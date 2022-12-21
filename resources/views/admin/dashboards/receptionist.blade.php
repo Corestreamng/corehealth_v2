@@ -12,7 +12,7 @@
                 <h3 class="font-weight-bold mb-0"> 2,409</span>
                 </h3>
                 <span class="text-muted font-13">Registered today</span>
-                <a href="#">
+                <a href="{{route('patient.create')}}">
                     <br><br><button type="button" class="btn btn-primary mt-2 mt-sm-0 btn-icon-text">
                         <i class="mdi mdi-plus-circle"></i> Add New Patient </button>
                 </a>

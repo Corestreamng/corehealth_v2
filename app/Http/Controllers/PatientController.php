@@ -24,7 +24,7 @@ class PatientController extends Controller
      */
     public function create()
     {
-        
+        return view('admin.receptionist.new_patient');
     }
 
     /**
