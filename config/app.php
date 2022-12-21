@@ -165,7 +165,7 @@ return [
         /*
          * Package Service Providers...
          */
-        Spatie\Permission\PermissionServiceProvider::class,git 
+        Spatie\Permission\PermissionServiceProvider::class,
         /*
          * Application Service Providers...
          */
