@@ -15,7 +15,7 @@ class CreateUsersTable extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->integer('is_admin')->default(19);
+            $table->integer('is_admin')->default(20);
             $table->string('email')->unique();
             $table->string('filename')->nullable();//name of pic uploaded for user
             $table->string('old_records')->nullable();

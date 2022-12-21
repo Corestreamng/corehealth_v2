@@ -21,6 +21,10 @@
     <link rel="stylesheet" href="{{asset('admin/assets/css/demo_1/style.css')}}" />
     <!-- End layout styles -->
     <link rel="shortcut icon" href="{{asset('admin/assets/images/favicon.png')}}" />
+    <script src="{{ asset('js/app.js') }}" defer></script>
+
+    <!-- Styles -->
+    {{-- <link href="{{ asset('css/app.css') }}" rel="stylesheet"> --}}
 </head>
 
 <body>
