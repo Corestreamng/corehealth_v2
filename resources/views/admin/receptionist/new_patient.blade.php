@@ -203,8 +203,8 @@
                                     <div class="input-group">
                                         <span class="input-group-text" id="ethnicity"><i
                                                 class="mdi mdi-crown"></i></span>
-                                        <input type="text" class="form-control" placeholder="ethnicity" aria-label="ethnicity"
-                                            aria-describedby="ethnicity" name="ethnicity">
+                                        <input type="text" class="form-control" placeholder="ethnicity"
+                                            aria-label="ethnicity" aria-describedby="ethnicity" name="ethnicity">
                                     </div>
                                 </div>
                             </div>
@@ -239,11 +239,132 @@
 
                 </div>
             </div>
-            <div class="tab-pane fade" id="family" role="tabpanel" aria-labelledby="family-tab">Family</div>
-            <div class="tab-pane fade" id="insurance" role="tabpanel" aria-labelledby="insurance-tab">Insurance</div>
+            <div class="tab-pane fade" id="family" role="tabpanel" aria-labelledby="family-tab">
+                <div class="container-fluid mt-4">
+                    {{-- <small class="text-danger">*Required fields</small> --}}
+                    <form action="{{ route('patient.store', ['step' => 3]) }}" method="POST" id="relatives_">
+                        @csrf
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="">File number </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text" id="file_no"><i
+                                                class="mdi mdi-file-find"></i></span>
+                                        <input type="text" class="form-control" placeholder="file_no"
+                                            aria-label="file_no" aria-describedby="file_no" name="file_no">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-5">
+                                <div class="form-group">
+                                    <label for="">Select Person </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text" id="nationality"><i
+                                                class="mdi mdi-account"></i></span>
+                                        <select name="person[]" id="person1" class="form-control">
+                                            <option value="">Select person</option>
+                                            @foreach ($all_patients as $patient)
+                                                <option value="{{ $patient->id }}">{{ $patient->file_no }} -
+                                                    {{ $patient->user->surname }}, {{ $patient->user->firstname }}
+                                                    {{ $patient->user->othername ?? '' }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-5">
+                                <div class="form-group">
+                                    <label for="">Select Relationship </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text" id="ethnicity"><i
+                                                class="mdi mdi-link-variant"></i></span>
+                                        <select name="relationship[]" id="relationship1" class="form-control">
+                                            <option value="">select relationship</option>
+                                            <option value="Parent">Parent</option>
+                                            <option value="Child">Child</option>
+                                            <option value="Sibling">Sibling</option>
+                                            <option value="Cousin">Cousin</option>
+                                            <option value="Uncle">Uncle</option>
+                                            <option value="Aunt">Aunt</option>
+                                            <option value="Niece">Niece</option>
+                                            <option value="Nephew">Nephew</option>
+                                            <option value="Others">Others</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-2 ">
+                                <button type="button" class="btn btn-success" style="margin-top: 25px"
+                                    onclick="add_row()"><span class="mdi mdi-plus"></span></button>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary mr-2"> Save </button>
+                        <a href="{{ route('home') }}" class="btn btn-light">Exit</a>
+                    </form>
+
+                </div>
+            </div>
+            <div class="tab-pane fade" id="insurance" role="tabpanel" aria-labelledby="insurance-tab">
+                <div class="container-fluid mt-4">
+                    {{-- <small class="text-danger">*Required fields</small> --}}
+                    <form action="{{ route('patient.store', ['step' => 3]) }}" method="POST" id="relatives_">
+                        @csrf
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="">Select Scheme </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i
+                                                class="mdi mdi-file-find"></i></span>
+                                        <select name="insurance_scheme" id="insurance_scheme" class="form-control">
+                                            <option value="">Select scheme</option>
+                                            <option value="NHIS">NHIS</option>
+                                            <option value="PLASCHEMA">PLASCHEMA</option>
+                                            <option value="NNPC">NNPC</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <div class="form-group">
+                                    <label for="">Select HMO </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text" ><i
+                                                class="mdi mdi-account"></i></span>
+                                        <select name="hmo_id" id="hmo_id" class="form-control">
+                                            <option value="">Select HMO</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="form-group">
+                                    <label for="">HMO ID/No</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i
+                                                class="mdi mdi-link-variant"></i></span>
+                                        <input type="text" name="hmo_no" class="form-control" placeholder="HMO ID/No">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary mr-2"> Save </button>
+                        <a href="{{ route('home') }}" class="btn btn-light">Exit</a>
+                    </form>
+                </div>
+            </div>
             <div class="tab-pane fade" id="review" role="tabpanel" aria-labelledby="review-tab">Review</div>
         </div>
     @else
     @endif
+    <script>
+        $('#relatives_').append(`
 
+        `)
+    </script>
 @endsection

@@ -24,7 +24,8 @@ class PatientController extends Controller
      */
     public function create()
     {
-        return view('admin.receptionist.new_patient');
+        $all_patients = Patient::with(['user'])->where('status',1);
+        return view('admin.receptionist.new_patient')->with(['all_patients' => $all_patients]);
     }
 
     /**
