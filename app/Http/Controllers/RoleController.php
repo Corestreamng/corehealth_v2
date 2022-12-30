@@ -22,7 +22,7 @@ class RoleController extends Controller
     public function __construct()
     {
         // $this->middleware(['role:super-admin', 'permission:publish articles|edit articles']);
-        $this->middleware(['role:Super-Admin|Admin']);
+        // $this->middleware(['role:Super-Admin|Admin']);
     }
 
     public function listRoles()
@@ -50,8 +50,8 @@ class RoleController extends Controller
         // $rolePermissions = DB::table("role_has_permissions")->where("role_has_permissions.role_id",1)
         //     ->pluck('role_has_permissions.permission_id','role_has_permissions.permission_id')
         //     ->all();
-        return view('admin.roles.index', compact('permission'));
-        // return view('admin.roles.index', compact('permission'));
+        return view('admin.access.roles.index', compact('permission'));
+        // return view('admin.access.roles.index', compact('permission'));
     }
 
     /**
@@ -62,7 +62,7 @@ class RoleController extends Controller
     public function create()
     {
         $permission = Permission::orderBy('name')->get();
-        return view('admin.roles.create', compact('permission'));
+        return view('admin.access.roles.create', compact('permission'));
     }
 
     /**
@@ -123,7 +123,7 @@ class RoleController extends Controller
         $rolePermissions = DB::table("role_has_permissions")->where("role_has_permissions.role_id", $id)
             ->pluck('role_has_permissions.permission_id', 'role_has_permissions.permission_id')
             ->all();
-        return view('admin.roles.edit', compact('role', 'permission', 'rolePermissions'));
+        return view('admin.access.roles.edit', compact('role', 'permission', 'rolePermissions'));
     }
 
     /**
