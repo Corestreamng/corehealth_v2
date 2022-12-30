@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Doctor\DoctorConsultationsController;
+use App\Http\Controllers\Doctor\DoctorDashboardController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\StaffController;
@@ -48,3 +50,13 @@ Route::group(['middleware' => ['auth']], function () {
 Auth::routes();
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+
+
+
+Route::group(['prefix' => 'doctor', 'middleware' => ['auth']], function () {
+    Route::get('/home', [DoctorDashboardController::class, 'index'])->name('doctor.dashboard');
+
+
+    Route::get('/consultations', [DoctorConsultationsController::class, 'index'])->name('doctor.consultations');
+
+});
