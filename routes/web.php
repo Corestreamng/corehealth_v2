@@ -24,25 +24,26 @@ Route::get('/', function () {
 Route::group(['middleware' => ['auth']], function () {
     Route::put('users/updateAvatar/{id}', 'Admin\UserController@updateAvatar')->name('users.updateAvatar');
 
-    Route::group(['middleware' => ['role:Users']], function () {
+    Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Users
         Route::get('listUsers', [StaffController::class, 'listUsers'])->name('listUsers');
         Route::resource('users', StaffController::class);
     });
 
-    Route::group(['middleware' => ['role:Roles']], function () {
+    Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Roles
         Route::get('listRoles', [RoleController::class,'listRoles'])->name('listRoles');
         Route::resource('roles', RoleController::class);
     });
 
-    Route::group(['middleware' => ['role:Permissions']], function () {
+    Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
         Route::get('listPermissions', [PermissionController::class, 'listPermissions'])->name('listPermissions');
         Route::resource('permissions', PermissionController::class);
     });
 
     Route::resource('patient', PatientController::class);
+    Route::get('patientsList','Patient\PatientController@patientsList')->name('patientsList');
 });
 
 Auth::routes();

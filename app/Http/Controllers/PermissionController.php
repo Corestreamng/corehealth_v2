@@ -22,7 +22,7 @@ class PermissionController extends Controller
     public function __construct()
     {
         // $this->middleware(['role:super-admin', 'permission:publish articles|edit articles']);
-        $this->middleware(['role:Super-Admin|Admin']);
+        // $this->middleware(['role:Super-Admin|Admin']);
     }
     public function listPermissions()
     {

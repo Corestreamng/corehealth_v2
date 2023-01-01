@@ -21,7 +21,7 @@
     <link rel="stylesheet" href="{{asset('admin/assets/css/demo_1/style.css')}}" />
     <!-- End layout styles -->
     <link rel="shortcut icon" href="{{asset('admin/assets/images/favicon.png')}}" />
-    <script src="{{ asset('js/app.js') }}" defer></script>
+    <script src="{{ asset('js/app.js') }}" ></script>
 
     <!-- Styles -->
     {{-- <link href="{{ asset('css/app.css') }}" rel="stylesheet"> --}}
@@ -41,11 +41,11 @@
             <!-- partial -->
             <div class="main-panel">
                 <div class="content-wrapper pb-0">
-                    <div class="page-header flex-wrap">
-                        {{-- <div class="header-left">
+                    {{-- <div class="page-header flex-wrap">
+                        <div class="header-left">
                             <button class="btn btn-primary mb-2 mb-md-0 mr-2"> Create new document </button>
                             <button class="btn btn-outline-primary bg-white mb-2 mb-md-0"> Import documents </button>
-                        </div> --}}
+                        </div>
                         <div class="header-right d-flex flex-wrap mt-2 mt-sm-0">
                             <div class="d-flex align-items-center">
                                 <a href="#">
@@ -56,7 +56,43 @@
                                 </a>
                             </div>
                         </div>
-                    </div>
+                    </div> --}}
+                    <section class="content-header">
+                        <div class="container-fluid">
+                            <div class="row mb-2">
+                                <div class="col-sm-6">
+                                    <h1>@yield('page_name')</h1>
+                                </div>
+                                <div class="col-sm-6">
+                                    <ol class="breadcrumb float-sm-right">
+                                        <li class="breadcrumb-item"><a href="#">@yield('page_name')</a></li>
+                                        <li class="breadcrumb-item active">@yield('subpage_name')</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div><!-- /.container-fluid -->
+                        <div>
+                            @if (count($errors) > 0)
+                                <div class="alert alert-danger alert-dismissible">
+                                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                                    <!-- <h5><i class="icon fa fa-info"></i> Alert!</h5> -->
+                                    <ul>
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+
+                                </div>
+                            @endif
+                            @if (Session::has('message'))
+                                <div class="alert alert-{{ Session::get('message_type', 'danger') }} alert-dismissable">
+                                    <button type="button" class="close" data-dismiss="alert"
+                                        aria-hidden="true">&times;</button>
+                                    <strong>Message &nbsp;</strong> {{ Session::get('message') }}
+                                </div>
+                            @endif
+                        </div>
+                    </section>
                     <!-- first row starts here -->
                     @yield('content')
                 </div>
@@ -72,6 +108,7 @@
     <!-- container-scroller -->
     <!-- plugins:js -->
     <script src="{{asset('admin/assets/vendors/js/vendor.bundle.base.js')}}"></script>
+    @yield('scripts')
     <!-- endinject -->
     <!-- Plugin js for this page -->
     {{-- <script src="admin/assets/vendors/jquery-bar-rating/jquery.barrating.min.js"></script>
@@ -92,6 +129,7 @@
     <!-- Custom js for this page -->
     <script src="{{asset('admin/assets/js/dashboard.js')}}"></script>
     <!-- End custom js for this page -->
+    
 </body>
 
 </html>

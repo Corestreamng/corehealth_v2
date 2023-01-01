@@ -1,24 +1,8 @@
-@extends('admin.layouts.admin')
-
-@section('main-content')
-
-
-
-<section class="content-header">
-  <div class="container-fluid">
-    <div class="row mb-2">
-      <div class="col-sm-6">
-        <h1>Permission Management</h1>
-      </div>
-      <div class="col-sm-6">
-        <ol class="breadcrumb float-sm-right">
-          <li class="breadcrumb-item"><a href="#">Home</a></li>
-          <li class="breadcrumb-item active">Permission Management</li>
-        </ol>
-      </div>
-    </div>
-  </div><!-- /.container-fluid -->
-</section>
+@extends('admin.layouts.app')
+@section('title', 'Permision detail')
+@section('page_name', 'Permission')
+@section('subpage_name', 'Permission detail')
+@section('content')
 
  <section class="content">
 
@@ -34,14 +18,14 @@
           </div> -->
         {!! Form::model($permission, ['method' => 'PATCH', 'route'=> ['permissions.update', $permission->id], 'class' => 'form-horizontal', 'role' => 'form']) !!}
             {{ csrf_field() }}
-              
+
             <div class="form-group">
                 <label class="control-label col-sm-2" for="title">Name:</label>
                 <div class="col-sm-10">
                     <input type="text" class="form-control" id="name" name="name" readonly="true" value="{!! (!empty($permission->name)) ? $permission->name : old('name') !!}" autofocus>
                 </div>
             </div>
-           
+
 
             <div class="row">
                 <div class="col-md-6">
@@ -51,20 +35,20 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="col-md-6">
                     <div class="form-group">
                         <div class="col-sm-6">
                             <a href="{{ route('permissions.index') }}" class="pull-right btn btn-danger"><i class="fa fa-close"></i> Back </a>
                         </div>
                     </div>
-                </div>                        
+                </div>
             </div>
 
         {!! Form::close() !!}
         </div>
       </div>
-      
+
     </div>
 
 </section>
@@ -107,7 +91,7 @@
 @section('scripts')
 
 <!-- jQuery -->
-<script src="{{ asset('plugins/jquery/jquery.min.js') }}"></script>
+{{-- <script src="{{ asset('plugins/jQuery/jquery.min.js') }}"></script> --}}
 <!-- Bootstrap 4 -->
 <!-- <script src="{{ asset('plugins/bootstrap/js/bootstrap.min.js') }}"></script> -->
 <script src="{{ asset('plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
@@ -127,7 +111,7 @@
             { "data": "DT_RowIndex" },
             { "data": "name" },
             { "data": "guard_name" },
-            { "data": "edit" }, 
+            { "data": "edit" },
             { "data": "delete" }
         ],
       "paging": true

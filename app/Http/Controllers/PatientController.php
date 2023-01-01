@@ -4,6 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\Patient;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Yajra\DataTables\DataTables;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\File;
+use Intervention\Image\Facades\Image;
+use Illuminate\Support\Facades\Storage;
+use RealRashid\SweetAlert\Facades\Alert;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Carbon;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 
 class PatientController extends Controller
 {
@@ -14,7 +25,24 @@ class PatientController extends Controller
      */
     public function index()
     {
-        //
+        return view('admin.patients.index');
+    }
+
+    public function patientsList()
+    {
+        $pc = Patient::with('user', 'clinic')->orderBy('created_at', 'DESC')->get();
+        //dd($pc);
+        return Datatables::of($pc)
+            ->addIndexColumn()
+            ->editColumn('fullname', function ($pc) {
+                return (userfullname($pc->user->id));
+            })
+
+            ->editColumn('created_at', function ($note) {
+                return date('h:i a D M j, Y', strtotime($note->created_at));
+            })
+            ->rawColumns(['fullname'])
+            ->make(true);
     }
 
     /**

@@ -27,29 +27,29 @@
                 </div>
             </form>
         </li>
-        <li class="pt-2 pb-1">
-            <span class="nav-item-head">Receptionist</span>
-        </li>
         <li class="nav-item">
-            <a class="nav-link" href="index.html">
+            <a class="nav-link" href="{{route('home')}}">
                 <i class="mdi mdi-compass-outline menu-icon"></i>
                 <span class="menu-title">Dashboard</span>
             </a>
+        </li>
+        <li class="pt-2 pb-1">
+            <span class="nav-item-head">Receptionist</span>
         </li>
         <li class="nav-item">
             <a class="nav-link" data-toggle="collapse" href="#new_patient" aria-expanded="false"
                 aria-controls="new_patient">
                 <i class="mdi mdi-crosshairs-gps menu-icon"></i>
-                <span class="menu-title">New Patient</span>
+                <span class="menu-title">Patients</span>
                 <i class="menu-arrow"></i>
             </a>
             <div class="collapse" id="new_patient">
                 <ul class="nav flex-column sub-menu">
                     <li class="nav-item">
-                        <a class="nav-link" href="pages/ui-features/buttons.html">New Registration</a>
+                        <a class="nav-link" href="{{route('patient.create')}}">New Registration</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="pages/ui-features/dropdowns.html">Continue Registration</a>
+                        <a class="nav-link" href="{{route('patient.index')}}">All Patients</a>
                     </li>
                 </ul>
             </div>
@@ -104,6 +104,33 @@
                     </li>
                 </ul>
             </div>
+        </li>
+        <li class="pt-2 pb-1">
+            <span class="nav-item-head">Admin</span>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="collapse" href="#access" aria-expanded="false"
+                aria-controls="access">
+                <i class="mdi mdi-crosshairs-gps menu-icon"></i>
+                <span class="menu-title">Access Control</span>
+                <i class="menu-arrow"></i>
+            </a>
+            <div class="collapse" id="access">
+                <ul class="nav flex-column sub-menu">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{route('roles.index')}}">Roles</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{route('permissions.index')}}">Permissions</a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{route('users.index')}}">
+                <i class="mdi mdi-compass-outline menu-icon"></i>
+                <span class="menu-title">Staff Management</span>
+            </a>
         </li>
     </ul>
 </nav>

@@ -9,8 +9,8 @@ use Illuminate\Support\Facades\Hash;
 // use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\File;
-use App\User;
-use App\Status;
+use App\Models\User;
+use App\Models\Status;
 use App\Customer;
 use App\StatusCategory;
 use Spatie\Permission\Models\Role;
@@ -18,6 +18,7 @@ use Spatie\Permission\Models\Permission;
 use Yajra\DataTables\DataTables;
 use RealRashid\SweetAlert\Facades\Alert;
 use Intervention\Image\Facades\Image;
+use App\Models\UserCategory;
 
 class StaffController extends Controller
 {
@@ -29,7 +30,7 @@ class StaffController extends Controller
     public function __construct()
     {
         // $this->middleware(['role:super-admin', 'permission:publish articles|edit articles']);
-        $this->middleware(['role:Super-Admin|Admin|Users', 'permission:users|user-create|user-list|user-edit|user-delete']);
+        // $this->middleware(['Role:Super-Admin|Admin|Users', 'permission:users|user-create|user-list|user-edit|user-delete']);
     }
 
     public function listUsers()
@@ -38,9 +39,9 @@ class StaffController extends Controller
 
         // if(Auth::user()->hasRole(['Super-Admin', 'Admin'])){
 
-        $user = User::with(['statuscategory' => function ($q) {
+        $user = User::with(['category' => function ($q) {
             $q->addSelect(['id', 'name']);
-        }])->where('visible', '>=', 0)->orderBy('id', 'ASC')->get();
+        }])->where('status','>', 0)->orderBy('id', 'ASC')->get();
         // dd($user);
         // }else{
 
@@ -55,8 +56,8 @@ class StaffController extends Controller
         return Datatables::of($user)
             ->addIndexColumn()
             ->editColumn('is_admin', function ($user) {
-                $statuscategory_name = $user->statuscategory->name;
-                return $statuscategory_name;
+                $user_category_name = $user->category->name;
+                return $user_category_name;
             })
             ->addColumn('filename', function ($user) {
 
@@ -65,37 +66,37 @@ class StaffController extends Controller
             })
             ->addColumn('view', function ($user) {
 
-                if (Auth::user()->hasPermissionTo('user-show') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
+                // if (Auth::user()->hasPermissionTo('user-show') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
 
                     $url =  route('users.show', $user->id);
                     return '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> View</a>';
-                } else {
+                // } else {
 
-                    $label = '<span class="label label-warning">Not Allowed</span>';
-                    return $label;
-                }
+                //     $label = '<span class="label label-warning">Not Allowed</span>';
+                //     return $label;
+                // }
             })
             ->addColumn('edit', function ($user) {
 
-                if (Auth::user()->hasPermissionTo('user-edit') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
+                // if (Auth::user()->hasPermissionTo('user-edit') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
 
                     $url =  route('users.edit', $user->id);
                     return '<a href="' . $url . '" class="btn btn-info btn-sm" ><i class="fa fa-pencil"></i> Edit</a>';
-                } else {
+                // } else {
 
-                    $label = '<span class="label label-warning">Not Allow</span>';
-                    return $label;
-                }
+                //     $label = '<span class="label label-warning">Not Allow</span>';
+                //     return $label;
+                // }
             })
             ->addColumn('delete', function ($user) {
 
-                if (Auth::user()->hasPermissionTo('user-delete') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
+                // if (Auth::user()->hasPermissionTo('user-delete') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
                     $id = $user->id;
                     return '<button type="button" class="delete-modal btn btn-danger btn-sm" data-toggle="modal" data-id="' . $id . '"><i class="fa fa-trash"></i> Delete</button>';
-                } else {
-                    $label = '<span class="label label-danger">Not Allow</span>';
-                    return $label;
-                }
+                // } else {
+                //     $label = '<span class="label label-danger">Not Allow</span>';
+                //     return $label;
+                // }
             })
             ->rawColumns(['filename', 'view', 'edit', 'delete'])
             ->make(true);
@@ -114,11 +115,11 @@ class StaffController extends Controller
     public function index()
     {
 
-        $statuses = StatusCategory::whereVisible(1)->get();
-        $options = Status::whereVisible(1)->get();
+        $statuses = UserCategory::whereStatus(1)->get();
+        // $options = Status::whereVisible(1)->get();
         $roles = Role::pluck('name', 'name')->all();
 
-        return view('admin.users.index', compact('statuses', 'options', 'roles'));
+        return view('admin.staff.index', compact('roles','statuses'));
     }
 
     /**
@@ -129,12 +130,10 @@ class StaffController extends Controller
     public function create()
     {
         $roles = Role::pluck('name', 'name')->all();
-        $statuses = StatusCategory::pluck('name', 'id')->all();
-        $options = Status::pluck('name', 'id')->all();
+        $statuses = UserCategory::whereStatus(1)->get();
         $permissions = Permission::pluck('name', 'name')->all();
-        $clientUsers = Customer::pluck('fullname', 'id')->all();
 
-        return view('admin.users.create', compact('options', 'roles', 'statuses', 'permissions', 'clientUsers'));
+        return view('admin.staff.create', compact('roles', 'statuses', 'permissions'));
     }
 
     /**
@@ -333,12 +332,11 @@ class StaffController extends Controller
         $user = User::whereId($id)->first();
         // dd($user->getRoleNames());
         // $roles = Role::pluck('name','name')->all();
-        $statuses = StatusCategory::whereVisible(1)->get();
-        $options = Status::whereVisible(1)->get();
+        $statuses = UserCategory::whereStatus(1)->get();
         // $userRole = $user->roles->pluck('name', 'name')->all();
 
-        // return view('admin.users.show', compact('user', 'statuses', 'options', 'roles', 'userRole'));
-        return view('admin.users.show', compact('user', 'statuses', 'options'));
+        // return view('admin.staff.show', compact('user', 'statuses', 'options', 'roles', 'userRole'));
+        return view('admin.staff.show', compact('user', 'statuses'));
     }
 
     /**
@@ -352,15 +350,13 @@ class StaffController extends Controller
         $user = User::whereId($id)->first();
         $roles = Role::pluck('name', 'name')->all();
         $permissions = Permission::pluck('name', 'name')->all();
-        $statuses = StatusCategory::whereVisible(1)->get();
-        $options = Status::whereVisible(1)->get();
+        $statuses = UserCategory::whereStatus(1)->get();
         $userRole = $user->roles->pluck('name', 'name')->all();
         $userPermission = $user->permissions->pluck('name', 'name')->all();
-        $clientUsers = Customer::pluck('fullname', 'id')->all();
 
         // dd($userRole);
 
-        return view('admin.users.edit', compact('user', 'statuses', 'options', 'roles', 'permissions', 'userRole', 'userPermission', 'clientUsers'));
+        return view('admin.staff.edit', compact('user', 'statuses', 'roles', 'permissions', 'userRole', 'userPermission'));
     }
 
     /**
@@ -653,6 +649,6 @@ class StaffController extends Controller
 
         $user = User::with(['statuscategory'])->whereEmail($email)->where('visible', '=', 2)->first();
 
-        return view('admin.users.profile', compact('user'));
+        return view('admin.staff.profile', compact('user'));
     }
 }
