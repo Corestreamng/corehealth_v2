@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Providers\RouteServiceProvider;
+use Auth;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 
 class LoginController extends Controller
@@ -20,6 +21,16 @@ class LoginController extends Controller
     */
 
     use AuthenticatesUsers;
+
+
+    protected function authenticated()
+    {
+        if(Auth::user()->is_admin == 22){
+            return redirect()->route('doctor.dashboard');
+        }
+
+        return redirect()->route('home');
+    }
 
     /**
      * Where to redirect users after login.
