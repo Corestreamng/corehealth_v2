@@ -340,7 +340,7 @@
       $.ajax({
           headers: {'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')},
           type: 'POST',
-          url: "{{ route('users.store') }}",
+          url: "{{ route('staff.store') }}",
           data: {
             'is_admin': $('#is_admin').val(),
             'surname': $('#surname').val(),

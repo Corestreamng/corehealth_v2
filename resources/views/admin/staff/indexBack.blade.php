@@ -353,7 +353,7 @@
       var form_data = $(this).serialize();
       $.ajax({
           type: 'POST',
-          url: "{{route('users.store') }}",
+          url: "{{route('staff.store') }}",
           data: form_data,
           dataType:"json",
           success: function(data) {

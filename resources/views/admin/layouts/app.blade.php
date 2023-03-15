@@ -5,23 +5,24 @@
     <!-- Required meta tags -->
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <title>{{env('APP_NAME')}} | @yield('title')</title>
+    <title>{{ env('APP_NAME') }} | @yield('title')</title>
     <!-- plugins:css -->
-    <link rel="stylesheet" href="{{asset('admin/assets/vendors/mdi/css/materialdesignicons.min.css')}}">
-    <link rel="stylesheet" href="{{asset('admin/assets/vendors/flag-icon-css/css/flag-icon.min.css')}}">
-    <link rel="stylesheet" href="{{asset('admin/assets/vendors/css/vendor.bundle.base.css')}}">
+    <link rel="stylesheet" href="{{ asset('admin/assets/vendors/mdi/css/materialdesignicons.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('admin/assets/vendors/flag-icon-css/css/flag-icon.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('admin/assets/vendors/css/vendor.bundle.base.css') }}">
     <!-- endinject -->
     <!-- Plugin css for this page -->
-    <link rel="stylesheet" href="{{asset('admin/assets/vendors/jquery-bar-rating/css-stars.css')}}" />
-    <link rel="stylesheet" href="{{asset('admin/assets/vendors/font-awesome/css/font-awesome.min.css')}}" />
+    <link rel="stylesheet" href="{{ asset('admin/assets/vendors/jquery-bar-rating/css-stars.css') }}" />
+    <link rel="stylesheet" href="{{ asset('admin/assets/vendors/font-awesome/css/font-awesome.min.css') }}" />
     <!-- End plugin css for this page -->
     <!-- inject:css -->
     <!-- endinject -->
     <!-- Layout styles -->
-    <link rel="stylesheet" href="{{asset('admin/assets/css/demo_1/style.css')}}" />
+    <link rel="stylesheet" href="{{ asset('admin/assets/css/demo_1/style.css') }}" />
     <!-- End layout styles -->
-    <link rel="shortcut icon" href="{{asset('admin/assets/images/favicon.png')}}" />
-    <script src="{{ asset('js/app.js') }}" ></script>
+    <link rel="shortcut icon" href="{{ asset('admin/assets/images/favicon.png') }}" />
+    <link rel="stylesheet" href="{{asset('css/selectisize.css')}}">
+    <script src="{{ asset('js/app.js') }}"></script>
 
     <!-- Styles -->
     {{-- <link href="{{ asset('css/app.css') }}" rel="stylesheet"> --}}
@@ -72,25 +73,20 @@
                             </div>
                         </div><!-- /.container-fluid -->
                         <div>
-                            @if (count($errors) > 0)
+                            @if (count($errors))
                                 <div class="alert alert-danger alert-dismissible">
-                                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                                    <button type="button" class="close" data-dismiss="alert"
+                                        aria-hidden="true">×</button>
                                     <!-- <h5><i class="icon fa fa-info"></i> Alert!</h5> -->
                                     <ul>
-                                        @foreach ($errors->all() as $error)
+                                        @foreach ($errors as $error)
                                             <li>{{ $error }}</li>
                                         @endforeach
                                     </ul>
 
                                 </div>
                             @endif
-                            @if (Session::has('message'))
-                                <div class="alert alert-{{ Session::get('message_type', 'danger') }} alert-dismissable">
-                                    <button type="button" class="close" data-dismiss="alert"
-                                        aria-hidden="true">&times;</button>
-                                    <strong>Message &nbsp;</strong> {{ Session::get('message') }}
-                                </div>
-                            @endif
+                            @include('admin.partials.notification')
                         </div>
                     </section>
                     <!-- first row starts here -->
@@ -107,7 +103,7 @@
     </div>
     <!-- container-scroller -->
     <!-- plugins:js -->
-    <script src="{{asset('admin/assets/vendors/js/vendor.bundle.base.js')}}"></script>
+    <script src="{{ asset('admin/assets/vendors/js/vendor.bundle.base.js') }}"></script>
     @yield('scripts')
     <!-- endinject -->
     <!-- Plugin js for this page -->
@@ -120,16 +116,16 @@
     <script src="admin/assets/vendors/flot/jquery.flot.stack.js"></script> --}}
     <!-- End plugin js for this page -->
     <!-- inject:js -->
-    <script src="{{asset('admin/assets/js/off-canvas.js')}}"></script>
-    <script src="{{asset('admin/assets/js/hoverable-collapse.js')}}"></script>
-    <script src="{{asset('admin/assets/js/misc.js')}}"></script>
-    <script src="{{asset('admin/assets/js/settings.js')}}"></script>
-    <script src="{{asset('admin/assets/js/todolist.js')}}"></script>
+    <script src="{{ asset('admin/assets/js/off-canvas.js') }}"></script>
+    <script src="{{ asset('admin/assets/js/hoverable-collapse.js') }}"></script>
+    <script src="{{ asset('admin/assets/js/misc.js') }}"></script>
+    <script src="{{ asset('admin/assets/js/settings.js') }}"></script>
+    {{-- <script src="{{ asset('admin/assets/js/todolist.js') }}"></script> --}}
     <!-- endinject -->
     <!-- Custom js for this page -->
-    <script src="{{asset('admin/assets/js/dashboard.js')}}"></script>
+    <script src="{{ asset('admin/assets/js/dashboard.js') }}"></script>
     <!-- End custom js for this page -->
-    
+
 </body>
 
 </html>

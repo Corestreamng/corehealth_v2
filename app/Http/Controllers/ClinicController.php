@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Clinic;
+use App\Models\Staff;
 use Illuminate\Http\Request;
+use Response;
 
 class ClinicController extends Controller
 {
@@ -15,6 +17,18 @@ class ClinicController extends Controller
     public function index()
     {
         //
+    }
+
+
+    public function getDoctors($clinic_id)
+    {
+        try {
+            $doctors = Staff::with(['user'])->where('clinic_id', $clinic_id)->where('status', 1)->get();
+            return response(json_encode($doctors));
+        } catch (\Exception $e) {
+
+            return response(json_encode("An error occurred " . $e->getMessage()), 500);
+        }
     }
 
     /**

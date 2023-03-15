@@ -11,9 +11,8 @@
             </div>
             <div class="card-body">
                 <!-- <form class="form-horizontal" role="form"> -->
-                {!! Form::model($user, ['method' => 'PATCH', 'route' => ['users.update', $user->id]]) !!}
+                {!! Form::model($user, ['method' => 'PATCH', 'route' => ['staff.update', $user->id]]) !!}
                 {{ csrf_field() }}
-                <input type="hidden" name="_method" value="PUT">
                 <div class="form-group">
                     <img src="{!! url('storage/image/user/' . $user->filename) !!}" valign="middle" width="150px" height="120px" />
                     <br>
@@ -69,6 +68,92 @@
                             value="{!! !empty($user->email) ? $user->email : old('email') !!}" autofocus>
                     </div>
                 </div>
+                <div class="row">
+                    <div class="form-group col-sm-6">
+                        <label for="phone_number" class=" control-label">Phone Number <span class="text-danger">*</span></label>
+
+                        <div class="">
+                            <input type="phone_number" class="form-control" id="phone_number" name="phone_number"
+                                value="{!! !empty($user->othername) ? $user->othername : old('othername') !!}" placeholder="Phone Number" required>
+                        </div>
+                    </div>
+                    <div class="form-group col-sm-6">
+                        <label for="password" class="control-label">Password</label>
+
+                        <div class="">
+                            <input type="password" class="form-control" id="password" name="password"
+                                placeholder="Password" value="pwd" disabled>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="form-group col-sm-6">
+                        <label for="is_admin" class=" control-label">Specialization</label>
+
+                        <div class="">
+                            {!! Form::select('specializations', $specializations, ($user->staff_profile->specialization_id) ? ($user->staff_profile->specialization_id) : null , ['id' => 'specializations', 'name' => 'specialization', 'class' => 'form-control select2', 'placeholder' => 'Pick a value']) !!}
+                        </div>
+                    </div>
+
+                    <div class="form-group col-sm-6">
+                        <label for="is_admin" class=" control-label">Clinic <span class="text-danger">*Required for doctors</span></label>
+
+                        <div class="">
+                            {!! Form::select('clinics', $clinics, $user->staff_profile->clinic_id, ['id' => 'clinics', 'name' => 'clinic', 'class' => 'form-control select2', 'placeholder' => 'Pick a value']) !!}
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="">Gender <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text" id="gender"><i
+                                        class="mdi mdi-gender-male-female"></i></span>
+                                <select class="form-control" placeholder="gender"
+                                aria-label="gender" aria-describedby="gender" name="gender">
+                                    <option value="">Select gender</option>
+                                    <option value="Male" {{($user->staff_profile->gender == "Male") ? "selected" : "" }}>Male</option>
+                                    <option value="Female" {{($user->staff_profile->gender == "Female") ? "selected" : "" }}>Female</option>
+                                    <option value="Others" {{($user->staff_profile->gender == "Others") ? "selected" : "" }}>Others</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="">Date of Birth <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text" id="dob"><i
+                                        class="mdi mdi-calendar"></i></span>
+                                <input type="date" class="form-control" placeholder="dob" aria-label="dob"
+                                    aria-describedby="dob" name="dob" value="{!! !empty($user->staff_profile->date_of_birth) ? $user->staff_profile->date_of_birth : old('dob') !!}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="">Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text" id="address"><i
+                                        class="mdi mdi-map-marker-radius"></i></span>
+                                <textarea name="address" id="address" class="form-control">{!! !empty($user->staff_profile->home_address) ? $user->staff_profile->home_address : old('address') !!}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="">Consultation fee</label>
+                            <div class="input-group">
+                                <span class="input-group-text" id="consultation_fee-">NGN</span>
+                                <input type="number" name="consultation_fee" class="form-control" value="{!! !empty($user->staff_profile->consultation_fee) ? $user->staff_profile->consultation_fee : old('consultation_fee') !!}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 @if ($user->assignRole == 1)
 
                     <div class="form-group">
@@ -114,7 +199,7 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <div class="col-sm-6">
-                                <a href="{{ route('users.index') }}" class="pull-right btn btn-danger"><i
+                                <a href="{{ route('staff.index') }}" class="pull-right btn btn-danger"><i
                                         class="fa fa-close"></i> Back </a>
                             </div>
                         </div>

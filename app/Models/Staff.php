@@ -15,7 +15,7 @@ class Staff extends Model
         'gender',
         'date_of_birth',
         'home_address',
-        'contact_address',
+        'phone_number',
         'consultation_fee',
         'status',
     ];

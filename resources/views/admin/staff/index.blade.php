@@ -7,13 +7,13 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    @if (auth()->user()->can('user-create'))
-                        <a href="{{ route('users.create') }}" id="loading-btn" data-loading-text="Loading..."
+                    {{-- @if (auth()->user()->can('user-create')) --}}
+                        <a href="{{ route('staff.create') }}" id="loading-btn" data-loading-text="Loading..."
                             class="btn btn-primary">
                             <i class="fa fa-user"></i>
                             New User
                         </a>
-                    @endif
+                    {{-- @endif --}}
                 </div>
                 <!-- /.card-header -->
                 <div class="card-body">
@@ -92,7 +92,7 @@
                 "processing": true,
                 "serverSide": true,
                 "ajax": {
-                    "url": "{{ url('listUsers') }}",
+                    "url": "{{ route('listStaff') }}",
                     "type": "GET"
                 },
                 "columns": [{

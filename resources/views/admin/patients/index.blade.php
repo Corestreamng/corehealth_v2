@@ -22,7 +22,9 @@
                                     <th>HMO / Insurance</th>
                                     <th>HMO Number</th>
                                     <th>Date</th>
-                                    <th>Actions</th>
+                                    <th>View</th>
+                                    <th>Edit</th>
+                                    <th>Delete</th>
                                 </tr>
                             </thead>
                         </table>
@@ -68,8 +70,8 @@
                         name: "file_no"
                     },
                     {
-                        data: "insurance_scheme",
-                        name: "insurance_scheme"
+                        data: "hmo_id",
+                        name: "hmo_id"
                     },
                     {
                         data: "hmo_no",
@@ -78,6 +80,18 @@
                     {
                         data: "created_at",
                         name: "created_at"
+                    },
+                    {
+                        data: "view",
+                        name: "view"
+                    },
+                    {
+                        data: "edit",
+                        name: "edit"
+                    },
+                    {
+                        data: "delete",
+                        name: "delete"
                     },
                 ],
                 // initComplete: function () {

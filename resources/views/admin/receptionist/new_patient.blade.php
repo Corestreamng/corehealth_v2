@@ -14,24 +14,24 @@
                     type="button" role="tab" aria-controls="private_data" aria-selected="false">Private data</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="family-tab" data-bs-toggle="tab" data-bs-target="#family" type="button"
+                <button class="nav-link" id="family_tab" data-bs-toggle="tab" data-bs-target="#family" type="button"
                     role="tab" aria-controls="family" aria-selected="false">Family</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="insurance-tab" data-bs-toggle="tab" data-bs-target="#insurance" type="button"
+                <button class="nav-link" id="insurance_tab" data-bs-toggle="tab" data-bs-target="#insurance" type="button"
                     role="tab" aria-controls="insurance" aria-selected="false">Insurance</button>
             </li>
-            <li class="nav-item" role="presentation">
+            {{-- <li class="nav-item" role="presentation">
                 <button class="nav-link" id="review-tab" data-bs-toggle="tab" data-bs-target="#review" type="button"
                     role="tab" aria-controls="review" aria-selected="false">Review</button>
-            </li>
+            </li> --}}
         </ul>
-        <div class="tab-content" id="myTabContent">
-            <div class="tab-pane fade show active" id="biodata" role="tabpanel" aria-labelledby="biodata_tab">
-                <div class="container-fluid mt-4">
-                    <small class="text-danger">*Required fields</small>
-                    <form action="{{ route('patient.store') }}" method="POST">
-                        @csrf
+        <form action="{{ route('patient.store') }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            <div class="tab-content" id="myTabContent">
+                <div class="tab-pane fade show active" id="biodata" role="tabpanel" aria-labelledby="biodata_tab">
+                    <div class="container-fluid mt-4">
+                        <small class="text-danger">*Required fields</small>
                         <div class="row">
                             <div class="col-sm-4">
                                 <div class="form-group">
@@ -40,7 +40,8 @@
                                         <span class="input-group-text" id="surname"><i
                                                 class="mdi mdi-account-multiple"></i></span>
                                         <input type="text" class="form-control" placeholder="Surname"
-                                            aria-label="surname" aria-describedby="surname" name="surname">
+                                            aria-label="surname" aria-describedby="surname" name="surname"
+                                            value="{{ old('surname') }}">
                                     </div>
                                 </div>
                             </div>
@@ -50,7 +51,8 @@
                                     <div class="input-group">
                                         <span class="input-group-text" id="firstname"><i class="mdi mdi-account"></i></span>
                                         <input type="text" class="form-control" placeholder="firstname"
-                                            aria-label="firstname" aria-describedby="firstname" name="firstname">
+                                            aria-label="firstname" aria-describedby="firstname" name="firstname"
+                                            value="{{ old('firstname') }}">
                                     </div>
                                 </div>
                             </div>
@@ -61,7 +63,8 @@
                                         <span class="input-group-text" id="surname"><i
                                                 class="mdi mdi-account-check"></i></span>
                                         <input type="text" class="form-control" placeholder="Surname"
-                                            aria-label="surname" aria-describedby="surname" name="othername">
+                                            aria-label="surname" aria-describedby="surname" name="othername"
+                                            value="{{ old('othername') }}">
                                     </div>
                                 </div>
                             </div>
@@ -75,8 +78,16 @@
                                     <div class="input-group">
                                         <span class="input-group-text" id="gender"><i
                                                 class="mdi mdi-gender-male-female"></i></span>
-                                        <input type="text" class="form-control" placeholder="gender"
-                                            aria-label="gender" aria-describedby="gender" name="gender">
+                                        <select class="form-control" placeholder="gender" aria-label="gender"
+                                            aria-describedby="gender" name="gender">
+                                            <option value="">Select gender</option>
+                                            <option value="Male" {{ old('gender') == 'Male' ? 'selected' : '' }}>Male
+                                            </option>
+                                            <option value="Female" {{ old('gender') == 'Female' ? 'selected' : '' }}>
+                                                Female</option>
+                                            <option value="Others" {{ old('gender') == 'Others' ? 'selected' : '' }}>
+                                                Others</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>
@@ -86,8 +97,8 @@
                                     <div class="input-group">
                                         <span class="input-group-text" id="dob"><i
                                                 class="mdi mdi-calendar"></i></span>
-                                        <input type="text" class="form-control" placeholder="dob" aria-label="dob"
-                                            aria-describedby="dob" name="dob">
+                                        <input type="date" class="form-control" placeholder="dob" aria-label="dob"
+                                            aria-describedby="dob" name="dob" value="{{ old('dob') }}">
                                     </div>
                                 </div>
                             </div>
@@ -110,7 +121,7 @@
                                 <div class="form-group">
                                     <label for="">Old Records</label>
                                     <div class="input-group">
-                                        <span class="input-group-text" id="dob"><i
+                                        <span class="input-group-text" id="old_records"><i
                                                 class="mdi mdi-file-import"></i></span>
                                         <input type="file" class="form-control" aria-label="old_records"
                                             aria-describedby="old_records" name="old_records">
@@ -118,17 +129,17 @@
                                 </div>
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary mr-2"> Save </button>
+                        <button type="button" onclick="switch_tab(event,'private_data_tab')"
+                            class="btn btn-primary mr-2">
+                            Next </button>
                         <a href="{{ route('home') }}" class="btn btn-light">Exit</a>
-                    </form>
 
+
+                    </div>
                 </div>
-            </div>
-            <div class="tab-pane fade" id="private_data" role="tabpanel" aria-labelledby="private_data_tab">
-                <div class="container-fluid mt-4">
-                    <small class="text-danger">*Required fields</small>
-                    <form action="{{ route('patient.store', ['step' => 2]) }}" method="POST">
-                        @csrf
+                <div class="tab-pane fade" id="private_data" role="tabpanel" aria-labelledby="private_data_tab">
+                    <div class="container-fluid mt-4">
+                        <small class="text-danger">*Required fields</small>
                         <div class="row">
                             <div class="col-sm-4">
                                 <div class="form-group">
@@ -138,15 +149,24 @@
                                                 class="mdi mdi-water"></i></span>
                                         <select name="blood_group" id="" class="form-control">
                                             <option value="">Select blood group</option>
-                                            <option value="A+">A+</option>
-                                            <option value="B+">B+</option>
-                                            <option value="AB+">AB+</option>
-                                            <option value="A-">A-</option>
-                                            <option value="B-">B-</option>
-                                            <option value="AB-">AB-</option>
-                                            <option value="O+">O+</option>
-                                            <option value="O-">O-</option>
-                                            <option value="Others">Others</option>
+                                            <option value="A+" {{ old('blood_group') == 'A+' ? 'selected' : '' }}>
+                                                A+</option>
+                                            <option value="B+" {{ old('blood_group') == 'B+' ? 'selected' : '' }}>
+                                                B+</option>
+                                            <option value="AB+"
+                                                {{ old('blood_group') == 'AB+' ? 'selected' : '' }}>AB+</option>
+                                            <option value="A-" {{ old('blood_group') == 'A-' ? 'selected' : '' }}>
+                                                A-</option>
+                                            <option value="B-" {{ old('blood_group') == 'B-' ? 'selected' : '' }}>
+                                                B-</option>
+                                            <option value="AB-"
+                                                {{ old('blood_group') == 'AB-' ? 'selected' : '' }}>AB-</option>
+                                            <option value="O+" {{ old('blood_group') == 'O+' ? 'selected' : '' }}>
+                                                O+</option>
+                                            <option value="O-" {{ old('blood_group') == 'A-' ? 'selected' : '' }}>
+                                                O-</option>
+                                            <option value="Others"
+                                                {{ old('blood_group') == 'Others+' ? 'selected' : '' }}>Others</option>
                                         </select>
                                     </div>
                                 </div>
@@ -159,12 +179,18 @@
                                                 class="mdi mdi-flask"></i></span>
                                         <select name="genotype" id="genotype" class="form-control">
                                             <option value="">select genotype</option>
-                                            <option value="AA">AA</option>
-                                            <option value="AS">AS</option>
-                                            <option value="AC">AC</option>
-                                            <option value="SS">SS</option>
-                                            <option value="SC">SC</option>
-                                            <option value="Others">Others</option>
+                                            <option value="AA" {{ old('genotype') == 'AA' ? 'selected' : '' }}>AA
+                                            </option>
+                                            <option value="AS" {{ old('genotype') == 'AS' ? 'selected' : '' }}>AS
+                                            </option>
+                                            <option value="AC" {{ old('genotype') == 'AC' ? 'selected' : '' }}>AC
+                                            </option>
+                                            <option value="SS" {{ old('genotype') == 'SS' ? 'selected' : '' }}>SS
+                                            </option>
+                                            <option value="SC" {{ old('genotype') == 'SC' ? 'selected' : '' }}>SC
+                                            </option>
+                                            <option value="Others"
+                                                {{ old('genotype') == 'Others' ? 'selected' : '' }}>Others</option>
                                         </select>
                                     </div>
                                 </div>
@@ -176,8 +202,10 @@
                                         <span class="input-group-text" id="disability"><i
                                                 class="mdi mdi-walk"></i></span>
                                         <select name="disability" id="disability" class="form-control">
-                                            <option value="0">No Disability</option>
-                                            <option value="1">Disabled</option>
+                                            <option value="0" {{ old('disability') == '0' ? 'selected' : '' }}>No
+                                                Disability</option>
+                                            <option value="1" {{ old('disability') == '1' ? 'selected' : '' }}>
+                                                Disabled</option>
                                         </select>
                                     </div>
                                 </div>
@@ -193,7 +221,8 @@
                                         <span class="input-group-text" id="nationality"><i
                                                 class="mdi mdi-map"></i></span>
                                         <input type="text" class="form-control" placeholder="nationality"
-                                            aria-label="nationality" aria-describedby="nationality" name="nationality">
+                                            aria-label="nationality" aria-describedby="nationality" name="nationality"
+                                            value="{{ old('nationality') }}">
                                     </div>
                                 </div>
                             </div>
@@ -204,7 +233,8 @@
                                         <span class="input-group-text" id="ethnicity"><i
                                                 class="mdi mdi-crown"></i></span>
                                         <input type="text" class="form-control" placeholder="ethnicity"
-                                            aria-label="ethnicity" aria-describedby="ethnicity" name="ethnicity">
+                                            aria-label="ethnicity" aria-describedby="ethnicity" name="ethnicity"
+                                            {{ old('ethnicity') }}>
                                     </div>
                                 </div>
                             </div>
@@ -218,7 +248,7 @@
                                     <div class="input-group">
                                         <span class="input-group-text" id="address"><i
                                                 class="mdi mdi-map-marker-radius"></i></span>
-                                        <textarea name="address" id="address" class="form-control"></textarea>
+                                        <textarea name="address" id="address" class="form-control">{{ old('address') }}</textarea>
                                     </div>
                                 </div>
                             </div>
@@ -228,143 +258,107 @@
                                     <div class="input-group">
                                         <span class="input-group-text" id="misc"><i
                                                 class="mdi mdi-library-books"></i></span>
-                                        <textarea name="misc" id="misc" class="form-control"></textarea>
+                                        <textarea name="misc" id="misc" class="form-control">{{ old('misc') }}</textarea>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary mr-2"> Save </button>
+                        <button type="button" onclick="switch_tab(event,'biodata_tab')" class="btn btn-secondary mr-2">
+                            Prev </button>
+                        <button type="button" onclick="switch_tab(event,'family_tab')" class="btn btn-primary mr-2">
+                            Next </button>
                         <a href="{{ route('home') }}" class="btn btn-light">Exit</a>
-                    </form>
+        </form>
 
-                </div>
-            </div>
-            <div class="tab-pane fade" id="family" role="tabpanel" aria-labelledby="family-tab">
-                <div class="container-fluid mt-4">
-                    {{-- <small class="text-danger">*Required fields</small> --}}
-                    <form action="{{ route('patient.store', ['step' => 3]) }}" method="POST" id="relatives_">
-                        @csrf
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="form-group">
-                                    <label for="">File number </label>
-                                    <div class="input-group">
-                                        <span class="input-group-text" id="file_no"><i
-                                                class="mdi mdi-file-find"></i></span>
-                                        <input type="text" class="form-control" placeholder="file_no"
-                                            aria-label="file_no" aria-describedby="file_no" name="file_no">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-sm-5">
-                                <div class="form-group">
-                                    <label for="">Select Person </label>
-                                    <div class="input-group">
-                                        <span class="input-group-text" id="nationality"><i
-                                                class="mdi mdi-account"></i></span>
-                                        <select name="person[]" id="person1" class="form-control">
-                                            <option value="">Select person</option>
-                                            @foreach ($all_patients as $patient)
-                                                <option value="{{ $patient->id }}">{{ $patient->file_no }} -
-                                                    {{ $patient->user->surname }}, {{ $patient->user->firstname }}
-                                                    {{ $patient->user->othername ?? '' }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-sm-5">
-                                <div class="form-group">
-                                    <label for="">Select Relationship </label>
-                                    <div class="input-group">
-                                        <span class="input-group-text" id="ethnicity"><i
-                                                class="mdi mdi-link-variant"></i></span>
-                                        <select name="relationship[]" id="relationship1" class="form-control">
-                                            <option value="">select relationship</option>
-                                            <option value="Parent">Parent</option>
-                                            <option value="Child">Child</option>
-                                            <option value="Sibling">Sibling</option>
-                                            <option value="Cousin">Cousin</option>
-                                            <option value="Uncle">Uncle</option>
-                                            <option value="Aunt">Aunt</option>
-                                            <option value="Niece">Niece</option>
-                                            <option value="Nephew">Nephew</option>
-                                            <option value="Others">Others</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-sm-2 ">
-                                <button type="button" class="btn btn-success" style="margin-top: 25px"
-                                    onclick="add_row()"><span class="mdi mdi-plus"></span></button>
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-primary mr-2"> Save </button>
-                        <a href="{{ route('home') }}" class="btn btn-light">Exit</a>
-                    </form>
-
-                </div>
-            </div>
-            <div class="tab-pane fade" id="insurance" role="tabpanel" aria-labelledby="insurance-tab">
-                <div class="container-fluid mt-4">
-                    {{-- <small class="text-danger">*Required fields</small> --}}
-                    <form action="{{ route('patient.store', ['step' => 3]) }}" method="POST" id="relatives_">
-                        @csrf
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="form-group">
-                                    <label for="">Select Scheme </label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i
-                                                class="mdi mdi-file-find"></i></span>
-                                        <select name="insurance_scheme" id="insurance_scheme" class="form-control">
-                                            <option value="">Select scheme</option>
-                                            <option value="NHIS">NHIS</option>
-                                            <option value="PLASCHEMA">PLASCHEMA</option>
-                                            <option value="NNPC">NNPC</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-sm-6">
-                                <div class="form-group">
-                                    <label for="">Select HMO </label>
-                                    <div class="input-group">
-                                        <span class="input-group-text" ><i
-                                                class="mdi mdi-account"></i></span>
-                                        <select name="hmo_id" id="hmo_id" class="form-control">
-                                            <option value="">Select HMO</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-sm-6">
-                                <div class="form-group">
-                                    <label for="">HMO ID/No</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i
-                                                class="mdi mdi-link-variant"></i></span>
-                                        <input type="text" name="hmo_no" class="form-control" placeholder="HMO ID/No">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-primary mr-2"> Save </button>
-                        <a href="{{ route('home') }}" class="btn btn-light">Exit</a>
-                    </form>
-                </div>
-            </div>
-            <div class="tab-pane fade" id="review" role="tabpanel" aria-labelledby="review-tab">Review</div>
         </div>
+        </div>
+        <div class="tab-pane fade" id="family" role="tabpanel" aria-labelledby="family-tab">
+            <div class="container-fluid mt-4">
+                {{-- <small class="text-danger">*Required fields</small> --}}
+                <div class="row">
+                    <div class="col-12">
+                        <div class="form-group">
+                            <label for="">File number </label>
+                            <div class="input-group">
+                                <span class="input-group-text" id="file_no"><i class="mdi mdi-file-find"></i></span>
+                                <input type="text" class="form-control" placeholder="file_no" aria-label="file_no"
+                                    aria-describedby="file_no" name="file_no" value="{{ old('file_no') }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" onclick="switch_tab(event,'private_data_tab')" class="btn btn-secondary mr-2">
+                    Prev
+                </button>
+                <button type="button" onclick="switch_tab(event,'insurance_tab')"
+                    class="btn btn-primary mr-2">Next</button>
+                <a href="{{ route('home') }}" class="btn btn-light">Exit</a>
+                </form>
+
+            </div>
+        </div>
+        <div class="tab-pane fade" id="insurance" role="tabpanel" aria-labelledby="insurance-tab">
+            <div class="container-fluid mt-4">
+                {{-- <small class="text-danger">*Required fields</small> --}}
+                <div class="row">
+                    {{-- <div class="col-12">
+                        <div class="form-group">
+                            <label for="">Select Scheme </label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="mdi mdi-file-find"></i></span>
+                                <select name="insurance_scheme" id="insurance_scheme" class="form-control">
+                                    <option value="">Select scheme</option>
+                                    <option value="1" {{((old('insurance_scheme') == '1') ? 'selected' : '')}}>NHIS</option>
+                                    <option value="2" {{((old('insurance_scheme') == '2') ? 'selected' : '')}}>PLASCHEMA</option>
+                                    <option value="3" {{((old('insurance_scheme') == '1') ? 'selected' : '')}}>NNPC</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div> --}}
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="">Select HMO </label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="mdi mdi-account"></i></span>
+                                <select name="hmo_id" id="hmo_id" class="form-control">
+                                    <option value="">Select HMO</option>
+                                    @foreach ($hmos as $hmo)
+                                        <option value="{{ $hmo->id }}">{{ $hmo->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="">HMO ID/No</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="mdi mdi-link-variant"></i></span>
+                                <input type="text" name="hmo_no" class="form-control" placeholder="HMO ID/No"
+                                    value="{{ old('hmo_no') }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" onclick="switch_tab(event,'family_tab')" class="btn btn-secondary mr-2"> Prev
+                </button>
+                <button type="submit" class="btn btn-primary mr-2"> Save </button>
+                <a href="{{ route('home') }}" class="btn btn-light">Exit</a>
+                </form>
+            </div>
+        </div>
+        </div>
+        </form>
     @else
     @endif
+@endsection
+@section('scripts')
     <script>
-        $('#relatives_').append(`
-
-        `)
+        function switch_tab(e, id_of_next_tab) {
+            e.preventDefault();
+            $('#' + id_of_next_tab).click();
+        }
     </script>
 @endsection

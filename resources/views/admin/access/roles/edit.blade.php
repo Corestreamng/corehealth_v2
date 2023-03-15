@@ -49,8 +49,6 @@
                                             {{ Form::checkbox('permission[]', $value->id, in_array($value->id, $rolePermissions) ? true : false, ['class' => 'form-check-input']) }}
                                             {{ $value->name }}
                                         </label>
-
-
                                         <!-- </div> -->
                                     </div>
                                 @endforeach

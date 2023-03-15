@@ -19,6 +19,7 @@ class CreateDoctorQueuesTable extends Migration
             $table->unsignedBigInteger('clinic_id');
             $table->unsignedBigInteger('staff_id')->nullable();
             $table->unsignedBigInteger('receptionist_id');
+            $table->unsignedBigInteger('request_entry_id');
             $table->integer('status')->default(1);//1 for new queue entry, 2 for conttinuing patients entry, 0 for inactive or deleted entries
             $table->foreign('patient_id')->references('id')->on('patients');
             $table->foreign('clinic_id')->references('id')->on('clinics');

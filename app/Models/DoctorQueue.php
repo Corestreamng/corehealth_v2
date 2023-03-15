@@ -14,6 +14,7 @@ class DoctorQueue extends Model
         'clinic_id',
         'staff_id',
         'receptionist_id',
+        'request_entry_id',
         'status',
     ];
 
@@ -31,5 +32,9 @@ class DoctorQueue extends Model
 
     public function receptionist(){
         return $this->belongsTo(User::class,'receptionist_id','id');
+    }
+
+    public function request_entry(){
+        return $this->belongsTo(ProductOrServiceRequest::class,'request_entry_id','id');
     }
 }
