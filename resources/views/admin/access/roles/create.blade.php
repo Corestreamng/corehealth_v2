@@ -1,56 +1,26 @@
 @extends('admin.layouts.app')
-@section('title', 'Hompage')
-@section('page_name', 'Home')
-@section('subpage_name', 'New Patient')
+@section('title', 'New Role')
+@section('page_name', 'Roles')
+@section('subpage_name', 'New Role')
 
 @section('content')
-<section class="content-header">
-  <div class="container-fluid">
-    <div class="row mb-2">
-      <div class="col-sm-6">
-        <h1>Create Role Management</h1>
-      </div>
-      <div class="col-sm-6">
-        <ol class="breadcrumb float-sm-right">
-          <li class="breadcrumb-item"><a href="#">Home</a></li>
-          <li class="breadcrumb-item active">Create Role Management</li>
-        </ol>
-      </div>
-    </div>
-  </div><!-- /.container-fluid -->
-</section>
 
-<section class="content">
+    <section class="content">
 
-    <div class="col-12">
-      <div class="card">
-        <div class="card-header">
-          <h3 class="card-title">Create Role Management</h3>
-        </div>
-        <!-- /.card-header -->
-        <div class="card-body">
-                <div>
-                    @if (count($errors) > 0)
-                        <div class="alert alert-danger alert-dismissible">
-                            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-                            <!-- <h5><i class="icon fa fa-info"></i> Alert!</h5> -->
-                            <ul>
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-
-                        </div>
-                    @endif
-                    @include('partials.notification')
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Create Role</h3>
                 </div>
-
-                {!! Form::open(['method' => 'POST', 'route'=> 'roles.store', 'class' => 'form-horizontal', 'role' => 'form']) !!}
+                <!-- /.card-header -->
+                <div class="card-body">
+                    {!! Form::open(['method' => 'POST', 'route' => 'roles.store', 'class' => 'form-horizontal', 'role' => 'form']) !!}
                     {{ csrf_field() }}
                     <div class="form-group">
                         <label for="name" class="col-sm-2 control-label">Name</label>
                         <div class="col-sm-10">
-                        <input type="text" class="form-control" id="name" name="name" value="{{ old('name') }}" required autofocus placeholder="Enter Name">
+                            <input type="text" class="form-control" id="name" name="name"
+                                value="{{ old('name') }}" required autofocus placeholder="Enter Name">
                         </div>
                     </div>
 
@@ -58,13 +28,15 @@
                         <label for="permission">Assign permission to the role above:</label>
                         <div class="col-md-12">
                             <div class="row">
-                                @foreach($permission as $value)
+                                @foreach ($permission as $value)
                                     <div class="col-md-4">
                                         <div class="checkbox">
-                                        <input type="checkbox" class="form-check-input" id="permission" name="permission[]" value="{{ $value->id }}">
-                                        <label class="form-check-label" for="{{ $value->id }}">{{ $value->name }}</label>
+                                            <input type="checkbox" class="form-check-input" id="{{ $value->id }}"
+                                                name="permission[]" value="{{ $value->id }}">
+                                            <label class="form-check-label"
+                                                for="{{ $value->id }}">{{ $value->name }}</label>
 
-                                        <br/>
+                                            <br />
                                         </div>
                                     </div>
                                 @endforeach
@@ -85,42 +57,42 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <div class="col-sm-6">
-                                    <a href="{{ route('roles.index') }}" class="pull-right btn btn-danger"><i class="fa fa-close"></i> Back </a>
+                                    <a href="{{ route('roles.index') }}" class="pull-right btn btn-danger"><i
+                                            class="fa fa-close"></i> Back </a>
                                 </div>
                             </div>
                         </div>
                     </div>
-                {!! Form::close() !!}
+                    {!! Form::close() !!}
+                </div>
+            </div>
+
         </div>
-      </div>
 
-    </div>
-
-</section>
+    </section>
 
 @endsection
 
 @section('scripts')
-<!-- jQuery -->
-<script src="{{ asset('plugins/jQuery/jquery.min.js') }}"></script>
-<script src="{{ asset('plugins/select2/select2.min.js') }}"></script>
-<!-- Bootstrap 4 -->
-<!-- <script src="{{ asset('plugins/bootstrap/js/bootstrap.min.js') }}"></script> -->
-<script src="{{ asset('plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-<!-- DataTables -->
-<script src="{{ asset('plugins/datatables/jquery.dataTables.js') }}"></script>
-<script src="{{ asset('plugins/datatables/dataTables.bootstrap4.js') }}"></script>
-<script src="{{ asset('plugins/ckeditor/ckeditor.js') }}"></script>
+    <!-- jQuery -->
+    {{-- <script src="{{ asset('plugins/jQuery/jquery.min.js') }}"></script> --}}
+    <script src="{{ asset('plugins/select2/select2.min.js') }}"></script>
+    <!-- Bootstrap 4 -->
+    <!-- <script src="{{ asset('plugins/bootstrap/js/bootstrap.min.js') }}"></script> -->
+    <script src="{{ asset('plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <!-- DataTables -->
+    <script src="{{ asset('plugins/datatables/jquery.dataTables.js') }}"></script>
+    <script src="{{ asset('plugins/datatables/dataTables.bootstrap4.js') }}"></script>
+    <script src="{{ asset('plugins/ckeditor/ckeditor.js') }}"></script>
 
-<script>
-    // CKEDITOR.replace('content_edit');
-    CKEDITOR.replace('content');
-</script>
-<script>
-    $(document).ready(function() {
-      $(".select2").select2();
-    });
-</script>
+    <script>
+        // CKEDITOR.replace('content_edit');
+        CKEDITOR.replace('content');
+    </script>
+    <script>
+        $(document).ready(function() {
+            $(".select2").select2();
+        });
+    </script>
 
 @endsection
-

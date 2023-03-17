@@ -42,6 +42,21 @@ return [
             'visibility' => 'public',
         ],
 
+        'user_images' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/image/user/'),
+        ],
+
+        'old_records' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/image/user/old_records/'),
+        ],
+
+        'thumbnail_user_images' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/image/user/thumbnail/'),
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

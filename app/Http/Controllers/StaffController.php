@@ -9,15 +9,16 @@ use Illuminate\Support\Facades\Hash;
 // use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\File;
-use App\User;
-use App\Status;
-use App\Customer;
-use App\StatusCategory;
+use App\Models\User;
+use App\Models\Clinic;
+use App\Models\Staff;
+use App\Models\Specialization;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Yajra\DataTables\DataTables;
 use RealRashid\SweetAlert\Facades\Alert;
 use Intervention\Image\Facades\Image;
+use App\Models\UserCategory;
 
 class StaffController extends Controller
 {
@@ -29,18 +30,18 @@ class StaffController extends Controller
     public function __construct()
     {
         // $this->middleware(['role:super-admin', 'permission:publish articles|edit articles']);
-        $this->middleware(['role:Super-Admin|Admin|Users', 'permission:users|user-create|user-list|user-edit|user-delete']);
+        // $this->middleware(['Role:Super-Admin|Admin|Users', 'permission:users|user-create|user-list|user-edit|user-delete']);
     }
 
-    public function listUsers()
+    public function listStaff()
     {
 
 
         // if(Auth::user()->hasRole(['Super-Admin', 'Admin'])){
 
-        $user = User::with(['statuscategory' => function ($q) {
+        $user = User::with(['category' => function ($q) {
             $q->addSelect(['id', 'name']);
-        }])->where('visible', '>=', 0)->orderBy('id', 'ASC')->get();
+        }])->where('status', '>', 0)->orderBy('id', 'ASC')->where('is_admin', '!=', 19)->get();
         // dd($user);
         // }else{
 
@@ -55,8 +56,8 @@ class StaffController extends Controller
         return Datatables::of($user)
             ->addIndexColumn()
             ->editColumn('is_admin', function ($user) {
-                $statuscategory_name = $user->statuscategory->name;
-                return $statuscategory_name;
+                $user_category_name = $user->category->name;
+                return $user_category_name;
             })
             ->addColumn('filename', function ($user) {
 
@@ -65,37 +66,37 @@ class StaffController extends Controller
             })
             ->addColumn('view', function ($user) {
 
-                if (Auth::user()->hasPermissionTo('user-show') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
+                // if (Auth::user()->hasPermissionTo('user-show') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
 
-                    $url =  route('users.show', $user->id);
-                    return '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> View</a>';
-                } else {
+                $url =  route('staff.show', $user->id);
+                return '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> View</a>';
+                // } else {
 
-                    $label = '<span class="label label-warning">Not Allowed</span>';
-                    return $label;
-                }
+                //     $label = '<span class="label label-warning">Not Allowed</span>';
+                //     return $label;
+                // }
             })
             ->addColumn('edit', function ($user) {
 
-                if (Auth::user()->hasPermissionTo('user-edit') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
+                // if (Auth::user()->hasPermissionTo('user-edit') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
 
-                    $url =  route('users.edit', $user->id);
-                    return '<a href="' . $url . '" class="btn btn-info btn-sm" ><i class="fa fa-pencil"></i> Edit</a>';
-                } else {
+                $url =  route('staff.edit', $user->id);
+                return '<a href="' . $url . '" class="btn btn-info btn-sm" ><i class="fa fa-pencil"></i> Edit</a>';
+                // } else {
 
-                    $label = '<span class="label label-warning">Not Allow</span>';
-                    return $label;
-                }
+                //     $label = '<span class="label label-warning">Not Allow</span>';
+                //     return $label;
+                // }
             })
             ->addColumn('delete', function ($user) {
 
-                if (Auth::user()->hasPermissionTo('user-delete') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
-                    $id = $user->id;
-                    return '<button type="button" class="delete-modal btn btn-danger btn-sm" data-toggle="modal" data-id="' . $id . '"><i class="fa fa-trash"></i> Delete</button>';
-                } else {
-                    $label = '<span class="label label-danger">Not Allow</span>';
-                    return $label;
-                }
+                // if (Auth::user()->hasPermissionTo('user-delete') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
+                $id = $user->id;
+                return '<button type="button" class="delete-modal btn btn-danger btn-sm" data-toggle="modal" data-id="' . $id . '"><i class="fa fa-trash"></i> Delete</button>';
+                // } else {
+                //     $label = '<span class="label label-danger">Not Allow</span>';
+                //     return $label;
+                // }
             })
             ->rawColumns(['filename', 'view', 'edit', 'delete'])
             ->make(true);
@@ -114,11 +115,11 @@ class StaffController extends Controller
     public function index()
     {
 
-        $statuses = StatusCategory::whereVisible(1)->get();
-        $options = Status::whereVisible(1)->get();
+        $statuses = UserCategory::whereStatus(1)->get();
+        // $options = Status::whereVisible(1)->get();
         $roles = Role::pluck('name', 'name')->all();
 
-        return view('admin.users.index', compact('statuses', 'options', 'roles'));
+        return view('admin.staff.index', compact('roles', 'statuses'));
     }
 
     /**
@@ -128,13 +129,13 @@ class StaffController extends Controller
      */
     public function create()
     {
-        $roles = Role::pluck('name', 'name')->all();
-        $statuses = StatusCategory::pluck('name', 'id')->all();
-        $options = Status::pluck('name', 'id')->all();
-        $permissions = Permission::pluck('name', 'name')->all();
-        $clientUsers = Customer::pluck('fullname', 'id')->all();
+        $roles = Role::pluck('name', 'id')->all();
+        $statuses = UserCategory::pluck('name', 'id')->all();
+        $specializations = Specialization::pluck('name', 'id')->all();
+        $clinics = Clinic::pluck('name', 'id')->all();
+        $permissions = Permission::pluck('name', 'id')->all();
 
-        return view('admin.users.create', compact('options', 'roles', 'statuses', 'permissions', 'clientUsers'));
+        return view('admin.staff.create', compact('roles', 'statuses', 'permissions', 'specializations', 'clinics'));
     }
 
     /**
@@ -148,22 +149,19 @@ class StaffController extends Controller
         // dd($request->all());
         $rules = [
             'is_admin'  => 'required',
-            'designation'  => 'nullable',
             'surname'   => 'required|min:3|max:150',
             'firstname' => 'required|min:3|max:150',
             // 'email'     => 'required|Email|min:6|max:150',
-            'phone_number'     => 'required',
-            'content'   => 'nullable|min:3',
+            'gender'    => 'required',
+            'phone_number'=> 'required',
             'password'  => 'nullable|min:6',
             // 'password'  => 'required|min:6|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/',
-            'visible'   => 'required',
-            // 'roles' => 'required',
         ];
 
         if ($request->hasFile('filename')) {
 
             $rules += [
-                'filename' => 'max:1024|mimes:jpeg,bmp,png,gif,svg,jpg',
+                'filename' => 'max:10240|mimes:jpeg,bmp,png,gif,svg,jpg',
             ];
         }
 
@@ -181,18 +179,41 @@ class StaffController extends Controller
             ];
         }
 
+        if ($request->is_admin == 21) {
+            #  Making sure specialization being validated for doctors
+            $rules += [
+                'specialization' => 'required',
+            ];
+        }
+        if ($request->is_admin == 21) {
+            # Making sure clinic being validated for doctors
+            $rules += [
+                'clinic' => 'required',
+            ];
+        }
+        if ($request->is_admin == 21) {
+            # Making sure consultation_fee being validated for doctors
+            $rules += [
+                'consultation_fee' => 'required',
+            ];
+        }
+
         if ($request->assignPermission) {
-            #  Making sure if password change was selected it's being validated
+            # Making sure permissions being validated
             $rules += [
                 'permissions' => 'required',
             ];
         }
 
-        if(!$request->email){
-            $request->email = strtolower(trim($request->firstname)).'.'.strtolower(trim($request->surname)).'@hms.com';
+        if (!$request->email) {
+            $request->email = strtolower(trim($request->firstname)) . '.' . strtolower(trim($request->surname)) . '@hms.com';
+        } else {
+            $rules += [
+                'email'     => 'email|min:6|max:150|unique:users,email',
+            ];
         }
 
-        if(!$request->password){
+        if (!$request->password) {
             $request->password = '123456';
         }
 
@@ -203,7 +224,7 @@ class StaffController extends Controller
         if ($v->fails()) {
             // return Response::json(array('errors' => $v->getMessageBag()->toArray()));
             // Alert::error('Error Title', 'One or more information is needed.');
-            return back()->with('errors', $v->messages()->all()[0])->withInput();
+            return back()->with('errors', $v->messages()->all())->withInput();
         } else {
 
             if ($request->hasFile('filename')) {
@@ -260,43 +281,32 @@ class StaffController extends Controller
                     // delete image before uploading
                     Storage::disk('old_records')->delete($filename_o);
 
-                    Storage::disk('old_records')->put($filename_o,$file_o->get());
+                    Storage::disk('old_records')->put($filename_o, $file_o->get());
                 } else {
-                    Storage::disk('old_records')->put($filename_o,$file_o->get());
+                    Storage::disk('old_records')->put($filename_o, $file_o->get());
                 }
             }
 
             $user              = new User;
 
-            if($request->filename){
+            if ($request->filename) {
                 $user->filename    = ($filename) ? $filename : "avatar.png";
-            }else{
+            } else {
                 $user->filename    = "avatar.png";
             }
 
-            if($request->old_records){
+            if ($request->old_records) {
                 $user->old_records    = ($filename_o) ? $filename_o : null;
-            }else{
+            } else {
                 $user->old_records    = null;
             }
 
             $user->is_admin    = $request->is_admin;
-            $user->customer_id = ($request->customer_id) ? $request->customer_id : 0;
-            $user->designation = $request->designation ?? null;
-            $user->slug        = str_replace(" ", "-", strtolower($request->firstname));
             $user->surname     = $request->surname;
             $user->firstname   = $request->firstname;
             $user->othername   = ($request->othername) ? $request->othername : " ";
             $user->email       = $request->email;
-            $user->phone_number= $request->phone_number;
-            $user->content     = $request->content;
             $user->password    = Hash::make($request->password);
-
-            if($request->is_admin == 19){
-                $user->visible     = 0;
-            }else{
-                $user->visible     = $request->visible;
-            }
 
             $user->assignRole      = ($request->assignRole) ? 1 : 0;
             $user->assignPermission      = ($request->assignPermission) ? 1 : 0;
@@ -312,12 +322,29 @@ class StaffController extends Controller
                     # code...
                     $user->givePermissionTo($request->permissions);
                 }
+                $staff = new Staff;
+                $staff->clinic_id = $request->clinic ?? null;
+                $staff->user_id = $user->id;
+                $staff->specialization_id = $request->specialization ?? null;
+                $staff->gender = $request->gender ?? null;
+                $staff->date_of_birth = $request->dob ?? null;
+                $staff->home_address = $request->address ?? null;
+                $staff->phone_number = $request->phone_number ?? null;
+                $staff->consultation_fee = $request->consultation_fee ?? null;
 
-                // Send User an email with set password link
-                $msg = 'User [' . $user->firstname . ' ' . $user->surname . '] was successfully created. An email was sent to [' . $user->email . '] providing a set password link.';
-                Alert::success('Success ', $msg);
-                // return redirect()->back()->withMessage($msg)->withMessageType('success');
-                return redirect()->route('users.create');
+                if ($staff->save()) {
+                    // Send User an email with set password link
+                    $msg = 'User [' . $user->firstname . ' ' . $user->surname . '] was successfully created.';
+                    Alert::success('Success ', $msg);
+                    return redirect()->back()->withMessage($msg)->withMessageType('success');
+                } else {
+                    $user->delete(); //rollback
+                    $msg = 'Something is went wrong. Please try again later.';
+                    return redirect()->back()->with('error', $msg)->withInput();
+                }
+            } else {
+                $msg = 'Something is went wrong. Please try again later.';
+                return redirect()->back()->with('error', $msg)->withInput();
             }
         }
     }
@@ -331,14 +358,12 @@ class StaffController extends Controller
     public function show($id)
     {
         $user = User::whereId($id)->first();
-        // dd($user->getRoleNames());
-        // $roles = Role::pluck('name','name')->all();
-        $statuses = StatusCategory::whereVisible(1)->get();
-        $options = Status::whereVisible(1)->get();
-        // $userRole = $user->roles->pluck('name', 'name')->all();
-
-        // return view('admin.users.show', compact('user', 'statuses', 'options', 'roles', 'userRole'));
-        return view('admin.users.show', compact('user', 'statuses', 'options'));
+        $roles = Role::pluck('name', 'id')->all();
+        $statuses = UserCategory::all();
+        $specializations = Specialization::pluck('name', 'id')->all();
+        $clinics = Clinic::pluck('name', 'id')->all();
+        $permissions = Permission::pluck('name', 'id')->all();
+        return view('admin.staff.show', compact('user', 'roles', 'statuses', 'permissions', 'specializations', 'clinics'));
     }
 
     /**
@@ -352,15 +377,15 @@ class StaffController extends Controller
         $user = User::whereId($id)->first();
         $roles = Role::pluck('name', 'name')->all();
         $permissions = Permission::pluck('name', 'name')->all();
-        $statuses = StatusCategory::whereVisible(1)->get();
-        $options = Status::whereVisible(1)->get();
+        $statuses = UserCategory::whereStatus(1)->get();
         $userRole = $user->roles->pluck('name', 'name')->all();
+        $specializations = Specialization::pluck('name', 'id')->all();
         $userPermission = $user->permissions->pluck('name', 'name')->all();
-        $clientUsers = Customer::pluck('fullname', 'id')->all();
+        $clinics = Clinic::pluck('name', 'id')->all();
 
         // dd($userRole);
 
-        return view('admin.users.edit', compact('user', 'statuses', 'options', 'roles', 'permissions', 'userRole', 'userPermission', 'clientUsers'));
+        return view('admin.staff.edit', compact('user', 'statuses', 'roles', 'permissions', 'userRole', 'userPermission', 'specializations', 'clinics'));
     }
 
     /**
@@ -378,18 +403,18 @@ class StaffController extends Controller
             'designation'  => 'nullable',
             'surname'   => 'required|min:3|max:150',
             'firstname' => 'required|min:3|max:150',
-            'email'     => 'required|Email|min:6|max:150',
+            'email'     => "required|Email|min:6|max:150|unique:users,email,$id",
             'phone_number'     => 'required',
             // 'password'  => 'required|min:6',
             // 'password'  => 'required|min:6|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/',
-            'visible'   => 'required',
-            // 'roles' => 'required',
+            // 'visible'   => 'required'/,
+            'gender' => 'required',
         ];
 
         if ($request->hasFile('filename')) {
             #  Making sure if password change was selected it's being validated
             $rules += [
-                'filename' => 'max:1024|mimes:jpeg,bmp,png,gif,svg,jpg',
+                'filename' => 'max:10240|mimes:jpeg,bmp,png,gif,svg,jpg',
             ];
         }
 
@@ -406,7 +431,7 @@ class StaffController extends Controller
 
         $v = Validator::make($request->all(), $rules);
         if ($v->fails()) {
-            return back()->with('errors', $v->messages()->all()[0])->withInput();
+            return back()->with('errors', $v->messages()->all())->withInput();
         } else {
 
             $user = User::findOrFail($id);
@@ -427,15 +452,6 @@ class StaffController extends Controller
 
                     Image::make($file)
                         ->resize(215, 215)
-                        ->save($filename);
-                }
-
-                if (Storage::disk('user_images')->exists($filename)) {
-                    // delete image before uploading
-                    File::delete($path . $filename);
-
-                    Image::make($file)
-                        ->resize(215, 215)
                         ->save($path . $filename);
                 } else {
                     Image::make($file)
@@ -444,19 +460,11 @@ class StaffController extends Controller
                 }
 
                 $thumbnail_path = storage_path('/app/public/image/user/thumbnail/');
+
+                //save thumbnail for index images
                 if (Storage::disk('thumbnail_user_images')->exists($user->filename)) {
                     // delete image before uploading
                     File::delete($thumbnail_path . $user->filename);
-
-                    Image::make($file)
-                        ->resize(106, 106)
-                        ->save($path . $filename);
-                }
-
-                // save thumbnail for index images
-                if (Storage::disk('thumbnail_user_images')->exists($filename)) {
-                    // delete image before uploading
-                    File::delete($thumbnail_path . $filename);
 
                     Image::make($file)
                         ->resize(106, 106)
@@ -481,69 +489,81 @@ class StaffController extends Controller
                 $filename_o = time() . '-' . $name_o;
                 //dd($filename_o);
 
-                if (Storage::disk('old_records')->exists($filename_o)) {
+                if (Storage::disk('old_records')->exists($user->old_records)) {
                     // delete image before uploading
-                    Storage::disk('old_records')->delete($filename_o);
+                    Storage::disk('old_records')->delete($user->old_records);
 
-                    Storage::disk('old_records')->put($filename_o,$file_o->get());
+                    Storage::disk('old_records')->put($filename_o, $file_o->get());
                 } else {
-                    Storage::disk('old_records')->put($filename_o,$file_o->get());
+                    Storage::disk('old_records')->put($filename_o, $file_o->get());
                 }
 
-                if($request->old_records){
+                if ($request->old_records) {
                     $user->old_records    = $filename_o ?? null;
-                }else{
+                } else {
                     $user->old_records    = null;
                 }
-
             }
 
-            $user->is_admin         = $request->is_admin;
-            $user->customer_id      = ($request->customer_id) ? $request->customer_id : 0;
-            $user->designation      = $request->designation;
-            $user->slug             = str_replace(" ", "-", strtolower($request->firstname));
-            $user->surname          = $request->surname;
-            $user->firstname        = $request->firstname;
-            $user->othername        = ($request->othername) ? $request->othername : " ";
-            $user->email            = $request->email;
-            $user->phone_number            = $request->phone_number;
-            $user->content          = $request->content;
-            //
-            if (!empty($request->password)) {
-                $user->password     = Hash::make($request->password);
-            }
 
-            // else{
-            //     // $input = array_except($input,array('password'));
+            // if ($request->filename) {
+            //     $user->filename    = ($filename) ? $filename : "avatar.png";
+            // } else {
+            //     $user->filename    = "avatar.png";
             // }
-            $user->visible          = $request->visible;
-            $user->assignRole       = ($request->assignRole) ? 1 : 0;
-            $user->assignPermission = ($request->assignPermission) ? 1 : 0;
 
-            if ($user->save()) {
-                # code...
-                if ($user->assignRole) {
+            // if ($request->old_records) {
+            //     $user->old_records    = ($filename_o) ? $filename_o : null;
+            // } else {
+            //     $user->old_records    = null;
+            // }
+
+            $user->is_admin    = $request->is_admin;
+            $user->surname     = $request->surname;
+            $user->firstname   = $request->firstname;
+            $user->othername   = ($request->othername) ? $request->othername : " ";
+            $user->email       = $request->email;
+            $user->password    = Hash::make($request->password);
+
+            $user->assignRole      = ($request->assignRole) ? 1 : 0;
+            $user->assignPermission      = ($request->assignPermission) ? 1 : 0;
+
+            if ($user->update()) {
+
+                if ($request->assignRole) {
                     # code...
-                    $user->syncRoles([$request->roles]);
+                    $user->assignRole($request->roles);
                 }
 
-                if ($user->assignPermission) {
+                if ($request->assignPermission) {
                     # code...
-                    // dd($request->permissions);
-                    $user->syncPermissions([$request->permissions]);
+                    $user->givePermissionTo($request->permissions);
                 }
+                $staff = Staff::where('user_id',$id)->first();
+                // dd($staff);
+                $staff->clinic_id = $request->clinic ?? null;
+                $staff->user_id = $user->id;
+                $staff->specialization_id = $request->specialization ?? null;
+                $staff->gender = $request->gender ?? null;
+                $staff->date_of_birth = $request->dob ?? null;
+                $staff->home_address = $request->address ?? null;
+                $staff->phone_number = $request->phone_number ?? null;
+                $staff->consultation_fee = $request->consultation_fee ?? null;
 
-                $msg = 'The Information for [' . $user->firstname . ' ' . $user->surname . '] was successfully updated.';
-                Alert::success('Success ', $msg);
-                return redirect()->back()->withMessage($msg)->withMessageType('success');
+                if ($staff->update()) {
+                    // Send User an email with set password link
+                    $msg = 'User [' . $user->firstname . ' ' . $user->surname . '] was successfully updated.';
+                    Alert::success('Success ', $msg);
+                    return redirect()->route('staff.index')->withMessage($msg)->withMessageType('success');
+                    // return redirect()->route('staff.create');
+                } else {
+                    $msg = 'Something is went wrong. Please try again later.';
+                    return redirect()->back()->with('error', $msg)->withInput();
+                }
+            } else {
+                $msg = 'Something is went wrong. Please try again later.';
+                return redirect()->back()->with('error', $msg)->withInput();
             }
-
-
-            // DB::table('model_has_roles')->where('model_id', $id)->delete();
-            // $user->assignRole($request->roles);
-            // dd( $user->assignRole($request->roles));
-            // return response()->json($user);
-
         }
     }
 
@@ -560,7 +580,7 @@ class StaffController extends Controller
 
         $v = Validator::make($request->all(), $rules);
         if ($v->fails()) {
-            return back()->with('errors', $v->messages()->all()[0])->withInput();
+            return back()->with('errors', $v->messages()->all())->withInput();
         } else {
 
             $user = User::findOrFail($id);
@@ -629,7 +649,6 @@ class StaffController extends Controller
                 Alert::success('Success ', $msg);
                 return redirect()->back()->withMessage($msg)->withMessageType('success');
             }
-
         }
     }
 
@@ -653,6 +672,6 @@ class StaffController extends Controller
 
         $user = User::with(['statuscategory'])->whereEmail($email)->where('visible', '=', 2)->first();
 
-        return view('admin.users.profile', compact('user'));
+        return view('admin.staff.profile', compact('user'));
     }
 }

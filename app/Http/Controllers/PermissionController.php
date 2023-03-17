@@ -22,7 +22,7 @@ class PermissionController extends Controller
     public function __construct()
     {
         // $this->middleware(['role:super-admin', 'permission:publish articles|edit articles']);
-        $this->middleware(['role:Super-Admin|Admin']);
+        // $this->middleware(['role:Super-Admin|Admin']);
     }
     public function listPermissions()
     {
@@ -44,7 +44,7 @@ class PermissionController extends Controller
     public function index()
     {
         $permission = Permission::get();
-        return view('admin.permissions.index', compact('permission'));
+        return view('admin.access.permissions.index', compact('permission'));
     }
 
     /**
@@ -54,7 +54,7 @@ class PermissionController extends Controller
      */
     public function create()
     {
-        return view('admin.permissions.create');
+        return view('admin.access.permissions.create');
     }
 
     /**
@@ -74,7 +74,7 @@ class PermissionController extends Controller
         if( $v->fails() ) {
             // return Response::json(array('errors' => $v->getMessageBag()->toArray()));
             Alert::error('Error Title', 'One or more information is needed.');
-            return redirect()->back()->withInput()->withErrors($v);
+            return redirect()->back()->with('errors', $v->messages()->all())->withInput();
         } else {
 
             $permission              = new Permission;
@@ -99,7 +99,7 @@ class PermissionController extends Controller
     public function show($id)
     {
         $permission = Permission::find($id);
-        return view('admin.permissions.show', compact('permission'));
+        return view('admin.access.permissions.show', compact('permission'));
     }
 
     /**
@@ -111,7 +111,7 @@ class PermissionController extends Controller
     public function edit($id)
     {
         $permission = Permission::find($id);
-        return view('admin.permissions.edit', compact('permission'));
+        return view('admin.access.permissions.edit', compact('permission'));
     }
 
     /**
@@ -133,7 +133,7 @@ class PermissionController extends Controller
         if( $v->fails() ) {
             // return Response::json(array('errors' => $v->getMessageBag()->toArray()));
             Alert::error('Error Title', 'One or more information is needed.');
-            return redirect()->back()->withInput()->withErrors($v);
+            return redirect()->back()->with('errors', $v->messages()->all())->withInput();
         } else {
 
             $permission = Permission::find($id);

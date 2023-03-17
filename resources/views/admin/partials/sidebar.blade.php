@@ -27,29 +27,29 @@
                 </div>
             </form>
         </li>
-        <li class="pt-2 pb-1">
-            <span class="nav-item-head">Receptionist</span>
-        </li>
         <li class="nav-item">
-            <a class="nav-link" href="index.html">
+            <a class="nav-link" href="{{route('home')}}">
                 <i class="mdi mdi-compass-outline menu-icon"></i>
                 <span class="menu-title">Dashboard</span>
             </a>
+        </li>
+        <li class="pt-2 pb-1">
+            <span class="nav-item-head">Receptionist</span>
         </li>
         <li class="nav-item">
             <a class="nav-link" data-toggle="collapse" href="#new_patient" aria-expanded="false"
                 aria-controls="new_patient">
                 <i class="mdi mdi-crosshairs-gps menu-icon"></i>
-                <span class="menu-title">New Patient</span>
+                <span class="menu-title">Patients</span>
                 <i class="menu-arrow"></i>
             </a>
             <div class="collapse" id="new_patient">
                 <ul class="nav flex-column sub-menu">
                     <li class="nav-item">
-                        <a class="nav-link" href="pages/ui-features/buttons.html">New Registration</a>
+                        <a class="nav-link" href="{{route('patient.create')}}">New Registration</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="pages/ui-features/dropdowns.html">Continue Registration</a>
+                        <a class="nav-link" href="{{route('patient.index')}}">All Patients</a>
                     </li>
                 </ul>
             </div>
@@ -64,7 +64,7 @@
             <div class="collapse" id="returning_patient">
                 <ul class="nav flex-column sub-menu">
                     <li class="nav-item">
-                        <a class="nav-link" href="pages/ui-features/buttons.html">Search</a>
+                        <a class="nav-link" href="{{route('add-to-queue')}}">Search</a>
                     </li>
                 </ul>
             </div>
@@ -115,7 +115,82 @@
             <div class="collapse" id="returning_patient">
                 <ul class="nav flex-column sub-menu">
                     <li class="nav-item">
-                        <a class="nav-link" href="pages/ui-features/buttons.html">Search</a>
+                        <a class="nav-link" href="{{route('product-or-service-request.index')}}">Search</a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+        <li class="pt-2 pb-1">
+            <span class="nav-item-head">Admin</span>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="collapse" href="#access" aria-expanded="false"
+                aria-controls="access">
+                <i class="mdi mdi-crosshairs-gps menu-icon"></i>
+                <span class="menu-title">Access Control</span>
+                <i class="menu-arrow"></i>
+            </a>
+            <div class="collapse" id="access">
+                <ul class="nav flex-column sub-menu">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{route('roles.index')}}">Roles</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{route('permissions.index')}}">Permissions</a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{route('staff.index')}}">
+                <i class="mdi mdi-compass-outline menu-icon"></i>
+                <span class="menu-title">Staff Management</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{route('hmo.index')}}">
+                <i class="mdi mdi-compass-outline menu-icon"></i>
+                <span class="menu-title">HMO Management</span>
+            </a>
+        </li>
+        <li class="pt-2 pb-1">
+            <span class="nav-item-head">Store</span>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="collapse" href="#products" aria-expanded="false"
+                aria-controls="products">
+                <i class="mdi mdi-crosshairs-gps menu-icon"></i>
+                <span class="menu-title">Product Management</span>
+                <i class="menu-arrow"></i>
+            </a>
+            <div class="collapse" id="products">
+                <ul class="nav flex-column sub-menu">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{route('product-category.index')}}">Categories</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{route('stores.index')}}">Stores</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{route('products.index')}}">Products</a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="collapse" href="#services" aria-expanded="false"
+                aria-controls="services">
+                <i class="mdi mdi-crosshairs-gps menu-icon"></i>
+                <span class="menu-title">Services Management</span>
+                <i class="menu-arrow"></i>
+            </a>
+            <div class="collapse" id="services">
+                <ul class="nav flex-column sub-menu">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{route('services-category.index')}}">Categories</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{route('services.index')}}">Services</a>
                     </li>
                 </ul>
             </div>

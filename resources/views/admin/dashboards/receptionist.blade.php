@@ -32,7 +32,7 @@
                 <h3 class="font-weight-bold mb-0">409</span>
                 </h3>
                 <span class="text-muted font-13">Seen today today</span>
-                <a href="#">
+                <a href="{{route('add-to-queue')}}">
                     <br><br><button type="button" class="btn btn-info mt-2 mt-sm-0 btn-icon-text">
                         <i class="mdi mdi-plus-circle"></i> Queue Patient </button>
                 </a>
