@@ -18,7 +18,7 @@ class paymentController extends Controller
     {
 
         $checkBox = $request->input('someCheckbox');
-        session(['selected',$checkBox]);
+        session(['selected'=>$checkBox]);
         $checkboxValues = session('selected');
         $services = service::whereIn('id',$checkboxValues)->get();
 

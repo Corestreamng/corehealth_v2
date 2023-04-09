@@ -14,16 +14,17 @@
                         </div>
                         <div class="col-sm-6">
                             {{-- @if (auth()->user()->can('user-create')) --}}
-                            <a href="{{ route('add-to-queue') }}" id="loading-btn" data-loading-text="Loading..."
+                            {{-- <a href="{{ route('add-to-queue') }}" id="loading-btn" data-loading-text="Loading..."
                                 class="btn btn-primary btn-sm float-right">
                                 <i class="fa fa-plus"></i>
                                 New Request
-                            </a>
+                            </a> --}}
                             {{-- @endif --}}
                         </div>
                     </div>
                 </div>
 <form action="{{route('service-payment')}}" method="post">
+    @csrf
                 <div class="card-body">
                     <div class="table-responsive">
                         <table id="products-list" class="table table-sm table-bordered table-striped">
@@ -36,7 +37,7 @@
                             </thead>
                         </table>
                     </div>
-                    <button type="button" class="align-self-end btn btn-lg btn-block btn-primary" style="margin-top: auto;">proceed</button>
+                    <button type="submit" class="align-self-end btn btn-lg btn-block btn-primary" style="margin-top: auto;">proceed</button>
                 </div>
             </form>
             </div>

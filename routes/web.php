@@ -91,8 +91,8 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('services',[accountsController::class,'index'])->name('services');
         Route::get('service-list',[accountsController::class,'services'])->name('service-list');
         Route::get('product-list',[accountsController::class,'products'])->name('product-list');
-        Route::post('service-payment',[paymentController::class,'products'])->name('service-payment');
-        Route::post('product-payment',[ProductAccountController::class,'products'])->name('product-payment');
+        Route::post('service-payment',[paymentController::class,'process'])->name('service-payment');
+        Route::post('product-payment',[ProductAccountController::class,'process'])->name('product-payment');
         Route::get('listSalesService/{id}', [ServiceController::class,'listSalesService'])->name('listSalesService');
     });
 

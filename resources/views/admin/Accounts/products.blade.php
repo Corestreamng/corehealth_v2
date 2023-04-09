@@ -36,9 +36,9 @@
                             </thead>
                         </table>
                     </div>
-                    <button type="button" class="align-self-end btn btn-lg btn-block btn-primary" style="margin-top: auto;">proceed</button>
+                    <button type="submit" class="align-self-end btn btn-lg btn-block btn-primary" style="margin-top: auto;">proceed</button>
                 </div>
-            </form>
+</form>
             </div>
         </div>
     </div>

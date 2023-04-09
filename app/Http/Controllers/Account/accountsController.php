@@ -15,7 +15,7 @@ class accountsController extends Controller
     }
     public function products()
     {
-        $products = ProductOrServiceRequest::with('product')->where('invoice_id',NULL)->get();
+        $products = ProductOrServiceRequest::with('product')->where('product_id',!NULL)->where('invoice_id',NULL)->get();
         return DataTables::of($products)
         ->addIndexColumn()
         ->addColumn('checkBox',function($product){
@@ -28,8 +28,8 @@ class accountsController extends Controller
     public function services()
     {
 
-        $services = ProductOrServiceRequest::with('service')->where('invoice_id',NULL)->get();
-        // orderBy('id','DESC')->paginate(10);
+        $services = ProductOrServiceRequest::with('service')->where('service_id',!NULL)->where('invoice_id',NULL)->get();
+        // orderBy('id','DESC')->paginate(10);g
         return DataTables::of($services)
         ->addIndexColumn()
         ->addColumn('checkBox',function($service){
