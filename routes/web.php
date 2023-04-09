@@ -19,6 +19,9 @@ use App\Http\Controllers\StockController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\StoreStockController;
 use App\Http\Controllers\ClinicController;
+use App\Http\Controllers\Account\accountsController;
+use App\Http\Controllers\Account\paymentController;
+use App\Http\Controllers\Account\productAccountController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -84,7 +87,12 @@ Route::group(['middleware' => ['auth']], function () {
     Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
         Route::resource('services', ServiceController::class);
-        Route::get('services-list', [ServiceController::class, 'listServices'])->name('services-list');
+        // Route::get('services-list', [ServiceController::class, 'listServices'])->name('services-list');
+        Route::get('services',[accountsController::class,'index'])->name('services');
+        Route::get('service-list',[accountsController::class,'services'])->name('service-list');
+        Route::get('product-list',[accountsController::class,'products'])->name('product-list');
+        Route::post('service-payment',[paymentController::class,'products'])->name('service-payment');
+        Route::post('product-payment',[ProductAccountController::class,'products'])->name('product-payment');
         Route::get('listSalesService/{id}', [ServiceController::class,'listSalesService'])->name('listSalesService');
     });
 

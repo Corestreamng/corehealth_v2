@@ -4,13 +4,31 @@ namespace App\Http\Controllers\Account;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\{detail,payment};
+use App\Models\{service,detail,payment,ProductOrServiceRequest};
 use LaravelDaily\Invoices\Invoice;
 use LaravelDaily\Invoices\Classes\Party;
 use LaravelDaily\Invoices\Classes\InvoiceItem;
 
+
 class paymentController extends Controller
 {
+
+
+    public function process(Request $request)
+    {
+
+        $checkBox = $request->input('someCheckbox');
+        session(['selected',$checkBox]);
+        $checkboxValues = session('selected');
+        $services = service::whereIn('id',$checkboxValues)->get();
+
+        return view('admin.Accounts.products');
+
+
+
+    }
+
+
     public function payment(Request $request)
     {
         $request->validate([
@@ -25,7 +43,9 @@ class paymentController extends Controller
             'reference_no'=>$request->reference_no
         ]);
         if($payment){
-            detail::whereIn('id',$selectedServices)->update(['has_paid'=>1]);
+            $data = new invoice;
+            $data->create();
+            ProductOrServiceRequest::whereIn('id',$selectedServices)->update(['invoice_id'=>$data->id]);
 
             $patient = new Party([
                 'name'          => 'Roosevelt Lloyd',

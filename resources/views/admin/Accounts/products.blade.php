@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
 @section('title', 'Services and Products ')
-@section('page_name', 'Services')
-@section('subpage_name', 'Services Request List')
+@section('page_name', 'Services and Products')
+@section('subpage_name', 'Services and Products Request List')
 @section('content')
     <div id="content-wrapper">
         <div class="container">
@@ -23,14 +23,14 @@
                         </div>
                     </div>
                 </div>
-<form action="{{route('service-payment')}}" method="post">
+<form action="{{route('product-payment')}}" method="post">
                 <div class="card-body">
                     <div class="table-responsive">
                         <table id="products-list" class="table table-sm table-bordered table-striped">
                             <thead>
                                 <tr>
                                     <th>SN</th>
-                                    <th>Service Name</th>
+                                    <th>Product Name</th>
                                     <th>select</th>
                                 </tr>
                             </thead>
@@ -71,8 +71,8 @@
                         name: "DT_RowIndex"
                     },
                     {
-                        data: "service.service_name",
-                        name: "service"
+                        data: "product.product_name",
+                        name: "product"
                     },
 
 
