@@ -33,14 +33,23 @@
                                 <tr>
                                     <th>SN</th>
                                     <th>Service Name</th>
-                                    <th>select</th>
+                                    <th>price</th>
                                 </tr>
                             </thead>
+                            @isset($services)
+                            @forelse ($services as $service )
                             <tbody>
-                                <td></td>
-                                <td></td>
+                                <td>{{$service->id}}</td>
+                                <td>{{$service->service_name}}</td>
                                 <td></td>
                             </tbody>
+                            @empty
+                            <p>no service selected for payment</p>                              
+                            @endforelse
+                                
+                            @endisset
+                            
+                            
                         </table>
                     </div>
                     
@@ -53,14 +62,24 @@
                                 <tr>
                                     <th>SN</th>
                                     <th>Product Name</th>
-                                    <th>select</th>
+                                    <th>price</th>
                                 </tr>
                             </thead>
+                            @isset($products)
+                            @forelse ($products as $product )
                             <tbody>
+                                <td>{{$product->id}}</td>
+                                <td>{{$product->product_name}}</td>
                                 <td></td>
-                                <td></td>
-                                <td></td>
-                            </tbody>
+                                
+                            @empty
+                            <P>No product selected for payment</P>
+                                
+                            @endforelse
+                                
+                            @endisset
+                          
+                            
                         </table>
                         {{-- <div>
                             <label for="">Reference number</label>

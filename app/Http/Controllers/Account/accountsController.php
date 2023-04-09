@@ -20,7 +20,7 @@ class accountsController extends Controller
         ->addIndexColumn()
         ->addColumn('checkBox',function($product){
             
-            return '<input type="checkbox" id="'.$product->id.'" name="someCheckbox[]" />';
+            return '<input type="checkbox" value="'.$product->id.'" name="someCheckbox[]" />';
         })
         ->rawColumns(['checkBox'])
         ->make(true);
@@ -34,7 +34,7 @@ class accountsController extends Controller
         ->addIndexColumn()
         ->addColumn('checkBox',function($service){
             
-            return '<input type="checkbox" id="'.$service->id.'" name="someCheckbox[]" />';
+            return '<input type="checkbox" value="'.$service->id.'" name="someCheckbox[]" />';
         })
         ->rawColumns(['checkBox'])
         ->make(true);

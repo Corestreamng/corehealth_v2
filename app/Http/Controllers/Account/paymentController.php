@@ -23,8 +23,7 @@ class paymentController extends Controller
         }
         session(['selected'=>$checkBox]);
         $checkboxValues = session('selected');
-        $services = service::whereIn('id',$checkboxValues)->get();
-
+        // $services = service::whereIn('id',$checkboxValues)->get();
         return view('admin.Accounts.products');
 
 
