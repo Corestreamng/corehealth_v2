@@ -4,19 +4,41 @@ namespace App\Http\Controllers\Account;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\{Service,detail};
+use App\Models\{service,detail,ProductOrServiceRequest};
+use Yajra\DataTables\DataTables;
 
 class accountsController extends Controller
 {
     public function index()
     {
-        return view('admin.dashboards.accounts');
+        return view('admin.Accounts.services');
+    }
+    public function products()
+    {
+        $products = ProductOrServiceRequest::with('product')->where('product_id',!NULL)->where('invoice_id',NULL)->get();
+        return DataTables::of($products)
+        ->addIndexColumn()
+        ->addColumn('checkBox',function($product){
+            
+            return '<input type="checkbox" value="'.$product->id.'" name="someCheckbox[]" />';
+        })
+        ->rawColumns(['checkBox'])
+        ->make(true);
     }
     public function services()
     {
 
-        $services = service::orderBy('id','DESC')->paginate(10);
-        return view('admin.accounts.services',compact('services'));
+        $services = ProductOrServiceRequest::with('service')->where('service_id',!NULL)->where('invoice_id',NULL)->get();
+        // orderBy('id','DESC')->paginate(10);g
+        return DataTables::of($services)
+        ->addIndexColumn()
+        ->addColumn('checkBox',function($service){
+            
+            return '<input type="checkbox" value="'.$service->id.'" name="someCheckbox[]" />';
+        })
+        ->rawColumns(['checkBox'])
+        ->make(true);
+        // return view('admin.accounts.services',compact('services'));
 //
     }
     public function search(Request $request)
