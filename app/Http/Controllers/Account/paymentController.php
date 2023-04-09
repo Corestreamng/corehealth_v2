@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Account;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\{service,detail,payment,ProductOrServiceRequest};
+use App\Models\{service,detail,payment,ProductOrServiceRequest,invoice as in};
 use LaravelDaily\Invoices\Invoice;
 use LaravelDaily\Invoices\Classes\Party;
 use LaravelDaily\Invoices\Classes\InvoiceItem;
@@ -18,6 +18,9 @@ class paymentController extends Controller
     {
 
         $checkBox = $request->input('someCheckbox');
+        if ($checkBox == NULL) {
+            return view('admin.Accounts.products');
+        }
         session(['selected'=>$checkBox]);
         $checkboxValues = session('selected');
         $services = service::whereIn('id',$checkboxValues)->get();
@@ -43,7 +46,7 @@ class paymentController extends Controller
             'reference_no'=>$request->reference_no
         ]);
         if($payment){
-            $data = new invoice;
+            $data = new in;
             $data->create();
             ProductOrServiceRequest::whereIn('id',$selectedServices)->update(['invoice_id'=>$data->id]);
 

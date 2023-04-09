@@ -24,6 +24,7 @@
                     </div>
                 </div>
 <form action="{{route('product-payment')}}" method="post">
+    @csrf
                 <div class="card-body">
                     <div class="table-responsive">
                         <table id="products-list" class="table table-sm table-bordered table-striped">
