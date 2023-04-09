@@ -13,7 +13,7 @@
 
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table id="products" class="table table-sm table-sm table-bordered table-striped ">
+                        <table id="patient-list" class="table table-sm table-bordered table-striped ">
                             <thead>
                                 <tr>
                                     <th># </th>
@@ -44,7 +44,7 @@
 
     <script>
         $(function() {
-            $('#products').DataTable({
+            $('#patient-list').DataTable({
                 "dom": 'Bfrtip',
                 "lengthMenu": [
                     [10, 25, 50, 100, -1],
