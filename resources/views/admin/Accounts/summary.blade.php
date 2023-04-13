@@ -23,7 +23,7 @@
                         </div>
                     </div>
                 </div>
-<form action="{{route('service-payment')}}" method="post">
+<form action="{{route('complete-payment')}}" method="post">
     @csrf
                 <div class="card-body">
                     <h4>Services</h4>
@@ -44,15 +44,15 @@
                                 <td></td>
                             </tbody>
                             @empty
-                            <p>no service selected for payment</p>                              
+                            <p>no service selected for payment</p>
                             @endforelse
-                                
+
                             @endisset
-                            
-                            
+
+
                         </table>
                     </div>
-                    
+
                 </div>
                 <div class="card-body">
                     <h4>Products</h4>
@@ -71,15 +71,15 @@
                                 <td>{{$product->id}}</td>
                                 <td>{{$product->product_name}}</td>
                                 <td></td>
-                                
+
                             @empty
                             <P>No product selected for payment</P>
-                                
+
                             @endforelse
-                                
+
                             @endisset
-                          
-                            
+
+
                         </table>
                         {{-- <div>
                             <label for="">Reference number</label>
@@ -93,7 +93,12 @@
                             <input type="text">
                         </div> --}}
                     </div>
-                    <button type="submit" class="align-self-end btn btn-lg btn-block btn-primary" style="margin-top: auto;">proceed</button>
+                    <div>
+                        <input type="text" name="payment_type">
+                        <input type="text" name="total" id="">
+                        <input type="text" name="reference_no" id="">
+                    </div>
+                    <button type="submit" class="align-self-end btn btn-lg btn-block btn-primary" style="margin-top: auto;">complete payment</button>
                 </div>
             </form>
             </div>

@@ -9,5 +9,5 @@ class payment extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['patient_id','total','payment_type'];
+    protected $fillable = ['reference_no','total','payment_type'];
 }

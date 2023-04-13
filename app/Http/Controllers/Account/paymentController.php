@@ -33,22 +33,29 @@ class paymentController extends Controller
 
     public function payment(Request $request)
     {
+
         $request->validate([
             'total'=>'required',
-            'payment_type'=>'required'
+            'payment_type'=>'required',
+            'reference_no'=>'required'
         ]);
 
         $payment = payment::create([
-            'patient_id'=> $request->patient_id,
             'payment_type'=>$request->payment_type,
             'total'=>$request->total,
             'reference_no'=>$request->reference_no
         ]);
+        // dd($payment);
         if($payment){
-            $data = new in;
-            $data->create();
-            ProductOrServiceRequest::whereIn('id',$selectedServices)->update(['invoice_id'=>$data->id]);
+            $data = in::create();
+            if(session('selected')==!NULL){
+                $products = ProductOrServiceRequest::whereIn('id',array_values(session('selected')))->get();
 
+            }
+            $products = ProductOrServiceRequest::whereIn('id',array_values(session('selected')))->get();
+            dd($products);
+            // ->update(['invoice_id'=>$data->id]);
+            ProductOrServiceRequest::whereIn('id',session('product'))->update(['invoice_id'=>$data->id]);
             $patient = new Party([
                 'name'          => 'Roosevelt Lloyd',
                 'phone'         => '(520) 318-9486',
