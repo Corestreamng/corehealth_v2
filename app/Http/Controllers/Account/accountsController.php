@@ -27,9 +27,9 @@ class accountsController extends Controller
     }
     public function services($id)
     {
-        dd($id);
+        // dd($id);
 
-        $services = ProductOrServiceRequest::with('service')->where('service_id',!NULL)->where('invoice_id',NULL)->get();
+        $services = ProductOrServiceRequest::with('service')->where('user_id',$id)->where('service_id',!NULL)->where('invoice_id',NULL)->get();
         // orderBy('id','DESC')->paginate(10);g
         return DataTables::of($services)
         ->addIndexColumn()
