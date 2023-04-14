@@ -19,8 +19,8 @@ class productAccountController extends Controller
             $services = service::whereIn('id',array_values($checkboxServices))->get();
             //  dd($services);
             if($inputs == NULL){
- 
-                
+
+
                 return view('admin.Accounts.summary',compact('services'));
 
             }
@@ -32,10 +32,10 @@ class productAccountController extends Controller
                 dd($products);
                 return view('admin.Accounts.summary',compact('checkboxProducts','services'));
             }
-            
+
         } catch (\Throwable $th) {
             //throw $th;
         }
-        
+
     }
 }

@@ -170,6 +170,7 @@ class paymentController extends Controller
 
 
             }
+            session()->forget('product','select');
     //         $products = ProductOrServiceRequest::whereIn('id',array_values(session('selected')))->get();
     //         dd($products);
     //         // ->update(['invoice_id'=>$data->id]);

@@ -19,21 +19,22 @@ class accountsController extends Controller
         return DataTables::of($products)
         ->addIndexColumn()
         ->addColumn('checkBox',function($product){
-            
+
             return '<input type="checkbox" value="'.$product->id.'" name="someCheckbox[]" />';
         })
         ->rawColumns(['checkBox'])
         ->make(true);
     }
-    public function services()
+    public function services($id)
     {
+        dd($id);
 
         $services = ProductOrServiceRequest::with('service')->where('service_id',!NULL)->where('invoice_id',NULL)->get();
         // orderBy('id','DESC')->paginate(10);g
         return DataTables::of($services)
         ->addIndexColumn()
         ->addColumn('checkBox',function($service){
-            
+
             return '<input type="checkbox" value="'.$service->id.'" name="someCheckbox[]" />';
         })
         ->rawColumns(['checkBox'])
