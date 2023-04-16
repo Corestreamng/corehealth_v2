@@ -18,13 +18,14 @@ class paymentController extends Controller
     {
 
         $checkBox = $request->input('someCheckbox');
+        $id = $request->id;
         if ($checkBox == NULL) {
-            return view('admin.Accounts.products');
+            return view('admin.Accounts.products',compact('id'));
         }
         session(['selected'=>$checkBox]);
         $checkboxValues = session('selected');
         // $services = service::whereIn('id',$checkboxValues)->get();
-        return view('admin.Accounts.products');
+        return view('admin.Accounts.products',compact('id'));
 
 
 
@@ -171,6 +172,10 @@ class paymentController extends Controller
 
             }
             session()->forget('product','select');
+
+
+
+
     //         $products = ProductOrServiceRequest::whereIn('id',array_values(session('selected')))->get();
     //         dd($products);
     //         // ->update(['invoice_id'=>$data->id]);

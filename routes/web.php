@@ -86,9 +86,9 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
-        Route::resource('services', ServiceController::class);
+        // Route::resource('services', ServiceController::class);
         // Route::get('services-list', [ServiceController::class, 'listServices'])->name('services-list');
-        Route::get('services',[accountsController::class,'index'])->name('services');
+        Route::get('services/{id}',[accountsController::class,'index'])->name('services');
         Route::get('service-list/{id}',[accountsController::class,'services'])->name('service-list');
         Route::get('product-list',[accountsController::class,'products'])->name('product-list');
         Route::post('service-payment',[paymentController::class,'process'])->name('service-payment');

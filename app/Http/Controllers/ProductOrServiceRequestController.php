@@ -30,7 +30,7 @@ class ProductOrServiceRequestController extends Controller
         return Datatables::of($req)
             ->addIndexColumn()
             ->addColumn('show',function($r){
-                $url = route('service-list', $r->user_id);
+                $url = route('services', $r->user_id);
                 return "<a href='$url' class='btn btn-info btn-sm' ><i class='fa fa-eye'></i> View</a>";
             })
             ->addColumn('patient',function($r){

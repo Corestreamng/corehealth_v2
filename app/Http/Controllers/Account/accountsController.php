@@ -9,9 +9,10 @@ use Yajra\DataTables\DataTables;
 
 class accountsController extends Controller
 {
-    public function index()
+    public function index($id)
     {
-        return view('admin.Accounts.services');
+
+        return view('admin.Accounts.services',compact('id'));
     }
     public function products()
     {
