@@ -16,14 +16,17 @@ class paymentController extends Controller
 
     public function process(Request $request)
     {
+        // dd($request);
 
         $checkBox = $request->input('someCheckbox');
         $id = $request->id;
+        // dd($checkBox);
         if ($checkBox == NULL) {
             return view('admin.Accounts.products',compact('id'));
         }
         session(['selected'=>$checkBox]);
         $checkboxValues = session('selected');
+        // dd($checkboxValues);
         // $services = service::whereIn('id',$checkboxValues)->get();
         return view('admin.Accounts.products',compact('id'));
 
