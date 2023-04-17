@@ -9,9 +9,9 @@ use Yajra\DataTables\DataTables;
 
 class accountsController extends Controller
 {
-    public function index($id)
+    public function index($identifier)
     {
-
+        $id = $identifier;
         return view('admin.Accounts.services',compact('id'));
     }
     public function products()
@@ -32,6 +32,7 @@ class accountsController extends Controller
 
         $services = ProductOrServiceRequest::with('service')->where('user_id',$id)->where('service_id',!NULL)->where('invoice_id',NULL)->get();
         // orderBy('id','DESC')->paginate(10);g
+        // dd($services);
         return DataTables::of($services)
         ->addIndexColumn()
         ->addColumn('checkBox',function($service){

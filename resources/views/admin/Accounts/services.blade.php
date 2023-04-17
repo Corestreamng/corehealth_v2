@@ -54,7 +54,7 @@
     <script src="{{ asset('/plugins/dataT/datatables.js') }}" defer></script>
 
     <script>
-        var dar = document.getElementById('myInput'). value;
+        const dar = document.getElementById('myInput'). value;
         console.log(dar);
         $(function() {
 
