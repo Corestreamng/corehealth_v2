@@ -95,18 +95,21 @@
                     </div>
                     <div>
                         <div>
-                            <select name="" id="">
+                            <label for="payment_type">Type</label>
+                            <select name="payment_type" id="">
                             <option value="POS">POS</option>
                             <option value="Cash">Cash</option>
                             <option value="Transfer">Transfer</option>
                         </select>
                     </div>
                     <div>
-                        @isset($sumProducts || $sumServices)
-                       <input type="text" name="total" id="" value="{{$sumProducts + $sumServices}}" required>
-                        @endisset
+                        @if (@isset($sumServices) || @isset($sumProducts))
+                        <label for="total">Total</label>
+                       <input type="text" name="total" id="" value="{{$sumProducts ?? 0 + $sumServices ?? 0}}" required>
+                        @endif
                     </div>
                     <div>
+                        <label for="reference_no"> Ref</label>
                         <input type="text" name="reference_no" id="">
                     </div>
                     </div>

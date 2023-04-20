@@ -17,7 +17,7 @@ class productAccountController extends Controller
             $checkboxServices = session('selected');
             // dd($checkboxServices);
             $services = service::whereIn('id',array_values($checkboxServices))->get();
-            $sumServices = service::whereIn('id',array_values($checkboxServices))->get();
+            $sumServices = service::whereIn('id',array_values($checkboxServices))->sum('id');
             //  dd($services);
             if($inputs == NULL){
 
@@ -31,7 +31,7 @@ class productAccountController extends Controller
                 $checkboxProducts = session('products');
                 $products = Product::whereIn('id',$checkboxProducts)->get();
                 $sumProducts = Product::whereIn('id',$checkboxProducts)->sum('id');
-                dd($products);
+                // dd($products);
                 return view('admin.Accounts.summary',compact('products','services','sumServices','sumProducts'));
             }
 
