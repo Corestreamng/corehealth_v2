@@ -68,7 +68,7 @@
                 "processing": true,
                 "serverSide": true,
                 "ajax": {
-                    "url": "/service-list/"+dar,
+                    "url": "/services-list/"+dar,
                     "type": "GET"
                 },
                 "columns": [{
