@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddPriceListIdToServicesTable extends Migration
+class AddPriceIdToServicesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -14,7 +14,7 @@ class AddPriceListIdToServicesTable extends Migration
     public function up()
     {
         Schema::table('services', function (Blueprint $table) {
-            $table->foreign('price_list_id')->references('id')->on('price_list')->onDelete('cascade');
+            $table->foreignId('price_id')->constrained('id');
         });
     }
 

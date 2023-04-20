@@ -78,7 +78,7 @@ class paymentController extends Controller
 
                 $item = (new InvoiceItem())
                 ->title($service->service->service_name)
-                ->pricePerUnit('100');
+                ->pricePerUnit($service->id);
               $items->push($item);
             }
             $notes = [
@@ -139,7 +139,7 @@ class paymentController extends Controller
 
                 $item = (new InvoiceItem())
                 ->title($product->product->product_name)
-                ->pricePerUnit('100');
+                ->pricePerUnit($product->id);
               $items->push($item);
             }
             $notes = [

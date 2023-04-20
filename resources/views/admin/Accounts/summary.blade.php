@@ -70,7 +70,7 @@
                             <tbody>
                                 <td>{{$product->id}}</td>
                                 <td>{{$product->product_name}}</td>
-                                <td></td>
+                                <td>{{$product->id}}</td>
 
                             @empty
                             <P>No product selected for payment</P>
@@ -94,11 +94,25 @@
                         </div> --}}
                     </div>
                     <div>
-                        <input type="text" name="payment_type">
-                        <input type="text" name="total" id="">
+                        <div>
+                            <select name="" id="">
+                            <option value="POS">POS</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Transfer">Transfer</option>
+                        </select>
+                    </div>
+                    <div>
+                        @isset($sumProducts || $sumServices)
+                       <input type="text" name="total" id="" value="{{$sumProducts + $sumServices}}" required>
+                        @endisset
+                    </div>
+                    <div>
                         <input type="text" name="reference_no" id="">
                     </div>
+                    </div>
+                    <div>
                     <button type="submit" class="align-self-end btn btn-lg btn-block btn-primary" style="margin-top: auto;">complete payment</button>
+                </div>
                 </div>
             </form>
             </div>
