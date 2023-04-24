@@ -41,7 +41,6 @@ class paymentController extends Controller
         $request->validate([
             'total'=>'required',
             'payment_type'=>'required',
-            'reference_no'=>'required'
         ]);
 
         $payment = payment::create([
@@ -53,12 +52,13 @@ class paymentController extends Controller
         if($payment){
             $data = in::create();
             if(session('selected')== !NULL){
-                $services = ProductOrServiceRequest::with('service')->whereIn('id',array_values(session('selected')))->update(['invoice_id'=>$data->id]);;
+                $services = ProductOrServiceRequest::whereIn('id',array_values(session('selected')))->update(['invoice_id'=>$data->id]);
                 // dd($products);
                 // // ->update(['invoice_id'=>$data->id]);
                 // ProductOrServiceRequest::whereIn('id',session('product'))->update(['invoice_id'=>$data->id]);
+
                 $patient = new Party([
-                    'name'          => 'Roosevelt Lloyd',
+                    'name'          => 'core health',
                     'phone'         => '(520) 318-9486',
                     'custom_fields' => [
                 ],]
@@ -71,14 +71,17 @@ class paymentController extends Controller
             ],]
 
         );
-        $services = ProductOrServiceRequest::with('service')->whereIn('id',array_values(session('selected')))->get();
+        $requests = ProductOrServiceRequest::with(['user','service'])->whereIn('id',array_values(session('selected')))->pluck('service_id');
+        // dd($requests);
+        $services =  service::with('price')->whereIn('id',$requests)->get();
+        // dd(userfullname($services['user_id']));
         $items = collect();
           foreach($services as $service)
             {
 
                 $item = (new InvoiceItem())
-                ->title($service->service->service_name)
-                ->pricePerUnit($service->id);
+                ->title($service->service_name)
+                ->pricePerUnit($service->price->sale_price);
               $items->push($item);
             }
             $notes = [
@@ -97,6 +100,7 @@ class paymentController extends Controller
                 ->serialNumberFormat('{SEQUENCE}/{SERIES}')
                 ->seller($coreHealth)
                 ->buyer($patient)
+                ->currencySymbol('₦')
                 ->date(now()->subWeeks(3))
                 ->dateFormat('m/d/Y')
                 // ->filename($client->name . ' ' . $customer->name)
@@ -160,6 +164,7 @@ class paymentController extends Controller
                 ->buyer($patient)
                 ->date(now()->subWeeks(3))
                 ->dateFormat('m/d/Y')
+                ->currencySymbol('₦')
                 // ->filename($client->name . ' ' . $customer->name)
                 ->addItems($items)
                 ->notes($notes)
@@ -174,7 +179,7 @@ class paymentController extends Controller
 
 
             }
-            session()->forget('product','select');
+
 
 
 

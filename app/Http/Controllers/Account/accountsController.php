@@ -16,12 +16,14 @@ class accountsController extends Controller
     }
     public function products($id)
     {
-        $products = ProductOrServiceRequest::with('product')->where('user_id',$id)->where('product_id',!NULL)->where('invoice_id',NULL)->get();
+        // dd($id);
+        $products = ProductOrServiceRequest::with('product')->where('service_id',NULL)->where('user_id',$id)->where('invoice_id',NULL)->get();
+        // dd($products);
         return DataTables::of($products)
         ->addIndexColumn()
         ->addColumn('checkBox',function($product){
 
-            return '<input type="checkbox" value="'.$product->id.'" name="someCheckbox[]" />';
+            return '<input type="checkbox" value="'.$product->id.'" name="productChecked[]" />';
         })
         ->rawColumns(['checkBox'])
         ->make(true);
@@ -31,7 +33,7 @@ class accountsController extends Controller
         // dd($id);
         $identify = $id;
 
-        $services = ProductOrServiceRequest::with('service')->where('user_id',$identify)->where('service_id',!NULL)->where('invoice_id',NULL)->get();
+        $services = ProductOrServiceRequest::with('service')->where('product_id',NULL)->where('user_id',$identify)->where('invoice_id',NULL)->get();
         // orderBy('id','DESC')->paginate(10);g
         // dd($services);
         return DataTables::of($services)

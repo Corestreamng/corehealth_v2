@@ -41,6 +41,7 @@
                             <tbody>
                                 <td>{{$service->id}}</td>
                                 <td>{{$service->service_name}}</td>
+                                <td>{{$service->price->sale_price ?? 0}}</td>
                                 <td></td>
                             </tbody>
                             @empty
@@ -104,6 +105,7 @@
                     </div>
                     <div>
                         @if (@isset($sumServices) || @isset($sumProducts))
+                        {{-- <p>{{dd($sumServices)}}</p> --}}
                         <label for="total">Total</label>
                        <input type="text" name="total" id="" value="{{$sumProducts ?? 0 + $sumServices ?? 0}}" required>
                         @endif
