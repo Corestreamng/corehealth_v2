@@ -37,6 +37,7 @@ class productAccountController extends Controller
                 $productRequests = ProductOrServiceRequest::whereIn('id',array_values($checkboxProducts))->pluck('product_id');
                 // dd($productRequests);
                 $products = Product::with('price')->whereIn('id',$productRequests)->get();
+                
 
 
                 $sumProducts = Product::whereIn('id',$productRequests)->sum('id');

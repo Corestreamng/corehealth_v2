@@ -16,8 +16,9 @@ class accountsController extends Controller
     }
     public function products($id)
     {
+
         // dd($id);
-        $products = ProductOrServiceRequest::with('product')->where('service_id',NULL)->where('user_id',$id)->where('invoice_id',NULL)->get();
+        $products = ProductOrServiceRequest::with('product.price')->where('service_id',NULL)->where('user_id',$id)->where('invoice_id',NULL)->get();
         // dd($products);
         return DataTables::of($products)
         ->addIndexColumn()
@@ -33,7 +34,7 @@ class accountsController extends Controller
         // dd($id);
         $identify = $id;
 
-        $services = ProductOrServiceRequest::with('service')->where('product_id',NULL)->where('user_id',$identify)->where('invoice_id',NULL)->get();
+        $services = ProductOrServiceRequest::with('service.price')->where('product_id',NULL)->where('user_id',$identify)->where('invoice_id',NULL)->get();
         // orderBy('id','DESC')->paginate(10);g
         // dd($services);
         return DataTables::of($services)

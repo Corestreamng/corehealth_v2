@@ -32,6 +32,7 @@
                                 <tr>
                                     <th>SN</th>
                                     <th>Service Name</th>
+                                    <th>Price</th>
                                     <th>select</th>
                                 </tr>
                             </thead>
@@ -79,8 +80,10 @@
                         data: "service.service_name",
                         name: "service"
                     },
-
-
+                    {
+                        data: "service.price.sale_price",
+                        name: "service"
+                    },
                     {
                         data: "checkBox",
                         name: "checkBox"

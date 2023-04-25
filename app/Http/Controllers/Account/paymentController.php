@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Account;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\{service,detail,payment,ProductOrServiceRequest,invoice as in};
+use App\Models\{Product,service,detail,payment,ProductOrServiceRequest,invoice as in};
 use LaravelDaily\Invoices\Invoice;
 use LaravelDaily\Invoices\Classes\Party;
 use LaravelDaily\Invoices\Classes\InvoiceItem;
@@ -84,6 +84,25 @@ class paymentController extends Controller
                 ->pricePerUnit($service->price->sale_price);
               $items->push($item);
             }
+        // dd($items);
+
+        if(session('products')!= NULL){
+            $prods = ProductOrServiceRequest::with('product')->whereIn('id',array_values(session('products')))->update(['invoice_id'=>$data->id]);;
+            $req = ProductOrServiceRequest::with('product')->whereIn('id',array_values(session('products')))->pluck('product_id');
+            $products =  Product::with('price')->whereIn('id',$req)->get();
+            // dd($products);
+
+            $goods = collect();
+            foreach($products as $product)
+                {
+
+                $product = (new InvoiceItem())
+                ->title($product->product_name)
+                ->pricePerUnit($product->price->current_sale_price);
+                $goods->push($product);
+            }
+
+            // dd($goods);
             $notes = [
                 'your multiline',
                 'additional notes',
@@ -105,6 +124,7 @@ class paymentController extends Controller
                 ->dateFormat('m/d/Y')
                 // ->filename($client->name . ' ' . $customer->name)
                 ->addItems($items)
+                ->addItems($goods)
                 ->notes($notes)
                 ->save('public');
 
@@ -115,70 +135,101 @@ class paymentController extends Controller
                 return $invoice->stream();
 
                 // composer require laraveldaily/laravel-invoices
+        }
+        $notes = [
+            'your multiline',
+            'additional notes',
+            'in regards of delivery or something else',
+        ];
+        // $notes = implode("<br>", $notes);
 
+        // $invoice = Invoice::make('receipt')
+        //     ->series('BIG')
+        //     // ability to include translated invoice status
+        //     // in case it was paid
+        //     ->status(__('invoices::invoice.paid'))
+        //     ->sequence(667)
+        //     ->serialNumberFormat('{SEQUENCE}/{SERIES}')
+        //     ->seller($coreHealth)
+        //     ->buyer($patient)
+        //     ->currencySymbol('₦')
+        //     ->date(now()->subWeeks(3))
+        //     ->dateFormat('m/d/Y')
+        //     // ->filename($client->name . ' ' . $customer->name)
+        //     ->addItems($items)
+        //     ->notes($notes)
+        //     ->save('public');
+
+        //     $link = $invoice->url();
+        //     // Then send email to party with link
+
+        //     // And return invoice itself to browser or have a different view
+        //     return $invoice->stream();
             }
-            if(session('product')!= NULL){
-                $services = ProductOrServiceRequest::with('product')->whereIn('id',array_values(session('product')))->update(['invoice_id'=>$data->id]);;
-                // dd($products);
-                // // ->update(['invoice_id'=>$data->id]);
-                // ProductOrServiceRequest::whereIn('id',session('product'))->update(['invoice_id'=>$data->id]);
-                $patient = new Party([
-                    'name'          => 'Roosevelt Lloyd',
-                    'phone'         => '(520) 318-9486',
-                    'custom_fields' => [
-                ],]
+        //     if(session('product')!= NULL){
+        //         $services = ProductOrServiceRequest::with('product')->whereIn('id',array_values(session('product')))->update(['invoice_id'=>$data->id]);;
+        //         // dd($products);
+        //         // // ->update(['invoice_id'=>$data->id]);
+        //         // ProductOrServiceRequest::whereIn('id',session('product'))->update(['invoice_id'=>$data->id]);
+        //         $patient = new Party([
+        //             'name'          => 'Roosevelt Lloyd',
+        //             'phone'         => '(520) 318-9486',
+        //             'custom_fields' => [
+        //         ],]
 
-            );
-             $coreHealth = new Party([
-                'name'          => 'hospital name',
-                'phone'         => 'hospital customer care',
-                'custom_fields' => [
-            ],]
+        //     );
+        //      $coreHealth = new Party([
+        //         'name'          => 'hospital name',
+        //         'phone'         => 'hospital customer care',
+        //         'custom_fields' => [
+        //     ],]
 
-        );
-        $products = ProductOrServiceRequest::with('product')->whereIn('id',array_values(session('product')))->get();
-        $items = collect();
-          foreach($products as $product)
-            {
+        // );
+        // $products = ProductOrServiceRequest::with('product')->whereIn('id',array_values(session('product')))->get();
+        // $items = collect();
+        //   foreach($products as $product)
+        //     {
 
-                $item = (new InvoiceItem())
-                ->title($product->product->product_name)
-                ->pricePerUnit($product->id);
-              $items->push($item);
-            }
-            $notes = [
-                'your multiline',
-                'additional notes',
-                'in regards of delivery or something else',
-            ];
-            $notes = implode("<br>", $notes);
+        //         $item = (new InvoiceItem())
+        //         ->title($product->product->product_name)
+        //         ->pricePerUnit($product->id);
+        //       $items->push($item);
+        //     }
+        //     $notes = [
+        //         'your multiline',
+        //         'additional notes',
+        //         'in regards of delivery or something else',
+        //     ];
+        //     $notes = implode("<br>", $notes);
 
-            $invoice = Invoice::make('receipt')
-                ->series('BIG')
-                // ability to include translated invoice status
-                // in case it was paid
-                ->status(__('invoices::invoice.paid'))
-                ->sequence(667)
-                ->serialNumberFormat('{SEQUENCE}/{SERIES}')
-                ->seller($coreHealth)
-                ->buyer($patient)
-                ->date(now()->subWeeks(3))
-                ->dateFormat('m/d/Y')
-                ->currencySymbol('₦')
-                // ->filename($client->name . ' ' . $customer->name)
-                ->addItems($items)
-                ->notes($notes)
-                ->save('public');
+        //     $invoice = Invoice::make('receipt')
+        //         ->series('BIG')
+        //         // ability to include translated invoice status
+        //         // in case it was paid
+        //         ->status(__('invoices::invoice.paid'))
+        //         ->sequence(667)
+        //         ->serialNumberFormat('{SEQUENCE}/{SERIES}')
+        //         ->seller($coreHealth)
+        //         ->buyer($patient)
+        //         ->date(now()->subWeeks(3))
+        //         ->dateFormat('m/d/Y')
+        //         ->currencySymbol('₦')
+        //         ->currencyCode('NGN')
+        //         // ->filename($client->name . ' ' . $customer->name)
+        //         ->addItems($items)
 
-                $link = $invoice->url();
-                // Then send email to party with link
+        //         ->notes($notes)
+        //         ->save('public');
 
-                // And return invoice itself to browser or have a different view
-                return $invoice->stream();
+        //         $link = $invoice->url();
+        //         // Then send email to party with link
+
+        //         // And return invoice itself to browser or have a different view
+        //         return $invoice->stream();
 
 
 
-            }
+        //     }
 
 
 

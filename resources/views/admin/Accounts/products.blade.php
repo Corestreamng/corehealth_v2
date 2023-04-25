@@ -32,6 +32,7 @@
                                 <tr>
                                     <th>SN</th>
                                     <th>Product Name</th>
+                                    <th>Price</th>
                                     <th>select</th>
                                 </tr>
                             </thead>
@@ -78,8 +79,10 @@
                         data: "product.product_name",
                         name: "product"
                     },
-
-
+                    {
+                        data: "product.price.current_sale_price",
+                        name: "price"
+                    },
                     {
                         data: "checkBox",
                         name: "checkBox"
