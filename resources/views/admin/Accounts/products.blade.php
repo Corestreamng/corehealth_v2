@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
-@section('title', 'Services and Products ')
-@section('page_name', 'Services and Products')
-@section('subpage_name', 'Services and Products Request List')
+@section('title', 'Products ')
+@section('page_name', 'Products')
+@section('subpage_name', 'Products Request List')
 @section('content')
     <div id="content-wrapper">
         <div class="container">
@@ -14,12 +14,12 @@
                         </div>
                         <div class="col-sm-6">
                             {{-- @if (auth()->user()->can('user-create')) --}}
-                            <a href="{{ route('add-to-queue') }}" id="loading-btn" data-loading-text="Loading..."
+                            {{-- <a href="{{ route('add-to-queue') }}" id="loading-btn" data-loading-text="Loading..."
                                 class="btn btn-primary btn-sm float-right">
                                 <i class="fa fa-plus"></i>
                                 New Request
                             </a>
-                            {{-- @endif --}}
+                             @endif --}}
                         </div>
                     </div>
                 </div>
@@ -32,11 +32,13 @@
                                 <tr>
                                     <th>SN</th>
                                     <th>Product Name</th>
+                                    <th>Price</th>
                                     <th>select</th>
                                 </tr>
                             </thead>
                         </table>
                     </div>
+                    <input type="hidden" name="id" id="myInput" value="{{$id}}">
                     <button type="submit" class="align-self-end btn btn-lg btn-block btn-primary" style="margin-top: auto;">proceed</button>
                 </div>
 </form>
@@ -53,6 +55,8 @@
     <script src="{{ asset('/plugins/dataT/datatables.js') }}" defer></script>
 
     <script>
+        const dar = document.getElementById('myInput'). value;
+        console.log(dar);
         $(function() {
             $('#products-list').DataTable({
                 "dom": 'Bfrtip',
@@ -64,7 +68,7 @@
                 "processing": true,
                 "serverSide": true,
                 "ajax": {
-                    "url": "{{ route('service-list') }}",
+                    "url": "product-list/"+dar,
                     "type": "GET"
                 },
                 "columns": [{
@@ -75,8 +79,10 @@
                         data: "product.product_name",
                         name: "product"
                     },
-
-
+                    {
+                        data: "product.price.current_sale_price",
+                        name: "price"
+                    },
                     {
                         data: "checkBox",
                         name: "checkBox"

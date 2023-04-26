@@ -31,4 +31,14 @@ class Service extends Model
     {
         return $this->belongsTo(ServiceCategory::class, 'category_id','id');
     }
+
+    /**
+     * Get the prices that owns the service
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function prices(): BelongsTo
+    {
+        return $this->belongsTo(price_list::class,'price_list_id','id');
+    }
 }

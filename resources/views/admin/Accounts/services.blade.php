@@ -32,11 +32,13 @@
                                 <tr>
                                     <th>SN</th>
                                     <th>Service Name</th>
+                                    <th>Price</th>
                                     <th>select</th>
                                 </tr>
                             </thead>
                         </table>
                     </div>
+                    <input type="hidden" name="id" id="myInput" value="{{$id}}">
                     <button type="submit" class="align-self-end btn btn-lg btn-block btn-primary" style="margin-top: auto;">proceed</button>
                 </div>
             </form>
@@ -53,7 +55,10 @@
     <script src="{{ asset('/plugins/dataT/datatables.js') }}" defer></script>
 
     <script>
+        const dar = document.getElementById('myInput'). value;
+        console.log(dar);
         $(function() {
+
             $('#products-list').DataTable({
                 "dom": 'Bfrtip',
                 "lengthMenu": [
@@ -64,7 +69,7 @@
                 "processing": true,
                 "serverSide": true,
                 "ajax": {
-                    "url": "{{ route('service-list') }}",
+                    "url": "/services-list/"+dar,
                     "type": "GET"
                 },
                 "columns": [{
@@ -75,8 +80,10 @@
                         data: "service.service_name",
                         name: "service"
                     },
-
-
+                    {
+                        data: "service.price.sale_price",
+                        name: "service"
+                    },
                     {
                         data: "checkBox",
                         name: "checkBox"

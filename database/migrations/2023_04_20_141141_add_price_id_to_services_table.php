@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreatePaymentsTable extends Migration
+class AddPriceIdToServicesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,12 +13,8 @@ class CreatePaymentsTable extends Migration
      */
     public function up()
     {
-        Schema::create('payments', function (Blueprint $table) {
-            $table->id();
-            $table->string('reference_no');
-            $table->string('total');
-            $table->string('payment_type');
-            $table->timestamps();
+        Schema::table('services', function (Blueprint $table) {
+            $table->foreignId('price_id')->constrained('id');
         });
     }
 
@@ -29,6 +25,8 @@ class CreatePaymentsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('payments');
+        Schema::table('services', function (Blueprint $table) {
+            //
+        });
     }
 }
