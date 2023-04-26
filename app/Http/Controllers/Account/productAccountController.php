@@ -37,10 +37,11 @@ class productAccountController extends Controller
                 $productRequests = ProductOrServiceRequest::whereIn('id',array_values($checkboxProducts))->pluck('product_id');
                 // dd($productRequests);
                 $products = Product::with('price')->whereIn('id',$productRequests)->get();
-                
-
-
-                $sumProducts = Product::whereIn('id',$productRequests)->sum('id');
+                $productsTotal = 0;
+                foreach($products as $product) {
+                    $productsTotal += $product->price->current_sale_price;
+                }
+                $sumProducts = $productsTotal;
                 // dd($sumProducts);
                 // dd($sumServices);
                 return view('admin.Accounts.summary',compact('products','services','sumServices','sumProducts'));

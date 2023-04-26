@@ -141,155 +141,68 @@ class paymentController extends Controller
             'additional notes',
             'in regards of delivery or something else',
         ];
-        // $notes = implode("<br>", $notes);
+        }
+            if(session('products')!= NULL){
+                $prods = ProductOrServiceRequest::with('product')->whereIn('id',array_values(session('products')))->update(['invoice_id'=>$data->id]);
+                $patient = new Party([
+                    'name'          => 'core health',
+                    'phone'         => '(520) 318-9486',
+                    'custom_fields' => [
+                ],]
 
-        // $invoice = Invoice::make('receipt')
-        //     ->series('BIG')
-        //     // ability to include translated invoice status
-        //     // in case it was paid
-        //     ->status(__('invoices::invoice.paid'))
-        //     ->sequence(667)
-        //     ->serialNumberFormat('{SEQUENCE}/{SERIES}')
-        //     ->seller($coreHealth)
-        //     ->buyer($patient)
-        //     ->currencySymbol('₦')
-        //     ->date(now()->subWeeks(3))
-        //     ->dateFormat('m/d/Y')
-        //     // ->filename($client->name . ' ' . $customer->name)
-        //     ->addItems($items)
-        //     ->notes($notes)
-        //     ->save('public');
+            );
+             $coreHealth = new Party([
+                'name'          => 'hospital name',
+                'phone'         => 'hospital customer care',
+                'custom_fields' => [
+            ],]
+        );
+                $req = ProductOrServiceRequest::with('product')->whereIn('id',array_values(session('products')))->pluck('product_id');
+                $products =  Product::with('price')->whereIn('id',$req)->get();
+                // dd($products);
 
-        //     $link = $invoice->url();
-        //     // Then send email to party with link
+                $goods = collect();
+                foreach($products as $product)
+                    {
 
-        //     // And return invoice itself to browser or have a different view
-        //     return $invoice->stream();
+                    $product = (new InvoiceItem())
+                    ->title($product->product_name)
+                    ->pricePerUnit($product->price->current_sale_price);
+                    $goods->push($product);
+                }
+
+                // dd($goods);
+                $notes = [
+                    'your multiline',
+                    'additional notes',
+                    'in regards of delivery or something else',
+                ];
+                $notes = implode("<br>", $notes);
+
+                $invoice = Invoice::make('receipt')
+                    ->series('BIG')
+                    // ability to include translated invoice status
+                    // in case it was paid
+                    ->status(__('invoices::invoice.paid'))
+                    ->sequence(667)
+                    ->serialNumberFormat('{SEQUENCE}/{SERIES}')
+                    ->seller($coreHealth)
+                    ->buyer($patient)
+                    ->currencySymbol('₦')
+                    ->date(now()->subWeeks(3))
+                    ->dateFormat('m/d/Y')
+                    // ->filename($client->name . ' ' . $customer->name)
+
+                    ->addItems($goods)
+                    ->notes($notes)
+                    ->save('public');
+
+                    $link = $invoice->url();
+                    // Then send email to party with link
+
+                    // And return invoice itself to browser or have a different view
+                    return $invoice->stream();
             }
-        //     if(session('product')!= NULL){
-        //         $services = ProductOrServiceRequest::with('product')->whereIn('id',array_values(session('product')))->update(['invoice_id'=>$data->id]);;
-        //         // dd($products);
-        //         // // ->update(['invoice_id'=>$data->id]);
-        //         // ProductOrServiceRequest::whereIn('id',session('product'))->update(['invoice_id'=>$data->id]);
-        //         $patient = new Party([
-        //             'name'          => 'Roosevelt Lloyd',
-        //             'phone'         => '(520) 318-9486',
-        //             'custom_fields' => [
-        //         ],]
-
-        //     );
-        //      $coreHealth = new Party([
-        //         'name'          => 'hospital name',
-        //         'phone'         => 'hospital customer care',
-        //         'custom_fields' => [
-        //     ],]
-
-        // );
-        // $products = ProductOrServiceRequest::with('product')->whereIn('id',array_values(session('product')))->get();
-        // $items = collect();
-        //   foreach($products as $product)
-        //     {
-
-        //         $item = (new InvoiceItem())
-        //         ->title($product->product->product_name)
-        //         ->pricePerUnit($product->id);
-        //       $items->push($item);
-        //     }
-        //     $notes = [
-        //         'your multiline',
-        //         'additional notes',
-        //         'in regards of delivery or something else',
-        //     ];
-        //     $notes = implode("<br>", $notes);
-
-        //     $invoice = Invoice::make('receipt')
-        //         ->series('BIG')
-        //         // ability to include translated invoice status
-        //         // in case it was paid
-        //         ->status(__('invoices::invoice.paid'))
-        //         ->sequence(667)
-        //         ->serialNumberFormat('{SEQUENCE}/{SERIES}')
-        //         ->seller($coreHealth)
-        //         ->buyer($patient)
-        //         ->date(now()->subWeeks(3))
-        //         ->dateFormat('m/d/Y')
-        //         ->currencySymbol('₦')
-        //         ->currencyCode('NGN')
-        //         // ->filename($client->name . ' ' . $customer->name)
-        //         ->addItems($items)
-
-        //         ->notes($notes)
-        //         ->save('public');
-
-        //         $link = $invoice->url();
-        //         // Then send email to party with link
-
-        //         // And return invoice itself to browser or have a different view
-        //         return $invoice->stream();
-
-
-
-        //     }
-
-
-
-
-
-    //         $products = ProductOrServiceRequest::whereIn('id',array_values(session('selected')))->get();
-    //         dd($products);
-    //         // ->update(['invoice_id'=>$data->id]);
-    //         ProductOrServiceRequest::whereIn('id',session('product'))->update(['invoice_id'=>$data->id]);
-    //         $patient = new Party([
-    //             'name'          => 'Roosevelt Lloyd',
-    //             'phone'         => '(520) 318-9486',
-    //             'custom_fields' => [
-    //         ],]
-
-    //     );
-    //      $coreHealth = new Party([
-    //         'name'          => 'hospital name',
-    //         'phone'         => 'hospital customer care',
-    //         'custom_fields' => [
-    //     ],]
-
-    // );
-    //   foreach($selectedServices as $service)
-    //     {
-
-    //         $item = (new InvoiceItem())
-    //         ->title($service->name)
-    //         ->pricePerUnit($service->price);
-
-    //     }
-    //     $notes = [
-    //         'your multiline',
-    //         'additional notes',
-    //         'in regards of delivery or something else',
-    //     ];
-    //     $notes = implode("<br>", $notes);
-
-    //     $invoice = Invoice::make('receipt')
-    //         ->series('BIG')
-    //         // ability to include translated invoice status
-    //         // in case it was paid
-    //         ->status(__('invoices::invoice.paid'))
-    //         ->sequence(667)
-    //         ->serialNumberFormat('{SEQUENCE}/{SERIES}')
-    //         ->seller($coreHealth)
-    //         ->buyer($patient)
-    //         ->date(now()->subWeeks(3))
-    //         ->dateFormat('m/d/Y')
-    //         ->filename($client->name . ' ' . $customer->name)
-    //         ->addItems($items)
-    //         ->notes($notes)
-    //         ->save('public');
-
-    //         $link = $invoice->url();
-    //         // Then send email to party with link
-
-    //         // And return invoice itself to browser or have a different view
-    //         return $invoice->stream();
-
 
 
         }

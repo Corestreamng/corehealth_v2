@@ -42,7 +42,7 @@
                                 <td>{{$service->id}}</td>
                                 <td>{{$service->service_name}}</td>
                                 <td><span>&#8358;</span>{{ $service->price->sale_price ?? 0}}</td>
-                                <td></td>
+
                             </tbody>
                             @empty
                             <p>no service selected for payment</p>
@@ -73,6 +73,7 @@
                                 <td>{{$product->product_name}}</td>
                                 <td><span>&#8358;</span>{{ $product->price->current_sale_price}}</td>
 
+                            </tbody>
                             @empty
                             <P>No product selected for payment</P>
 
