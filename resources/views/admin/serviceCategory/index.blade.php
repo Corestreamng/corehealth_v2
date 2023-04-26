@@ -36,7 +36,7 @@
                                     <th>Category</th>
                                     <th>Category Code</th>
                                     <th>Status</th>
-                                    <th>Product</th>
+                                    <th>Services</th>
                                     <th>Edit</th>
                                     {{-- <th>Delete</th> --}}
                                 </tr>

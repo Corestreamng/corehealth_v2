@@ -189,9 +189,9 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{route('services-category.index')}}">Categories</a>
                     </li>
-                    {{-- <li class="nav-item">
+                    <li class="nav-item">
                         <a class="nav-link" href="{{route('services.index')}}">Services</a>
-                    </li> --}}
+                    </li>
                 </ul>
             </div>
         </li>
