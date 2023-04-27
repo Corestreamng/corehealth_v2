@@ -56,7 +56,7 @@
 
     <script>
         const dar = document.getElementById('myInput'). value;
-        console.log(dar);
+        // console.log(dar);
         $(function() {
 
             $('#products-list').DataTable({
