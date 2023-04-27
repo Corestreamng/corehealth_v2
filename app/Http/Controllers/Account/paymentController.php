@@ -127,6 +127,7 @@ class paymentController extends Controller
                 ->addItems($goods)
                 ->notes($notes)
                 ->save('public');
+                payment::latest()->update(['invoice_id'=>$data->id]);
 
                 $link = $invoice->url();
                 // Then send email to party with link
@@ -136,12 +137,40 @@ class paymentController extends Controller
 
                 // composer require laraveldaily/laravel-invoices
         }
+
+        }
         $notes = [
             'your multiline',
             'additional notes',
             'in regards of delivery or something else',
         ];
-        }
+        $notes = implode("<br>", $notes);
+
+        $invoice = Invoice::make('receipt')
+            ->series('BIG')
+            // ability to include translated invoice status
+            // in case it was paid
+            ->status(__('invoices::invoice.paid'))
+            ->sequence(667)
+            ->serialNumberFormat('{SEQUENCE}/{SERIES}')
+            ->seller($coreHealth)
+            ->buyer($patient)
+            ->currencySymbol('₦')
+            ->date(now()->subWeeks(3))
+            ->dateFormat('m/d/Y')
+            // ->filename($client->name . ' ' . $customer->name)
+            ->addItems($items)
+            ->notes($notes)
+            ->save('public');
+            payment::latest()->update(['invoice_id'=>$data->id]);
+
+            $link = $invoice->url();
+            // Then send email to party with link
+
+            // And return invoice itself to browser or have a different view
+            return $invoice->stream();
+
+
             if(session('products')!= NULL){
                 $prods = ProductOrServiceRequest::with('product')->whereIn('id',array_values(session('products')))->update(['invoice_id'=>$data->id]);
                 $patient = new Party([
@@ -196,7 +225,7 @@ class paymentController extends Controller
                     ->addItems($goods)
                     ->notes($notes)
                     ->save('public');
-
+                    payment::latest()->update(['invoice_id'=>$data->id]);
                     $link = $invoice->url();
                     // Then send email to party with link
 

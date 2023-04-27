@@ -18,6 +18,7 @@ class CreatePaymentsTable extends Migration
             $table->string('reference_no');
             $table->string('total');
             $table->string('payment_type');
+            $table->foreignId('invoice_id')->constrained()->nullable();
             $table->timestamps();
         });
     }
