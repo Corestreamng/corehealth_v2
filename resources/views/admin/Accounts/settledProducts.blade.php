@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
-@section('title', 'Services and Products ')
-@section('page_name', 'settled Products')
-@section('subpage_name', 'Paid Products List')
+@section('title', 'Products ')
+@section('page_name', 'Products')
+@section('subpage_name', 'Products Request List')
 @section('content')
     <div id="content-wrapper">
         <div class="container">
@@ -10,8 +10,8 @@
                 <div class="card-header">
                     <div class="row">
                         <div class="col-sm-6">
-                            {{-- <a href="{{route('paid-services',$id)}}">unsettled</a> --}}
                             {{-- {{ __('Services') }} --}}
+                            {{-- <a href="{{route('paid-products',$id)}}">Settled</a> --}}
                         </div>
                         <div class="col-sm-6">
                             {{-- @if (auth()->user()->can('user-create')) --}}
@@ -19,27 +19,29 @@
                                 class="btn btn-primary btn-sm float-right">
                                 <i class="fa fa-plus"></i>
                                 New Request
-                            </a> --}}
-                            {{-- @endif --}}
+                            </a>
+                             @endif --}}
                         </div>
                     </div>
                 </div>
+
                 <div class="card-body">
                     <div class="table-responsive">
                         <table id="products-list" class="table table-sm table-bordered table-striped">
                             <thead>
                                 <tr>
                                     <th>SN</th>
-                                    <th>Service Name</th>
+                                    <th>Product Name</th>
                                     <th>Price</th>
+
                                 </tr>
                             </thead>
                         </table>
                     </div>
                     <input type="hidden" name="id" id="myInput" value="{{$id}}">
-                    <button type="submit" class="align-self-end btn btn-lg btn-block btn-primary" style="margin-top: auto;">proceed</button>
+
                 </div>
-            </form>
+
             </div>
         </div>
     </div>
@@ -56,7 +58,6 @@
         const dar = document.getElementById('myInput'). value;
         console.log(dar);
         $(function() {
-
             $('#products-list').DataTable({
                 "dom": 'Bfrtip',
                 "lengthMenu": [
@@ -67,7 +68,7 @@
                 "processing": true,
                 "serverSide": true,
                 "ajax": {
-                    "url": "/settled-products/"+dar,
+                    "url": "settled-products/"+dar,
                     "type": "GET"
                 },
                 "columns": [{
@@ -75,13 +76,14 @@
                         name: "DT_RowIndex"
                     },
                     {
-                        data: "service.service_name",
-                        name: "service"
+                        data: "product.product_name",
+                        name: "product"
                     },
                     {
-                        data: "service.price.sale_price",
-                        name: "service"
+                        data: "product.price.current_sale_price",
+                        name: "price"
                     },
+
                 ],
                 // initComplete: function () {
                 //     this.api().columns().every(function () {
