@@ -14,6 +14,12 @@ class paymentController extends Controller
 {
 
 
+    // public function prod()
+    // {
+
+    // }
+
+
     public function process(Request $request)
     {
         // dd($request);
@@ -29,8 +35,6 @@ class paymentController extends Controller
         // dd($checkboxValues);
         // $services = service::whereIn('id',$checkboxValues)->get();
         return view('admin.Accounts.products',compact('id'));
-
-
 
     }
 
