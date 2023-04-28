@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
-@section('title', 'Products ')
-@section('page_name', 'Products')
-@section('subpage_name', 'Products Request List')
+@section('title', 'Services and Products ')
+@section('page_name', 'settled Products')
+@section('subpage_name', 'Paid Products List')
 @section('content')
     <div id="content-wrapper">
         <div class="container">
@@ -10,8 +10,8 @@
                 <div class="card-header">
                     <div class="row">
                         <div class="col-sm-6">
+                            <a href="{{route('paid-services',$id)}}">unsettled</a>
                             {{-- {{ __('Services') }} --}}
-                            <a href="{{route('paid-products',$id)}}">Settled</a>
                         </div>
                         <div class="col-sm-6">
                             {{-- @if (auth()->user()->can('user-create')) --}}
@@ -19,22 +19,19 @@
                                 class="btn btn-primary btn-sm float-right">
                                 <i class="fa fa-plus"></i>
                                 New Request
-                            </a>
-                             @endif --}}
+                            </a> --}}
+                            {{-- @endif --}}
                         </div>
                     </div>
                 </div>
-<form action="{{route('product-payment')}}" method="post">
-    @csrf
                 <div class="card-body">
                     <div class="table-responsive">
                         <table id="products-list" class="table table-sm table-bordered table-striped">
                             <thead>
                                 <tr>
                                     <th>SN</th>
-                                    <th>Product Name</th>
+                                    <th>Service Name</th>
                                     <th>Price</th>
-                                    <th>select</th>
                                 </tr>
                             </thead>
                         </table>
@@ -42,7 +39,7 @@
                     <input type="hidden" name="id" id="myInput" value="{{$id}}">
                     <button type="submit" class="align-self-end btn btn-lg btn-block btn-primary" style="margin-top: auto;">proceed</button>
                 </div>
-</form>
+            </form>
             </div>
         </div>
     </div>
@@ -59,6 +56,7 @@
         const dar = document.getElementById('myInput'). value;
         console.log(dar);
         $(function() {
+
             $('#products-list').DataTable({
                 "dom": 'Bfrtip',
                 "lengthMenu": [
@@ -69,7 +67,7 @@
                 "processing": true,
                 "serverSide": true,
                 "ajax": {
-                    "url": "product-list/"+dar,
+                    "url": "/settled-products/"+dar,
                     "type": "GET"
                 },
                 "columns": [{
@@ -77,16 +75,12 @@
                         name: "DT_RowIndex"
                     },
                     {
-                        data: "product.product_name",
-                        name: "product"
+                        data: "service.service_name",
+                        name: "service"
                     },
                     {
-                        data: "product.price.current_sale_price",
-                        name: "price"
-                    },
-                    {
-                        data: "checkBox",
-                        name: "checkBox"
+                        data: "service.price.sale_price",
+                        name: "service"
                     },
                 ],
                 // initComplete: function () {
