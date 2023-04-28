@@ -1,6 +1,6 @@
 @extends('admin.layouts.app')
-@section('title', 'Product Category')
-@section('page_name', 'Product Category')
+@section('title', 'Service Category')
+@section('page_name', 'Service Category')
 @section('subpage_name', 'Show Category')
 @section('content')
     <div class="card border-info mb-3">
