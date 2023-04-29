@@ -31,12 +31,11 @@ class accountsController extends Controller
     }
     public function services($id)
     {
-        // dd($id);
+
         $identify = $id;
 
         $services = ProductOrServiceRequest::with('service.price')->where('product_id',NULL)->where('user_id',$identify)->where('invoice_id',NULL)->get();
-        // orderBy('id','DESC')->paginate(10);g
-        // dd($services);
+
         return DataTables::of($services)
         ->addIndexColumn()
         ->addColumn('checkBox',function($service){
@@ -45,8 +44,7 @@ class accountsController extends Controller
         })
         ->rawColumns(['checkBox'])
         ->make(true);
-        // return view('admin.accounts.services',compact('services'));
-//
+
     }
     public function serviceView($id)
     {
@@ -64,8 +62,7 @@ class accountsController extends Controller
         $identify = $id;
 
         $services = ProductOrServiceRequest::with('service.price')->where('product_id',NULL)->where('user_id',$identify)->where('invoice_id',!NULL)->get();
-        // orderBy('id','DESC')->paginate(10);g
-        // dd($services);
+
         return DataTables::of($services)
         ->addIndexColumn()
         ->addColumn('checkBox',function($service){
@@ -78,7 +75,7 @@ class accountsController extends Controller
     public function settledProducts($id)
     {
         $products = ProductOrServiceRequest::with('product.price')->where('service_id',NULL)->where('user_id',$id)->where('invoice_id',!NULL)->get();
-        // dd($products);
+        ;
         return DataTables::of($products)
         ->addIndexColumn()
         ->addColumn('checkBox',function($product){

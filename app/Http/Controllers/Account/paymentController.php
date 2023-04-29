@@ -20,17 +20,17 @@ class paymentController extends Controller
 
     public function process(Request $request)
     {
-        // dd($request);
+
 
         $checkBox = $request->input('someCheckbox');
         $id = $request->id;
-        // dd($checkBox);
+        ;
         if ($checkBox == NULL) {
             return view('admin.Accounts.products',compact('id'));
         }
         session(['selected'=>$checkBox]);
         $checkboxValues = session('selected');
-        // dd($checkboxValues);
+
 
         return view('admin.Accounts.products',compact('id'));
 
@@ -55,9 +55,6 @@ class paymentController extends Controller
             $data = in::create();
             if(session('selected')== !NULL){
                 $services = ProductOrServiceRequest::whereIn('id',array_values(session('selected')))->update(['invoice_id'=>$data->id]);
-                // dd($products);
-                // // ->update(['invoice_id'=>$data->id]);
-                // ProductOrServiceRequest::whereIn('id',session('product'))->update(['invoice_id'=>$data->id]);
 
                 $patient = new Party([
                     'name'          => 'core health',
@@ -67,16 +64,16 @@ class paymentController extends Controller
 
             );
              $coreHealth = new Party([
-                'name'          => 'hospital name',
+                'name'          => 'Core Health',
                 'phone'         => 'hospital customer care',
                 'custom_fields' => [
             ],]
 
         );
-        $requests = ProductOrServiceRequest::with(['user','service'])->whereIn('id',array_values(session('selected')))->pluck('service_id');
-        // dd($requests);
+        $requests = ProductOrServiceRequest::with(['user','service'])->whereIn('id',array_values(session('selected')))->pluck(['service_id','user_id']);
+
         $services =  service::with('price')->whereIn('id',$requests)->get();
-        // dd(userfullname($services['user_id']));
+
         $items = collect();
           foreach($services as $service)
             {
@@ -135,6 +132,7 @@ class paymentController extends Controller
                 // Then send email to party with link
 
                 // And return invoice itself to browser or have a different view
+                Session::flush();
                 return $invoice->stream();
 
                 // composer require laraveldaily/laravel-invoices
@@ -170,6 +168,7 @@ class paymentController extends Controller
             // Then send email to party with link
 
             // And return invoice itself to browser or have a different view
+            Session::flush();
             return $invoice->stream();
 
 
@@ -232,6 +231,7 @@ class paymentController extends Controller
                     // Then send email to party with link
 
                     // And return invoice itself to browser or have a different view
+                    Session::flush();
                     return $invoice->stream();
             }
 

@@ -10,7 +10,7 @@
                 <div class="card-header">
                     <div class="row">
                         <div class="col-sm-6">
-                            {{-- {{ __('Services') }} --}}
+
                             <a href="javascript:history.back()">unsettled</a>
                         </div>
                         <div class="col-sm-6">
