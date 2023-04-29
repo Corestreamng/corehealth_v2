@@ -8,14 +8,11 @@ use App\Models\{Product,service,detail,payment,ProductOrServiceRequest,invoice a
 use LaravelDaily\Invoices\Invoice;
 use LaravelDaily\Invoices\Classes\Party;
 use LaravelDaily\Invoices\Classes\InvoiceItem;
+use Session;
 
 
 class paymentController extends Controller
 {
-    public function back()
-    {
-        return back();
-    }
 
 
     public function process(Request $request)
@@ -70,7 +67,7 @@ class paymentController extends Controller
             ],]
 
         );
-        $requests = ProductOrServiceRequest::with(['user','service'])->whereIn('id',array_values(session('selected')))->pluck(['service_id','user_id']);
+        $requests = ProductOrServiceRequest::with(['user','service'])->whereIn('id',array_values(session('selected')))->pluck('service_id');
 
         $services =  service::with('price')->whereIn('id',$requests)->get();
 
@@ -132,7 +129,7 @@ class paymentController extends Controller
                 // Then send email to party with link
 
                 // And return invoice itself to browser or have a different view
-                Session::flush();
+                Session::forget(['selected','products']);
                 return $invoice->stream();
 
                 // composer require laraveldaily/laravel-invoices
@@ -168,7 +165,7 @@ class paymentController extends Controller
             // Then send email to party with link
 
             // And return invoice itself to browser or have a different view
-            Session::flush();
+            Session::forget('selected');
             return $invoice->stream();
 
 
@@ -231,7 +228,7 @@ class paymentController extends Controller
                     // Then send email to party with link
 
                     // And return invoice itself to browser or have a different view
-                    Session::flush();
+                    Session::forget('products');
                     return $invoice->stream();
             }
 
