@@ -12,12 +12,10 @@ use LaravelDaily\Invoices\Classes\InvoiceItem;
 
 class paymentController extends Controller
 {
-
-
-    // public function prod()
-    // {
-
-    // }
+    public function back()
+    {
+        return back();
+    }
 
 
     public function process(Request $request)
@@ -33,7 +31,7 @@ class paymentController extends Controller
         session(['selected'=>$checkBox]);
         $checkboxValues = session('selected');
         // dd($checkboxValues);
-        // $services = service::whereIn('id',$checkboxValues)->get();
+
         return view('admin.Accounts.products',compact('id'));
 
     }

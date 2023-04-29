@@ -11,7 +11,7 @@
                     <div class="row">
                         <div class="col-sm-6">
                             {{-- {{ __('Services') }} --}}
-                            {{-- <a href="{{route('paid-products',$id)}}">Settled</a> --}}
+                            <a href="javascript:history.back()">unsettled</a>
                         </div>
                         <div class="col-sm-6">
                             {{-- @if (auth()->user()->can('user-create')) --}}
@@ -68,7 +68,7 @@
                 "processing": true,
                 "serverSide": true,
                 "ajax": {
-                    "url": "settled-products/"+dar,
+                    "url": "/settled-products/"+dar,
                     "type": "GET"
                 },
                 "columns": [{

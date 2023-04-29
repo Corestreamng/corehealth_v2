@@ -95,6 +95,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('settled-products/{id}',[accountsController::class,'settledProducts'])->name('settled-products');
         Route::get('paid-services/{id}',[accountsController::class,'serviceView'])->name('paid-services');
         Route::get('paid-products/{id}',[accountsController::class,'productView'])->name('paid-products');
+        Route::get('back',[paymentController::class, 'back'])->name('back');
         Route::post('service-payment',[paymentController::class,'process'])->name('service-payment');
         Route::post('complete-payment',[paymentController::class,'payment'])->name('complete-payment');
         Route::post('product-payment',[ProductAccountController::class,'process'])->name('product-payment');
