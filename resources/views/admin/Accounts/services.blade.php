@@ -10,6 +10,7 @@
                 <div class="card-header">
                     <div class="row">
                         <div class="col-sm-6">
+                            <a href="{{route('paid-services',$id)}}">settled</a>
                             {{-- {{ __('Services') }} --}}
                         </div>
                         <div class="col-sm-6">

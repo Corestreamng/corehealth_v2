@@ -10,8 +10,8 @@
                 <div class="card-header">
                     <div class="row">
                         <div class="col-sm-6">
-                            {{-- {{ __('Services') }} --}}
-                            <a href="{{route('paid-products',$id)}}">Settled</a>
+
+                            <a href="javascript:history.back()">unsettled</a>
                         </div>
                         <div class="col-sm-6">
                             {{-- @if (auth()->user()->can('user-create')) --}}
@@ -24,8 +24,7 @@
                         </div>
                     </div>
                 </div>
-<form action="{{route('product-payment')}}" method="post">
-    @csrf
+
                 <div class="card-body">
                     <div class="table-responsive">
                         <table id="products-list" class="table table-sm table-bordered table-striped">
@@ -34,15 +33,15 @@
                                     <th>SN</th>
                                     <th>Product Name</th>
                                     <th>Price</th>
-                                    <th>select</th>
+
                                 </tr>
                             </thead>
                         </table>
                     </div>
                     <input type="hidden" name="id" id="myInput" value="{{$id}}">
-                    <button type="submit" class="align-self-end btn btn-lg btn-block btn-primary" style="margin-top: auto;">proceed</button>
+
                 </div>
-</form>
+
             </div>
         </div>
     </div>
@@ -69,7 +68,7 @@
                 "processing": true,
                 "serverSide": true,
                 "ajax": {
-                    "url": "product-list/"+dar,
+                    "url": "/settled-products/"+dar,
                     "type": "GET"
                 },
                 "columns": [{
@@ -84,10 +83,7 @@
                         data: "product.price.current_sale_price",
                         name: "price"
                     },
-                    {
-                        data: "checkBox",
-                        name: "checkBox"
-                    },
+
                 ],
                 // initComplete: function () {
                 //     this.api().columns().every(function () {

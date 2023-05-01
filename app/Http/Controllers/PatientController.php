@@ -6,7 +6,7 @@ use App\Models\Patient;
 use App\Models\User;
 use App\Models\Hmo;
 use App\Models\Clinic;
-use App\Models\Service;
+use App\Models\service;
 use App\Models\Product;
 use App\Models\UserCategory;
 use Illuminate\Http\Request;
@@ -163,7 +163,7 @@ class PatientController extends Controller
         $patient = Patient::where('user_id', $user_id)->first();
         $family = Patient::with(['user'])->where('file_no', $patient->file_no)->get();
         $products = Product::with(['category','price'])->where('status',1)->get();
-        $services = Service::with(['category','price'])->where('status',1)->get();
+        $services = service::with(['category','price'])->where('status',1)->get();
         $clinics = Clinic::where('status', 1)->get();
         return view('admin.receptionist.send_queue', compact('family','products','services','clinics'));
     }
