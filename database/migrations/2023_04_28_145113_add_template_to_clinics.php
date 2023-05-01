@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddPriceIdToServicesTable extends Migration
+class AddTemplateToClinics extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,8 @@ class AddPriceIdToServicesTable extends Migration
      */
     public function up()
     {
-        Schema::table('services', function (Blueprint $table) {
-            $table->foreignId('price_id');
+        Schema::table('clinics', function (Blueprint $table) {
+            $table->longText('template')->nullable();
         });
     }
 
@@ -25,7 +25,7 @@ class AddPriceIdToServicesTable extends Migration
      */
     public function down()
     {
-        Schema::table('services', function (Blueprint $table) {
+        Schema::table('clinics', function (Blueprint $table) {
             //
         });
     }

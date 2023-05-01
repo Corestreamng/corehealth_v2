@@ -195,5 +195,27 @@
                 </ul>
             </div>
         </li>
+
+        <li class="pt-2 pb-1">
+            <span class="nav-item-head">Doctors</span>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="collapse" href="#consultations" aria-expanded="false"
+                aria-controls="consultations">
+                <i class="mdi mdi-crosshairs-gps menu-icon"></i>
+                <span class="menu-title">Consultations</span>
+                <i class="menu-arrow"></i>
+            </a>
+            <div class="collapse" id="consultations">
+                <ul class="nav flex-column sub-menu">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{route('encounters.index')}}">New</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{route('encounters.index')}}">Continuing</a>
+                    </li>
+                </ul>
+            </div>
+        </li>
     </ul>
 </nav>

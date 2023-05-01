@@ -22,6 +22,7 @@ use App\Http\Controllers\ClinicController;
 use App\Http\Controllers\Account\accountsController;
 use App\Http\Controllers\Account\paymentController;
 use App\Http\Controllers\Account\productAccountController;
+use App\Http\Controllers\EncounterController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -82,6 +83,13 @@ Route::group(['middleware' => ['auth']], function () {
         Route::resource('product-category', ProductCategoryController::class);
         Route::get('product-category-list', [ProductCategoryController::class, 'listProductCategories'])->name('product-category-list');
         Route::get('listSalesProduct/{id}', [ProductController::class,'listSalesProduct'])->name('listSalesProduct');
+    });
+
+    Route::group(['middleware' => ['auth']], function () {
+        // Creating and Listing Permissions
+        Route::resource('encounters', EncounterController::class);
+        Route::get('NewEncounterList', [EncounterController::class, 'NewEncounterList'])->name('NewEncounterList');
+        Route::get('EncounterHistoryList/{patient_id}', [EncounterController::class, 'EncounterHistoryList'])->name('EncounterHistoryList');
     });
 
     Route::group(['middleware' => ['auth']], function () {
