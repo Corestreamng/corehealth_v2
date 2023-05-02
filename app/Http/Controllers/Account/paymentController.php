@@ -21,7 +21,6 @@ class paymentController extends Controller
 
         $checkBox = $request->input('someCheckbox');
         $id = $request->id;
-        ;
         if ($checkBox == NULL) {
             return view('admin.Accounts.products',compact('id'));
         }
@@ -67,25 +66,25 @@ class paymentController extends Controller
             ],]
 
         );
-        $requests = ProductOrServiceRequest::with(['user','service'])->whereIn('id',array_values(session('selected')))->pluck('service_id');
+        $services = ProductOrServiceRequest::with(['user','service.price'])->whereIn('id',array_values(session('selected')))->get();
 
-        $services =  service::with('price')->whereIn('id',$requests)->get();
+        // $services =  service::with('price')->whereIn('id',$requests)->get();
 
         $items = collect();
           foreach($services as $service)
             {
 
                 $item = (new InvoiceItem())
-                ->title($service->service_name)
-                ->pricePerUnit($service->price->sale_price);
+                ->title($service->service->service_name)
+                ->pricePerUnit($service->service->price->sale_price);
               $items->push($item);
             }
         // dd($items);
 
         if(session('products')!= NULL){
             $prods = ProductOrServiceRequest::with('product')->whereIn('id',array_values(session('products')))->update(['invoice_id'=>$data->id]);;
-            $req = ProductOrServiceRequest::with('product')->whereIn('id',array_values(session('products')))->pluck('product_id');
-            $products =  Product::with('price')->whereIn('id',$req)->get();
+            $products = ProductOrServiceRequest::with('product.price')->whereIn('id',array_values(session('products')))->get();
+            // $products =  Product::with('price')->whereIn('id',$req)->get();
             // dd($products);
 
             $goods = collect();
@@ -93,8 +92,8 @@ class paymentController extends Controller
                 {
 
                 $product = (new InvoiceItem())
-                ->title($product->product_name)
-                ->pricePerUnit($product->price->current_sale_price);
+                ->title($product->product->product_name)
+                ->pricePerUnit($product->product->price->current_sale_price);
                 $goods->push($product);
             }
 
@@ -184,20 +183,17 @@ class paymentController extends Controller
                 'custom_fields' => [
             ],]
         );
-                $req = ProductOrServiceRequest::with('product')->whereIn('id',array_values(session('products')))->pluck('product_id');
-                $products =  Product::with('price')->whereIn('id',$req)->get();
-                // dd($products);
+        $products = ProductOrServiceRequest::with('product.price')->whereIn('id',array_values(session('products')))->get();
 
-                $goods = collect();
-                foreach($products as $product)
-                    {
+        $goods = collect();
+        foreach($products as $product)
+            {
 
-                    $product = (new InvoiceItem())
-                    ->title($product->product_name)
-                    ->pricePerUnit($product->price->current_sale_price);
-                    $goods->push($product);
-                }
-
+            $product = (new InvoiceItem())
+            ->title($product->product->product_name)
+            ->pricePerUnit($product->product->price->current_sale_price);
+            $goods->push($product);
+        }
                 // dd($goods);
                 $notes = [
                     'your multiline',

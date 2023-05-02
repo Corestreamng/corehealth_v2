@@ -15,11 +15,11 @@ class productAccountController extends Controller
 
             $inputs = $request->input('productChecked');
             $checkboxServices = session('selected');
-            $requests = ProductOrServiceRequest::whereIn('id',array_values($checkboxServices))->pluck('service_id');
-            $services = service::with('price')->whereIn('id',$requests)->get();
+            $services = ProductOrServiceRequest::with('service.price')->whereIn('id',array_values($checkboxServices))->get();
+            // $services = service::with('price')->whereIn('id',$requests)->get();
             $total = 0;
             foreach($services as $service) {
-                $total += $service->price->sale_price;
+                $total += $service->service->price->sale_price;
             }
             $sumServices = $total;
             // dd($sumServices);
@@ -34,9 +34,9 @@ class productAccountController extends Controller
                 session(['products'=>$inputs]);
                 $checkboxProducts = session('products');
                 // dd($checkboxProducts);
-                $productRequests = ProductOrServiceRequest::whereIn('id',array_values($checkboxProducts))->pluck('product_id');
+                $products = ProductOrServiceRequest::with('product.price')->whereIn('id',array_values($checkboxProducts))->get();
                 // dd($productRequests);
-                $products = Product::with('price')->whereIn('id',$productRequests)->get();
+                // $products = Product::with('price')->whereIn('id',$productRequests)->get();
                 $productsTotal = 0;
                 foreach($products as $product) {
                     $productsTotal += $product->price->current_sale_price;

@@ -40,8 +40,8 @@
                             @forelse ($services as $service )
                             <tbody>
                                 <td>{{$service->id}}</td>
-                                <td>{{$service->service_name}}</td>
-                                <td><span>&#8358;</span>{{ $service->price->sale_price ?? 0}}</td>
+                                <td>{{$service->service->service_name}}</td>
+                                <td><span>&#8358;</span>{{ $service->service->price->sale_price ?? 0}}</td>
 
                             </tbody>
                             @empty
@@ -70,8 +70,8 @@
                             @forelse ($products as $product )
                             <tbody>
                                 <td>{{$product->id}}</td>
-                                <td>{{$product->product_name}}</td>
-                                <td><span>&#8358;</span>{{ $product->price->current_sale_price}}</td>
+                                <td>{{$product->product->product_name}}</td>
+                                <td><span>&#8358;</span>{{ $product->product->price->current_sale_price}}</td>
 
                             </tbody>
                             @empty
