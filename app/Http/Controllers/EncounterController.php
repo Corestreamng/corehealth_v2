@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AdmissionRequest;
 use App\Models\Clinic;
 use App\Models\Encounter;
 use App\Models\DoctorQueue;
@@ -82,6 +83,57 @@ class EncounterController extends Controller
             ->make(true);
     }
 
+    public function PrevEncounterList()
+    {
+        $doc = Staff::where('user_id', Auth::id())->first();
+        $queue = DoctorQueue::where(function ($q) use ($doc) {
+            $q->where('clinic_id', $doc->clinic_id);
+            $q->orWhere('staff_id', $doc->id);
+        })
+            ->where('status', '>', 1)->orderBy('created_at', 'DESC')->get();
+        //dd($pc);
+        return Datatables::of($queue)
+            ->addIndexColumn()
+            ->editColumn('fullname', function ($queue) {
+                $patient = patient::find($queue->patient_id);
+                return (userfullname($patient->user_id));
+            })
+
+            ->editColumn('created_at', function ($note) {
+                return date('h:i a D M j, Y', strtotime($note->created_at));
+            })
+            ->editColumn('hmo_id', function ($queue) {
+                $patient = patient::find($queue->patient_id);
+                return Hmo::find($patient->hmo_id)->name ?? 'N/A';
+            })
+            ->editColumn('clinic_id', function ($queue) {
+                $clinic = Clinic::find($queue->clinic_id);
+                return $clinic->name ?? 'N/A';
+            })
+            ->editColumn('staff_id', function ($queue) use ($doc) {
+                return (userfullname($doc->user_id));
+            })
+            ->addColumn('file_no', function ($queue) {
+                $patient = patient::find($queue->patient_id);
+                return $patient->file_no;
+            })
+            ->addColumn('view', function ($queue) {
+
+                // if (Auth::user()->hasPermissionTo('user-show') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
+
+                    $url =  route('patient.show', $queue->patient_id);
+                    return '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> View</a>';
+                // } else {
+
+                //     $label = '<span class="label label-warning">Not Allowed</span>';
+                //     return $label;
+                // }
+            })
+            ->rawColumns(['fullname', 'view',])
+            ->make(true);
+    }
+
+
     public function EncounterHistoryList($patient_id)
     {
 
@@ -96,7 +148,7 @@ class EncounterController extends Controller
                 return date('h:i a D M j, Y', strtotime($hist->created_at));
             })
             ->editColumn('notes', function ($hist) {
-                $str = 'nn';
+                $str = '';
                 $reasons_for_encounter = json_decode($hist->reasons_for_encounter);
                 if ($reasons_for_encounter != '') {
                     $str .= "<h5>Reasons for Encounter</h5>";
@@ -210,6 +262,15 @@ class EncounterController extends Controller
             $queue = DoctorQueue::where('id', $request->queue_id)->update([
                 'status' => 2
             ]);
+
+            if($request->consult_admit == 1){
+                $admit = new AdmissionRequest;
+                $admit->encounter_id = $encounter->id;
+                $admit->doctor_id = Auth::id();
+                $admit->patient_id = $request->patient_id;
+                $admit->note = $request->admit_note;
+                $admit->save();
+            }
             DB::commit();
             return redirect()->route('encounters.index')->with(['message' => "Encounter Notes Saved Successfully", 'message_type' => 'success']);
         } catch (\Exception $e) {

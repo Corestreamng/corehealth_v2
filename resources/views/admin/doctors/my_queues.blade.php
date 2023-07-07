@@ -10,7 +10,7 @@
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="cont_data_tab" data-bs-toggle="tab" data-bs-target="#cont" type="button"
-                role="tab" aria-controls="cont_data" aria-selected="false">Continuing</button>
+                role="tab" aria-controls="cont_data" aria-selected="false">Previous</button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="scheduled_tab" data-bs-toggle="tab" data-bs-target="#scheduled" type="button"
@@ -39,7 +39,7 @@
         <div class="tab-pane fade" id="cont" role="tabpanel" aria-labelledby="cont_tab">
             <div class="card mt-2">
                 <div class="card-body table-responsive">
-                    <table class="table" id="cont_consult_list">
+                    <table class="table" id="prev_consult_list">
                         <thead>
                             <th>#</th>
                             <th>Patient Name</th>
@@ -132,7 +132,7 @@
     </script>
     <script>
         $(function() {
-            $('#cont_consult_list').DataTable({
+            $('#prev_consult_list').DataTable({
                 "dom": 'Bfrtip',
                 "lengthMenu": [
                     [10, 25, 50, 100, -1],
@@ -142,7 +142,7 @@
                 "processing": true,
                 "serverSide": true,
                 "ajax": {
-                    "url": "{{ url('patientsList') }}",
+                    "url": "{{ url('PrevEncounterList') }}",
                     "type": "GET"
                 },
                 "columns": [{
@@ -160,6 +160,14 @@
                     {
                         data: "hmo_id",
                         name: "hmo_id"
+                    },
+                    {
+                        data: "clinic_id",
+                        name: "clinic_id"
+                    },
+                    {
+                        data: "staff_id",
+                        name: "staff_id"
                     },
                     {
                         data: "created_at",

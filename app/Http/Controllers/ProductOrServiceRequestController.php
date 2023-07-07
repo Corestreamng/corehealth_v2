@@ -10,6 +10,7 @@ use App\Models\Staff;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\DataTables;
+use Illuminate\Support\Facades\DB;
 
 class ProductOrServiceRequestController extends Controller
 {
@@ -24,7 +25,7 @@ class ProductOrServiceRequestController extends Controller
     }
 
     public function productOrServicesRequestersList(){
-        \DB::statement("SET SQL_MODE=''");//disable sql strict mode to allow groupby query
+        DB::statement("SET SQL_MODE=''");//disable sql strict mode to allow groupby query
         $req = ProductOrServiceRequest::where('invoice_id', '=', null)->groupBy('user_id')->orderBy('created_at', 'DESC')->get();
 
         return Datatables::of($req)

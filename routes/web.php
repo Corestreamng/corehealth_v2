@@ -90,6 +90,7 @@ Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
         Route::resource('encounters', EncounterController::class);
         Route::get('NewEncounterList', [EncounterController::class, 'NewEncounterList'])->name('NewEncounterList');
+        Route::get('PrevEncounterList', [EncounterController::class, 'PrevEncounterList'])->name('PrevEncounterList');
         Route::get('EncounterHistoryList/{patient_id}', [EncounterController::class, 'EncounterHistoryList'])->name('EncounterHistoryList');
     });
 

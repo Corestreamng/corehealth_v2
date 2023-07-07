@@ -56,6 +56,11 @@
                                         Records</a>
                                     <br>
                                 </div>
+                            @else
+                                <div class="form-group">
+                                    <a href="#"><i class="fa fa-file"></i> No Old Records Attached</a>
+                                    <br>
+                                </div>
                             @endif
                         </div>
                         <div class="col-sm-3">
@@ -81,8 +86,6 @@
                                     <td>{{ $patient->blood_group ?? 'N/A' }}</td>
                                     <th>Genotype :</th>
                                     <td>{{ $patient->genotype ?? 'N/A' }}</td>
-                                    <th>Disability status:</th>
-                                    <td>{{ $patient->disability == 1 ? 'Disabled' : 'None' }}</td>
                                 </tr>
                                 <tr>
                                     <th>Nationality: </th>
@@ -102,6 +105,10 @@
                                     <th>HMO No:</th>
                                     <td>{{ $patient->hmo_no ?? 'N/A' }}</td>
                                 </tr>
+                                <tr>
+                                    <th>Disability status:</th>
+                                    <td>{{ $patient->disability == 1 ? 'Disabled' : 'None' }}</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -116,7 +123,8 @@
         <div class="tab-pane fade" id="vitals" role="tabpanel" aria-labelledby="vitals_tab">
             <div class="card mt-2">
                 <div class="card-body table-responsive">
-                    <br><button type="button" onclick="switch_tab(event,'patient_data_tab')" class="btn btn-secondary mr-2">
+                    <br><button type="button" onclick="switch_tab(event,'patient_data_tab')"
+                        class="btn btn-secondary mr-2">
                         Prev
                     </button>
                     <button type="button" onclick="switch_tab(event,'investigation_hist_tab')"
@@ -130,7 +138,8 @@
         <div class="tab-pane fade" id="investigation_hist" role="tabpanel" aria-labelledby="investigation_hist_tab">
             <div class="card mt-2">
                 <div class="card-body table-responsive">
-                    <br><button type="button" onclick="switch_tab(event,'vitals_data_tab')" class="btn btn-secondary mr-2">
+                    <br><button type="button" onclick="switch_tab(event,'vitals_data_tab')"
+                        class="btn btn-secondary mr-2">
                         Prev
                     </button>
                     <button type="button" onclick="switch_tab(event,'encounter_hist_tab')"
@@ -184,15 +193,15 @@
             <div class="tab-pane fade" id="my_notes" role="tabpanel" aria-labelledby="my_notes_tab">
                 <div class="card mt-2">
                     <div class="card-body table-responsive">
-                        <input type="hidden" value="{{$req_entry->service_id}}" name="req_entry_service_id" required>
-                        <input type="hidden" value="{{$req_entry->id}}" name="req_entry_id">
-                        <input type="hidden" value="{{request()->get('patient_id')}}" name="patient_id">
-                        <input type="hidden" value="{{request()->get('queue_id')}}" name="queue_id">
+                        <input type="hidden" value="{{ $req_entry->service_id }}" name="req_entry_service_id" required>
+                        <input type="hidden" value="{{ $req_entry->id }}" name="req_entry_id">
+                        <input type="hidden" value="{{ request()->get('patient_id') }}" name="patient_id">
+                        <input type="hidden" value="{{ request()->get('queue_id') }}" name="queue_id">
                         {{-- <select name="reasons_for_encounter" id="reasons_for_encounter" class="form-control" multiple>
                             <option value="">--select reason--</option>
                         </select> --}}
                         <div>
-                            <textarea name="doctor_diagnosis" id="" class="form-control classic-editor" required></textarea>
+                            <textarea name="doctor_diagnosis" id="" class="form-control classic-editor"></textarea>
                         </div>
 
                         <br><button type="button" onclick="switch_tab(event,'nursing_notes_tab')"
@@ -229,7 +238,8 @@
                                 </tbody>
                             </table>
                         </div>
-                        <br><button type="button" onclick="switch_tab(event,'my_notes_tab')" class="btn btn-secondary mr-2">
+                        <br><button type="button" onclick="switch_tab(event,'my_notes_tab')"
+                            class="btn btn-secondary mr-2">
                             Prev
                         </button>
                         <button type="button" onclick="switch_tab(event,'investigations_tab')"
@@ -278,13 +288,14 @@
                 <div class="card mt-2">
                     <div class="card-body table-responsive">
                         <label for="consult_admit">Admit Patient</label>
-                        <select name="consult_admit" id="consult_admit" class="form-control" onchange="toggleAdmitNote(this)">
+                        <select name="consult_admit" id="consult_admit" class="form-control"
+                            onchange="toggleAdmitNote(this)">
                             <option value="0">No</option>
                             <option value="1">Yes</option>
                         </select>
                         <br>
                         <div id="admit-note-div">
-                            
+
                         </div>
                         <br><button type="button" onclick="switch_tab(event,'investigations_tab')"
                             class="btn btn-secondary mr-2">
@@ -435,12 +446,12 @@
             $('#' + id_of_next_tab).click();
         }
 
-        function toggleAdmitNote(obj){
+        function toggleAdmitNote(obj) {
             var opt = $(obj).val();
             console.log(opt);
-            if(opt=='0'){
+            if (opt == '0') {
                 $('#admit-note-div').html('');
-            }else{
+            } else {
                 var mk = `
                     <textarea name="admit_note" id="admit_note" class="form-control">Enter brief note</textarea>
                 `;
