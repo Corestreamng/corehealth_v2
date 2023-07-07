@@ -83,6 +83,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::resource('product-category', ProductCategoryController::class);
         Route::get('product-category-list', [ProductCategoryController::class, 'listProductCategories'])->name('product-category-list');
         Route::get('listSalesProduct/{id}', [ProductController::class,'listSalesProduct'])->name('listSalesProduct');
+        Route::get('live-search-products', [ProductController::class, 'liveSearchProducts'])->name('live-search-products');
     });
 
     Route::group(['middleware' => ['auth']], function () {
@@ -108,6 +109,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('complete-payment',[paymentController::class,'payment'])->name('complete-payment');
         Route::post('product-payment',[ProductAccountController::class,'process'])->name('product-payment');
         Route::get('listSalesService/{id}', [ServiceController::class,'listSalesService'])->name('listSalesService');
+        Route::get('live-search-services', [ServiceController::class, 'liveSearchServices'])->name('live-search-services');
     });
 
     Route::group(['middleware' => ['auth']], function () {

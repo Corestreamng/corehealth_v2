@@ -104,6 +104,14 @@ class ProductController extends Controller
             ->make(true);
     }
 
+    public function liveSearchProducts(Request $request){
+        $request->validate([
+            'term' => 'required|string'
+        ]);
+        $pc = Product::where('status', '=', 1)->where('product_name', 'LIKE', "%$request->term%")->with('stock', 'category', 'price')->orderBy('product_name', 'ASC')->get();
+        return json_decode($pc);
+    }
+
     public function listSalesProduct(Request $request, $id)
     {
 

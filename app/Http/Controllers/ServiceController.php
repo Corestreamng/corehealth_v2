@@ -79,6 +79,14 @@ class ServiceController extends Controller
             ->make(true);
     }
 
+    public function liveSearchServices(Request $request){
+        $request->validate([
+            'term' => 'required|string'
+        ]);
+        $pc = Service::where('status', '=', 1)->where('service_name', 'LIKE', "%$request->term%")->with('category', 'price')->orderBy('service_name', 'ASC')->get();
+        return json_decode($pc);
+    }
+
     public function listSalesService(Request $request, $id)
     {
 

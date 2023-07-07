@@ -105,7 +105,7 @@
                             </tbody>
                         </table>
                     </div>
-                    <button type="button" onclick="switch_tab(event,'vitals_data_tab')"
+                    <br><button type="button" onclick="switch_tab(event,'vitals_data_tab')"
                         class="btn btn-primary mr-2">Next</button>
                     <a href="{{ route('encounters.index') }}"
                         onclick="return confirm('Are you sure you wish to exit? Changes are yet to be saved')"
@@ -116,7 +116,7 @@
         <div class="tab-pane fade" id="vitals" role="tabpanel" aria-labelledby="vitals_tab">
             <div class="card mt-2">
                 <div class="card-body table-responsive">
-                    <button type="button" onclick="switch_tab(event,'patient_data_tab')" class="btn btn-secondary mr-2">
+                    <br><button type="button" onclick="switch_tab(event,'patient_data_tab')" class="btn btn-secondary mr-2">
                         Prev
                     </button>
                     <button type="button" onclick="switch_tab(event,'investigation_hist_tab')"
@@ -130,7 +130,7 @@
         <div class="tab-pane fade" id="investigation_hist" role="tabpanel" aria-labelledby="investigation_hist_tab">
             <div class="card mt-2">
                 <div class="card-body table-responsive">
-                    <button type="button" onclick="switch_tab(event,'vitals_data_tab')" class="btn btn-secondary mr-2">
+                    <br><button type="button" onclick="switch_tab(event,'vitals_data_tab')" class="btn btn-secondary mr-2">
                         Prev
                     </button>
                     <button type="button" onclick="switch_tab(event,'encounter_hist_tab')"
@@ -152,7 +152,7 @@
                             <th>Time</th>
                         </thead>
                     </table>
-                    <button type="button" onclick="switch_tab(event,'investigation_hist_tab')"
+                    <br><button type="button" onclick="switch_tab(event,'investigation_hist_tab')"
                         class="btn btn-secondary mr-2">
                         Prev
                     </button>
@@ -167,7 +167,7 @@
         <div class="tab-pane fade" id="nursing_notes" role="tabpanel" aria-labelledby="nursing_notes_tab">
             <div class="card mt-2">
                 <div class="card-body table-responsive">
-                    <button type="button" onclick="switch_tab(event,'encounter_hist_tab')"
+                    <br><button type="button" onclick="switch_tab(event,'encounter_hist_tab')"
                         class="btn btn-secondary mr-2">
                         Prev
                     </button>
@@ -180,18 +180,19 @@
             </div>
         </div>
         <form action="{{ route('encounters.store') }}" method="post">
+            @csrf
             <div class="tab-pane fade" id="my_notes" role="tabpanel" aria-labelledby="my_notes_tab">
                 <div class="card mt-2">
                     <div class="card-body table-responsive">
-                        <select name="reasons_for_encounter" id="reasons_for_encounter" class="form-control" multiple>
+                        {{-- <select name="reasons_for_encounter" id="reasons_for_encounter" class="form-control" multiple>
                             <option value="">--select reason--</option>
-                        </select>
-                        <div contenteditable="true">
-                            {!! $clinic->template !!}
+                        </select> --}}
+                        <div>
+                            <textarea name="doctor_diagnosis" id="" class="form-control classic-editor"></textarea>
                         </div>
 
                         <textarea name="notes" id="doc_notes" hidden></textarea>
-                        <button type="button" onclick="switch_tab(event,'nursing_notes_tab')"
+                        <br><button type="button" onclick="switch_tab(event,'nursing_notes_tab')"
                             class="btn btn-secondary mr-2">
                             Prev
                         </button>
@@ -203,10 +204,28 @@
                     </div>
                 </div>
             </div>
-            <div class="tab-pane fade show " id="prescription" role="tabpanel" aria-labelledby="prescription_tab">
+            <div class="tab-pane fade" id="prescription" role="tabpanel" aria-labelledby="prescription_tab">
                 <div class="card mt-2">
                     <div class="card-body table-responsive">
-                        <button type="button" onclick="switch_tab(event,'my_notes_tab')" class="btn btn-secondary mr-2">
+                        <input type="text" class="form-control" id="consult_presc_search"
+                            onkeyup="searchProducts(this.value)">
+                        <ul class="list-group" id="consult_presc_res" style="display: none;">
+
+                        </ul>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <th>Name</th>
+                                    <th>Price</th>
+                                    <th>Dose/Freq.</th>
+                                    <th>*</th>
+                                </thead>
+                                <tbody id="selected-products">
+
+                                </tbody>
+                            </table>
+                        </div>
+                        <br><button type="button" onclick="switch_tab(event,'my_notes_tab')" class="btn btn-secondary mr-2">
                             Prev
                         </button>
                         <button type="button" onclick="switch_tab(event,'investigations_tab')"
@@ -220,7 +239,25 @@
             <div class="tab-pane fade" id="investigations" role="tabpanel" aria-labelledby="investigations_tab">
                 <div class="card mt-2">
                     <div class="card-body table-responsive">
-                        <button type="button" onclick="switch_tab(event,'prescription_tab')"
+                        <input type="text" class="form-control" id="consult_inves_search"
+                            onkeyup="searchServices(this.value)">
+                        <ul class="list-group" id="consult_inves_res" style="display: none;">
+
+                        </ul>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <th>Name</th>
+                                    <th>Price</th>
+                                    <th>Notes/specimen</th>
+                                    <th>*</th>
+                                </thead>
+                                <tbody id="selected-services">
+
+                                </tbody>
+                            </table>
+                        </div>
+                        <br><button type="button" onclick="switch_tab(event,'prescription_tab')"
                             class="btn btn-secondary mr-2">
                             Prev
                         </button>
@@ -235,7 +272,16 @@
             <div class="tab-pane fade" id="admission" role="tabpanel" aria-labelledby="admission_tab">
                 <div class="card mt-2">
                     <div class="card-body table-responsive">
-                        <button type="button" onclick="switch_tab(event,'investigations_tab')"
+                        <label for="consult_admit">Admit Patient</label>
+                        <select name="consult_admit" id="consult_admit" class="form-control" onchange="toggleAdmitNote(this)">
+                            <option value="0">No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                        <br>
+                        <div id="admit-note-div">
+                            
+                        </div>
+                        <br><button type="button" onclick="switch_tab(event,'investigations_tab')"
                             class="btn btn-secondary mr-2">
                             Prev
                         </button>
@@ -250,7 +296,7 @@
     </div>
 @endsection
 @section('scripts')
-    <script src="{{ asset('/plugins/dataT/datatables.js') }}" defer></script>
+    <script src="{{ asset('/plugins/dataT/datatables.min.js') }}" defer></script>
     <script>
         $(function() {
             $('#encounter_history_list').DataTable({
@@ -382,6 +428,119 @@
         function switch_tab(e, id_of_next_tab) {
             e.preventDefault();
             $('#' + id_of_next_tab).click();
+        }
+
+        function toggleAdmitNote(obj){
+            var opt = $(obj).val();
+            console.log(opt);
+            if(opt=='0'){
+                $('#admit-note-div').html('');
+            }else{
+                var mk = `
+                    <textarea name="admit_note" id="admit_note" class="form-control">Enter brief note</textarea>
+                `;
+                $('#admit-note-div').append(mk);
+            }
+        }
+
+        function removeProdRow(obj) {
+            $(obj).closest('tr').remove();
+        }
+
+        function setSearchValProd(name, id, price) {
+            var mk = `
+                <tr>
+                    <td>${name}</td>
+                    <td>${price}</td>
+                    <td>
+                        <input type = 'text' class='form-control' name=consult_presc_dose[]>
+                        <input type = 'hidden' name=consult_presc_id[] value='${id}'>
+                    </td>
+                    <td><button class='btn btn-danger' onclick="removeProdRow(this)">x</button></td>
+                </tr>
+            `;
+
+            $('#selected-products').append(mk);
+            $('#consult_presc_res').empty();
+
+        }
+
+        function searchProducts(q) {
+            if (q != "") {
+                searchRequest = $.ajax({
+                    url: "{{ url('live-search-products') }}",
+                    method: "GET",
+                    dataType: 'json',
+                    data: {
+                        term: q
+                    },
+                    success: function(data) {
+                        // Clear existing options from the select field
+                        $('#consult_presc_res').html('');
+                        console.log(data);
+                        // data = JSON.parse(data);
+
+                        for (var i = 0; i < data.length; i++) {
+                            // Append the new options to the list field
+                            var mk =
+                                `<li class='list-group-item' 
+                                   style="background-color: #f0f0f0;"
+                                   onclick="setSearchValProd('${data[i].product_name}[${data[i].product_code}](${data[i].stock.current_quantity} avail.)', '${data[i].id}', '${data[i].price.initial_sale_price}')">
+                                   [${data[i].category.category_name}]<b>${data[i].product_name}[${data[i].product_code}]</b> (${data[i].stock.current_quantity} avail.) NGN ${data[i].price.initial_sale_price}</li>`;
+                            $('#consult_presc_res').append(mk);
+                            $('#consult_presc_res').show();
+                        }
+                    }
+                });
+            }
+        }
+
+        function setSearchValSer(name, id, price) {
+            var mk = `
+                <tr>
+                    <td>${name}</td>
+                    <td>${price}</td>
+                    <td>
+                        <input type = 'text' class='form-control' name=consult_inves_note[]>
+                        <input type = 'hidden' name=consult_inves_id[] value='${id}'>
+                    </td>
+                    <td><button class='btn btn-danger' onclick="removeProdRow(this)">x</button></td>
+                </tr>
+            `;
+
+            $('#selected-services').append(mk);
+            $('#consult_inves_res').empty();
+
+        }
+
+        function searchServices(q) {
+            if (q != "") {
+                searchRequest = $.ajax({
+                    url: "{{ url('live-search-services') }}",
+                    method: "GET",
+                    dataType: 'json',
+                    data: {
+                        term: q
+                    },
+                    success: function(data) {
+                        // Clear existing options from the select field
+                        $('#consult_inves_res').html('');
+                        console.log(data);
+                        // data = JSON.parse(data);
+
+                        for (var i = 0; i < data.length; i++) {
+                            // Append the new options to the list field
+                            var mk =
+                                `<li class='list-group-item' 
+                                   style="background-color: #f0f0f0;"
+                                   onclick="setSearchValSer('${data[i].service_name}[${data[i].service_code}]', '${data[i].id}', '${data[i].price.sale_price}')">
+                                   [${data[i].category.category_name}]<b>${data[i].service_name}[${data[i].service_code}]</b> NGN ${data[i].price.sale_price}</li>`;
+                            $('#consult_inves_res').append(mk);
+                            $('#consult_inves_res').show();
+                        }
+                    }
+                });
+            }
         }
     </script>
 @endsection
