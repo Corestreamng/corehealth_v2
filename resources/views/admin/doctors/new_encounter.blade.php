@@ -184,7 +184,7 @@
             <div class="tab-pane fade" id="my_notes" role="tabpanel" aria-labelledby="my_notes_tab">
                 <div class="card mt-2">
                     <div class="card-body table-responsive">
-                        <input type="hidden" value="{{$req_entry->service_id}}" name="req_entry_service_id">
+                        <input type="hidden" value="{{$req_entry->service_id}}" name="req_entry_service_id" required>
                         <input type="hidden" value="{{$req_entry->id}}" name="req_entry_id">
                         <input type="hidden" value="{{request()->get('patient_id')}}" name="patient_id">
                         <input type="hidden" value="{{request()->get('queue_id')}}" name="queue_id">
@@ -192,10 +192,9 @@
                             <option value="">--select reason--</option>
                         </select> --}}
                         <div>
-                            <textarea name="doctor_diagnosis" id="" class="form-control classic-editor"></textarea>
+                            <textarea name="doctor_diagnosis" id="" class="form-control classic-editor" required></textarea>
                         </div>
 
-                        <textarea name="notes" id="doc_notes" hidden></textarea>
                         <br><button type="button" onclick="switch_tab(event,'nursing_notes_tab')"
                             class="btn btn-secondary mr-2">
                             Prev
@@ -211,8 +210,9 @@
             <div class="tab-pane fade" id="prescription" role="tabpanel" aria-labelledby="prescription_tab">
                 <div class="card mt-2">
                     <div class="card-body table-responsive">
+                        <label for="">Search products</label>
                         <input type="text" class="form-control" id="consult_presc_search"
-                            onkeyup="searchProducts(this.value)">
+                            onkeyup="searchProducts(this.value)" placeholder="search products...">
                         <ul class="list-group" id="consult_presc_res" style="display: none;">
 
                         </ul>
@@ -243,8 +243,9 @@
             <div class="tab-pane fade" id="investigations" role="tabpanel" aria-labelledby="investigations_tab">
                 <div class="card mt-2">
                     <div class="card-body table-responsive">
+                        <label for="consult_inves_search">Search services</label>
                         <input type="text" class="form-control" id="consult_inves_search"
-                            onkeyup="searchServices(this.value)">
+                            onkeyup="searchServices(this.value)" placeholder="search services...">
                         <ul class="list-group" id="consult_inves_res" style="display: none;">
 
                         </ul>

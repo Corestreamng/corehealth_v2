@@ -46,4 +46,8 @@ class LabServiceRequest extends Model
     public function doctor(){
         return $this->belongsTo(User::class, 'doctor_id','id');
     }
+
+    public function biller(){
+        return $this->belongsTo(User::class, 'billed_by','id');
+    }
 }

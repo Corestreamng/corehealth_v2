@@ -5,28 +5,34 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class ProductRequest extends Model
+class AdmissionRequest extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'product_request_id',
+        'service_request_id',
         'billed_by',
         'billed_date',
-        'product_id',
+        'service_id',
         'encounter_id',
         'patient_id',
+        'bed_id',
+        'bed_assign_date',
+        'bed_assigned_by',
+        'discharged',
+        'discharge_date',
+        'discharged_by',
         'doctor_id',
-        'dose',
+        'note',
         'status'
     ];
 
     public function productOrServiceRequest(){
-        return $this->belongsTo(ProductOrServiceRequest::class,'product_request_id','id');
+        return $this->belongsTo(ProductOrServiceRequest::class,'service_request_id','id');
     }
 
-    public function product(){
-        return $this->belongsTo(Product::class, 'product_id','id');
+    public function service(){
+        return $this->belongsTo(Service::class, 'service_id','id');
     }
 
     public function encounter(){
@@ -43,5 +49,17 @@ class ProductRequest extends Model
 
     public function biller(){
         return $this->belongsTo(User::class, 'billed_by','id');
+    }
+
+    public function bed_assigner(){
+        return $this->belongsTo(User::class, 'bed_assigned_by','id');
+    }
+
+    public function discharger(){
+        return $this->belongsTo(User::class, 'discharged_by','id');
+    }
+
+    public function beds(){
+        return $this->hasMany(Bed::class,'bed_id','id');
     }
 }
