@@ -49,12 +49,12 @@ class MoveStockController extends Controller
             if ($v->fails()) {
                 $msg = 'Please cheak Your Inputs .';
                 //flash($msg, 'danger');
-                return redirect()->back()->with('errors', $v->messages()->all())->withInput();
+                return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
             }
             if ($request->quantity >  $request->current_quntity) {
                 $msg = 'Reduce Quantity ' . $request->quantity . ' to Transfer.';
                 // flash($msg, 'success');
-                return redirect()->back()->withInput()->withMessage($msg)->withMessageType('warning')->with($msg);
+                return redirect()->back()->withInput()->withInput()->withMessage($msg)->withMessageType('warning')->with($msg);
             }
 
             $pcc = StoreStock::where('store_id', '=', $request->stores_)->where('product_id', '=', $request->product_id)->first();
@@ -83,7 +83,7 @@ class MoveStockController extends Controller
                 } else {
                     $msg = 'Something is went wrong. Please try again later, information not save.';
                     //flash($msg, 'danger');
-                    return redirect()->back()->withInput();
+                    return redirect()->back()->withInput()->withInput();
                 }
             } elseif (!empty($pcc)) {
                 //$pcc = StoreStock::find($pc->id);
@@ -103,12 +103,12 @@ class MoveStockController extends Controller
                 } else {
                     $msg = 'Something is went wrong. Please try again later, information not save.';
                     //flash($msg, 'danger');
-                    return redirect()->back()->withMessage($msg)->withMessageType('danger')->withInput();
+                    return redirect()->back()->withInput()->withMessage($msg)->withMessageType('danger')->withInput();
                 }
             }
         } catch (\Exception $e) {
 
-            return redirect()->back()->withMessage("An error occurred " . $e->getMessage());
+            return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
     }
 

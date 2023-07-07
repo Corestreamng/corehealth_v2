@@ -113,7 +113,7 @@ class ProductCategoryController extends Controller
 
         if ($v->fails()) {
 
-            return redirect()->back()->with('errors', $v->messages()->all())->withInput();
+            return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
         } else {
 
             $category                       = new ProductCategory();
@@ -127,7 +127,7 @@ class ProductCategoryController extends Controller
             } else {
 
                 $msg = 'Something is went wrong. But it seems it is not your input contact the system administrator';
-                return redirect()->back()->withMessage($msg)->withMessageType('danger');
+                return redirect()->back()->withInput()->withMessage($msg)->withMessageType('danger');
             }
         }
     }
@@ -182,7 +182,7 @@ class ProductCategoryController extends Controller
 
         if ($v->fails()) {
 
-            return redirect()->back()->with('errors', $v->messages()->all())->withInput();
+            return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
         } else {
 
             $category                       = ProductCategory::find($id);
@@ -196,7 +196,7 @@ class ProductCategoryController extends Controller
             } else {
 
                 $msg = 'Something is went wrong. But it seems it is not your input contact the system administrator';
-                return redirect()->back()->withMessage($msg)->withMessageType('danger')->withInput();
+                return redirect()->back()->withInput()->withMessage($msg)->withMessageType('danger')->withInput();
             }
         }
     }

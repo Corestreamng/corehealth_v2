@@ -74,7 +74,7 @@ class PermissionController extends Controller
         if( $v->fails() ) {
             // return Response::json(array('errors' => $v->getMessageBag()->toArray()));
             Alert::error('Error Title', 'One or more information is needed.');
-            return redirect()->back()->with('errors', $v->messages()->all())->withInput();
+            return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
         } else {
 
             $permission              = new Permission;
@@ -133,7 +133,7 @@ class PermissionController extends Controller
         if( $v->fails() ) {
             // return Response::json(array('errors' => $v->getMessageBag()->toArray()));
             Alert::error('Error Title', 'One or more information is needed.');
-            return redirect()->back()->with('errors', $v->messages()->all())->withInput();
+            return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
         } else {
 
             $permission = Permission::find($id);

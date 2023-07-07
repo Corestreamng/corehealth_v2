@@ -336,15 +336,15 @@ class StaffController extends Controller
                     // Send User an email with set password link
                     $msg = 'User [' . $user->firstname . ' ' . $user->surname . '] was successfully created.';
                     Alert::success('Success ', $msg);
-                    return redirect()->back()->withMessage($msg)->withMessageType('success');
+                    return redirect()->back()->withInput()->withMessage($msg)->withMessageType('success');
                 } else {
                     $user->delete(); //rollback
                     $msg = 'Something is went wrong. Please try again later.';
-                    return redirect()->back()->with('error', $msg)->withInput();
+                    return redirect()->back()->withInput()->with('error', $msg)->withInput();
                 }
             } else {
                 $msg = 'Something is went wrong. Please try again later.';
-                return redirect()->back()->with('error', $msg)->withInput();
+                return redirect()->back()->withInput()->with('error', $msg)->withInput();
             }
         }
     }
@@ -558,11 +558,11 @@ class StaffController extends Controller
                     // return redirect()->route('staff.create');
                 } else {
                     $msg = 'Something is went wrong. Please try again later.';
-                    return redirect()->back()->with('error', $msg)->withInput();
+                    return redirect()->back()->withInput()->with('error', $msg)->withInput();
                 }
             } else {
                 $msg = 'Something is went wrong. Please try again later.';
-                return redirect()->back()->with('error', $msg)->withInput();
+                return redirect()->back()->withInput()->with('error', $msg)->withInput();
             }
         }
     }
@@ -647,7 +647,7 @@ class StaffController extends Controller
             if ($user->save()) {
                 $msg = 'The Avatar for [' . $user->firstname . ' ' . $user->surname . '] was successfully updated.';
                 Alert::success('Success ', $msg);
-                return redirect()->back()->withMessage($msg)->withMessageType('success');
+                return redirect()->back()->withInput()->withMessage($msg)->withMessageType('success');
             }
         }
     }

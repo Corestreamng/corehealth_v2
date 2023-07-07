@@ -112,7 +112,7 @@ class ServiceCategoryController extends Controller
 
         if ($v->fails()) {
 
-            return redirect()->back()->with('errors', $v->messages()->all())->withInput();
+            return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
         } else {
 
             $category                       = new ServiceCategory();
@@ -126,7 +126,7 @@ class ServiceCategoryController extends Controller
             } else {
 
                 $msg = 'Something is went wrong. But it seems it is not your input contact the system administrator';
-                return redirect()->back()->withMessage($msg)->withMessageType('danger');
+                return redirect()->back()->withInput()->withMessage($msg)->withMessageType('danger');
             }
         }
     }
@@ -181,7 +181,7 @@ class ServiceCategoryController extends Controller
 
         if ($v->fails()) {
 
-            return redirect()->back()->with('errors', $v->messages()->all())->withInput();
+            return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
         } else {
 
             $category                       = ServiceCategory::find($id);
@@ -195,7 +195,7 @@ class ServiceCategoryController extends Controller
             } else {
 
                 $msg = 'Something is went wrong. But it seems it is not your input contact the system administrator';
-                return redirect()->back()->withMessage($msg)->withMessageType('danger')->withInput();
+                return redirect()->back()->withInput()->withMessage($msg)->withMessageType('danger')->withInput();
             }
         }
     }

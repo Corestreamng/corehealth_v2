@@ -34,7 +34,7 @@ class ServicePriceController extends Controller
             $application = ApplicationStatu::whereId(1)->first();
             return view('admin.service_prices.create', compact('service', 'application'));
         } catch (\Exception $e) {
-            return redirect()->back()->withMessage("An error occurred " . $e->getMessage());
+            return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
     }
 
@@ -69,7 +69,7 @@ class ServicePriceController extends Controller
             if ($v->fails()) {
                 $msg = 'Please cheak Your Inputs .';
                 //flash($msg, 'danger');
-                return redirect()->back()->with('errors', $v->messages()->all())->withInput();
+                return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
             } else {
                 $myprice                 = new ServicePrice();
                 $myprice->service_id     = $request->service_id;
@@ -88,12 +88,12 @@ class ServicePriceController extends Controller
                 } else {
                     $msg = 'Something is went wrong. Please try again later, information not save.';
                     //flash($msg, 'danger');
-                    return redirect()->back()->withMessage($msg)->withMessageType('danger');
+                    return redirect()->back()->withInput()->withMessage($msg)->withMessageType('danger');
                 }
             }
         } catch (\Exception $e) {
 
-            return redirect()->back()->withMessage("An error occurred " . $e->getMessage());
+            return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
     }
 
@@ -109,7 +109,7 @@ class ServicePriceController extends Controller
             $service     = Service::whereId($id)->first();
             return view('admin.service_prices.newprice', compact('service'));
         } catch (\Exception $e) {
-            return redirect()->back()->withMessage("An error occurred " . $e->getMessage());
+            return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
     }
 
@@ -130,7 +130,7 @@ class ServicePriceController extends Controller
                 return view('admin.service_prices.edit', compact('data'));
             }
         } catch (\Exception $e) {
-            return redirect()->back()->withMessage("An error occurred " . $e->getMessage());
+            return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
     }
 
@@ -153,7 +153,7 @@ class ServicePriceController extends Controller
 
             if ($v->fails()) {
                 $msg = 'Please cheak Your Inputs .';
-                return redirect()->back()->with('errors', $v->messages()->all())->withInput();
+                return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
             } else {
                 $myprice               =  ServicePrice::find($id);
                 $myprice->cost_price   = $request->cost_price;
@@ -166,12 +166,12 @@ class ServicePriceController extends Controller
                     return redirect(route('services.index'))->withMessage($msg)->withMessageType('success')->with($msg);
                 } else {
                     $msg = 'Something is went wrong. Please try again later, information not save.';
-                    return redirect()->back()->withInput();
+                    return redirect()->back()->withInput()->withInput();
                 }
             }
         } catch (\Exception $e) {
 
-            return redirect()->back()->withMessage("An error occurred " . $e->getMessage());
+            return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
     }
 

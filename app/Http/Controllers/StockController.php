@@ -47,7 +47,7 @@ class StockController extends Controller
         if ($request->quantity < 1) {
             # code...
             Alert::error('Error', 'The Order Quantity Cannot be Less Than Zero.');
-            return redirect()->back();
+            return redirect()->back()->withInput();
         }
 
         $product_id  = $request->product_id;

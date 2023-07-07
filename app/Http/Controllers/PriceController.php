@@ -39,7 +39,7 @@ class PriceController extends Controller
                 return view('admin.prices.create', compact('product', 'application'));
             }
         } catch (\Exception $e) {
-            return redirect()->back()->withMessage("An error occurred " . $e->getMessage());
+            return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
     }
 
@@ -80,7 +80,7 @@ class PriceController extends Controller
             if ($v->fails()) {
                 $msg = 'Please cheak Your Inputs .';
                 //flash($msg, 'danger');
-                return redirect()->back()->with('errors', $v->messages()->all())->withInput();
+                return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
             } else {
                 $cheak_half = Product::find($request->products);
                 //dd($cheak_half);
@@ -121,12 +121,12 @@ class PriceController extends Controller
                 } else {
                     $msg = 'Something is went wrong. Please try again later, information not save.';
                     //flash($msg, 'danger');
-                    return redirect()->back()->withMessage($msg)->withMessageType('danger');
+                    return redirect()->back()->withInput()->withMessage($msg)->withMessageType('danger');
                 }
             }
         } catch (\Exception $e) {
 
-            return redirect()->back()->withMessage("An error occurred " . $e->getMessage());
+            return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
     }
 
@@ -149,7 +149,7 @@ class PriceController extends Controller
                 return view('home.index');
             }
         } catch (\Exception $e) {
-            return redirect()->back()->withMessage("An error occurred " . $e->getMessage());
+            return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
     }
 
@@ -171,7 +171,7 @@ class PriceController extends Controller
                 return view('admin.prices.edit', compact('data', 'application'));
             }
         } catch (\Exception $e) {
-            return redirect()->back()->withMessage("An error occurred " . $e->getMessage());
+            return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
     }
 
@@ -198,7 +198,7 @@ class PriceController extends Controller
             if ($v->fails()) {
                 $msg = 'Please cheak Your Inputs .';
                 //flash($msg, 'danger');
-                return redirect()->back()->with('errors', $v->messages()->all())->withInput();
+                return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
             } else {
                 $cheak_half = Product::find($request->products);
                 //  dd($request);
@@ -230,12 +230,12 @@ class PriceController extends Controller
                 } else {
                     $msg = 'Something is went wrong. Please try again later, information not save.';
                     //flash($msg, 'danger');
-                    return redirect()->back()->withInput();
+                    return redirect()->back()->withInput()->withInput();
                 }
             }
         } catch (\Exception $e) {
 
-            return redirect()->back()->withMessage("An error occurred " . $e->getMessage());
+            return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
     }
 

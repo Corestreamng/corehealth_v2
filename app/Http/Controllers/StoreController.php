@@ -103,7 +103,7 @@ class StoreController extends Controller
 
             if ($v->fails()) {
                 Alert::error('Error Title', 'One or more information is needed.');
-                return redirect()->back()->with('errors', $v->messages()->all())->withInput();
+                return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
             } else {
 
                 $store               = new Store();
@@ -119,7 +119,7 @@ class StoreController extends Controller
             }
         } catch (\Exception $e) {
 
-            return redirect()->back()->withMessage("An error occurred " . $e->getMessage());
+            return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
     }
 
@@ -149,7 +149,7 @@ class StoreController extends Controller
             return view('admin.stores.edit', compact('store'));
         } catch (\Exception $e) {
 
-            return redirect()->back()->withMessage("An error occurred " . $e->getMessage());
+            return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
     }
 
@@ -180,7 +180,7 @@ class StoreController extends Controller
 
             if ($v->fails()) {
                 Alert::error('Error Title', 'One or more information is needed.');
-                return redirect()->back()->with('errors', $v->messages()->all())->withInput();
+                return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
             } else {
 
                 $store               = Store::findOrFail($id);
@@ -196,7 +196,7 @@ class StoreController extends Controller
             }
         } catch (Exception $e) {
 
-            return redirect()->back()->withMessage("An error occurred " . $e->getMessage())->withMessageType('danger');
+            return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage())->withMessageType('danger');
         }
     }
 

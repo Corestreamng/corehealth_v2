@@ -164,9 +164,9 @@ class ServiceController extends Controller
 
             if ($v->fails()) {
                 // Alert::error('Error Title', 'One or more information is needed.');
-                // return redirect()->back()->with('errors', $v->messages()->all())->withInput();
-                // return redirect()->back()->with('toast_error', $v->messages()->all()[0])->withInput();
-                return redirect()->back()->with('errors', $v->messages()->all())->withInput();
+                // return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
+                // return redirect()->back()->withInput()->with('toast_error', $v->messages()->all()[0])->withInput();
+                return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
             } else {
 
                 $myservice                      = new Service();
@@ -182,12 +182,12 @@ class ServiceController extends Controller
                 } else {
                     $msg = 'Something is went wrong. Please try again later, Service not Saved.';
                     //flash($msg, 'danger');
-                    return redirect()->back()->withMessage($msg)->withMessageType('danger')->withInput();
+                    return redirect()->back()->withInput()->withMessage($msg)->withMessageType('danger')->withInput();
                 }
             }
         } catch (\Exception $e) {
 
-            return redirect()->back()->withMessage("An error occurred " . $e->getMessage());
+            return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
     }
 
@@ -221,7 +221,7 @@ class ServiceController extends Controller
             return view('admin.service.edit', compact('product', 'category'));
         } catch (\Exception $e) {
 
-            return redirect()->back()->withMessage("An error occurred " . $e->getMessage());
+            return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
     }
 
@@ -245,7 +245,7 @@ class ServiceController extends Controller
 
             if ($v->fails()) {
                 //  $msg = 'Please cheak Your Inputs .';
-                return redirect()->back()->with('errors', $v->messages()->all())->withInput();
+                return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
             } else {
 
                 $myservice                 = Service::whereId($id)->first();
@@ -261,12 +261,12 @@ class ServiceController extends Controller
                 } else {
                     $msg = 'Something is went wrong. Please try again later, information not save.';
 
-                    return redirect()->back()->withMessage($msg)->withMessageType('success')->withInput();
+                    return redirect()->back()->withInput()->withMessage($msg)->withMessageType('success')->withInput();
                 }
             }
         } catch (\Exception $e) {
 
-            return redirect()->back()->withMessage("An error occurred " . $e->getMessage());
+            return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
     }
 

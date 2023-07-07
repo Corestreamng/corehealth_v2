@@ -23,6 +23,10 @@ class Encounter extends Model
         return $this->hasMany(LabRequest::class,'encounter_id','id');
     }
 
+    public function doctor(){
+        return $this->belongsTo(User::class, 'doctor_id', 'id');
+    }
+
     public function productOrServiceRequest(){
         return $this->belongsTo(ProductOrServiceRequest::class,'service_request_id','id');
     }

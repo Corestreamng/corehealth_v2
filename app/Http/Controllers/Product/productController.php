@@ -225,9 +225,9 @@ class productController extends Controller
 
             if ($v->fails()) {
                 // Alert::error('Error Title', 'One or more information is needed.');
-                // return redirect()->back()->withInput()->withErrors($v);
-                // return redirect()->back()->with('toast_error', $v->messages()->all()[0])->withInput();
-                return redirect()->back()->with('toast_error', $v->messages()->all()[0])->withInput();
+                // return redirect()->back()->withInput()->withInput()->withErrors($v);
+                // return redirect()->back()->withInput()->with('toast_error', $v->messages()->all()[0])->withInput();
+                return redirect()->back()->withInput()->with('toast_error', $v->messages()->all()[0])->withInput();
             } else {
 
                 $myproduct                      = new Product();
@@ -271,12 +271,12 @@ class productController extends Controller
                 } else {
                     $msg = 'Something is went wrong. Please try again later, Product not Saved.';
                     //flash($msg, 'danger');
-                    return redirect()->back()->with('error', $msg)->withInput();
+                    return redirect()->back()->withInput()->with('error', $msg)->withInput();
                 }
             }
         } catch (Exception $e) {
 
-            return redirect()->back()->withMessage("An error occurred " . $e->getMessage());
+            return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
     }
 
@@ -311,7 +311,7 @@ class productController extends Controller
             return view('admin.product.edit', compact('product', 'application', 'category'));
         } catch (Exception $e) {
 
-            return redirect()->back()->withMessage("An error occurred " . $e->getMessage());
+            return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
     }
 
@@ -371,7 +371,7 @@ class productController extends Controller
             if ($v->fails()) {
 
                 //  $msg = 'Please cheak Your Inputs .';
-                return redirect()->back()->with('error', $v->messages()->all()[0])->withInput();
+                return redirect()->back()->withInput()->with('error', $v->messages()->all()[0])->withInput();
             } else {
 
                 $myproduct                 = Product::whereId($id)->first();
@@ -403,12 +403,12 @@ class productController extends Controller
                 } else {
                     $msg = 'Something is went wrong. Please try again later, information not save.';
                     //flash($msg, 'danger');
-                    return redirect()->back()->withInput();
+                    return redirect()->back()->withInput()->withInput();
                 }
             }
         } catch (Exception $e) {
 
-            return redirect()->back()->withMessage("An error occurred " . $e->getMessage());
+            return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
     }
 }

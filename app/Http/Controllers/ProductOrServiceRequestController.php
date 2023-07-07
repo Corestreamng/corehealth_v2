@@ -76,7 +76,7 @@ class ProductOrServiceRequestController extends Controller
             if ($request->is_consultation == 1) {
                 if (count(array_filter($request->service_id)) < 1) {
                     $msg = "Please select a service for at least one of the listed patients";
-                    return redirect()->back()->withMessage($msg)->withMessageType('warning');
+                    return redirect()->back()->withInput()->withMessage($msg)->withMessageType('warning');
                 } else {
                     $service_ids = array_filter(($request->service_id));
                     sort($service_ids);
@@ -109,11 +109,11 @@ class ProductOrServiceRequestController extends Controller
                                     } else {
                                         $req->delete();
                                         $msg = "An error occured while saving the request, please try again later";
-                                        return redirect()->back()->withMessage($msg)->withMessageType('danger')->withInput();
+                                        return redirect()->back()->withInput()->withMessage($msg)->withMessageType('danger')->withInput();
                                     }
                                 } else {
                                     $msg = "An error occured while saving the request, please try again later";
-                                    return redirect()->back()->withMessage($msg)->withMessageType('danger')->withInput();
+                                    return redirect()->back()->withInput()->withMessage($msg)->withMessageType('danger')->withInput();
                                 }
                             } else {
                                 continue;
@@ -121,13 +121,13 @@ class ProductOrServiceRequestController extends Controller
                         }
                     } else {
                         $msg = "Please specify a clinic for all patients for whom you specified a service";
-                        return redirect()->back()->withMessage($msg)->withMessageType('warning')->withInput();
+                        return redirect()->back()->withInput()->withMessage($msg)->withMessageType('warning')->withInput();
                     }
                 }
             } else {
                 if (count(array_filter($request->service_id)) < 1) {
                     $msg = "Please select a service for at least one of the listed patients";
-                    return redirect()->back()->withMessage($msg)->withMessageType('warning');
+                    return redirect()->back()->withInput()->withMessage($msg)->withMessageType('warning');
                 } else {
                     $service_ids = array_filter(($request->service_id));
                     sort($service_ids);
@@ -143,13 +143,13 @@ class ProductOrServiceRequestController extends Controller
                             return redirect()->route('add-to-queue')->withMessage($msg)->withMessageType('success')->withInput();
                         } else {
                             $msg = "An error occured while saving the request, please try again later";
-                            return redirect()->back()->withMessage($msg)->withMessageType('danger')->withInput();
+                            return redirect()->back()->withInput()->withMessage($msg)->withMessageType('danger')->withInput();
                         }
                     }
                 }
             }
         } catch (\Exception $e) {
-            return redirect()->back()->withMessage("An error occurred " . $e->getMessage() . 'line:' . $e->getLine());
+            return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage() . 'line:' . $e->getLine());
         }
     }
 

@@ -144,7 +144,7 @@
         <div class="tab-pane fade " id="encounter_hist" role="tabpanel" aria-labelledby="encounter_hist_tab">
             <div class="card mt-2">
                 <div class="card-body table-responsive">
-                    <table class="table" id="encounter_history_list">
+                    <table class="table" style="width: 100%" id="encounter_history_list">
                         <thead>
                             <th>#</th>
                             <th>Doctor</th>
@@ -184,6 +184,10 @@
             <div class="tab-pane fade" id="my_notes" role="tabpanel" aria-labelledby="my_notes_tab">
                 <div class="card mt-2">
                     <div class="card-body table-responsive">
+                        <input type="hidden" value="{{$req_entry->service_id}}" name="req_entry_service_id">
+                        <input type="hidden" value="{{$req_entry->id}}" name="req_entry_id">
+                        <input type="hidden" value="{{request()->get('patient_id')}}" name="patient_id">
+                        <input type="hidden" value="{{request()->get('queue_id')}}" name="queue_id">
                         {{-- <select name="reasons_for_encounter" id="reasons_for_encounter" class="form-control" multiple>
                             <option value="">--select reason--</option>
                         </select> --}}

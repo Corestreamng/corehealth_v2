@@ -5,34 +5,28 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class LabServiceRequest extends Model
+class ProductRequest extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'service_request_id',
+        'product_request_id',
         'billed_by',
         'billed_date',
-        'service_id',
+        'product_id',
         'encounter_id',
         'patient_id',
-        'result',
-        'result_date',
-        'result_by',
-        'sample_taken',
-        'sample_date',
-        'sample_taken_by',
         'doctor_id',
-        'note',
+        'dose',
         'status'
     ];
 
     public function productOrServiceRequest(){
-        return $this->belongsTo(ProductOrServiceRequest::class,'service_request_id','id');
+        return $this->belongsTo(ProductOrServiceRequest::class,'product_request_id','id');
     }
 
-    public function service(){
-        return $this->belongsTo(Service::class, 'service_id','id');
+    public function product(){
+        return $this->belongsTo(Product::class, 'product_id','id');
     }
 
     public function encounter(){
