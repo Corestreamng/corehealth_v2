@@ -381,7 +381,7 @@
         aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
-                <form action="" method="post">
+                <form action="{{route('service-save-result')}}" method="post" onsubmit="copyResTemplateToField()" >
                     @csrf
                     <div class="modal-header">
                         <h5 class="modal-title" id="investResModalLabel">Enter Result (<span
@@ -803,6 +803,11 @@
             $('#invest_res_template').html($(obj).attr('data-template'));
             $('#invest_res_entry_id').val($(obj).attr('data-id'));
             $('#investResModal').modal('show');
+        }
+
+        function copyResTemplateToField(){
+            $('#invest_res_template_submited').val($('#invest_res_template').html());
+            return true;
         }
     </script>
 

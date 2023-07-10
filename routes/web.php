@@ -23,6 +23,9 @@ use App\Http\Controllers\Account\accountsController;
 use App\Http\Controllers\Account\paymentController;
 use App\Http\Controllers\Account\productAccountController;
 use App\Http\Controllers\EncounterController;
+use App\Http\Controllers\LabServiceRequestController;
+use App\Http\Controllers\ProductRequestController;
+use App\Models\LabServiceRequest;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -88,9 +91,22 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
+        Route::resource('product-category', ProductRequestController::class);
+        Route::post('product-bill-patient', [ProductRequestController::class, 'bill'])->name('product-bill-patient');
+        Route::post('service-bill-patient', [LabServiceRequestController::class, 'bill'])->name('service-bill-patient');
+        Route::post('service-save-result', [LabServiceRequestController::class, 'saveResult'])->name('service-save-result');
+    });
+
+    Route::group(['middleware' => ['auth']], function () {
+        // Creating and Listing Permissions
         Route::resource('encounters', EncounterController::class);
         Route::get('NewEncounterList', [EncounterController::class, 'NewEncounterList'])->name('NewEncounterList');
         Route::get('PrevEncounterList', [EncounterController::class, 'PrevEncounterList'])->name('PrevEncounterList');
+        Route::get('investigationHistoryList/{patient_id}', [EncounterController::class, 'investigationHistoryList'])->name('investigationHistoryList');
+        Route::get('prescHistoryList/{patient_id}', [EncounterController::class, 'prescHistoryList'])->name('prescHistoryList');
+        Route::get('prescBillList/{patient_id}', [EncounterController::class, 'prescBillList'])->name('prescBillList');
+        Route::get('investBillList/{patient_id}', [EncounterController::class, 'investBillList'])->name('investBillList');
+        Route::get('investResList/{patient_id}', [LabServiceRequestController::class, 'investResList'])->name('investResList');
         Route::get('EncounterHistoryList/{patient_id}', [EncounterController::class, 'EncounterHistoryList'])->name('EncounterHistoryList');
     });
 

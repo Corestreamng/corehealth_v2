@@ -4,7 +4,7 @@
 @section('content')
 <div class="row">
     <div class="col-sm-6 stretch-card grid-margin">
-        <table class="table">
+        <table class="table table-sm table-bordered table-striped">
             <thead>
               <tr>
                 <th scope="col"></th>

@@ -98,7 +98,7 @@
 
                             <p>
                                 <div class="card-body p-0">
-                                    <table class="table">
+                                    <table class="table table-sm table-bordered table-striped">
                                         <thead>
                                         {{-- <tr>
                                             <th style="width: 10px">#</th>

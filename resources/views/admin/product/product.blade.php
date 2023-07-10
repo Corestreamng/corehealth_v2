@@ -57,6 +57,7 @@
             $(function() {
                 $('#products-issue').DataTable({
                     "dom": 'Bfrtip',
+                "iDisplayLength": 50,
                     "lengthMenu": [
                         [10, 25, 50, 100, 200, 300, 500, 1000, 2000, 3000, 5000, -1],
                         [10, 25, 50, 100, 200, 300, 500, 1000, 2000, 3000, 5000, "All"]

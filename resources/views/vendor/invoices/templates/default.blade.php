@@ -156,7 +156,7 @@
         </table>
 
         {{-- Seller - Buyer --}}
-        <table class="table">
+        <table class="table table-sm table-bordered table-striped">
             <thead>
                 <tr>
                     <th class="border-0 pl-0 party-header" width="48.5%">

@@ -368,7 +368,7 @@ class PatientController extends Controller
         $roles = Role::pluck('name', 'id')->all();
         $statuses = UserCategory::all();
         $permissions = Permission::pluck('name', 'id')->all();
-        return view('admin.patients.show', compact('user', 'roles', 'statuses', 'permissions', 'patient'));
+        return view('admin.patients.show1', compact('user', 'roles', 'statuses', 'permissions', 'patient'));
     }
 
     /**

@@ -67,6 +67,7 @@
   $(function () {
     $('#products').DataTable({
         // "dom": 'Bfrtip',
+                "iDisplayLength": 50,
         "buttons": [ 'copy', 'excel', 'pdf', 'print', 'colvis' ],
         "processing": true,
         "serverSide": true,

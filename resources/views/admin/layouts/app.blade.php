@@ -28,6 +28,14 @@
         .ck-editor__editable_inline {
             min-height: 200px;
         }
+
+        .tab-content .tab-pane {
+            display: none;
+        }
+
+        .tab-content .active {
+            display: block;
+        }
     </style>
 
     <!-- Styles -->

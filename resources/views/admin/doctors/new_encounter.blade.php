@@ -18,8 +18,12 @@
                 History</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link " id="encounter_hist_tab" data-bs-toggle="tab" data-bs-target="#encounter_hist"
-                type="button" role="tab" aria-controls="encounter_hist" aria-selected="true">Encounter History</button>
+            <button class="nav-link" id="presc_hist_tab" data-bs-toggle="tab" data-bs-target="#presc_hist" type="button"
+                role="tab" aria-controls="presc_hist" aria-selected="false">Drug
+                History</button>
+        </li <li class="nav-item" role="presentation">
+        <button class="nav-link " id="encounter_hist_tab" data-bs-toggle="tab" data-bs-target="#encounter_hist"
+            type="button" role="tab" aria-controls="encounter_hist" aria-selected="true">Encounter History</button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="nursing_notes_tab" data-bs-toggle="tab" data-bs-target="#nursing_notes"
@@ -73,7 +77,7 @@
                     <br>
                     <hr>
                     <div class="table-responsive">
-                        <table class="table">
+                        <table class="table table-sm table-bordered table-striped">
                             <tbody>
                                 <tr>
                                     <th>Gender: </th>
@@ -138,7 +142,36 @@
         <div class="tab-pane fade" id="investigation_hist" role="tabpanel" aria-labelledby="investigation_hist_tab">
             <div class="card mt-2">
                 <div class="card-body table-responsive">
+                    <table class="table table-sm table-bordered table-striped" style="width: 100%" id="investigation_history_list">
+                        <thead>
+                            <th>#</th>
+                            <th>Results</th>
+                            <th>Details</th>
+                        </thead>
+                    </table>
                     <br><button type="button" onclick="switch_tab(event,'vitals_data_tab')"
+                        class="btn btn-secondary mr-2">
+                        Prev
+                    </button>
+                    <button type="button" onclick="switch_tab(event,'presc_hist_tab')"
+                        class="btn btn-primary mr-2">Next</button>
+                    <a href="{{ route('encounters.index') }}"
+                        onclick="return confirm('Are you sure you wish to exit? Changes are yet to be saved')"
+                        class="btn btn-light">Exit</a>
+                </div>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="presc_hist" role="tabpanel" aria-labelledby="presc_hist_tab">
+            <div class="card mt-2">
+                <div class="card-body table-responsive">
+                    <table class="table table-sm table-bordered table-striped" style="width: 100%" id="presc_history_list">
+                        <thead>
+                            <th>#</th>
+                            <th>Product</th>
+                            <th>Details</th>
+                        </thead>
+                    </table>
+                    <br><button type="button" onclick="switch_tab(event,'investigation_hist_tab')"
                         class="btn btn-secondary mr-2">
                         Prev
                     </button>
@@ -153,7 +186,7 @@
         <div class="tab-pane fade " id="encounter_hist" role="tabpanel" aria-labelledby="encounter_hist_tab">
             <div class="card mt-2">
                 <div class="card-body table-responsive">
-                    <table class="table" style="width: 100%" id="encounter_history_list">
+                    <table class="table table-sm table-bordered table-striped" style="width: 100%" id="encounter_history_list">
                         <thead>
                             <th>#</th>
                             <th>Doctor</th>
@@ -225,8 +258,9 @@
                         <ul class="list-group" id="consult_presc_res" style="display: none;">
 
                         </ul>
+                        <br>
                         <div class="table-responsive">
-                            <table class="table">
+                            <table class="table table-sm table-bordered table-striped">
                                 <thead>
                                     <th>Name</th>
                                     <th>Price</th>
@@ -253,14 +287,15 @@
             <div class="tab-pane fade" id="investigations" role="tabpanel" aria-labelledby="investigations_tab">
                 <div class="card mt-2">
                     <div class="card-body table-responsive">
-                        <label for="consult_inves_search">Search services</label>
-                        <input type="text" class="form-control" id="consult_inves_search"
+                        <label for="consult_invest_search">Search services</label>
+                        <input type="text" class="form-control" id="consult_invest_search"
                             onkeyup="searchServices(this.value)" placeholder="search services...">
-                        <ul class="list-group" id="consult_inves_res" style="display: none;">
+                        <ul class="list-group" id="consult_invest_res" style="display: none;">
 
                         </ul>
+                        <br>
                         <div class="table-responsive">
-                            <table class="table">
+                            <table class="table table-sm table-bordered table-striped">
                                 <thead>
                                     <th>Name</th>
                                     <th>Price</th>
@@ -317,6 +352,7 @@
         $(function() {
             $('#encounter_history_list').DataTable({
                 "dom": 'Bfrtip',
+                "iDisplayLength": 50,
                 "lengthMenu": [
                     [10, 25, 50, 100, -1],
                     [10, 25, 50, 100, "All"]
@@ -352,8 +388,9 @@
     </script>
     <script>
         $(function() {
-            $('#cont_consult_list').DataTable({
+            $('#investigation_history_list').DataTable({
                 "dom": 'Bfrtip',
+                "iDisplayLength": 50,
                 "lengthMenu": [
                     [10, 25, 50, 100, -1],
                     [10, 25, 50, 100, "All"]
@@ -362,7 +399,7 @@
                 "processing": true,
                 "serverSide": true,
                 "ajax": {
-                    "url": "{{ url('patientsList') }}",
+                    "url": "{{ url('investigationHistoryList', request()->get('patient_id')) }}",
                     "type": "GET"
                 },
                 "columns": [{
@@ -370,24 +407,46 @@
                         name: "DT_RowIndex"
                     },
                     {
-                        data: "fullname",
-                        name: "fullname"
-                    },
-                    {
-                        data: "file_no",
-                        name: "file_no"
-                    },
-                    {
-                        data: "hmo_id",
-                        name: "hmo_id"
+                        data: "result",
+                        name: "result"
                     },
                     {
                         data: "created_at",
                         name: "created_at"
                     },
+                ],
+
+                "paging": true
+            });
+        });
+    </script>
+    <script>
+        $(function() {
+            $('#presc_history_list').DataTable({
+                "dom": 'Bfrtip',
+                "iDisplayLength": 50,
+                "lengthMenu": [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, "All"]
+                ],
+                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{ url('prescHistoryList', request()->get('patient_id')) }}",
+                    "type": "GET"
+                },
+                "columns": [{
+                        data: "DT_RowIndex",
+                        name: "DT_RowIndex"
+                    },
                     {
-                        data: "view",
-                        name: "view"
+                        data: "dose",
+                        name: "dose"
+                    },
+                    {
+                        data: "created_at",
+                        name: "created_at"
                     },
                 ],
 
@@ -399,6 +458,7 @@
         $(function() {
             $('#scheduled_consult_list').DataTable({
                 "dom": 'Bfrtip',
+                "iDisplayLength": 50,
                 "lengthMenu": [
                     [10, 25, 50, 100, -1],
                     [10, 25, 50, 100, "All"]
@@ -459,57 +519,6 @@
             }
         }
 
-        function removeProdRow(obj) {
-            $(obj).closest('tr').remove();
-        }
-
-        function setSearchValProd(name, id, price) {
-            var mk = `
-                <tr>
-                    <td>${name}</td>
-                    <td>${price}</td>
-                    <td>
-                        <input type = 'text' class='form-control' name=consult_presc_dose[]>
-                        <input type = 'hidden' name=consult_presc_id[] value='${id}'>
-                    </td>
-                    <td><button class='btn btn-danger' onclick="removeProdRow(this)">x</button></td>
-                </tr>
-            `;
-
-            $('#selected-products').append(mk);
-            $('#consult_presc_res').empty();
-
-        }
-
-        function searchProducts(q) {
-            if (q != "") {
-                searchRequest = $.ajax({
-                    url: "{{ url('live-search-products') }}",
-                    method: "GET",
-                    dataType: 'json',
-                    data: {
-                        term: q
-                    },
-                    success: function(data) {
-                        // Clear existing options from the select field
-                        $('#consult_presc_res').html('');
-                        console.log(data);
-                        // data = JSON.parse(data);
-
-                        for (var i = 0; i < data.length; i++) {
-                            // Append the new options to the list field
-                            var mk =
-                                `<li class='list-group-item' 
-                                   style="background-color: #f0f0f0;"
-                                   onclick="setSearchValProd('${data[i].product_name}[${data[i].product_code}](${data[i].stock.current_quantity} avail.)', '${data[i].id}', '${data[i].price.initial_sale_price}')">
-                                   [${data[i].category.category_name}]<b>${data[i].product_name}[${data[i].product_code}]</b> (${data[i].stock.current_quantity} avail.) NGN ${data[i].price.initial_sale_price}</li>`;
-                            $('#consult_presc_res').append(mk);
-                            $('#consult_presc_res').show();
-                        }
-                    }
-                });
-            }
-        }
 
         function setSearchValSer(name, id, price) {
             var mk = `
@@ -517,15 +526,15 @@
                     <td>${name}</td>
                     <td>${price}</td>
                     <td>
-                        <input type = 'text' class='form-control' name=consult_inves_note[]>
-                        <input type = 'hidden' name=consult_inves_id[] value='${id}'>
+                        <input type = 'text' class='form-control' name=consult_invest_note[]>
+                        <input type = 'hidden' name=consult_invest_id[] value='${id}'>
                     </td>
                     <td><button class='btn btn-danger' onclick="removeProdRow(this)">x</button></td>
                 </tr>
             `;
 
             $('#selected-services').append(mk);
-            $('#consult_inves_res').empty();
+            $('#consult_invest_res').html('');
 
         }
 
@@ -540,19 +549,19 @@
                     },
                     success: function(data) {
                         // Clear existing options from the select field
-                        $('#consult_inves_res').html('');
+                        $('#consult_invest_res').html('');
                         console.log(data);
                         // data = JSON.parse(data);
 
                         for (var i = 0; i < data.length; i++) {
                             // Append the new options to the list field
                             var mk =
-                                `<li class='list-group-item' 
+                                `<li class='list-group-item'
                                    style="background-color: #f0f0f0;"
                                    onclick="setSearchValSer('${data[i].service_name}[${data[i].service_code}]', '${data[i].id}', '${data[i].price.sale_price}')">
                                    [${data[i].category.category_name}]<b>${data[i].service_name}[${data[i].service_code}]</b> NGN ${data[i].price.sale_price}</li>`;
-                            $('#consult_inves_res').append(mk);
-                            $('#consult_inves_res').show();
+                            $('#consult_invest_res').append(mk);
+                            $('#consult_invest_res').show();
                         }
                     }
                 });

@@ -21,7 +21,7 @@
         <div class="tab-pane fade show active" id="new" role="tabpanel" aria-labelledby="new_tab">
             <div class="card mt-2">
                 <div class="card-body table-responsive">
-                    <table class="table" id="new_consult_list">
+                    <table class="table table-sm table-bordered table-striped" id="new_consult_list">
                         <thead>
                             <th>#</th>
                             <th>Patient Name</th>
@@ -39,7 +39,7 @@
         <div class="tab-pane fade" id="cont" role="tabpanel" aria-labelledby="cont_tab">
             <div class="card mt-2">
                 <div class="card-body table-responsive">
-                    <table class="table" id="prev_consult_list">
+                    <table class="table table-sm table-bordered table-striped" id="prev_consult_list">
                         <thead>
                             <th>#</th>
                             <th>Patient Name</th>
@@ -57,7 +57,7 @@
         <div class="tab-pane fade" id="scheduled" role="tabpanel" aria-labelledby="scheduled_tab">
             <div class="card mt-2">
                 <div class="card-body table-responsive">
-                    <table class="table" id="scheduled_consult_list">
+                    <table class="table table-sm table-bordered table-striped" id="scheduled_consult_list">
                         <thead>
                             <th>#</th>
                             <th>Patient Name</th>
@@ -81,6 +81,7 @@
         $(function() {
             $('#new_consult_list').DataTable({
                 "dom": 'Bfrtip',
+                "iDisplayLength": 50,
                 "lengthMenu": [
                     [10, 25, 50, 100, -1],
                     [10, 25, 50, 100, "All"]
@@ -134,6 +135,7 @@
         $(function() {
             $('#prev_consult_list').DataTable({
                 "dom": 'Bfrtip',
+                "iDisplayLength": 50,
                 "lengthMenu": [
                     [10, 25, 50, 100, -1],
                     [10, 25, 50, 100, "All"]
@@ -187,6 +189,7 @@
         $(function() {
             $('#scheduled_consult_list').DataTable({
                 "dom": 'Bfrtip',
+                "iDisplayLength": 50,
                 "lengthMenu": [
                     [10, 25, 50, 100, -1],
                     [10, 25, 50, 100, "All"]

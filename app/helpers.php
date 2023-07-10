@@ -8,6 +8,7 @@ use App\Models\LabService;
 use App\Models\ModeOfPayment;
 use App\Models\BudgetYear;
 use App\Models\Dependant;
+use App\Models\StoreStock;
 
 const NAIRA_CODE = '₦';
 const REFERENCE_RANDOM_NUMBER_LENGTH = 6;
@@ -206,7 +207,7 @@ function dateSplit($date)
 
 function reOrderAlertFlag($productId, $reOrderAlert)
 {
-    $storeStocks = StoreStoke::where('product_id', '=', $productId)->get();
+    $storeStocks = StoreStock::where('product_id', '=', $productId)->get();
     $val = "";
 
     foreach ($storeStocks as $storeStock) {
@@ -236,7 +237,7 @@ function generateFileNo()
     // $timestamp =  $dt->year . $dt->month;
     // $fileNumber = randomDigits(REFERENCE_FILE_NUMBER_LENGTH);
     // return  $fileNumber . $timestamp;
-    $p = \App\Patient::orderBy('file_no', 'DESC')->first()->file_no;
+    $p = \App\Models\Patient::orderBy('file_no', 'DESC')->first()->file_no;
     return $p + 1;
 }
 

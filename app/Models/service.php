@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Service extends Model
+class service extends Model
 {
     use HasFactory;
 
@@ -35,9 +35,8 @@ class Service extends Model
     /**
      * Get the prices that owns the service
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function prices(): BelongsTo
+    public function prices()
     {
         return $this->belongsTo(price_list::class,'price_list_id','id');
     }

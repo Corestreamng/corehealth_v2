@@ -106,13 +106,13 @@
             </div>
         </li>
         <li class="nav-item">
-            <a class="nav-link" data-toggle="collapse" href="#returning_patient" aria-expanded="false"
-                aria-controls="returning_patient">
+            <a class="nav-link" data-toggle="collapse" href="#acc_patient" aria-expanded="false"
+                aria-controls="acc_patient">
                 <i class="mdi mdi-crosshairs-gps menu-icon"></i>
                 <span class="menu-title">Accounts</span>
                 <i class="menu-arrow"></i>
             </a>
-            <div class="collapse" id="returning_patient">
+            <div class="collapse" id="acc_patient">
                 <ul class="nav flex-column sub-menu">
                     <li class="nav-item">
                         <a class="nav-link" href="{{route('product-or-service-request.index')}}">Search</a>
