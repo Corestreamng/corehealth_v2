@@ -17,6 +17,7 @@ use App\Models\ProductOrServiceRequest;
 use App\Models\ProductRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class EncounterController extends Controller
 {
@@ -32,105 +33,115 @@ class EncounterController extends Controller
 
     public function NewEncounterList()
     {
-        $doc = Staff::where('user_id', Auth::id())->first();
-        $queue = DoctorQueue::where(function ($q) use ($doc) {
-            $q->where('clinic_id', $doc->clinic_id);
-            $q->orWhere('staff_id', $doc->id);
-        })
-            ->where('status', 1)->orderBy('created_at', 'DESC')->get();
-        //dd($pc);
-        return Datatables::of($queue)
-            ->addIndexColumn()
-            ->editColumn('fullname', function ($queue) {
-                $patient = patient::find($queue->patient_id);
-                return (userfullname($patient->user_id));
+        try {
+            $doc = Staff::where('user_id', Auth::id())->first();
+            $queue = DoctorQueue::where(function ($q) use ($doc) {
+                $q->where('clinic_id', $doc->clinic_id);
+                $q->orWhere('staff_id', $doc->id);
             })
+                ->where('status', 1)->orderBy('created_at', 'DESC')->get();
+            //dd($pc);
+            return Datatables::of($queue)
+                ->addIndexColumn()
+                ->editColumn('fullname', function ($queue) {
+                    $patient = patient::find($queue->patient_id);
+                    return (userfullname($patient->user_id));
+                })
 
-            ->editColumn('created_at', function ($note) {
-                return date('h:i a D M j, Y', strtotime($note->created_at));
-            })
-            ->editColumn('hmo_id', function ($queue) {
-                $patient = patient::find($queue->patient_id);
-                return Hmo::find($patient->hmo_id)->name ?? 'N/A';
-            })
-            ->editColumn('clinic_id', function ($queue) {
-                $clinic = Clinic::find($queue->clinic_id);
-                return $clinic->name ?? 'N/A';
-            })
-            ->editColumn('staff_id', function ($queue) use ($doc) {
-                return (userfullname($doc->user_id));
-            })
-            ->addColumn('file_no', function ($queue) {
-                $patient = patient::find($queue->patient_id);
-                return $patient->file_no;
-            })
-            ->addColumn('view', function ($queue) {
+                ->editColumn('created_at', function ($note) {
+                    return date('h:i a D M j, Y', strtotime($note->created_at));
+                })
+                ->editColumn('hmo_id', function ($queue) {
+                    $patient = patient::find($queue->patient_id);
+                    return Hmo::find($patient->hmo_id)->name ?? 'N/A';
+                })
+                ->editColumn('clinic_id', function ($queue) {
+                    $clinic = Clinic::find($queue->clinic_id);
+                    return $clinic->name ?? 'N/A';
+                })
+                ->editColumn('staff_id', function ($queue) use ($doc) {
+                    return (userfullname($doc->user_id));
+                })
+                ->addColumn('file_no', function ($queue) {
+                    $patient = patient::find($queue->patient_id);
+                    return $patient->file_no;
+                })
+                ->addColumn('view', function ($queue) {
 
-                // if (Auth::user()->hasPermissionTo('user-show') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
+                    // if (Auth::user()->hasPermissionTo('user-show') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
 
-                $url =  route(
-                    'encounters.create',
-                    ['patient_id' => $queue->patient_id, 'req_entry_id' => $queue->request_entry_id, 'queue_id' => $queue->id]
-                );
-                return '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> Encounter</a>';
-                // } else {
+                    $url =  route(
+                        'encounters.create',
+                        ['patient_id' => $queue->patient_id, 'req_entry_id' => $queue->request_entry_id, 'queue_id' => $queue->id]
+                    );
+                    return '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> Encounter</a>';
+                    // } else {
 
-                //     $label = '<span class="label label-warning">Not Allowed</span>';
-                //     return $label;
-                // }
-            })
-            ->rawColumns(['fullname', 'view',])
-            ->make(true);
+                    //     $label = '<span class="label label-warning">Not Allowed</span>';
+                    //     return $label;
+                    // }
+                })
+                ->rawColumns(['fullname', 'view',])
+                ->make(true);
+        } catch (\Exception $e) {
+            Log::error($e->getMessage(), ['exception' => $e]);
+            return redirect()->back()->withInput()->with('error', $e);
+        }
     }
 
     public function PrevEncounterList()
     {
-        $doc = Staff::where('user_id', Auth::id())->first();
-        $queue = DoctorQueue::where(function ($q) use ($doc) {
-            $q->where('clinic_id', $doc->clinic_id);
-            $q->orWhere('staff_id', $doc->id);
-        })
-        ->where('status', '>', 1)->orderBy('created_at', 'DESC')->get();
-        //dd($pc);
-        return Datatables::of($queue)
-            ->addIndexColumn()
-            ->editColumn('fullname', function ($queue) {
-                $patient = patient::find($queue->patient_id);
-                return (userfullname($patient->user_id));
+        try {
+            $doc = Staff::where('user_id', Auth::id())->first();
+            $queue = DoctorQueue::where(function ($q) use ($doc) {
+                $q->where('clinic_id', $doc->clinic_id);
+                $q->orWhere('staff_id', $doc->id);
             })
+                ->where('status', '>', 1)->orderBy('created_at', 'DESC')->get();
+            //dd($pc);
+            return Datatables::of($queue)
+                ->addIndexColumn()
+                ->editColumn('fullname', function ($queue) {
+                    $patient = patient::find($queue->patient_id);
+                    return (userfullname($patient->user_id));
+                })
 
-            ->editColumn('created_at', function ($note) {
-                return date('h:i a D M j, Y', strtotime($note->created_at));
-            })
-            ->editColumn('hmo_id', function ($queue) {
-                $patient = patient::find($queue->patient_id);
-                return Hmo::find($patient->hmo_id)->name ?? 'N/A';
-            })
-            ->editColumn('clinic_id', function ($queue) {
-                $clinic = Clinic::find($queue->clinic_id);
-                return $clinic->name ?? 'N/A';
-            })
-            ->editColumn('staff_id', function ($queue) use ($doc) {
-                return (userfullname($doc->user_id));
-            })
-            ->addColumn('file_no', function ($queue) {
-                $patient = patient::find($queue->patient_id);
-                return $patient->file_no;
-            })
-            ->addColumn('view', function ($queue) {
+                ->editColumn('created_at', function ($note) {
+                    return date('h:i a D M j, Y', strtotime($note->created_at));
+                })
+                ->editColumn('hmo_id', function ($queue) {
+                    $patient = patient::find($queue->patient_id);
+                    return Hmo::find($patient->hmo_id)->name ?? 'N/A';
+                })
+                ->editColumn('clinic_id', function ($queue) {
+                    $clinic = Clinic::find($queue->clinic_id);
+                    return $clinic->name ?? 'N/A';
+                })
+                ->editColumn('staff_id', function ($queue) use ($doc) {
+                    return (userfullname($doc->user_id));
+                })
+                ->addColumn('file_no', function ($queue) {
+                    $patient = patient::find($queue->patient_id);
+                    return $patient->file_no;
+                })
+                ->addColumn('view', function ($queue) {
 
-                // if (Auth::user()->hasPermissionTo('user-show') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
+                    // if (Auth::user()->hasPermissionTo('user-show') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
 
-                $url =  route('patient.show', $queue->patient_id);
-                return '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> View</a>';
-                // } else {
+                    $url =  route('patient.show', $queue->patient_id);
+                    return '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> View</a>';
+                    // } else {
 
-                //     $label = '<span class="label label-warning">Not Allowed</span>';
-                //     return $label;
-                // }
-            })
-            ->rawColumns(['fullname', 'view',])
-            ->make(true);
+                    //     $label = '<span class="label label-warning">Not Allowed</span>';
+                    //     return $label;
+                    // }
+                })
+                ->rawColumns(['fullname', 'view',])
+                ->make(true);
+        } catch (\Exception $e) {
+            Log::error($e->getMessage(), ['exception' => $e]);
+            return redirect()->back()->withInput()->with('error', $e);
+        }
     }
 
     public function investigationHistoryList($patient_id)
@@ -148,7 +159,7 @@ class EncounterController extends Controller
                 $str .= "<br><b>Sample taken by:</b> " . ((isset($h->sample_taken_by) && $h->sample_taken_by != null) ? (userfullname($h->sample_taken_by) . ' (' . date('h:i a D M j, Y', strtotime($h->sample_date)) . ')') : "<span class='badge badge-warning'>Not taken</span>");
                 $str .= "<br><b>Results by:</b> " . ((isset($h->result_by) && $h->result_by != null) ? (userfullname($h->result_by) . ' (' . date('h:i a D M j, Y', strtotime($h->result_date)) . ')') : "<span class='badge badge-warning'>Awaiting Results</span>");
                 $str .= "<br><b>Request Note:</b> " . ((isset($h->note) && $h->note != null) ? ($h->note) : "<span class='badge badge-warning'>N/A</span><br>");
-                return "</small>".$str;
+                return "</small>" . $str;
             })
             ->editColumn('result', function ($his) {
                 $str = "<span class = 'badge badge-success'>" . $his->service->service_name . "</span><hr>";
@@ -166,8 +177,8 @@ class EncounterController extends Controller
         //dd($pc);
         return Datatables::of($his)
             ->addIndexColumn()
-            ->addColumn('select', function($h){
-                $str = "<input type='checkbox' name='selectedInvestBillRows[]' onclick='checkInvestBillRow(this)' data-price = '".$h->service->price->sale_price."' value='$h->id' class='form-control'> ";
+            ->addColumn('select', function ($h) {
+                $str = "<input type='checkbox' name='selectedInvestBillRows[]' onclick='checkInvestBillRow(this)' data-price = '" . $h->service->price->sale_price . "' value='$h->id' class='form-control'> ";
                 return $str;
             })
             ->editColumn('created_at', function ($h) {
@@ -178,7 +189,7 @@ class EncounterController extends Controller
                 $str .= "<br><b>Sample taken by:</b> " . ((isset($h->sample_taken_by) && $h->sample_taken_by != null) ? (userfullname($h->sample_taken_by) . ' (' . date('h:i a D M j, Y', strtotime($h->sample_date)) . ')') : "<span class='badge badge-warning'>Not taken</span>");
                 $str .= "<br><b>Results by:</b> " . ((isset($h->result_by) && $h->result_by != null) ? (userfullname($h->result_by) . ' (' . date('h:i a D M j, Y', strtotime($h->result_date)) . ')') : "<span class='badge badge-warning'>Awaiting Results</span>");
                 $str .= "<br><b>Request Note:</b> " . ((isset($h->note) && $h->note != null) ? ($h->note) : "<span class='badge badge-warning'>N/A</span><br>");
-                return "</small>".$str;
+                return "</small>" . $str;
             })
             ->editColumn('result', function ($his) {
                 $str = "<span class = 'badge badge-success'>" . $his->service->service_name . "</span><hr>";
@@ -201,7 +212,7 @@ class EncounterController extends Controller
                 $str .= "<b>Requested By: </b>" . ((isset($h->doctor_id) && $h->doctor_id != null) ? (userfullname($h->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-warning'>N/A</span>") . '<br>';
                 $str .= "<b>Last Updated On: </b>" . date('h:i a D M j, Y', strtotime($h->updated_at)) . '<br>';
                 $str .= "<b>Billed/ Dispensed By: </b>" . ((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->billed_date)) . ')') : "<span class='badge badge-warning'>Not billed</span><br>");
-                return "</small>".$str;
+                return "</small>" . $str;
             })
             ->editColumn('dose', function ($his) {
                 $str = "<span class = 'badge badge-success'>[" . (($his->product->product_code) ? $his->product->product_code : '') . "]" . $his->product->product_name . "</span>";
@@ -219,8 +230,8 @@ class EncounterController extends Controller
         //dd($pc);
         return Datatables::of($his)
             ->addIndexColumn()
-            ->addColumn('select', function($h){
-                $str = "<input type='checkbox' name='selectedPrescBillRows[]' onclick='checkPrescBillRow(this)' data-price = '".$h->product->price->current_sale_price."' value='$h->id' class='form-control'> ";
+            ->addColumn('select', function ($h) {
+                $str = "<input type='checkbox' name='selectedPrescBillRows[]' onclick='checkPrescBillRow(this)' data-price = '" . $h->product->price->current_sale_price . "' value='$h->id' class='form-control'> ";
                 return $str;
             })
             ->editColumn('created_at', function ($h) {
@@ -228,14 +239,14 @@ class EncounterController extends Controller
                 $str .= "<b>Requested By: </b>" . ((isset($h->doctor_id) && $h->doctor_id != null) ? (userfullname($h->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-warning'>N/A</span>") . '<br>';
                 $str .= "<b>Last Updated On: </b>" . date('h:i a D M j, Y', strtotime($h->updated_at)) . '<br>';
                 $str .= "<b>Billed/ Dispensed By: </b>" . ((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->billed_date)) . ')') : "<span class='badge badge-warning'>Not billed</span><br>");
-                return "</small>".$str;
+                return "</small>" . $str;
             })
             ->editColumn('dose', function ($his) {
                 $str = "<span class = 'badge badge-success'>[" . (($his->product->product_code) ? $his->product->product_code : '') . "]" . $his->product->product_name . "</span>";
                 $str .= "<hr> <b>Dose/Freq:</b> " . ($his->dose ?? 'N/A');
                 return $str;
             })
-            ->rawColumns(['created_at', 'dose','select'])
+            ->rawColumns(['created_at', 'dose', 'select'])
             ->make(true);
     }
 
@@ -285,9 +296,10 @@ class EncounterController extends Controller
             $req_entry = ProductOrServiceRequest::find(request()->get('req_entry_id'));
             return view('admin.doctors.new_encounter')->with(['patient' => $patient, 'doctor' => $doctor, 'clinic' => $clinic, 'req_entry' => $req_entry]);
         } catch (\Exception $e) {
-
+            Log::error($e->getMessage(), ['exception' => $e]);
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
+
     }
 
     /**
@@ -353,8 +365,6 @@ class EncounterController extends Controller
                     $invest->save();
 
                     $req_entr = new ProductOrServiceRequest;
-
-
                 }
             }
 
@@ -386,6 +396,7 @@ class EncounterController extends Controller
             return redirect()->route('encounters.index')->with(['message' => "Encounter Notes Saved Successfully", 'message_type' => 'success']);
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error($e->getMessage(), ['exception' => $e]);
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
     }

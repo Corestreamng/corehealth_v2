@@ -501,6 +501,59 @@
         });
     </script>
     <script>
+        function removeProdRow(obj) {
+            $(obj).closest('tr').remove();
+        }
+
+        function setSearchValProd(name, id, price) {
+            var mk = `
+                <tr>
+                    <td>${name}</td>
+                    <td>${price}</td>
+                    <td>
+                        <input type = 'text' class='form-control' name=consult_presc_dose[] required>
+                        <input type = 'hidden' name=consult_presc_id[] value='${id}'>
+                    </td>
+                    <td><button class='btn btn-danger' onclick="removeProdRow(this)">x</button></td>
+                </tr>
+            `;
+
+            $('#selected-products').append(mk);
+            $('#consult_presc_res').html('');
+
+        }
+
+        function searchProducts(q) {
+            if (q != "") {
+                searchRequest = $.ajax({
+                    url: "{{ url('live-search-products') }}",
+                    method: "GET",
+                    dataType: 'json',
+                    data: {
+                        term: q
+                    },
+                    success: function(data) {
+                        // Clear existing options from the select field
+                        $('#consult_presc_res').html('');
+                        console.log(data);
+                        // data = JSON.parse(data);
+
+                        for (var i = 0; i < data.length; i++) {
+                            // Append the new options to the list field
+                            var mk =
+                                `<li class='list-group-item'
+                                   style="background-color: #f0f0f0;"
+                                   onclick="setSearchValProd('${data[i].product_name}[${data[i].product_code}](${data[i].stock.current_quantity} avail.)', '${data[i].id}', '${data[i].price.initial_sale_price}')">
+                                   [${data[i].category.category_name}]<b>${data[i].product_name}[${data[i].product_code}]</b> (${data[i].stock.current_quantity} avail.) NGN ${data[i].price.initial_sale_price}</li>`;
+                            $('#consult_presc_res').append(mk);
+                            $('#consult_presc_res').show();
+                        }
+                    }
+                });
+            }
+        }
+    </script>
+    <script>
         function switch_tab(e, id_of_next_tab) {
             e.preventDefault();
             $('#' + id_of_next_tab).click();

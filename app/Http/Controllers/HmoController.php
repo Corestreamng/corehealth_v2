@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Hmo;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\DataTables;
 use RealRashid\SweetAlert\Facades\Alert;
@@ -50,28 +51,33 @@ class HmoController extends Controller
      */
     public function store(Request $request)
     {
-        $rules =
-            [
-                'name' => 'required',
-                'description' => 'nullable',
-                'discount' => 'required'
+        try {
+            $rules =
+                [
+                    'name' => 'required',
+                    'description' => 'nullable',
+                    'discount' => 'required'
 
-            ];
-        $v = Validator::make($request->all(), $rules);
-        if ($v->fails()) {
-            return back()->with('errors', $v->messages()->all())->withInput();
-        } else {
+                ];
+            $v = Validator::make($request->all(), $rules);
+            if ($v->fails()) {
+                return back()->with('errors', $v->messages()->all())->withInput();
+            } else {
 
-            $hmo              = new Hmo;
-            $hmo->name        = $request->name;
-            $hmo->desc = $request->description;
-            $hmo->discount    = $request->discount;
+                $hmo              = new Hmo;
+                $hmo->name        = $request->name;
+                $hmo->desc = $request->description;
+                $hmo->discount    = $request->discount;
 
-            if ($hmo->save()) {
-                $msg = 'The HMO [' . $hmo->name . '] was successfully Saved.';
-                Alert::success('Success ', $msg);
-                return redirect()->route('hmo.index')->withMessage($msg)->withMessageType('success');
+                if ($hmo->save()) {
+                    $msg = 'The HMO [' . $hmo->name . '] was successfully Saved.';
+                    Alert::success('Success ', $msg);
+                    return redirect()->route('hmo.index')->withMessage($msg)->withMessageType('success');
+                }
             }
+        } catch (\Exception $e) {
+            return redirect()->back()->withInput()->with('error', $e);
+            Log::error($e->getMessage(), ['exception' => $e]);
         }
     }
 
@@ -94,7 +100,7 @@ class HmoController extends Controller
      */
     public function edit(Hmo $hmo)
     {
-        return view('admin.hmo.edit',compact('hmo'));
+        return view('admin.hmo.edit', compact('hmo'));
     }
 
     /**
@@ -106,27 +112,32 @@ class HmoController extends Controller
      */
     public function update(Request $request, Hmo $hmo)
     {
-        $rules =
-            [
-                'name' => 'required',
-                'description' => 'nullable',
-                'discount' => 'required'
+        try {
+            $rules =
+                [
+                    'name' => 'required',
+                    'description' => 'nullable',
+                    'discount' => 'required'
 
-            ];
-        $v = Validator::make($request->all(), $rules);
-        if ($v->fails()) {
-            return back()->with('errors', $v->messages()->all())->withInput();
-        } else {
+                ];
+            $v = Validator::make($request->all(), $rules);
+            if ($v->fails()) {
+                return back()->with('errors', $v->messages()->all())->withInput();
+            } else {
 
-            $hmo->name        = $request->name;
-            $hmo->desc        = $request->description;
-            $hmo->discount    = $request->discount;
+                $hmo->name        = $request->name;
+                $hmo->desc        = $request->description;
+                $hmo->discount    = $request->discount;
 
-            if ($hmo->update()) {
-                $msg = 'The HMO [' . $hmo->name . '] was successfully Updated.';
-                Alert::success('Success ', $msg);
-                return redirect()->route('hmo.index')->withMessage($msg)->withMessageType('success');
+                if ($hmo->update()) {
+                    $msg = 'The HMO [' . $hmo->name . '] was successfully Updated.';
+                    Alert::success('Success ', $msg);
+                    return redirect()->route('hmo.index')->withMessage($msg)->withMessageType('success');
+                }
             }
+        } catch (\Exception $e) {
+            return redirect()->back()->withInput()->with('error', $e);
+            Log::error($e->getMessage(), ['exception' => $e]);
         }
     }
 

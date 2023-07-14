@@ -159,7 +159,7 @@
                     data-target="#accountsCardBody" aria-expanded="false" aria-controls="accountsCardBody">Toggle</button>
             </div>
             <div class="collapse card-body" id="accountsCardBody">
-                accounts
+                
             </div>
         </div>
         <div class="card mt-3">
@@ -381,7 +381,7 @@
         aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
-                <form action="{{route('service-save-result')}}" method="post" onsubmit="copyResTemplateToField()" >
+                <form action="{{ route('service-save-result') }}" method="post" onsubmit="copyResTemplateToField()">
                     @csrf
                     <div class="modal-header">
                         <h5 class="modal-title" id="investResModalLabel">Enter Result (<span
@@ -400,7 +400,9 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="submit" onclick="return confirm('Are you sure you wish to save this result entry? It can not be edited after!')" class="btn btn-primary">Save changes</button>
+                        <button type="submit"
+                            onclick="return confirm('Are you sure you wish to save this result entry? It can not be edited after!')"
+                            class="btn btn-primary">Save changes</button>
                     </div>
                 </form>
             </div>
@@ -805,7 +807,7 @@
             $('#investResModal').modal('show');
         }
 
-        function copyResTemplateToField(){
+        function copyResTemplateToField() {
             $('#invest_res_template_submited').val($('#invest_res_template').html());
             return true;
         }

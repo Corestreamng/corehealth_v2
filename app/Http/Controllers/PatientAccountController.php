@@ -2,13 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Clinic;
-use App\Models\Staff;
+use App\Models\PatientAccount;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Response;
 
-class ClinicController extends Controller
+class PatientAccountController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -17,19 +14,7 @@ class ClinicController extends Controller
      */
     public function index()
     {
-        
-    }
-
-
-    public function getDoctors($clinic_id)
-    {
-        try {
-            $doctors = Staff::with(['user'])->where('clinic_id', $clinic_id)->where('status', 1)->get();
-            return response(json_encode($doctors));
-        } catch (\Exception $e) {
-            Log::error($e->getMessage(), ['exception' => $e]);
-            return response(json_encode("An error occurred " . $e->getMessage()), 500);
-        }
+        //
     }
 
     /**
@@ -56,10 +41,10 @@ class ClinicController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\Clinic  $clinic
+     * @param  \App\Models\PatientAccount  $patientAccount
      * @return \Illuminate\Http\Response
      */
-    public function show(Clinic $clinic)
+    public function show(PatientAccount $patientAccount)
     {
         //
     }
@@ -67,10 +52,10 @@ class ClinicController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\Clinic  $clinic
+     * @param  \App\Models\PatientAccount  $patientAccount
      * @return \Illuminate\Http\Response
      */
-    public function edit(Clinic $clinic)
+    public function edit(PatientAccount $patientAccount)
     {
         //
     }
@@ -79,10 +64,10 @@ class ClinicController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Clinic  $clinic
+     * @param  \App\Models\PatientAccount  $patientAccount
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Clinic $clinic)
+    public function update(Request $request, PatientAccount $patientAccount)
     {
         //
     }
@@ -90,10 +75,10 @@ class ClinicController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Clinic  $clinic
+     * @param  \App\Models\PatientAccount  $patientAccount
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Clinic $clinic)
+    public function destroy(PatientAccount $patientAccount)
     {
         //
     }
