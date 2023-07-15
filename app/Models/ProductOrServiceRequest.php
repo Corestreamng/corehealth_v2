@@ -30,6 +30,10 @@ class ProductOrServiceRequest extends Model
         return $this->belongsTo(invoice::class,'invoice_id','id');
     }
 
+    public function payment(){
+        return $this->belongsTo(payment::class,'payment_id','id');
+    }
+
     public function user(){
         return $this->belongsTo(User::class,'user_id');
     }

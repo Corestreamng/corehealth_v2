@@ -391,7 +391,7 @@ class PatientController extends Controller
             $statuses = UserCategory::all();
             $permissions = Permission::pluck('name', 'id')->all();
             $patient_acc = $patient->account;
-            return view('admin.patients.show1', compact('user', 'roles', 'statuses', 'permissions', 'patient'));
+            return view('admin.patients.show1', compact('user', 'roles', 'statuses', 'permissions', 'patient', 'patient_acc'));
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
             return redirect()->back()->withInput()->with('error', $e);

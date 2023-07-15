@@ -159,7 +159,52 @@
                     data-target="#accountsCardBody" aria-expanded="false" aria-controls="accountsCardBody">Toggle</button>
             </div>
             <div class="collapse card-body" id="accountsCardBody">
-                
+                @if(null != $patient_acc)
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead class="bg-dark text-light">
+                                <th>Account Id</th>
+                                <th>Account bal</th>
+                                <th>Last Updated</th>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>{{$patient_acc->id}}</td>
+                                    <td>{{$patient_acc->balance}}</td>
+                                    <td>{{date('h:i a D M j, Y', strtotime($patient_acc->updated_at))}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <hr>
+                    <h5>Make Deposit</h5>
+                    <form action="{{route('account-make-deposit')}}" method="post">
+                        @csrf
+                        <input type="hidden" name="patient_id" value="{{$patient->id}}">
+                        <input type="hidden" name="acc_id" value="{{$patient_acc->id}}">
+                        <div class="form-group">
+                            <label for="">Amount | <small>Enter negative values for debt / credit</small></label>
+                            <input type="number" name="amount" id="" class="form-control" placeholder="Enter amount to deposit">
+                        </div>
+                        <button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure you wish to save this deposit?')">Save</button>
+                    </form>
+                @else
+                    <h4>Patient Has no acc</h4>
+                @endif
+                <hr>
+                All Previous Transactions
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered table-striped" style="width: 100%" id="payment_history_list">
+                        <thead>
+                            <th>#</th>
+                            <th>Staff</th>
+                            <th>Amount</th>
+                            <th>Type</th>
+                            <th>Service(s)</th>
+                            <th>Date</th>
+                        </thead>
+                    </table>
+                </div>
             </div>
         </div>
         <div class="card mt-3">
@@ -451,6 +496,52 @@
                     {
                         data: "notes",
                         name: "notes"
+                    },
+                    {
+                        data: "created_at",
+                        name: "created_at"
+                    },
+                ],
+
+                "paging": true
+            });
+        });
+    </script>
+    <script>
+        $(function() {
+            $('#payment_history_list').DataTable({
+                "dom": 'Bfrtip',
+                "iDisplayLength": 50,
+                "lengthMenu": [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, "All"]
+                ],
+                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{ route('patientPaymentHistoryList', $patient->id) }}",
+                    "type": "GET"
+                },
+                "columns": [{
+                        data: "DT_RowIndex",
+                        name: "DT_RowIndex"
+                    },
+                    {
+                        data: "user_id",
+                        name: "user_id"
+                    },
+                    {
+                        data: "total",
+                        name: "total"
+                    },
+                    {
+                        data: "payment_type",
+                        name: "payment_type"
+                    },
+                    {
+                        data: "product_or_service_request",
+                        name: "product_or_service_request"
                     },
                     {
                         data: "created_at",

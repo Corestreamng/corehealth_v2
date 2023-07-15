@@ -24,8 +24,10 @@ use App\Http\Controllers\Account\paymentController;
 use App\Http\Controllers\Account\productAccountController;
 use App\Http\Controllers\EncounterController;
 use App\Http\Controllers\LabServiceRequestController;
+use App\Http\Controllers\PatientAccountController;
 use App\Http\Controllers\ProductRequestController;
 use App\Models\LabServiceRequest;
+use App\Models\PatientAccount;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -95,6 +97,8 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('product-bill-patient', [ProductRequestController::class, 'bill'])->name('product-bill-patient');
         Route::post('service-bill-patient', [LabServiceRequestController::class, 'bill'])->name('service-bill-patient');
         Route::post('service-save-result', [LabServiceRequestController::class, 'saveResult'])->name('service-save-result');
+        Route::post('account-make-deposit', [PatientAccountController::class, 'makeDeposit'])->name('account-make-deposit');
+        Route::get('patientPaymentHistoryList/{patient_id}', [PatientAccountController::class, 'patientPaymentHistoryList'])->name('patientPaymentHistoryList');
     });
 
     Route::group(['middleware' => ['auth']], function () {
