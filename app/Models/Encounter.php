@@ -14,6 +14,7 @@ class Encounter extends Model
         'service_request_id',
         'service_id',
         'patient_id',
+        'admission_request_id',
         'reasons_for_encounter',
         'notes',
         'status'
@@ -37,6 +38,10 @@ class Encounter extends Model
 
     public function patient(){
         return $this->belongsTo(patient::class, 'patient_id','id');
+    }
+
+    public function admission_request(){
+        return $this->hasOne(AdmissionRequest::class, 'admission_request_id', 'id');
     }
 }
 

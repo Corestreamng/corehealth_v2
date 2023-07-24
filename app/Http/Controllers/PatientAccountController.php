@@ -51,7 +51,7 @@ class PatientAccountController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error($e->getMessage(), ['exception' => $e]);
-            return redirect()->back()->withInput()->with('error', $e);
+            return redirect()->back()->withInput()->with('error',$e->getMessage());
         }
     }
 
@@ -71,8 +71,8 @@ class PatientAccountController extends Controller
             ->addColumn('product_or_service_request', function($hist){
                 $str = '';
                 foreach($hist->product_or_service_request as $rr){
-                    $str .= '<small>['.$rr->service->category->category_name.'] '
-                    .$rr->service->service_name.'('.$rr->service->service_code.')</small><br>';
+                    $str .= '<small>['.($rr->service->category->category_name ?? $rr->product->category->category_name).'] '
+                    .($rr->service->service_name ?? $rr->product->product_name).'('.($rr->service->service_code ?? $rr->product->product_code).')</small><br>';
                 }
                 return $str;
             })

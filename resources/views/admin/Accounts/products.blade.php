@@ -11,7 +11,7 @@
                     <div class="row">
                         <div class="col-sm-6">
                             {{-- {{ __('Services') }} --}}
-                            <a href="{{route('paid-products',$id)}}">Settled</a>
+                            <a href="{{ route('paid-products', $id) }}">Settled</a>
                         </div>
                         <div class="col-sm-6">
                             {{-- @if (auth()->user()->can('user-create')) --}}
@@ -24,25 +24,27 @@
                         </div>
                     </div>
                 </div>
-<form action="{{route('product-payment')}}" method="post">
-    @csrf
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table id="products-list" class="table table-sm table-bordered table-striped">
-                            <thead>
-                                <tr>
-                                    <th>SN</th>
-                                    <th>Product Name</th>
-                                    <th>Price</th>
-                                    <th>select</th>
-                                </tr>
-                            </thead>
-                        </table>
+                <form action="{{ route('product-payment') }}" method="post">
+                    @csrf
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table id="products-list" class="table table-sm table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>SN</th>
+                                        <th>Product Name</th>
+                                        <th>Price</th>
+                                        <th>Quantity</th>
+                                        <th>Select</th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <input type="hidden" name="id" id="myInput" value="{{ $id }}"> <br>
+                        <button type="submit" class="align-self-end btn btn-primary"
+                            style="margin-top: auto;">Proceed</button>
                     </div>
-                    <input type="hidden" name="id" id="myInput" value="{{$id}}">
-                    <button type="submit" class="align-self-end btn btn-lg btn-block btn-primary" style="margin-top: auto;">proceed</button>
-                </div>
-</form>
+                </form>
             </div>
         </div>
     </div>
@@ -56,7 +58,7 @@
     <script src="{{ asset('/plugins/dataT/datatables.js') }}" defer></script>
 
     <script>
-        const dar = document.getElementById('myInput'). value;
+        const dar = document.getElementById('myInput').value;
         console.log(dar);
         $(function() {
             $('#products-list').DataTable({
@@ -70,7 +72,7 @@
                 "processing": true,
                 "serverSide": true,
                 "ajax": {
-                    "url": "product-list/"+dar,
+                    "url": "product-list/" + dar,
                     "type": "GET"
                 },
                 "columns": [{
@@ -84,6 +86,9 @@
                     {
                         data: "product.price.current_sale_price",
                         name: "price"
+                    },
+                    {
+                        data:"qty"
                     },
                     {
                         data: "checkBox",

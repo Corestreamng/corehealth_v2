@@ -15,6 +15,7 @@ class Bed extends Model
         'unit',
         'price',
         'status',
+        'service_id',
         'occupant_id'
     ];
 
@@ -24,5 +25,9 @@ class Bed extends Model
 
     public function occupant(){
         return $this->belongsTo(patient::class, 'occupant_id', 'id');
+    }
+
+    public function service(){
+        return $this->hasOne(Service::class, 'id', 'service_id');
     }
 }

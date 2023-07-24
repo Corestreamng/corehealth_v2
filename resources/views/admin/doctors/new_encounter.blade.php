@@ -1,6 +1,10 @@
 @extends('admin.layouts.app')
 @section('title', 'New Encounter')
-@section('page_name', 'Consultations')
+@if (request()->get('admission_req_id') != '')
+    @section('page_name', 'Ward Round')
+@else
+    @section('page_name', 'Consultations')
+@endif
 @section('subpage_name', 'New Encounter')
 @section('content')
     <ul class="nav nav-tabs" id="myTab" role="tablist">
@@ -116,6 +120,32 @@
                             </tbody>
                         </table>
                     </div>
+                    @if (isset($admission_request))
+                        <hr>
+                        <h4>Admission Info <a href="{{ route('discharge-patient', $admission_request->id) }}"
+                                class="btn btn-warning"
+                                onclick="return confirm('Are you sure you wish to discharge ths patient?')">Discharge</a>
+                        </h4>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped">
+                                <tr>
+                                    <th>Admitted By</th>
+                                    <td>{{ userfullname($admission_request->doctor_id) }}</td>
+                                    <th>Admitted On </th>
+                                    <td>{{ date('h:i a D M j, Y', strtotime($admission_request->created_at)) }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Bed</th>
+                                    <td>{{ $admission_request->bed->name }}</td>
+                                    <th>Ward</th>
+                                    <td>{{ $admission_request->bed->ward }}, <b>Unit:</b>
+                                        {{ $admission_request->bed->unit ?? 'N/A' }}</td>
+                                </tr>
+                            </table>
+
+                        </div>
+                        <hr>
+                    @endif
                     <br><button type="button" onclick="switch_tab(event,'vitals_data_tab')"
                         class="btn btn-primary mr-2">Next</button>
                     <a href="{{ route('encounters.index') }}"
@@ -142,7 +172,8 @@
         <div class="tab-pane fade" id="investigation_hist" role="tabpanel" aria-labelledby="investigation_hist_tab">
             <div class="card mt-2">
                 <div class="card-body table-responsive">
-                    <table class="table table-sm table-bordered table-striped" style="width: 100%" id="investigation_history_list">
+                    <table class="table table-sm table-bordered table-striped" style="width: 100%"
+                        id="investigation_history_list">
                         <thead>
                             <th>#</th>
                             <th>Results</th>
@@ -164,7 +195,8 @@
         <div class="tab-pane fade" id="presc_hist" role="tabpanel" aria-labelledby="presc_hist_tab">
             <div class="card mt-2">
                 <div class="card-body table-responsive">
-                    <table class="table table-sm table-bordered table-striped" style="width: 100%" id="presc_history_list">
+                    <table class="table table-sm table-bordered table-striped" style="width: 100%"
+                        id="presc_history_list">
                         <thead>
                             <th>#</th>
                             <th>Product</th>
@@ -186,7 +218,8 @@
         <div class="tab-pane fade " id="encounter_hist" role="tabpanel" aria-labelledby="encounter_hist_tab">
             <div class="card mt-2">
                 <div class="card-body table-responsive">
-                    <table class="table table-sm table-bordered table-striped" style="width: 100%" id="encounter_history_list">
+                    <table class="table table-sm table-bordered table-striped" style="width: 100%"
+                        id="encounter_history_list">
                         <thead>
                             <th>#</th>
                             <th>Doctor</th>
@@ -226,10 +259,15 @@
             <div class="tab-pane fade" id="my_notes" role="tabpanel" aria-labelledby="my_notes_tab">
                 <div class="card mt-2">
                     <div class="card-body table-responsive">
-                        <input type="hidden" value="{{ $req_entry->service_id }}" name="req_entry_service_id" required>
-                        <input type="hidden" value="{{ $req_entry->id }}" name="req_entry_id">
+
+                        <input type="hidden" value="{{ $req_entry->service_id ?? 'ward_round' }}"
+                            name="req_entry_service_id" required>
+                        <input type="hidden" value="{{ $req_entry->id ?? 'ward_round' }}" name="req_entry_id">
                         <input type="hidden" value="{{ request()->get('patient_id') }}" name="patient_id">
-                        <input type="hidden" value="{{ request()->get('queue_id') }}" name="queue_id">
+                        <input type="hidden" value="{{ request()->get('queue_id') ?? 'ward_round' }}" name="queue_id">
+                        @if (request()->get('admission_req_id') != '')
+                            <input type="hidden" value="{{ request()->get('admission_req_id') }}" name="queue_id">
+                        @endif
                         {{-- <select name="reasons_for_encounter" id="reasons_for_encounter" class="form-control" multiple>
                             <option value="">--select reason--</option>
                         </select> --}}
@@ -322,16 +360,20 @@
             <div class="tab-pane fade" id="admission" role="tabpanel" aria-labelledby="admission_tab">
                 <div class="card mt-2">
                     <div class="card-body table-responsive">
-                        <label for="consult_admit">Admit Patient</label>
-                        <select name="consult_admit" id="consult_admit" class="form-control"
-                            onchange="toggleAdmitNote(this)">
-                            <option value="0">No</option>
-                            <option value="1">Yes</option>
-                        </select>
-                        <br>
-                        <div id="admit-note-div">
+                        @if (isset($admission_request))
+                            <h4>Currently Admitted</h4>
+                        @else
+                            <label for="consult_admit">Admit Patient</label>
+                            <select name="consult_admit" id="consult_admit" class="form-control"
+                                onchange="toggleAdmitNote(this)">
+                                <option value="0">No</option>
+                                <option value="1">Yes</option>
+                            </select>
+                            <br>
+                            <div id="admit-note-div">
 
-                        </div>
+                            </div>
+                        @endif
                         <br><button type="button" onclick="switch_tab(event,'investigations_tab')"
                             class="btn btn-secondary mr-2">
                             Prev

@@ -11,7 +11,7 @@
                     <div class="row">
                         <div class="col-sm-6">
 
-                            <a href="javascript:history.back()">unsettled</a>
+                            <a href="javascript:history.back()">Unsettled</a>
                         </div>
                         <div class="col-sm-6">
                             {{-- @if (auth()->user()->can('user-create')) --}}
@@ -38,7 +38,7 @@
                             </thead>
                         </table>
                     </div>
-                    <input type="hidden" name="id" id="myInput" value="{{$id}}">
+                    <input type="hidden" name="id" id="myInput" value="{{ $id }}">
 
                 </div>
 
@@ -55,7 +55,7 @@
     <script src="{{ asset('/plugins/dataT/datatables.js') }}" defer></script>
 
     <script>
-        const dar = document.getElementById('myInput'). value;
+        const dar = document.getElementById('myInput').value;
         console.log(dar);
         $(function() {
             $('#products-list').DataTable({
@@ -69,7 +69,7 @@
                 "processing": true,
                 "serverSide": true,
                 "ajax": {
-                    "url": "/settled-products/"+dar,
+                    "url": "/settled-products/" + dar,
                     "type": "GET"
                 },
                 "columns": [{

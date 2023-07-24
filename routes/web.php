@@ -22,13 +22,17 @@ use App\Http\Controllers\ClinicController;
 use App\Http\Controllers\Account\accountsController;
 use App\Http\Controllers\Account\paymentController;
 use App\Http\Controllers\Account\productAccountController;
+use App\Http\Controllers\AdmissionRequestController;
+use App\Http\Controllers\BedController;
 use App\Http\Controllers\EncounterController;
 use App\Http\Controllers\LabServiceRequestController;
 use App\Http\Controllers\PatientAccountController;
 use App\Http\Controllers\ProductRequestController;
+use App\Models\AdmissionRequest;
 use App\Models\LabServiceRequest;
 use App\Models\PatientAccount;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 
 /*
 |--------------------------------------------------------------------------
@@ -117,6 +121,12 @@ Route::group(['middleware' => ['auth']], function () {
     Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
         Route::resource('services', ServiceController::class);
+        Route::resource('beds', BedController::class);
+        Route::get('bed-list', [BedController::class, 'listBeds'])->name('bed-list');
+        Route::resource('admission-requests', AdmissionRequestController::class);
+        Route::get('discharge-patient/{admission_req_id}', [AdmissionRequestController::class, 'dischargePatient'])->name('discharge-patient');
+        Route::post('assign-bed', [AdmissionRequestController::class, 'assignBed'])->name('assign-bed');
+        Route::post('assign-bill', [AdmissionRequestController::class, 'assignBill'])->name('assign-bill');
         Route::get('services-list', [ServiceController::class, 'listServices'])->name('services-list');
         Route::get('servicess/{id}',[accountsController::class,'index'])->name('servicess');
         Route::get('services-list/{id}',[accountsController::class,'services'])->name('service-list');
@@ -179,6 +189,10 @@ Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
         Route::resource('product-or-service-request', ProductOrServiceRequestController::class);
         Route::get('product-services-requesters-list', [ProductOrServiceRequestController::class, 'productOrServicesRequestersList'])->name('product-services-requesters-list');
+        Route::get('admission-requests-list', [AdmissionRequestController::class, 'admissionRequests'])->name('admission-requests-list');
+        Route::get('my-admission-requests-list', [AdmissionRequestController::class, 'myAdmissionRequests'])->name('my-admission-requests-list');
+        Route::get('patient-admission-requests-list/{patient_id}', [AdmissionRequestController::class, 'patientAdmissionRequests'])->name('patient-admission-requests-list');
+        Route::resource('admission-requests', AdmissionRequestController::class);
     });
 
     Route::group(['middleware' => ['auth']], function () {

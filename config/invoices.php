@@ -28,14 +28,14 @@ return [
     ],
 
     'currency' => [
-        'code' => 'eur',
+        'code' => 'ngn',
         /*
          * Usually cents
          * Used when spelling out the amount and if your currency has decimals.
          *
          * Example: Amount in words: Eight hundred fifty thousand sixty-eight EUR and fifteen ct.
          */
-        'fraction' => 'ct.',
+        'fraction' => 'kb.',
         'symbol'   => '€',
         /*
          * Example: 19.00
@@ -61,6 +61,7 @@ return [
         // A4 = 210 mm x 297 mm = 595 pt x 842 pt
         'size'        => 'a4',
         'orientation' => 'portrait',
+        'dynamic_height' => true
     ],
 
     'disk' => 'local',

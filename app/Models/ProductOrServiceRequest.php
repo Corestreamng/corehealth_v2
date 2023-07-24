@@ -14,6 +14,8 @@ class ProductOrServiceRequest extends Model
         'user_id',
         'staff_user_id',
         'product_id',
+        'payment_id',
+        'qty',
         'service_id'
     ];
 

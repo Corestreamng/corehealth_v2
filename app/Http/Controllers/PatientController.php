@@ -14,6 +14,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\DataTables;
 use App\Http\Controllers\Controller;
+use App\Models\Bed;
 use App\Models\PatientAccount;
 use Illuminate\Support\Facades\File;
 use Intervention\Image\Facades\Image;
@@ -96,7 +97,7 @@ class PatientController extends Controller
                 ->make(true);
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
-            return redirect()->back()->withInput()->with('error', $e);
+            return redirect()->back()->withInput()->with('error',$e->getMessage());
         }
     }
 
@@ -161,7 +162,7 @@ class PatientController extends Controller
             }
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
-            return redirect()->back()->withInput()->with('error', $e);
+            return redirect()->back()->withInput()->with('error',$e->getMessage());
         }
     }
 
@@ -181,7 +182,7 @@ class PatientController extends Controller
             return view('admin.receptionist.send_queue', compact('family', 'products', 'services', 'clinics'));
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
-            return redirect()->back()->withInput()->with('error', $e);
+            return redirect()->back()->withInput()->with('error',$e->getMessage());
         }
     }
 
@@ -198,7 +199,7 @@ class PatientController extends Controller
             return view('admin.receptionist.new_patient')->with(['all_patients' => $all_patients, 'hmos' => $hmos]);
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
-            return redirect()->back()->withInput()->with('error', $e);
+            return redirect()->back()->withInput()->with('error',$e->getMessage());
         }
     }
 
@@ -373,7 +374,7 @@ class PatientController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error($e->getMessage(), ['exception' => $e]);
-            return redirect()->back()->withInput()->with('error', $e);
+            return redirect()->back()->withInput()->with('error',$e->getMessage());
         }
     }
 
@@ -391,10 +392,11 @@ class PatientController extends Controller
             $statuses = UserCategory::all();
             $permissions = Permission::pluck('name', 'id')->all();
             $patient_acc = $patient->account;
-            return view('admin.patients.show1', compact('user', 'roles', 'statuses', 'permissions', 'patient', 'patient_acc'));
+            $avail_beds = Bed::where('occupant_id', null)->where('status', 1)->get();
+            return view('admin.patients.show1', compact('user', 'roles', 'statuses', 'permissions', 'patient', 'patient_acc','avail_beds'));
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
-            return redirect()->back()->withInput()->with('error', $e);
+            return redirect()->back()->withInput()->with('error',$e->getMessage());
         }
     }
 
@@ -411,7 +413,7 @@ class PatientController extends Controller
             return view('admin.patients.edit', compact('patient', 'hmos'));
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
-            return redirect()->back()->withInput()->with('error', $e);
+            return redirect()->back()->withInput()->with('error',$e->getMessage());
         }
     }
 
@@ -578,7 +580,7 @@ class PatientController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error($e->getMessage(), ['exception' => $e]);
-            return redirect()->back()->withInput()->with('error', $e);
+            return redirect()->back()->withInput()->with('error',$e->getMessage());
         }
     }
 

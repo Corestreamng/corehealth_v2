@@ -79,10 +79,10 @@
             <div class="collapse" id="admissions">
                 <ul class="nav flex-column sub-menu">
                     <li class="nav-item">
-                        <a class="nav-link" href="pages/ui-features/buttons.html">Bed requests</a>
+                        <a class="nav-link" href="{{route('admission-requests.index')}}">Bed requests</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="pages/ui-features/dropdowns.html">Manage Beds</a>
+                        <a class="nav-link" href="{{route('beds.index')}}">Manage Beds</a>
                     </li>
                 </ul>
             </div>

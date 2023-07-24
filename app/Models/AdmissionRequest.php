@@ -59,7 +59,7 @@ class AdmissionRequest extends Model
         return $this->belongsTo(User::class, 'discharged_by','id');
     }
 
-    public function beds(){
-        return $this->hasMany(Bed::class,'bed_id','id');
+    public function bed(){
+        return $this->hasOne(Bed::class, 'id', 'bed_id');
     }
 }

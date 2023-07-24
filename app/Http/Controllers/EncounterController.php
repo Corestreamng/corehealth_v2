@@ -85,7 +85,7 @@ class EncounterController extends Controller
                 ->make(true);
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
-            return redirect()->back()->withInput()->with('error', $e);
+            return redirect()->back()->withInput()->with('error',$e->getMessage());
         }
     }
 
@@ -140,7 +140,7 @@ class EncounterController extends Controller
                 ->make(true);
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
-            return redirect()->back()->withInput()->with('error', $e);
+            return redirect()->back()->withInput()->with('error',$e->getMessage());
         }
     }
 
@@ -287,14 +287,21 @@ class EncounterController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function create(Request $request)
     {
         try {
             $doctor = Staff::where('user_id', Auth::id())->first();
             $patient = patient::find(request()->get('patient_id'));
             $clinic = Clinic::find($doctor->clinic_id);
             $req_entry = ProductOrServiceRequest::find(request()->get('req_entry_id'));
-            return view('admin.doctors.new_encounter')->with(['patient' => $patient, 'doctor' => $doctor, 'clinic' => $clinic, 'req_entry' => $req_entry]);
+            // dd($request->get('admission_req_id'));
+            if($request->get('admission_req_id') != ''){
+                $admission_request = AdmissionRequest::where('id', $request->admission_req_id)->first();
+                return view('admin.doctors.new_encounter')->with(['patient' => $patient, 'doctor' => $doctor, 'clinic' => $clinic, 'req_entry' => $req_entry,'admission_request' => $admission_request]);
+            }else{
+                return view('admin.doctors.new_encounter')->with(['patient' => $patient, 'doctor' => $doctor, 'clinic' => $clinic, 'req_entry' => $req_entry]);
+            }
+            
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
@@ -346,8 +353,16 @@ class EncounterController extends Controller
 
             DB::beginTransaction();
             $encounter = new Encounter;
-            $encounter->service_id = $request->req_entry_service_id;
-            $encounter->service_request_id = $request->req_entry_id;
+            if($request->req_entry_service_id == null || $request->req_entry_service_id == 'ward_round' ){
+                $encounter->service_id = null;
+                $encounter->service_request_id = null;
+            }else{
+                $encounter->service_id = $request->req_entry_service_id;
+                $encounter->service_request_id = $request->req_entry_id;
+            }
+            if($request->admission_request_id != ''){
+                $encounter->admission_request_id = $request->admission_request_id;
+            }
             $encounter->doctor_id = Auth::id();
             $encounter->patient_id = $request->patient_id;
             $encounter->reasons_for_encounter = null;
@@ -380,9 +395,11 @@ class EncounterController extends Controller
                 }
             }
 
-            $queue = DoctorQueue::where('id', $request->queue_id)->update([
-                'status' => 2
-            ]);
+            if($request->queue_id != 'ward_round'){
+                $queue = DoctorQueue::where('id', $request->queue_id)->update([
+                    'status' => 2
+                ]);
+            }
 
             if ($request->consult_admit == 1) {
                 $admit = new AdmissionRequest;

@@ -44,7 +44,7 @@
         <div class="card">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
-                    <div class="card-title"> Ward Rounds <small class="d-block text-muted">Register and manage appointments</small>
+                    <div class="card-title"> Ward Rounds <small class="d-block text-muted">See patients on admission </small>
                     </div>
                     <div class="d-flex text-muted font-20">
                         <i class="mdi mdi-help-circle-outline ml-2 mouse-pointer"></i>
@@ -53,7 +53,7 @@
                 <h3 class="font-weight-bold mb-0"> 409</span>
                 </h3>
                 <span class="text-muted font-13">Seen today</span>
-                <a href="#">
+                <a href="{{route('encounters.index')}}">
                     <br><br><button type="button" class="btn btn-warning mt-2 mt-sm-0 btn-icon-text">
                         <i class="mdi mdi-plus-circle"></i> See Patients </button>
                 </a>

@@ -111,7 +111,8 @@
             <div class="card-header">
                 Vitals
                 <button class="btn btn-primary pull-right" type="button" data-toggle="collapse"
-                    data-target="#vitalsCardBody" aria-expanded="false" aria-controls="vitalsCardBody">Toggle</button>
+                    data-target="#vitalsCardBody" aria-expanded="false" aria-controls="vitalsCardBody"><span
+                        class="fa fa-caret-down"></span></button>
             </div>
             <div class="collapse card-body" id="vitalsCardBody">
                 vitals
@@ -121,7 +122,7 @@
             <div class="card-header">
                 Billing
                 <button class="btn btn-primary pull-right" type="button" data-toggle="collapse"
-                    data-target="#billingCardBody" aria-expanded="false" aria-controls="billingCardBody">Toggle</button>
+                    data-target="#billingCardBody" aria-expanded="false" aria-controls="billingCardBody"><span class="fa fa-caret-down"></span></button>
             </div>
             <div class="collapse card-body" id="billingCardBody">
                 <form action="" method="post">
@@ -156,10 +157,11 @@
             <div class="card-header">
                 Accounts
                 <button class="btn btn-primary pull-right" type="button" data-toggle="collapse"
-                    data-target="#accountsCardBody" aria-expanded="false" aria-controls="accountsCardBody">Toggle</button>
+                    data-target="#accountsCardBody" aria-expanded="false" aria-controls="accountsCardBody"><span
+                        class="fa fa-caret-down"></span></button>
             </div>
             <div class="collapse card-body" id="accountsCardBody">
-                @if(null != $patient_acc)
+                @if (null != $patient_acc)
                     <div class="table-responsive">
                         <table class="table">
                             <thead class="bg-dark text-light">
@@ -169,24 +171,26 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td>{{$patient_acc->id}}</td>
-                                    <td>{{$patient_acc->balance}}</td>
-                                    <td>{{date('h:i a D M j, Y', strtotime($patient_acc->updated_at))}}</td>
+                                    <td>{{ $patient_acc->id }}</td>
+                                    <td>{{ $patient_acc->balance }}</td>
+                                    <td>{{ date('h:i a D M j, Y', strtotime($patient_acc->updated_at)) }}</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                     <hr>
                     <h5>Make Deposit</h5>
-                    <form action="{{route('account-make-deposit')}}" method="post">
+                    <form action="{{ route('account-make-deposit') }}" method="post">
                         @csrf
-                        <input type="hidden" name="patient_id" value="{{$patient->id}}">
-                        <input type="hidden" name="acc_id" value="{{$patient_acc->id}}">
+                        <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                        <input type="hidden" name="acc_id" value="{{ $patient_acc->id }}">
                         <div class="form-group">
                             <label for="">Amount | <small>Enter negative values for debt / credit</small></label>
-                            <input type="number" name="amount" id="" class="form-control" placeholder="Enter amount to deposit">
+                            <input type="number" name="amount" id="" class="form-control"
+                                placeholder="Enter amount to deposit" required>
                         </div>
-                        <button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure you wish to save this deposit?')">Save</button>
+                        <button type="submit" class="btn btn-primary"
+                            onclick="return confirm('Are you sure you wish to save this deposit?')">Save</button>
                     </form>
                 @else
                     <h4>Patient Has no acc</h4>
@@ -194,7 +198,8 @@
                 <hr>
                 All Previous Transactions
                 <div class="table-responsive">
-                    <table class="table table-sm table-bordered table-striped" style="width: 100%" id="payment_history_list">
+                    <table class="table table-sm table-bordered table-striped" style="width: 100%"
+                        id="payment_history_list">
                         <thead>
                             <th>#</th>
                             <th>Staff</th>
@@ -211,18 +216,32 @@
             <div class="card-header">
                 Admission History
                 <button class="btn btn-primary pull-right" type="button" data-toggle="collapse"
-                    data-target="#addmissionsCardBody" aria-expanded="false"
-                    aria-controls="addmissionsCardBody">Toggle</button>
+                    data-target="#addmissionsCardBody" aria-expanded="false" aria-controls="addmissionsCardBody"><span
+                        class="fa fa-caret-down"></span></button>
             </div>
             <div class="collapse card-body" id="addmissionsCardBody">
-                history
+                <div class="table-responsive">
+                    <table id="admission-request-list" class="table table-sm table-bordered table-striped"
+                        style="width: 100%">
+                        <thead>
+                            <tr>
+                                <th>SN</th>
+                                <th>Requested By</th>
+                                <th>Bills</th>
+                                <th>Bed</th>
+                                <th>View</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
             </div>
         </div>
         <div class="card mt-3">
             <div class="card-header">
                 ward notes
                 <button class="btn btn-primary pull-right" type="button" data-toggle="collapse"
-                    data-target="#wardNotesCardBody" aria-expanded="false" aria-controls="wardNotesCardBody">Toggle</button>
+                    data-target="#wardNotesCardBody" aria-expanded="false" aria-controls="wardNotesCardBody"><span
+                        class="fa fa-caret-down"></span></button>
             </div>
             <div class="collapse card-body" id="wardNotesCardBody">
                 ward notes
@@ -233,7 +252,7 @@
                 nursing notes
                 <button class="btn btn-primary pull-right" type="button" data-toggle="collapse"
                     data-target="#nurseingNotesCardBody" aria-expanded="false"
-                    aria-controls="nurseingNotesCardBody">Toggle</button>
+                    aria-controls="nurseingNotesCardBody"><span class="fa fa-caret-down"></span></button>
             </div>
             <div class="collapse card-body" id="nurseingNotesCardBody">
                 nursing notes
@@ -243,11 +262,12 @@
             <div class="card-header">
                 Doctor notes
                 <button class="btn btn-primary pull-right" type="button" data-toggle="collapse"
-                    data-target="#doctorNotesCardBody" aria-expanded="false"
-                    aria-controls="doctorNotesCardBody">Toggle</button>
+                    data-target="#doctorNotesCardBody" aria-expanded="false" aria-controls="doctorNotesCardBody"><span
+                        class="fa fa-caret-down"></span></button>
             </div>
             <div class="collapse card-body" id="doctorNotesCardBody">
-                <table class="table table-sm table-bordered table-striped" style="width: 100%" id="encounter_history_list">
+                <table class="table table-sm table-bordered table-striped" style="width: 100%"
+                    id="encounter_history_list">
                     <thead>
                         <th>#</th>
                         <th>Doctor</th>
@@ -262,7 +282,7 @@
                 Prescriptions
                 <button class="btn btn-primary pull-right" type="button" data-toggle="collapse"
                     data-target="#prescriptionsNotesCardBody" aria-expanded="false"
-                    aria-controls="prescriptionsNotesCardBody">Toggle</button>
+                    aria-controls="prescriptionsNotesCardBody"><span class="fa fa-caret-down"></span></button>
             </div>
             <div class="collapse card-body" id="prescriptionsNotesCardBody">
                 <h4>Requested Prescription</h4>
@@ -332,7 +352,7 @@
                 Investigations
                 <button class="btn btn-primary pull-right" type="button" data-toggle="collapse"
                     data-target="#investigationsCardBody" aria-expanded="false"
-                    aria-controls="investigationsCardBody">Toggle</button>
+                    aria-controls="investigationsCardBody"><span class="fa fa-caret-down"></span></button>
             </div>
             <div class="collapse card-body" id="investigationsCardBody">
                 <h4>Requested Investigations</h4>
@@ -389,24 +409,29 @@
                 </form>
                 <hr>
                 <h4>Investigation Result Entry</h4>
-                <table class="table table-sm table-bordered table-striped" style="width: 100%" id="invest_history_res">
-                    <thead>
-                        <th>#</th>
-                        <th>Service</th>
-                        <th>Details</th>
-                        <th>Entry</th>
-                    </thead>
-                </table>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered table-striped" style="width: 100%"
+                        id="invest_history_res">
+                        <thead>
+                            <th>#</th>
+                            <th>Service</th>
+                            <th>Details</th>
+                            <th>Entry</th>
+                        </thead>
+                    </table>
+                </div>
                 <hr>
                 <h4>Investigation History</h4>
-                <table class="table table-sm table-bordered table-striped" style="width: 100%"
-                    id="investigation_history_list">
-                    <thead>
-                        <th>#</th>
-                        <th>Results</th>
-                        <th>Details</th>
-                    </thead>
-                </table>
+                <div class="table responsive">
+                    <table class="table table-sm table-bordered table-striped" style="width: 100%"
+                        id="investigation_history_list">
+                        <thead>
+                            <th>#</th>
+                            <th>Results</th>
+                            <th>Details</th>
+                        </thead>
+                    </table>
+                </div>
 
             </div>
         </div>
@@ -426,7 +451,7 @@
         aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
-                <form action="{{ route('service-save-result') }}" method="post" onsubmit="copyResTemplateToField()">
+                <form action="{{ route('assign-bed') }}" method="post" onsubmit="copyResTemplateToField()">
                     @csrf
                     <div class="modal-header">
                         <h5 class="modal-title" id="investResModalLabel">Enter Result (<span
@@ -439,8 +464,8 @@
                         <div id="invest_res_template" style="border: 1px solid black;">
 
                         </div>
-                        <input type="text" id="invest_res_entry_id" name="invest_res_entry_id">
-                        <input type="text" name="invest_res_template_submited" id="invest_res_template_submited">
+                        <input type="hidden" id="invest_res_entry_id" name="invest_res_entry_id">
+                        <input type="hidden" name="invest_res_template_submited" id="invest_res_template_submited">
 
                     </div>
                     <div class="modal-footer">
@@ -454,7 +479,82 @@
         </div>
     </div>
 
+    <div class="modal fade" id="assignBillModal" tabindex="-1" role="dialog" aria-labelledby="assignBillModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form action="{{ route('assign-bill') }}" method="post">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title">Assign Bill </h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="assign_bed_req_id_" name="assign_bed_req_id">
+                        <div class="form-group">
+                            <label for="admit_days">No of days admitted</label>
+                            <input type="text" name="days" class="form-control" id="admit_days" readonly>
+                        </div>
+                        <div class="form-group">
+                            <h6>Bed Details</h6>
+                            <p id="admit_bed_details"></p>
+                            <label>Price</label>
+                            <input type="text" class="form-control" id="admit_price" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="">Total</label>
+                            <input type="text" id="admit_total" class="form-control" readonly>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit"
+                            onclick="return confirm('Are you sure you wish to save this entry? It can not be edited after!')"
+                            class="btn btn-primary">Save Bill </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
+    <div class="modal fade" id="assignBedModal" tabindex="-1" role="dialog" aria-labelledby="assignBedModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form action="{{ route('assign-bed') }}" method="post">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title">Assign Bed </h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="assign_bed_req_id" name="assign_bed_req_id">
+                        <div class="form-group">
+                            <label for="">Select Bed</label>
+                            <select name="bed_id" class="form-control">
+                                <option value="">--select bed--</option>
+                                @foreach ($avail_beds as $bed)
+                                    <option value="{{ $bed->id }}">{{ $bed->name }}[Price: NGN
+                                        {{ $bed->price }}, Ward: {{ $bed->ward }}, Unit: {{ $bed->unit }}]
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit"
+                            onclick="return confirm('Are you sure you wish to save this entry? It can not be edited after!')"
+                            class="btn btn-primary">Assign Bed </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @section('scripts')
@@ -618,6 +718,62 @@
                 ],
 
                 "paging": true
+            });
+        });
+    </script>
+    <script>
+        $(function() {
+            $('#admission-request-list').DataTable({
+                "dom": 'Bfrtip',
+                "iDisplayLength": 50,
+                "lengthMenu": [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, "All"]
+                ],
+                "buttons": ['pageLength', 'copy', 'excel', 'pdf', 'print', 'colvis'],
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{ route('patient-admission-requests-list', $patient->id) }}",
+                    "type": "GET"
+                },
+                "columns": [{
+                        data: "DT_RowIndex",
+                        name: "DT_RowIndex"
+                    },
+                    {
+                        data: "doctor_id",
+                        name: "doctor_id"
+                    },
+                    {
+                        data: "billed_by",
+                        name: "billed_by"
+                    },
+                    {
+                        data: "bed_id",
+                        name: "bed_id"
+                    },
+                    {
+                        data: "show",
+                        name: "show"
+                    },
+                ],
+                // initComplete: function () {
+                //     this.api().columns().every(function () {
+                //         var column = this;
+                //         var input = document.createElement("input");
+                //         $(input).appendTo($(column.footer()).empty())
+                //         .on('change', function () {
+                //             column.search($(this).val(), false, false, true).draw();
+                //         });
+                //     });
+                // },
+                "paging": true
+                // "lengthChange": false,
+                // "searching": true,
+                // "ordering": true,
+                // "info": true,
+                // "autoWidth": false
             });
         });
     </script>
@@ -901,6 +1057,22 @@
         function copyResTemplateToField() {
             $('#invest_res_template_submited').val($('#invest_res_template').html());
             return true;
+        }
+    </script>
+    <script>
+        function setBedModal(obj) {
+            $('#assign_bed_req_id').val($(obj).attr('data-id'));
+            $('#assignBedModal').modal('show');
+        }
+    </script>
+    <script>
+        function setBillModal(obj) {
+            $('#assign_bed_req_id_').val($(obj).attr('data-id'));
+            $('#admit_days').val($(obj).attr('data-days'));
+            $('#admit_price').val($(obj).attr('data-price'));
+            $('#admit_bed_details').html($(obj).attr('data-bed'));
+            $('#admit_total').val(parseFloat($(obj).attr('data-price')) * parseFloat($(obj).attr('data-days')));
+            $('#assignBillModal').modal('show');
         }
     </script>
 

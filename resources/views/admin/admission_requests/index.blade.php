@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
-@section('title', 'Services and Products ')
-@section('page_name', 'Settled services')
-@section('subpage_name', 'settled services List')
+@section('title', 'Admission Requests ')
+@section('page_name', 'Admission Requests')
+@section('subpage_name', 'Admission Requests List')
 @section('content')
     <div id="content-wrapper">
         <div class="container">
@@ -10,8 +10,7 @@
                 <div class="card-header">
                     <div class="row">
                         <div class="col-sm-6">
-                            <a href="{{ route('servicess', $id) }}">Unsettled</a>
-                            {{-- {{ __('Services') }} --}}
+                            {{ __('Requests') }}
                         </div>
                         <div class="col-sm-6">
                             {{-- @if (auth()->user()->can('user-create')) --}}
@@ -24,21 +23,26 @@
                         </div>
                     </div>
                 </div>
+
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table id="products-list" class="table table-sm table-bordered table-striped">
+                        <table id="request-list" class="table table-sm table-bordered table-striped">
                             <thead>
                                 <tr>
                                     <th>SN</th>
-                                    <th>Service Name</th>
-                                    <th>Price</th>
+                                    <th>Patient</th>
+                                    <th>File No</th>
+                                    <th>HMO/Insurance </th>
+                                    <th>HMO No</th>
+                                    <th>Requested By</th>
+                                    <th>Bills</th>
+                                    <th>Bed</th>
+                                    <th>View</th>
                                 </tr>
                             </thead>
                         </table>
                     </div>
-                    <input type="hidden" name="id" id="myInput" value="{{ $id }}">
                 </div>
-                </form>
             </div>
         </div>
     </div>
@@ -52,11 +56,8 @@
     <script src="{{ asset('/plugins/dataT/datatables.js') }}" defer></script>
 
     <script>
-        const dar = document.getElementById('myInput').value;
-        console.log(dar);
         $(function() {
-
-            $('#products-list').DataTable({
+            $('#request-list').DataTable({
                 "dom": 'Bfrtip',
                 "iDisplayLength": 50,
                 "lengthMenu": [
@@ -67,20 +68,44 @@
                 "processing": true,
                 "serverSide": true,
                 "ajax": {
-                    "url": "/settled-services/" + dar,
+                    "url": "{{ route('admission-requests-list') }}",
                     "type": "GET"
                 },
                 "columns": [{
-                        data: "id",
+                        data: "DT_RowIndex",
                         name: "DT_RowIndex"
                     },
                     {
-                        data: "service.service_name",
-                        name: "service"
+                        data: "patient",
+                        name: "patient"
                     },
                     {
-                        data: "service.price.sale_price",
-                        name: "service"
+                        data: "file_no",
+                        name: "file_no"
+                    },
+                    {
+                        data: "hmo",
+                        name: "hmo"
+                    },
+                    {
+                        data: "hmo_no",
+                        name: "hmo_no"
+                    },
+                    {
+                        data: "doctor_id",
+                        name: "doctor_id"
+                    },
+                    {
+                        data: "billed_by",
+                        name: "billed_by"
+                    },
+                    {
+                        data: "bed_id",
+                        name: "bed_id"
+                    },
+                    {
+                        data: "show",
+                        name: "show"
                     },
                 ],
                 // initComplete: function () {

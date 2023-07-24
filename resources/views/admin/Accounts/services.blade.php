@@ -10,7 +10,7 @@
                 <div class="card-header">
                     <div class="row">
                         <div class="col-sm-6">
-                            <a href="{{route('paid-services',$id)}}">settled</a>
+                            <a href="{{ route('paid-services', $id) }}">Settled</a>
                             {{-- {{ __('Services') }} --}}
                         </div>
                         <div class="col-sm-6">
@@ -24,25 +24,44 @@
                         </div>
                     </div>
                 </div>
-<form action="{{route('service-payment')}}" method="post">
-    @csrf
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table id="products-list" class="table table-sm table-bordered table-striped">
-                            <thead>
-                                <tr>
-                                    <th>SN</th>
-                                    <th>Service Name</th>
-                                    <th>Price</th>
-                                    <th>select</th>
-                                </tr>
-                            </thead>
-                        </table>
+                <form action="{{ route('service-payment') }}" method="post">
+                    @csrf
+                    <div class="card-body">
+                        <h1>Sevices</h1>
+                        <div class="table-responsive">
+                            <table id="service-list" class="table table-sm table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>SN</th>
+                                        <th>Service Name</th>
+                                        <th>Price</th>
+                                        <th>Quantity</th>
+                                        <th>Select</th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <hr>
+                        <h4>Products</h4>
+                        <div class="table-responsive">
+                            <table id="products-list" class="table table-sm table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>SN</th>
+                                        <th>Product Name</th>
+                                        <th>Price</th>
+                                        <th>Quantity</th>
+                                        <th>Select</th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <input type="hidden" name="id" id="myInput" value="{{ $id }}"><br>
+                        <button type="submit" class="align-self-end btn btn-primary"
+                            style="margin-top: auto;">Proceed</button>
                     </div>
-                    <input type="hidden" name="id" id="myInput" value="{{$id}}">
-                    <button type="submit" class="align-self-end btn btn-lg btn-block btn-primary" style="margin-top: auto;">proceed</button>
-                </div>
-            </form>
+                    <br>
+                </form>
             </div>
         </div>
     </div>
@@ -56,11 +75,11 @@
     <script src="{{ asset('/plugins/dataT/datatables.js') }}" defer></script>
 
     <script>
-        const dar = document.getElementById('myInput'). value;
+        const dar = document.getElementById('myInput').value;
         console.log(dar);
         $(function() {
 
-            $('#products-list').DataTable({
+            $('#service-list').DataTable({
                 "dom": 'Bfrtip',
                 "iDisplayLength": 50,
                 "lengthMenu": [
@@ -71,7 +90,7 @@
                 "processing": true,
                 "serverSide": true,
                 "ajax": {
-                    "url": "/services-list/"+dar,
+                    "url": "/services-list/" + dar,
                     "type": "GET"
                 },
                 "columns": [{
@@ -85,6 +104,66 @@
                     {
                         data: "service.price.sale_price",
                         name: "service"
+                    },
+                    {
+                        data: "qty"
+                    },
+                    {
+                        data: "checkBox",
+                        name: "checkBox"
+                    },
+                ],
+                // initComplete: function () {
+                //     this.api().columns().every(function () {
+                //         var column = this;
+                //         var input = document.createElement("input");
+                //         $(input).appendTo($(column.footer()).empty())
+                //         .on('change', function () {
+                //             column.search($(this).val(), false, false, true).draw();
+                //         });
+                //     });
+                // },
+                "paging": true
+                // "lengthChange": false,
+                // "searching": true,
+                // "ordering": true,
+                // "info": true,
+                // "autoWidth": false
+            });
+        });
+    </script>
+    <script>
+        // const dar = document.getElementById('myInput').value;
+        console.log(dar);
+        $(function() {
+            $('#products-list').DataTable({
+                "dom": 'Bfrtip',
+                "iDisplayLength": 50,
+                "lengthMenu": [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, "All"]
+                ],
+                "buttons": ['pageLength', 'copy', 'excel', 'pdf', 'print', 'colvis'],
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "/product-list/" + dar,
+                    "type": "GET"
+                },
+                "columns": [{
+                        data: "id",
+                        name: "DT_RowIndex"
+                    },
+                    {
+                        data: "product.product_name",
+                        name: "product"
+                    },
+                    {
+                        data: "product.price.current_sale_price",
+                        name: "price"
+                    },
+                    {
+                        data:"qty"
                     },
                     {
                         data: "checkBox",

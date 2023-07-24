@@ -52,9 +52,13 @@
                 <h3 class="font-weight-bold mb-0">409</span>
                 </h3>
                 <span class="text-muted font-13">Admitted today</span>
-                <a href="#">
+                <a href="{{route('admission-requests.index')}}">
                     <br><br><button type="button" class="btn btn-secondary mt-2 mt-sm-0 btn-icon-text">
                         <i class="mdi mdi-plus-circle"></i> Manage Admissions </button>
+                </a>
+                <a href="{{route('beds.index')}}">
+                    <button type="button" class="btn btn-secondary mt-2 mt-sm-0 btn-icon-text">
+                        <i class="fa fa-bed"></i> Manage Beds </button>
                 </a>
             </div>
         </div>
