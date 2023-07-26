@@ -41,7 +41,7 @@ class ProductRequestController extends Controller
             $request->validate([
                 'consult_presc_dose' => 'nullable|array|required_with:addedPrescBillRows',
                 'addedPrescBillRows' => 'nullable|array|required_with:consult_presc_dose',
-                'selectedPrescBillRows' => 'required|array',
+                'selectedPrescBillRows' => 'array',
                 'patient_user_id' => 'required',
                 'patient_id' => 'required'
             ]);
@@ -73,6 +73,18 @@ class ProductRequestController extends Controller
                             'billed_date' => date('Y-m-d H:i:s'),
                             'product_request_id' => $bill_req->id
                         ]);
+
+                        $product = Product::with(['stock'])->where('id',$prod_id)->first();
+                        if ($product && $product->stock) {
+                            $quantityToDecrement = 1; // You can adjust this value based on your requirements
+                            $product->stock->decrement('current_quantity', $quantityToDecrement);
+                        }
+
+                        //Save the updated stock model back to the database
+                        if ($product->stock) {
+                            $product->stock->save();
+                        }
+
                     }
                 }
                 if (isset($request->addedPrescBillRows)) {
@@ -94,6 +106,17 @@ class ProductRequestController extends Controller
                         $presc->product_request_id = $bill_req->id;
                         $presc->status = 2;
                         $presc->save();
+
+                        $product = Product::with(['stock'])->where('id',$request->addedPrescBillRows[$i])->first();
+                        if ($product && $product->stock) {
+                            $quantityToDecrement = 1; // You can adjust this value based on your requirements
+                            $product->stock->decrement('current_quantity', $quantityToDecrement);
+                        }
+
+                        //Save the updated stock model back to the database
+                        if ($product->stock) {
+                            $product->stock->save();
+                        }
                     }
                 }
                 DB::commit();

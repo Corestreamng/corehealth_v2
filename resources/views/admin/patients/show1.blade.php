@@ -824,8 +824,14 @@
 
         function subtract_from_total_presc_bill(v) {
             let new_tot = parseFloat($('#presc_bill_tot').val()) - parseFloat(v);
-            $('#presc_bill_tot').val(new_tot);
-            $('#presc_billed_tot').val(new_tot);
+            //in order to prevent negative values
+            if (new_tot > 0) {
+                $('#presc_bill_tot').val(new_tot);
+                $('#presc_billed_tot').val(new_tot);
+            } else {
+                $('#presc_bill_tot').val(0);
+                $('#presc_billed_tot').val(0);
+            }
         }
 
         function checkPrescBillRow(obj) {
@@ -982,8 +988,14 @@
 
         function subtract_from_total_invest_bill(v) {
             let new_tot = parseFloat($('#invest_bill_tot').val()) - parseFloat(v);
-            $('#invest_bill_tot').val(new_tot);
-            $('#invest_billed_tot').val(new_tot);
+            //in order to avoid having negative values
+            if (new_tot > 0) {
+                $('#invest_bill_tot').val(new_tot);
+                $('#invest_billed_tot').val(new_tot);
+            } else {
+                $('#invest_bill_tot').val(0);
+                $('#invest_billed_tot').val(0);
+            }
         }
 
         function checkInvestBillRow(obj) {

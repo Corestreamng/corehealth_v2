@@ -77,7 +77,7 @@ class LabServiceRequestController extends Controller
             $request->validate([
                 'consult_invest_note' => 'nullable|array|required_with:addedInvestBillRows',
                 'addedInvestBillRows' => 'nullable|array|required_with:consult_invest_note',
-                'selectedInvestBillRows' => 'required|array',
+                'selectedInvestBillRows' => 'array',
                 'patient_user_id' => 'required',
                 'patient_id' => 'required'
             ]);
