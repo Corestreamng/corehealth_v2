@@ -19,7 +19,7 @@ class DoctorQueue extends Model
     ];
 
     public function patient(){
-        return $this->belongsTo(Patient::class,'patient_id','id');
+        return $this->belongsTo(patient::class,'patient_id','id');
     }
 
     public function clinic(){

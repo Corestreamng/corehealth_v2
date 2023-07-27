@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ServicePrice;
 use Illuminate\Http\Request;
-use App\Models\Service;
+use App\Models\service;
 use Yajra\DataTables\DataTables;
 use RealRashid\SweetAlert\Facades\Alert;
 use App\Models\ApplicationStatu;
@@ -30,7 +30,7 @@ class ServicePriceController extends Controller
     {
         try {
             $service_id = request()->get('service_id');
-            $service     = Service::find($service_id);
+            $service     = service::find($service_id);
             $application = ApplicationStatu::whereId(1)->first();
             return view('admin.service_prices.create', compact('service', 'application'));
         } catch (\Exception $e) {
@@ -79,7 +79,7 @@ class ServicePriceController extends Controller
                 $myprice->status         = 1;
 
                 if ($myprice->save()) {
-                    $assing_price = Service::find($request->service_id);
+                    $assing_price = service::find($request->service_id);
                     $assing_price->price_assign = 1;
                     $assing_price->update();
                     $msg = 'price for ' . $assing_price->service_name . ' was saved successfully.';
@@ -106,7 +106,7 @@ class ServicePriceController extends Controller
     public function show($id)
     {
         try {
-            $service     = Service::whereId($id)->first();
+            $service     = service::whereId($id)->first();
             return view('admin.service_prices.newprice', compact('service'));
         } catch (\Exception $e) {
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());

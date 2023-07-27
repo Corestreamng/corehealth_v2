@@ -35,7 +35,7 @@
 
                             <div class="form-group col-md-12">
                                 <div class="table-responsive" style="display:none" id="showMe">
-                                    <table id="patient_table_id" class="table table-sm table-responsive table-striped">
+                                    <table id="patient_table_id" class="table table-responsive table-striped">
                                         <thead>
                                             <tr>
                                                 <th>SN</th>
@@ -64,7 +64,7 @@
         </div>
     </div>
 
-    <!-- Modal form to edit a user -->
+    {{-- <!-- Modal form to edit a user -->
     <div id="editModal" class="modal fade" role="dialog">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -109,7 +109,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> --}}
 @endsection
 
 @section('scripts')

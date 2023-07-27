@@ -150,7 +150,7 @@ class BedController extends Controller
                 return back()->with('errors', $v->messages()->all())->withInput();
             } else {
 
-                $bed_servie_entry                      = Service::where('id', $bed->service_id)->first();
+                $bed_servie_entry                      = service::where('id', $bed->service_id)->first();
                 $bed_servie_entry->category_id         = env('BED_SERVICE_CATGORY_ID',1);
                 $bed_servie_entry->service_name        = 'Bed '. $request->name ." ".$request->ward." ".$request->unit;
                 $bed_servie_entry->service_code        = strtoupper('Bed '. $request->name ." ".$request->ward." ".$request->unit);

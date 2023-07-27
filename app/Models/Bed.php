@@ -28,6 +28,6 @@ class Bed extends Model
     }
 
     public function service(){
-        return $this->hasOne(Service::class, 'id', 'service_id');
+        return $this->hasOne(service::class, 'id', 'service_id');
     }
 }

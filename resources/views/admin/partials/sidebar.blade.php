@@ -116,7 +116,7 @@
                 <div class="collapse" id="acc_patient">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('product-or-service-request.index') }}">Search</a>
+                            <a class="nav-link" href="{{ route('product-or-service-request.index') }}">All Payment Requests</a>
                         </li>
                     </ul>
                 </div>
@@ -173,7 +173,25 @@
         @endhasanyrole
         @hasanyrole('SUPERADMIN|ADMIN|STORE|PHARMACIST')
             <li class="pt-2 pb-1">
-                <span class="nav-item-head">Store</span>
+                <span class="nav-item-head">Store/ Pharmacy</span>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="collapse" href="#pharm_queue" aria-expanded="false"
+                    aria-controls="pharm_queue">
+                    <i class="mdi mdi-crosshairs-gps menu-icon"></i>
+                    <span class="menu-title">Queue</span>
+                    <i class="menu-arrow"></i>
+                </a>
+                <div class="collapse" id="pharm_queue">
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">My Current Queue</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">History</a>
+                        </li>
+                    </ul>
+                </div>
             </li>
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" href="#products" aria-expanded="false"
@@ -210,6 +228,82 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('services.index') }}">Services</a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="collapse" href="#new_patient" aria-expanded="false"
+                    aria-controls="new_patient">
+                    <i class="mdi mdi-crosshairs-gps menu-icon"></i>
+                    <span class="menu-title">Patients</span>
+                    <i class="menu-arrow"></i>
+                </a>
+                <div class="collapse" id="new_patient">
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('patient.index') }}">All Patients</a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+        @endhasallroles
+        @hasanyrole('SUPERADMIN|ADMIN|NURSE')
+            <li class="pt-2 pb-1">
+                <span class="nav-item-head">Nursing</span>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="collapse" href="#nursing_" aria-expanded="false"
+                    aria-controls="nursing_">
+                    <i class="mdi mdi-crosshairs-gps menu-icon"></i>
+                    <span class="menu-title">Queue</span>
+                    <i class="menu-arrow"></i>
+                </a>
+                <div class="collapse" id="nursing_">
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">My Current Queue</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">History</a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="collapse" href="#new_patient" aria-expanded="false"
+                    aria-controls="new_patient">
+                    <i class="mdi mdi-crosshairs-gps menu-icon"></i>
+                    <span class="menu-title">Patients</span>
+                    <i class="menu-arrow"></i>
+                </a>
+                <div class="collapse" id="new_patient">
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('patient.index') }}">All Patients</a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+        @endhasallroles
+        @hasanyrole('SUPERADMIN|ADMIN|LAB SCIENTIST|RADIOLOGIST')
+            <li class="pt-2 pb-1">
+                <span class="nav-item-head">LAB/ INVESTIGATIONS</span>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="collapse" href="#lab_queue" aria-expanded="false"
+                    aria-controls="lab_queue">
+                    <i class="mdi mdi-crosshairs-gps menu-icon"></i>
+                    <span class="menu-title">Queue</span>
+                    <i class="menu-arrow"></i>
+                </a>
+                <div class="collapse" id="lab_queue">
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">My Current Queue</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">History</a>
                         </li>
                     </ul>
                 </div>

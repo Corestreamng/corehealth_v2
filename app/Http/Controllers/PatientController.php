@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Patient;
+use App\Models\patient;
 use App\Models\User;
 use App\Models\Hmo;
 use App\Models\Clinic;
@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\DataTables;
 use App\Http\Controllers\Controller;
 use App\Models\Bed;
-use App\Models\PatientAccount;
+use App\Models\patientAccount;
 use Illuminate\Support\Facades\File;
 use Intervention\Image\Facades\Image;
 use Illuminate\Support\Facades\Storage;
@@ -45,7 +45,7 @@ class PatientController extends Controller
     public function patientsList()
     {
         try {
-            $pc = Patient::with('user')->orderBy('created_at', 'DESC')->get();
+            $pc = patient::with('user')->orderBy('created_at', 'DESC')->get();
             //dd($pc);
             return Datatables::of($pc)
                 ->addIndexColumn()
@@ -133,7 +133,7 @@ class PatientController extends Controller
                         return $fullname;
                     })
                     ->addColumn('hmo', function ($list) {
-                        $patient_hmo = Patient::where('user_id', $list->user_id)->first()->hmo_id;
+                        $patient_hmo = patient::where('user_id', $list->user_id)->first()->hmo_id;
                         $hmo_name = Hmo::where('id', $patient_hmo)->first()->name ?? 'N/A';
                         return $hmo_name;
                     })
@@ -174,8 +174,8 @@ class PatientController extends Controller
     public function getMyDependants($user_id)
     {
         try {
-            $patient = Patient::where('user_id', $user_id)->first();
-            $family = Patient::with(['user'])->where('file_no', $patient->file_no)->get();
+            $patient = patient::where('user_id', $user_id)->first();
+            $family = patient::with(['user'])->where('file_no', $patient->file_no)->get();
             $products = Product::with(['category', 'price'])->where('status', 1)->get();
             $services = service::with(['category', 'price'])->where('status', 1)->get();
             $clinics = Clinic::where('status', 1)->get();
@@ -194,7 +194,7 @@ class PatientController extends Controller
     public function create()
     {
         try {
-            $all_patients = Patient::with(['user'])->where('status', 1);
+            $all_patients = patient::with(['user'])->where('status', 1);
             $hmos = Hmo::where('status', 1)->get();
             return view('admin.receptionist.new_patient')->with(['all_patients' => $all_patients, 'hmos' => $hmos]);
         } catch (\Exception $e) {
@@ -381,7 +381,7 @@ class PatientController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\Patient  $patient
+     * @param  \App\Models\patient  $patient
      * @return \Illuminate\Http\Response
      */
     public function show(Patient $patient)
@@ -403,7 +403,7 @@ class PatientController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\Patient  $patient
+     * @param  \App\Models\patient  $patient
      * @return \Illuminate\Http\Response
      */
     public function edit(Patient $patient)
@@ -421,7 +421,7 @@ class PatientController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Patient  $patient
+     * @param  \App\Models\patient  $patient
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, Patient $patient)
@@ -587,7 +587,7 @@ class PatientController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Patient  $patient
+     * @param  \App\Models\patient  $patient
      * @return \Illuminate\Http\Response
      */
     public function destroy(Patient $patient)

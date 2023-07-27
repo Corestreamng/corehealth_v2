@@ -30,7 +30,7 @@ use App\Http\Controllers\PatientAccountController;
 use App\Http\Controllers\ProductRequestController;
 use App\Models\AdmissionRequest;
 use App\Models\LabServiceRequest;
-use App\Models\PatientAccount;
+use App\Models\patientAccount;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 

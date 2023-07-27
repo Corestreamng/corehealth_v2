@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Service;
+use App\Models\service;
 use App\Http\Requests\StoreServiceRequest;
 use App\Http\Requests\UpdateServiceRequest;
 
@@ -20,7 +20,7 @@ class ServiceController extends Controller
 {
     public function listServices()
     {
-        $pc = Service::where('status', '=', 1)->with('category')->orderBy('service_name', 'ASC')->get();
+        $pc = service::where('status', '=', 1)->with('category')->orderBy('service_name', 'ASC')->get();
 
         return Datatables::of($pc)
             ->addIndexColumn()
@@ -83,7 +83,7 @@ class ServiceController extends Controller
         $request->validate([
             'term' => 'required|string'
         ]);
-        $pc = Service::where('status', '=', 1)->where('service_name', 'LIKE', "%$request->term%")->with('category', 'price')->orderBy('service_name', 'ASC')->get();
+        $pc = service::where('status', '=', 1)->where('service_name', 'LIKE', "%$request->term%")->with('category', 'price')->orderBy('service_name', 'ASC')->get();
         return json_decode($pc);
     }
 
@@ -201,7 +201,7 @@ class ServiceController extends Controller
     {
         $pc = Sale::where('service_id', '=', $id)->with('transaction', 'product', 'store')->sum('total_amount');
         $qt = Sale::where('service_id', '=', $id)->with('transaction', 'product', 'store')->sum('quantity_buy');
-        $pp = Service::find($id);
+        $pp = service::find($id);
 
         return view('admin.service.product', compact('id', 'pp', 'pc', 'qt'));
     }
@@ -216,7 +216,7 @@ class ServiceController extends Controller
     {
 
         try {
-            $product = Service::whereId($id)->first();
+            $product = service::whereId($id)->first();
             $category       = ServiceCategory::where('status', '=', 1)->pluck('category_name', 'id')->all();
             return view('admin.service.edit', compact('product', 'category'));
         } catch (\Exception $e) {
@@ -248,7 +248,7 @@ class ServiceController extends Controller
                 return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
             } else {
 
-                $myservice                 = Service::whereId($id)->first();
+                $myservice                 = service::whereId($id)->first();
                 $myservice->user_id        = Auth::user()->id;
                 $myservice->category_id    = $request->category_id;
                 $myservice->service_name   = $request->service_name;
