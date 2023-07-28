@@ -242,6 +242,87 @@
         <div class="tab-pane fade" id="nursing_notes" role="tabpanel" aria-labelledby="nursing_notes_tab">
             <div class="card mt-2">
                 <div class="card-body table-responsive">
+                    <hr>
+                    All Patient Nursing Sheets
+                    <hr>
+                    <ul class="nav nav-tabs" id="myTab" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="closed-observation-tab" data-toggle="tab"
+                                href="#closed-observation" role="tab" aria-controls="closed-observation"
+                                aria-selected="true">Observation Charts</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="closed-treatment-tab" data-toggle="tab" href="#closed-treatment"
+                                role="tab" aria-controls="closed-treatment" aria-selected="false"> Treatment
+                                Sheets</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="closed-io-tab" data-toggle="tab" href="#closed-io" role="tab"
+                                aria-controls="closed-io" aria-selected="false"> Intake/Output Charts</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="closed-labour-tab" data-toggle="tab" href="#closed-labour"
+                                role="tab" aria-controls="closed-labour" aria-selected="false"> Labour
+                                Records</a>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="myClosedTabContent">
+                        <div class="tab-pane fade show active" id="closed-observation" role="tabpanel"
+                            aria-labelledby="closed-observation-tab">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered table-striped" style="width: 100%"
+                                    id="nurse_note_hist_1">
+                                    <thead>
+                                        <th>#</th>
+                                        <th>Note type</th>
+                                        <th>Details</th>
+                                        <th>Action</th>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="closed-treatment" role="tabpanel"
+                            aria-labelledby="closed-treatment-tab">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered table-striped" style="width: 100%"
+                                    id="nurse_note_hist_2">
+                                    <thead>
+                                        <th>#</th>
+                                        <th>Note type</th>
+                                        <th>Details</th>
+                                        <th>Action</th>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="closed-io" role="tabpanel" aria-labelledby="closed-io-tab">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered table-striped" style="width: 100%"
+                                    id="nurse_note_hist_3">
+                                    <thead>
+                                        <th>#</th>
+                                        <th>Note type</th>
+                                        <th>Details</th>
+                                        <th>Action</th>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="closed-labour" role="tabpanel"
+                            aria-labelledby="closed-labour-tab">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered table-striped" style="width: 100%"
+                                    id="nurse_note_hist_4">
+                                    <thead>
+                                        <th>#</th>
+                                        <th>Note type</th>
+                                        <th>Details</th>
+                                        <th>Action</th>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                     <br><button type="button" onclick="switch_tab(event,'encounter_hist_tab')"
                         class="btn btn-secondary mr-2">
                         Prev
@@ -387,6 +468,30 @@
             </div>
         </form>
     </div>
+    <div class="modal fade" id="nursingNoteModal" tabindex="-1" role="dialog" aria-labelledby="nursingNoteModal"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="investResModalLabel">Nursing Note Result (<span
+                            id="note_type_name_"></span>)</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="nursing_note_template_" class="table-reponsive" style="border: 1px solid black;">
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
 @endsection
 @section('scripts')
     <script src="{{ asset('/plugins/dataT/datatables.min.js') }}" defer></script>
@@ -662,5 +767,179 @@
                 });
             }
         }
+    </script>
+
+    <script>
+        $(function() {
+            $('#nurse_note_hist_1').DataTable({
+                "dom": 'Bfrtip',
+                "iDisplayLength": 50,
+                "lengthMenu": [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, "All"]
+                ],
+                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{ url('patientNursngNote', [$patient->id, 1]) }}",
+                    "type": "GET"
+                },
+                "columns": [{
+                        data: "DT_RowIndex",
+                        name: "DT_RowIndex"
+                    },
+                    {
+                        data: "nursing_note_type_id",
+                        name: "nursing_note_type_id"
+                    },
+                    {
+                        data: "created_by",
+                        name: "created_by"
+                    },
+                    {
+                        data: "select",
+                        name: "select"
+                    },
+                ],
+
+                "paging": true
+            });
+        });
+    </script>
+    <script>
+        $(function() {
+            $('#nurse_note_hist_2').DataTable({
+                "dom": 'Bfrtip',
+                "iDisplayLength": 50,
+                "lengthMenu": [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, "All"]
+                ],
+                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{ url('patientNursngNote', [$patient->id, 2]) }}",
+                    "type": "GET"
+                },
+                "columns": [{
+                        data: "DT_RowIndex",
+                        name: "DT_RowIndex"
+                    },
+                    {
+                        data: "nursing_note_type_id",
+                        name: "nursing_note_type_id"
+                    },
+                    {
+                        data: "created_by",
+                        name: "created_by"
+                    },
+                    {
+                        data: "select",
+                        name: "select"
+                    },
+                ],
+
+                "paging": true
+            });
+        });
+    </script>
+    <script>
+        $(function() {
+            $('#nurse_note_hist_3').DataTable({
+                "dom": 'Bfrtip',
+                "iDisplayLength": 50,
+                "lengthMenu": [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, "All"]
+                ],
+                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{ url('patientNursngNote', [$patient->id, 3]) }}",
+                    "type": "GET"
+                },
+                "columns": [{
+                        data: "DT_RowIndex",
+                        name: "DT_RowIndex"
+                    },
+                    {
+                        data: "nursing_note_type_id",
+                        name: "nursing_note_type_id"
+                    },
+                    {
+                        data: "created_by",
+                        name: "created_by"
+                    },
+                    {
+                        data: "select",
+                        name: "select"
+                    },
+                ],
+
+                "paging": true
+            });
+        });
+    </script>
+    <script>
+        $(function() {
+            $('#nurse_note_hist_4').DataTable({
+                "dom": 'Bfrtip',
+                "iDisplayLength": 50,
+                "lengthMenu": [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, "All"]
+                ],
+                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{ url('patientNursngNote', [$patient->id, 4]) }}",
+                    "type": "GET"
+                },
+                "columns": [{
+                        data: "DT_RowIndex",
+                        name: "DT_RowIndex"
+                    },
+                    {
+                        data: "nursing_note_type_id",
+                        name: "nursing_note_type_id"
+                    },
+                    {
+                        data: "created_by",
+                        name: "created_by"
+                    },
+                    {
+                        data: "select",
+                        name: "select"
+                    },
+                ],
+
+                "paging": true
+            });
+        });
+    </script>
+    <script>
+        function setNoteInModal(obj) {
+            $('#note_type_name_').text($(obj).attr('data-service-name'));
+            $('#nursing_note_template_').html($(obj).attr('data-template'));
+            $('#nursingNoteModal').modal('show');
+        }
+    </script>
+    <script>
+        function toggle_group(class_) {
+            var x = document.getElementsByClassName(class_);
+            for (i = 0; i < x.length; i++) {
+                if (x[i].style.display === "none") {
+                    x[i].style.display = "block";
+                } else {
+                    x[i].style.display = "none";
+                }
+            }
+
+        }
+        $('.DataTables').DataTable();
     </script>
 @endsection

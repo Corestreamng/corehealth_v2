@@ -26,6 +26,8 @@ use App\Http\Controllers\AdmissionRequestController;
 use App\Http\Controllers\BedController;
 use App\Http\Controllers\EncounterController;
 use App\Http\Controllers\LabServiceRequestController;
+use App\Http\Controllers\NursingNoteController;
+use App\Http\Controllers\NursingNoteTypeController;
 use App\Http\Controllers\PatientAccountController;
 use App\Http\Controllers\ProductRequestController;
 use App\Models\AdmissionRequest;
@@ -76,9 +78,9 @@ Route::group(['middleware' => ['auth']], function () {
         Route::resource('patient', PatientController::class);
         Route::get('patientsList', [PatientController::class, 'patientsList'])->name('patientsList');
         Route::get('add-to-queue', [PatientController::class, 'addToQueue'])->name('add-to-queue');
-        Route::get('listReturningPatients', [PatientController::class,'listReturningPatients'])->name('listReturningPatients');
-        Route::get('getMyDependants/{id}',[PatientController::class,'getMyDependants'])->name('getMyDependants');
-        Route::get('get-doctors/{id}',[ClinicController::class,'getDoctors'])->name('get-doctors');
+        Route::get('listReturningPatients', [PatientController::class, 'listReturningPatients'])->name('listReturningPatients');
+        Route::get('getMyDependants/{id}', [PatientController::class, 'getMyDependants'])->name('getMyDependants');
+        Route::get('get-doctors/{id}', [ClinicController::class, 'getDoctors'])->name('get-doctors');
     });
 
     Route::group(['middleware' => ['auth']], function () {
@@ -91,7 +93,7 @@ Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
         Route::resource('product-category', ProductCategoryController::class);
         Route::get('product-category-list', [ProductCategoryController::class, 'listProductCategories'])->name('product-category-list');
-        Route::get('listSalesProduct/{id}', [ProductController::class,'listSalesProduct'])->name('listSalesProduct');
+        Route::get('listSalesProduct/{id}', [ProductController::class, 'listSalesProduct'])->name('listSalesProduct');
         Route::get('live-search-products', [ProductController::class, 'liveSearchProducts'])->name('live-search-products');
     });
 
@@ -115,6 +117,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('prescBillList/{patient_id}', [EncounterController::class, 'prescBillList'])->name('prescBillList');
         Route::get('investBillList/{patient_id}', [EncounterController::class, 'investBillList'])->name('investBillList');
         Route::get('investResList/{patient_id}', [LabServiceRequestController::class, 'investResList'])->name('investResList');
+        Route::get('patientNursngNote/{patient_id}/{note_type}', [NursingNoteController::class, 'patientNursngNote'])->name('patientNursngNote');
         Route::get('EncounterHistoryList/{patient_id}', [EncounterController::class, 'EncounterHistoryList'])->name('EncounterHistoryList');
     });
 
@@ -128,18 +131,18 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('assign-bed', [AdmissionRequestController::class, 'assignBed'])->name('assign-bed');
         Route::post('assign-bill', [AdmissionRequestController::class, 'assignBill'])->name('assign-bill');
         Route::get('services-list', [ServiceController::class, 'listServices'])->name('services-list');
-        Route::get('servicess/{id}',[accountsController::class,'index'])->name('servicess');
-        Route::get('services-list/{id}',[accountsController::class,'services'])->name('service-list');
-        Route::get('product-list/{id}',[accountsController::class,'products'])->name('product-list');
-        Route::get('settled-services/{id}',[accountsController::class,'settledServices'])->name('settled-services');
-        Route::get('settled-products/{id}',[accountsController::class,'settledProducts'])->name('settled-products');
-        Route::get('paid-services/{id}',[accountsController::class,'serviceView'])->name('paid-services');
-        Route::get('paid-products/{id}',[accountsController::class,'productView'])->name('paid-products');
-        Route::get('back',[paymentController::class, 'back'])->name('back');
-        Route::post('service-payment',[paymentController::class,'process'])->name('service-payment');
-        Route::post('complete-payment',[paymentController::class,'payment'])->name('complete-payment');
-        Route::post('product-payment',[ProductAccountController::class,'process'])->name('product-payment');
-        Route::get('listSalesService/{id}', [ServiceController::class,'listSalesService'])->name('listSalesService');
+        Route::get('servicess/{id}', [accountsController::class, 'index'])->name('servicess');
+        Route::get('services-list/{id}', [accountsController::class, 'services'])->name('service-list');
+        Route::get('product-list/{id}', [accountsController::class, 'products'])->name('product-list');
+        Route::get('settled-services/{id}', [accountsController::class, 'settledServices'])->name('settled-services');
+        Route::get('settled-products/{id}', [accountsController::class, 'settledProducts'])->name('settled-products');
+        Route::get('paid-services/{id}', [accountsController::class, 'serviceView'])->name('paid-services');
+        Route::get('paid-products/{id}', [accountsController::class, 'productView'])->name('paid-products');
+        Route::get('back', [paymentController::class, 'back'])->name('back');
+        Route::post('service-payment', [paymentController::class, 'process'])->name('service-payment');
+        Route::post('complete-payment', [paymentController::class, 'payment'])->name('complete-payment');
+        Route::post('product-payment', [ProductAccountController::class, 'process'])->name('product-payment');
+        Route::get('listSalesService/{id}', [ServiceController::class, 'listSalesService'])->name('listSalesService');
         Route::get('live-search-services', [ServiceController::class, 'liveSearchServices'])->name('live-search-services');
     });
 
@@ -155,6 +158,13 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('stock-list', [StockController::class, 'listStock'])->name('stock-list');
     });
 
+    //nursig note types routes
+    Route::group(['middleware' => ['auth']], function () {
+        Route::resource('nursing-note-types', NursingNoteTypeController::class);
+        Route::resource('nursing-note', NursingNoteController::class);
+        Route::post('nursing-note/new', [NursingNoteController::class, 'new_note'])->name('nursing-note.new');
+    });
+
     Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
         Route::resource('stores', StoreController::class);
@@ -167,9 +177,8 @@ Route::group(['middleware' => ['auth']], function () {
         Route::resource('move-stock', MoveStockController::class);
         Route::get('store-stock-list', [StoreStockController::class, 'listStoreStock'])->name('store-stock-list');
 
-        Route::get('listStoresProducts/{id}', [StoreStockController::class,'listStoresProducts'])->name('listStoresProducts');
-        Route::get('listProductslocations/{id}', [StoreStockController::class,'listProductslocations'])->name('listProductslocations');
-
+        Route::get('listStoresProducts/{id}', [StoreStockController::class, 'listStoresProducts'])->name('listStoresProducts');
+        Route::get('listProductslocations/{id}', [StoreStockController::class, 'listProductslocations'])->name('listProductslocations');
     });
 
 

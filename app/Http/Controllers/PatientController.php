@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\NursingNote;
 use App\Models\patient;
+use App\Models\NursingNoteType;
 use App\Models\User;
 use App\Models\Hmo;
 use App\Models\Clinic;
@@ -97,7 +99,7 @@ class PatientController extends Controller
                 ->make(true);
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
-            return redirect()->back()->withInput()->with('error',$e->getMessage());
+            return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
     }
 
@@ -162,7 +164,7 @@ class PatientController extends Controller
             }
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
-            return redirect()->back()->withInput()->with('error',$e->getMessage());
+            return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
     }
 
@@ -182,7 +184,7 @@ class PatientController extends Controller
             return view('admin.receptionist.send_queue', compact('family', 'products', 'services', 'clinics'));
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
-            return redirect()->back()->withInput()->with('error',$e->getMessage());
+            return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
     }
 
@@ -199,7 +201,7 @@ class PatientController extends Controller
             return view('admin.receptionist.new_patient')->with(['all_patients' => $all_patients, 'hmos' => $hmos]);
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
-            return redirect()->back()->withInput()->with('error',$e->getMessage());
+            return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
     }
 
@@ -374,7 +376,7 @@ class PatientController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error($e->getMessage(), ['exception' => $e]);
-            return redirect()->back()->withInput()->with('error',$e->getMessage());
+            return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
     }
 
@@ -393,10 +395,63 @@ class PatientController extends Controller
             $permissions = Permission::pluck('name', 'id')->all();
             $patient_acc = $patient->account;
             $avail_beds = Bed::where('occupant_id', null)->where('status', 1)->get();
-            return view('admin.patients.show1', compact('user', 'roles', 'statuses', 'permissions', 'patient', 'patient_acc','avail_beds'));
+
+            //for nursing notes
+            $patient_id = $patient->id;
+            $patient = patient::find($patient_id);
+
+            $observation_note = NursingNote::with(['patient', 'createdBy', 'type'])
+                ->where('patient_id', $patient_id)
+                ->where('completed', false)
+                ->where('nursing_note_type_id', 1)
+                ->first() ?? null;
+
+            $observation_note_template = NursingNoteType::find(1);
+
+            $treatment_sheet = NursingNote::with(['patient', 'createdBy', 'type'])
+                ->where('patient_id', $patient_id)
+                ->where('completed', false)
+                ->where('nursing_note_type_id', 2)
+                ->first() ?? null;
+
+            $treatment_sheet_template = NursingNoteType::find(2);
+
+            $io_chart = NursingNote::with(['patient', 'createdBy', 'type'])
+                ->where('patient_id', $patient_id)
+                ->where('completed', false)
+                ->where('nursing_note_type_id', 3)
+                ->first() ?? null;
+
+            $io_chart_template = NursingNoteType::find(3);
+            // dd($io_chart_template);
+
+            $labour_record = NursingNote::with(['patient', 'createdBy', 'type'])
+                ->where('patient_id', $patient_id)
+                ->where('completed', false)
+                ->where('nursing_note_type_id', 4)
+                ->first() ?? null;
+
+            $labour_record_template = NursingNoteType::find(4);
+            return view('admin.patients.show1', compact(
+                'user',
+                'roles',
+                'statuses',
+                'permissions',
+                'patient',
+                'patient_acc',
+                'avail_beds',
+                'observation_note',
+                'treatment_sheet',
+                'io_chart',
+                'labour_record',
+                'observation_note_template',
+                'treatment_sheet_template',
+                'io_chart_template',
+                'labour_record_template'
+            ));
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
-            return redirect()->back()->withInput()->with('error',$e->getMessage());
+            return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
     }
 
@@ -413,7 +468,7 @@ class PatientController extends Controller
             return view('admin.patients.edit', compact('patient', 'hmos'));
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
-            return redirect()->back()->withInput()->with('error',$e->getMessage());
+            return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
     }
 
@@ -580,7 +635,7 @@ class PatientController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error($e->getMessage(), ['exception' => $e]);
-            return redirect()->back()->withInput()->with('error',$e->getMessage());
+            return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
     }
 
