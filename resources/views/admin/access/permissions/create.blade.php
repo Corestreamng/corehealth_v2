@@ -22,8 +22,8 @@
                     ]) !!}
                     {{ csrf_field() }}
                     <div class="form-group">
-                        <label for="name" class="col-sm-2 control-label">Name</label>
-                        <div class="col-sm-10">
+                        <label for="name" class="col-md-2 control-label">Name</label>
+                        <div class="col-md-10">
                             <input type="text" class="form-control" id="name" name="name"
                                 value="{{ old('name') }}" required autofocus placeholder="Enter Name">
                         </div>
@@ -34,7 +34,7 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <div class="col-sm-offset-1 col-sm-6">
+                                <div class="col-md-offset-1 col-md-6">
                                     <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Save</button>
                                 </div>
                             </div>
@@ -42,7 +42,7 @@
 
                         <div class="col-md-6">
                             <div class="form-group">
-                                <div class="col-sm-6">
+                                <div class="col-md-6">
                                     <a href="{{ route('permissions.index') }}" class="pull-right btn btn-danger"><i
                                             class="fa fa-close"></i> Back </a>
                                 </div>

@@ -33,7 +33,7 @@
                     <div class="container-fluid mt-4">
                         <small class="text-danger">*Required fields</small>
                         <div class="row">
-                            <div class="col-sm-4">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="">Surname <span class="text-danger">*</span></label>
                                     <div class="input-group">
@@ -45,7 +45,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-sm-4">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="">Firstname <span class="text-danger">*</span></label>
                                     <div class="input-group">
@@ -56,7 +56,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-sm-4">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="">Other names</label>
                                     <div class="input-group">
@@ -72,7 +72,7 @@
 
 
                         <div class="row">
-                            <div class="col-sm-6">
+                            <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="">Gender <span class="text-danger">*</span></label>
                                     <div class="input-group">
@@ -91,7 +91,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-sm-6">
+                            <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="">Date of Birth <span class="text-danger">*</span></label>
                                     <div class="input-group">
@@ -106,7 +106,7 @@
 
 
                         <div class="row">
-                            <div class="col-sm-6">
+                            <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="">Passport</label>
                                     <div class="input-group">
@@ -117,7 +117,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-sm-6">
+                            <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="">Old Records</label>
                                     <div class="input-group">
@@ -141,7 +141,7 @@
                     <div class="container-fluid mt-4">
                         <small class="text-danger">*Required fields</small>
                         <div class="row">
-                            <div class="col-sm-4">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="">Blood group </label>
                                     <div class="input-group">
@@ -171,7 +171,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-sm-4">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="">Genotype </label>
                                     <div class="input-group">
@@ -195,7 +195,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-sm-4">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="">Disablity status</label>
                                     <div class="input-group">
@@ -214,7 +214,7 @@
 
 
                         <div class="row">
-                            <div class="col-sm-6">
+                            <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="">Nationality </label>
                                     <div class="input-group">
@@ -226,7 +226,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-sm-6">
+                            <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="">Ethnicity </label>
                                     <div class="input-group">
@@ -242,7 +242,7 @@
 
 
                         <div class="row">
-                            <div class="col-sm-6">
+                            <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="">Residential Address</label>
                                     <div class="input-group">
@@ -252,7 +252,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-sm-6">
+                            <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="">Mics. data</label>
                                     <div class="input-group">
@@ -317,7 +317,7 @@
                     </div> --}}
                 </div>
                 <div class="row">
-                    <div class="col-sm-6">
+                    <div class="col-md-6">
                         <div class="form-group">
                             <label for="">Select HMO </label>
                             <div class="input-group">
@@ -331,7 +331,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-sm-6">
+                    <div class="col-md-6">
                         <div class="form-group">
                             <label for="">HMO ID/No</label>
                             <div class="input-group">

@@ -27,8 +27,8 @@
                     </div>
                 @endif
                 <div class="form-group">
-                    <label class="control-label col-sm-2" for="id">User Category:</label>
-                    <div class="col-sm-10">
+                    <label class="control-label col-md-2" for="id">User Category:</label>
+                    <div class="col-md-10">
                         <select class="form-control" id="is_admin" name="is_admin" readonly
                             placeholder="Select Status Category">
                             @foreach ($statuses as $status)
@@ -41,35 +41,35 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="control-label col-sm-2" for="title">Surname:</label>
-                    <div class="col-sm-10">
+                    <label class="control-label col-md-2" for="title">Surname:</label>
+                    <div class="col-md-10">
                         <input type="text" class="form-control" id="surname" name="surname" readonly
                             value="{!! !empty($user->surname) ? $user->surname : old('surname') !!}" autofocus>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="control-label col-sm-2" for="title">Firstname:</label>
-                    <div class="col-sm-10">
+                    <label class="control-label col-md-2" for="title">Firstname:</label>
+                    <div class="col-md-10">
                         <input type="text" class="form-control" id="firstname" name="firstname" readonly
                             value="{!! !empty($user->firstname) ? $user->firstname : old('firstname') !!}" autofocus>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="control-label col-sm-2" for="title">Othername:</label>
-                    <div class="col-sm-10">
+                    <label class="control-label col-md-2" for="title">Othername:</label>
+                    <div class="col-md-10">
                         <input type="text" class="form-control" id="othername" name="othername" readonly
                             value="{!! !empty($user->othername) ? $user->othername : old('othername') !!}" autofocus>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="control-label col-sm-2" for="title">Email:</label>
-                    <div class="col-sm-10">
+                    <label class="control-label col-md-2" for="title">Email:</label>
+                    <div class="col-md-10">
                         <input type="text" class="form-control" id="email" name="email" readonly
                             value="{!! !empty($user->email) ? $user->email : old('email') !!}" autofocus>
                     </div>
                 </div>
                 <div class="row">
-                    <div class="form-group col-sm-6">
+                    <div class="form-group col-md-6">
                         <label for="phone_number" class=" control-label">Phone Number <span class="text-danger">*</span></label>
 
                         <div class="">
@@ -77,7 +77,7 @@
                                 value="{!! !empty($user->othername) ? $user->othername : old('othername') !!}" placeholder="Phone Number" required>
                         </div>
                     </div>
-                    <div class="form-group col-sm-6">
+                    <div class="form-group col-md-6">
                         <label for="password" class="control-label">Password</label>
 
                         <div class="">
@@ -88,7 +88,7 @@
                 </div>
 
                 <div class="row">
-                    <div class="form-group col-sm-6">
+                    <div class="form-group col-md-6">
                         <label for="is_admin" class=" control-label">Specialization</label>
 
                         <div class="">
@@ -96,7 +96,7 @@
                         </div>
                     </div>
 
-                    <div class="form-group col-sm-6">
+                    <div class="form-group col-md-6">
                         <label for="is_admin" class=" control-label">Clinic <span class="text-danger">*Required for doctors</span></label>
 
                         <div class="">
@@ -105,7 +105,7 @@
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-sm-6">
+                    <div class="col-md-6">
                         <div class="form-group">
                             <label for="">Gender <span class="text-danger">*</span></label>
                             <div class="input-group">
@@ -121,7 +121,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-sm-6">
+                    <div class="col-md-6">
                         <div class="form-group">
                             <label for="">Date of Birth <span class="text-danger">*</span></label>
                             <div class="input-group">
@@ -134,7 +134,7 @@
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-sm-6">
+                    <div class="col-md-6">
                         <div class="form-group">
                             <label for="">Address</label>
                             <div class="input-group">
@@ -144,7 +144,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-sm-6">
+                    <div class="col-md-6">
                         <div class="form-group">
                             <label for="">Consultation fee</label>
                             <div class="input-group">
@@ -157,9 +157,9 @@
                 @if ($user->assignRole == 1)
 
                     <div class="form-group">
-                        <label for="inputPassword3" class="col-sm-2 control-label">Roles Assigned:</label>
+                        <label for="inputPassword3" class="col-md-2 control-label">Roles Assigned:</label>
 
-                        <div class="col-sm-10">
+                        <div class="col-md-10">
                             @if (!empty($user->getRoleNames()))
                                 @foreach ($user->getRoleNames() as $v)
                                     <label class="badge badge-success">{{ $v }}</label>
@@ -173,9 +173,9 @@
                 @if ($user->assignPermission == 1)
 
                     <div class="form-group">
-                        <label for="inputPassword3" class="col-sm-2 control-label">Permission Assigned:</label>
+                        <label for="inputPassword3" class="col-md-2 control-label">Permission Assigned:</label>
 
-                        <div class="col-sm-10">
+                        <div class="col-md-10">
                             @if (!empty($user->getPermissionNames()))
                                 @foreach ($user->getPermissionNames() as $v)
                                     <label class="badge badge-success">{{ $v }}</label>
@@ -190,7 +190,7 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <div class="col-sm-offset-1 col-sm-6">
+                            <div class="col-md-offset-1 col-md-6">
                                 <!-- <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Update</button> -->
                             </div>
                         </div>
@@ -198,7 +198,7 @@
 
                     <div class="col-md-6">
                         <div class="form-group">
-                            <div class="col-sm-6">
+                            <div class="col-md-6">
                                 <a href="{{ route('staff.index') }}" class="pull-right btn btn-danger"><i
                                         class="fa fa-close"></i> Back </a>
                             </div>

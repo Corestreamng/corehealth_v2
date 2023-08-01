@@ -54,7 +54,7 @@
                     <br />
                     <form class="form-horizontal" role="form">
                         <div class="form-group">
-                            <div class="col-sm-10">
+                            <div class="col-md-10">
                                 <input type="hidden" class="form-control" id="id_delete">
                             </div>
                         </div>

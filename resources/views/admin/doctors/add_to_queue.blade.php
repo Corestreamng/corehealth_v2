@@ -81,7 +81,7 @@
                         <div class="form-group">
                             <h4 class="text-center">Configure requested service for each patient</h4>
                             <hr>
-                            <div class="col-sm-10">
+                            <div class="col-md-10">
                                 <input type="hidden" class="form-control" id="id_edit" name="id_edit">
                                 <input type="hidden" class="form-control" id="user_id_edit" name="user_id_edit">
                                 <input type="hidden" class="form-control" id="file_no_edit" name="file_no_edit">

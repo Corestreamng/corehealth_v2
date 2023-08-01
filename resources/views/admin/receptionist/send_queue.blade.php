@@ -30,7 +30,7 @@
                             <input type="hidden" name="is_consultation" value="1">
                             <div class="row">
                                 @foreach ($family as $f)
-                                    <div class="col-sm-4">
+                                    <div class="col-md-4">
                                         <h5>{{ userfullname($f->user_id) }}</h5>
                                         <div class="form-group">
                                             <label for="service_id{{ $f->user_id }}">
@@ -86,7 +86,7 @@
                             <input type="hidden" name="is_consultation" value="0">
                             <div class="row">
                                 @foreach ($family as $f)
-                                    <div class="col-sm-4">
+                                    <div class="col-md-4">
                                         <h5>{{ userfullname($f->user_id) }}</h5>
                                         <div class="form-group">
                                             <label for="service_id{{ $f->user_id }}">

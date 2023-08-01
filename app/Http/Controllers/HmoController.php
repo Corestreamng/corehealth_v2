@@ -76,8 +76,8 @@ class HmoController extends Controller
                 }
             }
         } catch (\Exception $e) {
-            return redirect()->back()->withInput()->with('error',$e->getMessage());
             Log::error($e->getMessage(), ['exception' => $e]);
+            return redirect()->back()->withInput()->with('error',$e->getMessage());
         }
     }
 

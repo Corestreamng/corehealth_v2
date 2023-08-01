@@ -10,10 +10,10 @@
 <section class="content-header">
   <div class="container-fluid">
     <div class="row mb-2">
-      <div class="col-sm-6">
+      <div class="col-md-6">
         <h1>Profile Page</h1>
       </div>
-      <div class="col-sm-6">
+      <div class="col-md-6">
         <ol class="breadcrumb float-sm-right">
           <li class="breadcrumb-item"><a href="#">Home</a></li>
           <li class="breadcrumb-item active">Profile Page</li>
@@ -180,12 +180,12 @@
                                 <hr>
                                 <div class="form-group">
                                     <div class="row">
-                                    <div class="col-sm-6">
+                                    <div class="col-md-6">
                                         {{ Form::label('filename', 'Passport:') }}
                                         {{ Form::file('filename') }}
                                     </div>
 
-                                    <div class="col-sm-4" >
+                                    <div class="col-md-4" >
                                         <div class="float-right" style="border: dotted 1px 000000">
                                             <img src="" class="float-right" id="myimg" width=80>
                                         </div>
@@ -212,53 +212,53 @@
                     <div class="tab-pane" id="settings">
                         <form class="form-horizontal">
                             <div class="form-group row">
-                                <label class="control-label col-sm-2 col-form-label" for="title">Surname:</label>
-                                <div class="col-sm-10">
+                                <label class="control-label col-md-2 col-form-label" for="title">Surname:</label>
+                                <div class="col-md-10">
                                     <input type="text" class="form-control" id="surname" name="surname" value="{!! (!empty($user->surname)) ? $user->surname : old('surname') !!}" autofocus>
                                 </div>
                             </div>
                             <div class="form-group row">
-                                <label class="control-label col-sm-2 col-form-label" for="title">Firstname:</label>
-                                <div class="col-sm-10">
+                                <label class="control-label col-md-2 col-form-label" for="title">Firstname:</label>
+                                <div class="col-md-10">
                                     <input type="text" class="form-control" id="firstname" name="firstname" value="{!! (!empty($user->firstname)) ? $user->firstname : old('firstname') !!}" autofocus>
                                 </div>
                             </div>
                             <div class="form-group row">
-                                <label class="control-label col-sm-2 col-form-label" for="title">Othername:</label>
-                                <div class="col-sm-10">
+                                <label class="control-label col-md-2 col-form-label" for="title">Othername:</label>
+                                <div class="col-md-10">
                                     <input type="text" class="form-control" id="othername" name="othername" value="{!! (!empty($user->othername)) ? $user->othername : old('othername') !!}" autofocus>
                                 </div>
                             </div>
 
                             <div class="form-group row">
-                                <label class="control-label col-sm-2" for="email">Email</label>
-                                <div class="col-sm-10">
+                                <label class="control-label col-md-2" for="email">Email</label>
+                                <div class="col-md-10">
                                     <input type="text" class="form-control" id="email" name="email" value="{!! (!empty($user->email)) ? $user->email : old('email') !!}" readonly autofocus>
                                 </div>
                             </div>
                             <div class="form-group row">
-                                <label class="control-label col-sm-2" for="phone_number">Phone</label>
-                                <div class="col-sm-10">
+                                <label class="control-label col-md-2" for="phone_number">Phone</label>
+                                <div class="col-md-10">
                                     <input type="text" class="form-control" id="phone_number" name="phone_number" value="{!! (!empty($user->phone_number)) ? $user->phone_number : old('phone_number') !!}" readonly autofocus>
                                 </div>
                             </div>
                             <div class="form-group row">
-                                <label for="url" class="col-sm-2 control-label">About Me</label>
-                                <div class="col-sm-10">
+                                <label for="url" class="col-md-2 control-label">About Me</label>
+                                <div class="col-md-10">
                                     <textarea id="content" name="content" cols="30" rows="10" class="form-control" placeholder="Enter Content">
                                     {!! (!empty($user->content)) ? $user->content : old('content') !!}
                                     </textarea>
                                 </div>
                             </div>
                             <div class="form-group row">
-                                <label for="password" class="col-sm-2 control-label">Password</label>
+                                <label for="password" class="col-md-2 control-label">Password</label>
 
-                                <div class="col-sm-10">
+                                <div class="col-md-10">
                                 <input type="password" class="form-control" id="password" name="password" placeholder="Password">
                                 </div>
                             </div>
                             <div class="form-group row">
-                                <div class="offset-sm-2 col-sm-10">
+                                <div class="offset-sm-2 col-md-10">
                                 <div class="checkbox">
                                     <label>
                                     <input type="checkbox"> I agree to the <a href="#">terms and conditions</a>
@@ -267,7 +267,7 @@
                                 </div>
                             </div>
                             <div class="form-group row">
-                                <div class="offset-sm-2 col-sm-10">
+                                <div class="offset-sm-2 col-md-10">
                                 <button type="submit" class="btn btn-danger">Submit</button>
                                 </div>
                             </div>

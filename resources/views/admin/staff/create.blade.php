@@ -18,7 +18,7 @@
                     <div class="row">
                         <div class="form-group">
                             <div class="row">
-                                <div class="col-sm-6">
+                                <div class="col-md-6">
                                     {{ Form::label('filename', 'Passport:') }}
                                     {{ Form::file('filename') }}
                                 </div>
@@ -32,7 +32,7 @@
 
                         <div class="form-group">
                             <div class="row">
-                                <div class="col-sm-6">
+                                <div class="col-md-6">
                                     {{ Form::label('old_records', 'Old Records') }}
                                     {{ Form::file('old_records') }}
                                 </div>
@@ -50,14 +50,14 @@
                     </div>
                     <hr>
                     <div class="row">
-                        <div class="form-group col-sm-6">
+                        <div class="form-group col-md-6">
                             <label for="is_admin" class=" control-label">Status/Category <span class="text-danger">*</span></label>
 
 
                                 {!! Form::select('statuses', $statuses, old('is_admin'), ['id' => 'is_admin', 'name' => 'is_admin', 'class' => 'form-control select2', 'placeholder' => 'Pick a value','required' => 'true']) !!}
 
                         </div>
-                        <div class="form-group col-sm-6">
+                        <div class="form-group col-md-6">
                             <label for="surname" class=" control-label">Surname <span class="text-danger">*</span></label>
 
 
@@ -67,14 +67,14 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="form-group col-sm-6">
+                        <div class="form-group col-md-6">
                             <label for="inputEmail3" class=" control-label">Firstname <span class="text-danger">*</span></label>
 
 
                                 <input type="text" class="form-control" id="firstname" name="firstname"
                                     value="{{ old('firstname') }}" placeholder="Firstname" required>
                         </div>
-                        <div class="form-group col-sm-6">
+                        <div class="form-group col-md-6">
                             <label for="othername" class=" control-label">Othernames</label>
 
                             <div class="">
@@ -93,7 +93,7 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="form-group col-sm-6">
+                        <div class="form-group col-md-6">
                             <label for="phone_number" class=" control-label">Phone Number <span class="text-danger">*</span></label>
 
                             <div class="">
@@ -101,7 +101,7 @@
                                     value="{{ old('phone_number') }}" placeholder="Phone Number" required>
                             </div>
                         </div>
-                        <div class="form-group col-sm-6">
+                        <div class="form-group col-md-6">
                             <label for="password" class="control-label">Password</label>
 
                             <div class="">
@@ -112,7 +112,7 @@
                     </div>
 
                     <div class="row">
-                        <div class="form-group col-sm-6">
+                        <div class="form-group col-md-6">
                             <label for="is_admin" class=" control-label">Specialization <span class="text-danger">*Required for doctors</span></label>
 
                             <div class="">
@@ -120,7 +120,7 @@
                             </div>
                         </div>
 
-                        <div class="form-group col-sm-6">
+                        <div class="form-group col-md-6">
                             <label for="is_admin" class=" control-label">Clinic <span class="text-danger">*Required for doctors</span></label>
 
                             <div class="">
@@ -129,7 +129,7 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-sm-6">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="">Gender <span class="text-danger">*</span></label>
                                 <div class="input-group">
@@ -145,7 +145,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-sm-6">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="">Date of Birth <span class="text-danger">*</span></label>
                                 <div class="input-group">
@@ -158,7 +158,7 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-sm-6">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="">Address</label>
                                 <div class="input-group">
@@ -168,7 +168,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-sm-6">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="">Consultation fee <span class="text-danger">*Required for doctors</span></label>
                                 <div class="input-group">

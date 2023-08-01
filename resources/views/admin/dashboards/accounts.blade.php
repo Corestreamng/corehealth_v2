@@ -3,7 +3,7 @@
 @section('page_name', 'Home')
 @section('content')
 <div class="row">
-    <div class="col-sm-6 stretch-card grid-margin">
+    <div class="col-md-6 stretch-card grid-margin">
         <div class="card">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
@@ -23,7 +23,7 @@
             </div>
         </div>
     </div>
-    <div class="col-sm-6 stretch-card grid-margin">
+    <div class="col-md-6 stretch-card grid-margin">
         <div class="card">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
@@ -43,7 +43,7 @@
             </div>
         </div>
     </div>
-    {{-- <div class="col-sm-6 stretch-card grid-margin">
+    {{-- <div class="col-md-6 stretch-card grid-margin">
         <div class="card">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
@@ -63,7 +63,7 @@
             </div>
         </div>
     </div>
-    <div class="col-sm-6 stretch-card grid-margin">
+    <div class="col-md-6 stretch-card grid-margin">
         <div class="card">
             <div class="card-body">
                 <div class="d-flex justify-content-between">

@@ -30,6 +30,7 @@ use App\Http\Controllers\NursingNoteController;
 use App\Http\Controllers\NursingNoteTypeController;
 use App\Http\Controllers\PatientAccountController;
 use App\Http\Controllers\ProductRequestController;
+use App\Http\Controllers\VitalSignController;
 use App\Models\AdmissionRequest;
 use App\Models\LabServiceRequest;
 use App\Models\patientAccount;
@@ -208,6 +209,13 @@ Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
         Route::resource('hmo', HmoController::class);
         Route::get('hmoList', [HmoController::class, 'listHmo'])->name('hmoList');
+    });
+
+    Route::group(['middleware' => ['auth']], function () {
+        // Creating and Listing Permissions
+        Route::resource('vitals', VitalSignController::class);
+        Route::get('patient-vitals/{patient_id}', [VitalSignController::class, 'patientVitals'])->name('patient-vitals');
+        Route::get('allPatientVitals/{patient_id}', [VitalSignController::class, 'allPatientVitals'])->name('allPatientVitals');
     });
 });
 

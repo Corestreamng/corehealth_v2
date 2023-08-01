@@ -44,7 +44,7 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <div class="col-sm-offset-1 col-sm-6">
+                                <div class="col-md-offset-1 col-md-6">
                                     <button type="submit" class="btn btn-success"><i class="fa fa-save"></i>
                                         Update</button>
                                 </div>
@@ -53,7 +53,7 @@
 
                         <div class="col-md-6">
                             <div class="form-group">
-                                <div class="col-sm-6">
+                                <div class="col-md-6">
                                     <a href="{{ route('hmo.index') }}" class="pull-right btn btn-danger"><i
                                             class="fa fa-close"></i> Back </a>
                                 </div>

@@ -3,7 +3,7 @@
 @section('page_name', 'Home')
 @section('content')
 <div class="row">
-    <div class="col-sm-6 stretch-card grid-margin">
+    <div class="col-md-6 stretch-card grid-margin">
         <table class="table table-sm table-bordered table-striped">
             <thead>
               <tr>

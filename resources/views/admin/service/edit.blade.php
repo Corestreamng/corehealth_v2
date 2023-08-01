@@ -10,9 +10,9 @@
             <div class="card-header bg-transparent border-info">{{ __('Edit Service') }}</div>
             <div class="card-body">
                 <div class="form-group row">
-                    <label for="category_id" class="col-sm-2 col-form-label">{{ __('Category') }} <i
+                    <label for="category_id" class="col-md-2 col-form-label">{{ __('Category') }} <i
                             class="text-danger">*</i></label>
-                    <div class="col-sm-10">
+                    <div class="col-md-10">
                         {!! Form::select('category', $category, $product->category_id, [
                             'id' => 'category_id',
                             'name' => 'category_id',
@@ -24,9 +24,9 @@
                 </div>
 
                 <div class="form-group row">
-                    <label for="name" class="col-sm-2 col-form-label">{{ __('Name') }}<i
+                    <label for="name" class="col-md-2 col-form-label">{{ __('Name') }}<i
                             class="text-danger">*</i></label>
-                    <div class="col-sm-10">
+                    <div class="col-md-10">
                         <input type="text" id="service_name" class="form-control" name="service_name"
                             value="{{ old('service_name') ? old('service_name') : $product->service_name }}"
                             placeholder="Service Name">
@@ -34,8 +34,8 @@
                 </div>
 
                 <div class="form-group row">
-                    <label for="service_code" class="col-sm-2 col-form-label">{{ __('Code') }}</label>
-                    <div class="col-sm-10">
+                    <label for="service_code" class="col-md-2 col-form-label">{{ __('Code') }}</label>
+                    <div class="col-md-10">
                         <input type="text" id="service_code" class="form-control" name="service_code"
                             value="{{ old('service_code') ? old('service_code') : $product->service_code }}"
                             placeholder="Service Code">

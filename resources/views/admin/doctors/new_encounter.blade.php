@@ -55,7 +55,7 @@
             <div class="card mt-2">
                 <div class="card-body table-responsive">
                     <div class="row">
-                        <div class="col-sm-9">
+                        <div class="col-md-9">
                             <h1>{{ userfullname($patient->user->id) }}</h1>
                             <h3>File No: {{ $patient->file_no }}</h3>
                             @if ($patient->user->old_records)
@@ -71,7 +71,7 @@
                                 </div>
                             @endif
                         </div>
-                        <div class="col-sm-3">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <img src="{!! url('storage/image/user/' . $patient->user->filename) !!}" valign="middle" width="150px" height="120px" />
                                 <br>

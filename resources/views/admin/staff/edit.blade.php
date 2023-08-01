@@ -17,18 +17,18 @@
                 {{ csrf_field() }}
                 {{-- <input type="hidden" name="_method" value="PUT"> --}}
                 <div class="row">
-                    <div class="form-group col-sm-6">
+                    <div class="form-group col-md-6">
                         <h4>Active Image</h4>
                         <img src="{!! url('storage/image/user/' . $user->filename) !!}" valign="middle" width="150px" height="120px" />
                         <br>
                         <div class="form-group">
                             <div class="row">
-                                <div class="col-sm-6 float-left">
+                                <div class="col-md-6 float-left">
                                     {{ Form::label('filename', 'Select New Passport:') }}
                                     {{ Form::file('filename') }}
                                 </div>
 
-                                <div class="col-sm-4">
+                                <div class="col-md-4">
                                     {{-- <div id="destination" class="h-auto d-inline-block bg-info" style="width: 60px;"></div> --}}
                                     <img src="" class="float-right" id="myimg" width=80>
                                 </div>
@@ -36,9 +36,9 @@
                         </div>
 
                     </div>
-                    <div class="form-group col-sm-6">
+                    <div class="form-group col-md-6">
                         <div class="row">
-                            <div class="col-sm-4">
+                            <div class="col-md-4">
                                 @if ($user->old_records)
                                     <div class="form-group">
                                         <a href="{!! url('storage/image/user/old_records/' . $user->old_records) !!}" target="_blank"><i class="fa fa-file"></i> Old
@@ -48,7 +48,7 @@
                                     </div>
                                 @endif
                             </div>
-                            <div class="col-sm-6">
+                            <div class="col-md-6">
                                 {{ Form::label('old_records', 'Update Old Records') }}
                                 {{ Form::file('old_records') }}
                             </div>
@@ -60,7 +60,7 @@
                     <small class="text-danger"> Fields Marked * Are Required</small>
                 </div>
                 <div class="row">
-                    <div class="form-group col-sm-6">
+                    <div class="form-group col-md-6">
                         <label class="control-label" for="id">User Category: <span
                                 class="text-danger">*</span></label>
                         <div class="">
@@ -77,7 +77,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="form-group col-sm-6">
+                    <div class="form-group col-md-6">
                         <label class="control-label" for="title">Surname: <span class="text-danger">*</span></label>
                         <div class="">
                             <input type="text" class="form-control" id="surname" name="surname"
@@ -86,14 +86,14 @@
                     </div>
                 </div>
                 <div class="row">
-                    <div class="form-group col-sm-6">
+                    <div class="form-group col-md-6">
                         <label class="control-label" for="title">Firstname: <span class="text-danger">*</span></label>
                         <div class="">
                             <input type="text" class="form-control" id="firstname" name="firstname"
                                 value="{!! !empty($user->firstname) ? $user->firstname : old('firstname') !!}" autofocus>
                         </div>
                     </div>
-                    <div class="form-group col-sm-6">
+                    <div class="form-group col-md-6">
                         <label class="control-label" for="title">Othername:</label>
                         <div class="">
                             <input type="text" class="form-control" id="othername" name="othername"
@@ -102,7 +102,7 @@
                     </div>
                 </div>
                 <div class="row">
-                    <div class="form-group col-sm-12">
+                    <div class="form-group col-md-12">
                         <label class="control-label" for="title">Email:</label>
                         <div class="">
                             <input type="text" class="form-control" id="email" name="email"
@@ -111,7 +111,7 @@
                     </div>
                 </div>
                 <div class="row">
-                    <div class="form-group col-sm-6">
+                    <div class="form-group col-md-6">
                         <label for="phone_number" class=" control-label">Phone Number <span
                                 class="text-danger">*</span></label>
 
@@ -120,7 +120,7 @@
                                 value="{!! !empty($user->staff_profile->phone_number) ? $user->staff_profile->phone_number : old('phone_number') !!}" placeholder="Phone Number" required>
                         </div>
                     </div>
-                    <div class="form-group col-sm-6">
+                    <div class="form-group col-md-6">
                         <label for="password" class="control-label">Password</label>
 
                         <div class="">
@@ -131,7 +131,7 @@
                 </div>
 
                 <div class="row">
-                    <div class="form-group col-sm-6">
+                    <div class="form-group col-md-6">
                         <label for="is_admin" class=" control-label">Specialization <span class="text-danger">*Required
                                 for
                                 doctors</span></label>
@@ -151,7 +151,7 @@
                         </div>
                     </div>
 
-                    <div class="form-group col-sm-6">
+                    <div class="form-group col-md-6">
                         <label for="is_admin" class=" control-label">Clinic <span class="text-danger">*Required for
                                 doctors</span></label>
 
@@ -166,7 +166,7 @@
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-sm-6">
+                    <div class="col-md-6">
                         <div class="form-group">
                             <label for="">Gender <span class="text-danger">*</span></label>
                             <div class="input-group">
@@ -185,7 +185,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-sm-6">
+                    <div class="col-md-6">
                         <div class="form-group">
                             <label for="">Date of Birth <span class="text-danger">*</span></label>
                             <div class="input-group">
@@ -197,7 +197,7 @@
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-sm-6">
+                    <div class="col-md-6">
                         <div class="form-group">
                             <label for="">Address</label>
                             <div class="input-group">
@@ -207,7 +207,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-sm-6">
+                    <div class="col-md-6">
                         <div class="form-group">
                             <label for="">Consultation fee <span class="text-danger">*Required for
                                     doctors</span></label>
@@ -234,7 +234,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="inputPassword3" class="col-sm-2 control-label">Roles</label>
+                    <label for="inputPassword3" class="col-md-2 control-label">Roles</label>
                     <div class="">
                         {!! Form::select('roles[]', $roles, $userRole, [
                             'id' => 'roles',
@@ -258,7 +258,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="inputPassword3" class="col-sm-2 control-label">Permissions</label>
+                    <label for="inputPassword3" class="col-md-2 control-label">Permissions</label>
                     <div class="">
                         {!! Form::select('permissions[]', $permissions, $userPermission, [
                             'class' => 'form-control ',

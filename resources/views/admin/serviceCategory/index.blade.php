@@ -11,10 +11,10 @@
                 <div class="card-header">
 
                     <div class="row">
-                        <div class="col-sm-6">
+                        <div class="col-md-6">
                             {{ __('Service Category') }}
                         </div>
-                        <div class="col-sm-6">
+                        <div class="col-md-6">
                             {{-- @if (auth()->user()->can('user-create')) --}}
                             <a href="{{ route('services-category.create') }}" id="loading-btn" data-loading-text="Loading..."
                                 class="btn btn-primary btn-sm float-right">
@@ -62,7 +62,7 @@
                     <br />
                     <form class="form-horizontal" role="form">
                         <div class="form-group">
-                            <div class="col-sm-10">
+                            <div class="col-md-10">
                                 <input type="hidden" class="form-control" id="id_delete">
                             </div>
                         </div>

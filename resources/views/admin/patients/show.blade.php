@@ -10,7 +10,7 @@
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-sm-9">
+                    <div class="col-md-9">
                         <h1>{{ userfullname($user->id) }}</h1>
                         <h3>File No: {{ $patient->file_no }}</h3>
                         @if ($user->old_records)
@@ -25,7 +25,7 @@
                             </div>
                         @endif
                     </div>
-                    <div class="col-sm-3">
+                    <div class="col-md-3">
                         <div class="form-group">
                             <img src="{!! url('storage/image/user/' . $user->filename) !!}" valign="middle" width="150px" height="120px" />
                             <br>
@@ -77,9 +77,9 @@
                 @if ($user->assignRole == 1)
 
                     <div class="form-group">
-                        <label for="inputPassword3" class="col-sm-2 control-label">Roles Assigned:</label>
+                        <label for="inputPassword3" class="col-md-2 control-label">Roles Assigned:</label>
 
-                        <div class="col-sm-10">
+                        <div class="col-md-10">
                             @if (!empty($user->getRoleNames()))
                                 @foreach ($user->getRoleNames() as $v)
                                     <label class="badge badge-success">{{ $v }}</label>
@@ -93,9 +93,9 @@
                 @if ($user->assignPermission == 1)
 
                     <div class="form-group">
-                        <label for="inputPassword3" class="col-sm-2 control-label">Permission Assigned:</label>
+                        <label for="inputPassword3" class="col-md-2 control-label">Permission Assigned:</label>
 
-                        <div class="col-sm-10">
+                        <div class="col-md-10">
                             @if (!empty($user->getPermissionNames()))
                                 @foreach ($user->getPermissionNames() as $v)
                                     <label class="badge badge-success">{{ $v }}</label>
@@ -368,7 +368,7 @@
         <div class="row mt-2">
             <div class="col-12">
                 <div class="form-group">
-                    <div class="col-sm-6">
+                    <div class="col-md-6">
                         <a href="{{ route('staff.index') }}" class="btn btn-danger"><i class="fa fa-close"></i> Back
                         </a>
                     </div>

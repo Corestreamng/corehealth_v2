@@ -35,8 +35,8 @@ return [
          *
          * Example: Amount in words: Eight hundred fifty thousand sixty-eight EUR and fifteen ct.
          */
-        'fraction' => 'kb.',
-        'symbol'   => '€',
+        'fraction' => 'kobo.',
+        'symbol'   => 'N',
         /*
          * Example: 19.00
          */
@@ -59,9 +59,14 @@ return [
 
     'paper' => [
         // A4 = 210 mm x 297 mm = 595 pt x 842 pt
-        'size'        => 'a4',
+        'size'        => '50mm',
         'orientation' => 'portrait',
         'dynamic_height' => true
+    ],
+    
+    'default_paper_size' => [
+        'width' => 50,
+        'height' => 100,
     ],
 
     'disk' => 'local',

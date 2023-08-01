@@ -24,6 +24,7 @@
     <link rel="stylesheet" href="{{ asset('css/selectisize.css') }}">
     <script src="{{ asset('js/app.js') }}"></script>
     <link rel="stylesheet" href="asset('/plugins/dataT/datatables.min.css')">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
     <style>
         .ck-editor__editable_inline {
             min-height: 200px;
@@ -100,6 +101,34 @@
             document.getElementById("preloader").style.display = "none";
         };
     </script>
+    <script>
+        // Get the URL parameter value using JavaScript
+        function getParameterByName(name, url) {
+            if (!url) url = window.location.href;
+            name = name.replace(/[\[\]]/g, '\\$&');
+            var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+                results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, ' '));
+        }
+
+        // Scroll to the section based on the URL parameter
+        function scrollToSection() {
+            var sectionToScroll = getParameterByName('section');
+            if (sectionToScroll) {
+                var element = document.getElementById(sectionToScroll);
+                if (element) {
+                    element.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
+            }
+        }
+
+        // Call the scrollToSection function on page load
+        window.addEventListener('load', scrollToSection);
+    </script>
 
     <!-- Styles -->
     {{-- <link href="{{ asset('css/app.css') }}" rel="stylesheet"> --}}
@@ -147,10 +176,10 @@
                     <section class="content-header">
                         <div class="container-fluid">
                             <div class="row mb-2">
-                                <div class="col-sm-6">
+                                <div class="col-md-6">
                                     <h1>@yield('page_name')</h1>
                                 </div>
-                                <div class="col-sm-6">
+                                <div class="col-md-6">
                                     <ol class="breadcrumb float-sm-right">
                                         <li class="breadcrumb-item"><a href="#">@yield('page_name')</a></li>
                                         <li class="breadcrumb-item active">@yield('subpage_name')</li>
@@ -190,12 +219,12 @@
     <!-- container-scroller -->
     <!-- plugins:js -->
     <script src="{{ asset('admin/assets/vendors/js/vendor.bundle.base.js') }}"></script>
+    {{-- <script src="admin/assets/vendors/chart.js/Chart.min.js"></script> --}}
     @yield('scripts')
     <!-- endinject -->
     <!-- Plugin js for this page -->
-    {{-- <script src="admin/assets/vendors/jquery-bar-rating/jquery.barrating.min.js"></script>
-    <script src="admin/assets/vendors/chart.js/Chart.min.js"></script>
-    <script src="admin/assets/vendors/flot/jquery.flot.js"></script>
+    {{-- <script src="admin/assets/vendors/jquery-bar-rating/jquery.barrating.min.js"></script> --}}
+    {{-- <script src="admin/assets/vendors/flot/jquery.flot.js"></script>
     <script src="admin/assets/vendors/flot/jquery.flot.resize.js"></script>
     <script src="admin/assets/vendors/flot/jquery.flot.categories.js"></script>
     <script src="admin/assets/vendors/flot/jquery.flot.fillbetween.js"></script>
@@ -209,7 +238,7 @@
     {{-- <script src="{{ asset('admin/assets/js/todolist.js') }}"></script> --}}
     <!-- endinject -->
     <!-- Custom js for this page -->
-    <script src="{{ asset('admin/assets/js/dashboard.js') }}"></script>
+    {{-- <script src="{{ asset('admin/assets/js/dashboard.js') }}"></script> --}}
     <script src="{{ asset('plugins/ckeditor/ckeditor5/ckeditor.js') }}"></script>
     <script>
         ClassicEditor

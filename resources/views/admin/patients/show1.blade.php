@@ -10,7 +10,7 @@
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-sm-9">
+                    <div class="col-md-9">
                         <h1>{{ userfullname($user->id) }}</h1>
                         <h3>File No: {{ $patient->file_no }}</h3>
                         @if ($user->old_records)
@@ -25,7 +25,7 @@
                             </div>
                         @endif
                     </div>
-                    <div class="col-sm-3">
+                    <div class="col-md-3">
                         <div class="form-group">
                             <img src="{!! url('storage/image/user/' . $user->filename) !!}" valign="middle" width="150px" height="120px" />
                             <br>
@@ -77,9 +77,9 @@
                 @if ($user->assignRole == 1)
 
                     <div class="form-group">
-                        <label for="inputPassword3" class="col-sm-2 control-label">Roles Assigned:</label>
+                        <label for="inputPassword3" class="col-md-2 control-label">Roles Assigned:</label>
 
-                        <div class="col-sm-10">
+                        <div class="col-md-10">
                             @if (!empty($user->getRoleNames()))
                                 @foreach ($user->getRoleNames() as $v)
                                     <label class="badge badge-success">{{ $v }}</label>
@@ -93,9 +93,9 @@
                 @if ($user->assignPermission == 1)
 
                     <div class="form-group">
-                        <label for="inputPassword3" class="col-sm-2 control-label">Permission Assigned:</label>
+                        <label for="inputPassword3" class="col-md-2 control-label">Permission Assigned:</label>
 
-                        <div class="col-sm-10">
+                        <div class="col-md-10">
                             @if (!empty($user->getPermissionNames()))
                                 @foreach ($user->getPermissionNames() as $v)
                                     <label class="badge badge-success">{{ $v }}</label>
@@ -114,41 +114,101 @@
                     data-target="#vitalsCardBody" aria-expanded="false" aria-controls="vitalsCardBody"><span
                         class="fa fa-caret-down"></span></button>
             </div>
-            <div class="collapse card-body" id="vitalsCardBody">
+            <div class="collapse card-body {{ request()->get('section') && request()->get('section') == 'vitalsCardBody' ? 'show' : '' }}"
+                id="vitalsCardBody">
                 <div class="row">
-                    <div class="col-sm-6">
-                        <form>
-                            <div class="form-group">
-                                <label for="bloodPressure">Blood Pressure (mmHg) <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="bloodPressure" name="bloodPressure"
-                                    pattern="\d+/\d+" required>
-                                <small class="form-text text-muted">Enter in the format of "systolic/diastolic", e.g.,
-                                    120/80.</small>
-                            </div>
-                            <div class="form-group">
-                                <label for="bodyTemperature">Body Temperature (°C) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="bodyTemperature" name="bodyTemperature"
-                                    min="34" max="39" step="0.1" required>
+                    <div class="col-12">
+                        <form method="post" action="{{ route('vitals.store') }}">
+                            @csrf
+                            <div class="row">
+                                <div class="form-group col-md-6">
+                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                    <label for="bloodPressure">Blood Pressure (mmHg) <span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="bloodPressure" name="bloodPressure"
+                                        pattern="\d+/\d+" required>
+                                    <small class="form-text text-muted">Enter in the format of "systolic/diastolic", e.g.,
+                                        120/80.</small>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="bodyTemperature">Body Temperature (°C) <span
+                                            class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="bodyTemperature" name="bodyTemperature"
+                                        min="34" max="39" step="0.1" required>
                                     <small class="form-text text-muted">Min : 34, Max: 39</small>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label for="respiratoryRate">Respiratory Rate (BPM)</label>
-                                <input type="number" class="form-control" id="respiratoryRate" name="respiratoryRate"
-                                    min="12" max="30">
+                            <div class="row">
+                                <div class="form-group col-md-6">
+                                    <label for="respiratoryRate">Respiratory Rate (BPM)</label>
+                                    <input type="number" class="form-control" id="respiratoryRate" name="respiratoryRate"
+                                        min="12" max="30">
                                     <small class="form-text text-muted">Breaths per Minute. Min : 12, Max: 30</small>
-                            </div>
-                            <div class="form-group">
-                                <label for="heartRate">Heart Rate (BPM)</label>
-                                <input type="number" class="form-control" id="heartRate" name="heartRate" min="60"
-                                    max="220">
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="heartRate">Heart Rate (BPM)</label>
+                                    <input type="number" class="form-control" id="heartRate" name="heartRate"
+                                        min="60" max="220">
                                     <small class="form-text text-muted">Beats Per Min. Min : 60, Max: 220</small>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="form-group col-md-6">
+                                    <label for="datetimeField">Time Taken</label>
+                                    <input type="datetime-local" class="form-control" id="datetimeField"
+                                        name="datetimeField" value="{{ date('Y-m-d\TH:i') }}" required>
+                                    <small class="form-text text-muted">The exact time the vitals were taken</small>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="otherNotes">Other Notes</label>
+                                    <textarea name="otherNotes" id="otherNotes" class="form-control"></textarea>
+                                    <small class="form-text text-muted">Any other specifics about the patient</small>
+                                </div>
                             </div>
                             <button type="submit" class="btn btn-primary">Submit</button>
                         </form>
                     </div>
-                    <div class="col-sm-6">
-                        chart
+                    
+                    <div class="col-12">
+                    <hr>
+                        <h4>Vital Signs Charts(up to last 30 readings)</h4>
+                        <br>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <!-- Blood Pressure Chart -->
+                                <canvas id="bloodPressureChart"></canvas>
+                            </div>
+
+                            <div class="col-md-6">
+                                <!-- Temperature Chart -->
+                                <canvas id="temperatureChart"></canvas>
+                            </div>
+
+                            <div class="col-md-6">
+                                <!-- Heart Rate Chart -->
+                                <canvas id="heartRateChart"></canvas>
+
+                            </div>
+
+                            <div class="col-md-6">
+                                <!-- Respiratory Rate Chart -->
+                                <canvas id="respRateChart"></canvas>
+                            </div>
+                        </div>
+
                     </div>
+                </div>
+                <hr>
+                <h4>Vitals History</h4>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered table-striped" style="width: 100%" id="vitals_history">
+                        <thead>
+                            <th>#</th>
+                            <th>Service</th>
+                            <th>Details</th>
+                            {{-- <th>Entry</th> --}}
+                        </thead>
+                    </table>
                 </div>
             </div>
         </div>
@@ -194,7 +254,8 @@
                     data-target="#accountsCardBody" aria-expanded="false" aria-controls="accountsCardBody"><span
                         class="fa fa-caret-down"></span></button>
             </div>
-            <div class="collapse card-body" id="accountsCardBody">
+            <div class="collapse card-body {{ request()->get('section') && request()->get('section') == 'accountsCardBody' ? 'show' : '' }}"
+                id="accountsCardBody">
                 @if (null != $patient_acc)
                     <div class="table-responsive">
                         <table class="table">
@@ -253,7 +314,8 @@
                     data-target="#addmissionsCardBody" aria-expanded="false" aria-controls="addmissionsCardBody"><span
                         class="fa fa-caret-down"></span></button>
             </div>
-            <div class="collapse card-body" id="addmissionsCardBody">
+            <div class="collapse card-body {{ request()->get('section') && request()->get('section') == 'addmissionsCardBody' ? 'show' : '' }}"
+                id="addmissionsCardBody">
                 <div class="table-responsive">
                     <table id="admission-request-list" class="table table-sm table-bordered table-striped"
                         style="width: 100%">
@@ -277,7 +339,8 @@
                     data-target="#wardNotesCardBody" aria-expanded="false" aria-controls="wardNotesCardBody"><span
                         class="fa fa-caret-down"></span></button>
             </div>
-            <div class="collapse card-body" id="wardNotesCardBody">
+            <div class="collapse card-body {{ request()->get('section') && request()->get('section') == 'wardNotesCardBody' ? 'show' : '' }}"
+                id="wardNotesCardBody">
                 Procedure notes
             </div>
         </div>
@@ -288,7 +351,8 @@
                     data-target="#nurseingNotesCardBody" aria-expanded="false"
                     aria-controls="nurseingNotesCardBody"><span class="fa fa-caret-down"></span></button>
             </div>
-            <div class="collapse card-body" id="nurseingNotesCardBody">
+            <div class="collapse card-body {{ request()->get('section') && request()->get('section') == 'nurseingNotesCardBody' ? 'show' : '' }}"
+                id="nurseingNotesCardBody">
                 <ul class="nav nav-tabs" id="myTab" role="tablist">
                     <li class="nav-item">
                         <a class="nav-link active" id="observation-tab" data-toggle="tab" href="#observation"
@@ -558,7 +622,8 @@
                     data-target="#doctorNotesCardBody" aria-expanded="false" aria-controls="doctorNotesCardBody"><span
                         class="fa fa-caret-down"></span></button>
             </div>
-            <div class="collapse card-body" id="doctorNotesCardBody">
+            <div class="collapse card-body {{ request()->get('section') && request()->get('section') == 'doctorNotesCardBody' ? 'show' : '' }}"
+                id="doctorNotesCardBody">
                 <table class="table table-sm table-bordered table-striped" style="width: 100%"
                     id="encounter_history_list">
                     <thead>
@@ -577,7 +642,8 @@
                     data-target="#prescriptionsNotesCardBody" aria-expanded="false"
                     aria-controls="prescriptionsNotesCardBody"><span class="fa fa-caret-down"></span></button>
             </div>
-            <div class="collapse card-body" id="prescriptionsNotesCardBody">
+            <div class="collapse card-body {{ request()->get('section') && request()->get('section') == 'prescriptionsNotesCardBody' ? 'show' : '' }}"
+                id="prescriptionsNotesCardBody">
                 <h4>Requested Prescription</h4>
                 <form action="{{ route('product-bill-patient') }}" method="post">
                     @csrf
@@ -647,7 +713,8 @@
                     data-target="#investigationsCardBody" aria-expanded="false"
                     aria-controls="investigationsCardBody"><span class="fa fa-caret-down"></span></button>
             </div>
-            <div class="collapse card-body" id="investigationsCardBody">
+            <div class="collapse card-body {{ request()->get('section') && request()->get('section') == 'investigationsCardBody' ? 'show' : '' }}"
+                id="investigationsCardBody">
                 <h4>Requested Investigations</h4>
                 <form action="{{ route('service-bill-patient') }}" method="post">
                     @csrf
@@ -731,7 +798,7 @@
         <div class="row mt-2">
             <div class="col-12">
                 <div class="form-group">
-                    <div class="col-sm-6">
+                    <div class="col-md-6">
                         <a href="{{ route('staff.index') }}" class="btn btn-danger"><i class="fa fa-close"></i> Back
                         </a>
                     </div>
@@ -871,6 +938,9 @@
                 </form>
             </div>
         </div>
+    </div>
+    <div id="jjj">
+        kkdkdkk
     </div>
 @endsection
 
@@ -1648,6 +1718,207 @@
             }
 
         }
-        $('.DataTables').DataTable();
+    </script>
+
+    <script>
+        $(function() {
+            $('#vitals_history').DataTable({
+                "dom": 'Bfrtip',
+                "iDisplayLength": 50,
+                "lengthMenu": [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, "All"]
+                ],
+                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{ route('patient-vitals', $patient->id) }}",
+                    "type": "GET"
+                },
+                "columns": [{
+                        data: "DT_RowIndex",
+                        name: "DT_RowIndex"
+                    },
+                    {
+                        data: "created_at",
+                        name: "created_at"
+                    },
+                    {
+                        data: "result",
+                        name: "result"
+                    },
+                ],
+
+                "paging": true
+            });
+        });
+    </script>
+    <script>
+        $.ajax({
+            url: "{{ route('allPatientVitals', $patient->id) }}",
+            type: "GET",
+            dataType: "json",
+            success: function(response) {
+                console.log("Vitals fetched successfully:", response);
+                // response = JSON.parse(response);
+                // Extract vital sign data
+                const timeTaken = response.map(item => item.time_taken);
+                const bloodPressureSystolic = response.map(item => parseInt(item.blood_pressure.split("/")[0]));
+                const bloodPressureDiastolic = response.map(item => parseInt(item.blood_pressure.split("/")[1]));
+                const temperature = response.map(item => parseFloat(item.temp));
+                const heartRate = response.map(item => parseInt(item.heart_rate));
+                const respRate = response.map(item => parseInt(item.resp_rate));
+
+                // Create the Blood Pressure Chart
+                new Chart(document.getElementById("bloodPressureChart"), {
+                    type: "line",
+                    data: {
+                        labels: timeTaken,
+                        datasets: [{
+                                label: "Systolic Blood Pressure",
+                                borderColor: "rgba(255, 99, 132, 1)",
+                                backgroundColor: "rgba(255, 99, 132, 0.2)",
+                                data: bloodPressureSystolic,
+                                lineTension: 0.4
+                            },
+                            {
+                                label: "Diastolic Blood Pressure",
+                                borderColor: "rgba(54, 162, 235, 1)",
+                                backgroundColor: "rgba(54, 162, 235, 0.2)",
+                                data: bloodPressureDiastolic,
+                                lineTension: 0.4
+                            },
+                        ],
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: "Time Taken",
+                                },
+                            },
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: "Blood Pressure",
+                                },
+                            },
+                        },
+                    },
+                });
+
+                // Create the Temperature Chart
+                new Chart(document.getElementById("temperatureChart"), {
+                    type: "line",
+                    data: {
+                        labels: timeTaken,
+                        datasets: [{
+                            label: "Temperature",
+                            borderColor: "rgba(255, 206, 86, 1)",
+                            backgroundColor: "rgba(255, 206, 86, 0.2)",
+                            data: temperature,
+                            lineTension: 0.4
+                        }, ],
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: "Time Taken",
+                                },
+                            },
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: "Temperature",
+                                },
+                            },
+                        },
+                    },
+                });
+
+                // Create the Heart Rate Chart
+                new Chart(document.getElementById("heartRateChart"), {
+                    type: "line",
+                    data: {
+                        labels: timeTaken,
+                        datasets: [{
+                            label: "Heart Rate",
+                            borderColor: "rgba(75, 192, 192, 1)",
+                            backgroundColor: "rgba(75, 192, 192, 0.2)",
+                            data: heartRate,
+                            lineTension: 0.4
+                        }, ],
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: "Time Taken",
+                                },
+                            },
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: "Heart Rate",
+                                },
+                            },
+                        },
+                    },
+                });
+
+                // Create the Respiratory Rate Chart
+                new Chart(document.getElementById("respRateChart"), {
+                    type: "line",
+                    data: {
+                        labels: timeTaken,
+                        datasets: [{
+                            label: "Respiratory Rate",
+                            borderColor: "rgba(153, 102, 255, 1)",
+                            backgroundColor: "rgba(153, 102, 255, 0.2)",
+                            data: respRate,
+                            lineTension: 0.4
+                        }, ],
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: "Time Taken",
+                                },
+                            },
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: "Respiratory Rate",
+                                },
+                            },
+                        },
+                    },
+                });
+            },
+            error: function(xhr, status, error) {
+                // Error handler: handle the error
+                console.error("Error fetching vitals:", error);
+                // Add your code to handle the error here
+            }
+        });
     </script>
 @endsection

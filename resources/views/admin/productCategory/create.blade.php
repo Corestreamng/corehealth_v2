@@ -9,10 +9,10 @@
 
             <div class="card-header bg-transparent ">
                 <div class="row">
-                    <div class="col-sm-6">
+                    <div class="col-md-6">
                         {{ __('Product Category') }}
                     </div>
-                    <div class="col-sm-6">
+                    <div class="col-md-6">
 
                     </div>
                 </div>
@@ -21,24 +21,24 @@
             {{ csrf_field() }}
             <div class="card-body">
                 <div class="form-group row">
-                    <label for="category_name" class="col-sm-2 col-form-label">{{ __('Name') }}</label>
-                    <div class="col-sm-10">
+                    <label for="category_name" class="col-md-2 col-form-label">{{ __('Name') }}</label>
+                    <div class="col-md-10">
                         <input type="text" id="category_name" class="form-control" name="category_name"
                             value="{{ old('category_name') }}" placeholder="Category Name">
                     </div>
                 </div>
 
                 <div class="form-group row">
-                    <label for="category_code " class="col-sm-2 col-form-label">{{ __('Code') }}</label>
-                    <div class="col-sm-10">
+                    <label for="category_code " class="col-md-2 col-form-label">{{ __('Code') }}</label>
+                    <div class="col-md-10">
                         <input type="text" id="category_code" class="form-control" name="category_code"
                             value="{{ old('category_code') }}" placeholder="Category Code">
                     </div>
                 </div>
 
                 <div class="form-group row">
-                    <label for="category_description " class="col-sm-2 col-form-label">{{ __('Description') }}</label>
-                    <div class="col-sm-10">
+                    <label for="category_description " class="col-md-2 col-form-label">{{ __('Description') }}</label>
+                    <div class="col-md-10">
                         {!! Form::textarea('category_description', null, [
                             'class' => 'form-control',
                             'rows' => 4,

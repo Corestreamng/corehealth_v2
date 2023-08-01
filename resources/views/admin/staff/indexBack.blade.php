@@ -6,10 +6,10 @@
 <section class="content-header">
   <div class="container-fluid">
     <div class="row mb-2">
-      <div class="col-sm-6">
+      <div class="col-md-6">
         <h1>User Management</h1>
       </div>
-      <div class="col-sm-6">
+      <div class="col-md-6">
         <ol class="breadcrumb float-sm-right">
           <li class="breadcrumb-item"><a href="#">Home</a></li>
           <li class="breadcrumb-item active">User Management</li>
@@ -76,9 +76,9 @@
                 {{ csrf_field() }}
                   <div class="card-body">
                     <div class="form-group">
-                      <label for="is_admin" class="col-sm-4 control-label">Status Category</label>
+                      <label for="is_admin" class="col-md-4 control-label">Status Category</label>
 
-                      <div class="col-sm-10">
+                      <div class="col-md-10">
                         <select class="form-control{{ $errors->has('is_admin') ? ' is-invalid' : '' }}" id="is_admin" name="is_admin" required placeholder="Select Status Category">
                             <option value="0">--Select--</option>
                           @foreach($statuses as $status)
@@ -93,9 +93,9 @@
                       </div>
                     </div>
                     <div class="form-group">
-                      <label for="surname" class="col-sm-2 control-label">Surname</label>
+                      <label for="surname" class="col-md-2 control-label">Surname</label>
 
-                      <div class="col-sm-10">
+                      <div class="col-md-10">
                         <input type="text" class="form-control{{ $errors->has('surname') ? ' is-invalid' : '' }}" id="surname" name="surname" value="{{ old('surname') }}" required autofocus placeholder="Enter Surname">
                         @if ($errors->has('surname'))
                             <span class="invalid-feedback" role="alert">
@@ -105,9 +105,9 @@
                       </div>
                     </div>
                     <div class="form-group">
-                      <label for="inputEmail3" class="col-sm-2 control-label">Firstname</label>
+                      <label for="inputEmail3" class="col-md-2 control-label">Firstname</label>
 
-                      <div class="col-sm-10">
+                      <div class="col-md-10">
                         <input type="text" class="form-control{{ $errors->has('firstname') ? ' is-invalid' : '' }}" id="firstname" name="firstname" value="{{ old('firstname') }}" required placeholder="Firstname">
                         @if ($errors->has('firstname'))
                             <span class="invalid-feedback" role="alert">
@@ -117,17 +117,17 @@
                       </div>
                     </div>
                     <div class="form-group">
-                      <label for="othername" class="col-sm-2 control-label">Othername</label>
+                      <label for="othername" class="col-md-2 control-label">Othername</label>
 
-                      <div class="col-sm-10">
+                      <div class="col-md-10">
                         <input type="text" class="form-control" id="othername" name="othername" value="{{ old('othername') }}" placeholder="Othername">
 
                       </div>
                     </div>
                     <div class="form-group">
-                      <label for="email" class="col-sm-2 control-label">Email</label>
+                      <label for="email" class="col-md-2 control-label">Email</label>
 
-                      <div class="col-sm-10">
+                      <div class="col-md-10">
                         <input type="email" class="form-control{{ $errors->has('email') ? ' is-invalid' : '' }}" id="email" name="email" value="{{ old('email') }}" required placeholder="Email">
                         @if ($errors->has('email'))
                             <span class="invalid-feedback" role="alert">
@@ -137,9 +137,9 @@
                       </div>
                     </div>
                     <div class="form-group">
-                      <label for="inputPassword3" class="col-sm-2 control-label">Password</label>
+                      <label for="inputPassword3" class="col-md-2 control-label">Password</label>
 
-                      <div class="col-sm-10">
+                      <div class="col-md-10">
                         <input type="password" class="form-control{{ $errors->has('password') ? ' is-invalid' : '' }}" id="password" name="password" required placeholder="Password">
                         @if ($errors->has('password'))
                             <span class="invalid-feedback" role="alert">
@@ -149,9 +149,9 @@
                       </div>
                     </div>
                     <div class="form-group">
-                      <label for="visible" class="col-sm-4 control-label">Visible</label>
+                      <label for="visible" class="col-md-4 control-label">Visible</label>
 
-                      <div class="col-sm-10">
+                      <div class="col-md-10">
                         <select class="form-control{{ $errors->has('visible') ? ' is-invalid' : '' }}" id="visible" name="visible">
                             <option value="0">--Select--</option>
                           @foreach($options as $option)
@@ -161,9 +161,9 @@
                       </div>
                     </div>
                     <div class="form-group">
-                      <label for="inputPassword3" class="col-sm-2 control-label">Roles</label>
+                      <label for="inputPassword3" class="col-md-2 control-label">Roles</label>
 
-                      <div class="col-sm-10">
+                      <div class="col-md-10">
                       {!! Form::select('roles[]', $roles,[], array('class' => 'form-control','multiple')) !!}
                         @if ($errors->has('roles'))
                             <span class="invalid-feedback" role="alert">
@@ -204,8 +204,8 @@
 
       <form class="form-horizontal" role="form">
           <div class="form-group">
-              <label class="control-label col-sm-2" for="id">Status Category:</label>
-              <div class="col-sm-10">
+              <label class="control-label col-md-2" for="id">Status Category:</label>
+              <div class="col-md-10">
                   <select class="form-control{{ $errors->has('is_admin') ? ' is-invalid' : '' }}" id="is_admin" name="is_admin" required placeholder="Select Status Category">
                       <option value="0">--Select--</option>
                     @foreach($statuses as $status)
@@ -217,37 +217,37 @@
               </div>
           </div>
           <div class="form-group">
-              <label class="control-label col-sm-2" for="title">Surname:</label>
-              <div class="col-sm-10">
+              <label class="control-label col-md-2" for="title">Surname:</label>
+              <div class="col-md-10">
                   <input type="text" class="form-control" id="surname_edit" autofocus>
                   <p class="errorSurname text-center alert alert-danger hidden"></p>
               </div>
           </div>
           <div class="form-group">
-              <label class="control-label col-sm-2" for="title">Firstname:</label>
-              <div class="col-sm-10">
+              <label class="control-label col-md-2" for="title">Firstname:</label>
+              <div class="col-md-10">
                   <input type="text" class="form-control" id="firstname_edit" autofocus>
                   <p class="errorFirstname text-center alert alert-danger hidden"></p>
               </div>
           </div>
           <div class="form-group">
-              <label class="control-label col-sm-2" for="title">Othername:</label>
-              <div class="col-sm-10">
+              <label class="control-label col-md-2" for="title">Othername:</label>
+              <div class="col-md-10">
                   <input type="text" class="form-control" id="othername_edit" autofocus>
                   <p class="errorOthername text-center alert alert-danger hidden"></p>
               </div>
           </div>
           <div class="form-group">
-              <label class="control-label col-sm-2" for="title">Email:</label>
-              <div class="col-sm-10">
+              <label class="control-label col-md-2" for="title">Email:</label>
+              <div class="col-md-10">
                   <input type="text" class="form-control" id="email_edit" autofocus>
                   <p class="errorEmail text-center alert alert-danger hidden"></p>
               </div>
           </div>
           <div class="form-group">
-            <label for="visible" class="col-sm-4 control-label">Visible</label>
+            <label for="visible" class="col-md-4 control-label">Visible</label>
 
-            <div class="col-sm-10">
+            <div class="col-md-10">
               <select class="form-control" id="visible_edit">
                   <option value="0">--Select--</option>
                 @foreach($options as $option)
@@ -257,9 +257,9 @@
             </div>
           </div>
           <div class="form-group">
-            <label for="inputPassword3" class="col-sm-2 control-label">Roles</label>
+            <label for="inputPassword3" class="col-md-2 control-label">Roles</label>
 
-            <div class="col-sm-10">
+            <div class="col-md-10">
             {!! Form::select('roles[]', $roles,[], array('class' => 'form-control','multiple')) !!}
               @if ($errors->has('roles'))
                   <span class="invalid-feedback" role="alert">
