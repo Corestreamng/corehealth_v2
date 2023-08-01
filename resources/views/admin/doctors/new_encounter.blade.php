@@ -265,6 +265,10 @@
                                 role="tab" aria-controls="closed-labour" aria-selected="false"> Labour
                                 Records</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="closed-others-tab" data-toggle="tab" href="#closed-others"
+                                role="tab" aria-controls="closed-others" aria-selected="false"> Others </a>
+                        </li>
                     </ul>
                     <div class="tab-content" id="myClosedTabContent">
                         <div class="tab-pane fade show active" id="closed-observation" role="tabpanel"
@@ -313,6 +317,20 @@
                             <div class="table-responsive">
                                 <table class="table table-sm table-bordered table-striped" style="width: 100%"
                                     id="nurse_note_hist_4">
+                                    <thead>
+                                        <th>#</th>
+                                        <th>Note type</th>
+                                        <th>Details</th>
+                                        <th>Action</th>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="closed-others" role="tabpanel"
+                            aria-labelledby="closed-others-tab">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered table-striped" style="width: 100%"
+                                    id="nurse_note_hist_5">
                                     <thead>
                                         <th>#</th>
                                         <th>Note type</th>
@@ -897,6 +915,44 @@
                 "serverSide": true,
                 "ajax": {
                     "url": "{{ url('patientNursngNote', [$patient->id, 4]) }}",
+                    "type": "GET"
+                },
+                "columns": [{
+                        data: "DT_RowIndex",
+                        name: "DT_RowIndex"
+                    },
+                    {
+                        data: "nursing_note_type_id",
+                        name: "nursing_note_type_id"
+                    },
+                    {
+                        data: "created_by",
+                        name: "created_by"
+                    },
+                    {
+                        data: "select",
+                        name: "select"
+                    },
+                ],
+
+                "paging": true
+            });
+        });
+    </script>
+    <script>
+        $(function() {
+            $('#nurse_note_hist_5').DataTable({
+                "dom": 'Bfrtip',
+                "iDisplayLength": 50,
+                "lengthMenu": [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, "All"]
+                ],
+                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{ url('patientNursngNote', [$patient->id, 5]) }}",
                     "type": "GET"
                 },
                 "columns": [{

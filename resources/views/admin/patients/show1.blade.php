@@ -115,7 +115,41 @@
                         class="fa fa-caret-down"></span></button>
             </div>
             <div class="collapse card-body" id="vitalsCardBody">
-                vitals
+                <div class="row">
+                    <div class="col-sm-6">
+                        <form>
+                            <div class="form-group">
+                                <label for="bloodPressure">Blood Pressure (mmHg) <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="bloodPressure" name="bloodPressure"
+                                    pattern="\d+/\d+" required>
+                                <small class="form-text text-muted">Enter in the format of "systolic/diastolic", e.g.,
+                                    120/80.</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="bodyTemperature">Body Temperature (°C) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="bodyTemperature" name="bodyTemperature"
+                                    min="34" max="39" step="0.1" required>
+                                    <small class="form-text text-muted">Min : 34, Max: 39</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="respiratoryRate">Respiratory Rate (BPM)</label>
+                                <input type="number" class="form-control" id="respiratoryRate" name="respiratoryRate"
+                                    min="12" max="30">
+                                    <small class="form-text text-muted">Breaths per Minute. Min : 12, Max: 30</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="heartRate">Heart Rate (BPM)</label>
+                                <input type="number" class="form-control" id="heartRate" name="heartRate" min="60"
+                                    max="220">
+                                    <small class="form-text text-muted">Beats Per Min. Min : 60, Max: 220</small>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </form>
+                    </div>
+                    <div class="col-sm-6">
+                        chart
+                    </div>
+                </div>
             </div>
         </div>
         {{-- <div class="card mt-3">
@@ -238,18 +272,18 @@
         </div>
         <div class="card mt-3">
             <div class="card-header">
-                ward notes
+                Procedure notes
                 <button class="btn btn-primary pull-right" type="button" data-toggle="collapse"
                     data-target="#wardNotesCardBody" aria-expanded="false" aria-controls="wardNotesCardBody"><span
                         class="fa fa-caret-down"></span></button>
             </div>
             <div class="collapse card-body" id="wardNotesCardBody">
-                ward notes
+                Procedure notes
             </div>
         </div>
         <div class="card mt-3">
             <div class="card-header">
-                nursing notes
+                Nursing notes
                 <button class="btn btn-primary pull-right" type="button" data-toggle="collapse"
                     data-target="#nurseingNotesCardBody" aria-expanded="false"
                     aria-controls="nurseingNotesCardBody"><span class="fa fa-caret-down"></span></button>
@@ -272,6 +306,10 @@
                         <a class="nav-link" id="labour-tab" data-toggle="tab" href="#labour" role="tab"
                             aria-controls="labour" aria-selected="false">Labour Records</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="others-tab" data-toggle="tab" href="#others" role="tab"
+                            aria-controls="others" aria-selected="false">Other Notes</a>
+                    </li>
                 </ul>
                 <div class="tab-content" id="myTabContent">
                     <div class="tab-pane fade show active" id="observation" role="tabpanel"
@@ -291,14 +329,14 @@
                             </textarea>
                             </div>
                             <button type="submit" class="btn btn-primary"
-                                onclick="return confirm('are you sure you wish to save your entries?')">Save</button>
+                                onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
                         </form>
                         <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
                             {{ csrf_field() }}
                             <input type="hidden" name="note_type" value="1">
                             <input type="hidden" name="patient_id" value="{{ $patient->id }}">
                             <button type="submit"
-                                onclick="return confirm('are you sure you wish to save your entries and load a fresh sheet?')"
+                                onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
                                 class="btn btn-success" style="float: right; margin-top:-40px">Save &
                                 New</button>
                         </form>
@@ -318,14 +356,14 @@
                             </textarea>
                             </div>
                             <button type="submit" class="btn btn-primary"
-                                onclick="return confirm('are you sure you wish to save your entries?')">Save</button>
+                                onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
                         </form>
                         <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
                             {{ csrf_field() }}
                             <input type="hidden" name="note_type" value="2">
                             <input type="hidden" name="patient_id" value="{{ $patient->id }}">
                             <button type="submit" class="btn btn-success"
-                                onclick="return confirm('are you sure you wish to save your entries and load a fresh sheet?')"
+                                onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
                                 style="float: right; margin-top:-40px">Save &
                                 New</button>
                         </form>
@@ -345,14 +383,14 @@
                             </textarea>
                             </div>
                             <button type="submit" class="btn btn-primary"
-                                onclick="return confirm('are you sure you wish to save your entries?')">Save</button>
+                                onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
                         </form>
                         <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
                             {{ csrf_field() }}
                             <input type="hidden" name="note_type" value="3">
                             <input type="hidden" name="patient_id" value="{{ $patient->id }}">
                             <button type="submit" class="btn btn-success"
-                                onclick="return confirm('are you sure you wish to save your entries and load a fresh sheet?')"
+                                onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
                                 style="float: right; margin-top:-40px">Save &
                                 New</button>
                         </form>
@@ -373,14 +411,44 @@
                             </textarea>
                             </div>
                             <button type="submit" class="btn btn-primary"
-                                onclick="return confirm('are you sure you wish to save your entries?')">Save</button>
+                                onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
                         </form>
                         <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
                             {{ csrf_field() }}
                             <input type="hidden" name="note_type" value="4">
                             <input type="hidden" name="patient_id" value="{{ $patient->id }}">
                             <button type="submit" class="btn btn-success"
-                                onclick="return confirm('are you sure you wish to save your entries and load a fresh sheet?')"
+                                onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
+                                style="float: right; margin-top:-40px">Save &
+                                New</button>
+                        </form>
+                    </div>
+                    <div class="tab-pane fade" id="others" role="tabpanel" aria-labelledby="others-tab">
+                        <form action="{{ route('nursing-note.store') }}" method="post" id="others_form">
+                            {{ csrf_field() }}
+                            <input type="hidden" name="note_type" value="5">
+                            <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                            <input type="hidden" id="close_after_save" value="0">
+                            <div class="form-group">
+                                <br><label for="pateintDiagnosisReport" class="control-label">Other Notes
+                                    {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
+                                {{-- <div style="border:1px solid black;" id="the-others-note" class='the-others-note classic-editor'>
+                                    <?php //echo $others_record->note ?? $others_record_template->template;
+                                    ?>
+                                </div> --}}
+                                <textarea style="display: none" id="others_text" name="the_text" class="form-control classic-editor others_text">
+                                    <?php echo $others_record->note ?? $others_record_template->template; ?>
+                            </textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary"
+                                onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
+                        </form>
+                        <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
+                            {{ csrf_field() }}
+                            <input type="hidden" name="note_type" value="5">
+                            <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                            <button type="submit" class="btn btn-success"
+                                onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
                                 style="float: right; margin-top:-40px">Save &
                                 New</button>
                         </form>
@@ -391,20 +459,25 @@
                 <hr>
                 <ul class="nav nav-tabs" id="myTab" role="tablist">
                     <li class="nav-item">
-                        <a class="nav-link active" id="closed-observation-tab" data-toggle="tab" href="#closed-observation"
-                            role="tab" aria-controls="closed-observation" aria-selected="true"> Observation Charts</a>
+                        <a class="nav-link active" id="closed-observation-tab" data-toggle="tab"
+                            href="#closed-observation" role="tab" aria-controls="closed-observation"
+                            aria-selected="true"> Observation Charts</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="closed-treatment-tab" data-toggle="tab" href="#closed-treatment" role="tab"
-                            aria-controls="closed-treatment" aria-selected="false"> Treatment Sheets</a>
+                        <a class="nav-link" id="closed-treatment-tab" data-toggle="tab" href="#closed-treatment"
+                            role="tab" aria-controls="closed-treatment" aria-selected="false"> Treatment Sheets</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" id="closed-io-tab" data-toggle="tab" href="#closed-io" role="tab"
                             aria-controls="closed-io" aria-selected="false"> Intake/Output Charts</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="closed-labour-tab" data-toggle="tab" href="#closed-labour" role="tab"
-                            aria-controls="closed-labour" aria-selected="false"> Labour Records</a>
+                        <a class="nav-link" id="closed-labour-tab" data-toggle="tab" href="#closed-labour"
+                            role="tab" aria-controls="closed-labour" aria-selected="false"> Labour Records</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="closed-others-tab" data-toggle="tab" href="#closed-others"
+                            role="tab" aria-controls="closed-others" aria-selected="false"> Other Notes</a>
                     </li>
                 </ul>
                 <div class="tab-content" id="myClosedTabContent">
@@ -422,7 +495,8 @@
                             </table>
                         </div>
                     </div>
-                    <div class="tab-pane fade" id="closed-treatment" role="tabpanel" aria-labelledby="closed-treatment-tab">
+                    <div class="tab-pane fade" id="closed-treatment" role="tabpanel"
+                        aria-labelledby="closed-treatment-tab">
                         <div class="table-responsive">
                             <table class="table table-sm table-bordered table-striped" style="width: 100%"
                                 id="nurse_note_hist_2">
@@ -452,6 +526,19 @@
                         <div class="table-responsive">
                             <table class="table table-sm table-bordered table-striped" style="width: 100%"
                                 id="nurse_note_hist_4">
+                                <thead>
+                                    <th>#</th>
+                                    <th>Note type</th>
+                                    <th>Details</th>
+                                    <th>Action</th>
+                                </thead>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="closed-others" role="tabpanel" aria-labelledby="closed-others-tab">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered table-striped" style="width: 100%"
+                                id="nurse_note_hist_5">
                                 <thead>
                                     <th>#</th>
                                     <th>Note type</th>
@@ -689,21 +776,21 @@
         aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="investResModalLabel">Nursing Note Result (<span
-                                id="note_type_name_"></span>)</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <div id="nursing_note_template_" class="table-reponsive" style="border: 1px solid black;">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="investResModalLabel">Nursing Note Result (<span
+                            id="note_type_name_"></span>)</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="nursing_note_template_" class="table-reponsive" style="border: 1px solid black;">
 
-                        </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
                 </form>
             </div>
         </div>
@@ -1339,6 +1426,12 @@
             this.submit();
         })
 
+        // $('#others_form').on('submit', function(e) {
+        //     e.preventDefault();
+        //     var the_observation_note = $('#the-others-note').html();
+        //     document.getElementById('others_text').innerHTML = the_observation_note;
+        //     this.submit();
+        // })
         $('#labour_form').on('submit', function(e) {
             e.preventDefault();
             var the_observation_note = $('#the-labour-note').html();
@@ -1499,7 +1592,44 @@
         });
     </script>
     <script>
-        
+        $(function() {
+            $('#nurse_note_hist_5').DataTable({
+                "dom": 'Bfrtip',
+                "iDisplayLength": 50,
+                "lengthMenu": [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, "All"]
+                ],
+                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{ url('patientNursngNote', [$patient->id, 5]) }}",
+                    "type": "GET"
+                },
+                "columns": [{
+                        data: "DT_RowIndex",
+                        name: "DT_RowIndex"
+                    },
+                    {
+                        data: "nursing_note_type_id",
+                        name: "nursing_note_type_id"
+                    },
+                    {
+                        data: "created_by",
+                        name: "created_by"
+                    },
+                    {
+                        data: "select",
+                        name: "select"
+                    },
+                ],
+
+                "paging": true
+            });
+        });
+    </script>
+    <script>
         function setNoteInModal(obj) {
             $('#note_type_name_').text($(obj).attr('data-service-name'));
             $('#nursing_note_template_').html($(obj).attr('data-template'));

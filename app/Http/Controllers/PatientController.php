@@ -432,6 +432,14 @@ class PatientController extends Controller
                 ->first() ?? null;
 
             $labour_record_template = NursingNoteType::find(4);
+
+            $others_record = NursingNote::with(['patient', 'createdBy', 'type'])
+                ->where('patient_id', $patient_id)
+                ->where('completed', false)
+                ->where('nursing_note_type_id', 5)
+                ->first() ?? null;
+
+            $others_record_template = NursingNoteType::find(5);
             return view('admin.patients.show1', compact(
                 'user',
                 'roles',
@@ -444,10 +452,12 @@ class PatientController extends Controller
                 'treatment_sheet',
                 'io_chart',
                 'labour_record',
+                'others_record',
                 'observation_note_template',
                 'treatment_sheet_template',
                 'io_chart_template',
-                'labour_record_template'
+                'labour_record_template',
+                'others_record_template'
             ));
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);

@@ -28,7 +28,6 @@ class NursingNoteController extends Controller
 
         $observation_note = NursingNote::with(['patient', 'createdBy', 'type'])
             ->where('patient_id', $patient_id)
-            ->where('dependant_id', null)
             ->where('completed', false)
             ->where('nursing_note_type_id', 1)
             ->first() ?? null;
@@ -37,7 +36,6 @@ class NursingNoteController extends Controller
 
         $treatment_sheet = NursingNote::with(['patient', 'createdBy', 'type'])
             ->where('patient_id', $patient_id)
-            ->where('dependant_id', null)
             ->where('completed', false)
             ->where('nursing_note_type_id', 2)
             ->first() ?? null;
@@ -46,7 +44,6 @@ class NursingNoteController extends Controller
 
         $io_chart = NursingNote::with(['patient', 'createdBy', 'type'])
             ->where('patient_id', $patient_id)
-            ->where('dependant_id', null)
             ->where('completed', false)
             ->where('nursing_note_type_id', 3)
             ->first() ?? null;
@@ -56,12 +53,19 @@ class NursingNoteController extends Controller
 
         $labour_record = NursingNote::with(['patient', 'createdBy', 'type'])
             ->where('patient_id', $patient_id)
-            ->where('dependant_id', null)
             ->where('completed', false)
             ->where('nursing_note_type_id', 4)
             ->first() ?? null;
-
         $labour_record_template = NursingNoteType::find(4);
+
+        $others_record = NursingNote::with(['patient', 'createdBy', 'type'])
+            ->where('patient_id', $patient_id)
+            ->where('completed', false)
+            ->where('nursing_note_type_id', 5)
+            ->first() ?? null;
+
+        $others_record_template = NursingNoteType::find(5);
+
         return view('admin.nursing_notes.index', compact(
             'patient',
             'dependant',
@@ -69,10 +73,12 @@ class NursingNoteController extends Controller
             'treatment_sheet',
             'io_chart',
             'labour_record',
+            'others_record',
             'observation_note_template',
             'treatment_sheet_template',
             'io_chart_template',
-            'labour_record_template'
+            'labour_record_template',
+            'others_record_template'
         ));
     }
 
@@ -153,6 +159,19 @@ class NursingNoteController extends Controller
                             return back()->withMessage("Nursing Note Updated")->withMessageType('success');;
                         }
                     }
+                } elseif ($type == 5) {
+                    $others_record = NursingNote::with(['patient', 'createdBy', 'type'])
+                        ->where('patient_id', $patient_id)
+                        ->where('completed', false)
+                        ->where('nursing_note_type_id', 5)
+                        ->first() ?? null;
+
+                    if ($others_record) {
+                        $is_new = false;
+                        if ($others_record->update(['note' => ($request->the_text), 'updated_by' => Auth::id()])) {
+                            return back()->withMessage("Nursing Note Updated")->withMessageType('success');;
+                        }
+                    }
                 } else {
                     $labour_record = NursingNote::with(['patient', 'createdBy', 'type'])
                         ->where('patient_id', $patient_id)
@@ -229,6 +248,18 @@ class NursingNoteController extends Controller
                     return back()->withMessage("Nursing Note Updated")->withMessageType('success');;
                 }
             }
+        } elseif ($type == 5) {
+            $others_record = NursingNote::with(['patient', 'createdBy', 'type'])
+                ->where('patient_id', $patient_id)
+                ->where('completed', false)
+                ->where('nursing_note_type_id', 5)
+                ->first() ?? null;
+
+            if ($others_record) {
+                if ($others_record->update(['completed' => true, 'note' => $this->remove_editable($others_record->note), 'updated_by' => Auth::id()])) {
+                    return back()->withMessage("Nursing Note Updated")->withMessageType('success');;
+                }
+            }
         } else {
             $labour_record = NursingNote::with(['patient', 'createdBy', 'type'])
                 ->where('patient_id', $patient_id)
@@ -257,7 +288,7 @@ class NursingNoteController extends Controller
         return $the_string;
     }
 
-    public function patientNursngNote($patient_id,$note_type=1)
+    public function patientNursngNote($patient_id, $note_type = 1)
     {
         $his = NursingNote::with(['patient', 'createdBy', 'type'])
             ->where('patient_id', $patient_id)
@@ -274,18 +305,18 @@ class NursingNoteController extends Controller
                     </button>";
                 return $str;
             })
-            
+
             ->editColumn('created_by', function ($his) {
                 $str = "<br><b>Opened By:</b> " . ((isset($his->created_by) && $his->created_by != null) ? (userfullname($his->created_by) . ' (' . date('h:i a D M j, Y', strtotime($his->created_at)) . ')') : "N/A");
                 $str .= "<br><b>Last Updated By:</b> " . ((isset($his->updated_by) && $his->updated_by != null) ? (userfullname($his->updated_by) . ' (' . date('h:i a D M j, Y', strtotime($his->updated_at)) . ')') : "N/A");
-                if($his->completed == true){
+                if ($his->completed == true) {
                     $str .= "<span class = 'badge badge-success'>Closed</span>";
-                }else{
+                } else {
                     $str .= "<span class = 'badge badge-danger'>Still Open</span>";
                 }
                 return $str;
             })
-            ->editColumn('nursing_note_type_id', function($his){
+            ->editColumn('nursing_note_type_id', function ($his) {
                 return $his->type->name;
             })
             ->rawColumns(['created_by', 'select'])

@@ -12,6 +12,7 @@ class NursingNote extends Model
     protected $fillable = [
         'patient_id',
         'created_by',
+        'updated_by',
         'nursing_note_type_id',
         'note',
         'completed',
