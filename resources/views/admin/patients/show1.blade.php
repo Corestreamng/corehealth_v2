@@ -107,111 +107,113 @@
                 @endif
             </div>
         </div>
-        <div class="card mt-3">
-            <div class="card-header">
-                Vitals
-                <button class="btn btn-primary pull-right" type="button" data-toggle="collapse"
-                    data-target="#vitalsCardBody" aria-expanded="false" aria-controls="vitalsCardBody"><span
-                        class="fa fa-caret-down"></span></button>
-            </div>
-            <div class="collapse card-body {{ request()->get('section') && request()->get('section') == 'vitalsCardBody' ? 'show' : '' }}"
-                id="vitalsCardBody">
-                <div class="row">
-                    <div class="col-12">
-                        <form method="post" action="{{ route('vitals.store') }}">
-                            @csrf
-                            <div class="row">
-                                <div class="form-group col-md-6">
-                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
-                                    <label for="bloodPressure">Blood Pressure (mmHg) <span
-                                            class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="bloodPressure" name="bloodPressure"
-                                        pattern="\d+/\d+" required>
-                                    <small class="form-text text-muted">Enter in the format of "systolic/diastolic", e.g.,
-                                        120/80.</small>
+        @can('manage-vitals')
+            <div class="card mt-3">
+                <div class="card-header">
+                    Vitals
+                    <button class="btn btn-primary pull-right" type="button" data-toggle="collapse"
+                        data-target="#vitalsCardBody" aria-expanded="false" aria-controls="vitalsCardBody"><span
+                            class="fa fa-caret-down"></span></button>
+                </div>
+                <div class="collapse card-body {{ request()->get('section') && request()->get('section') == 'vitalsCardBody' ? 'show' : '' }}"
+                    id="vitalsCardBody">
+                    <div class="row">
+                        <div class="col-12">
+                            <form method="post" action="{{ route('vitals.store') }}">
+                                @csrf
+                                <div class="row">
+                                    <div class="form-group col-md-6">
+                                        <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                        <label for="bloodPressure">Blood Pressure (mmHg) <span
+                                                class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="bloodPressure" name="bloodPressure"
+                                            pattern="\d+/\d+" required>
+                                        <small class="form-text text-muted">Enter in the format of "systolic/diastolic", e.g.,
+                                            120/80.</small>
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label for="bodyTemperature">Body Temperature (°C) <span
+                                                class="text-danger">*</span></label>
+                                        <input type="number" class="form-control" id="bodyTemperature" name="bodyTemperature"
+                                            min="34" max="39" step="0.1" required>
+                                        <small class="form-text text-muted">Min : 34, Max: 39</small>
+                                    </div>
                                 </div>
-                                <div class="form-group col-md-6">
-                                    <label for="bodyTemperature">Body Temperature (°C) <span
-                                            class="text-danger">*</span></label>
-                                    <input type="number" class="form-control" id="bodyTemperature" name="bodyTemperature"
-                                        min="34" max="39" step="0.1" required>
-                                    <small class="form-text text-muted">Min : 34, Max: 39</small>
+                                <div class="row">
+                                    <div class="form-group col-md-6">
+                                        <label for="respiratoryRate">Respiratory Rate (BPM)</label>
+                                        <input type="number" class="form-control" id="respiratoryRate" name="respiratoryRate"
+                                            min="12" max="30">
+                                        <small class="form-text text-muted">Breaths per Minute. Min : 12, Max: 30</small>
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label for="heartRate">Heart Rate (BPM)</label>
+                                        <input type="number" class="form-control" id="heartRate" name="heartRate"
+                                            min="60" max="220">
+                                        <small class="form-text text-muted">Beats Per Min. Min : 60, Max: 220</small>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="row">
-                                <div class="form-group col-md-6">
-                                    <label for="respiratoryRate">Respiratory Rate (BPM)</label>
-                                    <input type="number" class="form-control" id="respiratoryRate" name="respiratoryRate"
-                                        min="12" max="30">
-                                    <small class="form-text text-muted">Breaths per Minute. Min : 12, Max: 30</small>
+                                <div class="row">
+                                    <div class="form-group col-md-6">
+                                        <label for="datetimeField">Time Taken</label>
+                                        <input type="datetime-local" class="form-control" id="datetimeField"
+                                            name="datetimeField" value="{{ date('Y-m-d\TH:i') }}" required>
+                                        <small class="form-text text-muted">The exact time the vitals were taken</small>
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label for="otherNotes">Other Notes</label>
+                                        <textarea name="otherNotes" id="otherNotes" class="form-control"></textarea>
+                                        <small class="form-text text-muted">Any other specifics about the patient</small>
+                                    </div>
                                 </div>
-                                <div class="form-group col-md-6">
-                                    <label for="heartRate">Heart Rate (BPM)</label>
-                                    <input type="number" class="form-control" id="heartRate" name="heartRate"
-                                        min="60" max="220">
-                                    <small class="form-text text-muted">Beats Per Min. Min : 60, Max: 220</small>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="form-group col-md-6">
-                                    <label for="datetimeField">Time Taken</label>
-                                    <input type="datetime-local" class="form-control" id="datetimeField"
-                                        name="datetimeField" value="{{ date('Y-m-d\TH:i') }}" required>
-                                    <small class="form-text text-muted">The exact time the vitals were taken</small>
-                                </div>
-                                <div class="form-group col-md-6">
-                                    <label for="otherNotes">Other Notes</label>
-                                    <textarea name="otherNotes" id="otherNotes" class="form-control"></textarea>
-                                    <small class="form-text text-muted">Any other specifics about the patient</small>
-                                </div>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Submit</button>
-                        </form>
-                    </div>
-                    
-                    <div class="col-12">
-                    <hr>
-                        <h4>Vital Signs Charts(up to last 30 readings)</h4>
-                        <br>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <!-- Blood Pressure Chart -->
-                                <canvas id="bloodPressureChart"></canvas>
-                            </div>
-
-                            <div class="col-md-6">
-                                <!-- Temperature Chart -->
-                                <canvas id="temperatureChart"></canvas>
-                            </div>
-
-                            <div class="col-md-6">
-                                <!-- Heart Rate Chart -->
-                                <canvas id="heartRateChart"></canvas>
-
-                            </div>
-
-                            <div class="col-md-6">
-                                <!-- Respiratory Rate Chart -->
-                                <canvas id="respRateChart"></canvas>
-                            </div>
+                                <button type="submit" class="btn btn-primary">Submit</button>
+                            </form>
                         </div>
 
+                        <div class="col-12">
+                            <hr>
+                            <h4>Vital Signs Charts(up to last 30 readings)</h4>
+                            <br>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <!-- Blood Pressure Chart -->
+                                    <canvas id="bloodPressureChart"></canvas>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <!-- Temperature Chart -->
+                                    <canvas id="temperatureChart"></canvas>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <!-- Heart Rate Chart -->
+                                    <canvas id="heartRateChart"></canvas>
+
+                                </div>
+
+                                <div class="col-md-6">
+                                    <!-- Respiratory Rate Chart -->
+                                    <canvas id="respRateChart"></canvas>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <hr>
+                    <h4>Vitals History</h4>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered table-striped" style="width: 100%" id="vitals_history">
+                            <thead>
+                                <th>#</th>
+                                <th>Service</th>
+                                <th>Details</th>
+                                {{-- <th>Entry</th> --}}
+                            </thead>
+                        </table>
                     </div>
                 </div>
-                <hr>
-                <h4>Vitals History</h4>
-                <div class="table-responsive">
-                    <table class="table table-sm table-bordered table-striped" style="width: 100%" id="vitals_history">
-                        <thead>
-                            <th>#</th>
-                            <th>Service</th>
-                            <th>Details</th>
-                            {{-- <th>Entry</th> --}}
-                        </thead>
-                    </table>
-                </div>
             </div>
-        </div>
+        @endcan
         {{-- <div class="card mt-3">
             <div class="card-header">
                 Billing
@@ -247,554 +249,568 @@
                 </form>
             </div>
         </div> --}}
-        <div class="card mt-3">
-            <div class="card-header">
-                Accounts
-                <button class="btn btn-primary pull-right" type="button" data-toggle="collapse"
-                    data-target="#accountsCardBody" aria-expanded="false" aria-controls="accountsCardBody"><span
-                        class="fa fa-caret-down"></span></button>
-            </div>
-            <div class="collapse card-body {{ request()->get('section') && request()->get('section') == 'accountsCardBody' ? 'show' : '' }}"
-                id="accountsCardBody">
-                @if (null != $patient_acc)
+        @can('manage-accounts')
+            <div class="card mt-3">
+                <div class="card-header">
+                    Accounts
+                    <button class="btn btn-primary pull-right" type="button" data-toggle="collapse"
+                        data-target="#accountsCardBody" aria-expanded="false" aria-controls="accountsCardBody"><span
+                            class="fa fa-caret-down"></span></button>
+                </div>
+                <div class="collapse card-body {{ request()->get('section') && request()->get('section') == 'accountsCardBody' ? 'show' : '' }}"
+                    id="accountsCardBody">
+                    @if (null != $patient_acc)
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead class="bg-dark text-light">
+                                    <th>Account Id</th>
+                                    <th>Account bal</th>
+                                    <th>Last Updated</th>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>{{ $patient_acc->id }}</td>
+                                        <td>{{ $patient_acc->balance }}</td>
+                                        <td>{{ date('h:i a D M j, Y', strtotime($patient_acc->updated_at)) }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <hr>
+                        <h5>Make Deposit</h5>
+                        <form action="{{ route('account-make-deposit') }}" method="post">
+                            @csrf
+                            <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                            <input type="hidden" name="acc_id" value="{{ $patient_acc->id }}">
+                            <div class="form-group">
+                                <label for="">Amount | <small>Enter negative values for debt / credit</small></label>
+                                <input type="number" name="amount" id="" class="form-control"
+                                    placeholder="Enter amount to deposit" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary"
+                                onclick="return confirm('Are you sure you wish to save this deposit?')">Save</button>
+                        </form>
+                    @else
+                        <h4>Patient Has no acc</h4>
+                    @endif
+                    <hr>
+                    All Previous Transactions
                     <div class="table-responsive">
-                        <table class="table">
-                            <thead class="bg-dark text-light">
-                                <th>Account Id</th>
-                                <th>Account bal</th>
-                                <th>Last Updated</th>
+                        <table class="table table-sm table-bordered table-striped" style="width: 100%"
+                            id="payment_history_list">
+                            <thead>
+                                <th>#</th>
+                                <th>Staff</th>
+                                <th>Amount</th>
+                                <th>Type</th>
+                                <th>Service(s)</th>
+                                <th>Date</th>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td>{{ $patient_acc->id }}</td>
-                                    <td>{{ $patient_acc->balance }}</td>
-                                    <td>{{ date('h:i a D M j, Y', strtotime($patient_acc->updated_at)) }}</td>
-                                </tr>
-                            </tbody>
                         </table>
                     </div>
-                    <hr>
-                    <h5>Make Deposit</h5>
-                    <form action="{{ route('account-make-deposit') }}" method="post">
-                        @csrf
-                        <input type="hidden" name="patient_id" value="{{ $patient->id }}">
-                        <input type="hidden" name="acc_id" value="{{ $patient_acc->id }}">
-                        <div class="form-group">
-                            <label for="">Amount | <small>Enter negative values for debt / credit</small></label>
-                            <input type="number" name="amount" id="" class="form-control"
-                                placeholder="Enter amount to deposit" required>
+                </div>
+            </div>
+        @endcan
+        @can('manage-admissions')
+            <div class="card mt-3">
+                <div class="card-header">
+                    Admission History
+                    <button class="btn btn-primary pull-right" type="button" data-toggle="collapse"
+                        data-target="#addmissionsCardBody" aria-expanded="false" aria-controls="addmissionsCardBody"><span
+                            class="fa fa-caret-down"></span></button>
+                </div>
+                <div class="collapse card-body {{ request()->get('section') && request()->get('section') == 'addmissionsCardBody' ? 'show' : '' }}"
+                    id="addmissionsCardBody">
+                    <div class="table-responsive">
+                        <table id="admission-request-list" class="table table-sm table-bordered table-striped"
+                            style="width: 100%">
+                            <thead>
+                                <tr>
+                                    <th>SN</th>
+                                    <th>Requested By</th>
+                                    <th>Bills</th>
+                                    <th>Bed</th>
+                                    <th>View</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        @endcan
+        @can('manage-procedures')
+            <div class="card mt-3">
+                <div class="card-header">
+                    Procedure notes
+                    <button class="btn btn-primary pull-right" type="button" data-toggle="collapse"
+                        data-target="#wardNotesCardBody" aria-expanded="false" aria-controls="wardNotesCardBody"><span
+                            class="fa fa-caret-down"></span></button>
+                </div>
+                <div class="collapse card-body {{ request()->get('section') && request()->get('section') == 'wardNotesCardBody' ? 'show' : '' }}"
+                    id="wardNotesCardBody">
+                    Procedure notes
+                </div>
+            </div>
+        @endcan
+        @can('manage-nursing-notes')
+            <div class="card mt-3">
+                <div class="card-header">
+                    Nursing notes
+                    <button class="btn btn-primary pull-right" type="button" data-toggle="collapse"
+                        data-target="#nurseingNotesCardBody" aria-expanded="false"
+                        aria-controls="nurseingNotesCardBody"><span class="fa fa-caret-down"></span></button>
+                </div>
+                <div class="collapse card-body {{ request()->get('section') && request()->get('section') == 'nurseingNotesCardBody' ? 'show' : '' }}"
+                    id="nurseingNotesCardBody">
+                    <ul class="nav nav-tabs" id="myTab" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="observation-tab" data-toggle="tab" href="#observation"
+                                role="tab" aria-controls="observation" aria-selected="true">Observation Chart</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="treatment-tab" data-toggle="tab" href="#treatment" role="tab"
+                                aria-controls="treatment" aria-selected="false">Treatment Sheet</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="io-tab" data-toggle="tab" href="#io" role="tab"
+                                aria-controls="io" aria-selected="false">Intake/Output Chart</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="labour-tab" data-toggle="tab" href="#labour" role="tab"
+                                aria-controls="labour" aria-selected="false">Labour Records</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="others-tab" data-toggle="tab" href="#others" role="tab"
+                                aria-controls="others" aria-selected="false">Other Notes</a>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="myTabContent">
+                        <div class="tab-pane fade show active" id="observation" role="tabpanel"
+                            aria-labelledby="observation-tab">
+                            <form action="{{ route('nursing-note.store') }}" method="post" id="observation_form">
+                                {{ csrf_field() }}
+                                <input type="hidden" name="note_type" value="1">
+                                <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                <div class="form-group">
+                                    <label for="pateintNoteReport" class="control-label">Observation Chart for
+                                        {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
+                                    <div style="border:1px solid black;" id="the-observation-note"
+                                        class='the-observation-note'>
+                                        <?php echo $observation_note->note ?? $observation_note_template->template; ?>
+                                    </div>
+                                    <textarea style="display: none" id="observation_text" name="the_text" class="form-control observation_text">
+                            </textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary"
+                                    onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
+                            </form>
+                            <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
+                                {{ csrf_field() }}
+                                <input type="hidden" name="note_type" value="1">
+                                <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                <button type="submit"
+                                    onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
+                                    class="btn btn-success" style="float: right; margin-top:-40px">Save &
+                                    New</button>
+                            </form>
                         </div>
-                        <button type="submit" class="btn btn-primary"
-                            onclick="return confirm('Are you sure you wish to save this deposit?')">Save</button>
-                    </form>
-                @else
-                    <h4>Patient Has no acc</h4>
-                @endif
-                <hr>
-                All Previous Transactions
-                <div class="table-responsive">
-                    <table class="table table-sm table-bordered table-striped" style="width: 100%"
-                        id="payment_history_list">
-                        <thead>
-                            <th>#</th>
-                            <th>Staff</th>
-                            <th>Amount</th>
-                            <th>Type</th>
-                            <th>Service(s)</th>
-                            <th>Date</th>
-                        </thead>
-                    </table>
-                </div>
-            </div>
-        </div>
-        <div class="card mt-3">
-            <div class="card-header">
-                Admission History
-                <button class="btn btn-primary pull-right" type="button" data-toggle="collapse"
-                    data-target="#addmissionsCardBody" aria-expanded="false" aria-controls="addmissionsCardBody"><span
-                        class="fa fa-caret-down"></span></button>
-            </div>
-            <div class="collapse card-body {{ request()->get('section') && request()->get('section') == 'addmissionsCardBody' ? 'show' : '' }}"
-                id="addmissionsCardBody">
-                <div class="table-responsive">
-                    <table id="admission-request-list" class="table table-sm table-bordered table-striped"
-                        style="width: 100%">
-                        <thead>
-                            <tr>
-                                <th>SN</th>
-                                <th>Requested By</th>
-                                <th>Bills</th>
-                                <th>Bed</th>
-                                <th>View</th>
-                            </tr>
-                        </thead>
-                    </table>
-                </div>
-            </div>
-        </div>
-        <div class="card mt-3">
-            <div class="card-header">
-                Procedure notes
-                <button class="btn btn-primary pull-right" type="button" data-toggle="collapse"
-                    data-target="#wardNotesCardBody" aria-expanded="false" aria-controls="wardNotesCardBody"><span
-                        class="fa fa-caret-down"></span></button>
-            </div>
-            <div class="collapse card-body {{ request()->get('section') && request()->get('section') == 'wardNotesCardBody' ? 'show' : '' }}"
-                id="wardNotesCardBody">
-                Procedure notes
-            </div>
-        </div>
-        <div class="card mt-3">
-            <div class="card-header">
-                Nursing notes
-                <button class="btn btn-primary pull-right" type="button" data-toggle="collapse"
-                    data-target="#nurseingNotesCardBody" aria-expanded="false"
-                    aria-controls="nurseingNotesCardBody"><span class="fa fa-caret-down"></span></button>
-            </div>
-            <div class="collapse card-body {{ request()->get('section') && request()->get('section') == 'nurseingNotesCardBody' ? 'show' : '' }}"
-                id="nurseingNotesCardBody">
-                <ul class="nav nav-tabs" id="myTab" role="tablist">
-                    <li class="nav-item">
-                        <a class="nav-link active" id="observation-tab" data-toggle="tab" href="#observation"
-                            role="tab" aria-controls="observation" aria-selected="true">Observation Chart</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="treatment-tab" data-toggle="tab" href="#treatment" role="tab"
-                            aria-controls="treatment" aria-selected="false">Treatment Sheet</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="io-tab" data-toggle="tab" href="#io" role="tab"
-                            aria-controls="io" aria-selected="false">Intake/Output Chart</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="labour-tab" data-toggle="tab" href="#labour" role="tab"
-                            aria-controls="labour" aria-selected="false">Labour Records</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="others-tab" data-toggle="tab" href="#others" role="tab"
-                            aria-controls="others" aria-selected="false">Other Notes</a>
-                    </li>
-                </ul>
-                <div class="tab-content" id="myTabContent">
-                    <div class="tab-pane fade show active" id="observation" role="tabpanel"
-                        aria-labelledby="observation-tab">
-                        <form action="{{ route('nursing-note.store') }}" method="post" id="observation_form">
-                            {{ csrf_field() }}
-                            <input type="hidden" name="note_type" value="1">
-                            <input type="hidden" name="patient_id" value="{{ $patient->id }}">
-                            <div class="form-group">
-                                <label for="pateintNoteReport" class="control-label">Observation Chart for
-                                    {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
-                                <div style="border:1px solid black;" id="the-observation-note"
-                                    class='the-observation-note'>
-                                    <?php echo $observation_note->note ?? $observation_note_template->template; ?>
-                                </div>
-                                <textarea style="display: none" id="observation_text" name="the_text" class="form-control observation_text">
+                        <div class="tab-pane fade" id="treatment" role="tabpanel" aria-labelledby="treatment-tab">
+                            <form action="{{ route('nursing-note.store') }}" method="post" id="treatment_form">
+                                {{ csrf_field() }}
+                                <input type="hidden" name="note_type" value="2">
+                                <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                <div class="form-group">
+                                    <label for="pateintNoteReport" class="control-label">Treatment sheet for
+                                        {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
+                                    <div style="border:1px solid black;" id="the-treatment-note" class='the-treatment-note'>
+                                        <?php echo $treatment_sheet->note ?? $treatment_sheet_template->template; ?>
+                                    </div>
+                                    <textarea style="display: none" id="treatment_text" name="the_text" class="form-control treatment_text">
                             </textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary"
-                                onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
-                        </form>
-                        <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
-                            {{ csrf_field() }}
-                            <input type="hidden" name="note_type" value="1">
-                            <input type="hidden" name="patient_id" value="{{ $patient->id }}">
-                            <button type="submit"
-                                onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
-                                class="btn btn-success" style="float: right; margin-top:-40px">Save &
-                                New</button>
-                        </form>
-                    </div>
-                    <div class="tab-pane fade" id="treatment" role="tabpanel" aria-labelledby="treatment-tab">
-                        <form action="{{ route('nursing-note.store') }}" method="post" id="treatment_form">
-                            {{ csrf_field() }}
-                            <input type="hidden" name="note_type" value="2">
-                            <input type="hidden" name="patient_id" value="{{ $patient->id }}">
-                            <div class="form-group">
-                                <label for="pateintNoteReport" class="control-label">Treatment sheet for
-                                    {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
-                                <div style="border:1px solid black;" id="the-treatment-note" class='the-treatment-note'>
-                                    <?php echo $treatment_sheet->note ?? $treatment_sheet_template->template; ?>
                                 </div>
-                                <textarea style="display: none" id="treatment_text" name="the_text" class="form-control treatment_text">
+                                <button type="submit" class="btn btn-primary"
+                                    onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
+                            </form>
+                            <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
+                                {{ csrf_field() }}
+                                <input type="hidden" name="note_type" value="2">
+                                <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                <button type="submit" class="btn btn-success"
+                                    onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
+                                    style="float: right; margin-top:-40px">Save &
+                                    New</button>
+                            </form>
+                        </div>
+                        <div class="tab-pane fade" id="io" role="tabpanel" aria-labelledby="io-tab">
+                            <form action="{{ route('nursing-note.store') }}" method="post" id="io_form">
+                                {{ csrf_field() }}
+                                <input type="hidden" name="note_type" value="3">
+                                <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                <div class="form-group">
+                                    <label for="pateintNoteReport" class="control-label">Intake/Output Chart
+                                        {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
+                                    <div style="border:1px solid black;" id="the-io-note" class='the-io-note'>
+                                        <?php echo $io_chart->note ?? $io_chart_template->template; ?>
+                                    </div>
+                                    <textarea style="display: none" id="io_text" name="the_text" class="form-control io_text">
                             </textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary"
-                                onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
-                        </form>
-                        <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
-                            {{ csrf_field() }}
-                            <input type="hidden" name="note_type" value="2">
-                            <input type="hidden" name="patient_id" value="{{ $patient->id }}">
-                            <button type="submit" class="btn btn-success"
-                                onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
-                                style="float: right; margin-top:-40px">Save &
-                                New</button>
-                        </form>
-                    </div>
-                    <div class="tab-pane fade" id="io" role="tabpanel" aria-labelledby="io-tab">
-                        <form action="{{ route('nursing-note.store') }}" method="post" id="io_form">
-                            {{ csrf_field() }}
-                            <input type="hidden" name="note_type" value="3">
-                            <input type="hidden" name="patient_id" value="{{ $patient->id }}">
-                            <div class="form-group">
-                                <label for="pateintNoteReport" class="control-label">Intake/Output Chart
-                                    {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
-                                <div style="border:1px solid black;" id="the-io-note" class='the-io-note'>
-                                    <?php echo $io_chart->note ?? $io_chart_template->template; ?>
                                 </div>
-                                <textarea style="display: none" id="io_text" name="the_text" class="form-control io_text">
+                                <button type="submit" class="btn btn-primary"
+                                    onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
+                            </form>
+                            <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
+                                {{ csrf_field() }}
+                                <input type="hidden" name="note_type" value="3">
+                                <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                <button type="submit" class="btn btn-success"
+                                    onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
+                                    style="float: right; margin-top:-40px">Save &
+                                    New</button>
+                            </form>
+                        </div>
+                        <div class="tab-pane fade" id="labour" role="tabpanel" aria-labelledby="labour-tab">
+                            <form action="{{ route('nursing-note.store') }}" method="post" id="labour_form">
+                                {{ csrf_field() }}
+                                <input type="hidden" name="note_type" value="4">
+                                <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                <input type="hidden" id="close_after_save" value="0">
+                                <div class="form-group">
+                                    <label for="pateintDiagnosisReport" class="control-label">Labour Records
+                                        {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
+                                    <div style="border:1px solid black;" id="the-labour-note" class='the-labour-note'>
+                                        <?php echo $labour_record->note ?? $labour_record_template->template; ?>
+                                    </div>
+                                    <textarea style="display: none" id="labour_text" name="the_text" class="form-control labour_text">
                             </textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary"
-                                onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
-                        </form>
-                        <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
-                            {{ csrf_field() }}
-                            <input type="hidden" name="note_type" value="3">
-                            <input type="hidden" name="patient_id" value="{{ $patient->id }}">
-                            <button type="submit" class="btn btn-success"
-                                onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
-                                style="float: right; margin-top:-40px">Save &
-                                New</button>
-                        </form>
-                    </div>
-                    <div class="tab-pane fade" id="labour" role="tabpanel" aria-labelledby="labour-tab">
-                        <form action="{{ route('nursing-note.store') }}" method="post" id="labour_form">
-                            {{ csrf_field() }}
-                            <input type="hidden" name="note_type" value="4">
-                            <input type="hidden" name="patient_id" value="{{ $patient->id }}">
-                            <input type="hidden" id="close_after_save" value="0">
-                            <div class="form-group">
-                                <label for="pateintDiagnosisReport" class="control-label">Labour Records
-                                    {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
-                                <div style="border:1px solid black;" id="the-labour-note" class='the-labour-note'>
-                                    <?php echo $labour_record->note ?? $labour_record_template->template; ?>
                                 </div>
-                                <textarea style="display: none" id="labour_text" name="the_text" class="form-control labour_text">
-                            </textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary"
-                                onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
-                        </form>
-                        <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
-                            {{ csrf_field() }}
-                            <input type="hidden" name="note_type" value="4">
-                            <input type="hidden" name="patient_id" value="{{ $patient->id }}">
-                            <button type="submit" class="btn btn-success"
-                                onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
-                                style="float: right; margin-top:-40px">Save &
-                                New</button>
-                        </form>
-                    </div>
-                    <div class="tab-pane fade" id="others" role="tabpanel" aria-labelledby="others-tab">
-                        <form action="{{ route('nursing-note.store') }}" method="post" id="others_form">
-                            {{ csrf_field() }}
-                            <input type="hidden" name="note_type" value="5">
-                            <input type="hidden" name="patient_id" value="{{ $patient->id }}">
-                            <input type="hidden" id="close_after_save" value="0">
-                            <div class="form-group">
-                                <br><label for="pateintDiagnosisReport" class="control-label">Other Notes
-                                    {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
-                                {{-- <div style="border:1px solid black;" id="the-others-note" class='the-others-note classic-editor'>
+                                <button type="submit" class="btn btn-primary"
+                                    onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
+                            </form>
+                            <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
+                                {{ csrf_field() }}
+                                <input type="hidden" name="note_type" value="4">
+                                <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                <button type="submit" class="btn btn-success"
+                                    onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
+                                    style="float: right; margin-top:-40px">Save &
+                                    New</button>
+                            </form>
+                        </div>
+                        <div class="tab-pane fade" id="others" role="tabpanel" aria-labelledby="others-tab">
+                            <form action="{{ route('nursing-note.store') }}" method="post" id="others_form">
+                                {{ csrf_field() }}
+                                <input type="hidden" name="note_type" value="5">
+                                <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                <input type="hidden" id="close_after_save" value="0">
+                                <div class="form-group">
+                                    <br><label for="pateintDiagnosisReport" class="control-label">Other Notes
+                                        {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
+                                    {{-- <div style="border:1px solid black;" id="the-others-note" class='the-others-note classic-editor'>
                                     <?php //echo $others_record->note ?? $others_record_template->template;
                                     ?>
                                 </div> --}}
-                                <textarea style="display: none" id="others_text" name="the_text" class="form-control classic-editor others_text">
+                                    <textarea style="display: none" id="others_text" name="the_text" class="form-control classic-editor others_text">
                                     <?php echo $others_record->note ?? $others_record_template->template; ?>
                             </textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary"
+                                    onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
+                            </form>
+                            <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
+                                {{ csrf_field() }}
+                                <input type="hidden" name="note_type" value="5">
+                                <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                <button type="submit" class="btn btn-success"
+                                    onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
+                                    style="float: right; margin-top:-40px">Save &
+                                    New</button>
+                            </form>
+                        </div>
+                    </div>
+                    <hr>
+                    All Patient Nursing Sheets
+                    <hr>
+                    <ul class="nav nav-tabs" id="myTab" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="closed-observation-tab" data-toggle="tab"
+                                href="#closed-observation" role="tab" aria-controls="closed-observation"
+                                aria-selected="true"> Observation Charts</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="closed-treatment-tab" data-toggle="tab" href="#closed-treatment"
+                                role="tab" aria-controls="closed-treatment" aria-selected="false"> Treatment Sheets</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="closed-io-tab" data-toggle="tab" href="#closed-io" role="tab"
+                                aria-controls="closed-io" aria-selected="false"> Intake/Output Charts</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="closed-labour-tab" data-toggle="tab" href="#closed-labour"
+                                role="tab" aria-controls="closed-labour" aria-selected="false"> Labour Records</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="closed-others-tab" data-toggle="tab" href="#closed-others"
+                                role="tab" aria-controls="closed-others" aria-selected="false"> Other Notes</a>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="myClosedTabContent">
+                        <div class="tab-pane fade show active" id="closed-observation" role="tabpanel"
+                            aria-labelledby="closed-observation-tab">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered table-striped" style="width: 100%"
+                                    id="nurse_note_hist_1">
+                                    <thead>
+                                        <th>#</th>
+                                        <th>Note type</th>
+                                        <th>Details</th>
+                                        <th>Action</th>
+                                    </thead>
+                                </table>
                             </div>
-                            <button type="submit" class="btn btn-primary"
-                                onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
-                        </form>
-                        <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
-                            {{ csrf_field() }}
-                            <input type="hidden" name="note_type" value="5">
-                            <input type="hidden" name="patient_id" value="{{ $patient->id }}">
-                            <button type="submit" class="btn btn-success"
-                                onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
-                                style="float: right; margin-top:-40px">Save &
-                                New</button>
-                        </form>
-                    </div>
-                </div>
-                <hr>
-                All Patient Nursing Sheets
-                <hr>
-                <ul class="nav nav-tabs" id="myTab" role="tablist">
-                    <li class="nav-item">
-                        <a class="nav-link active" id="closed-observation-tab" data-toggle="tab"
-                            href="#closed-observation" role="tab" aria-controls="closed-observation"
-                            aria-selected="true"> Observation Charts</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="closed-treatment-tab" data-toggle="tab" href="#closed-treatment"
-                            role="tab" aria-controls="closed-treatment" aria-selected="false"> Treatment Sheets</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="closed-io-tab" data-toggle="tab" href="#closed-io" role="tab"
-                            aria-controls="closed-io" aria-selected="false"> Intake/Output Charts</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="closed-labour-tab" data-toggle="tab" href="#closed-labour"
-                            role="tab" aria-controls="closed-labour" aria-selected="false"> Labour Records</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="closed-others-tab" data-toggle="tab" href="#closed-others"
-                            role="tab" aria-controls="closed-others" aria-selected="false"> Other Notes</a>
-                    </li>
-                </ul>
-                <div class="tab-content" id="myClosedTabContent">
-                    <div class="tab-pane fade show active" id="closed-observation" role="tabpanel"
-                        aria-labelledby="closed-observation-tab">
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered table-striped" style="width: 100%"
-                                id="nurse_note_hist_1">
-                                <thead>
-                                    <th>#</th>
-                                    <th>Note type</th>
-                                    <th>Details</th>
-                                    <th>Action</th>
-                                </thead>
-                            </table>
                         </div>
-                    </div>
-                    <div class="tab-pane fade" id="closed-treatment" role="tabpanel"
-                        aria-labelledby="closed-treatment-tab">
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered table-striped" style="width: 100%"
-                                id="nurse_note_hist_2">
-                                <thead>
-                                    <th>#</th>
-                                    <th>Note type</th>
-                                    <th>Details</th>
-                                    <th>Action</th>
-                                </thead>
-                            </table>
+                        <div class="tab-pane fade" id="closed-treatment" role="tabpanel"
+                            aria-labelledby="closed-treatment-tab">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered table-striped" style="width: 100%"
+                                    id="nurse_note_hist_2">
+                                    <thead>
+                                        <th>#</th>
+                                        <th>Note type</th>
+                                        <th>Details</th>
+                                        <th>Action</th>
+                                    </thead>
+                                </table>
+                            </div>
                         </div>
-                    </div>
-                    <div class="tab-pane fade" id="closed-io" role="tabpanel" aria-labelledby="closed-io-tab">
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered table-striped" style="width: 100%"
-                                id="nurse_note_hist_3">
-                                <thead>
-                                    <th>#</th>
-                                    <th>Note type</th>
-                                    <th>Details</th>
-                                    <th>Action</th>
-                                </thead>
-                            </table>
+                        <div class="tab-pane fade" id="closed-io" role="tabpanel" aria-labelledby="closed-io-tab">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered table-striped" style="width: 100%"
+                                    id="nurse_note_hist_3">
+                                    <thead>
+                                        <th>#</th>
+                                        <th>Note type</th>
+                                        <th>Details</th>
+                                        <th>Action</th>
+                                    </thead>
+                                </table>
+                            </div>
                         </div>
-                    </div>
-                    <div class="tab-pane fade" id="closed-labour" role="tabpanel" aria-labelledby="closed-labour-tab">
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered table-striped" style="width: 100%"
-                                id="nurse_note_hist_4">
-                                <thead>
-                                    <th>#</th>
-                                    <th>Note type</th>
-                                    <th>Details</th>
-                                    <th>Action</th>
-                                </thead>
-                            </table>
+                        <div class="tab-pane fade" id="closed-labour" role="tabpanel" aria-labelledby="closed-labour-tab">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered table-striped" style="width: 100%"
+                                    id="nurse_note_hist_4">
+                                    <thead>
+                                        <th>#</th>
+                                        <th>Note type</th>
+                                        <th>Details</th>
+                                        <th>Action</th>
+                                    </thead>
+                                </table>
+                            </div>
                         </div>
-                    </div>
-                    <div class="tab-pane fade" id="closed-others" role="tabpanel" aria-labelledby="closed-others-tab">
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered table-striped" style="width: 100%"
-                                id="nurse_note_hist_5">
-                                <thead>
-                                    <th>#</th>
-                                    <th>Note type</th>
-                                    <th>Details</th>
-                                    <th>Action</th>
-                                </thead>
-                            </table>
+                        <div class="tab-pane fade" id="closed-others" role="tabpanel" aria-labelledby="closed-others-tab">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered table-striped" style="width: 100%"
+                                    id="nurse_note_hist_5">
+                                    <thead>
+                                        <th>#</th>
+                                        <th>Note type</th>
+                                        <th>Details</th>
+                                        <th>Action</th>
+                                    </thead>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="card mt-3">
-            <div class="card-header">
-                Doctor notes
-                <button class="btn btn-primary pull-right" type="button" data-toggle="collapse"
-                    data-target="#doctorNotesCardBody" aria-expanded="false" aria-controls="doctorNotesCardBody"><span
-                        class="fa fa-caret-down"></span></button>
-            </div>
-            <div class="collapse card-body {{ request()->get('section') && request()->get('section') == 'doctorNotesCardBody' ? 'show' : '' }}"
-                id="doctorNotesCardBody">
-                <table class="table table-sm table-bordered table-striped" style="width: 100%"
-                    id="encounter_history_list">
-                    <thead>
-                        <th>#</th>
-                        <th>Doctor</th>
-                        <th>Notes</th>
-                        <th>Time</th>
-                    </thead>
-                </table>
-            </div>
-        </div>
-        <div class="card mt-3">
-            <div class="card-header">
-                Prescriptions
-                <button class="btn btn-primary pull-right" type="button" data-toggle="collapse"
-                    data-target="#prescriptionsNotesCardBody" aria-expanded="false"
-                    aria-controls="prescriptionsNotesCardBody"><span class="fa fa-caret-down"></span></button>
-            </div>
-            <div class="collapse card-body {{ request()->get('section') && request()->get('section') == 'prescriptionsNotesCardBody' ? 'show' : '' }}"
-                id="prescriptionsNotesCardBody">
-                <h4>Requested Prescription</h4>
-                <form action="{{ route('product-bill-patient') }}" method="post">
-                    @csrf
-                    <h6>Requested Items</h6>
-                    <input type="hidden" name="patient_user_id" id="" value="{{ $patient->user->id }}">
-                    <input type="hidden" name="patient_id" id="" value="{{ $patient->id }}">
+        @endcan
+        @can('see-doctor-notes')
+            <div class="card mt-3">
+                <div class="card-header">
+                    Doctor notes
+                    <button class="btn btn-primary pull-right" type="button" data-toggle="collapse"
+                        data-target="#doctorNotesCardBody" aria-expanded="false" aria-controls="doctorNotesCardBody"><span
+                            class="fa fa-caret-down"></span></button>
+                </div>
+                <div class="collapse card-body {{ request()->get('section') && request()->get('section') == 'doctorNotesCardBody' ? 'show' : '' }}"
+                    id="doctorNotesCardBody">
                     <table class="table table-sm table-bordered table-striped" style="width: 100%"
-                        id="presc_history_bills">
+                        id="encounter_history_list">
                         <thead>
                             <th>#</th>
-                            <th>Select</th>
+                            <th>Doctor</th>
+                            <th>Notes</th>
+                            <th>Time</th>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        @endcan
+        @can('manage-prescriptions')
+            <div class="card mt-3">
+                <div class="card-header">
+                    Prescriptions
+                    <button class="btn btn-primary pull-right" type="button" data-toggle="collapse"
+                        data-target="#prescriptionsNotesCardBody" aria-expanded="false"
+                        aria-controls="prescriptionsNotesCardBody"><span class="fa fa-caret-down"></span></button>
+                </div>
+                <div class="collapse card-body {{ request()->get('section') && request()->get('section') == 'prescriptionsNotesCardBody' ? 'show' : '' }}"
+                    id="prescriptionsNotesCardBody">
+                    <h4>Requested Prescription</h4>
+                    <form action="{{ route('product-bill-patient') }}" method="post">
+                        @csrf
+                        <h6>Requested Items</h6>
+                        <input type="hidden" name="patient_user_id" id="" value="{{ $patient->user->id }}">
+                        <input type="hidden" name="patient_id" id="" value="{{ $patient->id }}">
+                        <table class="table table-sm table-bordered table-striped" style="width: 100%"
+                            id="presc_history_bills">
+                            <thead>
+                                <th>#</th>
+                                <th>Select</th>
+                                <th>Product</th>
+                                <th>Details</th>
+                            </thead>
+                        </table>
+                        <hr>
+                        <h6>Other Items</h6>
+                        <label for="">Search products</label>
+                        <input type="text" class="form-control" id="consult_presc_search"
+                            onkeyup="searchProducts(this.value)" placeholder="search products...">
+                        <ul class="list-group" id="consult_presc_res" style="display: none;">
+
+                        </ul>
+                        <br>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered table-striped">
+                                <thead>
+                                    <th>*</th>
+                                    <th>Name</th>
+                                    <th>Price</th>
+                                    <th>Dose/Freq.</th>
+                                    <th>*</th>
+                                </thead>
+                                <tbody id="selected-products">
+
+                                </tbody>
+                            </table>
+                        </div>
+                        <hr>
+                        <div class="form-group">
+                            <label for="">Total cost of selected items</label>
+                            <input type="number" value="0" class="form-control" id="presc_bill_tot"
+                                name="presc_bill_tot" readonly required>
+
+                        </div>
+                        <button type="submit" class="btn btn-primary"
+                            onclick="return confirm('Are you sure you wish to bill the selected items')">Dispense/Bill</button>
+                        <button type="submit" value="dismiss_presc_bill" name="dismiss_presc_bill" class="btn btn-danger"
+                            onclick="return confirm('Are you sure you wish to dissmiss the selected items')"
+                            style="float: right">Dismiss</button>
+                    </form>
+                    <hr>
+                    <h4>Precription History</h4>
+                    <table class="table table-sm table-bordered table-striped" style="width: 100%" id="presc_history_list">
+                        <thead>
+                            <th>#</th>
                             <th>Product</th>
                             <th>Details</th>
                         </thead>
                     </table>
-                    <hr>
-                    <h6>Other Items</h6>
-                    <label for="">Search products</label>
-                    <input type="text" class="form-control" id="consult_presc_search"
-                        onkeyup="searchProducts(this.value)" placeholder="search products...">
-                    <ul class="list-group" id="consult_presc_res" style="display: none;">
-
-                    </ul>
-                    <br>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered table-striped">
+                </div>
+            </div>
+        @endcan
+        @can('manage-investigations')
+            <div class="card mt-3">
+                <div class="card-header">
+                    Investigations
+                    <button class="btn btn-primary pull-right" type="button" data-toggle="collapse"
+                        data-target="#investigationsCardBody" aria-expanded="false"
+                        aria-controls="investigationsCardBody"><span class="fa fa-caret-down"></span></button>
+                </div>
+                <div class="collapse card-body {{ request()->get('section') && request()->get('section') == 'investigationsCardBody' ? 'show' : '' }}"
+                    id="investigationsCardBody">
+                    <h4>Requested Investigations</h4>
+                    <form action="{{ route('service-bill-patient') }}" method="post">
+                        @csrf
+                        <h6>Requested Items</h6>
+                        <input type="hidden" name="patient_user_id" id="" value="{{ $patient->user->id }}">
+                        <input type="hidden" name="patient_id" id="" value="{{ $patient->id }}">
+                        <table class="table table-sm table-bordered table-striped" style="width: 100%"
+                            id="invest_history_bills">
                             <thead>
-                                <th>*</th>
-                                <th>Name</th>
-                                <th>Price</th>
-                                <th>Dose/Freq.</th>
-                                <th>*</th>
+                                <th>#</th>
+                                <th>Select</th>
+                                <th>Service</th>
+                                <th>Details</th>
                             </thead>
-                            <tbody id="selected-products">
+                        </table>
+                        <hr>
+                        <h6>Other Items</h6>
+                        <label for="consult_invest_search">Search services</label>
+                        <input type="text" class="form-control" id="consult_invest_search"
+                            onkeyup="searchServices(this.value)" placeholder="search services...">
+                        <ul class="list-group" id="consult_invest_res" style="display: none;">
 
-                            </tbody>
+                        </ul>
+                        <br>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered table-striped">
+                                <thead>
+                                    <th>*</th>
+                                    <th>Name</th>
+                                    <th>Price</th>
+                                    <th>Notes/Specimen</th>
+                                    <th>*</th>
+                                </thead>
+                                <tbody id="selected-services">
+
+                                </tbody>
+                            </table>
+                        </div>
+                        <hr>
+                        <div class="form-group">
+                            <label for="">Total cost of selected items</label>
+                            <input type="number" value="0" class="form-control" id="invest_bill_tot"
+                                name="invest_bill_tot" readonly required>
+
+                        </div>
+                        <button type="submit" class="btn btn-primary"
+                            onclick="return confirm('Are you sure you wish to bill the selected items')">Take
+                            sample/Bill</button>
+                        <button type="submit" value="dismiss_invest_bill" name="dismiss_invest_bill" class="btn btn-danger"
+                            onclick="return confirm('Are you sure you wish to dissmiss the selected items')"
+                            style="float: right">Dismiss</button>
+                    </form>
+                    <hr>
+                    <h4>Investigation Result Entry</h4>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered table-striped" style="width: 100%"
+                            id="invest_history_res">
+                            <thead>
+                                <th>#</th>
+                                <th>Service</th>
+                                <th>Details</th>
+                                <th>Entry</th>
+                            </thead>
                         </table>
                     </div>
                     <hr>
-                    <div class="form-group">
-                        <label for="">Total cost of selected items</label>
-                        <input type="number" value="0" class="form-control" id="presc_bill_tot"
-                            name="presc_bill_tot" readonly required>
-
-                    </div>
-                    <button type="submit" class="btn btn-primary"
-                        onclick="return confirm('Are you sure you wish to bill the selected items')">Dispense/Bill</button>
-                    <button type="submit" value="dismiss_presc_bill" name="dismiss_presc_bill" class="btn btn-danger"
-                        onclick="return confirm('Are you sure you wish to dissmiss the selected items')"
-                        style="float: right">Dismiss</button>
-                </form>
-                <hr>
-                <h4>Precription History</h4>
-                <table class="table table-sm table-bordered table-striped" style="width: 100%" id="presc_history_list">
-                    <thead>
-                        <th>#</th>
-                        <th>Product</th>
-                        <th>Details</th>
-                    </thead>
-                </table>
-            </div>
-        </div>
-        <div class="card mt-3">
-            <div class="card-header">
-                Investigations
-                <button class="btn btn-primary pull-right" type="button" data-toggle="collapse"
-                    data-target="#investigationsCardBody" aria-expanded="false"
-                    aria-controls="investigationsCardBody"><span class="fa fa-caret-down"></span></button>
-            </div>
-            <div class="collapse card-body {{ request()->get('section') && request()->get('section') == 'investigationsCardBody' ? 'show' : '' }}"
-                id="investigationsCardBody">
-                <h4>Requested Investigations</h4>
-                <form action="{{ route('service-bill-patient') }}" method="post">
-                    @csrf
-                    <h6>Requested Items</h6>
-                    <input type="hidden" name="patient_user_id" id="" value="{{ $patient->user->id }}">
-                    <input type="hidden" name="patient_id" id="" value="{{ $patient->id }}">
-                    <table class="table table-sm table-bordered table-striped" style="width: 100%"
-                        id="invest_history_bills">
-                        <thead>
-                            <th>#</th>
-                            <th>Select</th>
-                            <th>Service</th>
-                            <th>Details</th>
-                        </thead>
-                    </table>
-                    <hr>
-                    <h6>Other Items</h6>
-                    <label for="consult_invest_search">Search services</label>
-                    <input type="text" class="form-control" id="consult_invest_search"
-                        onkeyup="searchServices(this.value)" placeholder="search services...">
-                    <ul class="list-group" id="consult_invest_res" style="display: none;">
-
-                    </ul>
-                    <br>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered table-striped">
+                    <h4>Investigation History</h4>
+                    <div class="table responsive">
+                        <table class="table table-sm table-bordered table-striped" style="width: 100%"
+                            id="investigation_history_list">
                             <thead>
-                                <th>*</th>
-                                <th>Name</th>
-                                <th>Price</th>
-                                <th>Notes/Specimen</th>
-                                <th>*</th>
+                                <th>#</th>
+                                <th>Results</th>
+                                <th>Details</th>
                             </thead>
-                            <tbody id="selected-services">
-
-                            </tbody>
                         </table>
                     </div>
-                    <hr>
-                    <div class="form-group">
-                        <label for="">Total cost of selected items</label>
-                        <input type="number" value="0" class="form-control" id="invest_bill_tot"
-                            name="invest_bill_tot" readonly required>
 
-                    </div>
-                    <button type="submit" class="btn btn-primary"
-                        onclick="return confirm('Are you sure you wish to bill the selected items')">Take
-                        sample/Bill</button>
-                    <button type="submit" value="dismiss_invest_bill" name="dismiss_invest_bill" class="btn btn-danger"
-                        onclick="return confirm('Are you sure you wish to dissmiss the selected items')"
-                        style="float: right">Dismiss</button>
-                </form>
-                <hr>
-                <h4>Investigation Result Entry</h4>
-                <div class="table-responsive">
-                    <table class="table table-sm table-bordered table-striped" style="width: 100%"
-                        id="invest_history_res">
-                        <thead>
-                            <th>#</th>
-                            <th>Service</th>
-                            <th>Details</th>
-                            <th>Entry</th>
-                        </thead>
-                    </table>
                 </div>
-                <hr>
-                <h4>Investigation History</h4>
-                <div class="table responsive">
-                    <table class="table table-sm table-bordered table-striped" style="width: 100%"
-                        id="investigation_history_list">
-                        <thead>
-                            <th>#</th>
-                            <th>Results</th>
-                            <th>Details</th>
-                        </thead>
-                    </table>
-                </div>
-
             </div>
-        </div>
+        @endcan
         <div class="row mt-2">
             <div class="col-12">
                 <div class="form-group">
@@ -938,9 +954,6 @@
                 </form>
             </div>
         </div>
-    </div>
-    <div id="jjj">
-        kkdkdkk
     </div>
 @endsection
 
@@ -1765,7 +1778,8 @@
                 // Extract vital sign data
                 const timeTaken = response.map(item => item.time_taken);
                 const bloodPressureSystolic = response.map(item => parseInt(item.blood_pressure.split("/")[0]));
-                const bloodPressureDiastolic = response.map(item => parseInt(item.blood_pressure.split("/")[1]));
+                const bloodPressureDiastolic = response.map(item => parseInt(item.blood_pressure.split("/")[
+                    1]));
                 const temperature = response.map(item => parseFloat(item.temp));
                 const heartRate = response.map(item => parseInt(item.heart_rate));
                 const respRate = response.map(item => parseInt(item.resp_rate));

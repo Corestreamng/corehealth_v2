@@ -217,7 +217,7 @@ function reOrderAlertFlag($productId, $reOrderAlert)
         if ($getStockCurrentQ > $reOrderAlert) {
             $val = '<span class="badge badge-success"> In Stock </span>';
         } elseif ($getStockCurrentQ == $reOrderAlert) {
-            $val .= '<span class="badge badge-warning"> Low in Stock </span>';
+            $val .= '<span class="badge badge-secondary"> Low in Stock </span>';
         } elseif ($getStockCurrentQ == 0) {
             $val .= '<span class="badge badge-danger"> Out of Stock </span>';
         } elseif ($getStockCurrentQ < $reOrderAlert) {

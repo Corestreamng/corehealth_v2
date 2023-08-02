@@ -75,26 +75,25 @@ class VitalSignController extends Controller
         //dd($pc);
         return Datatables::of($his)
             ->addIndexColumn()
-            
+
             ->editColumn('created_at', function ($h) {
                 $str = "<small>";
-                $str .= "<b>Requested by: </b>" . ((isset($h->requested_by)  && $h->requested_by != null) ? (userfullname($h->requested_by) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-warning'>N/A</span>");
+                $str .= "<b class = 'mb-2'>Requested by: </b>" . ((isset($h->requested_by)  && $h->requested_by != null) ? (userfullname($h->requested_by) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
                 $str .= "<br><b>Last Updated On:</b> " . date('h:i a D M j, Y', strtotime($h->updated_at));
-                $str .= "<br><b>Taken by:</b> " . ((isset($h->taken_by) && $h->taken_by != null) ? (userfullname($h->taken_by) . ' (' . date('h:i a D M j, Y', strtotime($h->time_taken)) . ')') : "<span class='badge badge-warning'>Not billed</span>");
+                $str .= "<br><b>Taken by:</b> " . ((isset($h->taken_by) && $h->taken_by != null) ? (userfullname($h->taken_by) . ' (' . date('h:i a D M j, Y', strtotime($h->time_taken)) . ')') : "<span class='badge badge-secondary'>Not billed</span>");
                 return "</small>" . $str;
             })
             ->editColumn('result', function ($his) {
-                $str = "<b> Blood Pressure (mmHg): </b>" . $his->blood_pressure . "<br>";
-                $str .= "<b> Body Temperature (°C): </b>" . $his->temp . "<br>";
-                $str .= "<b> Respiratory Rate (BPM) :</b>" . $his->resp_rate . "<br>";
-                $str .= "<b> Heart Rate (BPM): </b>" . $his->heart_rate . "<br><hr>";
+                $str = "<b class = 'mb-2'> Blood Pressure (mmHg): </b>" . $his->blood_pressure . "<br>";
+                $str .= "<b class = 'mb-2'> Body Temperature (°C): </b>" . $his->temp . "<br>";
+                $str .= "<b class = 'mb-2'> Respiratory Rate (BPM) :</b>" . $his->resp_rate . "<br>";
+                $str .= "<b class = 'mb-2'> Heart Rate (BPM): </b>" . $his->heart_rate . "<br><hr>";
                 $str .= $his->other_notes ?? 'N/A';
                 return $str;
             })
             ->rawColumns(['created_at', 'result'])
             ->make(true);
     }
-
     public function allPatientVitals($patient_id){
         $vitals = VitalSign::where('status',1)->where('patient_id', $patient_id)->limit(30)->get();
         return json_encode($vitals);
