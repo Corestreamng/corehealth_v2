@@ -18,7 +18,11 @@ class VitalSignController extends Controller
      */
     public function index()
     {
-        //
+        if(request('history') == 1){
+            return view('admin.vitalsign_requests.history');
+        }else{
+            return view('admin.vitalsign_requests.index');
+        }
     }
 
     /**
@@ -78,16 +82,16 @@ class VitalSignController extends Controller
 
             ->editColumn('created_at', function ($h) {
                 $str = "<small>";
-                $str .= "<b class = 'mb-2'>Requested by: </b>" . ((isset($h->requested_by)  && $h->requested_by != null) ? (userfullname($h->requested_by) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
-                $str .= "<br><b>Last Updated On:</b> " . date('h:i a D M j, Y', strtotime($h->updated_at));
-                $str .= "<br><b>Taken by:</b> " . ((isset($h->taken_by) && $h->taken_by != null) ? (userfullname($h->taken_by) . ' (' . date('h:i a D M j, Y', strtotime($h->time_taken)) . ')') : "<span class='badge badge-secondary'>Not billed</span>");
-                return "</small>" . $str;
+                $str .= "<b >Requested by: </b>" . ((isset($h->requested_by)  && $h->requested_by != null) ? (userfullname($h->requested_by) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
+                $str .= "<br><br><b >Last Updated On:</b> " . date('h:i a D M j, Y', strtotime($h->updated_at));
+                $str .= "<br><br><b >Taken by:</b> " . ((isset($h->taken_by) && $h->taken_by != null) ? (userfullname($h->taken_by) . ' (' . date('h:i a D M j, Y', strtotime($h->time_taken)) . ')') : "<span class='badge badge-secondary'>Not billed</span>");
+                $str .= "</small>" ; return $str;
             })
             ->editColumn('result', function ($his) {
-                $str = "<b class = 'mb-2'> Blood Pressure (mmHg): </b>" . $his->blood_pressure . "<br>";
-                $str .= "<b class = 'mb-2'> Body Temperature (°C): </b>" . $his->temp . "<br>";
-                $str .= "<b class = 'mb-2'> Respiratory Rate (BPM) :</b>" . $his->resp_rate . "<br>";
-                $str .= "<b class = 'mb-2'> Heart Rate (BPM): </b>" . $his->heart_rate . "<br><hr>";
+                $str = "<b > Blood Pressure (mmHg): </b>" . $his->blood_pressure . "<br>";
+                $str .= "<b > Body Temperature (°C): </b>" . $his->temp . "<br>";
+                $str .= "<b > Respiratory Rate (BPM) :</b>" . $his->resp_rate . "<br>";
+                $str .= "<b > Heart Rate (BPM): </b>" . $his->heart_rate . "<br><hr>";
                 $str .= $his->other_notes ?? 'N/A';
                 return $str;
             })
@@ -97,6 +101,92 @@ class VitalSignController extends Controller
     public function allPatientVitals($patient_id){
         $vitals = VitalSign::where('status',1)->where('patient_id', $patient_id)->limit(30)->get();
         return json_encode($vitals);
+    }
+
+    public function patientVitalsQueue()
+    {
+        $his = VitalSign::with(['patient', 'takenBy','requstedBy'])
+            ->where('status', 1)->where('blood_pressure', null)->orderBy('created_at', 'DESC')->get();
+        //dd($pc);
+        return Datatables::of($his)
+            ->addIndexColumn()
+            ->addColumn('select', function ($h) {
+                $url = route('patient.show',[$h->patient->id, 'section' => 'vitalsCardBody']);
+                $str = "
+                    <a class='btn btn-primary' href='$url'>
+                        view
+                    </a>";
+                return $str;
+            })
+            ->editColumn('patient_id', function($h){
+                $str = "<small>";
+                $str .= "<b >Patient </b> :". (($h->patient->user) ? userfullname($h->patient->user->id) : "N/A" );
+                $str .= "<br><br><b >File No </b> : ". $h->patient->file_no;
+                $str .= "<br><br><b >Insurance/HMO :</b> : ". (($h->patient->hmo) ? $h->patient->hmo->name : "N/A");
+                $str .= "<br><br><b >HMO Number :</b> : ". (($h->patient->hmo_no) ? $h->patient->hmo_no : "N/A");
+                $str .= "</small>" ; return $str;
+
+            })
+            ->editColumn('created_at', function ($h) {
+                $str = "<small>";
+                $str .= "<b >Requested by: </b>" . ((isset($h->requested_by)  && $h->requested_by != null) ? (userfullname($h->requested_by) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
+                $str .= "<br><br><b >Last Updated On:</b> " . date('h:i a D M j, Y', strtotime($h->updated_at));
+                $str .= "<br><br><b >Taken by:</b> " . ((isset($h->taken_by) && $h->taken_by != null) ? (userfullname($h->taken_by) . ' (' . date('h:i a D M j, Y', strtotime($h->time_taken)) . ')') : "<span class='badge badge-secondary'>Not billed</span>");
+                $str .= "</small>" ; return $str;
+            })
+            ->editColumn('result', function ($his) {
+                $str = "<b > Blood Pressure (mmHg): </b>" . $his->blood_pressure . "<br>";
+                $str .= "<b > Body Temperature (°C): </b>" . $his->temp . "<br>";
+                $str .= "<b > Respiratory Rate (BPM) :</b>" . $his->resp_rate . "<br>";
+                $str .= "<b > Heart Rate (BPM): </b>" . $his->heart_rate . "<br><hr>";
+                $str .= $his->other_notes ?? 'N/A';
+                return $str;
+            })
+            ->rawColumns(['created_at', 'result', 'select', 'patient_id'])
+            ->make(true);
+    }
+
+    public function patientVitalsHistoryQueue()
+    {
+        $his = VitalSign::with(['patient', 'takenBy','requstedBy'])
+            ->where('status', 1)->where('blood_pressure','!=', null)->orderBy('created_at', 'DESC')->get();
+        //dd($pc);
+        return Datatables::of($his)
+            ->addIndexColumn()
+            ->addColumn('select', function ($h) {
+                $url = route('patient.show',[$h->patient->id, 'section' => 'vitalsCardBody']);
+                $str = "
+                    <a class='btn btn-primary' href='$url'>
+                        view
+                    </a>";
+                return $str;
+            })
+            ->editColumn('patient_id', function($h){
+                $str = "<small>";
+                $str .= "<b >Patient </b> :". (($h->patient->user) ? userfullname($h->patient->user->id) : "N/A" );
+                $str .= "<br><br><b >File No </b> : ". $h->patient->file_no;
+                $str .= "<br><br><b >Insurance/HMO :</b> : ". (($h->patient->hmo) ? $h->patient->hmo->name : "N/A");
+                $str .= "<br><br><b >HMO Number :</b> : ". (($h->patient->hmo_no) ? $h->patient->hmo_no : "N/A");
+                $str .= "</small>" ; return $str;
+
+            })
+            ->editColumn('created_at', function ($h) {
+                $str = "<small>";
+                $str .= "<b >Requested by: </b>" . ((isset($h->requested_by)  && $h->requested_by != null) ? (userfullname($h->requested_by) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
+                $str .= "<br><br><b >Last Updated On:</b> " . date('h:i a D M j, Y', strtotime($h->updated_at));
+                $str .= "<br><br><b >Taken by:</b> " . ((isset($h->taken_by) && $h->taken_by != null) ? (userfullname($h->taken_by) . ' (' . date('h:i a D M j, Y', strtotime($h->time_taken)) . ')') : "<span class='badge badge-secondary'>Not billed</span>");
+                $str .= "</small>" ; return $str;
+            })
+            ->editColumn('result', function ($his) {
+                $str = "<b > Blood Pressure (mmHg): </b>" . $his->blood_pressure . "<br>";
+                $str .= "<b > Body Temperature (°C): </b>" . $his->temp . "<br>";
+                $str .= "<b > Respiratory Rate (BPM) :</b>" . $his->resp_rate . "<br>";
+                $str .= "<b > Heart Rate (BPM): </b>" . $his->heart_rate . "<br><hr>";
+                $str .= $his->other_notes ?? 'N/A';
+                return $str;
+            })
+            ->rawColumns(['created_at', 'result', 'select', 'patient_id'])
+            ->make(true);
     }
 
     /**

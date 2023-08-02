@@ -185,10 +185,10 @@
                 <div class="collapse" id="pharm_queue">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
-                            <a class="nav-link" href="#">My Current Queue</a>
+                            <a class="nav-link" href="{{route('product-requests.index')}}">My Current Queue</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">History</a>
+                            <a class="nav-link" href="{{route('product-requests.index',['history' => true])}}">History</a>
                         </li>
                     </ul>
                 </div>
@@ -262,10 +262,10 @@
                 <div class="collapse" id="nursing_">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
-                            <a class="nav-link" href="#">My Current Queue</a>
+                            <a class="nav-link" href="{{route('vitals.index')}}">My Current Queue</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">History</a>
+                            <a class="nav-link" href="{{route('vitals.index', ['history'=>true])}}">History</a>
                         </li>
                     </ul>
                 </div>
@@ -300,10 +300,10 @@
                 <div class="collapse" id="lab_queue">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
-                            <a class="nav-link" href="#">My Current Queue</a>
+                            <a class="nav-link" href="{{route('service-requests.index')}}">My Current Queue</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">History</a>
+                            <a class="nav-link" href="{{route('service-requests.index',['history' => true])}}">History</a>
                         </li>
                     </ul>
                 </div>

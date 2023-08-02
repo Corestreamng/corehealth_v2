@@ -28,7 +28,91 @@ class ProductRequestController extends Controller
      */
     public function index()
     {
-        //
+        if(request('history') == 1){
+            return view('admin.product_requests.history');
+        }else{
+            return view('admin.product_requests.index');
+        }
+    }
+
+    public function prescQueueList()
+    {
+        $his = ProductRequest::with(['product', 'encounter', 'patient', 'productOrServiceRequest', 'doctor', 'biller'])
+            ->where('status', 1)->orderBy('created_at', 'DESC')->get();
+        //dd($pc);
+        return Datatables::of($his)
+            ->addIndexColumn()
+            ->addColumn('select', function ($h) {
+                $url = route('patient.show',[$h->patient->id, 'section' => 'prescriptionsNotesCardBody']);
+                $str = "
+                    <a class='btn btn-primary' href='$url'>
+                        view
+                    </a>";
+                return $str;
+            })
+            ->editColumn('patient_id', function($h){
+                $str = "<small>";
+                $str .= "<b >Patient </b> :". (($h->patient->user) ? userfullname($h->patient->user->id) : "N/A" );
+                $str .= "<br><br><b >File No </b> : ". $h->patient->file_no;
+                $str .= "<br><br><b >Insurance/HMO :</b> : ". (($h->patient->hmo) ? $h->patient->hmo->name : "N/A");
+                $str .= "<br><br><b >HMO Number :</b> : ". (($h->patient->hmo_no) ? $h->patient->hmo_no : "N/A");
+                $str .= "</small>" ; return $str;
+
+            })
+            ->editColumn('created_at', function ($h) {
+                $str = "<small>";
+                $str .= "<b >Requested By: </b>" . ((isset($h->doctor_id) && $h->doctor_id != null) ? (userfullname($h->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>") . '<br>';
+                $str .= "<b >Last Updated On: </b>" . date('h:i a D M j, Y', strtotime($h->updated_at)) . '<br>';
+                $str .= "<b >Billed/ Dispensed By: </b>" . ((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span><br>");
+                $str .= "</small>" ; return $str;
+            })
+            ->editColumn('dose', function ($his) {
+                $str = "<span class = 'badge badge-success'>[" . (($his->product->product_code) ? $his->product->product_code : '') . "]" . $his->product->product_name . "</span>";
+                $str .= "<hr> <b>Dose/Freq:</b> " . ($his->dose ?? 'N/A');
+                return $str;
+            })
+            ->rawColumns(['created_at', 'dose', 'select', 'patient_id'])
+            ->make(true);
+    }
+
+    public function prescQueueHistoryList()
+    {
+        $his = ProductRequest::with(['product', 'encounter', 'patient', 'productOrServiceRequest', 'doctor', 'biller'])
+            ->where('status', 2)->orderBy('created_at', 'DESC')->get();
+        //dd($pc);
+        return Datatables::of($his)
+            ->addIndexColumn()
+            ->addColumn('select', function ($h) {
+                $url = route('patient.show',[$h->patient->id, 'section' => 'prescriptionsNotesCardBody']);
+                $str = "
+                    <a class='btn btn-primary' href='$url'>
+                        view
+                    </a>";
+                return $str;
+            })
+            ->editColumn('patient_id', function($h){
+                $str = "<small>";
+                $str .= "<b >Patient </b> :". (($h->patient->user) ? userfullname($h->patient->user->id) : "N/A" );
+                $str .= "<br><br><b >File No </b> : ". $h->patient->file_no;
+                $str .= "<br><br><b >Insurance/HMO :</b> : ". (($h->patient->hmo) ? $h->patient->hmo->name : "N/A");
+                $str .= "<br><br><b >HMO Number :</b> : ". (($h->patient->hmo_no) ? $h->patient->hmo_no : "N/A");
+                $str .= "</small>" ; return $str;
+
+            })
+            ->editColumn('created_at', function ($h) {
+                $str = "<small>";
+                $str .= "<b >Requested By: </b>" . ((isset($h->doctor_id) && $h->doctor_id != null) ? (userfullname($h->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>") . '<br>';
+                $str .= "<b >Last Updated On: </b>" . date('h:i a D M j, Y', strtotime($h->updated_at)) . '<br>';
+                $str .= "<b >Billed/ Dispensed By: </b>" . ((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span><br>");
+                $str .= "</small>" ; return $str;
+            })
+            ->editColumn('dose', function ($his) {
+                $str = "<span class = 'badge badge-success'>[" . (($his->product->product_code) ? $his->product->product_code : '') . "]" . $his->product->product_name . "</span>";
+                $str .= "<hr> <b>Dose/Freq:</b> " . ($his->dose ?? 'N/A');
+                return $str;
+            })
+            ->rawColumns(['created_at', 'dose', 'select', 'patient_id'])
+            ->make(true);
     }
 
     /**

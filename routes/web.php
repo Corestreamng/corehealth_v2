@@ -100,8 +100,10 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
-        Route::resource('product-category', ProductRequestController::class);
+        Route::resource('product-requests', ProductRequestController::class);
         Route::post('product-bill-patient', [ProductRequestController::class, 'bill'])->name('product-bill-patient');
+        Route::get('prescQueueList', [ProductRequestController::class, 'prescQueueList'])->name('prescQueueList');
+        Route::get('prescQueueHistoryList', [ProductRequestController::class, 'prescQueueHistoryList'])->name('prescQueueHistoryList');
         Route::post('service-bill-patient', [LabServiceRequestController::class, 'bill'])->name('service-bill-patient');
         Route::post('service-save-result', [LabServiceRequestController::class, 'saveResult'])->name('service-save-result');
         Route::post('account-make-deposit', [PatientAccountController::class, 'makeDeposit'])->name('account-make-deposit');
@@ -118,6 +120,9 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('prescBillList/{patient_id}', [EncounterController::class, 'prescBillList'])->name('prescBillList');
         Route::get('investBillList/{patient_id}', [EncounterController::class, 'investBillList'])->name('investBillList');
         Route::get('investResList/{patient_id}', [LabServiceRequestController::class, 'investResList'])->name('investResList');
+        Route::resource('service-requests', LabServiceRequestController::class);
+        Route::get('investQueueList', [LabServiceRequestController::class, 'investQueueList'])->name('investQueueList');
+        Route::get('investHistoryList', [LabServiceRequestController::class, 'investHistoryList'])->name('investHistoryList');
         Route::get('patientNursngNote/{patient_id}/{note_type}', [NursingNoteController::class, 'patientNursngNote'])->name('patientNursngNote');
         Route::get('EncounterHistoryList/{patient_id}', [EncounterController::class, 'EncounterHistoryList'])->name('EncounterHistoryList');
     });
@@ -214,7 +219,9 @@ Route::group(['middleware' => ['auth']], function () {
     Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
         Route::resource('vitals', VitalSignController::class);
-        Route::get('patient-vitals/{patient_id}', [VitalSignController::class, 'patientVitals'])->name('patient-vitals');
+        Route::get('patientVitalsQueue/{patient_id}', [VitalSignController::class, 'patientVitals'])->name('patient-vitals');
+        Route::get('patientVitalsQueue', [VitalSignController::class, 'patientVitalsQueue'])->name('patientVitalsQueue');
+        Route::get('patientVitalsHistoryQueue', [VitalSignController::class, 'patientVitalsHistoryQueue'])->name('patientVitalsHistoryQueue');
         Route::get('allPatientVitals/{patient_id}', [VitalSignController::class, 'allPatientVitals'])->name('allPatientVitals');
     });
 });

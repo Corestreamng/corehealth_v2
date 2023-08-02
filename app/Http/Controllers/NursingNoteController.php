@@ -307,8 +307,8 @@ class NursingNoteController extends Controller
             })
 
             ->editColumn('created_by', function ($his) {
-                $str = "<br><b>Opened By:</b> " . ((isset($his->created_by) && $his->created_by != null) ? (userfullname($his->created_by) . ' (' . date('h:i a D M j, Y', strtotime($his->created_at)) . ')') : "N/A");
-                $str .= "<br><b>Last Updated By:</b> " . ((isset($his->updated_by) && $his->updated_by != null) ? (userfullname($his->updated_by) . ' (' . date('h:i a D M j, Y', strtotime($his->updated_at)) . ')') : "N/A");
+                $str = "<br><br><b >Opened By:</b> " . ((isset($his->created_by) && $his->created_by != null) ? (userfullname($his->created_by) . ' (' . date('h:i a D M j, Y', strtotime($his->created_at)) . ')') : "N/A");
+                $str .= "<br><br><b >Last Updated By:</b> " . ((isset($his->updated_by) && $his->updated_by != null) ? (userfullname($his->updated_by) . ' (' . date('h:i a D M j, Y', strtotime($his->updated_at)) . ')') : "N/A");
                 if ($his->completed == true) {
                     $str .= "<span class = 'badge badge-success'>Closed</span>";
                 } else {

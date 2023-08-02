@@ -24,7 +24,7 @@
     <link rel="stylesheet" href="{{ asset('css/selectisize.css') }}">
     <script src="{{ asset('js/app.js') }}"></script>
     <link rel="stylesheet" href="asset('/plugins/dataT/datatables.min.css')">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+    <script src="{{asset('plugins/chartjs/Chart.js')}}"></script>
     <style>
         .ck-editor__editable_inline {
             min-height: 200px;

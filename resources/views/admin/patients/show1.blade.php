@@ -509,7 +509,7 @@
                                     <?php //echo $others_record->note ?? $others_record_template->template;
                                     ?>
                                 </div> --}}
-                                    <textarea style="display: none" id="others_text" name="the_text" class="form-control classic-editor others_text">
+                                    <textarea  id="others_text" name="the_text" class="form-control classic-editor others_text">
                                     <?php echo $others_record->note ?? $others_record_template->template; ?>
                             </textarea>
                                 </div>

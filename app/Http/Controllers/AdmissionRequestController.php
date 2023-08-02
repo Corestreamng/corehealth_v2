@@ -53,8 +53,8 @@ class AdmissionRequestController extends Controller
             })
             ->editColumn('bed_id', function ($r) {
                 $str = "<small>";
-                $str .= "<b class = 'mb-2'>Bed</b>: " . (($r->bed) ? $r->bed->name : 'N/A') . " <b>Ward</b>: " . (($r->bed) ? $r->bed->ward : "N/A") . " <b>Unit</b>: " . ($r->bed->unit ?? "N/A") . "<br>";
-                $str .= "<b class = 'mb-2'>Assigned By</b>: " . (($r->bed_assigned_by) ? (userfullname($r->bed_assigned_by)) : "N/A");
+                $str .= "<b >Bed</b>: " . (($r->bed) ? $r->bed->name : 'N/A') . " <b>Ward</b>: " . (($r->bed) ? $r->bed->ward : "N/A") . " <b>Unit</b>: " . ($r->bed->unit ?? "N/A") . "<br>";
+                $str .= "<b >Assigned By</b>: " . (($r->bed_assigned_by) ? (userfullname($r->bed_assigned_by)) : "N/A");
                 $str .= "<br> <b>Date Assigned</b>: " . (($r->bed_assign_date) ? date('h:i a D M j, Y', strtotime($r->bed_assign_date)) : 'N/A') . "<br>";
                 $str .= "<br> <b>Discharged By </b>: " . (($r->discharged_by) ? (userfullname($r->discharged_by)) : "N/A")." (".(($r->discharge_date) ? date('h:i a D M j, Y', strtotime($r->discharge_date)) : 'N/A') . ")<br>";
                 $str .= "</small>";
@@ -65,7 +65,7 @@ class AdmissionRequestController extends Controller
             })
             ->editColumn('billed_by', function ($r) {
                 $str = "<small>";
-                $str .= "<b class = 'mb-2'>Biiled by: </b>" . (($r->billed_by) ? userfullname($r->billed_by) : 'N/A') . "<br>Date: " . (($r->billed_date) ? date('h:i a D M j, Y', strtotime($r->billed_date)) : 'N/A') . "<br>";
+                $str .= "<b >Biiled by: </b>" . (($r->billed_by) ? userfullname($r->billed_by) : 'N/A') . "<br>Date: " . (($r->billed_date) ? date('h:i a D M j, Y', strtotime($r->billed_date)) : 'N/A') . "<br>";
                 $str .= "</small>";
                 return $str;
             })
@@ -102,8 +102,8 @@ class AdmissionRequestController extends Controller
             })
             ->editColumn('bed_id', function ($r) {
                 $str = "<small>";
-                $str .= "<b class = 'mb-2'>Bed</b>: " . (($r->bed) ? $r->bed->name : 'N/A') . " <b>Ward</b>: " . (($r->bed) ? $r->bed->ward : "N/A") . " <b>Unit</b>: " . ($r->bed->unit ?? "N/A") . "<br>";
-                $str .= "<b class = 'mb-2'>Assigned By</b>: " . (($r->bed_assigned_by) ? (userfullname($r->bed_assigned_by)) : "N/A");
+                $str .= "<b >Bed</b>: " . (($r->bed) ? $r->bed->name : 'N/A') . " <b>Ward</b>: " . (($r->bed) ? $r->bed->ward : "N/A") . " <b>Unit</b>: " . ($r->bed->unit ?? "N/A") . "<br>";
+                $str .= "<b >Assigned By</b>: " . (($r->bed_assigned_by) ? (userfullname($r->bed_assigned_by)) : "N/A");
                 $str .= "<br> <b>Date Assigned</b>: " . (($r->bed_assign_date) ? date('h:i a D M j, Y', strtotime($r->bed_assign_date)) : 'N/A') . "<br>";
                 $str .= "<br> <b>Discharged By </b>: " . (($r->discharged_by) ? (userfullname($r->discharged_by)) : "N/A")." (".(($r->discharge_date) ? date('h:i a D M j, Y', strtotime($r->discharge_date)) : 'N/A') . ")<br>";
                 $str .= "</small>";
@@ -114,7 +114,7 @@ class AdmissionRequestController extends Controller
             })
             ->editColumn('billed_by', function ($r) {
                 $str = "<small>";
-                $str .= "<b class = 'mb-2'>Biiled by: </b>" . (($r->billed_by) ? userfullname($r->billed_by) : 'N/A') . "<br>Date: " . (($r->billed_date) ? date('h:i a D M j, Y', strtotime($r->billed_date)) : 'N/A') . "<br>";
+                $str .= "<b >Biiled by: </b>" . (($r->billed_by) ? userfullname($r->billed_by) : 'N/A') . "<br>Date: " . (($r->billed_date) ? date('h:i a D M j, Y', strtotime($r->billed_date)) : 'N/A') . "<br>";
                 $str .= "</small>";
                 return $str;
             })
@@ -174,8 +174,8 @@ class AdmissionRequestController extends Controller
             })
             ->editColumn('bed_id', function ($r) {
                 $str = "<small>";
-                $str .= "<b class = 'mb-2'>Bed</b>: " . (($r->bed) ? $r->bed->name : 'N/A') . " <b>Ward</b>: " . (($r->bed) ? $r->bed->ward : "N/A") . " <b>Unit</b>: " . ($r->bed->unit ?? "N/A") . "<br>";
-                $str .= "<b class = 'mb-2'>Assigned By</b>: " . (($r->bed_assigned_by) ? (userfullname($r->bed_assigned_by)) : "N/A");
+                $str .= "<b >Bed</b>: " . (($r->bed) ? $r->bed->name : 'N/A') . " <b>Ward</b>: " . (($r->bed) ? $r->bed->ward : "N/A") . " <b>Unit</b>: " . ($r->bed->unit ?? "N/A") . "<br>";
+                $str .= "<b >Assigned By</b>: " . (($r->bed_assigned_by) ? (userfullname($r->bed_assigned_by)) : "N/A");
                 $str .= "<br> <b>Date Assigned</b>: " . (($r->bed_assign_date) ? date('h:i a D M j, Y', strtotime($r->bed_assign_date)) : 'N/A') . "<br>";
                 $str .= "<br> <b>Discharged By </b>: " . (($r->discharged_by) ? (userfullname($r->discharged_by)) : "N/A")." (".(($r->discharge_date) ? date('h:i a D M j, Y', strtotime($r->discharge_date)) : 'N/A') . ")<br>";
                 $str .= "</small>";
@@ -186,7 +186,7 @@ class AdmissionRequestController extends Controller
             })
             ->editColumn('billed_by', function ($r) {
                 $str = "<small>";
-                $str .= "<b class = 'mb-2'>Biiled by: </b>" . (($r->billed_by) ? userfullname($r->billed_by) : 'N/A') . "<br>Date: " . (($r->billed_date) ? date('h:i a D M j, Y', strtotime($r->billed_date)) : 'N/A') . "<br>";
+                $str .= "<b >Biiled by: </b>" . (($r->billed_by) ? userfullname($r->billed_by) : 'N/A') . "<br>Date: " . (($r->billed_date) ? date('h:i a D M j, Y', strtotime($r->billed_date)) : 'N/A') . "<br>";
                 $str .= "</small>";
                 return $str;
             })
