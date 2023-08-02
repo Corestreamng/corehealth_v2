@@ -107,7 +107,7 @@
                 @endif
             </div>
         </div>
-        @can('manage-vitals')
+        @can('see-vitals')
             <div class="card mt-3">
                 <div class="card-header">
                     Vitals
@@ -249,7 +249,7 @@
                 </form>
             </div>
         </div> --}}
-        @can('manage-accounts')
+        @can('see-accounts')
             <div class="card mt-3">
                 <div class="card-header">
                     Accounts
@@ -311,7 +311,7 @@
                 </div>
             </div>
         @endcan
-        @can('manage-admissions')
+        @can('see-admissions')
             <div class="card mt-3">
                 <div class="card-header">
                     Admission History
@@ -338,7 +338,7 @@
                 </div>
             </div>
         @endcan
-        @can('manage-procedures')
+        @can('see-procedures')
             <div class="card mt-3">
                 <div class="card-header">
                     Procedure notes
@@ -352,7 +352,7 @@
                 </div>
             </div>
         @endcan
-        @can('manage-nursing-notes')
+        @can('see-nursing-notes')
             <div class="card mt-3">
                 <div class="card-header">
                     Nursing notes
@@ -647,7 +647,7 @@
                 </div>
             </div>
         @endcan
-        @can('manage-prescriptions')
+        @can('see-prescriptions')
             <div class="card mt-3">
                 <div class="card-header">
                     Prescriptions
@@ -720,7 +720,7 @@
                 </div>
             </div>
         @endcan
-        @can('manage-investigations')
+        @can('see-investigations')
             <div class="card mt-3">
                 <div class="card-header">
                     Investigations
