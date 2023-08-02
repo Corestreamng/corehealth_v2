@@ -108,7 +108,7 @@
                                 <option value="TRANSFER">Transfer</option>
                                 <option value="TELLER">Teller</option>
                                 <option value="CHEQUE">Cheque</option>
-                                <option value="ACC_WITHDRAW">Credit Account(NGN {{$services[0]->user->patient_profile->account->balance ?? $products[0]->user->patient_profile->account->balance}} )</option>
+                                <option value="ACC_WITHDRAW">Credit Account(NGN {{(($services[0]->user->patient_profile->account->balance) ? $services[0]->user->patient_profile->account->balance : (($products[0]->user->patient_profile->account->balance) ? $products[0]->user->patient_profile->account->balance : "N/A"))}} )</option>
                                 <option value="CLAIMS">Claims</option>
                             </select>
                         </div>
@@ -128,7 +128,7 @@
                         <div class="form-group">
                             <label for="reference_no"> Reference Number</label>
                             <input type="text" class="form-control" name="reference_no" id="reference number" value="{{generate_invoice_no()}}">
-                            <input type="hidden" name="patient_id" value="{{$services[0]->user->patient_profile->id ?? $products[0]->user->patient_profile->id}}">
+                            <input type="hidden" name="patient_id" value="{{(($services[0]->user->patient_profile->id) ? $services[0]->user->patient_profile->id : (($products[0]->user->patient_profile->id) ? $products[0]->user->patient_profile->id : "N/A"))}}">
                         </div>
                         <div>
                             <button type="submit" class="align-self-end btn btn-lg btn-block btn-primary"
