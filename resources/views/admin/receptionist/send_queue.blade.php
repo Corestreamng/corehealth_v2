@@ -14,11 +14,11 @@
                         type="button" role="tab" aria-controls="consultation"
                         aria-selected="true">Consultation</button>
                 </li>
-                <li class="nav-item" role="presentation">
+                {{-- <li class="nav-item" role="presentation">
                     <button class="nav-link" id="private_data_tab" data-bs-toggle="tab" data-bs-target="#other"
                         type="button" role="tab" aria-controls="other" aria-selected="false">Other
                         Services</button>
-                </li>
+                </li> --}}
 
             </ul>
             <div class="tab-content" id="myTabContent">
@@ -70,6 +70,13 @@
                                                 <option value="">--select doctor--</option>
                                             </select>
                                         </div>
+                                        {{-- <div class="form-group">
+                                            <label for="request_vitals{{ $f->user_id }}">
+                                                Request Vitals
+                                            </label>
+                                            <input type="checkbox" value="1" name="request_vitals[]" id="request_vitals{{ $f->user_id }}"
+                                                >
+                                        </div> --}}
                                     </div>
                                 @endforeach
                             </div>
@@ -78,7 +85,7 @@
                         </form>
                     </div>
                 </div>
-                <div class="tab-pane fade" id="other" role="tabpanel" aria-labelledby="other_tab">
+                {{-- <div class="tab-pane fade" id="other" role="tabpanel" aria-labelledby="other_tab">
                     <div class="container-fluid mt-4">
                         <small class="text-danger">*Required fields</small>
                         <form action="{{ route('product-or-service-request.store') }}" method="post">
@@ -111,7 +118,7 @@
                             <a href="{{route('add-to-queue')}}" class="btn btn-warning">Back</a>
                         </form>
                     </div>
-                </div>
+                </div> --}}
             </div>
         </div>
     </div>

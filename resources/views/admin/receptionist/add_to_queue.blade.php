@@ -33,20 +33,18 @@
 
                         <div class="row">
 
-                            <div class="form-group col-md-12">
+                            <div class="form-group col-12">
                                 <div class="table-responsive" style="display:none" id="showMe">
-                                    <table id="patient_table_id" class="table table-responsive table-striped">
+                                    <table id="patient_table_id" class="table table-responsive table-striped"
+                                        style="width: 100%">
                                         <thead>
                                             <tr>
                                                 <th>SN</th>
                                                 <th>File Number:</th>
                                                 <th>Fullname</th>
-                                                <th>Date of Birth</th>
-                                                <th>Blood Group</th>
-                                                <th>Genotype</th>
                                                 <th>HMO/Insurance</th>
                                                 <th>HMO Number</th>
-                                                {{-- <th>A/C Bal.</th> --}}
+                                                <th>A/C Bal.</th>
                                                 <th>Phone</th>
                                                 {{-- <th>Payment Valid</th> --}}
                                                 <th>Manage</th>
@@ -125,107 +123,78 @@
     <script>
         // jQuery.noConflict();
         jQuery(function($) {
-            var table = $('#patient_table_id').DataTable({
-                "initComplete": function(settings, json) {
-                    $('div.loading').remove();
-                },
-                dom: 'Bfrtip',
-                select: true,
-                processing: true,
-                serverSide: true,
-                ajax: {
-                    "url": "{{ route('listReturningPatients') }}",
-                    "type": "GET",
-                    "data": function(data) {
-                        data.q = $('#q').val();
+            // if ($('#q').val() != '') {
+                var table = $('#patient_table_id').DataTable({
+                    "initComplete": function(settings, json) {
+                        $('div.loading').remove();
+                    },
+                    dom: 'Bfrtip',
+                    select: true,
+                    processing: true,
+                    serverSide: true,
+                    ajax: {
+                        "url": "{{ route('listReturningPatients') }}",
+                        "type": "GET",
+                        "data": function(data) {
+                            data.q = $('#q').val() || 'a';
 
-                    }
-                },
-                columnDefs: [{
-                    orderable: true,
-                    //className: 'select-checkbox',
-                    data: null,
-                    defaultContent: '',
-                    targets: 0
-                }],
-                columns: [{
-                        data: 'DT_RowIndex',
-                        name: 'DT_RowIndex',
-                        'visible': false
+                        }
                     },
-                    {
-                        data: 'file_no',
-                        name: 'file_no'
-                    },
-                    {
-                        data: 'user_id',
-                        name: 'user_id'
-                    },
-                    {
-                        data: 'dob',
-                        name: 'dob'
-                    },
-                    {
-                        data: 'blood_group',
-                        name: 'blood_group'
-                    },
-                    {
-                        data: 'genotype',
-                        name: 'genotype'
-                    },
-                    {
-                        data: 'hmo',
-                        name: 'hmo'
-                    },
-                    {
-                        data: 'hmo_no',
-                        name: 'hmo_no'
-                    },
-                    // {
-                    //     data: 'acc_bal',
-                    //     name: 'acc_bal'
-                    // },
-                    {
-                        data: 'phone',
-                        data: 'phone'
-                    },
-                    // { data: 'payment_validation', name: 'payment_validation' },
-                    {
-                        data: 'process',
-                        name: 'process'
-                    }
+                    columnDefs: [{
+                        orderable: true,
+                        //className: 'select-checkbox',
+                        data: null,
+                        defaultContent: '',
+                        targets: 0
+                    }],
+                    columns: [{
+                            data: 'DT_RowIndex',
+                            name: 'DT_RowIndex',
+                            'visible': false
+                        },
+                        {
+                            data: 'file_no',
+                            name: 'file_no'
+                        },
+                        {
+                            data: 'user_id',
+                            name: 'user_id'
+                        },
+                        {
+                            data: 'hmo',
+                            name: 'hmo'
+                        },
+                        {
+                            data: 'hmo_no',
+                            name: 'hmo_no'
+                        },
+                        {
+                            data: 'acc_bal',
+                            name: 'acc_bal'
+                        },
+                        {
+                            data: 'phone',
+                            data: 'phone'
+                        },
+                        // { data: 'payment_validation', name: 'payment_validation' },
+                        {
+                            data: 'process',
+                            name: 'process'
+                        }
 
-                ],
-                {{-- select: {
-            style:    'os',
-            selector: 'td:first-child'
-        }, --}}
-                responsive: true,
-                order: [
-                    [1, 'asc']
-                ],
-                paging: true,
-                lengthChange: false,
-                searchable: false,
-                "info": true,
-                "autoWidth": false,
-                buttons: [
-                    'selected',
-                    'selectedSingle',
-                    'selectAll',
-                    'selectNone',
-                    'selectRows',
-                    //'selectColumns',
-                    //'selectCells'
-                    {{-- {
-                extend: 'selected', // Bind to Selected row
-                text: 'Edit',
-                name: 'edit'        // do not change name
-            }, --}}
-                    {{-- { extend: "edit",   editor: editor }, --}}
-                ]
+                    ],
+                    responsive: true,
+                    order: [
+                        [1, 'asc']
+                    ],
+                    paging: true,
+                    lengthChange: false,
+                    searchable: false,
+                    "info": true,
+                    "autoWidth": true,
+                });
+            // }
 
-            });
 
             $("#patients_search_form").on('submit', function(e) {
                 e.preventDefault();

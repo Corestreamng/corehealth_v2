@@ -139,15 +139,21 @@ class PatientController extends Controller
                         $hmo_name = Hmo::where('id', $patient_hmo)->first()->name ?? 'N/A';
                         return $hmo_name;
                     })
-                    // ->addColumn('acc_bal', function ($list) {
-                    //     $patient_acc = PatientAccount::where('user_id', $list->user_id)->first();
-                    //     if (null != $patient_acc) {
-                    //         $patient_acc_markup = "<span class= 'badge badge-success'>Deposit: NGN $patient_acc->deposit</span><br><span class= 'badge badge-danger'>Credit: NGN $patient_acc->credit</span>";
-                    //         return $patient_acc_markup;
-                    //     } else {
-                    //         return "<span class= 'badge badge-success'>No Account</span>";
-                    //     }
-                    // })
+                    ->addColumn('acc_bal', function ($list) {
+                        $patient_acc = patient::with(['account'])->where('user_id', $list->user_id)->first();
+                        $patient_acc = (($patient_acc->account) ? json_decode($patient_acc->account)->balance : "");
+                        if ($patient_acc != '') {
+                            if($patient_acc >= 0){
+                                $patient_acc_markup = "<span class= 'badge badge-success'>NGN $patient_acc</span>";
+                                return $patient_acc_markup;
+                            }else{
+                                $patient_acc_markup = "<span class= 'badge badge-danger'>NGN $patient_acc</span>";
+                                return $patient_acc_markup;
+                            }
+                        } else {
+                            return "<span class= 'badge badge-secondary'>No Account</span>";
+                        }
+                    })
                     ->addColumn('phone', function ($list) {
                         $phone_number = User::where('id', $list->user_id)->first()->phone_number ?? 'N/A';
                         return $phone_number;
@@ -159,7 +165,7 @@ class PatientController extends Controller
                             return '<a class="btn-success btn-sm" href="' . $url . '">Process</a>';
                         }
                     )
-                    ->rawColumns(['user_id', 'process'])
+                    ->rawColumns(['user_id', 'process','acc_bal'])
                     ->make(true);
             }
         } catch (\Exception $e) {
