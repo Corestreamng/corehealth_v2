@@ -34,7 +34,7 @@
                         <div class="row">
 
                             <div class="form-group col-12 ">
-                                <div class="table-responsive justify-content-center" style="display:none" id="showMe">
+                                <div class="table-responsive justify-content-center" style="display:none; width: 100%" id="showMe">
                                     <table id="patient_table_id" class="table table-responsive table-striped"
                                         style="width: 100%">
                                         <thead>

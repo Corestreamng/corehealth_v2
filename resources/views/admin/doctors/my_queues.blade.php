@@ -21,16 +21,16 @@
                 type="button" role="tab" aria-controls="other_admissions" aria-selected="false">Other
                 admissions</button>
         </li>
-        <li class="nav-item" role="presentation">
+        {{-- <li class="nav-item" role="presentation">
             <button class="nav-link" id="scheduled_tab" data-bs-toggle="tab" data-bs-target="#scheduled" type="button"
                 role="tab" aria-controls="scheduled" aria-selected="false">Scheduled</button>
-        </li>
+        </li> --}}
     </ul>
     <div class="tab-content" id="myTabContent">
         <div class="tab-pane fade show active" id="new" role="tabpanel" aria-labelledby="new_tab">
             <div class="card mt-2">
                 <div class="card-body table-responsive">
-                    <table class="table table-sm table-bordered table-striped" id="new_consult_list">
+                    <table class="table table-sm table-bordered table-striped" id="new_consult_list"  style="width: 100%">
                         <thead>
                             <th>#</th>
                             <th>Patient Name</th>
@@ -48,7 +48,7 @@
         <div class="tab-pane fade" id="cont" role="tabpanel" aria-labelledby="cont_tab">
             <div class="card mt-2">
                 <div class="card-body table-responsive">
-                    <table class="table table-sm table-bordered table-striped" id="prev_consult_list">
+                    <table class="table table-sm table-bordered table-striped" id="prev_consult_list"  style="width: 100%">
                         <thead>
                             <th>#</th>
                             <th>Patient Name</th>
@@ -66,7 +66,7 @@
         <div class="tab-pane fade" id="my_admissions" role="tabpanel" aria-labelledby="my_admissions_tab">
             <div class="card mt-2">
                 <div class="card-body table-responsive">
-                    <table class="table table-sm table-bordered table-striped" id="my_admissions_list">
+                    <table class="table table-sm table-bordered table-striped" id="my_admissions_list"  style="width: 100%">
                         <thead>
                             <tr>
                                 <th>SN</th>
@@ -87,7 +87,7 @@
         <div class="tab-pane fade" id="other_admissions" role="tabpanel" aria-labelledby="other_admissions_tab">
             <div class="card mt-2">
                 <div class="card-body table-responsive">
-                    <table class="table table-sm table-bordered table-striped" id="other_admissions_list">
+                    <table class="table table-sm table-bordered table-striped" id="other_admissions_list"  style="width: 100%">
                         <thead>
                             <tr>
                                 <th>SN</th>
@@ -105,7 +105,7 @@
                 </div>
             </div>
         </div>
-        <div class="tab-pane fade" id="scheduled" role="tabpanel" aria-labelledby="scheduled_tab">
+        {{-- <div class="tab-pane fade" id="scheduled" role="tabpanel" aria-labelledby="scheduled_tab">
             <div class="card mt-2">
                 <div class="card-body table-responsive">
                     <table class="table table-sm table-bordered table-striped" id="scheduled_consult_list">
@@ -122,7 +122,7 @@
                     </table>
                 </div>
             </div>
-        </div>
+        </div> --}}
 
     </div>
 @endsection
