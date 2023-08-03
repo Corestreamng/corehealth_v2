@@ -350,7 +350,7 @@ class paymentController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error($e->getMessage(), ['exception' => $e]);
-            return redirect()->back()->withInput()->with('error', $e->getMessage());
+            return redirect()->route('product-or-service-request.index')->withInput()->with('error', $e->getMessage());
         }
     }
 }
