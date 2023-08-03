@@ -33,7 +33,7 @@ use App\Http\Controllers\ProductRequestController;
 use App\Http\Controllers\VitalSignController;
 use App\Models\AdmissionRequest;
 use App\Models\LabServiceRequest;
-use App\Models\patientAccount;
+use App\Models\PatientAccount;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
