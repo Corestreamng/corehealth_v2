@@ -33,8 +33,8 @@
 
                         <div class="row">
 
-                            <div class="form-group col-12">
-                                <div class="table-responsive" style="display:none" id="showMe">
+                            <div class="form-group col-12 ">
+                                <div class="table-responsive justify-content-center" style="display:none" id="showMe">
                                     <table id="patient_table_id" class="table table-responsive table-striped"
                                         style="width: 100%">
                                         <thead>
@@ -113,94 +113,75 @@
 @section('scripts')
     <!-- DataTables -->
     <script src="{{ asset('/plugins/dataT/datatables.js') }}" defer></script>
-    <!-- jQuery -->
-    <script src="{{ asset('plugins/datatables/jquery-3.3.1.js') }}"></script>
-    <script src="{{ asset('plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
     <!-- DataTables -->
-    <script src="{{ asset('plugins/datatables/jquery.dataTables.min.js') }}"></script>
-    {{-- <script src="{{ asset('plugins/datatables/dataTables.select.min.js') }}"></script>
-     <script src="{{ asset('plugins/datatables/dataTables.buttons.min.js') }}"></script> --}}
+
     <script>
-        // jQuery.noConflict();
-        jQuery(function($) {
-            // if ($('#q').val() != '') {
-                var table = $('#patient_table_id').DataTable({
-                    "initComplete": function(settings, json) {
-                        $('div.loading').remove();
+        $(function() {
+            $('#patient_table_id').DataTable({
+                "initComplete": function(settings, json) {
+                    $('div.loading').remove();
+                },
+                "dom": 'Bfrtip',
+                "iDisplayLength": 50,
+                "lengthMenu": [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, "All"]
+                ],
+                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
+                "processing": true,
+                "serverSide": true,
+                "responsive": true,
+                "ajax": {
+                    "url": "{{ route('listReturningPatients') }}",
+                    "type": "GET",
+                    "data": function(data) {
+                        data.q = $('#q').val() || 'a';
+
+                    }
+                },
+                columns: [{
+                        data: 'DT_RowIndex',
+                        name: 'DT_RowIndex',
                     },
-                    dom: 'Bfrtip',
-                    select: true,
-                    processing: true,
-                    serverSide: true,
-                    ajax: {
-                        "url": "{{ route('listReturningPatients') }}",
-                        "type": "GET",
-                        "data": function(data) {
-                            data.q = $('#q').val() || 'a';
-
-                        }
+                    {
+                        data: 'file_no',
+                        name: 'file_no'
                     },
-                    columnDefs: [{
-                        orderable: true,
-                        //className: 'select-checkbox',
-                        data: null,
-                        defaultContent: '',
-                        targets: 0
-                    }],
-                    columns: [{
-                            data: 'DT_RowIndex',
-                            name: 'DT_RowIndex',
-                            'visible': false
-                        },
-                        {
-                            data: 'file_no',
-                            name: 'file_no'
-                        },
-                        {
-                            data: 'user_id',
-                            name: 'user_id'
-                        },
-                        {
-                            data: 'hmo',
-                            name: 'hmo'
-                        },
-                        {
-                            data: 'hmo_no',
-                            name: 'hmo_no'
-                        },
-                        {
-                            data: 'acc_bal',
-                            name: 'acc_bal'
-                        },
-                        {
-                            data: 'phone',
-                            data: 'phone'
-                        },
-                        // { data: 'payment_validation', name: 'payment_validation' },
-                        {
-                            data: 'process',
-                            name: 'process'
-                        }
+                    {
+                        data: 'user_id',
+                        name: 'user_id'
+                    },
+                    {
+                        data: 'hmo',
+                        name: 'hmo'
+                    },
+                    {
+                        data: 'hmo_no',
+                        name: 'hmo_no'
+                    },
+                    {
+                        data: 'acc_bal',
+                        name: 'acc_bal'
+                    },
+                    {
+                        data: 'phone',
+                        data: 'phone'
+                    },
+                    // { data: 'payment_validation', name: 'payment_validation' },
+                    {
+                        data: 'process',
+                        name: 'process'
+                    }
 
-                    ],
-                    responsive: true,
-                    order: [
-                        [1, 'asc']
-                    ],
-                    paging: true,
-                    lengthChange: false,
-                    searchable: false,
-                    "info": true,
-                    "autoWidth": true,
-                });
-            // }
+                ],
 
-
-            $("#patients_search_form").on('submit', function(e) {
-                e.preventDefault();
-                $('#showMe').show();
-                $('#patient_table_id').DataTable().draw(true);
+                "paging": true
             });
+        });
+        $("#patients_search_form").on('submit', function(e) {
+            e.preventDefault();
+            $('#showMe').show();
+            $('#patient_table_id').DataTable().draw(true);
         });
     </script>
 @endsection

@@ -513,6 +513,35 @@
 @endsection
 @section('scripts')
     <script src="{{ asset('/plugins/dataT/datatables.min.js') }}" defer></script>
+    <script src="{{ asset('plugins/ckeditor/ckeditor5/ckeditor.js') }}"></script>
+    <script>
+        ClassicEditor
+            .create(document.querySelector('.classic-editor'), {
+                toolbar: {
+                    items: [
+                        'undo', 'redo',
+                        '|', 'heading',
+                        '|', 'bold', 'italic',
+                        '|', 'link', 'uploadImage', 'insertTable', 'mediaEmbed',
+                        '|', 'bulletedList', 'numberedList', 'outdent', 'indent'
+                    ]
+                },
+                cloudServices: {
+                    // All predefined builds include the Easy Image feature.
+                    // Provide correct configuration values to use it.
+                    // tokenUrl: 'https://example.com/cs-token-endpoint',
+                    // uploadUrl: 'https://your-organization-id.cke-cs.com/easyimage/upload/'
+                    // Read more about Easy Image - https://ckeditor.com/docs/ckeditor5/latest/features/images/image-upload/easy-image.html.
+                    // For other image upload methods see the guide - https://ckeditor.com/docs/ckeditor5/latest/features/images/image-upload/image-upload.html.
+                }
+            })
+            .then(editor => {
+                window.editor = editor;
+            })
+            .catch(err => {
+                console.error(err);
+            });
+    </script>
     <script>
         $(function() {
             $('#encounter_history_list').DataTable({
