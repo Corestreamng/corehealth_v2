@@ -122,7 +122,7 @@
                             <form method="post" action="{{ route('vitals.store') }}">
                                 @csrf
                                 <div class="row">
-                                    <div class="form-group col-md-6">
+                                    <div class="form-group col-md-4">
                                         <input type="hidden" name="patient_id" value="{{ $patient->id }}">
                                         <label for="bloodPressure">Blood Pressure (mmHg) <span
                                                 class="text-danger">*</span></label>
@@ -131,12 +131,18 @@
                                         <small class="form-text text-muted">Enter in the format of "systolic/diastolic", e.g.,
                                             120/80.</small>
                                     </div>
-                                    <div class="form-group col-md-6">
+                                    <div class="form-group col-md-4">
                                         <label for="bodyTemperature">Body Temperature (°C) <span
                                                 class="text-danger">*</span></label>
                                         <input type="number" class="form-control" id="bodyTemperature" name="bodyTemperature"
                                             min="34" max="39" step="0.1" required>
                                         <small class="form-text text-muted">Min : 34, Max: 39</small>
+                                    </div>
+                                    <div class="form-group col-md-4">
+                                        <label for="bodyWeight">Body Weight (Kg)
+                                        <input type="number" class="form-control" id="bodyWeight" name="bodyWeight"
+                                            min="1" max="300" step="0.1" required>
+                                        <small class="form-text text-muted">Min : 1, Max: 300</small>
                                     </div>
                                 </div>
                                 <div class="row">
@@ -183,6 +189,11 @@
                                 <div class="col-md-6">
                                     <!-- Temperature Chart -->
                                     <canvas id="temperatureChart"></canvas>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <!-- Weight Chart -->
+                                    <canvas id="weightChart"></canvas>
                                 </div>
 
                                 <div class="col-md-6">
@@ -1929,6 +1940,7 @@
                 const bloodPressureDiastolic = response.map(item => parseInt(item.blood_pressure.split("/")[
                     1]));
                 const temperature = response.map(item => parseFloat(item.temp));
+                const weight = response.map(item => parseFloat(item.weight));
                 const heartRate = response.map(item => parseInt(item.heart_rate));
                 const respRate = response.map(item => parseInt(item.resp_rate));
 
@@ -1968,6 +1980,40 @@
                                 title: {
                                     display: true,
                                     text: "Blood Pressure",
+                                },
+                            },
+                        },
+                    },
+                });
+
+                // Create the Weight Chart
+                new Chart(document.getElementById("weightChart"), {
+                    type: "line",
+                    data: {
+                        labels: timeTaken,
+                        datasets: [{
+                            label: "Weight",
+                            borderColor: "rgba(255, 206, 86, 1)",
+                            backgroundColor: "rgba(255, 206, 86, 0.2)",
+                            data: weight,
+                            lineTension: 0.4
+                        }, ],
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: "Time Taken",
+                                },
+                            },
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: "Weight",
                                 },
                             },
                         },
