@@ -509,7 +509,7 @@
                                     <?php //echo $others_record->note ?? $others_record_template->template;
                                     ?>
                                 </div> --}}
-                                    <textarea  id="others_text" name="the_text" class="form-control classic-editor others_text">
+                                    <textarea id="others_text" name="the_text" class="form-control classic-editor others_text">
                                     <?php echo $others_record->note ?? $others_record_template->template; ?>
                             </textarea>
                                 </div>
@@ -657,7 +657,7 @@
                 </div>
                 <div class="collapse card-body {{ request()->get('section') && request()->get('section') == 'prescriptionsNotesCardBody' ? 'show' : '' }}"
                     id="prescriptionsNotesCardBody">
-                    <h4>Requested Prescription</h4>
+                    <h4>Requested Prescription(billing)</h4>
                     <form action="{{ route('product-bill-patient') }}" method="post">
                         @csrf
                         <h6>Requested Items</h6>
@@ -703,8 +703,31 @@
 
                         </div>
                         <button type="submit" class="btn btn-primary"
-                            onclick="return confirm('Are you sure you wish to bill the selected items')">Dispense/Bill</button>
+                            onclick="return confirm('Are you sure you wish to bill the selected items')">Bill</button>
                         <button type="submit" value="dismiss_presc_bill" name="dismiss_presc_bill" class="btn btn-danger"
+                            onclick="return confirm('Are you sure you wish to dissmiss the selected items')"
+                            style="float: right">Dismiss</button>
+                    </form>
+                    <hr>
+                    <h4>Requested Prescription(Dispense)</h4>
+                    <form action="{{ route('product-dispense-patient') }}" method="post">
+                        @csrf
+                        <h6>Requested Items</h6>
+                        <input type="hidden" name="patient_user_id" id="" value="{{ $patient->user->id }}">
+                        <input type="hidden" name="patient_id" id="" value="{{ $patient->id }}">
+                        <table class="table table-sm table-bordered table-striped" style="width: 100%"
+                            id="presc_history_dispense">
+                            <thead>
+                                <th>#</th>
+                                <th>Select</th>
+                                <th>Product</th>
+                                <th>Details</th>
+                            </thead>
+                        </table>
+                        <hr>
+                        <button type="submit" class="btn btn-primary"
+                            onclick="return confirm('Are you sure you wish to dispense the selected items')">Dispense</button>
+                        <button type="submit" value="dismiss_presc_dispense" name="dismiss_presc_bill" class="btn btn-danger"
                             onclick="return confirm('Are you sure you wish to dissmiss the selected items')"
                             style="float: right">Dismiss</button>
                     </form>
@@ -730,7 +753,7 @@
                 </div>
                 <div class="collapse card-body {{ request()->get('section') && request()->get('section') == 'investigationsCardBody' ? 'show' : '' }}"
                     id="investigationsCardBody">
-                    <h4>Requested Investigations</h4>
+                    <h4>Requested Investigations(billing)</h4>
                     <form action="{{ route('service-bill-patient') }}" method="post">
                         @csrf
                         <h6>Requested Items</h6>
@@ -776,13 +799,36 @@
 
                         </div>
                         <button type="submit" class="btn btn-primary"
-                            onclick="return confirm('Are you sure you wish to bill the selected items')">Take
-                            sample/Bill</button>
+                            onclick="return confirm('Are you sure you wish to bill the selected items')">Bill</button>
                         <button type="submit" value="dismiss_invest_bill" name="dismiss_invest_bill" class="btn btn-danger"
                             onclick="return confirm('Are you sure you wish to dissmiss the selected items')"
                             style="float: right">Dismiss</button>
                     </form>
                     <hr>
+                    <h4>Requested Investigations(sample collection)</h4>
+                    <form action="{{ route('service-sample-patient') }}" method="post">
+                        @csrf
+                        <h6>Requested Items</h6>
+                        <input type="hidden" name="patient_user_id" id="" value="{{ $patient->user->id }}">
+                        <input type="hidden" name="patient_id" id="" value="{{ $patient->id }}">
+                        <table class="table table-sm table-bordered table-striped" style="width: 100%"
+                            id="invest_history_sample">
+                            <thead>
+                                <th>#</th>
+                                <th>Select</th>
+                                <th>Service</th>
+                                <th>Details</th>
+                            </thead>
+                        </table>
+                        <hr>
+                        <button type="submit" class="btn btn-primary"
+                            onclick="return confirm('Are you sure you wish to mark the selected items as \'sample taken\'?')">Take Sample</button>
+                        <button type="submit" value="dismiss_invest_sample" name="dismiss_invest_bill" class="btn btn-danger"
+                            onclick="return confirm('Are you sure you wish to dissmiss the selected items, you cannot undo this!!!')"
+                            style="float: right">Dismiss</button>
+                    </form>
+                    <hr>
+
                     <h4>Investigation Result Entry</h4>
                     <div class="table-responsive">
                         <table class="table table-sm table-bordered table-striped" style="width: 100%"
@@ -827,7 +873,7 @@
         aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
-                <form action="{{ route('assign-bed') }}" method="post" onsubmit="copyResTemplateToField()">
+                <form action="{{ route('service-save-result') }}" method="post" onsubmit="copyResTemplateToField()">
                     @csrf
                     <div class="modal-header">
                         <h5 class="modal-title" id="investResModalLabel">Enter Result (<span
@@ -1243,6 +1289,44 @@
         });
     </script>
     <script>
+        $(function() {
+            $('#presc_history_dispense').DataTable({
+                "dom": 'Bfrtip',
+                "iDisplayLength": 50,
+                "lengthMenu": [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, "All"]
+                ],
+                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{ url('prescDispenseList', $patient->id) }}",
+                    "type": "GET"
+                },
+                "columns": [{
+                        data: "DT_RowIndex",
+                        name: "DT_RowIndex"
+                    },
+                    {
+                        data: "select",
+                        name: "select"
+                    },
+                    {
+                        data: "dose",
+                        name: "dose"
+                    },
+                    {
+                        data: "created_at",
+                        name: "created_at"
+                    },
+                ],
+
+                "paging": true
+            });
+        });
+    </script>
+    <script>
         function add_to_total_presc_bill(v) {
             let new_tot = parseFloat($('#presc_bill_tot').val()) + parseFloat(v);
             $('#presc_bill_tot').val(new_tot);
@@ -1328,7 +1412,44 @@
             }
         }
     </script>
+    <script>
+        $(function() {
+            $('#invest_history_sample').DataTable({
+                "dom": 'Bfrtip',
+                "iDisplayLength": 50,
+                "lengthMenu": [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, "All"]
+                ],
+                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{ url('investSampleList', $patient->id) }}",
+                    "type": "GET"
+                },
+                "columns": [{
+                        data: "DT_RowIndex",
+                        name: "DT_RowIndex"
+                    },
+                    {
+                        data: "select",
+                        name: "select"
+                    },
+                    {
+                        data: "result",
+                        name: "result"
+                    },
+                    {
+                        data: "created_at",
+                        name: "created_at"
+                    },
+                ],
 
+                "paging": true
+            });
+        });
+    </script>
     <script>
         $(function() {
             $('#invest_history_bills').DataTable({

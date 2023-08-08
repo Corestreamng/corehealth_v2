@@ -28,9 +28,9 @@ class ProductRequestController extends Controller
      */
     public function index()
     {
-        if(request('history') == 1){
+        if (request('history') == 1) {
             return view('admin.product_requests.history');
-        }else{
+        } else {
             return view('admin.product_requests.index');
         }
     }
@@ -38,33 +38,35 @@ class ProductRequestController extends Controller
     public function prescQueueList()
     {
         $his = ProductRequest::with(['product', 'encounter', 'patient', 'productOrServiceRequest', 'doctor', 'biller'])
-            ->where('status', 1)->orderBy('created_at', 'DESC')->get();
+            ->where('status', 1)->orWhere('status', 2)->orderBy('created_at', 'DESC')->get();
         //dd($pc);
         return Datatables::of($his)
             ->addIndexColumn()
             ->addColumn('select', function ($h) {
-                $url = route('patient.show',[$h->patient->id, 'section' => 'prescriptionsNotesCardBody']);
+                $url = route('patient.show', [$h->patient->id, 'section' => 'prescriptionsNotesCardBody']);
                 $str = "
                     <a class='btn btn-primary' href='$url'>
                         view
                     </a>";
                 return $str;
             })
-            ->editColumn('patient_id', function($h){
+            ->editColumn('patient_id', function ($h) {
                 $str = "<small>";
-                $str .= "<b >Patient </b> :". (($h->patient->user) ? userfullname($h->patient->user->id) : "N/A" );
-                $str .= "<br><br><b >File No </b> : ". $h->patient->file_no;
-                $str .= "<br><br><b >Insurance/HMO :</b> : ". (($h->patient->hmo) ? $h->patient->hmo->name : "N/A");
-                $str .= "<br><br><b >HMO Number :</b> : ". (($h->patient->hmo_no) ? $h->patient->hmo_no : "N/A");
-                $str .= "</small>" ; return $str;
-
+                $str .= "<b >Patient </b> :" . (($h->patient->user) ? userfullname($h->patient->user->id) : "N/A");
+                $str .= "<br><br><b >File No </b> : " . $h->patient->file_no;
+                $str .= "<br><br><b >Insurance/HMO :</b> : " . (($h->patient->hmo) ? $h->patient->hmo->name : "N/A");
+                $str .= "<br><br><b >HMO Number :</b> : " . (($h->patient->hmo_no) ? $h->patient->hmo_no : "N/A");
+                $str .= "</small>";
+                return $str;
             })
             ->editColumn('created_at', function ($h) {
                 $str = "<small>";
                 $str .= "<b >Requested By: </b>" . ((isset($h->doctor_id) && $h->doctor_id != null) ? (userfullname($h->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>") . '<br>';
                 $str .= "<b >Last Updated On: </b>" . date('h:i a D M j, Y', strtotime($h->updated_at)) . '<br>';
-                $str .= "<b >Billed/ Dispensed By: </b>" . ((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span><br>");
-                $str .= "</small>" ; return $str;
+                $str .= "<b >Billed By: </b>" . ((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span><br>");
+                $str .= "<br><b >Dispensed By: </b>" . ((isset($h->dispensed_by) && $h->dispensed_by != null) ? (userfullname($h->dispensed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->dispense_date)) . ')') : "<span class='badge badge-secondary'>Not dispensed</span><br>");
+                $str .= "</small>";
+                return $str;
             })
             ->editColumn('dose', function ($his) {
                 $str = "<span class = 'badge badge-success'>[" . (($his->product->product_code) ? $his->product->product_code : '') . "]" . $his->product->product_name . "</span>";
@@ -78,33 +80,35 @@ class ProductRequestController extends Controller
     public function prescQueueHistoryList()
     {
         $his = ProductRequest::with(['product', 'encounter', 'patient', 'productOrServiceRequest', 'doctor', 'biller'])
-            ->where('status', 2)->orderBy('created_at', 'DESC')->get();
+            ->where('status', 3)->orderBy('created_at', 'DESC')->get();
         //dd($pc);
         return Datatables::of($his)
             ->addIndexColumn()
             ->addColumn('select', function ($h) {
-                $url = route('patient.show',[$h->patient->id, 'section' => 'prescriptionsNotesCardBody']);
+                $url = route('patient.show', [$h->patient->id, 'section' => 'prescriptionsNotesCardBody']);
                 $str = "
                     <a class='btn btn-primary' href='$url'>
                         view
                     </a>";
                 return $str;
             })
-            ->editColumn('patient_id', function($h){
+            ->editColumn('patient_id', function ($h) {
                 $str = "<small>";
-                $str .= "<b >Patient </b> :". (($h->patient->user) ? userfullname($h->patient->user->id) : "N/A" );
-                $str .= "<br><br><b >File No </b> : ". $h->patient->file_no;
-                $str .= "<br><br><b >Insurance/HMO :</b> : ". (($h->patient->hmo) ? $h->patient->hmo->name : "N/A");
-                $str .= "<br><br><b >HMO Number :</b> : ". (($h->patient->hmo_no) ? $h->patient->hmo_no : "N/A");
-                $str .= "</small>" ; return $str;
-
+                $str .= "<b >Patient </b> :" . (($h->patient->user) ? userfullname($h->patient->user->id) : "N/A");
+                $str .= "<br><br><b >File No </b> : " . $h->patient->file_no;
+                $str .= "<br><br><b >Insurance/HMO :</b> : " . (($h->patient->hmo) ? $h->patient->hmo->name : "N/A");
+                $str .= "<br><br><b >HMO Number :</b> : " . (($h->patient->hmo_no) ? $h->patient->hmo_no : "N/A");
+                $str .= "</small>";
+                return $str;
             })
             ->editColumn('created_at', function ($h) {
                 $str = "<small>";
                 $str .= "<b >Requested By: </b>" . ((isset($h->doctor_id) && $h->doctor_id != null) ? (userfullname($h->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>") . '<br>';
                 $str .= "<b >Last Updated On: </b>" . date('h:i a D M j, Y', strtotime($h->updated_at)) . '<br>';
-                $str .= "<b >Billed/ Dispensed By: </b>" . ((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span><br>");
-                $str .= "</small>" ; return $str;
+                $str .= "<b >Billed By: </b>" . ((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span><br>");
+                $str .= "<br><b >Dispensed By: </b>" . ((isset($h->dispensed_by) && $h->dispensed_by != null) ? (userfullname($h->dispensed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->dispense_date)) . ')') : "<span class='badge badge-secondary'>Not dispensed</span><br>");
+                $str .= "</small>";
+                return $str;
             })
             ->editColumn('dose', function ($his) {
                 $str = "<span class = 'badge badge-success'>[" . (($his->product->product_code) ? $his->product->product_code : '') . "]" . $his->product->product_name . "</span>";
@@ -158,7 +162,7 @@ class ProductRequestController extends Controller
                             'product_request_id' => $bill_req->id
                         ]);
 
-                        $product = Product::with(['stock'])->where('id',$prod_id)->first();
+                        $product = Product::with(['stock'])->where('id', $prod_id)->first();
                         if ($product && $product->stock) {
                             $quantityToDecrement = 1; // You can adjust this value based on your requirements
                             $product->stock->decrement('current_quantity', $quantityToDecrement);
@@ -168,7 +172,6 @@ class ProductRequestController extends Controller
                         if ($product->stock) {
                             $product->stock->save();
                         }
-
                     }
                 }
                 if (isset($request->addedPrescBillRows)) {
@@ -191,7 +194,7 @@ class ProductRequestController extends Controller
                         $presc->status = 2;
                         $presc->save();
 
-                        $product = Product::with(['stock'])->where('id',$request->addedPrescBillRows[$i])->first();
+                        $product = Product::with(['stock'])->where('id', $request->addedPrescBillRows[$i])->first();
                         if ($product && $product->stock) {
                             $quantityToDecrement = 1; // You can adjust this value based on your requirements
                             $product->stock->decrement('current_quantity', $quantityToDecrement);
@@ -204,13 +207,53 @@ class ProductRequestController extends Controller
                     }
                 }
                 DB::commit();
-                return redirect()->back()->with(['message' => "Product Requests Dispensed & Billed Successfully", 'message_type' => 'success']);
+                return redirect()->back()->with(['message' => "Product Requests Billed Successfully", 'message_type' => 'success']);
             }
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage() . 'line' . $e->getLine());
         }
     }
+
+    public function dispense(Request $request)
+    {
+        try {
+            $request->validate([
+                'selectedPrescDispenseRows' => 'array',
+                'patient_user_id' => 'required',
+                'patient_id' => 'required'
+            ]);
+
+            if (isset($request->dismiss_presc_dispense) && isset($request->selectedPrescDispenseRows)) {
+                DB::beginTransaction();
+                for ($i = 0; $i < count($request->selectedPrescDispenseRows); $i++) {
+                    ProductRequest::where('id', $request->selectedPrescDispenseRows[$i])->update([
+                        'status' => 0
+                    ]);
+                }
+                DB::commit();
+                return redirect()->back()->with(['message' => "Product Requests Dismissed Successfully", 'message_type' => 'success']);
+            } else {
+                DB::beginTransaction();
+                if (isset($request->selectedPrescDispenseRows)) {
+                    for ($i = 0; $i < count($request->selectedPrescDispenseRows); $i++) {
+                        ProductRequest::where('id', $request->selectedPrescDispenseRows[$i])->update([
+                            'status' => 3,
+                            'dispensed_by' => Auth::id(),
+                            'dispense_date' => date('Y-m-d H:i:s'),
+                        ]);
+                    }
+                }
+
+                DB::commit();
+                return redirect()->back()->with(['message' => "Product Requests Dispensed Successfully", 'message_type' => 'success']);
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage() . 'line' . $e->getLine());
+        }
+    }
+
     /**
      * Show the form for creating a new resource.
      *
