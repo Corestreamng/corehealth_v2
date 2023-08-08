@@ -60,6 +60,7 @@ class VitalSignController extends Controller
             $vitalSign->blood_pressure = $request->bloodPressure;
             $vitalSign->heart_rate = $request->heartRate;
             $vitalSign->resp_rate = $request->respiratoryRate;
+            $vitalSign->weight = $request->bodyWeight;
             $vitalSign->other_notes = $request->otherNotes;
             $vitalSign->time_taken = $request->datetimeField;
             $vitalSign->save();
@@ -90,6 +91,7 @@ class VitalSignController extends Controller
             ->editColumn('result', function ($his) {
                 $str = "<b > Blood Pressure (mmHg): </b>" . $his->blood_pressure . "<br>";
                 $str .= "<b > Body Temperature (°C): </b>" . $his->temp . "<br>";
+                $str .= "<b > Body Weight (Kg): </b>" . $his->weight . "<br>";
                 $str .= "<b > Respiratory Rate (BPM) :</b>" . $his->resp_rate . "<br>";
                 $str .= "<b > Heart Rate (BPM): </b>" . $his->heart_rate . "<br><hr>";
                 $str .= $his->other_notes ?? 'N/A';
@@ -137,6 +139,7 @@ class VitalSignController extends Controller
             ->editColumn('result', function ($his) {
                 $str = "<b > Blood Pressure (mmHg): </b>" . $his->blood_pressure . "<br>";
                 $str .= "<b > Body Temperature (°C): </b>" . $his->temp . "<br>";
+                $str .= "<b > Body Weight (Kg): </b>" . $his->weight . "<br>";
                 $str .= "<b > Respiratory Rate (BPM) :</b>" . $his->resp_rate . "<br>";
                 $str .= "<b > Heart Rate (BPM): </b>" . $his->heart_rate . "<br><hr>";
                 $str .= $his->other_notes ?? 'N/A';
@@ -180,6 +183,7 @@ class VitalSignController extends Controller
             ->editColumn('result', function ($his) {
                 $str = "<b > Blood Pressure (mmHg): </b>" . $his->blood_pressure . "<br>";
                 $str .= "<b > Body Temperature (°C): </b>" . $his->temp . "<br>";
+                $str .= "<b > Body Weight (Kg): </b>" . $his->weight . "<br>";
                 $str .= "<b > Respiratory Rate (BPM) :</b>" . $his->resp_rate . "<br>";
                 $str .= "<b > Heart Rate (BPM): </b>" . $his->heart_rate . "<br><hr>";
                 $str .= $his->other_notes ?? 'N/A';
