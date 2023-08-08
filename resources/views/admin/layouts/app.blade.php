@@ -23,7 +23,7 @@
     <link rel="shortcut icon" href="{{ asset('admin/assets/images/favicon.png') }}" />
     <link rel="stylesheet" href="{{ asset('css/selectisize.css') }}">
     <script src="{{ asset('js/app.js') }}"></script>
-    <link rel="stylesheet" href="asset('/plugins/dataT/datatables.min.css')">
+    <link rel="stylesheet" href="{{asset('/plugins/dataT/datatables.min.css')}}">
     <script src="{{asset('plugins/chartjs/Chart.js')}}"></script>
     <style>
         .ck-editor__editable_inline {

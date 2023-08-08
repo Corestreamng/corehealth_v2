@@ -11,6 +11,8 @@ use App\Models\User;
 use App\Models\Staff;
 use App\Models\Hmo;
 use App\Models\LabServiceRequest;
+use App\Models\NursingNote;
+use App\Models\NursingNoteType;
 use Illuminate\Support\Facades\Auth;
 use App\Models\patient;
 use App\Models\ProductOrServiceRequest;
@@ -361,9 +363,68 @@ class EncounterController extends Controller
             $clinic = Clinic::find($doctor->clinic_id);
             $req_entry = ProductOrServiceRequest::find(request()->get('req_entry_id'));
             // dd($request->get('admission_req_id'));
+
+
             if ($request->get('admission_req_id') != '') {
                 $admission_request = AdmissionRequest::where('id', $request->admission_req_id)->first();
-                return view('admin.doctors.new_encounter')->with(['patient' => $patient, 'doctor' => $doctor, 'clinic' => $clinic, 'req_entry' => $req_entry, 'admission_request' => $admission_request]);
+                //for nursing notes
+                $patient_id = $patient->id;
+                $patient = patient::find($patient_id);
+
+                $observation_note = NursingNote::with(['patient', 'createdBy', 'type'])
+                    ->where('patient_id', $patient_id)
+                    ->where('completed', false)
+                    ->where('nursing_note_type_id', 1)
+                    ->first() ?? null;
+
+                $observation_note_template = NursingNoteType::find(1);
+
+                $treatment_sheet = NursingNote::with(['patient', 'createdBy', 'type'])
+                    ->where('patient_id', $patient_id)
+                    ->where('completed', false)
+                    ->where('nursing_note_type_id', 2)
+                    ->first() ?? null;
+
+                $treatment_sheet_template = NursingNoteType::find(2);
+
+                $io_chart = NursingNote::with(['patient', 'createdBy', 'type'])
+                    ->where('patient_id', $patient_id)
+                    ->where('completed', false)
+                    ->where('nursing_note_type_id', 3)
+                    ->first() ?? null;
+
+                $io_chart_template = NursingNoteType::find(3);
+                // dd($io_chart_template);
+
+                $labour_record = NursingNote::with(['patient', 'createdBy', 'type'])
+                    ->where('patient_id', $patient_id)
+                    ->where('completed', false)
+                    ->where('nursing_note_type_id', 4)
+                    ->first() ?? null;
+
+                $labour_record_template = NursingNoteType::find(4);
+
+                $others_record = NursingNote::with(['patient', 'createdBy', 'type'])
+                    ->where('patient_id', $patient_id)
+                    ->where('completed', false)
+                    ->where('nursing_note_type_id', 5)
+                    ->first() ?? null;
+
+                $others_record_template = NursingNoteType::find(5);
+
+                return view('admin.doctors.new_encounter')->with([
+                    'patient' => $patient, 'doctor' => $doctor, 'clinic' => $clinic, 'req_entry' => $req_entry, 'admission_request' => $admission_request,
+                    'observation_note' => $observation_note,
+                    'treatment_sheet' => $treatment_sheet,
+                    'io_chart' => $io_chart,
+                    'labour_record' => $labour_record,
+                    'others_record' => $others_record,
+                    'observation_note_template' => $observation_note_template,
+                    'treatment_sheet_template' => $treatment_sheet_template,
+                    'io_chart_template' => $io_chart_template,
+                    'labour_record_template' => $labour_record_template,
+                    'others_record_template' => $others_record_template
+                ]);
             } else {
                 return view('admin.doctors.new_encounter')->with(['patient' => $patient, 'doctor' => $doctor, 'clinic' => $clinic, 'req_entry' => $req_entry]);
             }

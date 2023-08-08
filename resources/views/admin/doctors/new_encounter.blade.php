@@ -157,6 +157,119 @@
         <div class="tab-pane fade" id="vitals" role="tabpanel" aria-labelledby="vitals_tab">
             <div class="card mt-2">
                 <div class="card-body table-responsive">
+
+                    <div class="row">
+                        <div class="col-12">
+                            <form method="post" action="{{ route('vitals.store') }}">
+                                @csrf
+                                <div class="row">
+                                    <div class="form-group col-md-4">
+                                        <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                        <label for="bloodPressure">Blood Pressure (mmHg) <span
+                                                class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="bloodPressure"
+                                            name="bloodPressure" pattern="\d+/\d+" required>
+                                        <small class="form-text text-muted">Enter in the format of
+                                            "systolic/diastolic", e.g.,
+                                            120/80.</small>
+                                    </div>
+                                    <div class="form-group col-md-4">
+                                        <label for="bodyTemperature">Body Temperature (°C) <span
+                                                class="text-danger">*</span></label>
+                                        <input type="number" class="form-control" id="bodyTemperature"
+                                            name="bodyTemperature" min="34" max="39" step="0.1"
+                                            required>
+                                        <small class="form-text text-muted">Min : 34, Max: 39</small>
+                                    </div>
+                                    <div class="form-group col-md-4">
+                                        <label for="bodyWeight">Body Weight (Kg)
+                                            <input type="number" class="form-control" id="bodyWeight" name="bodyWeight"
+                                                min="1" max="300" step="0.1" required>
+                                            <small class="form-text text-muted">Min : 1, Max: 300</small>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="form-group col-md-6">
+                                        <label for="respiratoryRate">Respiratory Rate (BPM)</label>
+                                        <input type="number" class="form-control" id="respiratoryRate"
+                                            name="respiratoryRate" min="12" max="30">
+                                        <small class="form-text text-muted">Breaths per Minute. Min : 12, Max:
+                                            30</small>
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label for="heartRate">Heart Rate (BPM)</label>
+                                        <input type="number" class="form-control" id="heartRate" name="heartRate"
+                                            min="60" max="220">
+                                        <small class="form-text text-muted">Beats Per Min. Min : 60, Max:
+                                            220</small>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="form-group col-md-6">
+                                        <label for="datetimeField">Time Taken</label>
+                                        <input type="datetime-local" class="form-control" id="datetimeField"
+                                            name="datetimeField" value="{{ date('Y-m-d\TH:i') }}" required>
+                                        <small class="form-text text-muted">The exact time the vitals were
+                                            taken</small>
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label for="otherNotes">Other Notes</label>
+                                        <textarea name="otherNotes" id="otherNotes" class="form-control"></textarea>
+                                        <small class="form-text text-muted">Any other specifics about the
+                                            patient</small>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Submit</button>
+                            </form>
+                        </div>
+
+                        <div class="col-12">
+                            <hr>
+                            <h4>Vital Signs Charts(up to last 30 readings)</h4>
+                            <br>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <!-- Blood Pressure Chart -->
+                                    <canvas id="bloodPressureChart"></canvas>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <!-- Temperature Chart -->
+                                    <canvas id="temperatureChart"></canvas>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <!-- Weight Chart -->
+                                    <canvas id="weightChart"></canvas>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <!-- Heart Rate Chart -->
+                                    <canvas id="heartRateChart"></canvas>
+
+                                </div>
+
+                                <div class="col-md-6">
+                                    <!-- Respiratory Rate Chart -->
+                                    <canvas id="respRateChart"></canvas>
+                                </div>
+                            </div>
+
+                        </div>
+                        <hr>
+                        <h4>Vitals History</h4>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered table-striped" style="width: 100%"
+                                id="vitals_history">
+                                <thead>
+                                    <th>#</th>
+                                    <th>Service</th>
+                                    <th>Details</th>
+                                    {{-- <th>Entry</th> --}}
+                                </thead>
+                            </table>
+                        </div>
+                    </div>
                     <br><button type="button" onclick="switch_tab(event,'patient_data_tab')"
                         class="btn btn-secondary mr-2">
                         Prev
@@ -242,6 +355,175 @@
         <div class="tab-pane fade" id="nursing_notes" role="tabpanel" aria-labelledby="nursing_notes_tab">
             <div class="card mt-2">
                 <div class="card-body table-responsive">
+                    @if (isset($admission_request))
+                        <ul class="nav nav-tabs" id="myTab" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active" id="observation-tab" data-toggle="tab" href="#observation"
+                                    role="tab" aria-controls="observation" aria-selected="true">Observation Chart</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="treatment-tab" data-toggle="tab" href="#treatment"
+                                    role="tab" aria-controls="treatment" aria-selected="false">Treatment Sheet</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="io-tab" data-toggle="tab" href="#io" role="tab"
+                                    aria-controls="io" aria-selected="false">Intake/Output Chart</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="labour-tab" data-toggle="tab" href="#labour" role="tab"
+                                    aria-controls="labour" aria-selected="false">Labour Records</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="others-tab" data-toggle="tab" href="#others" role="tab"
+                                    aria-controls="others" aria-selected="false">Other Notes</a>
+                            </li>
+                        </ul>
+                        <div class="tab-content" id="myTabContent">
+                            <div class="tab-pane fade show active" id="observation" role="tabpanel"
+                                aria-labelledby="observation-tab">
+                                <form action="{{ route('nursing-note.store') }}" method="post" id="observation_form">
+                                    {{ csrf_field() }}
+                                    <input type="hidden" name="note_type" value="1">
+                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                    <div class="form-group">
+                                        <label for="pateintNoteReport" class="control-label">Observation Chart for
+                                            {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
+                                        <div style="border:1px solid black;" id="the-observation-note"
+                                            class='the-observation-note'>
+                                            <?php echo $observation_note->note ?? $observation_note_template->template; ?>
+                                        </div>
+                                        <textarea style="display: none" id="observation_text" name="the_text" class="form-control observation_text">
+                            </textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary"
+                                        onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
+                                </form>
+                                <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
+                                    {{ csrf_field() }}
+                                    <input type="hidden" name="note_type" value="1">
+                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                    <button type="submit"
+                                        onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
+                                        class="btn btn-success" style="float: right; margin-top:-40px">Save &
+                                        New</button>
+                                </form>
+                            </div>
+                            <div class="tab-pane fade" id="treatment" role="tabpanel" aria-labelledby="treatment-tab">
+                                <form action="{{ route('nursing-note.store') }}" method="post" id="treatment_form">
+                                    {{ csrf_field() }}
+                                    <input type="hidden" name="note_type" value="2">
+                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                    <div class="form-group">
+                                        <label for="pateintNoteReport" class="control-label">Treatment sheet for
+                                            {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
+                                        <div style="border:1px solid black;" id="the-treatment-note"
+                                            class='the-treatment-note'>
+                                            <?php echo $treatment_sheet->note ?? $treatment_sheet_template->template; ?>
+                                        </div>
+                                        <textarea style="display: none" id="treatment_text" name="the_text" class="form-control treatment_text">
+                            </textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary"
+                                        onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
+                                </form>
+                                <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
+                                    {{ csrf_field() }}
+                                    <input type="hidden" name="note_type" value="2">
+                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                    <button type="submit" class="btn btn-success"
+                                        onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
+                                        style="float: right; margin-top:-40px">Save &
+                                        New</button>
+                                </form>
+                            </div>
+                            <div class="tab-pane fade" id="io" role="tabpanel" aria-labelledby="io-tab">
+                                <form action="{{ route('nursing-note.store') }}" method="post" id="io_form">
+                                    {{ csrf_field() }}
+                                    <input type="hidden" name="note_type" value="3">
+                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                    <div class="form-group">
+                                        <label for="pateintNoteReport" class="control-label">Intake/Output Chart
+                                            {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
+                                        <div style="border:1px solid black;" id="the-io-note" class='the-io-note'>
+                                            <?php echo $io_chart->note ?? $io_chart_template->template; ?>
+                                        </div>
+                                        <textarea style="display: none" id="io_text" name="the_text" class="form-control io_text">
+                            </textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary"
+                                        onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
+                                </form>
+                                <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
+                                    {{ csrf_field() }}
+                                    <input type="hidden" name="note_type" value="3">
+                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                    <button type="submit" class="btn btn-success"
+                                        onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
+                                        style="float: right; margin-top:-40px">Save &
+                                        New</button>
+                                </form>
+                            </div>
+                            <div class="tab-pane fade" id="labour" role="tabpanel" aria-labelledby="labour-tab">
+                                <form action="{{ route('nursing-note.store') }}" method="post" id="labour_form">
+                                    {{ csrf_field() }}
+                                    <input type="hidden" name="note_type" value="4">
+                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                    <input type="hidden" id="close_after_save" value="0">
+                                    <div class="form-group">
+                                        <label for="pateintDiagnosisReport" class="control-label">Labour Records
+                                            {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
+                                        <div style="border:1px solid black;" id="the-labour-note"
+                                            class='the-labour-note'>
+                                            <?php echo $labour_record->note ?? $labour_record_template->template; ?>
+                                        </div>
+                                        <textarea style="display: none" id="labour_text" name="the_text" class="form-control labour_text">
+                            </textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary"
+                                        onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
+                                </form>
+                                <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
+                                    {{ csrf_field() }}
+                                    <input type="hidden" name="note_type" value="4">
+                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                    <button type="submit" class="btn btn-success"
+                                        onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
+                                        style="float: right; margin-top:-40px">Save &
+                                        New</button>
+                                </form>
+                            </div>
+                            <div class="tab-pane fade" id="others" role="tabpanel" aria-labelledby="others-tab">
+                                <form action="{{ route('nursing-note.store') }}" method="post" id="others_form">
+                                    {{ csrf_field() }}
+                                    <input type="hidden" name="note_type" value="5">
+                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                    <input type="hidden" id="close_after_save" value="0">
+                                    <div class="form-group">
+                                        <br><label for="pateintDiagnosisReport" class="control-label">Other Notes
+                                            {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
+                                        {{-- <div style="border:1px solid black;" id="the-others-note" class='the-others-note classic-editor'>
+                                    <?php //echo $others_record->note ?? $others_record_template->template;
+                                    ?>
+                                </div> --}}
+                                        <textarea id="others_text" name="the_text" class="form-control classic-editor others_text">
+                                    <?php echo $others_record->note ?? $others_record_template->template; ?>
+                            </textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary"
+                                        onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
+                                </form>
+                                <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
+                                    {{ csrf_field() }}
+                                    <input type="hidden" name="note_type" value="5">
+                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                    <button type="submit" class="btn btn-success"
+                                        onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
+                                        style="float: right; margin-top:-40px">Save &
+                                        New</button>
+                                </form>
+                            </div>
+                        </div>
+                    @endif
                     <hr>
                     All Patient Nursing Sheets
                     <hr>
@@ -371,7 +653,7 @@
                             <option value="">--select reason--</option>
                         </select> --}}
                         <div>
-                            <textarea name="doctor_diagnosis" id="" class="form-control classic-editor"></textarea>
+                            <textarea name="doctor_diagnosis" id="" class="form-control classic-editor2"></textarea>
                         </div>
 
                         <br><button type="button" onclick="switch_tab(event,'nursing_notes_tab')"
@@ -517,6 +799,33 @@
     <script>
         ClassicEditor
             .create(document.querySelector('.classic-editor'), {
+                toolbar: {
+                    items: [
+                        'undo', 'redo',
+                        '|', 'heading',
+                        '|', 'bold', 'italic',
+                        '|', 'link', 'uploadImage', 'insertTable', 'mediaEmbed',
+                        '|', 'bulletedList', 'numberedList', 'outdent', 'indent'
+                    ]
+                },
+                cloudServices: {
+                    // All predefined builds include the Easy Image feature.
+                    // Provide correct configuration values to use it.
+                    // tokenUrl: 'https://example.com/cs-token-endpoint',
+                    // uploadUrl: 'https://your-organization-id.cke-cs.com/easyimage/upload/'
+                    // Read more about Easy Image - https://ckeditor.com/docs/ckeditor5/latest/features/images/image-upload/easy-image.html.
+                    // For other image upload methods see the guide - https://ckeditor.com/docs/ckeditor5/latest/features/images/image-upload/image-upload.html.
+                }
+            })
+            .then(editor => {
+                window.editor = editor;
+            })
+            .catch(err => {
+                console.error(err);
+            });
+
+            ClassicEditor
+            .create(document.querySelector('.classic-editor2'), {
                 toolbar: {
                     items: [
                         'undo', 'redo',
@@ -1025,6 +1334,8 @@
             }
 
         }
-        $('.DataTables').DataTable();
+        
     </script>
+    @include('admin.partials.vitals-scripts')
+    @include('admin.partials.nursing-note-save-scripts')
 @endsection

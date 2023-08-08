@@ -32,7 +32,7 @@ class AdmissionRequestController extends Controller
         return Datatables::of($req)
             ->addIndexColumn()
             ->addColumn('show', function ($r) {
-                $url =  route('patient.show', $r->patient_id);
+                $url =  route('patient.show', [$r->patient_id, 'section' => 'addmissionsCardBody']);
                 return '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> View</a>';
             })
             ->addColumn('patient', function ($r) {
@@ -81,7 +81,7 @@ class AdmissionRequestController extends Controller
         return Datatables::of($req)
             ->addIndexColumn()
             ->addColumn('show', function ($r) {
-                $url =  route('patient.show', $r->patient_id);
+                $url =  route('patient.show', [$r->patient_id, 'section' => 'addmissionsCardBody']);
                 return '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> View</a>';
             })
             ->addColumn('patient', function ($r) {
