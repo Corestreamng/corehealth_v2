@@ -43,7 +43,7 @@
                                                 <option value="">--select service--</option>
                                                 @foreach ($services as $service)
                                                     <option value="{{ $service->id }}">
-                                                        [{{ $service->category->category_name }}]
+                                                        [{{(($service->price) ? $service->price->sale_price : 'N/A')}}]
                                                         {{ $service->service_name }}-{{ $service->service_code }}</option>
                                                 @endforeach
                                             </select>

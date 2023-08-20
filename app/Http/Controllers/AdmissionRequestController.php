@@ -140,17 +140,18 @@ class AdmissionRequestController extends Controller
                 );
                 $url_discharge = route('discharge-patient', $r->id);
                 $str = '';
-                if ($r->discharged == false && $r->bed_id != null) {
+                if ($r->discharged == false ) {
                     $str .= '<a href="' . $url_ward_round . '" class="btn btn-success btn-sm" ><i class="fa fa-plus"></i> Encounter</a><br>';
                 }
                 if ($r->discharged == false && $r->bed_id == null) {
                     $str .= "<br>
-                    <button type='button' class='btn btn-primary' onclick='setBedModal(this)' data-id='$r->id'>
-                        <i class='fa fa-bed'></i> Assign Bed
+                    <button type='button' class='btn btn-primary' onclick='setBedModal(this)' data-id='$r->id' data-reassign='false'>
+                        <i class='fa fa-bed'></i> Assign/ Reassign Bed
                     </button><br>";
                 }
 
-                if ($r->discharged == true && $r->bed_id != null && $r->billed_by == null) {
+
+                if ($r->bed_id != null && $r->discharged == false) {
                     $days = date_diff(date_create($r->discharge_date), date_create($r->bed_assign_date))->days;
                     if ($days < 1) {
                         $days = 1;
@@ -158,11 +159,11 @@ class AdmissionRequestController extends Controller
                     $str .= "<br>
                     <button type='button' class='btn btn-primary' onclick='setBillModal(this)' data-id='$r->id' data-days = '$days'
                     data-bed='<b>Bed</b>:" . $r->bed->name . " <b>Ward</b>: " .  $r->bed->ward . " <b>Unit</b>: " . $r->bed->unit . "' data-price='" . $r->bed->price . "'>
-                        <i class='fa fa-dollar'></i> Bill
+                        <i class='fa fa-dollar'></i> Bill/ Release Bed
                     </button><br>";
                 }
 
-                if ($r->discharged == false && $r->bed_id != null) {
+                if ($r->discharged == false) {
                     $str .= '<br><a href="' . $url_discharge . '" class="btn btn-danger btn-sm" ><i class="fa fa-minus"></i> Discharge</a><br>';
                 }
 
@@ -199,6 +200,7 @@ class AdmissionRequestController extends Controller
         try {
             $request->validate([
                 'assign_bed_req_id' => 'required',
+                'assign_bed_reassign' => 'required',//redundent
                 'bed_id' => 'required|exists:beds,id'
             ]);
 
@@ -238,10 +240,10 @@ class AdmissionRequestController extends Controller
 
             DB::beginTransaction();
             $admit_req = AdmissionRequest::where('id', $request->assign_bed_req_id)->first();
-            $bed = Bed::where('id', $admit_req->bed_id)->first();
+            // $bed = Bed::where('id', $admit_req->bed_id)->first();
             $admit_req->update([
                 'billed_date' => date('Y-m-d H:i:s'),
-                'billed_by' => Auth::id()
+                'billed_by' => Auth::id(),
             ]);
 
             $bill_req = new ProductOrServiceRequest();
@@ -251,9 +253,15 @@ class AdmissionRequestController extends Controller
             $bill_req->qty = $request->days;
             $bill_req->save();
 
+            //release bed after billing
+            Bed::where('id', $admit_req->bed_id)->update([
+                'occupant_id' => null
+            ]);
+
             $admit_req = AdmissionRequest::where('id', $request->assign_bed_req_id)->first();
             $admit_req->update([
-                'service_request_id' => $bill_req->id
+                'service_request_id' => $bill_req->id,
+                'bed_id'=> null //once billed, the admission entry bed should be null, this will enable bed resaasignment, as bill bed will show after bed is reassigned
             ]);
             DB::commit();
             return back()->withMessage('Bill Assigned, you can proceed to make payment in the payments section')->withMessageType('success');
