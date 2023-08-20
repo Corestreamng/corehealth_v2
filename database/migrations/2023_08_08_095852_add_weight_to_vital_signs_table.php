@@ -26,7 +26,6 @@ class AddWeightToVitalSignsTable extends Migration
     public function down()
     {
         Schema::table('vital_signs', function (Blueprint $table) {
-            //
         });
     }
 }

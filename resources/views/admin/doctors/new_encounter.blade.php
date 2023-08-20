@@ -805,7 +805,7 @@
                         '|', 'heading',
                         '|', 'bold', 'italic',
                         '|', 'link', 'uploadImage', 'insertTable', 'mediaEmbed',
-                        '|', 'bulletedList', 'numberedList', 'outdent', 'indent'
+                        '|', 'bulletedList', 'numberedList', 'outdent', 'indent',
                     ]
                 },
                 cloudServices: {
@@ -1334,7 +1334,7 @@
             }
 
         }
-        
+
     </script>
     @include('admin.partials.vitals-scripts')
     @include('admin.partials.nursing-note-save-scripts')

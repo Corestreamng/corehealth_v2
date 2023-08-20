@@ -993,6 +993,8 @@
                     </div>
                     <div class="modal-body">
                         <input type="hidden" id="assign_bed_req_id" name="assign_bed_req_id">
+                        {{-- Redundent --}}
+                        <input type="hidden" id="assign_bed_reassign" name="assign_bed_reassign">
                         <div class="form-group">
                             <label for="">Select Bed</label>
                             <select name="bed_id" class="form-control">
@@ -1636,6 +1638,15 @@
     <script>
         function setBedModal(obj) {
             $('#assign_bed_req_id').val($(obj).attr('data-id'));
+            $('#assign_bed_reassign').val($(obj).attr('data-reassign'));
+            $('#assignBedModal').modal('show');
+        }
+    </script>
+
+    <script>
+        function newBedModal(obj) {
+            $('#assign_bed_req_id').val($(obj).attr('data-id'));
+            $('#assign_bed_reassign').val($(obj).attr('data-reassign'));
             $('#assignBedModal').modal('show');
         }
     </script>

@@ -185,7 +185,7 @@ class PatientController extends Controller
             $patient = patient::where('user_id', $user_id)->first();
             $family = patient::with(['user'])->where('file_no', $patient->file_no)->get();
             $products = Product::with(['category', 'price'])->where('status', 1)->get();
-            $services = service::with(['category', 'price'])->where('status', 1)->get();
+            $services = service::with(['category', 'price'])->where('status', 1)->where('price_assign', '=', 1)->where('category_id',env('CONSULTATION_CATEGORY_ID'))->get();
             $clinics = Clinic::where('status', 1)->get();
             return view('admin.receptionist.send_queue', compact('family', 'products', 'services', 'clinics'));
         } catch (\Exception $e) {

@@ -304,6 +304,8 @@ class LabServiceRequestController extends Controller
             ->editColumn('result', function ($his) {
                 $str = "<span class = 'badge badge-success'>" . $his->service->service_name . "</span><hr>";
                 $str .= $his->result ?? 'N/A';
+                $view_url = route('service-requests.show', $his->id);
+                $str .= "<br><a href='$view_url' class = 'btn btn-primary btn-sm' target='_blank'><i class='fa fa-print'></i> Print</a>";
                 return $str;
             })
             ->rawColumns(['created_at', 'result', 'select', 'patient_id'])
@@ -340,7 +342,9 @@ class LabServiceRequestController extends Controller
      */
     public function show($id)
     {
-        //
+        $req = LabServiceRequest::where('id',$id)->first();
+
+        return view('admin.lab_service_requests.show', ['req'=>$req]);
     }
 
     /**
