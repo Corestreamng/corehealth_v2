@@ -28,7 +28,7 @@ class CreateProductsTable extends Migration
             $table->boolean('stock_assign')->default(0);
             $table->boolean('price_assign')->default(0);
             $table->integer('promotion')->default(0);
-            $table->integer('1')->default(0);//non functional imlemented for backward comatibility
+            // $table->integer('1')->default(0);//non functional imlemented for backward comatibility
             $table->timestamps();
         });
     }

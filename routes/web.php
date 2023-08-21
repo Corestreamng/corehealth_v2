@@ -109,6 +109,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('service-sample-patient', [LabServiceRequestController::class, 'takeSample'])->name('service-sample-patient');
         Route::post('service-save-result', [LabServiceRequestController::class, 'saveResult'])->name('service-save-result');
         Route::post('account-make-deposit', [PatientAccountController::class, 'makeDeposit'])->name('account-make-deposit');
+        Route::resource('patient-account', PatientAccountController::class);
         Route::get('patientPaymentHistoryList/{patient_id}', [PatientAccountController::class, 'patientPaymentHistoryList'])->name('patientPaymentHistoryList');
     });
 

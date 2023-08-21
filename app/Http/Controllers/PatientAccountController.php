@@ -98,7 +98,20 @@ class PatientAccountController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        try {
+            $request->validate([
+                'patient_id' => 'required'
+            ]);
+    
+            $patient_account = new PatientAccount;
+            $patient_account->patient_id = $request->patient_id;
+            $patient_account->save();
+            $msg = 'Patient Account was successfully created.';
+            return redirect()->back()->withMessage($msg)->withMessageType('success');
+        } catch (\Exception $e) {
+            Log::error($e->getMessage(), ['exception' => $e]);
+            return redirect()->back()->withInput()->with('error', $e->getMessage());
+        }
     }
 
     /**

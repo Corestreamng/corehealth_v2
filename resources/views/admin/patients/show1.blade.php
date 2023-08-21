@@ -303,6 +303,11 @@
                         </form>
                     @else
                         <h4>Patient Has no acc</h4>
+                        <form action="{{route('patient-account.store')}}" method="post">
+                            @csrf
+                            <input type="hidden" name="patient_id" value="{{$patient->id}}">
+                            <button type="submit" class="btn btn-primary">Create account</button>
+                        </form>
                     @endif
                     <hr>
                     All Previous Transactions
