@@ -146,6 +146,59 @@ class EncounterController extends Controller
         }
     }
 
+    public function allPrevEncounters(){
+        return view('admin.encounters.index');
+    }
+
+    public function AllprevEncounterList()
+    {
+        
+            $queue = Encounter::orderBy('created_at', 'DESC')->get();
+            // dd($queue);
+            return Datatables::of($queue)
+                ->addIndexColumn()
+                ->editColumn('fullname', function ($queue) {
+                    return (userfullname($queue->patient->user_id));
+                })
+
+                ->editColumn('created_at', function ($note) {
+                    return date('h:i a D M j, Y', strtotime($note->created_at));
+                })
+                ->editColumn('hmo_id', function ($queue) {
+                    $patient = patient::find($queue->patient_id);
+                    return Hmo::find($patient->hmo_id)->name ?? 'N/A';
+                })
+                ->editColumn('clinic_id', function ($queue) {
+                    $clinic = Clinic::find($queue->clinic_id);
+                    return $clinic->name ?? 'N/A';
+                })
+                ->editColumn('doctor_id ', function ($queue) {
+                    return (userfullname($queue->doctor_id));
+                })
+                ->addColumn('file_no', function ($queue) {
+                    $patient = patient::find($queue->patient_id);
+                    return $patient->file_no;
+                })
+                ->addColumn('view', function ($queue) {
+
+                    // if (Auth::user()->hasPermissionTo('user-show') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
+
+                    $url =  route('patient.show', $queue->patient_id);
+                    return '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> View</a>';
+                    // } else {
+
+                    //     $label = '<span class="label label-warning">Not Allowed</span>';
+                    //     return $label;
+                    // }
+                })
+                ->rawColumns(['fullname', 'view',])
+                ->make(true);
+        // } catch (\Exception $e) {
+        //     Log::error($e->getMessage(), ['exception' => $e]);
+        //     return redirect()->back()->withInput()->with('error', $e->getMessage());
+        // }
+    }
+
     public function investigationHistoryList($patient_id)
     {
         $his = LabServiceRequest::with(['service', 'encounter', 'patient', 'productOrServiceRequest', 'doctor', 'biller'])

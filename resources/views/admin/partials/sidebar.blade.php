@@ -121,6 +121,21 @@
                     </ul>
                 </div>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="collapse" href="#prev_consult" aria-expanded="false"
+                    aria-controls="prev_consult">
+                    <i class="mdi mdi-crosshairs-gps menu-icon"></i>
+                    <span class="menu-title">Consultations</span>
+                    <i class="menu-arrow"></i>
+                </a>
+                <div class="collapse" id="prev_consult">
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('allPrevEncounters') }}">All Previous Consultations</a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
         @endhasanyrole
         @hasanyrole('SUPERADMIN|ADMIN')
             <li class="pt-2 pb-1">
