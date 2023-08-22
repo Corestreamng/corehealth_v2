@@ -83,7 +83,9 @@ class ServiceController extends Controller
         $request->validate([
             'term' => 'required|string'
         ]);
-        $pc = service::where('status', '=', 1)->where('service_name', 'LIKE', "%$request->term%")->with('category', 'price')->orderBy('service_name', 'ASC')->get();
+        $pc = service::where('status', '=', 1)->where('category_id', '!=', env('MISC_SERVICE_CATEGORY_ID'))
+        ->whereHas('price')
+        ->where('service_name', 'LIKE', "%$request->term%")->with('category', 'price')->orderBy('service_name', 'ASC')->limit(10)->get();
         return json_decode($pc);
     }
 

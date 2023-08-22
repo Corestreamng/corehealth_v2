@@ -72,7 +72,7 @@ class LabServiceRequestController extends Controller
     }
 
     /**
-     * dispense selected service requets
+     * bill selected service requets
      */
 
     public function bill(Request $request)

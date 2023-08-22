@@ -303,14 +303,96 @@
                         </form>
                     @else
                         <h4>Patient Has no acc</h4>
-                        <form action="{{route('patient-account.store')}}" method="post">
+                        <form action="{{ route('patient-account.store') }}" method="post">
                             @csrf
-                            <input type="hidden" name="patient_id" value="{{$patient->id}}">
+                            <input type="hidden" name="patient_id" value="{{ $patient->id }}">
                             <button type="submit" class="btn btn-primary">Create account</button>
                         </form>
                     @endif
                     <hr>
-                    All Previous Transactions
+                    <h4>Add Misc. Bills</h4>
+                    <form action="{{ route('add-misc-bill') }}" method="post">
+                        @csrf
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Service desc.</th>
+                                    <th>Cost (NGN)</th>
+                                    <th><button type="button" class="btn btn-primary btn-sm" onclick="addMiscBillRow()"><i
+                                                class="fa fa-plus"></i> Add row</button></th>
+                                </tr>
+                            </thead>
+                            <tbody id="misc-bill-row">
+                                <tr>
+                                    <td>
+                                        <input type="text" class="form-control" name="names[]" placeholder="Describe service rendered...">
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control" name="prices[]" min="1">
+                                        <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                    </td>
+                                    <td><button type="button" onclick="removeMiscBillRow(this)" class="btn btn-danger btn-sm"><i
+                                                class="fa fa-times"></i></button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure you wish to Save these Misc. bills?')">Save</button>
+                    </form>
+                    <hr>
+                    <h4>Requested Misc. Bill Items</h4>
+                    <form action="{{ route('bill-misc-bill') }}" method="post">
+                        @csrf
+                        <input type="hidden" name="patient_id" id="" value="{{ $patient->id }}">
+                        <input type="hidden" name="patient_user_id" id="" value="{{ $patient->user_id }}">
+                        <table class="table table-sm table-bordered table-striped" style="width: 100%"
+                            id="misc_bill_bills">
+                            <thead>
+                                <th>#</th>
+                                <th>Select</th>
+                                <th>Service</th>
+                                <th>Details</th>
+                            </thead>
+                        </table>
+                        <hr>
+                        <div class="form-group">
+                            <label for="">Total cost of selected items</label>
+                            <input type="number" value="0" class="form-control" id="misc_bill_tot"
+                                name="misc_bill_tot" readonly required>
+
+                        </div>
+                        <button type="submit" class="btn btn-primary"
+                            onclick="return confirm('Are you sure you wish to bill the selected items')">Bill</button>
+                        <button type="submit" value="dismiss_misc_bill" name="dismiss_misc_bill" class="btn btn-danger"
+                            onclick="return confirm('Are you sure you wish to dissmiss the selected items')"
+                            style="float: right">Dismiss</button>
+                    </form>
+                    <hr>
+                    <h4>All Previous Misc. Bill Items</h4>
+                    <table class="table table-sm table-bordered table-striped" style="width: 100%"
+                        id="misc_bill_bills_hist">
+                        <thead>
+                            <th>#</th>
+                            <th>Service</th>
+                            <th>Details</th>
+                        </thead>
+                    </table>
+                    <hr>
+                    <h4>Pending Paymnets</h4>
+                    <div class="table-responsive">
+                        <table id="pending-paymnet-list" class="table table-sm table-bordered table-striped" style="width: 100%">
+                            <thead>
+                                <tr>
+                                    <th>SN</th>
+                                    <th>Service</th>
+                                    <th>Product</th>
+                                    <th>View</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                    <hr>
+                    <h4>All Previous Transactions</h4>
                     <div class="table-responsive">
                         <table class="table table-sm table-bordered table-striped" style="width: 100%"
                             id="payment_history_list">
@@ -1311,6 +1393,78 @@
     </script>
     <script>
         $(function() {
+            $('#misc_bill_bills').DataTable({
+                "dom": 'Bfrtip',
+                "iDisplayLength": 50,
+                "lengthMenu": [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, "All"]
+                ],
+                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{ url('miscBillList', $patient->id) }}",
+                    "type": "GET"
+                },
+                "columns": [{
+                        data: "DT_RowIndex",
+                        name: "DT_RowIndex"
+                    },
+                    {
+                        data: "select",
+                        name: "select"
+                    },
+                    {
+                        data: "dose",
+                        name: "dose"
+                    },
+                    {
+                        data: "created_at",
+                        name: "created_at"
+                    },
+                ],
+
+                "paging": true
+            });
+        });
+    </script>
+    <script>
+        $(function() {
+            $('#misc_bill_bills_hist').DataTable({
+                "dom": 'Bfrtip',
+                "iDisplayLength": 50,
+                "lengthMenu": [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, "All"]
+                ],
+                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{ url('miscBillHistList', $patient->id) }}",
+                    "type": "GET"
+                },
+                "columns": [{
+                        data: "DT_RowIndex",
+                        name: "DT_RowIndex"
+                    },
+                    {
+                        data: "dose",
+                        name: "dose"
+                    },
+                    {
+                        data: "created_at",
+                        name: "created_at"
+                    },
+                ],
+
+                "paging": true
+            });
+        });
+    </script>
+    <script>
+        $(function() {
             $('#presc_history_dispense').DataTable({
                 "dom": 'Bfrtip',
                 "iDisplayLength": 50,
@@ -1375,6 +1529,37 @@
             } else {
                 // console.log('unch')
                 subtract_from_total_presc_bill(row_val);
+            }
+        }
+    </script>
+    <script>
+        function add_to_total_misc_bill(v) {
+            let new_tot = parseFloat($('#misc_bill_tot').val()) + parseFloat(v);
+            $('#misc_bill_tot').val(new_tot);
+            $('#misc_billed_tot').val(new_tot);
+        }
+
+        function subtract_from_total_misc_bill(v) {
+            let new_tot = parseFloat($('#misc_bill_tot').val()) - parseFloat(v);
+            //in order to prevent negative values
+            if (new_tot > 0) {
+                $('#misc_bill_tot').val(new_tot);
+                $('#misc_billed_tot').val(new_tot);
+            } else {
+                $('#misc_bill_tot').val(0);
+                $('#misc_billed_tot').val(0);
+            }
+        }
+
+        function checkMiscBillRow(obj) {
+            // console.log($(obj).val());
+            var row_val = $(obj).attr('data-price');
+            if ($(obj).is(':checked')) {
+                // console.log('ch')
+                add_to_total_misc_bill(row_val);
+            } else {
+                // console.log('unch')
+                subtract_from_total_misc_bill(row_val);
             }
         }
     </script>
@@ -1876,6 +2061,68 @@
 
         }
     </script>
+
+    <script>
+        function addMiscBillRow(){
+            let mrkup = `
+            <tr>
+                <td>
+                    <input type="text" class="form-control" name="names[]" placeholder="Describe service rendered...">
+                </td>
+                <td>
+                    <input type="number" class="form-control" name="prices[]" min="1">
+                </td>
+                <td><button type="button" onclick="removeMiscBillRow(this)" class="btn btn-danger btn-sm"><i
+                            class="fa fa-times"></i></button></td>
+            </tr>
+            `;
+
+            $('#misc-bill-row').append(mrkup);
+        }
+
+        function removeMiscBillRow(obj){
+            $(obj).closest('tr').remove();
+        }
+
+    </script>
+
+<script>
+    $(function() {
+        $('#pending-paymnet-list').DataTable({
+            "dom": 'Bfrtip',
+            "iDisplayLength": 50,
+            "lengthMenu": [
+                [10, 25, 50, 100, -1],
+                [10, 25, 50, 100, "All"]
+            ],
+            "buttons": ['pageLength', 'copy', 'excel', 'pdf', 'print', 'colvis'],
+            "processing": true,
+            "serverSide": true,
+            "ajax": {
+                "url": "{{ route('product-services-requesters-list',$patient->user_id) }}",
+                "type": "GET"
+            },
+            "columns": [{
+                    data: "DT_RowIndex",
+                    name: "DT_RowIndex"
+                },
+                {
+                    data: "service_id",
+                    name: "service_id"
+                },
+                {
+                    data: "product_id",
+                    name: "product_id"
+                },
+                {
+                    data: "show",
+                    name: "show"
+                },
+            ],
+            "paging": true
+        });
+    });
+</script>
 
     @include('admin.partials.vitals-scripts')
 @endsection
