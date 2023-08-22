@@ -310,6 +310,9 @@
                         </form>
                     @endif
                     <hr>
+                    <h4>All services Rendered</h4>
+                    <a href="{{route('patient-services-rendered', $patient->id)}}" class="btn btn-primary">See Details</a>
+                    <hr>
                     <h4>Add Misc. Bills</h4>
                     <form action="{{ route('add-misc-bill') }}" method="post">
                         @csrf
