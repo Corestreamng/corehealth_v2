@@ -16,8 +16,13 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\DataTables;
 use App\Http\Controllers\Controller;
+use App\Models\AdmissionRequest;
 use App\Models\Bed;
+use App\Models\Encounter;
+use App\Models\LabServiceRequest;
+use App\Models\MiscBill;
 use App\Models\PatientAccount;
+use App\Models\ProductRequest;
 use Illuminate\Support\Facades\File;
 use Intervention\Image\Facades\Image;
 use Illuminate\Support\Facades\Storage;
@@ -100,6 +105,46 @@ class PatientController extends Controller
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
             return redirect()->back()->withInput()->with('error', $e->getMessage());
+        }
+    }
+
+    public function PatientServicesRendered(Request $request, $patient_id){
+        $patient = patient::where('id',$patient_id)->first();
+        if(null != $request->start_from && null != $request->stop_at){
+            try {
+                $start = $request->start_from;
+                $end = $request->stop_at;
+                $consultation = Encounter::where('notes', '!=', null)->where('patient_id', $patient_id)->where('created_at', '<=', $end)->where('created_at', '>=', $start)->get();
+                $prescription = ProductRequest::where('status', '>', 1)->where('patient_id', $patient_id)->where('created_at', '<=', $end)->where('created_at', '>=', $start)->get();
+                $lab = LabServiceRequest::where('status', '>', 1)->where('patient_id', $patient_id)->where('created_at', '<=', $end)->where('created_at', '>=', $start)->get();
+                
+                $bed = AdmissionRequest::where('discharged', true)->where('patient_id', $patient_id)->where('discharge_date', '<=', $end)->where('discharge_date', '>=', $start)->get();
+
+                foreach ($bed as $b) {
+                    $days = date_diff(date_create($b->discharge_date), date_create($b->bed_assign_date))->days;
+                    if ($days < 1) {
+                        $days = 1;
+                    }
+                    array_push($b,['days'=> $days]);
+                }
+
+                $misc = MiscBill::where('status', '>', 1)->where('patient_id', $patient_id)->where('created_at', '<=', $end)->where('created_at', '>=', $start)->get();
+
+                return view('admin.encounters.services_rendered')->with([
+                    'patient' => $patient, 
+                    'consultation' => $consultation,
+                    'prescription' => $prescription,
+                    'lab' => $lab,
+                    'bed' => $bed,
+                    'misc'=> $misc,
+                    'app' => appsettings()
+                ]);
+            } catch (\Exception $e) {
+                Log::error($e->getMessage(), ['exception' => $e]);
+                return redirect()->back()->withInput()->with('error', $e->getMessage());
+            }
+        }else{
+            return view('admin.encounters.services_rendered')->with(['patient' => $patient]);
         }
     }
 

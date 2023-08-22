@@ -79,6 +79,7 @@ Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
         Route::resource('patient', PatientController::class);
         Route::get('patientsList', [PatientController::class, 'patientsList'])->name('patientsList');
+        Route::get('patient-services-rendered/{patient_id}', [PatientController::class, 'PatientServicesRendered'])->name('patient-services-rendered');
         Route::get('add-to-queue', [PatientController::class, 'addToQueue'])->name('add-to-queue');
         Route::get('listReturningPatients', [PatientController::class, 'listReturningPatients'])->name('listReturningPatients');
         Route::get('getMyDependants/{id}', [PatientController::class, 'getMyDependants'])->name('getMyDependants');

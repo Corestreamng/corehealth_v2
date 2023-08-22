@@ -29,7 +29,7 @@ class ServiceController extends Controller
                 return $service_code;
             })
             ->addColumn('category_id', function ($pc) {
-                $category_name = '<span class="badge badge-pill badge-dark">' . $pc->category->category_code . '</sapn>';
+                $category_name = '<span class="badge badge-pill badge-dark">' . (($pc->category) ? $pc->category->category_name : 'N/A') . '</sapn>';
                 return $category_name;
             })
             ->addColumn('visible', function ($pc) {
