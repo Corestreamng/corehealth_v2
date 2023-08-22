@@ -26,6 +26,7 @@ use App\Http\Controllers\AdmissionRequestController;
 use App\Http\Controllers\BedController;
 use App\Http\Controllers\EncounterController;
 use App\Http\Controllers\LabServiceRequestController;
+use App\Http\Controllers\MiscBillController;
 use App\Http\Controllers\NursingNoteController;
 use App\Http\Controllers\NursingNoteTypeController;
 use App\Http\Controllers\PatientAccountController;
@@ -109,6 +110,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('service-sample-patient', [LabServiceRequestController::class, 'takeSample'])->name('service-sample-patient');
         Route::post('service-save-result', [LabServiceRequestController::class, 'saveResult'])->name('service-save-result');
         Route::post('account-make-deposit', [PatientAccountController::class, 'makeDeposit'])->name('account-make-deposit');
+        Route::post('add-misc-bill', [PatientAccountController::class, 'addMsicBill'])->name('add-misc-bill');
         Route::resource('patient-account', PatientAccountController::class);
         Route::get('patientPaymentHistoryList/{patient_id}', [PatientAccountController::class, 'patientPaymentHistoryList'])->name('patientPaymentHistoryList');
     });
@@ -126,6 +128,9 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('investSampleList/{patient_id}', [EncounterController::class, 'investSampleList'])->name('investSampleList');
         Route::get('investResList/{patient_id}', [LabServiceRequestController::class, 'investResList'])->name('investResList');
         Route::resource('service-requests', LabServiceRequestController::class);
+        Route::get('miscBillList/{patient_id}', [MiscBillController::class, 'miscBillList'])->name('miscBillList');
+        Route::get('miscBillHistList/{patient_id?}', [MiscBillController::class, 'miscBillHistList'])->name('miscBillHistList');
+        Route::post('bill-misc-bill', [MiscBillController::class, 'bill'])->name('bill-misc-bill');
         Route::get('investQueueList', [LabServiceRequestController::class, 'investQueueList'])->name('investQueueList');
         Route::get('investHistoryList', [LabServiceRequestController::class, 'investHistoryList'])->name('investHistoryList');
         Route::get('patientNursngNote/{patient_id}/{note_type}', [NursingNoteController::class, 'patientNursngNote'])->name('patientNursngNote');
@@ -208,7 +213,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
         Route::resource('product-or-service-request', ProductOrServiceRequestController::class);
-        Route::get('product-services-requesters-list', [ProductOrServiceRequestController::class, 'productOrServicesRequestersList'])->name('product-services-requesters-list');
+        Route::get('product-services-requesters-list/{patient_user_id?}', [ProductOrServiceRequestController::class, 'productOrServicesRequestersList'])->name('product-services-requesters-list');
         Route::get('admission-requests-list', [AdmissionRequestController::class, 'admissionRequests'])->name('admission-requests-list');
         Route::get('my-admission-requests-list', [AdmissionRequestController::class, 'myAdmissionRequests'])->name('my-admission-requests-list');
         Route::get('patient-admission-requests-list/{patient_id}', [AdmissionRequestController::class, 'patientAdmissionRequests'])->name('patient-admission-requests-list');

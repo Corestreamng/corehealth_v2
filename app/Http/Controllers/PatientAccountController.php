@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\MiscBill;
+use App\Models\patient;
 use App\Models\PatientAccount;
 use App\Models\payment;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Models\Service;
+use App\Models\ServicePrice;
 use Yajra\DataTables\DataTables;
 
 class PatientAccountController extends Controller
@@ -109,6 +114,66 @@ class PatientAccountController extends Controller
             $msg = 'Patient Account was successfully created.';
             return redirect()->back()->withMessage($msg)->withMessageType('success');
         } catch (\Exception $e) {
+            Log::error($e->getMessage(), ['exception' => $e]);
+            return redirect()->back()->withInput()->with('error', $e->getMessage());
+        }
+    }
+
+
+    public function addMsicBill(Request $request){
+        try {
+            $request->validate([
+                'names' => 'array|required',
+                'prices' => 'array|required',
+                'names.*' => 'required|string',
+                'prices.*' => 'required|numeric',
+                'patient_id' => 'required'
+            ]);
+
+            $patient = patient::where('id', $request->patient_id)->first();
+
+            DB::beginTransaction();
+
+            for($i = 0; $i < count($request->names); $i++){
+
+                //create a misc service to associate the Misc bill with
+                $misc_service                      = new Service();
+                $misc_service->user_id             = Auth::user()->id;
+                $misc_service->category_id         = env('MISC_SERVICE_CATEGORY_ID');
+                $misc_service->service_name        = trim('['.userfullname($patient->user_id).'] '.$request->names[$i]);
+                $misc_service->service_code        = trim($request->names[$i]);
+                $misc_service->price_assign        = 1;
+                $misc_service->status              = 1;
+                
+
+                $misc_service->save();
+
+
+                //crete a price entry for the misc service creted above
+                $price_entry = new ServicePrice;
+                $price_entry-> service_id = $misc_service->id;
+                $price_entry->cost_price = $request->prices[$i];
+                $price_entry->sale_price = $request->prices[$i];
+                $price_entry->max_discount =  0;
+                $price_entry->status = 1;
+
+                $price_entry->save();
+
+                //crete the actual misc bill entry, nowthat it has a service to be associated with
+
+                $misc_bill = new MiscBill;
+                $misc_bill->created_by = Auth::id();
+                $misc_bill->creation_date = date('Y-m-d H:i:s');
+                $misc_bill->service_id = $misc_service->id;
+                $misc_bill->patient_id = $patient->id;
+                $misc_bill->save();
+
+            }
+            DB::commit();
+            $msg = 'Patient Misc. Bills Successfully Created.';
+            return redirect()->back()->withMessage($msg)->withMessageType('success');
+        } catch (\Exception $e) {
+            DB::rollBack();
             Log::error($e->getMessage(), ['exception' => $e]);
             return redirect()->back()->withInput()->with('error', $e->getMessage());
         }

@@ -108,7 +108,7 @@ class ProductController extends Controller
         $request->validate([
             'term' => 'required|string'
         ]);
-        $pc = Product::where('status', '=', 1)->where('product_name', 'LIKE', "%$request->term%")->with('stock', 'category', 'price')->orderBy('product_name', 'ASC')->get();
+        $pc = Product::where('status', '=', 1)->where('product_name', 'LIKE', "%$request->term%")->orWhere('product_code', 'LIKE', "%$request->term%")->with('stock', 'category', 'price')->orderBy('product_name', 'ASC')->limit(10)->get();
         return json_decode($pc);
     }
 
