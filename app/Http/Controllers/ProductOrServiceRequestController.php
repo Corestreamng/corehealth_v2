@@ -122,17 +122,17 @@ class ProductOrServiceRequestController extends Controller
 
                     return redirect()->back()->withInput()->withMessage($msg)->withMessageType('warning');
                 } else {
-                    $service_ids = array_filter($request->service_id);
-                    sort($service_ids);
-                    $clinic_ids = array_filter($request->clinic_id);
-                    sort($clinic_ids);
-                    $user_ids = array_filter($request->user_id);
-                    sort($user_ids);
-                    $doctor_ids = array_filter($request->doctor_id);
-                    sort($doctor_ids);
+                    $service_ids = ($request->service_id);
+                    // sort($service_ids);
+                    $clinic_ids = ($request->clinic_id);
+                    // sort($clinic_ids);
+                    $user_ids = ($request->user_id);
+                    // sort($user_ids);
+                    $doctor_ids = ($request->doctor_id);
+                    // sort($doctor_ids);
 
                     if (isset($request->request_vitals)) {
-                        $request_vitals = array_filter($request->request_vitals);
+                        $request_vitals = ($request->request_vitals);
                         sort($request_vitals);
                     } else {
                         $request_vitals = [];
@@ -141,7 +141,8 @@ class ProductOrServiceRequestController extends Controller
                     if (count($clinic_ids) == count($service_ids)) {
                         DB::beginTransaction();
                         for ($i = 0; $i < count($service_ids); ++$i) {
-                            if ($service_ids[$i] != '') {
+                            if ($service_ids[$i] != null) {
+                                // dd($user_ids[$i]);
                                 $req = new ProductOrServiceRequest();
                                 $req->service_id = $service_ids[$i];
                                 $req->user_id = $user_ids[$i];
@@ -151,6 +152,7 @@ class ProductOrServiceRequestController extends Controller
                                 $queue = new DoctorQueue();
                                 if (isset($doctor_ids[$i])) {
                                     $p = patient::where('user_id', $user_ids[$i])->first();
+                                    // die($p);
                                     $d = Staff::find($doctor_ids[$i]);
                                     $r = Staff::where('user_id', Auth::id())->first();
                                     $queue->patient_id = $p->id;

@@ -189,10 +189,15 @@ function userfullname($id)
 {
 
     $user = User::find($id);
-    $othername = ($user->othername) ? $user->othername : ' ';
-    $fullname = $user->surname . ' ' . $user->firstname . ' ' . $othername;
+    if($user){
+        $othername = ($user->othername) ? $user->othername : ' ';
+        $fullname = $user->surname . ' ' . $user->firstname . ' ' . $othername;
 
-    return  ucwords($fullname);
+        return  ucwords($fullname);
+    }else{
+        return 'N/A';
+    }
+    
 }
 
 
