@@ -276,9 +276,9 @@
                 </a>
                 <div class="collapse" id="nursing_">
                     <ul class="nav flex-column sub-menu">
-                        {{-- <li class="nav-item">
+                        <li class="nav-item">
                             <a class="nav-link" href="{{route('vitals.index')}}">My Current Queue</a>
-                        </li> --}}
+                        </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{route('vitals.index', ['history'=>true])}}">History</a>
                         </li>
