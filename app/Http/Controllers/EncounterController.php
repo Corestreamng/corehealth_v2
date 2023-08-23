@@ -173,7 +173,7 @@ class EncounterController extends Controller
                     return $clinic->name ?? 'N/A';
                 })
                 ->editColumn('doctor_id ', function ($queue) {
-                    return (userfullname($queue->doctor_id));
+                    return (($queue->doctor_id) ? userfullname($queue->doctor_id) : 'N/A');
                 })
                 ->addColumn('file_no', function ($queue) {
                     $patient = patient::find($queue->patient_id);
