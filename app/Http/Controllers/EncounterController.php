@@ -177,12 +177,12 @@ class EncounterController extends Controller
             ->editColumn('hmo_id', function ($queue) {
                 $patient = patient::find($queue->patient_id);
 
-                return (($patient) ? Hmo::find($patient->hmo_id)->name : 'N/A');
+                return (($patient) ? ((Hmo::find($patient->hmo_id)->name) ? Hmo::find($patient->hmo_id)->name : 'N/A') : 'N/A');
             })
             ->editColumn('clinic_id', function ($queue) {
                 $clinic = Clinic::find($queue->clinic_id);
 
-                return $clinic->name ?? 'N/A';
+                return (($clinic) ? $clinic->name : 'N/A');
             })
             ->editColumn('doctor_id ', function ($queue) {
                 return ($queue->doctor_id) ? userfullname($queue->doctor_id) : 'N/A';
