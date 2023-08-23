@@ -195,7 +195,7 @@ class LabServiceRequestController extends Controller
             ->addIndexColumn()
             ->addColumn('select', function ($h) {
                 $str = "
-                    <button type='button' class='btn btn-primary' onclick='setResTempInModal(this)' data-service-name = '" . $h->service->service_name . "' data-template = '" . $h->service->template . "' data-id='$h->id'>
+                    <button type='button' class='btn btn-primary' onclick='setResTempInModal(this)' data-service-name = '" . $h->service->service_name . "' data-template = '" . htmlspecialchars($h->service->template) . "' data-id='$h->id'>
                         Enter Result
                     </button>";
                 return $str;
