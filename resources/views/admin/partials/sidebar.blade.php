@@ -318,6 +318,21 @@
                     </ul>
                 </div>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="collapse" href="#returning_patient" aria-expanded="false"
+                    aria-controls="returning_patient">
+                    <i class="mdi mdi-crosshairs-gps menu-icon"></i>
+                    <span class="menu-title">Returning Patient</span>
+                    <i class="menu-arrow"></i>
+                </a>
+                <div class="collapse" id="returning_patient">
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('add-to-queue') }}">Search</a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
         @endhasallroles
         @hasanyrole('SUPERADMIN|ADMIN|LAB SCIENTIST|RADIOLOGIST')
             <li class="pt-2 pb-1">
@@ -387,6 +402,21 @@
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('patient.index') }}">All Patients</a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="collapse" href="#returning_patient" aria-expanded="false"
+                    aria-controls="returning_patient">
+                    <i class="mdi mdi-crosshairs-gps menu-icon"></i>
+                    <span class="menu-title">Returning Patient</span>
+                    <i class="menu-arrow"></i>
+                </a>
+                <div class="collapse" id="returning_patient">
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('add-to-queue') }}">Search</a>
                         </li>
                     </ul>
                 </div>
