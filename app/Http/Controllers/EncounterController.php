@@ -152,13 +152,13 @@ class EncounterController extends Controller
 
     public function AllprevEncounterList()
     {
-        
+
             $queue = Encounter::orderBy('created_at', 'DESC')->get();
             // dd($queue);
             return Datatables::of($queue)
                 ->addIndexColumn()
                 ->editColumn('fullname', function ($queue) {
-                    return (userfullname($queue->patient->user_id));
+                    return (($queue->patient) ? userfullname($queue->patient->user_id) : 'N/A');
                 })
 
                 ->editColumn('created_at', function ($note) {
