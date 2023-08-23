@@ -284,6 +284,24 @@
                         </li>
                     </ul>
                 </div>
+                <li class="nav-item">
+                <a class="nav-link" data-toggle="collapse" href="#admissions" aria-expanded="false"
+                    aria-controls="admissions">
+                    <i class="mdi mdi-crosshairs-gps menu-icon"></i>
+                    <span class="menu-title">Admissions</span>
+                    <i class="menu-arrow"></i>
+                </a>
+                <div class="collapse" id="admissions">
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('admission-requests.index') }}">Bed requests</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('beds.index') }}">Manage Beds</a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
             </li>
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" href="#new_patient" aria-expanded="false"
