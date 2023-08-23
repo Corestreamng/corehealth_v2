@@ -177,7 +177,7 @@ class EncounterController extends Controller
                 })
                 ->addColumn('file_no', function ($queue) {
                     $patient = patient::find($queue->patient_id);
-                    return $patient->file_no;
+                    return (($patient) ? $patient->file_no : 'N/A');
                 })
                 ->addColumn('view', function ($queue) {
 
