@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\DataTables;
+use App\Models\DoctorQueue;
 
 class VitalSignController extends Controller
 {
