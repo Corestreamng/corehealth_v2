@@ -212,7 +212,7 @@ class LabServiceRequestController extends Controller
                 return $str;
             })
             ->editColumn('result', function ($his) {
-                $str = "<span class = 'badge badge-success'>" . $his->service->service_name . "</span><hr>";
+                $str = "<span class = 'badge badge-success'>" . (($his->service) ? $his->service->service_name : "N/A") . "</span><hr>";
                 $str .= $his->result ?? 'N/A';
                 return $str;
             })
@@ -257,7 +257,7 @@ class LabServiceRequestController extends Controller
                 return $str;
             })
             ->editColumn('result', function ($his) {
-                $str = "<span class = 'badge badge-success'>" . $his->service->service_name . "</span><hr>";
+                $str = "<span class = 'badge badge-success'>" . (($his->service) ? $his->service->service_name : "N/A") . "</span><hr>";
                 $str .= $his->result ?? 'N/A';
                 return $str;
             })
@@ -302,7 +302,7 @@ class LabServiceRequestController extends Controller
                 return $str;
             })
             ->editColumn('result', function ($his) {
-                $str = "<span class = 'badge badge-success'>" . $his->service->service_name . "</span><hr>";
+                $str = "<span class = 'badge badge-success'>" . (($his->service) ? $his->service->service_name : "N/A") . "</span><hr>";
                 $str .= $his->result ?? 'N/A';
                 $view_url = route('service-requests.show', $his->id);
                 $str .= "<br><a href='$view_url' class = 'btn btn-primary btn-sm' target='_blank'><i class='fa fa-print'></i> Print</a>";
