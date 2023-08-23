@@ -108,7 +108,7 @@
                                 <option value="TRANSFER">Transfer</option>
                                 <option value="TELLER">Teller</option>
                                 <option value="CHEQUE">Cheque</option>
-                                <option value="ACC_WITHDRAW">Credit Account(NGN {{(($services) ? $services[0]->user->patient_profile->account->balance : (($products) ? $products[0]->user->patient_profile->account->balance : "N/A"))}} )</option>
+                                <option value="ACC_WITHDRAW">Credit Account(NGN {{(($services && $services[0]->user->patient_profile->account) ? $services[0]->user->patient_profile->account->balance : (($products && $products[0]->user->patient_profile->account) ? $products[0]->user->patient_profile->account->balance : "N/A"))}} )</option>
                                 <option value="CLAIMS">Claims</option>
                             </select>
                         </div>
