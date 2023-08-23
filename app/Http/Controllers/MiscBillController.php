@@ -85,7 +85,7 @@ class MiscBillController extends Controller
                 ->addIndexColumn()
                 ->addColumn('patient', function ($h) {
                     $str = "Name: ".userfullname($h->patient->user_id);
-                    $str .= "File No: ". $h->patient->file_no;
+                    $str .= "File No: ". (($h->patient) ? $h->patient->file_no : "N/A");
                     return $str;
                 })
                 ->editColumn('created_at', function ($h) {

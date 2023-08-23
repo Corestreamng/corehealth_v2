@@ -239,7 +239,7 @@ class LabServiceRequestController extends Controller
             ->editColumn('patient_id', function ($h) {
                 $str = "<small>";
                 $str .= "<b >Patient </b> :" . (($h->patient->user) ? userfullname($h->patient->user->id) : "N/A");
-                $str .= "<br><br><b >File No </b> : " . $h->patient->file_no;
+                $str .= "<br><br><b >File No </b> : " . (($h->patient) ? $h->patient->file_no : "N/A");
                 $str .= "<br><br><b >Insurance/HMO :</b> : " . (($h->patient->hmo) ? $h->patient->hmo->name : "N/A");
                 $str .= "<br><br><b >HMO Number :</b> : " . (($h->patient->hmo_no) ? $h->patient->hmo_no : "N/A");
                 $str .= "</small>";
@@ -284,7 +284,7 @@ class LabServiceRequestController extends Controller
             ->editColumn('patient_id', function ($h) {
                 $str = "<small>";
                 $str .= "<b >Patient </b> :" . (($h->patient->user) ? userfullname($h->patient->user->id) : "N/A");
-                $str .= "<br><br><b >File No </b> : " . $h->patient->file_no;
+                $str .= "<br><br><b >File No </b> : " . (($h->patient) ? $h->patient->file_no : "N/A");
                 $str .= "<br><br><b >Insurance/HMO :</b> : " . (($h->patient->hmo) ? $h->patient->hmo->name : "N/A");
                 $str .= "<br><br><b >HMO Number :</b> : " . (($h->patient->hmo_no) ? $h->patient->hmo_no : "N/A");
                 $str .= "</small>";
