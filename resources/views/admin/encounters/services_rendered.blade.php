@@ -51,14 +51,14 @@
                                     <th>HMO / Insurance</th>
                                 </tr>
                                 <tr>
-                                    <td>{{ $patient->hmo->name }}</td>
+                                    <td>{{ (($patient->hmo) ? $patient->hmo->name : "") }}</td>
 
                                 </tr>
                                 <tr>
                                     <th>HMO Number</th>
                                 </tr>
                                 <tr>
-                                    <td>{{ $patient->hmo_no }}</td>
+                                    <td>{{ $patient->hmo_no ?? "" }}</td>
                                 </tr>
                                 <tr>
                                     <th>Repeort period</th>
@@ -79,7 +79,7 @@
                                     <tr>
                                         <td>
                                             Consultation
-                                            <br> {{ $con->doctor->staff_profile->specialization->name }}
+                                            <br> {{ (($con->doctor->staff_profile) ? $con->doctor->staff_profile->specialization->name : 'N/A') }}
                                             <br> Dr. {{ userfullname($con->doctor->user_id) }}
                                             <br>{{ $con->created_at }}
                                         </td>
@@ -89,8 +89,8 @@
                                     <tr>
                                         <td>
                                             Precription
-                                            <br> Dr. {{ userfullname($pres->doctor_id) }}
-                                            <br>{{$pres->product->product_name }}
+                                            <br> Dr. {{ ($pres->doctor_id) ? userfullname($pres->doctor_id) : "" }}
+                                            <br>{{($pres->product) ? $pres->product->product_name : '' }}
                                             <br>{{ $pres->created_at }}
                                         </td>
                                     </tr>

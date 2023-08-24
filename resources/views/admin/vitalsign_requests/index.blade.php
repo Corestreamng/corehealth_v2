@@ -22,7 +22,7 @@
                                 <th>#</th>
                                 <th>Patient</th>
                                 <th>Service</th>
-                                <th>Details</th>
+                                <!-- <th>Details</th> -->
                                 <th>Entry</th>
                             </thead>
                         </table>
@@ -99,10 +99,10 @@
                         data: "created_at",
                         name: "created_at"
                     },
-                    {
-                        data: "result",
-                        name: "result"
-                    },
+                    // {
+                    //     data: "result",
+                    //     name: "result"
+                    // },
                     {
                         data: "select",
                         name: "select"

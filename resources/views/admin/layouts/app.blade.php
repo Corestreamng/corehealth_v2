@@ -5,6 +5,7 @@
     <!-- Required meta tags -->
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name='csrf-token' content='{{csrf_token()}}'>
     <title>{{ env('APP_NAME') }} | @yield('title')</title>
     <!-- plugins:css -->
     <link rel="stylesheet" href="{{ asset('admin/assets/vendors/mdi/css/materialdesignicons.min.css') }}">
@@ -134,7 +135,7 @@
     {{-- <link href="{{ asset('css/app.css') }}" rel="stylesheet"> --}}
 </head>
 
-<body>
+<body id='app'>
     <div class="container-scroller">
         <!-- partial:partials/_sidebar.html -->
         @include('admin.partials.sidebar')
