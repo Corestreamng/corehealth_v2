@@ -15,6 +15,6 @@ class Specialization extends Model
     ];
 
     public function staff(){
-        return $this->hasMany(Staff::class,'specialization_id');
+        return $this->hasMany(Staff::class,'specialization_id','id');
     }
 }
