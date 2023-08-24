@@ -27,7 +27,7 @@
                 <form action="{{ route('service-payment') }}" method="post">
                     @csrf
                     <div class="card-body">
-                        <h1>Sevices</h1>
+                        <h1>Services</h1>
                         <div class="table-responsive">
                             <table id="service-list" class="table table-sm table-bordered table-striped">
                                 <thead>
