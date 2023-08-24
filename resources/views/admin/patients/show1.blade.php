@@ -127,7 +127,7 @@
                                         <label for="bloodPressure">Blood Pressure (mmHg) <span
                                                 class="text-danger">*</span></label>
                                         <input type="text" class="form-control" id="bloodPressure" name="bloodPressure"
-                                            pattern="\d+/\d+" required>
+                                            pattern="\d+/\d+">
                                         <small class="form-text text-muted">Enter in the format of "systolic/diastolic", e.g.,
                                             120/80.</small>
                                     </div>
