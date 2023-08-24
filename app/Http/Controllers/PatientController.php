@@ -117,7 +117,7 @@ class PatientController extends Controller
                 $consultation = Encounter::where('notes', '!=', null)->where('patient_id', $patient_id)->where('created_at', '<=', $end)->where('created_at', '>=', $start)->get();
                 $prescription = ProductRequest::where('status', '>', 1)->where('patient_id', $patient_id)->where('created_at', '<=', $end)->where('created_at', '>=', $start)->get();
                 $lab = LabServiceRequest::where('status', '>', 1)->where('patient_id', $patient_id)->where('created_at', '<=', $end)->where('created_at', '>=', $start)->get();
-                
+
                 $bed = AdmissionRequest::where('discharged', true)->where('patient_id', $patient_id)->where('discharge_date', '<=', $end)->where('discharge_date', '>=', $start)->get();
 
                 foreach ($bed as $b) {
@@ -131,7 +131,7 @@ class PatientController extends Controller
                 $misc = MiscBill::where('status', '>', 1)->where('patient_id', $patient_id)->where('created_at', '<=', $end)->where('created_at', '>=', $start)->get();
 
                 return view('admin.encounters.services_rendered')->with([
-                    'patient' => $patient, 
+                    'patient' => $patient,
                     'consultation' => $consultation,
                     'prescription' => $prescription,
                     'lab' => $lab,
@@ -230,7 +230,7 @@ class PatientController extends Controller
             $patient = patient::where('user_id', $user_id)->first();
             $family = patient::with(['user'])->where('file_no', $patient->file_no)->get();
             $products = Product::with(['category', 'price'])->where('status', 1)->get();
-            $services = service::with(['category', 'price'])->where('status', 1)->where('price_assign', '=', 1)->where('category_id',env('CONSULTATION_CATEGORY_ID'))->get();
+            $services = service::with(['category', 'price'])->where('status', 1)->where('price_assign', 1)->where('category_id',env('CONSULTATION_CATEGORY_ID'))->get();
             $clinics = Clinic::where('status', 1)->get();
             return view('admin.receptionist.send_queue', compact('family', 'products', 'services', 'clinics'));
         } catch (\Exception $e) {
