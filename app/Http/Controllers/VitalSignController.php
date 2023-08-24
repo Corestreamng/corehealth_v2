@@ -47,7 +47,7 @@ class VitalSignController extends Controller
         try {
             $request->validate([
                 'patient_id' => 'required',
-                'bloodPressure' => 'required',
+                'bloodPressure' => 'nullable',
                 'bodyTemperature' => 'required',
                 'datetimeField' => 'required'
             ]);
@@ -58,7 +58,7 @@ class VitalSignController extends Controller
             $vitalSign->taken_by = Auth::id();
             $vitalSign->patient_id = $request->patient_id;
             $vitalSign->temp = $request->bodyTemperature;
-            $vitalSign->blood_pressure = $request->bloodPressure;
+            $vitalSign->blood_pressure = $request->bloodPressure ?? '0/0';
             $vitalSign->heart_rate = $request->heartRate;
             $vitalSign->resp_rate = $request->respiratoryRate;
             $vitalSign->weight = $request->bodyWeight;
