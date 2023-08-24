@@ -163,7 +163,7 @@ class EncounterController extends Controller
 
     public function AllprevEncounterList()
     {
-        $queue = Encounter::orderBy('created_at', 'DESC')->get();
+        $queue = Encounter::orderBy('created_at', 'DESC')->limit(10000)->get();
         // dd($queue);
         return Datatables::of($queue)
             ->addIndexColumn()
@@ -177,7 +177,7 @@ class EncounterController extends Controller
             ->editColumn('hmo_id', function ($queue) {
                 $patient = patient::find($queue->patient_id);
 
-                return (($patient) ? ((Hmo::find($patient->hmo_id)->name) ? Hmo::find($patient->hmo_id)->name : 'N/A') : 'N/A');
+                return (($patient) ? ((Hmo::find($patient->hmo_id)) ? Hmo::find($patient->hmo_id)->name : 'N/A') : 'N/A');
             })
             ->editColumn('clinic_id', function ($queue) {
                 $clinic = Clinic::find($queue->clinic_id);

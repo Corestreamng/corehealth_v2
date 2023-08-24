@@ -276,14 +276,32 @@
                 </a>
                 <div class="collapse" id="nursing_">
                     <ul class="nav flex-column sub-menu">
-                        {{-- <li class="nav-item">
+                        <li class="nav-item">
                             <a class="nav-link" href="{{route('vitals.index')}}">My Current Queue</a>
-                        </li> --}}
+                        </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{route('vitals.index', ['history'=>true])}}">History</a>
                         </li>
                     </ul>
                 </div>
+                <li class="nav-item">
+                <a class="nav-link" data-toggle="collapse" href="#admissions" aria-expanded="false"
+                    aria-controls="admissions">
+                    <i class="mdi mdi-crosshairs-gps menu-icon"></i>
+                    <span class="menu-title">Admissions</span>
+                    <i class="menu-arrow"></i>
+                </a>
+                <div class="collapse" id="admissions">
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('admission-requests.index') }}">Bed requests</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('beds.index') }}">Manage Beds</a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
             </li>
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" href="#new_patient" aria-expanded="false"
@@ -296,6 +314,21 @@
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('patient.index') }}">All Patients</a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="collapse" href="#returning_patient" aria-expanded="false"
+                    aria-controls="returning_patient">
+                    <i class="mdi mdi-crosshairs-gps menu-icon"></i>
+                    <span class="menu-title">Returning Patient</span>
+                    <i class="menu-arrow"></i>
+                </a>
+                <div class="collapse" id="returning_patient">
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('add-to-queue') }}">Search</a>
                         </li>
                     </ul>
                 </div>
@@ -369,6 +402,21 @@
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('patient.index') }}">All Patients</a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="collapse" href="#returning_patient" aria-expanded="false"
+                    aria-controls="returning_patient">
+                    <i class="mdi mdi-crosshairs-gps menu-icon"></i>
+                    <span class="menu-title">Returning Patient</span>
+                    <i class="menu-arrow"></i>
+                </a>
+                <div class="collapse" id="returning_patient">
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('add-to-queue') }}">Search</a>
                         </li>
                     </ul>
                 </div>

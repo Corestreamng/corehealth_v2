@@ -195,7 +195,7 @@ class LabServiceRequestController extends Controller
             ->addIndexColumn()
             ->addColumn('select', function ($h) {
                 $str = "
-                    <button type='button' class='btn btn-primary' onclick='setResTempInModal(this)' data-service-name = '" . $h->service->service_name . "' data-template = '" . $h->service->template . "' data-id='$h->id'>
+                    <button type='button' class='btn btn-primary' onclick='setResTempInModal(this)' data-service-name = '" . $h->service->service_name . "' data-template = '" . htmlspecialchars($h->service->template) . "' data-id='$h->id'>
                         Enter Result
                     </button>";
                 return $str;
@@ -212,7 +212,7 @@ class LabServiceRequestController extends Controller
                 return $str;
             })
             ->editColumn('result', function ($his) {
-                $str = "<span class = 'badge badge-success'>" . $his->service->service_name . "</span><hr>";
+                $str = "<span class = 'badge badge-success'>" . (($his->service) ? $his->service->service_name : "N/A") . "</span><hr>";
                 $str .= $his->result ?? 'N/A';
                 return $str;
             })
@@ -239,7 +239,7 @@ class LabServiceRequestController extends Controller
             ->editColumn('patient_id', function ($h) {
                 $str = "<small>";
                 $str .= "<b >Patient </b> :" . (($h->patient->user) ? userfullname($h->patient->user->id) : "N/A");
-                $str .= "<br><br><b >File No </b> : " . $h->patient->file_no;
+                $str .= "<br><br><b >File No </b> : " . (($h->patient) ? $h->patient->file_no : "N/A");
                 $str .= "<br><br><b >Insurance/HMO :</b> : " . (($h->patient->hmo) ? $h->patient->hmo->name : "N/A");
                 $str .= "<br><br><b >HMO Number :</b> : " . (($h->patient->hmo_no) ? $h->patient->hmo_no : "N/A");
                 $str .= "</small>";
@@ -257,7 +257,7 @@ class LabServiceRequestController extends Controller
                 return $str;
             })
             ->editColumn('result', function ($his) {
-                $str = "<span class = 'badge badge-success'>" . $his->service->service_name . "</span><hr>";
+                $str = "<span class = 'badge badge-success'>" . (($his->service) ? $his->service->service_name : "N/A") . "</span><hr>";
                 $str .= $his->result ?? 'N/A';
                 return $str;
             })
@@ -284,7 +284,7 @@ class LabServiceRequestController extends Controller
             ->editColumn('patient_id', function ($h) {
                 $str = "<small>";
                 $str .= "<b >Patient </b> :" . (($h->patient->user) ? userfullname($h->patient->user->id) : "N/A");
-                $str .= "<br><br><b >File No </b> : " . $h->patient->file_no;
+                $str .= "<br><br><b >File No </b> : " . (($h->patient) ? $h->patient->file_no : "N/A");
                 $str .= "<br><br><b >Insurance/HMO :</b> : " . (($h->patient->hmo) ? $h->patient->hmo->name : "N/A");
                 $str .= "<br><br><b >HMO Number :</b> : " . (($h->patient->hmo_no) ? $h->patient->hmo_no : "N/A");
                 $str .= "</small>";
@@ -302,7 +302,7 @@ class LabServiceRequestController extends Controller
                 return $str;
             })
             ->editColumn('result', function ($his) {
-                $str = "<span class = 'badge badge-success'>" . $his->service->service_name . "</span><hr>";
+                $str = "<span class = 'badge badge-success'>" . (($his->service) ? $his->service->service_name : "N/A") . "</span><hr>";
                 $str .= $his->result ?? 'N/A';
                 $view_url = route('service-requests.show', $his->id);
                 $str .= "<br><a href='$view_url' class = 'btn btn-primary btn-sm' target='_blank'><i class='fa fa-print'></i> Print</a>";

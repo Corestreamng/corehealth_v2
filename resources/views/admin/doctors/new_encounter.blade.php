@@ -136,10 +136,10 @@
                                 </tr>
                                 <tr>
                                     <th>Bed</th>
-                                    <td>{{ $admission_request->bed->name }}</td>
+                                    <td>{{ (($admission_request->bed) ? $admission_request->bed->name : "N/A") }}</td>
                                     <th>Ward</th>
-                                    <td>{{ $admission_request->bed->ward }}, <b>Unit:</b>
-                                        {{ $admission_request->bed->unit ?? 'N/A' }}</td>
+                                    <td>{{ (($admission_request->bed) ? $admission_request->bed->ward : "N/A") }}, <b>Unit:</b>
+                                        {{ (($admission_request->bed) ? $admission_request->bed->unit : "N/A") }}</td>
                                 </tr>
                             </table>
 

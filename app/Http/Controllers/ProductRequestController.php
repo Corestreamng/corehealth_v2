@@ -43,19 +43,24 @@ class ProductRequestController extends Controller
         return Datatables::of($his)
             ->addIndexColumn()
             ->addColumn('select', function ($h) {
-                $url = route('patient.show', [$h->patient->id, 'section' => 'prescriptionsNotesCardBody']);
-                $str = "
-                    <a class='btn btn-primary' href='$url'>
-                        view
-                    </a>";
-                return $str;
+                if($h->patient){
+                    $url = route('patient.show', [$h->patient->id, 'section' => 'prescriptionsNotesCardBody']);
+                    $str = "
+                        <a class='btn btn-primary' href='$url'>
+                            view
+                        </a>";
+                    return $str;
+                }else{
+                    return "N/A";
+                }
+                
             })
             ->editColumn('patient_id', function ($h) {
                 $str = "<small>";
-                $str .= "<b >Patient </b> :" . (($h->patient->user) ? userfullname($h->patient->user->id) : "N/A");
-                $str .= "<br><br><b >File No </b> : " . $h->patient->file_no;
-                $str .= "<br><br><b >Insurance/HMO :</b> : " . (($h->patient->hmo) ? $h->patient->hmo->name : "N/A");
-                $str .= "<br><br><b >HMO Number :</b> : " . (($h->patient->hmo_no) ? $h->patient->hmo_no : "N/A");
+                $str .= "<b >Patient </b> :" . (($h->patient) ? userfullname($h->patient->user_id) : "N/A");
+                $str .= "<br><br><b >File No </b> : " . (($h->patient) ? $h->patient->file_no : "N/A");
+                $str .= "<br><br><b >Insurance/HMO :</b> : " . (($h->patient && $h->patient->hmo) ? $h->patient->hmo->name : "N/A");
+                $str .= "<br><br><b >HMO Number :</b> : " . (($h->patient && $h->patient->hmo) ? $h->patient->hmo_no : "N/A");
                 $str .= "</small>";
                 return $str;
             })
@@ -95,7 +100,7 @@ class ProductRequestController extends Controller
             ->editColumn('patient_id', function ($h) {
                 $str = "<small>";
                 $str .= "<b >Patient </b> :" . (($h->patient->user) ? userfullname($h->patient->user->id) : "N/A");
-                $str .= "<br><br><b >File No </b> : " . $h->patient->file_no;
+                $str .= "<br><br><b >File No </b> : " . (($h->patient) ? $h->patient->file_no : "N/A");
                 $str .= "<br><br><b >Insurance/HMO :</b> : " . (($h->patient->hmo) ? $h->patient->hmo->name : "N/A");
                 $str .= "<br><br><b >HMO Number :</b> : " . (($h->patient->hmo_no) ? $h->patient->hmo_no : "N/A");
                 $str .= "</small>";
