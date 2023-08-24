@@ -79,7 +79,7 @@
                                     <tr>
                                         <td>
                                             Consultation
-                                            <br> {{ $con->doctor->staff_profile->specialization->name }}
+                                            <br> {{ (($con->doctor->staff_profile) ? $con->doctor->staff_profile->specialization->name : 'N/A') }}
                                             <br> Dr. {{ userfullname($con->doctor->user_id) }}
                                             <br>{{ $con->created_at }}
                                         </td>
