@@ -38,16 +38,16 @@
                 role="tab" aria-controls="my_notes" aria-selected="false">My Diagnosis and Notes</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link " id="prescription_tab" data-bs-toggle="tab" data-bs-target="#prescription"
-                type="button" role="tab" aria-controls="prescription" aria-selected="true">Prescription</button>
-        </li>
-        <li class="nav-item" role="presentation">
             <button class="nav-link" id="investigations_tab" data-bs-toggle="tab" data-bs-target="#investigations"
                 type="button" role="tab" aria-controls="investigations" aria-selected="false">Investigation</button>
         </li>
         <li class="nav-item" role="presentation">
+            <button class="nav-link " id="prescription_tab" data-bs-toggle="tab" data-bs-target="#prescription"
+                type="button" role="tab" aria-controls="prescription" aria-selected="true">Prescription</button>
+        </li>
+        <li class="nav-item" role="presentation">
             <button class="nav-link" id="admission_tab" data-bs-toggle="tab" data-bs-target="#admission" type="button"
-                role="tab" aria-controls="admission" aria-selected="false">Admission</button>
+                role="tab" aria-controls="admission" aria-selected="false">Conclusion</button>
         </li>
     </ul>
     <div class="tab-content" id="myTabContent">
@@ -136,10 +136,11 @@
                                 </tr>
                                 <tr>
                                     <th>Bed</th>
-                                    <td>{{ (($admission_request->bed) ? $admission_request->bed->name : "N/A") }}</td>
+                                    <td>{{ $admission_request->bed ? $admission_request->bed->name : 'N/A' }}</td>
                                     <th>Ward</th>
-                                    <td>{{ (($admission_request->bed) ? $admission_request->bed->ward : "N/A") }}, <b>Unit:</b>
-                                        {{ (($admission_request->bed) ? $admission_request->bed->unit : "N/A") }}</td>
+                                    <td>{{ $admission_request->bed ? $admission_request->bed->ward : 'N/A' }},
+                                        <b>Unit:</b>
+                                        {{ $admission_request->bed ? $admission_request->bed->unit : 'N/A' }}</td>
                                 </tr>
                             </table>
 
@@ -668,47 +669,12 @@
                     </div>
                 </div>
             </div>
-            <div class="tab-pane fade" id="prescription" role="tabpanel" aria-labelledby="prescription_tab">
-                <div class="card mt-2">
-                    <div class="card-body table-responsive">
-                        <label for="">Search products</label>
-                        <input type="text" class="form-control" id="consult_presc_search"
-                            onkeyup="searchProducts(this.value)" placeholder="search products...">
-                        <ul class="list-group" id="consult_presc_res" style="display: none;">
-
-                        </ul>
-                        <br>
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered table-striped">
-                                <thead>
-                                    <th>Name</th>
-                                    <th>Price</th>
-                                    <th>Dose/Freq.</th>
-                                    <th>*</th>
-                                </thead>
-                                <tbody id="selected-products">
-
-                                </tbody>
-                            </table>
-                        </div>
-                        <br><button type="button" onclick="switch_tab(event,'my_notes_tab')"
-                            class="btn btn-secondary mr-2">
-                            Prev
-                        </button>
-                        <button type="button" onclick="switch_tab(event,'investigations_tab')"
-                            class="btn btn-primary mr-2">Next</button>
-                        <a href="{{ route('encounters.index') }}"
-                            onclick="return confirm('Are you sure you wish to exit? Changes are yet to be saved')"
-                            class="btn btn-light">Exit</a>
-                    </div>
-                </div>
-            </div>
             <div class="tab-pane fade" id="investigations" role="tabpanel" aria-labelledby="investigations_tab">
                 <div class="card mt-2">
                     <div class="card-body table-responsive">
                         <label for="consult_invest_search">Search services</label>
                         <input type="text" class="form-control" id="consult_invest_search"
-                            onkeyup="searchServices(this.value)" placeholder="search services...">
+                            onkeyup="searchServices(this.value)" placeholder="search services..." autocomplete="off">
                         <ul class="list-group" id="consult_invest_res" style="display: none;">
 
                         </ul>
@@ -718,7 +684,7 @@
                                 <thead>
                                     <th>Name</th>
                                     <th>Price</th>
-                                    <th>Notes/specimen</th>
+                                    <th>Notes/specimen(optional)</th>
                                     <th>*</th>
                                 </thead>
                                 <tbody id="selected-services">
@@ -730,6 +696,41 @@
                             class="btn btn-secondary mr-2">
                             Prev
                         </button>
+                        <button type="button" onclick="switch_tab(event,'investigations_tab')"
+                            class="btn btn-primary mr-2">Next</button>
+                        <a href="{{ route('encounters.index') }}"
+                            onclick="return confirm('Are you sure you wish to exit? Changes are yet to be saved')"
+                            class="btn btn-light">Exit</a>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="prescription" role="tabpanel" aria-labelledby="prescription_tab">
+                <div class="card mt-2">
+                    <div class="card-body table-responsive">
+                        <label for="">Search products</label>
+                        <input type="text" class="form-control" id="consult_presc_search"
+                            onkeyup="searchProducts(this.value)" placeholder="search products..." autocomplete="off">
+                        <ul class="list-group" id="consult_presc_res" style="display: none;">
+
+                        </ul>
+                        <br>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered table-striped">
+                                <thead>
+                                    <th>Name</th>
+                                    <th>Price</th>
+                                    <th>Dose/Freq.(required)</th>
+                                    <th>*</th>
+                                </thead>
+                                <tbody id="selected-products">
+
+                                </tbody>
+                            </table>
+                        </div>
+                        <br><button type="button" onclick="switch_tab(event,'my_notes_tab')"
+                            class="btn btn-secondary mr-2">
+                            Prev
+                        </button>
                         <button type="button" onclick="switch_tab(event,'admission_tab')"
                             class="btn btn-primary mr-2">Next</button>
                         <a href="{{ route('encounters.index') }}"
@@ -738,28 +739,31 @@
                     </div>
                 </div>
             </div>
+
             <div class="tab-pane fade" id="admission" role="tabpanel" aria-labelledby="admission_tab">
                 <div class="card mt-2">
                     <div class="card-body table-responsive">
-                        @if (isset($admission_request))
+                        <label for="end_consultation">End Consultatation Cycle Now ? </label>
+                        <input type="checkbox" name="end_consultation" id="end_consultation" value="1">
+                        <hr>
+                        @if (isset($admission_request) || $admission_exists_ == 1)
                             <h4>Currently Admitted</h4>
                         @else
-                            <label for="consult_admit">Admit Patient</label>
-                            <select name="consult_admit" id="consult_admit" class="form-control"
-                                onchange="toggleAdmitNote(this)">
-                                <option value="0">No</option>
-                                <option value="1">Yes</option>
-                            </select>
-                            <br>
-                            <div id="admit-note-div">
-
-                            </div>
+                            <label for="consult_admit">Admit Patient ? </label>
+                            <input type="checkbox" name="consult_admit" id="consult_admit" value="1">
+                            <hr>
                         @endif
+                        <p>
+                            <i>
+                                Before saving, please ensure that all your entries are correct and as intended. if the save button does not work/respond,
+                            you most likely forgot to type any notes in the notes tab or have blank dosage fields in the prescription tab.
+                            </i>
+                        </p>
                         <br><button type="button" onclick="switch_tab(event,'investigations_tab')"
                             class="btn btn-secondary mr-2">
                             Prev
                         </button>
-                        <button type="submit" class="btn btn-primary mr-2"> Save </button>
+                        <button type="submit" class="btn btn-primary mr-2" onclick="return confirm('Are you sure?')"> Save </button>
                         <a href="{{ route('encounters.index') }}"
                             onclick="return confirm('Are you sure you wish to exit? Changes are yet to be saved')"
                             class="btn btn-light">Exit</a>
@@ -824,7 +828,7 @@
                 console.error(err);
             });
 
-            ClassicEditor
+        ClassicEditor
             .create(document.querySelector('.classic-editor2'), {
                 toolbar: {
                     items: [
@@ -1069,7 +1073,7 @@
                 $('#admit-note-div').html('');
             } else {
                 var mk = `
-                    <textarea name="admit_note" id="admit_note" class="form-control">Enter brief note</textarea>
+                    <textarea name="admit_note" id="admit_note" class="form-control" placeholder="Enter brief note"></textarea>
                 `;
                 $('#admit-note-div').append(mk);
             }
@@ -1334,7 +1338,6 @@
             }
 
         }
-
     </script>
     @include('admin.partials.vitals-scripts')
     @include('admin.partials.nursing-note-save-scripts')

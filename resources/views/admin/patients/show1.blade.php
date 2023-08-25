@@ -779,7 +779,7 @@
                         <h6>Other Items</h6>
                         <label for="">Search products</label>
                         <input type="text" class="form-control" id="consult_presc_search"
-                            onkeyup="searchProducts(this.value)" placeholder="search products...">
+                            onkeyup="searchProducts(this.value)" placeholder="search products..." autocomplete="off">
                         <ul class="list-group" id="consult_presc_res" style="display: none;">
 
                         </ul>
@@ -876,7 +876,7 @@
                         <h6>Other Items</h6>
                         <label for="consult_invest_search">Search services</label>
                         <input type="text" class="form-control" id="consult_invest_search"
-                            onkeyup="searchServices(this.value)" placeholder="search services...">
+                            onkeyup="searchServices(this.value)" placeholder="search services..." autocomplete="off">
                         <ul class="list-group" id="consult_invest_res" style="display: none;">
 
                         </ul>

@@ -15,6 +15,7 @@ use App\Models\ProductOrServiceRequest;
 use App\Models\ProductRequest;
 use App\Models\Staff;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -96,6 +97,76 @@ class EncounterController extends Controller
         }
     }
 
+    public function ContEncounterList()
+    {
+        try {
+            $doc = Staff::where('user_id', Auth::id())->first();
+            $currentDateTime = Carbon::now();
+            $timeThreshold = $currentDateTime->subHours(env('CONSULTATION_CYCLE_DURATION'));
+
+            // dd($timeThreshold);
+            $queue = DoctorQueue::where(function ($q) use ($doc) {
+                $q->where('clinic_id', $doc->clinic_id);
+                $q->orWhere('staff_id', $doc->id);
+            })
+            ->where('status', 2)
+            ->where('created_at', '>=', $timeThreshold)
+            ->orderBy('created_at', 'DESC')
+            ->get();
+            // dd($pc);
+            return Datatables::of($queue)
+                ->addIndexColumn()
+                ->editColumn('fullname', function ($queue) {
+                    $patient = patient::find($queue->patient_id);
+
+                    return userfullname($patient->user_id);
+                })
+
+                ->editColumn('created_at', function ($note) {
+                    return date('h:i a D M j, Y', strtotime($note->created_at));
+                })
+                ->editColumn('hmo_id', function ($queue) {
+                    $patient = patient::find($queue->patient_id);
+
+                    return Hmo::find($patient->hmo_id)->name ?? 'N/A';
+                })
+                ->editColumn('clinic_id', function ($queue) {
+                    $clinic = Clinic::find($queue->clinic_id);
+
+                    return $clinic->name ?? 'N/A';
+                })
+                ->editColumn('staff_id', function ($queue) use ($doc) {
+                    return userfullname($doc->user_id);
+                })
+                ->addColumn('file_no', function ($queue) {
+                    $patient = patient::find($queue->patient_id);
+
+                    return $patient->file_no;
+                })
+                ->addColumn('view', function ($queue) {
+                    // if (Auth::user()->hasPermissionTo('user-show') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
+
+                    $url = route(
+                        'encounters.create',
+                        ['patient_id' => $queue->patient_id, 'req_entry_id' => $queue->request_entry_id, 'queue_id' => $queue->id]
+                    );
+
+                    return '<a href="'.$url.'" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> Encounter</a>';
+                    // } else {
+
+                    //     $label = '<span class="label label-warning">Not Allowed</span>';
+                    //     return $label;
+                    // }
+                })
+                ->rawColumns(['fullname', 'view'])
+                ->make(true);
+        } catch (\Exception $e) {
+            Log::error($e->getMessage(), ['exception' => $e]);
+
+            return redirect()->back()->withInput()->with('error', $e->getMessage());
+        }
+    }
+
     public function PrevEncounterList()
     {
         try {
@@ -104,7 +175,7 @@ class EncounterController extends Controller
                 $q->where('clinic_id', $doc->clinic_id);
                 $q->orWhere('staff_id', $doc->id);
             })
-                ->where('status', '>', 1)->orderBy('created_at', 'DESC')->get();
+            ->where('status', '>', 2)->orderBy('created_at', 'DESC')->get();
             // dd($pc);
             return Datatables::of($queue)
                 ->addIndexColumn()
@@ -177,12 +248,12 @@ class EncounterController extends Controller
             ->editColumn('hmo_id', function ($queue) {
                 $patient = patient::find($queue->patient_id);
 
-                return (($patient) ? ((Hmo::find($patient->hmo_id)) ? Hmo::find($patient->hmo_id)->name : 'N/A') : 'N/A');
+                return ($patient) ? ((Hmo::find($patient->hmo_id)) ? Hmo::find($patient->hmo_id)->name : 'N/A') : 'N/A';
             })
             ->editColumn('clinic_id', function ($queue) {
                 $clinic = Clinic::find($queue->clinic_id);
 
-                return (($clinic) ? $clinic->name : 'N/A');
+                return ($clinic) ? $clinic->name : 'N/A';
             })
             ->editColumn('doctor_id ', function ($queue) {
                 return ($queue->doctor_id) ? userfullname($queue->doctor_id) : 'N/A';
@@ -441,10 +512,18 @@ class EncounterController extends Controller
             $patient = patient::find(request()->get('patient_id'));
             $clinic = Clinic::find($doctor->clinic_id);
             $req_entry = ProductOrServiceRequest::find(request()->get('req_entry_id'));
-            // dd($request->get('admission_req_id'));
+            $admission_exists = AdmissionRequest::where('patient_id', request()->get('patient_id'))->where('discharged', 0)->first();
+            
+            if(null != $admission_exists){
+                $admission_exists_ = 1;
+            }else{
+                $admission_exists_ = 0;
+            }
+            
+            // dd($admission_exists_);
 
-            if ($request->get('admission_req_id') != '') {
-                $admission_request = AdmissionRequest::where('id', $request->admission_req_id)->first();
+            if ($request->get('admission_req_id') != '' || $admission_exists_==1) {
+                $admission_request = AdmissionRequest::where('id', $request->admission_req_id)->first() ?? $admission_exists;
                 // for nursing notes
                 $patient_id = $patient->id;
                 $patient = patient::find($patient_id);
@@ -502,9 +581,10 @@ class EncounterController extends Controller
                     'io_chart_template' => $io_chart_template,
                     'labour_record_template' => $labour_record_template,
                     'others_record_template' => $others_record_template,
+                    'admission_exists_' => $admission_exists_
                 ]);
             } else {
-                return view('admin.doctors.new_encounter')->with(['patient' => $patient, 'doctor' => $doctor, 'clinic' => $clinic, 'req_entry' => $req_entry]);
+                return view('admin.doctors.new_encounter')->with(['patient' => $patient, 'doctor' => $doctor, 'clinic' => $clinic, 'req_entry' => $req_entry, 'admission_exists_' => $admission_exists_]);
             }
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
@@ -526,11 +606,11 @@ class EncounterController extends Controller
                 'doctor_diagnosis' => 'required|string',
                 'consult_presc_dose' => 'nullable|array|required_with:consult_presc_id',
                 'consult_presc_id' => 'nullable|array|required_with:consult_presc_dose',
-                'consult_invest_note' => 'nullable|array|required_with:consult_invest_id',
-                'consult_invest_id' => 'nullable|array|required_with:consult_invest_note',
+                'consult_invest_note' => 'nullable|array',
+                'consult_invest_id' => 'nullable|array',
                 'consult_presc_dose.*' => 'required_with:consult_presc_dose',
                 'consult_presc_id.*' => 'required_with:consult_presc_id',
-                'consult_invest_note.*' => 'required_with:consult_invest_note',
+                'consult_invest_note.*' => 'nullable',
                 'consult_invest_id.*' => 'required_with:consult_invest_id',
                 'admit_note' => 'nullable|string',
                 'consult_admit' => 'nullable',
@@ -538,6 +618,7 @@ class EncounterController extends Controller
                 'req_entry_id' => 'required',
                 'patient_id' => 'required',
                 'queue_id' => 'required',
+                'end_consultation' => 'nullable',
             ]);
 
             if (isset($request->consult_presc_id) && isset($request->consult_presc_dose)) {
@@ -602,11 +683,11 @@ class EncounterController extends Controller
 
             if ($request->queue_id != 'ward_round') {
                 $queue = DoctorQueue::where('id', $request->queue_id)->update([
-                    'status' => 2,
+                    'status' => (($request->end_consultation && $request->end_consultation == '1') ? 3 : 2),
                 ]);
             }
 
-            if ($request->consult_admit == 1) {
+            if ($request->consult_admit && $request->consult_admit == '1') {
                 $admit = new AdmissionRequest();
                 $admit->encounter_id = $encounter->id;
                 $admit->doctor_id = Auth::id();
