@@ -33,5 +33,9 @@ class patient extends Model
     public function hmo(){
         return $this->belongsTo(Hmo::class,'hmo_id', 'id');
     }
+
+    public function account(){
+        return $this->hasOne(PatientAccount::class, 'patient_id', 'id');
+    }
     
 }
