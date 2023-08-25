@@ -10,7 +10,11 @@
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="cont_data_tab" data-bs-toggle="tab" data-bs-target="#cont" type="button"
-                role="tab" aria-controls="cont_data" aria-selected="false">Previous</button>
+                role="tab" aria-controls="cont_data" aria-selected="false">Continuing</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="prev_data_tab" data-bs-toggle="tab" data-bs-target="#prev" type="button"
+                role="tab" aria-controls="prev_data" aria-selected="false">Previous</button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="my_admissions_tab" data-bs-toggle="tab" data-bs-target="#my_admissions"
@@ -46,6 +50,24 @@
             </div>
         </div>
         <div class="tab-pane fade" id="cont" role="tabpanel" aria-labelledby="cont_tab">
+            <div class="card mt-2">
+                <div class="card-body table-responsive">
+                    <table class="table table-sm table-bordered table-striped" id="cont_consult_list"  style="width: 100%">
+                        <thead>
+                            <th>#</th>
+                            <th>Patient Name</th>
+                            <th>File No</th>
+                            <th>HMO/Insurance</th>
+                            <th>Clinic</th>
+                            <th>Doctor</th>
+                            <th>Time</th>
+                            <th>Action</th>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="prev" role="tabpanel" aria-labelledby="prev_tab">
             <div class="card mt-2">
                 <div class="card-body table-responsive">
                     <table class="table table-sm table-bordered table-striped" id="prev_consult_list"  style="width: 100%">
@@ -142,6 +164,60 @@
                 "serverSide": true,
                 "ajax": {
                     "url": "{{ url('NewEncounterList') }}",
+                    "type": "GET"
+                },
+                "columns": [{
+                        data: "DT_RowIndex",
+                        name: "DT_RowIndex"
+                    },
+                    {
+                        data: "fullname",
+                        name: "fullname"
+                    },
+                    {
+                        data: "file_no",
+                        name: "file_no"
+                    },
+                    {
+                        data: "hmo_id",
+                        name: "hmo_id"
+                    },
+                    {
+                        data: "clinic_id",
+                        name: "clinic_id"
+                    },
+                    {
+                        data: "staff_id",
+                        name: "staff_id"
+                    },
+                    {
+                        data: "created_at",
+                        name: "created_at"
+                    },
+                    {
+                        data: "view",
+                        name: "view"
+                    },
+                ],
+
+                "paging": true
+            });
+        });
+    </script>
+    <script>
+        $(function() {
+            $('#cont_consult_list').DataTable({
+                "dom": 'Bfrtip',
+                "iDisplayLength": 50,
+                "lengthMenu": [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, "All"]
+                ],
+                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{ url('ContEncounterList') }}",
                     "type": "GET"
                 },
                 "columns": [{

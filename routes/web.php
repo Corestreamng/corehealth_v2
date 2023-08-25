@@ -122,6 +122,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('allPrevEncounters', [EncounterController::class, 'allPrevEncounters'])->name('allPrevEncounters');
         Route::get('AllprevEncounterList', [EncounterController::class, 'AllprevEncounterList'])->name('AllprevEncounterList');
         Route::get('NewEncounterList', [EncounterController::class, 'NewEncounterList'])->name('NewEncounterList');
+        Route::get('ContEncounterList', [EncounterController::class, 'ContEncounterList'])->name('ContEncounterList');
         Route::get('PrevEncounterList', [EncounterController::class, 'PrevEncounterList'])->name('PrevEncounterList');
         Route::get('investigationHistoryList/{patient_id}', [EncounterController::class, 'investigationHistoryList'])->name('investigationHistoryList');
         Route::get('prescHistoryList/{patient_id}', [EncounterController::class, 'prescHistoryList'])->name('prescHistoryList');
