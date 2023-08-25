@@ -185,7 +185,7 @@ class PatientController extends Controller
                         return $hmo_name;
                     })
                     ->addColumn('acc_bal', function ($list) {
-                        $patient_acc = patient::with(['account'])->where('user_id', $list->user_id)->first();
+                        $patient_acc = patient::where('user_id', $list->user_id)->first();
                         $patient_acc = (($patient_acc->account) ? json_decode($patient_acc->account)->balance : "");
                         if ($patient_acc != '') {
                             if($patient_acc >= 0){
