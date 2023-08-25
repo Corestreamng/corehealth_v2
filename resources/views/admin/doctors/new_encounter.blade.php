@@ -1057,6 +1057,8 @@
                         }
                     }
                 });
+            }else{
+                $('#consult_presc_res').html('');
             }
         }
     </script>
@@ -1125,6 +1127,8 @@
                         }
                     }
                 });
+            }else{
+                $('#consult_invest_res').html('');
             }
         }
     </script>
