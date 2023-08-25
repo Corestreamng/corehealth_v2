@@ -11,7 +11,6 @@
                     <div class="row">
                         <div class="col-md-6">
                             <a href="{{ route('paid-services', $id) }}">Settled</a>
-                            {{-- {{ __('Services') }} --}}
                         </div>
                         <div class="col-md-6">
                             {{-- @if (auth()->user()->can('user-create')) --}}
