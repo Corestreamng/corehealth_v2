@@ -11,6 +11,7 @@ class accountsController extends Controller
 {
     public function index($identifier)
     {
+        $id = $identifier;
         return view('admin.Accounts.services', compact('id'));
     }
     public function products($id)
