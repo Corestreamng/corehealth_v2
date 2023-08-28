@@ -115,8 +115,8 @@ class PatientController extends Controller
                 $start = $request->start_from;
                 $end = $request->stop_at;
                 $consultation = Encounter::where('notes', '!=', null)->where('patient_id', $patient_id)->where('created_at', '<=', $end)->where('created_at', '>=', $start)->get();
-                $prescription = ProductRequest::where('status', '>', 1)->where('patient_id', $patient_id)->where('created_at', '<=', $end)->where('created_at', '>=', $start)->get();
-                $lab = LabServiceRequest::where('status', '>', 1)->where('patient_id', $patient_id)->where('created_at', '<=', $end)->where('created_at', '>=', $start)->get();
+                $prescription = ProductRequest::where('status', '>', 0)->where('patient_id', $patient_id)->where('created_at', '<=', $end)->where('created_at', '>=', $start)->get();
+                $lab = LabServiceRequest::where('status', '>', 0)->where('patient_id', $patient_id)->where('created_at', '<=', $end)->where('created_at', '>=', $start)->get();
 
                 $bed = AdmissionRequest::where('discharged', true)->where('patient_id', $patient_id)->where('discharge_date', '<=', $end)->where('discharge_date', '>=', $start)->get();
 
