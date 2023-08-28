@@ -149,8 +149,8 @@
                                     <div class="form-group col-md-6">
                                         <label for="respiratoryRate">Respiratory Rate (BPM)</label>
                                         <input type="number" class="form-control" id="respiratoryRate" name="respiratoryRate"
-                                            min="12" max="30">
-                                        <small class="form-text text-muted">Breaths per Minute. Min : 12, Max: 30</small>
+                                            min="12" max="50">
+                                        <small class="form-text text-muted">Breaths per Minute. Min : 12, Max: 50</small>
                                     </div>
                                     <div class="form-group col-md-6">
                                         <label for="heartRate">Heart Rate (BPM)</label>
