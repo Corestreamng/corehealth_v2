@@ -116,6 +116,17 @@
                                 <tr>
                                     <th>Disability status:</th>
                                     <td>{{ $patient->disability == 1 ? 'Disabled' : 'None' }}</td>
+                                    <th>Phone: </th>
+                                    <td>{{($patient->phone_no)}}</td>
+                                </tr>
+                                <tr>
+                                    <th>Next Of Kin: </th>
+                                    <td>{{ $patient->next_of_kin_name ?? 'N/A' }}</td>
+                                    <th>Other next of kin info:</th>
+                                    <td>
+                                        Phone : {{ $patient->next_of_kin_phone ?? 'N/A' }} <br>
+                                        Address : {{ $patient->next_of_kin_address ?? 'N/A' }}
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>

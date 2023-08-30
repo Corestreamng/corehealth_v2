@@ -111,7 +111,17 @@
 
 
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="">Phone <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text" id="gender"><i
+                                                class="mdi mdi-phone"></i></span>
+                                        <input type="text" name="phone_no" value="{{$patient->phone_no }}" class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="">Passport</label>
                                     <div class="input-group">
@@ -122,7 +132,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="">Old Records</label>
                                     <div class="input-group">
@@ -311,6 +321,40 @@
                                 <span class="input-group-text" id="file_no"><i class="mdi mdi-file-find"></i></span>
                                 <input type="text" class="form-control" placeholder="file_no" aria-label="file_no"
                                     aria-describedby="file_no" name="file_no" value="{{ !empty($patient->file_no) ? $patient->file_no : old('file_no') }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-4">
+                        <div class="form-group">
+                            <label for="">Next of kin name </label>
+                            <div class="input-group">
+                                <span class="input-group-text" id="next_of_kin_name"><i class="mdi mdi-account"></i></span>
+                                <input type="text" class="form-control" placeholder="Next of kin name" aria-label="next_of_kin_name"
+                                    aria-describedby="next_of_kin_name" value="{{ !empty($patient->next_of_kin_name) ? $patient->next_of_kin_name : old('next_of_kin_name') }}" name="next_of_kin_name"
+                                    value="{{ old('next_of_kin_name') }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="form-group">
+                            <label for="">Next of kin phone </label>
+                            <div class="input-group">
+                                <span class="input-group-text" id="next_of_kin_phone"><i class="mdi mdi-phone"></i></span>
+                                <input type="text" class="form-control" placeholder="next_of_kin_phone" aria-label="next_of_kin_phone"
+                                    aria-describedby="next_of_kin_phone" value="{{ !empty($patient->next_of_kin_phone) ? $patient->next_of_kin_phone : old('next_of_kin_phone') }}" name="next_of_kin_phone">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="form-group">
+                            <label for="">Next of kin address </label>
+                            <div class="input-group">
+                                <span class="input-group-text" id="next_of_kin_address"><i
+                                        class="mdi mdi-library-books"></i></span>
+                                <textarea name="next_of_kin_address" id="next_of_kin_address"
+                                    class="form-control">{{ !empty($patient->next_of_kin_address) ? $patient->next_of_kin_address : old('next_of_kin_address') }}</textarea>
                             </div>
                         </div>
                     </div>

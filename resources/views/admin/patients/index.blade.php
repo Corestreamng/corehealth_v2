@@ -21,10 +21,10 @@
                                     <th>File No</th>
                                     <th>HMO / Insurance</th>
                                     <th>HMO Number</th>
+                                    <th>Phone</th>
                                     <th>Date</th>
                                     <th>View</th>
                                     <th>Edit</th>
-                                    <th>Delete</th>
                                 </tr>
                             </thead>
                         </table>
@@ -79,6 +79,10 @@
                         name: "hmo_no"
                     },
                     {
+                        data: "phone_no",
+                        name: "phone_no"
+                    },
+                    {
                         data: "created_at",
                         name: "created_at"
                     },
@@ -89,11 +93,7 @@
                     {
                         data: "edit",
                         name: "edit"
-                    },
-                    {
-                        data: "delete",
-                        name: "delete"
-                    },
+                    }
                 ],
                 // initComplete: function () {
                 //     this.api().columns().every(function () {
