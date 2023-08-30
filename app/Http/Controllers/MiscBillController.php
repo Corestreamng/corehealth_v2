@@ -29,7 +29,7 @@ class MiscBillController extends Controller
         return Datatables::of($his)
             ->addIndexColumn()
             ->addColumn('select', function ($h) {
-                $str = "<input type='checkbox' name='selectedMiscBillRows[]' onclick='checkMiscBillRow(this)' data-price = '".$h->service->price->sale_price."' value='$h->id' class='form-control'> ";
+                $str = "<input type='checkbox' name='selectedMiscBillRows[]' onclick='checkMiscBillRow(this)' data-price = '". (($h->service) ? $h->service->price->sale_price : "N/A") ."' value='$h->id' class='form-control'> ";
 
                 return $str;
             })
