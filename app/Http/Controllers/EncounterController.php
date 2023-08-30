@@ -303,7 +303,7 @@ class EncounterController extends Controller
                 return $str;
             })
             ->editColumn('result', function ($his) {
-                $str = "<span class = 'badge badge-success'>".$his->service->service_name.'</span><hr>';
+                $str = "<span class = 'badge badge-success'>".(($his->service) ? $his->service->service_name : "N/A").'</span><hr>';
                 $str .= $his->result ?? 'N/A';
 
                 return $str;
@@ -337,7 +337,7 @@ class EncounterController extends Controller
                 return $str;
             })
             ->editColumn('result', function ($his) {
-                $str = "<span class = 'badge badge-success'>".$his->service->service_name.'</span><hr>';
+                $str = "<span class = 'badge badge-success'>".(($his->service) ? $his->service->service_name : "N/A").'</span><hr>';
                 $str .= $his->result ?? 'N/A';
 
                 return $str;
@@ -371,7 +371,7 @@ class EncounterController extends Controller
                 return $str;
             })
             ->editColumn('result', function ($his) {
-                $str = "<span class = 'badge badge-success'>".$his->service->service_name.'</span><hr>';
+                $str = "<span class = 'badge badge-success'>".(($his->service) ? $his->service->service_name : "N/A").'</span><hr>';
                 $str .= $his->result ?? 'N/A';
 
                 return $str;
