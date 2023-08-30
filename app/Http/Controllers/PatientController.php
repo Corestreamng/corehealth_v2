@@ -108,9 +108,10 @@ class PatientController extends Controller
         }
     }
 
-    public function PatientServicesRendered(Request $request, $patient_id){
-        $patient = patient::where('id',$patient_id)->first();
-        if(null != $request->start_from && null != $request->stop_at){
+    public function PatientServicesRendered(Request $request, $patient_id)
+    {
+        $patient = patient::where('id', $patient_id)->first();
+        if (null != $request->start_from && null != $request->stop_at) {
             try {
                 $start = $request->start_from;
                 $end = $request->stop_at;
@@ -125,7 +126,7 @@ class PatientController extends Controller
                     if ($days < 1) {
                         $days = 1;
                     }
-                    array_push($b,['days'=> $days]);
+                    array_push($b, ['days' => $days]);
                 }
 
                 $misc = MiscBill::where('status', '>', 1)->where('patient_id', $patient_id)->where('created_at', '<=', $end)->where('created_at', '>=', $start)->get();
@@ -136,14 +137,14 @@ class PatientController extends Controller
                     'prescription' => $prescription,
                     'lab' => $lab,
                     'bed' => $bed,
-                    'misc'=> $misc,
+                    'misc' => $misc,
                     'app' => appsettings()
                 ]);
             } catch (\Exception $e) {
                 Log::error($e->getMessage(), ['exception' => $e]);
                 return redirect()->back()->withInput()->with('error', $e->getMessage());
             }
-        }else{
+        } else {
             return view('admin.encounters.services_rendered')->with(['patient' => $patient]);
         }
     }
@@ -188,10 +189,10 @@ class PatientController extends Controller
                         $patient_acc = patient::where('user_id', $list->user_id)->first();
                         $patient_acc = (($patient_acc->account) ? json_decode($patient_acc->account)->balance : "");
                         if ($patient_acc != '') {
-                            if($patient_acc >= 0){
+                            if ($patient_acc >= 0) {
                                 $patient_acc_markup = "<span class= 'badge badge-success'>NGN $patient_acc</span>";
                                 return $patient_acc_markup;
-                            }else{
+                            } else {
                                 $patient_acc_markup = "<span class= 'badge badge-danger'>NGN $patient_acc</span>";
                                 return $patient_acc_markup;
                             }
@@ -210,7 +211,7 @@ class PatientController extends Controller
                             return '<a class="btn-success btn-sm" href="' . $url . '">Process</a>';
                         }
                     )
-                    ->rawColumns(['user_id', 'process','acc_bal'])
+                    ->rawColumns(['user_id', 'process', 'acc_bal'])
                     ->make(true);
             }
         } catch (\Exception $e) {
@@ -230,7 +231,7 @@ class PatientController extends Controller
             $patient = patient::where('user_id', $user_id)->first();
             $family = patient::with(['user'])->where('file_no', $patient->file_no)->get();
             $products = Product::with(['category', 'price'])->where('status', 1)->get();
-            $services = service::with(['category', 'price'])->where('status', 1)->where('price_assign', 1)->where('category_id',env('CONSULTATION_CATEGORY_ID'))->get();
+            $services = service::with(['category', 'price'])->where('status', 1)->where('price_assign', 1)->where('category_id', env('CONSULTATION_CATEGORY_ID'))->get();
             $clinics = Clinic::where('status', 1)->get();
             return view('admin.receptionist.send_queue', compact('family', 'products', 'services', 'clinics'));
         } catch (\Exception $e) {
@@ -413,6 +414,10 @@ class PatientController extends Controller
                 $patient->hmo_no = $request->hmo_no ?? null;
                 $patient->misc = $request->misc ?? null;
                 $patient->nationality = $request->nationality ?? null;
+                $patient->next_of_kin_name = $request->next_of_kin_name ?? null;
+                $patient->next_of_kin_phone = $request->next_of_kin_phone ?? null;
+                $patient->next_of_kin_address = $request->next_of_kin_address ?? null;
+                $patient->phone_no = $request->phone_no ?? null;
 
                 $patient->save();
 
@@ -685,6 +690,10 @@ class PatientController extends Controller
                 $patient->hmo_no = $request->hmo_no ?? null;
                 $patient->misc = $request->misc ?? null;
                 $patient->nationality = $request->nationality ?? null;
+                $patient->next_of_kin_name = $request->next_of_kin_name ?? null;
+                $patient->next_of_kin_phone = $request->next_of_kin_phone ?? null;
+                $patient->next_of_kin_address = $request->next_of_kin_address ?? null;
+                $patient->phone_no = $request->phone_no ?? null;
 
                 $patient->update();
                 // Send User an email with set password link
