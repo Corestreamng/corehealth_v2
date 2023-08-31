@@ -658,7 +658,7 @@
                         <input type="hidden" value="{{ $req_entry->id ?? 'ward_round' }}" name="req_entry_id">
                         <input type="hidden" value="{{ request()->get('patient_id') }}" name="patient_id">
                         <input type="hidden" value="{{ request()->get('queue_id') ?? 'ward_round' }}" name="queue_id">
-                        <input type="text" name="encounter_id" value="{{$encounter->id}}" required>
+                        <input type="hidden" id="encounter_id__" name="encounter_id" value="{{$encounter->id}}" required>
                         @if (request()->get('admission_req_id') != '')
                             <input type="hidden" value="{{ request()->get('admission_req_id') }}" name="queue_id">
                         @endif
@@ -666,7 +666,8 @@
                             <option value="">--select reason--</option>
                         </select> --}}
                         <div>
-                            <textarea name="doctor_diagnosis" id="" class="form-control classic-editor2"></textarea>
+                            <i class="fa fa-save"></i><span id="autosave_status_text"> Auto Save Enabled...</span>
+                            <textarea name="doctor_diagnosis" id="doctor_diagnosis_text" class="form-control classic-editor2">{{$encounter->notes}}</textarea>
                         </div>
 
                         <br><button type="button" onclick="switch_tab(event,'nursing_notes_tab')"
@@ -813,32 +814,32 @@
     <script src="{{ asset('/plugins/dataT/datatables.min.js') }}" defer></script>
     <script src="{{ asset('plugins/ckeditor/ckeditor5/ckeditor.js') }}"></script>
     <script>
-        ClassicEditor
-            .create(document.querySelector('.classic-editor'), {
-                toolbar: {
-                    items: [
-                        'undo', 'redo',
-                        '|', 'heading',
-                        '|', 'bold', 'italic',
-                        '|', 'link', 'uploadImage', 'insertTable', 'mediaEmbed',
-                        '|', 'bulletedList', 'numberedList', 'outdent', 'indent',
-                    ]
-                },
-                cloudServices: {
-                    // All predefined builds include the Easy Image feature.
-                    // Provide correct configuration values to use it.
-                    // tokenUrl: 'https://example.com/cs-token-endpoint',
-                    // uploadUrl: 'https://your-organization-id.cke-cs.com/easyimage/upload/'
-                    // Read more about Easy Image - https://ckeditor.com/docs/ckeditor5/latest/features/images/image-upload/easy-image.html.
-                    // For other image upload methods see the guide - https://ckeditor.com/docs/ckeditor5/latest/features/images/image-upload/image-upload.html.
-                }
-            })
-            .then(editor => {
-                window.editor = editor;
-            })
-            .catch(err => {
-                console.error(err);
-            });
+        // ClassicEditor
+        //     .create(document.querySelector('.classic-editor'), {
+        //         toolbar: {
+        //             items: [
+        //                 'undo', 'redo',
+        //                 '|', 'heading',
+        //                 '|', 'bold', 'italic',
+        //                 '|', 'link', 'uploadImage', 'insertTable', 'mediaEmbed',
+        //                 '|', 'bulletedList', 'numberedList', 'outdent', 'indent',
+        //             ]
+        //         },
+        //         cloudServices: {
+        //             // All predefined builds include the Easy Image feature.
+        //             // Provide correct configuration values to use it.
+        //             // tokenUrl: 'https://example.com/cs-token-endpoint',
+        //             // uploadUrl: 'https://your-organization-id.cke-cs.com/easyimage/upload/'
+        //             // Read more about Easy Image - https://ckeditor.com/docs/ckeditor5/latest/features/images/image-upload/easy-image.html.
+        //             // For other image upload methods see the guide - https://ckeditor.com/docs/ckeditor5/latest/features/images/image-upload/image-upload.html.
+        //         }
+        //     })
+        //     .then(editor => {
+        //         window.editor = editor;
+        //     })
+        //     .catch(err => {
+        //         console.error(err);
+        //     });
 
         ClassicEditor
             .create(document.querySelector('.classic-editor2'), {
@@ -866,6 +867,41 @@
             .catch(err => {
                 console.error(err);
             });
+    </script>
+    <script>
+        function autosavenotes() {
+            console.log('...');
+            let notes = $('.ck-editor__editable:last').text();
+            let encounter_id = $('#encounter_id__').val();
+            let autosavesatustext = $('#autosave_status_text');
+            if(notes != ''){
+                notes = $('.ck-editor__editable:last').html();
+                autosavesatustext.text('Autosaving...');
+                autosavereq = $.ajax({
+                    type: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    url: "{{ route('auto-save-encounter-note') }}",
+                    data: {
+                        patient_id: "{{request()->get('patient_id')}}",
+                        notes: notes,
+                        encounter_id:encounter_id
+                    },
+                    success: function(data) {
+                        console.log(data);
+                        autosavesatustext.text('Autosaved')
+
+                    },
+                    error: function(x,y,z){
+                        console.log(x,y,z);
+                        autosavesatustext.text('Autosave failed')
+                    }
+                });
+            }
+        }
+
+        setInterval(autosavenotes, 10000);
     </script>
     <script>
         $(function() {

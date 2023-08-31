@@ -97,9 +97,23 @@ class EncounterController extends Controller
         }
     }
 
+    public function endOldEncounterReq(){
+        $currentDateTime = Carbon::now();
+        $timeThreshold = $currentDateTime->subHours(env('CONSULTATION_CYCLE_DURATION'));
+
+        $q = DoctorQueue::where('status', 2)
+                ->where('created_at', '<', $timeThreshold)->get();
+        foreach($q as $r){
+            $r->update([
+                'status' => 3
+            ]);
+        }
+    }
+
     public function ContEncounterList()
     {
         try {
+            $this->endOldEncounterReq();
             $doc = Staff::where('user_id', Auth::id())->first();
             $currentDateTime = Carbon::now();
             $timeThreshold = $currentDateTime->subHours(env('CONSULTATION_CYCLE_DURATION'));
@@ -174,8 +188,9 @@ class EncounterController extends Controller
             $queue = DoctorQueue::where(function ($q) use ($doc) {
                 $q->where('clinic_id', $doc->clinic_id);
                 $q->orWhere('staff_id', $doc->id);
-            })
-                ->where('status', '>', 2)->orderBy('created_at', 'DESC')->get();
+            })->where('status', '>', '2')
+            ->orderBy('created_at', 'DESC')->get();
+
             // dd($pc);
             return Datatables::of($queue)
                 ->addIndexColumn()
@@ -501,6 +516,28 @@ class EncounterController extends Controller
     }
 
     /**
+     * autosave notes.
+     */
+    public function autosaveNotes(Request $request)
+    {
+        try {
+            $request->validate([
+                'encounter_id' => 'required',
+                'notes' => 'required',
+            ]);
+
+            $encounter = Encounter::where('id', $request->encounter_id)->update([
+                'notes' => $request->notes
+            ]);
+
+            return response()->json(['success']);
+        } catch (\Exception $e) {
+            Log::error($e->getMessage(), ['exception' => $e]);
+            return response()->json(['failed'],500);
+        }
+    }
+
+    /**
      * Show the form for creating a new resource.
      *
      * @return \Illuminate\Http\Response
@@ -513,10 +550,11 @@ class EncounterController extends Controller
             $clinic = Clinic::find($doctor->clinic_id);
             $req_entry = ProductOrServiceRequest::find(request()->get('req_entry_id'));
             $admission_exists = AdmissionRequest::where('patient_id', request()->get('patient_id'))->where('discharged', 0)->first();
+            $queue_id = $request->get('queue_id');
 
-            $encounter = Encounter::where('doctor_id', $doctor->id)->where('patient_id', $patient->id)->where('notes', null)->first();
+            $encounter = Encounter::where('doctor_id', $doctor->id)->where('patient_id', $patient->id)->where('completed', false)->first();
 
-            if(!$encounter){
+            if (!$encounter) {
                 $encounter = new Encounter();
                 // $encounter->service_id = $req_entry->service_id;
                 $encounter->doctor_id = $doctor->id;
@@ -524,14 +562,13 @@ class EncounterController extends Controller
                 $encounter->patient_id = $patient->id;
 
                 $encounter->save();
-            }else{
+            } else {
                 // $encounter->service_id = $req_entry->service_id;
                 $encounter->doctor_id = $doctor->id;
                 // $encounter->service_request_id = $req_entry->id;
                 $encounter->patient_id = $patient->id;
                 $encounter->update();
             }
-
 
             if ($encounter) {
                 if (null != $admission_exists) {
@@ -602,7 +639,7 @@ class EncounterController extends Controller
                         'labour_record_template' => $labour_record_template,
                         'others_record_template' => $others_record_template,
                         'admission_exists_' => $admission_exists_,
-                        'encounter' => $encounter
+                        'encounter' => $encounter,
                     ]);
                 } else {
                     return view('admin.doctors.new_encounter')->with([
@@ -611,7 +648,7 @@ class EncounterController extends Controller
                         'clinic' => $clinic,
                         'req_entry' => $req_entry,
                         'admission_exists_' => $admission_exists_,
-                        'encounter' => $encounter
+                        'encounter' => $encounter,
                     ]);
                 }
             }
@@ -648,7 +685,7 @@ class EncounterController extends Controller
                 'patient_id' => 'required',
                 'queue_id' => 'required',
                 'end_consultation' => 'nullable',
-                'encounter_id' => 'required'
+                'encounter_id' => 'required',
             ]);
 
             if (isset($request->consult_presc_id) && isset($request->consult_presc_dose)) {
@@ -668,7 +705,7 @@ class EncounterController extends Controller
             }
 
             DB::beginTransaction();
-            $encounter =  Encounter::where('id',$request->encounter_id)->first();
+            $encounter = Encounter::where('id', $request->encounter_id)->first();
             if ($request->req_entry_service_id == null || $request->req_entry_service_id == 'ward_round') {
                 $encounter->service_id = null;
                 $encounter->service_request_id = null;
@@ -683,6 +720,7 @@ class EncounterController extends Controller
             $encounter->patient_id = $request->patient_id;
             $encounter->reasons_for_encounter = null;
             $encounter->notes = $request->doctor_diagnosis;
+            $encounter->completed = true;
             $encounter->update();
 
             if (isset($request->consult_invest_id) && count($request->consult_invest_id) > 0) {
