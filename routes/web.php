@@ -1,42 +1,39 @@
 <?php
 
+use App\Http\Controllers\Account\accountsController;
+use App\Http\Controllers\Account\paymentController;
+use App\Http\Controllers\Account\productAccountController;
+use App\Http\Controllers\AdmissionRequestController;
+use App\Http\Controllers\BedController;
+use App\Http\Controllers\ClinicController;
 use App\Http\Controllers\Doctor\DoctorConsultationsController;
 use App\Http\Controllers\Doctor\DoctorDashboardController;
+use App\Http\Controllers\EncounterController;
 use App\Http\Controllers\HmoController;
+use App\Http\Controllers\LabServiceRequestController;
+use App\Http\Controllers\MiscBillController;
 use App\Http\Controllers\MoveStockController;
+use App\Http\Controllers\NursingNoteController;
+use App\Http\Controllers\NursingNoteTypeController;
+use App\Http\Controllers\PatientAccountController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PriceController;
 use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductOrServiceRequestController;
-use App\Http\Controllers\StaffController;
+use App\Http\Controllers\ProductRequestController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ServiceCategoryController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ServicePriceController;
+use App\Http\Controllers\StaffController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\StoreStockController;
-use App\Http\Controllers\ClinicController;
-use App\Http\Controllers\Account\accountsController;
-use App\Http\Controllers\Account\paymentController;
-use App\Http\Controllers\Account\productAccountController;
-use App\Http\Controllers\AdmissionRequestController;
-use App\Http\Controllers\BedController;
-use App\Http\Controllers\EncounterController;
-use App\Http\Controllers\LabServiceRequestController;
-use App\Http\Controllers\MiscBillController;
-use App\Http\Controllers\NursingNoteController;
-use App\Http\Controllers\NursingNoteTypeController;
-use App\Http\Controllers\PatientAccountController;
-use App\Http\Controllers\ProductRequestController;
 use App\Http\Controllers\VitalSignController;
-use App\Models\AdmissionRequest;
-use App\Models\LabServiceRequest;
-use App\Models\PatientAccount;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -139,6 +136,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('investHistoryList', [LabServiceRequestController::class, 'investHistoryList'])->name('investHistoryList');
         Route::get('patientNursngNote/{patient_id}/{note_type}', [NursingNoteController::class, 'patientNursngNote'])->name('patientNursngNote');
         Route::get('EncounterHistoryList/{patient_id}', [EncounterController::class, 'EncounterHistoryList'])->name('EncounterHistoryList');
+        Route::post('auto-save-encounter-note', [EncounterController::class, 'autosaveNotes'])->name('auto-save-encounter-note');
     });
 
     Route::group(['middleware' => ['auth']], function () {
@@ -178,7 +176,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('stock-list', [StockController::class, 'listStock'])->name('stock-list');
     });
 
-    //nursig note types routes
+    // nursig note types routes
     Route::group(['middleware' => ['auth']], function () {
         Route::resource('nursing-note-types', NursingNoteTypeController::class);
         Route::resource('nursing-note', NursingNoteController::class);
@@ -200,7 +198,6 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('listStoresProducts/{id}', [StoreStockController::class, 'listStoresProducts'])->name('listStoresProducts');
         Route::get('listProductslocations/{id}', [StoreStockController::class, 'listProductslocations'])->name('listProductslocations');
     });
-
 
     Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
@@ -246,11 +243,8 @@ Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name
 
 Route::get('/accounts', [App\Http\Controllers\Account\accountsController::class, 'index']);
 
-
-
 Route::group(['prefix' => 'doctor', 'middleware' => ['auth']], function () {
     Route::get('/home', [DoctorDashboardController::class, 'index'])->name('doctor.dashboard');
-
 
     Route::get('/consultations', [DoctorConsultationsController::class, 'index'])->name('doctor.consultations');
 });
