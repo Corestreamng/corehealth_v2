@@ -658,6 +658,7 @@
                         <input type="hidden" value="{{ $req_entry->id ?? 'ward_round' }}" name="req_entry_id">
                         <input type="hidden" value="{{ request()->get('patient_id') }}" name="patient_id">
                         <input type="hidden" value="{{ request()->get('queue_id') ?? 'ward_round' }}" name="queue_id">
+                        <input type="text" name="encounter_id" value="{{$encounter->id}}" required>
                         @if (request()->get('admission_req_id') != '')
                             <input type="hidden" value="{{ request()->get('admission_req_id') }}" name="queue_id">
                         @endif
