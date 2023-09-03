@@ -131,6 +131,13 @@
         window.addEventListener('load', scrollToSection);
     </script>
 
+    <script>
+        function popMessengerWindow() {
+            var mywindow = window.open("{{route('messages')}}", 'Messenger', 'height=800,width=800');
+            mywindow.focus(); // IE >= 10
+        }
+    </script>
+
     <!-- Styles -->
     {{-- <link href="{{ asset('css/app.css') }}" rel="stylesheet"> --}}
 </head>
@@ -240,7 +247,7 @@
     <!-- endinject -->
     <!-- Custom js for this page -->
     {{-- <script src="{{ asset('admin/assets/js/dashboard.js') }}"></script> --}}
-    
+
     <!-- End custom js for this page -->
 
 </body>

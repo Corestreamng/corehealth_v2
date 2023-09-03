@@ -9,10 +9,10 @@
         </div>
         <ul class="navbar-nav">
             <li class="nav-item dropdown">
-                <a class="nav-link" id="messageDropdown" href="#" data-toggle="dropdown" aria-expanded="false">
-                    <i class="mdi mdi-email-outline"></i>
+                <a class="nav-link" id="messageDropdown" href="#" onclick="popMessengerWindow()" data-toggle="dropdown" aria-expanded="false">
+                    <i class="mdi mdi-email-outline"></i> @include('messenger.unread-count')
                 </a>
-                <div class="dropdown-menu dropdown-menu-left navbar-dropdown preview-list"
+                {{-- <div class="dropdown-menu dropdown-menu-left navbar-dropdown preview-list"
                     aria-labelledby="messageDropdown">
                     <h6 class="p-3 mb-0 font-weight-semibold">Messages</h6>
                     <div class="dropdown-divider"></div>
@@ -50,13 +50,13 @@
                     </a>
                     <div class="dropdown-divider"></div>
                     <h6 class="p-3 mb-0 text-center text-primary font-13">4 new messages</h6>
-                </div>
+                </div> --}}
             </li>
             <li class="nav-item dropdown ml-3">
                 <a class="nav-link" id="notificationDropdown" href="#" data-toggle="dropdown">
                     <i class="mdi mdi-bell-outline"></i>
                 </a>
-                <div class="dropdown-menu dropdown-menu-left navbar-dropdown preview-list"
+                {{-- <div class="dropdown-menu dropdown-menu-left navbar-dropdown preview-list"
                     aria-labelledby="notificationDropdown">
                     <h6 class="px-3 py-3 font-weight-semibold mb-0">Notifications</h6>
                     <div class="dropdown-divider"></div>
@@ -97,7 +97,7 @@
                     </a>
                     <div class="dropdown-divider"></div>
                     <h6 class="p-3 font-13 mb-0 text-primary text-center">View all notifications</h6>
-                </div>
+                </div> --}}
             </li>
         </ul>
         <ul class="navbar-nav navbar-nav-right">
