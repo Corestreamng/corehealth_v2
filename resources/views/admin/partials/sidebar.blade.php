@@ -33,6 +33,20 @@
                 <i class="mdi mdi-compass-outline menu-icon"></i>
                 <span class="menu-title">Dashboard</span>
             </a>
+            <a class="nav-link" href="#" onclick="popMessengerWindow()">
+                <i class="mdi mdi-email-outline menu-icon"></i>
+                <span class="menu-title">Messenger @include('messenger.unread-count')</span>
+            </a>
+            <hr>
+            <a class="nav-link" href="{{ route('logout') }}"
+                onclick="event.preventDefault();
+                         document.getElementById('logout-form').submit();">
+                <i class="fa fa-logout"></i>
+                <span class="menu-title text-danger">Logout</span>
+            </a>
+            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                @csrf
+            </form>
         </li>
         @hasanyrole('SUPERADMIN|ADMIN|RECEPTIONIST')
             <li class="pt-2 pb-1">
@@ -90,7 +104,8 @@
                 </div>
             </li>
             <li class="nav-item">
-                <a class="nav-link" data-toggle="collapse" href="#bookings" aria-expanded="false" aria-controls="bookings">
+                <a class="nav-link" data-toggle="collapse" href="#bookings" aria-expanded="false"
+                    aria-controls="bookings">
                     <i class="mdi mdi-crosshairs-gps menu-icon"></i>
                     <span class="menu-title">Bookings</span>
                     <i class="menu-arrow"></i>
@@ -116,7 +131,8 @@
                 <div class="collapse" id="acc_patient">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('product-or-service-request.index') }}">All Payment Requests</a>
+                            <a class="nav-link" href="{{ route('product-or-service-request.index') }}">All Payment
+                                Requests</a>
                         </li>
                     </ul>
                 </div>
@@ -200,10 +216,11 @@
                 <div class="collapse" id="pharm_queue">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
-                            <a class="nav-link" href="{{route('product-requests.index')}}">My Current Queue</a>
+                            <a class="nav-link" href="{{ route('product-requests.index') }}">My Current Queue</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{route('product-requests.index',['history' => true])}}">History</a>
+                            <a class="nav-link"
+                                href="{{ route('product-requests.index', ['history' => true]) }}">History</a>
                         </li>
                     </ul>
                 </div>
@@ -277,14 +294,14 @@
                 <div class="collapse" id="nursing_">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
-                            <a class="nav-link" href="{{route('vitals.index')}}">My Current Queue</a>
+                            <a class="nav-link" href="{{ route('vitals.index') }}">My Current Queue</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{route('vitals.index', ['history'=>true])}}">History</a>
+                            <a class="nav-link" href="{{ route('vitals.index', ['history' => true]) }}">History</a>
                         </li>
                     </ul>
                 </div>
-                <li class="nav-item">
+            <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" href="#admissions" aria-expanded="false"
                     aria-controls="admissions">
                     <i class="mdi mdi-crosshairs-gps menu-icon"></i>
@@ -348,10 +365,11 @@
                 <div class="collapse" id="lab_queue">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
-                            <a class="nav-link" href="{{route('service-requests.index')}}">My Current Queue</a>
+                            <a class="nav-link" href="{{ route('service-requests.index') }}">My Current Queue</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{route('service-requests.index',['history' => true])}}">History</a>
+                            <a class="nav-link"
+                                href="{{ route('service-requests.index', ['history' => true]) }}">History</a>
                         </li>
                     </ul>
                 </div>
