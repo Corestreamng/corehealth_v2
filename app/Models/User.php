@@ -2,16 +2,20 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Cmgmyr\Messenger\Traits\Messagable;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles;
+    use HasApiTokens;
+    use HasFactory;
+    use Notifiable;
+    use HasRoles;
+    use Messagable;
 
     /**
      * The attributes that are mass assignable.
@@ -51,16 +55,18 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
-    public function category(){
-        return $this->belongsTo(UserCategory::class,'is_admin','id');
+    public function category()
+    {
+        return $this->belongsTo(UserCategory::class, 'is_admin', 'id');
     }
 
-    public function staff_profile(){
+    public function staff_profile()
+    {
         return $this->hasOne(Staff::class, 'user_id', 'id');
     }
 
-    public function patient_profile(){
-        return $this->hasOne(patient::class, 'user_id','id');
+    public function patient_profile()
+    {
+        return $this->hasOne(patient::class, 'user_id', 'id');
     }
-
 }
