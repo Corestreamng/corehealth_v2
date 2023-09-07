@@ -54,7 +54,7 @@ class MessagesController extends Controller
 
         // don't show the current user in list
         $userId = Auth::id();
-        $users = User::whereIn('id', $thread->participantsUserIds($userId))->get();
+        $users = User::whereIn('id', $thread->participantsUserIds($userId))->orderBy('surname', 'ASC')->get();
 
         $thread->markAsRead($userId);
 
@@ -68,7 +68,7 @@ class MessagesController extends Controller
      */
     public function create()
     {
-        $users = User::where('id', '!=', Auth::id())->where('is_admin', '>', 19)->get();
+        $users = User::where('id', '!=', Auth::id())->where('is_admin', '>', 19)->orderBy('surname', 'ASC')->get();
 
         return view('messenger.create', compact('users'));
     }
