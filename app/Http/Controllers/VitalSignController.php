@@ -121,7 +121,7 @@ class VitalSignController extends Controller
         $his = DoctorQueue::with(['patient', 'doctor', 'receptionist'])
             ->where('status', 1)
             ->where('vitals_taken', false)
-            ->where('created_at', '<', $timeThreshold)
+            ->where('created_at', '>', $timeThreshold)
             ->orderBy('created_at', 'DESC')->get();
         //dd($pc);
         return Datatables::of($his)
