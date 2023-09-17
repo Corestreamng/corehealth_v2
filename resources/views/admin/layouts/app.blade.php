@@ -5,7 +5,7 @@
     <!-- Required meta tags -->
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <meta name='csrf-token' content='{{csrf_token()}}'>
+    <meta name='csrf-token' content='{{ csrf_token() }}'>
     <title>{{ env('APP_NAME') }} | @yield('title')</title>
     <!-- plugins:css -->
     <link rel="stylesheet" href="{{ asset('admin/assets/vendors/mdi/css/materialdesignicons.min.css') }}">
@@ -24,8 +24,8 @@
     <link rel="shortcut icon" href="{{ asset('admin/assets/images/favicon.png') }}" />
     <link rel="stylesheet" href="{{ asset('css/selectisize.css') }}">
     <script src="{{ asset('js/app.js') }}"></script>
-    <link rel="stylesheet" href="{{asset('/plugins/dataT/datatables.min.css')}}">
-    <script src="{{asset('plugins/chartjs/Chart.js')}}"></script>
+    <link rel="stylesheet" href="{{ asset('/plugins/dataT/datatables.min.css') }}">
+    <script src="{{ asset('plugins/chartjs/Chart.js') }}"></script>
     <style>
         .ck-editor__editable_inline {
             min-height: 200px;
@@ -133,13 +133,96 @@
 
     <script>
         function popMessengerWindow() {
-            var mywindow = window.open("{{route('messages')}}", 'Messenger', 'height=800,width=800');
+            var mywindow = window.open("{{ route('messages') }}", 'Messenger', 'height=800,width=800');
             mywindow.focus(); // IE >= 10
         }
     </script>
 
     <!-- Styles -->
     {{-- <link href="{{ asset('css/app.css') }}" rel="stylesheet"> --}}
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #a7c7e7;
+            overflow: hidden;
+        }
+
+        .cloud {
+            position: absolute;
+            background-color: #fff;
+            border-radius: 50%;
+            opacity: 0.7;
+            animation: float 10s linear infinite;
+        }
+
+        .cloud::before,
+        .cloud::after {
+            content: "";
+            position: absolute;
+            background-color: #fff;
+            border-radius: 50%;
+            opacity: 0.7;
+        }
+
+        .cloud::before {
+            width: 50px;
+            height: 50px;
+            top: -20px;
+            left: 10px;
+        }
+
+        .cloud::after {
+            width: 80px;
+            height: 80px;
+            top: -10px;
+            right: 10px;
+        }
+
+        .cloud:nth-child(odd) {
+            width: 120px;
+            height: 120px;
+            top: 100px;
+            left: -60px;
+        }
+
+        .cloud:nth-child(even) {
+            width: 150px;
+            height: 150px;
+            top: 250px;
+            right: -60px;
+        }
+
+        /* Add more clouds as needed */
+        .cloud:nth-child(3) {
+            width: 100px;
+            height: 100px;
+            top: 50px;
+            left: 50px;
+        }
+
+        .cloud:nth-child(4) {
+            width: 180px;
+            height: 180px;
+            top: 350px;
+            right: 150px;
+        }
+
+        /* Keyframe animation */
+        @keyframes float {
+            0% {
+                transform: translateY(0) translateX(0);
+            }
+
+            50% {
+                transform: translateY(-20px) translateX(20px);
+            }
+
+            100% {
+                transform: translateY(0) translateX(0);
+            }
+        }
+    </style>
 </head>
 
 <body id='app'>
@@ -213,6 +296,10 @@
                         </div>
                     </section>
                     <!-- first row starts here -->
+                    <div class="cloud"></div>
+                    <div class="cloud"></div>
+                    <div class="cloud"></div>
+                    <div class="cloud"></div>
                     @yield('content')
                 </div>
                 <!-- content-wrapper ends -->

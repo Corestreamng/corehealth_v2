@@ -19,9 +19,96 @@
 
     <!-- Styles -->
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #a7c7e7;
+            overflow: hidden;
+        }
+
+        .cloud {
+            position: absolute;
+            background-color: #fff;
+            border-radius: 50%;
+            opacity: 0.7;
+            animation: float 10s linear infinite;
+        }
+
+        .cloud::before,
+        .cloud::after {
+            content: "";
+            position: absolute;
+            background-color: #fff;
+            border-radius: 50%;
+            opacity: 0.7;
+        }
+
+        .cloud::before {
+            width: 50px;
+            height: 50px;
+            top: -20px;
+            left: 10px;
+        }
+
+        .cloud::after {
+            width: 80px;
+            height: 80px;
+            top: -10px;
+            right: 10px;
+        }
+
+        .cloud:nth-child(odd) {
+            width: 120px;
+            height: 120px;
+            top: 100px;
+            left: -60px;
+        }
+
+        .cloud:nth-child(even) {
+            width: 150px;
+            height: 150px;
+            top: 250px;
+            right: -60px;
+        }
+
+        /* Add more clouds as needed */
+        .cloud:nth-child(3) {
+            width: 100px;
+            height: 100px;
+            top: 50px;
+            left: 50px;
+        }
+
+        .cloud:nth-child(4) {
+            width: 180px;
+            height: 180px;
+            top: 350px;
+            right: 150px;
+        }
+
+        /* Keyframe animation */
+        @keyframes float {
+            0% {
+                transform: translateY(0) translateX(0);
+            }
+
+            50% {
+                transform: translateY(-20px) translateX(20px);
+            }
+
+            100% {
+                transform: translateY(0) translateX(0);
+            }
+        }
+    </style>
 </head>
 
 <body>
+    <div class="cloud"></div>
+    <div class="cloud"></div>
+    <div class="cloud"></div>
+    <div class="cloud"></div>
     <div id="app">
         <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
             <div class="container">
