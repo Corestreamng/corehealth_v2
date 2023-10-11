@@ -1,6 +1,6 @@
-@if (Session::has('message'))
-<div class="alert alert-{{ Session::get('message_type', 'danger') }} alert-dismissable">
-  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-  <strong>Message &nbsp;</strong> {{ Session::get('message') }}
-</div>
+@if(Session::has('message'))
+    <div class="alert alert-{{ Session::get('message_type','danger') }} alert-dismissible fade show" role="alert">
+        <strong>{{ Session::get('message') }}</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
 @endif

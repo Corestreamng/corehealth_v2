@@ -145,7 +145,9 @@ class VitalSignController extends Controller
             })
             ->editColumn('created_at', function ($h) {
                 $str = "<small>";
-                $str .= "<b >Requested by: </b>" . ((isset($h->receptionist_id)  && $h->receptionist_id != null) ? (userfullname($h->receptionist_id) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
+                $str .= "<b >Clinic </b> : " . (($h->clinic) ? $h->clinic->name : "N/A");
+                $str .= "<br><br><b >Doctor </b> : " . (($h->doctor) ? (userfullname($h->doctor->id)) : "N/A");
+                $str .= "<br><br><b >Requested by: </b> " . ((isset($h->receptionist_id)  && $h->receptionist_id != null) ? (userfullname($h->receptionist_id) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
                 $str .= "<br><br><b >Last Updated On:</b> " . date('h:i a D M j, Y', strtotime($h->updated_at));
                 $str .= "</small>";
                 return $str;
