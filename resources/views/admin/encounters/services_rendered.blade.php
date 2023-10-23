@@ -82,6 +82,8 @@
                                             <br> {{ (($con->doctor->staff_profile) ? $con->doctor->staff_profile->specialization->name : 'N/A') }}
                                             <br> Dr. {{ userfullname($con->doctor->user_id) }}
                                             <br>{{ $con->created_at }}
+                                            <hr>
+                                            <br>{{ $con->notes }}
                                         </td>
                                     </tr>
                                 @endforeach
