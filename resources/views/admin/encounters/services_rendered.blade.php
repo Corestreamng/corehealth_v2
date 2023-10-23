@@ -38,7 +38,7 @@
                         <table class="table table-sm text-sm table-sm table-bordered table-striped ">
                             <thead>
                                 <tr align="center">
-                                    <th>{{ $app->site_name }}</th>
+                                    <th>{{env('APP_NAME')}} - {{ $app->site_name }}</th>
                                 </tr>
                                 <tr>
                                     <th>Fullname</th>
@@ -80,7 +80,7 @@
                                         <td>
                                             Consultation
                                             <br> {{ (($con->doctor->staff_profile) ? $con->doctor->staff_profile->specialization->name : 'N/A') }}
-                                            <br> Dr. {{ userfullname($con->doctor->user_id) }}
+                                            <br> Dr. {{ (($con->doctor->staff_profile) ? userfullname($con->doctor->staff_profile->user_id) : 'N/A') }}
                                             <br>{{ $con->created_at }}
                                             <hr>
                                             <br>{!! $con->notes !!}
