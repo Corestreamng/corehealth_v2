@@ -83,7 +83,7 @@
                                             <br> Dr. {{ userfullname($con->doctor->user_id) }}
                                             <br>{{ $con->created_at }}
                                             <hr>
-                                            <br>{! $con->notes !}
+                                            <br>{!! $con->notes !!}
                                         </td>
                                     </tr>
                                 @endforeach
