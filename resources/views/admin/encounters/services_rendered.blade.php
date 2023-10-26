@@ -6,16 +6,15 @@
     <div class="card">
         <div class="card-header">
             <h3 class="card-title">
-                {{userfullname($patient->user_id)}} [{{$patient->file_no}}]
+                {{ userfullname($patient->user_id) }} [{{ $patient->file_no }}]
             </h3>
         </div>
 
         <div class="card-body">
             <div class="row">
                 <div class="col-sm-12">
-                    <form
-                        action="{{ route('patient-services-rendered', ['patient_id'=>$patient->id]) }}"
-                        method="get" class="form-inline">
+                    <form action="{{ route('patient-services-rendered', ['patient_id' => $patient->id]) }}" method="get"
+                        class="form-inline">
                         <div class="form-group">
                             <input type="hidden" name="patient_id" value="{{ $patient->id }}">
                             <label for="">Date between</label>
@@ -38,27 +37,27 @@
                         <table class="table table-sm text-sm table-sm table-bordered table-striped ">
                             <thead>
                                 <tr align="center">
-                                    <th>{{env('APP_NAME')}} - {{ $app->site_name }}</th>
+                                    <th>{{ env('APP_NAME') }} - {{ $app->site_name }}</th>
                                 </tr>
                                 <tr>
                                     <th>Fullname</th>
                                 </tr>
                                 <tr>
                                     <td>{{ userfullname($patient->user_id) }} <br>Hosp.
-                                        No:{{ ($patient->file_no) }}</td>
+                                        No:{{ $patient->file_no }}</td>
                                 </tr>
                                 <tr>
                                     <th>HMO / Insurance</th>
                                 </tr>
                                 <tr>
-                                    <td>{{ (($patient->hmo) ? $patient->hmo->name : "") }}</td>
+                                    <td>{{ $patient->hmo ? $patient->hmo->name : '' }}</td>
 
                                 </tr>
                                 <tr>
                                     <th>HMO Number</th>
                                 </tr>
                                 <tr>
-                                    <td>{{ $patient->hmo_no ?? "" }}</td>
+                                    <td>{{ $patient->hmo_no ?? '' }}</td>
                                 </tr>
                                 <tr>
                                     <th>Repeort period</th>
@@ -79,11 +78,23 @@
                                     <tr>
                                         <td>
                                             Consultation
-                                            <br> {{ (($con->doctor->staff_profile) ? $con->doctor->staff_profile->specialization->name : 'N/A') }}
-                                            <br> Dr. {{ (($con->doctor->staff_profile) ? userfullname($con->doctor->staff_profile->user_id) : 'N/A') }}
+                                            <br>
+                                            {{ $con->doctor->staff_profile ? $con->doctor->staff_profile->specialization->name : 'N/A' }}
+                                            <br> Dr.
+                                            {{ $con->doctor->staff_profile ? userfullname($con->doctor->staff_profile->user_id) : 'N/A' }}
                                             <br>{{ $con->created_at }}
                                             <hr>
                                             <br>{!! $con->notes !!}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                                @foreach ($bed as $be)
+                                    <tr>
+                                        <td>
+                                            Admissions
+                                            <br> Admitted On {{ userfullname($be->bed_assign_date) }}
+                                            <br>Dischaged On {{ $be->discharge_date }}
+                                            <br>Admitted for {{ $be->days }} days
                                         </td>
                                     </tr>
                                 @endforeach
@@ -91,8 +102,8 @@
                                     <tr>
                                         <td>
                                             Precription
-                                            <br> Dr. {{ ($pres->doctor_id) ? userfullname($pres->doctor_id) : "" }}
-                                            <br>{{($pres->product) ? $pres->product->product_name : '' }}
+                                            <br> Dr. {{ $pres->doctor_id ? userfullname($pres->doctor_id) : '' }}
+                                            <br>{{ $pres->product ? $pres->product->product_name : '' }}
                                             <br>{{ $pres->created_at }}
                                         </td>
                                     </tr>
