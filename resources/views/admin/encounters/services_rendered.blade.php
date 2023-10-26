@@ -91,7 +91,7 @@
                                 @foreach ($bed as $be)
                                     <tr>
                                         <td>
-                                            Admissions
+                                            Admission
                                             <br>Admission Requested On {{ $be->created_at }}
                                             <br>Discharged On {{ $be->discharge_date }}
                                             {{-- <br>Admitted for {{ $be->days }} days --}}
