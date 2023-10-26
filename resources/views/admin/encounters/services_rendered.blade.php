@@ -93,7 +93,7 @@
                                         <td>
                                             Admissions
                                             <br> Admitted On {{ userfullname($be->bed_assign_date) }}
-                                            <br>Dischaged On {{ $be->discharge_date }}
+                                            <br>Discharged On {{ $be->discharge_date }}
                                             <br>Admitted for {{ $be->days }} days
                                         </td>
                                     </tr>
