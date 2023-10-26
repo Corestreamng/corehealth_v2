@@ -119,15 +119,20 @@ class PatientController extends Controller
                 $prescription = ProductRequest::where('status', '>', 0)->where('patient_id', $patient_id)->where('created_at', '<=', $end)->where('created_at', '>=', $start)->get();
                 $lab = LabServiceRequest::where('status', '>', 0)->where('patient_id', $patient_id)->where('created_at', '<=', $end)->where('created_at', '>=', $start)->get();
 
-                $bed = AdmissionRequest::where('discharged', true)->where('patient_id', $patient_id)->where('discharge_date', '<=', $end)->where('discharge_date', '>=', $start)->get();
+                $bed = AdmissionRequest::where('discharged', true)
+                    ->where('patient_id', $patient_id)
+                    ->where('discharge_date', '<=', $end)
+                    ->where('discharge_date', '>=', $start)
+                    ->get();
 
                 foreach ($bed as $b) {
                     $days = date_diff(date_create($b->discharge_date), date_create($b->bed_assign_date))->days;
                     if ($days < 1) {
                         $days = 1;
                     }
-                    array_push($b, ['days' => $days]);
+                    $b->days = $days; // Add 'days' key to the Eloquent model
                 }
+
 
                 $misc = MiscBill::where('status', '>', 1)->where('patient_id', $patient_id)->where('created_at', '<=', $end)->where('created_at', '>=', $start)->get();
 
