@@ -94,7 +94,7 @@
                                             Admissions
                                             <br>Admission Requested On {{ $be->created_at }}
                                             <br>Discharged On {{ $be->discharge_date }}
-                                            <br>Admitted for {{ $be->days }} days
+                                            {{-- <br>Admitted for {{ $be->days }} days --}}
                                         </td>
                                     </tr>
                                 @endforeach
