@@ -674,7 +674,7 @@
                             class="btn btn-secondary mr-2">
                             Prev
                         </button>
-                        <button type="button" onclick="switch_tab(event,'prescription_tab')"
+                        <button type="button" onclick="switch_tab(event,'investigations_tab')"
                             class="btn btn-primary mr-2">Next</button>
                         <a href="{{ route('encounters.index') }}"
                             onclick="return confirm('Are you sure you wish to exit? Changes are yet to be saved')"
@@ -705,11 +705,11 @@
                                 </tbody>
                             </table>
                         </div>
-                        <br><button type="button" onclick="switch_tab(event,'prescription_tab')"
+                        <br><button type="button" onclick="switch_tab(event,'my_notes_tab')"
                             class="btn btn-secondary mr-2">
                             Prev
                         </button>
-                        <button type="button" onclick="switch_tab(event,'investigations_tab')"
+                        <button type="button" onclick="switch_tab(event,'prescription_tab')"
                             class="btn btn-primary mr-2">Next</button>
                         <a href="{{ route('encounters.index') }}"
                             onclick="return confirm('Are you sure you wish to exit? Changes are yet to be saved')"
@@ -740,7 +740,7 @@
                                 </tbody>
                             </table>
                         </div>
-                        <br><button type="button" onclick="switch_tab(event,'my_notes_tab')"
+                        <br><button type="button" onclick="switch_tab(event,'investigations_tab')"
                             class="btn btn-secondary mr-2">
                             Prev
                         </button>
@@ -772,7 +772,7 @@
                             you most likely forgot to type any notes in the notes tab or have blank dosage fields in the prescription tab.
                             </i>
                         </p>
-                        <br><button type="button" onclick="switch_tab(event,'investigations_tab')"
+                        <br><button type="button" onclick="switch_tab(event,'prescription_tab')"
                             class="btn btn-secondary mr-2">
                             Prev
                         </button>
