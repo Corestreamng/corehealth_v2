@@ -33,6 +33,7 @@ use App\Http\Controllers\StoreController;
 use App\Http\Controllers\StoreStockController;
 use App\Http\Controllers\VitalSignController;
 use App\Http\Controllers\MessagesController;
+use App\Models\Staff;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -256,3 +257,6 @@ Route::group(['prefix' => 'messages'], function () {
     Route::get('{id}', [MessagesController::class, 'show'])->name('messages.show');
     Route::put('{id}', [MessagesController::class, 'update'])->name('messages.update');
 });
+
+Route::get('my-profile/{id}', [StaffController::class, 'my_profile'])->name('my-profile');
+Route::post('update-my-profile/{id}', [StaffController::class, 'update_my_profile'])->name('update-my-profile');
