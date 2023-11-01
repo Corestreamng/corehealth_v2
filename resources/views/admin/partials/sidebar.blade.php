@@ -33,21 +33,34 @@
                 <i class="mdi mdi-compass-outline menu-icon"></i>
                 <span class="menu-title">Dashboard</span>
             </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ route('my-profile', Auth::id()) }}">
+                <i class="fa fa-user menu-icon"></i>
+                <span class="menu-title"> Profile</span>
+            </a>
+        </li>
+        <li class="nav-item">
             <a class="nav-link" href="#" onclick="popMessengerWindow()">
                 <i class="mdi mdi-email-outline menu-icon"></i>
                 <span class="menu-title">Messenger @include('messenger.unread-count')</span>
             </a>
+        </li>
+
+        <li class="nav-item">
             <hr>
             <a class="nav-link" href="{{ route('logout') }}"
                 onclick="event.preventDefault();
-                         document.getElementById('logout-form').submit();">
-                <i class="fa fa-logout"></i>
+                     document.getElementById('logout-form').submit();">
+                <i class="fa fa-sign-out"></i>
                 <span class="menu-title text-danger">Logout</span>
             </a>
             <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
                 @csrf
             </form>
+            <hr>
         </li>
+
         @hasanyrole('SUPERADMIN|ADMIN|RECEPTIONIST')
             <li class="pt-2 pb-1">
                 <span class="nav-item-head">Receptionist</span>

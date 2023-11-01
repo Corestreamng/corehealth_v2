@@ -107,6 +107,174 @@ class StaffController extends Controller
         // }
     }
 
+    public function my_profile($id)
+    {
+        $user = User::whereId($id)->first();
+        $roles = Role::pluck('name', 'name')->all();
+        $permissions = Permission::pluck('name', 'name')->all();
+        $statuses = UserCategory::whereStatus(1)->get();
+        $userRole = $user->roles->pluck('name', 'name')->all();
+        $specializations = Specialization::pluck('name', 'id')->all();
+        $userPermission = $user->permissions->pluck('name', 'name')->all();
+        $clinics = Clinic::pluck('name', 'id')->all();
+
+        // dd($userRole);
+
+        return view('admin.staff.edit-my-profile', compact('user', 'statuses', 'roles', 'permissions', 'userRole', 'userPermission', 'specializations', 'clinics'));
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function update_my_profile(Request $request, $id)
+    {
+        if ($id != Auth::id()) {
+            abort(403, 'You Do Not Have Access to This Profile');
+        }
+        $rules = [
+            // 'is_admin'  => 'required',
+            'designation'  => 'nullable',
+            'surname'   => 'required|min:3|max:150',
+            'firstname' => 'required|min:3|max:150',
+            'phone_number'     => 'required',
+            'gender' => 'required',
+        ];
+
+        if ($request->hasFile('filename')) {
+            #  Making sure if password change was selected it's being validated
+            $rules += [
+                'filename' => 'max:10240|mimes:jpeg,bmp,png,gif,svg,jpg',
+            ];
+        }
+
+        if ($request->hasFile('old_records')) {
+
+            $rules += [
+                'old_records' => 'max:2000000024|mimes:jpeg,png,svg,jpg,pdf,doc,docx',
+            ];
+        }
+
+        if (!empty($request->password)) {
+            $rules += ['password'  => 'required|confirmed|min:6'];
+        }
+
+        $v = Validator::make($request->all(), $rules);
+        if ($v->fails()) {
+            return back()->with('errors', $v->messages()->all())->withInput();
+        } else {
+
+            $user = User::findOrFail($id);
+
+            if ($request->hasFile('filename')) {
+                $path = storage_path('/app/public/image/user/');
+                $file = $request->file('filename');
+                $extension = strtolower($file->getClientOriginalExtension());
+
+                // format of file is "timestamp-file-name.extension"
+                $name = str_replace("", "-", strtolower($file->getClientOriginalName()));
+                $name = str_replace("_", "-", $name);
+                $filename = time() . '-' . $name;
+
+                if (Storage::disk('user_images')->exists($user->filename)) {
+                    // delete image before uploading
+                    File::delete($path . $user->filename);
+
+                    Image::make($file)
+                        ->resize(215, 215)
+                        ->save($path . $filename);
+                } else {
+                    Image::make($file)
+                        ->resize(215, 215)
+                        ->save($path . $filename);
+                }
+
+                $thumbnail_path = storage_path('/app/public/image/user/thumbnail/');
+
+                //save thumbnail for index images
+                if (Storage::disk('thumbnail_user_images')->exists($user->filename)) {
+                    // delete image before uploading
+                    File::delete($thumbnail_path . $user->filename);
+
+                    Image::make($file)
+                        ->resize(106, 106)
+                        ->save($thumbnail_path .  $filename);
+                } else {
+                    Image::make($file)
+                        ->resize(106, 106)
+                        ->save($thumbnail_path . $filename);
+                }
+
+                $user->filename = ($filename) ? $filename : 'avatar.png';
+            }
+
+            if ($request->hasFile('old_records')) {
+                $path_o = storage_path('/app/public/image/user/old_records/');
+                $file_o = $request->file('old_records');
+                $extension_o = strtolower($file_o->getClientOriginalExtension());
+
+                // format of file is "timestamp-file-name.extension"
+                $name_o = str_replace(" ", "-", strtolower($file_o->getClientOriginalName()));
+                $name_o = str_replace("_", "-", $name_o);
+                $filename_o = time() . '-' . $name_o;
+                //dd($filename_o);
+
+                if (Storage::disk('old_records')->exists($user->old_records)) {
+                    // delete image before uploading
+                    Storage::disk('old_records')->delete($user->old_records);
+
+                    Storage::disk('old_records')->put($filename_o, $file_o->get());
+                } else {
+                    Storage::disk('old_records')->put($filename_o, $file_o->get());
+                }
+
+                if ($request->old_records) {
+                    $user->old_records    = $filename_o ?? null;
+                } else {
+                    $user->old_records    = null;
+                }
+            }
+
+            $user->surname     = $request->surname;
+            $user->firstname   = $request->firstname;
+            $user->othername   = ($request->othername) ? $request->othername : " ";
+            if ($request->password) {
+                $user->password    = Hash::make($request->password);
+            }
+
+            if ($user->update()) {
+
+                $staff = Staff::where('user_id', $id)->first();
+                // dd($staff);
+                $staff->clinic_id = $request->clinic ?? null;
+                $staff->user_id = $user->id;
+                $staff->specialization_id = $request->specialization ?? null;
+                $staff->gender = $request->gender ?? null;
+                $staff->date_of_birth = $request->dob ?? null;
+                $staff->home_address = $request->address ?? null;
+                $staff->phone_number = $request->phone_number ?? null;
+                $staff->consultation_fee = $request->consultation_fee ?? null;
+
+                if ($staff->update()) {
+                    // Send User an email with set password link
+                    $msg = 'Your profile was successfully updated.';
+                    Alert::success('Success ', $msg);
+                    return back()->withMessage($msg)->withMessageType('success');
+                    // return redirect()->route('staff.create');
+                } else {
+                    $msg = 'Something is went wrong. Please try again later.';
+                    return redirect()->back()->withInput()->with('error', $msg)->withInput();
+                }
+            } else {
+                $msg = 'Something is went wrong. Please try again later.';
+                return redirect()->back()->withInput()->with('error', $msg)->withInput();
+            }
+        }
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -153,7 +321,7 @@ class StaffController extends Controller
             'firstname' => 'required|min:3|max:150',
             // 'email'     => 'required|Email|min:6|max:150',
             'gender'    => 'required',
-            'phone_number'=> 'required',
+            'phone_number' => 'required',
             'password'  => 'nullable|min:6',
             // 'password'  => 'required|min:6|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/',
         ];
@@ -539,7 +707,7 @@ class StaffController extends Controller
                     # code...
                     $user->givePermissionTo($request->permissions);
                 }
-                $staff = Staff::where('user_id',$id)->first();
+                $staff = Staff::where('user_id', $id)->first();
                 // dd($staff);
                 $staff->clinic_id = $request->clinic ?? null;
                 $staff->user_id = $user->id;
