@@ -57,7 +57,7 @@ class PatientController extends Controller
             return Datatables::of($pc)
                 ->addIndexColumn()
                 ->editColumn('fullname', function ($pc) {
-                    return ($pc->user) ? (userfullname($pc->user->id)) : $pc->user_id;
+                    return ($pc->user) ? (userfullname($pc->user->id)) : dd($pc->user_id);
                 })
 
                 ->editColumn('created_at', function ($note) {
