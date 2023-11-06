@@ -57,7 +57,7 @@ class PatientController extends Controller
             return Datatables::of($pc)
                 ->addIndexColumn()
                 ->editColumn('fullname', function ($pc) {
-                    return ($pc->user) ? (userfullname($pc->user->id)) : dd($pc->user_id);
+                    return ($pc->user) ? (userfullname($pc->user->id)) : ($pc->user_id);
                 })
 
                 ->editColumn('created_at', function ($note) {
@@ -294,7 +294,7 @@ class PatientController extends Controller
             }
 
             if (!$request->email) {
-                $request->email = strtolower(trim($request->firstname)) . '.' . strtolower(trim($request->surname)) . '@hms.com';
+                $request->email = strtolower(trim($request->firstname)) . '.' . strtolower(trim($request->surname)) . '.' . rand(100000, 9999999) . '@hms.com';
             }
 
             if (!$request->password) {
