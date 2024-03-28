@@ -20,15 +20,18 @@ class Staff extends Model
         'status',
     ];
 
-    public function user(){
-        return $this->belongsTo(User::class,'user_id','id');
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 
-    public function specialization(){
-        return $this->belongsTo(Specialization::class,'specialization_id','id');
+    public function specialization()
+    {
+        return $this->belongsTo(Specialization::class, 'specialization_id', 'id');
     }
 
-    public function clinic(){
-        return $this->hasOne(Clinic::class);
+    public function clinic()
+    {
+        return $this->hasOne(Clinic::class, 'id', 'clinic_id');
     }
 }
