@@ -17,31 +17,35 @@ class Encounter extends Model
         'admission_request_id',
         'reasons_for_encounter',
         'notes',
-        'status'
     ];
 
-    public function labRequests(){
-        return $this->hasMany(LabRequest::class,'encounter_id','id');
+    public function labRequests()
+    {
+        return $this->hasMany(LabServiceRequest::class, 'encounter_id', 'id');
     }
 
-    public function doctor(){
+    public function doctor()
+    {
         return $this->belongsTo(User::class, 'doctor_id', 'id');
     }
 
-    public function productOrServiceRequest(){
-        return $this->belongsTo(ProductOrServiceRequest::class,'service_request_id','id');
+    public function productOrServiceRequest()
+    {
+        return $this->belongsTo(ProductOrServiceRequest::class, 'service_request_id', 'id');
     }
 
-    public function service(){
-        return $this->belongsTo(service::class, 'service_id','id');
+    public function service()
+    {
+        return $this->belongsTo(service::class, 'service_id', 'id');
     }
 
-    public function patient(){
-        return $this->belongsTo(patient::class, 'patient_id','id');
+    public function patient()
+    {
+        return $this->belongsTo(patient::class, 'patient_id', 'id');
     }
 
-    public function admission_request(){
-        return $this->hasOne(AdmissionRequest::class, 'admission_request_id', 'id');
+    public function admission_request()
+    {
+        return $this->hasOne(AdmissionRequest::class, 'id', 'admission_request_id');
     }
 }
-
