@@ -28,6 +28,39 @@ class DataEndpoint extends Controller
         }
     }
 
+    public function getFullStats()
+    {
+        try {
+            $patients  = patient::count();
+            $bookings = DoctorQueue::count();
+            $consultations = Encounter::count();
+            $hmos = Hmo::count();
+            $staff = Staff::count();
+            $nurses = User::where('is_admin', 22)->count();
+            $doctors = User::where('is_admin', 21)->count();
+            $admissions = AdmissionRequest::where('billed_by', '!=', null)->count();
+            $male_staff = Staff::where('gender', 'Male')->count();
+            $female_staff = Staff::where('gender', 'Female')->count();
+            $other_gender_staff = Staff::where('gender', 'Others')->count();
+            return response()->json(['status' => true, 'message' => 'Successfully retrived data', 'data' => [
+                'all_patients' => $patients,
+                'all_bookings' => $bookings,
+                'all_consultations' => $consultations,
+                'all_hmos' => $hmos,
+                'all_staff' => $staff,
+                'all_nurses' => $nurses,
+                'all_doctors' => $doctors,
+                'all_admissions' => $admissions,
+                'all_male_staff' => $male_staff,
+                'all_female_staff' => $female_staff,
+                'all_other_gender_staff' => $other_gender_staff,
+            ]]);
+        } catch (Exception $e) {
+            Log::error('Failed to get Facility Statistics: ' . $e->getMessage(), [$e]);
+            return response()->json(['status' => false, 'message' => 'Failed to get Facility Statistics'], 500);
+        }
+    }
+
     public function getAllPatients(Request $request)
     {
         try {
