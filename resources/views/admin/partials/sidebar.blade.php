@@ -19,7 +19,7 @@
                 <h4>{{ env('APP_NAME') }}</h4>
                 <div class="small font-weight-light pt-1">ver. {{ env('APP_VER') }}</div>
                 <hr>
-                <div class="small font-weight-light pt-1">{{appsettings()->site_abbreviation}}</div>
+                <div class="small font-weight-light pt-1">{{appsettings()->site_abbreviation ?? ''}}</div>
                 <hr>
             </a>
             <form class="d-flex align-items-center" action="#">
