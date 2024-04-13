@@ -8,11 +8,15 @@ use App\Models\ApplicationStatu;
 use App\Models\DoctorQueue;
 use App\Models\Encounter;
 use App\Models\Hmo;
+use App\Models\LabServiceRequest;
 use App\Models\patient;
+use App\Models\ProductOrServiceRequest;
+use App\Models\service;
 use App\Models\Staff;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class DataEndpoint extends Controller
@@ -59,6 +63,283 @@ class DataEndpoint extends Controller
             Log::error('Failed to get Facility Statistics: ' . $e->getMessage(), [$e]);
             return response()->json(['status' => false, 'message' => 'Failed to get Facility Statistics'], 500);
         }
+    }
+
+    public function getAgeDistribution()
+    {
+        // Retrieve all patients from the database
+        $patients = patient::all();
+
+        // Initialize an array to store the count of patients in each age group
+        $ageCounts = [
+            "0-2" => 0,
+            "3-5" => 0,
+            "6-12" => 0,
+            "13-18" => 0,
+            "18-35" => 0,
+            "36-55" => 0,
+            "55-64" => 0,
+            "65+" => 0
+        ];
+
+        // Calculate age distribution
+        foreach ($patients as $patient) {
+            // Calculate age
+            $dob = $patient->dob;
+            $dob = date_create($dob);
+            if ($dob instanceof \DateTime) {
+                $age = date_diff($dob, date_create('today'))->y;
+
+                // Determine age group
+                $ageGroup = $this->getAgeGroup($age);
+
+                // Increment count for the corresponding age group
+                if (array_key_exists($ageGroup, $ageCounts)) {
+                    $ageCounts[$ageGroup]++;
+                }
+            }
+        }
+
+        // Create JSON object
+        $jsonObject = [
+            "age_groups" => array_keys($ageCounts),
+            "counts" => array_values($ageCounts)
+        ];
+
+        // Return JSON response
+        return response()->json($jsonObject);
+    }
+
+    // Function to determine age group
+    private function getAgeGroup($age)
+    {
+        if ($age >= 0 && $age <= 2) {
+            return "0-2";
+        } elseif ($age >= 3 && $age <= 5) {
+            return "3-5";
+        } elseif ($age >= 6 && $age <= 12) {
+            return "6-12";
+        } elseif ($age >= 13 && $age <= 18) {
+            return "13-18";
+        } elseif ($age >= 18 && $age <= 35) {
+            return "18-35";
+        } elseif ($age >= 36 && $age <= 55) {
+            return "36-55";
+        } elseif ($age >= 55 && $age <= 64) {
+            return "55-64";
+        } else {
+            return "65+";
+        }
+    }
+
+
+    public function encountersPerMonth($year)
+    {
+        // Initialize an array to store the count of encounters per month
+        $encountersPerMonth = [];
+
+        // Loop through each month of the year
+        for ($month = 1; $month <= 12; $month++) {
+            // Count the number of encounters for the current month and year
+            $encounterCount = Encounter::whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)
+                ->count();
+
+            // Store the encounter count for the current month
+            $encountersPerMonth[$month] = $encounterCount;
+        }
+
+        // Return the encounter counts per month
+        return response()->json($encountersPerMonth);
+    }
+
+    public function hospitalizationsPerMonth($year)
+    {
+        // Initialize an array to store the count of hospitalizationssPerMonth
+        $hospitalizationssPerMonth = [];
+
+        // Loop through each month of the year
+        for ($month = 1; $month <= 12; $month++) {
+            // Count the number of encounters for the current month and year
+            $hospitalizationsCount = AdmissionRequest::whereYear('created_at', $year)
+                ->where('bed_id', '!=', null)
+                ->whereMonth('created_at', $month)
+                ->count();
+
+            $dischargeCount = AdmissionRequest::whereYear('created_at', $year)
+                ->where('bed_id', '!=', null)
+                // ->whereMonth('created_at', $month)
+                ->whereMonth('discharge_date', $month)
+                ->count();
+
+            // Store the hospitalizations count for the current month
+            $hospitalizationssPerMonth[$month]['admitted'] = $hospitalizationsCount;
+            $hospitalizationssPerMonth[$month]['discharged'] = $dischargeCount;
+        }
+
+        // Return the hospitalizations counts per month
+        return response()->json($hospitalizationssPerMonth);
+    }
+
+    public function investigationsPerMonth($year)
+    {
+        // Initialize an array to store the count of investigationsPerMonth
+        $investigationsPerMonth = [];
+
+        $investigation_services = service::where('category_id', env('INVESTGATION_CATEGORY_ID'))->get();
+
+        // Loop through each month of the year
+        for ($month = 1; $month <= 12; $month++) {
+            foreach ($investigation_services as $service) {
+                // Count the number of occurance for the current month and year
+                $investigationssCount = LabServiceRequest::whereYear('created_at', $year)
+                    ->where('service_id', $service->id)
+                    ->whereMonth('created_at', $month)
+                    ->count();
+                // Store the hospitalizations count for the current month
+                $investigationsPerMonth[$month][$service->service_name] = $investigationssCount;
+            }
+        }
+
+        // Return the hospitalizations counts per month
+        return response()->json($investigationsPerMonth);
+    }
+
+    public function incomePerMonth($year)
+    {
+        // Initialize an array to store the count of encounters per month
+        $incomePerMonth = [
+            1 => [
+                'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0
+            ],
+            2 => [
+                'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0
+            ],
+            3 => [
+                'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0
+            ],
+            4 => [
+                'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0
+            ],
+            5 => [
+                'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0
+            ],
+            6 => [
+                'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0
+            ],
+            7 => [
+                'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0
+            ],
+            8 => [
+                'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0
+            ],
+            9 => [
+                'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0
+            ],
+            10 => [
+                'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0
+            ],
+            11 => [
+                'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0
+            ],
+            12 => [
+                'consultations' => 0, 'investigations' => 0, 'admissions' => 0, 'nursing_services' => 0, 'misc_services' => 0
+            ]
+        ];
+
+        $bed_services = service::where('category_id', env('BED_SERVICE_CATGORY_ID'))->get()->pluck('id')->toArray();
+        $inves_services = service::where('category_id', env('INVESTGATION_CATEGORY_ID'))->get()->pluck('id')->toArray();
+        $consult_services = service::where('category_id', env('CONSULTATION_CATEGORY_ID'))->get()->pluck('id')->toArray();
+        $nursing_services = service::where('category_id', env('NUSRING_SERVICE_CATEGORY'))->get()->pluck('id')->toArray();
+        $misc_services = service::where('category_id', env('MISC_SERVICE_CATEGORY_ID'))->get()->pluck('id')->toArray();
+
+        // Fetch prices for the provided service IDs
+        $pricesPerMonth = ProductOrServiceRequest::whereIn('service_id', $inves_services)
+            ->whereYear('product_or_service_requests.created_at', $year)
+            ->join('payments', 'product_or_service_requests.payment_id', '=', 'payments.id')
+            ->select(
+                DB::raw('MONTH(payments.created_at) as month'),
+                DB::raw('YEAR(payments.created_at) as year'),
+                DB::raw('SUM(payments.total) as total_price')
+            )
+            ->groupBy(DB::raw('MONTH(payments.created_at)'), DB::raw('YEAR(payments.created_at)'))
+            ->get();
+
+        // Format the prices per month
+        foreach ($pricesPerMonth as $price) {
+            $incomePerMonth[$price->month]['investigations'] = $price->total_price;
+        }
+
+        // Fetch prices for the provided service IDs
+        $pricesPerMonth = ProductOrServiceRequest::whereIn('service_id', $bed_services)
+            ->whereYear('product_or_service_requests.created_at', $year)
+            ->join('payments', 'product_or_service_requests.payment_id', '=', 'payments.id')
+            ->select(
+                DB::raw('MONTH(payments.created_at) as month'),
+                DB::raw('YEAR(payments.created_at) as year'),
+                DB::raw('SUM(payments.total) as total_price')
+            )
+            ->groupBy(DB::raw('MONTH(payments.created_at)'), DB::raw('YEAR(payments.created_at)'))
+            ->get();
+
+        // Format the prices per month
+        foreach ($pricesPerMonth as $price) {
+            $incomePerMonth[$price->month]['admissions'] = $price->total_price;
+        }
+
+        // Fetch prices for the provided service IDs
+        $pricesPerMonth = ProductOrServiceRequest::whereIn('service_id', $nursing_services)
+            ->whereYear('product_or_service_requests.created_at', $year)
+            ->join('payments', 'product_or_service_requests.payment_id', '=', 'payments.id')
+            ->select(
+                DB::raw('MONTH(payments.created_at) as month'),
+                DB::raw('YEAR(payments.created_at) as year'),
+                DB::raw('SUM(payments.total) as total_price')
+            )
+            ->groupBy(DB::raw('MONTH(payments.created_at)'), DB::raw('YEAR(payments.created_at)'))
+            ->get();
+
+        // Format the prices per month
+        foreach ($pricesPerMonth as $price) {
+            $incomePerMonth[$price->month]['nursing_services'] = $price->total_price;
+        }
+
+        // Fetch prices for the provided service IDs
+        $pricesPerMonth = ProductOrServiceRequest::whereIn('service_id', $misc_services)
+            ->whereYear('product_or_service_requests.created_at', $year)
+            ->join('payments', 'product_or_service_requests.payment_id', '=', 'payments.id')
+            ->select(
+                DB::raw('MONTH(payments.created_at) as month'),
+                DB::raw('YEAR(payments.created_at) as year'),
+                DB::raw('SUM(payments.total) as total_price')
+            )
+            ->groupBy(DB::raw('MONTH(payments.created_at)'), DB::raw('YEAR(payments.created_at)'))
+            ->get();
+
+        // Format the prices per month
+        foreach ($pricesPerMonth as $price) {
+            $incomePerMonth[$price->month]['misc_services'] = $price->total_price;
+        }
+
+        // Fetch prices for the provided service IDs
+        $pricesPerMonth = ProductOrServiceRequest::whereIn('service_id', $consult_services)
+            ->whereYear('product_or_service_requests.created_at', $year)
+            ->join('payments', 'product_or_service_requests.payment_id', '=', 'payments.id')
+            ->select(
+                DB::raw('MONTH(payments.created_at) as month'),
+                DB::raw('YEAR(payments.created_at) as year'),
+                DB::raw('SUM(payments.total) as total_price')
+            )
+            ->groupBy(DB::raw('MONTH(payments.created_at)'), DB::raw('YEAR(payments.created_at)'))
+            ->get();
+
+        // Format the prices per month
+        foreach ($pricesPerMonth as $price) {
+            $incomePerMonth[$price->month]['consultations'] = $price->total_price;
+        }
+
+        // Return the prices per month
+        return response()->json($incomePerMonth);
     }
 
     public function getAllPatients(Request $request)
