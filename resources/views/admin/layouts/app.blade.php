@@ -21,7 +21,8 @@
     <!-- Layout styles -->
     <link rel="stylesheet" href="{{ asset('admin/assets/css/demo_1/style.css') }}" />
     <!-- End layout styles -->
-    <link rel="shortcut icon" href="{{ asset('admin/assets/images/favicon.png') }}" />
+    <link rel="shortcut icon" href="data:image/png;base64,{{(appsettings()->favicon) ?? '' }}" />
+    <link rel="icon" type="image/png" href="data:image/png;base64,{{(appsettings()->favicon) ?? '' }}">
     <link rel="stylesheet" href="{{ asset('css/selectisize.css') }}">
     <script src="{{ asset('js/app.js') }}"></script>
     <link rel="stylesheet" href="{{ asset('/plugins/dataT/datatables.min.css') }}">

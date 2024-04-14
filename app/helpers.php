@@ -178,7 +178,7 @@ function generateTransactionId()
 
 function appsettings()
 {
-    $app = ApplicationStatu::find(1);
+    $app = ApplicationStatu::first();
 
     // dd($app);
     return  $app;
@@ -189,15 +189,14 @@ function userfullname($id)
 {
 
     $user = User::find($id);
-    if($user){
+    if ($user) {
         $othername = ($user->othername) ? $user->othername : ' ';
         $fullname = $user->surname . ' ' . $user->firstname . ' ' . $othername;
 
         return  ucwords($fullname);
-    }else{
+    } else {
         return 'N/A';
     }
-    
 }
 
 
