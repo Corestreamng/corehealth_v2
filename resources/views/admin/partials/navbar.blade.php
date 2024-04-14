@@ -100,7 +100,7 @@
                 </div> --}}
             </li>
         </ul>
-        <ul class="navbar-nav navbar-nav-right">
+        {{-- <ul class="navbar-nav navbar-nav-right">
             <li class="nav-item nav-logout d-none d-md-block mr-3">
                 <a class="nav-link" href="#">Status</a>
             </li>
@@ -131,8 +131,8 @@
                     <i class="mdi mdi-home-circle"></i>
                 </a>
             </li>
-        </ul>
-        <ul class="navbar-nav ms-auto">
+        </ul> --}}
+        <ul class="navbar-nav ms-auto navbar-nav-right">
             <!-- Authentication Links -->
             @guest
                 @if (Route::has('login'))
@@ -150,7 +150,7 @@
                 <li class="nav-item dropdown">
                     <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button"
                         data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
-                        {{ Auth::user()->name }}
+                        {{ Auth::user()->firstname }} {{ Auth::user()->surname }}
                     </a>
 
                     <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
