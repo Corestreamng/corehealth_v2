@@ -3,7 +3,7 @@
         <li class="nav-item nav-profile border-bottom">
             <a href="#" class="nav-link flex-column">
                 <div class="nav-profile-image">
-                    <img src="{!! url('storage/image/user/'.$user->filename) !!}" alt="profile" />
+                    <img src="{!! url('storage/image/user/'.Auth::user()->filename) !!}" alt="profile" />
                     <!--change to offline or busy as needed-->
                 </div>
                 <div class="nav-profile-text d-flex ml-0 mb-3 flex-column">
@@ -15,21 +15,21 @@
         </li>
         <li class="nav-item pt-3">
             <a class="nav-link d-block" href="/">
-                <img class="sidebar-brand-logo" src="data:image/jpeg;base64,{{(appsettings()->logo) ?? '' }}" alt="Image" style="width: 80%" />
+                <img class="sidebar-brand-logo" src="data:image/jpeg;base64,{{(appsettings()->logo) ?? '' }}" alt="Image" style="width: 50%" />
                 <h4>{{ env('APP_NAME') }}</h4>
                 <div class="small font-weight-light pt-1">ver. {{ appsettings()->version ?? env('APP_VER') }}</div>
                 <hr>
                 <div class="small font-weight-light pt-1">{{ appsettings()->site_abbreviation ?? '' }}</div>
                 <hr>
             </a>
-            <form class="d-flex align-items-center" action="#">
+            {{-- <form class="d-flex align-items-center" action="#">
                 <div class="input-group">
                     <div class="input-group-prepend">
                         <i class="input-group-text border-0 mdi mdi-magnify"></i>
                     </div>
                     <input type="text" class="form-control border-0" placeholder="Search" />
                 </div>
-            </form>
+            </form> --}}
         </li>
         <li class="nav-item">
             <a class="nav-link" href="{{ route('home') }}">
