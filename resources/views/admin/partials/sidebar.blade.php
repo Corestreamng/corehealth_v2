@@ -263,24 +263,6 @@
                 </div>
             </li>
             <li class="nav-item">
-                <a class="nav-link" data-toggle="collapse" href="#services" aria-expanded="false"
-                    aria-controls="services">
-                    <i class="mdi mdi-crosshairs-gps menu-icon"></i>
-                    <span class="menu-title">Services Management</span>
-                    <i class="menu-arrow"></i>
-                </a>
-                <div class="collapse" id="services">
-                    <ul class="nav flex-column sub-menu">
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('services-category.index') }}">Categories</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('services.index') }}">Services</a>
-                        </li>
-                    </ul>
-                </div>
-            </li>
-            <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" href="#new_patient" aria-expanded="false"
                     aria-controls="new_patient">
                     <i class="mdi mdi-crosshairs-gps menu-icon"></i>
@@ -370,6 +352,24 @@
         @hasanyrole('SUPERADMIN|ADMIN|LAB SCIENTIST|RADIOLOGIST')
             <li class="pt-2 pb-1">
                 <span class="nav-item-head">LAB/ INVESTIGATIONS</span>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="collapse" href="#services" aria-expanded="false"
+                    aria-controls="services">
+                    <i class="mdi mdi-crosshairs-gps menu-icon"></i>
+                    <span class="menu-title">Services Management</span>
+                    <i class="menu-arrow"></i>
+                </a>
+                <div class="collapse" id="services">
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('services-category.index') }}">Categories</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('services.index') }}">Services</a>
+                        </li>
+                    </ul>
+                </div>
             </li>
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" href="#lab_queue" aria-expanded="false"
