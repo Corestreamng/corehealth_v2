@@ -402,6 +402,9 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('patient.index') }}">All Patients</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('patient.create') }}">New Registration</a>
+                        </li>
                     </ul>
                 </div>
             </li>
