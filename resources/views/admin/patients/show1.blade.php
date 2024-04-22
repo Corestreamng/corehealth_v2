@@ -71,7 +71,7 @@
                                 <th>Disability status:</th>
                                 <td>{{ $patient->disability == 1 ? 'Disabled' : 'None' }}</td>
                                 <th>Phone: </th>
-                                <td>{{($patient->phone_no)}}</td>
+                                <td>{{ $patient->phone_no }}</td>
                             </tr>
                             <tr>
                                 <th>Next Of Kin: </th>
@@ -322,7 +322,7 @@
                     @endif
                     <hr>
                     <h4>All services Rendered</h4>
-                    <a href="{{route('patient-services-rendered', $patient->id)}}" class="btn btn-primary">See Details</a>
+                    <a href="{{ route('patient-services-rendered', $patient->id) }}" class="btn btn-primary">See Details</a>
                     <hr>
                     <h4>Add Misc. Bills</h4>
                     <form action="{{ route('add-misc-bill') }}" method="post">
@@ -339,19 +339,21 @@
                             <tbody id="misc-bill-row">
                                 <tr>
                                     <td>
-                                        <input type="text" class="form-control" name="names[]" placeholder="Describe service rendered...">
+                                        <input type="text" class="form-control" name="names[]"
+                                            placeholder="Describe service rendered...">
                                     </td>
                                     <td>
                                         <input type="number" class="form-control" name="prices[]" min="1">
                                         <input type="hidden" name="patient_id" value="{{ $patient->id }}">
                                     </td>
-                                    <td><button type="button" onclick="removeMiscBillRow(this)" class="btn btn-danger btn-sm"><i
-                                                class="fa fa-times"></i></button></td>
+                                    <td><button type="button" onclick="removeMiscBillRow(this)"
+                                            class="btn btn-danger btn-sm"><i class="fa fa-times"></i></button></td>
                                 </tr>
                             </tbody>
                         </table>
 
-                        <button type="submit" class="btn btn-primary" onclick="return confirm('Are you sure you wish to Save these Misc. bills?')">Save</button>
+                        <button type="submit" class="btn btn-primary"
+                            onclick="return confirm('Are you sure you wish to Save these Misc. bills?')">Save</button>
                     </form>
                     <hr>
                     <h4>Requested Misc. Bill Items</h4>
@@ -359,8 +361,7 @@
                         @csrf
                         <input type="hidden" name="patient_id" id="" value="{{ $patient->id }}">
                         <input type="hidden" name="patient_user_id" id="" value="{{ $patient->user_id }}">
-                        <table class="table table-sm table-bordered table-striped" style="width: 100%"
-                            id="misc_bill_bills">
+                        <table class="table table-sm table-bordered table-striped" style="width: 100%" id="misc_bill_bills">
                             <thead>
                                 <th>#</th>
                                 <th>Select</th>
@@ -383,8 +384,7 @@
                     </form>
                     <hr>
                     <h4>All Previous Misc. Bill Items</h4>
-                    <table class="table table-sm table-bordered table-striped" style="width: 100%"
-                        id="misc_bill_bills_hist">
+                    <table class="table table-sm table-bordered table-striped" style="width: 100%" id="misc_bill_bills_hist">
                         <thead>
                             <th>#</th>
                             <th>Service</th>
@@ -394,7 +394,8 @@
                     <hr>
                     <h4>Pending Paymnets</h4>
                     <div class="table-responsive">
-                        <table id="pending-paymnet-list" class="table table-sm table-bordered table-striped" style="width: 100%">
+                        <table id="pending-paymnet-list" class="table table-sm table-bordered table-striped"
+                            style="width: 100%">
                             <thead>
                                 <tr>
                                     <th>SN</th>
@@ -978,7 +979,7 @@
             <div class="col-12">
                 <div class="form-group">
                     <div class="col-md-6">
-                        <a href="{{ route('staff.index') }}" class="btn btn-danger"><i class="fa fa-close"></i> Back
+                        <a href="{{ route('patient.index') }}" class="btn btn-danger"><i class="fa fa-close"></i> Back
                         </a>
                     </div>
                 </div>
@@ -996,7 +997,7 @@
                         <h5 class="modal-title" id="investResModalLabel">Enter Result (<span
                                 id="invest_res_service_name"></span>)</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
+                            <span aria-hidden="true">&times; <small>Press ESC to exit</small></span>
                         </button>
                     </div>
                     <div class="modal-body">
@@ -1018,6 +1019,71 @@
         </div>
     </div>
 
+    <div class="modal fade" id="investResViewModal" tabindex="-1" role="dialog"
+        aria-labelledby="investResViewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="investResViewModalLabel">View Result (<span
+                            class="invest_res_service_name_view"></span>)</h5>
+
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times; <small>Press ESC to exit</small></span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    @php
+                        $sett = appsettings();
+                    @endphp
+                    <div id="resultViewTable">
+                        <table class="table table-bordered">
+                            <tr>
+                                <td style="max-width: 20%">
+                                    <img
+                                        src="data:image/jpeg;base64,{{ $sett->logo ?? '' }}" alt="Image"
+                                        style="width: 100px" />
+
+                                </td>
+                                <td colspan="3">
+                                    {{$sett->site_name}}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2">{{$sett->contact_address}}</td>
+                                <td>{{$sett->contact_phones}}</td>
+                                <td>{{$sett->contact_emails}}</td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" id="invest_name">
+
+                                </td>
+                                <td>
+                                    <span class="invest_res_service_name_view"></span>
+                                </td>
+                                <td>
+                                    Sample Date :<span id="res_sample_date"></span>
+                                    <br>
+                                    Result Date: <span id="res_result_date"></span>
+                                    <br>
+                                    Result By: <span id="res_result_by"></span>
+                                </td>
+                            </tr>
+                        </table>
+                        <p id="invest_res">
+
+                        </p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    {{-- <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button> --}}
+                    <button type="submit" onclick="PrintElem('resultViewTable')" class="btn btn-primary">Print</button>
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade" id="nursingNoteModal" tabindex="-1" role="dialog" aria-labelledby="nursingNoteModal"
         aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
@@ -1026,7 +1092,7 @@
                     <h5 class="modal-title" id="investResModalLabel">Nursing Note Result (<span
                             id="note_type_name_"></span>)</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
+                        <span aria-hidden="true">&times; <small>Press ESC to exit</small></span>
                     </button>
                 </div>
                 <div class="modal-body">
@@ -1051,7 +1117,7 @@
                     <div class="modal-header">
                         <h5 class="modal-title">Assign Bill </h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
+                            <span aria-hidden="true">&times; <small>Press ESC to exit</small></span>
                         </button>
                     </div>
                     <div class="modal-body">
@@ -1091,7 +1157,7 @@
                     <div class="modal-header">
                         <h5 class="modal-title">Assign Bed </h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
+                            <span aria-hidden="true">&times; <small>Press ESC to exit</small></span>
                         </button>
                     </div>
                     <div class="modal-body">
@@ -1631,7 +1697,7 @@
                         }
                     }
                 });
-            }else{
+            } else {
                 $('#consult_presc_res').html('');
             }
         }
@@ -1827,7 +1893,7 @@
                         }
                     }
                 });
-            }else{
+            } else {
                 $('#consult_invest_res').html('');
             }
         }
@@ -1842,6 +1908,45 @@
 
         function copyResTemplateToField() {
             $('#invest_res_template_submited').val($('#invest_res_template').html());
+            return true;
+        }
+    </script>
+    <script>
+        function setResViewInModal(obj) {
+            let res_obj = JSON.parse($(obj).attr('data-result-obj'));
+            $('.invest_res_service_name_view').text($(obj).attr('data-service-name'));
+            $('#invest_res').html(res_obj.result);
+            $('#res_sample_date').html(res_obj.sample_date);
+            $('#res_result_date').html(res_obj.result_date);
+            $('#res_result_by').html(res_obj.results_person.firstname +' '+ res_obj.results_person.surname);
+            $('#invest_name').text(res_obj.patient.user.firstname + ' ' + res_obj.patient.user.surname +'('+ res_obj.patient.file_no+')');
+            $('#investResViewModal').modal('show');
+        }
+    </script>
+    <script>
+        function PrintElem(elem) {
+            var mywindow = window.open('', 'PRINT', 'height=600,width=800');
+
+            mywindow.document.write('<html><head><title>' + document.title + '</title>');
+            mywindow.document.write(
+                `<link rel="stylesheet" href="{{ asset('admin/assets/vendors/css/vendor.bundle.base.css') }}" />`);
+
+            mywindow.document.write(
+                `<link rel="stylesheet" href=" {{ asset('admin/assets/css/demo_1/style.css') }}" />`);
+            mywindow.document.write('</head><body>');
+            mywindow.document.write(document.getElementById(elem).innerHTML);
+            mywindow.document.write('</body></html>');
+
+            mywindow.document.close(); // IE >= 10
+
+            // Wait for the window and its contents to load
+            mywindow.onload = function() {
+                mywindow.focus(); // Set focus for IE
+                mywindow.print();
+                // Optional: Uncomment the line below to close the window after printing
+                // mywindow.close();
+            };
+
             return true;
         }
     </script>
@@ -2083,7 +2188,7 @@
     </script>
 
     <script>
-        function addMiscBillRow(){
+        function addMiscBillRow() {
             let mrkup = `
             <tr>
                 <td>
@@ -2100,49 +2205,48 @@
             $('#misc-bill-row').append(mrkup);
         }
 
-        function removeMiscBillRow(obj){
+        function removeMiscBillRow(obj) {
             $(obj).closest('tr').remove();
         }
-
     </script>
 
-<script>
-    $(function() {
-        $('#pending-paymnet-list').DataTable({
-            "dom": 'Bfrtip',
-            "iDisplayLength": 50,
-            "lengthMenu": [
-                [10, 25, 50, 100, -1],
-                [10, 25, 50, 100, "All"]
-            ],
-            "buttons": ['pageLength', 'copy', 'excel', 'pdf', 'print', 'colvis'],
-            "processing": true,
-            "serverSide": true,
-            "ajax": {
-                "url": "{{ route('product-services-requesters-list',$patient->user_id) }}",
-                "type": "GET"
-            },
-            "columns": [{
-                    data: "DT_RowIndex",
-                    name: "DT_RowIndex"
+    <script>
+        $(function() {
+            $('#pending-paymnet-list').DataTable({
+                "dom": 'Bfrtip',
+                "iDisplayLength": 50,
+                "lengthMenu": [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, "All"]
+                ],
+                "buttons": ['pageLength', 'copy', 'excel', 'pdf', 'print', 'colvis'],
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{ route('product-services-requesters-list', $patient->user_id) }}",
+                    "type": "GET"
                 },
-                {
-                    data: "service_id",
-                    name: "service_id"
-                },
-                {
-                    data: "product_id",
-                    name: "product_id"
-                },
-                {
-                    data: "show",
-                    name: "show"
-                },
-            ],
-            "paging": true
+                "columns": [{
+                        data: "DT_RowIndex",
+                        name: "DT_RowIndex"
+                    },
+                    {
+                        data: "service_id",
+                        name: "service_id"
+                    },
+                    {
+                        data: "product_id",
+                        name: "product_id"
+                    },
+                    {
+                        data: "show",
+                        name: "show"
+                    },
+                ],
+                "paging": true
+            });
         });
-    });
-</script>
+    </script>
 
     @include('admin.partials.vitals-scripts')
 @endsection

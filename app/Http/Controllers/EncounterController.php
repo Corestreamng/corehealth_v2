@@ -301,7 +301,7 @@ class EncounterController extends Controller
 
     public function investigationHistoryList($patient_id)
     {
-        $his = LabServiceRequest::with(['service', 'encounter', 'patient', 'productOrServiceRequest', 'doctor', 'biller'])
+        $his = LabServiceRequest::with(['service', 'encounter', 'patient', 'patient.user', 'productOrServiceRequest', 'doctor', 'biller', 'results_person'])
             ->where('status', '>', 0)->where('patient_id', $patient_id)->orderBy('created_at', 'DESC')->get();
         // dd($pc);
         return Datatables::of($his)
@@ -319,11 +319,19 @@ class EncounterController extends Controller
                 return $str;
             })
             ->editColumn('result', function ($his) {
-                $str = "<span class = 'badge badge-success'>" . (($his->service) ? $his->service->service_name : 'N/A') . '</span><hr>';
-                $str .= $his->result ?? 'N/A';
+                // $str = "<span class = 'badge badge-success'>" . (($his->service) ? $his->service->service_name : 'N/A') . '</span><hr>';
+                // $str .= $his->result ?? 'N/A';
+
+                $str = "
+                    <hr>
+                    <button type='button' class='btn btn-primary' onclick='setResViewInModal(this)' data-service-name = '" . $his->service->service_name . "' data-result = '" . htmlspecialchars($his->result) . " 'data-result-obj = '" . htmlspecialchars($his) . "'>
+                        Print Result
+                    </button>";
 
                 return $str;
+                return "hhh";
             })
+
             ->rawColumns(['created_at', 'result'])
             ->make(true);
     }
