@@ -7,6 +7,23 @@
 @endif
 @section('subpage_name', 'New Encounter')
 @section('content')
+    <style>
+        /* CSS to add a blue outline to all radio buttons and checkboxes */
+        input[type="radio"],
+        input[type="checkbox"] {
+            outline: 2px solid blue !important;
+            /* Blue outline with 2px thickness */
+            outline-offset: 2px !important;
+            /* Optional: offset the outline from the border */
+        }
+
+        /* Additional styles for better visibility and interaction */
+        input[type="radio"]:focus,
+        input[type="checkbox"]:focus {
+            outline-width: 3px !important;
+            /* Thicker outline on focus for better accessibility */
+        }
+    </style>
     <ul class="nav nav-tabs" id="myTab" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="patient_data_tab" data-bs-toggle="tab" data-bs-target="#patient_data"
@@ -117,7 +134,7 @@
                                     <th>Disability status:</th>
                                     <td>{{ $patient->disability == 1 ? 'Disabled' : 'None' }}</td>
                                     <th>Phone: </th>
-                                    <td>{{($patient->phone_no)}}</td>
+                                    <td>{{ $patient->phone_no }}</td>
                                 </tr>
                                 <tr>
                                     <th>Next Of Kin: </th>
@@ -151,7 +168,8 @@
                                     <th>Ward</th>
                                     <td>{{ $admission_request->bed ? $admission_request->bed->ward : 'N/A' }},
                                         <b>Unit:</b>
-                                        {{ $admission_request->bed ? $admission_request->bed->unit : 'N/A' }}</td>
+                                        {{ $admission_request->bed ? $admission_request->bed->unit : 'N/A' }}
+                                    </td>
                                 </tr>
                             </table>
 
@@ -656,18 +674,66 @@
                         <input type="hidden" value="{{ $req_entry->service_id ?? 'ward_round' }}"
                             name="req_entry_service_id" required>
                         <input type="hidden" value="{{ $req_entry->id ?? 'ward_round' }}" name="req_entry_id">
-                        <input type="hidden" value="{{ request()->get('patient_id') }}" name="patient_id">
+                        <input type="hidden" value="{{ request()->get('patient_id') }}" name="patient_id"
+                            id="encounter_patient_id__">
                         <input type="hidden" value="{{ request()->get('queue_id') ?? 'ward_round' }}" name="queue_id">
-                        <input type="hidden" id="encounter_id__" name="encounter_id" value="{{$encounter->id}}" required>
+                        <input type="hidden" id="encounter_id__" name="encounter_id" value="{{ $encounter->id }}"
+                            required>
                         @if (request()->get('admission_req_id') != '')
                             <input type="hidden" value="{{ request()->get('admission_req_id') }}" name="queue_id">
                         @endif
-                        {{-- <select name="reasons_for_encounter" id="reasons_for_encounter" class="form-control" multiple>
-                            <option value="">--select reason--</option>
-                        </select> --}}
+                        <div class="form-group">
+                            <div class="container">
+                                {{-- {!!generateForm($formdata)!!} --}}
+                                <div class="d-flex justify-content-between">
+                                    <h5>Forms/Profiles</h5>
+                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                                        data-bs-target="#profileModal"> <span class="fas fa-edit"></span>
+                                        Fill New patient Profile
+                                    </button>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <th>Form Name</th>
+                                            <th>Form Data</th>
+                                            <th>Filled By</th>
+                                            <th>Date</th>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+
+                            <label for="reasons_for_encounter">Select ICPC -2 Reason(s) for Encounter(required)</label>
+                            <select name="reasons_for_encounter[]" id="reasons_for_encounter" class="text-lg"
+                                multiple="multiple" required style="width: 100%; display:block;">
+                                @foreach ($reasons_for_encounter_cat_list as $reason_cat)
+                                    <optgroup label="{{ $reason_cat->category }}">
+                                        @foreach ($reasons_for_encounter_sub_cat_list as $reason_sub_cat)
+                                            @if ($reason_sub_cat->category == $reason_cat->category)
+                                                <option disabled style="font-weight: bold;">
+                                                    {{ $reason_sub_cat->sub_category }}</option>
+                                                @foreach ($reasons_for_encounter_list as $reason_item)
+                                                    @if ($reason_item->category == $reason_cat->category && $reason_item->sub_category == $reason_sub_cat->sub_category)
+                                                        <option
+                                                            value="{{ $reason_item->code }}-{{ $reason_item->name }}">
+                                                            &emsp;{{ $reason_item->code }} {{ $reason_item->name }}
+                                                        </option>
+                                                    @endif
+                                                @endforeach
+                                            @endif
+                                        @endforeach
+                                    </optgroup>
+                                @endforeach
+                            </select>
+                        </div>
+                        <hr>
                         <div>
                             <i class="fa fa-save"></i><span id="autosave_status_text"> Auto Save Enabled...</span>
-                            <textarea name="doctor_diagnosis" id="doctor_diagnosis_text" class="form-control classic-editor2">{{$encounter->notes}}</textarea>
+                            <textarea name="doctor_diagnosis" id="doctor_diagnosis_text" class="form-control classic-editor2">{{ $encounter->notes }}</textarea>
                         </div>
 
                         <br><button type="button" onclick="switch_tab(event,'nursing_notes_tab')"
@@ -768,15 +834,18 @@
                         @endif
                         <p>
                             <i>
-                                Before saving, please ensure that all your entries are correct and as intended. if the save button does not work/respond,
-                            you most likely forgot to type any notes in the notes tab or have blank dosage fields in the prescription tab.
+                                Before saving, please ensure that all your entries are correct and as intended. if the save
+                                button does not work/respond,
+                                you most likely forgot to type any notes in the notes tab or have blank dosage fields in the
+                                prescription tab.
                             </i>
                         </p>
                         <br><button type="button" onclick="switch_tab(event,'prescription_tab')"
                             class="btn btn-secondary mr-2">
                             Prev
                         </button>
-                        <button type="submit" class="btn btn-primary mr-2" onclick="return confirm('Are you sure?')"> Save </button>
+                        <button type="submit" class="btn btn-primary mr-2" onclick="return confirm('Are you sure?')">
+                            Save </button>
                         <a href="{{ route('encounters.index') }}"
                             onclick="return confirm('Are you sure you wish to exit? Changes are yet to be saved')"
                             class="btn btn-light">Exit</a>
@@ -784,6 +853,44 @@
                 </div>
             </div>
         </form>
+    </div>
+    <!--Profile / Form  Modal -->
+    <div class="modal fade" id="profileModal" tabindex="-1" aria-labelledby="profileModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="profileModalLabel">Fill Profile / Form</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-10">
+                                    <label for="form_type">Form Type</label>
+                                    <select id="form_type" class="form-control">
+                                        <option value="">--select form--</option>
+                                        <option value="test">Test</option>
+                                        <option value="anc">ANC</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <button onclick="getForm()" class="btn btn-primary mt-4">Get Form</button>
+                                </div>
+                            </div>
+                            <hr>
+                            <form action="{{ route('patient-form.store') }}" method="post" id="patient_form_form">
+
+
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="modal fade" id="nursingNoteModal" tabindex="-1" role="dialog" aria-labelledby="nursingNoteModal"
         aria-hidden="true">
@@ -813,6 +920,45 @@
 @section('scripts')
     <script src="{{ asset('/plugins/dataT/datatables.min.js') }}" defer></script>
     <script src="{{ asset('plugins/ckeditor/ckeditor5/ckeditor.js') }}"></script>
+
+    <script>
+        $(function() {
+            $("#reasons_for_encounter").select2();
+        });
+    </script>
+    <script>
+        function getForm() {
+            let form_ = $('#patient_form_form');
+            let form_id = $('#form_type').val();
+            let encounter_id = $('#encounter_id__').val();
+            let patient_id = $('#encounter_patient_id__').val();
+            if (form_id != '') {
+                getformreq = $.ajax({
+                    type: 'GET',
+                    url: "{{ route('patient-form.create') }}",
+                    data: {
+                        form_id: form_id,
+                    },
+                    success: function(data) {
+                        console.log(data);
+                        form_.html(data.formdata);
+                        mar = `
+                            <input type="hidden" name="form_id" value="${data.form_id}">
+                            <input type="hidden" name="patient_id" value="${patient_id}">
+                            <input type="hidden" name="encounter_id" value="${encounter_id}">
+                            <button type="submit" class="btn btn-primary">Save</button>
+                        `;
+                        form_.append(mar);
+                        form_.append(`{{ csrf_field() }}`);
+                    },
+                    error: function(x, y, z) {
+                        console.log(x, y, z);
+                        form_.html('Sorry, Failed to obtain form, please try again later');
+                    }
+                });
+            }
+        }
+    </script>
     <script>
         // ClassicEditor
         //     .create(document.querySelector('.classic-editor'), {
@@ -874,7 +1020,7 @@
             let notes = $('.ck-editor__editable:last').text();
             let encounter_id = $('#encounter_id__').val();
             let autosavesatustext = $('#autosave_status_text');
-            if(notes != ''){
+            if (notes != '') {
                 notes = $('.ck-editor__editable:last').html();
                 autosavesatustext.text('Autosaving...');
                 autosavereq = $.ajax({
@@ -884,17 +1030,17 @@
                     },
                     url: "{{ route('auto-save-encounter-note') }}",
                     data: {
-                        patient_id: "{{request()->get('patient_id')}}",
+                        patient_id: "{{ request()->get('patient_id') }}",
                         notes: notes,
-                        encounter_id:encounter_id
+                        encounter_id: encounter_id
                     },
                     success: function(data) {
                         console.log(data);
                         autosavesatustext.text('Autosaved')
 
                     },
-                    error: function(x,y,z){
-                        console.log(x,y,z);
+                    error: function(x, y, z) {
+                        console.log(x, y, z);
                         autosavesatustext.text('Autosave failed')
                     }
                 });
@@ -1105,7 +1251,7 @@
                         }
                     }
                 });
-            }else{
+            } else {
                 $('#consult_presc_res').html('');
             }
         }
@@ -1175,7 +1321,7 @@
                         }
                     }
                 });
-            }else{
+            } else {
                 $('#consult_invest_res').html('');
             }
         }

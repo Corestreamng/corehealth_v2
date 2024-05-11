@@ -23,10 +23,11 @@
     <!-- End layout styles -->
     <link rel="shortcut icon" href="data:image/png;base64,{{(appsettings()->favicon) ?? '' }}" />
     <link rel="icon" type="image/png" href="data:image/png;base64,{{(appsettings()->favicon) ?? '' }}">
-    <link rel="stylesheet" href="{{ asset('css/selectisize.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/select2.min.css') }}">
     <script src="{{ asset('js/app.js') }}"></script>
     <link rel="stylesheet" href="{{ asset('/plugins/dataT/datatables.min.css') }}">
     <script src="{{ asset('plugins/chartjs/Chart.js') }}"></script>
+
     <style>
         .ck-editor__editable_inline {
             min-height: 200px;
@@ -315,6 +316,11 @@
     <!-- container-scroller -->
     <!-- plugins:js -->
     <script src="{{ asset('admin/assets/vendors/js/vendor.bundle.base.js') }}"></script>
+    <script src="{{ asset('assets/js/select2.min.js') }}"></script>
+    <script>
+        $('.select2').select2();
+    </script>
+
     {{-- <script src="admin/assets/vendors/chart.js/Chart.min.js"></script> --}}
     @yield('scripts')
     <!-- endinject -->

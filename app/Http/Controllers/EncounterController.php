@@ -13,6 +13,7 @@ use App\Models\NursingNoteType;
 use App\Models\patient;
 use App\Models\ProductOrServiceRequest;
 use App\Models\ProductRequest;
+use App\Models\ReasonForEncounter;
 use App\Models\Staff;
 use App\Models\User;
 use Carbon\Carbon;
@@ -508,13 +509,15 @@ class EncounterController extends Controller
             })
             ->editColumn('notes', function ($hist) {
                 $str = '';
-                $reasons_for_encounter = json_decode($hist->reasons_for_encounter);
-                if ($reasons_for_encounter != '') {
-                    $str .= '<h5>Reasons for Encounter</h5>';
+                if ($hist->reasons_for_encounter != '') {
+                    $reasons_for_encounter = explode(',', $hist->reasons_for_encounter);
+                    $str .= '<h6>Reason(s) for Encounter(ICPC -2 )</h6>';
+                    $str .= '<div class="row">';
                     foreach ($reasons_for_encounter as $reason) {
-                        $str .= "<span class='badge badge-success m-2'>$reason</span>";
+                        $str .= "<span class='badge badge-secondary m-1 col-10'>$reason</span>";
                     }
-                    $str .= '<br>';
+                    $str .= '</div>';
+                    $str .= '<hr>';
                 }
 
                 return $str .= $hist->notes;
@@ -559,6 +562,12 @@ class EncounterController extends Controller
             $req_entry = ProductOrServiceRequest::find(request()->get('req_entry_id'));
             $admission_exists = AdmissionRequest::where('patient_id', request()->get('patient_id'))->where('discharged', 0)->first();
             $queue_id = $request->get('queue_id');
+
+            $reasons_for_encounter_list = ReasonForEncounter::all();
+            $reasons_for_encounter_cat_list = ReasonForEncounter::distinct()->get(['category']);
+            $reasons_for_encounter_sub_cat_list = ReasonForEncounter::distinct()->get(['sub_category', 'category']);
+
+            // dd($reasons_for_encounter_cat_list);
 
             $encounter = Encounter::where('doctor_id', $doctor->id)->where('patient_id', $patient->id)->where('completed', false)->first();
 
@@ -648,6 +657,9 @@ class EncounterController extends Controller
                         'others_record_template' => $others_record_template,
                         'admission_exists_' => $admission_exists_,
                         'encounter' => $encounter,
+                        'reasons_for_encounter_list' => $reasons_for_encounter_list,
+                        'reasons_for_encounter_cat_list' => $reasons_for_encounter_cat_list,
+                        'reasons_for_encounter_sub_cat_list' => $reasons_for_encounter_sub_cat_list,
                     ]);
                 } else {
                     return view('admin.doctors.new_encounter')->with([
@@ -657,6 +669,9 @@ class EncounterController extends Controller
                         'req_entry' => $req_entry,
                         'admission_exists_' => $admission_exists_,
                         'encounter' => $encounter,
+                        'reasons_for_encounter_list' => $reasons_for_encounter_list,
+                        'reasons_for_encounter_cat_list' => $reasons_for_encounter_cat_list,
+                        'reasons_for_encounter_sub_cat_list' => $reasons_for_encounter_sub_cat_list,
                     ]);
                 }
             }
@@ -694,6 +709,7 @@ class EncounterController extends Controller
                 'queue_id' => 'required',
                 'end_consultation' => 'nullable',
                 'encounter_id' => 'required',
+                'reasons_for_encounter' => 'required'
             ]);
 
             if (isset($request->consult_presc_id) && isset($request->consult_presc_dose)) {
@@ -726,11 +742,11 @@ class EncounterController extends Controller
             }
             $encounter->doctor_id = Auth::id();
             $encounter->patient_id = $request->patient_id;
-            $encounter->reasons_for_encounter = null;
+            $encounter->reasons_for_encounter = implode(',', $request->reasons_for_encounter);
             $encounter->notes = $request->doctor_diagnosis;
             $encounter->completed = true;
             $encounter->update();
-
+            // dd($encounter);
             if (isset($request->consult_invest_id) && count($request->consult_invest_id) > 0) {
                 for ($r = 0; $r < count($request->consult_invest_id); ++$r) {
                     $invest = new LabServiceRequest();

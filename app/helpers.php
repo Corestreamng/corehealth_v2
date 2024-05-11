@@ -9,12 +9,72 @@ use App\Models\ModeOfPayment;
 use App\Models\BudgetYear;
 use App\Models\Dependant;
 use App\Models\StoreStock;
+use Illuminate\Support\Facades\Lang;
 
 const NAIRA_CODE = '₦';
 const REFERENCE_RANDOM_NUMBER_LENGTH = 6;
 const REFERENCE_FILE_NUMBER_LENGTH = 4;
 const CASH_TRANSACTION_NUMBER_LENGTH = 4;
 
+function generateForm($formData)
+{
+    $html = '';
+
+    foreach ($formData as $data) {
+        $html .= '<div class="form-group">';
+        $html .= '<label class="form-label">' . $data->name . '</label>';
+
+        if ($data->type == 'text') {
+            $html .= '<input type="text" class="form-control form-control-sm" name="' . $data->label . '" value="' . old($data->label) . '" ' . ($data->is_required == 'required' ? 'required' : '') . '>';
+        } elseif ($data->type == 'textarea') {
+            $html .= '<textarea class="form-control form-control-sm" name="' . $data->label . '" ' . ($data->is_required == 'required' ? 'required' : '') . '>' . old($data->label) . '</textarea>';
+        } elseif ($data->type == 'select') {
+            $html .= '<select class="form-control form-control-sm" name="' . $data->label . '" ' . ($data->is_required == 'required' ? 'required' : '') . '>';
+            $html .= '<option value="">Select One</option>';
+            foreach ($data->options as $item) {
+                $html .= '<option value="' . $item . '" ' . (($item == old($data->label)) ? 'selected' : '') . '>' . $item . '</option>';
+            }
+            $html .= '</select>';
+        } elseif ($data->type == 'checkbox') {
+            foreach ($data->options as $option) {
+                $html .= '<div class="">';
+                $html .= '<input class="form-check-input" name="' . $data->label . '[]" type="checkbox" value="' . $option . '" id="' . $data->label . '_' . titleToKey($option) . '">';
+                $html .= '<label class="form-check-label" for="' . $data->label . '_' . titleToKey($option) . '">' . $option;
+                $html .= '</label>';
+                $html .= '</div>';
+            }
+        } elseif ($data->type == 'radio') {
+            foreach ($data->options as $option) {
+                $html .= '<div class="">';
+                $html .= '<input class="form-check-input" name="' . $data->label . '" type="radio" value="' . $option . '" id="' . $data->label . '_' . titleToKey($option) . '" ' . (($option == old($data->label) ? 'checked' : '')) . '>';
+                $html .= '<label class="form-check-label" for="' . $data->label . '_' . titleToKey($option) . '">' . $option;
+                $html .= '</label>';
+                $html .= '</div>';
+            }
+        } elseif ($data->type == 'file') {
+            $html .= '<input type="file" class="form-control form-control-sm custom-input-field" name="' . $data->label . '" ' . ($data->is_required == 'required' ? 'required' : '') . ' accept="' . implode(',', array_map(function ($ext) {
+                return '.' . $ext;
+            }, explode(',', $data->extensions))) . '">';
+            $html .= '<pre class="text--base mt-1">Supported mimes: ' . $data->extensions . '</pre>';
+        }
+
+        $html .= '</div>';
+    }
+
+    return $html;
+}
+
+
+function keyToTitle($text)
+{
+    return ucfirst(preg_replace("/[^A-Za-z0-9 ]/", ' ', $text));
+}
+
+
+function titleToKey($text)
+{
+    return strtolower(str_replace(' ', '_', $text));
+}
 
 function generate_invoice_no()
 {
@@ -41,7 +101,7 @@ function toMoney($val, $symbol = '₦', $r = 2)
     $t = ',';
     $sign = ($n < 0) ? '-' : '';
     $i = $n = number_format(abs($n), $r);
-    $j = (($j = $i . length) > 3) ? $j % 3 : 0;
+    $j = (($j = strlen($i)) > 3) ? $j % 3 : 0;
 
     return  $symbol . $sign . ($j ? substr($i, 0, $j) + $t : '') . preg_replace('/(\d{3})(?=\d)/', "$1" + $t, substr($i, $j));
 }
@@ -256,12 +316,12 @@ function generateCashPaymentTransaction()
 }
 
 
-function getLabId($id)
-{
-    $getLab = LabService::find($id);
-    $getLab_id = $getLab->lab_id;
-    return $getLab_id;
-}
+// function getLabId($id)
+// {
+//     $getLab = LabService::find($id);
+//     $getLab_id = $getLab->lab_id;
+//     return $getLab_id;
+// }
 
 function showFileNumber($id)
 {
