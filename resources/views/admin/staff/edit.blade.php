@@ -238,7 +238,7 @@
                     <div class="">
                         {!! Form::select('roles[]', $roles, $userRole, [
                             'id' => 'roles',
-                            'class' => 'form-control ',
+                            'class' => 'form-control select2',
                             'multiple',
                             'style' => 'width: 100%;',
                             'data-toggle' => '',
@@ -261,7 +261,7 @@
                     <label for="inputPassword3" class="col-md-2 control-label">Permissions</label>
                     <div class="">
                         {!! Form::select('permissions[]', $permissions, $userPermission, [
-                            'class' => 'form-control ',
+                            'class' => 'form-control select2',
                             'multiple',
                             'style' => 'width: 100%;',
                             'data-toggle' => '',

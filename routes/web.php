@@ -33,6 +33,8 @@ use App\Http\Controllers\StoreController;
 use App\Http\Controllers\StoreStockController;
 use App\Http\Controllers\VitalSignController;
 use App\Http\Controllers\MessagesController;
+use App\Http\Controllers\PatientProfileController;
+use App\Models\PatientProfile;
 use App\Models\Staff;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -170,6 +172,12 @@ Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
         Route::resource('services-category', ServiceCategoryController::class);
         Route::get('services-category-list', [ServiceCategoryController::class, 'listServiceCategories'])->name('services-category-list');
+    });
+
+    Route::group(['middleware' => ['auth']], function () {
+        // Creating and Listing patient forms
+        Route::resource('patient-form', PatientProfileController::class);
+        Route::get('patient-form-list/{patient_id}', [PatientProfileController::class, 'listPatientForm'])->name('patient-form-list');
     });
 
     Route::group(['middleware' => ['auth']], function () {
