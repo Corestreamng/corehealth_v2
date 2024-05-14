@@ -92,7 +92,7 @@
                         <label for="is_admin" class=" control-label">Specialization</label>
 
                         <div class="">
-                            {!! Form::select('specializations', $specializations, ($user->staff_profile->specialization_id) ? ($user->staff_profile->specialization_id) : null , ['id' => 'specializations', 'name' => 'specialization', 'class' => 'form-control select2', 'placeholder' => 'Pick a value']) !!}
+                            {!! Form::select('specializations', $specializations, ($user->staff_profile) ? ($user->staff_profile->specialization_id) : null , ['id' => 'specializations', 'name' => 'specialization', 'class' => 'form-control select2', 'placeholder' => 'Pick a value']) !!}
                         </div>
                     </div>
 

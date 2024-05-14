@@ -14,6 +14,7 @@
             outline: 2px solid blue !important;
             /* Blue outline with 2px thickness */
             outline-offset: 2px !important;
+            margin-left: 4px;
             /* Optional: offset the outline from the border */
         }
 
@@ -684,30 +685,48 @@
                         @endif
                         <div class="form-group">
                             <div class="container">
+                                <div class="accordion" id="accordionForProfile">
+                                    <div class="accordion-item">
+                                        <h4 class="accordion-header" id="flush-headingOne">
+                                            <span class="collapsed" type="button"
+                                                data-bs-toggle="collapse" data-bs-target="#flush-collapseOne"
+                                                aria-expanded="false" aria-controls="flush-collapseOne">
+                                                <span class="fa fa-eye"></span>
+                                                See Patient Profiles</span>
+                                            <span class="fa fa-caret-down"></span>
+                                        </h4>
+                                        <div id="flush-collapseOne" class="accordion-collapse collapse"
+                                            aria-labelledby="flush-headingOne" data-bs-parent="#accordionForProfile">
+                                            <div class="accordion-body">
+                                                <div class="d-flex justify-content-between">
+                                                    <h5>Forms/Profiles</h5>
+                                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                                                        data-bs-target="#profileModal"> <span class="fa fa-plus"></span>
+                                                        Fill New patient Profile
+                                                    </button>
+                                                </div>
+                                                <div class="table-responsive">
+                                                    <table class="table" id="profile_forms_table" style="width: 100%">
+                                                        <thead>
+                                                            <th>#</th>
+                                                            <th>Form Data</th>
+                                                        </thead>
+                                                        <tbody></tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                                 {{-- {!!generateForm($formdata)!!} --}}
-                                <div class="d-flex justify-content-between">
-                                    <h5>Forms/Profiles</h5>
-                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                                        data-bs-target="#profileModal"> <span class="fas fa-edit"></span>
-                                        Fill New patient Profile
-                                    </button>
-                                </div>
-                                <div class="table-responsive">
-                                    <table class="table">
-                                        <thead>
-                                            <th>Form Name</th>
-                                            <th>Form Data</th>
-                                            <th>Filled By</th>
-                                            <th>Date</th>
-                                        </thead>
-                                        <tbody></tbody>
-                                    </table>
-                                </div>
+
                             </div>
                         </div>
+                        <hr>
                         <div class="form-group">
 
-                            <label for="reasons_for_encounter">Select ICPC -2 Reason(s) for Encounter(required)</label>
+                            <label for="reasons_for_encounter">Select ICPC -2 Reason(s) for Encounter(required) <span
+                                    class="text-danger">*</span></label>
                             <select name="reasons_for_encounter[]" id="reasons_for_encounter" class="text-lg"
                                 multiple="multiple" required style="width: 100%; display:block;">
                                 @foreach ($reasons_for_encounter_cat_list as $reason_cat)
@@ -860,7 +879,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="profileModalLabel">Fill Profile / Form</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">x</button>
                 </div>
                 <div class="modal-body">
                     <div class="card">
@@ -1048,6 +1067,36 @@
         }
 
         setInterval(autosavenotes, 10000);
+    </script>
+    <script>
+        $(function() {
+            $('#profile_forms_table').DataTable({
+                "dom": 'Bfrtip',
+                "iDisplayLength": 5,
+                "lengthMenu": [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, "All"]
+                ],
+                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{ route('patient-form-list', request()->get('patient_id')) }}",
+                    "type": "GET"
+                },
+                "columns": [{
+                        data: "DT_RowIndex",
+                        name: "DT_RowIndex"
+                    },
+                    {
+                        data: "form_data",
+                        name: "form_data"
+                    },
+                ],
+
+                "paging": true
+            });
+        });
     </script>
     <script>
         $(function() {

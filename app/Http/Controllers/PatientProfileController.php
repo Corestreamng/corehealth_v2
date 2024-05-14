@@ -310,7 +310,7 @@ class PatientProfileController extends Controller
         ]);
 
         try {
-            $data = $request->except(['_token']);
+            $data = $request->except(['_token', 'patient_id', 'encounter_id', 'form_id']);
 
             $d = new PatientProfile();
             $d->encounter_id = $request->encounter_id;
@@ -333,22 +333,25 @@ class PatientProfileController extends Controller
         //dd($pc);
         return DataTables::of($his)
             ->addIndexColumn()
-            ->editColumn('created_at', function ($h) {
-                $str = "<small>";
-                $str .= "<b >Taken by:</b> " . ((isset($h->filled_by) && $h->filled_by != null) ? (userfullname($h->filled_by) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
+
+            ->editColumn('form_data', function ($his) {
+                $str = "";
+                $str .= "<span class = 'badge bg-primary'>";
+                $str .= keyToTitle($his->form_id);
+                $str .= "</span>";
+                $str .= '<hr>';
+                $str .= "<small>";
+                $str .= "<b >Taken by:</b> " . ((isset($his->filled_by) && $his->filled_by != null) ? (userfullname($his->filled_by) . ' (' . date('h:i a D M j, Y', strtotime($his->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
                 $str .= "</small>";
+                $str .= '<hr>';
+                $data = json_decode($his->form_data);
+                foreach ($data as $key => $d) {
+                    $str .= "<b >" . keyToTitle($key) . " </b> : " . str_replace('\\', '', str_replace('"', " ", json_encode($d))) . "<br><br>";
+                }
+
                 return $str;
             })
-            ->editColumn('result', function ($his) {
-                $str = "<b > Blood Pressure (mmHg): </b>" . $his->blood_pressure . "<br>";
-                $str .= "<b > Body Temperature (°C): </b>" . $his->temp . "<br>";
-                $str .= "<b > Body Weight (Kg): </b>" . $his->weight . "<br>";
-                $str .= "<b > Respiratory Rate (BPM) :</b>" . $his->resp_rate . "<br>";
-                $str .= "<b > Heart Rate (BPM): </b>" . $his->heart_rate . "<br><hr>";
-                $str .= $his->other_notes ?? 'N/A';
-                return $str;
-            })
-            ->rawColumns(['created_at', 'result'])
+            ->rawColumns(['form_data'])
             ->make(true);
     }
 

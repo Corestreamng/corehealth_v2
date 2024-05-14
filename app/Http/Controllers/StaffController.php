@@ -256,7 +256,7 @@ class StaffController extends Controller
                 $staff->date_of_birth = $request->dob ?? null;
                 $staff->home_address = $request->address ?? null;
                 $staff->phone_number = $request->phone_number ?? null;
-                $staff->consultation_fee = $request->consultation_fee ?? null;
+                $staff->consultation_fee = $request->consultation_fee ?? 0;
 
                 if ($staff->update()) {
                     // Send User an email with set password link
@@ -498,7 +498,7 @@ class StaffController extends Controller
                 $staff->date_of_birth = $request->dob ?? null;
                 $staff->home_address = $request->address ?? null;
                 $staff->phone_number = $request->phone_number ?? null;
-                $staff->consultation_fee = $request->consultation_fee ?? null;
+                $staff->consultation_fee = $request->consultation_fee ?? 0;
 
                 if ($staff->save()) {
                     // Send User an email with set password link
@@ -716,7 +716,7 @@ class StaffController extends Controller
                 $staff->date_of_birth = $request->dob ?? null;
                 $staff->home_address = $request->address ?? null;
                 $staff->phone_number = $request->phone_number ?? null;
-                $staff->consultation_fee = $request->consultation_fee ?? null;
+                $staff->consultation_fee = $request->consultation_fee ?? 0;
 
                 if ($staff->update()) {
                     // Send User an email with set password link

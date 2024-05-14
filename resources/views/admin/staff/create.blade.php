@@ -151,7 +151,7 @@
                                 <div class="input-group">
                                     <span class="input-group-text" id="dob"><i
                                             class="mdi mdi-calendar"></i></span>
-                                    <input type="text" class="form-control" placeholder="dob" aria-label="dob"
+                                    <input type="date" class="form-control" placeholder="dob" aria-label="dob"
                                         aria-describedby="dob" name="dob" value="{{old('dob')}}">
                                 </div>
                             </div>

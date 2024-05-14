@@ -22,7 +22,11 @@ function generateForm($formData)
 
     foreach ($formData as $data) {
         $html .= '<div class="form-group">';
-        $html .= '<label class="form-label">' . $data->name . '</label>';
+        $html .= '<label class="form-label">' . $data->name;
+        if ($data->is_required == 'required') {
+            $html .= "<span class = 'text-danger'> *</span>";
+        }
+        $html .= '</label>';
 
         if ($data->type == 'text') {
             $html .= '<input type="text" class="form-control form-control-sm" name="' . $data->label . '" value="' . old($data->label) . '" ' . ($data->is_required == 'required' ? 'required' : '') . '>';
@@ -37,7 +41,7 @@ function generateForm($formData)
             $html .= '</select>';
         } elseif ($data->type == 'checkbox') {
             foreach ($data->options as $option) {
-                $html .= '<div class="">';
+                $html .= '<div class="form-check">';
                 $html .= '<input class="form-check-input" name="' . $data->label . '[]" type="checkbox" value="' . $option . '" id="' . $data->label . '_' . titleToKey($option) . '">';
                 $html .= '<label class="form-check-label" for="' . $data->label . '_' . titleToKey($option) . '">' . $option;
                 $html .= '</label>';
@@ -45,7 +49,7 @@ function generateForm($formData)
             }
         } elseif ($data->type == 'radio') {
             foreach ($data->options as $option) {
-                $html .= '<div class="">';
+                $html .= '<div class="form-check">';
                 $html .= '<input class="form-check-input" name="' . $data->label . '" type="radio" value="' . $option . '" id="' . $data->label . '_' . titleToKey($option) . '" ' . (($option == old($data->label) ? 'checked' : '')) . '>';
                 $html .= '<label class="form-check-label" for="' . $data->label . '_' . titleToKey($option) . '">' . $option;
                 $html .= '</label>';
