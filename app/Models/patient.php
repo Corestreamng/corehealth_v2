@@ -23,19 +23,23 @@ class patient extends Model
         'address',
         'nationality',
         'ethnicity',
-        'misc'
+        'misc',
+        'dhis_consult_tracker_id',
+        'dhis_consult_enrollment_id'
     ];
 
-    public function user(){
-        return $this->belongsTo(User::class,'user_id','id');
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 
-    public function hmo(){
-        return $this->belongsTo(Hmo::class,'hmo_id', 'id');
+    public function hmo()
+    {
+        return $this->belongsTo(Hmo::class, 'hmo_id', 'id');
     }
 
-    public function account(){
+    public function account()
+    {
         return $this->hasOne(PatientAccount::class, 'patient_id', 'id');
     }
-    
 }
