@@ -20,6 +20,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\DataTables;
 
@@ -725,6 +726,45 @@ class EncounterController extends Controller
                     $msg = 'Please fill out notes for all selected services';
 
                     return redirect()->back()->withInput()->withMessage($msg)->withMessageType('warning');
+                }
+            }
+
+            // Find the patient
+            $patient = Patient::findOrFail($request->patient_id);
+
+            if (null != $patient->dhis_consult_enrollment_id && null != $patient->dhis_consult_tracker_id) {
+
+
+                // Get current time in the required format
+                $currentTime = Carbon::now()->format('Y-m-d\TH:i:s.000');
+
+                // Prepare the data values for reasons for encounter
+                // Loop through each reason for encounter and create an event
+                foreach ($request->reasons_for_encounter as $reason) {
+                    $dataValues = [
+                        [
+                            "dataElement" => "Wbqs9HWzViD",
+                            "value" => $reason
+                        ]
+                    ];
+
+                    Http::withBasicAuth('admin', 'district')
+                        ->post('https://play.im.dhis2.org/stable-2-41-0/api/tracker?importStrategy=CREATE&async=false', [
+                            "events" => [
+                                [
+                                    "dataValues" => $dataValues,
+                                    "enrollmentStatus" => "ACTIVE",
+                                    "occurredAt" => $currentTime,
+                                    "orgUnit" => "ceIanzOanAL",
+                                    "program" => "wxwI998tFlT",
+                                    "programStage" => "H2sBYS2Y9gX",
+                                    "scheduledAt" => $currentTime,
+                                    "status" => "ACTIVE",
+                                    "enrollment" => $patient->dhis_consult_enrollment_id,
+                                    "trackedEntity" => $patient->dhis_consult_tracker_id
+                                ]
+                            ]
+                        ]);
                 }
             }
 

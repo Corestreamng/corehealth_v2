@@ -33,6 +33,7 @@ use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 
@@ -403,6 +404,56 @@ class PatientController extends Controller
                     $user->givePermissionTo($request->permissions);
                 }
 
+                // Create Tracked Entity Instance
+                $trackedEntityResponse = Http::withBasicAuth('admin', 'district')
+                    ->post('https://play.im.dhis2.org/stable-2-41-0/api/tracker?importStrategy=CREATE&async=false', [
+                        "trackedEntities" => [
+                            [
+                                "orgUnit" => "Rp268JB6Ne4",
+                                "trackedEntityType" => "nEenWmSyUEp",
+                                "attributes" => [
+                                    [
+                                        "attribute" => "w75KJ2mc4zz",
+                                        "value" => $request->firstname
+                                    ],
+                                    [
+                                        "attribute" => "zDhUuAYrxNC",
+                                        "value" => $request->surname
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]);
+
+                $trackedEntityInstanceId = $trackedEntityResponse->json()['bundleReport']['typeReportMap']['TRACKED_ENTITY']['objectReports'][0]['uid'];
+
+                // Get current time in the required format
+                $currentTime = Carbon::now()->format('Y-m-d\TH:i:s.000');
+                // Create Enrollment
+                $enrollmentResponse = Http::withBasicAuth('admin', 'district')
+                    ->post('https://play.im.dhis2.org/stable-2-41-0/api/tracker?importStrategy=CREATE&async=false', [
+                        "enrollments" => [
+                            [
+                                "attributes" => [
+                                    [
+                                        "attribute" => "aW66s2QSosT",
+                                        "value" => $request->firstname . ' ' . $request->surname
+                                    ]
+                                ],
+                                "enrolledAt" => $currentTime,
+                                "occurredAt" => $currentTime,
+                                "orgUnit" => "ceIanzOanAL",
+                                "program" => "wxwI998tFlT",
+                                "status" => "ACTIVE",
+                                "trackedEntityType" => "nEenWmSyUEp",
+                                "trackedEntity" => $trackedEntityInstanceId
+                            ]
+                        ]
+                    ]);
+
+                $enrollmentId = $enrollmentResponse->json()['bundleReport']['typeReportMap']['ENROLLMENT']['objectReports'][0]['uid'];
+
+
                 $patient = new patient;
 
                 $patient->user_id = $user->id;
@@ -423,6 +474,8 @@ class PatientController extends Controller
                 $patient->next_of_kin_phone = $request->next_of_kin_phone ?? null;
                 $patient->next_of_kin_address = $request->next_of_kin_address ?? null;
                 $patient->phone_no = $request->phone_no ?? null;
+                $patient->dhis_consult_tracker_id = $trackedEntityInstanceId;
+                $patient->dhis_consult_enrollment_id = $enrollmentId;
 
                 $patient->save();
 
