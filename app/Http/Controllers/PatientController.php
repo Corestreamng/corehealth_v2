@@ -405,19 +405,19 @@ class PatientController extends Controller
                 }
 
                 // Create Tracked Entity Instance
-                $trackedEntityResponse = Http::withBasicAuth('admin', 'district')
-                    ->post('https://play.im.dhis2.org/stable-2-41-0/api/tracker?importStrategy=CREATE&async=false', [
+                $trackedEntityResponse = Http::withBasicAuth(env('DHIS_USERNAME'), env('DHIS_PASS'))
+                    ->post(env('DHIS_API_URL') . '/tracker?importStrategy=CREATE&async=false', [
                         "trackedEntities" => [
                             [
-                                "orgUnit" => "Rp268JB6Ne4",
-                                "trackedEntityType" => "nEenWmSyUEp",
+                                "orgUnit" => env('DHIS_ORG_UNIT'),
+                                "trackedEntityType" => env('DHIS_TRACKED_ENTITY_TYPE'),
                                 "attributes" => [
                                     [
-                                        "attribute" => "w75KJ2mc4zz",
+                                        "attribute" => env('DHIS_TRACKED_ENTITY_ATTR1'),
                                         "value" => $request->firstname
                                     ],
                                     [
-                                        "attribute" => "zDhUuAYrxNC",
+                                        "attribute" => env('DHIS_TRACKED_ENTITY_ATTR2'),
                                         "value" => $request->surname
                                     ]
                                 ]
@@ -430,22 +430,26 @@ class PatientController extends Controller
                 // Get current time in the required format
                 $currentTime = Carbon::now()->format('Y-m-d\TH:i:s.000');
                 // Create Enrollment
-                $enrollmentResponse = Http::withBasicAuth('admin', 'district')
-                    ->post('https://play.im.dhis2.org/stable-2-41-0/api/tracker?importStrategy=CREATE&async=false', [
+                $enrollmentResponse = Http::withBasicAuth(env('DHIS_USERNAME'), env('DHIS_PASS'))
+                    ->post(env('DHIS_API_URL') . '/tracker?importStrategy=CREATE&async=false', [
                         "enrollments" => [
                             [
                                 "attributes" => [
                                     [
-                                        "attribute" => "aW66s2QSosT",
-                                        "value" => $request->firstname . ' ' . $request->surname
+                                        "attribute" => env('DHIS_TRACKED_ENTITY_ATTR1'),
+                                        "value" => $request->firstname
+                                    ],
+                                    [
+                                        "attribute" => env('DHIS_TRACKED_ENTITY_ATTR2'),
+                                        "value" => $request->surname
                                     ]
                                 ],
                                 "enrolledAt" => $currentTime,
                                 "occurredAt" => $currentTime,
-                                "orgUnit" => "ceIanzOanAL",
-                                "program" => "wxwI998tFlT",
-                                "status" => "ACTIVE",
-                                "trackedEntityType" => "nEenWmSyUEp",
+                                "orgUnit" => env('DHIS_ORG_UNIT'),
+                                "program" => env('DHIS_TRACKED_ENTITY_PROGRAM'),
+                                "status" => "COMPLETED",
+                                "trackedEntityType" => env('DHIS_TRACKED_ENTITY_TYPE'),
                                 "trackedEntity" => $trackedEntityInstanceId
                             ]
                         ]

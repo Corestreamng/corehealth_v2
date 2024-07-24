@@ -743,23 +743,23 @@ class EncounterController extends Controller
                 foreach ($request->reasons_for_encounter as $reason) {
                     $dataValues = [
                         [
-                            "dataElement" => "Wbqs9HWzViD",
+                            "dataElement" => env('DHIS_TRACKED_ENTITY_PROGRAM_EVENT_DATAELEMENT'),
                             "value" => $reason
                         ]
                     ];
 
                     Http::withBasicAuth('admin', 'district')
-                        ->post('https://play.im.dhis2.org/stable-2-41-0/api/tracker?importStrategy=CREATE&async=false', [
+                        ->post(env('DHIS_API_URL') . '/tracker?importStrategy=CREATE&async=false', [
                             "events" => [
                                 [
                                     "dataValues" => $dataValues,
                                     "enrollmentStatus" => "ACTIVE",
                                     "occurredAt" => $currentTime,
-                                    "orgUnit" => "ceIanzOanAL",
-                                    "program" => "wxwI998tFlT",
-                                    "programStage" => "H2sBYS2Y9gX",
+                                    "orgUnit" => env('DHIS_ORG_UNIT'),
+                                    "program" => env('DHIS_TRACKED_ENTITY_PROGRAM'),
+                                    "programStage" => env("DHIS_TRACKED_ENTITY_PROGRAM_STAGE2"),
                                     "scheduledAt" => $currentTime,
-                                    "status" => "ACTIVE",
+                                    "status" => "COMPLETED",
                                     "enrollment" => $patient->dhis_consult_enrollment_id,
                                     "trackedEntity" => $patient->dhis_consult_tracker_id
                                 ]
