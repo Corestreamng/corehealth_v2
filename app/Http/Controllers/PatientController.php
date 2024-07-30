@@ -435,7 +435,7 @@ class PatientController extends Controller
                                     ],
                                     [
                                         "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_CITY'),
-                                        "value" => $last_word
+                                        "value" => $last_word ?? ''
                                     ]
                                 ]
                             ]
@@ -470,7 +470,7 @@ class PatientController extends Controller
                                     ],
                                     [
                                         "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_CITY'),
-                                        "value" => $last_word
+                                        "value" => $last_word ?? ''
                                     ]
                                 ],
                                 "enrolledAt" => $currentTime,
