@@ -405,6 +405,11 @@ class PatientController extends Controller
                 }
 
                 // Create Tracked Entity Instance
+
+                //get last word in address and use as city name
+                $last_word_start = strrpos($request->address, ' ') + 1; // +1 so we don't include the space in our result
+                $last_word = substr($$request->address, $last_word_start);
+
                 $trackedEntityResponse = Http::withBasicAuth(env('DHIS_USERNAME'), env('DHIS_PASS'))
                     ->post(env('DHIS_API_URL') . '/tracker?importStrategy=CREATE&async=false', [
                         "trackedEntities" => [
@@ -413,12 +418,24 @@ class PatientController extends Controller
                                 "trackedEntityType" => env('DHIS_TRACKED_ENTITY_TYPE'),
                                 "attributes" => [
                                     [
-                                        "attribute" => env('DHIS_TRACKED_ENTITY_ATTR1'),
+                                        "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_FNAME'),
                                         "value" => $request->firstname
                                     ],
                                     [
-                                        "attribute" => env('DHIS_TRACKED_ENTITY_ATTR2'),
+                                        "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_LNAME'),
                                         "value" => $request->surname
+                                    ],
+                                    [
+                                        "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_GENDER'),
+                                        "value" => $request->gender
+                                    ],
+                                    [
+                                        "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_DOB'),
+                                        "value" => date('Y-m-d', strtotime($request->dob))
+                                    ],
+                                    [
+                                        "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_CITY'),
+                                        "value" => $last_word
                                     ]
                                 ]
                             ]
@@ -436,12 +453,24 @@ class PatientController extends Controller
                             [
                                 "attributes" => [
                                     [
-                                        "attribute" => env('DHIS_TRACKED_ENTITY_ATTR1'),
+                                        "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_FNAME'),
                                         "value" => $request->firstname
                                     ],
                                     [
-                                        "attribute" => env('DHIS_TRACKED_ENTITY_ATTR2'),
+                                        "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_LNAME'),
                                         "value" => $request->surname
+                                    ],
+                                    [
+                                        "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_GENDER'),
+                                        "value" => $request->gender
+                                    ],
+                                    [
+                                        "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_DOB'),
+                                        "value" => date('Y-m-d', strtotime($request->dob))
+                                    ],
+                                    [
+                                        "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_CITY'),
+                                        "value" => $last_word
                                     ]
                                 ],
                                 "enrolledAt" => $currentTime,
