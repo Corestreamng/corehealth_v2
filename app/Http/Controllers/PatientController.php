@@ -407,8 +407,8 @@ class PatientController extends Controller
                 // Create Tracked Entity Instance
 
                 //get last word in address and use as city name
-                $last_word_start = strrpos($request->address, ' ') + 1; // +1 so we don't include the space in our result
-                $last_word = substr($request->address, $last_word_start);
+                $last_word_start = strrpos($request->address, ' ');
+                $last_word = trim(substr($request->address, $last_word_start));
 
                 $trackedEntityResponse = Http::withBasicAuth(env('DHIS_USERNAME'), env('DHIS_PASS'))
                     ->post(env('DHIS_API_URL') . '/tracker?importStrategy=CREATE&async=false', [
@@ -441,6 +441,8 @@ class PatientController extends Controller
                             ]
                         ]
                     ]);
+
+                dd($trackedEntityResponse->json());
 
                 $trackedEntityInstanceId = $trackedEntityResponse->json()['bundleReport']['typeReportMap']['TRACKED_ENTITY']['objectReports'][0]['uid'];
 
