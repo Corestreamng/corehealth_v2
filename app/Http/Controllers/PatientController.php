@@ -442,7 +442,6 @@ class PatientController extends Controller
                         ]
                     ]);
 
-                dd($trackedEntityResponse->json());
 
                 $trackedEntityInstanceId = $trackedEntityResponse->json()['bundleReport']['typeReportMap']['TRACKED_ENTITY']['objectReports'][0]['uid'];
 
