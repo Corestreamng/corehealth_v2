@@ -21,8 +21,8 @@
     <!-- Layout styles -->
     <link rel="stylesheet" href="{{ asset('admin/assets/css/demo_1/style.css') }}" />
     <!-- End layout styles -->
-    <link rel="shortcut icon" href="data:image/png;base64,{{(appsettings()->favicon) ?? '' }}" />
-    <link rel="icon" type="image/png" href="data:image/png;base64,{{(appsettings()->favicon) ?? '' }}">
+    <link rel="shortcut icon" href="data:image/png;base64,{{ appsettings()->favicon ?? '' }}" />
+    <link rel="icon" type="image/png" href="data:image/png;base64,{{ appsettings()->favicon ?? '' }}">
     <link rel="stylesheet" href="{{ asset('assets/css/select2.min.css') }}">
     <script src="{{ asset('js/app.js') }}"></script>
     <link rel="stylesheet" href="{{ asset('/plugins/dataT/datatables.min.css') }}">
@@ -343,6 +343,22 @@
     {{-- <script src="{{ asset('admin/assets/js/dashboard.js') }}"></script> --}}
 
     <!-- End custom js for this page -->
+
+    <!--Start of Tawk.to Script-->
+    <script type="text/javascript">
+        var Tawk_API = Tawk_API || {},
+            Tawk_LoadStart = new Date();
+        (function() {
+            var s1 = document.createElement("script"),
+                s0 = document.getElementsByTagName("script")[0];
+            s1.async = true;
+            s1.src = 'https://embed.tawk.to/66cf52e250c10f7a00a161f2/1i6ctnie6';
+            s1.charset = 'UTF-8';
+            s1.setAttribute('crossorigin', '*');
+            s0.parentNode.insertBefore(s1, s0);
+        })();
+    </script>
+    <!--End of Tawk.to Script-->
 
 </body>
 
