@@ -366,9 +366,9 @@
                         id="encounter_history_list">
                         <thead>
                             <th>#</th>
-                            <th>Doctor</th>
+                            {{-- <th>Doctor</th> --}}
                             <th>Notes</th>
-                            <th>Time</th>
+                            {{-- <th>Time</th> --}}
                         </thead>
                     </table>
                     <br><button type="button" onclick="switch_tab(event,'investigation_hist_tab')"
@@ -688,9 +688,9 @@
                                 <div class="accordion" id="accordionForProfile">
                                     <div class="accordion-item">
                                         <h4 class="accordion-header" id="flush-headingOne">
-                                            <span class="collapsed" type="button"
-                                                data-bs-toggle="collapse" data-bs-target="#flush-collapseOne"
-                                                aria-expanded="false" aria-controls="flush-collapseOne">
+                                            <span class="collapsed" type="button" data-bs-toggle="collapse"
+                                                data-bs-target="#flush-collapseOne" aria-expanded="false"
+                                                aria-controls="flush-collapseOne">
                                                 <span class="fa fa-eye"></span>
                                                 See Patient Profiles</span>
                                             <span class="fa fa-caret-down"></span>
@@ -725,8 +725,8 @@
                         <hr>
                         <div class="form-group">
 
-                            <label for="reasons_for_encounter">Select ICPC -2 Reason(s) for Encounter(required) <span
-                                    class="text-danger">*</span></label>
+                            <label for="reasons_for_encounter">Select ICPC -2 Reason(s) for Encounter/ Diagnosis(required)
+                                <span class="text-danger">*</span></label>
                             <select name="reasons_for_encounter[]" id="reasons_for_encounter" class="text-lg"
                                 multiple="multiple" required style="width: 100%; display:block;">
                                 @foreach ($reasons_for_encounter_cat_list as $reason_cat)
@@ -748,6 +748,31 @@
                                     </optgroup>
                                 @endforeach
                             </select>
+                        </div>
+                        <br>
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <div class="form-group">
+                                    <label for="reasons_for_encounter_comment_1">Select Diagnosis Comment 1(required)</label>
+                                    <select class="form-control" name="reasons_for_encounter_comment_1" id="reasons_for_encounter_comment_1" required>
+                                        <option value="NA">Not Applicable</option>
+                                        <option value="QUERY">Query</option>
+                                        <option value="DIFFRENTIAL">Diffrential</option>
+                                        <option value="CONFIRMED">Confirmed</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="form-group">
+                                    <label for="reasons_for_encounter_comment_2"> Select Diagnosis Comment 2(required)</label>
+                                    <select class="form-control" name="reasons_for_encounter_comment_2" id="reasons_for_encounter_comment_2" required>
+                                        <option value="NA">Not Applicable</option>
+                                        <option value="ACUTE">Acute</option>
+                                        <option value="CHRONIC">Chronic</option>
+                                        <option value="RECURRENT">Recurrent</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                         <hr>
                         <div>
@@ -1118,18 +1143,18 @@
                         data: "DT_RowIndex",
                         name: "DT_RowIndex"
                     },
-                    {
-                        data: "doctor_id",
-                        name: "doctor_id"
-                    },
+                    // {
+                    //     data: "doctor_id",
+                    //     name: "doctor_id"
+                    // },
                     {
                         data: "notes",
                         name: "notes"
                     },
-                    {
-                        data: "created_at",
-                        name: "created_at"
-                    },
+                    // {
+                    //     data: "created_at",
+                    //     name: "created_at"
+                    // },
                 ],
 
                 "paging": true
