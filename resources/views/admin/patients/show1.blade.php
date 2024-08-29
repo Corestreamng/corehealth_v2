@@ -753,9 +753,9 @@
                             id="encounter_history_list">
                             <thead>
                                 <th>#</th>
-                                <th>Doctor</th>
+                                {{-- <th>Doctor</th> --}}
                                 <th>Notes</th>
-                                <th>Time</th>
+                                {{-- <th>Time</th> --}}
                             </thead>
                         </table>
                     </div>
@@ -1247,18 +1247,18 @@
                         data: "DT_RowIndex",
                         name: "DT_RowIndex"
                     },
-                    {
-                        data: "doctor_id",
-                        name: "doctor_id"
-                    },
+                    //{
+                    //    data: "doctor_id",
+                    //    name: "doctor_id"
+                    //},
                     {
                         data: "notes",
                         name: "notes"
                     },
-                    {
-                        data: "created_at",
-                        name: "created_at"
-                    },
+                    //{
+                    //    data: "created_at",
+                    //    name: "created_at"
+                    //},
                 ],
 
                 "paging": true
