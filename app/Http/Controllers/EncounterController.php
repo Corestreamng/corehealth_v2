@@ -84,7 +84,7 @@ class EncounterController extends Controller
                         ['patient_id' => $queue->patient_id, 'req_entry_id' => $queue->request_entry_id, 'queue_id' => $queue->id]
                     );
 
-                    return '<a href="'.$url.'" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> Encounter</a>';
+                    return '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> Encounter</a>';
                     // } else {
 
                     //     $label = '<span class="label label-warning">Not Allowed</span>';
@@ -170,7 +170,7 @@ class EncounterController extends Controller
                         ['patient_id' => $queue->patient_id, 'req_entry_id' => $queue->request_entry_id, 'queue_id' => $queue->id]
                     );
 
-                    return '<a href="'.$url.'" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> Encounter</a>';
+                    return '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> Encounter</a>';
                     // } else {
 
                     //     $label = '<span class="label label-warning">Not Allowed</span>';
@@ -231,7 +231,7 @@ class EncounterController extends Controller
 
                     $url = route('patient.show', $queue->patient_id);
 
-                    return '<a href="'.$url.'" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> View</a>';
+                    return '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> View</a>';
                     // } else {
 
                     //     $label = '<span class="label label-warning">Not Allowed</span>';
@@ -289,7 +289,7 @@ class EncounterController extends Controller
 
                 $url = route('patient.show', $queue->patient_id);
 
-                return '<a href="'.$url.'" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> View</a>';
+                return '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> View</a>';
                 // } else {
 
                 //     $label = '<span class="label label-warning">Not Allowed</span>';
@@ -314,23 +314,23 @@ class EncounterController extends Controller
             ->addIndexColumn()
             ->editColumn('created_at', function ($h) {
                 $str = '<small>';
-                $str .= '<b >Requested by: </b>'.((isset($h->doctor_id) && $h->doctor_id != null) ? (userfullname($h->doctor_id).' ('.date('h:i a D M j, Y', strtotime($h->created_at)).')') : "<span class='badge badge-secondary'>N/A</span>");
-                $str .= '<br><br><b >Last Updated On:</b> '.date('h:i a D M j, Y', strtotime($h->updated_at));
-                $str .= '<br><br><b >Billed by:</b> '.((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by).' ('.date('h:i a D M j, Y', strtotime($h->billed_date)).')') : "<span class='badge badge-secondary'>Not billed</span>");
-                $str .= '<br><br><b >Sample taken by:</b> '.((isset($h->sample_taken_by) && $h->sample_taken_by != null) ? (userfullname($h->sample_taken_by).' ('.date('h:i a D M j, Y', strtotime($h->sample_date)).')') : "<span class='badge badge-secondary'>Not taken</span>");
-                $str .= '<br><br><b >Results by:</b> '.((isset($h->result_by) && $h->result_by != null) ? (userfullname($h->result_by).' ('.date('h:i a D M j, Y', strtotime($h->result_date)).')') : "<span class='badge badge-secondary'>Awaiting Results</span>");
-                $str .= '<br><br><b >Request Note:</b> '.((isset($h->note) && $h->note != null) ? ($h->note) : "<span class='badge badge-secondary'>N/A</span><br>");
+                $str .= '<b >Requested by: </b>' . ((isset($h->doctor_id) && $h->doctor_id != null) ? (userfullname($h->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
+                $str .= '<br><br><b >Last Updated On:</b> ' . date('h:i a D M j, Y', strtotime($h->updated_at));
+                $str .= '<br><br><b >Billed by:</b> ' . ((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span>");
+                $str .= '<br><br><b >Sample taken by:</b> ' . ((isset($h->sample_taken_by) && $h->sample_taken_by != null) ? (userfullname($h->sample_taken_by) . ' (' . date('h:i a D M j, Y', strtotime($h->sample_date)) . ')') : "<span class='badge badge-secondary'>Not taken</span>");
+                $str .= '<br><br><b >Results by:</b> ' . ((isset($h->result_by) && $h->result_by != null) ? (userfullname($h->result_by) . ' (' . date('h:i a D M j, Y', strtotime($h->result_date)) . ')') : "<span class='badge badge-secondary'>Awaiting Results</span>");
+                $str .= '<br><br><b >Request Note:</b> ' . ((isset($h->note) && $h->note != null) ? ($h->note) : "<span class='badge badge-secondary'>N/A</span><br>");
                 $str .= '</small>';
 
                 return $str;
             })
             ->editColumn('result', function ($his) {
-                $str = "<span class = 'badge badge-success'>".(($his->service) ? $his->service->service_name : 'N/A').'</span><hr>';
+                $str = "<span class = 'badge badge-success'>" . (($his->service) ? $his->service->service_name : 'N/A') . '</span><hr>';
                 $str .= $his->result ?? 'N/A';
 
                 $str .= "
                     <hr>
-                    <button type='button' class='btn btn-primary' onclick='setResViewInModal(this)' data-service-name = '".$his->service->service_name."' data-result = '".htmlspecialchars($his->result)." 'data-result-obj = '".htmlspecialchars($his)."'>
+                    <button type='button' class='btn btn-primary' onclick='setResViewInModal(this)' data-service-name = '" . $his->service->service_name . "' data-result = '" . htmlspecialchars($his->result) . " 'data-result-obj = '" . htmlspecialchars($his) . "'>
                         Print Result
                     </button>";
 
@@ -350,24 +350,24 @@ class EncounterController extends Controller
         return DataTables::of($his)
             ->addIndexColumn()
             ->addColumn('select', function ($h) {
-                $str = "<input type='checkbox' name='selectedInvestBillRows[]' onclick='checkInvestBillRow(this)' data-price = '".(($h->service) ? $h->service->price->sale_price : 'N/A')."' value='$h->id' class='form-control'> ";
+                $str = "<input type='checkbox' name='selectedInvestBillRows[]' onclick='checkInvestBillRow(this)' data-price = '" . (($h->service) ? $h->service->price->sale_price : 'N/A') . "' value='$h->id' class='form-control'> ";
 
                 return $str;
             })
             ->editColumn('created_at', function ($h) {
                 $str = '<small>';
-                $str .= '<b >Requested by: </b>'.((isset($h->doctor_id) && $h->doctor_id != null) ? (userfullname($h->doctor_id).' ('.date('h:i a D M j, Y', strtotime($h->created_at)).')') : "<span class='badge badge-secondary'>N/A</span>");
-                $str .= '<br><br><b >Last Updated On:</b> '.date('h:i a D M j, Y', strtotime($h->updated_at));
-                $str .= '<br><br><b >Billed by:</b> '.((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by).' ('.date('h:i a D M j, Y', strtotime($h->billed_date)).')') : "<span class='badge badge-secondary'>Not billed</span>");
-                $str .= '<br><br><b >Sample taken by:</b> '.((isset($h->sample_taken_by) && $h->sample_taken_by != null) ? (userfullname($h->sample_taken_by).' ('.date('h:i a D M j, Y', strtotime($h->sample_date)).')') : "<span class='badge badge-secondary'>Not taken</span>");
-                $str .= '<br><br><b >Results by:</b> '.((isset($h->result_by) && $h->result_by != null) ? (userfullname($h->result_by).' ('.date('h:i a D M j, Y', strtotime($h->result_date)).')') : "<span class='badge badge-secondary'>Awaiting Results</span>");
-                $str .= '<br><br><b >Request Note:</b> '.((isset($h->note) && $h->note != null) ? ($h->note) : "<span class='badge badge-secondary'>N/A</span><br>");
+                $str .= '<b >Requested by: </b>' . ((isset($h->doctor_id) && $h->doctor_id != null) ? (userfullname($h->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
+                $str .= '<br><br><b >Last Updated On:</b> ' . date('h:i a D M j, Y', strtotime($h->updated_at));
+                $str .= '<br><br><b >Billed by:</b> ' . ((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span>");
+                $str .= '<br><br><b >Sample taken by:</b> ' . ((isset($h->sample_taken_by) && $h->sample_taken_by != null) ? (userfullname($h->sample_taken_by) . ' (' . date('h:i a D M j, Y', strtotime($h->sample_date)) . ')') : "<span class='badge badge-secondary'>Not taken</span>");
+                $str .= '<br><br><b >Results by:</b> ' . ((isset($h->result_by) && $h->result_by != null) ? (userfullname($h->result_by) . ' (' . date('h:i a D M j, Y', strtotime($h->result_date)) . ')') : "<span class='badge badge-secondary'>Awaiting Results</span>");
+                $str .= '<br><br><b >Request Note:</b> ' . ((isset($h->note) && $h->note != null) ? ($h->note) : "<span class='badge badge-secondary'>N/A</span><br>");
                 $str .= '</small>';
 
                 return $str;
             })
             ->editColumn('result', function ($his) {
-                $str = "<span class = 'badge badge-success'>".(($his->service) ? $his->service->service_name : 'N/A').'</span><hr>';
+                $str = "<span class = 'badge badge-success'>" . (($his->service) ? $his->service->service_name : 'N/A') . '</span><hr>';
                 $str .= $his->result ?? 'N/A';
 
                 return $str;
@@ -385,24 +385,24 @@ class EncounterController extends Controller
         return DataTables::of($his)
             ->addIndexColumn()
             ->addColumn('select', function ($h) {
-                $str = "<input type='checkbox' name='selectedInvestSampleRows[]' onclick='checkInvestSampleRow(this)' data-price = '".$h->service->price->sale_price."' value='$h->id' class='form-control'> ";
+                $str = "<input type='checkbox' name='selectedInvestSampleRows[]' onclick='checkInvestSampleRow(this)' data-price = '" . $h->service->price->sale_price . "' value='$h->id' class='form-control'> ";
 
                 return $str;
             })
             ->editColumn('created_at', function ($h) {
                 $str = '<small>';
-                $str .= '<b >Requested by: </b>'.((isset($h->doctor_id) && $h->doctor_id != null) ? (userfullname($h->doctor_id).' ('.date('h:i a D M j, Y', strtotime($h->created_at)).')') : "<span class='badge badge-secondary'>N/A</span>");
-                $str .= '<br><br><b >Last Updated On:</b> '.date('h:i a D M j, Y', strtotime($h->updated_at));
-                $str .= '<br><br><b >Billed by:</b> '.((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by).' ('.date('h:i a D M j, Y', strtotime($h->billed_date)).')') : "<span class='badge badge-secondary'>Not billed</span>");
-                $str .= '<br><br><b >Sample taken by:</b> '.((isset($h->sample_taken_by) && $h->sample_taken_by != null) ? (userfullname($h->sample_taken_by).' ('.date('h:i a D M j, Y', strtotime($h->sample_date)).')') : "<span class='badge badge-secondary'>Not taken</span>");
-                $str .= '<br><br><b >Results by:</b> '.((isset($h->result_by) && $h->result_by != null) ? (userfullname($h->result_by).' ('.date('h:i a D M j, Y', strtotime($h->result_date)).')') : "<span class='badge badge-secondary'>Awaiting Results</span>");
-                $str .= '<br><br><b >Request Note:</b> '.((isset($h->note) && $h->note != null) ? ($h->note) : "<span class='badge badge-secondary'>N/A</span><br>");
+                $str .= '<b >Requested by: </b>' . ((isset($h->doctor_id) && $h->doctor_id != null) ? (userfullname($h->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
+                $str .= '<br><br><b >Last Updated On:</b> ' . date('h:i a D M j, Y', strtotime($h->updated_at));
+                $str .= '<br><br><b >Billed by:</b> ' . ((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span>");
+                $str .= '<br><br><b >Sample taken by:</b> ' . ((isset($h->sample_taken_by) && $h->sample_taken_by != null) ? (userfullname($h->sample_taken_by) . ' (' . date('h:i a D M j, Y', strtotime($h->sample_date)) . ')') : "<span class='badge badge-secondary'>Not taken</span>");
+                $str .= '<br><br><b >Results by:</b> ' . ((isset($h->result_by) && $h->result_by != null) ? (userfullname($h->result_by) . ' (' . date('h:i a D M j, Y', strtotime($h->result_date)) . ')') : "<span class='badge badge-secondary'>Awaiting Results</span>");
+                $str .= '<br><br><b >Request Note:</b> ' . ((isset($h->note) && $h->note != null) ? ($h->note) : "<span class='badge badge-secondary'>N/A</span><br>");
                 $str .= '</small>';
 
                 return $str;
             })
             ->editColumn('result', function ($his) {
-                $str = "<span class = 'badge badge-success'>".(($his->service) ? $his->service->service_name : 'N/A').'</span><hr>';
+                $str = "<span class = 'badge badge-success'>" . (($his->service) ? $his->service->service_name : 'N/A') . '</span><hr>';
                 $str .= $his->result ?? 'N/A';
 
                 return $str;
@@ -421,17 +421,17 @@ class EncounterController extends Controller
             ->addIndexColumn()
             ->editColumn('created_at', function ($h) {
                 $str = '<small>';
-                $str .= '<b >Requested By: </b>'.((isset($h->doctor_id) && $h->doctor_id != null) ? (userfullname($h->doctor_id).' ('.date('h:i a D M j, Y', strtotime($h->created_at)).')') : "<span class='badge badge-secondary'>N/A</span>").'<br>';
-                $str .= '<b >Last Updated On: </b>'.date('h:i a D M j, Y', strtotime($h->updated_at)).'<br>';
-                $str .= '<b >Billed By: </b>'.((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by).' ('.date('h:i a D M j, Y', strtotime($h->billed_date)).')') : "<span class='badge badge-secondary'>Not billed</span><br>");
-                $str .= '<br><b >Dispensed By: </b>'.((isset($h->dispensed_by) && $h->dispensed_by != null) ? (userfullname($h->dispensed_by).' ('.date('h:i a D M j, Y', strtotime($h->dispense_date)).')') : "<span class='badge badge-secondary'>Not dispensed</span><br>");
+                $str .= '<b >Requested By: </b>' . ((isset($h->doctor_id) && $h->doctor_id != null) ? (userfullname($h->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>") . '<br>';
+                $str .= '<b >Last Updated On: </b>' . date('h:i a D M j, Y', strtotime($h->updated_at)) . '<br>';
+                $str .= '<b >Billed By: </b>' . ((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span><br>");
+                $str .= '<br><b >Dispensed By: </b>' . ((isset($h->dispensed_by) && $h->dispensed_by != null) ? (userfullname($h->dispensed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->dispense_date)) . ')') : "<span class='badge badge-secondary'>Not dispensed</span><br>");
                 $str .= '</small>';
 
                 return $str;
             })
             ->editColumn('dose', function ($his) {
-                $str = "<span class = 'badge badge-success'>[".(($his->product->product_code) ? $his->product->product_code : '').']'.$his->product->product_name.'</span>';
-                $str .= '<hr> <b>Dose/Freq:</b> '.($his->dose ?? 'N/A');
+                $str = "<span class = 'badge badge-success'>[" . (($his->product->product_code) ? $his->product->product_code : '') . ']' . $his->product->product_name . '</span>';
+                $str .= '<hr> <b>Dose/Freq:</b> ' . ($his->dose ?? 'N/A');
 
                 return $str;
             })
@@ -448,23 +448,23 @@ class EncounterController extends Controller
         return DataTables::of($his)
             ->addIndexColumn()
             ->addColumn('select', function ($h) {
-                $str = "<input type='checkbox' name='selectedPrescBillRows[]' onclick='checkPrescBillRow(this)' data-price = '".$h->product->price->current_sale_price."' value='$h->id' class='form-control'> ";
+                $str = "<input type='checkbox' name='selectedPrescBillRows[]' onclick='checkPrescBillRow(this)' data-price = '" . $h->product->price->current_sale_price . "' value='$h->id' class='form-control'> ";
 
                 return $str;
             })
             ->editColumn('created_at', function ($h) {
                 $str = '<small>';
-                $str .= '<b >Requested By: </b>'.((isset($h->doctor_id) && $h->doctor_id != null) ? (userfullname($h->doctor_id).' ('.date('h:i a D M j, Y', strtotime($h->created_at)).')') : "<span class='badge badge-secondary'>N/A</span>").'<br>';
-                $str .= '<b >Last Updated On: </b>'.date('h:i a D M j, Y', strtotime($h->updated_at)).'<br>';
-                $str .= '<b >Billed By: </b>'.((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by).' ('.date('h:i a D M j, Y', strtotime($h->billed_date)).')') : "<span class='badge badge-secondary'>Not billed</span><br>");
-                $str .= '<br><b >Dispensed By: </b>'.((isset($h->dispensed_by) && $h->dispensed_by != null) ? (userfullname($h->dispensed_by).' ('.date('h:i a D M j, Y', strtotime($h->dispense_date)).')') : "<span class='badge badge-secondary'>Not dispensed</span><br>");
+                $str .= '<b >Requested By: </b>' . ((isset($h->doctor_id) && $h->doctor_id != null) ? (userfullname($h->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>") . '<br>';
+                $str .= '<b >Last Updated On: </b>' . date('h:i a D M j, Y', strtotime($h->updated_at)) . '<br>';
+                $str .= '<b >Billed By: </b>' . ((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span><br>");
+                $str .= '<br><b >Dispensed By: </b>' . ((isset($h->dispensed_by) && $h->dispensed_by != null) ? (userfullname($h->dispensed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->dispense_date)) . ')') : "<span class='badge badge-secondary'>Not dispensed</span><br>");
                 $str .= '</small>';
 
                 return $str;
             })
             ->editColumn('dose', function ($his) {
-                $str = "<span class = 'badge badge-success'>[".(($his->product->product_code) ? $his->product->product_code : '').']'.$his->product->product_name.'</span>';
-                $str .= '<hr> <b>Dose/Freq:</b> '.($his->dose ?? 'N/A');
+                $str = "<span class = 'badge badge-success'>[" . (($his->product->product_code) ? $his->product->product_code : '') . ']' . $his->product->product_name . '</span>';
+                $str .= '<hr> <b>Dose/Freq:</b> ' . ($his->dose ?? 'N/A');
 
                 return $str;
             })
@@ -487,17 +487,17 @@ class EncounterController extends Controller
             })
             ->editColumn('created_at', function ($h) {
                 $str = '<small>';
-                $str .= '<b >Requested By: </b>'.((isset($h->doctor_id) && $h->doctor_id != null) ? (userfullname($h->doctor_id).' ('.date('h:i a D M j, Y', strtotime($h->created_at)).')') : "<span class='badge badge-secondary'>N/A</span>").'<br>';
-                $str .= '<b >Last Updated On: </b>'.date('h:i a D M j, Y', strtotime($h->updated_at)).'<br>';
-                $str .= '<b >Billed By: </b>'.((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by).' ('.date('h:i a D M j, Y', strtotime($h->billed_date)).')') : "<span class='badge badge-secondary'>Not billed</span><br>");
-                $str .= '<br><b >Dispensed By: </b>'.((isset($h->dispensed_by) && $h->dispensed_by != null) ? (userfullname($h->dispensed_by).' ('.date('h:i a D M j, Y', strtotime($h->dispense_date)).')') : "<span class='badge badge-secondary'>Not dispensed</span><br>");
+                $str .= '<b >Requested By: </b>' . ((isset($h->doctor_id) && $h->doctor_id != null) ? (userfullname($h->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>") . '<br>';
+                $str .= '<b >Last Updated On: </b>' . date('h:i a D M j, Y', strtotime($h->updated_at)) . '<br>';
+                $str .= '<b >Billed By: </b>' . ((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span><br>");
+                $str .= '<br><b >Dispensed By: </b>' . ((isset($h->dispensed_by) && $h->dispensed_by != null) ? (userfullname($h->dispensed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->dispense_date)) . ')') : "<span class='badge badge-secondary'>Not dispensed</span><br>");
                 $str .= '</small>';
 
                 return $str;
             })
             ->editColumn('dose', function ($his) {
-                $str = "<span class = 'badge badge-success'>[".(($his->product->product_code) ? $his->product->product_code : '').']'.$his->product->product_name.'</span>';
-                $str .= '<hr> <b>Dose/Freq:</b> '.($his->dose ?? 'N/A');
+                $str = "<span class = 'badge badge-success'>[" . (($his->product->product_code) ? $his->product->product_code : '') . ']' . $his->product->product_name . '</span>';
+                $str .= '<hr> <b>Dose/Freq:</b> ' . ($his->dose ?? 'N/A');
 
                 return $str;
             })
@@ -538,8 +538,8 @@ class EncounterController extends Controller
                     }
                     $str .= '</div><br>';
                 }
-                $str .= '<h6>Diagnosis Comment 1: </h6>'."<u class='ml-3'>".$hist->reasons_for_encounter_comment_1."</u>";
-                $str .= '<h6>Diagnosis Comment 2: </h6>'."<u class='ml-3'>".$hist->reasons_for_encounter_comment_2."</u>";
+                $str .= '<h6>Diagnosis Comment 1: </h6>' . "<u class='ml-3'>" . $hist->reasons_for_encounter_comment_1 . "</u>";
+                $str .= '<h6>Diagnosis Comment 2: </h6>' . "<u class='ml-3'>" . $hist->reasons_for_encounter_comment_2 . "</u>";
                 $str .= '<hr>';
 
                 $str .= '<h6>Main Notes: </h6>';
@@ -669,7 +669,11 @@ class EncounterController extends Controller
                     $others_record_template = NursingNoteType::find(5);
 
                     return view('admin.doctors.new_encounter')->with([
-                        'patient' => $patient, 'doctor' => $doctor, 'clinic' => $clinic, 'req_entry' => $req_entry, 'admission_request' => $admission_request,
+                        'patient' => $patient,
+                        'doctor' => $doctor,
+                        'clinic' => $clinic,
+                        'req_entry' => $req_entry,
+                        'admission_request' => $admission_request,
                         'observation_note' => $observation_note,
                         'treatment_sheet' => $treatment_sheet,
                         'io_chart' => $io_chart,
@@ -703,7 +707,7 @@ class EncounterController extends Controller
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
 
-            return redirect()->back()->withInput()->withMessage('An error occurred '.$e->getMessage());
+            return redirect()->back()->withInput()->withMessage('An error occurred ' . $e->getMessage());
         }
     }
 
@@ -773,7 +777,7 @@ class EncounterController extends Controller
                     ];
 
                     Http::withBasicAuth('admin', 'district')
-                        ->post(env('DHIS_API_URL').'/tracker?importStrategy=CREATE&async=false', [
+                        ->post(env('DHIS_API_URL') . '/tracker?importStrategy=CREATE&async=false', [
                             'events' => [
                                 [
                                     'dataValues' => $dataValues,
@@ -855,12 +859,29 @@ class EncounterController extends Controller
             }
             DB::commit();
 
+            if ($request->queue_id != 'ward_round' && $request->queue_id != '') {
+                // Send to CoreHealth SuperAdmin
+                $queue = DoctorQueue::where('id', $request->queue_id)->first();
+                // dd($queue);
+
+                $response = Http::withBasicAuth(
+                    env('COREHMS_SUPERADMIN_USERNAME'),
+                    env('COREHMS_SUPERADMIN_PASS')
+                )->withHeaders([
+                    'Content-Type' => 'application/json',
+                ])->post(env('COREHMS_SUPERADMIN_URL') . '/event-notification.php?notification_type=consultation', [
+                    'category' => $queue->clinic->name,
+                    'health_case' => $request->reasons_for_encounter[0] ?? null
+                ]);
+
+                Log::info("sent api request For encounter, ", [$response->body()]);
+            }
             return redirect()->route('encounters.index')->with(['message' => 'Encounter Notes Saved Successfully', 'message_type' => 'success']);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error($e->getMessage(), ['exception' => $e]);
 
-            return redirect()->back()->withInput()->withMessage('An error occurred '.$e->getMessage());
+            return redirect()->back()->withInput()->withMessage('An error occurred ' . $e->getMessage());
         }
     }
 
@@ -869,34 +890,26 @@ class EncounterController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function show(Encounter $encounter)
-    {
-    }
+    public function show(Encounter $encounter) {}
 
     /**
      * Show the form for editing the specified resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function edit(Encounter $encounter)
-    {
-    }
+    public function edit(Encounter $encounter) {}
 
     /**
      * Update the specified resource in storage.
      *
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Encounter $encounter)
-    {
-    }
+    public function update(Request $request, Encounter $encounter) {}
 
     /**
      * Remove the specified resource from storage.
      *
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Encounter $encounter)
-    {
-    }
+    public function destroy(Encounter $encounter) {}
 }

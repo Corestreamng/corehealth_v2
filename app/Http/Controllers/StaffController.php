@@ -2,23 +2,25 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-// use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\File;
-use App\Models\User;
 use App\Models\Clinic;
-use App\Models\Staff;
 use App\Models\Specialization;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
-use Yajra\DataTables\DataTables;
-use RealRashid\SweetAlert\Facades\Alert;
-use Intervention\Image\Facades\Image;
+use App\Models\Staff;
+use App\Models\User;
+// use Illuminate\Support\Facades\DB;
 use App\Models\UserCategory;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use Intervention\Image\Facades\Image;
+use RealRashid\SweetAlert\Facades\Alert;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Yajra\DataTables\DataTables;
 
 class StaffController extends Controller
 {
@@ -35,8 +37,6 @@ class StaffController extends Controller
 
     public function listStaff()
     {
-
-
         // if(Auth::user()->hasRole(['Super-Admin', 'Admin'])){
 
         $user = User::with(['category' => function ($q) {
@@ -53,22 +53,23 @@ class StaffController extends Controller
         //     }
         // }
 
-        return Datatables::of($user)
+        return DataTables::of($user)
             ->addIndexColumn()
             ->editColumn('is_admin', function ($user) {
                 $user_category_name = $user->category->name;
+
                 return $user_category_name;
             })
             ->addColumn('filename', function ($user) {
-
                 $url = url('storage/image/user/thumbnail/' . $user->filename);
+
                 return '<img src=' . $url . ' border="0" width="30" class="img-rounded" align="center" />';
             })
             ->addColumn('view', function ($user) {
-
                 // if (Auth::user()->hasPermissionTo('user-show') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
 
-                $url =  route('staff.show', $user->id);
+                $url = route('staff.show', $user->id);
+
                 return '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> View</a>';
                 // } else {
 
@@ -77,10 +78,10 @@ class StaffController extends Controller
                 // }
             })
             ->addColumn('edit', function ($user) {
-
                 // if (Auth::user()->hasPermissionTo('user-edit') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
 
-                $url =  route('staff.edit', $user->id);
+                $url = route('staff.edit', $user->id);
+
                 return '<a href="' . $url . '" class="btn btn-info btn-sm" ><i class="fa fa-pencil"></i> Edit</a>';
                 // } else {
 
@@ -89,9 +90,9 @@ class StaffController extends Controller
                 // }
             })
             ->addColumn('delete', function ($user) {
-
                 // if (Auth::user()->hasPermissionTo('user-delete') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
                 $id = $user->id;
+
                 return '<button type="button" class="delete-modal btn btn-danger btn-sm" data-toggle="modal" data-id="' . $id . '"><i class="fa fa-trash"></i> Delete</button>';
                 // } else {
                 //     $label = '<span class="label label-danger">Not Allow</span>';
@@ -100,9 +101,6 @@ class StaffController extends Controller
             })
             ->rawColumns(['filename', 'view', 'edit', 'delete'])
             ->make(true);
-
-
-
 
         // }
     }
@@ -126,8 +124,8 @@ class StaffController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
+     * @param int $id
+     *
      * @return \Illuminate\Http\Response
      */
     public function update_my_profile(Request $request, $id)
@@ -137,36 +135,34 @@ class StaffController extends Controller
         }
         $rules = [
             // 'is_admin'  => 'required',
-            'designation'  => 'nullable',
-            'surname'   => 'required|min:3|max:150',
+            'designation' => 'nullable',
+            'surname' => 'required|min:3|max:150',
             'firstname' => 'required|min:3|max:150',
-            'phone_number'     => 'required',
+            'phone_number' => 'required',
             'gender' => 'required',
         ];
 
         if ($request->hasFile('filename')) {
-            #  Making sure if password change was selected it's being validated
+            //  Making sure if password change was selected it's being validated
             $rules += [
                 'filename' => 'max:10240|mimes:jpeg,bmp,png,gif,svg,jpg',
             ];
         }
 
         if ($request->hasFile('old_records')) {
-
             $rules += [
                 'old_records' => 'max:2000000024|mimes:jpeg,png,svg,jpg,pdf,doc,docx',
             ];
         }
 
         if (!empty($request->password)) {
-            $rules += ['password'  => 'required|confirmed|min:6'];
+            $rules += ['password' => 'required|confirmed|min:6'];
         }
 
         $v = Validator::make($request->all(), $rules);
         if ($v->fails()) {
             return back()->with('errors', $v->messages()->all())->withInput();
         } else {
-
             $user = User::findOrFail($id);
 
             if ($request->hasFile('filename')) {
@@ -175,8 +171,8 @@ class StaffController extends Controller
                 $extension = strtolower($file->getClientOriginalExtension());
 
                 // format of file is "timestamp-file-name.extension"
-                $name = str_replace("", "-", strtolower($file->getClientOriginalName()));
-                $name = str_replace("_", "-", $name);
+                $name = str_replace('', '-', strtolower($file->getClientOriginalName()));
+                $name = str_replace('_', '-', $name);
                 $filename = time() . '-' . $name;
 
                 if (Storage::disk('user_images')->exists($user->filename)) {
@@ -194,14 +190,14 @@ class StaffController extends Controller
 
                 $thumbnail_path = storage_path('/app/public/image/user/thumbnail/');
 
-                //save thumbnail for index images
+                // save thumbnail for index images
                 if (Storage::disk('thumbnail_user_images')->exists($user->filename)) {
                     // delete image before uploading
                     File::delete($thumbnail_path . $user->filename);
 
                     Image::make($file)
                         ->resize(106, 106)
-                        ->save($thumbnail_path .  $filename);
+                        ->save($thumbnail_path . $filename);
                 } else {
                     Image::make($file)
                         ->resize(106, 106)
@@ -217,10 +213,10 @@ class StaffController extends Controller
                 $extension_o = strtolower($file_o->getClientOriginalExtension());
 
                 // format of file is "timestamp-file-name.extension"
-                $name_o = str_replace(" ", "-", strtolower($file_o->getClientOriginalName()));
-                $name_o = str_replace("_", "-", $name_o);
+                $name_o = str_replace(' ', '-', strtolower($file_o->getClientOriginalName()));
+                $name_o = str_replace('_', '-', $name_o);
                 $filename_o = time() . '-' . $name_o;
-                //dd($filename_o);
+                // dd($filename_o);
 
                 if (Storage::disk('old_records')->exists($user->old_records)) {
                     // delete image before uploading
@@ -232,21 +228,20 @@ class StaffController extends Controller
                 }
 
                 if ($request->old_records) {
-                    $user->old_records    = $filename_o ?? null;
+                    $user->old_records = $filename_o ?? null;
                 } else {
-                    $user->old_records    = null;
+                    $user->old_records = null;
                 }
             }
 
-            $user->surname     = $request->surname;
-            $user->firstname   = $request->firstname;
-            $user->othername   = ($request->othername) ? $request->othername : " ";
+            $user->surname = $request->surname;
+            $user->firstname = $request->firstname;
+            $user->othername = ($request->othername) ? $request->othername : ' ';
             if ($request->password) {
-                $user->password    = Hash::make($request->password);
+                $user->password = Hash::make($request->password);
             }
 
             if ($user->update()) {
-
                 $staff = Staff::where('user_id', $id)->first();
                 // dd($staff);
                 $staff->clinic_id = $request->clinic ?? null;
@@ -262,14 +257,17 @@ class StaffController extends Controller
                     // Send User an email with set password link
                     $msg = 'Your profile was successfully updated.';
                     Alert::success('Success ', $msg);
+
                     return back()->withMessage($msg)->withMessageType('success');
                     // return redirect()->route('staff.create');
                 } else {
                     $msg = 'Something is went wrong. Please try again later.';
+
                     return redirect()->back()->withInput()->with('error', $msg)->withInput();
                 }
             } else {
                 $msg = 'Something is went wrong. Please try again later.';
+
                 return redirect()->back()->withInput()->with('error', $msg)->withInput();
             }
         }
@@ -282,7 +280,6 @@ class StaffController extends Controller
      */
     public function index()
     {
-
         $statuses = UserCategory::whereStatus(1)->get();
         // $options = Status::whereVisible(1)->get();
         $roles = Role::pluck('name', 'name')->all();
@@ -309,65 +306,62 @@ class StaffController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
     {
         // dd($request->all());
         $rules = [
-            'is_admin'  => 'required',
-            'surname'   => 'required|min:3|max:150',
+            'is_admin' => 'required',
+            'surname' => 'required|min:3|max:150',
             'firstname' => 'required|min:3|max:150',
             // 'email'     => 'required|Email|min:6|max:150',
-            'gender'    => 'required',
+            'gender' => 'required',
             'phone_number' => 'required',
-            'password'  => 'nullable|min:6',
+            'password' => 'nullable|min:6',
             // 'password'  => 'required|min:6|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/',
         ];
 
         if ($request->hasFile('filename')) {
-
             $rules += [
                 'filename' => 'max:10240|mimes:jpeg,bmp,png,gif,svg,jpg',
             ];
         }
 
         if ($request->hasFile('old_records')) {
-
             $rules += [
                 'old_records' => 'max:2000000024|mimes:jpeg,png,svg,jpg,pdf,doc,docx',
             ];
         }
 
         if ($request->assignRole) {
-            #  Making sure if password change was selected it's being validated
+            //  Making sure if password change was selected it's being validated
             $rules += [
                 'roles' => 'required',
             ];
         }
 
         if ($request->is_admin == 21) {
-            #  Making sure specialization being validated for doctors
+            //  Making sure specialization being validated for doctors
             $rules += [
                 'specialization' => 'required',
             ];
         }
         if ($request->is_admin == 21) {
-            # Making sure clinic being validated for doctors
+            // Making sure clinic being validated for doctors
             $rules += [
                 'clinic' => 'required',
             ];
         }
         if ($request->is_admin == 21) {
-            # Making sure consultation_fee being validated for doctors
+            // Making sure consultation_fee being validated for doctors
             $rules += [
                 'consultation_fee' => 'required',
             ];
         }
 
         if ($request->assignPermission) {
-            # Making sure permissions being validated
+            // Making sure permissions being validated
             $rules += [
                 'permissions' => 'required',
             ];
@@ -377,15 +371,13 @@ class StaffController extends Controller
             $request->email = strtolower(trim($request->firstname)) . '.' . strtolower(trim($request->surname)) . '@hms.com';
         } else {
             $rules += [
-                'email'     => 'email|min:6|max:150|unique:users,email',
+                'email' => 'email|min:6|max:150|unique:users,email',
             ];
         }
 
         if (!$request->password) {
             $request->password = '123456';
         }
-
-
 
         $v = Validator::make($request->all(), $rules);
 
@@ -394,15 +386,14 @@ class StaffController extends Controller
             // Alert::error('Error Title', 'One or more information is needed.');
             return back()->with('errors', $v->messages()->all())->withInput();
         } else {
-
             if ($request->hasFile('filename')) {
                 $path = storage_path('/app/public/image/user/');
                 $file = $request->file('filename');
                 $extension = strtolower($file->getClientOriginalExtension());
 
                 // format of file is "timestamp-file-name.extension"
-                $name = str_replace(" ", "-", strtolower($file->getClientOriginalName()));
-                $name = str_replace("_", "-", $name);
+                $name = str_replace(' ', '-', strtolower($file->getClientOriginalName()));
+                $name = str_replace('_', '-', $name);
                 $filename = time() . '-' . $name;
 
                 if (Storage::disk('user_images')->exists($filename)) {
@@ -440,10 +431,10 @@ class StaffController extends Controller
                 $extension_o = strtolower($file_o->getClientOriginalExtension());
 
                 // format of file is "timestamp-file-name.extension"
-                $name_o = str_replace(" ", "-", strtolower($file_o->getClientOriginalName()));
-                $name_o = str_replace("_", "-", $name_o);
+                $name_o = str_replace(' ', '-', strtolower($file_o->getClientOriginalName()));
+                $name_o = str_replace('_', '-', $name_o);
                 $filename_o = time() . '-' . $name_o;
-                //dd($filename_o);
+                // dd($filename_o);
 
                 if (Storage::disk('old_records')->exists($filename_o)) {
                     // delete image before uploading
@@ -455,42 +446,41 @@ class StaffController extends Controller
                 }
             }
 
-            $user              = new User;
+            $user = new User();
 
             if ($request->filename) {
-                $user->filename    = ($filename) ? $filename : "avatar.png";
+                $user->filename = ($filename) ? $filename : 'avatar.png';
             } else {
-                $user->filename    = "avatar.png";
+                $user->filename = 'avatar.png';
             }
 
             if ($request->old_records) {
-                $user->old_records    = ($filename_o) ? $filename_o : null;
+                $user->old_records = ($filename_o) ? $filename_o : null;
             } else {
-                $user->old_records    = null;
+                $user->old_records = null;
             }
 
-            $user->is_admin    = $request->is_admin;
-            $user->surname     = $request->surname;
-            $user->firstname   = $request->firstname;
-            $user->othername   = ($request->othername) ? $request->othername : " ";
-            $user->email       = $request->email;
-            $user->password    = Hash::make($request->password);
+            $user->is_admin = $request->is_admin;
+            $user->surname = $request->surname;
+            $user->firstname = $request->firstname;
+            $user->othername = ($request->othername) ? $request->othername : ' ';
+            $user->email = $request->email;
+            $user->password = Hash::make($request->password);
 
-            $user->assignRole      = ($request->assignRole) ? 1 : 0;
-            $user->assignPermission      = ($request->assignPermission) ? 1 : 0;
+            $user->assignRole = ($request->assignRole) ? 1 : 0;
+            $user->assignPermission = ($request->assignPermission) ? 1 : 0;
 
             if ($user->save()) {
-
                 if ($request->assignRole) {
-                    # code...
+                    // code...
                     $user->assignRole($request->roles);
                 }
 
                 if ($request->assignPermission) {
-                    # code...
+                    // code...
                     $user->givePermissionTo($request->permissions);
                 }
-                $staff = new Staff;
+                $staff = new Staff();
                 $staff->clinic_id = $request->clinic ?? null;
                 $staff->user_id = $user->id;
                 $staff->specialization_id = $request->specialization ?? null;
@@ -501,17 +491,50 @@ class StaffController extends Controller
                 $staff->consultation_fee = $request->consultation_fee ?? 0;
 
                 if ($staff->save()) {
-                    // Send User an email with set password link
+                    // Send to CoreHealth SuperAdmin
+                    // For doctors and nurses
+                    if ($request->is_admin == 21) {
+                        $response = Http::withBasicAuth(
+                            env('COREHMS_SUPERADMIN_USERNAME'),
+                            env('COREHMS_SUPERADMIN_PASS')
+                        )->withHeaders([
+                            'Content-Type' => 'application/json',
+                        ])->post(env('COREHMS_SUPERADMIN_URL') . '/event-notification.php?notification_type=staff', [
+                            'type' => 'Doctors',
+                            'specialization' => $request->specialization ?? null,
+                            'gender' => $request->gender ?? null,
+                        ]);
+
+                        Log::info("sent api request For Staff doc, ", [$response->body()]);
+                    } elseif ($request->is_admin == 22) {
+                        $response = Http::withBasicAuth(
+                            env('COREHMS_SUPERADMIN_USERNAME'),
+                            env('COREHMS_SUPERADMIN_PASS')
+                        )->withHeaders([
+                            'Content-Type' => 'application/json',
+                        ])->post(env('COREHMS_SUPERADMIN_URL') . '/event-notification.php?notification_type=staff', [
+                            'type' => 'Nurse',
+                            'specialization' => $request->specialization ?? null,
+                            'gender' => $request->gender ?? null,
+                        ]);
+
+                        Log::info("sent api request For staff nurse, ", [$response->body()]);
+                    }
+
+
                     $msg = 'User [' . $user->firstname . ' ' . $user->surname . '] was successfully created.';
                     Alert::success('Success ', $msg);
+
                     return redirect()->back()->withInput()->withMessage($msg)->withMessageType('success');
                 } else {
-                    $user->delete(); //rollback
+                    $user->delete(); // rollback
                     $msg = 'Something is went wrong. Please try again later.';
+
                     return redirect()->back()->withInput()->with('error', $msg)->withInput();
                 }
             } else {
                 $msg = 'Something is went wrong. Please try again later.';
+
                 return redirect()->back()->withInput()->with('error', $msg)->withInput();
             }
         }
@@ -520,7 +543,8 @@ class StaffController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  int  $id
+     * @param int $id
+     *
      * @return \Illuminate\Http\Response
      */
     public function show($id)
@@ -531,13 +555,15 @@ class StaffController extends Controller
         $specializations = Specialization::pluck('name', 'id')->all();
         $clinics = Clinic::pluck('name', 'id')->all();
         $permissions = Permission::pluck('name', 'id')->all();
+
         return view('admin.staff.show', compact('user', 'roles', 'statuses', 'permissions', 'specializations', 'clinics'));
     }
 
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  int  $id
+     * @param int $id
+     *
      * @return \Illuminate\Http\Response
      */
     public function edit($id)
@@ -559,20 +585,20 @@ class StaffController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
+     * @param int $id
+     *
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, $id)
     {
         // dd($request->all());
         $rules = [
-            'is_admin'  => 'required',
-            'designation'  => 'nullable',
-            'surname'   => 'required|min:3|max:150',
+            'is_admin' => 'required',
+            'designation' => 'nullable',
+            'surname' => 'required|min:3|max:150',
             'firstname' => 'required|min:3|max:150',
-            'email'     => "required|Email|min:6|max:150|unique:users,email,$id",
-            'phone_number'     => 'required',
+            'email' => "required|Email|min:6|max:150|unique:users,email,$id",
+            'phone_number' => 'required',
             // 'password'  => 'required|min:6',
             // 'password'  => 'required|min:6|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/',
             // 'visible'   => 'required'/,
@@ -580,28 +606,26 @@ class StaffController extends Controller
         ];
 
         if ($request->hasFile('filename')) {
-            #  Making sure if password change was selected it's being validated
+            //  Making sure if password change was selected it's being validated
             $rules += [
                 'filename' => 'max:10240|mimes:jpeg,bmp,png,gif,svg,jpg',
             ];
         }
 
         if ($request->hasFile('old_records')) {
-
             $rules += [
                 'old_records' => 'max:2000000024|mimes:jpeg,png,svg,jpg,pdf,doc,docx',
             ];
         }
 
         if (!empty($request->password)) {
-            $rules += ['password'  => 'required|min:6'];
+            $rules += ['password' => 'required|min:6'];
         }
 
         $v = Validator::make($request->all(), $rules);
         if ($v->fails()) {
             return back()->with('errors', $v->messages()->all())->withInput();
         } else {
-
             $user = User::findOrFail($id);
 
             if ($request->hasFile('filename')) {
@@ -610,8 +634,8 @@ class StaffController extends Controller
                 $extension = strtolower($file->getClientOriginalExtension());
 
                 // format of file is "timestamp-file-name.extension"
-                $name = str_replace("", "-", strtolower($file->getClientOriginalName()));
-                $name = str_replace("_", "-", $name);
+                $name = str_replace('', '-', strtolower($file->getClientOriginalName()));
+                $name = str_replace('_', '-', $name);
                 $filename = time() . '-' . $name;
 
                 if (Storage::disk('user_images')->exists($user->filename)) {
@@ -629,14 +653,14 @@ class StaffController extends Controller
 
                 $thumbnail_path = storage_path('/app/public/image/user/thumbnail/');
 
-                //save thumbnail for index images
+                // save thumbnail for index images
                 if (Storage::disk('thumbnail_user_images')->exists($user->filename)) {
                     // delete image before uploading
                     File::delete($thumbnail_path . $user->filename);
 
                     Image::make($file)
                         ->resize(106, 106)
-                        ->save($thumbnail_path .  $filename);
+                        ->save($thumbnail_path . $filename);
                 } else {
                     Image::make($file)
                         ->resize(106, 106)
@@ -652,10 +676,10 @@ class StaffController extends Controller
                 $extension_o = strtolower($file_o->getClientOriginalExtension());
 
                 // format of file is "timestamp-file-name.extension"
-                $name_o = str_replace(" ", "-", strtolower($file_o->getClientOriginalName()));
-                $name_o = str_replace("_", "-", $name_o);
+                $name_o = str_replace(' ', '-', strtolower($file_o->getClientOriginalName()));
+                $name_o = str_replace('_', '-', $name_o);
                 $filename_o = time() . '-' . $name_o;
-                //dd($filename_o);
+                // dd($filename_o);
 
                 if (Storage::disk('old_records')->exists($user->old_records)) {
                     // delete image before uploading
@@ -667,12 +691,11 @@ class StaffController extends Controller
                 }
 
                 if ($request->old_records) {
-                    $user->old_records    = $filename_o ?? null;
+                    $user->old_records = $filename_o ?? null;
                 } else {
-                    $user->old_records    = null;
+                    $user->old_records = null;
                 }
             }
-
 
             // if ($request->filename) {
             //     $user->filename    = ($filename) ? $filename : "avatar.png";
@@ -686,25 +709,24 @@ class StaffController extends Controller
             //     $user->old_records    = null;
             // }
 
-            $user->is_admin    = $request->is_admin;
-            $user->surname     = $request->surname;
-            $user->firstname   = $request->firstname;
-            $user->othername   = ($request->othername) ? $request->othername : " ";
-            $user->email       = $request->email;
-            $user->password    = Hash::make($request->password);
+            $user->is_admin = $request->is_admin;
+            $user->surname = $request->surname;
+            $user->firstname = $request->firstname;
+            $user->othername = ($request->othername) ? $request->othername : ' ';
+            $user->email = $request->email;
+            $user->password = Hash::make($request->password);
 
-            $user->assignRole      = ($request->assignRole) ? 1 : 0;
-            $user->assignPermission      = ($request->assignPermission) ? 1 : 0;
+            $user->assignRole = ($request->assignRole) ? 1 : 0;
+            $user->assignPermission = ($request->assignPermission) ? 1 : 0;
 
             if ($user->update()) {
-
                 if ($request->assignRole) {
-                    # code...
+                    // code...
                     $user->assignRole($request->roles);
                 }
 
                 if ($request->assignPermission) {
-                    # code...
+                    // code...
                     $user->givePermissionTo($request->permissions);
                 }
                 $staff = Staff::where('user_id', $id)->first();
@@ -722,14 +744,17 @@ class StaffController extends Controller
                     // Send User an email with set password link
                     $msg = 'User [' . $user->firstname . ' ' . $user->surname . '] was successfully updated.';
                     Alert::success('Success ', $msg);
+
                     return redirect()->route('staff.index')->withMessage($msg)->withMessageType('success');
                     // return redirect()->route('staff.create');
                 } else {
                     $msg = 'Something is went wrong. Please try again later.';
+
                     return redirect()->back()->withInput()->with('error', $msg)->withInput();
                 }
             } else {
                 $msg = 'Something is went wrong. Please try again later.';
+
                 return redirect()->back()->withInput()->with('error', $msg)->withInput();
             }
         }
@@ -750,7 +775,6 @@ class StaffController extends Controller
         if ($v->fails()) {
             return back()->with('errors', $v->messages()->all())->withInput();
         } else {
-
             $user = User::findOrFail($id);
 
             if ($request->hasFile('filename')) {
@@ -759,8 +783,8 @@ class StaffController extends Controller
                 $extension = strtolower($file->getClientOriginalExtension());
 
                 // format of file is "timestamp-file-name.extension"
-                $name = str_replace("", "-", strtolower($file->getClientOriginalName()));
-                $name = str_replace("_", "-", $name);
+                $name = str_replace('', '-', strtolower($file->getClientOriginalName()));
+                $name = str_replace('_', '-', $name);
                 $filename = time() . '-' . $name;
 
                 if (Storage::disk('user_images')->exists($user->filename)) {
@@ -802,7 +826,7 @@ class StaffController extends Controller
 
                     Image::make($file)
                         ->resize(106, 106)
-                        ->save($thumbnail_path .  $filename);
+                        ->save($thumbnail_path . $filename);
                 } else {
                     Image::make($file)
                         ->resize(106, 106)
@@ -815,6 +839,7 @@ class StaffController extends Controller
             if ($user->save()) {
                 $msg = 'The Avatar for [' . $user->firstname . ' ' . $user->surname . '] was successfully updated.';
                 Alert::success('Success ', $msg);
+
                 return redirect()->back()->withInput()->withMessage($msg)->withMessageType('success');
             }
         }
@@ -823,7 +848,8 @@ class StaffController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
+     * @param int $id
+     *
      * @return \Illuminate\Http\Response
      */
     public function destroy($id)
