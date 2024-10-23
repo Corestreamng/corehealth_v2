@@ -762,7 +762,7 @@ class EncounterController extends Controller
             // Find the patient
             $patient = patient::findOrFail($request->patient_id);
 
-            if (null != $patient->dhis_consult_enrollment_id && null != $patient->dhis_consult_tracker_id) {
+            if (null != $patient->dhis_consult_enrollment_id && null != $patient->dhis_consult_tracker_id && $patient->dhis_consult_enrollment_id != '' && $patient->dhis_consult_tracker_id != '') {
                 // Get current time in the required format
                 $currentTime = Carbon::now()->format('Y-m-d\TH:i:s.000');
 
