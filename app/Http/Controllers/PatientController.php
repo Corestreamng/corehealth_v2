@@ -410,83 +410,88 @@ class PatientController extends Controller
                 $last_word_start = strrpos($request->address, ' ');
                 $last_word = trim(substr($request->address, $last_word_start));
 
-                $trackedEntityResponse = Http::withBasicAuth(env('DHIS_USERNAME'), env('DHIS_PASS'))
-                    ->post(env('DHIS_API_URL') . '/tracker?importStrategy=CREATE&async=false', [
-                        "trackedEntities" => [
-                            [
-                                "orgUnit" => env('DHIS_ORG_UNIT'),
-                                "trackedEntityType" => env('DHIS_TRACKED_ENTITY_TYPE'),
-                                "attributes" => [
-                                    [
-                                        "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_FNAME'),
-                                        "value" => $request->firstname
-                                    ],
-                                    [
-                                        "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_LNAME'),
-                                        "value" => $request->surname
-                                    ],
-                                    [
-                                        "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_GENDER'),
-                                        "value" => $request->gender
-                                    ],
-                                    [
-                                        "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_DOB'),
-                                        "value" => date('Y-m-d', strtotime($request->dob))
-                                    ],
-                                    [
-                                        "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_CITY'),
-                                        "value" => $last_word ?? ''
+                if (env('GOONLINE') == 1) {
+
+                    $trackedEntityResponse = Http::withBasicAuth(env('DHIS_USERNAME'), env('DHIS_PASS'))
+                        ->post(env('DHIS_API_URL') . '/tracker?importStrategy=CREATE&async=false', [
+                            "trackedEntities" => [
+                                [
+                                    "orgUnit" => env('DHIS_ORG_UNIT'),
+                                    "trackedEntityType" => env('DHIS_TRACKED_ENTITY_TYPE'),
+                                    "attributes" => [
+                                        [
+                                            "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_FNAME'),
+                                            "value" => $request->firstname
+                                        ],
+                                        [
+                                            "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_LNAME'),
+                                            "value" => $request->surname
+                                        ],
+                                        [
+                                            "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_GENDER'),
+                                            "value" => $request->gender
+                                        ],
+                                        [
+                                            "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_DOB'),
+                                            "value" => date('Y-m-d', strtotime($request->dob))
+                                        ],
+                                        [
+                                            "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_CITY'),
+                                            "value" => $last_word ?? ''
+                                        ]
                                     ]
                                 ]
                             ]
-                        ]
-                    ]);
+                        ]);
 
 
-                $trackedEntityInstanceId = $trackedEntityResponse->json()['bundleReport']['typeReportMap']['TRACKED_ENTITY']['objectReports'][0]['uid'];
+                    $trackedEntityInstanceId = $trackedEntityResponse->json()['bundleReport']['typeReportMap']['TRACKED_ENTITY']['objectReports'][0]['uid'];
 
-                // Get current time in the required format
-                $currentTime = Carbon::now()->format('Y-m-d\TH:i:s.000');
-                // Create Enrollment
-                $enrollmentResponse = Http::withBasicAuth(env('DHIS_USERNAME'), env('DHIS_PASS'))
-                    ->post(env('DHIS_API_URL') . '/tracker?importStrategy=CREATE&async=false', [
-                        "enrollments" => [
-                            [
-                                "attributes" => [
-                                    [
-                                        "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_FNAME'),
-                                        "value" => $request->firstname
+                    // Get current time in the required format
+                    $currentTime = Carbon::now()->format('Y-m-d\TH:i:s.000');
+                    // Create Enrollment
+                    $enrollmentResponse = Http::withBasicAuth(env('DHIS_USERNAME'), env('DHIS_PASS'))
+                        ->post(env('DHIS_API_URL') . '/tracker?importStrategy=CREATE&async=false', [
+                            "enrollments" => [
+                                [
+                                    "attributes" => [
+                                        [
+                                            "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_FNAME'),
+                                            "value" => $request->firstname
+                                        ],
+                                        [
+                                            "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_LNAME'),
+                                            "value" => $request->surname
+                                        ],
+                                        [
+                                            "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_GENDER'),
+                                            "value" => $request->gender
+                                        ],
+                                        [
+                                            "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_DOB'),
+                                            "value" => date('Y-m-d', strtotime($request->dob))
+                                        ],
+                                        [
+                                            "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_CITY'),
+                                            "value" => $last_word ?? ''
+                                        ]
                                     ],
-                                    [
-                                        "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_LNAME'),
-                                        "value" => $request->surname
-                                    ],
-                                    [
-                                        "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_GENDER'),
-                                        "value" => $request->gender
-                                    ],
-                                    [
-                                        "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_DOB'),
-                                        "value" => date('Y-m-d', strtotime($request->dob))
-                                    ],
-                                    [
-                                        "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_CITY'),
-                                        "value" => $last_word ?? ''
-                                    ]
-                                ],
-                                "enrolledAt" => $currentTime,
-                                "occurredAt" => $currentTime,
-                                "orgUnit" => env('DHIS_ORG_UNIT'),
-                                "program" => env('DHIS_TRACKED_ENTITY_PROGRAM'),
-                                "status" => "COMPLETED",
-                                "trackedEntityType" => env('DHIS_TRACKED_ENTITY_TYPE'),
-                                "trackedEntity" => $trackedEntityInstanceId
+                                    "enrolledAt" => $currentTime,
+                                    "occurredAt" => $currentTime,
+                                    "orgUnit" => env('DHIS_ORG_UNIT'),
+                                    "program" => env('DHIS_TRACKED_ENTITY_PROGRAM'),
+                                    "status" => "COMPLETED",
+                                    "trackedEntityType" => env('DHIS_TRACKED_ENTITY_TYPE'),
+                                    "trackedEntity" => $trackedEntityInstanceId
+                                ]
                             ]
-                        ]
-                    ]);
+                        ]);
 
-                $enrollmentId = $enrollmentResponse->json()['bundleReport']['typeReportMap']['ENROLLMENT']['objectReports'][0]['uid'];
-
+                    $enrollmentId = $enrollmentResponse->json()['bundleReport']['typeReportMap']['ENROLLMENT']['objectReports'][0]['uid'];
+                } else {
+                    $trackedEntityInstanceId = '';
+                    $enrollmentId = '';
+                }
 
                 $patient = new patient;
 
@@ -523,7 +528,7 @@ class PatientController extends Controller
                     env('COREHMS_SUPERADMIN_PASS')
                 )->withHeaders([
                     'Content-Type' => 'application/json',
-                ])->post(env('COREHMS_SUPERADMIN_URL').'/event-notification.php?notification_type=patient', [
+                ])->post(env('COREHMS_SUPERADMIN_URL') . '/event-notification.php?notification_type=patient', [
                     'nothing' => true
                 ]);
 
