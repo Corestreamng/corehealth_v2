@@ -250,50 +250,65 @@ class LabServiceRequestController extends Controller
                     return "<a class='btn btn-primary' href='{$url}'>view</a>";
                 })
                 ->editColumn('patient_id', function ($request) {
-                    // Guard against null relationships
+                    // Guard against null patient
                     if (!$request->patient) {
                         return '<span class="badge badge-danger">Patient data not found</span>';
                     }
 
-                    return view('partials.lab-request-patient-info', [
-                        'patientName' => $request->patient->user ? userfullname($request->patient->user->id) : 'N/A',
-                        'fileNo' => $request->patient->file_no ?? 'N/A',
-                        'hmoName' => optional($request->patient->hmo)->name ?? 'N/A',
-                        'hmoNo' => $request->patient->hmo_no ?? 'N/A'
-                    ])->render();
+                    $str = "<small>";
+                    $str .= "<b>Patient: </b>" . (($request->patient->user) ? userfullname($request->patient->user->id) : "N/A");
+                    $str .= "<br><br><b>File No: </b>" . ($request->patient->file_no ?? "N/A");
+                    $str .= "<br><br><b>Insurance/HMO: </b>" . (($request->patient->hmo) ? $request->patient->hmo->name : "N/A");
+                    $str .= "<br><br><b>HMO Number: </b>" . ($request->patient->hmo_no ?? "N/A");
+                    $str .= "</small>";
+
+                    return $str;
                 })
                 ->editColumn('created_at', function ($request) {
-                    $doctorInfo = isset($request->doctor_id)
-                        ? userfullname($request->doctor_id) . ' (' . $this->formatDateTime($request->created_at) . ')'
-                        : '<span class="badge badge-secondary">N/A</span>';
+                    $str = "<small>";
 
-                    $billedInfo = isset($request->billed_by)
-                        ? userfullname($request->billed_by) . ' (' . $this->formatDateTime($request->billed_date) . ')'
-                        : '<span class="badge badge-secondary">Not billed</span>';
+                    // Doctor info
+                    $str .= "<b>Requested by: </b>" .
+                        (isset($request->doctor_id) ?
+                            userfullname($request->doctor_id) . ' (' . $this->formatDateTime($request->created_at) . ')' :
+                            "<span class='badge badge-secondary'>N/A</span>");
 
-                    $sampleInfo = isset($request->sample_taken_by)
-                        ? userfullname($request->sample_taken_by) . ' (' . $this->formatDateTime($request->sample_date) . ')'
-                        : '<span class="badge badge-secondary">Not taken</span>';
+                    // Last updated
+                    $str .= "<br><br><b>Last Updated On: </b>" . $this->formatDateTime($request->updated_at);
 
-                    $resultInfo = isset($request->result_by)
-                        ? userfullname($request->result_by) . ' (' . $this->formatDateTime($request->result_date) . ')'
-                        : '<span class="badge badge-secondary">Awaiting Results</span>';
+                    // Billed info
+                    $str .= "<br><br><b>Billed by: </b>" .
+                        (isset($request->billed_by) ?
+                            userfullname($request->billed_by) . ' (' . $this->formatDateTime($request->billed_date) . ')' :
+                            "<span class='badge badge-secondary'>Not billed</span>");
 
-                    return view('partials.lab-request-timeline', [
-                        'doctorInfo' => $doctorInfo,
-                        'updatedAt' => $this->formatDateTime($request->updated_at),
-                        'billedInfo' => $billedInfo,
-                        'sampleInfo' => $sampleInfo,
-                        'resultInfo' => $resultInfo,
-                        'note' => $request->note ?? 'N/A'
-                    ])->render();
+                    // Sample info
+                    $str .= "<br><br><b>Sample taken by: </b>" .
+                        (isset($request->sample_taken_by) ?
+                            userfullname($request->sample_taken_by) . ' (' . $this->formatDateTime($request->sample_date) . ')' :
+                            "<span class='badge badge-secondary'>Not taken</span>");
+
+                    // Results info
+                    $str .= "<br><br><b>Results by: </b>" .
+                        (isset($request->result_by) ?
+                            userfullname($request->result_by) . ' (' . $this->formatDateTime($request->result_date) . ')' :
+                            "<span class='badge badge-secondary'>Awaiting Results</span>");
+
+                    // Note
+                    $str .= "<br><br><b>Request Note: </b>" .
+                        (isset($request->note) && $request->note != null ?
+                            $request->note :
+                            "<span class='badge badge-secondary'>N/A</span>");
+
+                    $str .= "</small>";
+                    return $str;
                 })
                 ->editColumn('result', function ($request) {
-                    $serviceName = optional($request->service)->service_name ?? 'N/A';
-                    return view('partials.lab-request-result', [
-                        'serviceName' => $serviceName,
-                        'result' => $request->result ?? 'N/A'
-                    ])->render();
+                    $str = "<span class='badge badge-success'>" .
+                        (optional($request->service)->service_name ?? "N/A") .
+                        "</span><hr>";
+                    $str .= $request->result ?? 'N/A';
+                    return $str;
                 })
                 ->rawColumns(['created_at', 'result', 'select', 'patient_id'])
                 ->make(true);
@@ -323,6 +338,7 @@ class LabServiceRequestController extends Controller
             ? date('h:i a D M j, Y', strtotime($datetime))
             : 'N/A';
     }
+
 
     public function investHistoryList()
     {
