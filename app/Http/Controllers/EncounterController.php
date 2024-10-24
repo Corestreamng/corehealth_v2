@@ -864,17 +864,19 @@ class EncounterController extends Controller
                 $queue = DoctorQueue::where('id', $request->queue_id)->first();
                 // dd($queue);
 
-                $response = Http::withBasicAuth(
-                    env('COREHMS_SUPERADMIN_USERNAME'),
-                    env('COREHMS_SUPERADMIN_PASS')
-                )->withHeaders([
-                    'Content-Type' => 'application/json',
-                ])->post(env('COREHMS_SUPERADMIN_URL') . '/event-notification.php?notification_type=consultation', [
-                    'category' => $queue->clinic->name,
-                    'health_case' => $request->reasons_for_encounter[0] ?? null
-                ]);
+                if (env('GOONLINE') == 1) {
+                    $response = Http::withBasicAuth(
+                        env('COREHMS_SUPERADMIN_USERNAME'),
+                        env('COREHMS_SUPERADMIN_PASS')
+                    )->withHeaders([
+                        'Content-Type' => 'application/json',
+                    ])->post(env('COREHMS_SUPERADMIN_URL') . '/event-notification.php?notification_type=consultation', [
+                        'category' => $queue->clinic->name,
+                        'health_case' => $request->reasons_for_encounter[0] ?? null
+                    ]);
 
-                Log::info("sent api request For encounter, ", [$response->body()]);
+                    Log::info("sent api request For encounter, ", [$response->body()]);
+                }
             }
             return redirect()->route('encounters.index')->with(['message' => 'Encounter Notes Saved Successfully', 'message_type' => 'success']);
         } catch (\Exception $e) {
