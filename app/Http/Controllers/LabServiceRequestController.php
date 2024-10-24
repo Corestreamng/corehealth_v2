@@ -17,6 +17,7 @@ use App\Models\patient;
 use App\Models\Product;
 use App\Models\ProductOrServiceRequest;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class LabServiceRequestController extends Controller
 {
@@ -222,47 +223,105 @@ class LabServiceRequestController extends Controller
 
     public function investQueueList()
     {
-        //all request with status 1, 2 i.e those that re yet to be billed or results are yet to be enterd
-        $his = LabServiceRequest::with(['service', 'encounter', 'patient', 'productOrServiceRequest', 'doctor', 'biller'])
-            ->where('status', 1)->orWhere('status', 2)->orWhere('status', 3)->orderBy('created_at', 'DESC')->get();
-        //dd($pc);
-        return Datatables::of($his)
-            ->addIndexColumn()
-            ->addColumn('select', function ($h) {
-                $url = route('patient.show', [$h->patient->id, 'section' => 'investigationsCardBody']);
-                $str = "
-                    <a class='btn btn-primary' href='$url'>
-                        view
-                    </a>";
-                return $str;
-            })
-            ->editColumn('patient_id', function ($h) {
-                $str = "<small>";
-                $str .= "<b >Patient </b> :" . (($h->patient->user) ? userfullname($h->patient->user->id) : "N/A");
-                $str .= "<br><br><b >File No </b> : " . (($h->patient) ? $h->patient->file_no : "N/A");
-                $str .= "<br><br><b >Insurance/HMO :</b> : " . (($h->patient->hmo) ? $h->patient->hmo->name : "N/A");
-                $str .= "<br><br><b >HMO Number :</b> : " . (($h->patient->hmo_no) ? $h->patient->hmo_no : "N/A");
-                $str .= "</small>";
-                return $str;
-            })
-            ->editColumn('created_at', function ($h) {
-                $str = "<small>";
-                $str .= "<b >Requested by: </b>" . ((isset($h->doctor_id)  && $h->doctor_id != null) ? (userfullname($h->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
-                $str .= "<br><br><b >Last Updated On:</b> " . date('h:i a D M j, Y', strtotime($h->updated_at));
-                $str .= "<br><br><b >Billed by:</b> " . ((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span>");
-                $str .= "<br><br><b >Sample taken by:</b> " . ((isset($h->sample_taken_by) && $h->sample_taken_by != null) ? (userfullname($h->sample_taken_by) . ' (' . date('h:i a D M j, Y', strtotime($h->sample_date)) . ')') : "<span class='badge badge-secondary'>Not taken</span>");
-                $str .= "<br><br><b >Results by:</b> " . ((isset($h->result_by) && $h->result_by != null) ? (userfullname($h->result_by) . ' (' . date('h:i a D M j, Y', strtotime($h->result_date)) . ')') : "<span class='badge badge-secondary'>Awaiting Results</span>");
-                $str .= "<br><br><b >Request Note:</b> " . ((isset($h->note) && $h->note != null) ? ($h->note) : "<span class='badge badge-secondary'>N/A</span><br>");
-                $str .= "</small>";
-                return $str;
-            })
-            ->editColumn('result', function ($his) {
-                $str = "<span class = 'badge badge-success'>" . (($his->service) ? $his->service->service_name : "N/A") . "</span><hr>";
-                $str .= $his->result ?? 'N/A';
-                return $str;
-            })
-            ->rawColumns(['created_at', 'result', 'select', 'patient_id'])
-            ->make(true);
+        try {
+            // Get lab service requests with eager loading
+            $requests = LabServiceRequest::with([
+                'service',
+                'encounter',
+                'patient.user',
+                'patient.hmo',
+                'productOrServiceRequest',
+                'doctor',
+                'biller'
+            ])
+                ->whereIn('status', [1, 2, 3])
+                ->orderByDesc('created_at')
+                ->get();
+
+            return Datatables::of($requests)
+                ->addIndexColumn()
+                ->addColumn('select', function ($request) {
+                    // Guard against null patient
+                    if (!$request->patient) {
+                        return '<span class="badge badge-danger">Invalid Patient Data</span>';
+                    }
+
+                    $url = route('patient.show', [$request->patient->id, 'section' => 'investigationsCardBody']);
+                    return "<a class='btn btn-primary' href='{$url}'>view</a>";
+                })
+                ->editColumn('patient_id', function ($request) {
+                    // Guard against null relationships
+                    if (!$request->patient) {
+                        return '<span class="badge badge-danger">Patient data not found</span>';
+                    }
+
+                    return view('partials.lab-request-patient-info', [
+                        'patientName' => $request->patient->user ? userfullname($request->patient->user->id) : 'N/A',
+                        'fileNo' => $request->patient->file_no ?? 'N/A',
+                        'hmoName' => optional($request->patient->hmo)->name ?? 'N/A',
+                        'hmoNo' => $request->patient->hmo_no ?? 'N/A'
+                    ])->render();
+                })
+                ->editColumn('created_at', function ($request) {
+                    $doctorInfo = isset($request->doctor_id)
+                        ? userfullname($request->doctor_id) . ' (' . $this->formatDateTime($request->created_at) . ')'
+                        : '<span class="badge badge-secondary">N/A</span>';
+
+                    $billedInfo = isset($request->billed_by)
+                        ? userfullname($request->billed_by) . ' (' . $this->formatDateTime($request->billed_date) . ')'
+                        : '<span class="badge badge-secondary">Not billed</span>';
+
+                    $sampleInfo = isset($request->sample_taken_by)
+                        ? userfullname($request->sample_taken_by) . ' (' . $this->formatDateTime($request->sample_date) . ')'
+                        : '<span class="badge badge-secondary">Not taken</span>';
+
+                    $resultInfo = isset($request->result_by)
+                        ? userfullname($request->result_by) . ' (' . $this->formatDateTime($request->result_date) . ')'
+                        : '<span class="badge badge-secondary">Awaiting Results</span>';
+
+                    return view('partials.lab-request-timeline', [
+                        'doctorInfo' => $doctorInfo,
+                        'updatedAt' => $this->formatDateTime($request->updated_at),
+                        'billedInfo' => $billedInfo,
+                        'sampleInfo' => $sampleInfo,
+                        'resultInfo' => $resultInfo,
+                        'note' => $request->note ?? 'N/A'
+                    ])->render();
+                })
+                ->editColumn('result', function ($request) {
+                    $serviceName = optional($request->service)->service_name ?? 'N/A';
+                    return view('partials.lab-request-result', [
+                        'serviceName' => $serviceName,
+                        'result' => $request->result ?? 'N/A'
+                    ])->render();
+                })
+                ->rawColumns(['created_at', 'result', 'select', 'patient_id'])
+                ->make(true);
+        } catch (\Exception $e) {
+            Log::error('Lab Service Request Error: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'error' => 'An error occurred while processing the request.',
+                'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error'
+            ], 500);
+        }
+    }
+
+    /**
+     * Format datetime to consistent format
+     *
+     * @param string|null $datetime
+     * @return string
+     */
+    private function formatDateTime(?string $datetime): string
+    {
+        return $datetime
+            ? date('h:i a D M j, Y', strtotime($datetime))
+            : 'N/A';
     }
 
     public function investHistoryList()
@@ -342,9 +401,9 @@ class LabServiceRequestController extends Controller
      */
     public function show($id)
     {
-        $req = LabServiceRequest::where('id',$id)->first();
+        $req = LabServiceRequest::where('id', $id)->first();
 
-        return view('admin.lab_service_requests.show', ['req'=>$req]);
+        return view('admin.lab_service_requests.show', ['req' => $req]);
     }
 
     /**
