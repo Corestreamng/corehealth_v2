@@ -34,6 +34,8 @@ use App\Http\Controllers\StoreStockController;
 use App\Http\Controllers\VitalSignController;
 use App\Http\Controllers\MessagesController;
 use App\Http\Controllers\PatientProfileController;
+use App\Http\Controllers\SpecializationController;
+use App\Models\Clinic;
 use App\Models\PatientProfile;
 use App\Models\Staff;
 use Illuminate\Support\Facades\Auth;
@@ -69,6 +71,9 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('listRoles', [RoleController::class, 'listRoles'])->name('listRoles');
         Route::resource('roles', RoleController::class);
     });
+
+    Route::resource('specializations', SpecializationController::class);
+    Route::resource('clinics', ClinicController::class);
 
     Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions

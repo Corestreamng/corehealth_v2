@@ -197,6 +197,18 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link" href="{{ route('specializations.index') }}">
+                    <i class="mdi mdi-compass-outline menu-icon"></i>
+                    <span class="menu-title">Specializations Management</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('clinics.index') }}">
+                    <i class="mdi mdi-compass-outline menu-icon"></i>
+                    <span class="menu-title">Clinics Management</span>
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link" href="{{ route('hmo.index') }}">
                     <i class="mdi mdi-compass-outline menu-icon"></i>
                     <span class="menu-title">HMO Management</span>
