@@ -491,34 +491,36 @@ class StaffController extends Controller
                 $staff->consultation_fee = $request->consultation_fee ?? 0;
 
                 if ($staff->save()) {
-                    // Send to CoreHealth SuperAdmin
-                    // For doctors and nurses
-                    if ($request->is_admin == 21) {
-                        $response = Http::withBasicAuth(
-                            env('COREHMS_SUPERADMIN_USERNAME'),
-                            env('COREHMS_SUPERADMIN_PASS')
-                        )->withHeaders([
-                            'Content-Type' => 'application/json',
-                        ])->post(env('COREHMS_SUPERADMIN_URL') . '/event-notification.php?notification_type=staff', [
-                            'type' => 'Doctors',
-                            'specialization' => $request->specialization ?? null,
-                            'gender' => $request->gender ?? null,
-                        ]);
+                    if (env('GOONLINE') == 1) {
+                        // Send to CoreHealth SuperAdmin
+                        // For doctors and nurses
+                        if ($request->is_admin == 21) {
+                            $response = Http::withBasicAuth(
+                                env('COREHMS_SUPERADMIN_USERNAME'),
+                                env('COREHMS_SUPERADMIN_PASS')
+                            )->withHeaders([
+                                'Content-Type' => 'application/json',
+                            ])->post(env('COREHMS_SUPERADMIN_URL') . '/event-notification.php?notification_type=staff', [
+                                'type' => 'Doctors',
+                                'specialization' => $request->specialization ?? null,
+                                'gender' => $request->gender ?? null,
+                            ]);
 
-                        Log::info("sent api request For Staff doc, ", [$response->body()]);
-                    } elseif ($request->is_admin == 22) {
-                        $response = Http::withBasicAuth(
-                            env('COREHMS_SUPERADMIN_USERNAME'),
-                            env('COREHMS_SUPERADMIN_PASS')
-                        )->withHeaders([
-                            'Content-Type' => 'application/json',
-                        ])->post(env('COREHMS_SUPERADMIN_URL') . '/event-notification.php?notification_type=staff', [
-                            'type' => 'Nurse',
-                            'specialization' => $request->specialization ?? null,
-                            'gender' => $request->gender ?? null,
-                        ]);
+                            Log::info("sent api request For Staff doc, ", [$response->body()]);
+                        } elseif ($request->is_admin == 22) {
+                            $response = Http::withBasicAuth(
+                                env('COREHMS_SUPERADMIN_USERNAME'),
+                                env('COREHMS_SUPERADMIN_PASS')
+                            )->withHeaders([
+                                'Content-Type' => 'application/json',
+                            ])->post(env('COREHMS_SUPERADMIN_URL') . '/event-notification.php?notification_type=staff', [
+                                'type' => 'Nurse',
+                                'specialization' => $request->specialization ?? null,
+                                'gender' => $request->gender ?? null,
+                            ]);
 
-                        Log::info("sent api request For staff nurse, ", [$response->body()]);
+                            Log::info("sent api request For staff nurse, ", [$response->body()]);
+                        }
                     }
 
 
