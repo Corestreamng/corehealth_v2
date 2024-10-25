@@ -224,7 +224,7 @@ class EncounterController extends Controller
                 ->addColumn('file_no', function ($queue) {
                     $patient = patient::find($queue->patient_id);
 
-                    return $patient->file_no;
+                    return $patient?->file_no;
                 })
                 ->addColumn('view', function ($queue) {
                     // if (Auth::user()->hasPermissionTo('user-show') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
