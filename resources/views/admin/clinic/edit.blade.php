@@ -8,6 +8,7 @@
         <div class="card border-info mb-3">
             <div class="card-header">
                 <h4>Edit Clinic</h4>
+                <a href="{{ route('clinics.index') }}" class="btn btn-secondary float-end">Back to List</a>
             </div>
             <div class="card-body">
                 <form action="{{ route('clinics.update', $clinic->id) }}" method="POST">

@@ -522,18 +522,19 @@ class PatientController extends Controller
                 $patient_account->patient_id = $patient->id;
                 $patient_account->save();
 
-                //send to corehms super admin
-                $response = Http::withBasicAuth(
-                    env('COREHMS_SUPERADMIN_USERNAME'),
-                    env('COREHMS_SUPERADMIN_PASS')
-                )->withHeaders([
-                    'Content-Type' => 'application/json',
-                ])->post(env('COREHMS_SUPERADMIN_URL') . '/event-notification.php?notification_type=patient', [
-                    'nothing' => true
-                ]);
+                if (env('GOONLINE') == 1) {
+                    //send to corehms super admin
+                    $response = Http::withBasicAuth(
+                        env('COREHMS_SUPERADMIN_USERNAME'),
+                        env('COREHMS_SUPERADMIN_PASS')
+                    )->withHeaders([
+                        'Content-Type' => 'application/json',
+                    ])->post(env('COREHMS_SUPERADMIN_URL') . '/event-notification.php?notification_type=patient', [
+                        'nothing' => true
+                    ]);
 
-                Log::info("sent api request For Patient, ", [$response->body()]);
-
+                    Log::info("sent api request For Patient, ", [$response->body()]);
+                }
                 $msg = 'Patient  [' . $user->firstname . ' ' . $user->surname . '] was successfully created.';
                 Db::commit();
                 return redirect()->back()->withMessage($msg)->withMessageType('success');
