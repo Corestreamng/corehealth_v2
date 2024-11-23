@@ -196,25 +196,25 @@ class LabServiceRequestController extends Controller
             ->addIndexColumn()
             ->addColumn('select', function ($h) {
                 $str = "
-                    <button type='button' class='btn btn-primary' onclick='setResTempInModal(this)' data-service-name = '" . $h->service->service_name . "' data-template = '" . htmlspecialchars($h->service->template) . "' data-id='$h->id'>
+                    <button type='button' class='btn btn-primary' onclick='setResTempInModal(this)' data-service-name = '" . $h?->service->service_name . "' data-template = '" . htmlspecialchars($h?->service->template) . "' data-id='$h?->id'>
                         Enter Result
                     </button>";
                 return $str;
             })
             ->editColumn('created_at', function ($h) {
                 $str = "<small>";
-                $str .= "<b >Requested by: </b>" . ((isset($h->doctor_id)  && $h->doctor_id != null) ? (userfullname($h->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
-                $str .= "<br><br><b >Last Updated On:</b> " . date('h:i a D M j, Y', strtotime($h->updated_at));
-                $str .= "<br><br><b >Billed by:</b> " . ((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span>");
-                $str .= "<br><br><b >Sample taken by:</b> " . ((isset($h->sample_taken_by) && $h->sample_taken_by != null) ? (userfullname($h->sample_taken_by) . ' (' . date('h:i a D M j, Y', strtotime($h->sample_date)) . ')') : "<span class='badge badge-secondary'>Not taken</span>");
-                $str .= "<br><br><b >Results by:</b> " . ((isset($h->result_by) && $h->result_by != null) ? (userfullname($h->result_by) . ' (' . date('h:i a D M j, Y', strtotime($h->result_date)) . ')') : "<span class='badge badge-secondary'>Awaiting Results</span>");
-                $str .= "<br><br><b >Request Note:</b> " . ((isset($h->note) && $h->note != null) ? ($h->note) : "<span class='badge badge-secondary'>N/A</span><br>");
+                $str .= "<b >Requested by: </b>" . ((isset($h?->doctor_id)  && $h?->doctor_id != null) ? (userfullname($h?->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h?->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
+                $str .= "<br><br><b >Last Updated On:</b> " . date('h:i a D M j, Y', strtotime($h?->updated_at));
+                $str .= "<br><br><b >Billed by:</b> " . ((isset($h?->billed_by) && $h?->billed_by != null) ? (userfullname($h?->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h?->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span>");
+                $str .= "<br><br><b >Sample taken by:</b> " . ((isset($h?->sample_taken_by) && $h?->sample_taken_by != null) ? (userfullname($h?->sample_taken_by) . ' (' . date('h:i a D M j, Y', strtotime($h?->sample_date)) . ')') : "<span class='badge badge-secondary'>Not taken</span>");
+                $str .= "<br><br><b >Results by:</b> " . ((isset($h?->result_by) && $h?->result_by != null) ? (userfullname($h?->result_by) . ' (' . date('h:i a D M j, Y', strtotime($h?->result_date)) . ')') : "<span class='badge badge-secondary'>Awaiting Results</span>");
+                $str .= "<br><br><b >Request Note:</b> " . ((isset($h?->note) && $h?->note != null) ? ($h?->note) : "<span class='badge badge-secondary'>N/A</span><br>");
                 $str .= "</small>";
                 return $str;
             })
             ->editColumn('result', function ($his) {
-                $str = "<span class = 'badge badge-success'>" . (($his->service) ? $his->service->service_name : "N/A") . "</span><hr>";
-                $str .= $his->result ?? 'N/A';
+                $str = "<span class = 'badge badge-success'>" . (($his?->service) ? $his?->service->service_name : "N/A") . "</span><hr>";
+                $str .= $his?->result ?? 'N/A';
                 return $str;
             })
             ->rawColumns(['created_at', 'result', 'select'])
@@ -349,7 +349,7 @@ class LabServiceRequestController extends Controller
         return Datatables::of($his)
             ->addIndexColumn()
             ->addColumn('select', function ($h) {
-                $url = route('patient.show', [$h->patient->id, 'section' => 'investigationsCardBody']);
+                $url = route('patient.show', [$h?->patient->id, 'section' => 'investigationsCardBody']);
                 $str = "
                     <a class='btn btn-primary' href='$url'>
                         view
@@ -358,28 +358,28 @@ class LabServiceRequestController extends Controller
             })
             ->editColumn('patient_id', function ($h) {
                 $str = "<small>";
-                $str .= "<b >Patient </b> :" . (($h->patient->user) ? userfullname($h->patient->user->id) : "N/A");
-                $str .= "<br><br><b >File No </b> : " . (($h->patient) ? $h->patient->file_no : "N/A");
-                $str .= "<br><br><b >Insurance/HMO :</b> : " . (($h->patient->hmo) ? $h->patient->hmo->name : "N/A");
-                $str .= "<br><br><b >HMO Number :</b> : " . (($h->patient->hmo_no) ? $h->patient->hmo_no : "N/A");
+                $str .= "<b >Patient </b> :" . (($h?->patient->user) ? userfullname($h?->patient->user->id) : "N/A");
+                $str .= "<br><br><b >File No </b> : " . (($h?->patient) ? $h?->patient->file_no : "N/A");
+                $str .= "<br><br><b >Insurance/HMO :</b> : " . (($h?->patient->hmo) ? $h?->patient->hmo->name : "N/A");
+                $str .= "<br><br><b >HMO Number :</b> : " . (($h?->patient->hmo_no) ? $h?->patient->hmo_no : "N/A");
                 $str .= "</small>";
                 return $str;
             })
             ->editColumn('created_at', function ($h) {
                 $str = "<small>";
-                $str .= "<b >Requested by: </b>" . ((isset($h->doctor_id)  && $h->doctor_id != null) ? (userfullname($h->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
-                $str .= "<br><br><b >Last Updated On:</b> " . date('h:i a D M j, Y', strtotime($h->updated_at));
-                $str .= "<br><br><b >Billed by:</b> " . ((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span>");
-                $str .= "<br><br><b >Sample taken by:</b> " . ((isset($h->sample_taken_by) && $h->sample_taken_by != null) ? (userfullname($h->sample_taken_by) . ' (' . date('h:i a D M j, Y', strtotime($h->sample_date)) . ')') : "<span class='badge badge-secondary'>Not taken</span>");
-                $str .= "<br><br><b >Results by:</b> " . ((isset($h->result_by) && $h->result_by != null) ? (userfullname($h->result_by) . ' (' . date('h:i a D M j, Y', strtotime($h->result_date)) . ')') : "<span class='badge badge-secondary'>Awaiting Results</span>");
-                $str .= "<br><br><b >Request Note:</b> " . ((isset($h->note) && $h->note != null) ? ($h->note) : "<span class='badge badge-secondary'>N/A</span><br>");
+                $str .= "<b >Requested by: </b>" . ((isset($h?->doctor_id)  && $h?->doctor_id != null) ? (userfullname($h?->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h?->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
+                $str .= "<br><br><b >Last Updated On:</b> " . date('h:i a D M j, Y', strtotime($h?->updated_at));
+                $str .= "<br><br><b >Billed by:</b> " . ((isset($h?->billed_by) && $h?->billed_by != null) ? (userfullname($h?->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h?->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span>");
+                $str .= "<br><br><b >Sample taken by:</b> " . ((isset($h?->sample_taken_by) && $h?->sample_taken_by != null) ? (userfullname($h?->sample_taken_by) . ' (' . date('h:i a D M j, Y', strtotime($h?->sample_date)) . ')') : "<span class='badge badge-secondary'>Not taken</span>");
+                $str .= "<br><br><b >Results by:</b> " . ((isset($h?->result_by) && $h?->result_by != null) ? (userfullname($h?->result_by) . ' (' . date('h:i a D M j, Y', strtotime($h?->result_date)) . ')') : "<span class='badge badge-secondary'>Awaiting Results</span>");
+                $str .= "<br><br><b >Request Note:</b> " . ((isset($h?->note) && $h?->note != null) ? ($h?->note) : "<span class='badge badge-secondary'>N/A</span><br>");
                 $str .= "</small>";
                 return $str;
             })
             ->editColumn('result', function ($his) {
-                $str = "<span class = 'badge badge-success'>" . (($his->service) ? $his->service->service_name : "N/A") . "</span><hr>";
-                $str .= $his->result ?? 'N/A';
-                $view_url = route('service-requests.show', $his->id);
+                $str = "<span class = 'badge badge-success'>" . (($his?->service) ? $his?->service->service_name : "N/A") . "</span><hr>";
+                $str .= $his?->result ?? 'N/A';
+                $view_url = route('service-requests.show', $his?->id);
                 $str .= "<br><a href='$view_url' class = 'btn btn-primary btn-sm' target='_blank'><i class='fa fa-print'></i> Print</a>";
                 return $str;
             })
