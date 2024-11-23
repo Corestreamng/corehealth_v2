@@ -720,28 +720,50 @@ class EncounterController extends Controller
     {
         // dd($request->all());
         try {
-            $request->validate([
-                'doctor_diagnosis' => 'required|string',
-                'consult_presc_dose' => 'nullable|array|required_with:consult_presc_id',
-                'consult_presc_id' => 'nullable|array|required_with:consult_presc_dose',
-                'consult_invest_note' => 'nullable|array',
-                'consult_invest_id' => 'nullable|array',
-                'consult_presc_dose.*' => 'required_with:consult_presc_dose',
-                'consult_presc_id.*' => 'required_with:consult_presc_id',
-                'consult_invest_note.*' => 'nullable',
-                'consult_invest_id.*' => 'required_with:consult_invest_id',
-                'admit_note' => 'nullable|string',
-                'consult_admit' => 'nullable',
-                'req_entry_service_id' => 'required',
-                'req_entry_id' => 'required',
-                'patient_id' => 'required',
-                'queue_id' => 'required',
-                'end_consultation' => 'nullable',
-                'encounter_id' => 'required',
-                'reasons_for_encounter' => 'required',
-                'reasons_for_encounter_comment_1' => 'required',
-                'reasons_for_encounter_comment_2' => 'required',
-            ]);
+            if (env('REQUIRE_DIAGNOSIS') == 1) {
+                $request->validate([
+                    'doctor_diagnosis' => 'required|string',
+                    'consult_presc_dose' => 'nullable|array|required_with:consult_presc_id',
+                    'consult_presc_id' => 'nullable|array|required_with:consult_presc_dose',
+                    'consult_invest_note' => 'nullable|array',
+                    'consult_invest_id' => 'nullable|array',
+                    'consult_presc_dose.*' => 'required_with:consult_presc_dose',
+                    'consult_presc_id.*' => 'required_with:consult_presc_id',
+                    'consult_invest_note.*' => 'nullable',
+                    'consult_invest_id.*' => 'required_with:consult_invest_id',
+                    'admit_note' => 'nullable|string',
+                    'consult_admit' => 'nullable',
+                    'req_entry_service_id' => 'required',
+                    'req_entry_id' => 'required',
+                    'patient_id' => 'required',
+                    'queue_id' => 'required',
+                    'end_consultation' => 'nullable',
+                    'encounter_id' => 'required',
+                    'reasons_for_encounter' => 'required',
+                    'reasons_for_encounter_comment_1' => 'required',
+                    'reasons_for_encounter_comment_2' => 'required',
+                ]);
+            } else {
+                $request->validate([
+                    'doctor_diagnosis' => 'required|string',
+                    'consult_presc_dose' => 'nullable|array|required_with:consult_presc_id',
+                    'consult_presc_id' => 'nullable|array|required_with:consult_presc_dose',
+                    'consult_invest_note' => 'nullable|array',
+                    'consult_invest_id' => 'nullable|array',
+                    'consult_presc_dose.*' => 'required_with:consult_presc_dose',
+                    'consult_presc_id.*' => 'required_with:consult_presc_id',
+                    'consult_invest_note.*' => 'nullable',
+                    'consult_invest_id.*' => 'required_with:consult_invest_id',
+                    'admit_note' => 'nullable|string',
+                    'consult_admit' => 'nullable',
+                    'req_entry_service_id' => 'required',
+                    'req_entry_id' => 'required',
+                    'patient_id' => 'required',
+                    'queue_id' => 'required',
+                    'end_consultation' => 'nullable',
+                    'encounter_id' => 'required',
+                ]);
+            }
 
             if (isset($request->consult_presc_id) && isset($request->consult_presc_dose)) {
                 if (count($request->consult_presc_id) !== count($request->consult_presc_dose)) {
@@ -766,33 +788,36 @@ class EncounterController extends Controller
                 // Get current time in the required format
                 $currentTime = Carbon::now()->format('Y-m-d\TH:i:s.000');
 
-                // Prepare the data values for reasons for encounter
-                // Loop through each reason for encounter and create an event
-                foreach ($request->reasons_for_encounter as $reason) {
-                    $dataValues = [
-                        [
-                            'dataElement' => env('DHIS_TRACKED_ENTITY_PROGRAM_EVENT_DATAELEMENT'),
-                            'value' => $reason,
-                        ],
-                    ];
+                if (env('GOONLINE') == 1) {
 
-                    Http::withBasicAuth('admin', 'district')
-                        ->post(env('DHIS_API_URL') . '/tracker?importStrategy=CREATE&async=false', [
-                            'events' => [
-                                [
-                                    'dataValues' => $dataValues,
-                                    'enrollmentStatus' => 'ACTIVE',
-                                    'occurredAt' => $currentTime,
-                                    'orgUnit' => env('DHIS_ORG_UNIT'),
-                                    'program' => env('DHIS_TRACKED_ENTITY_PROGRAM'),
-                                    'programStage' => env('DHIS_TRACKED_ENTITY_PROGRAM_STAGE2'),
-                                    'scheduledAt' => $currentTime,
-                                    'status' => 'COMPLETED',
-                                    'enrollment' => $patient->dhis_consult_enrollment_id,
-                                    'trackedEntity' => $patient->dhis_consult_tracker_id,
-                                ],
+                    // Prepare the data values for reasons for encounter
+                    // Loop through each reason for encounter and create an event
+                    foreach ($request->reasons_for_encounter as $reason) {
+                        $dataValues = [
+                            [
+                                'dataElement' => env('DHIS_TRACKED_ENTITY_PROGRAM_EVENT_DATAELEMENT'),
+                                'value' => $reason,
                             ],
-                        ]);
+                        ];
+
+                        Http::withBasicAuth('admin', 'district')
+                            ->post(env('DHIS_API_URL') . '/tracker?importStrategy=CREATE&async=false', [
+                                'events' => [
+                                    [
+                                        'dataValues' => $dataValues,
+                                        'enrollmentStatus' => 'ACTIVE',
+                                        'occurredAt' => $currentTime,
+                                        'orgUnit' => env('DHIS_ORG_UNIT'),
+                                        'program' => env('DHIS_TRACKED_ENTITY_PROGRAM'),
+                                        'programStage' => env('DHIS_TRACKED_ENTITY_PROGRAM_STAGE2'),
+                                        'scheduledAt' => $currentTime,
+                                        'status' => 'COMPLETED',
+                                        'enrollment' => $patient->dhis_consult_enrollment_id,
+                                        'trackedEntity' => $patient->dhis_consult_tracker_id,
+                                    ],
+                                ],
+                            ]);
+                    }
                 }
             }
 
@@ -810,9 +835,11 @@ class EncounterController extends Controller
             }
             $encounter->doctor_id = Auth::id();
             $encounter->patient_id = $request->patient_id;
-            $encounter->reasons_for_encounter = implode(',', $request->reasons_for_encounter);
-            $encounter->reasons_for_encounter_comment_1 = $request->reasons_for_encounter_comment_1;
-            $encounter->reasons_for_encounter_comment_2 = $request->reasons_for_encounter_comment_2;
+            if (env('REQUIRE_DIAGNOSIS')) {
+                $encounter->reasons_for_encounter = implode(',', $request->reasons_for_encounter);
+                $encounter->reasons_for_encounter_comment_1 = $request->reasons_for_encounter_comment_1;
+                $encounter->reasons_for_encounter_comment_2 = $request->reasons_for_encounter_comment_2;
+            }
             $encounter->notes = $request->doctor_diagnosis;
             $encounter->completed = true;
             $encounter->update();

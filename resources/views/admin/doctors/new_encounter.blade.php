@@ -723,58 +723,65 @@
                             </div>
                         </div>
                         <hr>
-                        <div class="form-group">
+                        @if (env('REQUIRE_DIAGNOSIS'))
+                            <div class="form-group">
 
-                            <label for="reasons_for_encounter">Select ICPC -2 Reason(s) for Encounter/ Diagnosis(required)
-                                <span class="text-danger">*</span></label>
-                            <select name="reasons_for_encounter[]" id="reasons_for_encounter" class="text-lg"
-                                multiple="multiple" required style="width: 100%; display:block;">
-                                @foreach ($reasons_for_encounter_cat_list as $reason_cat)
-                                    <optgroup label="{{ $reason_cat->category }}">
-                                        @foreach ($reasons_for_encounter_sub_cat_list as $reason_sub_cat)
-                                            @if ($reason_sub_cat->category == $reason_cat->category)
-                                                <option disabled style="font-weight: bold;">
-                                                    {{ $reason_sub_cat->sub_category }}</option>
-                                                @foreach ($reasons_for_encounter_list as $reason_item)
-                                                    @if ($reason_item->category == $reason_cat->category && $reason_item->sub_category == $reason_sub_cat->sub_category)
-                                                        <option
-                                                            value="{{ $reason_item->code }}-{{ $reason_item->name }}">
-                                                            &emsp;{{ $reason_item->code }} {{ $reason_item->name }}
-                                                        </option>
-                                                    @endif
-                                                @endforeach
-                                            @endif
-                                        @endforeach
-                                    </optgroup>
-                                @endforeach
-                            </select>
-                        </div>
-                        <br>
-                        <div class="row">
-                            <div class="col-sm-6">
-                                <div class="form-group">
-                                    <label for="reasons_for_encounter_comment_1">Select Diagnosis Comment 1(required)</label>
-                                    <select class="form-control" name="reasons_for_encounter_comment_1" id="reasons_for_encounter_comment_1" required>
-                                        <option value="NA">Not Applicable</option>
-                                        <option value="QUERY">Query</option>
-                                        <option value="DIFFRENTIAL">Diffrential</option>
-                                        <option value="CONFIRMED">Confirmed</option>
-                                    </select>
+                                <label for="reasons_for_encounter">Select ICPC -2 Reason(s) for Encounter/
+                                    Diagnosis(required)
+                                    <span class="text-danger">*</span></label>
+                                <select name="reasons_for_encounter[]" id="reasons_for_encounter" class="text-lg"
+                                    multiple="multiple" required style="width: 100%; display:block;">
+                                    @foreach ($reasons_for_encounter_cat_list as $reason_cat)
+                                        <optgroup label="{{ $reason_cat->category }}">
+                                            @foreach ($reasons_for_encounter_sub_cat_list as $reason_sub_cat)
+                                                @if ($reason_sub_cat->category == $reason_cat->category)
+                                                    <option disabled style="font-weight: bold;">
+                                                        {{ $reason_sub_cat->sub_category }}</option>
+                                                    @foreach ($reasons_for_encounter_list as $reason_item)
+                                                        @if ($reason_item->category == $reason_cat->category && $reason_item->sub_category == $reason_sub_cat->sub_category)
+                                                            <option
+                                                                value="{{ $reason_item->code }}-{{ $reason_item->name }}">
+                                                                &emsp;{{ $reason_item->code }} {{ $reason_item->name }}
+                                                            </option>
+                                                        @endif
+                                                    @endforeach
+                                                @endif
+                                            @endforeach
+                                        </optgroup>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <br>
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label for="reasons_for_encounter_comment_1">Select Diagnosis Comment
+                                            1(required)</label>
+                                        <select class="form-control" name="reasons_for_encounter_comment_1"
+                                            id="reasons_for_encounter_comment_1" required>
+                                            <option value="NA">Not Applicable</option>
+                                            <option value="QUERY">Query</option>
+                                            <option value="DIFFRENTIAL">Diffrential</option>
+                                            <option value="CONFIRMED">Confirmed</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label for="reasons_for_encounter_comment_2"> Select Diagnosis Comment
+                                            2(required)</label>
+                                        <select class="form-control" name="reasons_for_encounter_comment_2"
+                                            id="reasons_for_encounter_comment_2" required>
+                                            <option value="NA">Not Applicable</option>
+                                            <option value="ACUTE">Acute</option>
+                                            <option value="CHRONIC">Chronic</option>
+                                            <option value="RECURRENT">Recurrent</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="col-sm-6">
-                                <div class="form-group">
-                                    <label for="reasons_for_encounter_comment_2"> Select Diagnosis Comment 2(required)</label>
-                                    <select class="form-control" name="reasons_for_encounter_comment_2" id="reasons_for_encounter_comment_2" required>
-                                        <option value="NA">Not Applicable</option>
-                                        <option value="ACUTE">Acute</option>
-                                        <option value="CHRONIC">Chronic</option>
-                                        <option value="RECURRENT">Recurrent</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <hr>
+                            <hr>
+                        @endif
                         <div>
                             <i class="fa fa-save"></i><span id="autosave_status_text"> Auto Save Enabled...</span>
                             <textarea name="doctor_diagnosis" id="doctor_diagnosis_text" class="form-control classic-editor2">{{ $encounter->notes }}</textarea>
