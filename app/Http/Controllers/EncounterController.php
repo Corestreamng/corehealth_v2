@@ -268,16 +268,13 @@ class EncounterController extends Controller
 
             return DataTables::of($query)
                 ->addIndexColumn()
-                ->orderColumn('DT_RowIndex', function ($query, $order) {
-                    // Skip ordering for row index column
-                })
-                ->editColumn('fullname', function ($queue) {
+                ->addColumn('fullname', function ($queue) {
                     return ($queue->patient) ? userfullname($queue->patient->user_id) : 'N/A';
                 })
                 ->editColumn('created_at', function ($note) {
                     return date('h:i a D M j, Y', strtotime($note->created_at));
                 })
-                ->editColumn('hmo_id', function ($queue) {
+                ->addColumn('hmo_id', function ($queue) {
                     $patient = Patient::find($queue->patient_id);
 
                     if (!$patient) return 'N/A';
@@ -286,7 +283,7 @@ class EncounterController extends Controller
                     $hmo = Hmo::find($patient->hmo_id);
                     return $hmo ? $hmo->name : 'N/A';
                 })
-                ->editColumn('clinic_id', function ($queue) {
+                ->addColumn('clinic_id', function ($queue) {
                     $clinic = Clinic::find($queue->clinic_id);
                     return $clinic ? $clinic->name : 'N/A';
                 })
@@ -301,7 +298,7 @@ class EncounterController extends Controller
                     $url = route('patient.show', $queue->patient_id);
                     return '<a href="' . $url . '" class="btn btn-success btn-sm"><i class="fa fa-street-view"></i> View</a>';
                 })
-                ->rawColumns(['fullname', 'view'])
+                ->rawColumns(['view'])
                 ->make(true);
         } catch (\Exception $e) {
             Log::error('Error in AllprevEncounterList: ' . $e->getMessage(), [
