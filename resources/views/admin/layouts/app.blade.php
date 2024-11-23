@@ -361,6 +361,15 @@
         <!--End of Tawk.to Script-->
     @endif
 
+    <script>
+        setInterval(function() {
+            $.get('/csrf-token').done(function(data) {
+                $('meta[name="csrf-token"]').attr('content', data.token);
+                $('input[name="_token"]').val(data.token);
+            });
+        }, 1800000); // Refresh csrf token every 30 minutes
+    </script>
+
 
 </body>
 

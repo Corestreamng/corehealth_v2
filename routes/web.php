@@ -56,6 +56,11 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+//token refresh route
+Route::get('/csrf-token', function () {
+    return response()->json(['token' => csrf_token()]);
+});
+
 Route::group(['middleware' => ['auth']], function () {
     // Route::put('staff/updateAvatar/{id}', 'Admin\UserController@updateAvatar')->name('users.updateAvatar');
 
