@@ -56,14 +56,14 @@ class PatientAccountController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error($e->getMessage(), ['exception' => $e]);
-            return redirect()->back()->withInput()->with('error',$e->getMessage());
+            return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
     }
 
     public function patientPaymentHistoryList($patient_id)
     {
 
-        $hist = payment::where('patient_id', $patient_id)->with('product_or_service_request','patient','staff_user')->get();
+        $hist = payment::where('patient_id', $patient_id)->with('product_or_service_request', 'patient', 'staff_user')->get();
         //dd($pc);
         return Datatables::of($hist)
             ->addIndexColumn()
@@ -73,11 +73,11 @@ class PatientAccountController extends Controller
             ->editColumn('created_at', function ($hist) {
                 return date('h:i a D M j, Y', strtotime($hist->created_at));
             })
-            ->addColumn('product_or_service_request', function($hist){
+            ->addColumn('product_or_service_request', function ($hist) {
                 $str = '';
-                foreach($hist->product_or_service_request as $rr){
-                    $str .= '<small>['.($rr->service->category->category_name ?? $rr->product->category->category_name).'] '
-                    .($rr->service->service_name ?? $rr->product->product_name).'('.($rr->service->service_code ?? $rr->product->product_code).')</small><br>';
+                foreach ($hist->product_or_service_request as $rr) {
+                    $str .= '<small>[' . ($rr?->service->category?->category_name ?? $rr?->product->category?->category_name) . '] '
+                        . ($rr?->service->service_name ?? $rr?->product->product_name) . '(' . ($rr?->service->service_code ?? $rr?->product->product_code) . ')</small><br>';
                 }
                 return $str;
             })
@@ -107,7 +107,7 @@ class PatientAccountController extends Controller
             $request->validate([
                 'patient_id' => 'required'
             ]);
-    
+
             $patient_account = new PatientAccount;
             $patient_account->patient_id = $request->patient_id;
             $patient_account->save();
@@ -120,7 +120,8 @@ class PatientAccountController extends Controller
     }
 
 
-    public function addMsicBill(Request $request){
+    public function addMsicBill(Request $request)
+    {
         try {
             $request->validate([
                 'names' => 'array|required',
@@ -134,24 +135,24 @@ class PatientAccountController extends Controller
 
             DB::beginTransaction();
 
-            for($i = 0; $i < count($request->names); $i++){
+            for ($i = 0; $i < count($request->names); $i++) {
 
                 //create a misc service to associate the Misc bill with
                 $misc_service                      = new Service();
                 $misc_service->user_id             = Auth::user()->id;
                 $misc_service->category_id         = env('MISC_SERVICE_CATEGORY_ID');
-                $misc_service->service_name        = trim('['.userfullname($patient->user_id).'] '.$request->names[$i]);
+                $misc_service->service_name        = trim('[' . userfullname($patient->user_id) . '] ' . $request->names[$i]);
                 $misc_service->service_code        = trim($request->names[$i]);
                 $misc_service->price_assign        = 1;
                 $misc_service->status              = 1;
-                
+
 
                 $misc_service->save();
 
 
                 //crete a price entry for the misc service creted above
                 $price_entry = new ServicePrice;
-                $price_entry-> service_id = $misc_service->id;
+                $price_entry->service_id = $misc_service->id;
                 $price_entry->cost_price = $request->prices[$i];
                 $price_entry->sale_price = $request->prices[$i];
                 $price_entry->max_discount =  0;
@@ -167,7 +168,6 @@ class PatientAccountController extends Controller
                 $misc_bill->service_id = $misc_service->id;
                 $misc_bill->patient_id = $patient->id;
                 $misc_bill->save();
-
             }
             DB::commit();
             $msg = 'Patient Misc. Bills Successfully Created.';

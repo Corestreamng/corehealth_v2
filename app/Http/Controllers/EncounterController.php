@@ -36,36 +36,49 @@ class EncounterController extends Controller
         return view('admin.doctors.my_queues');
     }
 
-    public function NewEncounterList()
+    public function NewEncounterList(Request $request)
     {
         try {
+            // Fetch the currently logged-in doctor
             $doc = Staff::where('user_id', Auth::id())->first();
-            $queue = DoctorQueue::where(function ($q) use ($doc) {
-                $q->where('clinic_id', $doc->clinic_id);
-                $q->orWhere('staff_id', $doc->id);
-            })
-                ->where('status', 1)->orderBy('created_at', 'DESC')->get();
 
-            // dd($pc);
+            // Retrieve date range from the request
+            $startDate = $request->input('start_date');
+            $endDate = $request->input('end_date');
+
+            // Build the base query
+            $queueQuery = DoctorQueue::where(function ($q) use ($doc) {
+                $q->where('clinic_id', $doc->clinic_id)
+                    ->orWhere('staff_id', $doc->id);
+            })
+                ->where('status', 1);
+
+            // Apply date filtering if both dates are provided
+            if ($startDate && $endDate) {
+                $queueQuery->whereBetween('created_at', [
+                    Carbon::parse($startDate)->startOfDay(),
+                    Carbon::parse($endDate)->endOfDay(),
+                ]);
+            }
+
+            // Get the filtered results
+            $queue = $queueQuery->orderBy('created_at', 'DESC')->get();
+
             return DataTables::of($queue)
                 ->addIndexColumn()
                 ->editColumn('fullname', function ($queue) {
                     $patient = patient::find($queue->patient_id);
-
                     return userfullname($patient->user_id);
                 })
-
                 ->editColumn('created_at', function ($note) {
                     return date('h:i a D M j, Y', strtotime($note->created_at));
                 })
                 ->editColumn('hmo_id', function ($queue) {
                     $patient = patient::find($queue->patient_id);
-
                     return Hmo::find($patient->hmo_id)->name ?? 'N/A';
                 })
                 ->editColumn('clinic_id', function ($queue) {
                     $clinic = Clinic::find($queue->clinic_id);
-
                     return $clinic->name ?? 'N/A';
                 })
                 ->editColumn('staff_id', function ($queue) use ($doc) {
@@ -73,23 +86,15 @@ class EncounterController extends Controller
                 })
                 ->addColumn('file_no', function ($queue) {
                     $patient = patient::find($queue->patient_id);
-
                     return $patient->file_no;
                 })
                 ->addColumn('view', function ($queue) {
-                    // if (Auth::user()->hasPermissionTo('user-show') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
-
                     $url = route(
                         'encounters.create',
                         ['patient_id' => $queue->patient_id, 'req_entry_id' => $queue->request_entry_id, 'queue_id' => $queue->id]
                     );
 
                     return '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> Encounter</a>';
-                    // } else {
-
-                    //     $label = '<span class="label label-warning">Not Allowed</span>';
-                    //     return $label;
-                    // }
                 })
                 ->rawColumns(['fullname', 'view'])
                 ->make(true);
@@ -114,44 +119,46 @@ class EncounterController extends Controller
         }
     }
 
-    public function ContEncounterList()
+    public function PrevEncounterList(Request $request)
     {
         try {
-            $this->endOldEncounterReq();
             $doc = Staff::where('user_id', Auth::id())->first();
-            $currentDateTime = Carbon::now();
-            $timeThreshold = $currentDateTime->subHours(env('CONSULTATION_CYCLE_DURATION'));
 
-            // dd($timeThreshold);
-            $queue = DoctorQueue::where(function ($q) use ($doc) {
+            // Get start and end dates from request, fallback to null
+            $startDate = $request->input('start_date') ? Carbon::parse($request->input('start_date')) : null;
+            $endDate = $request->input('end_date') ? Carbon::parse($request->input('end_date')) : null;
+
+            $queueQuery = DoctorQueue::where(function ($q) use ($doc) {
                 $q->where('clinic_id', $doc->clinic_id);
                 $q->orWhere('staff_id', $doc->id);
             })
-                ->where('status', 2)
-                ->where('created_at', '>=', $timeThreshold)
-                ->orderBy('created_at', 'DESC')
-                ->get();
+                ->where('status', '>', '2');
 
-            // dd($pc);
+            // Apply date range filter if provided
+            if ($startDate) {
+                $queueQuery->where('created_at', '>=', $startDate);
+            }
+            if ($endDate) {
+                $queueQuery->where('created_at', '<=', $endDate);
+            }
+
+            $queue = $queueQuery->orderBy('created_at', 'DESC')->get();
+
             return DataTables::of($queue)
                 ->addIndexColumn()
                 ->editColumn('fullname', function ($queue) {
                     $patient = patient::find($queue->patient_id);
-
                     return userfullname($patient->user_id);
                 })
-
                 ->editColumn('created_at', function ($note) {
                     return date('h:i a D M j, Y', strtotime($note->created_at));
                 })
                 ->editColumn('hmo_id', function ($queue) {
                     $patient = patient::find($queue->patient_id);
-
                     return Hmo::find($patient->hmo_id)->name ?? 'N/A';
                 })
                 ->editColumn('clinic_id', function ($queue) {
                     $clinic = Clinic::find($queue->clinic_id);
-
                     return $clinic->name ?? 'N/A';
                 })
                 ->editColumn('staff_id', function ($queue) use ($doc) {
@@ -159,63 +166,64 @@ class EncounterController extends Controller
                 })
                 ->addColumn('file_no', function ($queue) {
                     $patient = patient::find($queue->patient_id);
-
-                    return $patient->file_no;
+                    return $patient?->file_no;
                 })
                 ->addColumn('view', function ($queue) {
-                    // if (Auth::user()->hasPermissionTo('user-show') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
-
-                    $url = route(
-                        'encounters.create',
-                        ['patient_id' => $queue->patient_id, 'req_entry_id' => $queue->request_entry_id, 'queue_id' => $queue->id]
-                    );
-
-                    return '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> Encounter</a>';
-                    // } else {
-
-                    //     $label = '<span class="label label-warning">Not Allowed</span>';
-                    //     return $label;
-                    // }
+                    $url = route('patient.show', $queue->patient_id);
+                    return '<a href="' . $url . '" class="btn btn-success btn-sm"><i class="fa fa-street-view"></i> View</a>';
                 })
                 ->rawColumns(['fullname', 'view'])
                 ->make(true);
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
-
             return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
     }
 
-    public function PrevEncounterList()
+    public function ContEncounterList(Request $request)
     {
         try {
+            $this->endOldEncounterReq();
             $doc = Staff::where('user_id', Auth::id())->first();
-            $queue = DoctorQueue::where(function ($q) use ($doc) {
+
+            $timeThreshold = Carbon::now()->subHours(env('CONSULTATION_CYCLE_DURATION'));
+
+            // Get start and end dates from request, fallback to null
+            $startDate = $request->input('start_date') ? Carbon::parse($request->input('start_date')) : null;
+            $endDate = $request->input('end_date') ? Carbon::parse($request->input('end_date')) : null;
+
+            $queueQuery = DoctorQueue::where(function ($q) use ($doc) {
                 $q->where('clinic_id', $doc->clinic_id);
                 $q->orWhere('staff_id', $doc->id);
-            })->where('status', '>', '2')
-                ->orderBy('created_at', 'DESC')->get();
+            })
+                ->where('status', 2)
+                ->where('created_at', '>=', $timeThreshold);
 
-            // dd($pc);
+            // Apply date range filter if provided
+            if ($startDate) {
+                $queueQuery->where('created_at', '>=', $startDate);
+            }
+            if ($endDate) {
+                $queueQuery->where('created_at', '<=', $endDate);
+            }
+
+            $queue = $queueQuery->orderBy('created_at', 'DESC')->get();
+
             return DataTables::of($queue)
                 ->addIndexColumn()
                 ->editColumn('fullname', function ($queue) {
                     $patient = patient::find($queue->patient_id);
-
                     return userfullname($patient->user_id);
                 })
-
                 ->editColumn('created_at', function ($note) {
                     return date('h:i a D M j, Y', strtotime($note->created_at));
                 })
                 ->editColumn('hmo_id', function ($queue) {
                     $patient = patient::find($queue->patient_id);
-
                     return Hmo::find($patient->hmo_id)->name ?? 'N/A';
                 })
                 ->editColumn('clinic_id', function ($queue) {
                     $clinic = Clinic::find($queue->clinic_id);
-
                     return $clinic->name ?? 'N/A';
                 })
                 ->editColumn('staff_id', function ($queue) use ($doc) {
@@ -223,26 +231,20 @@ class EncounterController extends Controller
                 })
                 ->addColumn('file_no', function ($queue) {
                     $patient = patient::find($queue->patient_id);
-
-                    return $patient?->file_no;
+                    return $patient->file_no;
                 })
                 ->addColumn('view', function ($queue) {
-                    // if (Auth::user()->hasPermissionTo('user-show') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
-
-                    $url = route('patient.show', $queue->patient_id);
-
-                    return '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> View</a>';
-                    // } else {
-
-                    //     $label = '<span class="label label-warning">Not Allowed</span>';
-                    //     return $label;
-                    // }
+                    $url = route('encounters.create', [
+                        'patient_id' => $queue->patient_id,
+                        'req_entry_id' => $queue->request_entry_id,
+                        'queue_id' => $queue->id
+                    ]);
+                    return '<a href="' . $url . '" class="btn btn-success btn-sm"><i class="fa fa-street-view"></i> Encounter</a>';
                 })
                 ->rawColumns(['fullname', 'view'])
                 ->make(true);
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
-
             return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
     }
@@ -252,56 +254,66 @@ class EncounterController extends Controller
         return view('admin.encounters.index');
     }
 
-    public function AllprevEncounterList()
+    public function AllprevEncounterList(Request $request)
     {
-        $queue = Encounter::orderBy('created_at', 'DESC')->limit(10000)->get();
+        try {
+            $query = Encounter::query()
+                ->when($request->filled(['start_date', 'end_date']), function ($query) use ($request) {
+                    return $query->whereBetween('created_at', [
+                        $request->start_date . ' 00:00:00',
+                        $request->end_date . ' 23:59:59'
+                    ]);
+                })
+                ->orderBy('created_at', 'DESC');
 
-        // dd($queue);
-        return DataTables::of($queue)
-            ->addIndexColumn()
-            ->editColumn('fullname', function ($queue) {
-                return ($queue->patient) ? userfullname($queue->patient->user_id) : 'N/A';
-            })
+            return DataTables::of($query)
+                ->addIndexColumn()
+                ->orderColumn('DT_RowIndex', function ($query, $order) {
+                    // Skip ordering for row index column
+                })
+                ->editColumn('fullname', function ($queue) {
+                    return ($queue->patient) ? userfullname($queue->patient->user_id) : 'N/A';
+                })
+                ->editColumn('created_at', function ($note) {
+                    return date('h:i a D M j, Y', strtotime($note->created_at));
+                })
+                ->editColumn('hmo_id', function ($queue) {
+                    $patient = Patient::find($queue->patient_id);
 
-            ->editColumn('created_at', function ($note) {
-                return date('h:i a D M j, Y', strtotime($note->created_at));
-            })
-            ->editColumn('hmo_id', function ($queue) {
-                $patient = patient::find($queue->patient_id);
+                    if (!$patient) return 'N/A';
+                    if (!$patient->hmo_id) return 'N/A';
 
-                return ($patient) ? ((Hmo::find($patient->hmo_id)) ? Hmo::find($patient->hmo_id)->name : 'N/A') : 'N/A';
-            })
-            ->editColumn('clinic_id', function ($queue) {
-                $clinic = Clinic::find($queue->clinic_id);
+                    $hmo = Hmo::find($patient->hmo_id);
+                    return $hmo ? $hmo->name : 'N/A';
+                })
+                ->editColumn('clinic_id', function ($queue) {
+                    $clinic = Clinic::find($queue->clinic_id);
+                    return $clinic ? $clinic->name : 'N/A';
+                })
+                ->editColumn('doctor_id', function ($queue) {
+                    return $queue->doctor_id ? userfullname($queue->doctor_id) : 'N/A';
+                })
+                ->addColumn('file_no', function ($queue) {
+                    $patient = Patient::find($queue->patient_id);
+                    return $patient ? $patient->file_no : 'N/A';
+                })
+                ->addColumn('view', function ($queue) {
+                    $url = route('patient.show', $queue->patient_id);
+                    return '<a href="' . $url . '" class="btn btn-success btn-sm"><i class="fa fa-street-view"></i> View</a>';
+                })
+                ->rawColumns(['fullname', 'view'])
+                ->make(true);
+        } catch (\Exception $e) {
+            Log::error('Error in AllprevEncounterList: ' . $e->getMessage(), [
+                'exception' => $e,
+                'start_date' => $request->start_date,
+                'end_date' => $request->end_date
+            ]);
 
-                return ($clinic) ? $clinic->name : 'N/A';
-            })
-            ->editColumn('doctor_id ', function ($queue) {
-                return ($queue->doctor_id) ? userfullname($queue->doctor_id) : 'N/A';
-            })
-            ->addColumn('file_no', function ($queue) {
-                $patient = patient::find($queue->patient_id);
-
-                return ($patient) ? $patient->file_no : 'N/A';
-            })
-            ->addColumn('view', function ($queue) {
-                // if (Auth::user()->hasPermissionTo('user-show') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
-
-                $url = route('patient.show', $queue->patient_id);
-
-                return '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> View</a>';
-                // } else {
-
-                //     $label = '<span class="label label-warning">Not Allowed</span>';
-                //     return $label;
-                // }
-            })
-            ->rawColumns(['fullname', 'view'])
-            ->make(true);
-        // } catch (\Exception $e) {
-        //     Log::error($e->getMessage(), ['exception' => $e]);
-        //     return redirect()->back()->withInput()->with('error', $e->getMessage());
-        // }
+            return response()->json([
+                'error' => 'An error occurred while fetching the data. Please try again.'
+            ], 500);
+        }
     }
 
     public function investigationHistoryList($patient_id)

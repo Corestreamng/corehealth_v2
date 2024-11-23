@@ -25,14 +25,27 @@ class AdmissionRequestController extends Controller
         return view('admin.admission_requests.index');
     }
 
-    public function myAdmissionRequests()
+    public function myAdmissionRequests(Request $request)
     {
-        $req = AdmissionRequest::where('discharged', 0)->where('status', 1)->where('doctor_id', Auth::id())->orderBy('created_at', 'DESC')->get();
+        // Get start and end dates from request
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        // Build the query with date range filtering
+        $query = AdmissionRequest::where('discharged', 0)
+            ->where('status', 1)
+            ->where('doctor_id', Auth::id());
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        }
+
+        $req = $query->orderBy('created_at', 'DESC')->get();
 
         return Datatables::of($req)
             ->addIndexColumn()
             ->addColumn('show', function ($r) {
-                $url =  route('patient.show', [$r->patient_id, 'section' => 'addmissionsCardBody']);
+                $url = route('patient.show', [$r->patient_id, 'section' => 'addmissionsCardBody']);
                 return '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> View</a>';
             })
             ->addColumn('patient', function ($r) {
@@ -45,7 +58,7 @@ class AdmissionRequestController extends Controller
             ->addColumn('hmo', function ($r) {
                 $p = patient::where('user_id', $r->patient->user_id)->first();
                 $hmo = Hmo::find($p->hmo_id);
-                return (($hmo) ? $hmo->name : 'N/A');
+                return $hmo ? $hmo->name : 'N/A';
             })
             ->addColumn('hmo_no', function ($r) {
                 $p = patient::where('user_id', $r->patient->user_id)->first();
@@ -53,35 +66,46 @@ class AdmissionRequestController extends Controller
             })
             ->editColumn('bed_id', function ($r) {
                 $str = "<small>";
-                $str .= "<b >Bed</b>: " . (($r->bed) ? $r->bed->name : 'N/A') . " <b>Ward</b>: " . (($r->bed) ? $r->bed->ward : "N/A") . " <b>Unit</b>: " . ($r->bed->unit ?? "N/A") . "<br>";
-                $str .= "<b >Assigned By</b>: " . (($r->bed_assigned_by) ? (userfullname($r->bed_assigned_by)) : "N/A");
-                $str .= "<br> <b>Date Assigned</b>: " . (($r->bed_assign_date) ? date('h:i a D M j, Y', strtotime($r->bed_assign_date)) : 'N/A') . "<br>";
-                $str .= "<br> <b>Discharged By </b>: " . (($r->discharged_by) ? (userfullname($r->discharged_by)) : "N/A")." (".(($r->discharge_date) ? date('h:i a D M j, Y', strtotime($r->discharge_date)) : 'N/A') . ")<br>";
+                $str .= "<b>Bed:</b> " . ($r->bed ? $r->bed->name : 'N/A') . " <b>Ward:</b> " . ($r->bed ? $r->bed->ward : 'N/A') . " <b>Unit:</b> " . ($r->bed->unit ?? 'N/A') . "<br>";
+                $str .= "<b>Assigned By:</b> " . ($r->bed_assigned_by ? userfullname($r->bed_assigned_by) : 'N/A') . "<br>";
+                $str .= "<b>Date Assigned:</b> " . ($r->bed_assign_date ? date('h:i a D M j, Y', strtotime($r->bed_assign_date)) : 'N/A') . "<br>";
+                $str .= "<b>Discharged By:</b> " . ($r->discharged_by ? userfullname($r->discharged_by) : 'N/A') . " (" . ($r->discharge_date ? date('h:i a D M j, Y', strtotime($r->discharge_date)) : 'N/A') . ")<br>";
                 $str .= "</small>";
                 return $str;
             })
             ->editColumn('doctor_id', function ($r) {
-                return ($r->doctor_id) ? userfullname($r->doctor_id) : 'N/A';
+                return $r->doctor_id ? userfullname($r->doctor_id) : 'N/A';
             })
             ->editColumn('billed_by', function ($r) {
                 $str = "<small>";
-                $str .= "<b >Biiled by: </b>" . (($r->billed_by) ? userfullname($r->billed_by) : 'N/A') . "<br>Date: " . (($r->billed_date) ? date('h:i a D M j, Y', strtotime($r->billed_date)) : 'N/A') . "<br>";
+                $str .= "<b>Billed by:</b> " . ($r->billed_by ? userfullname($r->billed_by) : 'N/A') . "<br>";
+                $str .= "<b>Date:</b> " . ($r->billed_date ? date('h:i a D M j, Y', strtotime($r->billed_date)) : 'N/A') . "<br>";
                 $str .= "</small>";
                 return $str;
             })
             ->rawColumns(['show', 'bed_id', 'billed_by'])
             ->make(true);
     }
-
-    public function admissionRequests()
+    public function admissionRequests(Request $request)
     {
-        // DB::statement("SET SQL_MODE=''");//disable sql strict mode to allow groupby query
-        $req = AdmissionRequest::where('discharged', 0)->where('status', 1)->orderBy('created_at', 'DESC')->get();
+        // Get start and end dates from request
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        // Build the query with date range filtering
+        $query = AdmissionRequest::where('discharged', 0)
+            ->where('status', 1);
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        }
+
+        $req = $query->orderBy('created_at', 'DESC')->get();
 
         return Datatables::of($req)
             ->addIndexColumn()
             ->addColumn('show', function ($r) {
-                $url =  route('patient.show', [$r->patient_id, 'section' => 'addmissionsCardBody']);
+                $url = route('patient.show', [$r->patient_id, 'section' => 'addmissionsCardBody']);
                 return '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> View</a>';
             })
             ->addColumn('patient', function ($r) {
@@ -94,7 +118,7 @@ class AdmissionRequestController extends Controller
             ->addColumn('hmo', function ($r) {
                 $p = patient::where('user_id', $r->patient->user_id)->first();
                 $hmo = Hmo::find($p->hmo_id);
-                return (($hmo) ? $hmo->name : 'N/A');
+                return $hmo ? $hmo->name : 'N/A';
             })
             ->addColumn('hmo_no', function ($r) {
                 $p = patient::where('user_id', $r->patient->user_id)->first();
@@ -102,25 +126,27 @@ class AdmissionRequestController extends Controller
             })
             ->editColumn('bed_id', function ($r) {
                 $str = "<small>";
-                $str .= "<b >Bed</b>: " . (($r->bed) ? $r->bed->name : 'N/A') . " <b>Ward</b>: " . (($r->bed) ? $r->bed->ward : "N/A") . " <b>Unit</b>: " . ($r->bed->unit ?? "N/A") . "<br>";
-                $str .= "<b >Assigned By</b>: " . (($r->bed_assigned_by) ? (userfullname($r->bed_assigned_by)) : "N/A");
-                $str .= "<br> <b>Date Assigned</b>: " . (($r->bed_assign_date) ? date('h:i a D M j, Y', strtotime($r->bed_assign_date)) : 'N/A') . "<br>";
-                $str .= "<br> <b>Discharged By </b>: " . (($r->discharged_by) ? (userfullname($r->discharged_by)) : "N/A")." (".(($r->discharge_date) ? date('h:i a D M j, Y', strtotime($r->discharge_date)) : 'N/A') . ")<br>";
+                $str .= "<b>Bed:</b> " . ($r->bed ? $r->bed->name : 'N/A') . " <b>Ward:</b> " . ($r->bed ? $r->bed->ward : 'N/A') . " <b>Unit:</b> " . ($r->bed->unit ?? 'N/A') . "<br>";
+                $str .= "<b>Assigned By:</b> " . ($r->bed_assigned_by ? userfullname($r->bed_assigned_by) : 'N/A') . "<br>";
+                $str .= "<b>Date Assigned:</b> " . ($r->bed_assign_date ? date('h:i a D M j, Y', strtotime($r->bed_assign_date)) : 'N/A') . "<br>";
+                $str .= "<b>Discharged By:</b> " . ($r->discharged_by ? userfullname($r->discharged_by) : 'N/A') . " (" . ($r->discharge_date ? date('h:i a D M j, Y', strtotime($r->discharge_date)) : 'N/A') . ")<br>";
                 $str .= "</small>";
                 return $str;
             })
             ->editColumn('doctor_id', function ($r) {
-                return ($r->doctor_id) ? userfullname($r->doctor_id) : 'N/A';
+                return $r->doctor_id ? userfullname($r->doctor_id) : 'N/A';
             })
             ->editColumn('billed_by', function ($r) {
                 $str = "<small>";
-                $str .= "<b >Biiled by: </b>" . (($r->billed_by) ? userfullname($r->billed_by) : 'N/A') . "<br>Date: " . (($r->billed_date) ? date('h:i a D M j, Y', strtotime($r->billed_date)) : 'N/A') . "<br>";
+                $str .= "<b>Billed by:</b> " . ($r->billed_by ? userfullname($r->billed_by) : 'N/A') . "<br>";
+                $str .= "<b>Date:</b> " . ($r->billed_date ? date('h:i a D M j, Y', strtotime($r->billed_date)) : 'N/A') . "<br>";
                 $str .= "</small>";
                 return $str;
             })
             ->rawColumns(['show', 'bed_id', 'billed_by'])
             ->make(true);
     }
+
 
     public function patientAdmissionRequests($patient_id)
     {
@@ -140,7 +166,7 @@ class AdmissionRequestController extends Controller
                 );
                 $url_discharge = route('discharge-patient', $r->id);
                 $str = '';
-                if ($r->discharged == false ) {
+                if ($r->discharged == false) {
                     $str .= '<a href="' . $url_ward_round . '" class="btn btn-success btn-sm" ><i class="fa fa-plus"></i> Encounter</a><br>';
                 }
                 if ($r->discharged == false && $r->bed_id == null) {
@@ -178,7 +204,7 @@ class AdmissionRequestController extends Controller
                 $str .= "<b >Bed</b>: " . (($r->bed) ? $r->bed->name : 'N/A') . " <b>Ward</b>: " . (($r->bed) ? $r->bed->ward : "N/A") . " <b>Unit</b>: " . ($r->bed->unit ?? "N/A") . "<br>";
                 $str .= "<b >Assigned By</b>: " . (($r->bed_assigned_by) ? (userfullname($r->bed_assigned_by)) : "N/A");
                 $str .= "<br> <b>Date Assigned</b>: " . (($r->bed_assign_date) ? date('h:i a D M j, Y', strtotime($r->bed_assign_date)) : 'N/A') . "<br>";
-                $str .= "<br> <b>Discharged By </b>: " . (($r->discharged_by) ? (userfullname($r->discharged_by)) : "N/A")." (".(($r->discharge_date) ? date('h:i a D M j, Y', strtotime($r->discharge_date)) : 'N/A') . ")<br>";
+                $str .= "<br> <b>Discharged By </b>: " . (($r->discharged_by) ? (userfullname($r->discharged_by)) : "N/A") . " (" . (($r->discharge_date) ? date('h:i a D M j, Y', strtotime($r->discharge_date)) : 'N/A') . ")<br>";
                 $str .= "</small>";
                 return $str;
             })
@@ -200,7 +226,7 @@ class AdmissionRequestController extends Controller
         try {
             $request->validate([
                 'assign_bed_req_id' => 'required',
-                'assign_bed_reassign' => 'required',//redundent
+                'assign_bed_reassign' => 'required', //redundent
                 'bed_id' => 'required|exists:beds,id'
             ]);
 
@@ -261,7 +287,7 @@ class AdmissionRequestController extends Controller
             $admit_req = AdmissionRequest::where('id', $request->assign_bed_req_id)->first();
             $admit_req->update([
                 'service_request_id' => $bill_req->id,
-                'bed_id'=> null //once billed, the admission entry bed should be null, this will enable bed resaasignment, as bill bed will show after bed is reassigned
+                'bed_id' => null //once billed, the admission entry bed should be null, this will enable bed resaasignment, as bill bed will show after bed is reassigned
             ]);
             DB::commit();
             return back()->withMessage('Bill Assigned, you can proceed to make payment in the payments section')->withMessageType('success');

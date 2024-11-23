@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\patient;
 use App\Models\Product;
 use App\Models\ProductOrServiceRequest;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -35,46 +36,59 @@ class ProductRequestController extends Controller
         }
     }
 
-    public function prescQueueList()
+    public function prescQueueList(Request $request)
     {
-        $his = ProductRequest::with(['product', 'encounter', 'patient', 'productOrServiceRequest', 'doctor', 'biller'])
-            ->where('status', 1)->orWhere('status', 2)->orderBy('created_at', 'DESC')->get();
-        //dd($pc);
+        // Initialize the query with relationships and basic filters
+        $query = ProductRequest::with(['product', 'encounter', 'patient', 'productOrServiceRequest', 'doctor', 'biller'])
+            ->whereIn('status', [1, 2]) // Filter by status 1 or 2
+            ->orderBy('created_at', 'DESC');
+
+        // Apply date range filter if both start_date and end_date are provided
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('created_at', [
+                Carbon::parse($request->start_date)->startOfDay(),
+                Carbon::parse($request->end_date)->endOfDay(),
+            ]);
+        }
+
+        // Get the filtered data
+        $his = $query->get();
+
+        // Return data to DataTable
         return Datatables::of($his)
             ->addIndexColumn()
             ->addColumn('select', function ($h) {
-                if($h->patient){
+                if ($h->patient) {
                     $url = route('patient.show', [$h->patient->id, 'section' => 'prescriptionsNotesCardBody']);
                     $str = "
-                        <a class='btn btn-primary' href='$url'>
-                            view
-                        </a>";
+                    <a class='btn btn-primary' href='$url'>
+                        view
+                    </a>";
                     return $str;
-                }else{
+                } else {
                     return "N/A";
                 }
-                
             })
             ->editColumn('patient_id', function ($h) {
                 $str = "<small>";
-                $str .= "<b >Patient </b> :" . (($h->patient) ? userfullname($h->patient->user_id) : "N/A");
-                $str .= "<br><br><b >File No </b> : " . (($h->patient) ? $h->patient->file_no : "N/A");
-                $str .= "<br><br><b >Insurance/HMO :</b> : " . (($h->patient && $h->patient->hmo) ? $h->patient->hmo->name : "N/A");
-                $str .= "<br><br><b >HMO Number :</b> : " . (($h->patient && $h->patient->hmo) ? $h->patient->hmo_no : "N/A");
+                $str .= "<b>Patient</b>: " . (($h->patient) ? userfullname($h->patient->user_id) : "N/A");
+                $str .= "<br><br><b>File No</b>: " . (($h->patient) ? $h->patient->file_no : "N/A");
+                $str .= "<br><br><b>Insurance/HMO</b>: " . (($h->patient && $h->patient->hmo) ? $h->patient->hmo->name : "N/A");
+                $str .= "<br><br><b>HMO Number</b>: " . (($h->patient && $h->patient->hmo) ? $h->patient->hmo_no : "N/A");
                 $str .= "</small>";
                 return $str;
             })
             ->editColumn('created_at', function ($h) {
                 $str = "<small>";
-                $str .= "<b >Requested By: </b>" . ((isset($h->doctor_id) && $h->doctor_id != null) ? (userfullname($h->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>") . '<br>';
-                $str .= "<b >Last Updated On: </b>" . date('h:i a D M j, Y', strtotime($h->updated_at)) . '<br>';
-                $str .= "<b >Billed By: </b>" . ((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span><br>");
-                $str .= "<br><b >Dispensed By: </b>" . ((isset($h->dispensed_by) && $h->dispensed_by != null) ? (userfullname($h->dispensed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->dispense_date)) . ')') : "<span class='badge badge-secondary'>Not dispensed</span><br>");
+                $str .= "<b>Requested By</b>: " . ((isset($h->doctor_id) && $h->doctor_id != null) ? (userfullname($h->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>") . '<br>';
+                $str .= "<b>Last Updated On</b>: " . date('h:i a D M j, Y', strtotime($h->updated_at)) . '<br>';
+                $str .= "<b>Billed By</b>: " . ((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span><br>");
+                $str .= "<br><b>Dispensed By</b>: " . ((isset($h->dispensed_by) && $h->dispensed_by != null) ? (userfullname($h->dispensed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->dispense_date)) . ')') : "<span class='badge badge-secondary'>Not dispensed</span><br>");
                 $str .= "</small>";
                 return $str;
             })
             ->editColumn('dose', function ($his) {
-                $str = "<span class = 'badge badge-success'>[" . (($his->product->product_code) ? $his->product->product_code : '') . "]" . $his->product->product_name . "</span>";
+                $str = "<span class='badge badge-success'>[" . (($his->product->product_code) ? $his->product->product_code : '') . "]" . $his->product->product_name . "</span>";
                 $str .= "<hr> <b>Dose/Freq:</b> " . ($his->dose ?? 'N/A');
                 return $str;
             })
@@ -84,17 +98,30 @@ class ProductRequestController extends Controller
 
     public function prescQueueHistoryList()
     {
+        // Get the start_date and end_date from the request
+        $startDate = request('start_date') ? date('Y-m-d 00:00:00', strtotime(request('start_date'))) : null;
+        $endDate = request('end_date') ? date('Y-m-d 23:59:59', strtotime(request('end_date'))) : null;
+
+        // Build the query
         $his = ProductRequest::with(['product', 'encounter', 'patient', 'productOrServiceRequest', 'doctor', 'biller'])
-            ->where('status', 3)->orderBy('created_at', 'DESC')->get();
-        //dd($pc);
+            ->where('status', 3);
+
+        // Apply date range filter if both dates are provided
+        if ($startDate && $endDate) {
+            $his = $his->whereBetween('created_at', [$startDate, $endDate]);
+        }
+
+        // Order by latest created_at
+        $his = $his->orderBy('created_at', 'DESC')->get();
+
         return Datatables::of($his)
             ->addIndexColumn()
             ->addColumn('select', function ($h) {
                 $url = route('patient.show', [$h->patient->id, 'section' => 'prescriptionsNotesCardBody']);
                 $str = "
-                    <a class='btn btn-primary' href='$url'>
-                        view
-                    </a>";
+                <a class='btn btn-primary' href='$url'>
+                    view
+                </a>";
                 return $str;
             })
             ->editColumn('patient_id', function ($h) {
@@ -123,6 +150,7 @@ class ProductRequestController extends Controller
             ->rawColumns(['created_at', 'dose', 'select', 'patient_id'])
             ->make(true);
     }
+
 
     /**
      * dispense selected roduct requets

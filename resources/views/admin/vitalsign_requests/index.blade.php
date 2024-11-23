@@ -6,66 +6,57 @@
 
     <section class="content">
 
+        <!-- Date Range Filter Card -->
+        <div class="card mb-2">
+            <div class="card-body">
+                <form id="dateRangeForm">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="start_date">Start Date</label>
+                                <input type="date" class="form-control form-control-sm" id="start_date" name="start_date"
+                                    value="{{ date('Y-m-d', strtotime('-1 day')) }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="end_date">End Date</label>
+                                <input type="date" class="form-control form-control-sm" id="end_date" name="end_date"
+                                    value="{{ date('Y-m-d') }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <button type="button" id="fetchData" class="btn btn-primary btn-sm d-block">
+                                    Fetch Data
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- DataTable -->
         <div class="col-12">
             <div class="card">
-                {{-- <div class="card-header">
-                    <a href="{{ route('hmo.create') }}" class="btn btn-primary">New HMO</a>
-                </div> --}}
-                <!-- /.card-header -->
                 <div class="card-body">
-                    {{-- <div class="pull-right">
-                        <!-- <a href="{{ route('hmo.create') }}" class="btn btn-primary" >New Role</a> -->
-                    </div> --}}
                     <div class="table-responsive">
                         <table class="table table-sm table-bordered table-striped" style="width: 100%" id="vitals_history">
                             <thead>
                                 <th>#</th>
                                 <th>Patient</th>
                                 <th>Service</th>
-                                <!-- <th>Details</th> -->
                                 <th>Entry</th>
                             </thead>
                         </table>
                     </div>
                 </div>
             </div>
-
         </div>
 
     </section>
-
-
-
-    <!-- Modal form to delete a user -->
-    <div id="deleteModal" class="modal fade" role="dialog">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title"></h4>
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <h4 class="text-center">Are you sure you want to delete the following user?</h4>
-                    <br />
-                    <form class="form-horizontal" role="form">
-                        <div class="form-group">
-                            <div class="col-md-10">
-                                <input type="hidden" class="form-control" id="id_delete">
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-danger delete" data-dismiss="modal">
-                        <span id="" class='glyphicon glyphicon-trash'></span> Delete
-                    </button>
-                    <button type="button" class="btn btn-warning" data-dismiss="modal">
-                        <span class='glyphicon glyphicon-remove'></span> Close
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 
 @endsection
 
@@ -73,7 +64,7 @@
     <script src="{{ asset('/plugins/dataT/datatables.js') }}" defer></script>
     <script>
         $(function() {
-            $('#vitals_history').DataTable({
+            const table = $('#vitals_history').DataTable({
                 "dom": 'Bfrtip',
                 "iDisplayLength": 50,
                 "lengthMenu": [
@@ -85,7 +76,11 @@
                 "serverSide": true,
                 "ajax": {
                     "url": "{{ route('patientVitalsQueue') }}",
-                    "type": "GET"
+                    "type": "GET",
+                    "data": function(d) {
+                        d.start_date = $('#start_date').val();
+                        d.end_date = $('#end_date').val();
+                    }
                 },
                 "columns": [{
                         data: "DT_RowIndex",
@@ -99,19 +94,18 @@
                         data: "created_at",
                         name: "created_at"
                     },
-                    // {
-                    //     data: "result",
-                    //     name: "result"
-                    // },
                     {
                         data: "select",
                         name: "select"
                     },
                 ],
-
                 "paging": true
+            });
+
+            // Fetch Data Button Click
+            $('#fetchData').click(function() {
+                table.ajax.reload();
             });
         });
     </script>
-
 @endsection
