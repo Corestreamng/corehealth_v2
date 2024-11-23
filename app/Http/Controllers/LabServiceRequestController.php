@@ -221,11 +221,15 @@ class LabServiceRequestController extends Controller
             ->make(true);
     }
 
-    public function investQueueList()
+    public function investQueueList(Request $request)
     {
         try {
-            // Get lab service requests with eager loading
-            $requests = LabServiceRequest::with([
+            // Validate start and end dates
+            $startDate = $request->input('start_date');
+            $endDate = $request->input('end_date');
+
+            // Build query with eager loading and filters
+            $query = LabServiceRequest::with([
                 'service',
                 'encounter',
                 'patient.user',
@@ -234,14 +238,19 @@ class LabServiceRequestController extends Controller
                 'doctor',
                 'biller'
             ])
-                ->whereIn('status', [1, 2, 3])
-                ->orderByDesc('created_at')
-                ->get();
+                ->whereIn('status', [1, 2, 3]);
 
+            // Apply date range filter if provided
+            if ($startDate && $endDate) {
+                $query->whereBetween('created_at', [$startDate, $endDate]);
+            }
+
+            $requests = $query->orderByDesc('created_at')->get();
+
+            // Generate DataTable response
             return Datatables::of($requests)
                 ->addIndexColumn()
                 ->addColumn('select', function ($request) {
-                    // Guard against null patient
                     if (!$request->patient) {
                         return '<span class="badge badge-danger">Invalid Patient Data</span>';
                     }
@@ -250,7 +259,6 @@ class LabServiceRequestController extends Controller
                     return "<a class='btn btn-primary' href='{$url}'>view</a>";
                 })
                 ->editColumn('patient_id', function ($request) {
-                    // Guard against null patient
                     if (!$request->patient) {
                         return '<span class="badge badge-danger">Patient data not found</span>';
                     }
@@ -267,34 +275,28 @@ class LabServiceRequestController extends Controller
                 ->editColumn('created_at', function ($request) {
                     $str = "<small>";
 
-                    // Doctor info
                     $str .= "<b>Requested by: </b>" .
                         (isset($request->doctor_id) ?
                             userfullname($request->doctor_id) . ' (' . $this->formatDateTime($request->created_at) . ')' :
                             "<span class='badge badge-secondary'>N/A</span>");
 
-                    // Last updated
                     $str .= "<br><br><b>Last Updated On: </b>" . $this->formatDateTime($request->updated_at);
 
-                    // Billed info
                     $str .= "<br><br><b>Billed by: </b>" .
                         (isset($request->billed_by) ?
                             userfullname($request->billed_by) . ' (' . $this->formatDateTime($request->billed_date) . ')' :
                             "<span class='badge badge-secondary'>Not billed</span>");
 
-                    // Sample info
                     $str .= "<br><br><b>Sample taken by: </b>" .
                         (isset($request->sample_taken_by) ?
                             userfullname($request->sample_taken_by) . ' (' . $this->formatDateTime($request->sample_date) . ')' :
                             "<span class='badge badge-secondary'>Not taken</span>");
 
-                    // Results info
                     $str .= "<br><br><b>Results by: </b>" .
                         (isset($request->result_by) ?
                             userfullname($request->result_by) . ' (' . $this->formatDateTime($request->result_date) . ')' :
                             "<span class='badge badge-secondary'>Awaiting Results</span>");
 
-                    // Note
                     $str .= "<br><br><b>Request Note: </b>" .
                         (isset($request->note) && $request->note != null ?
                             $request->note :
@@ -326,6 +328,7 @@ class LabServiceRequestController extends Controller
         }
     }
 
+
     /**
      * Format datetime to consistent format
      *
@@ -340,20 +343,34 @@ class LabServiceRequestController extends Controller
     }
 
 
-    public function investHistoryList()
+    public function investHistoryList(Request $request)
     {
-        //all request with status 3 i.e those that results have been enterd
-        $his = LabServiceRequest::with(['service', 'encounter', 'patient', 'productOrServiceRequest', 'doctor', 'biller'])
-            ->where('status', '=', 4)->orderBy('created_at', 'DESC')->get();
-        //dd($pc);
+        // Base query to fetch lab service requests with status 4
+        $query = LabServiceRequest::with([
+            'service',
+            'encounter',
+            'patient',
+            'productOrServiceRequest',
+            'doctor',
+            'biller'
+        ])->where('status', '=', 4);
+
+        // Apply date filters if provided
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+        }
+
+        // Fetch filtered or unfiltered results
+        $his = $query->orderBy('created_at', 'DESC')->get();
+
         return Datatables::of($his)
             ->addIndexColumn()
             ->addColumn('select', function ($h) {
                 $url = route('patient.show', [$h?->patient->id, 'section' => 'investigationsCardBody']);
                 $str = "
-                    <a class='btn btn-primary' href='$url'>
-                        view
-                    </a>";
+                <a class='btn btn-primary' href='$url'>
+                    view
+                </a>";
                 return $str;
             })
             ->editColumn('patient_id', function ($h) {
@@ -386,6 +403,7 @@ class LabServiceRequestController extends Controller
             ->rawColumns(['created_at', 'result', 'select', 'patient_id'])
             ->make(true);
     }
+
 
 
     /**
