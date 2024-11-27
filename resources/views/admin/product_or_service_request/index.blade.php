@@ -1,11 +1,44 @@
 @extends('admin.layouts.app')
-@section('title', 'Services and Products ')
+@section('title', 'Services and Products')
 @section('page_name', 'Services and Products')
 @section('subpage_name', 'Services and Products Request List')
 @section('content')
     <div id="content-wrapper">
         <div class="container">
 
+            <!-- Date Filter Card -->
+            <div class="card mb-2">
+                <div class="card-body">
+                    <form id="dateRangeForm">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="start_date">Start Date</label>
+                                    <input type="date" class="form-control form-control-sm" id="start_date" name="start_date"
+                                        value="{{ date('Y-m-d', strtotime('-1 day')) }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="end_date">End Date</label>
+                                    <input type="date" class="form-control form-control-sm" id="end_date" name="end_date"
+                                        value="{{ date('Y-m-d') }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>&nbsp;</label>
+                                    <button type="button" id="fetchData" class="btn btn-primary btn-sm d-block">
+                                        Fetch Data
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Services and Products Table -->
             <div class="card">
                 <div class="card-header">
                     <div class="row">
@@ -13,13 +46,11 @@
                             {{ __('Services') }}
                         </div>
                         <div class="col-md-6">
-                            {{-- @if (auth()->user()->can('user-create')) --}}
                             <a href="{{ route('add-to-queue') }}" id="loading-btn" data-loading-text="Loading..."
                                 class="btn btn-primary btn-sm float-right">
                                 <i class="fa fa-plus"></i>
                                 New Request
                             </a>
-                            {{-- @endif --}}
                         </div>
                     </div>
                 </div>
@@ -32,7 +63,7 @@
                                     <th>SN</th>
                                     <th>Patient</th>
                                     <th>File No</th>
-                                    <th>HMO/Insurance </th>
+                                    <th>HMO/Insurance</th>
                                     <th>HMO No</th>
                                     <th>View</th>
                                 </tr>
@@ -46,15 +77,13 @@
 @endsection
 
 @section('scripts')
-    <!-- jQuery -->
-    {{-- <script src="{{ asset('/plugins/dataT/jQuery-3.3.1/jquery-3.3.1.min.js') }}"></script> --}}
-    <!-- Bootstrap 4 -->
     <!-- DataTables -->
     <script src="{{ asset('/plugins/dataT/datatables.js') }}" defer></script>
 
     <script>
         $(function() {
-            $('#products-list').DataTable({
+            // Initialize DataTable
+            const table = $('#products-list').DataTable({
                 "dom": 'Bfrtip',
                 "iDisplayLength": 50,
                 "lengthMenu": [
@@ -66,11 +95,19 @@
                 "serverSide": true,
                 "ajax": {
                     "url": "{{ route('product-services-requesters-list') }}",
-                    "type": "GET"
+                    "type": "GET",
+                    "data": function(d) {
+                        // Add date range to AJAX request
+                        d.start_date = $('#start_date').val();
+                        d.end_date = $('#end_date').val();
+                    }
                 },
-                "columns": [{
+                "columns": [
+                    {
                         data: "DT_RowIndex",
-                        name: "DT_RowIndex"
+                        name: "DT_RowIndex",
+                        orderable: false,
+                        searchable: false
                     },
                     {
                         data: "patient",
@@ -90,25 +127,17 @@
                     },
                     {
                         data: "show",
-                        name: "show"
+                        name: "show",
+                        orderable: false,
+                        searchable: false
                     },
                 ],
-                // initComplete: function () {
-                //     this.api().columns().every(function () {
-                //         var column = this;
-                //         var input = document.createElement("input");
-                //         $(input).appendTo($(column.footer()).empty())
-                //         .on('change', function () {
-                //             column.search($(this).val(), false, false, true).draw();
-                //         });
-                //     });
-                // },
                 "paging": true
-                // "lengthChange": false,
-                // "searching": true,
-                // "ordering": true,
-                // "info": true,
-                // "autoWidth": false
+            });
+
+            // Filter Button Event
+            $('#fetchData').click(function() {
+                table.ajax.reload();
             });
         });
     </script>

@@ -136,10 +136,10 @@ class EncounterController extends Controller
 
             // Apply date range filter if provided
             if ($startDate) {
-                $queueQuery->where('created_at', '>=', $startDate);
+                $queueQuery->where('created_at', '>=', $startDate->startOfDay());
             }
             if ($endDate) {
-                $queueQuery->where('created_at', '<=', $endDate);
+                $queueQuery->where('created_at', '<=', $endDate->endOfDay());
             }
 
             $queue = $queueQuery->orderBy('created_at', 'DESC')->get();
@@ -186,7 +186,7 @@ class EncounterController extends Controller
             $this->endOldEncounterReq();
             $doc = Staff::where('user_id', Auth::id())->first();
 
-            $timeThreshold = Carbon::now()->subHours(env('CONSULTATION_CYCLE_DURATION'));
+            $timeThreshold = Carbon::now()->subHours(env('CONSULTATION_CYCLE_DURATION', 24));
 
             // Get start and end dates from request, fallback to null
             $startDate = $request->input('start_date') ? Carbon::parse($request->input('start_date')) : null;
@@ -201,10 +201,10 @@ class EncounterController extends Controller
 
             // Apply date range filter if provided
             if ($startDate) {
-                $queueQuery->where('created_at', '>=', $startDate);
+                $queueQuery->where('created_at', '>=', $startDate->startOfDay());
             }
             if ($endDate) {
-                $queueQuery->where('created_at', '<=', $endDate);
+                $queueQuery->where('created_at', '<=', $endDate->endOfDay());
             }
 
             $queue = $queueQuery->orderBy('created_at', 'DESC')->get();

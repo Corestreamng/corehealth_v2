@@ -8,6 +8,7 @@ use App\Models\patient;
 use App\Models\ProductOrServiceRequest;
 use App\Models\Staff;
 use App\Models\VitalSign;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -26,32 +27,43 @@ class ProductOrServiceRequestController extends Controller
         return view('admin.product_or_service_request.index');
     }
 
-    public function productOrServicesRequestersList($patient_user_id = null)
+    public function productOrServicesRequestersList(Request $request, $patient_user_id = null)
     {
-        if (null == $patient_user_id) {
-            DB::statement("SET SQL_MODE=''"); // disable sql strict mode to allow groupby query
-            $req = ProductOrServiceRequest::where('payment_id', '=', null)->groupBy('user_id')->orderBy('created_at', 'DESC')->get();
+        // Disable SQL strict mode to allow group by queries
+        DB::statement("SET SQL_MODE=''");
+
+        // Extract date filters from the request
+        $startDate = Carbon::parse($request->input('start_date'));
+        $endDate = Carbon::parse($request->input('end_date'));
+
+        // Base query
+        $query = ProductOrServiceRequest::where('payment_id', '=', null);
+
+        // Apply date filtering if dates are provided
+        if ($startDate && $endDate) {
+            $query->whereBetween('created_at', [$startDate->startOfDay(), $endDate->endOfDay()]);
+        }
+
+        if ($patient_user_id === null) {
+            $req = $query->groupBy('user_id')->orderBy('created_at', 'DESC')->get();
 
             return Datatables::of($req)
                 ->addIndexColumn()
                 ->addColumn('show', function ($r) {
                     $url = route('servicess', $r->user_id);
-
-                    return "<a href='$url' class='btn btn-info btn-sm' ><i class='fa fa-eye'></i> View</a>";
+                    return "<a href='$url' class='btn btn-info btn-sm'><i class='fa fa-eye'></i> View</a>";
                 })
                 ->addColumn('patient', function ($r) {
                     return userfullname($r->user_id);
                 })
                 ->addColumn('file_no', function ($r) {
                     $p = patient::where('user_id', $r->user_id)->first();
-
                     return $p->file_no ?? 'N/A';
                 })
                 ->addColumn('hmo', function ($r) {
                     $p = patient::where('user_id', $r->user_id)->first();
                     if ($p) {
                         $hmo = Hmo::find($p->hmo_id);
-
                         return $hmo->name ?? 'N/A';
                     } else {
                         return 'N/A';
@@ -59,37 +71,34 @@ class ProductOrServiceRequestController extends Controller
                 })
                 ->addColumn('hmo_no', function ($r) {
                     $p = patient::where('user_id', $r->user_id)->first();
-
                     return $p->hmo_no ?? 'N/A';
                 })
                 ->rawColumns(['show'])
                 ->make(true);
         } else {
-            DB::statement("SET SQL_MODE=''"); // disable sql strict mode to allow groupby query
-            $req = ProductOrServiceRequest::where('payment_id', '=', null)->where('user_id', $patient_user_id)->orderBy('created_at', 'DESC')->get();
+            $req = $query->where('user_id', $patient_user_id)->orderBy('created_at', 'DESC')->get();
 
             return Datatables::of($req)
                 ->addIndexColumn()
                 ->addColumn('show', function ($r) {
                     $url = route('servicess', $r->user_id);
-
-                    return "<a href='$url' class='btn btn-info btn-sm' ><i class='fa fa-eye'></i> View</a>";
+                    return "<a href='$url' class='btn btn-info btn-sm'><i class='fa fa-eye'></i> View</a>";
                 })
                 ->editColumn('service_id', function ($r) {
-                    if(null != $r->service_id){
-                        $str = "<b>Service: </b>". $r->service->service_name;
-                        $str .= "<br><b>Price: <b>". $r->service->price->sale_price;
+                    if (null != $r->service_id) {
+                        $str = "<b>Service: </b>" . $r->service->service_name;
+                        $str .= "<br><b>Price: </b>" . $r->service->price->sale_price;
                         return $str;
-                    }else{
+                    } else {
                         return "N/A";
                     }
                 })
                 ->editColumn('product_id', function ($r) {
-                    if(null !=$r->product_id){
-                        $str = "<b>Product: </b>". $r->product->name;
-                        $str .= "<br><b>Price: <b>". $r->product->price->current_sale_date;
+                    if (null != $r->product_id) {
+                        $str = "<b>Product: </b>" . $r->product->name;
+                        $str .= "<br><b>Price: </b>" . $r->product->price->current_sale_date;
                         return $str;
-                    }else{
+                    } else {
                         return "N/A";
                     }
                 })
@@ -103,9 +112,7 @@ class ProductOrServiceRequestController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
-    {
-    }
+    public function create() {}
 
     /**
      * Store a newly created resource in storage.
@@ -172,12 +179,12 @@ class ProductOrServiceRequestController extends Controller
 
                                 $queue->save();
 
-                            // if (isset($request_vitals[$i])) {
+                                // if (isset($request_vitals[$i])) {
                                 //     $vitalSign = new VitalSign;
                                 //     $vitalSign->requested_by = Auth::id();
                                 //     $vitalSign->patient_id = $request->patient_id;
                                 //     $vitalSign->save();
-                            // }
+                                // }
                             } else {
                                 continue;
                             }
@@ -220,7 +227,7 @@ class ProductOrServiceRequestController extends Controller
             DB::rollBack();
             Log::error($e->getMessage(), ['exception' => $e]);
 
-            return redirect()->back()->withInput()->withMessage('An error occurred '.$e->getMessage().'line:'.$e->getLine());
+            return redirect()->back()->withInput()->withMessage('An error occurred ' . $e->getMessage() . 'line:' . $e->getLine());
         }
     }
 
@@ -229,34 +236,26 @@ class ProductOrServiceRequestController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function show(ProductOrServiceRequest $productOrServiceRequest)
-    {
-    }
+    public function show(ProductOrServiceRequest $productOrServiceRequest) {}
 
     /**
      * Show the form for editing the specified resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function edit(ProductOrServiceRequest $productOrServiceRequest)
-    {
-    }
+    public function edit(ProductOrServiceRequest $productOrServiceRequest) {}
 
     /**
      * Update the specified resource in storage.
      *
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, ProductOrServiceRequest $productOrServiceRequest)
-    {
-    }
+    public function update(Request $request, ProductOrServiceRequest $productOrServiceRequest) {}
 
     /**
      * Remove the specified resource from storage.
      *
      * @return \Illuminate\Http\Response
      */
-    public function destroy(ProductOrServiceRequest $productOrServiceRequest)
-    {
-    }
+    public function destroy(ProductOrServiceRequest $productOrServiceRequest) {}
 }
