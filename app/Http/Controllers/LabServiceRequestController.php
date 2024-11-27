@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\patient;
 use App\Models\Product;
 use App\Models\ProductOrServiceRequest;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -225,8 +226,8 @@ class LabServiceRequestController extends Controller
     {
         try {
             // Validate start and end dates
-            $startDate = $request->input('start_date');
-            $endDate = $request->input('end_date');
+            $startDate = Carbon::parse($request->input('start_date'));
+            $endDate = Carbon::parse($request->input('end_date'));
 
             // Build query with eager loading and filters
             $query = LabServiceRequest::with([
@@ -242,7 +243,7 @@ class LabServiceRequestController extends Controller
 
             // Apply date range filter if provided
             if ($startDate && $endDate) {
-                $query->whereBetween('created_at', [$startDate, $endDate]);
+                $query->whereBetween('created_at', [$startDate->startOfDay(), $endDate->endOfDay()]);
             }
 
             $requests = $query->orderByDesc('created_at')->get();

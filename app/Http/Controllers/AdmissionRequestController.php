@@ -7,6 +7,7 @@ use App\Models\Bed;
 use App\Models\patient;
 use App\Models\Hmo;
 use App\Models\ProductOrServiceRequest;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\DataTables;
@@ -28,8 +29,8 @@ class AdmissionRequestController extends Controller
     public function myAdmissionRequests(Request $request)
     {
         // Get start and end dates from request
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
+        $startDate = Carbon::parse($request->input('start_date'));
+        $endDate = Carbon::parse($request->input('end_date'));
 
         // Build the query with date range filtering
         $query = AdmissionRequest::where('discharged', 0)
@@ -37,7 +38,7 @@ class AdmissionRequestController extends Controller
             ->where('doctor_id', Auth::id());
 
         if ($startDate && $endDate) {
-            $query->whereBetween('created_at', [$startDate, $endDate]);
+            $query->whereBetween('created_at', [$startDate->startOfDay(), $endDate->endOfDay()]);
         }
 
         $req = $query->orderBy('created_at', 'DESC')->get();
@@ -89,15 +90,15 @@ class AdmissionRequestController extends Controller
     public function admissionRequests(Request $request)
     {
         // Get start and end dates from request
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
+        $startDate = Carbon::parse($request->input('start_date'));
+        $endDate = Carbon::parse($request->input('end_date'));
 
         // Build the query with date range filtering
         $query = AdmissionRequest::where('discharged', 0)
             ->where('status', 1);
 
         if ($startDate && $endDate) {
-            $query->whereBetween('created_at', [$startDate, $endDate]);
+            $query->whereBetween('created_at', [$startDate->startOfDay(), $endDate->endOfDay()]);
         }
 
         $req = $query->orderBy('created_at', 'DESC')->get();
