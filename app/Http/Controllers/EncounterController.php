@@ -928,26 +928,34 @@ class EncounterController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function show(Encounter $encounter) {}
+    public function show(Encounter $encounter)
+    {
+    }
 
     /**
      * Show the form for editing the specified resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function edit(Encounter $encounter) {}
+    public function edit(Encounter $encounter)
+    {
+    }
 
     /**
      * Update the specified resource in storage.
      *
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Encounter $encounter) {}
+    public function update(Request $request, Encounter $encounter)
+    {
+    }
 
     /**
      * Remove the specified resource from storage.
      *
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Encounter $encounter) {}
+    public function destroy(Encounter $encounter)
+    {
+    }
 }

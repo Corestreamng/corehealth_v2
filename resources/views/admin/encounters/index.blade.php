@@ -3,6 +3,8 @@
 @section('page_name', 'Consultations')
 @section('subpage_name', 'History')
 @section('content')
+
+    <!-- Date Filter Form -->
     <div class="card mb-2">
         <div class="card-body">
             <form id="dateRangeForm">
@@ -34,42 +36,41 @@
         </div>
     </div>
 
+    <!-- Tab and Table for Consultation History -->
     <ul class="nav nav-tabs" id="myTab" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="cont_data_tab" data-bs-toggle="tab" data-bs-target="#cont" type="button"
-                role="tab" aria-controls="cont_data" aria-selected="true">Previous</button>
+                role="tab" aria-controls="cont" aria-selected="true">Previous</button>
         </li>
     </ul>
     <div class="tab-content" id="myTabContent">
-        <div class="tab-pane fade show active" id="cont" role="tabpanel" aria-labelledby="cont_tab">
+        <div class="tab-pane fade show active" id="cont" role="tabpanel" aria-labelledby="cont_data_tab">
             <div class="card mt-2">
                 <div class="card-body table-responsive">
-                    <div id="tableContainer">
-                        <table class="table table-sm table-bordered table-striped" id="all_prev_consult_list"
-                            style="width: 100%">
-                            <thead>
-                                <th>#</th>
-                                <th>Patient Name</th>
-                                <th>File No</th>
-                                <th>HMO/Insurance</th>
-                                <th>Clinic</th>
-                                <th>Doctor</th>
-                                <th>Time</th>
-                                <th>Action</th>
-                            </thead>
-                        </table>
-                    </div>
+                    <table class="table table-sm table-bordered table-striped" id="all_prev_consult_list" style="width: 100%">
+                        <thead>
+                            {{-- <th>#</th> --}}
+                            <th>Patient Name</th>
+                            <th>File No</th>
+                            <th>HMO/Insurance</th>
+                            <th>Clinic</th>
+                            <th>Doctor</th>
+                            <th>Time</th>
+                            <th>Action</th>
+                        </thead>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
+
 @endsection
 
 @section('scripts')
     <script src="{{ asset('/plugins/dataT/datatables.js') }}" defer></script>
     <script>
         $(function() {
-            // Initialize DataTable
+            // Initialize DataTable with server-side processing
             const table = $('#all_prev_consult_list').DataTable({
                 "dom": 'Bfrtip',
                 "iDisplayLength": 50,
@@ -88,18 +89,15 @@
                         d.end_date = $('#end_date').val();
                     }
                 },
-                "columns": [{
-                        data: 'DT_RowIndex',
-                        name: 'DT_RowIndex',
-                        orderable: false,
-                        searchable: false
-                    },
+                "columns": [
+                    // {
+                    //     data: "DT_RowIndex",
+                    //     name: "DT_RowIndex"
+                    // },
                     {
                         data: "fullname",
-                        name: "fullname",
-                        orderable: true,
+                        // name: "fullname",
                         searchable: true
-
                     },
                     {
                         data: "file_no",
@@ -123,17 +121,15 @@
                     },
                     {
                         data: "view",
-                        name: "view",
-                        orderable: false,
-                        searchable: false
+                        name: "view"
                     },
                 ],
                 "paging": true
             });
 
-            // Filter Button Event
+            // Fetch data when the user clicks the 'Fetch Data' button
             $('#fetchData').click(function() {
-                table.ajax.reload();
+                table.ajax.reload(); // Reload DataTable with the selected date range
             });
         });
     </script>
