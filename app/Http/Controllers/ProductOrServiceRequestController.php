@@ -95,8 +95,8 @@ class ProductOrServiceRequestController extends Controller
                 })
                 ->editColumn('product_id', function ($r) {
                     if (null != $r->product_id) {
-                        $str = "<b>Product: </b>" . $r->product->name;
-                        $str .= "<br><b>Price: </b>" . $r->product->price->current_sale_date;
+                        $str = "<b>Product: </b>" . $r->product->product_name;
+                        $str .= "<br><b>Price: </b>" . $r->product->price->current_sale_price;
                         return $str;
                     } else {
                         return "N/A";
