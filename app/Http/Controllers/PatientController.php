@@ -302,6 +302,20 @@ class PatientController extends Controller
                 $request->password = '123456';
             }
 
+            // Check if the user already exists based on email, or a combination of first and last name.
+            $existingUser = User::where('email', $request->email)
+                ->orWhere(function ($query) use ($request) {
+                    $query->where('surname', $request->surname)
+                        ->where('firstname', $request->firstname)
+                        ->where('file_no', $request->file_no);
+                })
+                ->first();
+
+            if ($existingUser) {
+                return back()->with('error', 'A user with this email or name already exists.')->withInput();
+            }
+
+
             $v = Validator::make($request->all(), $rules);
 
             if ($v->fails()) {
