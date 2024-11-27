@@ -90,7 +90,7 @@
                 <a class="nav-link" data-toggle="collapse" href="#returning_patient" aria-expanded="false"
                     aria-controls="returning_patient">
                     <i class="mdi mdi-crosshairs-gps menu-icon"></i>
-                    <span class="menu-title">Returning Patient</span>
+                    <span class="menu-title">Patient Lookup</span>
                     <i class="menu-arrow"></i>
                 </a>
                 <div class="collapse" id="returning_patient">
@@ -349,7 +349,7 @@
                 <a class="nav-link" data-toggle="collapse" href="#returning_patient" aria-expanded="false"
                     aria-controls="returning_patient">
                     <i class="mdi mdi-crosshairs-gps menu-icon"></i>
-                    <span class="menu-title">Returning Patient</span>
+                    <span class="menu-title">Patient Lookup</span>
                     <i class="menu-arrow"></i>
                 </a>
                 <div class="collapse" id="returning_patient">
@@ -459,7 +459,7 @@
                 <a class="nav-link" data-toggle="collapse" href="#returning_patient" aria-expanded="false"
                     aria-controls="returning_patient">
                     <i class="mdi mdi-crosshairs-gps menu-icon"></i>
-                    <span class="menu-title">Returning Patient</span>
+                    <span class="menu-title">Patient Lookup</span>
                     <i class="menu-arrow"></i>
                 </a>
                 <div class="collapse" id="returning_patient">

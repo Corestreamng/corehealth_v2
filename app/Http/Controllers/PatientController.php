@@ -214,7 +214,15 @@ class PatientController extends Controller
                         'process',
                         function ($list) {
                             $url = route('getMyDependants', $list->user_id);
-                            return '<a class="btn-success btn-sm" href="' . $url . '">Process</a>';
+                            $p = patient::where('user_id', $list->user_id)->first();
+
+                            if ($p) {
+                                $url2 = route('patient.show', [$p->id]);
+                            } else {
+                                $url2 = '#';
+                            }
+
+                            return '<a class="btn-success btn-sm" href="' . $url . '">Add To Queue</a> <br><br><a class="btn btn-primary" href="' . $url2 . '"> View Profile</a>';
                         }
                     )
                     ->rawColumns(['user_id', 'process', 'acc_bal'])
