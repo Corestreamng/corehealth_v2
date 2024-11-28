@@ -310,17 +310,20 @@ class PatientController extends Controller
                 $request->password = '123456';
             }
 
-            // Check if the user already exists based on email, or a combination of first and last name.
+            // Check if the user already exists based on email, or a combination of surname, firstname, and file number in the patient relationship.
             $existingUser = User::where('email', $request->email)
                 ->orWhere(function ($query) use ($request) {
                     $query->where('surname', $request->surname)
                         ->where('firstname', $request->firstname)
-                        ->where('file_no', $request->file_no);
+                        ->whereHas('patient_profile', function ($subQuery) use ($request) {
+                            $subQuery->where('file_no', $request->file_no);
+                        });
                 })
                 ->first();
 
+
             if ($existingUser) {
-                return back()->with('error', 'A user with this email or name already exists.')->withInput();
+                return redirect()->back()->withMessage('A user with this email or name/file no already exists.')->withMessageType('danger');
             }
 
 
@@ -565,7 +568,7 @@ class PatientController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error($e->getMessage(), ['exception' => $e]);
-            return redirect()->back()->withInput()->with('error', $e->getMessage());
+            return redirect()->back()->withMessage($e->getMessage())->withMessageType('danger');
         }
     }
 
