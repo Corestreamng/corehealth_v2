@@ -339,7 +339,7 @@ class EncounterController extends Controller
 
                 $str .= "
                     <hr>
-                    <button type='button' class='btn btn-primary' onclick='setResViewInModal(this)' data-service-name = '" . $his->service->service_name . "' data-result = '" . htmlspecialchars($his->result) . " 'data-result-obj = '" . htmlspecialchars($his) . "'>
+                    <button type='button' class='btn btn-primary' onclick='setResViewInModal(this)' data-service-name = '" . (($his->service) ? $his->service->service_name : 'N/A') . "' data-result = '" . htmlspecialchars($his->result) . " 'data-result-obj = '" . htmlspecialchars($his) . "'>
                         Print Result
                     </button>";
 
@@ -928,34 +928,26 @@ class EncounterController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function show(Encounter $encounter)
-    {
-    }
+    public function show(Encounter $encounter) {}
 
     /**
      * Show the form for editing the specified resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function edit(Encounter $encounter)
-    {
-    }
+    public function edit(Encounter $encounter) {}
 
     /**
      * Update the specified resource in storage.
      *
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Encounter $encounter)
-    {
-    }
+    public function update(Request $request, Encounter $encounter) {}
 
     /**
      * Remove the specified resource from storage.
      *
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Encounter $encounter)
-    {
-    }
+    public function destroy(Encounter $encounter) {}
 }
