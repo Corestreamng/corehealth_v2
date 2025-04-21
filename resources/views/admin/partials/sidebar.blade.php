@@ -33,13 +33,13 @@
         </li>
         <li class="nav-item">
             <a class="nav-link" href="{{ route('home') }}">
-                <i class="mdi mdi-compass-outline menu-icon"></i>
+                <i class="mdi mdi-view-dashboard menu-icon"></i>
                 <span class="menu-title">Dashboard</span>
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link" href="{{ route('my-profile', Auth::id()) }}">
-                <i class="fa fa-user menu-icon"></i>
+                <i class="mdi mdi-account-circle menu-icon"></i>
                 <span class="menu-title"> Profile</span>
             </a>
         </li>
@@ -55,7 +55,7 @@
             <a class="nav-link" href="{{ route('logout') }}"
                 onclick="event.preventDefault();
                      document.getElementById('logout-form').submit();">
-                <i class="fa fa-sign-out"></i>
+                <i class="mdi mdi-logout menu-icon"></i>
                 <span class="menu-title text-danger">Logout</span>
             </a>
             <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
@@ -71,7 +71,7 @@
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" href="#new_patient" aria-expanded="false"
                     aria-controls="new_patient">
-                    <i class="mdi mdi-crosshairs-gps menu-icon"></i>
+                    <i class="mdi mdi-account-group menu-icon"></i>
                     <span class="menu-title">Patients</span>
                     <i class="menu-arrow"></i>
                 </a>
@@ -171,11 +171,11 @@
         @endhasanyrole
         @hasanyrole('SUPERADMIN|ADMIN')
             <li class="pt-2 pb-1">
-                <span class="nav-item-head">Admin</span>
+                <span class="nav-item-head">Administration</span>
             </li>
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" href="#access" aria-expanded="false" aria-controls="access">
-                    <i class="mdi mdi-crosshairs-gps menu-icon"></i>
+                    <i class="mdi mdi-shield-account menu-icon"></i>
                     <span class="menu-title">Access Control</span>
                     <i class="menu-arrow"></i>
                 </a>

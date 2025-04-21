@@ -260,6 +260,15 @@ Route::group(['middleware' => ['auth']], function () {
 Auth::routes();
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+// routes/web.php
+Route::get('/api/chart/clinic-appointments', [App\Http\Controllers\HomeController::class, 'fetchClinicAppointments'])->name('api.clinic.appointments');
+Route::prefix('api/chart/clinic')->group(function () {
+    Route::get('/timeline', [App\Http\Controllers\HomeController::class, 'chartAppointmentsOverTime'])->name('api.chart.clinic.timeline');
+    Route::get('/by', [App\Http\Controllers\HomeController::class, 'chartAppointmentsByClinic'])->name('api.chart.clinic.by');
+    Route::get('/services', [App\Http\Controllers\HomeController::class, 'chartTopClinicServices'])->name('api.chart.clinic.services');
+    Route::get('/status', [App\Http\Controllers\HomeController::class, 'chartQueueStatus'])->name('api.chart.clinic.status');
+});
+
 
 Route::get('/accounts', [App\Http\Controllers\Account\accountsController::class, 'index']);
 
