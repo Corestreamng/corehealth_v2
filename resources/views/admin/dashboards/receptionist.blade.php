@@ -4,7 +4,7 @@
         <div class="card bg-primary text-white">
             <div class="card-body">
                 <h4 class="card-title">New Patients</h4>
-                <h3 class="font-weight-bold">2,400</h3>
+                <h3 class="font-weight-bold">-</h3>
                 <p>Registered Today</p>
             </div>
         </div>
@@ -13,7 +13,7 @@
         <div class="card bg-success text-white">
             <div class="card-body">
                 <h4 class="card-title">Returning Patients</h4>
-                <h3 class="font-weight-bold">409</h3>
+                <h3 class="font-weight-bold">-</h3>
                 <p>Seen Today</p>
             </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="card bg-danger text-white">
             <div class="card-body">
                 <h4 class="card-title">Admissions</h4>
-                <h3 class="font-weight-bold">409</h3>
+                <h3 class="font-weight-bold">-</h3>
                 <p>Admitted Today</p>
             </div>
         </div>
@@ -31,7 +31,7 @@
         <div class="card bg-warning text-white">
             <div class="card-body">
                 <h4 class="card-title">Bookings</h4>
-                <h3 class="font-weight-bold">409</h3>
+                <h3 class="font-weight-bold">-</h3>
                 <p>Booked Today</p>
             </div>
         </div>
