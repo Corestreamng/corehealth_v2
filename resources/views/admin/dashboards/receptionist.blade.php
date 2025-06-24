@@ -4,7 +4,7 @@
         <div class="card bg-primary text-white">
             <div class="card-body">
                 <h4 class="card-title">New Patients</h4>
-                <h3 class="font-weight-bold">-</h3>
+                <h3 class="font-weight-bold" id="stat-new-patients">-</h3>
                 <p>Registered Today</p>
             </div>
         </div>
@@ -13,7 +13,7 @@
         <div class="card bg-success text-white">
             <div class="card-body">
                 <h4 class="card-title">Returning Patients</h4>
-                <h3 class="font-weight-bold">-</h3>
+                <h3 class="font-weight-bold" id="stat-returning-patients">-</h3>
                 <p>Seen Today</p>
             </div>
         </div>
@@ -22,7 +22,7 @@
         <div class="card bg-danger text-white">
             <div class="card-body">
                 <h4 class="card-title">Admissions</h4>
-                <h3 class="font-weight-bold">-</h3>
+                <h3 class="font-weight-bold" id="stat-admissions">-</h3>
                 <p>Admitted Today</p>
             </div>
         </div>
@@ -31,8 +31,44 @@
         <div class="card bg-warning text-white">
             <div class="card-body">
                 <h4 class="card-title">Bookings</h4>
-                <h3 class="font-weight-bold">-</h3>
+                <h3 class="font-weight-bold" id="stat-bookings">-</h3>
                 <p>Booked Today</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Optionally, show more stats -->
+<div class="row">
+    <div class="col-md-3 stretch-card grid-margin">
+        <div class="card border">
+            <div class="card-body">
+                <h6 class="card-title">Total Patients</h6>
+                <h4 class="font-weight-bold" id="stat-total-patients">-</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 stretch-card grid-margin">
+        <div class="card border">
+            <div class="card-body">
+                <h6 class="card-title">Total Admissions</h6>
+                <h4 class="font-weight-bold" id="stat-total-admissions">-</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 stretch-card grid-margin">
+        <div class="card border">
+            <div class="card-body">
+                <h6 class="card-title">Total Bookings</h6>
+                <h4 class="font-weight-bold" id="stat-total-bookings">-</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 stretch-card grid-margin">
+        <div class="card border">
+            <div class="card-body">
+                <h6 class="card-title">Total Encounters</h6>
+                <h4 class="font-weight-bold" id="stat-total-encounters">-</h4>
             </div>
         </div>
     </div>
@@ -88,6 +124,26 @@
                     <i class="mdi mdi-plus-circle"></i> Manage Bookings
                 </a>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Unified Chart Date Range Selector -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="d-flex align-items-center">
+            <label class="me-2 mb-0 fw-bold">Date Range:</label>
+            <select class="form-select chart-date-range" style="width:auto;display:inline-block;">
+                <option value="today">Today</option>
+                <option value="this_month">This Month</option>
+                <option value="this_quarter">This Quarter</option>
+                <option value="last_six_months">Last Six Months</option>
+                <option value="this_year">This Year</option>
+                <option value="custom">Custom</option>
+                <option value="all_time">All Time</option>
+            </select>
+            <input type="date" class="form-control d-inline-block ms-2 custom-date-start" style="width:auto;display:none;" />
+            <input type="date" class="form-control d-inline-block ms-2 custom-date-end" style="width:auto;display:none;" />
         </div>
     </div>
 </div>

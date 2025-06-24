@@ -269,6 +269,8 @@ Route::prefix('api/chart/clinic')->group(function () {
     Route::get('/status', [App\Http\Controllers\HomeController::class, 'chartQueueStatus'])->name('api.chart.clinic.status');
 });
 
+// Dashboard stats API
+Route::get('/dashboard/receptionist-stats', [App\Http\Controllers\HomeController::class, 'dashboardStats'])->name('dashboard.receptionist-stats');
 
 Route::get('/accounts', [App\Http\Controllers\Account\accountsController::class, 'index']);
 
