@@ -133,7 +133,7 @@
             <label class="me-2 fw-bold mb-0">Date Range:</label>
             <select class="form-select chart-date-range me-2" style="width:auto;">
                 <option value="today">Today</option>
-                <option value="this_month">This Month</option>
+                <option value="this_month" selected>This Month</option>
                 <option value="this_quarter">This Quarter</option>
                 <option value="last_six_months">Last Six Months</option>
                 <option value="this_year">This Year</option>
