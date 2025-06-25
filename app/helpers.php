@@ -11,10 +11,10 @@ use App\Models\Dependant;
 use App\Models\StoreStock;
 use Illuminate\Support\Facades\Lang;
 
-const NAIRA_CODE = '₦';
-const REFERENCE_RANDOM_NUMBER_LENGTH = 6;
-const REFERENCE_FILE_NUMBER_LENGTH = 4;
-const CASH_TRANSACTION_NUMBER_LENGTH = 4;
+$NAIRA_CODE = '₦';
+$REFERENCE_RANDOM_NUMBER_LENGTH = 6;
+$REFERENCE_FILE_NUMBER_LENGTH = 4;
+$CASH_TRANSACTION_NUMBER_LENGTH = 4;
 
 if (!function_exists('generateForm')) {
     function generateForm($formData)
