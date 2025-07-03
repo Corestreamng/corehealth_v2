@@ -255,6 +255,16 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('patientVitalsHistoryQueue', [VitalSignController::class, 'patientVitalsHistoryQueue'])->name('patientVitalsHistoryQueue');
         Route::get('allPatientVitals/{patient_id}', [VitalSignController::class, 'allPatientVitals'])->name('allPatientVitals');
     });
+
+    Route::group(['middleware' => ['auth']], function () {
+        // Creating and Listing Permissions
+        Route::get('merged-list/{id}', [App\Http\Controllers\Account\accountsController::class, 'mergedList']);
+    });
+
+    Route::group(['middleware' => ['auth']], function () {
+        // Creating and Listing Permissions
+        Route::get('transactions', [App\Http\Controllers\Account\paymentController::class, 'transactions'])->name('transactions');
+    });
 });
 
 Auth::routes();
