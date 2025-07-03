@@ -10,11 +10,9 @@ use App\Models\BudgetYear;
 use App\Models\Dependant;
 use App\Models\StoreStock;
 use Illuminate\Support\Facades\Lang;
+use Carbon\Carbon;
 
 $NAIRA_CODE = '₦';
-$REFERENCE_RANDOM_NUMBER_LENGTH = 6;
-$REFERENCE_FILE_NUMBER_LENGTH = 4;
-$CASH_TRANSACTION_NUMBER_LENGTH = 4;
 
 if (!function_exists('generateForm')) {
     function generateForm($formData)
@@ -88,11 +86,11 @@ if (!function_exists('titleToKey')) {
 
 if (!function_exists('generate_invoice_no')) {
 
-    function generate_invoice_no()
+    function generate_invoice_no($REFERENCE_RANDOM_NUMBER_LENGTH = 4)
     {
-        $dt = \Carbon\Carbon::now();
+        $dt = Carbon::now();
         $timestamp = $dt->hour . $dt->minute . $dt->second;
-        $referenceNumber = randomDigits(REFERENCE_RANDOM_NUMBER_LENGTH);
+        $referenceNumber = randomDigits($REFERENCE_RANDOM_NUMBER_LENGTH);
         return $referenceNumber . $timestamp;
     }
 }
@@ -251,12 +249,12 @@ if (!function_exists('convert_number_to_words')) {
 
 if (!function_exists('generateTransactionId')) {
 
-    function generateTransactionId()
+    function generateTransactionId($REFERENCE_RANDOM_NUMBER_LENGTH = 6)
     {
-        $dt = \Carbon\Carbon::now();
+        $dt = Carbon::now();
         // $year = $dt->year;
         $timestamp = $dt->minute . $dt->second . $dt->year;
-        $transactionNumber = randomDigits(REFERENCE_RANDOM_NUMBER_LENGTH);
+        $transactionNumber = randomDigits($REFERENCE_RANDOM_NUMBER_LENGTH);
         return  $transactionNumber . $timestamp;
     }
 }
@@ -332,7 +330,7 @@ if (!function_exists('generateFileNo')) {
 
     function generateFileNo()
     {
-        // $dt = \Carbon\Carbon::now();
+        // $dt = Carbon::now();
         // // $year = $dt->year;
         // $timestamp =  $dt->year . $dt->month;
         // $fileNumber = randomDigits(REFERENCE_FILE_NUMBER_LENGTH);
@@ -345,12 +343,12 @@ if (!function_exists('generateFileNo')) {
 
 if (!function_exists('generateCashPaymentTransaction')) {
 
-    function generateCashPaymentTransaction()
+    function generateCashPaymentTransaction($CASH_TRANSACTION_NUMBER_LENGTH = 6)
     {
-        $dt = \Carbon\Carbon::now();
+        $dt = Carbon::now();
         // $year = $dt->year;
         $tstamp = $dt->year . $dt->minute . $dt->second;
-        $transNumber = randomDigits(CASH_TRANSACTION_NUMBER_LENGTH);
+        $transNumber = randomDigits($CASH_TRANSACTION_NUMBER_LENGTH);
         return  $transNumber . $tstamp;
     }
 }
