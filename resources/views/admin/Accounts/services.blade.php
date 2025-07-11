@@ -179,7 +179,7 @@
                 "processing": true,
                 "serverSide": true,
                 "ajax": {
-                    "url": "/services-list/" + dar,
+                    "url": "{{route('service-list', ['id' => $id])}}",
                     "type": "GET"
                 },
                 "columns": [
@@ -207,7 +207,7 @@
                 "processing": true,
                 "serverSide": true,
                 "ajax": {
-                    "url": "/product-list/" + dar,
+                    "url": "{{ route('product-list', ['id' => $id]) }}",
                     "type": "GET"
                 },
                 "columns": [
