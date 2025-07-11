@@ -130,13 +130,13 @@
                 type: 'GET',
                 url: "{{ url('get-doctors') }}/" + clinic_id,
                 success: function(data) {
-                    //console.log(data);
-                    data = JSON.parse(data);
+                    console.log(data);
+                    // data = JSON.parse(data);
                     $('#' + doctor_id_field).html('');
                     $('#' + doctor_id_field).append(`<option value="">--select doctor--</option>`)
                     for (var i = 0; i < data.length; i++) {
                         $('#' + doctor_id_field).append(`
-                            <option value='${data[i].id}'>${data[i].user.surname}, ${data[i].user.firstname}</option>
+                            <option value='${data[i].id}'>${data[i].user.surname}, ${data[i].user.firstname} ${data[i].user.othername} - ${data[i].specialization.name}</option>
                         `);
                     }
 

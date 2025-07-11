@@ -12,4 +12,9 @@ class Clinic extends Model
     protected $fillable = [
         'name'
     ];
+
+    public function doctors()
+    {
+        return $this->hasMany(Staff::class, 'clinic_id', 'id');
+    }
 }
