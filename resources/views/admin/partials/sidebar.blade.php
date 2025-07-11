@@ -140,7 +140,7 @@
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" href="#acc_patient" aria-expanded="false"
                     aria-controls="acc_patient">
-                    <i class="mdi mdi-crosshairs-gps menu-icon"></i>
+                    <i class="mdi mdi-bank menu-icon"></i>
                     <span class="menu-title">Accounts</span>
                     <i class="menu-arrow"></i>
                 </a>
@@ -149,6 +149,11 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('product-or-service-request.index') }}">All Payment
                                 Requests</a>
+                        </li>
+                    </ul>
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('my-transactions') }}">All My Transactions</a>
                         </li>
                     </ul>
                 </div>
@@ -225,6 +230,21 @@
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('patient.index') }}">All Patients</a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="collapse" href="#all-finances" aria-expanded="false"
+                    aria-controls="finances">
+                    <i class="mdi mdi-cash menu-icon"></i>
+                    <span class="menu-title">Finance</span>
+                    <i class="menu-arrow"></i>
+                </a>
+                <div class="collapse" id="all-finances">
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('transactions') }}">All Transactions</a>
                         </li>
                     </ul>
                 </div>

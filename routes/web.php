@@ -264,6 +264,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
         Route::get('transactions', [App\Http\Controllers\Account\paymentController::class, 'transactions'])->name('transactions');
+        Route::get('my-transactions', [App\Http\Controllers\Account\paymentController::class, 'myTransactions'])->name('my-transactions');
     });
 });
 
