@@ -32,6 +32,6 @@ class Staff extends Model
 
     public function clinic()
     {
-        return $this->hasOne(Clinic::class, 'id', 'clinic_id');
+        return $this->belongsTo(Clinic::class, 'clinic_id', 'id');
     }
 }

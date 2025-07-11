@@ -53,4 +53,16 @@ class ClinicController extends Controller
         $clinic->delete();
         return back()->withMessage('Clinic deleted successfully')->withMessageType('success');
     }
+
+    public function getDoctors($clinic_id)
+    {
+        $clinic = Clinic::findOrFail($clinic_id);
+        if (!$clinic) {
+            return response()->json(['error' => 'Clinic not found'], 404);
+        }
+
+        // Fetch doctors associated with the clinic
+        $doctors = $clinic->doctors()->with(['user', 'specialization'])->get();
+        return response()->json($doctors);
+    }
 }
