@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
-@section('title', 'All Transactions')
+@section('title', 'My Transactions')
 @section('page_name', 'Transactions')
-@section('subpage_name', 'All Payments & Discounts')
+@section('subpage_name', 'My Payments & Discounts')
 @section('content')
     <div class="container">
         <div class="card mt-4 mb-3">
@@ -70,7 +70,7 @@
             </div>
         </div>
         <div class="card">
-            <div class="card-header">Transactions From {{$from}} to {{$to}}</div>
+            <div class="card-header">My Transactions From {{$from}} to {{$to}}</div>
             <div class="card-body table-responsive">
                 <table class="table table-sm table-bordered table-striped">
                     <thead>

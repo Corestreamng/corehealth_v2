@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Models\Service;
+use App\Models\service;
 use App\Models\ServicePrice;
 use Yajra\DataTables\DataTables;
 
@@ -138,7 +138,7 @@ class PatientAccountController extends Controller
             for ($i = 0; $i < count($request->names); $i++) {
 
                 //create a misc service to associate the Misc bill with
-                $misc_service                      = new Service();
+                $misc_service                      = new service();
                 $misc_service->user_id             = Auth::user()->id;
                 $misc_service->category_id         = env('MISC_SERVICE_CATEGORY_ID');
                 $misc_service->service_name        = trim('[' . userfullname($patient->user_id) . '] ' . $request->names[$i]);

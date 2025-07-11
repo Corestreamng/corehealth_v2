@@ -287,7 +287,7 @@ class paymentController extends Controller
         $payment_type = $request->input('payment_type', null);
 
         $query = \App\Models\payment::query()
-            ->with(['patient', 'user'])
+            ->with(['patient', 'patient.user'])
             ->whereDate('created_at', '>=', $from)
             ->whereDate('created_at', '<=', $to);
 
@@ -298,17 +298,50 @@ class paymentController extends Controller
         $transactions = $query->orderBy('created_at', 'desc')->get();
 
         $total_amount = $transactions->sum('total');
-        $total_discount = $transactions->sum('discount');
+        $total_discount = $transactions->sum('total_discount');
         $total_count = $transactions->count();
 
         $by_type = $transactions->groupBy('payment_type')->map(function ($group) {
             return [
                 'count' => $group->count(),
                 'amount' => $group->sum('total'),
-                'discount' => $group->sum('discount'),
+                'discount' => $group->sum('total_discount'),
             ];
         });
 
         return view('admin.Accounts.transactions', compact('transactions', 'from', 'to', 'payment_type', 'total_amount', 'total_discount', 'total_count', 'by_type'));
+    }
+
+    public function myTransactions(Request $request)
+    {
+        $from = $request->input('from', now()->startOfMonth()->toDateString());
+        $to = $request->input('to', now()->toDateString());
+        $payment_type = $request->input('payment_type', null);
+
+        $query = \App\Models\payment::query()
+            ->with(['patient', 'patient.user'])
+            ->whereDate('created_at', '>=', $from)
+            ->whereDate('created_at', '<=', $to)
+            ->where('user_id', Auth::id());
+
+        if ($payment_type) {
+            $query->where('payment_type', $payment_type);
+        }
+
+        $transactions = $query->orderBy('created_at', 'desc')->get();
+
+        $total_amount = $transactions->sum('total');
+        $total_discount = $transactions->sum('total_discount');
+        $total_count = $transactions->count();
+
+        $by_type = $transactions->groupBy('payment_type')->map(function ($group) {
+            return [
+                'count' => $group->count(),
+                'amount' => $group->sum('total'),
+                'discount' => $group->sum('total_discount'),
+            ];
+        });
+
+        return view('admin.Accounts.my_transactions', compact('transactions', 'from', 'to', 'payment_type', 'total_amount', 'total_discount', 'total_count', 'by_type'));
     }
 }

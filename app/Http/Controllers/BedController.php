@@ -68,11 +68,11 @@ class BedController extends Controller
                 return back()->with('errors', $v->messages()->all())->withInput();
             } else {
                 DB::beginTransaction();
-                $bed_servie_entry                      = new Service;
+                $bed_servie_entry                      = new service;
                 $bed_servie_entry->user_id             = Auth::user()->id;
-                $bed_servie_entry->category_id         = env('BED_SERVICE_CATGORY_ID',1);
-                $bed_servie_entry->service_name        = 'Bed '. $request->name ." ".$request->ward." ".$request->unit;
-                $bed_servie_entry->service_code        = strtoupper('Bed '. $request->name ." ".$request->ward." ".$request->unit);
+                $bed_servie_entry->category_id         = env('BED_SERVICE_CATGORY_ID', 1);
+                $bed_servie_entry->service_name        = 'Bed ' . $request->name . " " . $request->ward . " " . $request->unit;
+                $bed_servie_entry->service_code        = strtoupper('Bed ' . $request->name . " " . $request->ward . " " . $request->unit);
                 $bed_servie_entry->status              = 1;
                 $bed_servie_entry->price_assign        = 1;
                 $bed_servie_entry->save();
@@ -101,7 +101,7 @@ class BedController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->withInput()->with('error',$e->getMessage());
+            return redirect()->back()->withInput()->with('error', $e->getMessage());
             Log::error($e->getMessage(), ['exception' => $e]);
         }
     }
@@ -112,10 +112,7 @@ class BedController extends Controller
      * @param  \App\Models\Bed  $bed
      * @return \Illuminate\Http\Response
      */
-    public function show(Bed $bed)
-    {
-
-    }
+    public function show(Bed $bed) {}
 
     /**
      * Show the form for editing the specified resource.
@@ -151,9 +148,9 @@ class BedController extends Controller
             } else {
 
                 $bed_servie_entry                      = service::where('id', $bed->service_id)->first();
-                $bed_servie_entry->category_id         = env('BED_SERVICE_CATGORY_ID',1);
-                $bed_servie_entry->service_name        = 'Bed '. $request->name ." ".$request->ward." ".$request->unit;
-                $bed_servie_entry->service_code        = strtoupper('Bed '. $request->name ." ".$request->ward." ".$request->unit);
+                $bed_servie_entry->category_id         = env('BED_SERVICE_CATGORY_ID', 1);
+                $bed_servie_entry->service_name        = 'Bed ' . $request->name . " " . $request->ward . " " . $request->unit;
+                $bed_servie_entry->service_code        = strtoupper('Bed ' . $request->name . " " . $request->ward . " " . $request->unit);
                 $bed_servie_entry->update();
 
                 $bed_entry_service_price_entry                 = ServicePrice::where('service_id', $bed->service_id)->first();
@@ -174,7 +171,7 @@ class BedController extends Controller
                 }
             }
         } catch (\Exception $e) {
-            return redirect()->back()->withInput()->with('error',$e->getMessage());
+            return redirect()->back()->withInput()->with('error', $e->getMessage());
             Log::error($e->getMessage(), ['exception' => $e]);
         }
     }
