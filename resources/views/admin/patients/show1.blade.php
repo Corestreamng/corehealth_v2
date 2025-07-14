@@ -26,6 +26,12 @@
                     data-bs-toggle="tab" data-bs-target="#vitalsCardBody" type="button" role="tab">Vitals</button>
             </li>
         @endcan
+        @can('see-nursing-notes')
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {{ $section == 'nurseChartCardBody' ? 'active' : '' }}" id="nurseChart-tab"
+                    data-bs-toggle="tab" data-bs-target="#nurseChartCardBody" type="button" role="tab">New Nurse Chart</button>
+            </li>
+        @endcan
         @can('see-accounts')
             <li class="nav-item" role="presentation">
                 <button class="nav-link {{ $section == 'accountsCardBody' ? 'active' : '' }}" id="accounts-tab"
@@ -81,6 +87,13 @@
             <div class="tab-pane fade {{ $section == 'vitalsCardBody' ? 'show active' : '' }}" id="vitalsCardBody" role="tabpanel">
                 <div class="card">
                     <div class="card-body">@include('admin.patients.partials.vitals')</div>
+                </div>
+            </div>
+        @endcan
+        @can('see-nursing-notes')
+            <div class="tab-pane fade {{ $section == 'nurseChartCardBody' ? 'show active' : '' }}" id="nurseChartCardBody" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">@include('admin.patients.partials.nurse_chart')</div>
                 </div>
             </div>
         @endcan
@@ -1210,4 +1223,5 @@
     </script>
 
     @include('admin.partials.vitals-scripts')
+    @include('admin.patients.partials.nurse_chart_scripts')
 @endsection
