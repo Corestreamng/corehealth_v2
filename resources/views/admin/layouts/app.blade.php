@@ -28,6 +28,11 @@
     <link rel="stylesheet" href="{{ asset('/plugins/dataT/datatables.min.css') }}">
     <script src="{{ asset('plugins/chartjs/Chart.js') }}"></script>
 
+    <!-- Toastr CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css"
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- End Toastr CSS -->
+
     <style>
         .ck-editor__editable_inline {
             min-height: 200px;
@@ -370,6 +375,10 @@
         }, 1800000); // Refresh csrf token every 30 minutes
     </script>
 
+    <!-- Toastr JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!-- End Toastr JS -->
 
 </body>
 
