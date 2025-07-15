@@ -14,6 +14,7 @@ Route::middleware([])->group(function () {
 
     // Intake & Output Chart Routes
     Route::get('patients/{patient}/nurse-chart/intake-output', [\App\Http\Controllers\IntakeOutputChartController::class, 'index'])->name('nurse.intake_output.index');
+    Route::get('patients/{patient}/nurse-chart/intake-output/logs/{period}', [\App\Http\Controllers\IntakeOutputChartController::class, 'periodLogs'])->name('nurse.intake_output.logs');
     Route::post('patients/nurse-chart/intake-output/start', [\App\Http\Controllers\IntakeOutputChartController::class, 'startPeriod'])->name('nurse.intake_output.start');
     Route::post('patients/nurse-chart/intake-output/end', [\App\Http\Controllers\IntakeOutputChartController::class, 'endPeriod'])->name('nurse.intake_output.end');
     Route::post('patients/nurse-chart/intake-output/record', [\App\Http\Controllers\IntakeOutputChartController::class, 'storeRecord'])->name('nurse.intake_output.record');

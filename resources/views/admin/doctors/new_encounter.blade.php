@@ -24,6 +24,25 @@
             outline-width: 3px !important;
             /* Thicker outline on focus for better accessibility */
         }
+        
+        /* Styles for read-only nurse notes */
+        .readonly-note {
+            background-color: #f8f9fa;
+            position: relative;
+            pointer-events: none;
+            min-height: 300px;
+            padding: 10px;
+            overflow-y: auto;
+        }
+        
+        .readonly-note input, 
+        .readonly-note select, 
+        .readonly-note textarea {
+            background-color: #eee !important;
+            border: 1px solid #ddd !important;
+            color: #555 !important;
+            pointer-events: none !important;
+        }
     </style>
     <ul class="nav nav-tabs" id="myTab" role="tablist">
         <li class="nav-item" role="presentation">
@@ -387,6 +406,16 @@
             <div class="card mt-2">
                 <div class="card-body table-responsive">
                     @if (isset($admission_request))
+                        <!-- Doctor View Notice Banner -->
+                        <div class="alert alert-info mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="mdi mdi-eye-outline me-2 fs-3"></i>
+                                <div>
+                                    <strong>Viewing Mode:</strong> You are viewing the nurse notes in read-only mode. No changes can be made.
+                                </div>
+                            </div>
+                        </div>
+                        
                         <ul class="nav nav-tabs" id="myTab" role="tablist">
                             <li class="nav-item">
                                 <a class="nav-link active" id="observation-tab" data-toggle="tab" href="#observation"
@@ -412,146 +441,53 @@
                         <div class="tab-content" id="myTabContent">
                             <div class="tab-pane fade show active" id="observation" role="tabpanel"
                                 aria-labelledby="observation-tab">
-                                <form action="{{ route('nursing-note.store') }}" method="post" id="observation_form">
-                                    {{ csrf_field() }}
-                                    <input type="hidden" name="note_type" value="1">
-                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
-                                    <div class="form-group">
-                                        <label for="pateintNoteReport" class="control-label">Observation Chart for
-                                            {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
-                                        <div style="border:1px solid black;" id="the-observation-note"
-                                            class='the-observation-note'>
-                                            <?php echo $observation_note->note ?? $observation_note_template->template; ?>
-                                        </div>
-                                        <textarea style="display: none" id="observation_text" name="the_text" class="form-control observation_text">
-                            </textarea>
+                                <div class="form-group">
+                                    <label for="pateintNoteReport" class="control-label">Observation Chart for
+                                        {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
+                                    <div style="border:1px solid black;" id="the-observation-note"
+                                        class='the-observation-note readonly-note'>
+                                        <?php echo $observation_note->note ?? $observation_note_template->template; ?>
                                     </div>
-                                    <button type="submit" class="btn btn-primary"
-                                        onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
-                                </form>
-                                <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
-                                    {{ csrf_field() }}
-                                    <input type="hidden" name="note_type" value="1">
-                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
-                                    <button type="submit"
-                                        onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
-                                        class="btn btn-success" style="float: right; margin-top:-40px">Save &
-                                        New</button>
-                                </form>
+                                </div>
                             </div>
                             <div class="tab-pane fade" id="treatment" role="tabpanel" aria-labelledby="treatment-tab">
-                                <form action="{{ route('nursing-note.store') }}" method="post" id="treatment_form">
-                                    {{ csrf_field() }}
-                                    <input type="hidden" name="note_type" value="2">
-                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
-                                    <div class="form-group">
-                                        <label for="pateintNoteReport" class="control-label">Treatment sheet for
-                                            {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
-                                        <div style="border:1px solid black;" id="the-treatment-note"
-                                            class='the-treatment-note'>
-                                            <?php echo $treatment_sheet->note ?? $treatment_sheet_template->template; ?>
-                                        </div>
-                                        <textarea style="display: none" id="treatment_text" name="the_text" class="form-control treatment_text">
-                            </textarea>
+                                <div class="form-group">
+                                    <label for="pateintNoteReport" class="control-label">Treatment sheet for
+                                        {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
+                                    <div style="border:1px solid black;" id="the-treatment-note"
+                                        class='the-treatment-note readonly-note'>
+                                        <?php echo $treatment_sheet->note ?? $treatment_sheet_template->template; ?>
                                     </div>
-                                    <button type="submit" class="btn btn-primary"
-                                        onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
-                                </form>
-                                <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
-                                    {{ csrf_field() }}
-                                    <input type="hidden" name="note_type" value="2">
-                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
-                                    <button type="submit" class="btn btn-success"
-                                        onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
-                                        style="float: right; margin-top:-40px">Save &
-                                        New</button>
-                                </form>
+                                </div>
                             </div>
                             <div class="tab-pane fade" id="io" role="tabpanel" aria-labelledby="io-tab">
-                                <form action="{{ route('nursing-note.store') }}" method="post" id="io_form">
-                                    {{ csrf_field() }}
-                                    <input type="hidden" name="note_type" value="3">
-                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
-                                    <div class="form-group">
-                                        <label for="pateintNoteReport" class="control-label">Intake/Output Chart
-                                            {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
-                                        <div style="border:1px solid black;" id="the-io-note" class='the-io-note'>
-                                            <?php echo $io_chart->note ?? $io_chart_template->template; ?>
-                                        </div>
-                                        <textarea style="display: none" id="io_text" name="the_text" class="form-control io_text">
-                            </textarea>
+                                <div class="form-group">
+                                    <label for="pateintNoteReport" class="control-label">Intake/Output Chart
+                                        {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
+                                    <div style="border:1px solid black;" id="the-io-note" 
+                                        class='the-io-note readonly-note'>
+                                        <?php echo $io_chart->note ?? $io_chart_template->template; ?>
                                     </div>
-                                    <button type="submit" class="btn btn-primary"
-                                        onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
-                                </form>
-                                <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
-                                    {{ csrf_field() }}
-                                    <input type="hidden" name="note_type" value="3">
-                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
-                                    <button type="submit" class="btn btn-success"
-                                        onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
-                                        style="float: right; margin-top:-40px">Save &
-                                        New</button>
-                                </form>
+                                </div>
                             </div>
                             <div class="tab-pane fade" id="labour" role="tabpanel" aria-labelledby="labour-tab">
-                                <form action="{{ route('nursing-note.store') }}" method="post" id="labour_form">
-                                    {{ csrf_field() }}
-                                    <input type="hidden" name="note_type" value="4">
-                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
-                                    <input type="hidden" id="close_after_save" value="0">
-                                    <div class="form-group">
-                                        <label for="pateintDiagnosisReport" class="control-label">Labour Records
-                                            {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
-                                        <div style="border:1px solid black;" id="the-labour-note"
-                                            class='the-labour-note'>
-                                            <?php echo $labour_record->note ?? $labour_record_template->template; ?>
-                                        </div>
-                                        <textarea style="display: none" id="labour_text" name="the_text" class="form-control labour_text">
-                            </textarea>
+                                <div class="form-group">
+                                    <label for="pateintDiagnosisReport" class="control-label">Labour Records
+                                        {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
+                                    <div style="border:1px solid black;" id="the-labour-note"
+                                        class='the-labour-note readonly-note'>
+                                        <?php echo $labour_record->note ?? $labour_record_template->template; ?>
                                     </div>
-                                    <button type="submit" class="btn btn-primary"
-                                        onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
-                                </form>
-                                <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
-                                    {{ csrf_field() }}
-                                    <input type="hidden" name="note_type" value="4">
-                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
-                                    <button type="submit" class="btn btn-success"
-                                        onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
-                                        style="float: right; margin-top:-40px">Save &
-                                        New</button>
-                                </form>
+                                </div>
                             </div>
                             <div class="tab-pane fade" id="others" role="tabpanel" aria-labelledby="others-tab">
-                                <form action="{{ route('nursing-note.store') }}" method="post" id="others_form">
-                                    {{ csrf_field() }}
-                                    <input type="hidden" name="note_type" value="5">
-                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
-                                    <input type="hidden" id="close_after_save" value="0">
-                                    <div class="form-group">
-                                        <br><label for="pateintDiagnosisReport" class="control-label">Other Notes
-                                            {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
-                                        {{-- <div style="border:1px solid black;" id="the-others-note" class='the-others-note classic-editor'>
-                                    <?php //echo $others_record->note ?? $others_record_template->template;
-                                    ?>
-                                </div> --}}
-                                        <textarea id="others_text" name="the_text" class="form-control classic-editor others_text">
-                                    <?php echo $others_record->note ?? $others_record_template->template; ?>
-                            </textarea>
+                                <div class="form-group">
+                                    <br><label for="pateintDiagnosisReport" class="control-label">Other Notes
+                                        {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
+                                    <div style="border:1px solid black;" class="readonly-note p-3">
+                                        <?php echo $others_record->note ?? $others_record_template->template; ?>
                                     </div>
-                                    <button type="submit" class="btn btn-primary"
-                                        onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
-                                </form>
-                                <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
-                                    {{ csrf_field() }}
-                                    <input type="hidden" name="note_type" value="5">
-                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
-                                    <button type="submit" class="btn btn-success"
-                                        onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
-                                        style="float: right; margin-top:-40px">Save &
-                                        New</button>
-                                </form>
+                                </div>
                             </div>
                         </div>
                     @endif
@@ -1620,4 +1556,32 @@
     </script>
     @include('admin.partials.vitals-scripts')
     @include('admin.partials.nursing-note-save-scripts')
+    <script>
+    // Doctor read-only viewing mode for nurse notes
+    $(document).ready(function() {
+        // Make all note sections read-only
+        $('.readonly-note').find('input, select, textarea').prop('disabled', true);
+        
+        // Initialize tables for nurse note history if not already initialized
+        const patientId = $('#encounter_patient_id__').val();
+        if (patientId) {
+            ['1', '2', '3', '4', '5'].forEach(function(noteType) {
+                if ($('#nurse_note_hist_' + noteType).length && 
+                    !$.fn.DataTable.isDataTable('#nurse_note_hist_' + noteType)) {
+                    
+                    $('#nurse_note_hist_' + noteType).DataTable({
+                        "processing": true,
+                        "serverSide": true,
+                        "ajax": "/admin/nursing-note/list/" + patientId + "/" + noteType,
+                        "columns": [
+                            { "data": "created_at", "name": "created_at", "title": "Date & Time" },
+                            { "data": "view", "name": "view", "title": "View" }
+                        ],
+                        "order": [[0, "desc"]]
+                    });
+                }
+            });
+        }
+    });
+    </script>
 @endsection

@@ -3,38 +3,59 @@
 
     <!-- Drug Selection and Controls -->
     <div class="mb-4">
-        <div class="row g-3 align-items-end">
-            <div class="col-md-4">
-                <label for="drug-select" class="form-label">Select Drug/Medication</label>
-                <select class="form-select" id="drug-select">
-                    <option value="">-- Select a medication --</option>
-                    <!-- Will be populated via AJAX -->
-                </select>
-            </div>
-            <div class="col-md-8">
-                <div class="btn-group" role="group">
-                    <button type="button" class="btn btn-primary" id="set-schedule-btn" disabled>
-                        <i class="mdi mdi-calendar-plus"></i> Set Schedule
-                    </button>
-                    <button type="button" class="btn btn-danger" id="discontinue-btn" disabled>
-                        <i class="mdi mdi-calendar-remove"></i> Discontinue
-                    </button>
-                    <button type="button" class="btn btn-success" id="resume-btn" disabled>
-                        <i class="mdi mdi-calendar-check"></i> Resume
-                    </button>
-                    <button type="button" class="btn btn-secondary" id="prev-month-btn">
-                        <i class="mdi mdi-chevron-left"></i> Previous
-                    </button>
-                    <button type="button" class="btn btn-secondary" id="today-btn">
-                        Today
-                    </button>
-                    <button type="button" class="btn btn-secondary" id="next-month-btn">
-                        Next <i class="mdi mdi-chevron-right"></i>
-                    </button>
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="row g-3 align-items-end">
+                    <div class="col-12">
+                        <label for="drug-select" class="form-label fw-bold">
+                            <i class="mdi mdi-pill text-primary me-1"></i> Select Drug/Medication
+                        </label>
+                        <select class="form-select" id="drug-select" style="width: 100%;">
+                            <option value="">-- Select a medication --</option>
+                            <!-- Will be populated via AJAX -->
+                        </select>
+                    </div>
                 </div>
+                <hr class="my-3">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="d-flex flex-wrap gap-2 medication-controls">
+                            <button type="button" class="btn btn-primary btn-sm" id="set-schedule-btn" disabled>
+                                <i class="mdi mdi-calendar-plus"></i>
+                                <span class="d-none d-sm-inline">Set Schedule</span>
+                            </button>
+                            <button type="button" class="btn btn-danger btn-sm" id="discontinue-btn" disabled>
+                                <i class="mdi mdi-calendar-remove"></i>
+                                <span class="d-none d-sm-inline">Discontinue</span>
+                            </button>
+                            <button type="button" class="btn btn-success btn-sm" id="resume-btn" disabled>
+                                <i class="mdi mdi-calendar-check"></i>
+                                <span class="d-none d-sm-inline">Resume</span>
+                            </button>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-secondary btn-sm" id="prev-month-btn">
+                                    <i class="mdi mdi-chevron-left"></i>
+                                    <span class="d-none d-sm-inline">Previous</span>
+                                </button>
+                                <button type="button" class="btn btn-secondary btn-sm" id="today-btn">
+                                    <i class="mdi mdi-calendar-today d-inline d-sm-none"></i>
+                                    <span class="d-none d-sm-inline">Today</span>
+                                </button>
+                                <button type="button" class="btn btn-secondary btn-sm" id="next-month-btn">
+                                    <span class="d-none d-sm-inline">Next</span>
+                                    <i class="mdi mdi-chevron-right"></i>
+                                </button>
+                            </div>
+                            <button type="button" class="btn btn-info btn-sm" id="view-logs-btn">
+                                <i class="mdi mdi-history"></i>
+                                <span class="d-none d-sm-inline">View Logs</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div id="medication-status" class="mt-3 border-top pt-2"></div>
             </div>
         </div>
-        <div id="medication-status" class="mt-2"></div>
     </div>
 
     <!-- Loading indicator -->
@@ -45,34 +66,34 @@
         <div class="mt-2 text-primary">Loading medication chart...</div>
     </div>
 
-    <!-- Calendar View -->
-    <div id="medication-calendar" class="mb-4" style="display:none;">
-        <h6 id="calendar-title" class="mb-3 text-center"></h6>
-        <div class="table-responsive">
-            <table class="table table-bordered table-sm">
-                <thead>
-                    <tr class="bg-light">
-                        <th style="width: 40px;">Day</th>
-                        <th style="width: 100px;">Date</th>
-                        <th>Schedule</th>
-                    </tr>
-                </thead>
-                <tbody id="calendar-body">
-                    <!-- Will be populated via JavaScript -->
-                </tbody>
-            </table>
-        </div>
+    <!-- Legend -->
+    <div id="calendar-legend" class="mb-3" style="display:none;">
+        <!-- Legend will be populated via JavaScript -->
     </div>
 
-    <!-- Legend -->
-    <div id="calendar-legend" class="mb-4 small" style="display:none;">
-        <span class="badge bg-primary me-2">Scheduled</span>
-        <span class="badge bg-success me-2">Administered</span>
-        <span class="badge bg-warning me-2">Due</span>
-        <span class="badge bg-danger me-2">Missed</span>
-        <span class="badge bg-secondary me-2">Discontinued</span>
-        <span class="badge bg-info me-2">Edited</span>
-        <span class="badge bg-dark me-2"><s>Deleted</s></span>
+    <!-- Calendar View -->
+    <div id="medication-calendar" class="mb-4" style="display:none;">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light py-2">
+                <h6 id="calendar-title" class="card-title mb-0 text-center fw-bold"></h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped table-sm mb-0">
+                        <thead>
+                            <tr class="bg-light">
+                                <th style="width: 60px;" class="text-center">Day</th>
+                                <th style="width: 120px;">Date</th>
+                                <th>Schedule</th>
+                            </tr>
+                        </thead>
+                        <tbody id="calendar-body">
+                            <!-- Will be populated via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Set Schedule Modal -->

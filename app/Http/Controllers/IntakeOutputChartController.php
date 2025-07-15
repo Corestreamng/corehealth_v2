@@ -15,7 +15,7 @@ class IntakeOutputChartController extends Controller
             ->where('patient_id', $patientId)->where('type', 'fluid')->get();
         $solidPeriods = IntakeOutputPeriod::with(['records', 'nurse'])
             ->where('patient_id', $patientId)->where('type', 'solid')->get();
-            
+
         // Add nurse names to periods and records
         $fluidPeriods->each(function($period) {
             $period->nurse_name = $period->nurse_id ? userfullname($period->nurse_id) : 'Unknown';
@@ -23,14 +23,14 @@ class IntakeOutputChartController extends Controller
                 $record->nurse_name = $record->nurse_id ? userfullname($record->nurse_id) : 'Unknown';
             });
         });
-        
+
         $solidPeriods->each(function($period) {
             $period->nurse_name = $period->nurse_id ? userfullname($period->nurse_id) : 'Unknown';
             $period->records->each(function($record) {
                 $record->nurse_name = $record->nurse_id ? userfullname($record->nurse_id) : 'Unknown';
             });
         });
-        
+
         return response()->json(compact('fluidPeriods', 'solidPeriods'));
     }
 
@@ -75,12 +75,65 @@ class IntakeOutputChartController extends Controller
         ]);
         $nurseId = Auth::id();
         $data['nurse_id'] = $nurseId;
-        
+
         $record = IntakeOutputRecord::create($data);
-        
+
         // Add the nurse name to the response
         $record->nurse_name = userfullname($nurseId);
-        
+
         return response()->json(['success' => true, 'record' => $record]);
+    }
+
+    /**
+     * Get logs/history for a specific period
+     */
+    public function periodLogs($patientId, $periodId)
+    {
+        $period = IntakeOutputPeriod::with(['records', 'nurse'])
+            ->where('patient_id', $patientId)
+            ->findOrFail($periodId);
+
+        // Create history entries
+        $history = [];
+
+        // Add period start
+        $history[] = [
+            'date' => $period->started_at,
+            'action' => 'create_period',
+            'details' => 'Period started',
+            'user' => $period->nurse_id ? userfullname($period->nurse_id) : 'Unknown'
+        ];
+
+        // Add each record
+        foreach ($period->records as $record) {
+            $history[] = [
+                'date' => $record->recorded_at,
+                'action' => 'add_record_' . $record->type,
+                'details' => "Added " . $record->type . " record: " . $record->amount . " " .
+                             ($period->type === 'fluid' ? 'ml' : 'g') .
+                             ($record->description ? " - " . $record->description : ""),
+                'user' => $record->nurse_id ? userfullname($record->nurse_id) : 'Unknown'
+            ];
+        }
+
+        // Add period end if applicable
+        if ($period->ended_at) {
+            $history[] = [
+                'date' => $period->ended_at,
+                'action' => 'end_period',
+                'details' => 'Period ended',
+                'user' => $period->ended_by ? userfullname($period->ended_by) : 'Unknown'
+            ];
+        }
+
+        // Sort by date
+        usort($history, function($a, $b) {
+            return strtotime($b['date']) - strtotime($a['date']);
+        });
+
+        return response()->json([
+            'success' => true,
+            'history' => $history
+        ]);
     }
 }
