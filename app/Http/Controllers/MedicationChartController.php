@@ -16,21 +16,39 @@ use Illuminate\Support\Facades\Validator;
 
 class MedicationChartController extends Controller
 {
-    public function index($patientId)
+    public function index($patientId, Request $request)
     {
         $patient = Patient::findOrFail($patientId);
         $userId = $patient->user_id ?? $patient->user->id ?? null;
 
-        // Get all ProductOrServiceRequest where product_id is not null
+        // Get date filter parameters
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+
+        // Default to last 30 days if no dates provided
+        if (!$startDate) {
+            $startDate = Carbon::now()->subDays(30)->startOfDay()->format('Y-m-d');
+        }
+        if (!$endDate) {
+            $endDate = Carbon::now()->endOfDay()->format('Y-m-d');
+        }
+
+        // Get prescriptions with date filtering
         $prescriptions = ProductOrServiceRequest::where('user_id', $userId)
             ->with(['product.category', 'product.price', 'product.stock'])
             ->whereNotNull('product_id')
+            ->when($startDate && $endDate, function($query) use ($startDate, $endDate) {
+                return $query->whereBetween('created_at', [$startDate, $endDate]);
+            })
             ->latest('created_at')
             ->get();
 
-        // Get administrations with user information
+        // Get administrations with user information and date filtering
         $administrations = MedicationAdministration::where('patient_id', $patientId)
             ->with(['administeredBy', 'editedBy', 'deletedBy'])
+            ->when($startDate && $endDate, function($query) use ($startDate, $endDate) {
+                return $query->whereBetween('administered_at', [$startDate, $endDate]);
+            })
             ->get();
 
         // Format user information using the userfullname helper
@@ -54,7 +72,15 @@ class MedicationChartController extends Controller
             }
         });
 
-        return response()->json(compact('prescriptions', 'administrations'));
+        // Return data with date range information
+        return response()->json([
+            'prescriptions' => $prescriptions,
+            'administrations' => $administrations,
+            'period' => [
+                'start' => $startDate,
+                'end' => $endDate
+            ]
+        ]);
     }
 
     public function getSchedule($patientId, $scheduleId)
@@ -67,7 +93,7 @@ class MedicationChartController extends Controller
         return response()->json(['schedule' => $schedule]);
     }
 
-    public function calendar($patientId, $medicationId, $startDate = null)
+    public function calendar($patientId, $medicationId, $startDate = null, Request $request)
     {
         $patient = Patient::findOrFail($patientId);
         $medication = ProductOrServiceRequest::with(['product.category'])
@@ -75,13 +101,23 @@ class MedicationChartController extends Controller
             ->where('user_id', $patient->user_id)
             ->firstOrFail();
 
-        // If startDate not provided, use 15 days before today
-        if (!$startDate) {
+        // Check if we have a start_date in the query parameters (which takes precedence)
+        $startDateQuery = $request->query('start_date');
+        if ($startDateQuery) {
+            $startDate = $startDateQuery;
+        }
+        // If start_date URL parameter provided, use that
+        else if (!$startDate) {
+            // Default to 15 days before today if no date is provided
             $startDate = Carbon::now()->subDays(15)->format('Y-m-d');
         }
 
-        // Calculate end date (30 days from start)
-        $endDate = Carbon::parse($startDate)->addDays(30)->format('Y-m-d');
+        // Check if we have an end_date in the query parameters
+        $endDate = $request->query('end_date');
+        if (!$endDate) {
+            // Default to 30 days from start if no end date provided
+            $endDate = Carbon::parse($startDate)->addDays(30)->format('Y-m-d');
+        }
 
         // Get all schedules for this medication in the date range
         $schedules = MedicationSchedule::where('patient_id', $patientId)
@@ -132,14 +168,14 @@ class MedicationChartController extends Controller
             $history->each(function ($record) {
                 $record->user_fullname = userfullname($record->user_id);
             });
-            
+
             // Get all administration history for this medication
             $adminHistory = MedicationAdministration::with(['administeredBy', 'editedBy', 'deletedBy'])
                 ->where('patient_id', $patientId)
                 ->where('product_or_service_request_id', $medicationId)
                 ->orderBy('created_at', 'desc')
                 ->get();
-                
+
             // Add names to admin history records
             $adminHistory->each(function ($admin) {
                 $admin->administered_by_name = userfullname($admin->administered_by);

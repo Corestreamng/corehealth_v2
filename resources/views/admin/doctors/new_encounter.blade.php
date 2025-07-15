@@ -53,7 +53,7 @@
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="nurse_charts_tab" data-bs-toggle="tab" data-bs-target="#nurse_charts"
-                type="button" role="tab" aria-controls="nurse_charts" aria-selected="false">Nurse Charts</button>
+                type="button" role="tab" aria-controls="nurse_charts" aria-selected="false">New Nurse Charts</button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="my_notes_tab" data-bs-toggle="tab" data-bs-target="#my_notes" type="button"

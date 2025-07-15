@@ -9,12 +9,69 @@ use Illuminate\Support\Facades\Auth;
 
 class IntakeOutputChartController extends Controller
 {
-    public function index($patientId)
+    public function index($patientId, Request $request)
     {
-        $fluidPeriods = IntakeOutputPeriod::with(['records', 'nurse'])
-            ->where('patient_id', $patientId)->where('type', 'fluid')->get();
-        $solidPeriods = IntakeOutputPeriod::with(['records', 'nurse'])
-            ->where('patient_id', $patientId)->where('type', 'solid')->get();
+        // Get date filter parameters
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+
+        // Default to last 30 days if no dates provided
+        if (!$startDate) {
+            $startDate = now()->subDays(30)->startOfDay()->format('Y-m-d');
+        }
+        if (!$endDate) {
+            $endDate = now()->endOfDay()->format('Y-m-d');
+        }
+
+        // Apply date filtering to fluid periods
+        $fluidPeriods = IntakeOutputPeriod::with(['records' => function($query) use ($startDate, $endDate) {
+                if ($startDate && $endDate) {
+                    $query->whereBetween('recorded_at', [$startDate, $endDate]);
+                }
+            }, 'nurse'])
+            ->where('patient_id', $patientId)
+            ->where('type', 'fluid')
+            ->when($startDate && $endDate, function($query) use ($startDate, $endDate) {
+                return $query->where(function($q) use ($startDate, $endDate) {
+                    // Include periods that overlap with the date range
+                    $q->whereBetween('started_at', [$startDate, $endDate])
+                      ->orWhereBetween('ended_at', [$startDate, $endDate])
+                      ->orWhere(function($innerQ) use ($startDate, $endDate) {
+                          // Include periods that span the entire date range
+                          $innerQ->where('started_at', '<=', $startDate)
+                                 ->where(function($deepQ) use ($endDate) {
+                                     $deepQ->where('ended_at', '>=', $endDate)
+                                           ->orWhereNull('ended_at');
+                                 });
+                      });
+                });
+            })
+            ->get();
+
+        // Apply date filtering to solid periods
+        $solidPeriods = IntakeOutputPeriod::with(['records' => function($query) use ($startDate, $endDate) {
+                if ($startDate && $endDate) {
+                    $query->whereBetween('recorded_at', [$startDate, $endDate]);
+                }
+            }, 'nurse'])
+            ->where('patient_id', $patientId)
+            ->where('type', 'solid')
+            ->when($startDate && $endDate, function($query) use ($startDate, $endDate) {
+                return $query->where(function($q) use ($startDate, $endDate) {
+                    // Include periods that overlap with the date range
+                    $q->whereBetween('started_at', [$startDate, $endDate])
+                      ->orWhereBetween('ended_at', [$startDate, $endDate])
+                      ->orWhere(function($innerQ) use ($startDate, $endDate) {
+                          // Include periods that span the entire date range
+                          $innerQ->where('started_at', '<=', $startDate)
+                                 ->where(function($deepQ) use ($endDate) {
+                                     $deepQ->where('ended_at', '>=', $endDate)
+                                           ->orWhereNull('ended_at');
+                                 });
+                      });
+                });
+            })
+            ->get();
 
         // Add nurse names to periods and records
         $fluidPeriods->each(function($period) {
@@ -31,7 +88,14 @@ class IntakeOutputChartController extends Controller
             });
         });
 
-        return response()->json(compact('fluidPeriods', 'solidPeriods'));
+        return response()->json([
+            'fluidPeriods' => $fluidPeriods,
+            'solidPeriods' => $solidPeriods,
+            'period' => [
+                'start' => $startDate,
+                'end' => $endDate
+            ]
+        ]);
     }
 
     public function startPeriod(Request $request)
@@ -87,9 +151,25 @@ class IntakeOutputChartController extends Controller
     /**
      * Get logs/history for a specific period
      */
-    public function periodLogs($patientId, $periodId)
+    public function periodLogs($patientId, $periodId, Request $request)
     {
-        $period = IntakeOutputPeriod::with(['records', 'nurse'])
+        // Get date filter parameters
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+
+        // Default to last 30 days if no dates provided
+        if (!$startDate) {
+            $startDate = now()->subDays(30)->startOfDay()->format('Y-m-d');
+        }
+        if (!$endDate) {
+            $endDate = now()->endOfDay()->format('Y-m-d');
+        }
+
+        $period = IntakeOutputPeriod::with(['records' => function($query) use ($startDate, $endDate) {
+                if ($startDate && $endDate) {
+                    $query->whereBetween('recorded_at', [$startDate, $endDate]);
+                }
+            }, 'nurse'])
             ->where('patient_id', $patientId)
             ->findOrFail($periodId);
 
@@ -133,7 +213,11 @@ class IntakeOutputChartController extends Controller
 
         return response()->json([
             'success' => true,
-            'history' => $history
+            'history' => $history,
+            'period' => [
+                'start' => $startDate,
+                'end' => $endDate
+            ]
         ]);
     }
 }
