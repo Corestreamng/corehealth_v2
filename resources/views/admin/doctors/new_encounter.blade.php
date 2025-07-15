@@ -24,25 +24,6 @@
             outline-width: 3px !important;
             /* Thicker outline on focus for better accessibility */
         }
-        
-        /* Styles for read-only nurse notes */
-        .readonly-note {
-            background-color: #f8f9fa;
-            position: relative;
-            pointer-events: none;
-            min-height: 300px;
-            padding: 10px;
-            overflow-y: auto;
-        }
-        
-        .readonly-note input, 
-        .readonly-note select, 
-        .readonly-note textarea {
-            background-color: #eee !important;
-            border: 1px solid #ddd !important;
-            color: #555 !important;
-            pointer-events: none !important;
-        }
     </style>
     <ul class="nav nav-tabs" id="myTab" role="tablist">
         <li class="nav-item" role="presentation">
@@ -69,6 +50,10 @@
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="nursing_notes_tab" data-bs-toggle="tab" data-bs-target="#nursing_notes"
                 type="button" role="tab" aria-controls="nursing_notes" aria-selected="false">Nursing Notes</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="nurse_charts_tab" data-bs-toggle="tab" data-bs-target="#nurse_charts"
+                type="button" role="tab" aria-controls="nurse_charts" aria-selected="false">Nurse Charts</button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="my_notes_tab" data-bs-toggle="tab" data-bs-target="#my_notes" type="button"
@@ -406,16 +391,6 @@
             <div class="card mt-2">
                 <div class="card-body table-responsive">
                     @if (isset($admission_request))
-                        <!-- Doctor View Notice Banner -->
-                        <div class="alert alert-info mb-3">
-                            <div class="d-flex align-items-center">
-                                <i class="mdi mdi-eye-outline me-2 fs-3"></i>
-                                <div>
-                                    <strong>Viewing Mode:</strong> You are viewing the nurse notes in read-only mode. No changes can be made.
-                                </div>
-                            </div>
-                        </div>
-                        
                         <ul class="nav nav-tabs" id="myTab" role="tablist">
                             <li class="nav-item">
                                 <a class="nav-link active" id="observation-tab" data-toggle="tab" href="#observation"
@@ -441,53 +416,146 @@
                         <div class="tab-content" id="myTabContent">
                             <div class="tab-pane fade show active" id="observation" role="tabpanel"
                                 aria-labelledby="observation-tab">
-                                <div class="form-group">
-                                    <label for="pateintNoteReport" class="control-label">Observation Chart for
-                                        {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
-                                    <div style="border:1px solid black;" id="the-observation-note"
-                                        class='the-observation-note readonly-note'>
-                                        <?php echo $observation_note->note ?? $observation_note_template->template; ?>
+                                <form action="{{ route('nursing-note.store') }}" method="post" id="observation_form">
+                                    {{ csrf_field() }}
+                                    <input type="hidden" name="note_type" value="1">
+                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                    <div class="form-group">
+                                        <label for="pateintNoteReport" class="control-label">Observation Chart for
+                                            {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
+                                        <div style="border:1px solid black;" id="the-observation-note"
+                                            class='the-observation-note'>
+                                            <?php echo $observation_note->note ?? $observation_note_template->template; ?>
+                                        </div>
+                                        <textarea style="display: none" id="observation_text" name="the_text" class="form-control observation_text">
+                            </textarea>
                                     </div>
-                                </div>
+                                    <button type="submit" class="btn btn-primary"
+                                        onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
+                                </form>
+                                <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
+                                    {{ csrf_field() }}
+                                    <input type="hidden" name="note_type" value="1">
+                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                    <button type="submit"
+                                        onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
+                                        class="btn btn-success" style="float: right; margin-top:-40px">Save &
+                                        New</button>
+                                </form>
                             </div>
                             <div class="tab-pane fade" id="treatment" role="tabpanel" aria-labelledby="treatment-tab">
-                                <div class="form-group">
-                                    <label for="pateintNoteReport" class="control-label">Treatment sheet for
-                                        {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
-                                    <div style="border:1px solid black;" id="the-treatment-note"
-                                        class='the-treatment-note readonly-note'>
-                                        <?php echo $treatment_sheet->note ?? $treatment_sheet_template->template; ?>
+                                <form action="{{ route('nursing-note.store') }}" method="post" id="treatment_form">
+                                    {{ csrf_field() }}
+                                    <input type="hidden" name="note_type" value="2">
+                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                    <div class="form-group">
+                                        <label for="pateintNoteReport" class="control-label">Treatment sheet for
+                                            {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
+                                        <div style="border:1px solid black;" id="the-treatment-note"
+                                            class='the-treatment-note'>
+                                            <?php echo $treatment_sheet->note ?? $treatment_sheet_template->template; ?>
+                                        </div>
+                                        <textarea style="display: none" id="treatment_text" name="the_text" class="form-control treatment_text">
+                            </textarea>
                                     </div>
-                                </div>
+                                    <button type="submit" class="btn btn-primary"
+                                        onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
+                                </form>
+                                <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
+                                    {{ csrf_field() }}
+                                    <input type="hidden" name="note_type" value="2">
+                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                    <button type="submit" class="btn btn-success"
+                                        onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
+                                        style="float: right; margin-top:-40px">Save &
+                                        New</button>
+                                </form>
                             </div>
                             <div class="tab-pane fade" id="io" role="tabpanel" aria-labelledby="io-tab">
-                                <div class="form-group">
-                                    <label for="pateintNoteReport" class="control-label">Intake/Output Chart
-                                        {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
-                                    <div style="border:1px solid black;" id="the-io-note" 
-                                        class='the-io-note readonly-note'>
-                                        <?php echo $io_chart->note ?? $io_chart_template->template; ?>
+                                <form action="{{ route('nursing-note.store') }}" method="post" id="io_form">
+                                    {{ csrf_field() }}
+                                    <input type="hidden" name="note_type" value="3">
+                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                    <div class="form-group">
+                                        <label for="pateintNoteReport" class="control-label">Intake/Output Chart
+                                            {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
+                                        <div style="border:1px solid black;" id="the-io-note" class='the-io-note'>
+                                            <?php echo $io_chart->note ?? $io_chart_template->template; ?>
+                                        </div>
+                                        <textarea style="display: none" id="io_text" name="the_text" class="form-control io_text">
+                            </textarea>
                                     </div>
-                                </div>
+                                    <button type="submit" class="btn btn-primary"
+                                        onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
+                                </form>
+                                <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
+                                    {{ csrf_field() }}
+                                    <input type="hidden" name="note_type" value="3">
+                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                    <button type="submit" class="btn btn-success"
+                                        onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
+                                        style="float: right; margin-top:-40px">Save &
+                                        New</button>
+                                </form>
                             </div>
                             <div class="tab-pane fade" id="labour" role="tabpanel" aria-labelledby="labour-tab">
-                                <div class="form-group">
-                                    <label for="pateintDiagnosisReport" class="control-label">Labour Records
-                                        {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
-                                    <div style="border:1px solid black;" id="the-labour-note"
-                                        class='the-labour-note readonly-note'>
-                                        <?php echo $labour_record->note ?? $labour_record_template->template; ?>
+                                <form action="{{ route('nursing-note.store') }}" method="post" id="labour_form">
+                                    {{ csrf_field() }}
+                                    <input type="hidden" name="note_type" value="4">
+                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                    <input type="hidden" id="close_after_save" value="0">
+                                    <div class="form-group">
+                                        <label for="pateintDiagnosisReport" class="control-label">Labour Records
+                                            {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
+                                        <div style="border:1px solid black;" id="the-labour-note"
+                                            class='the-labour-note'>
+                                            <?php echo $labour_record->note ?? $labour_record_template->template; ?>
+                                        </div>
+                                        <textarea style="display: none" id="labour_text" name="the_text" class="form-control labour_text">
+                            </textarea>
                                     </div>
-                                </div>
+                                    <button type="submit" class="btn btn-primary"
+                                        onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
+                                </form>
+                                <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
+                                    {{ csrf_field() }}
+                                    <input type="hidden" name="note_type" value="4">
+                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                    <button type="submit" class="btn btn-success"
+                                        onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
+                                        style="float: right; margin-top:-40px">Save &
+                                        New</button>
+                                </form>
                             </div>
                             <div class="tab-pane fade" id="others" role="tabpanel" aria-labelledby="others-tab">
-                                <div class="form-group">
-                                    <br><label for="pateintDiagnosisReport" class="control-label">Other Notes
-                                        {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
-                                    <div style="border:1px solid black;" class="readonly-note p-3">
-                                        <?php echo $others_record->note ?? $others_record_template->template; ?>
+                                <form action="{{ route('nursing-note.store') }}" method="post" id="others_form">
+                                    {{ csrf_field() }}
+                                    <input type="hidden" name="note_type" value="5">
+                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                    <input type="hidden" id="close_after_save" value="0">
+                                    <div class="form-group">
+                                        <br><label for="pateintDiagnosisReport" class="control-label">Other Notes
+                                            {{ $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername }}</label><br><br>
+                                        {{-- <div style="border:1px solid black;" id="the-others-note" class='the-others-note classic-editor'>
+                                    <?php //echo $others_record->note ?? $others_record_template->template;
+                                    ?>
+                                </div> --}}
+                                        <textarea id="others_text" name="the_text" class="form-control classic-editor others_text">
+                                    <?php echo $others_record->note ?? $others_record_template->template; ?>
+                            </textarea>
                                     </div>
-                                </div>
+                                    <button type="submit" class="btn btn-primary"
+                                        onclick="return confirm('Are you sure you wish to save your entries?')">Save</button>
+                                </form>
+                                <form action="{{ route('nursing-note.new') }}" method="POST" class="form">
+                                    {{ csrf_field() }}
+                                    <input type="hidden" name="note_type" value="5">
+                                    <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                                    <button type="submit" class="btn btn-success"
+                                        onclick="return confirm('Are you sure you wish to save your entries and load a fresh sheet?')"
+                                        style="float: right; margin-top:-40px">Save &
+                                        New</button>
+                                </form>
                             </div>
                         </div>
                     @endif
@@ -594,11 +662,137 @@
                         class="btn btn-secondary mr-2">
                         Prev
                     </button>
-                    <button type="button" onclick="switch_tab(event,'my_notes_tab')"
+                    <button type="button" onclick="switch_tab(event,'nurse_charts_tab')"
                         class="btn btn-primary mr-2">Next</button>
                     <a href="{{ route('encounters.index') }}"
                         onclick="return confirm('Are you sure you wish to exit? Changes are yet to be saved')"
                         class="btn btn-light">Exit</a>
+                </div>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="nurse_charts" role="tabpanel" aria-labelledby="nurse_charts_tab">
+            <div class="card mt-2">
+                <div class="card-body">
+                    <!-- Nurse Charts Content -->
+                    <div class="alert alert-info">
+                        <i class="mdi mdi-information-outline me-2"></i>
+                        This is a read-only view of nurse medication and intake/output charts for the patient.
+                    </div>
+
+                    <!-- Date Range Filter -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="mdi mdi-calendar-range me-1"></i> Date Range Filter</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label for="chart-date-from" class="form-label">From Date</label>
+                                    <input type="date" class="form-control" id="chart-date-from">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="chart-date-to" class="form-label">To Date</label>
+                                    <input type="date" class="form-control" id="chart-date-to">
+                                </div>
+                                <div class="col-md-4 d-flex align-items-end">
+                                    <button type="button" id="apply-date-filter" class="btn btn-primary me-2">
+                                        <i class="mdi mdi-filter"></i> Apply Filter
+                                    </button>
+                                    <button type="button" id="reset-date-filter" class="btn btn-outline-secondary">
+                                        <i class="mdi mdi-refresh"></i> Reset
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Summary Stats -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h5 class="text-muted mb-0">
+                                <i class="mdi mdi-calendar me-1"></i>
+                                <span id="date-range-summary">Showing data from the last 30 days</span>
+                            </h5>
+                        </div>
+                        <div id="data-summary-stats" class="d-flex gap-3">
+                            <!-- Will be populated with JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Tabs for Medication and Intake/Output Charts -->
+                    <ul class="nav nav-tabs mb-3" id="nurseChartTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link active" id="medication-chart-tab" data-toggle="tab" href="#medication-chart"
+                               role="tab" aria-controls="medication-chart" aria-selected="true">
+                               <i class="mdi mdi-pill me-1"></i> Medication Chart
+                            </a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="fluid-io-chart-tab" data-toggle="tab" href="#fluid-io-chart"
+                               role="tab" aria-controls="fluid-io-chart" aria-selected="false">
+                               <i class="mdi mdi-water me-1"></i> Fluid Intake/Output
+                            </a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="solid-io-chart-tab" data-toggle="tab" href="#solid-io-chart"
+                               role="tab" aria-controls="solid-io-chart" aria-selected="false">
+                               <i class="mdi mdi-food-apple me-1"></i> Solid Intake/Output
+                            </a>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="nurseChartTabContent">
+                        <!-- Medication Chart Tab -->
+                        <div class="tab-pane fade show active" id="medication-chart" role="tabpanel" aria-labelledby="medication-chart-tab">
+                            <div class="medication-chart-container">
+                                <div id="medication-chart-content" class="mt-3">
+                                    <div class="text-center py-5">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p class="mt-2">Loading medication chart...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Fluid I/O Chart Tab -->
+                        <div class="tab-pane fade" id="fluid-io-chart" role="tabpanel" aria-labelledby="fluid-io-chart-tab">
+                            <div class="fluid-io-chart-container">
+                                <div id="fluid-io-chart-content" class="mt-3">
+                                    <div class="text-center py-5">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p class="mt-2">Loading fluid intake/output chart...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Solid I/O Chart Tab -->
+                        <div class="tab-pane fade" id="solid-io-chart" role="tabpanel" aria-labelledby="solid-io-chart-tab">
+                            <div class="solid-io-chart-container">
+                                <div id="solid-io-chart-content" class="mt-3">
+                                    <div class="text-center py-5">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p class="mt-2">Loading solid intake/output chart...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="button" onclick="switch_tab(event,'nursing_notes_tab')" class="btn btn-secondary me-2">
+                            <i class="mdi mdi-arrow-left me-1"></i> Previous
+                        </button>
+                        <button type="button" onclick="switch_tab(event,'my_notes_tab')" class="btn btn-primary">
+                            Next <i class="mdi mdi-arrow-right ms-1"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1556,32 +1750,553 @@
     </script>
     @include('admin.partials.vitals-scripts')
     @include('admin.partials.nursing-note-save-scripts')
+
+    <!-- Nurse Charts Scripts -->
     <script>
-    // Doctor read-only viewing mode for nurse notes
-    $(document).ready(function() {
-        // Make all note sections read-only
-        $('.readonly-note').find('input, select, textarea').prop('disabled', true);
-        
-        // Initialize tables for nurse note history if not already initialized
-        const patientId = $('#encounter_patient_id__').val();
-        if (patientId) {
-            ['1', '2', '3', '4', '5'].forEach(function(noteType) {
-                if ($('#nurse_note_hist_' + noteType).length && 
-                    !$.fn.DataTable.isDataTable('#nurse_note_hist_' + noteType)) {
-                    
-                    $('#nurse_note_hist_' + noteType).DataTable({
-                        "processing": true,
-                        "serverSide": true,
-                        "ajax": "/admin/nursing-note/list/" + patientId + "/" + noteType,
-                        "columns": [
-                            { "data": "created_at", "name": "created_at", "title": "Date & Time" },
-                            { "data": "view", "name": "view", "title": "View" }
-                        ],
-                        "order": [[0, "desc"]]
-                    });
-                }
+        // Wait for document to be ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize nurse chart tabs - using bootstrap 5 syntax
+            const nurseChartTabTriggers = document.querySelectorAll('#nurseChartTabs a[data-toggle="tab"]');
+            nurseChartTabTriggers.forEach(trigger => {
+                trigger.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const tabId = this.getAttribute('href');
+                    const tab = new bootstrap.Tab(trigger);
+                    tab.show();
+                });
             });
-        }
-    });
+
+            // Initialize date filter with default dates (last 30 days)
+            initDateFilter();
+
+            // Add event listener for apply filter button
+            document.getElementById('apply-date-filter').addEventListener('click', function() {
+                loadNurseCharts();
+            });
+
+            // Add event listener for reset filter button
+            document.getElementById('reset-date-filter').addEventListener('click', function() {
+                initDateFilter();
+                loadNurseCharts();
+            });
+
+            // Add event listener for nurse chart tab activation
+            $('#nurse_charts_tab').on('shown.bs.tab', function(e) {
+                loadNurseCharts();
+            });
+
+            // Helper function to extract medication name from various possible data structures
+            function extractMedicationName(obj, prescriptions) {
+                if (!obj) return 'N/A';
+
+                // Try different possible paths to find the medication name
+                if (obj.medication_name) return obj.medication_name;
+                if (obj.product_name) return obj.product_name;
+                if (obj.name) return obj.name;
+
+                if (obj.product) {
+                    if (typeof obj.product === 'object') {
+                        return obj.product.product_name || obj.product.name || 'N/A';
+                    }
+                    return obj.product;
+                }
+
+                if (obj.prescription && obj.prescription.product) {
+                    const product = obj.prescription.product;
+                    return product.product_name || product.name || 'N/A';
+                }
+
+                // For administration records with a product_or_service_request_id
+                // Look up the corresponding prescription
+                if (obj.product_or_service_request_id && prescriptions && prescriptions.length > 0) {
+                    const prescription = prescriptions.find(p => p.id === obj.product_or_service_request_id);
+                    if (prescription) {
+                        // Recursively call the function to extract the name from the prescription
+                        // Passing null as second parameter to avoid infinite recursion
+                        return extractMedicationName(prescription, null);
+                    }
+                }
+
+                // Extract from dosage if it contains medication name
+                if (obj.dose && typeof obj.dose === 'string' && obj.dose.includes(':')) {
+                    const parts = obj.dose.split(':');
+                    if (parts.length > 0) return parts[0].trim();
+                }
+
+                return 'N/A';
+            }
+
+            // Date utility functions
+            function getDefaultStartDate() {
+                const date = new Date();
+                date.setDate(date.getDate() - 30); // Default to last 30 days
+                return date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+            }
+
+            function getDefaultEndDate() {
+                return new Date().toISOString().split('T')[0]; // Today
+            }
+
+            function formatDateForApi(dateString) {
+                if (!dateString) return '';
+                return dateString; // Already in YYYY-MM-DD format for API
+            }
+
+            // Initialize date filter with defaults
+            function initDateFilter() {
+                document.getElementById('chart-date-from').value = getDefaultStartDate();
+                document.getElementById('chart-date-to').value = getDefaultEndDate();
+            }
+
+            // Format a date for display
+            function formatDateForDisplay(dateString) {
+                if (!dateString) return '';
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+            }
+
+            // Update the date range summary display
+            function updateDateRangeSummary(startDate, endDate) {
+                const startFormatted = formatDateForDisplay(startDate);
+                const endFormatted = formatDateForDisplay(endDate);
+                const summaryElement = document.getElementById('date-range-summary');
+
+                if (startDate && endDate) {
+                    summaryElement.textContent = `Showing data from ${startFormatted} to ${endFormatted}`;
+                } else if (startDate) {
+                    summaryElement.textContent = `Showing data from ${startFormatted} onwards`;
+                } else if (endDate) {
+                    summaryElement.textContent = `Showing data up to ${endFormatted}`;
+                } else {
+                    summaryElement.textContent = `Showing all data`;
+                }
+            }
+
+            // Load nurse charts data
+            function loadNurseCharts() {
+                const patientId = {{ $patient->id }};
+
+                // Initialize date filter if needed
+                if (!document.getElementById('chart-date-from').value) {
+                    initDateFilter();
+                }
+
+                // Get current filter values
+                const startDate = document.getElementById('chart-date-from').value;
+                const endDate = document.getElementById('chart-date-to').value;
+
+                // Update the date range summary
+                updateDateRangeSummary(startDate, endDate);
+
+                // Load medication chart with date filter
+                loadMedicationChart(patientId, startDate, endDate);
+
+                // Load intake/output charts with date filter
+                loadIntakeOutputCharts(patientId, startDate, endDate);
+            }
+
+            // Function to load medication chart
+            function loadMedicationChart(patientId, startDate, endDate) {
+                // Show loading indicator
+                const container = document.getElementById('medication-chart-content');
+                container.innerHTML = `
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading medication data...</p>
+                    </div>
+                `;
+
+                // Build URL with query parameters
+                const url = new URL(`{{ url('/') }}/patients/${patientId}/nurse-chart/medication`);
+                if (startDate) url.searchParams.append('start_date', formatDateForApi(startDate));
+                if (endDate) url.searchParams.append('end_date', formatDateForApi(endDate));
+
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Log data structure for debugging
+                        console.log('Medication Chart Data:', data);
+                        const container = document.getElementById('medication-chart-content');
+
+                        // Update summary stats
+                        const prescriptionCount = data.prescriptions ? data.prescriptions.length : 0;
+                        const administrationCount = data.administrations ? data.administrations.length : 0;
+
+                        document.getElementById('data-summary-stats').innerHTML = `
+                            <span class="badge bg-primary rounded-pill fs-6">
+                                <i class="mdi mdi-pill me-1"></i> ${prescriptionCount} medications
+                            </span>
+                            <span class="badge bg-info rounded-pill fs-6">
+                                <i class="mdi mdi-history me-1"></i> ${administrationCount} administrations
+                            </span>
+                        `;
+
+                        // Create medication list view (read-only)
+                        let html = '<div class="card shadow-sm">';
+
+                        // Show prescription count in the header
+                        // Using the same prescriptionCount from above to avoid duplicate declaration
+                        html += `<div class="card-header bg-light">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0"><i class="mdi mdi-pill me-1"></i> Current Medications</h6>
+                                <small class="text-muted">${prescriptionCount} medications found</small>
+                            </div>
+                        </div>`;
+                        html += '<div class="card-body p-0"><div class="table-responsive">';
+                        html += '<table class="table table-sm table-hover mb-0">';
+                        html += '<thead class="table-light"><tr>';
+                        html += '<th>Medication</th>';
+                        html += '<th>Dose</th>';
+                        html += '<th>Route</th>';
+                        html += '<th>Frequency</th>';
+                        html += '<th>Status</th>';
+                        html += '</tr></thead><tbody>';
+
+                        if (data.prescriptions && data.prescriptions.length > 0) {
+                            data.prescriptions.forEach(prescription => {
+                                // Use our helper function to get the medication name
+                                const medicationName = extractMedicationName(prescription, null);
+
+                                // Get schedule info
+                                const schedules = prescription.schedules || [];
+                                const isDiscontinued = schedules.some(s => s.discontinued_at);
+
+                                // Get dosage from various possible properties
+                                let dosage = 'N/A';
+                                if (prescription.dosage) {
+                                    dosage = prescription.dosage;
+                                } else if (prescription.dose) {
+                                    // If dose contains both med name and dosage (format: "Med Name: Dosage")
+                                    if (typeof prescription.dose === 'string' && prescription.dose.includes(':')) {
+                                        const parts = prescription.dose.split(':');
+                                        if (parts.length > 1) dosage = parts[1].trim();
+                                        else dosage = prescription.dose;
+                                    } else {
+                                        dosage = prescription.dose;
+                                    }
+                                }
+
+                                html += '<tr>';
+                                html += `<td>${medicationName}</td>`;
+                                html += `<td>${dosage}</td>`;
+                                html += `<td>${prescription.route || 'Oral'}</td>`;
+                                html += `<td>${prescription.frequency || prescription.timing || 'N/A'}</td>`;
+                                if (isDiscontinued) {
+                                    html += '<td><span class="badge bg-danger">Discontinued</span></td>';
+                                } else {
+                                    html += '<td><span class="badge bg-success">Active</span></td>';
+                                }
+                                html += '</tr>';
+                            });
+                        } else {
+                            html += '<tr><td colspan="5" class="text-center">No medication records found</td></tr>';
+                        }
+
+                        html += '</tbody></table></div></div></div>';
+
+                        // Add medication history section
+                        html += '<div class="card shadow-sm mt-3">';
+
+                        // Show date range and record count in the header
+                        // Using the same administrationCount from above
+                        html += `<div class="card-header bg-light">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0"><i class="mdi mdi-history me-1"></i> Recent Administrations</h6>
+                                <small class="text-muted">${administrationCount} records found</small>
+                            </div>
+                        </div>`;
+                        html += '<div class="card-body p-0"><div class="table-responsive">';
+                        html += '<table class="table table-sm table-hover mb-0">';
+                        html += '<thead class="table-light"><tr>';
+                        html += '<th>Time</th>';
+                        html += '<th>Medication</th>';
+                        html += '<th>Dose</th>';
+                        html += '<th>Route</th>';
+                        html += '<th>Given By</th>';
+                        html += '<th>Status</th>';
+                        html += '</tr></thead><tbody>';
+
+                        if (data.administrations && data.administrations.length > 0) {
+                            // Sort administrations by time, newest first
+                            const administrations = [...data.administrations].sort((a, b) => {
+                                return new Date(b.administered_at) - new Date(a.administered_at);
+                            });
+
+                            // Log first administration entry for structure inspection
+                            if (administrations.length > 0) {
+                                console.log('Sample Administration Entry:', administrations[0]);
+                            }
+
+                            // Get prescriptions array for mapping
+                            const prescriptions = data.prescriptions || [];
+
+                            // Log the prescriptions array for debugging
+                            console.log(`Found ${prescriptions.length} prescriptions for mapping administration records`);
+
+                            administrations.slice(0, 10).forEach(admin => {
+                                // Log the mapping attempt
+                                if (admin.product_or_service_request_id) {
+                                    const matchedPrescription = prescriptions.find(p => p.id === admin.product_or_service_request_id);
+                                    console.log(`Mapping administration ID ${admin.id || 'unknown'} to prescription ID ${admin.product_or_service_request_id}:`,
+                                        matchedPrescription ? 'Found match' : 'No match found');
+                                }
+
+                                // Extract medication name using our helper function, passing prescriptions for mapping
+                                const medication = extractMedicationName(admin, prescriptions);
+
+                                // Format date for display
+                                const time = new Date(admin.administered_at);
+                                const timeStr = time.toLocaleString();
+
+                                // Get dosage from any available property
+                                const dosage = admin.dosage || admin.dose || 'N/A';
+
+                                html += '<tr>';
+                                html += `<td>${timeStr}</td>`;
+                                html += `<td>${medication}</td>`;
+                                html += `<td>${dosage}</td>`;
+                                html += `<td>${admin.route || 'Oral'}</td>`;
+                                html += `<td>${admin.administered_by_name || 'Unknown'}</td>`;
+
+                                if (admin.deleted_at) {
+                                    html += '<td><span class="badge bg-danger">Deleted</span></td>';
+                                } else if (admin.edited_at) {
+                                    html += '<td><span class="badge bg-warning">Edited</span></td>';
+                                } else {
+                                    html += '<td><span class="badge bg-success">Given</span></td>';
+                                }
+
+                                html += '</tr>';
+                            });
+                        } else {
+                            html += '<tr><td colspan="6" class="text-center">No administration records found</td></tr>';
+                        }
+
+                        html += '</tbody></table></div></div></div>';
+
+                        container.innerHTML = html;
+                    })
+                    .catch(error => {
+                        console.error('Error loading medication chart:', error);
+                        document.getElementById('medication-chart-content').innerHTML =
+                            '<div class="alert alert-danger">Failed to load medication chart data. Please try again later.</div>';
+                    });
+            }
+
+            // Function to load intake/output charts
+            function loadIntakeOutputCharts(patientId, startDate, endDate) {
+                // Show loading indicators
+                const fluidContainer = document.getElementById('fluid-io-chart-content');
+                const solidContainer = document.getElementById('solid-io-chart-content');
+
+                const loadingHtml = `
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading data...</p>
+                    </div>
+                `;
+
+                fluidContainer.innerHTML = loadingHtml;
+                solidContainer.innerHTML = loadingHtml;
+
+                // Build URL with query parameters
+                const url = new URL(`{{ url('/') }}/patients/${patientId}/nurse-chart/intake-output`);
+                if (startDate) url.searchParams.append('start_date', formatDateForApi(startDate));
+                if (endDate) url.searchParams.append('end_date', formatDateForApi(endDate));
+
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Process fluid periods
+                        renderIntakeOutputChart(data.fluidPeriods, 'fluid-io-chart-content', 'Fluid');
+
+                        // Process solid periods
+                        renderIntakeOutputChart(data.solidPeriods, 'solid-io-chart-content', 'Solid');
+
+                        // Count total I/O records
+                        let totalRecords = 0;
+                        let totalPeriods = 0;
+
+                        if (data.fluidPeriods) {
+                            totalPeriods += data.fluidPeriods.length;
+                            data.fluidPeriods.forEach(period => {
+                                if (period.records) totalRecords += period.records.length;
+                            });
+                        }
+
+                        if (data.solidPeriods) {
+                            totalPeriods += data.solidPeriods.length;
+                            data.solidPeriods.forEach(period => {
+                                if (period.records) totalRecords += period.records.length;
+                            });
+                        }
+
+                        // Add to existing summary stats
+                        const statsContainer = document.getElementById('data-summary-stats');
+                        statsContainer.innerHTML += `
+                            <span class="badge bg-warning rounded-pill fs-6">
+                                <i class="mdi mdi-water me-1"></i> ${totalRecords} I/O records
+                            </span>
+                        `;
+                    })
+                    .catch(error => {
+                        console.error('Error loading intake/output charts:', error);
+                        document.getElementById('fluid-io-chart-content').innerHTML =
+                            '<div class="alert alert-danger">Failed to load fluid intake/output data. Please try again later.</div>';
+                        document.getElementById('solid-io-chart-content').innerHTML =
+                            '<div class="alert alert-danger">Failed to load solid intake/output data. Please try again later.</div>';
+                    });
+            }
+
+            // Helper function to render intake/output chart
+            function renderIntakeOutputChart(periods, containerId, type) {
+                const container = document.getElementById(containerId);
+
+                // Sort periods by started_at, newest first
+                const sortedPeriods = [...periods].sort((a, b) => {
+                    return new Date(b.started_at) - new Date(a.started_at);
+                });
+
+                if (sortedPeriods.length === 0) {
+                    container.innerHTML = `<div class="alert alert-info">No ${type.toLowerCase()} intake/output records found</div>`;
+                    return;
+                }
+
+                let html = '';
+
+                // Add legend
+                html += `<div class="card mb-2">
+                    <div class="card-body p-2">
+                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                            <small class="text-muted me-2">Legend:</small>
+                            <span class="badge bg-primary rounded-pill d-flex align-items-center">
+                                <i class="mdi mdi-arrow-down-bold me-1"></i> Intake
+                            </span>
+                            <span class="badge bg-warning rounded-pill d-flex align-items-center">
+                                <i class="mdi mdi-arrow-up-bold me-1"></i> Output
+                            </span>
+                            <span class="badge bg-success rounded-pill d-flex align-items-center">
+                                <i class="mdi mdi-clock-start me-1"></i> Active
+                            </span>
+                            <span class="badge bg-secondary rounded-pill d-flex align-items-center">
+                                <i class="mdi mdi-clock-end me-1"></i> Ended
+                            </span>
+                        </div>
+                    </div>
+                </div>`;
+
+                // Process each period
+                sortedPeriods.forEach((period, index) => {
+                    const isActive = !period.ended_at;
+                    const startTime = new Date(period.started_at).toLocaleString();
+                    const endTime = period.ended_at ? new Date(period.ended_at).toLocaleString() : 'Ongoing';
+
+                    // Calculate totals
+                    let intakeTotal = 0;
+                    let outputTotal = 0;
+
+                    // Sort records by created_at, newest first
+                    const sortedRecords = [...period.records].sort((a, b) => {
+                        return new Date(b.created_at) - new Date(a.created_at);
+                    });
+
+                    sortedRecords.forEach(record => {
+                        if (record.type === 'intake') {
+                            intakeTotal += parseFloat(record.amount);
+                        } else {
+                            outputTotal += parseFloat(record.amount);
+                        }
+                    });
+
+                    const balance = intakeTotal - outputTotal;
+                    const balanceClass = balance > 0 ? 'text-success' : (balance < 0 ? 'text-danger' : 'text-muted');
+
+                    // Period card
+                    html += `<div class="card shadow-sm mb-3 period-card">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">
+                                    Period ${isActive ?
+                                        '<span class="badge bg-success ms-1">Active</span>' :
+                                        '<span class="badge bg-secondary ms-1">Ended</span>'
+                                    }
+                                </h6>
+                                <small class="text-muted">Started: ${startTime}</small>
+                                ${period.ended_at ? `<br><small class="text-muted">Ended: ${endTime}</small>` : ''}
+                            </div>
+                            <div class="text-end">
+                                <span class="fw-bold">Nurse: ${period.nurse_name}</span>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Time</th>
+                                            <th>Type</th>
+                                            <th>Description</th>
+                                            <th>Amount</th>
+                                            <th>Recorded By</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>`;
+
+                    if (sortedRecords.length > 0) {
+                        sortedRecords.forEach(record => {
+                            const recordTime = new Date(record.created_at).toLocaleString();
+                            const recordType = record.type === 'intake' ? 'Intake' : 'Output';
+                            const typeClass = record.type === 'intake' ? 'bg-primary' : 'bg-warning';
+                            const typeIcon = record.type === 'intake' ? 'mdi-arrow-down-bold' : 'mdi-arrow-up-bold';
+
+                            html += `<tr>
+                                <td>${recordTime}</td>
+                                <td><span class="badge ${typeClass} rounded-pill"><i class="mdi ${typeIcon} me-1"></i> ${recordType}</span></td>
+                                <td>${record.description || 'N/A'}</td>
+                                <td>${record.amount} ${record.unit || ''}</td>
+                                <td>${record.nurse_name}</td>
+                            </tr>`;
+                        });
+                    } else {
+                        html += `<tr><td colspan="5" class="text-center">No records found for this period</td></tr>`;
+                    }
+
+                    // Add balance row
+                    html += `</tbody>
+                                </table>
+                            </div>
+                            <div class="card-footer bg-light">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <span class="text-primary fw-bold">Total Intake: ${intakeTotal} ${type === 'Fluid' ? 'ml' : 'g'}</span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <span class="text-warning fw-bold">Total Output: ${outputTotal} ${type === 'Fluid' ? 'ml' : 'g'}</span>
+                                    </div>
+                                    <div class="col-md-4 text-end">
+                                        <span class="${balanceClass} fw-bold">Balance: ${balance} ${type === 'Fluid' ? 'ml' : 'g'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+
+                    // Add a separator between periods
+                    if (index < sortedPeriods.length - 1) {
+                        html += '<hr class="my-3 opacity-50">';
+                    }
+                });
+
+                container.innerHTML = html;
+            }
+        });
     </script>
 @endsection
