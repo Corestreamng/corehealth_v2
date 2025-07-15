@@ -1223,5 +1223,5 @@
     </script>
 
     @include('admin.partials.vitals-scripts')
-    @include('admin.patients.partials.nurse_chart_scripts')
+    @include('admin.patients.partials.nurse_chart_scripts_enhanced')
 @endsection

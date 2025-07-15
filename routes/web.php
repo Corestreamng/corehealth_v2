@@ -302,4 +302,4 @@ Route::get('my-profile/{id}', [StaffController::class, 'my_profile'])->name('my-
 Route::post('update-my-profile/{id}', [StaffController::class, 'update_my_profile'])->name('update-my-profile');
 
 // Nurse Chart routes
-require __DIR__.'/nurse_chart.php';
+require __DIR__ . '/nurse_chart.php';

@@ -124,6 +124,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Application Settings
+    |--------------------------------------------------------------------------
+    |
+    | Custom application settings that can be accessed via config().
+    |
+    */
+
+    'note_edit_window' => env('NOTE_EDIT_WINDOW', 30), // Time window (in minutes) for editing/deleting medication administrations
+
+    /*
+    |--------------------------------------------------------------------------
     | Autoloaded Service Providers
     |--------------------------------------------------------------------------
     |
