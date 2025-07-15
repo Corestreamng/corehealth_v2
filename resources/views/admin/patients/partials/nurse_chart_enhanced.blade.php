@@ -21,3 +21,8 @@
         </div>
     </div>
 </div>
+
+@section('scripts')
+    @parent
+    @include('admin.patients.partials.nurse_chart_scripts_enhanced')
+@endsection

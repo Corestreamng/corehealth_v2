@@ -47,6 +47,17 @@ class User extends Authenticatable
     ];
 
     /**
+     * Get the user's full name as a single property.
+     *
+     * @return string
+     */
+    public function getNameAttribute()
+    {
+        $othername = ($this->othername) ? $this->othername : '';
+        return ucwords($this->surname . ' ' . $this->firstname . ' ' . $othername);
+    }
+
+    /**
      * The attributes that should be cast.
      *
      * @var array<string, string>

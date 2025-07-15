@@ -274,6 +274,9 @@ if (!function_exists('userfullname')) {
 
     function userfullname($id)
     {
+        if (!$id) {
+            return 'Unknown';
+        }
 
         $user = User::find($id);
         if ($user) {
@@ -282,7 +285,7 @@ if (!function_exists('userfullname')) {
 
             return  ucwords($fullname);
         } else {
-            return 'N/A';
+            return 'Unknown';
         }
     }
 }

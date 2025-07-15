@@ -11,10 +11,26 @@ class IntakeOutputChartController extends Controller
 {
     public function index($patientId)
     {
-        $fluidPeriods = IntakeOutputPeriod::with('records')
+        $fluidPeriods = IntakeOutputPeriod::with(['records', 'nurse'])
             ->where('patient_id', $patientId)->where('type', 'fluid')->get();
-        $solidPeriods = IntakeOutputPeriod::with('records')
+        $solidPeriods = IntakeOutputPeriod::with(['records', 'nurse'])
             ->where('patient_id', $patientId)->where('type', 'solid')->get();
+            
+        // Add nurse names to periods and records
+        $fluidPeriods->each(function($period) {
+            $period->nurse_name = $period->nurse_id ? userfullname($period->nurse_id) : 'Unknown';
+            $period->records->each(function($record) {
+                $record->nurse_name = $record->nurse_id ? userfullname($record->nurse_id) : 'Unknown';
+            });
+        });
+        
+        $solidPeriods->each(function($period) {
+            $period->nurse_name = $period->nurse_id ? userfullname($period->nurse_id) : 'Unknown';
+            $period->records->each(function($record) {
+                $record->nurse_name = $record->nurse_id ? userfullname($record->nurse_id) : 'Unknown';
+            });
+        });
+        
         return response()->json(compact('fluidPeriods', 'solidPeriods'));
     }
 
@@ -57,8 +73,14 @@ class IntakeOutputChartController extends Controller
             'description' => 'nullable|string',
             'recorded_at' => 'required|date',
         ]);
-        $data['nurse_id'] = Auth::id();
+        $nurseId = Auth::id();
+        $data['nurse_id'] = $nurseId;
+        
         $record = IntakeOutputRecord::create($data);
+        
+        // Add the nurse name to the response
+        $record->nurse_name = userfullname($nurseId);
+        
         return response()->json(['success' => true, 'record' => $record]);
     }
 }
