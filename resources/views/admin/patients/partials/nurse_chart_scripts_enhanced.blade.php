@@ -1,4 +1,32 @@
 <script>
+    // Add custom styles for intake/output sections
+    document.addEventListener('DOMContentLoaded', function() {
+        const style = document.createElement('style');
+        style.textContent = `
+            .period-card { transition: all 0.2s ease-in-out; }
+            .period-card:hover { box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.15) !important; }
+            .badge.rounded-pill { display: inline-flex; align-items: center; }
+            .table-sm > :not(caption) > * > * { padding: 0.3rem 0.5rem; vertical-align: middle; }
+            @media (max-width: 768px) {
+                .period-card .card-header { flex-direction: column; align-items: start !important; }
+                .period-card .card-header > div:last-child { margin-top: 0.5rem; width: 100%; }
+            }
+
+            // Add custom styles for medication chart responsiveness
+            .medication-controls { justify-content: flex-end; }
+            .schedule-slot { margin-bottom: 4px; transition: all 0.2s ease; }
+            .schedule-slot:hover { transform: translateY(-2px); }
+            #calendar-legend .badge { display: inline-flex; align-items: center; margin-bottom: 5px; }
+            #calendar-legend .badge i { margin-right: 4px; }
+            @media (max-width: 767.98px) {
+                .medication-controls { justify-content: flex-start; margin-top: 10px; }
+                #calendar-title { font-size: 0.9rem; }
+                .table-sm td, .table-sm th { padding: 0.25rem 0.5rem; font-size: 0.85rem; }
+            }
+        `;
+        document.head.appendChild(style);
+    });
+
     // CSRF token for AJAX requests
     var CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     var PATIENT_ID = {{ isset($patient) ? (is_object($patient) ? $patient->id : $patient) : (isset($patient_id) ? $patient_id : 'null') }};
@@ -22,6 +50,7 @@
     // Configurable time window for editing/deleting administrations (from .env)
     var NOTE_EDIT_WINDOW = {{ env('NOTE_EDIT_WINDOW', 30) }}; // Default 30 minutes if not set
     var intakeOutputChartIndexRoute = "{{ route('nurse.intake_output.index', [':patient']) }}";
+    var intakeOutputChartLogsRoute = "{{ route('nurse.intake_output.logs', [':patient', ':period']) }}";
     var intakeOutputChartStartRoute = "{{ route('nurse.intake_output.start') }}";
     var intakeOutputChartEndRoute = "{{ route('nurse.intake_output.end') }}";
     var intakeOutputChartRecordRoute = "{{ route('nurse.intake_output.record') }}";
@@ -234,20 +263,57 @@
             let statusHtml = '';
 
             if (medication.product && medication.product.product_name) {
-                statusHtml += `<strong>${medication.product.product_name}</strong>: `;
+                const productName = medication.product.product_name;
 
                 if (medication.discontinued_at) {
                     const discontinuedDate = new Date(medication.discontinued_at);
                     const discontinuedBy = medication.discontinued_by_name || medication.user_fullname || medication.discontinued_by || 'Unknown';
-                    statusHtml += `<span class="text-danger">Discontinued on ${formatDate(discontinuedDate)} by ${discontinuedBy}. Reason: ${medication.discontinued_reason}</span>`;
+
+                    statusHtml += `
+                    <div class="alert alert-danger py-2 mb-0">
+                        <div class="d-flex align-items-center">
+                            <i class="mdi mdi-calendar-remove me-2 fs-5"></i>
+                            <div>
+                                <strong>${productName}</strong>: Discontinued
+                                <div class="small">
+                                    <span class="fw-bold">Date:</span> ${formatDate(discontinuedDate)}
+                                    <span class="fw-bold">By:</span> ${discontinuedBy}
+                                </div>
+                                <div class="small"><span class="fw-bold">Reason:</span> ${medication.discontinued_reason}</div>
+                            </div>
+                        </div>
+                    `;
 
                     if (medication.resumed_at) {
                         const resumedDate = new Date(medication.resumed_at);
                         const resumedBy = medication.resumed_by_name || medication.user_fullname || medication.resumed_by || 'Unknown';
-                        statusHtml += `<br><span class="text-success">Resumed on ${formatDate(resumedDate)} by ${resumedBy}. Reason: ${medication.resumed_reason}</span>`;
+
+                        statusHtml += `
+                        <div class="mt-2 d-flex align-items-center">
+                            <i class="mdi mdi-calendar-check me-2 fs-5 text-success"></i>
+                            <div>
+                                <strong class="text-success">Resumed</strong>
+                                <div class="small">
+                                    <span class="fw-bold">Date:</span> ${formatDate(resumedDate)}
+                                    <span class="fw-bold">By:</span> ${resumedBy}
+                                </div>
+                                <div class="small"><span class="fw-bold">Reason:</span> ${medication.resumed_reason}</div>
+                            </div>
+                        </div>
+                        `;
                     }
+
+                    statusHtml += `</div>`;
                 } else {
-                    statusHtml += '<span class="text-success">Active</span>';
+                    statusHtml += `
+                    <div class="alert alert-success py-2 mb-0">
+                        <div class="d-flex align-items-center">
+                            <i class="mdi mdi-check-circle me-2 fs-5"></i>
+                            <div>
+                                <strong>${productName}</strong>: <span class="badge bg-success">Active</span>
+                            </div>
+                        </div>
+                    </div>`;
                 }
             }
 
@@ -272,46 +338,30 @@
         // Render the calendar legend
         function renderLegend() {
             const legendHtml = `
-            <div class="card mb-3">
+            <div class="card shadow-sm mb-3">
                 <div class="card-body p-2">
-                    <h6 class="card-title mb-2">Legend</h6>
-                    <div class="d-flex flex-wrap align-items-center gap-2">
-                        <div class="d-flex align-items-center">
-                            <span class="badge bg-primary me-1">
-                                <i class="mdi mdi-calendar-clock"></i>
-                            </span>
-                            <small>Scheduled</small>
-                        </div>
-                        <div class="d-flex align-items-center">
-                            <span class="badge bg-success me-1">
-                                <i class="mdi mdi-check"></i>
-                            </span>
-                            <small>Administered</small>
-                        </div>
-                        <div class="d-flex align-items-center">
-                            <span class="badge bg-info me-1">
-                                <i class="mdi mdi-pencil"></i>
-                            </span>
-                            <small>Edited</small>
-                        </div>
-                        <div class="d-flex align-items-center">
-                            <span class="badge bg-dark me-1">
-                                <i class="mdi mdi-close"></i>
-                            </span>
-                            <small>Deleted</small>
-                        </div>
-                        <div class="d-flex align-items-center">
-                            <span class="badge bg-danger me-1">
-                                <i class="mdi mdi-calendar-remove"></i>
-                            </span>
-                            <small>Missed</small>
-                        </div>
-                        <div class="d-flex align-items-center">
-                            <span class="badge bg-secondary me-1">
-                                <i class="mdi mdi-calendar"></i>
-                            </span>
-                            <small>Discontinued</small>
-                        </div>
+                    <h6 class="card-title mb-2 d-flex align-items-center">
+                        <i class="mdi mdi-information-outline text-primary me-1"></i> Legend
+                    </h6>
+                    <div class="d-flex flex-wrap gap-1">
+                        <span class="badge bg-primary rounded-pill">
+                            <i class="mdi mdi-calendar-clock"></i> Scheduled
+                        </span>
+                        <span class="badge bg-success rounded-pill">
+                            <i class="mdi mdi-check"></i> Administered
+                        </span>
+                        <span class="badge bg-info rounded-pill">
+                            <i class="mdi mdi-pencil"></i> Edited
+                        </span>
+                        <span class="badge bg-dark rounded-pill">
+                            <i class="mdi mdi-close"></i> Deleted
+                        </span>
+                        <span class="badge bg-danger rounded-pill">
+                            <i class="mdi mdi-calendar-remove"></i> Missed
+                        </span>
+                        <span class="badge bg-secondary rounded-pill">
+                            <i class="mdi mdi-calendar"></i> Discontinued
+                        </span>
                     </div>
                 </div>
             </div>
@@ -325,9 +375,15 @@
             const endDate = new Date(period.end);
             const product = medication.product || {};
 
-            // Update calendar title
-            $('#calendar-title').text(
-                `${product.product_name || 'Medication'} Schedule: ${formatDate(startDate)} to ${formatDate(endDate)}`
+            // Update calendar title with responsive design
+            const productName = product.product_name || 'Medication';
+            const dateRange = `${formatDate(startDate)} to ${formatDate(endDate)}`;
+
+            $('#calendar-title').html(
+                `<span class="text-primary">${productName}</span>
+                <span class="d-block d-sm-inline small text-muted">
+                    <i class="mdi mdi-calendar-range"></i> ${dateRange}
+                </span>`
             );
 
             let daysHtml = '';
@@ -417,9 +473,9 @@
                             const adminUser = admin.administered_by_name || 'Unknown';
 
                             if (admin.deleted_at) {
-                                tooltipContent = `Deleted administration: ${admin.dose} via ${admin.route}\nBy: ${admin.deleted_by_name || 'Unknown'}\nReason: ${admin.delete_reason || 'Not specified'}`;
+                                tooltipContent = `Deleted administration: ${admin.dose} via ${schedule.route}\nBy: ${admin.deleted_by_name || 'Unknown'}\nReason: ${admin.delete_reason || 'Not specified'}`;
                             } else if (admin.edited_at) {
-                                tooltipContent = `Edited administration: ${admin.dose} via ${admin.route}\nBy: ${admin.edited_by_name || 'Unknown'}\nReason: ${admin.edit_reason || 'Not specified'}`;
+                                tooltipContent = `Edited administration: ${admin.dose} via ${schedule.route}\nBy: ${admin.edited_by_name || 'Unknown'}\nReason: ${admin.edit_reason || 'Not specified'}`;
                             } else {
                                 tooltipContent = `Administered: ${admin.dose} via ${admin.route}\nBy: ${adminUser}\nAt: ${formatDateTime(adminTime)}`;
                                 if (admin.comment) {
@@ -485,45 +541,56 @@
             // Generate logs HTML
             let logsHtml = '';
             if (logs.length === 0) {
-                logsHtml = '<p class="text-muted">No activity logs available for this medication.</p>';
+                logsHtml = `<div class="alert alert-info m-3">
+                    <i class="mdi mdi-information-outline me-2"></i>
+                    No activity logs available for this medication.
+                </div>`;
             } else {
-                logsHtml = '<div class="table-responsive"><table class="table table-sm table-striped">';
-                logsHtml += '<thead><tr><th>Date & Time</th><th>Action</th><th>Details</th><th>User</th></tr></thead><tbody>';
+                logsHtml = '<div class="table-responsive"><table class="table table-sm table-striped table-hover mb-0">';
+                logsHtml += '<thead class="table-light"><tr><th style="width:160px">Date & Time</th><th style="width:120px">Action</th><th>Details</th><th style="width:140px">User</th></tr></thead><tbody>';
 
                 logs.forEach(log => {
                     const logDate = new Date(log.date);
                     let actionBadgeClass = 'bg-primary';
                     let actionText = log.action;
+                    let actionIcon = 'mdi-information-outline';
 
                     // Style based on action type
                     switch(log.action.toLowerCase()) {
                         case 'administration':
                             actionBadgeClass = 'bg-success';
                             actionText = 'Administered';
+                            actionIcon = 'mdi-check';
                             break;
                         case 'edit':
                             actionBadgeClass = 'bg-info';
                             actionText = 'Edited';
+                            actionIcon = 'mdi-pencil';
                             break;
                         case 'delete':
                             actionBadgeClass = 'bg-dark';
                             actionText = 'Deleted';
+                            actionIcon = 'mdi-close';
                             break;
                         case 'discontinue':
                             actionBadgeClass = 'bg-warning';
                             actionText = 'Discontinued';
+                            actionIcon = 'mdi-calendar-remove';
                             break;
                         case 'resume':
                             actionBadgeClass = 'bg-success';
                             actionText = 'Resumed';
+                            actionIcon = 'mdi-calendar-check';
                             break;
                     }
 
                     logsHtml += `<tr>
-                        <td>${formatDateTime(logDate)}</td>
-                        <td><span class="badge ${actionBadgeClass}">${actionText}</span></td>
+                        <td><small>${formatDateTime(logDate)}</small></td>
+                        <td><span class="badge ${actionBadgeClass} rounded-pill">
+                            <i class="mdi ${actionIcon}"></i> ${actionText}</span>
+                        </td>
                         <td>${log.details || log.reason || '-'}</td>
-                        <td>${log.user || 'Unknown'}</td>
+                        <td><small>${log.user || 'Unknown'}</small></td>
                     </tr>`;
                 });
 
@@ -1208,15 +1275,394 @@
 
         // Initialize Intake/Output Chart functions
         function loadIntakeOutput(type) {
-            // Intake/output functionality would go here
+            $.get(intakeOutputChartIndexRoute.replace(':patient', PATIENT_ID), function(data) {
+                let periods = type === 'fluid' ? data.fluidPeriods : data.solidPeriods;
+
+                // Sort periods to show newest first
+                periods.sort(function(a, b) {
+                    return new Date(b.started_at) - new Date(a.started_at);
+                });
+
+                let html = '';
+
+                periods.forEach(function(p) {
+                    // Get intake and output totals for this period
+                    let totalIntake = 0;
+                    let totalOutput = 0;
+
+                    if (p.records && p.records.length > 0) {
+                        p.records.forEach(function(r) {
+                            if (r.type === 'intake') {
+                                totalIntake += parseFloat(r.amount);
+                            } else if (r.type === 'output') {
+                                totalOutput += parseFloat(r.amount);
+                            }
+                        });
+                    }
+
+                    // Calculate balance
+                    const balance = totalIntake - totalOutput;
+                    const balanceClass = balance >= 0 ? 'text-success' : 'text-danger';
+                    const periodStatus = p.ended_at ? 'secondary' : 'info';
+                    const periodIcon = type === 'fluid' ? 'mdi-water' : 'mdi-food-apple';
+
+                    html += `<div class='card mb-2 shadow-sm period-card ${!p.ended_at ? 'border-info' : ''}'>
+                        <div class='card-header py-2 d-flex justify-content-between align-items-center ${!p.ended_at ? 'bg-info bg-opacity-10' : ''}'>
+                            <div>
+                                <span class="badge bg-${periodStatus} rounded-pill me-1" data-bs-toggle="tooltip"
+                                    title="${p.ended_at ? 'Closed period' : 'Active period'}">
+                                    <i class="mdi ${p.ended_at ? 'mdi-clock-end' : 'mdi-clock-start'}"></i>
+                                    ${p.ended_at ? 'Ended' : 'Active'}
+                                </span>
+                                <strong>${formatDateTime(p.started_at)}</strong>
+                                ${(p.ended_at ? ' to ' + formatDateTime(p.ended_at) : '')}
+                                <span class="ms-2 text-muted small">(By: ${p.nurse_name || 'Unknown'})</span>
+                            </div>
+                            <div class="d-flex gap-1">`;
+
+                    // Add View Logs button for all periods
+                    html += `<button class='btn btn-sm btn-outline-secondary view-io-logs-btn' data-period-id='${p.id}'
+                                data-type='${type}' data-bs-toggle="tooltip" title="View activity logs">
+                                <i class="mdi mdi-history"></i> <span class="d-none d-sm-inline">Logs</span></button>`;
+
+                    if (!p.ended_at) {
+                        html += `<button class='btn btn-sm btn-outline-danger end-period-btn' data-period-id='${p.id}'
+                                data-type='${type}' data-bs-toggle="tooltip" title="End this period">
+                                <i class="mdi mdi-clock-end"></i> <span class="d-none d-sm-inline">End Period</span></button>`;
+                    }
+
+                    html += `</div></div>
+                        <div class='card-body p-0'>
+                            <div class="table-responsive mb-0">
+                                <table class="table table-bordered mb-2">
+                                    <tr class="bg-light">
+                                        <td width="33%" class="text-center p-2">
+                                            <div class="fs-6 fw-bold">Intake</div>
+                                            <div class="fs-5">
+                                                <i class="mdi ${type === 'fluid' ? 'mdi-water text-primary' : 'mdi-food-apple text-success'}"></i>
+                                                ${totalIntake} ${type === 'fluid' ? 'ml' : 'g'}
+                                            </div>
+                                        </td>
+                                        <td width="33%" class="text-center p-2">
+                                            <div class="fs-6 fw-bold">Output</div>
+                                            <div class="fs-5">
+                                                <i class="mdi ${type === 'fluid' ? 'mdi-water-off text-warning' : 'mdi-delete-empty text-danger'}"></i>
+                                                ${totalOutput} ${type === 'fluid' ? 'ml' : 'g'}
+                                            </div>
+                                        </td>
+                                        <td width="33%" class="text-center p-2">
+                                            <div class="fs-6 fw-bold">Balance</div>
+                                            <div class="fs-5 ${balanceClass}">
+                                                <i class="mdi ${balance >= 0 ? 'mdi-arrow-up' : 'mdi-arrow-down'}"></i>
+                                                ${Math.abs(balance)} ${type === 'fluid' ? 'ml' : 'g'}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class='table table-sm table-striped mb-0'>
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 80px">Type</th>
+                                            <th style="width: 80px">Amount</th>
+                                            <th>Description</th>
+                                            <th style="width: 160px">Time</th>
+                                            <th style="width: 140px">Recorded By</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>`;
+
+                    if (p.records && p.records.length > 0) {
+                        // Sort records by recorded_at date (newest first)
+                        const sortedRecords = [...p.records].sort((a, b) =>
+                            new Date(b.recorded_at) - new Date(a.recorded_at)
+                        );
+
+                        sortedRecords.forEach(function(r) {
+                            const recordIcon = r.type === 'intake' ?
+                                (type === 'fluid' ? 'mdi-water text-primary' : 'mdi-food-apple text-success') :
+                                (type === 'fluid' ? 'mdi-water-off text-warning' : 'mdi-delete-empty text-danger');
+
+                            const recordBadge = r.type === 'intake' ?
+                                (type === 'fluid' ? 'bg-primary' : 'bg-success') :
+                                (type === 'fluid' ? 'bg-warning' : 'bg-danger');
+
+                            html += `<tr>
+                                    <td>
+                                        <span class="badge ${recordBadge} rounded-pill">
+                                            <i class="mdi ${recordIcon}"></i> ${r.type.charAt(0).toUpperCase() + r.type.slice(1)}
+                                        </span>
+                                    </td>
+                                    <td><strong>${r.amount}</strong> ${type === 'fluid' ? 'ml' : 'g'}</td>
+                                    <td>${r.description || '<span class="text-muted">No description</span>'}</td>
+                                    <td>${formatDateTime(r.recorded_at)}</td>
+                                    <td>${r.nurse_name || 'Unknown'}</td>
+                                </tr>`;
+                        });
+                    } else {
+                        html += `<tr><td colspan="5" class="text-center text-muted py-3">No records yet</td></tr>`;
+                    }
+
+                    html += `</tbody>
+                    </table>
+                    </div>`;
+
+                    if (!p.ended_at) {
+                        html += `<div class="card-footer bg-white p-2">
+                            <button class='btn btn-primary btn-sm add-record-btn' data-period-id='${p.id}' data-type='${type}'>
+                                <i class="mdi mdi-plus-circle"></i> Add ${type.charAt(0).toUpperCase() + type.slice(1)} Record
+                            </button>
+                        </div>`;
+                    }
+
+                    html += `</div>
+                    </div>
+                    <hr class="my-4 border-2">`;
+
+                });
+
+                $('#' + type + '-periods-list').html(html ||
+                    `<div class="alert alert-info d-flex align-items-center">
+                        <i class="mdi ${type === 'fluid' ? 'mdi-water' : 'mdi-food-apple'} fs-3 me-3"></i>
+                        <div>
+                            <h6>No ${type} periods found</h6>
+                            <p class="mb-0">Click the "Start New Period" button above to begin tracking ${type} intake and output for this patient.</p>
+                        </div>
+                    </div>`
+                );
+
+                // Initialize tooltips
+                $('[data-bs-toggle="tooltip"]').tooltip();
+            });
         }
 
+        // Handle View Logs button click for intake/output periods
+        $(document).on('click', '.view-io-logs-btn', function() {
+            const periodId = $(this).data('period-id');
+            const periodType = $(this).data('type');
+
+            console.log('View logs clicked for period:', periodId, periodType);
+
+            // Show loading state in modal
+            $('#io-logs-title').text('Loading...');
+            $('#io-logs-content').html('<div class="d-flex justify-content-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+            $('#intakeOutputLogsModal').modal('show');
+
+            // Fetch period history/logs
+            $.ajax({
+                url: intakeOutputChartLogsRoute.replace(':patient', PATIENT_ID).replace(':period', periodId),
+                type: 'GET',
+                success: function(response) {
+                    if (response.success) {
+                        const title = `${periodType.charAt(0).toUpperCase() + periodType.slice(1)} Period Activity Logs`;
+                        $('#io-logs-title').text(title);
+
+                        // Process and display logs
+                        let logsHtml = '';
+                        if (response.history && response.history.length > 0) {
+                            logsHtml = '<div class="table-responsive"><table class="table table-sm table-striped">';
+                            logsHtml += '<thead><tr><th style="width:160px">Date & Time</th><th style="width:100px">Action</th><th>Details</th><th style="width:140px">User</th></tr></thead><tbody>';
+
+                            response.history.forEach(log => {
+                                // Handle both object format and array format logs
+                                const logDate = log.date ? new Date(log.date) : new Date(log[0]);
+                                const action = log.action || log[1] || 'Action';
+                                const details = log.details || log[2] || '-';
+                                const user = log.user || log[3] || 'Unknown';
+
+                                let actionBadgeClass = 'bg-primary';
+                                let actionIcon = 'mdi-information-outline';
+                                let actionDisplay = action;
+
+                                // Style based on action type
+                                if (action.includes('create_period') || action.includes('start')) {
+                                    actionBadgeClass = 'bg-success';
+                                    actionIcon = 'mdi-clock-start';
+                                    actionDisplay = 'Started';
+                                } else if (action.includes('end_period')) {
+                                    actionBadgeClass = 'bg-warning';
+                                    actionIcon = 'mdi-clock-end';
+                                    actionDisplay = 'Ended';
+                                } else if (action.includes('add_record_intake')) {
+                                    actionBadgeClass = 'bg-info';
+                                    actionIcon = 'mdi-plus-circle';
+                                    actionDisplay = 'Intake';
+                                } else if (action.includes('add_record_output')) {
+                                    actionBadgeClass = 'bg-danger';
+                                    actionIcon = 'mdi-minus-circle';
+                                    actionDisplay = 'Output';
+                                }
+
+                                logsHtml += `<tr>
+                                    <td><small>${formatDateTime(logDate)}</small></td>
+                                    <td><span class="badge ${actionBadgeClass} rounded-pill">
+                                        <i class="mdi ${actionIcon}"></i> ${actionDisplay}</span></td>
+                                    <td>${details}</td>
+                                    <td><small>${user}</small></td>
+                                </tr>`;
+                            });
+
+                            logsHtml += '</tbody></table></div>';
+                        } else {
+                            logsHtml = `<div class="alert alert-info">
+                                <i class="mdi mdi-information-outline me-2"></i>
+                                No activity logs available for this period.
+                            </div>`;
+                        }
+
+                        $('#io-logs-content').html(logsHtml);
+                    } else {
+                        $('#io-logs-content').html('<div class="alert alert-danger">Failed to load logs</div>');
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Error loading logs:', xhr);
+                    $('#io-logs-content').html('<div class="alert alert-danger">Error loading logs. Please try again.</div>');
+                }
+            });
+        });
+
         $('#startFluidPeriodBtn').click(function() {
-            // Fluid period functionality would go here
+            $.post(intakeOutputChartStartRoute, {
+                patient_id: PATIENT_ID,
+                type: 'fluid',
+                _token: CSRF_TOKEN
+            }, function(response) {
+                if (response.success) {
+                    toastr.success('Fluid period started successfully');
+                    loadIntakeOutput('fluid');
+                } else {
+                    toastr.error(response.message || 'Failed to start fluid period');
+                }
+            });
         });
 
         $('#startSolidPeriodBtn').click(function() {
-            // Solid period functionality would go here
+            $.post(intakeOutputChartStartRoute, {
+                patient_id: PATIENT_ID,
+                type: 'solid',
+                _token: CSRF_TOKEN
+            }, function(response) {
+                if (response.success) {
+                    toastr.success('Solid period started successfully');
+                    loadIntakeOutput('solid');
+                } else {
+                    toastr.error(response.message || 'Failed to start solid period');
+                }
+            });
+        });
+
+        // End intake/output period
+        $(document).on('click', '.end-period-btn', function() {
+            const periodId = $(this).data('period-id');
+            const periodType = $(this).data('type');
+
+            if (confirm('Are you sure you want to end this period?')) {
+                $.ajax({
+                    url: intakeOutputChartEndRoute,
+                    type: 'POST',
+                    data: {
+                        period_id: periodId,
+                        _token: CSRF_TOKEN
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            toastr.success('Period ended successfully');
+                            loadIntakeOutput(periodType);
+                        } else {
+                            toastr.error(response.message || 'Failed to end period');
+                        }
+                    },
+                    error: function() {
+                        toastr.error('Failed to end period');
+                    }
+                });
+            }
+        });
+
+        // Open record modal
+        $(document).on('click', '.add-record-btn', function() {
+            const periodId = $(this).data('period-id');
+            const periodType = $(this).data('type');
+
+            // Populate the correct form
+            if (periodType === 'fluid') {
+                $('#fluid_period_id').val(periodId);
+
+                // Set the current time
+                const now = new Date();
+                $('#fluid_recorded_at').val(formatDateTimeForInput(now));
+
+                $('#fluidRecordModal').modal('show');
+            } else {
+                $('#solid_period_id').val(periodId);
+
+                // Set the current time
+                const now = new Date();
+                $('#solid_recorded_at').val(formatDateTimeForInput(now));
+
+                $('#solidRecordModal').modal('show');
+            }
+        });
+
+        // Submit fluid record form
+        $('#fluidRecordForm').submit(function(e) {
+            e.preventDefault();
+
+            $.ajax({
+                url: intakeOutputChartRecordRoute,
+                type: 'POST',
+                data: $(this).serialize() + '&_token=' + CSRF_TOKEN,
+                success: function(response) {
+                    if (response.success) {
+                        toastr.success('Record added successfully');
+                        $('#fluidRecordModal').modal('hide');
+                        loadIntakeOutput('fluid');
+                    } else {
+                        toastr.error(response.message || 'Failed to add record');
+                    }
+                },
+                error: function(xhr) {
+                    const errorMsg = xhr.responseJSON && xhr.responseJSON.errors ?
+                        Object.values(xhr.responseJSON.errors).flat().join('<br>') :
+                        'Failed to add record. Please check your inputs.';
+                    toastr.error(errorMsg);
+                }
+            });
+        });
+
+        // Submit solid record form
+        $('#solidRecordForm').submit(function(e) {
+            e.preventDefault();
+
+            $.ajax({
+                url: intakeOutputChartRecordRoute,
+                type: 'POST',
+                data: $(this).serialize() + '&_token=' + CSRF_TOKEN,
+                success: function(response) {
+                    if (response.success) {
+                        toastr.success('Record added successfully');
+                        $('#solidRecordModal').modal('hide');
+                        loadIntakeOutput('solid');
+                    } else {
+                        toastr.error(response.message || 'Failed to add record');
+                    }
+                },
+                error: function(xhr) {
+                    const errorMsg = xhr.responseJSON && xhr.responseJSON.errors ?
+                        Object.values(xhr.responseJSON.errors).flat().join('<br>') :
+                        'Failed to add record. Please check your inputs.';
+                    toastr.error(errorMsg);
+                }
+            });
+        });
+
+        // Initialize intake/output on tab activation
+        $(document).on('shown.bs.tab', 'button[data-bs-toggle="tab"][data-bs-target="#intakeOutputChart"]', function (e) {
+            loadIntakeOutput('fluid');
+            loadIntakeOutput('solid');
         });
     });
 
@@ -1263,15 +1709,41 @@
 <div class="modal fade" id="medicationLogsModal" tabindex="-1" aria-labelledby="medicationLogsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="medication-logs-title">Activity Logs</h5>
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="medication-logs-title">
+                    <i class="mdi mdi-history text-primary me-1"></i> Activity Logs
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body" id="medication-logs-content">
+            <div class="modal-body p-0" id="medication-logs-content">
                 <!-- Logs content will be populated dynamically -->
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                    <i class="mdi mdi-close-circle me-1"></i> Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add the Intake/Output Logs Modal -->
+<div class="modal fade" id="intakeOutputLogsModal" tabindex="-1" aria-labelledby="intakeOutputLogsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="io-logs-title">
+                    <i class="mdi mdi-history me-1"></i> Intake/Output Period Logs
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="io-logs-content">
+                <!-- Logs content will be populated dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="mdi mdi-close-circle me-1"></i> Close
+                </button>
             </div>
         </div>
     </div>
