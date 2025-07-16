@@ -1,4 +1,5 @@
 <?php
+
 use Illuminate\Support\Facades\Route;
 
 Route::middleware([])->group(function () {
@@ -18,4 +19,7 @@ Route::middleware([])->group(function () {
     Route::post('patients/nurse-chart/intake-output/start', [\App\Http\Controllers\IntakeOutputChartController::class, 'startPeriod'])->name('nurse.intake_output.start');
     Route::post('patients/nurse-chart/intake-output/end', [\App\Http\Controllers\IntakeOutputChartController::class, 'endPeriod'])->name('nurse.intake_output.end');
     Route::post('patients/nurse-chart/intake-output/record', [\App\Http\Controllers\IntakeOutputChartController::class, 'storeRecord'])->name('nurse.intake_output.record');
+
+    // Remove a medication schedule entry (if no administration exists)
+    Route::post('patients/nurse-chart/medication/remove-schedule', [\App\Http\Controllers\MedicationChartController::class, 'removeSchedule'])->name('nurse.medication.remove_schedule');
 });
