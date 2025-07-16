@@ -58,4 +58,10 @@ class ProductOrServiceRequest extends Model
     {
         return $this->hasOne(DoctorQueue::class, 'request_entry_id', 'id');
     }
+
+    // Add this relationship to get the doctor's order (dose/freq)
+    public function productRequest()
+    {
+        return $this->hasOne(ProductRequest::class, 'product_request_id', 'id');
+    }
 }

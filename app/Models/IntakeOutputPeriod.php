@@ -13,13 +13,7 @@ class IntakeOutputPeriod extends Model
         'type',
         'started_at',
         'ended_at',
-        'ended_by',
         'nurse_id'
-    ];
-    
-    protected $dates = [
-        'started_at',
-        'ended_at'
     ];
     public function patient()
     {
@@ -32,14 +26,5 @@ class IntakeOutputPeriod extends Model
     public function records()
     {
         return $this->hasMany(IntakeOutputRecord::class, 'period_id');
-    }
-    public function endedByNurse()
-    {
-        return $this->belongsTo(User::class, 'ended_by');
-    }
-    
-    public function history()
-    {
-        return $this->hasMany(IntakeOutputHistory::class, 'period_id');
     }
 }

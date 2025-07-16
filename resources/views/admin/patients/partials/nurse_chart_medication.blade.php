@@ -71,7 +71,7 @@
                 <form id="scheduleForm">
                     <div class="modal-header">
                         <h5 class="modal-title" id="setScheduleModalLabel">Set Medication Schedule</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">x</button>
                     </div>
                     <div class="modal-body">
                         <input type="hidden" name="product_or_service_request_id" id="schedule_request_id">
@@ -175,7 +175,7 @@
                 <form id="administerForm">
                     <div class="modal-header">
                         <h5 class="modal-title" id="administerModalLabel">Administer Medication</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">x</button>
                     </div>
                     <div class="modal-body">
                         <input type="hidden" name="schedule_id" id="administer_schedule_id">
@@ -229,7 +229,7 @@
                 <form id="discontinueForm">
                     <div class="modal-header">
                         <h5 class="modal-title" id="discontinueModalLabel">Discontinue Medication</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">x</button>
                     </div>
                     <div class="modal-body">
                         <input type="hidden" name="product_or_service_request_id" id="discontinue_request_id">
@@ -260,7 +260,7 @@
                 <form id="resumeForm">
                     <div class="modal-header">
                         <h5 class="modal-title" id="resumeModalLabel">Resume Medication</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">x</button>
                     </div>
                     <div class="modal-body">
                         <input type="hidden" name="product_or_service_request_id" id="resume_request_id">

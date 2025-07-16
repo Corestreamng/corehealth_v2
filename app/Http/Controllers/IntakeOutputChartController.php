@@ -17,10 +17,10 @@ class IntakeOutputChartController extends Controller
 
         // Default to last 30 days if no dates provided
         if (!$startDate) {
-            $startDate = now()->subDays(30)->startOfDay()->format('Y-m-d');
+            $startDate = now()->subDays(30)->startOfDay();
         }
         if (!$endDate) {
-            $endDate = now()->endOfDay()->format('Y-m-d');
+            $endDate = now()->endOfDay();
         }
 
         // Apply date filtering to fluid periods

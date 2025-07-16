@@ -1,4 +1,53 @@
 <div class="solid-intake-output-section">
+    <!-- Date Range Filter -->
+    <div class="card mb-3">
+        <div class="card-header bg-light">
+            <h6 class="mb-0"><i class="mdi mdi-calendar-range me-1"></i> Date Range Filter</h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label for="solid_start_date" class="form-label">Start Date</label>
+                    <input type="date" class="form-control" id="solid_start_date">
+                </div>
+                <div class="col-md-4">
+                    <label for="solid_end_date" class="form-label">End Date</label>
+                    <input type="date" class="form-control" id="solid_end_date">
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <div class="btn-group w-100">
+                        <button type="button" class="btn btn-primary" id="solid_apply_filter_btn">
+                            <i class="mdi mdi-filter"></i> Apply
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="solid_reset_filter_btn">
+                            <i class="mdi mdi-refresh"></i> Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Date Range Navigation -->
+    <div class="card mb-3">
+        <div class="card-body p-2">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="solid_prev_period_btn">
+                        <i class="mdi mdi-chevron-left"></i> Previous 30 Days
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="solid_current_period_btn">
+                        Current Period
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="solid_next_period_btn">
+                        Next 30 Days <i class="mdi mdi-chevron-right"></i>
+                    </button>
+                </div>
+                <div id="solid_date_range_display" class="text-muted small"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Solid Legend -->
     <div class="card mb-2">
         <div class="card-body p-2">
@@ -38,7 +87,7 @@
                         <h5 class="modal-title" id="solidRecordModalLabel">
                             <i class="mdi mdi-food-apple me-1"></i> Add Solid Intake/Output
                         </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">x</button>
                     </div>
                     <div class="modal-body">
                         <input type="hidden" name="period_id" id="solid_period_id">

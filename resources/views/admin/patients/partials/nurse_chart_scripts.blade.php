@@ -17,6 +17,19 @@
     var intakeOutputChartStartRoute = "{{ route('nurse.intake_output.start') }}";
     var intakeOutputChartEndRoute = "{{ route('nurse.intake_output.end') }}";
     var intakeOutputChartRecordRoute = "{{ route('nurse.intake_output.record') }}";
+
+    // Date range variables for I/O charts
+    let fluidStartDate = new Date();
+    fluidStartDate.setDate(fluidStartDate.getDate() - 30); // Start 30 days before today
+    let fluidEndDate = new Date(); // Today
+
+    let solidStartDate = new Date();
+    solidStartDate.setDate(solidStartDate.getDate() - 30); // Start 30 days before today
+    let solidEndDate = new Date(); // Today
+
+    let medicationStartDate = new Date();
+    medicationStartDate.setDate(medicationStartDate.getDate() - 30); // Start 30 days before today
+    let medicationEndDate = new Date(); // Today
 </script>
 <script>
     // Nurse Chart JS (AJAX + Toaster)
@@ -28,8 +41,15 @@
         let medications = [];
         let medicationStatus = {};
 
+        // Initialize date displays
+        updateFluidDateDisplay();
+        updateSolidDateDisplay();
+        updateMedicationDateDisplay();
+
         // Initialize date inputs with today's date
-        document.getElementById('start_date').valueAsDate = new Date();
+        if (document.getElementById('start_date')) {
+            document.getElementById('start_date').valueAsDate = new Date();
+        }
 
         // Medication Chart initialization
         function loadMedicationsList() {
@@ -37,7 +57,18 @@
             $('#medication-chart-list').hide();
             $('#medication-calendar-view').hide();
 
-            $.get(medicationChartIndexRoute.replace(':patient', PATIENT_ID), function(data) {
+            // Build URL with date filters
+            const url = new URL(medicationChartIndexRoute.replace(':patient', PATIENT_ID), window.location.origin);
+            url.searchParams.append('start_date', formatDateForApi(medicationStartDate));
+            url.searchParams.append('end_date', formatDateForApi(medicationEndDate));
+
+            $.get(url, function(data) {
+                // Update date range display from response if available
+                if (data.period) {
+                    medicationStartDate = new Date(data.period.start);
+                    medicationEndDate = new Date(data.period.end);
+                    updateMedicationDateDisplay();
+                }
                 $('#medication-loading').hide();
                 medications = data.prescriptions || [];
 
@@ -129,10 +160,16 @@
             $('#medication-calendar-view').hide();
 
             const formattedStartDate = formatDateForApi(startDate);
-            const url = medicationChartCalendarRoute
+
+            // Create full URL and add end_date parameter
+            const baseUrl = medicationChartCalendarRoute
                 .replace(':patient', PATIENT_ID)
                 .replace(':medication', medicationId)
                 .replace(':start_date', formattedStartDate);
+
+            // Add end_date parameter to ensure proper date range filtering
+            const url = new URL(baseUrl, window.location.origin);
+            url.searchParams.append('end_date', formatDateForApi(medicationEndDate));
 
             $.get(url, function(data) {
                 $('#medication-loading').hide();
@@ -142,6 +179,13 @@
                     const product = medication.product || {};
                     const schedules = data.schedules || [];
                     const administrations = data.administrations || [];
+
+                    // Update date range display from response if available
+                    if (data.period) {
+                        medicationStartDate = new Date(data.period.start);
+                        medicationEndDate = new Date(data.period.end);
+                        updateMedicationDateDisplay();
+                    }
 
                     // Update medication status display
                     updateMedicationStatus(medication);
@@ -647,10 +691,94 @@
             return Math.round((d2 - d1) / oneDay);
         }
         // Intake/Output Chart
+        // Update date display for fluid and solid charts
+        function updateFluidDateDisplay() {
+            const startStr = fluidStartDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+            const endStr = fluidEndDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+            $('#fluid_date_range_display').text(`${startStr} - ${endStr}`);
+
+            // Update filter inputs
+            $('#fluid_start_date').val(formatDateForInput(fluidStartDate));
+            $('#fluid_end_date').val(formatDateForInput(fluidEndDate));
+        }
+
+        function updateSolidDateDisplay() {
+            const startStr = solidStartDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+            const endStr = solidEndDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+            $('#solid_date_range_display').text(`${startStr} - ${endStr}`);
+
+            // Update filter inputs
+            $('#solid_start_date').val(formatDateForInput(solidStartDate));
+            $('#solid_end_date').val(formatDateForInput(solidEndDate));
+        }
+
+        function updateMedicationDateDisplay() {
+            const startStr = medicationStartDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+            const endStr = medicationEndDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+            $('#medication_date_range_display').text(`${startStr} - ${endStr}`);
+
+            // Update filter inputs
+            $('#medication_start_date').val(formatDateForInput(medicationStartDate));
+            $('#medication_end_date').val(formatDateForInput(medicationEndDate));
+        }
+
+        // Format date for input fields (YYYY-MM-DD)
+        function formatDateForInput(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        // Format date for API requests (YYYY-MM-DD)
+        function formatDateForApi(date) {
+            return date.toISOString().split('T')[0];
+        }
+
         function loadIntakeOutput(type) {
-            $.get(intakeOutputChartIndexRoute.replace(':patient', PATIENT_ID), function(data) {
+            // Show loading indicator
+            const container = type === 'fluid' ? $('#fluid-periods-list') : $('#solid-periods-list');
+            container.html(`
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading ${type} intake/output data...</p>
+                </div>
+            `);
+
+            // Get the right date range based on type
+            const startDate = type === 'fluid' ? fluidStartDate : solidStartDate;
+            const endDate = type === 'fluid' ? fluidEndDate : solidEndDate;
+
+            // Build URL with date filters
+            const url = new URL(intakeOutputChartIndexRoute.replace(':patient', PATIENT_ID));
+            url.searchParams.append('start_date', formatDateForApi(startDate));
+            url.searchParams.append('end_date', formatDateForApi(endDate));
+
+            $.get(url, function(data) {
                 let periods = type === 'fluid' ? data.fluidPeriods : data.solidPeriods;
                 let html = '';
+
+                // Update date range display from response if available
+                if (data.period) {
+                    if (type === 'fluid') {
+                        fluidStartDate = new Date(data.period.start);
+                        fluidEndDate = new Date(data.period.end);
+                        updateFluidDateDisplay();
+                    } else {
+                        solidStartDate = new Date(data.period.start);
+                        solidEndDate = new Date(data.period.end);
+                        updateSolidDateDisplay();
+                    }
+                }
+
+                if (!periods || periods.length === 0) {
+                    html = `<div class="alert alert-info">
+                        <i class="mdi mdi-information-outline me-2"></i>
+                        No ${type} intake/output records found for the selected date range.
+                    </div>`;
+                    container.html(html);
+                    return;
+                }
+
                 periods.forEach(function(p) {
                     html += `<div class='card mb-2'>
                         <div class='card-header'>Period: ${p.started_at} ${(p.ended_at ? ' - ' + p.ended_at : '')}`;
@@ -750,6 +878,11 @@
         });
         // On tab show
         $('#nurseChart-tab').on('shown.bs.tab', function() {
+            // Initialize date displays
+            updateFluidDateDisplay();
+            updateSolidDateDisplay();
+            updateMedicationDateDisplay();
+
             loadMedicationsList();
             loadIntakeOutput('fluid');
             loadIntakeOutput('solid');
@@ -757,6 +890,11 @@
 
         // Initial load if already active
         if ($('#nurseChartCardBody').hasClass('show')) {
+            // Initialize date displays
+            updateFluidDateDisplay();
+            updateSolidDateDisplay();
+            updateMedicationDateDisplay();
+
             loadMedicationsList();
             loadIntakeOutput('fluid');
             loadIntakeOutput('solid');
@@ -766,6 +904,193 @@
                 loadMedicationsList();
             });
         }
+
+        // Fluid Date Navigation
+        $('#fluid_prev_period_btn').click(function() {
+            const newStartDate = new Date(fluidStartDate);
+            const newEndDate = new Date(fluidEndDate);
+            newStartDate.setDate(newStartDate.getDate() - 30);
+            newEndDate.setDate(newEndDate.getDate() - 30);
+
+            fluidStartDate = newStartDate;
+            fluidEndDate = newEndDate;
+            updateFluidDateDisplay();
+            loadIntakeOutput('fluid');
+        });
+
+        $('#fluid_next_period_btn').click(function() {
+            const newStartDate = new Date(fluidStartDate);
+            const newEndDate = new Date(fluidEndDate);
+            newStartDate.setDate(newStartDate.getDate() + 30);
+            newEndDate.setDate(newEndDate.getDate() + 30);
+
+            // Don't go beyond today
+            const today = new Date();
+            if (newEndDate > today) {
+                newEndDate.setTime(today.getTime());
+                newStartDate.setTime(today.getTime());
+                newStartDate.setDate(newStartDate.getDate() - 30);
+            }
+
+            fluidStartDate = newStartDate;
+            fluidEndDate = newEndDate;
+            updateFluidDateDisplay();
+            loadIntakeOutput('fluid');
+        });
+
+        $('#fluid_current_period_btn').click(function() {
+            const today = new Date();
+            fluidEndDate = today;
+            fluidStartDate = new Date(today);
+            fluidStartDate.setDate(fluidStartDate.getDate() - 30);
+
+            updateFluidDateDisplay();
+            loadIntakeOutput('fluid');
+        });
+
+        $('#fluid_apply_filter_btn').click(function() {
+            const startVal = $('#fluid_start_date').val();
+            const endVal = $('#fluid_end_date').val();
+
+            if (startVal && endVal) {
+                fluidStartDate = new Date(startVal);
+                fluidEndDate = new Date(endVal);
+
+                // Add one day to end date to include the full day
+                fluidEndDate.setDate(fluidEndDate.getDate() + 1);
+
+                loadIntakeOutput('fluid');
+                toastr.success('Date filter applied to fluid chart');
+            } else {
+                toastr.error('Please select both start and end dates');
+            }
+        });
+
+        $('#fluid_reset_filter_btn').click(function() {
+            const today = new Date();
+            fluidEndDate = today;
+            fluidStartDate = new Date(today);
+            fluidStartDate.setDate(fluidStartDate.getDate() - 30);
+
+            updateFluidDateDisplay();
+            loadIntakeOutput('fluid');
+            toastr.info('Date filter reset to default (last 30 days)');
+        });
+
+        // Solid Date Navigation
+        $('#solid_prev_period_btn').click(function() {
+            const newStartDate = new Date(solidStartDate);
+            const newEndDate = new Date(solidEndDate);
+            newStartDate.setDate(newStartDate.getDate() - 30);
+            newEndDate.setDate(newEndDate.getDate() - 30);
+
+            solidStartDate = newStartDate;
+            solidEndDate = newEndDate;
+            updateSolidDateDisplay();
+            loadIntakeOutput('solid');
+        });
+
+        $('#solid_next_period_btn').click(function() {
+            const newStartDate = new Date(solidStartDate);
+            const newEndDate = new Date(solidEndDate);
+            newStartDate.setDate(newStartDate.getDate() + 30);
+            newEndDate.setDate(newEndDate.getDate() + 30);
+
+            // Don't go beyond today
+            const today = new Date();
+            if (newEndDate > today) {
+                newEndDate.setTime(today.getTime());
+                newStartDate.setTime(today.getTime());
+                newStartDate.setDate(newStartDate.getDate() - 30);
+            }
+
+            solidStartDate = newStartDate;
+            solidEndDate = newEndDate;
+            updateSolidDateDisplay();
+            loadIntakeOutput('solid');
+        });
+
+        $('#solid_current_period_btn').click(function() {
+            const today = new Date();
+            solidEndDate = today;
+            solidStartDate = new Date(today);
+            solidStartDate.setDate(solidStartDate.getDate() - 30);
+
+            updateSolidDateDisplay();
+            loadIntakeOutput('solid');
+        });
+
+        $('#solid_apply_filter_btn').click(function() {
+            const startVal = $('#solid_start_date').val();
+            const endVal = $('#solid_end_date').val();
+
+            if (startVal && endVal) {
+                solidStartDate = new Date(startVal);
+                solidEndDate = new Date(endVal);
+
+                // Add one day to end date to include the full day
+                solidEndDate.setDate(solidEndDate.getDate() + 1);
+
+                loadIntakeOutput('solid');
+                toastr.success('Date filter applied to solid chart');
+            } else {
+                toastr.error('Please select both start and end dates');
+            }
+        });
+
+        $('#solid_reset_filter_btn').click(function() {
+            const today = new Date();
+            solidEndDate = today;
+            solidStartDate = new Date(today);
+            solidStartDate.setDate(solidStartDate.getDate() - 30);
+
+            updateSolidDateDisplay();
+            loadIntakeOutput('solid');
+            toastr.info('Date filter reset to default (last 30 days)');
+        });
+
+        // Medication Date Filter
+        $('#medication_apply_filter_btn').click(function() {
+            const startVal = $('#medication_start_date').val();
+            const endVal = $('#medication_end_date').val();
+
+            if (startVal && endVal) {
+                medicationStartDate = new Date(startVal);
+                medicationEndDate = new Date(endVal);
+
+                // Add one day to end date to include the full day
+                medicationEndDate.setDate(medicationEndDate.getDate() + 1);
+
+                // If a medication is selected, reload its calendar with the new dates
+                if (selectedMedication) {
+                    loadMedicationCalendar(selectedMedication.id, medicationStartDate);
+                } else {
+                    loadMedicationsList(); // Otherwise reload the full list
+                }
+
+                toastr.success('Date filter applied to medication chart');
+            } else {
+                toastr.error('Please select both start and end dates');
+            }
+        });
+
+        $('#medication_reset_filter_btn').click(function() {
+            const today = new Date();
+            medicationEndDate = today;
+            medicationStartDate = new Date(today);
+            medicationStartDate.setDate(medicationStartDate.getDate() - 30);
+
+            updateMedicationDateDisplay();
+
+            // If a medication is selected, reload its calendar with the new dates
+            if (selectedMedication) {
+                loadMedicationCalendar(selectedMedication.id, medicationStartDate);
+            } else {
+                loadMedicationsList(); // Otherwise reload the full list
+            }
+
+            toastr.info('Date filter reset to default (last 30 days)');
+        });
     });
 </script>
 
