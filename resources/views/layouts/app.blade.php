@@ -8,7 +8,11 @@
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'Laravel') }}</title>
+    <title>{{ appsettings()->site_abbreviation ?? config('app.name', 'Laravel') }}</title>
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="data:image/png;base64,{{ appsettings()->favicon ?? '' }}" />
+    <link rel="icon" type="image/png" href="data:image/png;base64,{{ appsettings()->favicon ?? '' }}">
 
     <!-- Scripts -->
     <script src="{{ asset('js/app.js') }}" defer></script>
@@ -25,6 +29,20 @@
             padding: 0;
             background-color: #a7c7e7;
             overflow: hidden;
+        }
+
+        body.auth-page {
+            background-color: #ffffff;
+            overflow: auto;
+        }
+
+        body.auth-page .cloud,
+        body.auth-page nav {
+            display: none;
+        }
+
+        body.auth-page main {
+            padding: 0;
         }
 
         .cloud {
@@ -104,7 +122,7 @@
     </style>
 </head>
 
-<body>
+<body class="@if(Request::is('login') || Request::is('register') || Request::is('password/*') || Request::is('email/verify')) auth-page @endif">
     <div class="cloud"></div>
     <div class="cloud"></div>
     <div class="cloud"></div>

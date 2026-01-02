@@ -1,175 +1,81 @@
-<nav class="navbar default-layout-navbar col-lg-12 col-12 p-0 fixed-top d-flex flex-row">
-    <div class="navbar-menu-wrapper d-flex align-items-stretch">
-        <button class="navbar-toggler navbar-toggler align-self-center" type="button" data-toggle="minimize">
-            <span class="mdi mdi-chevron-double-left"></span>
+<nav class="ch-navbar default-layout-navbar col-lg-12 col-12 p-0 fixed-top">
+    <div class="navbar-menu-wrapper d-flex align-items-center justify-content-between w-100">
+        <!-- Left: Sidebar Toggle -->
+        <button class="navbar-toggler align-self-center" type="button" data-toggle="minimize">
+            <i class="mdi mdi-menu"></i>
         </button>
-        <div class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-center">
-            <a class="navbar-brand brand-logo-mini" href="index.html"><img src="../assets/images/logo-mini.svg"
-                    alt="logo" /></a>
-        </div>
-        <ul class="navbar-nav">
-            <li class="nav-item dropdown">
-                <a class="nav-link" id="messageDropdown" href="#" onclick="popMessengerWindow()" data-toggle="dropdown" aria-expanded="false">
-                    <i class="mdi mdi-email-outline"></i> @include('messenger.unread-count')
-                </a>
-                {{-- <div class="dropdown-menu dropdown-menu-left navbar-dropdown preview-list"
-                    aria-labelledby="messageDropdown">
-                    <h6 class="p-3 mb-0 font-weight-semibold">Messages</h6>
-                    <div class="dropdown-divider"></div>
-                    <a class="dropdown-item preview-item">
-                        <div class="preview-thumbnail">
-                            <img src="../assets/images/faces/face1.jpg" alt="image" class="profile-pic">
-                        </div>
-                        <div class="preview-item-content d-flex align-items-start flex-column justify-content-center">
-                            <h6 class="preview-subject ellipsis mb-1 font-weight-normal">Mark send you a
-                                message</h6>
-                            <p class="text-gray mb-0"> 1 Minutes ago </p>
-                        </div>
-                    </a>
-                    <div class="dropdown-divider"></div>
-                    <a class="dropdown-item preview-item">
-                        <div class="preview-thumbnail">
-                            <img src="../assets/images/faces/face6.jpg" alt="image" class="profile-pic">
-                        </div>
-                        <div class="preview-item-content d-flex align-items-start flex-column justify-content-center">
-                            <h6 class="preview-subject ellipsis mb-1 font-weight-normal">Cregh send you a
-                                message</h6>
-                            <p class="text-gray mb-0"> 15 Minutes ago </p>
-                        </div>
-                    </a>
-                    <div class="dropdown-divider"></div>
-                    <a class="dropdown-item preview-item">
-                        <div class="preview-thumbnail">
-                            <img src="../assets/images/faces/face7.jpg" alt="image" class="profile-pic">
-                        </div>
-                        <div class="preview-item-content d-flex align-items-start flex-column justify-content-center">
-                            <h6 class="preview-subject ellipsis mb-1 font-weight-normal">Profile picture
-                                updated</h6>
-                            <p class="text-gray mb-0"> 18 Minutes ago </p>
-                        </div>
-                    </a>
-                    <div class="dropdown-divider"></div>
-                    <h6 class="p-3 mb-0 text-center text-primary font-13">4 new messages</h6>
-                </div> --}}
-            </li>
-            <li class="nav-item dropdown ml-3">
-                <a class="nav-link" id="notificationDropdown" href="#" data-toggle="dropdown">
-                    <i class="mdi mdi-bell-outline"></i>
-                </a>
-                {{-- <div class="dropdown-menu dropdown-menu-left navbar-dropdown preview-list"
-                    aria-labelledby="notificationDropdown">
-                    <h6 class="px-3 py-3 font-weight-semibold mb-0">Notifications</h6>
-                    <div class="dropdown-divider"></div>
-                    <a class="dropdown-item preview-item">
-                        <div class="preview-thumbnail">
-                            <div class="preview-icon bg-success">
-                                <i class="mdi mdi-calendar"></i>
-                            </div>
-                        </div>
-                        <div class="preview-item-content d-flex align-items-start flex-column justify-content-center">
-                            <h6 class="preview-subject font-weight-normal mb-0">New order recieved</h6>
-                            <p class="text-gray ellipsis mb-0"> 45 sec ago </p>
-                        </div>
-                    </a>
-                    <div class="dropdown-divider"></div>
-                    <a class="dropdown-item preview-item">
-                        <div class="preview-thumbnail">
-                            <div class="preview-icon bg-warning">
-                                <i class="mdi mdi-settings"></i>
-                            </div>
-                        </div>
-                        <div class="preview-item-content d-flex align-items-start flex-column justify-content-center">
-                            <h6 class="preview-subject font-weight-normal mb-0">Server limit reached</h6>
-                            <p class="text-gray ellipsis mb-0"> 55 sec ago </p>
-                        </div>
-                    </a>
-                    <div class="dropdown-divider"></div>
-                    <a class="dropdown-item preview-item">
-                        <div class="preview-thumbnail">
-                            <div class="preview-icon bg-info">
-                                <i class="mdi mdi-link-variant"></i>
-                            </div>
-                        </div>
-                        <div class="preview-item-content d-flex align-items-start flex-column justify-content-center">
-                            <h6 class="preview-subject font-weight-normal mb-0">Kevin karvelle</h6>
-                            <p class="text-gray ellipsis mb-0"> 11:09 PM </p>
-                        </div>
-                    </a>
-                    <div class="dropdown-divider"></div>
-                    <h6 class="p-3 font-13 mb-0 text-primary text-center">View all notifications</h6>
-                </div> --}}
-            </li>
-        </ul>
-        {{-- <ul class="navbar-nav navbar-nav-right">
-            <li class="nav-item nav-logout d-none d-md-block mr-3">
-                <a class="nav-link" href="#">Status</a>
-            </li>
-            <li class="nav-item nav-logout d-none d-md-block">
-                <button class="btn btn-sm btn-danger">Trailing</button>
-            </li>
-            <li class="nav-item nav-profile dropdown d-none d-md-block">
-                <a class="nav-link dropdown-toggle" id="profileDropdown" href="#" data-toggle="dropdown"
-                    aria-expanded="false">
-                    <div class="nav-profile-text">English </div>
-                </a>
-                <div class="dropdown-menu center navbar-dropdown" aria-labelledby="profileDropdown">
-                    <a class="dropdown-item" href="#">
-                        <i class="flag-icon flag-icon-bl mr-3"></i> French </a>
-                    <div class="dropdown-divider"></div>
-                    <a class="dropdown-item" href="#">
-                        <i class="flag-icon flag-icon-cn mr-3"></i> Chinese </a>
-                    <div class="dropdown-divider"></div>
-                    <a class="dropdown-item" href="#">
-                        <i class="flag-icon flag-icon-de mr-3"></i> German </a>
-                    <div class="dropdown-divider"></div>
-                    <a class="dropdown-item" href="#">
-                        <i class="flag-icon flag-icon-ru mr-3"></i>Russian </a>
-                </div>
-            </li>
-            <li class="nav-item nav-logout d-none d-lg-block">
-                <a class="nav-link" href="index.html">
-                    <i class="mdi mdi-home-circle"></i>
-                </a>
-            </li>
-        </ul> --}}
-        <ul class="navbar-nav ms-auto navbar-nav-right">
-            <!-- Authentication Links -->
-            @guest
-                @if (Route::has('login'))
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('login') }}">{{ __('Login') }}</a>
-                    </li>
-                @endif
 
-                @if (Route::has('register'))
-                    {{-- <li class="nav-item">
-                        <a class="nav-link" href="{{ route('register') }}">{{ __('Register') }}</a>
-                    </li> --}}
-                @endif
-            @else
+        <!-- Right: User Menu -->
+        <ul class="navbar-nav navbar-nav-right d-flex flex-row align-items-center ml-auto" style="gap: 15px; margin: 0; list-style: none;">
+            <!-- Dark/Light Mode Toggle -->
+            <li class="nav-item">
+                <button id="darkModeToggle" class="nav-link" style="width: 36px; height: 36px; border: none; background: transparent; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: background 0.2s;">
+                    <i class="mdi mdi-weather-night" id="darkModeIcon" style="font-size: 18px; color: #666;"></i>
+                </button>
+            </li>
+
+            <!-- Messages -->
+            <li class="nav-item">
+                <a class="nav-link" href="#" onclick="popMessengerWindow()" style="width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center; position: relative; border-radius: 4px; transition: background 0.2s;">
+                    <i class="mdi mdi-email-outline" style="font-size: 18px; color: #666;"></i>
+                    @include('messenger.unread-count')
+                </a>
+            </li>
+
+            <!-- Notifications -->
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-toggle="dropdown" style="width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center; position: relative; border-radius: 4px; transition: background 0.2s;">
+                    <i class="mdi mdi-bell-outline" style="font-size: 18px; color: #666;"></i>
+                    <span class="notification-badge" style="position: absolute; top: 6px; right: 6px; background: #dc3545; color: white; border-radius: 50%; width: 8px; height: 8px; display: none;"></span>
+                </a>
+            </li>
+
+            <!-- User Dropdown -->
+            @auth
                 <li class="nav-item dropdown">
-                    <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button"
-                        data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
-                        {{ Auth::user()->firstname }} {{ Auth::user()->surname }}
+                    <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="padding: 0; display: flex; align-items: center;">
+                        <img src="{!! url('storage/image/user/'.Auth::user()->filename) !!}" alt="profile" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; cursor: pointer;" />
                     </a>
 
                     <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                        <a class="dropdown-item" href="{{ route('my-profile') }}">
+                            <i class="mdi mdi-account-outline mr-2"></i> Profile
+                        </a>
+                        <div class="dropdown-divider" style="margin: 4px 0;"></div>
                         <a class="dropdown-item" href="{{ route('logout') }}"
-                            onclick="event.preventDefault();
-                                         document.getElementById('logout-form').submit();">
-                            {{ __('Logout') }}
+                            onclick="event.preventDefault(); document.getElementById('logout-form-navbar').submit();">
+                            <i class="mdi mdi-logout mr-2"></i> Sign out
                         </a>
 
-                        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                        <form id="logout-form-navbar" action="{{ route('logout') }}" method="POST" class="d-none">
                             @csrf
                         </form>
                     </div>
                 </li>
-            @endguest
+            @endauth
         </ul>
-        <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button"
-            data-toggle="offcanvas">
-            <span class="mdi mdi-menu"></span>
+
+        <!-- Mobile Sidebar Toggle -->
+        <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button" data-toggle="offcanvas">
+            <i class="mdi mdi-menu"></i>
         </button>
     </div>
 </nav>
+
+<style>
+    /* Message count badge styling */
+    .ch-navbar .count {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        background: #dc3545;
+        color: white;
+        font-size: 9px;
+        padding: 2px 4px;
+        border-radius: 8px;
+        font-weight: 600;
+        min-width: 14px;
+        text-align: center;
+        line-height: 1;
+    }
+</style>

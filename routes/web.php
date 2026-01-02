@@ -10,6 +10,7 @@ use App\Http\Controllers\Doctor\DoctorConsultationsController;
 use App\Http\Controllers\Doctor\DoctorDashboardController;
 use App\Http\Controllers\EncounterController;
 use App\Http\Controllers\HmoController;
+use App\Http\Controllers\HospitalConfigController;
 use App\Http\Controllers\LabServiceRequestController;
 use App\Http\Controllers\MiscBillController;
 use App\Http\Controllers\MoveStockController;
@@ -84,6 +85,12 @@ Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
         Route::get('listPermissions', [PermissionController::class, 'listPermissions'])->name('listPermissions');
         Route::resource('permissions', PermissionController::class);
+    });
+
+    // Hospital Configuration
+    Route::group(['middleware' => ['auth', 'role:SUPERADMIN|ADMIN']], function () {
+        Route::get('hospital-config', [HospitalConfigController::class, 'index'])->name('hospital-config.index');
+        Route::put('hospital-config', [HospitalConfigController::class, 'update'])->name('hospital-config.update');
     });
 
     Route::group(['middleware' => ['auth']], function () {
@@ -298,8 +305,8 @@ Route::group(['prefix' => 'messages'], function () {
     Route::put('{id}', [MessagesController::class, 'update'])->name('messages.update');
 });
 
-Route::get('my-profile/{id}', [StaffController::class, 'my_profile'])->name('my-profile');
-Route::post('update-my-profile/{id}', [StaffController::class, 'update_my_profile'])->name('update-my-profile');
+Route::get('my-profile', [StaffController::class, 'my_profile'])->name('my-profile');
+Route::post('update-my-profile', [StaffController::class, 'update_my_profile'])->name('update-my-profile');
 
 // Nurse Chart routes
 require __DIR__ . '/nurse_chart.php';
