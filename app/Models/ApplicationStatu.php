@@ -15,6 +15,7 @@ class ApplicationStatu extends Model
         'footer_text',
         'logo',
         'favicon',
+        'hos_color',
         'contact_address',
         'contact_phones',
         'contact_emails',

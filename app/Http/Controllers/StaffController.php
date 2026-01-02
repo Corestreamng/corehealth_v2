@@ -105,9 +105,9 @@ class StaffController extends Controller
         // }
     }
 
-    public function my_profile($id)
+    public function my_profile()
     {
-        $user = User::whereId($id)->first();
+        $user = User::whereId(Auth::id())->first();
         $roles = Role::pluck('name', 'name')->all();
         $permissions = Permission::pluck('name', 'name')->all();
         $statuses = UserCategory::whereStatus(1)->get();
@@ -128,8 +128,9 @@ class StaffController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function update_my_profile(Request $request, $id)
+    public function update_my_profile(Request $request)
     {
+        $id = Auth::id();
         if ($id != Auth::id()) {
             abort(403, 'You Do Not Have Access to This Profile');
         }

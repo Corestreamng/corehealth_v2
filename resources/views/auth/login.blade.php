@@ -1,72 +1,324 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">{{ __('Login') }} | {{appsettings()->site_abbreviation ?? ''}}</div>
+@php
+    $primaryColor = appsettings()->hos_color ?? '#011b33';
+    $hoverColor = adjustBrightness($primaryColor, 30);
+    $focusShadow = hexToRgba($primaryColor, 0.1);
+    $hoverShadow = hexToRgba($primaryColor, 0.2);
 
-                <div class="card-body">
-                    <form method="POST" action="{{ route('login') }}">
-                        @csrf
+    function adjustBrightness($hex, $percent) {
+        $hex = str_replace('#', '', $hex);
+        $r = hexdec(substr($hex, 0, 2));
+        $g = hexdec(substr($hex, 2, 2));
+        $b = hexdec(substr($hex, 4, 2));
+        $r = min(255, $r + ($r * $percent / 100));
+        $g = min(255, $g + ($g * $percent / 100));
+        $b = min(255, $b + ($b * $percent / 100));
+        return sprintf('#%02x%02x%02x', $r, $g, $b);
+    }
 
-                        <div class="row mb-3">
-                            <label for="email" class="col-md-4 col-form-label text-md-end">{{ __('Email Address') }}</label>
+    function hexToRgba($hex, $alpha) {
+        $hex = str_replace('#', '', $hex);
+        $r = hexdec(substr($hex, 0, 2));
+        $g = hexdec(substr($hex, 2, 2));
+        $b = hexdec(substr($hex, 4, 2));
+        return "rgba($r, $g, $b, $alpha)";
+    }
+@endphp
+<style>
+    .auth-wrapper {
+        min-height: 100vh;
+        display: flex;
+        background: #ffffff;
+    }
 
-                            <div class="col-md-6">
-                                <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus>
+    .auth-left {
+        flex: 1;
+        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $hoverColor }} 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem;
+        position: relative;
+        overflow: hidden;
+    }
 
-                                @error('email')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
+    .auth-left::before {
+        content: '';
+        position: absolute;
+        width: 500px;
+        height: 500px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 50%;
+        top: -200px;
+        right: -200px;
+    }
 
-                        <div class="row mb-3">
-                            <label for="password" class="col-md-4 col-form-label text-md-end">{{ __('Password') }}</label>
+    .auth-left::after {
+        content: '';
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 50%;
+        bottom: -100px;
+        left: -100px;
+    }
 
-                            <div class="col-md-6">
-                                <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="current-password">
+    .auth-left-content {
+        position: relative;
+        z-index: 2;
+        color: white;
+        max-width: 500px;
+    }
 
-                                @error('password')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
+    .auth-left-content h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        line-height: 1.2;
+    }
 
-                        <div class="row mb-3">
-                            <div class="col-md-6 offset-md-4">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
+    .auth-left-content p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        line-height: 1.6;
+    }
 
-                                    <label class="form-check-label" for="remember">
-                                        {{ __('Remember Me') }}
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
+    .auth-right {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem;
+        background: #f8f9fa;
+    }
 
-                        <div class="row mb-0">
-                            <div class="col-md-8 offset-md-4">
-                                <button type="submit" class="btn btn-primary">
-                                    {{ __('Login') }}
-                                </button>
+    .auth-form-container {
+        width: 100%;
+        max-width: 450px;
+        background: white;
+        padding: 3rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+    }
 
-                                @if (Route::has('password.request'))
-                                    <a class="btn btn-link" href="{{ route('password.request') }}">
-                                        {{ __('Forgot Your Password?') }}
-                                    </a>
-                                @endif
-                            </div>
-                        </div>
-                    </form>
-                </div>
+    .auth-form-header {
+        margin-bottom: 2rem;
+    }
+
+    .auth-form-header h2 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 0.5rem;
+    }
+
+    .auth-form-header p {
+        color: #6c757d;
+        margin: 0;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .form-control {
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+        border: 1.5px solid #e0e0e0;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        border-color: {{ $primaryColor }};
+        box-shadow: 0 0 0 0.2rem {{ $focusShadow }};
+    }
+
+    .form-control.is-invalid {
+        border-color: #dc3545;
+    }
+
+    .btn-auth-primary {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        font-size: 1rem;
+        font-weight: 600;
+        background: {{ $primaryColor }};
+        border: none;
+        border-radius: 8px;
+        color: white;
+        transition: all 0.3s ease;
+        margin-top: 1rem;
+    }
+
+    .btn-auth-primary:hover {
+        background: {{ $hoverColor }};
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px {{ $hoverShadow }};
+    }
+
+    .btn-auth-primary:active {
+        transform: translateY(0);
+    }
+
+    .auth-link {
+        color: {{ $primaryColor }};
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.3s ease;
+    }
+
+    .auth-link:hover {
+        color: {{ $hoverColor }};
+        text-decoration: none;
+    }
+
+    .form-check-input:checked {
+        background-color: {{ $primaryColor }};
+        border-color: {{ $primaryColor }};
+    }
+
+    .form-check-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .divider {
+        text-align: center;
+        margin: 1.5rem 0;
+        color: #6c757d;
+        font-size: 0.85rem;
+    }
+
+    .brand-logo {
+        display: inline-block;
+        max-width: 120px;
+        max-height: 80px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 0.75rem;
+        margin-bottom: 2rem;
+    }
+
+    .brand-logo img {
+        width: 100%;
+        height: auto;
+        object-fit: contain;
+    }
+
+    .brand-logo .brand-initials {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 80px;
+        height: 60px;
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: white;
+    }
+
+    @media (max-width: 991px) {
+        .auth-left {
+            display: none;
+        }
+
+        .auth-right {
+            flex: 1;
+            padding: 2rem 1rem;
+        }
+
+        .auth-form-container {
+            padding: 2rem 1.5rem;
+        }
+    }
+</style>
+
+<div class="auth-wrapper">
+    <div class="auth-left">
+        <div class="auth-left-content">
+            <div class="brand-logo">
+                @if(appsettings()->logo)
+                    <img src="data:image/jpeg;base64,{{ appsettings()->logo }}" alt="{{ appsettings()->site_abbreviation ?? 'Logo' }}" />
+                @else
+                    <span class="brand-initials">{{ substr(appsettings()->site_abbreviation ?? 'CH', 0, 2) }}</span>
+                @endif
             </div>
+            <h1>Welcome back to {{ appsettings()->site_abbreviation ?? 'CoreHealth' }}</h1>
+            <p>Secure, efficient healthcare management at your fingertips. Access your dashboard and continue providing excellent patient care.</p>
+        </div>
+    </div>
+
+    <div class="auth-right">
+        <div class="auth-form-container">
+            <div class="auth-form-header">
+                <h2>Sign In</h2>
+                <p>Enter your credentials to access your account</p>
+            </div>
+
+            <form method="POST" action="{{ route('login') }}">
+                @csrf
+
+                <div class="mb-3">
+                    <label for="email" class="form-label">{{ __('Email Address') }}</label>
+                    <input id="email" type="email" class="form-control @error('email') is-invalid @enderror"
+                           name="email" value="{{ old('email') }}" required autocomplete="email" autofocus
+                           placeholder="Enter your email">
+
+                    @error('email')
+                        <span class="invalid-feedback" role="alert">
+                            <strong>{{ $message }}</strong>
+                        </span>
+                    @enderror
+                </div>
+
+                <div class="mb-3">
+                    <label for="password" class="form-label">{{ __('Password') }}</label>
+                    <input id="password" type="password" class="form-control @error('password') is-invalid @enderror"
+                           name="password" required autocomplete="current-password"
+                           placeholder="Enter your password">
+
+                    @error('password')
+                        <span class="invalid-feedback" role="alert">
+                            <strong>{{ $message }}</strong>
+                        </span>
+                    @enderror
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="remember" id="remember"
+                               {{ old('remember') ? 'checked' : '' }}>
+                        <label class="form-check-label" for="remember">
+                            {{ __('Remember Me') }}
+                        </label>
+                    </div>
+
+                    @if (Route::has('password.request'))
+                        <a class="auth-link" href="{{ route('password.request') }}">
+                            {{ __('Forgot Password?') }}
+                        </a>
+                    @endif
+                </div>
+
+                <button type="submit" class="btn btn-auth-primary">
+                    {{ __('Sign In') }}
+                </button>
+
+                @if (Route::has('register'))
+                    <div class="text-center mt-4">
+                        <span class="text-muted">Don't have an account? </span>
+                        <a class="auth-link" href="{{ route('register') }}">
+                            {{ __('Sign Up') }}
+                        </a>
+                    </div>
+                @endif
+            </form>
         </div>
     </div>
 </div>
