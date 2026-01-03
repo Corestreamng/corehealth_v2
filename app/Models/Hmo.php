@@ -13,8 +13,14 @@ class Hmo extends Model
         'name',
         'desc',
         'status',
-        'discount'
+        'discount',
+        'hmo_scheme_id'
     ];
+
+    public function scheme()
+    {
+        return $this->belongsTo(HmoScheme::class, 'hmo_scheme_id');
+    }
 
     public function patients(){
         return $this->hasMany(patient::class,'hmo_id','id');

@@ -22,6 +22,7 @@
                                 <tr>
                                     <th>S/N</th>
                                     <th>Name</th>
+                                    <th>Scheme</th>
                                     <th>Discount</th>
                                     <th>Edit</th>
                                     <th>Delete</th>
@@ -96,6 +97,9 @@
                     },
                     {
                         "data": "name"
+                    },
+                    {
+                        "data": "scheme"
                     },
                     {
                         "data": "discount"

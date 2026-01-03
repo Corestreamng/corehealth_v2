@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Hmo;
+use App\Models\HmoScheme;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -23,10 +24,13 @@ class HmoController extends Controller
 
     public function listHmo()
     {
-        $hmos = Hmo::orderBy('name', 'ASC')->get();
+        $hmos = Hmo::with('scheme')->orderBy('name', 'ASC')->get();
 
         return Datatables::of($hmos)
             ->addIndexColumn()
+            ->addColumn('scheme', function($hmo) {
+                return $hmo->scheme ? $hmo->scheme->name : 'N/A';
+            })
             ->addColumn('edit',   '<a href="{{ route(\'hmo.edit\', $id)}}" class="btn btn-info btn-sm" ><i class="fa fa-pencil"></i> Edit</a>')
             ->addColumn('delete', '<button type="button" class="delete-modal btn btn-danger btn-sm" data-toggle="modal" data-id="{{$id}}"><i class="fa fa-trash"></i> Delete</button>')
             ->rawColumns(['edit', 'delete'])
@@ -40,7 +44,8 @@ class HmoController extends Controller
      */
     public function create()
     {
-        return view('admin.hmo.create');
+        $schemes = HmoScheme::where('status', 1)->orderBy('name', 'ASC')->get();
+        return view('admin.hmo.create', compact('schemes'));
     }
 
     /**
@@ -68,6 +73,7 @@ class HmoController extends Controller
                 $hmo->name        = $request->name;
                 $hmo->desc = $request->description;
                 $hmo->discount    = $request->discount;
+                $hmo->hmo_scheme_id = $request->hmo_scheme_id ?? 1;
 
                 if ($hmo->save()) {
                     $msg = 'The HMO [' . $hmo->name . '] was successfully Saved.';
@@ -100,7 +106,8 @@ class HmoController extends Controller
      */
     public function edit(Hmo $hmo)
     {
-        return view('admin.hmo.edit', compact('hmo'));
+        $schemes = HmoScheme::where('status', 1)->orderBy('name', 'ASC')->get();
+        return view('admin.hmo.edit', compact('hmo', 'schemes'));
     }
 
     /**
@@ -128,6 +135,7 @@ class HmoController extends Controller
                 $hmo->name        = $request->name;
                 $hmo->desc        = $request->description;
                 $hmo->discount    = $request->discount;
+                $hmo->hmo_scheme_id = $request->hmo_scheme_id ?? $hmo->hmo_scheme_id ?? 1;
 
                 if ($hmo->update()) {
                     $msg = 'The HMO [' . $hmo->name . '] was successfully Updated.';

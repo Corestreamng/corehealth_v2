@@ -263,7 +263,7 @@ class PatientController extends Controller
     {
         try {
             $all_patients = patient::with(['user'])->where('status', 1);
-            $hmos = Hmo::where('status', 1)->get();
+            $hmos = Hmo::with('scheme')->where('status', 1)->get()->groupBy('scheme.name');
             return view('admin.receptionist.new_patient')->with(['all_patients' => $all_patients, 'hmos' => $hmos]);
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
@@ -530,7 +530,7 @@ class PatientController extends Controller
                 $patient->ethnicity = $request->ethnicity ?? null;
                 $patient->gender = $request->gender ?? null;
                 $patient->genotype = $request->genotype ?? null;
-                $patient->hmo_id = $request->hmo_id ?? null;
+                $patient->hmo_id = $request->hmo_id ?? 1; // Default to Private HMO (id=1)
                 $patient->hmo_no = $request->hmo_no ?? null;
                 $patient->misc = $request->misc ?? null;
                 $patient->nationality = $request->nationality ?? null;
@@ -666,7 +666,7 @@ class PatientController extends Controller
     public function edit(Patient $patient)
     {
         try {
-            $hmos = Hmo::where('status', 1)->get();
+            $hmos = Hmo::with('scheme')->where('status', 1)->get()->groupBy('scheme.name');
             return view('admin.patients.edit', compact('patient', 'hmos'));
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
@@ -822,7 +822,7 @@ class PatientController extends Controller
                 $patient->ethnicity = $request->ethnicity ?? null;
                 $patient->gender = $request->gender ?? null;
                 $patient->genotype = $request->genotype ?? null;
-                $patient->hmo_id = $request->hmo_id ?? null;
+                $patient->hmo_id = $request->hmo_id ?? 1; // Default to Private HMO (id=1)
                 $patient->hmo_no = $request->hmo_no ?? null;
                 $patient->misc = $request->misc ?? null;
                 $patient->nationality = $request->nationality ?? null;

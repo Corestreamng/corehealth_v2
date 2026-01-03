@@ -4,14 +4,14 @@
         <li class="nav-item nav-brand">
             <div class="text-center w-100">
                 @if(appsettings()->logo)
-                    <img src="data:image/jpeg;base64,{{ appsettings()->logo }}" alt="logo" style="max-width: 80px; height: auto; border-radius: 12px; margin-bottom: 0.5rem;" />
+                    <img src="data:image/jpeg;base64,{{ appsettings()->logo }}" alt="logo" class="nav-brand-logo" />
                 @else
-                    <div style="display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 12px; background: rgba(255, 255, 255, 0.2); font-size: 1.5rem; font-weight: 700; color: white; margin-bottom: 0.5rem;">
+                    <div class="nav-brand-abbr">
                         {{ strtoupper(substr(appsettings()->site_abbreviation ?? 'CH', 0, 2)) }}
                     </div>
                 @endif
-                <h6 class="mb-1" style="color: white; font-weight: 600; font-size: 0.9rem;">{{ env('APP_NAME') }}</h6>
-                <p class="mb-0" style="color: rgba(255, 255, 255, 0.7); font-size: 0.75rem;">v{{ appsettings()->version ?? env('APP_VER') }}</p>
+                <h6 class="mb-1 nav-brand-title">{{ env('APP_NAME') }}</h6>
+                <p class="mb-0 nav-brand-version">v{{ appsettings()->version ?? env('APP_VER') }}</p>
             </div>
         </li>
 
@@ -42,13 +42,13 @@
                 <span class="nav-item-head">Receptionist</span>
             </li>
             <li class="nav-item {{ request()->routeIs('patient.*') ? 'active' : '' }}">
-                <a class="nav-link {{ request()->routeIs('patient.*') ? 'active' : '' }}" data-toggle="collapse" href="#new_patient" aria-expanded="{{ request()->routeIs('patient.*') ? 'true' : 'false' }}"
-                    aria-controls="new_patient">
+                <a class="nav-link {{ request()->routeIs('patient.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#new_patient_receptionist" data-bs-target="#new_patient_receptionist" aria-expanded="{{ request()->routeIs('patient.*') ? 'true' : 'false' }}"
+                    aria-controls="new_patient_receptionist">
                     <i class="mdi mdi-account-multiple-outline menu-icon"></i>
                     <span class="menu-title">Patients</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
-                <div class="collapse {{ request()->routeIs('patient.*') ? 'show' : '' }}" id="new_patient">
+                <div class="collapse {{ request()->routeIs('patient.*') ? 'show' : '' }}" id="new_patient_receptionist">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('patient.create') ? 'active' : '' }}" href="{{ route('patient.create') }}">New Registration</a>
@@ -60,13 +60,13 @@
                 </div>
             </li>
             <li class="nav-item {{ request()->routeIs('add-to-queue') ? 'active' : '' }}">
-                <a class="nav-link {{ request()->routeIs('add-to-queue') ? 'active' : '' }}" data-toggle="collapse" href="#returning_patient" aria-expanded="{{ request()->routeIs('add-to-queue') ? 'true' : 'false' }}"
-                    aria-controls="returning_patient">
+                <a class="nav-link {{ request()->routeIs('add-to-queue') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#returning_patient_receptionist" data-bs-target="#returning_patient_receptionist" aria-expanded="{{ request()->routeIs('add-to-queue') ? 'true' : 'false' }}"
+                    aria-controls="returning_patient_receptionist">
                     <i class="mdi mdi-account-search-outline menu-icon"></i>
                     <span class="menu-title">Patient Lookup</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
-                <div class="collapse {{ request()->routeIs('add-to-queue') ? 'show' : '' }}" id="returning_patient">
+                <div class="collapse {{ request()->routeIs('add-to-queue') ? 'show' : '' }}" id="returning_patient_receptionist">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('add-to-queue') ? 'active' : '' }}" href="{{ route('add-to-queue') }}">Search</a>
@@ -75,13 +75,13 @@
                 </div>
             </li>
             <li class="nav-item {{ request()->routeIs('admission-requests.*', 'beds.*') ? 'active' : '' }}">
-                <a class="nav-link {{ request()->routeIs('admission-requests.*', 'beds.*') ? 'active' : '' }}" data-toggle="collapse" href="#admissions" aria-expanded="{{ request()->routeIs('admission-requests.*', 'beds.*') ? 'true' : 'false' }}"
-                    aria-controls="admissions">
-                    <i class="mdi mdi-bed-outline menu-icon"></i>
+                <a class="nav-link {{ request()->routeIs('admission-requests.*', 'beds.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#admissions_receptionist" data-bs-target="#admissions_receptionist" aria-expanded="{{ request()->routeIs('admission-requests.*', 'beds.*') ? 'true' : 'false' }}"
+                    aria-controls="admissions_receptionist">
+                    <i class="mdi mdi-hotel menu-icon"></i>
                     <span class="menu-title">Admissions</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
-                <div class="collapse {{ request()->routeIs('admission-requests.*', 'beds.*') ? 'show' : '' }}" id="admissions">
+                <div class="collapse {{ request()->routeIs('admission-requests.*', 'beds.*') ? 'show' : '' }}" id="admissions_receptionist">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('admission-requests.index') ? 'active' : '' }}" href="{{ route('admission-requests.index') }}">Bed requests</a>
@@ -93,9 +93,9 @@
                 </div>
             </li>
             <li class="nav-item">
-                <a class="nav-link" data-toggle="collapse" href="#bookings" aria-expanded="false"
+                <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#bookings" data-bs-target="#bookings" aria-expanded="false"
                     aria-controls="bookings">
-                    <i class="mdi mdi-calendar-clock-outline menu-icon"></i>
+                    <i class="mdi mdi-calendar-check menu-icon"></i>
                     <span class="menu-title">Bookings</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
@@ -111,7 +111,7 @@
                 </div>
             </li>
             <li class="nav-item {{ request()->routeIs('product-or-service-request.*', 'my-transactions') ? 'active' : '' }}">
-                <a class="nav-link {{ request()->routeIs('product-or-service-request.*', 'my-transactions') ? 'active' : '' }}" data-toggle="collapse" href="#acc_patient" aria-expanded="{{ request()->routeIs('product-or-service-request.*', 'my-transactions') ? 'true' : 'false' }}"
+                <a class="nav-link {{ request()->routeIs('product-or-service-request.*', 'my-transactions') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#acc_patient" data-bs-target="#acc_patient" aria-expanded="{{ request()->routeIs('product-or-service-request.*', 'my-transactions') ? 'true' : 'false' }}"
                     aria-controls="acc_patient">
                     <i class="mdi mdi-cash-multiple menu-icon"></i>
                     <span class="menu-title">Accounts</span>
@@ -132,7 +132,7 @@
                 </div>
             </li>
             <li class="nav-item {{ request()->routeIs('allPrevEncounters') ? 'active' : '' }}">
-                <a class="nav-link {{ request()->routeIs('allPrevEncounters') ? 'active' : '' }}" data-toggle="collapse" href="#prev_consult" aria-expanded="{{ request()->routeIs('allPrevEncounters') ? 'true' : 'false' }}"
+                <a class="nav-link {{ request()->routeIs('allPrevEncounters') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#prev_consult" data-bs-target="#prev_consult" aria-expanded="{{ request()->routeIs('allPrevEncounters') ? 'true' : 'false' }}"
                     aria-controls="prev_consult">
                     <i class="mdi mdi-stethoscope menu-icon"></i>
                     <span class="menu-title">Consultations</span>
@@ -152,7 +152,7 @@
                 <span class="nav-item-head">Administration</span>
             </li>
             <li class="nav-item {{ request()->routeIs('roles.*', 'permissions.*') ? 'active' : '' }}">
-                <a class="nav-link {{ request()->routeIs('roles.*', 'permissions.*') ? 'active' : '' }}" data-toggle="collapse" href="#access" aria-expanded="{{ request()->routeIs('roles.*', 'permissions.*') ? 'true' : 'false' }}" aria-controls="access">
+                <a class="nav-link {{ request()->routeIs('roles.*', 'permissions.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#access" data-bs-target="#access" aria-expanded="{{ request()->routeIs('roles.*', 'permissions.*') ? 'true' : 'false' }}" aria-controls="access">
                     <i class="mdi mdi-shield-account menu-icon"></i>
                     <span class="menu-title">Access Control</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
@@ -170,13 +170,13 @@
             </li>
             <li class="nav-item {{ request()->routeIs('hospital-config.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('hospital-config.*') ? 'active' : '' }}" href="{{ route('hospital-config.index') }}">
-                    <i class="mdi mdi-office-building-cog-outline menu-icon"></i>
+                    <i class="mdi mdi-cogs menu-icon"></i>
                     <span class="menu-title">Hospital Config</span>
                 </a>
             </li>
             <li class="nav-item {{ request()->routeIs('staff.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('staff.*') ? 'active' : '' }}" href="{{ route('staff.index') }}">
-                    <i class="mdi mdi-badge-account-outline menu-icon"></i>
+                    <i class="mdi mdi-account-group menu-icon"></i>
                     <span class="menu-title">Staff Management</span>
                 </a>
             </li>
@@ -194,18 +194,18 @@
             </li>
             <li class="nav-item {{ request()->routeIs('hmo.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('hmo.*') ? 'active' : '' }}" href="{{ route('hmo.index') }}">
-                    <i class="mdi mdi-shield-heart-outline menu-icon"></i>
+                    <i class="mdi mdi-shield-check menu-icon"></i>
                     <span class="menu-title">HMO Management</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" data-toggle="collapse" href="#new_patient" aria-expanded="false"
-                    aria-controls="new_patient">
+                <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#new_patient_admin" data-bs-target="#new_patient_admin" aria-expanded="false"
+                    aria-controls="new_patient_admin">
                     <i class="mdi mdi-crosshairs-gps menu-icon"></i>
                     <span class="menu-title">Patients</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
-                <div class="collapse" id="new_patient">
+                <div class="collapse" id="new_patient_admin">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('patient.index') }}">All Patients</a>
@@ -214,7 +214,7 @@
                 </div>
             </li>
             <li class="nav-item {{ request()->routeIs('transactions') ? 'active' : '' }}">
-                <a class="nav-link {{ request()->routeIs('transactions') ? 'active' : '' }}" data-toggle="collapse" href="#all-finances" aria-expanded="{{ request()->routeIs('transactions') ? 'true' : 'false' }}"
+                <a class="nav-link {{ request()->routeIs('transactions') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#all-finances" data-bs-target="#all-finances" aria-expanded="{{ request()->routeIs('transactions') ? 'true' : 'false' }}"
                     aria-controls="finances">
                     <i class="mdi mdi-chart-line menu-icon"></i>
                     <span class="menu-title">Finance</span>
@@ -234,7 +234,7 @@
                 <span class="nav-item-head">Store/ Pharmacy</span>
             </li>
             <li class="nav-item {{ request()->routeIs('product-requests.*') ? 'active' : '' }}">
-                <a class="nav-link {{ request()->routeIs('product-requests.*') ? 'active' : '' }}" data-toggle="collapse" href="#pharm_queue" aria-expanded="{{ request()->routeIs('product-requests.*') ? 'true' : 'false' }}"
+                <a class="nav-link {{ request()->routeIs('product-requests.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#pharm_queue" data-bs-target="#pharm_queue" aria-expanded="{{ request()->routeIs('product-requests.*') ? 'true' : 'false' }}"
                     aria-controls="pharm_queue">
                     <i class="mdi mdi-format-list-checks menu-icon"></i>
                     <span class="menu-title">Queue</span>
@@ -253,7 +253,7 @@
                 </div>
             </li>
             <li class="nav-item {{ request()->routeIs('product-category.*', 'stores.*', 'products.*') ? 'active' : '' }}">
-                <a class="nav-link {{ request()->routeIs('product-category.*', 'stores.*', 'products.*') ? 'active' : '' }}" data-toggle="collapse" href="#products" aria-expanded="{{ request()->routeIs('product-category.*', 'stores.*', 'products.*') ? 'true' : 'false' }}"
+                <a class="nav-link {{ request()->routeIs('product-category.*', 'stores.*', 'products.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#products" data-bs-target="#products" aria-expanded="{{ request()->routeIs('product-category.*', 'stores.*', 'products.*') ? 'true' : 'false' }}"
                     aria-controls="products">
                     <i class="mdi mdi-package-variant menu-icon"></i>
                     <span class="menu-title">Product Management</span>
@@ -274,13 +274,13 @@
                 </div>
             </li>
             <li class="nav-item">
-                <a class="nav-link" data-toggle="collapse" href="#new_patient" aria-expanded="false"
-                    aria-controls="new_patient">
+                <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#new_patient_store" data-bs-target="#new_patient_store" aria-expanded="false"
+                    aria-controls="new_patient_store">
                     <i class="mdi mdi-crosshairs-gps menu-icon"></i>
                     <span class="menu-title">Patients</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
-                <div class="collapse" id="new_patient">
+                <div class="collapse" id="new_patient_store">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('patient.index') }}">All Patients</a>
@@ -294,7 +294,7 @@
                 <span class="nav-item-head">Nursing</span>
             </li>
             <li class="nav-item {{ request()->routeIs('vitals.*') ? 'active' : '' }}">
-                <a class="nav-link {{ request()->routeIs('vitals.*') ? 'active' : '' }}" data-toggle="collapse" href="#nursing_" aria-expanded="{{ request()->routeIs('vitals.*') ? 'true' : 'false' }}"
+                <a class="nav-link {{ request()->routeIs('vitals.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#nursing_" data-bs-target="#nursing_" aria-expanded="{{ request()->routeIs('vitals.*') ? 'true' : 'false' }}"
                     aria-controls="nursing_">
                     <i class="mdi mdi-clipboard-pulse-outline menu-icon"></i>
                     <span class="menu-title">Queue</span>
@@ -310,14 +310,15 @@
                         </li>
                     </ul>
                 </div>
+            </li>
             <li class="nav-item">
-                <a class="nav-link" data-toggle="collapse" href="#admissions" aria-expanded="false"
-                    aria-controls="admissions">
+                <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#admissions_nursing" data-bs-target="#admissions_nursing" aria-expanded="false"
+                    aria-controls="admissions_nursing">
                     <i class="mdi mdi-crosshairs-gps menu-icon"></i>
                     <span class="menu-title">Admissions</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
-                <div class="collapse" id="admissions">
+                <div class="collapse" id="admissions_nursing">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('admission-requests.index') }}">Bed requests</a>
@@ -328,15 +329,14 @@
                     </ul>
                 </div>
             </li>
-            </li>
             <li class="nav-item">
-                <a class="nav-link" data-toggle="collapse" href="#new_patient" aria-expanded="false"
-                    aria-controls="new_patient">
+                <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#new_patient_nursing" data-bs-target="#new_patient_nursing" aria-expanded="false"
+                    aria-controls="new_patient_nursing">
                     <i class="mdi mdi-crosshairs-gps menu-icon"></i>
                     <span class="menu-title">Patients</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
-                <div class="collapse" id="new_patient">
+                <div class="collapse" id="new_patient_nursing">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('patient.index') }}">All Patients</a>
@@ -345,13 +345,13 @@
                 </div>
             </li>
             <li class="nav-item">
-                <a class="nav-link" data-toggle="collapse" href="#returning_patient" aria-expanded="false"
-                    aria-controls="returning_patient">
+                <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#returning_patient_nursing" data-bs-target="#returning_patient_nursing" aria-expanded="false"
+                    aria-controls="returning_patient_nursing">
                     <i class="mdi mdi-crosshairs-gps menu-icon"></i>
                     <span class="menu-title">Patient Lookup</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
-                <div class="collapse" id="returning_patient">
+                <div class="collapse" id="returning_patient_nursing">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('add-to-queue') }}">Search</a>
@@ -365,7 +365,7 @@
                 <span class="nav-item-head">LAB/ INVESTIGATIONS</span>
             </li>
             <li class="nav-item">
-                <a class="nav-link" data-toggle="collapse" href="#services" aria-expanded="false"
+                <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#services" data-bs-target="#services" aria-expanded="false"
                     aria-controls="services">
                     <i class="mdi mdi-flask-outline menu-icon"></i>
                     <span class="menu-title">Services Management</span>
@@ -383,7 +383,7 @@
                 </div>
             </li>
             <li class="nav-item">
-                <a class="nav-link" data-toggle="collapse" href="#lab_queue" aria-expanded="false"
+                <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#lab_queue" data-bs-target="#lab_queue" aria-expanded="false"
                     aria-controls="lab_queue">
                     <i class="mdi mdi-test-tube menu-icon"></i>
                     <span class="menu-title">Queue</span>
@@ -402,13 +402,13 @@
                 </div>
             </li>
             <li class="nav-item">
-                <a class="nav-link" data-toggle="collapse" href="#new_patient" aria-expanded="false"
-                    aria-controls="new_patient">
+                <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#new_patient_lab" data-bs-target="#new_patient_lab" aria-expanded="false"
+                    aria-controls="new_patient_lab">
                     <i class="mdi mdi-crosshairs-gps menu-icon"></i>
                     <span class="menu-title">Patients</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
-                <div class="collapse" id="new_patient">
+                <div class="collapse" id="new_patient_lab">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('patient.index') }}">All Patients</a>
@@ -425,7 +425,7 @@
                 <span class="nav-item-head">Doctors</span>
             </li>
             <li class="nav-item">
-                <a class="nav-link" data-toggle="collapse" href="#consultations" aria-expanded="false"
+                <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#consultations" data-bs-target="#consultations" aria-expanded="false"
                     aria-controls="consultations">
                     <i class="mdi mdi-doctor menu-icon"></i>
                     <span class="menu-title">Consultations</span>
@@ -440,13 +440,13 @@
                 </div>
             </li>
             <li class="nav-item">
-                <a class="nav-link" data-toggle="collapse" href="#new_patient" aria-expanded="false"
-                    aria-controls="new_patient">
+                <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#new_patient_doctor" data-bs-target="#new_patient_doctor" aria-expanded="false"
+                    aria-controls="new_patient_doctor">
                     <i class="mdi mdi-crosshairs-gps menu-icon"></i>
                     <span class="menu-title">Patients</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
-                <div class="collapse" id="new_patient">
+                <div class="collapse" id="new_patient_doctor">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('patient.index') }}">All Patients</a>
@@ -455,13 +455,13 @@
                 </div>
             </li>
             <li class="nav-item">
-                <a class="nav-link" data-toggle="collapse" href="#returning_patient" aria-expanded="false"
-                    aria-controls="returning_patient">
+                <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#returning_patient_doctor" data-bs-target="#returning_patient_doctor" aria-expanded="false"
+                    aria-controls="returning_patient_doctor">
                     <i class="mdi mdi-crosshairs-gps menu-icon"></i>
                     <span class="menu-title">Patient Lookup</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
-                <div class="collapse" id="returning_patient">
+                <div class="collapse" id="returning_patient_doctor">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('add-to-queue') }}">Search</a>
@@ -472,24 +472,27 @@
         @endhasanyrole
         </div>
 
-        <!-- Bottom User Profile Section - Fixed like Paystack Settings -->
-        <li class="nav-item nav-profile">
-            <a href="#" class="d-flex align-items-center text-decoration-none" style="color: white;">
-                <img src="{!! url('storage/image/user/'.Auth::user()->filename) !!}" alt="profile" />
-                <div class="ml-3 flex-grow-1" style="min-width: 0;">
-                    <div class="nav-profile-text" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                        {{ Auth::user()->firstname }} {{ Auth::user()->surname }}
+        <!-- Bottom User Profile Section -->
+        <li class="nav-item nav-profile pt-3 mt-auto border-top" style="border-color: rgba(255,255,255,0.1) !important;">
+            <div class="px-3 pb-3">
+                <div class="d-flex align-items-center mb-3">
+                    <img src="{!! url('storage/image/user/'.Auth::user()->filename) !!}" alt="profile" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover; border: 2px solid rgba(255,255,255,0.1);" />
+                    <div class="ml-3 overflow-hidden">
+                        <div class="font-weight-bold text-white text-truncate" style="font-size: 0.95rem;">
+                            {{ Auth::user()->firstname }} {{ Auth::user()->surname }}
+                        </div>
+                        <div class="text-muted small text-truncate" style="opacity: 0.7;">{{ Auth::user()->category->name ?? '' }}</div>
                     </div>
-                    <span style="display: block;">{{ Auth::user()->is_admin }}</span>
                 </div>
+
                 <a href="{{ route('logout') }}"
-                    onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
-                    class="ml-2"
-                    style="color: rgba(255, 255, 255, 0.7); font-size: 1.2rem;"
-                    title="Logout">
-                    <i class="mdi mdi-logout"></i>
+                   onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
+                   class="btn btn-block d-flex align-items-center justify-content-center py-2"
+                   style="background: rgba(255, 50, 50, 0.15); border: 1px solid rgba(255, 50, 50, 0.2); color: #ff6b6b; transition: all 0.3s;">
+                    <i class="mdi mdi-logout mr-2"></i>
+                    <span style="font-weight: 500;">Logout</span>
                 </a>
-            </a>
+            </div>
             <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
                 @csrf
             </form>

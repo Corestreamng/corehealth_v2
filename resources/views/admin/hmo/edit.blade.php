@@ -34,6 +34,20 @@
                         </div>
                     </div>
                     <div class="form-group">
+                        <label for="hmo_scheme_id" class="control-label">HMO Scheme Category <i class="text-danger">*</i></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="mdi mdi-shield-outline"></i></span>
+                            <select name="hmo_scheme_id" id="hmo_scheme_id" class="form-control" required>
+                                <option value="">Select Scheme Category</option>
+                                @foreach ($schemes as $scheme)
+                                    <option value="{{ $scheme->id }}" {{ old('hmo_scheme_id', $hmo->hmo_scheme_id ?? 1) == $scheme->id ? 'selected' : '' }}>
+                                        {{ $scheme->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
                         <label for="discount" class="control-label">Discount(%) <i class="text-danger">*</i></label>
                         <div>
                             <input type="number" class="form-control" id="discount" name="discount" min='0' max='100'
