@@ -157,80 +157,104 @@ class PatientController extends Controller
 
     public function listReturningPatients(Request $request)
     {
-
         try {
-            // dd($request->all());
-            $rules =
-                [
-                    'q' => 'required',
+            // Get search query
+            $q = trim($request->q ?? '');
 
-                ];
-            $v = Validator::make($request->all(), $rules);
-
-            if ($v->fails()) {
-                return Response::json(array('errors' => $v->getMessageBag()->toArray()));
-            } else {
-                $q = (!empty($request->q)) ? ($request->q) : ('');
-                # code...
-                // $postsQuery = DB::select("select * from `patients` left join `users` on `patients`.`user_id` = `users`.`id`
-                //     where `patients`.`status` != :visibility and (`users`.`surname` like :q1 or `users`.`firstname` like :q2
-                //     or `users`.`othername` like :q3 or `patients`.`file_no` like :q4)", array('visibility' => 1, 'q1' => '%' . $q . '%', 'q2' => '%' . $q . '%', 'q3' => '%' . $q . '%', 'q4' => '%' . $q . '%'));
-
-                $postsQuery = DB::select("select * from `patients` left join `users` on `patients`.`user_id` = `users`.`id`
-                    where (`users`.`surname` like :q1 or `users`.`firstname` like :q2
-                    or `users`.`othername` like :q3 or `patients`.`file_no` like :q4)", array('q1' => '%' . $q . '%', 'q2' => '%' . $q . '%', 'q3' => '%' . $q . '%', 'q4' => '%' . $q . '%'));
-                $list = $postsQuery;
-                return Datatables::of($list)
-                    ->addIndexColumn()
-                    ->addColumn('user_id', function ($list) {
-                        $fullname = $list->surname . " " . $list->firstname . " " . $list->othername;
-                        return $fullname;
-                    })
-                    ->addColumn('hmo', function ($list) {
-                        $patient_hmo = patient::where('user_id', $list->user_id)->first()->hmo_id;
-                        $hmo_name = Hmo::where('id', $patient_hmo)->first()->name ?? 'N/A';
-                        return $hmo_name;
-                    })
-                    ->addColumn('acc_bal', function ($list) {
-                        $patient_acc = patient::where('user_id', $list->user_id)->first();
-                        $patient_acc = (($patient_acc->account) ? json_decode($patient_acc->account)->balance : "");
-                        if ($patient_acc != '') {
-                            if ($patient_acc >= 0) {
-                                $patient_acc_markup = "<span class= 'badge badge-success'>NGN $patient_acc</span>";
-                                return $patient_acc_markup;
-                            } else {
-                                $patient_acc_markup = "<span class= 'badge badge-danger'>NGN $patient_acc</span>";
-                                return $patient_acc_markup;
-                            }
-                        } else {
-                            return "<span class= 'badge badge-secondary'>No Account</span>";
-                        }
-                    })
-                    ->addColumn('phone', function ($list) {
-                        $phone_number = User::where('id', $list->user_id)->first()->phone_number ?? 'N/A';
-                        return $phone_number;
-                    })
-                    ->addColumn(
-                        'process',
-                        function ($list) {
-                            $url = route('getMyDependants', $list->user_id);
-                            $p = patient::where('user_id', $list->user_id)->first();
-
-                            if ($p) {
-                                $url2 = route('patient.show', [$p->id]);
-                            } else {
-                                $url2 = '#';
-                            }
-
-                            return '<a class="btn-success btn-sm" href="' . $url . '">Add To Queue</a> <br><br><a class="btn btn-primary" href="' . $url2 . '"> View Profile</a>';
-                        }
-                    )
-                    ->rawColumns(['user_id', 'process', 'acc_bal'])
-                    ->make(true);
+            // If no search query provided, return empty dataset
+            if (empty($q)) {
+                return Datatables::of(collect([]))->make(true);
             }
+
+            // Split search query into individual words for better matching
+            $searchTerms = array_filter(explode(' ', $q));
+
+            // Build query using Eloquent for better performance and maintainability
+            $query = patient::leftJoin('users', 'patients.user_id', '=', 'users.id')
+                ->select(
+                    'patients.*',
+                    'users.surname',
+                    'users.firstname',
+                    'users.othername'
+                );
+
+            // If multiple search terms, search for each term across all fields
+            if (count($searchTerms) > 1) {
+                $query->where(function($mainQuery) use ($searchTerms) {
+                    foreach ($searchTerms as $term) {
+                        $mainQuery->where(function($subQuery) use ($term) {
+                            $subQuery->where('users.surname', 'like', '%' . $term . '%')
+                                ->orWhere('users.firstname', 'like', '%' . $term . '%')
+                                ->orWhere('users.othername', 'like', '%' . $term . '%')
+                                ->orWhere('patients.phone_no', 'like', '%' . $term . '%')
+                                ->orWhere('patients.file_no', 'like', '%' . $term . '%');
+                        });
+                    }
+                });
+            } else {
+                // Single search term - search across all fields
+                $query->where(function($subQuery) use ($q) {
+                    $subQuery->where('users.surname', 'like', '%' . $q . '%')
+                        ->orWhere('users.firstname', 'like', '%' . $q . '%')
+                        ->orWhere('users.othername', 'like', '%' . $q . '%')
+                        ->orWhere('patients.phone_no', 'like', '%' . $q . '%')
+                        ->orWhere('patients.file_no', 'like', '%' . $q . '%')
+                        ->orWhereRaw("CONCAT(COALESCE(users.surname, ''), ' ', COALESCE(users.firstname, ''), ' ', COALESCE(users.othername, '')) like ?", ['%' . $q . '%']);
+                });
+            }
+
+            // Order by relevance - exact matches first, then partial matches
+            $query->orderByRaw("
+                CASE
+                    WHEN users.surname = ? THEN 1
+                    WHEN users.firstname = ? THEN 2
+                    WHEN patients.file_no = ? THEN 3
+                    WHEN patients.phone_no = ? THEN 4
+                    WHEN users.surname LIKE ? THEN 5
+                    WHEN users.firstname LIKE ? THEN 6
+                    ELSE 7
+                END
+            ", [$q, $q, $q, $q, $q . '%', $q . '%'])
+            ->orderBy('users.surname', 'asc');
+
+            $postsQuery = $query->limit(100)->get(); // Limit to 100 results for performance
+
+            return Datatables::of($postsQuery)
+                ->addIndexColumn()
+                ->addColumn('user_id', function ($list) {
+                    $fullname = trim(($list->surname ?? '') . " " . ($list->firstname ?? '') . " " . ($list->othername ?? ''));
+                    return $fullname;
+                })
+                ->addColumn('hmo', function ($list) {
+                    $hmo_name = Hmo::where('id', $list->hmo_id)->first()->name ?? 'N/A';
+                    return $hmo_name;
+                })
+                ->addColumn('acc_bal', function ($list) {
+                    $patient_acc = $list->account ? (json_decode($list->account)->balance ?? '') : '';
+                    if ($patient_acc !== '') {
+                        if ($patient_acc >= 0) {
+                            return "<span class='badge badge-success'>NGN " . number_format($patient_acc, 2) . "</span>";
+                        } else {
+                            return "<span class='badge badge-danger'>NGN " . number_format($patient_acc, 2) . "</span>";
+                        }
+                    } else {
+                        return "<span class='badge badge-secondary'>No Account</span>";
+                    }
+                })
+                ->addColumn('phone', function ($list) {
+                    return $list->phone_no ?? 'N/A';
+                })
+                ->addColumn('process', function ($list) {
+                    $url = route('getMyDependants', $list->user_id);
+                    $url2 = route('patient.show', [$list->id]);
+
+                    return '<a class="btn btn-success btn-sm" href="' . $url . '">Add To Queue</a> <br><br><a class="btn btn-primary btn-sm" href="' . $url2 . '"> View Profile</a>';
+                })
+                ->rawColumns(['user_id', 'process', 'acc_bal'])
+                ->make(true);
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
-            return redirect()->back()->withInput()->with('error', $e->getMessage());
+            return response()->json(['error' => 'An error occurred while searching patients.'], 500);
         }
     }
 

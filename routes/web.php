@@ -184,6 +184,8 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('assign-bed', [AdmissionRequestController::class, 'assignBed'])->name('assign-bed');
         Route::post('assign-bill', [AdmissionRequestController::class, 'assignBill'])->name('assign-bill');
         Route::get('services-list', [ServiceController::class, 'listServices'])->name('services-list');
+        Route::get('services/{id}/build-template', [ServiceController::class, 'buildTemplate'])->name('services.build-template');
+        Route::post('services/{id}/save-template', [ServiceController::class, 'saveTemplate'])->name('services.save-template');
         Route::get('servicess/{id}', [accountsController::class, 'index'])->name('servicess');
         Route::get('services-list/{id}', [accountsController::class, 'services'])->name('service-list');
         Route::get('product-list/{id}', [accountsController::class, 'products'])->name('product-list');

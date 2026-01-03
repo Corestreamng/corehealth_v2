@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\patient;
 use App\Models\Product;
 use App\Models\ProductOrServiceRequest;
+use App\Models\service;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -46,11 +47,14 @@ class LabServiceRequestController extends Controller
             $request->validate([
                 'invest_res_template_submited' => 'required|string',
                 'invest_res_entry_id' => 'required',
+                'invest_res_template_version' => 'required|in:1,2',
+                'invest_res_template_data' => 'nullable|string',
                 'result_attachments.*' => 'nullable|file|max:10240|mimes:pdf,jpg,jpeg,png,doc,docx'
             ]);
 
             $labRequest = LabServiceRequest::findOrFail($request->invest_res_entry_id);
             $isEdit = $request->invest_res_is_edit == '1';
+            $templateVersion = $request->invest_res_template_version;
 
             // If this is an edit, check if we're within the edit time window
             if ($isEdit && $labRequest->result_date) {
@@ -66,19 +70,71 @@ class LabServiceRequestController extends Controller
                 }
             }
 
-            //make all contenteditable section uneditable, so that they wont be editable when they show up in medical history
-            $request->invest_res_template_submited = str_replace('contenteditable="true"', 'contenteditable="false"', $request->invest_res_template_submited);
-            $request->invest_res_template_submited = str_replace("contenteditable='true'", "contenteditable='false'", $request->invest_res_template_submited);
-            $request->invest_res_template_submited = str_replace('contenteditable = "true"', 'contenteditable="false"', $request->invest_res_template_submited);
-            $request->invest_res_template_submited = str_replace("contenteditable ='true'", "contenteditable='false'", $request->invest_res_template_submited);
-            $request->invest_res_template_submited = str_replace('contenteditable= "true"', 'contenteditable="false"', $request->invest_res_template_submited);
+            // Process result based on template version
+            $resultHtml = $request->invest_res_template_submited;
+            $resultData = null;
 
-            //remove all black borders and replace with gray
-            $request->invest_res_template_submited = str_replace(' black', ' gray', $request->invest_res_template_submited);
+            if ($templateVersion == '2' && $request->invest_res_template_data) {
+                // V2 Template: Store structured data and generate HTML for display
+                $structuredData = json_decode($request->invest_res_template_data, true);
+
+                if ($structuredData) {
+                    // Get the service template for generating HTML
+                    $service = service::find($labRequest->service_id);
+                    $template = $service->result_template_v2;
+
+                    if ($template && isset($template['parameters'])) {
+                        // Calculate status for each parameter and generate HTML
+                        $enhancedData = [];
+                        $htmlResult = '<div class="lab-result-v2">';
+                        $htmlResult .= '<table class="table table-bordered">';
+                        $htmlResult .= '<thead><tr><th>Parameter</th><th>Value</th><th>Reference Range</th><th>Status</th></tr></thead>';
+                        $htmlResult .= '<tbody>';
+
+                        foreach ($template['parameters'] as $param) {
+                            if (isset($structuredData[$param['id']])) {
+                                $value = $structuredData[$param['id']];
+                                $status = $this->determineParameterStatus($param, $value);
+
+                                $enhancedData[$param['id']] = [
+                                    'value' => $value,
+                                    'status' => $status
+                                ];
+
+                                // Generate HTML row
+                                $htmlResult .= '<tr>';
+                                $htmlResult .= '<td><strong>' . htmlspecialchars($param['name']) . '</strong>';
+                                if (isset($param['unit']) && $param['unit']) {
+                                    $htmlResult .= ' <small>(' . htmlspecialchars($param['unit']) . ')</small>';
+                                }
+                                $htmlResult .= '</td>';
+                                $htmlResult .= '<td>' . htmlspecialchars($this->formatValue($param['type'], $value)) . '</td>';
+                                $htmlResult .= '<td>' . $this->formatReferenceRange($param) . '</td>';
+                                $htmlResult .= '<td>' . $this->formatStatus($status) . '</td>';
+                                $htmlResult .= '</tr>';
+                            }
+                        }
+
+                        $htmlResult .= '</tbody></table></div>';
+                        $resultHtml = $htmlResult;
+                        $resultData = $enhancedData;
+                    }
+                }
+            } else {
+                // V1 Template: Process as before
+                //make all contenteditable section uneditable
+                $resultHtml = str_replace('contenteditable="true"', 'contenteditable="false"', $resultHtml);
+                $resultHtml = str_replace("contenteditable='true'", "contenteditable='false'", $resultHtml);
+                $resultHtml = str_replace('contenteditable = "true"', 'contenteditable="false"', $resultHtml);
+                $resultHtml = str_replace("contenteditable ='true'", "contenteditable='false'", $resultHtml);
+                $resultHtml = str_replace('contenteditable= "true"', 'contenteditable="false"', $resultHtml);
+
+                //remove all black borders and replace with gray
+                $resultHtml = str_replace(' black', ' gray', $resultHtml);
+            }
 
             // Handle file uploads
             $attachments = [];
-            // Attachments may already be an array (Laravel auto-decodes JSON columns)
             $existingAttachments = $labRequest->attachments;
             if (is_string($existingAttachments)) {
                 $existingAttachments = json_decode($existingAttachments, true) ?? [];
@@ -121,7 +177,8 @@ class LabServiceRequestController extends Controller
             DB::beginTransaction();
 
             $updateData = [
-                'result' => $request->invest_res_template_submited,
+                'result' => $resultHtml,
+                'result_data' => $resultData,
                 'attachments' => !empty($allAttachments) ? json_encode($allAttachments) : null,
                 'status' => 4
             ];
@@ -141,6 +198,111 @@ class LabServiceRequestController extends Controller
             DB::rollBack();
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage() . ' line' . $e->getLine());
         }
+    }
+
+    /**
+     * Determine the status of a parameter value based on reference range
+     */
+    private function determineParameterStatus($param, $value)
+    {
+        if (!isset($param['reference_range'])) {
+            return 'N/A';
+        }
+
+        $refRange = $param['reference_range'];
+        $type = $param['type'];
+
+        if ($type === 'integer' || $type === 'float') {
+            if (isset($refRange['min']) && isset($refRange['max'])) {
+                $numValue = floatval($value);
+                if ($numValue < $refRange['min']) {
+                    return 'Low';
+                } elseif ($numValue > $refRange['max']) {
+                    return 'High';
+                } else {
+                    return 'Normal';
+                }
+            }
+        } elseif ($type === 'boolean') {
+            if (isset($refRange['reference_value'])) {
+                $boolValue = $value === true || $value === 'true';
+                $refValue = $refRange['reference_value'] === true;
+                return $boolValue === $refValue ? 'Normal' : 'Abnormal';
+            }
+        } elseif ($type === 'enum') {
+            if (isset($refRange['reference_value'])) {
+                return $value === $refRange['reference_value'] ? 'Normal' : 'Abnormal';
+            }
+        }
+
+        return 'N/A';
+    }
+
+    /**
+     * Format a value for display
+     */
+    private function formatValue($type, $value)
+    {
+        if ($value === null || $value === '') {
+            return 'N/A';
+        }
+
+        if ($type === 'boolean') {
+            return $value === true || $value === 'true' ? 'Yes/Positive' : 'No/Negative';
+        }
+
+        if ($type === 'float') {
+            return number_format(floatval($value), 2);
+        }
+
+        return $value;
+    }
+
+    /**
+     * Format reference range for display
+     */
+    private function formatReferenceRange($param)
+    {
+        if (!isset($param['reference_range'])) {
+            return 'N/A';
+        }
+
+        $refRange = $param['reference_range'];
+        $type = $param['type'];
+
+        if ($type === 'integer' || $type === 'float') {
+            if (isset($refRange['min']) && isset($refRange['max'])) {
+                return $refRange['min'] . ' - ' . $refRange['max'];
+            }
+        } elseif ($type === 'boolean') {
+            if (isset($refRange['reference_value'])) {
+                return $refRange['reference_value'] ? 'Yes/Positive' : 'No/Negative';
+            }
+        } elseif ($type === 'enum') {
+            if (isset($refRange['reference_value'])) {
+                return $refRange['reference_value'];
+            }
+        } elseif (isset($refRange['text'])) {
+            return $refRange['text'];
+        }
+
+        return 'N/A';
+    }
+
+    /**
+     * Format status badge
+     */
+    private function formatStatus($status)
+    {
+        $badges = [
+            'Normal' => '<span class="badge badge-success">Normal</span>',
+            'High' => '<span class="badge badge-danger">High</span>',
+            'Low' => '<span class="badge badge-warning">Low</span>',
+            'Abnormal' => '<span class="badge badge-warning">Abnormal</span>',
+            'N/A' => '<span class="badge badge-secondary">N/A</span>'
+        ];
+
+        return $badges[$status] ?? $status;
     }
 
     /**
@@ -266,8 +428,15 @@ class LabServiceRequestController extends Controller
         return Datatables::of($his)
             ->addIndexColumn()
             ->addColumn('select', function ($h) {
+                $hasV2Template = !empty($h?->service->result_template_v2);
+                $templateV2Json = $hasV2Template ? htmlspecialchars(json_encode($h?->service->result_template_v2), ENT_QUOTES, 'UTF-8') : '';
+
                 $str = "
-                    <button type='button' class='btn btn-primary' onclick='setResTempInModal(this)' data-service-name = '" . $h?->service->service_name . "' data-template = '" . htmlspecialchars($h?->service->template) . "' data-id='$h?->id'>
+                    <button type='button' class='btn btn-primary' onclick='setResTempInModal(this)'
+                        data-service-name = '" . $h?->service->service_name . "'
+                        data-template = '" . htmlspecialchars($h?->service->template) . "'
+                        data-template-v2 = '" . $templateV2Json . "'
+                        data-id='$h?->id'>
                         Enter Result
                     </button>";
                 return $str;

@@ -382,12 +382,15 @@ class EncounterController extends Controller
                 }
 
                 $str .= "
-                    <button type='button' class='btn btn-primary btn-sm' onclick='setResViewInModal(this)'
+                    <button type='button' class='btn btn-info btn-sm mr-2' onclick='setResViewInModal(this)'
                         data-service-name = '" . (($his->service) ? $his->service->service_name : 'N/A') . "'
                         data-result = '" . htmlspecialchars($his->result) . "'
                         data-result-obj = '" . htmlspecialchars($his) . "'>
+                        <i class='mdi mdi-eye'></i> View
+                    </button>
+                    <a href='" . route('service-requests.show', $his->id) . "' target='_blank' class='btn btn-primary btn-sm'>
                         <i class='mdi mdi-printer'></i> Print
-                    </button>";
+                    </a>";
 
                 return $str;
             })
@@ -498,12 +501,15 @@ class EncounterController extends Controller
                 }
 
                 $str .= "
-                    <button type='button' class='btn btn-primary btn-sm' onclick='setImagingResViewInModal(this)'
+                    <button type='button' class='btn btn-info btn-sm mr-2' onclick='setImagingResViewInModal(this)'
                         data-service-name = '" . (($his->service) ? $his->service->service_name : 'N/A') . "'
                         data-result = '" . htmlspecialchars($his->result) . "'
                         data-result-obj = '" . htmlspecialchars($his) . "'>
+                        <i class='mdi mdi-eye'></i> View
+                    </button>
+                    <a href='" . route('imaging-requests.show', $his->id) . "' target='_blank' class='btn btn-primary btn-sm'>
                         <i class='mdi mdi-printer'></i> Print
-                    </button>";
+                    </a>";
 
                 return $str;
             })
