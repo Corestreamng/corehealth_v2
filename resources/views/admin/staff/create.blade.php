@@ -2,239 +2,223 @@
 @section('title', 'Create Staff')
 @section('page_name', 'Staff')
 @section('subpage_name', 'Create Staff')
+@section('style')
+    @php
+        $primaryColor = appsettings()->hos_color ?? '#011b33';
+    @endphp
+    <style>
+        :root {
+            --primary-color: {{ $primaryColor }};
+            --primary-light: {{ $primaryColor }}15;
+        }
+    </style>
+    <link rel="stylesheet" href="{{ asset('css/modern-forms.css') }}">
+@endsection
 @section('content')
-    <section class="content">
-
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Create staff</h3>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card-modern">
+                <div class="card-header-modern d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-1 font-weight-bold text-dark">Create New Staff</h2>
+                        <p class="text-muted mb-0">Add a new staff member to the system</p>
+                    </div>
                 </div>
-                <!-- /.card-header -->
-                <div class="card-body">
-
+                <div class="card-body p-3">
                     {!! Form::open(['method' => 'POST', 'route' => 'staff.store', 'class' => 'form-horizontal', 'enctype' => 'multipart/form-data']) !!}
                     {{ csrf_field() }}
-                    <div class="row">
-                        <div class="form-group">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    {{ Form::label('filename', 'Passport:') }}
-                                    {{ Form::file('filename') }}
+
+            <div class="row">
+                <!-- Left Column: Image & Files -->
+                <div class="col-lg-3">
+                    <div class="card-modern">
+                        <div class="card-header-modern">
+                            <h5 class="card-title-modern">
+                                <i class="mdi mdi-camera-outline text-primary"></i> Profile Image
+                            </h5>
+                        </div>
+                        <div class="card-body text-center p-3">
+                            <img src="{{ asset('img/avatar-placeholder.png') }}" id="preview-img" class="preview-image mb-3" style="width: 100px; height: 100px;">
+                            <div class="upload-zone">
+                                <input type="file" name="filename" id="filename" accept="image/*" onchange="previewImage(this)">
+                                <i class="mdi mdi-cloud-upload upload-icon"></i>
+                                <p class="mb-0 font-weight-bold">Click to upload</p>
+                                <small class="text-muted">JPG, PNG up to 2MB</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-modern">
+                        <div class="card-header-modern">
+                            <h5 class="card-title-modern">
+                                <i class="mdi mdi-file-document-outline text-primary"></i> Documents
+                            </h5>
+                        </div>
+                        <div class="card-body p-3">
+                            <label class="form-label-modern">Old Records</label>
+                            <input type="file" class="form-control form-control-modern" id="old_records" name="old_records" style="height: auto; padding: 0.5rem;">
+                            <small class="text-muted mt-2 d-block">Upload historical records.</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Details -->
+                <div class="col-lg-9">
+                    <!-- Personal Information -->
+                    <div class="card-modern">
+                        <div class="card-header-modern">
+                            <h5 class="card-title-modern">
+                                <i class="mdi mdi-account-details-outline text-primary"></i> Personal Information
+                            </h5>
+                        </div>
+                        <div class="card-body p-3">
+                            <div class="row g-3">
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label-modern">Surname <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control form-control-modern" name="surname" value="{{ old('surname') }}" placeholder="e.g. Doe" required>
                                 </div>
-
-                                <div class="">
-                                    {{-- <div id="destination" class="h-auto d-inline-block bg-info" style="width: 60px;"></div> --}}
-                                    <img src="" class="float-right" id="myimg" width=80>
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label-modern">Firstname <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control form-control-modern" name="firstname" value="{{ old('firstname') }}" placeholder="e.g. John" required>
                                 </div>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    {{ Form::label('old_records', 'Old Records') }}
-                                    {{ Form::file('old_records') }}
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label-modern">Othername</label>
+                                    <input type="text" class="form-control form-control-modern" name="othername" value="{{ old('othername') }}" placeholder="Middle name">
                                 </div>
-
-                                <div class="">
-                                    {{-- <div id="destination" class="h-auto d-inline-block bg-info" style="width: 60px;"></div> --}}
-                                    <img src="" class="float-right" id="myimg" width=80>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <hr>
-                    <div class="form-group">
-                        <small class="text-danger"> Fields Marked * Are  Required</small>
-                    </div>
-                    <hr>
-                    <div class="row">
-                        <div class="form-group col-md-6">
-                            <label for="is_admin" class=" control-label">Status/Category <span class="text-danger">*</span></label>
-
-
-                                {!! Form::select('statuses', $statuses, old('is_admin'), ['id' => 'is_admin', 'name' => 'is_admin', 'class' => 'form-control select2', 'placeholder' => 'Pick a value','required' => 'true']) !!}
-
-                        </div>
-                        <div class="form-group col-md-6">
-                            <label for="surname" class=" control-label">Surname <span class="text-danger">*</span></label>
-
-
-                                <input type="text" class="form-control" id="surname" name="surname"
-                                    value="{{ old('surname') }}" autofocus placeholder="Enter Surname" required>
-
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="form-group col-md-6">
-                            <label for="inputEmail3" class=" control-label">Firstname <span class="text-danger">*</span></label>
-
-
-                                <input type="text" class="form-control" id="firstname" name="firstname"
-                                    value="{{ old('firstname') }}" placeholder="Firstname" required>
-                        </div>
-                        <div class="form-group col-md-6">
-                            <label for="othername" class=" control-label">Othernames</label>
-
-                            <div class="">
-                                <input type="text" class="form-control" id="othername" name="othername"
-                                    value="{{ old('othername') }}" placeholder="Othername">
-
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="email" class=" control-label">Email <span class="text-danger">*</span></label>
-
-                        <div class="">
-                            <input type="email" class="form-control" id="email" name="email" value="{{ old('email') }}"
-                                placeholder="Email" autocomplete="off">
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="form-group col-md-6">
-                            <label for="phone_number" class=" control-label">Phone Number <span class="text-danger">*</span></label>
-
-                            <div class="">
-                                <input type="phone_number" class="form-control" id="phone_number" name="phone_number"
-                                    value="{{ old('phone_number') }}" placeholder="Phone Number" required>
-                            </div>
-                        </div>
-                        <div class="form-group col-md-6">
-                            <label for="password" class="control-label">Password</label>
-
-                            <div class="">
-                                <input type="password" class="form-control" id="password" name="password"
-                                    placeholder="Password" value="123456">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="form-group col-md-6">
-                            <label for="is_admin" class=" control-label">Specialization <span class="text-danger">*Required for doctors</span></label>
-
-                            <div class="">
-                                {!! Form::select('specializations', $specializations, old('specialization'), ['id' => 'specializations', 'name' => 'specialization', 'class' => 'form-control select2', 'placeholder' => 'Pick a value']) !!}
-                            </div>
-                        </div>
-
-                        <div class="form-group col-md-6">
-                            <label for="is_admin" class=" control-label">Clinic <span class="text-danger">*Required for doctors</span></label>
-
-                            <div class="">
-                                {!! Form::select('clinics', $clinics, null, ['id' => 'clinics', 'name' => 'clinic', 'class' => 'form-control select2', 'placeholder' => 'Pick a value']) !!}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="">Gender <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text" id="gender"><i
-                                            class="mdi mdi-gender-male-female"></i></span>
-                                    <select class="form-control" placeholder="gender"
-                                    aria-label="gender" aria-describedby="gender" name="gender" required>
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label-modern">Gender <span class="text-danger">*</span></label>
+                                    <select class="form-control form-control-modern" name="gender" required>
                                         <option value="">Select gender</option>
                                         <option value="Male" {{(old('gender') == 'Male') ? 'selected': ''}}>Male</option>
                                         <option value="Female" {{(old('gender') == 'Female') ? 'selected': ''}}>Female</option>
                                         <option value="Others" {{(old('gender') == 'Others') ? 'selected': ''}}>Others</option>
                                     </select>
                                 </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="">Date of Birth <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text" id="dob"><i
-                                            class="mdi mdi-calendar"></i></span>
-                                    <input type="date" class="form-control" placeholder="dob" aria-label="dob"
-                                        aria-describedby="dob" name="dob" value="{{old('dob')}}">
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label-modern">Date of Birth <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control form-control-modern" name="dob" value="{{old('dob')}}" required>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="">Address</label>
-                                <div class="input-group">
-                                    <span class="input-group-text" id="address"><i
-                                            class="mdi mdi-map-marker-radius"></i></span>
-                                    <textarea name="address" id="address" class="form-control">{{old('address')}}</textarea>
+
+                    <!-- Professional Details -->
+                    <div class="card-modern">
+                        <div class="card-header-modern">
+                            <h5 class="card-title-modern">
+                                <i class="mdi mdi-doctor text-primary"></i> Professional Details
+                            </h5>
+                        </div>
+                        <div class="card-body p-3">
+                            <div class="row g-3">
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label-modern">Staff Category <span class="text-danger">*</span></label>
+                                    {!! Form::select('statuses', $statuses, old('is_admin'), ['class' => 'form-control form-control-modern select2', 'placeholder' => 'Select Category', 'required' => 'true']) !!}
                                 </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="">Consultation fee <span class="text-danger">*Required for doctors</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text" id="consultation_fee-">NGN</span>
-                                    <input type="number" name="consultation_fee" class="form-control" value="{{old('consultation_fee')}}">
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label-modern">Specialization <small class="text-muted">(Doctors)</small></label>
+                                    {!! Form::select('specializations', $specializations, old('specialization'), ['class' => 'form-control form-control-modern select2', 'placeholder' => 'Select Specialization']) !!}
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                    <hr>
-                    <div class="form-group">
-                        <div class="form-check checkbox-success checkbox-circle">
-                            <input id="assignRole" type="checkbox" name="assignRole">
-                            <label for="active">Assign Role</label>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="inputPassword3" class=" control-label">Roles</label>
-                        <div class="">
-                            {!! Form::select('roles[]', $roles, [], ['class' => 'form-control select2', 'multiple', 'style' => 'width: 100%;', 'data-toggle' => 'select2', 'data-placeholder' => 'Select to assign role...', 'data-allow-clear' => 'true']) !!}
-                        </div>
-                    </div>
-
-
-                    <div class="form-group">
-                        <div class="form-check checkbox-success checkbox-circle">
-                            <input id="assignPermission" type="checkbox" name="assignPermission">
-                            <label for="active">Assign Permission</label>
-                        </div>
-                    </div>
-
-
-                    <div class="form-group">
-                        <label for="inputPassword3" class=" control-label">Permissions</label>
-                        <div class="">
-                            {!! Form::select('permissions[]', $permissions, [], ['class' => 'form-control select2', 'multiple', 'style' => 'width: 100%;', 'data-toggle' => 'select2', 'data-placeholder' => 'Select to assign direct permission...', 'data-allow-clear' => 'true']) !!}
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <div class="float-left">
-                                    <a href="{{ route('staff.index') }}" class="pull-right btn btn-danger"><i
-                                            class="fa fa-close"></i> Back </a>
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label-modern">Clinic <small class="text-muted">(Doctors)</small></label>
+                                    {!! Form::select('clinics', $clinics, old('clinics'), ['class' => 'form-control form-control-modern select2', 'placeholder' => 'Select Clinic']) !!}
                                 </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <div class="float-right">
-                                    <button type="submit" class="btn btn-success"><i class="fa fa-save"></i>
-                                        Save</button>
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label-modern">Consultation Fee <small class="text-muted">(Doctors)</small></label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">NGN</span>
+                                        </div>
+                                        <input type="number" name="consultation_fee" class="form-control form-control-modern" value="{{old('consultation_fee')}}">
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    {!! Form::close() !!}
 
+                    <!-- Contact Details -->
+                    <div class="card-modern">
+                        <div class="card-header-modern">
+                            <h5 class="card-title-modern">
+                                <i class="mdi mdi-card-account-mail-outline text-primary"></i> Contact Details
+                            </h5>
+                        </div>
+                        <div class="card-body p-3">
+                            <div class="row g-3">
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label-modern">Email Address <span class="text-danger">*</span></label>
+                                    <input type="email" class="form-control form-control-modern" name="email" value="{{ old('email') }}" placeholder="email@example.com" required>
+                                </div>
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label-modern">Phone Number <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control form-control-modern" name="phone_number" value="{{ old('phone_number') }}" placeholder="+234..." required>
+                                </div>
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label-modern">Residential Address</label>
+                                    <textarea class="form-control form-control-modern" name="address" rows="3" placeholder="Enter full address">{{ old('address') }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Security & Access -->
+                    <div class="card-modern">
+                        <div class="card-header-modern">
+                            <h5 class="card-title-modern">
+                                <i class="mdi mdi-shield-lock-outline text-primary"></i> Security & Access
+                            </h5>
+                        </div>
+                        <div class="card-body p-3">
+                            <div class="row g-3">
+                                <div class="col-lg-6 col-md-6">
+                                    <label class="form-label-modern">Password <span class="text-danger">*</span></label>
+                                    <input type="password" class="form-control form-control-modern" name="password" value="123456" required>
+                                    <small class="text-muted">Default: 123456</small>
+                                </div>
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label-modern">Password <span class="text-danger">*</span></label>
+                                    <input type="password" class="form-control form-control-modern" name="password" placeholder="Minimum 8 characters" required>
+                                </div>
+                            </div>
+
+                            <hr class="my-3">
+
+                            <div class="row g-3">
+                                <div class="col-lg-4 col-md-6">
+                                    <div class="custom-control custom-checkbox mb-2">
+                                        <input type="checkbox" class="custom-control-input" id="assignRole" name="assignRole">
+                                        <label class="custom-control-label font-weight-bold" for="assignRole">Assign Roles</label>
+                                    </div>
+                                    {!! Form::select('roles[]', $roles, [], ['class' => 'form-control form-control-modern select2', 'multiple', 'style' => 'width: 100%;', 'data-placeholder' => 'Select roles...']) !!}
+                                </div>
+                                <div class="col-lg-4 col-md-6">
+                                    <div class="custom-control custom-checkbox mb-2">
+                                        <input type="checkbox" class="custom-control-input" id="assignPermission" name="assignPermission">
+                                        <label class="custom-control-label font-weight-bold" for="assignPermission">Assign Permissions</label>
+                                    </div>
+                                    {!! Form::select('permissions[]', $permissions, [], ['class' => 'form-control form-control-modern select2', 'multiple', 'style' => 'width: 100%;', 'data-placeholder' => 'Select permissions...']) !!}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
+            <!-- Action Buttons -->
+            <div class="card-footer bg-white border-top py-3">
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{{ route('staff.index') }}" class="btn btn-light border px-4">Cancel</a>
+                    <button type="submit" class="btn btn-primary-modern px-4">
+                        <i class="mdi mdi-check mr-1"></i> Create Staff
+                    </button>
+                </div>
+            </div>
+            {!! Form::close() !!}
         </div>
-
-    </section>
+    </div>
+</div>
+</div>
 @endsection
 
 @section('scripts')
