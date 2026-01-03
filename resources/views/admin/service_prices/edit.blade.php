@@ -14,9 +14,9 @@
                         <table class="table table-sm table-bordered table-striped ">
                             <thead>
                                 <tr>
-                                    <th>Cost Price {{ NAIRA_CODE }}</th>
-                                    <th>Issue Price {{ NAIRA_CODE }}</th>
-                                    <th>Maximum Discount {{ NAIRA_CODE }}</th>
+                                    <th>Cost Price (NGN)</th>
+                                    <th>Issue Price (NGN)</th>
+                                    <th>Maximum Discount (NGN)</th>
 
                                     <input type="hidden" name="id" id="id" class=" form-control"
                                         value="{{ old('name') ? old('name') : $data->id }}" />

@@ -108,7 +108,7 @@ class EncounterController extends Controller
     public function endOldEncounterReq()
     {
         $currentDateTime = Carbon::now();
-        $timeThreshold = $currentDateTime->subHours(env('CONSULTATION_CYCLE_DURATION'));
+        $timeThreshold = $currentDateTime->subHours(appsettings('consultation_cycle_duration', 24));
 
         $q = DoctorQueue::where('status', 2)
             ->where('created_at', '<', $timeThreshold)->get();
@@ -186,7 +186,7 @@ class EncounterController extends Controller
             $this->endOldEncounterReq();
             $doc = Staff::where('user_id', Auth::id())->first();
 
-            $timeThreshold = Carbon::now()->subHours(env('CONSULTATION_CYCLE_DURATION', 24));
+            $timeThreshold = Carbon::now()->subHours(appsettings('consultation_cycle_duration', 24));
 
             // Get start and end dates from request, fallback to null
             $startDate = $request->input('start_date') ? Carbon::parse($request->input('start_date')) : null;
@@ -337,10 +337,56 @@ class EncounterController extends Controller
                 $str = "<span class = 'badge badge-success'>" . (($his->service) ? $his->service->service_name : 'N/A') . '</span><hr>';
                 $str .= $his->result ?? 'N/A';
 
+                // Add attachments if any
+                if ($his->attachments) {
+                    $attachments = is_string($his->attachments) ? json_decode($his->attachments, true) : $his->attachments;
+                    if (!empty($attachments)) {
+                        $str .= "<hr><b><i class='mdi mdi-paperclip'></i> Attachments:</b><br>";
+                        foreach ($attachments as $attachment) {
+                            $url = asset('storage/' . $attachment['path']);
+                            $icon = $this->getFileIcon($attachment['type']);
+                            $str .= "<a href='{$url}' target='_blank' class='badge badge-info mr-1'>{$icon} {$attachment['name']}</a> ";
+                        }
+                    }
+                }
+
+                $str .= "<hr>";
+
+                // Check if result can be edited (within edit window)
+                $canEdit = false;
+                if ($his->result_date) {
+                    $resultDate = Carbon::parse($his->result_date);
+                    $editDuration = appsettings('result_edit_duration') ?? 60;
+                    $editDeadline = $resultDate->copy()->addMinutes($editDuration);
+                    $canEdit = Carbon::now()->lessThanOrEqualTo($editDeadline);
+                }
+
+                // Add edit button if within edit window
+                if ($canEdit) {
+                    // Prepare attachments JSON for edit button
+                    $attachmentsJson = '';
+                    if ($his->attachments) {
+                        $attachments = is_string($his->attachments) ? json_decode($his->attachments, true) : $his->attachments;
+                        $attachmentsJson = htmlspecialchars(json_encode($attachments));
+                    }
+
+                    $str .= "
+                        <button type='button' class='btn btn-warning btn-sm mr-2' onclick='editLabResult(this)'
+                            data-id='{$his->id}'
+                            data-service-name='" . (($his->service) ? $his->service->service_name : 'N/A') . "'
+                            data-result='" . htmlspecialchars($his->result) . "'
+                            data-template='" . htmlspecialchars($his->result) . "'
+                            data-attachments='" . $attachmentsJson . "'>
+                            <i class='mdi mdi-pencil'></i> Edit
+                        </button>";
+                }
+
                 $str .= "
-                    <hr>
-                    <button type='button' class='btn btn-primary' onclick='setResViewInModal(this)' data-service-name = '" . (($his->service) ? $his->service->service_name : 'N/A') . "' data-result = '" . htmlspecialchars($his->result) . " 'data-result-obj = '" . htmlspecialchars($his) . "'>
-                        Print Result
+                    <button type='button' class='btn btn-primary btn-sm' onclick='setResViewInModal(this)'
+                        data-service-name = '" . (($his->service) ? $his->service->service_name : 'N/A') . "'
+                        data-result = '" . htmlspecialchars($his->result) . "'
+                        data-result-obj = '" . htmlspecialchars($his) . "'>
+                        <i class='mdi mdi-printer'></i> Print
                     </button>";
 
                 return $str;
@@ -379,6 +425,114 @@ class EncounterController extends Controller
                 $str = "<span class = 'badge badge-success'>" . (($his->service) ? $his->service->service_name : 'N/A') . '</span><hr>';
                 $str .= $his->result ?? 'N/A';
 
+                return $str;
+            })
+            ->rawColumns(['created_at', 'result', 'select'])
+            ->make(true);
+    }
+
+    public function imagingHistoryList($patient_id)
+    {
+        $his = \App\Models\ImagingServiceRequest::with(['service', 'encounter', 'patient', 'patient.user', 'productOrServiceRequest', 'doctor', 'biller', 'results_person'])
+            ->where('status', '>', 0)->where('patient_id', $patient_id)->orderBy('created_at', 'DESC')->get();
+
+        return DataTables::of($his)
+            ->addIndexColumn()
+            ->editColumn('created_at', function ($h) {
+                $str = '<small>';
+                $str .= '<b >Requested by: </b>' . ((isset($h->doctor_id) && $h->doctor_id != null) ? (userfullname($h->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
+                $str .= '<br><br><b >Last Updated On:</b> ' . date('h:i a D M j, Y', strtotime($h->updated_at));
+                $str .= '<br><br><b >Billed by:</b> ' . ((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span>");
+                $str .= '<br><br><b >Results by:</b> ' . ((isset($h->result_by) && $h->result_by != null) ? (userfullname($h->result_by) . ' (' . date('h:i a D M j, Y', strtotime($h->result_date)) . ')') : "<span class='badge badge-secondary'>Awaiting Results</span>");
+                $str .= '<br><br><b >Request Note:</b> ' . ((isset($h->note) && $h->note != null) ? ($h->note) : "<span class='badge badge-secondary'>N/A</span><br>");
+                $str .= '</small>';
+
+                return $str;
+            })
+            ->editColumn('result', function ($his) {
+                $str = "<span class = 'badge badge-success'>" . (($his->service) ? $his->service->service_name : 'N/A') . '</span><hr>';
+                $str .= $his->result ?? 'N/A';
+
+                // Add attachments if any
+                if ($his->attachments) {
+                    $attachments = is_string($his->attachments) ? json_decode($his->attachments, true) : $his->attachments;
+                    if (!empty($attachments)) {
+                        $str .= "<hr><b><i class='mdi mdi-paperclip'></i> Attachments:</b><br>";
+                        foreach ($attachments as $attachment) {
+                            $url = asset('storage/' . $attachment['path']);
+                            $icon = $this->getFileIcon($attachment['type']);
+                            $str .= "<a href='{$url}' target='_blank' class='badge badge-info mr-1'>{$icon} {$attachment['name']}</a> ";
+                        }
+                    }
+                }
+
+                $str .= "<hr>";
+
+                // Check if result can be edited (within edit window)
+                $canEdit = false;
+                if ($his->result_date) {
+                    $resultDate = Carbon::parse($his->result_date);
+                    $editDuration = appsettings('result_edit_duration') ?? 60;
+                    $editDeadline = $resultDate->copy()->addMinutes($editDuration);
+                    $canEdit = Carbon::now()->lessThanOrEqualTo($editDeadline);
+                }
+
+                // Add edit button if within edit window
+                if ($canEdit) {
+                    // Prepare attachments JSON for edit button
+                    $attachmentsJson = '';
+                    if ($his->attachments) {
+                        $attachments = is_string($his->attachments) ? json_decode($his->attachments, true) : $his->attachments;
+                        $attachmentsJson = htmlspecialchars(json_encode($attachments));
+                    }
+
+                    $str .= "
+                        <button type='button' class='btn btn-warning btn-sm mr-2' onclick='editImagingResult(this)'
+                            data-id='{$his->id}'
+                            data-service-name='" . (($his->service) ? $his->service->service_name : 'N/A') . "'
+                            data-result='" . htmlspecialchars($his->result) . "'
+                            data-template='" . htmlspecialchars($his->result) . "'
+                            data-attachments='" . $attachmentsJson . "'>
+                            <i class='mdi mdi-pencil'></i> Edit
+                        </button>";
+                }
+
+                $str .= "
+                    <button type='button' class='btn btn-primary btn-sm' onclick='setImagingResViewInModal(this)'
+                        data-service-name = '" . (($his->service) ? $his->service->service_name : 'N/A') . "'
+                        data-result = '" . htmlspecialchars($his->result) . "'
+                        data-result-obj = '" . htmlspecialchars($his) . "'>
+                        <i class='mdi mdi-printer'></i> Print
+                    </button>";
+
+                return $str;
+            })
+            ->rawColumns(['created_at', 'result'])
+            ->make(true);
+    }
+
+    public function imagingBillList($patient_id)
+    {
+        $his = \App\Models\ImagingServiceRequest::with(['service', 'encounter', 'patient', 'productOrServiceRequest', 'doctor', 'biller'])
+            ->where('status', '=', 1)->where('patient_id', $patient_id)->orderBy('created_at', 'DESC')->get();
+
+        return DataTables::of($his)
+            ->addIndexColumn()
+            ->addColumn('select', function ($h) {
+                $str = "<input type='checkbox' name='selectedImagingBillRows[]' onclick='checkImagingBillRow(this)' data-price = '" . (($h->service) ? $h->service->price->sale_price : 'N/A') . "' value='$h->id' class='form-control'> ";
+                return $str;
+            })
+            ->editColumn('created_at', function ($h) {
+                $str = '<small>';
+                $str .= '<b >Requested by: </b>' . ((isset($h->doctor_id) && $h->doctor_id != null) ? (userfullname($h->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
+                $str .= '<br><br><b >Last Updated On:</b> ' . date('h:i a D M j, Y', strtotime($h->updated_at));
+                $str .= '<br><br><b >Request Note:</b> ' . ((isset($h->note) && $h->note != null) ? ($h->note) : "<span class='badge badge-secondary'>N/A</span><br>");
+                $str .= '</small>';
+                return $str;
+            })
+            ->editColumn('result', function ($his) {
+                $str = "<span class = 'badge badge-success'>" . (($his->service) ? $his->service->service_name : 'N/A') . '</span><hr>';
+                $str .= $his->result ?? 'N/A';
                 return $str;
             })
             ->rawColumns(['created_at', 'result', 'select'])
@@ -797,7 +951,7 @@ class EncounterController extends Controller
                 // Get current time in the required format
                 $currentTime = Carbon::now()->format('Y-m-d\TH:i:s.000');
 
-                if (env('GOONLINE') == 1) {
+                if (appsettings('goonline', 0) == 1) {
 
                     // Prepare the data values for reasons for encounter
                     // Loop through each reason for encounter and create an event
@@ -900,7 +1054,7 @@ class EncounterController extends Controller
                 $queue = DoctorQueue::where('id', $request->queue_id)->first();
                 // dd($queue);
 
-                if (env('GOONLINE') == 1) {
+                if (appsettings('goonline', 0) == 1) {
                     $response = Http::withBasicAuth(
                         env('COREHMS_SUPERADMIN_USERNAME'),
                         env('COREHMS_SUPERADMIN_PASS')
@@ -950,4 +1104,23 @@ class EncounterController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function destroy(Encounter $encounter) {}
+
+    /**
+     * Get file icon based on file type
+     *
+     * @param string $fileType
+     * @return string
+     */
+    private function getFileIcon($fileType)
+    {
+        if (strpos($fileType, 'pdf') !== false) {
+            return "<i class='mdi mdi-file-pdf text-danger'></i>";
+        } elseif (strpos($fileType, 'word') !== false || strpos($fileType, 'doc') !== false) {
+            return "<i class='mdi mdi-file-word text-primary'></i>";
+        } elseif (strpos($fileType, 'image') !== false) {
+            return "<i class='mdi mdi-file-image text-success'></i>";
+        } else {
+            return "<i class='mdi mdi-file text-secondary'></i>";
+        }
+    }
 }

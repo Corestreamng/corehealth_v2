@@ -13,12 +13,12 @@
                     <table class="table table-sm table-responsive table-bordered table-striped ">
                         <thead>
                             <tr>
-                                <th>Supplier Price {{ NAIRA_CODE }}</th>
-                                <th>Issue Price {{ NAIRA_CODE }}</th>
-                                <th>Maximum Discount {{ NAIRA_CODE }}</th>
+                                <th>Supplier Price (NGN)</th>
+                                <th>Issue Price (NGN)</th>
+                                <th>Maximum Discount (NGN)</th>
                                 @if ($application->allow_piece_sale == 1)
-                                    <th>Pieces Price {{ NAIRA_CODE }}</th>
-                                    <th>Pieces Mxd {{ NAIRA_CODE }}</th>
+                                    <th>Pieces Price (NGN)</th>
+                                    <th>Pieces Mxd (NGN)</th>
                                 @endif
 
                                 <input type="hidden" name="id" id="id" class=" form-control"

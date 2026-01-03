@@ -10,6 +10,7 @@ use App\Models\BudgetYear;
 use App\Models\Dependant;
 use App\Models\StoreStock;
 use Illuminate\Support\Facades\Lang;
+use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 
 $NAIRA_CODE = '₦';
@@ -261,12 +262,48 @@ if (!function_exists('generateTransactionId')) {
 
 if (!function_exists('appsettings')) {
 
-    function appsettings()
+    function appsettings($key = null)
     {
-        $app = ApplicationStatu::first();
+        static $app = null;
 
-        // dd($app);
-        return  $app;
+        if ($app === null) {
+            $app = Cache::remember('app_settings', 3600, function () {
+                return ApplicationStatu::first();
+            });
+        }
+
+        // If specific key is requested, return it with fallback to env
+        if ($key !== null) {
+            $value = $app->{$key} ?? null;
+
+            // If value is null or empty, fallback to env
+            if ($value === null || $value === '') {
+                // Map common keys to env names
+                $envMap = [
+                    'bed_service_category_id' => 'BED_SERVICE_CATGORY_ID',
+                    'investigation_category_id' => 'INVESTGATION_CATEGORY_ID',
+                    'consultation_category_id' => 'CONSULTATION_CATEGORY_ID',
+                    'nursing_service_category' => 'NUSRING_SERVICE_CATEGORY',
+                    'misc_service_category_id' => 'MISC_SERVICE_CATEGORY_ID',
+                    'consultation_cycle_duration' => 'CONSULTATION_CYCLE_DURATION',
+                    'note_edit_window' => 'NOTE_EDIT_WINDOW',
+                ];
+
+                $envKey = $envMap[$key] ?? strtoupper($key);
+                return env($envKey);
+            }
+
+            return $value;
+        }
+
+        return $app;
+    }
+}
+
+if (!function_exists('clearAppSettingsCache')) {
+    function clearAppSettingsCache()
+    {
+        Cache::forget('app_settings');
     }
 }
 

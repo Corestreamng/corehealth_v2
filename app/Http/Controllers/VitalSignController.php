@@ -117,7 +117,7 @@ class VitalSignController extends Controller
     public function patientVitalsQueue(Request $request)
     {
         $currentDateTime = Carbon::now();
-        $timeThreshold = $currentDateTime->subHours(env('CONSULTATION_CYCLE_DURATION'));
+        $timeThreshold = $currentDateTime->subHours(appsettings('consultation_cycle_duration', 24));
 
         // Retrieve date range from the request
         $startDate = $request->input('start_date');

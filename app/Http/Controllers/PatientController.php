@@ -245,7 +245,7 @@ class PatientController extends Controller
             $patient = patient::where('user_id', $user_id)->first();
             $family = patient::with(['user'])->where('file_no', $patient->file_no)->get();
             $products = Product::with(['category', 'price'])->where('status', 1)->get();
-            $services = service::with(['category', 'price'])->where('status', 1)->where('price_assign', 1)->where('category_id', env('CONSULTATION_CATEGORY_ID'))->get();
+            $services = service::with(['category', 'price'])->where('status', 1)->where('price_assign', 1)->where('category_id', appsettings('consultation_category_id'))->get();
             $clinics = Clinic::where('status', 1)->get();
             return view('admin.receptionist.send_queue', compact('family', 'products', 'services', 'clinics'));
         } catch (\Exception $e) {
@@ -435,7 +435,7 @@ class PatientController extends Controller
                 $last_word_start = strrpos($request->address, ' ');
                 $last_word = trim(substr($request->address, $last_word_start));
 
-                if (env('GOONLINE') == 1) {
+                if (appsettings('goonline', 0) == 1) {
 
                     $trackedEntityResponse = Http::withBasicAuth(env('DHIS_USERNAME'), env('DHIS_PASS'))
                         ->post(env('DHIS_API_URL') . '/tracker?importStrategy=CREATE&async=false', [
@@ -547,7 +547,7 @@ class PatientController extends Controller
                 $patient_account->patient_id = $patient->id;
                 $patient_account->save();
 
-                if (env('GOONLINE') == 1) {
+                if (appsettings('goonline', 0) == 1) {
                     //send to corehms super admin
                     $response = Http::withBasicAuth(
                         env('COREHMS_SUPERADMIN_USERNAME'),

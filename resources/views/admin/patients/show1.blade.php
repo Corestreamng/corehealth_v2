@@ -74,6 +74,12 @@
                     data-bs-toggle="tab" data-bs-target="#investigationsCardBody" type="button" role="tab">Investigations</button>
             </li>
         @endcan
+        @can('see-investigations')
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {{ $section == 'imagingCardBody' ? 'active' : '' }}" id="imaging-tab"
+                    data-bs-toggle="tab" data-bs-target="#imagingCardBody" type="button" role="tab">Imaging</button>
+            </li>
+        @endcan
     </ul>
 
     {{-- Tab content --}}
@@ -143,6 +149,13 @@
             <div class="tab-pane fade {{ $section == 'investigationsCardBody' ? 'show active' : '' }}" id="investigationsCardBody" role="tabpanel">
                 <div class="card">
                     <div class="card-body">@include('admin.patients.partials.invest')</div>
+                </div>
+            </div>
+        @endcan
+        @can('see-investigations')
+            <div class="tab-pane fade {{ $section == 'imagingCardBody' ? 'show active' : '' }}" id="imagingCardBody" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">@include('admin.patients.partials.imaging')</div>
                 </div>
             </div>
         @endcan
@@ -872,16 +885,184 @@
         }
     </script>
     <script>
+        // CKEditor instances
+        let investResEditor = null;
+        let imagingResEditor = null;
+        let deletedAttachments = [];
+        let imagingDeletedAttachments = [];
+
         function setResTempInModal(obj) {
             $('#invest_res_service_name').text($(obj).attr('data-service-name'));
-            $('#invest_res_template').html($(obj).attr('data-template'));
             $('#invest_res_entry_id').val($(obj).attr('data-id'));
+            $('#invest_res_is_edit').val('0'); // Set to create mode
+            
+            // Clear existing attachments and reset
+            deletedAttachments = [];
+            $('#deleted_attachments').val('[]');
+            $('#existing_attachments_container').hide();
+            $('#existing_attachments_list').html('');
+
+            // Load template into CKEditor
+            let template = $(obj).attr('data-template');
+
+            // Initialize CKEditor if not already initialized
+            if (!investResEditor) {
+                ClassicEditor
+                    .create(document.querySelector('#invest_res_template_editor'), {
+                        toolbar: {
+                            items: [
+                                'undo', 'redo',
+                                '|', 'heading',
+                                '|', 'bold', 'italic',
+                                '|', 'link', 'insertTable',
+                                '|', 'bulletedList', 'numberedList', 'outdent', 'indent'
+                            ]
+                        }
+                    })
+                    .then(editor => {
+                        investResEditor = editor;
+                        editor.setData(template);
+                    })
+                    .catch(err => {
+                        console.error(err);
+                    });
+            } else {
+                investResEditor.setData(template);
+            }
+
             $('#investResModal').modal('show');
         }
 
         function copyResTemplateToField() {
-            $('#invest_res_template_submited').val($('#invest_res_template').html());
+            if (investResEditor) {
+                $('#invest_res_template_submited').val(investResEditor.getData());
+            }
             return true;
+        }
+
+        // Handle form submission
+        $('#investResModal form').on('submit', function(e) {
+            copyResTemplateToField();
+
+            let isEdit = $('#invest_res_is_edit').val() === '1';
+            let message = isEdit
+                ? 'Are you sure you want to update this result?'
+                : 'Are you sure you wish to save this result entry? It can not be edited after!';
+
+            if (!confirm(message)) {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        // Function to edit lab result
+        function editLabResult(obj) {
+            $('#invest_res_service_name').text($(obj).attr('data-service-name'));
+            $('#invest_res_entry_id').val($(obj).attr('data-id'));
+            $('#invest_res_is_edit').val('1'); // Set to edit mode
+            
+            // Reset deleted attachments
+            deletedAttachments = [];
+            $('#deleted_attachments').val('[]');
+
+            // Load existing result into CKEditor
+            let result = $(obj).attr('data-result');
+            
+            // Load existing attachments
+            let attachments = $(obj).attr('data-attachments');
+            if (attachments) {
+                try {
+                    attachments = JSON.parse(attachments);
+                    displayExistingAttachments(attachments);
+                } catch(e) {
+                    console.error('Error parsing attachments:', e);
+                }
+            } else {
+                $('#existing_attachments_container').hide();
+            }
+
+            // Initialize CKEditor if not already initialized
+            if (!investResEditor) {
+                ClassicEditor
+                    .create(document.querySelector('#invest_res_template_editor'), {
+                        toolbar: {
+                            items: [
+                                'undo', 'redo',
+                                '|', 'heading',
+                                '|', 'bold', 'italic',
+                                '|', 'link', 'insertTable',
+                                '|', 'bulletedList', 'numberedList', 'outdent', 'indent'
+                            ]
+                        }
+                    })
+                    .then(editor => {
+                        investResEditor = editor;
+                        editor.setData(result);
+                    })
+                    .catch(err => {
+                        console.error(err);
+                    });
+            } else {
+                investResEditor.setData(result);
+            }
+
+            // Update modal title and button text
+            $('#investResModal .modal-title').text('Edit Investigation Result');
+            $('#invest_res_submit_btn').html('<i class="mdi mdi-content-save"></i> Update Result');
+
+            $('#investResModal').modal('show');
+
+            // Reset modal on close
+            $('#investResModal').on('hidden.bs.modal', function() {
+                $('#investResModal .modal-title').text('Investigation Result Entry');
+                $('#invest_res_submit_btn').html('Save changes');
+                $('#invest_res_is_edit').val('0');
+                deletedAttachments = [];
+                $('#deleted_attachments').val('[]');
+                $('#existing_attachments_container').hide();
+            });
+        }
+        
+        // Function to display existing attachments for lab results
+        function displayExistingAttachments(attachments) {
+            if (!attachments || attachments.length === 0) {
+                $('#existing_attachments_container').hide();
+                return;
+            }
+            
+            let html = '';
+            attachments.forEach((attachment, index) => {
+                if (!deletedAttachments.includes(index)) {
+                    let icon = getFileIcon(attachment.type);
+                    html += `
+                        <div class="badge badge-secondary mr-2 mb-2 p-2" id="attachment_${index}">
+                            ${icon} ${attachment.name}
+                            <button type="button" class="btn btn-sm btn-link text-danger p-0 ml-2" 
+                                onclick="removeAttachment(${index})" title="Remove">
+                                <i class="mdi mdi-close-circle"></i>
+                            </button>
+                        </div>
+                    `;
+                }
+            });
+            
+            $('#existing_attachments_list').html(html);
+            $('#existing_attachments_container').show();
+        }
+        
+        // Function to remove an attachment
+        function removeAttachment(index) {
+            if (!deletedAttachments.includes(index)) {
+                deletedAttachments.push(index);
+                $('#deleted_attachments').val(JSON.stringify(deletedAttachments));
+                $(`#attachment_${index}`).fadeOut(300, function() {
+                    $(this).remove();
+                    // Hide container if no attachments left
+                    if ($('#existing_attachments_list').children(':visible').length === 0) {
+                        $('#existing_attachments_container').fadeOut();
+                    }
+                });
+            }
         }
     </script>
     <script>
@@ -894,9 +1075,426 @@
             $('#res_result_by').html(res_obj.results_person.firstname + ' ' + res_obj.results_person.surname);
             $('#invest_name').text(res_obj.patient.user.firstname + ' ' + res_obj.patient.user.surname + '(' + res_obj
                 .patient.file_no + ')');
+
+            // Handle attachments
+            $('#invest_attachments').html('');
+            if (res_obj.attachments) {
+                let attachments = typeof res_obj.attachments === 'string' ? JSON.parse(res_obj.attachments) : res_obj.attachments;
+                if (attachments && attachments.length > 0) {
+                    let attachHtml = '<hr><h6><i class="mdi mdi-paperclip"></i> Attachments:</h6><div class="row">';
+                    attachments.forEach(function(attachment) {
+                        let url = '{{ asset("storage") }}/' + attachment.path;
+                        let icon = getFileIcon(attachment.type);
+                        attachHtml += `<div class="col-md-4 mb-2">
+                            <a href="${url}" target="_blank" class="btn btn-outline-primary btn-sm btn-block">
+                                ${icon} ${attachment.name}
+                            </a>
+                        </div>`;
+                    });
+                    attachHtml += '</div>';
+                    $('#invest_attachments').html(attachHtml);
+                }
+            }
+
             $('#investResViewModal').modal('show');
         }
+
+        function getFileIcon(extension) {
+            const icons = {
+                'pdf': '<i class="mdi mdi-file-pdf"></i>',
+                'doc': '<i class="mdi mdi-file-word"></i>',
+                'docx': '<i class="mdi mdi-file-word"></i>',
+                'jpg': '<i class="mdi mdi-file-image"></i>',
+                'jpeg': '<i class="mdi mdi-file-image"></i>',
+                'png': '<i class="mdi mdi-file-image"></i>'
+            };
+            return icons[extension] || '<i class="mdi mdi-file"></i>';
+        }
     </script>
+
+    {{-- Imaging JavaScript Functions --}}
+    <script>
+        // Imaging DataTables
+        $(function() {
+            $('#imaging_history_list').DataTable({
+                "dom": 'Bfrtip',
+                "iDisplayLength": 50,
+                "lengthMenu": [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, "All"]
+                ],
+                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{ url('imagingHistoryList', $patient->id) }}",
+                    "type": "GET"
+                },
+                "columns": [{
+                        data: "DT_RowIndex",
+                        name: "DT_RowIndex"
+                    },
+                    {
+                        data: "result",
+                        name: "result"
+                    },
+                    {
+                        data: "created_at",
+                        name: "created_at"
+                    },
+                ],
+                "paging": true
+            });
+
+            $('#imaging_history_bills').DataTable({
+                "dom": 'Bfrtip',
+                "iDisplayLength": 50,
+                "lengthMenu": [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, "All"]
+                ],
+                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{ url('imagingBillList', $patient->id) }}",
+                    "type": "GET"
+                },
+                "columns": [{
+                        data: "DT_RowIndex",
+                        name: "DT_RowIndex"
+                    },
+                    {
+                        data: "select",
+                        name: "select"
+                    },
+                    {
+                        data: "result",
+                        name: "result"
+                    },
+                    {
+                        data: "created_at",
+                        name: "created_at"
+                    },
+                ],
+                "paging": true
+            });
+
+            $('#imaging_history_res').DataTable({
+                "dom": 'Bfrtip',
+                "iDisplayLength": 50,
+                "lengthMenu": [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, "All"]
+                ],
+                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{ url('imagingResList', $patient->id) }}",
+                    "type": "GET"
+                },
+                "columns": [{
+                        data: "DT_RowIndex",
+                        name: "DT_RowIndex"
+                    },
+                    {
+                        data: "result",
+                        name: "result"
+                    },
+                    {
+                        data: "created_at",
+                        name: "created_at"
+                    },
+                    {
+                        data: "select",
+                        name: "select"
+                    },
+                ],
+                "paging": true
+            });
+        });
+
+        // Imaging billing functions
+        function add_to_total_imaging_bill(v) {
+            let new_tot = parseFloat($('#imaging_bill_tot').val()) + parseFloat(v);
+            $('#imaging_bill_tot').val(new_tot);
+        }
+
+        function subtract_from_total_imaging_bill(v) {
+            let new_tot = parseFloat($('#imaging_bill_tot').val()) - parseFloat(v);
+            if (new_tot > 0) {
+                $('#imaging_bill_tot').val(new_tot);
+            } else {
+                $('#imaging_bill_tot').val(0);
+            }
+        }
+
+        function checkImagingBillRow(obj) {
+            var row_val = $(obj).attr('data-price');
+            if ($(obj).is(':checked')) {
+                add_to_total_imaging_bill(row_val);
+            } else {
+                subtract_from_total_imaging_bill(row_val);
+            }
+        }
+
+        function setSearchValImagingSer(name, id, price) {
+            var mk = `
+                <tr>
+                    <td><input type='checkbox' name='addedImagingBillRows[]' onclick='checkImagingBillRow(this)' data-price = '${price}' value='${id}' class='form-control addedRows'></td>
+                    <td>${name}</td>
+                    <td>${price}</td>
+                    <td>
+                        <input type = 'text' class='form-control' name='consult_imaging_note[]'>
+                    </td>
+                    <td><button class='btn btn-danger' onclick="removeImagingProdRow(this,'${price}')">x</button></td>
+                </tr>
+            `;
+            $('#selected-imaging-services').append(mk);
+            $('#consult_imaging_search').val('');
+            $('#consult_imaging_res').html('');
+        }
+
+        function removeImagingProdRow(obj, price) {
+            subtract_from_total_imaging_bill(price);
+            $(obj).closest('tr').remove();
+        }
+
+        function searchImagingServices(q) {
+            if (q != "") {
+                $.ajax({
+                    url: "{{ url('live-search-services') }}",
+                    method: "GET",
+                    dataType: 'json',
+                    data: {
+                        term: q,
+                        category_id: 6  // Imaging category ID
+                    },
+                    success: function(data) {
+                        $('#consult_imaging_res').html('');
+                        for (var i = 0; i < data.length; i++) {
+                            var mk =
+                                `<li class='list-group-item'
+                                   style="background-color: #f0f0f0;"
+                                   onclick="setSearchValImagingSer('${data[i].service_name}[${data[i].service_code}]', '${data[i].id}', '${data[i].price.sale_price}')">
+                                   [${data[i].category.category_name}]<b>${data[i].service_name}[${data[i].service_code}]</b> NGN ${data[i].price.sale_price}</li>`;
+                            $('#consult_imaging_res').append(mk);
+                            $('#consult_imaging_res').show();
+                        }
+                    }
+                });
+            } else {
+                $('#consult_imaging_res').html('');
+            }
+        }
+
+        function setImagingResTempInModal(obj) {
+            $('#imaging_res_service_name').text($(obj).attr('data-service-name'));
+            $('#imaging_res_entry_id').val($(obj).attr('data-id'));
+            $('#imaging_res_is_edit').val('0'); // Set to create mode
+            
+            // Clear existing attachments and reset
+            imagingDeletedAttachments = [];
+            $('#imaging_deleted_attachments').val('[]');
+            $('#imaging_existing_attachments_container').hide();
+            $('#imaging_existing_attachments_list').html('');
+
+            // Load template into CKEditor
+            let template = $(obj).attr('data-template');
+
+            // Initialize CKEditor if not already initialized
+            if (!imagingResEditor) {
+                ClassicEditor
+                    .create(document.querySelector('#imaging_res_template_editor'), {
+                        toolbar: {
+                            items: [
+                                'undo', 'redo',
+                                '|', 'heading',
+                                '|', 'bold', 'italic',
+                                '|', 'link', 'insertTable',
+                                '|', 'bulletedList', 'numberedList', 'outdent', 'indent'
+                            ]
+                        }
+                    })
+                    .then(editor => {
+                        imagingResEditor = editor;
+                        editor.setData(template);
+                    })
+                    .catch(err => {
+                        console.error(err);
+                    });
+            } else {
+                imagingResEditor.setData(template);
+            }
+
+            $('#imagingResModal').modal('show');
+        }
+
+        function copyImagingResTemplateToField() {
+            if (imagingResEditor) {
+                $('#imaging_res_template_submited').val(imagingResEditor.getData());
+            }
+            return true;
+        }
+
+        // Handle imaging form submission
+        $('#imagingResModal form').on('submit', function(e) {
+            copyImagingResTemplateToField();
+
+            let isEdit = $('#imaging_res_is_edit').val() === '1';
+            let message = isEdit
+                ? 'Are you sure you want to update this result?'
+                : 'Are you sure you wish to save this result entry? It can not be edited after!';
+
+            if (!confirm(message)) {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        // Function to edit imaging result
+        function editImagingResult(obj) {
+            $('#imaging_res_service_name').text($(obj).attr('data-service-name'));
+            $('#imaging_res_entry_id').val($(obj).attr('data-id'));
+            $('#imaging_res_is_edit').val('1'); // Set to edit mode
+            
+            // Reset deleted attachments
+            imagingDeletedAttachments = [];
+            $('#imaging_deleted_attachments').val('[]');
+
+            // Load existing result into CKEditor
+            let result = $(obj).attr('data-result');
+            
+            // Load existing attachments
+            let attachments = $(obj).attr('data-attachments');
+            if (attachments) {
+                try {
+                    attachments = JSON.parse(attachments);
+                    displayImagingExistingAttachments(attachments);
+                } catch(e) {
+                    console.error('Error parsing attachments:', e);
+                }
+            } else {
+                $('#imaging_existing_attachments_container').hide();
+            }
+
+            // Initialize CKEditor if not already initialized
+            if (!imagingResEditor) {
+                ClassicEditor
+                    .create(document.querySelector('#imaging_res_template_editor'), {
+                        toolbar: {
+                            items: [
+                                'undo', 'redo',
+                                '|', 'heading',
+                                '|', 'bold', 'italic',
+                                '|', 'link', 'insertTable',
+                                '|', 'bulletedList', 'numberedList', 'outdent', 'indent'
+                            ]
+                        }
+                    })
+                    .then(editor => {
+                        imagingResEditor = editor;
+                        editor.setData(result);
+                    })
+                    .catch(err => {
+                        console.error(err);
+                    });
+            } else {
+                imagingResEditor.setData(result);
+            }
+
+            // Update modal title and button text
+            $('#imagingResModal .modal-title').text('Edit Imaging Result');
+            $('#imaging_res_submit_btn').html('<i class="mdi mdi-content-save"></i> Update Result');
+
+            $('#imagingResModal').modal('show');
+
+            // Reset modal on close
+            $('#imagingResModal').on('hidden.bs.modal', function() {
+                $('#imagingResModal .modal-title').text('Imaging Result Entry');
+                $('#imaging_res_submit_btn').html('Save changes');
+                $('#imaging_res_is_edit').val('0');
+                imagingDeletedAttachments = [];
+                $('#imaging_deleted_attachments').val('[]');
+                $('#imaging_existing_attachments_container').hide();
+            });
+        }
+        
+        // Function to display existing attachments for imaging results
+        function displayImagingExistingAttachments(attachments) {
+            if (!attachments || attachments.length === 0) {
+                $('#imaging_existing_attachments_container').hide();
+                return;
+            }
+            
+            let html = '';
+            attachments.forEach((attachment, index) => {
+                if (!imagingDeletedAttachments.includes(index)) {
+                    let icon = getFileIcon(attachment.type);
+                    html += `
+                        <div class="badge badge-secondary mr-2 mb-2 p-2" id="imaging_attachment_${index}">
+                            ${icon} ${attachment.name}
+                            <button type="button" class="btn btn-sm btn-link text-danger p-0 ml-2" 
+                                onclick="removeImagingAttachment(${index})" title="Remove">
+                                <i class="mdi mdi-close-circle"></i>
+                            </button>
+                        </div>
+                    `;
+                }
+            });
+            
+            $('#imaging_existing_attachments_list').html(html);
+            $('#imaging_existing_attachments_container').show();
+        }
+        
+        // Function to remove an imaging attachment
+        function removeImagingAttachment(index) {
+            if (!imagingDeletedAttachments.includes(index)) {
+                imagingDeletedAttachments.push(index);
+                $('#imaging_deleted_attachments').val(JSON.stringify(imagingDeletedAttachments));
+                $(`#imaging_attachment_${index}`).fadeOut(300, function() {
+                    $(this).remove();
+                    // Hide container if no attachments left
+                    if ($('#imaging_existing_attachments_list').children(':visible').length === 0) {
+                        $('#imaging_existing_attachments_container').fadeOut();
+                    }
+                });
+            }
+        }
+
+        function setImagingResViewInModal(obj) {
+            let res_obj = JSON.parse($(obj).attr('data-result-obj'));
+            $('.imaging_res_service_name_view').text($(obj).attr('data-service-name'));
+            $('#imaging_res').html(res_obj.result);
+            $('#imaging_result_date').html(res_obj.result_date);
+            $('#imaging_result_by').html(res_obj.results_person.firstname + ' ' + res_obj.results_person.surname);
+            $('#imaging_name').text(res_obj.patient.user.firstname + ' ' + res_obj.patient.user.surname + '(' + res_obj.patient.file_no + ')');
+
+            // Handle attachments
+            $('#imaging_attachments').html('');
+            if (res_obj.attachments) {
+                let attachments = typeof res_obj.attachments === 'string' ? JSON.parse(res_obj.attachments) : res_obj.attachments;
+                if (attachments && attachments.length > 0) {
+                    let attachHtml = '<hr><h6><i class="mdi mdi-paperclip"></i> Attachments:</h6><div class="row">';
+                    attachments.forEach(function(attachment) {
+                        let url = '{{ asset("storage") }}/' + attachment.path;
+                        let icon = getFileIcon(attachment.type);
+                        attachHtml += `<div class="col-md-4 mb-2">
+                            <a href="${url}" target="_blank" class="btn btn-outline-primary btn-sm btn-block">
+                                ${icon} ${attachment.name}
+                            </a>
+                        </div>`;
+                    });
+                    attachHtml += '</div>';
+                    $('#imaging_attachments').html(attachHtml);
+                }
+            }
+
+            $('#imagingResViewModal').modal('show');
+        }
+    </script>
+
     <script>
         function PrintElem(elem) {
             var mywindow = window.open('', 'PRINT', 'height=600,width=800');

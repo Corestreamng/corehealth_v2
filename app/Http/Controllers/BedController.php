@@ -70,7 +70,7 @@ class BedController extends Controller
                 DB::beginTransaction();
                 $bed_servie_entry                      = new service;
                 $bed_servie_entry->user_id             = Auth::user()->id;
-                $bed_servie_entry->category_id         = env('BED_SERVICE_CATGORY_ID', 1);
+                $bed_servie_entry->category_id         = appsettings('bed_service_category_id', 1);
                 $bed_servie_entry->service_name        = 'Bed ' . $request->name . " " . $request->ward . " " . $request->unit;
                 $bed_servie_entry->service_code        = strtoupper('Bed ' . $request->name . " " . $request->ward . " " . $request->unit);
                 $bed_servie_entry->status              = 1;
@@ -148,7 +148,7 @@ class BedController extends Controller
             } else {
 
                 $bed_servie_entry                      = service::where('id', $bed->service_id)->first();
-                $bed_servie_entry->category_id         = env('BED_SERVICE_CATGORY_ID', 1);
+                $bed_servie_entry->category_id         = appsettings('bed_service_category_id', 1);
                 $bed_servie_entry->service_name        = 'Bed ' . $request->name . " " . $request->ward . " " . $request->unit;
                 $bed_servie_entry->service_code        = strtoupper('Bed ' . $request->name . " " . $request->ward . " " . $request->unit);
                 $bed_servie_entry->update();

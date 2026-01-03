@@ -496,7 +496,7 @@ class StaffController extends Controller
                 $staff->consultation_fee = $request->consultation_fee ?? 0;
 
                 if ($staff->save()) {
-                    if (env('GOONLINE') == 1) {
+                    if (appsettings('goonline', 0) == 1) {
                         // Send to CoreHealth SuperAdmin
                         // For doctors and nurses
                         if ($request->is_admin == 21) {

@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class LabServiceRequest extends Model
+class ImagingServiceRequest extends Model
 {
     use HasFactory;
 
@@ -20,9 +20,6 @@ class LabServiceRequest extends Model
         'attachments',
         'result_date',
         'result_by',
-        'sample_taken',
-        'sample_date',
-        'sample_taken_by',
         'doctor_id',
         'note',
         'status'

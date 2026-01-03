@@ -13,9 +13,9 @@
                     <thead>
                         <tr>
                             <th>Product Name</th>
-                            <th>Cost Price {{ NAIRA_CODE }}</th>
-                            <th>Issue Price {{ NAIRA_CODE }}</th>
-                            <th>Maximum Discount {{ NAIRA_CODE }}</th>
+                            <th>Cost Price (NGN)</th>
+                            <th>Issue Price (NGN)</th>
+                            <th>Maximum Discount (NGN)</th>
                         </tr>
                     </thead>
                     <tbody>
