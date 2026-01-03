@@ -19,7 +19,7 @@
     <!-- inject:css -->
     <!-- endinject -->
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="{{ asset('assets/css/bootstrap.min.css') }}" rel="stylesheet" />
     <!-- End Bootstrap CSS -->
     <link rel="shortcut icon" href="data:image/png;base64,{{ appsettings()->favicon ?? '' }}" />
     <link rel="icon" type="image/png" href="data:image/png;base64,{{ appsettings()->favicon ?? '' }}">
@@ -29,12 +29,11 @@
     <script src="{{ asset('plugins/chartjs/Chart.js') }}"></script>
 
     <!-- Toastr CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css"
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="{{ asset('assets/css/toastr.min.css') }}" />
     <!-- End Toastr CSS -->
 
     <!-- Google Fonts: Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="{{ asset('assets/css/inter-font.css') }}" rel="stylesheet">
 
     @php
         $primaryColor = appsettings()->hos_color ?? '#011b33';
@@ -1734,8 +1733,8 @@ rgba(255, 255, 255, 0.7) !important;
 
     <script>
         function popMessengerWindow() {
-            var mywindow = window.open("{{ route('messages') }}", 'Messenger', 'height=800,width=800');
-            mywindow.focus(); // IE >= 10
+            // Toggle the floating widget instead of opening a new window
+            toggleChatWindow();
         }
     </script>
 
@@ -1824,6 +1823,9 @@ rgba(255, 255, 255, 0.7) !important;
             }
         }
     </style>
+
+    <!-- Chat Styles -->
+    <link rel="stylesheet" href="{{ asset('css/chat-styles.css') }}">
 </head>
 
 <body id='app'>
@@ -1916,6 +1918,9 @@ rgba(255, 255, 255, 0.7) !important;
     <script>
         $('.select2').select2();
     </script>
+
+    <!-- Chat Core JS - Must load before page scripts -->
+    <script src="{{ asset('js/chat-core.js') }}?v={{ time() }}"></script>
 
     {{-- <script src="admin/assets/vendors/chart.js/Chart.min.js"></script> --}}
     @yield('scripts')
@@ -2076,9 +2081,10 @@ rgba(255, 255, 255, 0.7) !important;
     </script>
 
     <!-- Toastr JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="{{ asset('assets/js/toastr.min.js') }}"></script>
     <!-- End Toastr JS -->
+
+    @include('admin.partials.chat-widget')
 
 </body>
 

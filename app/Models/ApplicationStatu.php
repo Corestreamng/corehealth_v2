@@ -23,6 +23,7 @@ class ApplicationStatu extends Model
         'description',
         'version',
         'active',
-        'debug_mode'
+        'debug_mode',
+        'notification_sound'
     ];
 }

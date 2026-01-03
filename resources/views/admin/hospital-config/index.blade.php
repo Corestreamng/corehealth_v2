@@ -54,6 +54,14 @@
                                                style="border-radius: 8px; padding: 0.75rem;">
                                     </div>
 
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Notification Sound</label>
+                                        <div class="custom-control custom-switch mt-2">
+                                            <input type="checkbox" class="custom-control-input" id="notificationSoundSwitch" name="notification_sound" value="1" {{ $config->notification_sound ? 'checked' : '' }}>
+                                            <label class="custom-control-label" for="notificationSoundSwitch">Enable chat notification sounds</label>
+                                        </div>
+                                    </div>
+
                                     <div class="col-md-12 mb-3">
                                         <label class="form-label" style="font-weight: 600; color: #495057;">Description</label>
                                         <textarea class="form-control" name="description" rows="3"
