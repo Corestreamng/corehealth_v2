@@ -13,6 +13,7 @@ use App\Http\Controllers\EncounterController;
 use App\Http\Controllers\HmoController;
 use App\Http\Controllers\HospitalConfigController;
 use App\Http\Controllers\LabServiceRequestController;
+use App\Http\Controllers\ImagingServiceRequestController;
 use App\Http\Controllers\MiscBillController;
 use App\Http\Controllers\MoveStockController;
 use App\Http\Controllers\NursingNoteController;
@@ -144,6 +145,8 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('ContEncounterList', [EncounterController::class, 'ContEncounterList'])->name('ContEncounterList');
         Route::get('PrevEncounterList', [EncounterController::class, 'PrevEncounterList'])->name('PrevEncounterList');
         Route::get('investigationHistoryList/{patient_id}', [EncounterController::class, 'investigationHistoryList'])->name('investigationHistoryList');
+        Route::get('imagingHistoryList/{patient_id}', [EncounterController::class, 'imagingHistoryList'])->name('imagingHistoryList');
+        Route::get('imagingBillList/{patient_id}', [EncounterController::class, 'imagingBillList'])->name('imagingBillList');
         Route::get('prescHistoryList/{patient_id}', [EncounterController::class, 'prescHistoryList'])->name('prescHistoryList');
         Route::get('prescBillList/{patient_id}', [EncounterController::class, 'prescBillList'])->name('prescBillList');
         Route::get('prescDispenseList/{patient_id}', [EncounterController::class, 'prescDispenseList'])->name('prescDispenseList');
@@ -156,6 +159,16 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('bill-misc-bill', [MiscBillController::class, 'bill'])->name('bill-misc-bill');
         Route::get('investQueueList', [LabServiceRequestController::class, 'investQueueList'])->name('investQueueList');
         Route::get('investHistoryList', [LabServiceRequestController::class, 'investHistoryList'])->name('investHistoryList');
+
+        // Imaging Service Request Routes
+        Route::resource('imaging-requests', ImagingServiceRequestController::class);
+        Route::post('bill-imaging', [ImagingServiceRequestController::class, 'bill'])->name('bill-imaging');
+        Route::post('save-imaging-result', [ImagingServiceRequestController::class, 'saveResult'])->name('save-imaging-result');
+        Route::get('imagingResList/{patient_id}', [ImagingServiceRequestController::class, 'imagingResList'])->name('imagingResList');
+        Route::get('imagingBillList/{patient_id}', [ImagingServiceRequestController::class, 'imagingBillList'])->name('imagingBillList');
+        Route::get('imagingQueueList', [ImagingServiceRequestController::class, 'imagingQueueList'])->name('imagingQueueList');
+        Route::get('imagingHistoryList', [ImagingServiceRequestController::class, 'imagingHistoryList'])->name('imagingHistoryList');
+
         Route::get('patientNursngNote/{patient_id}/{note_type}', [NursingNoteController::class, 'patientNursngNote'])->name('patientNursngNote');
         Route::get('EncounterHistoryList/{patient_id}', [EncounterController::class, 'EncounterHistoryList'])->name('EncounterHistoryList');
         Route::post('auto-save-encounter-note', [EncounterController::class, 'autosaveNotes'])->name('auto-save-encounter-note');

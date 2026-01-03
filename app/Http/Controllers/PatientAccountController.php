@@ -140,7 +140,7 @@ class PatientAccountController extends Controller
                 //create a misc service to associate the Misc bill with
                 $misc_service                      = new service();
                 $misc_service->user_id             = Auth::user()->id;
-                $misc_service->category_id         = env('MISC_SERVICE_CATEGORY_ID');
+                $misc_service->category_id         = appsettings('misc_service_category_id');
                 $misc_service->service_name        = trim('[' . userfullname($patient->user_id) . '] ' . $request->names[$i]);
                 $misc_service->service_code        = trim($request->names[$i]);
                 $misc_service->price_assign        = 1;

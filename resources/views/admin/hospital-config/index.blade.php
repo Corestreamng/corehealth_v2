@@ -85,45 +85,299 @@
                             </div>
                         </div>
 
-                        <!-- Contact Information Card -->
+                        <!-- Service Categories Card -->
                         <div class="card mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                             <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef;">
                                 <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
-                                    <i class="mdi mdi-phone-outline mr-2" style="color: var(--primary-color);"></i>
-                                    Contact Information
+                                    <i class="mdi mdi-shape-outline mr-2" style="color: var(--primary-color);"></i>
+                                    Service Categories
+                                </h5>
+                            </div>
+                            <div class="card-body" style="padding: 2rem;">
+                                <p class="text-muted mb-3" style="font-size: 0.9rem;">
+                                    <i class="mdi mdi-information-outline"></i> Configure the category IDs for different service types in your system.
+                                </p>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Bed Service Category ID</label>
+                                        <input type="number" class="form-control" name="bed_service_category_id"
+                                               value="{{ old('bed_service_category_id', $config->bed_service_category_id ?? 3) }}"
+                                               min="1" style="border-radius: 8px; padding: 0.75rem;">
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Investigation Category ID</label>
+                                        <input type="number" class="form-control" name="investigation_category_id"
+                                               value="{{ old('investigation_category_id', $config->investigation_category_id ?? 2) }}"
+                                               min="1" style="border-radius: 8px; padding: 0.75rem;">
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Consultation Category ID</label>
+                                        <input type="number" class="form-control" name="consultation_category_id"
+                                               value="{{ old('consultation_category_id', $config->consultation_category_id ?? 1) }}"
+                                               min="1" style="border-radius: 8px; padding: 0.75rem;">
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Nursing Service Category</label>
+                                        <input type="number" class="form-control" name="nursing_service_category"
+                                               value="{{ old('nursing_service_category', $config->nursing_service_category ?? 4) }}"
+                                               min="1" style="border-radius: 8px; padding: 0.75rem;">
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Misc Service Category ID</label>
+                                        <input type="number" class="form-control" name="misc_service_category_id"
+                                               value="{{ old('misc_service_category_id', $config->misc_service_category_id ?? 5) }}"
+                                               min="1" style="border-radius: 8px; padding: 0.75rem;">
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Imaging Category ID</label>
+                                        <input type="number" class="form-control" name="imaging_category_id"
+                                               value="{{ old('imaging_category_id', $config->imaging_category_id ?? 6) }}"
+                                               min="1" style="border-radius: 8px; padding: 0.75rem;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Time Windows Card -->
+                        <div class="card mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                            <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef;">
+                                <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
+                                    <i class="mdi mdi-clock-outline mr-2" style="color: var(--primary-color);"></i>
+                                    Time Windows
+                                </h5>
+                            </div>
+                            <div class="card-body" style="padding: 2rem;">
+                                <p class="text-muted mb-3" style="font-size: 0.9rem;">
+                                    <i class="mdi mdi-information-outline"></i> Configure time limits for various operations.
+                                </p>
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Consultation Cycle Duration</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" name="consultation_cycle_duration"
+                                                   value="{{ old('consultation_cycle_duration', $config->consultation_cycle_duration ?? 24) }}"
+                                                   min="1" style="border-radius: 8px 0 0 8px; padding: 0.75rem;">
+                                            <div class="input-group-append">
+                                                <span class="input-group-text" style="border-radius: 0 8px 8px 0;">hours</span>
+                                            </div>
+                                        </div>
+                                        <small class="text-muted">Time before consultation expires</small>
+                                    </div>
+
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Note Edit Window</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" name="note_edit_window"
+                                                   value="{{ old('note_edit_window', $config->note_edit_window ?? 30) }}"
+                                                   min="1" style="border-radius: 8px 0 0 8px; padding: 0.75rem;">
+                                            <div class="input-group-append">
+                                                <span class="input-group-text" style="border-radius: 0 8px 8px 0;">minutes</span>
+                                            </div>
+                                        </div>
+                                        <small class="text-muted">Time to allow note editing</small>
+                                    </div>
+
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Result Edit Duration</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" name="result_edit_duration"
+                                                   value="{{ old('result_edit_duration', $config->result_edit_duration ?? 60) }}"
+                                                   min="1" style="border-radius: 8px 0 0 8px; padding: 0.75rem;">
+                                            <div class="input-group-append">
+                                                <span class="input-group-text" style="border-radius: 0 8px 8px 0;">minutes</span>
+                                            </div>
+                                        </div>
+                                        <small class="text-muted">Time to allow result editing</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Integration Settings Card -->
+                        <div class="card mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                            <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef;">
+                                <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
+                                    <i class="mdi mdi-api mr-2" style="color: var(--primary-color);"></i>
+                                    Integration Settings
+                                </h5>
+                            </div>
+                            <div class="card-body" style="padding: 2rem;">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Client ID</label>
+                                        <input type="text" class="form-control" name="client_id"
+                                               value="{{ old('client_id', $config->client_id) }}"
+                                               style="border-radius: 8px; padding: 0.75rem;">
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Client Secret</label>
+                                        <input type="password" class="form-control" name="client_secret"
+                                               value="{{ old('client_secret', $config->client_secret) }}"
+                                               style="border-radius: 8px; padding: 0.75rem;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- DHIS2 Settings Card -->
+                        <div class="card mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                            <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef;">
+                                <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
+                                    <i class="mdi mdi-server-network mr-2" style="color: var(--primary-color);"></i>
+                                    DHIS2 Integration
+                                </h5>
+                            </div>
+                            <div class="card-body" style="padding: 2rem;">
+                                <p class="text-muted mb-3" style="font-size: 0.9rem;">
+                                    <i class="mdi mdi-information-outline"></i> Configure DHIS2 health information system integration.
+                                </p>
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">DHIS2 API URL</label>
+                                        <input type="text" class="form-control" name="dhis_api_url"
+                                               value="{{ old('dhis_api_url', $config->dhis_api_url) }}"
+                                               placeholder="http://localhost:8080/api"
+                                               style="border-radius: 8px; padding: 0.75rem;">
+                                        <small class="text-muted">No trailing slash</small>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Username</label>
+                                        <input type="text" class="form-control" name="dhis_username"
+                                               value="{{ old('dhis_username', $config->dhis_username) }}"
+                                               style="border-radius: 8px; padding: 0.75rem;">
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Password</label>
+                                        <input type="password" class="form-control" name="dhis_pass"
+                                               value="{{ old('dhis_pass', $config->dhis_pass) }}"
+                                               style="border-radius: 8px; padding: 0.75rem;">
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Organization Unit</label>
+                                        <input type="text" class="form-control" name="dhis_org_unit"
+                                               value="{{ old('dhis_org_unit', $config->dhis_org_unit) }}"
+                                               style="border-radius: 8px; padding: 0.75rem;">
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Tracked Entity Type</label>
+                                        <input type="text" class="form-control" name="dhis_tracked_entity_type"
+                                               value="{{ old('dhis_tracked_entity_type', $config->dhis_tracked_entity_type) }}"
+                                               style="border-radius: 8px; padding: 0.75rem;">
+                                    </div>
+
+                                    <div class="col-md-12 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Tracked Entity Program</label>
+                                        <input type="text" class="form-control" name="dhis_tracked_entity_program"
+                                               value="{{ old('dhis_tracked_entity_program', $config->dhis_tracked_entity_program) }}"
+                                               style="border-radius: 8px; padding: 0.75rem;">
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Program Stage 1 (First Visit)</label>
+                                        <input type="text" class="form-control" name="dhis_tracked_entity_program_stage1"
+                                               value="{{ old('dhis_tracked_entity_program_stage1', $config->dhis_tracked_entity_program_stage1) }}"
+                                               style="border-radius: 8px; padding: 0.75rem;">
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Program Stage 2 (Follow Up)</label>
+                                        <input type="text" class="form-control" name="dhis_tracked_entity_program_stage2"
+                                               value="{{ old('dhis_tracked_entity_program_stage2', $config->dhis_tracked_entity_program_stage2) }}"
+                                               style="border-radius: 8px; padding: 0.75rem;">
+                                    </div>
+
+                                    <div class="col-md-12 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Event Data Element</label>
+                                        <input type="text" class="form-control" name="dhis_tracked_entity_program_event_dataelement"
+                                               value="{{ old('dhis_tracked_entity_program_event_dataelement', $config->dhis_tracked_entity_program_event_dataelement) }}"
+                                               style="border-radius: 8px; padding: 0.75rem;">
+                                        <small class="text-muted">Data element for event (reason for encounter)</small>
+                                    </div>
+
+                                    <!-- Tracked Entity Attributes -->
+                                    <div class="col-md-12 mt-2 mb-2">
+                                        <h6 style="font-weight: 600; color: #495057;">Tracked Entity Attributes</h6>
+                                        <hr>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">First Name Attribute</label>
+                                        <input type="text" class="form-control" name="dhis_tracked_entity_attr_fname"
+                                               value="{{ old('dhis_tracked_entity_attr_fname', $config->dhis_tracked_entity_attr_fname) }}"
+                                               style="border-radius: 8px; padding: 0.75rem;">
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Last Name Attribute</label>
+                                        <input type="text" class="form-control" name="dhis_tracked_entity_attr_lname"
+                                               value="{{ old('dhis_tracked_entity_attr_lname', $config->dhis_tracked_entity_attr_lname) }}"
+                                               style="border-radius: 8px; padding: 0.75rem;">
+                                    </div>
+
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Gender Attribute</label>
+                                        <input type="text" class="form-control" name="dhis_tracked_entity_attr_gender"
+                                               value="{{ old('dhis_tracked_entity_attr_gender', $config->dhis_tracked_entity_attr_gender) }}"
+                                               style="border-radius: 8px; padding: 0.75rem;">
+                                    </div>
+
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">Date of Birth Attribute</label>
+                                        <input type="text" class="form-control" name="dhis_tracked_entity_attr_dob"
+                                               value="{{ old('dhis_tracked_entity_attr_dob', $config->dhis_tracked_entity_attr_dob) }}"
+                                               style="border-radius: 8px; padding: 0.75rem;">
+                                    </div>
+
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">City Attribute</label>
+                                        <input type="text" class="form-control" name="dhis_tracked_entity_attr_city"
+                                               value="{{ old('dhis_tracked_entity_attr_city', $config->dhis_tracked_entity_attr_city) }}"
+                                               style="border-radius: 8px; padding: 0.75rem;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CoreHMS SuperAdmin Card -->
+                        <div class="card mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                            <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef;">
+                                <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
+                                    <i class="mdi mdi-account-supervisor mr-2" style="color: var(--primary-color);"></i>
+                                    CoreHMS SuperAdmin Integration
                                 </h5>
                             </div>
                             <div class="card-body" style="padding: 2rem;">
                                 <div class="row">
                                     <div class="col-md-12 mb-3">
-                                        <label class="form-label" style="font-weight: 600; color: #495057;">Address</label>
-                                        <textarea class="form-control" name="contact_address" rows="2"
-                                                  style="border-radius: 8px; padding: 0.75rem;">{{ old('contact_address', $config->contact_address) }}</textarea>
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">SuperAdmin URL</label>
+                                        <input type="text" class="form-control" name="corehms_superadmin_url"
+                                               value="{{ old('corehms_superadmin_url', $config->corehms_superadmin_url) }}"
+                                               placeholder="https://corehms.com/api"
+                                               style="border-radius: 8px; padding: 0.75rem;">
                                     </div>
 
                                     <div class="col-md-6 mb-3">
-                                        <label class="form-label" style="font-weight: 600; color: #495057;">Phone Numbers</label>
-                                        <input type="text" class="form-control" name="contact_phones"
-                                               value="{{ old('contact_phones', $config->contact_phones) }}"
-                                               placeholder="+234 123 456 7890, +234 987 654 3210"
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">SuperAdmin Username</label>
+                                        <input type="text" class="form-control" name="corehms_superadmin_username"
+                                               value="{{ old('corehms_superadmin_username', $config->corehms_superadmin_username) }}"
                                                style="border-radius: 8px; padding: 0.75rem;">
-                                        <small class="text-muted">Separate multiple phones with commas</small>
                                     </div>
 
                                     <div class="col-md-6 mb-3">
-                                        <label class="form-label" style="font-weight: 600; color: #495057;">Email Addresses</label>
-                                        <input type="text" class="form-control" name="contact_emails"
-                                               value="{{ old('contact_emails', $config->contact_emails) }}"
-                                               placeholder="info@hospital.com, support@hospital.com"
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">SuperAdmin Password</label>
+                                        <input type="password" class="form-control" name="corehms_superadmin_pass"
+                                               value="{{ old('corehms_superadmin_pass', $config->corehms_superadmin_pass) }}"
                                                style="border-radius: 8px; padding: 0.75rem;">
-                                        <small class="text-muted">Separate multiple emails with commas</small>
-                                    </div>
-
-                                    <div class="col-md-12 mb-3">
-                                        <label class="form-label" style="font-weight: 600; color: #495057;">Social Media Links (JSON)</label>
-                                        <textarea class="form-control" name="social_links" rows="3"
-                                                  style="border-radius: 8px; padding: 0.75rem; font-family: monospace;">{{ old('social_links', $config->social_links) }}</textarea>
-                                        <small class="text-muted">Example: {"facebook": "url", "twitter": "url", "instagram": "url"}</small>
                                     </div>
                                 </div>
                             </div>
@@ -213,6 +467,53 @@
                                         </label>
                                     </div>
                                     <small class="text-muted d-block mt-1">Show detailed error messages</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Feature Flags Card -->
+                        <div class="card mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                            <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef;">
+                                <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
+                                    <i class="mdi mdi-flag-variant mr-2" style="color: var(--primary-color);"></i>
+                                    Feature Flags
+                                </h5>
+                            </div>
+                            <div class="card-body" style="padding: 2rem;">
+                                <div class="mb-3">
+                                    <div class="custom-control custom-switch">
+                                        <input type="hidden" name="goonline" value="0">
+                                        <input type="checkbox" class="custom-control-input" id="goonline"
+                                               name="goonline" value="1" {{ $config->goonline ? 'checked' : '' }}>
+                                        <label class="custom-control-label" for="goonline" style="font-weight: 600;">
+                                            Go Online
+                                        </label>
+                                    </div>
+                                    <small class="text-muted d-block mt-1">Enable DHIS2 & SuperAdmin sync</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="custom-control custom-switch">
+                                        <input type="hidden" name="requirediagnosis" value="0">
+                                        <input type="checkbox" class="custom-control-input" id="requirediagnosis"
+                                               name="requirediagnosis" value="1" {{ $config->requirediagnosis ? 'checked' : '' }}>
+                                        <label class="custom-control-label" for="requirediagnosis" style="font-weight: 600;">
+                                            Require Diagnosis
+                                        </label>
+                                    </div>
+                                    <small class="text-muted d-block mt-1">Require diagnosis during consultation</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="custom-control custom-switch">
+                                        <input type="hidden" name="enable_twakto" value="0">
+                                        <input type="checkbox" class="custom-control-input" id="enable_twakto"
+                                               name="enable_twakto" value="1" {{ $config->enable_twakto ? 'checked' : '' }}>
+                                        <label class="custom-control-label" for="enable_twakto" style="font-weight: 600;">
+                                            Enable Tawk.to
+                                        </label>
+                                    </div>
+                                    <small class="text-muted d-block mt-1">Enable Tawk.to chat support widget</small>
                                 </div>
                             </div>
                         </div>

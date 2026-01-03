@@ -94,7 +94,7 @@ class ProcedureController extends Controller
     {
         try {
             $currentDateTime = Carbon::now();
-            $timeThreshold = $currentDateTime->subHours(env('CONSULTATION_CYCLE_DURATION'));
+            $timeThreshold = $currentDateTime->subHours(appsettings('consultation_cycle_duration', 24));
 
             // dd($timeThreshold);
             $queue = Procedure::where('requested_by', Auth::id())

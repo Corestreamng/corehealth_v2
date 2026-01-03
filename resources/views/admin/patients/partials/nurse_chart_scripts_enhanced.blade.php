@@ -101,7 +101,7 @@
     }
 
     // Configurable time window for editing/deleting administrations (from .env)
-    var NOTE_EDIT_WINDOW = {{ env('NOTE_EDIT_WINDOW', 30) }}; // Default 30 minutes if not set
+    var NOTE_EDIT_WINDOW = {{ appsettings('note_edit_window', 30) }}; // Default 30 minutes if not set
     var intakeOutputChartIndexRoute = "{{ route('nurse.intake_output.index', [':patient']) }}";
     var intakeOutputChartLogsRoute = "{{ route('nurse.intake_output.logs', [':patient', ':period']) }}";
     var intakeOutputChartStartRoute = "{{ route('nurse.intake_output.start') }}";

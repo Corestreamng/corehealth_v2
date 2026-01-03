@@ -1943,7 +1943,7 @@ rgba(255, 255, 255, 0.7) !important;
     {{-- <script src="{{ asset('admin/assets/js/dashboard.js') }}"></script> --}}
 
     <!-- End custom js for this page -->
-    @if (env('ENABLE_TWAKTO') == 1)
+    @if (appsettings('enable_twakto', 0) == 1)
         <!--Start of Tawk.to Script-->
         <script type="text/javascript">
             var Tawk_API = Tawk_API || {},
