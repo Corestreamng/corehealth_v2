@@ -21,6 +21,7 @@ use RealRashid\SweetAlert\Facades\Alert;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Yajra\DataTables\DataTables;
+use Illuminate\View\ComponentAttributeBag;
 
 class StaffController extends Controller
 {
@@ -61,9 +62,12 @@ class StaffController extends Controller
                 return $user_category_name;
             })
             ->addColumn('filename', function ($user) {
-                $url = url('storage/image/user/thumbnail/' . $user->filename);
-
-                return '<img src=' . $url . ' border="0" width="30" class="img-rounded" align="center" />';
+                return view('components.user-avatar', [
+                    'user' => $user,
+                    'width' => '30px',
+                    'height' => '30px',
+                    'attributes' => new ComponentAttributeBag()
+                ])->render();
             })
             ->addColumn('view', function ($user) {
                 // if (Auth::user()->hasPermissionTo('user-show') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {

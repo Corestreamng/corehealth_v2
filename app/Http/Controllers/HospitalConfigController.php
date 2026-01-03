@@ -38,7 +38,8 @@ class HospitalConfigController extends Controller
             'description' => 'nullable|string',
             'version' => 'nullable|string|max:50',
             'active' => 'boolean',
-            'debug_mode' => 'boolean'
+            'debug_mode' => 'boolean',
+            'notification_sound' => 'nullable'
         ]);
 
         $config = ApplicationStatu::first();
@@ -46,6 +47,9 @@ class HospitalConfigController extends Controller
         if (!$config) {
             $config = new ApplicationStatu();
         }
+
+        // Handle Checkboxes
+        $validated['notification_sound'] = $request->has('notification_sound');
 
         // Handle logo upload
         if ($request->hasFile('logo')) {

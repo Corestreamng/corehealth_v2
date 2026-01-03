@@ -34,7 +34,7 @@
             @auth
                 <li class="nav-item dropdown">
                     <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="padding: 0; display: flex; align-items: center;">
-                        <img src="{!! url('storage/image/user/'.Auth::user()->filename) !!}" alt="profile" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; cursor: pointer;" />
+                        <x-user-avatar :user="Auth::user()" width="32px" height="32px" />
                     </a>
 
                     <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">

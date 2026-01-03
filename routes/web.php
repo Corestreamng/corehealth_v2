@@ -5,6 +5,7 @@ use App\Http\Controllers\Account\paymentController;
 use App\Http\Controllers\Account\productAccountController;
 use App\Http\Controllers\AdmissionRequestController;
 use App\Http\Controllers\BedController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ClinicController;
 use App\Http\Controllers\Doctor\DoctorConsultationsController;
 use App\Http\Controllers\Doctor\DoctorDashboardController;
@@ -297,12 +298,19 @@ Route::group(['prefix' => 'doctor', 'middleware' => ['auth']], function () {
 
     Route::get('/consultations', [DoctorConsultationsController::class, 'index'])->name('doctor.consultations');
 });
-Route::group(['prefix' => 'messages'], function () {
-    Route::get('/', [MessagesController::class, 'index'])->name('messages');
-    Route::get('create', [MessagesController::class, 'create'])->name('messages.create');
-    Route::post('/', [MessagesController::class, 'store'])->name('messages.store');
-    Route::get('{id}', [MessagesController::class, 'show'])->name('messages.show');
-    Route::put('{id}', [MessagesController::class, 'update'])->name('messages.update');
+Route::group(['prefix' => 'chat', 'middleware' => ['auth']], function () {
+    Route::get('/', [ChatController::class, 'index'])->name('chat.index');
+    Route::get('/conversations', [ChatController::class, 'getConversations'])->name('chat.conversations');
+    Route::get('/messages/{conversationId}', [ChatController::class, 'getMessages'])->name('chat.messages');
+    Route::post('/mark-read/{conversationId}', [ChatController::class, 'markAsRead'])->name('chat.mark-read');
+    Route::get('/check-unread', [ChatController::class, 'checkUnread'])->name('chat.check-unread');
+    Route::post('/send', [ChatController::class, 'sendMessage'])->name('chat.send');
+    Route::post('/create', [ChatController::class, 'createConversation'])->name('chat.create');
+    Route::get('/search-users', [ChatController::class, 'searchUsers'])->name('chat.search-users');
+    Route::get('/search-messages/{conversationId}', [ChatController::class, 'searchMessagesInConversation'])->name('chat.search-messages');
+    Route::delete('/message/{messageId}', [ChatController::class, 'deleteMessage'])->name('chat.delete-message');
+    Route::post('/archive/{conversationId}', [ChatController::class, 'archiveConversation'])->name('chat.archive');
+    Route::post('/unarchive/{conversationId}', [ChatController::class, 'unarchiveConversation'])->name('chat.unarchive');
 });
 
 Route::get('my-profile', [StaffController::class, 'my_profile'])->name('my-profile');

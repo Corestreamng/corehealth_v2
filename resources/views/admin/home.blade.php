@@ -21,7 +21,7 @@
 @endsection
 @section('scripts')
 <!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ asset('plugins/chartjs/Chart.js') }}"></script>
 <script>
 $(document).ready(function () {
     // Chart instance cache

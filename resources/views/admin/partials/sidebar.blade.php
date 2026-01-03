@@ -33,7 +33,7 @@
             <li class="nav-item">
                 <a class="nav-link" href="#" onclick="popMessengerWindow()">
                     <i class="mdi mdi-message-text-outline menu-icon"></i>
-                    <span class="menu-title">Messenger @include('messenger.unread-count')</span>
+                    <span class="menu-title">Messenger</span>
                 </a>
         </li>
 
@@ -476,7 +476,7 @@
         <li class="nav-item nav-profile pt-3 mt-auto border-top" style="border-color: rgba(255,255,255,0.1) !important;">
             <div class="px-3 pb-3">
                 <div class="d-flex align-items-center mb-3">
-                    <img src="{!! url('storage/image/user/'.Auth::user()->filename) !!}" alt="profile" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover; border: 2px solid rgba(255,255,255,0.1);" />
+                    <x-user-avatar :user="Auth::user()" width="40px" height="40px" class="border border-light" />
                     <div class="ml-3 overflow-hidden">
                         <div class="font-weight-bold text-white text-truncate" style="font-size: 0.95rem;">
                             {{ Auth::user()->firstname }} {{ Auth::user()->surname }}

@@ -80,4 +80,9 @@ class User extends Authenticatable
     {
         return $this->hasOne(patient::class, 'user_id', 'id');
     }
+
+    public function conversations()
+    {
+        return $this->belongsToMany(ChatConversation::class, 'chat_participants', 'user_id', 'conversation_id');
+    }
 }
