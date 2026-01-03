@@ -1,7 +1,7 @@
 <nav class="ch-navbar default-layout-navbar col-lg-12 col-12 p-0 fixed-top">
     <div class="navbar-menu-wrapper d-flex align-items-center justify-content-between w-100">
         <!-- Left: Sidebar Toggle -->
-        <button class="navbar-toggler align-self-center" type="button" data-toggle="minimize">
+        <button class="sidebar-toggle-btn" type="button">
             <i class="mdi mdi-menu"></i>
         </button>
 
@@ -56,7 +56,7 @@
         </ul>
 
         <!-- Mobile Sidebar Toggle -->
-        <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button" data-toggle="offcanvas">
+        <button class="sidebar-mobile-toggle-btn d-lg-none" type="button">
             <i class="mdi mdi-menu"></i>
         </button>
     </div>

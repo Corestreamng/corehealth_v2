@@ -393,13 +393,18 @@
                         <div class="form-group">
                             <label for="">Select HMO </label>
                             <div class="input-group">
-                                <span class="input-group-text"><i class="mdi mdi-account"></i></span>
+                                <span class="input-group-text"><i class="mdi mdi-shield-heart-outline"></i></span>
                                 <select name="hmo_id" id="hmo_id" class="form-control">
                                     <option value="">Select HMO</option>
-                                    @foreach ($hmos as $hmo)
-                                        <option value="{{ $hmo->id }}"
-                                            {{ !empty($patient->hmo_id && $patient->hmo_id == $hmo->id) ? 'selected' : (old('hmo_id') == $hmo->id ? 'selected' : '') }}>
-                                            {{ $hmo->name }}</option>
+                                    @foreach ($hmos as $schemeName => $schemeHmos)
+                                        <optgroup label="{{ $schemeName ?? 'Uncategorized' }}">
+                                            @foreach ($schemeHmos as $hmo)
+                                                <option value="{{ $hmo->id }}"
+                                                    {{ old('hmo_id', $patient->hmo_id) == $hmo->id ? 'selected' : '' }}>
+                                                    {{ $hmo->name }}
+                                                </option>
+                                            @endforeach
+                                        </optgroup>
                                     @endforeach
                                 </select>
                             </div>
