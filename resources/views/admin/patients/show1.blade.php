@@ -895,15 +895,39 @@
             $('#invest_res_service_name').text($(obj).attr('data-service-name'));
             $('#invest_res_entry_id').val($(obj).attr('data-id'));
             $('#invest_res_is_edit').val('0'); // Set to create mode
-            
+
             // Clear existing attachments and reset
             deletedAttachments = [];
             $('#deleted_attachments').val('[]');
             $('#existing_attachments_container').hide();
             $('#existing_attachments_list').html('');
 
-            // Load template into CKEditor
-            let template = $(obj).attr('data-template');
+            // Check if V2 template exists
+            let templateV2Str = $(obj).attr('data-template-v2');
+            let templateV1 = $(obj).attr('data-template');
+
+            if (templateV2Str && templateV2Str !== '') {
+                // Use V2 Template (structured form)
+                try {
+                    let templateV2 = JSON.parse(templateV2Str);
+                    loadV2Template(templateV2, null); // null means new entry, not editing
+                } catch (e) {
+                    console.error('Error parsing V2 template:', e);
+                    // Fallback to V1
+                    loadV1Template(templateV1);
+                }
+            } else {
+                // Use V1 Template (WYSIWYG editor)
+                loadV1Template(templateV1);
+            }
+
+            $('#investResModal').modal('show');
+        }
+
+        function loadV1Template(template) {
+            $('#invest_res_template_version').val('1');
+            $('#v1_template_container').show();
+            $('#v2_template_container').hide();
 
             // Initialize CKEditor if not already initialized
             if (!investResEditor) {
@@ -929,13 +953,248 @@
             } else {
                 investResEditor.setData(template);
             }
+        }
 
-            $('#investResModal').modal('show');
+        function loadV2Template(template, existingData) {
+            $('#invest_res_template_version').val('2');
+            $('#v1_template_container').hide();
+            $('#v2_template_container').show();
+
+            let formHtml = '<div class="v2-result-form">';
+            formHtml += '<h6 class="mb-3">' + template.template_name + '</h6>';
+
+            // Sort parameters by order
+            let parameters = template.parameters.sort((a, b) => a.order - b.order);
+
+            parameters.forEach(param => {
+                if (param.show_in_report === false) {
+                    return; // Skip hidden parameters
+                }
+
+                formHtml += '<div class="form-group row">';
+                formHtml += '<label class="col-md-4 col-form-label">';
+                formHtml += param.name;
+                if (param.unit) {
+                    formHtml += ' <small class="text-muted">(' + param.unit + ')</small>';
+                }
+                if (param.required) {
+                    formHtml += ' <span class="text-danger">*</span>';
+                }
+                formHtml += '</label>';
+                formHtml += '<div class="col-md-8">';
+
+                let fieldId = 'param_' + param.id;
+                let value = existingData && existingData[param.id] ? existingData[param.id] : '';
+
+                // Generate form field based on type
+                if (param.type === 'string') {
+                    formHtml += '<input type="text" class="form-control v2-param-field" ';
+                    formHtml += 'data-param-id="' + param.id + '" ';
+                    formHtml += 'data-param-type="' + param.type + '" ';
+                    formHtml += 'id="' + fieldId + '" ';
+                    formHtml += 'value="' + value + '" ';
+                    if (param.required) formHtml += 'required ';
+                    formHtml += 'placeholder="Enter ' + param.name + '">';
+
+                } else if (param.type === 'integer') {
+                    formHtml += '<input type="number" step="1" class="form-control v2-param-field" ';
+                    formHtml += 'data-param-id="' + param.id + '" ';
+                    formHtml += 'data-param-type="' + param.type + '" ';
+                    if (param.reference_range) {
+                        formHtml += 'data-ref-min="' + (param.reference_range.min || '') + '" ';
+                        formHtml += 'data-ref-max="' + (param.reference_range.max || '') + '" ';
+                    }
+                    formHtml += 'id="' + fieldId + '" ';
+                    formHtml += 'value="' + value + '" ';
+                    if (param.required) formHtml += 'required ';
+                    formHtml += 'placeholder="Enter ' + param.name + '">';
+
+                } else if (param.type === 'float') {
+                    formHtml += '<input type="number" step="0.01" class="form-control v2-param-field" ';
+                    formHtml += 'data-param-id="' + param.id + '" ';
+                    formHtml += 'data-param-type="' + param.type + '" ';
+                    if (param.reference_range) {
+                        formHtml += 'data-ref-min="' + (param.reference_range.min || '') + '" ';
+                        formHtml += 'data-ref-max="' + (param.reference_range.max || '') + '" ';
+                    }
+                    formHtml += 'id="' + fieldId + '" ';
+                    formHtml += 'value="' + value + '" ';
+                    if (param.required) formHtml += 'required ';
+                    formHtml += 'placeholder="Enter ' + param.name + '">';
+
+                } else if (param.type === 'boolean') {
+                    formHtml += '<select class="form-control v2-param-field" ';
+                    formHtml += 'data-param-id="' + param.id + '" ';
+                    formHtml += 'data-param-type="' + param.type + '" ';
+                    if (param.reference_range && param.reference_range.reference_value !== undefined) {
+                        formHtml += 'data-ref-value="' + param.reference_range.reference_value + '" ';
+                    }
+                    formHtml += 'id="' + fieldId + '" ';
+                    if (param.required) formHtml += 'required ';
+                    formHtml += '>';
+                    formHtml += '<option value="">Select</option>';
+                    formHtml += '<option value="true" ' + (value === true || value === 'true' ? 'selected' : '') + '>Yes/Positive</option>';
+                    formHtml += '<option value="false" ' + (value === false || value === 'false' ? 'selected' : '') + '>No/Negative</option>';
+                    formHtml += '</select>';
+
+                } else if (param.type === 'enum') {
+                    formHtml += '<select class="form-control v2-param-field" ';
+                    formHtml += 'data-param-id="' + param.id + '" ';
+                    formHtml += 'data-param-type="' + param.type + '" ';
+                    if (param.reference_range && param.reference_range.reference_value) {
+                        formHtml += 'data-ref-value="' + param.reference_range.reference_value + '" ';
+                    }
+                    formHtml += 'id="' + fieldId + '" ';
+                    if (param.required) formHtml += 'required ';
+                    formHtml += '>';
+                    formHtml += '<option value="">Select</option>';
+                    if (param.options) {
+                        param.options.forEach(opt => {
+                            formHtml += '<option value="' + opt.value + '" ' + (value === opt.value ? 'selected' : '') + '>' + opt.label + '</option>';
+                        });
+                    }
+                    formHtml += '</select>';
+
+                } else if (param.type === 'long_text') {
+                    formHtml += '<textarea class="form-control v2-param-field" ';
+                    formHtml += 'data-param-id="' + param.id + '" ';
+                    formHtml += 'data-param-type="' + param.type + '" ';
+                    formHtml += 'id="' + fieldId + '" ';
+                    formHtml += 'rows="3" ';
+                    if (param.required) formHtml += 'required ';
+                    formHtml += 'placeholder="Enter ' + param.name + '">' + value + '</textarea>';
+                }
+
+                // Add reference range info if available
+                if (param.reference_range) {
+                    formHtml += '<small class="form-text text-muted">';
+                    if (param.type === 'integer' || param.type === 'float') {
+                        if (param.reference_range.min !== null && param.reference_range.max !== null) {
+                            formHtml += 'Normal range: ' + param.reference_range.min + ' - ' + param.reference_range.max;
+                        }
+                    } else if (param.type === 'boolean' && param.reference_range.reference_value !== undefined) {
+                        formHtml += 'Normal: ' + (param.reference_range.reference_value ? 'Yes/Positive' : 'No/Negative');
+                    } else if (param.type === 'enum' && param.reference_range.reference_value) {
+                        formHtml += 'Normal: ' + param.reference_range.reference_value;
+                    } else if (param.reference_range.text) {
+                        formHtml += param.reference_range.text;
+                    }
+                    formHtml += '</small>';
+                }
+
+                // Status indicator (will be updated on blur)
+                formHtml += '<div class="mt-1"><span class="param-status" id="status_' + param.id + '"></span></div>';
+
+                formHtml += '</div>';
+                formHtml += '</div>';
+            });
+
+            formHtml += '</div>';
+
+            $('#v2_form_fields').html(formHtml);
+
+            // Add event listeners for value changes to show status
+            $('.v2-param-field').on('blur change', function() {
+                updateParameterStatus($(this));
+            });
+        }
+
+        function updateParameterStatus($field) {
+            let paramId = $field.data('param-id');
+            let paramType = $field.data('param-type');
+            let value = $field.val();
+            let $statusSpan = $('#status_' + paramId);
+
+            if (!value || value === '') {
+                $statusSpan.html('');
+                return;
+            }
+
+            let status = '';
+            let statusClass = '';
+
+            if (paramType === 'integer' || paramType === 'float') {
+                let numValue = parseFloat(value);
+                let min = $field.data('ref-min');
+                let max = $field.data('ref-max');
+
+                if (min !== '' && max !== '') {
+                    if (numValue < min) {
+                        status = 'Low';
+                        statusClass = 'badge-warning';
+                    } else if (numValue > max) {
+                        status = 'High';
+                        statusClass = 'badge-danger';
+                    } else {
+                        status = 'Normal';
+                        statusClass = 'badge-success';
+                    }
+                }
+            } else if (paramType === 'boolean') {
+                let refValue = $field.data('ref-value');
+                if (refValue !== undefined) {
+                    let boolValue = value === 'true';
+                    let refBool = refValue === true || refValue === 'true';
+
+                    if (boolValue === refBool) {
+                        status = 'Normal';
+                        statusClass = 'badge-success';
+                    } else {
+                        status = 'Abnormal';
+                        statusClass = 'badge-warning';
+                    }
+                }
+            } else if (paramType === 'enum') {
+                let refValue = $field.data('ref-value');
+                if (refValue) {
+                    if (value === refValue) {
+                        status = 'Normal';
+                        statusClass = 'badge-success';
+                    } else {
+                        status = 'Abnormal';
+                        statusClass = 'badge-warning';
+                    }
+                }
+            }
+
+            if (status) {
+                $statusSpan.html('<span class="badge ' + statusClass + '">' + status + '</span>');
+            } else {
+                $statusSpan.html('');
+            }
         }
 
         function copyResTemplateToField() {
-            if (investResEditor) {
-                $('#invest_res_template_submited').val(investResEditor.getData());
+            let version = $('#invest_res_template_version').val();
+
+            if (version === '2') {
+                // Collect V2 structured data
+                let data = {};
+                $('.v2-param-field').each(function() {
+                    let paramId = $(this).data('param-id');
+                    let paramType = $(this).data('param-type');
+                    let value = $(this).val();
+
+                    // Convert values to appropriate types
+                    if (paramType === 'integer') {
+                        data[paramId] = value ? parseInt(value) : null;
+                    } else if (paramType === 'float') {
+                        data[paramId] = value ? parseFloat(value) : null;
+                    } else if (paramType === 'boolean') {
+                        data[paramId] = value === 'true' ? true : (value === 'false' ? false : null);
+                    } else {
+                        data[paramId] = value || null;
+                    }
+                });
+
+                $('#invest_res_template_data').val(JSON.stringify(data));
+                // For V2, we still save a simple HTML representation to result column for backward compat
+                $('#invest_res_template_submited').val('<p>Structured result data (V2 template)</p>');
+            } else {
+                // V1: Copy from CKEditor
+                if (investResEditor) {
+                    $('#invest_res_template_submited').val(investResEditor.getData());
+                }
             }
             return true;
         }
@@ -960,14 +1219,14 @@
             $('#invest_res_service_name').text($(obj).attr('data-service-name'));
             $('#invest_res_entry_id').val($(obj).attr('data-id'));
             $('#invest_res_is_edit').val('1'); // Set to edit mode
-            
+
             // Reset deleted attachments
             deletedAttachments = [];
             $('#deleted_attachments').val('[]');
 
             // Load existing result into CKEditor
             let result = $(obj).attr('data-result');
-            
+
             // Load existing attachments
             let attachments = $(obj).attr('data-attachments');
             if (attachments) {
@@ -1022,14 +1281,14 @@
                 $('#existing_attachments_container').hide();
             });
         }
-        
+
         // Function to display existing attachments for lab results
         function displayExistingAttachments(attachments) {
             if (!attachments || attachments.length === 0) {
                 $('#existing_attachments_container').hide();
                 return;
             }
-            
+
             let html = '';
             attachments.forEach((attachment, index) => {
                 if (!deletedAttachments.includes(index)) {
@@ -1037,7 +1296,7 @@
                     html += `
                         <div class="badge badge-secondary mr-2 mb-2 p-2" id="attachment_${index}">
                             ${icon} ${attachment.name}
-                            <button type="button" class="btn btn-sm btn-link text-danger p-0 ml-2" 
+                            <button type="button" class="btn btn-sm btn-link text-danger p-0 ml-2"
                                 onclick="removeAttachment(${index})" title="Remove">
                                 <i class="mdi mdi-close-circle"></i>
                             </button>
@@ -1045,11 +1304,11 @@
                     `;
                 }
             });
-            
+
             $('#existing_attachments_list').html(html);
             $('#existing_attachments_container').show();
         }
-        
+
         // Function to remove an attachment
         function removeAttachment(index) {
             if (!deletedAttachments.includes(index)) {
@@ -1068,20 +1327,116 @@
     <script>
         function setResViewInModal(obj) {
             let res_obj = JSON.parse($(obj).attr('data-result-obj'));
+
+            // Basic service info
             $('.invest_res_service_name_view').text($(obj).attr('data-service-name'));
-            $('#invest_res').html(res_obj.result);
-            $('#res_sample_date').html(res_obj.sample_date);
-            $('#res_result_date').html(res_obj.result_date);
+
+            // Patient information
+            let patientName = res_obj.patient.user.firstname + ' ' + res_obj.patient.user.surname;
+            $('#res_patient_name').html(patientName);
+            $('#res_patient_id').html(res_obj.patient.file_no);
+
+            // Calculate age from date of birth
+            let age = 'N/A';
+            if (res_obj.patient.date_of_birth) {
+                let dob = new Date(res_obj.patient.date_of_birth);
+                let today = new Date();
+                let ageYears = today.getFullYear() - dob.getFullYear();
+                let monthDiff = today.getMonth() - dob.getMonth();
+                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+                    ageYears--;
+                }
+                age = ageYears + ' years';
+            }
+            $('#res_patient_age').html(age);
+
+            // Gender
+            let gender = res_obj.patient.gender ? res_obj.patient.gender.toUpperCase() : 'N/A';
+            $('#res_patient_gender').html(gender);
+
+            // Test information
+            $('#res_test_id').html(res_obj.id);
+            $('#res_sample_date').html(res_obj.sample_date || 'N/A');
+            $('#res_result_date').html(res_obj.result_date || 'N/A');
             $('#res_result_by').html(res_obj.results_person.firstname + ' ' + res_obj.results_person.surname);
-            $('#invest_name').text(res_obj.patient.user.firstname + ' ' + res_obj.patient.user.surname + '(' + res_obj
-                .patient.file_no + ')');
+
+            // Signature date (use result date)
+            $('#res_signature_date').html(res_obj.result_date || '');
+
+            // Generated date (current date)
+            let now = new Date();
+            let generatedDate = now.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            $('#res_generated_date').html(generatedDate);
+
+            // Handle V2 results (structured data)
+            if (res_obj.result_data && typeof res_obj.result_data === 'object') {
+                let resultsHtml = '<table class="result-table"><thead><tr>';
+                resultsHtml += '<th style="width: 40%;">Test Parameter</th>';
+                resultsHtml += '<th style="width: 25%;">Results</th>';
+                resultsHtml += '<th style="width: 25%;">Reference Range</th>';
+                resultsHtml += '<th style="width: 10%;">Status</th>';
+                resultsHtml += '</tr></thead><tbody>';
+
+                res_obj.result_data.forEach(function(param) {
+                    resultsHtml += '<tr>';
+                    resultsHtml += '<td><strong>' + param.name + '</strong>';
+                    if (param.code) {
+                        resultsHtml += ' <span style="color: #999;">(' + param.code + ')</span>';
+                    }
+                    resultsHtml += '</td>';
+
+                    // Value with unit
+                    let valueDisplay = param.value;
+                    if (param.unit) {
+                        valueDisplay += ' ' + param.unit;
+                    }
+                    resultsHtml += '<td>' + valueDisplay + '</td>';
+
+                    // Reference range
+                    let refRange = 'N/A';
+                    if (param.reference_range) {
+                        if (param.type === 'integer' || param.type === 'float') {
+                            if (param.reference_range.min !== undefined && param.reference_range.max !== undefined) {
+                                refRange = param.reference_range.min + ' - ' + param.reference_range.max;
+                                if (param.unit) refRange += ' ' + param.unit;
+                            }
+                        } else if (param.type === 'boolean' || param.type === 'enum') {
+                            refRange = param.reference_range.reference_value || 'N/A';
+                        } else if (param.reference_range.text) {
+                            refRange = param.reference_range.text;
+                        }
+                    }
+                    resultsHtml += '<td>' + refRange + '</td>';
+
+                    // Status badge
+                    let statusHtml = '';
+                    if (param.status) {
+                        let statusClass = 'status-' + param.status.toLowerCase().replace(' ', '-');
+                        statusHtml = '<span class="result-status-badge ' + statusClass + '">' + param.status + '</span>';
+                    }
+                    resultsHtml += '<td>' + statusHtml + '</td>';
+                    resultsHtml += '</tr>';
+                });
+
+                resultsHtml += '</tbody></table>';
+                $('#invest_res').html(resultsHtml);
+            } else {
+                // V1 results (HTML content)
+                $('#invest_res').html(res_obj.result);
+            }
 
             // Handle attachments
             $('#invest_attachments').html('');
             if (res_obj.attachments) {
                 let attachments = typeof res_obj.attachments === 'string' ? JSON.parse(res_obj.attachments) : res_obj.attachments;
                 if (attachments && attachments.length > 0) {
-                    let attachHtml = '<hr><h6><i class="mdi mdi-paperclip"></i> Attachments:</h6><div class="row">';
+                    let attachHtml = '<div class="result-attachments"><h6 style="margin-bottom: 15px;"><i class="mdi mdi-paperclip"></i> Attachments</h6><div class="row">';
                     attachments.forEach(function(attachment) {
                         let url = '{{ asset("storage") }}/' + attachment.path;
                         let icon = getFileIcon(attachment.type);
@@ -1091,7 +1446,7 @@
                             </a>
                         </div>`;
                     });
-                    attachHtml += '</div>';
+                    attachHtml += '</div></div>';
                     $('#invest_attachments').html(attachHtml);
                 }
             }
@@ -1293,7 +1648,7 @@
             $('#imaging_res_service_name').text($(obj).attr('data-service-name'));
             $('#imaging_res_entry_id').val($(obj).attr('data-id'));
             $('#imaging_res_is_edit').val('0'); // Set to create mode
-            
+
             // Clear existing attachments and reset
             imagingDeletedAttachments = [];
             $('#imaging_deleted_attachments').val('[]');
@@ -1358,14 +1713,14 @@
             $('#imaging_res_service_name').text($(obj).attr('data-service-name'));
             $('#imaging_res_entry_id').val($(obj).attr('data-id'));
             $('#imaging_res_is_edit').val('1'); // Set to edit mode
-            
+
             // Reset deleted attachments
             imagingDeletedAttachments = [];
             $('#imaging_deleted_attachments').val('[]');
 
             // Load existing result into CKEditor
             let result = $(obj).attr('data-result');
-            
+
             // Load existing attachments
             let attachments = $(obj).attr('data-attachments');
             if (attachments) {
@@ -1420,14 +1775,14 @@
                 $('#imaging_existing_attachments_container').hide();
             });
         }
-        
+
         // Function to display existing attachments for imaging results
         function displayImagingExistingAttachments(attachments) {
             if (!attachments || attachments.length === 0) {
                 $('#imaging_existing_attachments_container').hide();
                 return;
             }
-            
+
             let html = '';
             attachments.forEach((attachment, index) => {
                 if (!imagingDeletedAttachments.includes(index)) {
@@ -1435,7 +1790,7 @@
                     html += `
                         <div class="badge badge-secondary mr-2 mb-2 p-2" id="imaging_attachment_${index}">
                             ${icon} ${attachment.name}
-                            <button type="button" class="btn btn-sm btn-link text-danger p-0 ml-2" 
+                            <button type="button" class="btn btn-sm btn-link text-danger p-0 ml-2"
                                 onclick="removeImagingAttachment(${index})" title="Remove">
                                 <i class="mdi mdi-close-circle"></i>
                             </button>
@@ -1443,11 +1798,11 @@
                     `;
                 }
             });
-            
+
             $('#imaging_existing_attachments_list').html(html);
             $('#imaging_existing_attachments_container').show();
         }
-        
+
         // Function to remove an imaging attachment
         function removeImagingAttachment(index) {
             if (!imagingDeletedAttachments.includes(index)) {
@@ -1465,18 +1820,143 @@
 
         function setImagingResViewInModal(obj) {
             let res_obj = JSON.parse($(obj).attr('data-result-obj'));
+
+            // Basic service info
             $('.imaging_res_service_name_view').text($(obj).attr('data-service-name'));
-            $('#imaging_res').html(res_obj.result);
-            $('#imaging_result_date').html(res_obj.result_date);
+
+            // Patient information
+            let patientName = res_obj.patient.user.firstname + ' ' + res_obj.patient.user.surname;
+            $('#imaging_patient_name').html(patientName);
+            $('#imaging_patient_id').html(res_obj.patient.file_no);
+
+            // Calculate age from date of birth
+            let age = 'N/A';
+            if (res_obj.patient.date_of_birth) {
+                let dob = new Date(res_obj.patient.date_of_birth);
+                let today = new Date();
+                let ageYears = today.getFullYear() - dob.getFullYear();
+                let monthDiff = today.getMonth() - dob.getMonth();
+                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+                    ageYears--;
+                }
+                age = ageYears + ' years';
+            }
+            $('#imaging_patient_age').html(age);
+
+            // Gender
+            let gender = res_obj.patient.gender ? res_obj.patient.gender.toUpperCase() : 'N/A';
+            $('#imaging_patient_gender').html(gender);
+
+            // Test information
+            $('#imaging_test_id').html(res_obj.id);
+            $('#imaging_result_date').html(res_obj.result_date || 'N/A');
             $('#imaging_result_by').html(res_obj.results_person.firstname + ' ' + res_obj.results_person.surname);
-            $('#imaging_name').text(res_obj.patient.user.firstname + ' ' + res_obj.patient.user.surname + '(' + res_obj.patient.file_no + ')');
+
+            // Status
+            let statusBadge = '';
+            if (res_obj.status) {
+                let statusClass = 'badge-';
+                let statusText = String(res_obj.status); // Convert to string
+                switch(statusText.toLowerCase()) {
+                    case 'completed':
+                    case '3':
+                    case '4':
+                        statusClass += 'success';
+                        statusText = 'Completed';
+                        break;
+                    case 'pending':
+                    case '1':
+                        statusClass += 'warning';
+                        statusText = 'Pending';
+                        break;
+                    case 'in progress':
+                    case '2':
+                        statusClass += 'info';
+                        statusText = 'In Progress';
+                        break;
+                    default: statusClass += 'secondary';
+                }
+                statusBadge = '<span class="badge ' + statusClass + '">' + statusText + '</span>';
+            }
+            $('#imaging_status').html(statusBadge || 'N/A');
+
+            // Signature date (use result date)
+            $('#imaging_signature_date').html(res_obj.result_date || '');
+
+            // Generated date (current date)
+            let now = new Date();
+            let generatedDate = now.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            $('#imaging_generated_date').html(generatedDate);
+
+            // Handle V2 results (structured data)
+            if (res_obj.result_data && typeof res_obj.result_data === 'object') {
+                let resultsHtml = '<table class="imaging-result-table"><thead><tr>';
+                resultsHtml += '<th style="width: 40%;">Parameter</th>';
+                resultsHtml += '<th style="width: 25%;">Results</th>';
+                resultsHtml += '<th style="width: 25%;">Reference Range</th>';
+                resultsHtml += '<th style="width: 10%;">Status</th>';
+                resultsHtml += '</tr></thead><tbody>';
+
+                res_obj.result_data.forEach(function(param) {
+                    resultsHtml += '<tr>';
+                    resultsHtml += '<td><strong>' + param.name + '</strong>';
+                    if (param.code) {
+                        resultsHtml += ' <span style="color: #999;">(' + param.code + ')</span>';
+                    }
+                    resultsHtml += '</td>';
+
+                    // Value with unit
+                    let valueDisplay = param.value;
+                    if (param.unit) {
+                        valueDisplay += ' ' + param.unit;
+                    }
+                    resultsHtml += '<td>' + valueDisplay + '</td>';
+
+                    // Reference range
+                    let refRange = 'N/A';
+                    if (param.reference_range) {
+                        if (param.type === 'integer' || param.type === 'float') {
+                            if (param.reference_range.min !== undefined && param.reference_range.max !== undefined) {
+                                refRange = param.reference_range.min + ' - ' + param.reference_range.max;
+                                if (param.unit) refRange += ' ' + param.unit;
+                            }
+                        } else if (param.type === 'boolean' || param.type === 'enum') {
+                            refRange = param.reference_range.reference_value || 'N/A';
+                        } else if (param.reference_range.text) {
+                            refRange = param.reference_range.text;
+                        }
+                    }
+                    resultsHtml += '<td>' + refRange + '</td>';
+
+                    // Status badge
+                    let statusHtml = '';
+                    if (param.status) {
+                        let statusClass = 'imaging-status-' + param.status.toLowerCase().replace(' ', '-');
+                        statusHtml = '<span class="imaging-result-status-badge ' + statusClass + '">' + param.status + '</span>';
+                    }
+                    resultsHtml += '<td>' + statusHtml + '</td>';
+                    resultsHtml += '</tr>';
+                });
+
+                resultsHtml += '</tbody></table>';
+                $('#imaging_res').html(resultsHtml);
+            } else {
+                // V1 results (HTML content)
+                $('#imaging_res').html(res_obj.result);
+            }
 
             // Handle attachments
             $('#imaging_attachments').html('');
             if (res_obj.attachments) {
                 let attachments = typeof res_obj.attachments === 'string' ? JSON.parse(res_obj.attachments) : res_obj.attachments;
                 if (attachments && attachments.length > 0) {
-                    let attachHtml = '<hr><h6><i class="mdi mdi-paperclip"></i> Attachments:</h6><div class="row">';
+                    let attachHtml = '<div class="imaging-result-attachments"><h6 style="margin-bottom: 15px;"><i class="mdi mdi-paperclip"></i> Attachments</h6><div class="row">';
                     attachments.forEach(function(attachment) {
                         let url = '{{ asset("storage") }}/' + attachment.path;
                         let icon = getFileIcon(attachment.type);
@@ -1486,7 +1966,7 @@
                             </a>
                         </div>`;
                     });
-                    attachHtml += '</div>';
+                    attachHtml += '</div></div>';
                     $('#imaging_attachments').html(attachHtml);
                 }
             }
@@ -1497,14 +1977,275 @@
 
     <script>
         function PrintElem(elem) {
-            var mywindow = window.open('', 'PRINT', 'height=600,width=800');
+            @php
+                $hosColor = appsettings()->hos_color ?? '#0066cc';
+            @endphp
+
+            var mywindow = window.open('', 'PRINT', 'height=800,width=1000');
+
+            // Get all style tags from the current modal
+            var styleContent = '';
+            var modalParent = document.getElementById(elem).closest('.modal-content');
+            if (modalParent) {
+                var styleTags = modalParent.querySelectorAll('style');
+                styleTags.forEach(function(styleTag) {
+                    styleContent += styleTag.innerHTML;
+                });
+            }
 
             mywindow.document.write('<html><head><title>' + document.title + '</title>');
-            mywindow.document.write(
-                `<link rel="stylesheet" href="{{ asset('admin/assets/vendors/css/vendor.bundle.base.css') }}" />`);
+            mywindow.document.write('<meta charset="UTF-8">');
 
-            mywindow.document.write(
-                `<link rel="stylesheet" href=" {{ asset('admin/assets/css/demo_1/style.css') }}" />`);
+            // Add custom styles for printing
+            mywindow.document.write(`<style>
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+                body {
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    padding: 20px;
+                    background: white;
+                    width: 100%;
+                    max-width: 100%;
+                }
+                #resultViewTable, #imagingResultViewTable {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                }
+
+                /* Lab/Imaging Result Styles */
+                .result-header, .imaging-result-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 20px;
+                    border-bottom: 3px solid {{ $hosColor }};
+                    page-break-inside: avoid;
+                }
+                .result-header-left, .imaging-result-header-left {
+                    display: flex;
+                    align-items: center;
+                    gap: 15px;
+                }
+                .result-logo, .imaging-result-logo {
+                    width: 70px;
+                    height: 70px;
+                    object-fit: contain;
+                }
+                .result-hospital-name, .imaging-result-hospital-name {
+                    font-size: 24px;
+                    font-weight: bold;
+                    color: {{ $hosColor }};
+                    text-transform: uppercase;
+                }
+                .result-header-right, .imaging-result-header-right {
+                    text-align: right;
+                    font-size: 13px;
+                    color: #666;
+                    line-height: 1.6;
+                }
+                .result-title-section, .imaging-result-title-section {
+                    background: {{ $hosColor }};
+                    color: white;
+                    text-align: center;
+                    padding: 15px;
+                    font-size: 28px;
+                    font-weight: bold;
+                    letter-spacing: 6px;
+                    page-break-inside: avoid;
+                }
+                .result-patient-info, .imaging-result-patient-info {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 20px;
+                    padding: 20px;
+                    background: #f8f9fa;
+                    page-break-inside: avoid;
+                }
+                .result-info-box, .imaging-result-info-box {
+                    background: white;
+                    padding: 15px;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                }
+                .result-info-row, .imaging-result-info-row {
+                    display: flex;
+                    padding: 8px 0;
+                    border-bottom: 1px solid #eee;
+                }
+                .result-info-row:last-child, .imaging-result-info-row:last-child {
+                    border-bottom: none;
+                }
+                .result-info-label, .imaging-result-info-label {
+                    font-weight: 600;
+                    color: #333;
+                    min-width: 120px;
+                }
+                .result-info-value, .imaging-result-info-value {
+                    color: #666;
+                    flex: 1;
+                }
+                .result-section, .imaging-result-section {
+                    padding: 20px;
+                }
+                .result-section-title, .imaging-result-section-title {
+                    font-size: 20px;
+                    font-weight: bold;
+                    color: {{ $hosColor }};
+                    margin-bottom: 15px;
+                    padding-bottom: 10px;
+                    border-bottom: 2px solid {{ $hosColor }};
+                    page-break-after: avoid;
+                }
+                .result-table, .imaging-result-table {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    border-collapse: collapse;
+                    margin-top: 15px;
+                    table-layout: fixed;
+                }
+                .result-table thead, .imaging-result-table thead {
+                    background: {{ $hosColor }};
+                    color: white;
+                }
+                .result-table th, .imaging-result-table th {
+                    padding: 12px;
+                    text-align: left;
+                    font-weight: 600;
+                    border: 1px solid #dee2e6;
+                }
+                .result-table td, .imaging-result-table td {
+                    padding: 10px 12px;
+                    border: 1px solid #ddd;
+                    word-wrap: break-word;
+                    overflow-wrap: break-word;
+                }
+                .result-table tbody tr:nth-child(even),
+                .imaging-result-table tbody tr:nth-child(even) {
+                    background: #f8f9fa;
+                }
+                .result-status-badge, .imaging-result-status-badge {
+                    display: inline-block;
+                    padding: 3px 8px;
+                    border-radius: 4px;
+                    font-size: 12px;
+                    font-weight: 600;
+                }
+                .status-normal, .imaging-status-normal {
+                    background: #d4edda;
+                    color: #155724;
+                }
+                .status-high, .imaging-status-high {
+                    background: #f8d7da;
+                    color: #721c24;
+                }
+                .status-low, .imaging-status-low {
+                    background: #fff3cd;
+                    color: #856404;
+                }
+                .status-abnormal, .imaging-status-abnormal {
+                    background: #f8d7da;
+                    color: #721c24;
+                }
+                .result-attachments, .imaging-result-attachments {
+                    margin-top: 20px;
+                    padding: 15px;
+                    background: #f8f9fa;
+                    border-radius: 8px;
+                    page-break-inside: avoid;
+                }
+                .result-footer, .imaging-result-footer {
+                    padding: 20px;
+                    border-top: 2px solid #eee;
+                    font-size: 12px;
+                    color: #999;
+                    text-align: center;
+                    page-break-inside: avoid;
+                }
+
+                /* Badge styles */
+                .badge {
+                    display: inline-block;
+                    padding: 3px 8px;
+                    border-radius: 4px;
+                    font-size: 12px;
+                    font-weight: 600;
+                }
+                .badge-success {
+                    background: #28a745;
+                    color: white;
+                }
+                .badge-warning {
+                    background: #ffc107;
+                    color: #000;
+                }
+                .badge-info {
+                    background: #17a2b8;
+                    color: white;
+                }
+                .badge-secondary {
+                    background: #6c757d;
+                    color: white;
+                }
+
+                /* Button styles for attachments */
+                .btn {
+                    display: inline-block;
+                    padding: 6px 12px;
+                    margin: 5px;
+                    border: 1px solid transparent;
+                    border-radius: 4px;
+                    text-decoration: none;
+                    font-size: 14px;
+                }
+                .btn-outline-primary {
+                    color: {{ $hosColor }};
+                    border-color: {{ $hosColor }};
+                }
+                .row {
+                    display: flex;
+                    flex-wrap: wrap;
+                    margin: -5px;
+                }
+                .col-md-4 {
+                    flex: 0 0 33.333333%;
+                    max-width: 33.333333%;
+                    padding: 5px;
+                }
+
+                /* Icon styles */
+                .mdi:before {
+                    font-family: "Material Design Icons";
+                }
+
+                /* Print specific */
+                @media print {
+                    body {
+                        padding: 0;
+                        width: 100%;
+                        max-width: 100%;
+                    }
+                    #resultViewTable, #imagingResultViewTable {
+                        width: 100% !important;
+                        max-width: 100% !important;
+                    }
+                    .result-table, .imaging-result-table {
+                        width: 100% !important;
+                        max-width: 100% !important;
+                    }
+                    .btn-outline-primary {
+                        display: none;
+                    }
+                }
+
+                @page {
+                    margin: 0.5cm;
+                    size: A4;
+                }
+            </style>`);
+
             mywindow.document.write('</head><body>');
             mywindow.document.write(document.getElementById(elem).innerHTML);
             mywindow.document.write('</body></html>');
@@ -1514,9 +2255,11 @@
             // Wait for the window and its contents to load
             mywindow.onload = function() {
                 mywindow.focus(); // Set focus for IE
-                mywindow.print();
-                // Optional: Uncomment the line below to close the window after printing
-                // mywindow.close();
+                setTimeout(function() {
+                    mywindow.print();
+                    // Optional: Uncomment the line below to close the window after printing
+                    // mywindow.close();
+                }, 250);
             };
 
             return true;

@@ -18,9 +18,16 @@ use Illuminate\Support\Facades\Auth;
 
 class ServiceController extends Controller
 {
-    public function listServices()
+    public function listServices(Request $request)
     {
-        $pc = service::where('status', '=', 1)->with('category')->orderBy('service_name', 'ASC')->get();
+        $query = service::where('status', '=', 1)->with('category');
+
+        // Filter by category if provided
+        if ($request->has('category') && $request->category) {
+            $query->where('category_id', $request->category);
+        }
+
+        $pc = $query->orderBy('service_name', 'ASC')->get();
 
         return Datatables::of($pc)
             ->addIndexColumn()
@@ -51,6 +58,20 @@ class ServiceController extends Controller
                     return $label;
                 }
             })
+            ->addColumn('template', function ($pc) {
+                // Show template builder button only for Med Lab (2) and Imaging (6) categories
+                if (in_array($pc->category_id, [2, 6])) {
+                    $url = route('services.build-template', $pc->id);
+                    $hasTemplate = !empty($pc->result_template_v2);
+                    $icon = $hasTemplate ? 'fa-edit' : 'fa-plus';
+                    $text = $hasTemplate ? 'Edit' : 'Build';
+                    $badge = $hasTemplate ? '<span class="badge badge-success badge-sm ml-1">✓</span>' : '';
+
+                    return '<a href="' . $url . '" class="btn btn-warning btn-sm"><i class="fa ' . $icon . '"></i> ' . $text . '</a>' . $badge;
+                } else {
+                    return '<span class="text-muted">N/A</span>';
+                }
+            })
             ->addColumn('trans', function ($pc) {
 
                 if (Auth::user()->hasPermissionTo('can-manage-products') || Auth::user()->hasRole(['ADMIN', 'STORE'])) {
@@ -75,7 +96,7 @@ class ServiceController extends Controller
                     return $label;
                 }
             })
-            ->rawColumns(['service_code', 'category_id', 'visible', 'edit', 'adjust', 'trans'])
+            ->rawColumns(['service_code', 'category_id', 'visible', 'edit', 'adjust', 'template', 'trans'])
             ->make(true);
     }
 
@@ -138,9 +159,20 @@ class ServiceController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        return view('admin.service.index');
+        $categoryId = $request->input('category');
+        $categoryName = null;
+
+        if ($categoryId) {
+            $category = ServiceCategory::find($categoryId);
+            $categoryName = $category ? $category->category_name : null;
+        }
+
+        return view('admin.service.index', [
+            'filterCategory' => $categoryId,
+            'categoryName' => $categoryName
+        ]);
     }
 
     /**
@@ -290,5 +322,143 @@ class ServiceController extends Controller
     public function destroy($id)
     {
         //
+    }
+
+    /**
+     * Show the result template builder for a service
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function buildTemplate($id)
+    {
+        $service = service::with('category')->findOrFail($id);
+
+        // Decode existing template if any
+        $template = $service->result_template_v2;
+
+        return view('admin.service.template-builder', [
+            'service' => $service,
+            'template' => $template
+        ]);
+    }
+
+    /**
+     * Save the result template for a service
+     *
+     * @param  Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function saveTemplate(Request $request, $id)
+    {
+        try {
+            $service = service::findOrFail($id);
+
+            // Validate the template structure with flexible rules
+            $validated = $request->validate([
+                'template_name' => 'required|string|max:255',
+                'parameters' => 'required|array|min:1',
+                'parameters.*.id' => 'required|string',
+                'parameters.*.name' => 'required|string',
+                'parameters.*.code' => 'required|string',
+                'parameters.*.type' => 'required|in:string,integer,float,boolean,enum,long_text',
+                'parameters.*.unit' => 'nullable|string',
+                'parameters.*.required' => 'required',
+                'parameters.*.show_in_report' => 'required',
+                'parameters.*.order' => 'required|integer',
+                'parameters.*.reference_range' => 'nullable|array',
+                'parameters.*.reference_range.min' => 'nullable|numeric',
+                'parameters.*.reference_range.max' => 'nullable|numeric',
+                'parameters.*.reference_range.reference_value' => 'nullable',
+                'parameters.*.reference_range.text' => 'nullable|string',
+                'parameters.*.options' => 'nullable|array',
+                'parameters.*.options.*.value' => 'nullable|string',
+                'parameters.*.options.*.label' => 'nullable|string',
+            ]);
+
+            // Clean up and process parameters
+            $parameters = [];
+            foreach ($validated['parameters'] as $param) {
+                $cleanParam = [
+                    'id' => $param['id'],
+                    'name' => $param['name'],
+                    'code' => $param['code'],
+                    'type' => $param['type'],
+                    'unit' => $param['unit'] ?? null,
+                    'required' => filter_var($param['required'], FILTER_VALIDATE_BOOLEAN),
+                    'show_in_report' => filter_var($param['show_in_report'], FILTER_VALIDATE_BOOLEAN),
+                    'order' => (int)$param['order'],
+                ];
+
+                // Add options if present and not empty (for enum type)
+                if (isset($param['options']) && is_array($param['options']) && !empty($param['options'])) {
+                    $cleanParam['options'] = array_values(array_filter($param['options'], function($opt) {
+                        return isset($opt['value']) && $opt['value'] !== '';
+                    }));
+                }
+
+                // Add reference range if present and not empty
+                if (isset($param['reference_range']) && is_array($param['reference_range'])) {
+                    $refRange = array_filter($param['reference_range'], function($value) {
+                        return $value !== null && $value !== '';
+                    });
+
+                    if (!empty($refRange)) {
+                        // For enum type, validate that reference_value is in options
+                        if ($param['type'] === 'enum' && isset($refRange['reference_value'])) {
+                            if (!isset($cleanParam['options']) || empty($cleanParam['options'])) {
+                                return response()->json([
+                                    'success' => false,
+                                    'message' => "Enum parameter '{$param['name']}' must have options defined before setting a reference value."
+                                ], 400);
+                            }
+
+                            $optionValues = array_column($cleanParam['options'], 'value');
+                            if (!in_array($refRange['reference_value'], $optionValues)) {
+                                return response()->json([
+                                    'success' => false,
+                                    'message' => "Reference value '{$refRange['reference_value']}' for parameter '{$param['name']}' must be one of the defined options: " . implode(', ', $optionValues)
+                                ], 400);
+                            }
+                        }
+
+                        // Convert numeric strings to numbers for min/max
+                        if (isset($refRange['min'])) {
+                            $refRange['min'] = is_numeric($refRange['min']) ? (float)$refRange['min'] : $refRange['min'];
+                        }
+                        if (isset($refRange['max'])) {
+                            $refRange['max'] = is_numeric($refRange['max']) ? (float)$refRange['max'] : $refRange['max'];
+                        }
+                        $cleanParam['reference_range'] = $refRange;
+                    }
+                }
+
+                $parameters[] = $cleanParam;
+            }
+
+            // Build the template structure
+            $template = [
+                'template_name' => $validated['template_name'],
+                'version' => '2.0',
+                'parameters' => $parameters
+            ];
+
+            // Save to database
+            $service->result_template_v2 = $template;
+            $service->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Template saved successfully',
+                'template' => $template
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error saving template: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

@@ -17,6 +17,7 @@ class ImagingServiceRequest extends Model
         'encounter_id',
         'patient_id',
         'result',
+        'result_data',
         'attachments',
         'result_date',
         'result_by',
@@ -26,7 +27,8 @@ class ImagingServiceRequest extends Model
     ];
 
     protected $casts = [
-        'attachments' => 'array'
+        'attachments' => 'array',
+        'result_data' => 'array'
     ];
 
     public function productOrServiceRequest()
@@ -60,6 +62,11 @@ class ImagingServiceRequest extends Model
     }
 
     public function results_person()
+    {
+        return $this->belongsTo(User::class, 'result_by', 'id');
+    }
+
+    public function resultBy()
     {
         return $this->belongsTo(User::class, 'result_by', 'id');
     }

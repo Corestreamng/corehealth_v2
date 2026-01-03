@@ -16,6 +16,11 @@ class service extends Model
         'service_code',
         'price_assign',
         'status',
+        'result_template_v2',
+    ];
+
+    protected $casts = [
+        'result_template_v2' => 'array',
     ];
 
     public function requests(){

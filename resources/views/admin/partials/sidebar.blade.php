@@ -362,7 +362,7 @@
         @endhasallroles
         @hasanyrole('SUPERADMIN|ADMIN|LAB SCIENTIST|RADIOLOGIST')
             <li class="pt-2 pb-1">
-                <span class="nav-item-head">LAB/ INVESTIGATIONS</span>
+                <span class="nav-item-head">MED LAB</span>
             </li>
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#services" data-bs-target="#services" aria-expanded="false"
@@ -377,7 +377,10 @@
                             <a class="nav-link" href="{{ route('services-category.index') }}">Categories</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('services.index') }}">Services</a>
+                            <a class="nav-link" href="{{ route('services.index', ['category' => appsettings('investigation_category_id', 2)]) }}">Med Lab Services</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('services.index', ['category' => appsettings('imaging_category_id', 6)]) }}">Imaging Services</a>
                         </li>
                     </ul>
                 </div>
@@ -386,7 +389,7 @@
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#lab_queue" data-bs-target="#lab_queue" aria-expanded="false"
                     aria-controls="lab_queue">
                     <i class="mdi mdi-test-tube menu-icon"></i>
-                    <span class="menu-title">Queue</span>
+                    <span class="menu-title">Med Lab Queue</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
                 <div class="collapse" id="lab_queue">
@@ -397,6 +400,28 @@
                         <li class="nav-item">
                             <a class="nav-link"
                                 href="{{ route('service-requests.index', ['history' => true]) }}">History</a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+            <li class="pt-2 pb-1">
+                <span class="nav-item-head">IMAGING</span>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#imaging_queue" data-bs-target="#imaging_queue" aria-expanded="false"
+                    aria-controls="imaging_queue">
+                    <i class="mdi mdi-image-multiple menu-icon"></i>
+                    <span class="menu-title">Imaging Queue</span>
+                    <i class="mdi mdi-chevron-right menu-arrow"></i>
+                </a>
+                <div class="collapse" id="imaging_queue">
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('imaging-requests.index') }}">My Current Queue</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link"
+                                href="{{ route('imaging-requests.index', ['history' => true]) }}">History</a>
                         </li>
                     </ul>
                 </div>

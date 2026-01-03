@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
 @section('title', 'Services ')
 @section('page_name', 'Services ')
-@section('subpage_name', 'Services List')
+@section('subpage_name', isset($categoryName) ? $categoryName . ' Services' : 'Services List')
 @section('content')
     <div id="content-wrapper">
         <div class="container">
@@ -10,7 +10,7 @@
                 <div class="card-header">
                     <div class="row">
                         <div class="col-md-6">
-                            {{ __('Services') }}
+                            {{ isset($categoryName) ? $categoryName . ' Services' : __('Services') }}
                         </div>
                         <div class="col-md-6">
                             {{-- @if (auth()->user()->can('user-create')) --}}
@@ -35,6 +35,7 @@
                                     <th>Service Code</th>
                                     <th>Status</th>
                                     <th>Price</th>
+                                    <th>Template</th>
                                     <th>View</th>
                                     <th>Edit</th>
                                 </tr>
@@ -68,7 +69,12 @@
                 "serverSide": true,
                 "ajax": {
                     "url": "{{ route('services-list') }}",
-                    "type": "GET"
+                    "type": "GET",
+                    "data": function(d) {
+                        @if(isset($filterCategory))
+                        d.category = {{ $filterCategory }};
+                        @endif
+                    }
                 },
                 "columns": [{
                         data: "DT_RowIndex",
@@ -93,6 +99,10 @@
                     {
                         data: "adjust",
                         name: "adjust"
+                    },
+                    {
+                        data: "template",
+                        name: "template"
                     },
                     {
                         data: "trans",
