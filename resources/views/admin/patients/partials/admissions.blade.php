@@ -1,13 +1,9 @@
 <div class="table-responsive">
-    <table id="admission-request-list" class="table table-sm table-bordered table-striped"
+    <table id="admission-request-list" class="table table-hover"
         style="width: 100%">
-        <thead>
+        <thead class="table-light">
             <tr>
-                <th>SN</th>
-                <th>Requested By</th>
-                <th>Bills</th>
-                <th>Bed</th>
-                <th>View</th>
+                <th style="width: 100%;"><i class="fa fa-bed"></i> Admission History</th>
             </tr>
         </thead>
     </table>

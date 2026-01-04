@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ProductRequest extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'product_request_id',
@@ -20,7 +21,9 @@ class ProductRequest extends Model
         'patient_id',
         'doctor_id',
         'dose',
-        'status'
+        'status',
+        'deleted_by',
+        'deletion_reason'
     ];
 
     public function productOrServiceRequest()

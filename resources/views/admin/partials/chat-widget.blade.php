@@ -110,9 +110,7 @@
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h6 class="modal-title">New Messages</h6>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center">
                 <i class="mdi mdi-email-alert text-primary mb-2" style="font-size: 48px;"></i>

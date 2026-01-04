@@ -24,7 +24,12 @@ class AdmissionRequest extends Model
         'discharged_by',
         'doctor_id',
         'note',
-        'status'
+        'status',
+        'admission_reason',
+        'discharge_reason',
+        'discharge_note',
+        'followup_instructions',
+        'priority'
     ];
 
     public function productOrServiceRequest(){

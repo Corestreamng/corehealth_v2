@@ -7,6 +7,7 @@ use App\Models\Clinic;
 use App\Models\DoctorQueue;
 use App\Models\Encounter;
 use App\Models\Hmo;
+use App\Models\ImagingServiceRequest;
 use App\Models\LabServiceRequest;
 use App\Models\NursingNote;
 use App\Models\NursingNoteType;
@@ -320,37 +321,73 @@ class EncounterController extends Controller
 
         // dd($pc);
         return DataTables::of($his)
-            ->addIndexColumn()
-            ->editColumn('created_at', function ($h) {
-                $str = '<small>';
-                $str .= '<b >Requested by: </b>' . ((isset($h->doctor_id) && $h->doctor_id != null) ? (userfullname($h->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
-                $str .= '<br><br><b >Last Updated On:</b> ' . date('h:i a D M j, Y', strtotime($h->updated_at));
-                $str .= '<br><br><b >Billed by:</b> ' . ((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span>");
-                $str .= '<br><br><b >Sample taken by:</b> ' . ((isset($h->sample_taken_by) && $h->sample_taken_by != null) ? (userfullname($h->sample_taken_by) . ' (' . date('h:i a D M j, Y', strtotime($h->sample_date)) . ')') : "<span class='badge badge-secondary'>Not taken</span>");
-                $str .= '<br><br><b >Results by:</b> ' . ((isset($h->result_by) && $h->result_by != null) ? (userfullname($h->result_by) . ' (' . date('h:i a D M j, Y', strtotime($h->result_date)) . ')') : "<span class='badge badge-secondary'>Awaiting Results</span>");
-                $str .= '<br><br><b >Request Note:</b> ' . ((isset($h->note) && $h->note != null) ? ($h->note) : "<span class='badge badge-secondary'>N/A</span><br>");
-                $str .= '</small>';
+            ->addColumn('info', function ($his) {
+                $str = '<div class="card mb-2" style="border-left: 4px solid #0d6efd;">';
+                $str .= '<div class="card-body p-3">';
 
-                return $str;
-            })
-            ->editColumn('result', function ($his) {
-                $str = "<span class = 'badge badge-success'>" . (($his->service) ? $his->service->service_name : 'N/A') . '</span><hr>';
-                $str .= $his->result ?? 'N/A';
+                // Header with service name and status
+                $str .= '<div class="d-flex justify-content-between align-items-start mb-3">';
+                $str .= "<h6 class='mb-0'><span class='badge bg-success'>" . (($his->service) ? $his->service->service_name : 'N/A') . '</span></h6>';
+
+                // Status badges
+                $statusBadge = '';
+                if ($his->result) {
+                    $statusBadge = "<span class='badge bg-info'>Result Available</span>";
+                } elseif ($his->sample_taken_by) {
+                    $statusBadge = "<span class='badge bg-warning'>Sample Taken</span>";
+                } elseif ($his->billed_by) {
+                    $statusBadge = "<span class='badge bg-primary'>Billed</span>";
+                } else {
+                    $statusBadge = "<span class='badge bg-secondary'>Pending</span>";
+                }
+                $str .= $statusBadge;
+                $str .= '</div>';
+
+                // Timeline section
+                $str .= '<div class="mb-3"><small>';
+                $str .= '<div class="mb-2"><i class="mdi mdi-account-arrow-right text-primary"></i> <b>Requested by:</b> '
+                    . ((isset($his->doctor_id) && $his->doctor_id != null) ? (userfullname($his->doctor_id) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($his->created_at)) . ')</span>') : "<span class='badge bg-secondary'>N/A</span>");
+                $str .= '</div>';
+
+                $str .= '<div class="mb-2"><i class="mdi mdi-cash-multiple text-success"></i> <b>Billed by:</b> '
+                    . ((isset($his->billed_by) && $his->billed_by != null) ? (userfullname($his->billed_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($his->billed_date)) . ')</span>') : "<span class='badge bg-secondary'>Not billed</span>");
+                $str .= '</div>';
+
+                $str .= '<div class="mb-2"><i class="mdi mdi-test-tube text-warning"></i> <b>Sample taken by:</b> '
+                    . ((isset($his->sample_taken_by) && $his->sample_taken_by != null) ? (userfullname($his->sample_taken_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($his->sample_date)) . ')</span>') : "<span class='badge bg-secondary'>Not taken</span>");
+                $str .= '</div>';
+
+                $str .= '<div class="mb-2"><i class="mdi mdi-clipboard-check text-info"></i> <b>Results by:</b> '
+                    . ((isset($his->result_by) && $his->result_by != null) ? (userfullname($his->result_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($his->result_date)) . ')</span>') : "<span class='badge bg-secondary'>Awaiting Results</span>");
+                $str .= '</div>';
+                $str .= '</small></div>';
+
+                // Results section
+                if ($his->result) {
+                    $str .= '<div class="alert alert-light mb-2"><small><b>Result:</b><br>' . $his->result . '</small></div>';
+                }
+
+                // Request note
+                if (isset($his->note) && $his->note != null) {
+                    $str .= '<div class="mb-2"><small><i class="mdi mdi-note-text"></i> <b>Note:</b> ' . $his->note . '</small></div>';
+                }
 
                 // Add attachments if any
                 if ($his->attachments) {
                     $attachments = is_string($his->attachments) ? json_decode($his->attachments, true) : $his->attachments;
                     if (!empty($attachments)) {
-                        $str .= "<hr><b><i class='mdi mdi-paperclip'></i> Attachments:</b><br>";
+                        $str .= "<div class='mb-2'><small><b><i class='mdi mdi-paperclip'></i> Attachments:</b> ";
                         foreach ($attachments as $attachment) {
                             $url = asset('storage/' . $attachment['path']);
                             $icon = $this->getFileIcon($attachment['type']);
-                            $str .= "<a href='{$url}' target='_blank' class='badge badge-info mr-1'>{$icon} {$attachment['name']}</a> ";
+                            $str .= "<a href='{$url}' target='_blank' class='badge bg-info text-white me-1'>{$icon} {$attachment['name']}</a> ";
                         }
+                        $str .= "</small></div>";
                     }
                 }
 
-                $str .= "<hr>";
+                // Action buttons
+                $str .= '<div class="btn-group mt-2" role="group">';
 
                 // Check if result can be edited (within edit window)
                 $canEdit = false;
@@ -371,7 +408,7 @@ class EncounterController extends Controller
                     }
 
                     $str .= "
-                        <button type='button' class='btn btn-warning btn-sm mr-2' onclick='editLabResult(this)'
+                        <button type='button' class='btn btn-warning btn-sm' onclick='editLabResult(this)'
                             data-id='{$his->id}'
                             data-service-name='" . (($his->service) ? $his->service->service_name : 'N/A') . "'
                             data-result='" . htmlspecialchars($his->result) . "'
@@ -382,7 +419,7 @@ class EncounterController extends Controller
                 }
 
                 $str .= "
-                    <button type='button' class='btn btn-info btn-sm mr-2' onclick='setResViewInModal(this)'
+                    <button type='button' class='btn btn-info btn-sm' onclick='setResViewInModal(this)'
                         data-service-name = '" . (($his->service) ? $his->service->service_name : 'N/A') . "'
                         data-result = '" . htmlspecialchars($his->result) . "'
                         data-result-obj = '" . htmlspecialchars($his) . "'>
@@ -392,10 +429,32 @@ class EncounterController extends Controller
                         <i class='mdi mdi-printer'></i> Print
                     </a>";
 
+                // Show delete button only if:
+                // 1. Current user is the doctor who created the request
+                // 2. Status is pending (1) or in progress (2)
+                // 3. Not yet billed
+                // 4. No results entered yet
+                $canDelete = (Auth::id() == $his->doctor_id)
+                    && ($his->status == 1 || $his->status == 2)
+                    && empty($his->billed_by)
+                    && empty($his->result);
+
+                if ($canDelete) {
+                    $serviceName = $his->service ? $his->service->service_name : 'N/A';
+                    $str .= "<button type='button' class='btn btn-danger btn-sm'
+                        onclick='deleteLabRequest({$his->id}, {$his->encounter_id}, \"{$serviceName}\")'
+                        title='Delete this request'>
+                        <i class='fa fa-trash'></i> Delete
+                    </button>";
+                }
+
+                $str .= '</div>'; // Close btn-group
+                $str .= '</div>'; // Close card-body
+                $str .= '</div>'; // Close card
+
                 return $str;
             })
-
-            ->rawColumns(['created_at', 'result'])
+            ->rawColumns(['info'])
             ->make(true);
     }
 
@@ -440,36 +499,67 @@ class EncounterController extends Controller
             ->where('status', '>', 0)->where('patient_id', $patient_id)->orderBy('created_at', 'DESC')->get();
 
         return DataTables::of($his)
-            ->addIndexColumn()
-            ->editColumn('created_at', function ($h) {
-                $str = '<small>';
-                $str .= '<b >Requested by: </b>' . ((isset($h->doctor_id) && $h->doctor_id != null) ? (userfullname($h->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>");
-                $str .= '<br><br><b >Last Updated On:</b> ' . date('h:i a D M j, Y', strtotime($h->updated_at));
-                $str .= '<br><br><b >Billed by:</b> ' . ((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span>");
-                $str .= '<br><br><b >Results by:</b> ' . ((isset($h->result_by) && $h->result_by != null) ? (userfullname($h->result_by) . ' (' . date('h:i a D M j, Y', strtotime($h->result_date)) . ')') : "<span class='badge badge-secondary'>Awaiting Results</span>");
-                $str .= '<br><br><b >Request Note:</b> ' . ((isset($h->note) && $h->note != null) ? ($h->note) : "<span class='badge badge-secondary'>N/A</span><br>");
-                $str .= '</small>';
+            ->addColumn('info', function ($his) {
+                $str = '<div class="card mb-2" style="border-left: 4px solid #0d6efd;">';
+                $str .= '<div class="card-body p-3">';
 
-                return $str;
-            })
-            ->editColumn('result', function ($his) {
-                $str = "<span class = 'badge badge-success'>" . (($his->service) ? $his->service->service_name : 'N/A') . '</span><hr>';
-                $str .= $his->result ?? 'N/A';
+                // Header with service name and status
+                $str .= '<div class="d-flex justify-content-between align-items-start mb-3">';
+                $str .= "<h6 class='mb-0'><span class='badge bg-success'>" . (($his->service) ? $his->service->service_name : 'N/A') . '</span></h6>';
+
+                // Status badges
+                $statusBadge = '';
+                if ($his->result) {
+                    $statusBadge = "<span class='badge bg-info'>Result Available</span>";
+                } elseif ($his->billed_by) {
+                    $statusBadge = "<span class='badge bg-primary'>Billed</span>";
+                } else {
+                    $statusBadge = "<span class='badge bg-secondary'>Pending</span>";
+                }
+                $str .= $statusBadge;
+                $str .= '</div>';
+
+                // Timeline section
+                $str .= '<div class="mb-3"><small>';
+                $str .= '<div class="mb-2"><i class="mdi mdi-account-arrow-right text-primary"></i> <b>Requested by:</b> '
+                    . ((isset($his->doctor_id) && $his->doctor_id != null) ? (userfullname($his->doctor_id) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($his->created_at)) . ')</span>') : "<span class='badge bg-secondary'>N/A</span>");
+                $str .= '</div>';
+
+                $str .= '<div class="mb-2"><i class="mdi mdi-cash-multiple text-success"></i> <b>Billed by:</b> '
+                    . ((isset($his->billed_by) && $his->billed_by != null) ? (userfullname($his->billed_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($his->billed_date)) . ')</span>') : "<span class='badge bg-secondary'>Not billed</span>");
+                $str .= '</div>';
+
+                $str .= '<div class="mb-2"><i class="mdi mdi-clipboard-check text-info"></i> <b>Results by:</b> '
+                    . ((isset($his->result_by) && $his->result_by != null) ? (userfullname($his->result_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($his->result_date)) . ')</span>') : "<span class='badge bg-secondary'>Awaiting Results</span>");
+                $str .= '</div>';
+                $str .= '</small></div>';
+
+                // Results section
+                if ($his->result) {
+                    $str .= '<div class="alert alert-light mb-2"><small><b>Result:</b><br>' . $his->result . '</small></div>';
+                }
+
+                // Request note
+                if (isset($his->note) && $his->note != null) {
+                    $str .= '<div class="mb-2"><small><i class="mdi mdi-note-text"></i> <b>Note:</b> ' . $his->note . '</small></div>';
+                }
 
                 // Add attachments if any
                 if ($his->attachments) {
                     $attachments = is_string($his->attachments) ? json_decode($his->attachments, true) : $his->attachments;
                     if (!empty($attachments)) {
-                        $str .= "<hr><b><i class='mdi mdi-paperclip'></i> Attachments:</b><br>";
+                        $str .= "<div class='mb-2'><small><b><i class='mdi mdi-paperclip'></i> Attachments:</b> ";
                         foreach ($attachments as $attachment) {
                             $url = asset('storage/' . $attachment['path']);
                             $icon = $this->getFileIcon($attachment['type']);
-                            $str .= "<a href='{$url}' target='_blank' class='badge badge-info mr-1'>{$icon} {$attachment['name']}</a> ";
+                            $str .= "<a href='{$url}' target='_blank' class='badge bg-info text-white me-1'>{$icon} {$attachment['name']}</a> ";
                         }
+                        $str .= "</small></div>";
                     }
                 }
 
-                $str .= "<hr>";
+                // Action buttons
+                $str .= '<div class="btn-group mt-2" role="group">';
 
                 // Check if result can be edited (within edit window)
                 $canEdit = false;
@@ -490,7 +580,7 @@ class EncounterController extends Controller
                     }
 
                     $str .= "
-                        <button type='button' class='btn btn-warning btn-sm mr-2' onclick='editImagingResult(this)'
+                        <button type='button' class='btn btn-warning btn-sm' onclick='editImagingResult(this)'
                             data-id='{$his->id}'
                             data-service-name='" . (($his->service) ? $his->service->service_name : 'N/A') . "'
                             data-result='" . htmlspecialchars($his->result) . "'
@@ -501,7 +591,7 @@ class EncounterController extends Controller
                 }
 
                 $str .= "
-                    <button type='button' class='btn btn-info btn-sm mr-2' onclick='setImagingResViewInModal(this)'
+                    <button type='button' class='btn btn-info btn-sm' onclick='setImagingResViewInModal(this)'
                         data-service-name = '" . (($his->service) ? $his->service->service_name : 'N/A') . "'
                         data-result = '" . htmlspecialchars($his->result) . "'
                         data-result-obj = '" . htmlspecialchars($his) . "'>
@@ -511,9 +601,32 @@ class EncounterController extends Controller
                         <i class='mdi mdi-printer'></i> Print
                     </a>";
 
+                // Show delete button only if:
+                // 1. Current user is the doctor who created the request
+                // 2. Status is pending (1) or in progress (2)
+                // 3. Not yet billed
+                // 4. No results entered yet
+                $canDelete = (Auth::id() == $his->doctor_id)
+                    && ($his->status == 1 || $his->status == 2)
+                    && empty($his->billed_by)
+                    && empty($his->result);
+
+                if ($canDelete) {
+                    $serviceName = $his->service ? $his->service->service_name : 'N/A';
+                    $str .= "<button type='button' class='btn btn-danger btn-sm'
+                        onclick='deleteImagingRequest({$his->id}, {$his->encounter_id}, \"{$serviceName}\")'
+                        title='Delete this request'>
+                        <i class='fa fa-trash'></i> Delete
+                    </button>";
+                }
+
+                $str .= '</div>'; // Close btn-group
+                $str .= '</div>'; // Close card-body
+                $str .= '</div>'; // Close card
+
                 return $str;
             })
-            ->rawColumns(['created_at', 'result'])
+            ->rawColumns(['info'])
             ->make(true);
     }
 
@@ -587,24 +700,73 @@ class EncounterController extends Controller
 
         // dd($pc);
         return DataTables::of($his)
-            ->addIndexColumn()
-            ->editColumn('created_at', function ($h) {
-                $str = '<small>';
-                $str .= '<b >Requested By: </b>' . ((isset($h->doctor_id) && $h->doctor_id != null) ? (userfullname($h->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>") . '<br>';
-                $str .= '<b >Last Updated On: </b>' . date('h:i a D M j, Y', strtotime($h->updated_at)) . '<br>';
-                $str .= '<b >Billed By: </b>' . ((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span><br>");
-                $str .= '<br><b >Dispensed By: </b>' . ((isset($h->dispensed_by) && $h->dispensed_by != null) ? (userfullname($h->dispensed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->dispense_date)) . ')') : "<span class='badge badge-secondary'>Not dispensed</span><br>");
-                $str .= '</small>';
+            ->addColumn('info', function ($his) {
+                $str = '<div class="card mb-2" style="border-left: 4px solid #0d6efd;">';
+                $str .= '<div class="card-body p-3">';
+
+                // Header with product name and status
+                $str .= '<div class="d-flex justify-content-between align-items-start mb-3">';
+                $str .= "<h6 class='mb-0'><span class='badge bg-success'>[" . (($his->product->product_code) ? $his->product->product_code : '') . '] ' . $his->product->product_name . '</span></h6>';
+
+                // Status badges
+                $statusBadge = '';
+                if ($his->dispensed_by) {
+                    $statusBadge = "<span class='badge bg-info'>Dispensed</span>";
+                } elseif ($his->billed_by) {
+                    $statusBadge = "<span class='badge bg-primary'>Billed</span>";
+                } else {
+                    $statusBadge = "<span class='badge bg-secondary'>Pending</span>";
+                }
+                $str .= $statusBadge;
+                $str .= '</div>';
+
+                // Dosage information
+                $str .= '<div class="alert alert-light mb-3"><small><b><i class="mdi mdi-pill"></i> Dose/Frequency:</b><br>' . ($his->dose ?? 'N/A') . '</small></div>';
+
+                // Timeline section
+                $str .= '<div class="mb-3"><small>';
+                $str .= '<div class="mb-2"><i class="mdi mdi-account-arrow-right text-primary"></i> <b>Requested by:</b> '
+                    . ((isset($his->doctor_id) && $his->doctor_id != null) ? (userfullname($his->doctor_id) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($his->created_at)) . ')</span>') : "<span class='badge bg-secondary'>N/A</span>");
+                $str .= '</div>';
+
+                $str .= '<div class="mb-2"><i class="mdi mdi-cash-multiple text-success"></i> <b>Billed by:</b> '
+                    . ((isset($his->billed_by) && $his->billed_by != null) ? (userfullname($his->billed_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($his->billed_date)) . ')</span>') : "<span class='badge bg-secondary'>Not billed</span>");
+                $str .= '</div>';
+
+                $str .= '<div class="mb-2"><i class="mdi mdi-package-variant text-warning"></i> <b>Dispensed by:</b> '
+                    . ((isset($his->dispensed_by) && $his->dispensed_by != null) ? (userfullname($his->dispensed_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($his->dispense_date)) . ')</span>') : "<span class='badge bg-secondary'>Not dispensed</span>");
+                $str .= '</div>';
+                $str .= '</small></div>';
+
+                // Action buttons
+                $str .= '<div class="btn-group mt-2" role="group">';
+
+                // Show delete button only if:
+                // 1. Current user is the doctor who created the request
+                // 2. Status is pending (1) or in progress (2)
+                // 3. Not yet billed
+                // 4. Not yet dispensed
+                $canDelete = (Auth::id() == $his->doctor_id)
+                    && ($his->status == 1 || $his->status == 2)
+                    && empty($his->billed_by)
+                    && empty($his->dispensed_by);
+
+                if ($canDelete) {
+                    $productName = $his->product ? $his->product->product_name : 'N/A';
+                    $str .= "<button type='button' class='btn btn-danger btn-sm'
+                        onclick='deletePrescription({$his->id}, {$his->encounter_id}, \"{$productName}\")'
+                        title='Delete this prescription'>
+                        <i class='fa fa-trash'></i> Delete
+                    </button>";
+                }
+
+                $str .= '</div>'; // Close btn-group
+                $str .= '</div>'; // Close card-body
+                $str .= '</div>'; // Close card
 
                 return $str;
             })
-            ->editColumn('dose', function ($his) {
-                $str = "<span class = 'badge badge-success'>[" . (($his->product->product_code) ? $his->product->product_code : '') . ']' . $his->product->product_name . '</span>';
-                $str .= '<hr> <b>Dose/Freq:</b> ' . ($his->dose ?? 'N/A');
-
-                return $str;
-            })
-            ->rawColumns(['created_at', 'dose'])
+            ->rawColumns(['info'])
             ->make(true);
     }
 
@@ -676,46 +838,105 @@ class EncounterController extends Controller
 
     public function EncounterHistoryList($patient_id)
     {
-        $hist = Encounter::where('patient_id', $patient_id)->where('notes', '!=', null)->orderBy('created_at', 'DESC')->get();
+        // Get the current encounter ID to exclude if provided
+        $excludeEncounterId = request()->get('exclude_encounter_id');
 
-        // dd($pc);
+        $query = Encounter::with(['doctor', 'patient'])
+            ->where('patient_id', $patient_id)
+            ->where('notes', '!=', null)
+            ->where('completed', true) // Only show completed encounters
+            ->orderBy('created_at', 'DESC');
+
+        // Exclude the current encounter if specified
+        if ($excludeEncounterId) {
+            $query->where('id', '!=', $excludeEncounterId);
+        }
+
+        $hist = $query->get();
+
         return DataTables::of($hist)
-            ->addIndexColumn()
-            // ->editColumn('doctor_id', function ($hist) {
-            //     return userfullname($hist->doctor_id);
-            // })
-            // ->editColumn('created_at', function ($hist) {
-            //     return date('h:i a D M j, Y', strtotime($hist->created_at));
-            // })
-            ->editColumn('notes', function ($hist) {
-                $str = '';
-                $str .= '<h6>Documented by: </h6>';
-                $str .= userfullname($hist->doctor_id);
-                $str .= "<br>";
-                $str .= "<br>";
+            ->addColumn('info', function ($hist) {
+                $str = '<div class="card mb-2" style="border-left: 4px solid #0d6efd;">';
+                $str .= '<div class="card-body p-3">';
 
-                $str .= '<h6>Documented at: </h6>';
-                $str .= date('h:i a D M j, Y', strtotime($hist->created_at));
-                $str .= "<br>";
-                $str .= "<br>";
+                // Header with doctor name and status
+                $str .= '<div class="d-flex justify-content-between align-items-start mb-3">';
+                $str .= "<h6 class='mb-0'><i class='mdi mdi-account-circle'></i> <span class='text-primary'>" . userfullname($hist->doctor_id) . "</span></h6>";
+                $str .= "<span class='badge bg-info'>" . date('h:i a D M j, Y', strtotime($hist->created_at)) . "</span>";
+                $str .= '</div>';
+
+                // Reasons for encounter
                 if ($hist->reasons_for_encounter != '') {
                     $reasons_for_encounter = explode(',', $hist->reasons_for_encounter);
-                    $str .= '<h6>Reason(s) for Encounter/ Diagnosis(ICPC -2 ): </h6>';
-                    $str .= '<div class="row">';
+                    $str .= '<div class="mb-3">';
+                    $str .= '<small><b><i class="mdi mdi-format-list-bulleted"></i> Reason(s) for Encounter/Diagnosis (ICPC-2):</b></small><br>';
                     foreach ($reasons_for_encounter as $reason) {
-                        $str .= "<u class='ml-3'>$reason, </u>";
+                        $str .= "<span class='badge bg-light text-dark me-1 mb-1'>" . trim($reason) . "</span>";
                     }
-                    $str .= '</div><br>';
+                    $str .= '</div>';
                 }
-                $str .= '<h6>Diagnosis Comment 1: </h6>' . "<u class='ml-3'>" . $hist->reasons_for_encounter_comment_1 . "</u>";
-                $str .= '<h6>Diagnosis Comment 2: </h6>' . "<u class='ml-3'>" . $hist->reasons_for_encounter_comment_2 . "</u>";
-                $str .= '<hr>';
 
-                $str .= '<h6>Main Notes: </h6>';
+                // Diagnosis comments
+                if ($hist->reasons_for_encounter_comment_1) {
+                    $str .= '<div class="mb-2"><small><b><i class="mdi mdi-comment-text"></i> Diagnosis Comment 1:</b> ' . $hist->reasons_for_encounter_comment_1 . '</small></div>';
+                }
+                if ($hist->reasons_for_encounter_comment_2) {
+                    $str .= '<div class="mb-2"><small><b><i class="mdi mdi-comment-text"></i> Diagnosis Comment 2:</b> ' . $hist->reasons_for_encounter_comment_2 . '</small></div>';
+                }
 
-                return $str .= $hist->notes;
+                // Main notes
+                $str .= '<div class="alert alert-light mb-2"><small><b><i class="mdi mdi-note-text"></i> Clinical Notes:</b><br>' . $hist->notes . '</small></div>';
+
+                // Action buttons
+                $str .= '<div class="btn-group mt-2" role="group">';
+
+                // Check if encounter can be edited (within edit window)
+                $canEdit = false;
+                if ($hist->created_at) {
+                    $createdDate = Carbon::parse($hist->created_at);
+                    $editDuration = appsettings('note_edit_duration') ?? 60;
+                    $editDeadline = $createdDate->copy()->addMinutes($editDuration);
+                    $canEdit = Carbon::now()->lessThanOrEqualTo($editDeadline);
+                }
+
+                // Add edit button if within edit window and user is the creator
+                if ($canEdit && Auth::id() == $hist->doctor_id) {
+                    $notesEscaped = htmlspecialchars($hist->notes, ENT_QUOTES);
+                    $reasonsEscaped = htmlspecialchars($hist->reasons_for_encounter ?? '');
+                    $comment1Escaped = htmlspecialchars($hist->reasons_for_encounter_comment_1 ?? '');
+                    $comment2Escaped = htmlspecialchars($hist->reasons_for_encounter_comment_2 ?? '');
+                    $isWardRound = $hist->admission_request_id ? 'true' : 'false';
+
+                    $str .= "<button type='button' class='btn btn-warning btn-sm' onclick='editEncounterNote(this)'
+                        data-id='{$hist->id}'
+                        data-notes='{$notesEscaped}'
+                        data-reasons='{$reasonsEscaped}'
+                        data-comment1='{$comment1Escaped}'
+                        data-comment2='{$comment2Escaped}'
+                        data-is-ward-round='{$isWardRound}'>
+                        <i class='mdi mdi-pencil'></i> Edit
+                    </button>";
+                }
+
+                // Show delete button only if within edit window and user is the creator
+                $canDelete = $canEdit && (Auth::id() == $hist->doctor_id);
+
+                if ($canDelete) {
+                    $encounterDate = date('M j, Y', strtotime($hist->created_at));
+                    $str .= "<button type='button' class='btn btn-danger btn-sm'
+                        onclick='deleteEncounter({$hist->id}, \"{$encounterDate}\")'
+                        title='Delete this encounter note'>
+                        <i class='fa fa-trash'></i> Delete
+                    </button>";
+                }
+
+                $str .= '</div>'; // Close btn-group
+                $str .= '</div>'; // Close card-body
+                $str .= '</div>'; // Close card
+
+                return $str;
             })
-            ->rawColumns(['notes'])
+            ->rawColumns(['info'])
             ->make(true);
     }
 
@@ -743,6 +964,157 @@ class EncounterController extends Controller
     }
 
     /**
+     * Delete an encounter note (soft delete).
+     */
+    public function deleteEncounter(Request $request, Encounter $encounter)
+    {
+        try {
+            // Check permissions
+            if (Auth::id() != $encounter->doctor_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You are not authorized to delete this encounter note.'
+                ], 403);
+            }
+
+            // Check if within edit window
+            $createdDate = Carbon::parse($encounter->created_at);
+            $editDuration = appsettings('note_edit_duration') ?? 60;
+            $editDeadline = $createdDate->copy()->addMinutes($editDuration);
+
+            if (Carbon::now()->greaterThan($editDeadline)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The edit window for this encounter has expired.'
+                ], 403);
+            }
+
+            // Validate deletion reason
+            $request->validate([
+                'reason' => 'required|string|max:500'
+            ]);
+
+            // Perform soft delete
+            $encounter->deleted_by = Auth::id();
+            $encounter->deletion_reason = $request->reason;
+            $encounter->save();
+            $encounter->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Encounter note deleted successfully.'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Encounter deletion failed: ' . $e->getMessage(), ['exception' => $e]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete encounter: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update encounter notes.
+     */
+    public function updateEncounterNotes(Request $request, Encounter $encounter)
+    {
+        try {
+            // Check permissions
+            if (Auth::id() != $encounter->doctor_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You are not authorized to edit this encounter note.'
+                ], 403);
+            }
+
+            // Check if within edit window
+            $createdDate = Carbon::parse($encounter->created_at);
+            $editDuration = appsettings('note_edit_duration') ?? 60;
+            $editDeadline = $createdDate->copy()->addMinutes($editDuration);
+
+            if (Carbon::now()->greaterThan($editDeadline)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The edit window for this encounter has expired.'
+                ], 403);
+            }
+
+            // Check if diagnosis is applicable
+            $diagnosisApplicable = $request->input('diagnosis_applicable', true);
+
+            // Validate request
+            $validationRules = [
+                'notes' => 'required|string',
+                'diagnosis_applicable' => 'nullable|boolean',
+            ];
+
+            // Only require diagnosis fields if applicable
+            if ($diagnosisApplicable) {
+                $validationRules['reasons_for_encounter'] = 'nullable|string';
+                $validationRules['reasons_for_encounter_comment_1'] = 'nullable|string';
+                $validationRules['reasons_for_encounter_comment_2'] = 'nullable|string';
+            }
+
+            $request->validate($validationRules);
+
+            // Process reasons only if diagnosis is applicable
+            $reasonsString = null;
+            $comment1 = null;
+            $comment2 = null;
+
+            if ($diagnosisApplicable) {
+                $reasonsString = $request->reasons_for_encounter;
+                $comment1 = $request->reasons_for_encounter_comment_1;
+                $comment2 = $request->reasons_for_encounter_comment_2;
+
+                if ($reasonsString) {
+                    $reasonsArray = explode(',', $reasonsString);
+                    $processedReasons = [];
+
+                    foreach ($reasonsArray as $reason) {
+                        $reason = trim($reason);
+                        if (empty($reason)) continue;
+
+                        // Check if this is a custom reason (doesn't match existing pattern)
+                        $existingReason = ReasonForEncounter::where(function($query) use ($reason) {
+                            $query->where('code', 'LIKE', $reason.'%')
+                                ->orWhereRaw("CONCAT(code, '-', name) = ?", [$reason]);
+                        })->first();
+
+                        if (!$existingReason && !empty($reason)) {
+                            // Create custom reason
+                            ReasonForEncounter::createCustomReason($reason);
+                        }
+
+                        $processedReasons[] = $reason;
+                    }
+
+                    $reasonsString = implode(',', $processedReasons);
+                }
+            }
+
+            // Update encounter
+            $encounter->update([
+                'notes' => $request->notes,
+                'reasons_for_encounter' => $reasonsString,
+                'reasons_for_encounter_comment_1' => $comment1,
+                'reasons_for_encounter_comment_2' => $comment2,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Encounter note updated successfully.'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Encounter update failed: ' . $e->getMessage(), ['exception' => $e]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update encounter: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Show the form for creating a new resource.
      *
      * @return \Illuminate\Http\Response
@@ -763,20 +1135,30 @@ class EncounterController extends Controller
 
             // dd($reasons_for_encounter_cat_list);
 
-            $encounter = Encounter::where('doctor_id', $doctor->id)->where('patient_id', $patient->id)->where('completed', false)->first();
+            // Find or create encounter specific to this service request/queue
+            $encounterQuery = Encounter::where('doctor_id', $doctor->id)
+                ->where('patient_id', $patient->id)
+                ->where('completed', false);
+            
+            // If we have a service request (req_entry_id), use it to identify the encounter
+            if ($req_entry) {
+                $encounterQuery->where('service_request_id', $req_entry->id);
+            }
+            
+            $encounter = $encounterQuery->first();
 
             if (!$encounter) {
                 $encounter = new Encounter();
-                // $encounter->service_id = $req_entry->service_id;
                 $encounter->doctor_id = $doctor->id;
-                // $encounter->service_request_id = $req_entry->id;
+                $encounter->service_request_id = $req_entry ? $req_entry->id : null;
+                $encounter->service_id = $req_entry ? $req_entry->service_id : null;
                 $encounter->patient_id = $patient->id;
-
                 $encounter->save();
             } else {
-                // $encounter->service_id = $req_entry->service_id;
+                // Update existing encounter (in case doctor or service changed)
                 $encounter->doctor_id = $doctor->id;
-                // $encounter->service_request_id = $req_entry->id;
+                $encounter->service_request_id = $req_entry ? $req_entry->id : null;
+                $encounter->service_id = $req_entry ? $req_entry->service_id : null;
                 $encounter->patient_id = $patient->id;
                 $encounter->update();
             }
@@ -791,7 +1173,7 @@ class EncounterController extends Controller
                 // dd($admission_exists_);
 
                 if ($request->get('admission_req_id') != '' || $admission_exists_ == 1) {
-                    $admission_request = AdmissionRequest::where('id', $request->admission_req_id)->first() ?? $admission_exists;
+                    $admission_request = AdmissionRequest::where('id', $request->admission_req_id)->where('discharged', 0)->first() ?? $admission_exists;
                     // for nursing notes
                     $patient_id = $patient->id;
                     $patient = patient::find($patient_id);
@@ -889,7 +1271,7 @@ class EncounterController extends Controller
     {
         // dd($request->all());
         try {
-            if (env('REQUIRE_DIAGNOSIS') == 1) {
+            if (appsettings('requirediagnosis') == 1) {
                 $request->validate([
                     'doctor_diagnosis' => 'required|string',
                     'consult_presc_dose' => 'nullable|array|required_with:consult_presc_id',
@@ -919,10 +1301,14 @@ class EncounterController extends Controller
                     'consult_presc_id' => 'nullable|array|required_with:consult_presc_dose',
                     'consult_invest_note' => 'nullable|array',
                     'consult_invest_id' => 'nullable|array',
+                    'consult_imaging_note' => 'nullable|array',
+                    'consult_imaging_id' => 'nullable|array',
                     'consult_presc_dose.*' => 'required_with:consult_presc_dose',
                     'consult_presc_id.*' => 'required_with:consult_presc_id',
                     'consult_invest_note.*' => 'nullable',
                     'consult_invest_id.*' => 'required_with:consult_invest_id',
+                    'consult_imaging_note.*' => 'nullable',
+                    'consult_imaging_id.*' => 'required_with:consult_imaging_id',
                     'admit_note' => 'nullable|string',
                     'consult_admit' => 'nullable',
                     'req_entry_service_id' => 'required',
@@ -950,6 +1336,14 @@ class EncounterController extends Controller
                 }
             }
 
+            if (isset($request->consult_imaging_id) && isset($request->consult_imaging_note)) {
+                if (count($request->consult_imaging_id) !== count($request->consult_imaging_note)) {
+                    $msg = 'Please fill out notes for all selected imaging services';
+
+                    return redirect()->back()->withInput()->withMessage($msg)->withMessageType('warning');
+                }
+            }
+
             // Find the patient
             $patient = patient::findOrFail($request->patient_id);
 
@@ -964,21 +1358,21 @@ class EncounterController extends Controller
                     foreach ($request->reasons_for_encounter as $reason) {
                         $dataValues = [
                             [
-                                'dataElement' => env('DHIS_TRACKED_ENTITY_PROGRAM_EVENT_DATAELEMENT'),
+                                'dataElement' => appsettings('dhis_tracked_entity_program_event_dataelement'),
                                 'value' => $reason,
                             ],
                         ];
 
                         Http::withBasicAuth('admin', 'district')
-                            ->post(env('DHIS_API_URL') . '/tracker?importStrategy=CREATE&async=false', [
+                            ->post(appsettings('dhis_api_url') . '/tracker?importStrategy=CREATE&async=false', [
                                 'events' => [
                                     [
                                         'dataValues' => $dataValues,
                                         'enrollmentStatus' => 'ACTIVE',
                                         'occurredAt' => $currentTime,
-                                        'orgUnit' => env('DHIS_ORG_UNIT'),
-                                        'program' => env('DHIS_TRACKED_ENTITY_PROGRAM'),
-                                        'programStage' => env('DHIS_TRACKED_ENTITY_PROGRAM_STAGE2'),
+                                        'orgUnit' => appsettings('dhis_org_unit'),
+                                        'program' => appsettings('dhis_tracked_entity_program'),
+                                        'programStage' => appsettings('dhis_tracked_entity_program_stage2'),
                                         'scheduledAt' => $currentTime,
                                         'status' => 'COMPLETED',
                                         'enrollment' => $patient->dhis_consult_enrollment_id,
@@ -1004,7 +1398,7 @@ class EncounterController extends Controller
             }
             $encounter->doctor_id = Auth::id();
             $encounter->patient_id = $request->patient_id;
-            if (env('REQUIRE_DIAGNOSIS')) {
+            if (appsettings('requirediagnosis', 0)) {
                 $encounter->reasons_for_encounter = implode(',', $request->reasons_for_encounter);
                 $encounter->reasons_for_encounter_comment_1 = $request->reasons_for_encounter_comment_1;
                 $encounter->reasons_for_encounter_comment_2 = $request->reasons_for_encounter_comment_2;
@@ -1024,6 +1418,18 @@ class EncounterController extends Controller
                     $invest->save();
 
                     $req_entr = new ProductOrServiceRequest();
+                }
+            }
+
+            if (isset($request->consult_imaging_id) && count($request->consult_imaging_id) > 0) {
+                for ($r = 0; $r < count($request->consult_imaging_id); ++$r) {
+                    $imaging = new ImagingServiceRequest();
+                    $imaging->service_id = $request->consult_imaging_id[$r];
+                    $imaging->note = $request->consult_imaging_note[$r];
+                    $imaging->encounter_id = $encounter->id;
+                    $imaging->patient_id = $request->patient_id;
+                    $imaging->doctor_id = Auth::id();
+                    $imaging->save();
                 }
             }
 
@@ -1062,11 +1468,11 @@ class EncounterController extends Controller
 
                 if (appsettings('goonline', 0) == 1) {
                     $response = Http::withBasicAuth(
-                        env('COREHMS_SUPERADMIN_USERNAME'),
-                        env('COREHMS_SUPERADMIN_PASS')
+                        appsettings('COREHMS_SUPERADMIN_USERNAME'),
+                        appsettings('COREHMS_SUPERADMIN_PASS')
                     )->withHeaders([
                         'Content-Type' => 'application/json',
-                    ])->post(env('COREHMS_SUPERADMIN_URL') . '/event-notification.php?notification_type=consultation', [
+                    ])->post(appsettings('COREHMS_SUPERADMIN_URL') . '/event-notification.php?notification_type=consultation', [
                         'category' => $queue->clinic->name,
                         'health_case' => $request->reasons_for_encounter[0] ?? null
                     ]);
@@ -1128,5 +1534,595 @@ class EncounterController extends Controller
         } else {
             return "<i class='mdi mdi-file text-secondary'></i>";
         }
+    }
+
+    /**
+     * Save diagnosis and notes for encounter via AJAX
+     */
+    public function saveDiagnosis(Request $request, Encounter $encounter)
+    {
+        try {
+            // Check if diagnosis is applicable
+            $diagnosisApplicable = $request->input('diagnosis_applicable', true);
+
+            $validationRules = [
+                'doctor_diagnosis' => 'nullable|string',
+                'diagnosis_applicable' => 'nullable|boolean',
+            ];
+
+            // Only require diagnosis fields if diagnosis is applicable
+            if (appsettings('requirediagnosis', 0) && $diagnosisApplicable) {
+                $validationRules['reasons_for_encounter'] = 'required|array|min:1';
+                $validationRules['reasons_for_encounter_comment_1'] = 'required|string';
+                $validationRules['reasons_for_encounter_comment_2'] = 'required|string';
+            }
+
+            $validated = $request->validate($validationRules);
+
+            // Only save diagnosis fields if diagnosis is applicable
+            if (appsettings('requirediagnosis', 0) && $diagnosisApplicable && $request->has('reasons_for_encounter')) {
+                $encounter->reasons_for_encounter = implode(',', $request->reasons_for_encounter);
+                $encounter->reasons_for_encounter_comment_1 = $request->reasons_for_encounter_comment_1;
+                $encounter->reasons_for_encounter_comment_2 = $request->reasons_for_encounter_comment_2;
+
+                // Process custom reasons
+                $reasonsArray = $request->reasons_for_encounter;
+                foreach ($reasonsArray as $reason) {
+                    $reason = trim($reason);
+                    if (empty($reason)) continue;
+
+                    // Check if custom reason (starts with 'custom:')
+                    if (strpos($reason, 'custom:') === 0) {
+                        $customReasonText = str_replace('custom:', '', $reason);
+                        ReasonForEncounter::createCustomReason($customReasonText);
+                    }
+                }
+            } else {
+                // Clear diagnosis fields when not applicable
+                $encounter->reasons_for_encounter = null;
+                $encounter->reasons_for_encounter_comment_1 = null;
+                $encounter->reasons_for_encounter_comment_2 = null;
+            }
+
+            $encounter->notes = $request->doctor_diagnosis ?? '';
+            $encounter->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Diagnosis and notes saved successfully'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed: ' . implode(', ', $e->validator->errors()->all()),
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error saving diagnosis: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Save lab service requests for encounter via AJAX
+     */
+    public function saveLabs(Request $request, Encounter $encounter)
+    {
+        try {
+            $request->validate([
+                'consult_invest_id' => 'required|array',
+                'consult_invest_id.*' => 'required|integer',
+                'consult_invest_note' => 'required|array',
+                'consult_invest_note.*' => 'nullable|string',
+            ]);
+
+            if (count($request->consult_invest_id) !== count($request->consult_invest_note)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please fill out notes for all selected services'
+                ], 422);
+            }
+
+            // Delete existing lab requests for this encounter (to avoid duplicates on re-save)
+            LabServiceRequest::where('encounter_id', $encounter->id)->delete();
+
+            // Save new lab requests
+            for ($r = 0; $r < count($request->consult_invest_id); ++$r) {
+                $invest = new LabServiceRequest();
+                $invest->service_id = $request->consult_invest_id[$r];
+                $invest->note = $request->consult_invest_note[$r];
+                $invest->encounter_id = $encounter->id;
+                $invest->patient_id = $encounter->patient_id;
+                $invest->doctor_id = Auth::id();
+                $invest->save();
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => count($request->consult_invest_id) . ' lab service(s) saved successfully',
+                'count' => count($request->consult_invest_id)
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error saving lab requests: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Save imaging service requests for encounter via AJAX
+     */
+    public function saveImaging(Request $request, Encounter $encounter)
+    {
+        try {
+            $request->validate([
+                'consult_imaging_id' => 'required|array',
+                'consult_imaging_id.*' => 'required|integer',
+                'consult_imaging_note' => 'required|array',
+                'consult_imaging_note.*' => 'nullable|string',
+            ]);
+
+            if (count($request->consult_imaging_id) !== count($request->consult_imaging_note)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please fill out notes for all selected imaging services'
+                ], 422);
+            }
+
+            // Delete existing imaging requests for this encounter
+            ImagingServiceRequest::where('encounter_id', $encounter->id)->delete();
+
+            // Save new imaging requests
+            for ($r = 0; $r < count($request->consult_imaging_id); ++$r) {
+                $imaging = new ImagingServiceRequest();
+                $imaging->service_id = $request->consult_imaging_id[$r];
+                $imaging->note = $request->consult_imaging_note[$r];
+                $imaging->encounter_id = $encounter->id;
+                $imaging->patient_id = $encounter->patient_id;
+                $imaging->doctor_id = Auth::id();
+                $imaging->save();
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => count($request->consult_imaging_id) . ' imaging service(s) saved successfully',
+                'count' => count($request->consult_imaging_id)
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error saving imaging requests: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Save prescription/medications for encounter via AJAX
+     */
+    public function savePrescriptions(Request $request, Encounter $encounter)
+    {
+        try {
+            $request->validate([
+                'consult_presc_id' => 'required|array|min:1',
+                'consult_presc_id.*' => 'required|integer',
+                'consult_presc_dose' => 'required|array|min:1',
+                'consult_presc_dose.*' => 'nullable|string',
+            ]);
+
+            if (count($request->consult_presc_id) !== count($request->consult_presc_dose)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Mismatch between products and dosages'
+                ], 422);
+            }
+
+            // Check for empty doses and warn
+            $emptyDoses = [];
+            foreach ($request->consult_presc_dose as $index => $dose) {
+                if (empty(trim($dose))) {
+                    $emptyDoses[] = $index + 1;
+                }
+            }
+
+            // Delete existing prescriptions for this encounter
+            ProductRequest::where('encounter_id', $encounter->id)->delete();
+
+            // Save new prescriptions
+            for ($r = 0; $r < count($request->consult_presc_id); ++$r) {
+                $presc = new ProductRequest();
+                $presc->product_id = $request->consult_presc_id[$r];
+                $presc->dose = $request->consult_presc_dose[$r] ?? '';
+                $presc->encounter_id = $encounter->id;
+                $presc->patient_id = $encounter->patient_id;
+                $presc->doctor_id = Auth::id();
+                $presc->save();
+            }
+
+            $message = count($request->consult_presc_id) . ' prescription(s) saved successfully';
+            if (!empty($emptyDoses)) {
+                $message .= '. Warning: Item(s) ' . implode(', ', $emptyDoses) . ' have no dosage specified.';
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'count' => count($request->consult_presc_id),
+                'empty_doses' => $emptyDoses
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed: ' . implode(', ', $e->validator->errors()->all()),
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error saving prescriptions: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Finalize encounter - mark as complete and handle admission/queue
+     */
+    public function finalizeEncounter(Request $request, Encounter $encounter)
+    {
+        try {
+            $request->validate([
+                'end_consultation' => 'nullable|boolean',
+                'consult_admit' => 'nullable|boolean',
+                'admit_note' => 'nullable|string',
+                'queue_id' => 'required',
+            ]);
+
+            DB::beginTransaction();
+
+            // Mark encounter as complete
+            $encounter->completed = true;
+            $encounter->doctor_id = Auth::id();
+            $encounter->save();
+
+            // Handle queue status
+            if ($request->queue_id != 'ward_round') {
+                DoctorQueue::where('id', $request->queue_id)->update([
+                    'status' => (($request->end_consultation && $request->end_consultation == '1') ? 3 : 2),
+                ]);
+            }
+
+            // Handle admission request
+            if ($request->consult_admit && $request->consult_admit == '1') {
+                $admit = new AdmissionRequest();
+                $admit->encounter_id = $encounter->id;
+                $admit->patient_id = $encounter->patient_id;
+                $admit->note = $request->admit_note;
+                $admit->doctor_id = Auth::id();
+                $admit->save();
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Encounter completed successfully',
+                'redirect' => route('encounters.index')
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error finalizing encounter: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get encounter summary with all saved data
+     */
+    public function getEncounterSummary(Encounter $encounter)
+    {
+        try {
+            // Get diagnosis/notes
+            $diagnosis = [
+                'saved' => !empty($encounter->notes) || !empty($encounter->reasons_for_encounter),
+                'notes' => $encounter->notes,
+                'reasons' => $encounter->reasons_for_encounter,
+                'comment_1' => $encounter->reasons_for_encounter_comment_1,
+                'comment_2' => $encounter->reasons_for_encounter_comment_2,
+            ];
+
+            // Get lab requests
+            $labs = LabServiceRequest::where('encounter_id', $encounter->id)
+                ->with('service')
+                ->get()
+                ->map(function($lab) {
+                    return [
+                        'id' => $lab->id,
+                        'name' => $lab->service->service_name ?? 'N/A',
+                        'code' => $lab->service->service_code ?? '',
+                        'note' => $lab->note,
+                        'status' => $lab->status ?? 1,
+                        'created_at' => $lab->created_at->format('M d, Y H:i')
+                    ];
+                });
+
+            // Get imaging requests
+            $imaging = ImagingServiceRequest::where('encounter_id', $encounter->id)
+                ->with('service')
+                ->get()
+                ->map(function($img) {
+                    return [
+                        'id' => $img->id,
+                        'name' => $img->service->service_name ?? 'N/A',
+                        'code' => $img->service->service_code ?? '',
+                        'note' => $img->note,
+                        'status' => $img->status ?? 1,
+                        'created_at' => $img->created_at->format('M d, Y H:i')
+                    ];
+                });
+
+            // Get prescriptions
+            $prescriptions = ProductRequest::where('encounter_id', $encounter->id)
+                ->with('product')
+                ->get()
+                ->map(function($presc) {
+                    return [
+                        'id' => $presc->id,
+                        'name' => $presc->product->product_name ?? 'N/A',
+                        'dose' => $presc->dose,
+                        'status' => $presc->status ?? 1,
+                        'created_at' => $presc->created_at->format('M d, Y H:i')
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'diagnosis' => $diagnosis,
+                    'labs' => $labs,
+                    'imaging' => $imaging,
+                    'prescriptions' => $prescriptions,
+                    'encounter' => [
+                        'id' => $encounter->id,
+                        'completed' => $encounter->completed,
+                        'created_at' => $encounter->created_at->format('M d, Y H:i'),
+                        'updated_at' => $encounter->updated_at->format('M d, Y H:i'),
+                    ]
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching encounter summary: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete a lab service request (soft delete)
+     */
+    public function deleteLab(Request $request, Encounter $encounter, LabServiceRequest $lab)
+    {
+        try {
+            // Validate that lab belongs to this encounter
+            if ($lab->encounter_id != $encounter->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This lab request does not belong to this encounter'
+                ], 403);
+            }
+
+            // Validate that current user is the creator
+            if ($lab->doctor_id != Auth::id()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You can only delete your own requests'
+                ], 403);
+            }
+
+            // Validate that request is not yet processed (status 1 or 2)
+            if ($lab->status > 2) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete: Lab results have already been entered',
+                    'reason' => 'results_entered'
+                ], 403);
+            }
+
+            // Validate that request has not been billed
+            if ($lab->billed_by || $lab->billed_date) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete: This request has already been billed',
+                    'reason' => 'already_billed'
+                ], 403);
+            }
+
+            // Validate deletion reason
+            $request->validate([
+                'reason' => 'required|string|max:500'
+            ]);
+
+            // Soft delete the request
+            $lab->deleted_by = Auth::id();
+            $lab->deletion_reason = $request->reason;
+            $lab->save();
+            $lab->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Lab request deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting lab request: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete an imaging service request (soft delete)
+     */
+    public function deleteImaging(Request $request, Encounter $encounter, ImagingServiceRequest $imaging)
+    {
+        try {
+            // Validate that imaging belongs to this encounter
+            if ($imaging->encounter_id != $encounter->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This imaging request does not belong to this encounter'
+                ], 403);
+            }
+
+            // Validate that current user is the creator
+            if ($imaging->doctor_id != Auth::id()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You can only delete your own requests'
+                ], 403);
+            }
+
+            // Validate that request is not yet processed (status 1 or 2)
+            if ($imaging->status > 2) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete: Imaging results have already been entered',
+                    'reason' => 'results_entered'
+                ], 403);
+            }
+
+            // Validate that request has not been billed
+            if ($imaging->billed_by || $imaging->billed_date) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete: This request has already been billed',
+                    'reason' => 'already_billed'
+                ], 403);
+            }
+
+            // Validate deletion reason
+            $request->validate([
+                'reason' => 'required|string|max:500'
+            ]);
+
+            // Soft delete the request
+            $imaging->deleted_by = Auth::id();
+            $imaging->deletion_reason = $request->reason;
+            $imaging->save();
+            $imaging->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Imaging request deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting imaging request: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete a prescription request (soft delete)
+     */
+    public function deletePrescription(Request $request, Encounter $encounter, ProductRequest $prescription)
+    {
+        try {
+            // Validate that prescription belongs to this encounter
+            if ($prescription->encounter_id != $encounter->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This prescription does not belong to this encounter'
+                ], 403);
+            }
+
+            // Validate that current user is the creator
+            if ($prescription->doctor_id != Auth::id()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You can only delete your own prescriptions'
+                ], 403);
+            }
+
+            // Validate that prescription is not yet dispensed (status 1 or 2)
+            if ($prescription->status > 2) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete: This prescription has already been dispensed',
+                    'reason' => 'already_dispensed'
+                ], 403);
+            }
+
+            // Validate that prescription has not been billed
+            if ($prescription->billed_by || $prescription->billed_date) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete: This prescription has already been billed',
+                    'reason' => 'already_billed'
+                ], 403);
+            }
+
+            // Validate deletion reason
+            $request->validate([
+                'reason' => 'required|string|max:500'
+            ]);
+
+            // Soft delete the prescription
+            $prescription->deleted_by = Auth::id();
+            $prescription->deletion_reason = $request->reason;
+            $prescription->save();
+            $prescription->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Prescription deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting prescription: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Live search for reasons for encounter (ICPC-2 diagnosis codes)
+     */
+    public function liveSearchReasons(Request $request)
+    {
+        $request->validate([
+            'term' => 'required|string|min:2'
+        ]);
+
+        $searchTerm = $request->term;
+
+        $reasons = ReasonForEncounter::where(function ($query) use ($searchTerm) {
+            $query->where('name', 'LIKE', "%{$searchTerm}%")
+                ->orWhere('code', 'LIKE', "%{$searchTerm}%")
+                ->orWhere('category', 'LIKE', "%{$searchTerm}%")
+                ->orWhere('sub_category', 'LIKE', "%{$searchTerm}%");
+        })
+        ->orderByRaw("CASE WHEN code LIKE '{$searchTerm}%' THEN 1 WHEN name LIKE '{$searchTerm}%' THEN 2 ELSE 3 END")
+        ->orderBy('code', 'ASC')
+        ->limit(20)
+        ->get()
+        ->map(function ($reason) {
+            return [
+                'id' => $reason->id,
+                'code' => $reason->code,
+                'name' => $reason->name,
+                'category' => $reason->category,
+                'sub_category' => $reason->sub_category,
+                'display' => $reason->code . ' - ' . $reason->name,
+                'value' => $reason->code . '-' . $reason->name // For compatibility
+            ];
+        });
+
+        return response()->json($reasons);
     }
 }

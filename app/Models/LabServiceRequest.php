@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class LabServiceRequest extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'service_request_id',
@@ -26,7 +27,9 @@ class LabServiceRequest extends Model
         'sample_taken_by',
         'doctor_id',
         'note',
-        'status'
+        'status',
+        'deleted_by',
+        'deletion_reason'
     ];
 
     protected $casts = [

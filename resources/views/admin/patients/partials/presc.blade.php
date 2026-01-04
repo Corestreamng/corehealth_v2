@@ -72,13 +72,10 @@
         class="btn btn-danger"
         onclick="return confirm('Are you sure you wish to dissmiss the selected items')"
         style="float: right">Dismiss</button>
-</form>
 <hr>
-<h4>Precription History</h4>
-<table class="table table-sm table-bordered table-striped" style="width: 100%" id="presc_history_list">
-    <thead>
-        <th>#</th>
-        <th>Product</th>
-        <th>Details</th>
+<h4>Prescription History</h4>
+<table class="table table-hover" style="width: 100%" id="presc_history_list">
+    <thead class="table-light">
+        <th><i class="mdi mdi-pill"></i> Prescriptions</th>
     </thead>
 </table>

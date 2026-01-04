@@ -118,6 +118,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('product-category-list', [ProductCategoryController::class, 'listProductCategories'])->name('product-category-list');
         Route::get('listSalesProduct/{id}', [ProductController::class, 'listSalesProduct'])->name('listSalesProduct');
         Route::get('live-search-products', [ProductController::class, 'liveSearchProducts'])->name('live-search-products');
+        Route::get('live-search-reasons', [EncounterController::class, 'liveSearchReasons'])->name('live-search-reasons');
     });
 
     Route::group(['middleware' => ['auth']], function () {
@@ -144,6 +145,22 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('NewEncounterList', [EncounterController::class, 'NewEncounterList'])->name('NewEncounterList');
         Route::get('ContEncounterList', [EncounterController::class, 'ContEncounterList'])->name('ContEncounterList');
         Route::get('PrevEncounterList', [EncounterController::class, 'PrevEncounterList'])->name('PrevEncounterList');
+
+        // AJAX endpoints for incremental encounter saving
+        Route::post('encounters/{encounter}/save-diagnosis', [EncounterController::class, 'saveDiagnosis'])->name('encounters.saveDiagnosis');
+        Route::post('encounters/{encounter}/save-labs', [EncounterController::class, 'saveLabs'])->name('encounters.saveLabs');
+        Route::post('encounters/{encounter}/save-imaging', [EncounterController::class, 'saveImaging'])->name('encounters.saveImaging');
+        Route::post('encounters/{encounter}/save-prescriptions', [EncounterController::class, 'savePrescriptions'])->name('encounters.savePrescriptions');
+        Route::post('encounters/{encounter}/finalize', [EncounterController::class, 'finalizeEncounter'])->name('encounters.finalize');
+        Route::get('encounters/{encounter}/summary', [EncounterController::class, 'getEncounterSummary'])->name('encounters.summary');
+
+        // Delete endpoints for service requests
+        Route::delete('encounters/{encounter}/labs/{lab}', [EncounterController::class, 'deleteLab'])->name('encounters.deleteLab');
+        Route::delete('encounters/{encounter}/imaging/{imaging}', [EncounterController::class, 'deleteImaging'])->name('encounters.deleteImaging');
+        Route::delete('encounters/{encounter}/prescriptions/{prescription}', [EncounterController::class, 'deletePrescription'])->name('encounters.deletePrescription');
+        Route::delete('encounters/{encounter}', [EncounterController::class, 'deleteEncounter'])->name('encounters.delete');
+        Route::put('encounters/{encounter}/notes', [EncounterController::class, 'updateEncounterNotes'])->name('encounters.updateNotes');
+
         Route::get('investigationHistoryList/{patient_id}', [EncounterController::class, 'investigationHistoryList'])->name('investigationHistoryList');
         Route::get('imagingHistoryList/{patient_id}', [EncounterController::class, 'imagingHistoryList'])->name('imagingHistoryList');
         Route::get('imagingBillList/{patient_id}', [EncounterController::class, 'imagingBillList'])->name('imagingBillList');
@@ -181,6 +198,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('bed-list', [BedController::class, 'listBeds'])->name('bed-list');
         Route::resource('admission-requests', AdmissionRequestController::class);
         Route::get('discharge-patient/{admission_req_id}', [AdmissionRequestController::class, 'dischargePatient'])->name('discharge-patient');
+        Route::post('discharge-patient-api/{admission_req_id}', [AdmissionRequestController::class, 'dischargePatientApi'])->name('discharge-patient-api');
         Route::post('assign-bed', [AdmissionRequestController::class, 'assignBed'])->name('assign-bed');
         Route::post('assign-bill', [AdmissionRequestController::class, 'assignBill'])->name('assign-bill');
         Route::get('services-list', [ServiceController::class, 'listServices'])->name('services-list');

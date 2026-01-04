@@ -229,22 +229,12 @@
                     "url": "{{ route('EncounterHistoryList', $patient->id) }}",
                     "type": "GET"
                 },
-                "columns": [{
-                        data: "DT_RowIndex",
-                        name: "DT_RowIndex"
-                    },
-                    //{
-                    //    data: "doctor_id",
-                    //    name: "doctor_id"
-                    //},
+                "columns": [
                     {
-                        data: "notes",
-                        name: "notes"
-                    },
-                    //{
-                    //    data: "created_at",
-                    //    name: "created_at"
-                    //},
+                        data: "info",
+                        name: "info",
+                        orderable: false
+                    }
                 ],
 
                 "paging": true
@@ -313,18 +303,12 @@
                     "url": "{{ url('investigationHistoryList', $patient->id) }}",
                     "type": "GET"
                 },
-                "columns": [{
-                        data: "DT_RowIndex",
-                        name: "DT_RowIndex"
-                    },
+                "columns": [
                     {
-                        data: "result",
-                        name: "result"
-                    },
-                    {
-                        data: "created_at",
-                        name: "created_at"
-                    },
+                        data: "info",
+                        name: "info",
+                        orderable: false
+                    }
                 ],
 
                 "paging": true
@@ -347,18 +331,12 @@
                     "url": "{{ url('prescHistoryList', $patient->id) }}",
                     "type": "GET"
                 },
-                "columns": [{
-                        data: "DT_RowIndex",
-                        name: "DT_RowIndex"
-                    },
+                "columns": [
                     {
-                        data: "dose",
-                        name: "dose"
-                    },
-                    {
-                        data: "created_at",
-                        name: "created_at"
-                    },
+                        data: "info",
+                        name: "info",
+                        orderable: false
+                    }
                 ],
 
                 "paging": true
@@ -382,42 +360,11 @@
                     "type": "GET"
                 },
                 "columns": [{
-                        data: "DT_RowIndex",
-                        name: "DT_RowIndex"
-                    },
-                    {
-                        data: "doctor_id",
-                        name: "doctor_id"
-                    },
-                    {
-                        data: "billed_by",
-                        name: "billed_by"
-                    },
-                    {
-                        data: "bed_id",
-                        name: "bed_id"
-                    },
-                    {
-                        data: "show",
-                        name: "show"
-                    },
-                ],
-                // initComplete: function () {
-                //     this.api().columns().every(function () {
-                //         var column = this;
-                //         var input = document.createElement("input");
-                //         $(input).appendTo($(column.footer()).empty())
-                //         .on('change', function () {
-                //             column.search($(this).val(), false, false, true).draw();
-                //         });
-                //     });
-                // },
+                    data: "info",
+                    name: "info",
+                    orderable: false
+                }],
                 "paging": true
-                // "lengthChange": false,
-                // "searching": true,
-                // "ordering": true,
-                // "info": true,
-                // "autoWidth": false
             });
         });
     </script>
@@ -1485,18 +1432,12 @@
                     "url": "{{ url('imagingHistoryList', $patient->id) }}",
                     "type": "GET"
                 },
-                "columns": [{
-                        data: "DT_RowIndex",
-                        name: "DT_RowIndex"
-                    },
+                "columns": [
                     {
-                        data: "result",
-                        name: "result"
-                    },
-                    {
-                        data: "created_at",
-                        name: "created_at"
-                    },
+                        data: "info",
+                        name: "info",
+                        orderable: false
+                    }
                 ],
                 "paging": true
             });

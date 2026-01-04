@@ -501,11 +501,11 @@ class StaffController extends Controller
                         // For doctors and nurses
                         if ($request->is_admin == 21) {
                             $response = Http::withBasicAuth(
-                                env('COREHMS_SUPERADMIN_USERNAME'),
-                                env('COREHMS_SUPERADMIN_PASS')
+                                appsettings('COREHMS_SUPERADMIN_USERNAME'),
+                                appsettings('COREHMS_SUPERADMIN_PASS')
                             )->withHeaders([
                                 'Content-Type' => 'application/json',
-                            ])->post(env('COREHMS_SUPERADMIN_URL') . '/event-notification.php?notification_type=staff', [
+                            ])->post(appsettings('COREHMS_SUPERADMIN_URL') . '/event-notification.php?notification_type=staff', [
                                 'type' => 'Doctors',
                                 'specialization' => $request->specialization ?? null,
                                 'gender' => $request->gender ?? null,
@@ -514,11 +514,11 @@ class StaffController extends Controller
                             Log::info("sent api request For Staff doc, ", [$response->body()]);
                         } elseif ($request->is_admin == 22) {
                             $response = Http::withBasicAuth(
-                                env('COREHMS_SUPERADMIN_USERNAME'),
-                                env('COREHMS_SUPERADMIN_PASS')
+                                appsettings('COREHMS_SUPERADMIN_USERNAME'),
+                                appsettings('COREHMS_SUPERADMIN_PASS')
                             )->withHeaders([
                                 'Content-Type' => 'application/json',
-                            ])->post(env('COREHMS_SUPERADMIN_URL') . '/event-notification.php?notification_type=staff', [
+                            ])->post(appsettings('COREHMS_SUPERADMIN_URL') . '/event-notification.php?notification_type=staff', [
                                 'type' => 'Nurse',
                                 'specialization' => $request->specialization ?? null,
                                 'gender' => $request->gender ?? null,

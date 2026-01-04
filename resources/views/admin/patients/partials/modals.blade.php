@@ -7,9 +7,7 @@
                 <div class="modal-header">
                     <h5 class="modal-title" id="investResModalLabel">Enter Result (<span
                             id="invest_res_service_name"></span>)</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times; <small>Press ESC to exit</small></span>
-                    </button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <!-- V1 Template: WYSIWYG Editor -->
@@ -233,9 +231,7 @@
                 <h5 class="modal-title" id="investResViewModalLabel">
                     <i class="mdi mdi-file-document-outline"></i> Test Results
                 </h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
             <div class="modal-body p-0">
@@ -333,9 +329,9 @@
             </div>
 
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                    <i class="mdi mdi-close"></i> Close
-                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fa fa-times"></i> Close
+                    </button>
                 <button type="button" onclick="PrintElem('resultViewTable')" class="btn btn-primary">
                     <i class="mdi mdi-printer"></i> Print Results
                 </button>
@@ -354,9 +350,7 @@
                 <div class="modal-header">
                     <h5 class="modal-title" id="imagingResModalLabel">Enter Imaging Result (<span
                             id="imaging_res_service_name"></span>)</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times; <small>Press ESC to exit</small></span>
-                    </button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <textarea id="imaging_res_template_editor" class="ckeditor"></textarea>
@@ -570,9 +564,7 @@
                 <h5 class="modal-title" id="imagingResViewModalLabel">
                     <i class="mdi mdi-image-multiple"></i> Imaging Results
                 </h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
             <div class="modal-body p-0">
@@ -670,9 +662,9 @@
             </div>
 
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                    <i class="mdi mdi-close"></i> Close
-                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fa fa-times"></i> Close
+                    </button>
                 <button type="button" onclick="PrintElem('imagingResultViewTable')" class="btn btn-primary">
                     <i class="mdi mdi-printer"></i> Print Results
                 </button>
@@ -688,9 +680,7 @@
             <div class="modal-header">
                 <h5 class="modal-title" id="investResModalLabel">Nursing Note Result (<span
                         id="note_type_name_"></span>)</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times; <small>Press ESC to exit</small></span>
-                </button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div id="nursing_note_template_" class="table-reponsive" style="border: 1px solid black;">
@@ -713,9 +703,7 @@
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title">Assign Bill </h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times; <small>Press ESC to exit</small></span>
-                    </button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="assign_bed_req_id_" name="assign_bed_req_id">
@@ -753,9 +741,7 @@
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title">Assign Bed </h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times; <small>Press ESC to exit</small></span>
-                    </button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="assign_bed_req_id" name="assign_bed_req_id">
@@ -765,11 +751,13 @@
                         <label for="">Select Bed</label>
                         <select name="bed_id" class="form-control">
                             <option value="">--select bed--</option>
-                            @foreach ($avail_beds as $bed)
-                                <option value="{{ $bed->id }}">{{ $bed->name }}[Price: NGN
-                                    {{ $bed->price }}, Ward: {{ $bed->ward }}, Unit: {{ $bed->unit }}]
-                                </option>
-                            @endforeach
+                            @if(isset($avail_beds))
+                                @foreach ($avail_beds as $bed)
+                                    <option value="{{ $bed->id }}">{{ $bed->name }}[Price: NGN
+                                        {{ $bed->price }}, Ward: {{ $bed->ward }}, Unit: {{ $bed->unit }}]
+                                    </option>
+                                @endforeach
+                            @endif
                         </select>
                     </div>
                 </div>
@@ -783,3 +771,722 @@
         </div>
     </div>
 </div>
+
+{{-- Edit Encounter Note Modal --}}
+{{-- Edit Encounter Note Modal --}}
+<div class="modal fade" id="editEncounterModal" tabindex="-1" aria-labelledby="editEncounterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header" style="background-color: {{ appsettings('hos_color', '#007bff') }}; color: white;">
+                <h5 class="modal-title" id="editEncounterModalLabel">
+                    <i class="mdi mdi-pencil"></i> Edit Encounter Note
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editEncounterId">
+
+                @if (appsettings('requirediagnosis', 0))
+                <!-- Modern Toggle Switch for Diagnosis Not Applicable -->
+                <div class="diagnosis-toggle-container mb-4">
+                    <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded">
+                        <div>
+                            <strong class="d-block mb-1">Diagnosis Applicable?</strong>
+                            <small class="text-muted">Toggle to show/hide diagnosis fields</small>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="editEncounterDiagnosisApplicable" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="diagnosis-fields-wrapper" id="editEncounterDiagnosisFields">
+                <div class="form-group mb-3" id="editEncounterReasonsGroup">
+                    <label for="editEncounterReasonsSearch" class="form-label">
+                        <strong>Search ICPC-2 Reason(s) for Encounter/Diagnosis <span class="text-danger">*</span></strong>
+                    </label>
+                    <input type="text"
+                        class="form-control mb-2"
+                        id="editEncounterReasonsSearch"
+                        placeholder="Type to search diagnosis codes... (e.g., 'A03', 'Fever', 'Hypertension')"
+                        autocomplete="off">
+                    <small class="text-muted d-block mb-2">
+                        <i class="mdi mdi-information"></i> Type at least 2 characters to search. You can also add custom reasons.
+                    </small>
+                    <ul class="list-group" id="editReasons_search_results" style="display: none; max-height: 250px; overflow-y: auto;"></ul>
+
+                    <!-- Selected reasons display -->
+                    <div id="editSelected_reasons_container" class="mt-3">
+                        <label class="d-block mb-2"><strong>Selected Diagnoses:</strong></label>
+                        <div id="editSelected_reasons_list" class="d-flex flex-wrap gap-2">
+                            <span class="text-muted"><i>No diagnoses selected yet</i></span>
+                        </div>
+                    </div>
+
+                    <!-- Hidden input to store selected reason values -->
+                    <input type="hidden" id="editEncounterReasonsData" value="[]">
+                </div>
+
+                <div class="row mb-3" id="editEncounterCommentsGroup">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="editEncounterComment1" class="form-label">
+                                <strong>Select Diagnosis Comment 1 <span class="text-danger">*</span></strong>
+                            </label>
+                            <select class="form-control" id="editEncounterComment1" required>
+                                <option value="NA">Not Applicable</option>
+                                <option value="QUERY">Query</option>
+                                <option value="DIFFRENTIAL">Diffrential</option>
+                                <option value="CONFIRMED">Confirmed</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="editEncounterComment2" class="form-label">
+                                <strong>Select Diagnosis Comment 2 <span class="text-danger">*</span></strong>
+                            </label>
+                            <select class="form-control" id="editEncounterComment2" required>
+                                <option value="NA">Not Applicable</option>
+                                <option value="ACUTE">Acute</option>
+                                <option value="CHRONIC">Chronic</option>
+                                <option value="RECURRENT">Recurrent</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                </div>
+                @endif
+
+                <div class="form-group mb-3">
+                    <label for="editEncounterNotes" class="form-label">
+                        <strong>Clinical Notes / Diagnosis <span class="text-danger">*</span></strong>
+                    </label>
+                    <textarea class="form-control" id="editEncounterNotes" rows="10" required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fa fa-times"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-primary" id="saveEncounterEditBtn">
+                    <i class="fa fa-save"></i> Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Modern Toggle Switch Styling */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 30px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 30px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 22px;
+    width: 22px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background-color: #28a745;
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(30px);
+}
+
+.toggle-switch input:focus + .toggle-slider {
+    box-shadow: 0 0 1px #28a745;
+}
+
+.diagnosis-fields-wrapper {
+    overflow: hidden;
+    transition: max-height 0.5s ease, opacity 0.5s ease;
+}
+
+.diagnosis-fields-wrapper.hidden {
+    max-height: 0 !important;
+    opacity: 0;
+}
+
+.diagnosis-toggle-container {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Diagnosis Search Styles */
+.diagnosis-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    margin: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+}
+
+.diagnosis-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.diagnosis-badge .remove-btn {
+    cursor: pointer;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    font-size: 12px;
+}
+
+.diagnosis-badge .remove-btn:hover {
+    background: rgba(255,255,255,0.5);
+}
+
+#editReasons_search_results .list-group-item,
+#reasons_search_results .list-group-item {
+    cursor: pointer;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+}
+
+#editReasons_search_results .list-group-item:hover,
+#reasons_search_results .list-group-item:hover {
+    background: #f8f9fa;
+    border-left-color: #667eea;
+    padding-left: 18px;
+}
+
+.reason-code {
+    font-weight: 600;
+    color: #667eea;
+    margin-right: 8px;
+}
+
+.reason-name {
+    color: #333;
+}
+
+.reason-category {
+    font-size: 11px;
+    color: #6c757d;
+    margin-top: 2px;
+}
+</style>
+
+<script>
+// Edit Encounter Note - Populate modal with full functionality
+if (typeof editEncounterEditorInstance === 'undefined') {
+    var editEncounterEditorInstance = null;
+}
+let editSelectedReasons = [];
+let editReasonSearchTimeout = null;
+
+// Function to add a reason to edit modal selected list
+function editAddReason(reason) {
+    if (editSelectedReasons.find(r => r.value === reason.value)) {
+        return;
+    }
+    editSelectedReasons.push(reason);
+    editUpdateSelectedReasonsDisplay();
+    editUpdateHiddenInput();
+}
+
+// Function to remove a reason from edit modal
+function editRemoveReason(value) {
+    editSelectedReasons = editSelectedReasons.filter(r => r.value !== value);
+    editUpdateSelectedReasonsDisplay();
+    editUpdateHiddenInput();
+}
+
+// Update the visual display of selected reasons in edit modal
+function editUpdateSelectedReasonsDisplay() {
+    const container = $('#editSelected_reasons_list');
+    container.empty();
+
+    if (editSelectedReasons.length === 0) {
+        container.html('<span class="text-muted"><i>No diagnoses selected yet</i></span>');
+    } else {
+        editSelectedReasons.forEach(reason => {
+            const badge = $(`
+                <span class="diagnosis-badge">
+                    <span>${reason.display}</span>
+                    <span class="remove-btn" onclick="editRemoveReasonByValue('${reason.value.replace(/'/g, "\\'")}')">×</span>
+                </span>
+            `);
+            container.append(badge);
+        });
+    }
+}
+
+// Update hidden input with selected reason values in edit modal
+function editUpdateHiddenInput() {
+    $('#editEncounterReasonsData').val(JSON.stringify(editSelectedReasons));
+    console.log('Edit modal - Selected reasons:', editSelectedReasons);
+}
+
+// Make remove function accessible globally
+window.editRemoveReasonByValue = function(value) {
+    editRemoveReason(value);
+};
+
+function editEncounterNote(btn) {
+    console.log('=== editEncounterNote called ===');
+    const $btn = $(btn);
+    const id = $btn.data('id');
+    const notes = $btn.data('notes');
+    const reasons = $btn.attr('data-reasons'); // Use attr to ensure string
+    const comment1 = $btn.data('comment1');
+    const comment2 = $btn.data('comment2');
+    const isWardRound = $btn.data('is-ward-round');
+
+    console.log('Encounter Data:', {
+        id: id,
+        reasons: reasons,
+        comment1: comment1,
+        comment2: comment2,
+        isWardRound: isWardRound,
+        notesLength: notes ? notes.length : 0
+    });
+
+    // Store the encounter ID
+    $('#editEncounterId').val(id);
+
+    // Show the modal first
+    $('#editEncounterModal').modal('show');
+
+    // Initialize AJAX search for reasons after modal is shown
+    @if(appsettings('requirediagnosis', 0))
+    setTimeout(function() {
+        console.log('Initializing diagnosis search for edit modal...');
+
+        // Clear previous selections
+        editSelectedReasons = [];
+
+        // Populate diagnosis selection if available
+        if (reasons && reasons.trim() !== '') {
+            console.log('Setting reasons:', reasons);
+            const reasonsArray = reasons.split(',').map(r => r.trim());
+            console.log('Reasons array:', reasonsArray);
+
+            // Add each reason to the selected list
+            reasonsArray.forEach(reasonValue => {
+                if (reasonValue) {
+                    // Create reason object from the value string
+                    const reason = {
+                        value: reasonValue,
+                        display: reasonValue,
+                        code: reasonValue.split('-')[0] || 'CUSTOM',
+                        name: reasonValue.split('-').slice(1).join('-') || reasonValue
+                    };
+                    editAddReason(reason);
+                }
+            });
+
+            console.log('Selected reasons after setting:', editSelectedReasons);
+
+            // Check Diagnosis Applicable toggle (ON = diagnosis applies)
+            $('#editEncounterDiagnosisApplicable').prop('checked', true).trigger('change');
+        } else {
+            console.log('No reasons found, setting Diagnosis Not Applicable');
+            $('#editEncounterDiagnosisApplicable').prop('checked', false).trigger('change');
+        }
+
+        $('#editEncounterComment1').val(comment1 || 'NA');
+        $('#editEncounterComment2').val(comment2 || 'NA');
+        console.log('Comments set:', {comment1: comment1 || 'NA', comment2: comment2 || 'NA'});
+    }, 200);
+    @endif
+
+    // Store notes to set after editor initialization
+    const notesContent = notes || '';
+
+    // Initialize ClassicEditor (CKEditor 5) after modal is shown
+    // Wait a bit to ensure modal DOM is ready
+    setTimeout(function() {
+        // Destroy existing editor instance if any
+        if (editEncounterEditorInstance) {
+            editEncounterEditorInstance.destroy()
+                .then(() => {
+                    initializeEditEncounterEditor(notesContent);
+                })
+                .catch(error => {
+                    console.error('Error destroying editor:', error);
+                    initializeEditEncounterEditor(notesContent);
+                });
+        } else {
+            initializeEditEncounterEditor(notesContent);
+        }
+    }, 300);
+}
+
+function initializeEditEncounterEditor(content) {
+    const editorElement = document.querySelector('#editEncounterNotes');
+
+    if (!editorElement) {
+        console.error('Editor element not found');
+        return;
+    }
+
+    ClassicEditor
+        .create(editorElement, {
+            toolbar: {
+                items: [
+                    'undo', 'redo',
+                    '|', 'heading',
+                    '|', 'bold', 'italic',
+                    '|', 'link', 'uploadImage', 'insertTable', 'mediaEmbed',
+                    '|', 'bulletedList', 'numberedList', 'outdent', 'indent'
+                ]
+            }
+        })
+        .then(editor => {
+            editEncounterEditorInstance = editor;
+            // Set the content
+            editor.setData(content);
+        })
+        .catch(error => {
+            console.error('Error initializing editor:', error);
+            // Fallback to plain textarea
+            $('#editEncounterNotes').val(content);
+        });
+}
+
+// Save Encounter Edit
+$('#saveEncounterEditBtn').on('click', function() {
+    console.log('=== Save button clicked ===');
+    const encounterId = $('#editEncounterId').val();
+    console.log('Encounter ID:', encounterId);
+
+    // Get notes from ClassicEditor or textarea
+    let notes = '';
+    if (editEncounterEditorInstance) {
+        notes = editEncounterEditorInstance.getData();
+    } else {
+        notes = $('#editEncounterNotes').val();
+    }
+    console.log('Notes length:', notes ? notes.length : 0);
+
+    @if(appsettings('requirediagnosis', 0))
+    const diagnosisApplicable = $('#editEncounterDiagnosisApplicable').is(':checked');
+    let reasonValues = [];
+    let comment1 = 'NA';
+    let comment2 = 'NA';
+
+    console.log('Diagnosis Applicable checked:', diagnosisApplicable);
+
+    if (diagnosisApplicable) {
+        // Get selected reasons from the new AJAX search component
+        const reasonsData = $('#editEncounterReasonsData').val();
+        let selectedReasons = [];
+
+        try {
+            selectedReasons = JSON.parse(reasonsData);
+        } catch (e) {
+            console.error('Error parsing reasons data:', e);
+        }
+
+        comment1 = $('#editEncounterComment1').val();
+        comment2 = $('#editEncounterComment2').val();
+
+        console.log('Diagnosis data:', {
+            selectedReasons: selectedReasons,
+            comment1: comment1,
+            comment2: comment2
+        });
+
+        if (!selectedReasons || selectedReasons.length === 0) {
+            alert('Please select at least one diagnosis reason or toggle off "Diagnosis Applicable".');
+            return;
+        }
+
+        // Extract values for submission
+        reasonValues = selectedReasons.map(r => r.value);
+    }
+    @endif
+
+    if (!notes || !notes.trim()) {
+        alert('Clinical notes are required.');
+        return;
+    }
+
+    $(this).prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
+
+    const ajaxData = {
+        notes: notes,
+        @if(appsettings('requirediagnosis', 0))
+        diagnosis_applicable: diagnosisApplicable ? 1 : 0,
+        reasons_for_encounter: diagnosisApplicable ? reasonValues.join(',') : '',
+        reasons_for_encounter_comment_1: diagnosisApplicable ? comment1 : '',
+        reasons_for_encounter_comment_2: diagnosisApplicable ? comment2 : ''
+        @endif
+    };
+
+    console.log('Sending AJAX request with data:', ajaxData);
+
+    $.ajax({
+        url: `/encounters/${encounterId}/notes`,
+        type: 'PUT',
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        data: ajaxData,
+        success: function(response) {
+            console.log('Save successful:', response);
+            if (response.success) {
+                $('#editEncounterModal').modal('hide');
+
+                // Reload DataTable if it exists
+                if ($.fn.DataTable.isDataTable('#encounter_history_list')) {
+                    $('#encounter_history_list').DataTable().ajax.reload(null, false);
+                }
+
+                alert('Encounter note updated successfully!');
+
+                // Reload page if DataTable doesn't exist (for patient show page)
+                if (!$.fn.DataTable.isDataTable('#encounter_history_list')) {
+                    console.log('Reloading page...');
+                    location.reload();
+                }
+            } else {
+                alert(response.message || 'Failed to update encounter note');
+            }
+        },
+        error: function(xhr) {
+            console.error('Save error:', xhr);
+            const errorMsg = xhr.responseJSON?.message || 'An error occurred while updating the encounter note';
+            alert(errorMsg);
+        },
+        complete: function() {
+            $('#saveEncounterEditBtn').prop('disabled', false).html('<i class="fa fa-save"></i> Save Changes');
+        }
+    });
+});
+
+// Cleanup ClassicEditor when modal is closed
+$('#editEncounterModal').on('hidden.bs.modal', function() {
+    if (editEncounterEditorInstance) {
+        editEncounterEditorInstance.destroy()
+            .then(() => {
+                editEncounterEditorInstance = null;
+            })
+            .catch(error => {
+                console.error('Error destroying editor on modal close:', error);
+                editEncounterEditorInstance = null;
+            });
+    }
+});
+
+// Delete Encounter Note - Add to existing delete functionality
+function deleteEncounter(encounterId, encounterDate) {
+    if (!confirm(`Are you sure you want to delete the encounter note from ${encounterDate}? This action cannot be undone.`)) {
+        return;
+    }
+
+    const reason = prompt('Please provide a reason for deleting this encounter note:');
+    if (!reason || !reason.trim()) {
+        alert('A reason is required to delete an encounter note.');
+        return;
+    }
+
+    $.ajax({
+        url: `/encounters/${encounterId}`,
+        type: 'DELETE',
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        data: {
+            reason: reason
+        },
+        success: function(response) {
+            if (response.success) {
+                alert('Encounter note deleted successfully');
+                $('#encounter_history_list').DataTable().ajax.reload();
+            } else {
+                alert(response.message || 'Failed to delete encounter note');
+            }
+        },
+        error: function(xhr) {
+            const errorMsg = xhr.responseJSON?.message || 'An error occurred while deleting the encounter note';
+            alert(errorMsg);
+        }
+    });
+}
+
+// Initialize Select2 for the edit modal diagnosis selection
+$(document).ready(function() {
+    console.log('Document ready - initializing toggle handlers and AJAX search');
+
+    // Handle Diagnosis Applicable Toggle
+    $('#editEncounterDiagnosisApplicable').on('change', function() {
+        const isChecked = $(this).is(':checked');
+        console.log('Diagnosis Applicable toggle changed:', isChecked);
+
+        const $diagnosisFields = $('#editEncounterDiagnosisFields');
+
+        if (isChecked) {
+            // Diagnosis IS applicable - show fields with animation
+            $diagnosisFields.removeClass('hidden');
+            $diagnosisFields.css('max-height', $diagnosisFields[0].scrollHeight + 'px');
+
+            // Clear NA values if present
+            if ($('#editEncounterComment1').val() === 'NA') $('#editEncounterComment1').val('');
+            if ($('#editEncounterComment2').val() === 'NA') $('#editEncounterComment2').val('');
+        } else {
+            // Diagnosis is NOT applicable - hide fields with animation
+            $diagnosisFields.css('max-height', '0');
+            $diagnosisFields.addClass('hidden');
+
+            // Clear selected reasons
+            editSelectedReasons = [];
+            editUpdateSelectedReasonsDisplay();
+            editUpdateHiddenInput();
+
+            $('#editEncounterComment1').val('NA');
+            $('#editEncounterComment2').val('NA');
+        }
+    });
+
+    // AJAX search for reasons in edit modal
+    $('#editEncounterReasonsSearch').on('keyup', function() {
+        const searchTerm = $(this).val().trim();
+
+        clearTimeout(editReasonSearchTimeout);
+
+        if (searchTerm.length < 2) {
+            $('#editReasons_search_results').hide().empty();
+            return;
+        }
+
+        editReasonSearchTimeout = setTimeout(function() {
+            $.ajax({
+                url: "{{ url('live-search-reasons') }}",
+                method: "GET",
+                dataType: 'json',
+                data: { term: searchTerm },
+                success: function(data) {
+                    $('#editReasons_search_results').empty();
+
+                    if (data.length === 0) {
+                        // Show option to add custom reason
+                        const customItem = $(`
+                            <li class="list-group-item" style="background-color: #fff3cd;">
+                                <div>
+                                    <span class="reason-code">CUSTOM</span>
+                                    <span class="reason-name">Add custom reason: "${searchTerm}"</span>
+                                </div>
+                                <div class="reason-category">
+                                    <i class="mdi mdi-plus-circle"></i> Click to add as custom diagnosis
+                                </div>
+                            </li>
+                        `);
+
+                        customItem.on('click', function() {
+                            editAddReason({
+                                value: searchTerm,
+                                display: 'CUSTOM - ' + searchTerm,
+                                code: 'CUSTOM',
+                                name: searchTerm
+                            });
+                            $('#editEncounterReasonsSearch').val('');
+                            $('#editReasons_search_results').hide();
+                        });
+
+                        $('#editReasons_search_results').append(customItem);
+                    } else {
+                        // Show search results
+                        data.forEach(function(reason) {
+                            const item = $(`
+                                <li class="list-group-item">
+                                    <div>
+                                        <span class="reason-code">${reason.code}</span>
+                                        <span class="reason-name">${reason.name}</span>
+                                    </div>
+                                    <div class="reason-category">
+                                        ${reason.category} › ${reason.sub_category}
+                                    </div>
+                                </li>
+                            `);
+
+                            item.on('click', function() {
+                                editAddReason(reason);
+                                $('#editEncounterReasonsSearch').val('');
+                                $('#editReasons_search_results').hide();
+                            });
+
+                            $('#editReasons_search_results').append(item);
+                        });
+                    }
+
+                    $('#editReasons_search_results').show();
+                },
+                error: function() {
+                    $('#editReasons_search_results').html(`
+                        <li class="list-group-item text-danger">
+                            <i class="mdi mdi-alert"></i> Error searching diagnoses. Please try again.
+                        </li>
+                    `).show();
+                }
+            });
+        }, 300);
+    });
+
+    // Hide results when clicking outside
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#editEncounterReasonsSearch, #editReasons_search_results').length) {
+            $('#editReasons_search_results').hide();
+        }
+    });
+
+    // Set initial max-height for animation
+    setTimeout(function() {
+        const $diagnosisFields = $('#editEncounterDiagnosisFields');
+        if ($diagnosisFields.length) {
+            $diagnosisFields.css('max-height', $diagnosisFields[0].scrollHeight + 'px');
+        }
+    }, 100);
+});
+</script>
