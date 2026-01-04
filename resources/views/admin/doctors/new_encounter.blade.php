@@ -25,6 +25,54 @@
             /* Thicker outline on focus for better accessibility */
         }
     </style>
+
+    <!-- Action Bar -->
+    <div class="card mb-3 border-0 shadow-sm">
+        <div class="card-body py-2">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="mdi mdi-stethoscope text-primary" style="font-size: 24px; color: {{ appsettings('hos_color', '#007bff') }} !important;"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0 fw-bold">Consultation Actions</h6>
+                        <small class="text-muted" style="font-size: 0.85rem;">
+                            Manage patient admission status or finalize this consultation session.
+                        </small>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    @if (isset($admission_request))
+                        <!-- Patient is admitted - show status and discharge button -->
+                        <div class="d-flex align-items-center me-2 px-3 py-1 bg-light rounded border">
+                            <i class="fa fa-bed me-2" style="color: {{ appsettings('hos_color', '#007bff') }};"></i>
+                            <div class="d-flex flex-column lh-1">
+                                <span class="fw-bold text-dark" style="font-size: 0.8rem;">Admitted</span>
+                                <small class="text-muted" style="font-size: 0.7rem;">
+                                    {{ $admission_request->bed ? $admission_request->bed->name : 'N/A' }}
+                                </small>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-warning btn-sm d-flex align-items-center shadow-sm" onclick="openDischargeModal()">
+                            <i class="fa fa-sign-out-alt me-2"></i> Discharge
+                        </button>
+                    @else
+                        <!-- Patient not admitted - show admit button -->
+                        <button type="button" class="btn btn-info btn-sm text-white d-flex align-items-center shadow-sm" onclick="openAdmitModal()">
+                            <i class="fa fa-bed me-2"></i> Admit Patient
+                        </button>
+                    @endif
+                    
+                    <div class="vr mx-2 text-muted"></div>
+
+                    <button type="button" class="btn btn-sm text-white d-flex align-items-center shadow-sm" style="background-color: {{ appsettings('hos_color', '#007bff') }};" onclick="$('#concludeEncounterModal').modal('show')">
+                        <i class="fa fa-check-circle me-2"></i> Conclude Encounter
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <ul class="nav nav-tabs" id="myTab" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="patient_data_tab" data-bs-toggle="tab" data-bs-target="#patient_data"
@@ -35,19 +83,6 @@
                 role="tab" aria-controls="vitals_data" aria-selected="false">Viatals/ Allergies</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="investigation_hist_tab" data-bs-toggle="tab" data-bs-target="#investigation_hist"
-                type="button" role="tab" aria-controls="investigation_hist" aria-selected="false">Investigation
-                History</button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="presc_hist_tab" data-bs-toggle="tab" data-bs-target="#presc_hist" type="button"
-                role="tab" aria-controls="presc_hist" aria-selected="false">Drug
-                History</button>
-        </li <li class="nav-item" role="presentation">
-        <button class="nav-link " id="encounter_hist_tab" data-bs-toggle="tab" data-bs-target="#encounter_hist"
-            type="button" role="tab" aria-controls="encounter_hist" aria-selected="true">Encounter History</button>
-        </li>
-        <li class="nav-item" role="presentation">
             <button class="nav-link" id="nursing_notes_tab" data-bs-toggle="tab" data-bs-target="#nursing_notes"
                 type="button" role="tab" aria-controls="nursing_notes" aria-selected="false">Nursing Notes</button>
         </li>
@@ -56,20 +91,28 @@
                 type="button" role="tab" aria-controls="nurse_charts" aria-selected="false">New Nurse Charts</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="my_notes_tab" data-bs-toggle="tab" data-bs-target="#my_notes" type="button"
-                role="tab" aria-controls="my_notes" aria-selected="false">My Diagnosis and Notes</button>
+            <button class="nav-link" id="clinical_notes_tab" data-bs-toggle="tab" data-bs-target="#clinical_notes"
+                type="button" role="tab" aria-controls="clinical_notes" aria-selected="false">
+                <i class="mdi mdi-note-text"></i> Clinical Notes/Diagnosis
+            </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="investigations_tab" data-bs-toggle="tab" data-bs-target="#investigations"
-                type="button" role="tab" aria-controls="investigations" aria-selected="false">Investigation</button>
+            <button class="nav-link" id="laboratory_services_tab" data-bs-toggle="tab" data-bs-target="#laboratory_services"
+                type="button" role="tab" aria-controls="laboratory_services" aria-selected="false">
+                <i class="fa fa-flask"></i> Laboratory Services
+            </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link " id="prescription_tab" data-bs-toggle="tab" data-bs-target="#prescription"
-                type="button" role="tab" aria-controls="prescription" aria-selected="true">Prescription</button>
+            <button class="nav-link" id="imaging_services_tab" data-bs-toggle="tab" data-bs-target="#imaging_services"
+                type="button" role="tab" aria-controls="imaging_services" aria-selected="false">
+                <i class="fa fa-x-ray"></i> Imaging Services
+            </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="admission_tab" data-bs-toggle="tab" data-bs-target="#admission" type="button"
-                role="tab" aria-controls="admission" aria-selected="false">Conclusion</button>
+            <button class="nav-link" id="medications_tab" data-bs-toggle="tab" data-bs-target="#medications"
+                type="button" role="tab" aria-controls="medications" aria-selected="false">
+                <i class="fa fa-pills"></i> Medications
+            </button>
         </li>
     </ul>
     <div class="tab-content" id="myTabContent">
@@ -317,75 +360,25 @@
                 </div>
             </div>
         </div>
-        <div class="tab-pane fade" id="investigation_hist" role="tabpanel" aria-labelledby="investigation_hist_tab">
-            <div class="card mt-2">
-                <div class="card-body table-responsive">
-                    <table class="table table-sm table-bordered table-striped" style="width: 100%"
-                        id="investigation_history_list">
-                        <thead>
-                            <th>#</th>
-                            <th>Results</th>
-                            <th>Details</th>
-                        </thead>
-                    </table>
-                    <br><button type="button" onclick="switch_tab(event,'vitals_data_tab')"
-                        class="btn btn-secondary mr-2">
-                        Prev
-                    </button>
-                    <button type="button" onclick="switch_tab(event,'presc_hist_tab')"
-                        class="btn btn-primary mr-2">Next</button>
-                    <a href="{{ route('encounters.index') }}"
-                        onclick="return confirm('Are you sure you wish to exit? Changes are yet to be saved')"
-                        class="btn btn-light">Exit</a>
-                </div>
-            </div>
+
+        {{-- Laboratory Services: Combined Lab History + Lab Request --}}
+        <div class="tab-pane fade" id="laboratory_services" role="tabpanel" aria-labelledby="laboratory_services_tab">
+            @include('admin.doctors.partials.laboratory_services')
         </div>
-        <div class="tab-pane fade" id="presc_hist" role="tabpanel" aria-labelledby="presc_hist_tab">
-            <div class="card mt-2">
-                <div class="card-body table-responsive">
-                    <table class="table table-sm table-bordered table-striped" style="width: 100%"
-                        id="presc_history_list">
-                        <thead>
-                            <th>#</th>
-                            <th>Product</th>
-                            <th>Details</th>
-                        </thead>
-                    </table>
-                    <br><button type="button" onclick="switch_tab(event,'investigation_hist_tab')"
-                        class="btn btn-secondary mr-2">
-                        Prev
-                    </button>
-                    <button type="button" onclick="switch_tab(event,'encounter_hist_tab')"
-                        class="btn btn-primary mr-2">Next</button>
-                    <a href="{{ route('encounters.index') }}"
-                        onclick="return confirm('Are you sure you wish to exit? Changes are yet to be saved')"
-                        class="btn btn-light">Exit</a>
-                </div>
-            </div>
+
+        {{-- Imaging Services: Combined Imaging History + Imaging Request --}}
+        <div class="tab-pane fade" id="imaging_services" role="tabpanel" aria-labelledby="imaging_services_tab">
+            @include('admin.doctors.partials.imaging_services')
         </div>
-        <div class="tab-pane fade " id="encounter_hist" role="tabpanel" aria-labelledby="encounter_hist_tab">
-            <div class="card mt-2">
-                <div class="card-body table-responsive">
-                    <table class="table table-sm table-bordered table-striped" style="width: 100%"
-                        id="encounter_history_list">
-                        <thead>
-                            <th>#</th>
-                            {{-- <th>Doctor</th> --}}
-                            <th>Notes</th>
-                            {{-- <th>Time</th> --}}
-                        </thead>
-                    </table>
-                    <br><button type="button" onclick="switch_tab(event,'investigation_hist_tab')"
-                        class="btn btn-secondary mr-2">
-                        Prev
-                    </button>
-                    <button type="button" onclick="switch_tab(event,'nursing_notes_tab')"
-                        class="btn btn-primary mr-2">Next</button>
-                    <a href="{{ route('encounters.index') }}"
-                        onclick="return confirm('Are you sure you wish to exit? Changes are yet to be saved')"
-                        class="btn btn-light">Exit</a>
-                </div>
-            </div>
+
+        {{-- Medications: Combined Prescription History + New Prescription --}}
+        <div class="tab-pane fade" id="medications" role="tabpanel" aria-labelledby="medications_tab">
+            @include('admin.doctors.partials.medications')
+        </div>
+
+        {{-- Clinical Notes/Diagnosis: Combined History + New Entry --}}
+        <div class="tab-pane fade" id="clinical_notes" role="tabpanel" aria-labelledby="clinical_notes_tab">
+            @include('admin.doctors.partials.clinical_notes')
         </div>
         <div class="tab-pane fade" id="nursing_notes" role="tabpanel" aria-labelledby="nursing_notes_tab">
             <div class="card mt-2">
@@ -798,7 +791,7 @@
         </div>
         <form action="{{ route('encounters.store') }}" method="post">
             @csrf
-            <div class="tab-pane fade" id="my_notes" role="tabpanel" aria-labelledby="my_notes_tab">
+            <div class="tab-pane fade d-none" id="my_notes_old" role="tabpanel" aria-labelledby="my_notes_old_tab">
                 <div class="card mt-2">
                     <div class="card-body table-responsive">
 
@@ -853,186 +846,60 @@
                             </div>
                         </div>
                         <hr>
-                        @if (env('REQUIRE_DIAGNOSIS'))
-                            <div class="form-group">
+                        @include('admin.doctors.partials.clinical_notes')
+            {{-- Conclusion tab removed - now handled by modal --}}
+                <style>
+                    /* Custom Toggle Switch Styles */
+                    .toggle-switch {
+                        position: relative;
+                        display: inline-block;
+                        width: 60px;
+                        height: 34px;
+                    }
 
-                                <label for="reasons_for_encounter">Select ICPC -2 Reason(s) for Encounter/
-                                    Diagnosis(required)
-                                    <span class="text-danger">*</span></label>
-                                <select name="reasons_for_encounter[]" id="reasons_for_encounter" class="text-lg"
-                                    multiple="multiple" required style="width: 100%; display:block;">
-                                    @foreach ($reasons_for_encounter_cat_list as $reason_cat)
-                                        <optgroup label="{{ $reason_cat->category }}">
-                                            @foreach ($reasons_for_encounter_sub_cat_list as $reason_sub_cat)
-                                                @if ($reason_sub_cat->category == $reason_cat->category)
-                                                    <option disabled style="font-weight: bold;">
-                                                        {{ $reason_sub_cat->sub_category }}</option>
-                                                    @foreach ($reasons_for_encounter_list as $reason_item)
-                                                        @if ($reason_item->category == $reason_cat->category && $reason_item->sub_category == $reason_sub_cat->sub_category)
-                                                            <option
-                                                                value="{{ $reason_item->code }}-{{ $reason_item->name }}">
-                                                                &emsp;{{ $reason_item->code }} {{ $reason_item->name }}
-                                                            </option>
-                                                        @endif
-                                                    @endforeach
-                                                @endif
-                                            @endforeach
-                                        </optgroup>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <br>
-                            <div class="row">
-                                <div class="col-sm-6">
-                                    <div class="form-group">
-                                        <label for="reasons_for_encounter_comment_1">Select Diagnosis Comment
-                                            1(required)</label>
-                                        <select class="form-control" name="reasons_for_encounter_comment_1"
-                                            id="reasons_for_encounter_comment_1" required>
-                                            <option value="NA">Not Applicable</option>
-                                            <option value="QUERY">Query</option>
-                                            <option value="DIFFRENTIAL">Diffrential</option>
-                                            <option value="CONFIRMED">Confirmed</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-sm-6">
-                                    <div class="form-group">
-                                        <label for="reasons_for_encounter_comment_2"> Select Diagnosis Comment
-                                            2(required)</label>
-                                        <select class="form-control" name="reasons_for_encounter_comment_2"
-                                            id="reasons_for_encounter_comment_2" required>
-                                            <option value="NA">Not Applicable</option>
-                                            <option value="ACUTE">Acute</option>
-                                            <option value="CHRONIC">Chronic</option>
-                                            <option value="RECURRENT">Recurrent</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            <hr>
-                        @endif
-                        <div>
-                            <i class="fa fa-save"></i><span id="autosave_status_text"> Auto Save Enabled...</span>
-                            <textarea name="doctor_diagnosis" id="doctor_diagnosis_text" class="form-control classic-editor2">{{ $encounter->notes }}</textarea>
-                        </div>
+                    .toggle-switch input {
+                        opacity: 0;
+                        width: 0;
+                        height: 0;
+                    }
 
-                        <br><button type="button" onclick="switch_tab(event,'nursing_notes_tab')"
-                            class="btn btn-secondary mr-2">
-                            Prev
-                        </button>
-                        <button type="button" onclick="switch_tab(event,'investigations_tab')"
-                            class="btn btn-primary mr-2">Next</button>
-                        <a href="{{ route('encounters.index') }}"
-                            onclick="return confirm('Are you sure you wish to exit? Changes are yet to be saved')"
-                            class="btn btn-light">Exit</a>
-                    </div>
-                </div>
-            </div>
-            <div class="tab-pane fade" id="investigations" role="tabpanel" aria-labelledby="investigations_tab">
-                <div class="card mt-2">
-                    <div class="card-body table-responsive">
-                        <label for="consult_invest_search">Search services</label>
-                        <input type="text" class="form-control" id="consult_invest_search"
-                            onkeyup="searchServices(this.value)" placeholder="search services..." autocomplete="off">
-                        <ul class="list-group" id="consult_invest_res" style="display: none;">
+                    .toggle-slider {
+                        position: absolute;
+                        cursor: pointer;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background-color: #ccc;
+                        transition: .4s;
+                        border-radius: 34px;
+                    }
 
-                        </ul>
-                        <br>
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered table-striped">
-                                <thead>
-                                    <th>Name</th>
-                                    <th>Price</th>
-                                    <th>Notes/specimen(optional)</th>
-                                    <th>*</th>
-                                </thead>
-                                <tbody id="selected-services">
+                    .toggle-slider:before {
+                        position: absolute;
+                        content: "";
+                        height: 26px;
+                        width: 26px;
+                        left: 4px;
+                        bottom: 4px;
+                        background-color: white;
+                        transition: .4s;
+                        border-radius: 50%;
+                    }
 
-                                </tbody>
-                            </table>
-                        </div>
-                        <br><button type="button" onclick="switch_tab(event,'my_notes_tab')"
-                            class="btn btn-secondary mr-2">
-                            Prev
-                        </button>
-                        <button type="button" onclick="switch_tab(event,'prescription_tab')"
-                            class="btn btn-primary mr-2">Next</button>
-                        <a href="{{ route('encounters.index') }}"
-                            onclick="return confirm('Are you sure you wish to exit? Changes are yet to be saved')"
-                            class="btn btn-light">Exit</a>
-                    </div>
-                </div>
-            </div>
-            <div class="tab-pane fade" id="prescription" role="tabpanel" aria-labelledby="prescription_tab">
-                <div class="card mt-2">
-                    <div class="card-body table-responsive">
-                        <label for="">Search products</label>
-                        <input type="text" class="form-control" id="consult_presc_search"
-                            onkeyup="searchProducts(this.value)" placeholder="search products..." autocomplete="off">
-                        <ul class="list-group" id="consult_presc_res" style="display: none;">
+                    input:checked + .toggle-slider {
+                        background-color: {{ appsettings('hos_color', '#007bff') }};
+                    }
 
-                        </ul>
-                        <br>
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered table-striped">
-                                <thead>
-                                    <th>Name</th>
-                                    <th>Price</th>
-                                    <th>Dose/Freq.(required)</th>
-                                    <th>*</th>
-                                </thead>
-                                <tbody id="selected-products">
+                    input:focus + .toggle-slider {
+                        box-shadow: 0 0 1px {{ appsettings('hos_color', '#007bff') }};
+                    }
 
-                                </tbody>
-                            </table>
-                        </div>
-                        <br><button type="button" onclick="switch_tab(event,'investigations_tab')"
-                            class="btn btn-secondary mr-2">
-                            Prev
-                        </button>
-                        <button type="button" onclick="switch_tab(event,'admission_tab')"
-                            class="btn btn-primary mr-2">Next</button>
-                        <a href="{{ route('encounters.index') }}"
-                            onclick="return confirm('Are you sure you wish to exit? Changes are yet to be saved')"
-                            class="btn btn-light">Exit</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="tab-pane fade" id="admission" role="tabpanel" aria-labelledby="admission_tab">
-                <div class="card mt-2">
-                    <div class="card-body table-responsive">
-                        <label for="end_consultation">End Consultatation Cycle Now ? </label>
-                        <input type="checkbox" name="end_consultation" id="end_consultation" value="1">
-                        <hr>
-                        @if (isset($admission_request) || $admission_exists_ == 1)
-                            <h4>Currently Admitted</h4>
-                        @else
-                            <label for="consult_admit">Admit Patient ? </label>
-                            <input type="checkbox" name="consult_admit" id="consult_admit" value="1">
-                            <hr>
-                        @endif
-                        <p>
-                            <i>
-                                Before saving, please ensure that all your entries are correct and as intended. if the save
-                                button does not work/respond,
-                                you most likely forgot to type any notes in the notes tab or have blank dosage fields in the
-                                prescription tab.
-                            </i>
-                        </p>
-                        <br><button type="button" onclick="switch_tab(event,'prescription_tab')"
-                            class="btn btn-secondary mr-2">
-                            Prev
-                        </button>
-                        <button type="submit" class="btn btn-primary mr-2" onclick="return confirm('Are you sure?')">
-                            Save </button>
-                        <a href="{{ route('encounters.index') }}"
-                            onclick="return confirm('Are you sure you wish to exit? Changes are yet to be saved')"
-                            class="btn btn-light">Exit</a>
-                    </div>
-                </div>
-            </div>
+                    input:checked + .toggle-slider:before {
+                        transform: translateX(26px);
+                    }
+                </style>
+                {{-- Old conclusion tab content removed - now using modal instead --}}
         </form>
     </div>
     <!--Profile / Form  Modal -->
@@ -1102,9 +969,347 @@
     <script src="{{ asset('/plugins/dataT/datatables.min.js') }}" defer></script>
     <script src="{{ asset('plugins/ckeditor/ckeditor5/ckeditor.js') }}"></script>
 
+    <style>
+        /* Modern Toggle Switch Styling */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 30px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background-color: #28a745;
+        }
+
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+
+        .toggle-switch input:focus + .toggle-slider {
+            box-shadow: 0 0 1px #28a745;
+        }
+
+        .diagnosis-fields-wrapper {
+            overflow: hidden;
+            transition: max-height 0.5s ease, opacity 0.5s ease;
+        }
+
+        .diagnosis-fields-wrapper.hidden {
+            max-height: 0 !important;
+            opacity: 0;
+        }
+
+        .diagnosis-toggle-container {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Diagnosis Search Styles */
+        .diagnosis-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            margin: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
+        }
+
+        .diagnosis-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .diagnosis-badge .remove-btn {
+            cursor: pointer;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 12px;
+        }
+
+        .diagnosis-badge .remove-btn:hover {
+            background: rgba(255,255,255,0.5);
+        }
+
+        #reasons_search_results .list-group-item {
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        #reasons_search_results .list-group-item:hover {
+            background: #f8f9fa;
+            border-left-color: #667eea;
+            padding-left: 18px;
+        }
+
+        #reasons_search_results .reason-code {
+            font-weight: 600;
+            color: #667eea;
+            margin-right: 8px;
+        }
+
+        #reasons_search_results .reason-name {
+            color: #333;
+        }
+
+        #reasons_search_results .reason-category {
+            font-size: 11px;
+            color: #6c757d;
+            margin-top: 2px;
+        }
+    </style>
+
     <script>
         $(function() {
-            $("#reasons_for_encounter").select2();
+            // Don't initialize Select2 - we're using AJAX search now
+            // $("#reasons_for_encounter").select2({...});
+
+            // Store selected reasons
+            let selectedReasons = [];
+            let reasonSearchTimeout = null;
+
+            // Function to add a reason to selected list
+            function addReason(reason) {
+                // Check if already selected
+                if (selectedReasons.find(r => r.value === reason.value)) {
+                    return;
+                }
+
+                selectedReasons.push(reason);
+                updateSelectedReasonsDisplay();
+                updateHiddenInput();
+            }
+
+            // Function to remove a reason
+            function removeReason(value) {
+                selectedReasons = selectedReasons.filter(r => r.value !== value);
+                updateSelectedReasonsDisplay();
+                updateHiddenInput();
+            }
+
+            // Update the visual display of selected reasons
+            function updateSelectedReasonsDisplay() {
+                const container = $('#selected_reasons_list');
+                container.empty();
+
+                if (selectedReasons.length === 0) {
+                    container.html('<span class="text-muted"><i>No diagnoses selected yet</i></span>');
+                } else {
+                    selectedReasons.forEach(reason => {
+                        const badge = $(`
+                            <span class="diagnosis-badge">
+                                <span>${reason.display}</span>
+                                <span class="remove-btn" onclick="removeReasonByValue('${reason.value}')">×</span>
+                            </span>
+                        `);
+                        container.append(badge);
+                    });
+                }
+            }
+
+            // Update hidden input with selected reason values
+            function updateHiddenInput() {
+                const values = selectedReasons.map(r => r.value);
+                $('#reasons_for_encounter_data').val(JSON.stringify(selectedReasons));
+                console.log('Selected reasons:', selectedReasons);
+            }
+
+            // Make removeReason accessible globally
+            window.removeReasonByValue = function(value) {
+                removeReason(value);
+            };
+
+            // AJAX search for reasons
+            $('#reasons_for_encounter_search').on('keyup', function() {
+                const searchTerm = $(this).val().trim();
+
+                clearTimeout(reasonSearchTimeout);
+
+                if (searchTerm.length < 2) {
+                    $('#reasons_search_results').hide().empty();
+                    return;
+                }
+
+                reasonSearchTimeout = setTimeout(function() {
+                    $.ajax({
+                        url: "{{ url('live-search-reasons') }}",
+                        method: "GET",
+                        dataType: 'json',
+                        data: { term: searchTerm },
+                        success: function(data) {
+                            $('#reasons_search_results').empty();
+                            if (data.length === 0) {
+                                // Show option to add custom reason
+                                const customItem = $(`
+                                    <li class="list-group-item" style="background-color: #fff3cd;">
+                                        <div>
+                                            <span class="reason-code">CUSTOM</span>
+                                            <span class="reason-name">Add custom reason: "${searchTerm}"</span>
+                                        </div>
+                                        <div class="reason-category">
+                                            <i class="mdi mdi-plus-circle"></i> Click to add as custom diagnosis
+                                        </div>
+                                    </li>
+                                `);
+
+                                customItem.on('click', function() {
+                                    addReason({
+                                        value: searchTerm,
+                                        display: 'CUSTOM - ' + searchTerm,
+                                        code: 'CUSTOM',
+                                        name: searchTerm
+                                    });
+                                    $('#reasons_for_encounter_search').val('');
+                                    $('#reasons_search_results').hide();
+                                });
+
+                                $('#reasons_search_results').append(customItem);
+                            } else {
+                                // Show search results
+                                data.forEach(function(reason) {
+                                    const item = $(`
+                                        <li class="list-group-item">
+                                            <div>
+                                                <span class="reason-code">${reason.code}</span>
+                                                <span class="reason-name">${reason.name}</span>
+                                            </div>
+                                            <div class="reason-category">
+                                                ${reason.category} › ${reason.sub_category}
+                                            </div>
+                                        </li>
+                                    `);
+
+                                    item.on('click', function() {
+                                        addReason(reason);
+                                        $('#reasons_for_encounter_search').val('');
+                                        $('#reasons_search_results').hide();
+                                    });
+
+                                    $('#reasons_search_results').append(item);
+                                });
+                            }
+
+                            $('#reasons_search_results').show();
+                        },
+                        error: function() {
+                            $('#reasons_search_results').html(`
+                                <li class="list-group-item text-danger">
+                                    <i class="mdi mdi-alert"></i> Error searching diagnoses. Please try again.
+                                </li>
+                            `).show();
+                        }
+                    });
+                }, 300);
+            });
+
+            // Hide results when clicking outside
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('#reasons_for_encounter_search, #reasons_search_results').length) {
+                    $('#reasons_search_results').hide();
+                }
+            });
+
+            // Initialize Select2 for edit modal diagnosis dropdown (keep for edit modal)
+            @if(appsettings('requirediagnosis', 0))
+            $("#editEncounterReasons").select2({
+                dropdownParent: $('#editEncounterModal'),
+                placeholder: 'Select diagnosis codes',
+                allowClear: true,
+                tags: true
+            });
+            @endif
+
+            // Handle Diagnosis Applicable Toggle for New Encounter Form
+            $('#diagnosisApplicable').on('change', function() {
+                const isChecked = $(this).is(':checked');
+                console.log('New Encounter - Diagnosis Applicable toggle changed:', isChecked);
+
+                const $diagnosisFields = $('#diagnosisFields');
+
+                if (isChecked) {
+                    // Diagnosis IS applicable - show fields with animation
+                    $diagnosisFields.removeClass('hidden collapsed');
+                    $diagnosisFields.attr('style', ''); // Remove inline style
+                    $diagnosisFields.css({
+                        'display': 'block',
+                        'opacity': '1'
+                    });
+
+                    // Clear NA values if present
+                    if ($('#reasons_for_encounter_comment_1').val() === 'NA') {
+                        $('#reasons_for_encounter_comment_1').val('');
+                    }
+                    if ($('#reasons_for_encounter_comment_2').val() === 'NA') {
+                        $('#reasons_for_encounter_comment_2').val('');
+                    }
+                } else {
+                    // Diagnosis is NOT applicable - hide fields with animation
+                    $diagnosisFields.css('opacity', '0');
+                    setTimeout(function() {
+                        $diagnosisFields.addClass('collapsed');
+                    }, 300); // Wait for animation to complete
+
+                    // Set values to NA/null
+                    $('#reasons_for_encounter').val(null).trigger('change');
+                    $('#reasons_for_encounter_comment_1').val('NA');
+                    $('#reasons_for_encounter_comment_2').val('NA');
+                }
+            });
+
+            // Set initial max-height for animation
+            setTimeout(function() {
+                const $diagnosisFields = $('#diagnosisFields');
+                if ($diagnosisFields.length) {
+                    $diagnosisFields.css('max-height', $diagnosisFields[0].scrollHeight + 'px');
+                }
+            }, 100);
         });
     </script>
     <script>
@@ -1274,24 +1479,17 @@
                 "serverSide": true,
                 "ajax": {
                     "url": "{{ route('EncounterHistoryList', request()->get('patient_id')) }}",
-                    "type": "GET"
+                    "type": "GET",
+                    "data": function(d) {
+                        d.exclude_encounter_id = {{ $encounter->id ?? 'null' }};
+                    }
                 },
-                "columns": [{
-                        data: "DT_RowIndex",
-                        name: "DT_RowIndex"
-                    },
-                    // {
-                    //     data: "doctor_id",
-                    //     name: "doctor_id"
-                    // },
+                "columns": [
                     {
-                        data: "notes",
-                        name: "notes"
-                    },
-                    // {
-                    //     data: "created_at",
-                    //     name: "created_at"
-                    // },
+                        data: "info",
+                        name: "info",
+                        orderable: false
+                    }
                 ],
 
                 "paging": true
@@ -1314,18 +1512,40 @@
                     "url": "{{ url('investigationHistoryList', request()->get('patient_id')) }}",
                     "type": "GET"
                 },
-                "columns": [{
-                        data: "DT_RowIndex",
-                        name: "DT_RowIndex"
-                    },
+                "columns": [
                     {
-                        data: "result",
-                        name: "result"
-                    },
+                        data: "info",
+                        name: "info",
+                        orderable: false
+                    }
+                ],
+
+                "paging": true
+            });
+        });
+    </script>
+    <script>
+        $(function() {
+            $('#imaging_history_list').DataTable({
+                "dom": 'Bfrtip',
+                "iDisplayLength": 50,
+                "lengthMenu": [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, "All"]
+                ],
+                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{ url('imagingHistoryList', request()->get('patient_id')) }}",
+                    "type": "GET"
+                },
+                "columns": [
                     {
-                        data: "created_at",
-                        name: "created_at"
-                    },
+                        data: "info",
+                        name: "info",
+                        orderable: false
+                    }
                 ],
 
                 "paging": true
@@ -1348,18 +1568,12 @@
                     "url": "{{ url('prescHistoryList', request()->get('patient_id')) }}",
                     "type": "GET"
                 },
-                "columns": [{
-                        data: "DT_RowIndex",
-                        name: "DT_RowIndex"
-                    },
+                "columns": [
                     {
-                        data: "dose",
-                        name: "dose"
-                    },
-                    {
-                        data: "created_at",
-                        name: "created_at"
-                    },
+                        data: "info",
+                        name: "info",
+                        orderable: false
+                    }
                 ],
 
                 "paging": true
@@ -1505,6 +1719,24 @@
 
         }
 
+        function setSearchValImaging(name, id, price) {
+            var mk = `
+                <tr>
+                    <td>${name}</td>
+                    <td>${price}</td>
+                    <td>
+                        <input type = 'text' class='form-control' name=consult_imaging_note[]>
+                        <input type = 'hidden' name=consult_imaging_id[] value='${id}'>
+                    </td>
+                    <td><button class='btn btn-danger' onclick="removeProdRow(this)">x</button></td>
+                </tr>
+            `;
+
+            $('#selected-imaging-services').append(mk);
+            $('#consult_imaging_res').html('');
+
+        }
+
         function searchServices(q) {
             if (q != "") {
                 searchRequest = $.ajax({
@@ -1534,6 +1766,41 @@
                 });
             } else {
                 $('#consult_invest_res').html('');
+            }
+        }
+    </script>
+
+    <script>
+        function searchImagingServices(q) {
+            if (q != "") {
+                searchRequest = $.ajax({
+                    url: "{{ url('live-search-services') }}",
+                    method: "GET",
+                    dataType: 'json',
+                    data: {
+                        term: q,
+                        category_id: 6  // Imaging category ID
+                    },
+                    success: function(data) {
+                        // Clear existing options from the select field
+                        $('#consult_imaging_res').html('');
+                        console.log(data);
+                        // data = JSON.parse(data);
+
+                        for (var i = 0; i < data.length; i++) {
+                            // Append the new options to the list field
+                            var mk =
+                                `<li class='list-group-item'
+                                   style="background-color: #f0f0f0;"
+                                   onclick="setSearchValImaging('${data[i].service_name}[${data[i].service_code}]', '${data[i].id}', '${data[i].price.sale_price}')">
+                                   [${data[i].category.category_name}]<b>${data[i].service_name}[${data[i].service_code}]</b> NGN ${data[i].price.sale_price}</li>`;
+                            $('#consult_imaging_res').append(mk);
+                            $('#consult_imaging_res').show();
+                        }
+                    }
+                });
+            } else {
+                $('#consult_imaging_res').html('');
             }
         }
     </script>
@@ -1750,6 +2017,150 @@
     </script>
     @include('admin.partials.vitals-scripts')
     @include('admin.partials.nursing-note-save-scripts')
+    @include('admin.patients.partials.modals')
+
+    <script>
+        function setResViewInModal(obj) {
+            let res_obj = JSON.parse($(obj).attr('data-result-obj'));
+
+            // Basic service info
+            $('.invest_res_service_name_view').text($(obj).attr('data-service-name'));
+
+            // Patient information
+            let patientName = res_obj.patient.user.firstname + ' ' + res_obj.patient.user.surname;
+            $('#res_patient_name').html(patientName);
+            $('#res_patient_id').html(res_obj.patient.file_no);
+
+            // Calculate age from date of birth
+            let age = 'N/A';
+            if (res_obj.patient.date_of_birth) {
+                let dob = new Date(res_obj.patient.date_of_birth);
+                let today = new Date();
+                let ageYears = today.getFullYear() - dob.getFullYear();
+                let monthDiff = today.getMonth() - dob.getMonth();
+                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+                    ageYears--;
+                }
+                age = ageYears + ' years';
+            }
+            $('#res_patient_age').html(age);
+
+            // Gender
+            let gender = res_obj.patient.gender ? res_obj.patient.gender.toUpperCase() : 'N/A';
+            $('#res_patient_gender').html(gender);
+
+            // Test information
+            $('#res_test_id').html(res_obj.id);
+            $('#res_sample_date').html(res_obj.sample_date || 'N/A');
+            $('#res_result_date').html(res_obj.result_date || 'N/A');
+            $('#res_result_by').html(res_obj.results_person.firstname + ' ' + res_obj.results_person.surname);
+
+            // Signature date (use result date)
+            $('#res_signature_date').html(res_obj.result_date || '');
+
+            // Generated date (current date)
+            let now = new Date();
+            let generatedDate = now.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            $('#res_generated_date').html(generatedDate);
+
+            // Handle V2 results (structured data)
+            if (res_obj.result_data && typeof res_obj.result_data === 'object') {
+                let resultsHtml = '<table class="result-table"><thead><tr>';
+                resultsHtml += '<th style="width: 40%;">Test Parameter</th>';
+                resultsHtml += '<th style="width: 25%;">Results</th>';
+                resultsHtml += '<th style="width: 25%;">Reference Range</th>';
+                resultsHtml += '<th style="width: 10%;">Status</th>';
+                resultsHtml += '</tr></thead><tbody>';
+
+                res_obj.result_data.forEach(function(param) {
+                    resultsHtml += '<tr>';
+                    resultsHtml += '<td><strong>' + param.name + '</strong>';
+                    if (param.code) {
+                        resultsHtml += ' <span style="color: #999;">(' + param.code + ')</span>';
+                    }
+                    resultsHtml += '</td>';
+
+                    // Value with unit
+                    let valueDisplay = param.value;
+                    if (param.unit) {
+                        valueDisplay += ' ' + param.unit;
+                    }
+                    resultsHtml += '<td>' + valueDisplay + '</td>';
+
+                    // Reference range
+                    let refRange = 'N/A';
+                    if (param.reference_range) {
+                        if (param.type === 'integer' || param.type === 'float') {
+                            if (param.reference_range.min !== undefined && param.reference_range.max !== undefined) {
+                                refRange = param.reference_range.min + ' - ' + param.reference_range.max;
+                                if (param.unit) refRange += ' ' + param.unit;
+                            }
+                        } else if (param.type === 'boolean' || param.type === 'enum') {
+                            refRange = param.reference_range.reference_value || 'N/A';
+                        } else if (param.reference_range.text) {
+                            refRange = param.reference_range.text;
+                        }
+                    }
+                    resultsHtml += '<td>' + refRange + '</td>';
+
+                    // Status badge
+                    let statusHtml = '';
+                    if (param.status) {
+                        let statusClass = 'status-' + param.status.toLowerCase().replace(' ', '-');
+                        statusHtml = '<span class="result-status-badge ' + statusClass + '">' + param.status + '</span>';
+                    }
+                    resultsHtml += '<td>' + statusHtml + '</td>';
+                    resultsHtml += '</tr>';
+                });
+
+                resultsHtml += '</tbody></table>';
+                $('#invest_res').html(resultsHtml);
+            } else {
+                // V1 results (HTML content)
+                $('#invest_res').html(res_obj.result);
+            }
+
+            // Handle attachments
+            $('#invest_attachments').html('');
+            if (res_obj.attachments) {
+                let attachments = typeof res_obj.attachments === 'string' ? JSON.parse(res_obj.attachments) : res_obj.attachments;
+                if (attachments && attachments.length > 0) {
+                    let attachHtml = '<div class="result-attachments"><h6 style="margin-bottom: 15px;"><i class="mdi mdi-paperclip"></i> Attachments</h6><div class="row">';
+                    attachments.forEach(function(attachment) {
+                        let url = '{{ asset("storage") }}/' + attachment.path;
+                        let icon = getFileIcon(attachment.type);
+                        attachHtml += `<div class="col-md-4 mb-2">
+                            <a href="${url}" target="_blank" class="btn btn-outline-primary btn-sm btn-block">
+                                ${icon} ${attachment.name}
+                            </a>
+                        </div>`;
+                    });
+                    attachHtml += '</div></div>';
+                    $('#invest_attachments').html(attachHtml);
+                }
+            }
+
+            $('#investResViewModal').modal('show');
+        }
+
+        function getFileIcon(extension) {
+            const icons = {
+                'pdf': '<i class="mdi mdi-file-pdf"></i>',
+                'doc': '<i class="mdi mdi-file-word"></i>',
+                'docx': '<i class="mdi mdi-file-word"></i>',
+                'jpg': '<i class="mdi mdi-file-image"></i>',
+                'jpeg': '<i class="mdi mdi-file-image"></i>',
+                'png': '<i class="mdi mdi-file-image"></i>'
+            };
+            return icons[extension] || '<i class="mdi mdi-file"></i>';
+        }
+    </script>
 
     <!-- Nurse Charts Scripts -->
     <script>
@@ -2299,4 +2710,867 @@
             }
         });
     </script>
+
+    <script>
+        // AJAX Functions for Incremental Saving
+        const encounterId = '{{ $encounter->id }}';
+        const patientId = '{{ request()->get("patient_id") }}';
+        const queueId = '{{ request()->get("queue_id") ?? "ward_round" }}';
+
+        // Helper function to show messages
+        function showMessage(elementId, message, type = 'success') {
+            const element = document.getElementById(elementId);
+            const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+            element.innerHTML = `<div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>`;
+            setTimeout(() => { element.innerHTML = ''; }, 5000);
+        }
+
+        // Helper function to disable/enable button
+        function setButtonLoading(buttonId, loading) {
+            const btn = document.getElementById(buttonId);
+            if (loading) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving...';
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa fa-save"></i> Save & Next';
+            }
+        }
+
+        // Save Diagnosis
+        function saveDiagnosis() {
+            setButtonLoading('save_diagnosis_btn', true);
+
+            // Get diagnosis from CKEditor if available, otherwise from textarea
+            let diagnosisText = '';
+            if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances['doctor_diagnosis_text']) {
+                diagnosisText = CKEDITOR.instances['doctor_diagnosis_text'].getData();
+            } else {
+                diagnosisText = $('#doctor_diagnosis_text').val();
+            }
+
+            const formData = new FormData();
+            formData.append('doctor_diagnosis', diagnosisText);
+
+            @if(appsettings('requirediagnosis', 0))
+            // Check if diagnosis is applicable
+            const diagnosisApplicable = $('#diagnosisApplicable').is(':checked');
+            formData.append('diagnosis_applicable', diagnosisApplicable ? '1' : '0');
+
+            if (diagnosisApplicable) {
+                // Get selected reasons from the new AJAX search component
+                const reasonsData = $('#reasons_for_encounter_data').val();
+                let selectedReasons = [];
+
+                try {
+                    selectedReasons = JSON.parse(reasonsData);
+                } catch (e) {
+                    console.error('Error parsing reasons data:', e);
+                }
+
+                if (!selectedReasons || selectedReasons.length === 0) {
+                    showMessage('diagnosis_save_message', 'Please select at least one diagnosis reason or toggle off "Diagnosis Applicable"', 'error');
+                    setButtonLoading('save_diagnosis_btn', false);
+                    return;
+                }
+
+                // Send reasons as values (code-name format)
+                selectedReasons.forEach(reason => {
+                    formData.append('reasons_for_encounter[]', reason.value);
+                });
+
+                formData.append('reasons_for_encounter_comment_1', $('#reasons_for_encounter_comment_1').val());
+                formData.append('reasons_for_encounter_comment_2', $('#reasons_for_encounter_comment_2').val());
+            }
+            @endif
+
+            $.ajax({
+                url: `/encounters/${encounterId}/save-diagnosis`,
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    showMessage('diagnosis_save_message', response.message, 'success');
+                    updateSummary();
+
+                    // Reload encounter history DataTable if it exists
+                    if ($.fn.DataTable.isDataTable('#encounter_history_list')) {
+                        $('#encounter_history_list').DataTable().ajax.reload(null, false);
+                    }
+
+                    // Show conclusion modal after successful save
+                    setTimeout(() => {
+                        $('#concludeEncounterModal').modal('show');
+                    }, 500);
+                },
+                error: function(xhr) {
+                    let message = 'Error saving diagnosis';
+                    if (xhr.responseJSON) {
+                        if (xhr.responseJSON.errors) {
+                            message = Object.values(xhr.responseJSON.errors).flat().join(', ');
+                        } else if (xhr.responseJSON.message) {
+                            message = xhr.responseJSON.message;
+                        }
+                    }
+                    showMessage('diagnosis_save_message', message, 'error');
+                },
+                complete: function() {
+                    setButtonLoading('save_diagnosis_btn', false);
+                }
+            });
+        }
+
+        // Save Labs
+        function saveLabs() {
+            const services = [];
+            const notes = [];
+            $('#selected-services tr').each(function() {
+                const serviceId = $(this).find('input[name="consult_invest_id[]"]').val();
+                const note = $(this).find('input[name="consult_invest_note[]"]').val();
+                if (serviceId) {
+                    services.push(serviceId);
+                    notes.push(note || '');
+                }
+            });
+
+            if (services.length === 0) {
+                showMessage('labs_save_message', 'No lab services selected', 'error');
+                return;
+            }
+
+            setButtonLoading('save_labs_btn', true);
+
+            $.ajax({
+                url: `/encounters/${encounterId}/save-labs`,
+                method: 'POST',
+                data: {
+                    consult_invest_id: services,
+                    consult_invest_note: notes,
+                    _token: $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    showMessage('labs_save_message', response.message, 'success');
+                    updateSummary();
+                },
+                error: function(xhr) {
+                    const message = xhr.responseJSON?.message || 'Error saving lab requests';
+                    showMessage('labs_save_message', message, 'error');
+                },
+                complete: function() {
+                    setButtonLoading('save_labs_btn', false);
+                }
+            });
+        }
+
+        function saveLabsAndNext() {
+            saveLabs();
+            setTimeout(() => $('#imaging_tab').click(), 800);
+        }
+
+        // Save Imaging
+        function saveImaging() {
+            const services = [];
+            const notes = [];
+            $('#selected-imaging-services tr').each(function() {
+                const serviceId = $(this).find('input[name="consult_imaging_id[]"]').val();
+                const note = $(this).find('input[name="consult_imaging_note[]"]').val();
+                if (serviceId) {
+                    services.push(serviceId);
+                    notes.push(note || '');
+                }
+            });
+
+            if (services.length === 0) {
+                showMessage('imaging_save_message', 'No imaging services selected', 'error');
+                return;
+            }
+
+            setButtonLoading('save_imaging_btn', true);
+
+            $.ajax({
+                url: `/encounters/${encounterId}/save-imaging`,
+                method: 'POST',
+                data: {
+                    consult_imaging_id: services,
+                    consult_imaging_note: notes,
+                    _token: $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    showMessage('imaging_save_message', response.message, 'success');
+                    updateSummary();
+                },
+                error: function(xhr) {
+                    const message = xhr.responseJSON?.message || 'Error saving imaging requests';
+                    showMessage('imaging_save_message', message, 'error');
+                },
+                complete: function() {
+                    setButtonLoading('save_imaging_btn', false);
+                }
+            });
+        }
+
+        function saveImagingAndNext() {
+            saveImaging();
+            setTimeout(() => $('#prescription_tab').click(), 800);
+        }
+
+        // Save Prescriptions
+        function savePrescriptions() {
+            const products = [];
+            const doses = [];
+            let hasEmptyDose = false;
+
+            $('#selected-products tr').each(function() {
+                const productId = $(this).find('input[name="consult_presc_id[]"]').val();
+                const dose = $(this).find('input[name="consult_presc_dose[]"]').val();
+                if (productId) {
+                    products.push(productId);
+                    doses.push(dose || '');
+                    if (!dose || dose.trim() === '') {
+                        hasEmptyDose = true;
+                    }
+                }
+            });
+
+            if (products.length === 0) {
+                showMessage('prescriptions_save_message', 'No prescriptions selected', 'error');
+                return;
+            }
+
+            if (hasEmptyDose) {
+                if (!confirm('Some prescriptions have empty dosage fields. Do you want to continue?')) {
+                    return;
+                }
+            }
+
+            setButtonLoading('save_prescriptions_btn', true);
+
+            $.ajax({
+                url: `/encounters/${encounterId}/save-prescriptions`,
+                method: 'POST',
+                data: {
+                    consult_presc_id: products,
+                    consult_presc_dose: doses,
+                    _token: $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    const msgType = response.empty_doses && response.empty_doses.length > 0 ? 'warning' : 'success';
+                    showMessage('prescriptions_save_message', response.message, msgType);
+                    updateSummary();
+                },
+                error: function(xhr) {
+                    let message = 'Error saving prescriptions';
+                    if (xhr.responseJSON) {
+                        if (xhr.responseJSON.errors) {
+                            message = Object.values(xhr.responseJSON.errors).flat().join(', ');
+                        } else if (xhr.responseJSON.message) {
+                            message = xhr.responseJSON.message;
+                        }
+                    }
+                    showMessage('prescriptions_save_message', message, 'error');
+                },
+                complete: function() {
+                    setButtonLoading('save_prescriptions_btn', false);
+                }
+            });
+        }
+
+        function savePrescriptionsAndNext() {
+            savePrescriptions();
+            setTimeout(() => $('#admission_tab').click(), 800);
+        }
+
+        // Finalize Encounter
+        function finalizeEncounter() {
+            if (!confirm('Are you sure you want to complete this encounter?')) {
+                return;
+            }
+
+            const btn = document.getElementById('finalize_encounter_btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Completing...';
+
+            $.ajax({
+                url: `/encounters/${encounterId}/finalize`,
+                method: 'POST',
+                data: {
+                    end_consultation: $('#end_consultation').is(':checked') ? 1 : 0,
+                    consult_admit: $('#consult_admit').is(':checked') ? 1 : 0,
+                    admit_note: $('#admit_note').val(),
+                    queue_id: queueId,
+                    _token: $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    showMessage('finalize_message', response.message, 'success');
+                    setTimeout(() => {
+                        window.location.href = response.redirect;
+                    }, 1500);
+                },
+                error: function(xhr) {
+                    const message = xhr.responseJSON?.message || 'Error completing encounter';
+                    showMessage('finalize_message', message, 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa fa-check-circle"></i> Complete Encounter';
+                }
+            });
+        }
+
+        // Update Summary
+        function updateSummary() {
+            // Fetch real encounter data from database
+            $.ajax({
+                url: `/encounters/${encounterId}/summary`,
+                method: 'GET',
+                success: function(response) {
+                    if (response.success) {
+                        const data = response.data;
+
+                        // Update diagnosis summary
+                        if (data.diagnosis.saved) {
+                            const notesPreview = data.diagnosis.notes ?
+                                (data.diagnosis.notes.substring(0, 100) + (data.diagnosis.notes.length > 100 ? '...' : '')) :
+                                'Saved';
+                            $('#summary_diagnosis').html(`
+                                <span class="text-success"><i class="fa fa-check-circle"></i> <strong>Saved</strong></span>
+                                <br><small>${notesPreview}</small>
+                            `);
+                        } else {
+                            $('#summary_diagnosis').html(`<span class="text-muted">Not saved yet</span>`);
+                        }
+
+                        // Update labs summary
+                        if (data.labs.length > 0) {
+                            let labsHtml = `<span class="badge bg-success mb-2">${data.labs.length} service(s)</span><br>`;
+                            labsHtml += '<ul class="small mb-0 ps-3">';
+                            data.labs.forEach(lab => {
+                                labsHtml += `<li>${lab.name} ${lab.code ? '[' + lab.code + ']' : ''}</li>`;
+                            });
+                            labsHtml += '</ul>';
+                            $('#summary_labs').html(labsHtml);
+                        } else {
+                            $('#summary_labs').html(`<span class="text-muted">None selected</span>`);
+                        }
+
+                        // Update imaging summary
+                        if (data.imaging.length > 0) {
+                            let imagingHtml = `<span class="badge bg-success mb-2">${data.imaging.length} service(s)</span><br>`;
+                            imagingHtml += '<ul class="small mb-0 ps-3">';
+                            data.imaging.forEach(img => {
+                                imagingHtml += `<li>${img.name} ${img.code ? '[' + img.code + ']' : ''}</li>`;
+                            });
+                            imagingHtml += '</ul>';
+                            $('#summary_imaging').html(imagingHtml);
+                        } else {
+                            $('#summary_imaging').html(`<span class="text-muted">None selected</span>`);
+                        }
+
+                        // Update prescriptions summary
+                        if (data.prescriptions.length > 0) {
+                            let prescHtml = `<span class="badge bg-success mb-2">${data.prescriptions.length} medication(s)</span><br>`;
+                            prescHtml += '<ul class="small mb-0 ps-3">';
+                            data.prescriptions.forEach(presc => {
+                                prescHtml += `<li>${presc.name}${presc.dose ? ' - ' + presc.dose : ''}</li>`;
+                            });
+                            prescHtml += '</ul>';
+                            $('#summary_prescriptions').html(prescHtml);
+                        } else {
+                            $('#summary_prescriptions').html(`<span class="text-muted">None selected</span>`);
+                        }
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Error loading encounter summary:', xhr);
+                }
+            });
+        }
+
+        // Toggle admit note section
+        function toggleAdmitNote() {
+            const admitChecked = $('#consult_admit').is(':checked');
+            $('#admit_note_section').toggle(admitChecked);
+        }
+
+        // Initialize summary on page load
+        $(document).ready(function() {
+            // Don't load on page load, only when modal is opened
+        });
+    </script>
+
+    <!-- Unified Admission/Discharge Modal -->
+    <div class="modal fade" id="admitDischargeModal" tabindex="-1" aria-labelledby="admitDischargeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: {{ appsettings('hos_color', '#007bff') }}; color: white;">
+                    <h5 class="modal-title" id="admitDischargeModalLabel">
+                        <i class="fa fa-bed" id="modal_icon"></i> <span id="modal_title_text">Admit Patient</span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fa fa-info-circle"></i> <strong>Patient:</strong> {{ $patient->surname }} {{ $patient->first_name }} {{ $patient->other_names }}
+                    </div>
+
+                    <form id="admitDischargeForm">
+                        @csrf
+                        <input type="hidden" name="action" id="modal_action" value="admit">
+                        <input type="hidden" name="patient_id" value="{{ $patient->id }}">
+                        <input type="hidden" name="encounter_id" value="{{ $encounter->id }}">
+                        <input type="hidden" name="doctor_id" value="{{ auth()->user()->id }}">
+                        @if (isset($admission_request))
+                            <input type="hidden" name="admission_request_id" value="{{ $admission_request->id }}">
+                        @endif
+
+                        <!-- Admission Section -->
+                        <div id="admission_section">
+                            <div class="form-group mb-3">
+                                <label for="admission_reason_category"><strong>Admission Reason Category</strong> <span class="text-danger">*</span></label>
+                                <select class="form-control" name="admission_reason" id="admission_reason_category">
+                                    <option value="">-- Select Reason --</option>
+                                    <option value="Acute illness or injury">Acute Illness or Injury</option>
+                                    <option value="Chronic condition management">Chronic Condition Management</option>
+                                    <option value="Post-surgical care">Post-Surgical Care</option>
+                                    <option value="Diagnostic workup">Diagnostic Workup</option>
+                                    <option value="Maternal care">Maternal Care (Obstetrics)</option>
+                                    <option value="Neonatal care">Neonatal Care</option>
+                                    <option value="Mental health crisis">Mental Health Crisis</option>
+                                    <option value="Palliative or end-of-life care">Palliative or End-of-Life Care</option>
+                                    <option value="Rehabilitation">Rehabilitation</option>
+                                    <option value="Observation">Observation</option>
+                                    <option value="Social or safeguarding reasons">Social or Safeguarding Reasons</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label for="admit_note"><strong>Detailed Admission Notes</strong> <span class="text-danger">*</span></label>
+                                <textarea class="form-control" name="note" id="admit_note" rows="4"
+                                          placeholder="Enter detailed clinical notes, diagnosis, and special care instructions..."></textarea>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="admit_bed_id"><strong>Bed Assignment</strong></label>
+                                        <select class="form-control" name="bed_id" id="admit_bed_id">
+                                            <option value="">To be assigned later</option>
+                                            @php
+                                                $beds = \App\Models\Bed::where('status', 'available')->get();
+                                            @endphp
+                                            @foreach($beds as $bed)
+                                                <option value="{{ $bed->id }}">{{ $bed->name }} - {{ $bed->ward }} ({{ $bed->unit }})</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="admit_priority"><strong>Priority</strong></label>
+                                        <select class="form-control" name="priority" id="admit_priority">
+                                            <option value="routine">Routine</option>
+                                            <option value="urgent">Urgent</option>
+                                            <option value="emergency">Emergency</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Discharge Section -->
+                        <div id="discharge_section" style="display: none;">
+                            <div class="form-group mb-3">
+                                <label for="discharge_reason_category"><strong>Discharge Reason</strong> <span class="text-danger">*</span></label>
+                                <select class="form-control" name="discharge_reason" id="discharge_reason_category">
+                                    <option value="">-- Select Reason --</option>
+                                    <option value="Discharged to home">Discharged to Home (Recovered)</option>
+                                    <option value="Discharged improved">Discharged Improved (Ongoing Care at Home)</option>
+                                    <option value="Discharged against medical advice">Discharged Against Medical Advice (AMA)</option>
+                                    <option value="Transfer to another facility">Transfer to Another Facility</option>
+                                    <option value="Transfer to higher level of care">Transfer to Higher Level of Care</option>
+                                    <option value="Absconded">Absconded (Left Without Notice)</option>
+                                    <option value="Deceased">Deceased</option>
+                                    <option value="Discharged for financial reasons">Discharged for Financial Reasons</option>
+                                    <option value="Discharged for end-of-life care">Discharged for End-of-Life Care (Hospice)</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label for="discharge_note"><strong>Discharge Summary</strong> <span class="text-danger">*</span></label>
+                                <textarea class="form-control" name="discharge_note" id="discharge_note" rows="5"
+                                          placeholder="Enter discharge summary, condition at discharge, medications, follow-up instructions..."></textarea>
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label for="discharge_followup"><strong>Follow-up Instructions</strong></label>
+                                <textarea class="form-control" name="followup_instructions" id="discharge_followup" rows="2"
+                                          placeholder="Next appointment, medication refills, warning signs to watch for..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-warning" id="modal_warning">
+                            <i class="fa fa-exclamation-triangle"></i> <strong>Note:</strong> <span id="warning_text">This will create an admission request.</span>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fa fa-times"></i> Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary btn-lg" onclick="submitAdmitDischarge()" id="modal_submit_btn">
+                        <i class="fa fa-bed" id="btn_icon"></i> <span id="btn_text">Submit Admission</span>
+                    </button>
+                </div>
+                <div id="modal_message" class="px-3 pb-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conclude Encounter Modal -->
+    <div class="modal fade" id="concludeEncounterModal" tabindex="-1" aria-labelledby="concludeEncounterModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header text-white" style="background-color: {{ appsettings('hos_color', '#007bff') }};">
+                    <h5 class="modal-title" id="concludeEncounterModalLabel">
+                        <i class="fa fa-check-circle"></i> Conclude Encounter
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Encounter Summary -->
+                    <div class="mb-4">
+                        <h6 style="color: {{ appsettings('hos_color', '#007bff') }};"><i class="fa fa-info-circle"></i> Encounter Summary</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card summary-card bg-light mb-3">
+                                    <div class="card-body">
+                                        <h6 class="card-title" style="color: {{ appsettings('hos_color', '#007bff') }};"><i class="fa fa-stethoscope"></i> Diagnosis & Notes</h6>
+                                        <p class="card-text" id="modal_summary_diagnosis">
+                                            <span class="text-muted">None selected</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card summary-card bg-light mb-3">
+                                    <div class="card-body">
+                                        <h6 class="card-title" style="color: {{ appsettings('hos_color', '#007bff') }};"><i class="fa fa-flask"></i> Lab Requests</h6>
+                                        <p class="card-text" id="modal_summary_labs">
+                                            <span class="text-muted">None selected</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card summary-card bg-light mb-3">
+                                    <div class="card-body">
+                                        <h6 class="card-title" style="color: {{ appsettings('hos_color', '#007bff') }};"><i class="fa fa-x-ray"></i> Imaging Requests</h6>
+                                        <p class="card-text" id="modal_summary_imaging">
+                                            <span class="text-muted">None selected</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card summary-card bg-light mb-3">
+                                    <div class="card-body">
+                                        <h6 class="card-title" style="color: {{ appsettings('hos_color', '#007bff') }};"><i class="fa fa-pills"></i> Prescriptions</h6>
+                                        <p class="card-text" id="modal_summary_prescriptions">
+                                            <span class="text-muted">None selected</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="alert alert-info">
+                        <i class="fa fa-info-circle"></i>
+                        <strong>Note:</strong> Clicking "Complete Encounter" will finalize this consultation.
+                        Make sure all information is correct before proceeding.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fa fa-times"></i> Cancel
+                    </button>
+                    <button type="button" class="btn btn-lg text-white" style="background-color: {{ appsettings('hos_color', '#007bff') }};" onclick="finalizeEncounterFromModal()" id="modal_finalize_encounter_btn">
+                        <i class="fa fa-check-circle"></i> Complete Encounter
+                    </button>
+                </div>
+                <div id="modal_finalize_message" class="px-3 pb-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+    .summary-card {
+        border-left: 4px solid {{ appsettings('hos_color', '#007bff') }};
+    }
+
+    /* Toggle Switch Styles */
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 34px;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 34px;
+    }
+
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 26px;
+        width: 26px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+
+    input:checked + .toggle-slider {
+        background-color: {{ appsettings('hos_color', '#007bff') }};
+    }
+
+    input:focus + .toggle-slider {
+        box-shadow: 0 0 1px {{ appsettings('hos_color', '#007bff') }};
+    }
+
+    input:checked + .toggle-slider:before {
+        transform: translateX(26px);
+    }
+    </style>
+
+    <script>
+    // Open modal for admission
+    function openAdmitModal() {
+        // Reset form
+        document.getElementById('admitDischargeForm').reset();
+        document.getElementById('modal_action').value = 'admit';
+
+        // Update UI for admission
+        document.getElementById('modal_title_text').textContent = 'Admit Patient';
+        document.getElementById('modal_icon').className = 'fa fa-bed';
+        document.getElementById('btn_text').textContent = 'Submit Admission';
+        document.getElementById('btn_icon').className = 'fa fa-bed';
+        document.getElementById('modal_submit_btn').className = 'btn btn-info btn-lg text-white';
+        document.getElementById('warning_text').textContent = 'This will create an admission request.';
+
+        // Show/hide sections
+        document.getElementById('admission_section').style.display = 'block';
+        document.getElementById('discharge_section').style.display = 'none';
+
+        $('#admitDischargeModal').modal('show');
+    }
+
+    // Open modal for discharge
+    function openDischargeModal() {
+        // Reset form
+        document.getElementById('admitDischargeForm').reset();
+        document.getElementById('modal_action').value = 'discharge';
+
+        // Update UI for discharge
+        document.getElementById('modal_title_text').textContent = 'Discharge Patient';
+        document.getElementById('modal_icon').className = 'fa fa-sign-out-alt';
+        document.getElementById('btn_text').textContent = 'Submit Discharge';
+        document.getElementById('btn_icon').className = 'fa fa-sign-out-alt';
+        document.getElementById('modal_submit_btn').className = 'btn btn-warning btn-lg';
+        document.getElementById('warning_text').textContent = 'This will discharge the patient and free up the bed.';
+
+        // Show/hide sections
+        document.getElementById('admission_section').style.display = 'none';
+        document.getElementById('discharge_section').style.display = 'block';
+
+        $('#admitDischargeModal').modal('show');
+    }
+
+    // Submit admission or discharge
+    function submitAdmitDischarge() {
+        const form = document.getElementById('admitDischargeForm');
+        const btn = document.getElementById('modal_submit_btn');
+        const action = document.getElementById('modal_action').value;
+
+        // Validate based on action
+        if (action === 'admit') {
+            if (!document.getElementById('admission_reason_category').value) {
+                showMessage('modal_message', 'Please select an admission reason category', 'error');
+                return;
+            }
+            if (!document.getElementById('admit_note').value.trim()) {
+                showMessage('modal_message', 'Please enter detailed admission notes', 'error');
+                return;
+            }
+        } else if (action === 'discharge') {
+            if (!document.getElementById('discharge_reason_category').value) {
+                showMessage('modal_message', 'Please select a discharge reason', 'error');
+                return;
+            }
+            if (!document.getElementById('discharge_note').value.trim()) {
+                showMessage('modal_message', 'Please enter discharge summary', 'error');
+                return;
+            }
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class=\"fa fa-spinner fa-spin\"></i> Processing...';
+
+        const formData = new FormData(form);
+
+        // Determine endpoint
+        const url = action === 'admit'
+            ? '{{ route('admission-requests.store') }}'
+            : '/discharge-patient-api/' + formData.get('admission_request_id');
+
+        $.ajax({
+            url: url,
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                const successMsg = action === 'admit'
+                    ? 'Admission request submitted successfully!'
+                    : 'Patient discharged successfully!';
+                showMessage('modal_message', successMsg, 'success');
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            },
+            error: function(xhr) {
+                const message = xhr.responseJSON?.message || 'Error processing request';
+                showMessage('modal_message', message, 'error');
+                btn.disabled = false;
+                const originalText = action === 'admit' ? 'Submit Admission' : 'Submit Discharge';
+                const originalIcon = action === 'admit' ? 'fa-bed' : 'fa-sign-out-alt';
+                btn.innerHTML = `<i class=\"fa ${originalIcon}\"></i> ${originalText}`;
+            }
+        });
+    }
+
+    // Update modal summary when modal is opened
+    $('#concludeEncounterModal').on('show.bs.modal', function() {
+        updateModalSummary();
+    });
+
+    // Finalize encounter from modal
+    function finalizeEncounterFromModal() {
+        if (!confirm('Are you sure you want to complete this encounter?')) {
+            return;
+        }
+
+        const btn = document.getElementById('modal_finalize_encounter_btn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Completing...';
+
+        $.ajax({
+            url: `/encounters/${encounterId}/finalize`,
+            method: 'POST',
+            data: {
+                end_consultation: 0,
+                consult_admit: 0,
+                admit_note: '',
+                queue_id: queueId,
+                _token: $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                showMessage('modal_finalize_message', response.message, 'success');
+                setTimeout(() => {
+                    window.location.href = response.redirect;
+                }, 1500);
+            },
+            error: function(xhr) {
+                const message = xhr.responseJSON?.message || 'Error completing encounter';
+                showMessage('modal_finalize_message', message, 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa fa-check-circle"></i> Complete Encounter';
+            }
+        });
+    }
+
+    // Update modal summary (similar to updateSummary but targets modal elements)
+    function updateModalSummary() {
+        $.ajax({
+            url: `/encounters/${encounterId}/summary`,
+            method: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    const data = response.data;
+
+                    // Update diagnosis summary
+                    if (data.diagnosis.saved) {
+                        const notesPreview = data.diagnosis.notes ?
+                            (data.diagnosis.notes.substring(0, 100) + (data.diagnosis.notes.length > 100 ? '...' : '')) :
+                            'Saved';
+                        $('#modal_summary_diagnosis').html(`
+                            <span class="text-success"><i class="fa fa-check-circle"></i> <strong>Saved</strong></span>
+                            <br><small>${notesPreview}</small>
+                        `);
+                    } else {
+                        $('#modal_summary_diagnosis').html(`<span class="text-muted">Not saved yet</span>`);
+                    }
+
+                    // Update labs summary
+                    if (data.labs.count > 0) {
+                        $('#modal_summary_labs').html(`
+                            <span class="text-success"><i class="fa fa-check-circle"></i> ${data.labs.count} lab service(s) requested</span>
+                        `);
+                    } else {
+                        $('#modal_summary_labs').html(`<span class="text-muted">None selected</span>`);
+                    }
+
+                    // Update imaging summary
+                    if (data.imaging.count > 0) {
+                        $('#modal_summary_imaging').html(`
+                            <span class="text-success"><i class="fa fa-check-circle"></i> ${data.imaging.count} imaging service(s) requested</span>
+                        `);
+                    } else {
+                        $('#modal_summary_imaging').html(`<span class="text-muted">None selected</span>`);
+                    }
+
+                    // Update prescriptions summary
+                    if (data.prescriptions.count > 0) {
+                        $('#modal_summary_prescriptions').html(`
+                            <span class="text-success"><i class="fa fa-check-circle"></i> ${data.prescriptions.count} prescription(s) added</span>
+                        `);
+                    } else {
+                        $('#modal_summary_prescriptions').html(`<span class="text-muted">None selected</span>`);
+                    }
+                }
+            },
+            error: function(xhr) {
+                console.error('Error loading modal summary:', xhr);
+            }
+        });
+    }
+    </script>
+
+    @include('admin.doctors.partials.modals')
+    @include('admin.doctors.partials.scripts')
 @endsection

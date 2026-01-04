@@ -87,11 +87,9 @@
 <hr>
 <h4>Investigation History</h4>
 <div class="table responsive">
-    <table class="table table-sm table-bordered table-striped" style="width: 100%" id="investigation_history_list">
-        <thead>
-            <th>#</th>
-            <th>Results</th>
-            <th>Details</th>
+    <table class="table table-hover" style="width: 100%" id="investigation_history_list">
+        <thead class="table-light">
+            <th><i class="mdi mdi-test-tube"></i> Laboratory Requests</th>
         </thead>
     </table>
 </div>

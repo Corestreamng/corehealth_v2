@@ -64,11 +64,9 @@
 <hr>
 <h4>Imaging History</h4>
 <div class="table responsive">
-    <table class="table table-sm table-bordered table-striped" style="width: 100%" id="imaging_history_list">
-        <thead>
-            <th>#</th>
-            <th>Results</th>
-            <th>Details</th>
+    <table class="table table-hover" style="width: 100%" id="imaging_history_list">
+        <thead class="table-light">
+            <th><i class="mdi mdi-image-filter-hdr"></i> Imaging Requests</th>
         </thead>
     </table>
 </div>

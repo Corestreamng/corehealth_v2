@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Encounter extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'doctor_id',
@@ -16,7 +17,12 @@ class Encounter extends Model
         'patient_id',
         'admission_request_id',
         'reasons_for_encounter',
+        'reasons_for_encounter_comment_1',
+        'reasons_for_encounter_comment_2',
         'notes',
+        'deleted_at',
+        'deleted_by',
+        'deletion_reason',
     ];
 
     public function labRequests()

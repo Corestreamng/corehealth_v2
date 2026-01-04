@@ -23,6 +23,7 @@ use App\Models\LabServiceRequest;
 use App\Models\MiscBill;
 use App\Models\PatientAccount;
 use App\Models\ProductRequest;
+use App\Models\ReasonForEncounter;
 use Illuminate\Support\Facades\File;
 use Intervention\Image\Facades\Image;
 use Illuminate\Support\Facades\Storage;
@@ -461,31 +462,31 @@ class PatientController extends Controller
 
                 if (appsettings('goonline', 0) == 1) {
 
-                    $trackedEntityResponse = Http::withBasicAuth(env('DHIS_USERNAME'), env('DHIS_PASS'))
-                        ->post(env('DHIS_API_URL') . '/tracker?importStrategy=CREATE&async=false', [
+                    $trackedEntityResponse = Http::withBasicAuth(appsettings('dhis_username'), appsettings('dhis_pass'))
+                        ->post(appsettings('dhis_api_url') . '/tracker?importStrategy=CREATE&async=false', [
                             "trackedEntities" => [
                                 [
-                                    "orgUnit" => env('DHIS_ORG_UNIT'),
-                                    "trackedEntityType" => env('DHIS_TRACKED_ENTITY_TYPE'),
+                                    "orgUnit" => appsettings('dhis_org_unit'),
+                                    "trackedEntityType" => appsettings('dhis_tracked_entity_type'),
                                     "attributes" => [
                                         [
-                                            "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_FNAME'),
+                                            "attribute" => appsettings('dhis_tracked_entity_attr_fname'),
                                             "value" => $request->firstname
                                         ],
                                         [
-                                            "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_LNAME'),
+                                            "attribute" => appsettings('dhis_tracked_entity_attr_lname'),
                                             "value" => $request->surname
                                         ],
                                         [
-                                            "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_GENDER'),
+                                            "attribute" => appsettings('dhis_tracked_entity_attr_gender'),
                                             "value" => $request->gender
                                         ],
                                         [
-                                            "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_DOB'),
+                                            "attribute" => appsettings('dhis_tracked_entity_attr_dob'),
                                             "value" => date('Y-m-d', strtotime($request->dob))
                                         ],
                                         [
-                                            "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_CITY'),
+                                            "attribute" => appsettings('dhis_tracked_entity_attr_city'),
                                             "value" => $last_word ?? ''
                                         ]
                                     ]
@@ -499,38 +500,38 @@ class PatientController extends Controller
                     // Get current time in the required format
                     $currentTime = Carbon::now()->format('Y-m-d\TH:i:s.000');
                     // Create Enrollment
-                    $enrollmentResponse = Http::withBasicAuth(env('DHIS_USERNAME'), env('DHIS_PASS'))
-                        ->post(env('DHIS_API_URL') . '/tracker?importStrategy=CREATE&async=false', [
+                    $enrollmentResponse = Http::withBasicAuth(appsettings('dhis_username'), appsettings('dhis_pass'))
+                        ->post(appsettings('dhis_api_url') . '/tracker?importStrategy=CREATE&async=false', [
                             "enrollments" => [
                                 [
                                     "attributes" => [
                                         [
-                                            "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_FNAME'),
+                                            "attribute" => appsettings('dhis_tracked_entity_attr_fname'),
                                             "value" => $request->firstname
                                         ],
                                         [
-                                            "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_LNAME'),
+                                            "attribute" => appsettings('dhis_tracked_entity_attr_lname'),
                                             "value" => $request->surname
                                         ],
                                         [
-                                            "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_GENDER'),
+                                            "attribute" => appsettings('dhis_tracked_entity_attr_gender'),
                                             "value" => $request->gender
                                         ],
                                         [
-                                            "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_DOB'),
+                                            "attribute" => appsettings('dhis_tracked_entity_attr_dob'),
                                             "value" => date('Y-m-d', strtotime($request->dob))
                                         ],
                                         [
-                                            "attribute" => env('DHIS_TRACKED_ENTITY_ATTR_CITY'),
+                                            "attribute" => appsettings('dhis_tracked_entity_attr_city'),
                                             "value" => $last_word ?? ''
                                         ]
                                     ],
                                     "enrolledAt" => $currentTime,
                                     "occurredAt" => $currentTime,
-                                    "orgUnit" => env('DHIS_ORG_UNIT'),
-                                    "program" => env('DHIS_TRACKED_ENTITY_PROGRAM'),
+                                    "orgUnit" => appsettings('dhis_org_unit'),
+                                    "program" => appsettings('dhis_tracked_entity_program'),
                                     "status" => "COMPLETED",
-                                    "trackedEntityType" => env('DHIS_TRACKED_ENTITY_TYPE'),
+                                    "trackedEntityType" => appsettings('dhis_tracked_entity_type'),
                                     "trackedEntity" => $trackedEntityInstanceId
                                 ]
                             ]
@@ -574,11 +575,11 @@ class PatientController extends Controller
                 if (appsettings('goonline', 0) == 1) {
                     //send to corehms super admin
                     $response = Http::withBasicAuth(
-                        env('COREHMS_SUPERADMIN_USERNAME'),
-                        env('COREHMS_SUPERADMIN_PASS')
+                        appsettings('COREHMS_SUPERADMIN_USERNAME'),
+                        appsettings('COREHMS_SUPERADMIN_PASS')
                     )->withHeaders([
                         'Content-Type' => 'application/json',
-                    ])->post(env('COREHMS_SUPERADMIN_URL') . '/event-notification.php?notification_type=patient', [
+                    ])->post(appsettings('COREHMS_SUPERADMIN_URL') . '/event-notification.php?notification_type=patient', [
                         'nothing' => true
                     ]);
 
@@ -656,6 +657,11 @@ class PatientController extends Controller
                 ->first() ?? null;
 
             $others_record_template = NursingNoteType::find(5);
+
+            $reasons_for_encounter_list = ReasonForEncounter::all();
+            $reasons_for_encounter_cat_list = ReasonForEncounter::select('category')->distinct()->get();
+            $reasons_for_encounter_sub_cat_list = ReasonForEncounter::select('category', 'sub_category')->distinct()->get();
+
             return view('admin.patients.show1', compact(
                 'user',
                 'roles',
@@ -673,7 +679,10 @@ class PatientController extends Controller
                 'treatment_sheet_template',
                 'io_chart_template',
                 'labour_record_template',
-                'others_record_template'
+                'others_record_template',
+                'reasons_for_encounter_list',
+                'reasons_for_encounter_cat_list',
+                'reasons_for_encounter_sub_cat_list'
             ));
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);

@@ -151,74 +151,140 @@ class AdmissionRequestController extends Controller
 
     public function patientAdmissionRequests($patient_id)
     {
-        // DB::statement("SET SQL_MODE=''");//disable sql strict mode to allow groupby query
         $req = AdmissionRequest::where('status', 1)->where('patient_id', $patient_id)->orderBy('created_at', 'DESC')->get();
 
         return Datatables::of($req)
-            ->addIndexColumn()
-            ->addColumn('show', function ($r) {
-                $url_ward_round =  route(
-                    'encounters.create',
-                    [
+            ->addColumn('info', function ($r) {
+                $hosColor = appsettings('hos_color', '#007bff');
+                $borderColor = $r->discharged ? '#6c757d' : $hosColor;
+                
+                $str = '<div class="card mb-3" style="border-left: 4px solid ' . $borderColor . ';">';
+                $str .= '<div class="card-body p-3">';
+
+                // Header with status badge and date
+                $str .= '<div class="d-flex justify-content-between align-items-start mb-3">';
+                $str .= '<h6 class="mb-0"><i class="fa fa-bed"></i> Admission #' . $r->id . '</h6>';
+                if ($r->discharged) {
+                    $str .= '<span class="badge bg-secondary"><i class="fa fa-check"></i> Discharged</span>';
+                } else {
+                    $str .= '<span class="badge bg-success"><i class="fa fa-heartbeat"></i> Active</span>';
+                }
+                $str .= '</div>';
+
+                // Admission Details Row
+                $str .= '<div class="row mb-3">';
+                
+                // Left Column - Admission Info
+                $str .= '<div class="col-md-6">';
+                $str .= '<div class="mb-3">';
+                $str .= '<small class="text-muted d-block mb-1"><i class="fa fa-calendar"></i> ADMISSION DETAILS</small>';
+                $str .= '<div class="small mb-1"><strong>Date:</strong> ' . date('M j, Y h:i A', strtotime($r->created_at)) . '</div>';
+                $str .= '<div class="small mb-1"><strong>Admitted By:</strong> ' . ($r->doctor_id ? userfullname($r->doctor_id) : 'N/A') . '</div>';
+                $priorityClass = $r->priority == 'emergency' ? 'danger' : ($r->priority == 'urgent' ? 'warning' : 'info');
+                $str .= '<div class="small mb-1"><strong>Priority:</strong> <span class="badge bg-' . $priorityClass . '">' . ucfirst($r->priority ?? 'routine') . '</span></div>';
+                if ($r->admission_reason) {
+                    $str .= '<div class="small mb-1"><strong>Reason:</strong> ' . $r->admission_reason . '</div>';
+                }
+                $str .= '</div>';
+                $str .= '</div>';
+
+                // Right Column - Bed Info
+                $str .= '<div class="col-md-6">';
+                if ($r->bed_id) {
+                    $str .= '<div class="mb-3">';
+                    $str .= '<small class="text-muted d-block mb-1"><i class="fa fa-hospital"></i> BED & WARD</small>';
+                    $str .= '<div class="small mb-1"><strong>Bed:</strong> ' . ($r->bed ? $r->bed->name : 'N/A') . '</div>';
+                    $str .= '<div class="small mb-1"><strong>Ward:</strong> ' . ($r->bed ? $r->bed->ward : 'N/A') . '</div>';
+                    $str .= '<div class="small mb-1"><strong>Unit:</strong> ' . ($r->bed ? $r->bed->unit : 'N/A') . '</div>';
+                    if ($r->bed_assigned_by) {
+                        $str .= '<div class="small mb-1"><strong>Assigned By:</strong> ' . userfullname($r->bed_assigned_by) . '</div>';
+                    }
+                    $str .= '</div>';
+                } else {
+                    $str .= '<div class="alert alert-warning py-2 mb-3"><small><i class="fa fa-info-circle"></i> No bed assigned yet</small></div>';
+                }
+                $str .= '</div>';
+                $str .= '</div>'; // End row
+
+                // Admission Notes
+                if ($r->note) {
+                    $str .= '<div class="alert alert-light mb-3 py-2">';
+                    $str .= '<small><strong><i class="fa fa-notes-medical"></i> Admission Notes:</strong><br>' . nl2br($r->note) . '</small>';
+                    $str .= '</div>';
+                }
+
+                // Discharge Details (if discharged)
+                if ($r->discharged) {
+                    $str .= '<div class="border-top pt-3 mb-3">';
+                    $str .= '<small class="text-muted d-block mb-2"><i class="fa fa-sign-out-alt"></i> DISCHARGE INFORMATION</small>';
+                    $str .= '<div class="row">';
+                    $str .= '<div class="col-md-6">';
+                    $str .= '<div class="small mb-1"><strong>Date:</strong> ' . ($r->discharge_date ? date('M j, Y h:i A', strtotime($r->discharge_date)) : 'N/A') . '</div>';
+                    $str .= '<div class="small mb-1"><strong>Discharged By:</strong> ' . ($r->discharged_by ? userfullname($r->discharged_by) : 'N/A') . '</div>';
+                    if ($r->discharge_reason) {
+                        $str .= '<div class="small mb-1"><strong>Reason:</strong> ' . $r->discharge_reason . '</div>';
+                    }
+                    $str .= '</div>';
+                    $str .= '<div class="col-md-6">';
+                    if ($r->billed_by) {
+                        $str .= '<div class="small mb-1"><strong>Billed By:</strong> ' . userfullname($r->billed_by) . '</div>';
+                        $str .= '<div class="small mb-1"><strong>Bill Date:</strong> ' . ($r->billed_date ? date('M j, Y', strtotime($r->billed_date)) : 'N/A') . '</div>';
+                    }
+                    $str .= '</div>';
+                    $str .= '</div>'; // End row
+                    
+                    if ($r->discharge_note) {
+                        $str .= '<div class="alert alert-secondary py-2 mt-2 mb-2">';
+                        $str .= '<small><strong>Discharge Summary:</strong><br>' . nl2br($r->discharge_note) . '</small>';
+                        $str .= '</div>';
+                    }
+                    if ($r->followup_instructions) {
+                        $str .= '<div class="alert alert-info py-2 mb-0">';
+                        $str .= '<small><strong><i class="fa fa-calendar-check"></i> Follow-up Instructions:</strong><br>' . nl2br($r->followup_instructions) . '</small>';
+                        $str .= '</div>';
+                    }
+                    $str .= '</div>';
+                }
+
+                // Action Buttons (if not discharged)
+                if (!$r->discharged) {
+                    $url_ward_round = route('encounters.create', [
                         'patient_id' => $r->patient_id,
                         'queue_id' => 'ward_round',
                         'admission_req_id' => $r->id
-                    ]
-                );
-                $url_discharge = route('discharge-patient', $r->id);
-                $str = '';
-                if ($r->discharged == false) {
-                    $str .= '<a href="' . $url_ward_round . '" class="btn btn-success btn-sm" ><i class="fa fa-plus"></i> Encounter</a><br>';
-                }
-                if ($r->discharged == false && $r->bed_id == null) {
-                    $str .= "<br>
-                    <button type='button' class='btn btn-primary' onclick='setBedModal(this)' data-id='$r->id' data-reassign='false'>
-                        <i class='fa fa-bed'></i> Assign/ Reassign Bed
-                    </button><br>";
-                }
-
-
-                if ($r->bed_id != null && $r->discharged == false) {
-                    $days = date_diff(date_create($r->discharge_date), date_create($r->bed_assign_date))->days;
-                    if ($days < 1) {
-                        $days = 1;
+                    ]);
+                    
+                    $str .= '<div class="d-flex gap-2 flex-wrap mt-3">';
+                    $str .= '<a href="' . $url_ward_round . '" class="btn btn-success btn-sm"><i class="fa fa-plus"></i> New Encounter</a>';
+                    
+                    if ($r->bed_id == null) {
+                        $str .= "<button type='button' class='btn btn-primary btn-sm' onclick='setBedModal(this)' data-id='$r->id' data-reassign='false'>
+                            <i class='fa fa-bed'></i> Assign Bed
+                        </button>";
                     }
-                    $str .= "<br>
-                    <button type='button' class='btn btn-primary' onclick='setBillModal(this)' data-id='$r->id' data-days = '$days'
-                    data-bed='<b>Bed</b>:" . $r->bed->name . " <b>Ward</b>: " .  $r->bed->ward . " <b>Unit</b>: " . $r->bed->unit . "' data-price='" . $r->bed->price . "'>
-                        <i class='fa fa-dollar'></i> Bill/ Release Bed
-                    </button><br>";
+
+                    if ($r->bed_id != null) {
+                        $days = date_diff(date_create($r->discharge_date ?? now()), date_create($r->bed_assign_date))->days;
+                        if ($days < 1) $days = 1;
+                        $str .= "<button type='button' class='btn btn-info btn-sm' onclick='setBillModal(this)' data-id='$r->id' data-days='$days'
+                            data-bed='<b>Bed</b>:" . $r->bed->name . " <b>Ward</b>: " . $r->bed->ward . " <b>Unit</b>: " . $r->bed->unit . "' data-price='" . $r->bed->price . "'>
+                            <i class='fa fa-dollar'></i> Bill & Release Bed
+                        </button>";
+                    }
+                    
+                    $url_discharge = route('discharge-patient', $r->id);
+                    $str .= '<a href="' . $url_discharge . '" class="btn btn-warning btn-sm" onclick="return confirm(\'Are you sure you want to discharge this patient?\')">
+                        <i class="fa fa-sign-out-alt"></i> Discharge
+                    </a>';
+                    $str .= '</div>';
                 }
 
-                if ($r->discharged == false) {
-                    $str .= '<br><a href="' . $url_discharge . '" class="btn btn-danger btn-sm" ><i class="fa fa-minus"></i> Discharge</a><br>';
-                }
-
-                if ($r->discharged == true && $r->bed_id != null && $r->billed_by != null) {
-                    $str .= '<br><a href="#" class="btn btn-secondary btn-sm" ><i class="fa fa-minus"></i> Discharged</a><br>';
-                }
+                $str .= '</div>'; // Close card-body
+                $str .= '</div>'; // Close card
 
                 return $str;
             })
-            ->editColumn('bed_id', function ($r) {
-                $str = "<small>";
-                $str .= "<b >Bed</b>: " . (($r->bed) ? $r->bed->name : 'N/A') . " <b>Ward</b>: " . (($r->bed) ? $r->bed->ward : "N/A") . " <b>Unit</b>: " . ($r->bed->unit ?? "N/A") . "<br>";
-                $str .= "<b >Assigned By</b>: " . (($r->bed_assigned_by) ? (userfullname($r->bed_assigned_by)) : "N/A");
-                $str .= "<br> <b>Date Assigned</b>: " . (($r->bed_assign_date) ? date('h:i a D M j, Y', strtotime($r->bed_assign_date)) : 'N/A') . "<br>";
-                $str .= "<br> <b>Discharged By </b>: " . (($r->discharged_by) ? (userfullname($r->discharged_by)) : "N/A") . " (" . (($r->discharge_date) ? date('h:i a D M j, Y', strtotime($r->discharge_date)) : 'N/A') . ")<br>";
-                $str .= "</small>";
-                return $str;
-            })
-            ->editColumn('doctor_id', function ($r) {
-                return ($r->doctor_id) ? userfullname($r->doctor_id) : 'N/A';
-            })
-            ->editColumn('billed_by', function ($r) {
-                $str = "<small>";
-                $str .= "<b >Biiled by: </b>" . (($r->billed_by) ? userfullname($r->billed_by) : 'N/A') . "<br>Date: " . (($r->billed_date) ? date('h:i a D M j, Y', strtotime($r->billed_date)) : 'N/A') . "<br>";
-                $str .= "</small>";
-                return $str;
-            })
-            ->rawColumns(['bed_id', 'billed_by', 'show'])
+            ->rawColumns(['info'])
             ->make(true);
     }
 
@@ -321,6 +387,46 @@ class AdmissionRequestController extends Controller
         }
     }
 
+    public function dischargePatientApi(Request $request, $admission_req_id)
+    {
+        $request->validate([
+            'discharge_reason' => 'required|string',
+            'discharge_note' => 'required|string',
+        ]);
+
+        try {
+            DB::beginTransaction();
+            $req = AdmissionRequest::where('id', $admission_req_id)->first();
+
+            if (!$req) {
+                return response()->json(['message' => 'Admission request not found'], 404);
+            }
+
+            $req->update([
+                'discharged' => true,
+                'discharged_by' => Auth::id(),
+                'discharge_date' => date('Y-m-d H:i:s'),
+                'discharge_reason' => $request->discharge_reason,
+                'discharge_note' => $request->discharge_note,
+                'followup_instructions' => $request->followup_instructions,
+            ]);
+
+            if ($req->bed_id) {
+                Bed::where('id', $req->bed_id)->update([
+                    'occupant_id' => null,
+                    'status' => 'available'
+                ]);
+            }
+
+            DB::commit();
+            return response()->json(['message' => 'Patient discharged successfully'], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error($e->getMessage(), ['exception' => $e]);
+            return response()->json(['message' => 'An error occurred: ' . $e->getMessage()], 500);
+        }
+    }
+
 
     /**
      * Show the form for creating a new resource.
@@ -340,7 +446,57 @@ class AdmissionRequestController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'patient_id' => 'required|exists:patients,id',
+            'note' => 'required|string',
+            'admission_reason' => 'nullable|string',
+            'bed_id' => 'nullable|exists:beds,id',
+            'priority' => 'nullable|in:routine,urgent,emergency',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $admissionRequest = AdmissionRequest::create([
+                'patient_id' => $request->patient_id,
+                'encounter_id' => $request->encounter_id,
+                'doctor_id' => $request->doctor_id ?? Auth::id(),
+                'note' => $request->note,
+                'admission_reason' => $request->admission_reason,
+                'bed_id' => $request->bed_id,
+                'priority' => $request->priority ?? 'routine',
+                'status' => 1,
+            ]);
+
+            // If bed is assigned, update bed occupant
+            if ($request->bed_id) {
+                Bed::where('id', $request->bed_id)->update([
+                    'occupant_id' => $request->patient_id,
+                    'status' => 'occupied'
+                ]);
+                $admissionRequest->update([
+                    'bed_assign_date' => now(),
+                    'bed_assigned_by' => Auth::id()
+                ]);
+            }
+
+            DB::commit();
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Admission request created successfully'], 201);
+            }
+
+            return back()->withMessage('Admission request created successfully')->withMessageType('success');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error($e->getMessage(), ['exception' => $e]);
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Error creating admission request: ' . $e->getMessage()], 500);
+            }
+
+            return redirect()->back()->withMessage('An error occurred: ' . $e->getMessage())->withMessageType('error');
+        }
     }
 
     /**
