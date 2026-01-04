@@ -104,7 +104,7 @@
                         </div>
                     </div>
 
-                    <div class="diagnosis-fields-wrapper {{ (request()->get('queue_id') == 'ward_round' || request()->get('queue_id') === null) ? 'collapsed' : '' }}" id="diagnosisFields" style="{{ (request()->get('queue_id') == 'ward_round' || request()->get('queue_id') === null) ? 'display: none;' : '' }}">
+                    <div class="diagnosis-fields-wrapper collapsed" id="diagnosisFields" style="display: none;">
                         <div class="form-group">
                             <label for="reasons_for_encounter_search">
                                 Search ICPC-2 Reason(s) for Encounter/Diagnosis <span class="text-danger">*</span>
@@ -170,14 +170,20 @@
 
                 <br>
                 <div class="d-flex justify-content-between align-items-center">
-                    <button type="button" onclick="switch_tab(event,'nursing_notes_tab')"
+                    <button type="button" onclick="switch_tab(event,'nurse_charts_tab')"
                         class="btn btn-secondary">
-                        <i class="fa fa-arrow-left"></i> Prev
+                        <i class="fa fa-arrow-left"></i> Previous
                     </button>
-                    <button type="button" onclick="saveDiagnosis()" id="save_diagnosis_btn"
-                        class="btn btn-success">
-                        <i class="fa fa-save"></i> Save
-                    </button>
+                    <div>
+                        <button type="button" onclick="saveDiagnosisAndNext()" id="save_diagnosis_next_btn"
+                            class="btn btn-success me-2">
+                            <i class="fa fa-save"></i> Save & Next
+                        </button>
+                        <button type="button" onclick="saveDiagnosis()" id="save_diagnosis_btn"
+                            class="btn btn-outline-success">
+                            <i class="fa fa-save"></i> Save
+                        </button>
+                    </div>
                 </div>
                 <div id="diagnosis_save_message" class="mt-2"></div>
             </div>
@@ -459,36 +465,17 @@ function searchReasons(query) {
 }
 
 $(document).ready(function() {
-    // Initialize diagnosis fields state on page load
-    function initializeDiagnosisFields() {
+    // Listen for when Clinical Notes tab is shown
+    $('#clinical_notes_tab').on('shown.bs.tab', function() {
+        const isWardRound = {{ (request()->get('queue_id') == 'ward_round' || request()->get('queue_id') === null) ? 'true' : 'false' }};
+        const requireDiagnosis = {{ appsettings('requirediagnosis', 0) ? 'true' : 'false' }};
         const $checkbox = $('#diagnosisApplicable');
-        const $diagnosisFields = $('#diagnosisFields');
 
-        if ($checkbox.is(':checked')) {
-            // Remove all hiding classes and inline styles
-            $diagnosisFields.removeClass('collapsed hidden');
-            $diagnosisFields.removeAttr('style');
-            $diagnosisFields.css('display', 'block');
-            $('#reasons_for_encounter_comment_1').prop('required', true);
-            $('#reasons_for_encounter_comment_2').prop('required', true);
-        } else {
-            $diagnosisFields.addClass('collapsed').css('display', 'none');
-            $('#reasons_for_encounter_comment_1').prop('required', false).val('NA');
-            $('#reasons_for_encounter_comment_2').prop('required', false).val('NA');
+        // If not ward round and diagnosis is required, trigger the toggle
+        if (!isWardRound && requireDiagnosis && !$checkbox.is(':checked')) {
+            $checkbox.trigger('click');
         }
-    }
-
-    // Initialize on page load
-    initializeDiagnosisFields();
-
-    // Auto-toggle diagnosis if required and not ward round
-    const isWardRound = {{ (request()->get('queue_id') == 'ward_round' || request()->get('queue_id') === null) ? 'true' : 'false' }};
-    const requireDiagnosis = {{ appsettings('requirediagnosis', 0) ? 'true' : 'false' }};
-
-    if (!isWardRound && requireDiagnosis) {
-        // Trigger click to activate toggle and show fields
-        $('#diagnosisApplicable').trigger('click');
-    }
+    });
 
     // Toggle diagnosis fields
     $('#diagnosisApplicable').change(function() {

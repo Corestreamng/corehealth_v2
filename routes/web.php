@@ -177,6 +177,16 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('investQueueList', [LabServiceRequestController::class, 'investQueueList'])->name('investQueueList');
         Route::get('investHistoryList', [LabServiceRequestController::class, 'investHistoryList'])->name('investHistoryList');
 
+        // Lab Workbench Routes
+        Route::get('/lab-workbench', [\App\Http\Controllers\LabWorkbenchController::class, 'index'])->name('lab.workbench');
+        Route::get('/lab-workbench/patient-search', [\App\Http\Controllers\LabWorkbenchController::class, 'searchPatients'])->name('lab.search-patients');
+        Route::get('/lab-workbench/queue-counts', [\App\Http\Controllers\LabWorkbenchController::class, 'getQueueCounts'])->name('lab.queue-counts');
+        Route::get('/lab-workbench/patient/{id}/requests', [\App\Http\Controllers\LabWorkbenchController::class, 'getPatientRequests'])->name('lab.patient-requests');
+        Route::get('/lab-workbench/patient/{id}/vitals', [\App\Http\Controllers\LabWorkbenchController::class, 'getPatientVitals'])->name('lab.patient-vitals');
+        Route::get('/lab-workbench/patient/{id}/notes', [\App\Http\Controllers\LabWorkbenchController::class, 'getPatientNotes'])->name('lab.patient-notes');
+        Route::get('/lab-workbench/patient/{id}/medications', [\App\Http\Controllers\LabWorkbenchController::class, 'getPatientMedications'])->name('lab.patient-medications');
+        Route::get('/lab-workbench/patient/{id}/clinical-context', [\App\Http\Controllers\LabWorkbenchController::class, 'getClinicalContext'])->name('lab.clinical-context');
+
         // Imaging Service Request Routes
         Route::resource('imaging-requests', ImagingServiceRequestController::class);
         Route::post('bill-imaging', [ImagingServiceRequestController::class, 'bill'])->name('bill-imaging');

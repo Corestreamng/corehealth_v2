@@ -62,7 +62,7 @@
                             <i class="fa fa-bed me-2"></i> Admit Patient
                         </button>
                     @endif
-                    
+
                     <div class="vr mx-2 text-muted"></div>
 
                     <button type="button" class="btn btn-sm text-white d-flex align-items-center shadow-sm" style="background-color: {{ appsettings('hos_color', '#007bff') }};" onclick="$('#concludeEncounterModal').modal('show')">
@@ -76,42 +76,56 @@
     <ul class="nav nav-tabs" id="myTab" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="patient_data_tab" data-bs-toggle="tab" data-bs-target="#patient_data"
-                type="button" role="tab" aria-controls="patient_data" aria-selected="true">Patient Data</button>
+                type="button" role="tab" aria-controls="patient_data" aria-selected="true">
+                <i class="fa fa-user me-1"></i> Patient Data
+            </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="vitals_data_tab" data-bs-toggle="tab" data-bs-target="#vitals" type="button"
-                role="tab" aria-controls="vitals_data" aria-selected="false">Viatals/ Allergies</button>
+                role="tab" aria-controls="vitals_data" aria-selected="false">
+                <i class="fa fa-heartbeat me-1"></i> Vitals/ Allergies
+            </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="nursing_notes_tab" data-bs-toggle="tab" data-bs-target="#nursing_notes"
-                type="button" role="tab" aria-controls="nursing_notes" aria-selected="false">Nursing Notes</button>
+                type="button" role="tab" aria-controls="nursing_notes" aria-selected="false">
+                <i class="fa fa-user-nurse me-1"></i> Nursing Notes
+            </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="nurse_charts_tab" data-bs-toggle="tab" data-bs-target="#nurse_charts"
-                type="button" role="tab" aria-controls="nurse_charts" aria-selected="false">New Nurse Charts</button>
+                type="button" role="tab" aria-controls="nurse_charts" aria-selected="false">
+                <i class="fa fa-notes-medical me-1"></i> New Nurse Charts
+            </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="clinical_notes_tab" data-bs-toggle="tab" data-bs-target="#clinical_notes"
                 type="button" role="tab" aria-controls="clinical_notes" aria-selected="false">
-                <i class="mdi mdi-note-text"></i> Clinical Notes/Diagnosis
+                <i class="mdi mdi-note-text me-1"></i> Clinical Notes/Diagnosis
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="laboratory_services_tab" data-bs-toggle="tab" data-bs-target="#laboratory_services"
                 type="button" role="tab" aria-controls="laboratory_services" aria-selected="false">
-                <i class="fa fa-flask"></i> Laboratory Services
+                <i class="fa fa-flask me-1"></i> Laboratory Services
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="imaging_services_tab" data-bs-toggle="tab" data-bs-target="#imaging_services"
                 type="button" role="tab" aria-controls="imaging_services" aria-selected="false">
-                <i class="fa fa-x-ray"></i> Imaging Services
+                <i class="fa fa-x-ray me-1"></i> Imaging Services
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="medications_tab" data-bs-toggle="tab" data-bs-target="#medications"
                 type="button" role="tab" aria-controls="medications" aria-selected="false">
-                <i class="fa fa-pills"></i> Medications
+                <i class="fa fa-pills me-1"></i> Medications
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="admissions_tab" data-bs-toggle="tab" data-bs-target="#admissions"
+                type="button" role="tab" aria-controls="admissions" aria-selected="false">
+                <i class="fa fa-bed me-1"></i> Admission History
             </button>
         </li>
     </ul>
@@ -352,7 +366,7 @@
                         class="btn btn-secondary mr-2">
                         Prev
                     </button>
-                    <button type="button" onclick="switch_tab(event,'investigation_hist_tab')"
+                    <button type="button" onclick="switch_tab(event,'nursing_notes_tab')"
                         class="btn btn-primary mr-2">Next</button>
                     <a href="{{ route('encounters.index') }}"
                         onclick="return confirm('Are you sure you wish to exit? Changes are yet to be saved')"
@@ -374,6 +388,15 @@
         {{-- Medications: Combined Prescription History + New Prescription --}}
         <div class="tab-pane fade" id="medications" role="tabpanel" aria-labelledby="medications_tab">
             @include('admin.doctors.partials.medications')
+        </div>
+
+        {{-- Admission History --}}
+        <div class="tab-pane fade" id="admissions" role="tabpanel" aria-labelledby="admissions_tab">
+            <div class="card mt-2">
+                <div class="card-body">
+                    @include('admin.patients.partials.admissions')
+                </div>
+            </div>
         </div>
 
         {{-- Clinical Notes/Diagnosis: Combined History + New Entry --}}
@@ -651,7 +674,7 @@
                             </div>
                         </div>
                     </div>
-                    <br><button type="button" onclick="switch_tab(event,'encounter_hist_tab')"
+                    <br><button type="button" onclick="switch_tab(event,'vitals_data_tab')"
                         class="btn btn-secondary mr-2">
                         Prev
                     </button>
@@ -782,7 +805,7 @@
                         <button type="button" onclick="switch_tab(event,'nursing_notes_tab')" class="btn btn-secondary me-2">
                             <i class="mdi mdi-arrow-left me-1"></i> Previous
                         </button>
-                        <button type="button" onclick="switch_tab(event,'my_notes_tab')" class="btn btn-primary">
+                        <button type="button" onclick="switch_tab(event,'clinical_notes_tab')" class="btn btn-primary">
                             Next <i class="mdi mdi-arrow-right ms-1"></i>
                         </button>
                     </div>
@@ -2741,7 +2764,7 @@
         }
 
         // Save Diagnosis
-        function saveDiagnosis() {
+        function saveDiagnosis(showModal = true) {
             setButtonLoading('save_diagnosis_btn', true);
 
             // Get diagnosis from CKEditor if available, otherwise from textarea
@@ -2805,10 +2828,12 @@
                         $('#encounter_history_list').DataTable().ajax.reload(null, false);
                     }
 
-                    // Show conclusion modal after successful save
-                    setTimeout(() => {
-                        $('#concludeEncounterModal').modal('show');
-                    }, 500);
+                    // Show conclusion modal after successful save if requested
+                    if (showModal) {
+                        setTimeout(() => {
+                            $('#concludeEncounterModal').modal('show');
+                        }, 500);
+                    }
                 },
                 error: function(xhr) {
                     let message = 'Error saving diagnosis';
@@ -2825,6 +2850,11 @@
                     setButtonLoading('save_diagnosis_btn', false);
                 }
             });
+        }
+
+        function saveDiagnosisAndNext() {
+            saveDiagnosis(false);
+            setTimeout(() => $('#laboratory_services_tab').click(), 800);
         }
 
         // Save Labs
@@ -2871,7 +2901,7 @@
 
         function saveLabsAndNext() {
             saveLabs();
-            setTimeout(() => $('#imaging_tab').click(), 800);
+            setTimeout(() => $('#imaging_services_tab').click(), 800);
         }
 
         // Save Imaging
@@ -2918,7 +2948,7 @@
 
         function saveImagingAndNext() {
             saveImaging();
-            setTimeout(() => $('#prescription_tab').click(), 800);
+            setTimeout(() => $('#medications_tab').click(), 800);
         }
 
         // Save Prescriptions
@@ -2984,7 +3014,7 @@
 
         function savePrescriptionsAndNext() {
             savePrescriptions();
-            setTimeout(() => $('#admission_tab').click(), 800);
+            setTimeout(() => $('#admissions_tab').click(), 800);
         }
 
         // Finalize Encounter
@@ -3569,6 +3599,32 @@
             }
         });
     }
+    </script>
+
+    <script>
+        $(function() {
+            $('#admission-request-list').DataTable({
+                "dom": 'Bfrtip',
+                "iDisplayLength": 50,
+                "lengthMenu": [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, "All"]
+                ],
+                "buttons": ['pageLength', 'copy', 'excel', 'pdf', 'print', 'colvis'],
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{ route('patient-admission-requests-list', $patient->id) }}",
+                    "type": "GET"
+                },
+                "columns": [{
+                    data: "info",
+                    name: "info",
+                    orderable: false
+                }],
+                "paging": true
+            });
+        });
     </script>
 
     @include('admin.doctors.partials.modals')

@@ -80,7 +80,7 @@
 
         {{-- Navigation Buttons --}}
         <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
-            <button type="button" onclick="switch_tab(event,'my_notes_tab')" class="btn btn-secondary">
+            <button type="button" onclick="switch_tab(event,'clinical_notes_tab')" class="btn btn-secondary">
                 <i class="fa fa-arrow-left"></i> Previous
             </button>
             <div>

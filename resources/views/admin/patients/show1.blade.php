@@ -18,66 +18,89 @@
     <ul class="nav nav-tabs" id="patientTabs" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link {{ !$section || $section == 'patientInfo' ? 'active' : '' }}" id="patientInfo-tab"
-                data-bs-toggle="tab" data-bs-target="#patientInfo" type="button" role="tab">Patient Info</button>
+                data-bs-toggle="tab" data-bs-target="#patientInfo" type="button" role="tab">
+                <i class="fa fa-user me-1"></i> Patient Info
+            </button>
         </li>
         @can('see-vitals')
             <li class="nav-item" role="presentation">
                 <button class="nav-link {{ $section == 'vitalsCardBody' ? 'active' : '' }}" id="vitals-tab"
-                    data-bs-toggle="tab" data-bs-target="#vitalsCardBody" type="button" role="tab">Vitals</button>
+                    data-bs-toggle="tab" data-bs-target="#vitalsCardBody" type="button" role="tab">
+                    <i class="fa fa-heartbeat me-1"></i> Vitals
+                </button>
             </li>
         @endcan
         @can('see-nursing-notes')
             <li class="nav-item" role="presentation">
                 <button class="nav-link {{ $section == 'nurseChartCardBody' ? 'active' : '' }}" id="nurseChart-tab"
-                    data-bs-toggle="tab" data-bs-target="#nurseChartCardBody" type="button" role="tab">New Nurse Chart</button>
+                    data-bs-toggle="tab" data-bs-target="#nurseChartCardBody" type="button" role="tab">
+                    <i class="fa fa-notes-medical me-1"></i> Nurse Chart
+                </button>
             </li>
         @endcan
         @can('see-accounts')
             <li class="nav-item" role="presentation">
                 <button class="nav-link {{ $section == 'accountsCardBody' ? 'active' : '' }}" id="accounts-tab"
-                    data-bs-toggle="tab" data-bs-target="#accountsCardBody" type="button" role="tab">Accounts</button>
+                    data-bs-toggle="tab" data-bs-target="#accountsCardBody" type="button" role="tab">
+                    <i class="fa fa-money-bill-wave me-1"></i> Accounts
+                </button>
             </li>
         @endcan
         @can('see-admissions')
             <li class="nav-item" role="presentation">
                 <button class="nav-link {{ $section == 'addmissionsCardBody' ? 'active' : '' }}" id="admissions-tab"
-                    data-bs-toggle="tab" data-bs-target="#addmissionsCardBody" type="button" role="tab">Admission History</button>
+                    data-bs-toggle="tab" data-bs-target="#addmissionsCardBody" type="button" role="tab">
+                    <i class="fa fa-bed me-1"></i> Admission History
+                </button>
             </li>
         @endcan
         @can('see-procedures')
             <li class="nav-item" role="presentation">
                 <button class="nav-link {{ $section == 'wardNotesCardBody' ? 'active' : '' }}" id="procedures-tab"
-                    data-bs-toggle="tab" data-bs-target="#wardNotesCardBody" type="button" role="tab">Procedure Notes</button>
+                    data-bs-toggle="tab" data-bs-target="#wardNotesCardBody" type="button" role="tab">
+                    <i class="fa fa-procedures me-1"></i> Procedure Notes
+                </button>
             </li>
         @endcan
         @can('see-nursing-notes')
-            <li class="nav-item" role="presentation">
+        <!-- replaced by new nurse notes -->
+            <!-- <li class="nav-item" role="presentation">
                 <button class="nav-link {{ $section == 'nurseingNotesCardBody' ? 'active' : '' }}" id="nursing-tab"
-                    data-bs-toggle="tab" data-bs-target="#nurseingNotesCardBody" type="button" role="tab">Nursing Notes</button>
-            </li>
+                    data-bs-toggle="tab" data-bs-target="#nurseingNotesCardBody" type="button" role="tab">
+                    <i class="fa fa-user-nurse me-1"></i> Nursing Notes
+                </button>
+            </li> -->
         @endcan
         @can('see-doctor-notes')
             <li class="nav-item" role="presentation">
                 <button class="nav-link {{ $section == 'doctorNotesCardBody' ? 'active' : '' }}" id="doctor-tab"
-                    data-bs-toggle="tab" data-bs-target="#doctorNotesCardBody" type="button" role="tab">Doctor Notes</button>
+                    data-bs-toggle="tab" data-bs-target="#doctorNotesCardBody" type="button" role="tab">
+                    <i class="fa fa-stethoscope me-1"></i> Doctor Notes
+                </button>
             </li>
         @endcan
         @can('see-prescriptions')
             <li class="nav-item" role="presentation">
                 <button class="nav-link {{ $section == 'prescriptionsNotesCardBody' ? 'active' : '' }}" id="prescriptions-tab"
-                    data-bs-toggle="tab" data-bs-target="#prescriptionsNotesCardBody" type="button" role="tab">Prescriptions</button>
+                    data-bs-toggle="tab" data-bs-target="#prescriptionsNotesCardBody" type="button" role="tab">
+                    <i class="fa fa-pills me-1"></i> Prescriptions
+                </button>
             </li>
         @endcan
         @can('see-investigations')
             <li class="nav-item" role="presentation">
                 <button class="nav-link {{ $section == 'investigationsCardBody' ? 'active' : '' }}" id="investigations-tab"
-                    data-bs-toggle="tab" data-bs-target="#investigationsCardBody" type="button" role="tab">Investigations</button>
+                    data-bs-toggle="tab" data-bs-target="#investigationsCardBody" type="button" role="tab">
+                    <i class="fa fa-flask me-1"></i> Investigations
+                </button>
             </li>
         @endcan
         @can('see-investigations')
             <li class="nav-item" role="presentation">
                 <button class="nav-link {{ $section == 'imagingCardBody' ? 'active' : '' }}" id="imaging-tab"
-                    data-bs-toggle="tab" data-bs-target="#imagingCardBody" type="button" role="tab">Imaging</button>
+                    data-bs-toggle="tab" data-bs-target="#imagingCardBody" type="button" role="tab">
+                    <i class="fa fa-x-ray me-1"></i> Imaging
+                </button>
             </li>
         @endcan
     </ul>
@@ -124,13 +147,14 @@
                 </div>
             </div>
         @endcan
-        @can('see-nursing-notes')
+        <!-- replaced by new enhbced nurse  notes -->
+        <!-- @can('see-nursing-notes')
             <div class="tab-pane fade {{ $section == 'nurseingNotesCardBody' ? 'show active' : '' }}" id="nurseingNotesCardBody" role="tabpanel">
                 <div class="card">
                     <div class="card-body">@include('admin.patients.partials.nurse_notes')</div>
                 </div>
             </div>
-        @endcan
+        @endcan -->
         @can('see-doctor-notes')
             <div class="tab-pane fade {{ $section == 'doctorNotesCardBody' ? 'show active' : '' }}" id="doctorNotesCardBody" role="tabpanel">
                 <div class="card">
