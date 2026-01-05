@@ -2,7 +2,15 @@
 
 @section('title', 'Lab Workbench')
 
+@push('styles')
+<link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
+@endpush
+
 @section('content')
+@php
+    $hosColor = appsettings()->hos_color ?? '#0066cc';
+    $sett = appsettings();
+@endphp
 <style>
     :root {
         --hospital-primary: {{ appsettings('hos_color', '#007bff') }};
@@ -16,9 +24,8 @@
     /* Main Layout */
     .lab-workbench-container {
         display: flex;
-        height: calc(100vh - 100px);
+        min-height: calc(100vh - 100px);
         gap: 0;
-        overflow: hidden;
     }
 
     /* Left Panel - Patient Search */
@@ -272,6 +279,126 @@
         gap: 0.5rem;
     }
 
+    .btn-expand-patient {
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 2rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        text-transform: lowercase;
+        font-weight: 500;
+    }
+
+    .btn-expand-patient:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+    }
+
+    .btn-expand-patient.expanded i {
+        transform: rotate(180deg);
+    }
+
+    .patient-details-expanded {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-out;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        margin-top: 0;
+    }
+
+    .patient-details-expanded.show {
+        max-height: 1000px;
+        margin-top: 1rem;
+        padding-top: 1rem;
+    }
+
+    .patient-details-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        padding: 0.5rem 0;
+    }
+
+    .patient-detail-item {
+        background: rgba(255, 255, 255, 0.15);
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .patient-detail-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        opacity: 0.8;
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+    }
+
+    .patient-detail-value {
+        font-size: 0.95rem;
+        font-weight: 500;
+        word-break: break-word;
+    }
+
+    .patient-detail-item.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .patient-detail-value.text-content {
+        max-height: 100px;
+        overflow-y: auto;
+        line-height: 1.5;
+        font-size: 0.9rem;
+    }
+
+    .patient-detail-value.text-content::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .patient-detail-value.text-content::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+    }
+
+    .patient-detail-value.text-content::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 3px;
+    }
+
+    .patient-detail-value.text-content::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.5);
+    }
+
+    .allergies-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    .allergy-tag {
+        background: rgba(220, 53, 69, 0.2);
+        border: 1px solid rgba(220, 53, 69, 0.5);
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .allergy-tag i {
+        font-size: 0.75rem;
+    }
+
     .toggle-clinical-btn {
         background: rgba(255, 255, 255, 0.2);
         border: 2px solid rgba(255, 255, 255, 0.5);
@@ -314,6 +441,261 @@
         margin-bottom: 1.5rem;
     }
 
+    /* Queue View */
+    .queue-view {
+        flex: 1;
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .queue-view.active {
+        display: flex;
+    }
+
+    .queue-view-header {
+        padding: 1rem 1.5rem;
+        background: var(--hospital-primary);
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .queue-view-header h4 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .btn-close-queue {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-close-queue:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    .queue-view-content {
+        flex: 1;
+        overflow: auto;
+        padding: 1rem;
+        background: #f8f9fa;
+    }
+
+    /* Queue Card Styling */
+    .queue-card {
+        background: white;
+        border-radius: 0.75rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        transition: all 0.2s;
+    }
+
+    .queue-card:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .queue-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .queue-card-patient {
+        flex: 1;
+    }
+
+    .queue-card-patient-name {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 0.25rem;
+    }
+
+    .queue-card-patient-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+
+    .queue-card-patient-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .queue-card-service {
+        padding: 0.375rem 0.75rem;
+        background: var(--hospital-primary);
+        color: white;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .queue-card-body {
+        margin-bottom: 1rem;
+    }
+
+    .queue-card-status-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .queue-card-status-item {
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        background: #f8f9fa;
+    }
+
+    .queue-card-status-item.completed {
+        background: #d4edda;
+        border-left: 4px solid #28a745;
+    }
+
+    .queue-card-status-item.pending {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+    }
+
+    .queue-card-status-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
+
+    .queue-card-status-value {
+        font-size: 0.875rem;
+        color: #2c3e50;
+    }
+
+    .queue-card-note {
+        padding: 0.75rem;
+        background: #e7f3ff;
+        border-left: 4px solid #007bff;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        font-size: 0.875rem;
+    }
+
+    .queue-card-note-label {
+        font-weight: 700;
+        color: #007bff;
+        margin-bottom: 0.25rem;
+    }
+
+    .queue-card-attachments {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .queue-card-attachment {
+        padding: 0.375rem 0.75rem;
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        text-decoration: none;
+        color: #495057;
+        transition: all 0.2s;
+    }
+
+    .queue-card-attachment:hover {
+        background: #e9ecef;
+        border-color: #adb5bd;
+    }
+
+    /* Queue View */
+    .queue-view {
+        flex: 1;
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .queue-view.active {
+        display: flex;
+    }
+
+    .queue-view-header {
+        padding: 1rem 1.5rem;
+        background: white;
+        border-bottom: 2px solid #dee2e6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .queue-view-header h4 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-close-queue {
+        padding: 0.5rem 1rem;
+        background: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s;
+    }
+
+    .btn-close-queue:hover {
+        background: #5a6268;
+    }
+
+    .queue-view-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1.5rem;
+        background: #f8f9fa;
+    }
+
+    .queue-card-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .queue-card-actions .btn {
+        flex: 1;
+        min-width: 150px;
+    }
+
     /* Workspace Content */
     .workspace-content {
         flex: 1;
@@ -321,6 +703,7 @@
         flex-direction: column;
         overflow: hidden;
         display: none;
+        min-height: 0;
     }
 
     .workspace-content.active {
@@ -331,6 +714,21 @@
         display: flex;
         border-bottom: 2px solid #dee2e6;
         background: #f8f9fa;
+        flex-shrink: 0;
+        overflow-x: auto;
+        overflow-y: hidden;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+
+    .workspace-tabs::-webkit-scrollbar {
+        height: 4px;
+    }
+
+    .workspace-tabs::-webkit-scrollbar-thumb {
+        background: #dee2e6;
+        border-radius: 4px;
     }
 
     .workspace-tab {
@@ -345,6 +743,8 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        white-space: nowrap;
+        flex-shrink: 0;
     }
 
     .workspace-tab:hover {
@@ -370,12 +770,72 @@
     .workspace-tab-content {
         flex: 1;
         overflow-y: auto;
-        padding: 1.5rem;
+        overflow-x: hidden;
+        padding: 0;
+        padding-bottom: 4rem;
         display: none;
+        min-height: 0;
     }
 
     .workspace-tab-content.active {
         display: block;
+    }
+
+    /* Pending Sub-Tabs */
+    .pending-subtabs {
+        display: flex;
+        background: white;
+        border-bottom: 1px solid #dee2e6;
+        padding: 0.5rem 1rem;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .pending-subtab {
+        padding: 0.5rem 1rem;
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #495057;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .pending-subtab:hover {
+        background: #e9ecef;
+        border-color: #adb5bd;
+    }
+
+    .pending-subtab.active {
+        background: var(--hospital-primary);
+        color: white;
+        border-color: var(--hospital-primary);
+    }
+
+    .subtab-badge {
+        background: rgba(0, 0, 0, 0.2);
+        color: white;
+        padding: 0.125rem 0.5rem;
+        border-radius: 1rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        min-width: 1.5rem;
+        text-align: center;
+    }
+
+    .pending-subtab:not(.active) .subtab-badge {
+        background: #6c757d;
+        color: white;
+    }
+
+    .pending-subtab-content {
+        padding: 1.5rem;
+        overflow-y: auto;
     }
 
     /* Right Panel - Clinical Context */
@@ -638,6 +1098,17 @@
     .note-doctor i {
         color: var(--hospital-primary);
         font-size: 1.1rem;
+    }
+
+    .specialty-tag {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 0.25rem;
+        font-size: 0.7rem;
+        font-weight: 500;
+        margin-left: 0.5rem;
     }
 
     .note-diagnosis {
@@ -1091,6 +1562,69 @@
         background: rgba(0, 123, 255, 0.05);
     }
 
+    /* DataTables Custom Styling */
+    .clinical-panel-body .dataTables_wrapper {
+        width: 100%;
+    }
+
+    .clinical-panel-body table.dataTable {
+        width: 100% !important;
+        margin: 0 !important;
+    }
+
+    .clinical-panel-body table.dataTable thead {
+        display: none;
+    }
+
+    .clinical-panel-body table.dataTable tbody tr {
+        background: transparent;
+        border: none;
+    }
+
+    .clinical-panel-body table.dataTable tbody td {
+        padding: 0;
+        border: none;
+    }
+
+    .medications-header {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .medication-filters-container {
+        order: 1;
+    }
+
+    .allergy-banner {
+        order: 0;
+    }
+
+    .dataTables_filter {
+        order: 2;
+        margin: 0;
+    }
+
+    .dataTables_filter label {
+        width: 100%;
+        margin: 0;
+    }
+
+    .dataTables_filter input {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+        font-size: 0.85rem;
+    }
+
+    .dataTables_filter input:focus {
+        outline: none;
+        border-color: var(--hospital-primary);
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+
     /* Footer */
     .lab-footer {
         padding: 0.75rem 1.5rem;
@@ -1158,37 +1692,755 @@
         }
     }
 
-    /* Responsive */
-    @media (max-width: 1366px) {
+    /* Tooltips for vitals */
+    .vital-tooltip {
+        position: absolute;
+        background: #2d3748;
+        color: white;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.85rem;
+        z-index: 1000;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s;
+        min-width: 200px;
+    }
+
+    .vital-tooltip.active {
+        opacity: 1;
+    }
+
+    .vital-item {
+        position: relative;
+        cursor: help;
+    }
+
+    /* Enhanced vital status colors */
+    .vital-critical {
+        background: linear-gradient(135deg, #fee 0%, #fcc 100%);
+        border-left: 4px solid var(--danger);
+    }
+
+    .vital-warning {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        border-left: 4px solid var(--warning);
+    }
+
+    .vital-normal {
+        background: linear-gradient(135deg, #d4edda 0%, #c3f7cf 100%);
+        border-left: 4px solid var(--success);
+    }
+
+    /* Allergy alert banner */
+    .allergy-alert {
+        background: linear-gradient(135deg, #ffe5e5 0%, #ffcccc 100%);
+        border: 2px solid #ff4444;
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    .allergy-alert-icon {
+        font-size: 1.5rem;
+        color: #ff4444;
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.4);
+        }
+        50% {
+            box-shadow: 0 0 0 10px rgba(255, 68, 68, 0);
+        }
+    }
+
+    /* Medication search box */
+    .panel-search-box {
+        padding: 0.5rem;
+        border-bottom: 1px solid #dee2e6;
+        background: #f8f9fa;
+    }
+
+    .panel-search-box input {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        font-size: 0.9rem;
+    }
+
+    /* Enhanced medication status badges */
+    .medication-status-badge.status-active {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        font-weight: 600;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+    }
+
+    .medication-status-badge.status-stopped {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        font-weight: 600;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+    }
+
+    .medication-status-badge.status-long-term {
+        background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+        color: #212529;
+        font-weight: 600;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+    }
+
+    /* Clinical panel refresh animation */
+    .clinical-panel-btn.refreshing {
+        animation: spin 0.6s linear infinite;
+    }
+
+    /* Modal overlay for small screens */
+    .clinical-modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+    }
+
+    .clinical-modal-overlay.active {
+        display: block;
+    }
+
+    /* ============================================
+       NEW REQUEST FORM STYLES
+       ============================================ */
+
+    .new-request-container {
+        padding: 1.5rem;
+    }
+
+    .new-request-header {
+        margin-bottom: 2rem;
+    }
+
+    .new-request-header h4 {
+        color: var(--hospital-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .new-request-form {
+        background: white;
+        padding: 2rem;
+        border-radius: 0.5rem;
+        border: 1px solid #dee2e6;
+    }
+
+    #service-search-results {
+        border: 1px solid #dee2e6;
+        border-top: none;
+        background: white;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    #service-search-results .list-group-item {
+        cursor: pointer;
+        border-left: 3px solid transparent;
+        transition: all 0.2s;
+    }
+
+    #service-search-results .list-group-item:hover {
+        background: #f0f8ff;
+        border-left-color: var(--hospital-primary);
+    }
+
+    .selected-service-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .selected-service-info {
+        flex: 1;
+    }
+
+    .selected-service-name {
+        font-weight: 600;
+        color: #212529;
+    }
+
+    .selected-service-code {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+
+    .selected-service-price {
+        font-weight: 600;
+        color: var(--hospital-primary);
+        margin-right: 1rem;
+    }
+
+    .btn-remove-service {
+        color: var(--danger);
+        border: none;
+        background: none;
+        cursor: pointer;
+        padding: 0.25rem 0.5rem;
+    }
+
+    .btn-remove-service:hover {
+        color: darkred;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #dee2e6;
+    }
+
+    /* ============================================
+       REPORTS STYLES
+       ============================================ */
+
+    .reports-container {
+        padding: 1.5rem;
+    }
+
+    .reports-header {
+        margin-bottom: 2rem;
+    }
+
+    .reports-header h4 {
+        color: var(--hospital-primary);
+    }
+
+    .reports-filter-panel {
+        border: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .reports-filter-panel .card-header {
+        background: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .stat-card {
+        border: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-card .card-body {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.5rem;
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.8rem;
+    }
+
+    .stat-content h3 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 700;
+        color: #212529;
+    }
+
+    .stat-content p {
+        margin: 0;
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    #reports-datatable th {
+        font-weight: 600;
+        background: #f8f9fa;
+    }
+
+    /* Reports Sub-tabs */
+    #reports-tabs .nav-link {
+        color: #6c757d;
+        border: none;
+        border-bottom: 2px solid transparent;
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+    }
+
+    #reports-tabs .nav-link:hover {
+        border-color: #dee2e6;
+        color: #495057;
+    }
+
+    #reports-tabs .nav-link.active {
+        color: {{ $hosColor }};
+        border-bottom-color: {{ $hosColor }};
+        background: transparent;
+    }
+
+    /* DataTable mobile responsiveness */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        max-width: 100%;
+    }
+
+    @media (max-width: 767px) {
+        #reports-datatable {
+            font-size: 0.875rem;
+        }
+
+        #reports-datatable th,
+        #reports-datatable td {
+            white-space: nowrap;
+            padding: 0.5rem;
+        }
+    }
+
+    /* ============================================
+       SIMPLE RESPONSIVE LAYOUT - MOBILE FIRST
+       ============================================ */
+
+    /* Mobile: Show only one pane at a time */
+    @media (max-width: 767px) {
         .left-panel {
-            width: 25%;
+            display: block;
+            width: 100%;
         }
 
         .main-workspace {
+            display: none;
+            width: 100%;
+            height: calc(100vh - 100px);
+        }
+
+        .main-workspace.active {
+            display: flex;
+        }
+
+        .left-panel.hidden {
+            display: none;
+        }
+
+        .workspace-navbar {
+            display: flex !important;
+        }
+
+        .btn-back-to-search {
+            display: flex !important;
+        }
+
+        .btn-toggle-search {
+            display: none !important;
+        }
+
+        .btn-view-work-pane {
+            display: flex !important;
+            align-items: center;
+        }
+
+        .vital-entry-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .workspace-tab-content {
+            max-height: calc(100vh - 250px);
+            overflow-y: auto;
+        }
+
+        #history-tab .dataTables_wrapper {
+            overflow-x: auto;
+        }
+
+        #history-tab table.dataTable {
+            font-size: 0.85rem;
+        }
+    }
+
+    /* Tablet & Desktop: Show both panes side by side */
+    @media (min-width: 768px) {
+        .left-panel {
+            display: flex;
+            width: 300px;
+            min-width: 300px;
+        }
+
+        .left-panel.hidden {
+            display: none;
+        }
+
+        .main-workspace {
+            display: block;
             flex: 1;
         }
 
-        .right-panel {
-            width: 20%;
+        .workspace-navbar {
+            display: flex !important;
+        }
+
+        .btn-back-to-search {
+            display: none !important;
+        }
+
+        .btn-toggle-search {
+            display: flex !important;
         }
     }
 
-    @media (max-width: 1024px) {
-        .right-panel {
-            position: fixed;
-            right: 0;
-            top: 0;
-            bottom: 0;
-            width: 350px;
-            z-index: 1000;
-            box-shadow: -4px 0 8px rgba(0, 0, 0, 0.1);
+    /* Mobile Responsive: Queue cards */
+    @media (max-width: 768px) {
+        .queue-card-status-row {
+            grid-template-columns: 1fr;
+        }
+
+        .queue-card-patient-meta {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .queue-card-header {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .queue-card-service {
+            align-self: flex-start;
+        }
+
+        .queue-card-actions {
+            flex-direction: column;
+        }
+
+        .queue-card-actions .btn {
+            min-width: 100%;
+        }
+
+        .queue-view-header h4 {
+            font-size: 1rem;
+        }
+
+        .btn-close-queue {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
         }
     }
+
+    /* Workspace Navbar */
+    .workspace-navbar {
+        display: none;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        background: white;
+        border-bottom: 1px solid #dee2e6;
+        gap: 1rem;
+    }
+
+    .workspace-navbar-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-back-to-search,
+    .btn-toggle-search,
+    .btn-clinical-context {
+        display: none;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+        background: white;
+        color: #495057;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-back-to-search:hover,
+    .btn-toggle-search:hover {
+        background: #f8f9fa;
+        border-color: #adb5bd;
+    }
+
+    .btn-clinical-context {
+        display: flex;
+        background: var(--hospital-primary);
+        color: white;
+        border-color: var(--hospital-primary);
+    }
+
+    .btn-clinical-context:hover {
+        background: #0056b3;
+        border-color: #0056b3;
+        color: white;
+    }
+
+    .panel-header {
+        padding: 1rem;
+        background: var(--hospital-primary);
+        color: white;
+        border-bottom: 2px solid #dee2e6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .panel-header h5 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .btn-view-work-pane {
+        display: none;
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-view-work-pane:hover {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.8);
+    }
+
+    .btn-view-work-pane i {
+        margin-right: 0.25rem;
+    }
+
+    /* Clinical Context Modal Styling */
+    #clinical-context-modal .modal-dialog {
+        max-width: 90vw;
+    }
+
+    #clinical-context-modal .modal-body {
+        padding: 0;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    #clinical-tabs {
+        border-bottom: 1px solid #dee2e6;
+        background: #f8f9fa;
+        padding: 0.5rem 1rem 0 1rem;
+    }
+
+    #clinical-tabs .nav-link {
+        border: none;
+        color: #6c757d;
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        border-radius: 0.5rem 0.5rem 0 0;
+        transition: all 0.2s;
+    }
+
+    #clinical-tabs .nav-link:hover {
+        background: #e9ecef;
+        color: #495057;
+    }
+
+    #clinical-tabs .nav-link.active {
+        background: white;
+        color: var(--hospital-primary);
+        border-bottom: 2px solid var(--hospital-primary);
+    }
+
+    .clinical-tab-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .clinical-tab-header h6 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #212529;
+    }
+
+    .clinical-tab-body {
+        padding: 1rem;
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+
+    .refresh-clinical-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Medications Cards - Prevent fullscreen breakout */
+    #medications-list-container {
+        position: relative;
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    #medications-list-container .medication-card,
+    #medications-list-container .card {
+        position: relative !important;
+        width: auto !important;
+        max-width: 100% !important;
+        height: auto !important;
+        transform: none !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        bottom: auto !important;
+    }
+
+    #medications-list-container * {
+        position: relative !important;
+        max-width: 100% !important;
+    }
+
+    /* History Tab DataTable Fix */
+    #history-tab {
+        padding: 1rem;
+        padding-bottom: 2rem;
+        position: relative;
+    }
+
+    .history-table-wrapper {
+        max-width: 100%;
+        position: relative;
+    }
+
+    #history-tab .dataTables_wrapper {
+        max-width: 100%;
+        position: relative !important;
+    }
+
+    #history-tab .dataTables_wrapper .bottom {
+        margin-top: 1rem;
+        padding: 0.5rem;
+    }
+
+    #history-tab .dataTables_info,
+    #history-tab .dataTables_paginate {
+        margin-top: 0.5rem;
+    }
+
+    #history-tab table.dataTable {
+        width: 100% !important;
+        position: relative !important;
+        transform: none !important;
+    }
+
+    #history-tab table.dataTable tbody td {
+        position: relative !important;
+        max-width: 100%;
+        transform: none !important;
+    }
+
+    #history-tab table.dataTable tbody tr {
+        position: relative !important;
+        transform: none !important;
+    }
+
+    /* Disable DataTables responsive expansion */
+    #history-tab table.dataTable.dtr-inline.collapsed > tbody > tr > td.dtr-control:before,
+    #history-tab table.dataTable.dtr-inline.collapsed > tbody > tr > th.dtr-control:before {
+        display: none !important;
+    }
+
+    #history-tab table.dataTable.dtr-inline.collapsed > tbody > tr.parent > td.dtr-control:before,
+    #history-tab table.dataTable.dtr-inline.collapsed > tbody > tr.parent > th.dtr-control:before {
+        display: none !important;
+    }
+
+    #history-tab table.dataTable > tbody > tr.child {
+        display: none !important;
+    }
+
+    /* Prevent any child elements from going full screen */
+    #history-tab * {
+        max-width: 100% !important;
+    }
+
+    /* Fix for cards going full screen on mobile - Applies to all report cards */
+    .reports-container .card,
+    #top-services-card {
+        position: relative !important;
+        width: auto !important;
+        height: auto !important;
+        transform: none !important;
+        z-index: auto !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        bottom: auto !important;
+    }
+
+    /* Ensure cards inside DataTable don't break out */
+    #history-tab .card,
+    #history-tab .modal,
+    #history-tab [style*="position: fixed"],
+    #history-tab [style*="position: absolute"] {
+        position: relative !important;
+        width: auto !important;
+        height: auto !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        bottom: auto !important;
+        transform: none !important;
+        z-index: auto !important;
+    }
+
 </style>
 
 <div class="lab-workbench-container">
     <!-- Left Panel: Patient Search & Queue -->
-    <div class="left-panel">
+    <div class="left-panel" id="left-panel">
+        <div class="panel-header">
+            <h5><i class="fa fa-search"></i> Patient Search</h5>
+            <button class="btn-view-work-pane" id="btn-view-work-pane" title="View Work Pane">
+                <i class="fa fa-arrow-right"></i> Work Pane
+            </button>
+        </div>
+
         <div class="search-container" style="position: relative;">
             <input type="text"
                    id="patient-search-input"
@@ -1218,43 +2470,337 @@
 
         <div class="quick-actions">
             <h6>⚡ QUICK ACTIONS</h6>
-            <button class="quick-action-btn">
-                <i class="fa fa-plus-circle"></i>
+            <button class="quick-action-btn" id="btn-new-request" style="display: none;">
+                <i class="mdi mdi-plus-circle"></i>
                 <span>New Request</span>
             </button>
-            <button class="quick-action-btn">
-                <i class="fa fa-file-pdf"></i>
+            <button class="quick-action-btn" id="btn-view-reports">
+                <i class="mdi mdi-chart-box-outline"></i>
                 <span>View Reports</span>
             </button>
-            <button class="quick-action-btn">
-                <i class="fa fa-boxes"></i>
-                <span>Inventory</span>
+            <button class="quick-action-btn" disabled style="opacity: 0.5;">
+                <i class="mdi mdi-package-variant"></i>
+                <span>Inventory (Coming Soon)</span>
             </button>
         </div>
     </div>
 
     <!-- Main Workspace -->
-    <div class="main-workspace">
+    <div class="main-workspace" id="main-workspace">
+        <!-- Navigation Bar (Mobile Back Button + Actions) -->
+        <div class="workspace-navbar" id="workspace-navbar">
+            <button class="btn-back-to-search" id="btn-back-to-search">
+                <i class="fa fa-arrow-left"></i> Back to Search
+            </button>
+            <div class="workspace-navbar-actions">
+                <button class="btn-toggle-search" id="btn-toggle-search">
+                    <i class="fa fa-bars"></i> Toggle Search
+                </button>
+                <button class="btn-clinical-context" id="btn-clinical-context">
+                    <i class="fa fa-heartbeat"></i> Clinical Context
+                </button>
+            </div>
+        </div>
+
         <!-- Empty State -->
         <div class="empty-state" id="empty-state">
             <i class="fa fa-flask"></i>
             <h3>Select a patient to begin</h3>
-            <p>Use the search box on the left or view pending queue</p>
+            <p>Use the search box or view pending queue</p>
             <button class="btn btn-lg btn-primary" id="view-queue-btn">
                 📋 View All Pending Requests
             </button>
         </div>
 
+        <!-- Queue View -->
+        <div class="queue-view" id="queue-view">
+            <div class="queue-view-header">
+                <h4 id="queue-view-title"><i class="mdi mdi-format-list-bulleted"></i> Lab Queue</h4>
+                <button class="btn-close-queue" id="btn-close-queue">
+                    <i class="mdi mdi-close"></i> Close
+                </button>
+            </div>
+            <div class="queue-view-content">
+                <table class="table" id="queue-datatable" style="width: 100%">
+                    <thead>
+                        <tr>
+                            <th>Queue Items</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+
+        <!-- Reports View (Full Screen - Global Access) -->
+        <div class="queue-view" id="reports-view">
+            <div class="queue-view-header">
+                <h4><i class="mdi mdi-chart-box"></i> Laboratory Reports & Analytics</h4>
+                <button class="btn btn-secondary btn-close-queue" id="btn-close-reports">
+                    <i class="mdi mdi-close"></i> Close
+                </button>
+            </div>
+            <div class="queue-view-content" style="padding: 1.5rem;">
+                <!-- Filter Panel -->
+                <div class="reports-filter-panel card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="mdi mdi-filter"></i> Filters</h6>
+                    </div>
+                    <div class="card-body">
+                        <form id="reports-filter-form">
+                            <div class="form-row">
+                                <div class="form-group col-md-3">
+                                    <label for="report-date-from"><i class="mdi mdi-calendar"></i> Date From</label>
+                                    <input type="date" class="form-control" id="report-date-from" name="date_from">
+                                </div>
+                                <div class="form-group col-md-3">
+                                    <label for="report-date-to"><i class="mdi mdi-calendar"></i> Date To</label>
+                                    <input type="date" class="form-control" id="report-date-to" name="date_to">
+                                </div>
+                                <div class="form-group col-md-3">
+                                    <label for="report-status-filter"><i class="mdi mdi-filter-variant"></i> Status</label>
+                                    <select class="form-control" id="report-status-filter" name="status">
+                                        <option value="">All Statuses</option>
+                                        <option value="1">Awaiting Billing</option>
+                                        <option value="2">Awaiting Sample</option>
+                                        <option value="3">Awaiting Results</option>
+                                        <option value="4">Completed</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-3">
+                                    <label for="report-service-filter"><i class="mdi mdi-test-tube"></i> Service</label>
+                                    <select class="form-control" id="report-service-filter" name="service_id">
+                                        <option value="">All Services</option>
+                                        <!-- Services will be populated via JS -->
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-4">
+                                    <label for="report-doctor-filter"><i class="mdi mdi-doctor"></i> Requesting Doctor</label>
+                                    <select class="form-control" id="report-doctor-filter" name="doctor_id">
+                                        <option value="">All Doctors</option>
+                                        <!-- Doctors will be populated via JS -->
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-4">
+                                    <label for="report-hmo-filter"><i class="mdi mdi-hospital-building"></i> HMO</label>
+                                    <select class="form-control" id="report-hmo-filter" name="hmo_id">
+                                        <option value="">All HMOs</option>
+                                        <!-- HMOs will be populated via JS -->
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-4">
+                                    <label for="report-patient-search"><i class="mdi mdi-account-search"></i> Patient Search</label>
+                                    <input type="text" class="form-control" id="report-patient-search" name="patient_search" placeholder="File no or name...">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="col-md-12 text-right">
+                                    <button type="button" class="btn btn-secondary" id="clear-report-filters">
+                                        <i class="mdi mdi-refresh"></i> Clear
+                                    </button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="mdi mdi-filter"></i> Apply Filters
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Sub Tabs -->
+                <ul class="nav nav-tabs mb-3" id="reports-tabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="overview-tab" data-toggle="tab" href="#overview-content" role="tab" aria-controls="overview-content" aria-selected="true">
+                            <i class="mdi mdi-view-dashboard"></i> Overview
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="detailed-report-tab" data-toggle="tab" href="#detailed-report-content" role="tab" aria-controls="detailed-report-content" aria-selected="false">
+                            <i class="mdi mdi-table"></i> Detailed Report
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="analytics-tab" data-toggle="tab" href="#analytics-content" role="tab" aria-controls="analytics-content" aria-selected="false">
+                            <i class="mdi mdi-chart-line"></i> Analytics
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content" id="reports-tab-content">
+                    <!-- Overview Tab -->
+                    <div class="tab-pane fade show active" id="overview-content" role="tabpanel" aria-labelledby="overview-tab">
+                        <div class="reports-container">
+                            <!-- Summary Statistics Cards -->
+                            <div class="row mb-4">
+                                <div class="col-md-3">
+                                    <div class="stat-card">
+                                        <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                            <i class="mdi mdi-clipboard-list"></i>
+                                        </div>
+                                        <div class="stat-content">
+                                            <h3 id="stat-total-requests">0</h3>
+                                            <p>Total Requests</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="stat-card">
+                                        <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                                            <i class="mdi mdi-check-circle"></i>
+                                        </div>
+                                        <div class="stat-content">
+                                            <h3 id="stat-completed">0</h3>
+                                            <p>Completed</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="stat-card">
+                                        <div class="stat-icon" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);">
+                                            <i class="mdi mdi-clock"></i>
+                                        </div>
+                                        <div class="stat-content">
+                                            <h3 id="stat-pending">0</h3>
+                                            <p>Pending</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="stat-card">
+                                        <div class="stat-icon" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
+                                            <i class="mdi mdi-timer"></i>
+                                        </div>
+                                        <div class="stat-content">
+                                            <h3 id="stat-avg-tat">0</h3>
+                                            <p>Avg TAT</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Charts and Top Services -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0"><i class="mdi mdi-chart-bar"></i> Requests by Status</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <canvas id="status-chart" height="200"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0"><i class="mdi mdi-chart-line"></i> Monthly Trends</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <canvas id="trends-chart" height="200"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Top Services -->
+                            <div class="row mb-4">
+                                <div class="col-md-12">
+                                    <div class="card" id="top-services-card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0"><i class="mdi mdi-test-tube"></i> Top 10 Lab Services</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="top-services-list">
+                                                <p class="text-muted">Loading...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Report Tab -->
+                    <div class="tab-pane fade" id="detailed-report-content" role="tabpanel" aria-labelledby="detailed-report-tab">
+                        <div class="reports-container">
+                            <!-- DataTable -->
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0"><i class="mdi mdi-table"></i> Detailed Report</h6>
+                                    <div>
+                                        <button class="btn btn-sm btn-success" id="export-excel">
+                                            <i class="mdi mdi-file-excel"></i> Excel
+                                        </button>
+                                        <button class="btn btn-sm btn-danger" id="export-pdf">
+                                            <i class="mdi mdi-file-pdf"></i> PDF
+                                        </button>
+                                        <button class="btn btn-sm btn-info" id="print-report">
+                                            <i class="mdi mdi-printer"></i> Print
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover" id="reports-datatable" style="width: 100%">
+                                            <thead>
+                                                <tr>
+                                                    <th>Date</th>
+                                                    <th>File No</th>
+                                                    <th>Patient</th>
+                                                    <th>Service</th>
+                                                    <th>Doctor</th>
+                                                    <th>HMO</th>
+                                                    <th>Status</th>
+                                                    <th>TAT</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Analytics Tab -->
+                    <div class="tab-pane fade" id="analytics-content" role="tabpanel" aria-labelledby="analytics-tab">
+                        <div class="reports-container">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0"><i class="mdi mdi-doctor"></i> Top Requesting Doctors</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="top-doctors-list">
+                                                <p class="text-muted">Loading...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Patient Header -->
         <div class="patient-header" id="patient-header">
             <div class="patient-header-top">
-                <div>
+                <div style="flex: 1;">
                     <div class="patient-name" id="patient-name"></div>
                     <div class="patient-meta" id="patient-meta"></div>
                 </div>
-                <button class="toggle-clinical-btn" id="toggle-clinical-btn">
-                    📊 Clinical Context ›
+                <button class="btn-expand-patient" id="btn-expand-patient" title="Show more details">
+                    <span class="btn-expand-text">more biodata</span>
+                    <i class="mdi mdi-chevron-down"></i>
                 </button>
+            </div>
+            <div class="patient-details-expanded" id="patient-details-expanded">
+                <div class="patient-details-grid" id="patient-details-grid"></div>
             </div>
         </div>
 
@@ -1262,32 +2808,111 @@
         <div class="workspace-content" id="workspace-content">
             <div class="workspace-tabs">
                 <button class="workspace-tab active" data-tab="pending">
-                    <i class="fa fa-clipboard-list"></i>
+                    <i class="mdi mdi-clipboard-list"></i>
                     <span>Pending</span>
                     <span class="workspace-tab-badge" id="pending-badge">0</span>
                 </button>
                 <button class="workspace-tab" data-tab="new-request">
-                    <i class="fa fa-plus-circle"></i>
+                    <i class="mdi mdi-plus-circle"></i>
                     <span>New Request</span>
                 </button>
                 <button class="workspace-tab" data-tab="history">
-                    <i class="fa fa-history"></i>
+                    <i class="mdi mdi-history"></i>
                     <span>History</span>
                 </button>
             </div>
 
             <div class="workspace-tab-content active" id="pending-tab">
-                <h5>Loading...</h5>
+                <div class="pending-subtabs">
+                    <button class="pending-subtab active" data-status="all">
+                        <i class="mdi mdi-format-list-bulleted"></i>
+                        <span>All Pending</span>
+                        <span class="subtab-badge" id="all-pending-badge">0</span>
+                    </button>
+                    <button class="pending-subtab" data-status="billing">
+                        <i class="mdi mdi-cash-register"></i>
+                        <span>Awaiting Billing</span>
+                        <span class="subtab-badge" id="billing-subtab-badge">0</span>
+                    </button>
+                    <button class="pending-subtab" data-status="sample">
+                        <i class="mdi mdi-test-tube"></i>
+                        <span>Awaiting Sample</span>
+                        <span class="subtab-badge" id="sample-subtab-badge">0</span>
+                    </button>
+                    <button class="pending-subtab" data-status="results">
+                        <i class="mdi mdi-flask"></i>
+                        <span>Awaiting Results</span>
+                        <span class="subtab-badge" id="results-subtab-badge">0</span>
+                    </button>
+                </div>
+                <div class="pending-subtab-content" id="pending-subtab-container">
+                    <h5>Loading...</h5>
+                </div>
             </div>
 
             <div class="workspace-tab-content" id="new-request-tab">
-                <h5>New Request Form</h5>
-                <p>Create new lab request for this patient...</p>
+                <div class="new-request-container">
+                    <div class="new-request-header">
+                        <h4><i class="mdi mdi-plus-circle"></i> Create New Lab Request</h4>
+                        <p class="text-muted">Request investigation for <span id="new-request-patient-name"></span></p>
+                    </div>
+                    <form id="new-lab-request-form" class="new-request-form">
+                        <div class="form-row">
+                            <div class="form-group col-md-12">
+                                <label for="service-search-input"><i class="mdi mdi-magnify"></i> Search Laboratory Services *</label>
+                                <input type="text" class="form-control" id="service-search-input" placeholder="Type to search for lab services..." autocomplete="off">
+                                <ul class="list-group" id="service-search-results" style="display: none; position: absolute; z-index: 1000; max-height: 300px; overflow-y: auto; width: calc(100% - 30px);"></ul>
+                            </div>
+                        </div>
+
+                        <div id="selected-services-container" style="display: none;">
+                            <label><i class="mdi mdi-test-tube"></i> Selected Services</label>
+                            <div id="selected-services-list" class="mb-3"></div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="request-urgency"><i class="mdi mdi-clock-alert"></i> Urgency Level</label>
+                                <select class="form-control" id="request-urgency" name="urgency">
+                                    <option value="routine">Routine</option>
+                                    <option value="urgent">Urgent</option>
+                                    <option value="stat">STAT (Immediate)</option>
+                                </select>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="request-priority"><i class="mdi mdi-flag"></i> Priority</label>
+                                <select class="form-control" id="request-priority" name="priority">
+                                    <option value="normal">Normal</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="request-clinical-notes"><i class="mdi mdi-note-text"></i> Clinical Notes / Indication</label>
+                            <textarea class="form-control" id="request-clinical-notes" name="clinical_notes" rows="4" placeholder="Enter clinical indication, symptoms, or relevant patient history..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="request-special-instructions"><i class="mdi mdi-information"></i> Special Instructions</label>
+                            <textarea class="form-control" id="request-special-instructions" name="special_instructions" rows="2" placeholder="Any special handling or processing instructions..."></textarea>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="switchWorkspaceTab('pending')">
+                                <i class="mdi mdi-close"></i> Cancel
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="mdi mdi-check"></i> Submit Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
 
             <div class="workspace-tab-content" id="history-tab">
                 <h4>Investigation History</h4>
-                <div class="table responsive">
+                <div class="history-table">
                     <table class="table table-hover" style="width: 100%" id="investigation_history_list">
                         <thead class="table-light">
                             <th><i class="mdi mdi-test-tube"></i> Laboratory Requests</th>
@@ -1297,183 +2922,13 @@
             </div>
         </div>
     </div>
-
-    <!-- Right Panel: Clinical Context -->
-    <div class="right-panel" id="right-panel">
-        <div class="right-panel-header">
-            <h5>
-                <i class="fa fa-heartbeat"></i>
-                Clinical Context
-            </h5>
-            <button class="close-panel-btn" id="close-clinical-panel">
-                ×
-            </button>
-        </div>
-        <div class="right-panel-content">
-            <!-- Vitals Panel -->
-            <div class="clinical-panel">
-                <div class="clinical-panel-header" data-panel="vitals">
-                    <h6 class="clinical-panel-title">
-                        <i class="fa fa-heartbeat"></i>
-                        Recent Vitals (10)
-                    </h6>
-                    <div class="clinical-panel-actions">
-                        <button class="clinical-panel-btn refresh-btn" data-panel="vitals" title="Refresh">
-                            <i class="fa fa-sync"></i>
-                        </button>
-                        <button class="clinical-panel-btn collapse-btn" title="Collapse">
-                            <i class="fa fa-chevron-up"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="clinical-panel-body active" id="vitals-panel-body">
-                    <p class="text-muted">Loading vitals...</p>
-                </div>
-            </div>
-
-            <!-- Notes Panel -->
-            <div class="clinical-panel">
-                <div class="clinical-panel-header" data-panel="notes">
-                    <h6 class="clinical-panel-title">
-                        <i class="fa fa-notes-medical"></i>
-                        Doctor Notes (10)
-                    </h6>
-                    <div class="clinical-panel-actions">
-                        <button class="clinical-panel-btn refresh-btn" data-panel="notes" title="Refresh">
-                            <i class="fa fa-sync"></i>
-                        </button>
-                        <button class="clinical-panel-btn collapse-btn" title="Collapse">
-                            <i class="fa fa-chevron-up"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="clinical-panel-body active" id="notes-panel-body">
-                    <p class="text-muted">Loading notes...</p>
-                </div>
-            </div>
-
-            <!-- Medications Panel -->
-            <div class="clinical-panel">
-                <div class="clinical-panel-header" data-panel="medications">
-                    <h6 class="clinical-panel-title">
-                        <i class="fa fa-pills"></i>
-                        Medications (20)
-                    </h6>
-                    <div class="clinical-panel-actions">
-                        <button class="clinical-panel-btn refresh-btn" data-panel="medications" title="Refresh">
-                            <i class="fa fa-sync"></i>
-                        </button>
-                        <button class="clinical-panel-btn collapse-btn" title="Collapse">
-                            <i class="fa fa-chevron-up"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="clinical-panel-body active" id="medications-panel-body">
-                    <p class="text-muted">Loading medications...</p>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
-<!-- Footer -->
-<div class="lab-footer">
-    <div class="sync-indicator" id="sync-indicator">
-        <i class="fa fa-circle" style="color: var(--success);"></i>
-        <span>Last sync: <span id="last-sync-time">Just now</span></span>
-    </div>
-    <div>
-        <span>Server: <strong style="color: var(--success);">Online</strong></span>
-        <span class="mx-2">|</span>
-        <span>Queue refreshing every 30s</span>
-    </div>
-</div>
-
-<!-- Result Entry Modal -->
-<div class="modal fade" id="investResModal" tabindex="-1" role="dialog" aria-labelledby="investResModalLabel"
-    aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <form id="investResForm" action="{{ route('lab.saveResult') }}" method="post" enctype="multipart/form-data">
-                @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title" id="investResModalLabel">Enter Result (<span
-                            id="invest_res_service_name"></span>)</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <!-- V1 Template: WYSIWYG Editor -->
-                    <div id="v1_template_container">
-                        <textarea id="invest_res_template_editor" class="ckeditor"></textarea>
-                    </div>
-
-                    <!-- V2 Template: Structured Form -->
-                    <div id="v2_template_container" style="display: none;">
-                        <div id="v2_form_fields"></div>
-                    </div>
-
-                    <input type="hidden" id="invest_res_entry_id" name="invest_res_entry_id">
-                    <input type="hidden" name="invest_res_template_submited" id="invest_res_template_submited">
-                    <input type="hidden" id="invest_res_template_version" name="invest_res_template_version" value="1">
-                    <input type="hidden" id="invest_res_template_data" name="invest_res_template_data">
-                    <input type="hidden" id="invest_res_is_edit" name="invest_res_is_edit" value="0">
-                    <input type="hidden" id="deleted_attachments" name="deleted_attachments" value="[]">
-
-                    <hr>
-
-                    <!-- Existing Attachments -->
-                    <div id="existing_attachments_container" style="display: none;">
-                        <label><i class="mdi mdi-paperclip"></i> Existing Attachments</label>
-                        <div id="existing_attachments_list" class="mb-3"></div>
-                    </div>
-
-                    <!-- New File Upload -->
-                    <div class="form-group">
-                        <label for="result_attachments"><i class="mdi mdi-file-plus"></i> Add New Files (Optional)</label>
-                        <input type="file" class="form-control" id="result_attachments" name="result_attachments[]" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
-                        <small class="text-muted">You can attach multiple files (PDF, Images, Word documents). Max 10MB per file.</small>
-                    </div>
-
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="submit" id="invest_res_submit_btn"
-                        class="btn btn-primary">Save changes</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Result View Modal -->
+<!-- Investigation Result View Modal -->
 <div class="modal fade" id="investResViewModal" tabindex="-1" role="dialog" aria-labelledby="investResViewModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl" role="document">
         <div class="modal-content">
-            @php
-                $sett = appsettings();
-                $hosColor = $sett->hos_color ?? '#0066cc';
-            @endphp
             <style>
-                #resultViewTable { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; width: 100%; max-width: 100%; }
-                .result-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 3px solid {{ $hosColor }}; }
-                .result-header-left { display: flex; align-items: center; gap: 15px; }
-                .result-logo { width: 70px; height: 70px; object-fit: contain; }
-                .result-hospital-name { font-size: 24px; font-weight: bold; color: {{ $hosColor }}; text-transform: uppercase; }
-                .result-header-right { text-align: right; font-size: 13px; color: #666; line-height: 1.6; }
-                .result-title-section { background: {{ $hosColor }}; color: white; text-align: center; padding: 15px; font-size: 28px; font-weight: bold; letter-spacing: 6px; }
-                .result-patient-info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; background: #f8f9fa; }
-                .result-info-box { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-                .result-info-row { display: flex; padding: 8px 0; border-bottom: 1px solid #eee; }
-                .result-info-row:last-child { border-bottom: none; }
-                .result-info-label { font-weight: 600; color: #333; min-width: 120px; }
-                .result-info-value { color: #666; flex: 1; }
-                .result-section { padding: 20px; }
-                .result-section-title { font-size: 20px; font-weight: bold; color: {{ $hosColor }}; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid {{ $hosColor }}; }
-                .result-table { width: 100% !important; max-width: 100% !important; border-collapse: collapse; margin-top: 15px; table-layout: fixed; }
-                .result-table thead { background: {{ $hosColor }}; color: white; }
-                .result-table th { padding: 12px; text-align: left; font-weight: 600; }
                 .result-table td { padding: 10px 12px; border-bottom: 1px solid #ddd; }
                 .result-table tbody tr:hover { background: #f8f9fa; }
                 .result-table td, .result-table th { word-wrap: break-word; overflow-wrap: break-word; }
@@ -1915,8 +3370,10 @@
 <script>
 // Global state
 let currentPatient = null;
+let currentPatientData = null; // Store full patient data including allergies
 let queueRefreshInterval = null;
 let searchTimeout = null;
+let vitalTooltip = null;
 
 $(document).ready(function() {
     // Initialize
@@ -1924,6 +3381,7 @@ $(document).ready(function() {
     startQueueRefresh();
     initializeEventListeners();
     loadUserPreferences();
+    createVitalTooltip();
 });
 
 function initializeEventListeners() {
@@ -1953,10 +3411,48 @@ function initializeEventListeners() {
         switchWorkspaceTab(tab);
     });
 
-    // Toggle clinical context
-    $('#toggle-clinical-btn, #close-clinical-panel').on('click', toggleClinicalPanel);
+    // Pending sub-tabs
+    $('.pending-subtab').on('click', function() {
+        const status = $(this).data('status');
+        $('.pending-subtab').removeClass('active');
+        $(this).addClass('active');
+        renderPendingSubtabContent(status);
+    });
 
-    // Clinical panel collapse
+    // Navigation buttons
+    $('#btn-back-to-search').on('click', function() {
+        // Mobile: go back to search pane
+        $('#main-workspace').removeClass('active');
+        $('#left-panel').removeClass('hidden');
+    });
+
+    $('#btn-view-work-pane').on('click', function() {
+        // Mobile: switch to work pane without selecting a patient
+        $('#left-panel').addClass('hidden');
+        $('#main-workspace').addClass('active');
+    });
+
+    $('#btn-toggle-search').on('click', function() {
+        // Desktop/Tablet: toggle search pane visibility
+        $('#left-panel').toggleClass('hidden');
+    });
+
+    $('#btn-clinical-context').on('click', function() {
+        // Open clinical context modal
+        $('#clinical-context-modal').modal('show');
+        // Load clinical data if patient selected
+        if (currentPatient) {
+            loadClinicalContext(currentPatient);
+        }
+    });
+
+    // Clinical modal refresh buttons
+    $('.refresh-clinical-btn').on('click', function() {
+        const panel = $(this).data('panel');
+        refreshClinicalPanel(panel);
+    });
+
+    // Clinical panel collapse (legacy - keeping for compatibility)
     $('.clinical-panel-header').on('click', function(e) {
         if (!$(e.target).closest('.clinical-panel-actions').length) {
             $(this).next('.clinical-panel-body').slideToggle(200);
@@ -1964,18 +3460,20 @@ function initializeEventListeners() {
         }
     });
 
-    // Refresh buttons
-    $('.refresh-btn').on('click', function(e) {
-        e.stopPropagation();
-        const panel = $(this).data('panel');
-        refreshClinicalPanel(panel);
-    });
-
-    // Queue filter
+    // Queue filter buttons
     $('.queue-item').on('click', function() {
         const filter = $(this).data('filter');
-        // TODO: Implement filtering
-        console.log('Filter by:', filter);
+        showQueue(filter);
+    });
+
+    // Show all queue button
+    $('#show-all-queue-btn, #view-queue-btn').on('click', function() {
+        showQueue('all');
+    });
+
+    // Close queue button
+    $('#btn-close-queue').on('click', function() {
+        hideQueue();
     });
 }
 
@@ -2035,18 +3533,21 @@ function loadPatient(patientId) {
     $('#workspace-content').addClass('active');
     $('#patient-header').addClass('active');
 
+    // Mobile: Switch to work pane
+    $('#left-panel').addClass('hidden');
+    $('#main-workspace').addClass('active');
+
+    // Update quick actions visibility
+    updateQuickActions();
+
     // Load patient requests
     $.ajax({
         url: `/lab-workbench/patient/${patientId}/requests`,
         method: 'GET',
         success: function(data) {
+            currentPatientData = data.patient; // Store patient data including allergies
             displayPatientInfo(data.patient);
             displayPendingRequests(data.requests);
-
-            // Load clinical context if panel is visible
-            if ($('#right-panel').hasClass('active')) {
-                loadClinicalContext(patientId);
-            }
 
             // Initialize history DataTable
             initializeHistoryDataTable(patientId);
@@ -2065,6 +3566,9 @@ function initializeHistoryDataTable(patientId) {
     $('#investigation_history_list').DataTable({
         processing: true,
         serverSide: true,
+        responsive: false,
+        autoWidth: false,
+        dom: '<"top"f>rt<"bottom"lip><"clear">',
         ajax: {
             url: `/investigationHistoryList/${patientId}`,
             type: 'GET'
@@ -2117,25 +3621,205 @@ function displayPatientInfo(patient) {
     $('#patient-name').text(`${patient.name} (#${patient.file_no})`);
     $('#patient-meta').html(`
         <div class="patient-meta-item">
-            <i class="fa fa-user"></i>
+            <i class="mdi mdi-account"></i>
             <span>${patient.age} ${patient.gender}</span>
         </div>
         <div class="patient-meta-item">
-            <i class="fa fa-tint"></i>
-            <span>${patient.blood_type}</span>
+            <i class="mdi mdi-water"></i>
+            <span>${patient.blood_group} ${patient.genotype !== 'N/A' ? '(' + patient.genotype + ')' : ''}</span>
         </div>
         <div class="patient-meta-item">
-            <i class="fa fa-phone"></i>
+            <i class="mdi mdi-phone"></i>
             <span>${patient.phone}</span>
         </div>
+        <div class="patient-meta-item">
+            <i class="mdi mdi-hospital-building"></i>
+            <span>${patient.hmo} ${patient.hmo_category !== 'N/A' ? '[' + patient.hmo_category + ']' : ''} ${patient.hmo_no !== 'N/A' ? '(' + patient.hmo_no + ')' : ''}</span>
+        </div>
     `);
+
+    // Build detailed information grid - show ALL fields
+    let detailsHtml = '';
+
+    // Age (detailed)
+    detailsHtml += `
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-calendar-clock"></i> Age</div>
+            <div class="patient-detail-value">${patient.age}</div>
+        </div>
+    `;
+
+    // Gender
+    detailsHtml += `
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-gender-male-female"></i> Gender</div>
+            <div class="patient-detail-value">${patient.gender}</div>
+        </div>
+    `;
+
+    // Blood Group
+    detailsHtml += `
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-water"></i> Blood Group</div>
+            <div class="patient-detail-value">${patient.blood_group}</div>
+        </div>
+    `;
+
+    // Genotype
+    detailsHtml += `
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-dna"></i> Genotype</div>
+            <div class="patient-detail-value">${patient.genotype}</div>
+        </div>
+    `;
+
+    // Phone
+    detailsHtml += `
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-phone"></i> Phone Number</div>
+            <div class="patient-detail-value">${patient.phone}</div>
+        </div>
+    `;
+
+    // Address
+    detailsHtml += `
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-map-marker"></i> Address</div>
+            <div class="patient-detail-value">${patient.address}</div>
+        </div>
+    `;
+
+    // Nationality
+    detailsHtml += `
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-flag"></i> Nationality</div>
+            <div class="patient-detail-value">${patient.nationality}</div>
+        </div>
+    `;
+
+    // Ethnicity
+    detailsHtml += `
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-account-group"></i> Ethnicity</div>
+            <div class="patient-detail-value">${patient.ethnicity}</div>
+        </div>
+    `;
+
+    // Disability Status
+    detailsHtml += `
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-wheelchair-accessibility"></i> Disability</div>
+            <div class="patient-detail-value">${patient.disability}</div>
+        </div>
+    `;
+
+    // HMO
+    detailsHtml += `
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-hospital-building"></i> HMO</div>
+            <div class="patient-detail-value">${patient.hmo}</div>
+        </div>
+    `;
+
+    // HMO Category
+    detailsHtml += `
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-tag"></i> HMO Category</div>
+            <div class="patient-detail-value">${patient.hmo_category}</div>
+        </div>
+    `;
+
+    // HMO Number
+    detailsHtml += `
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-card-account-details"></i> HMO Number</div>
+            <div class="patient-detail-value">${patient.hmo_no}</div>
+        </div>
+    `;
+
+    // Insurance Scheme
+    detailsHtml += `
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-shield-account"></i> Insurance Scheme</div>
+            <div class="patient-detail-value">${patient.insurance_scheme}</div>
+        </div>
+    `;
+
+    // Allergies
+    if (patient.allergies && patient.allergies.length > 0) {
+        const allergiesList = patient.allergies.map(allergy =>
+            `<span class="allergy-tag"><i class="mdi mdi-alert"></i> ${allergy}</span>`
+        ).join('');
+        detailsHtml += `
+            <div class="patient-detail-item full-width">
+                <div class="patient-detail-label"><i class="mdi mdi-alert-circle"></i> Allergies</div>
+                <div class="patient-detail-value">
+                    <div class="allergies-list">${allergiesList}</div>
+                </div>
+            </div>
+        `;
+    } else {
+        detailsHtml += `
+            <div class="patient-detail-item full-width">
+                <div class="patient-detail-label"><i class="mdi mdi-alert-circle"></i> Allergies</div>
+                <div class="patient-detail-value">No known allergies</div>
+            </div>
+        `;
+    }
+
+    // Medical History
+    detailsHtml += `
+        <div class="patient-detail-item full-width">
+            <div class="patient-detail-label"><i class="mdi mdi-clipboard-text"></i> Medical History</div>
+            <div class="patient-detail-value text-content">${patient.medical_history}</div>
+        </div>
+    `;
+
+    // Miscellaneous Notes
+    detailsHtml += `
+        <div class="patient-detail-item full-width">
+            <div class="patient-detail-label"><i class="mdi mdi-note-text"></i> Additional Notes</div>
+            <div class="patient-detail-value text-content">${patient.misc}</div>
+        </div>
+    `;
+
+    $('#patient-details-grid').html(detailsHtml);
+
+    // Toggle expand/collapse functionality
+    $('#btn-expand-patient').off('click').on('click', function() {
+        $(this).toggleClass('expanded');
+        $('#patient-details-expanded').toggleClass('show');
+    });
 }
 
+let currentPendingRequests = null;
+let currentPendingFilter = 'all';
+
 function displayPendingRequests(requests) {
+    currentPendingRequests = requests;
     const totalPending = requests.billing.length + requests.sample.length + requests.results.length;
     $('#pending-badge').text(totalPending);
 
-    const $container = $('#pending-tab');
+    updatePendingSubtabBadges(requests);
+    renderPendingSubtabContent(currentPendingFilter);
+}
+
+function updatePendingSubtabBadges(requests) {
+    const totalPending = requests.billing.length + requests.sample.length + requests.results.length;
+    $('#all-pending-badge').text(totalPending);
+    $('#billing-subtab-badge').text(requests.billing.length);
+    $('#sample-subtab-badge').text(requests.sample.length);
+    $('#results-subtab-badge').text(requests.results.length);
+}
+
+function renderPendingSubtabContent(filter) {
+    if (!currentPendingRequests) return;
+
+    currentPendingFilter = filter;
+    const requests = currentPendingRequests;
+    const totalPending = requests.billing.length + requests.sample.length + requests.results.length;
+
+    const $container = $('#pending-subtab-container');
     $container.empty();
 
     if (totalPending === 0) {
@@ -2144,7 +3828,7 @@ function displayPendingRequests(requests) {
     }
 
     // Billing Section (Status 1)
-    if (requests.billing.length > 0) {
+    if ((filter === 'all' || filter === 'billing') && requests.billing.length > 0) {
         const billingHtml = `
             <div class="request-section" data-section="billing">
                 <div class="request-section-header">
@@ -2180,7 +3864,7 @@ function displayPendingRequests(requests) {
     }
 
     // Sample Section (Status 2)
-    if (requests.sample.length > 0) {
+    if ((filter === 'all' || filter === 'sample') && requests.sample.length > 0) {
         const sampleHtml = `
             <div class="request-section" data-section="sample">
                 <div class="request-section-header">
@@ -2216,7 +3900,7 @@ function displayPendingRequests(requests) {
     }
 
     // Results Section (Status 3)
-    if (requests.results.length > 0) {
+    if ((filter === 'all' || filter === 'results') && requests.results.length > 0) {
         const resultsHtml = `
             <div class="request-section" data-section="results">
                 <div class="request-section-header">
@@ -2377,66 +4061,92 @@ function loadClinicalContext(patientId) {
 }
 
 function displayVitals(vitals) {
-    const $container = $('#vitals-panel-body');
-    $container.empty();
-
-    if (vitals.length === 0) {
-        $container.html('<p class="text-muted">No recent vitals recorded</p>');
+    // Check if DataTables is loaded
+    if (typeof $.fn.DataTable === 'undefined') {
+        console.error('DataTables library is not loaded');
+        $('#vitals-panel-body').html('<p class="text-danger">Error: DataTables library not loaded</p>');
         return;
     }
 
-    vitals.forEach(vital => {
-        const vitalDate = formatDateTime(vital.created_at);
-        const bmi = calculateBMI(vital.weight, vital.height);
-        const temp = vital.temperature || 'N/A';
-        const pulse = vital.pulse || 'N/A';
-        const bp = vital.blood_pressure || 'N/A';
-        const rr = vital.respiratory_rate || 'N/A';
-        const weight = vital.weight || 'N/A';
+    // Destroy existing DataTable if present
+    if ($.fn.DataTable.isDataTable('#vitals-table')) {
+        $('#vitals-table').DataTable().destroy();
+    }
 
-        const vitalHtml = `
-            <div class="vital-entry">
-                <div class="vital-entry-header">
-                    <span class="vital-date">${vitalDate}</span>
-                    ${bmi ? `<span class="vital-bmi">BMI: ${bmi}</span>` : ''}
-                </div>
-                <div class="vital-entry-grid">
-                    <div class="vital-item ${getTempClass(temp)}">
-                        <i class="mdi mdi-thermometer"></i>
-                        <span class="vital-value">${temp}°C</span>
-                        <span class="vital-label">Temp</span>
+    // Initialize DataTable with custom card rendering
+    $('#vitals-table').DataTable({
+        data: vitals,
+        paging: false,
+        searching: false,
+        info: false,
+        ordering: false,
+        dom: 't',
+        language: {
+            emptyTable: '<p class="text-muted">No recent vitals recorded</p>'
+        },
+        columns: [{
+            data: null,
+            render: function(data, type, row) {
+                // Use time_taken if available, otherwise created_at
+                const vitalDate = formatDateTime(row.time_taken || row.created_at);
+
+                // Correct field names from database
+                const temp = row.temp || 'N/A';
+                const heartRate = row.heart_rate || 'N/A';
+                const bp = row.blood_pressure || 'N/A';
+                const respRate = row.resp_rate || 'N/A';
+                const weight = row.weight || 'N/A';
+
+                return `
+                    <div class="vital-entry">
+                        <div class="vital-entry-header">
+                            <span class="vital-date">${vitalDate}</span>
+                        </div>
+                        <div class="vital-entry-grid">
+                            <div class="vital-item ${getTempClass(temp)}"
+                                 onmouseenter="showVitalTooltip(event, 'temperature', '${temp}', '34°C - 39°C')">
+                                <i class="mdi mdi-thermometer"></i>
+                                <span class="vital-value">${temp}°C</span>
+                                <span class="vital-label">Temp</span>
+                            </div>
+                            <div class="vital-item ${getHeartRateClass(heartRate)}"
+                                 onmouseenter="showVitalTooltip(event, 'pulse', '${heartRate}', '60-220 BPM')">
+                                <i class="mdi mdi-heart-pulse"></i>
+                                <span class="vital-value">${heartRate}</span>
+                                <span class="vital-label">Heart Rate</span>
+                            </div>
+                            <div class="vital-item ${getBPClass(bp)}"
+                                 onmouseenter="showVitalTooltip(event, 'bp', '${bp}', '90/60 - 140/90 mmHg')">
+                                <i class="mdi mdi-water"></i>
+                                <span class="vital-value">${bp}</span>
+                                <span class="vital-label">BP (mmHg)</span>
+                            </div>
+                            <div class="vital-item ${getRespRateClass(respRate)}">
+                                <i class="mdi mdi-lungs"></i>
+                                <span class="vital-value">${respRate}</span>
+                                <span class="vital-label">Resp Rate (BPM)</span>
+                            </div>
+                            <div class="vital-item">
+                                <i class="mdi mdi-weight-kilogram"></i>
+                                <span class="vital-value">${weight}</span>
+                                <span class="vital-label">Weight (Kg)</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="vital-item ${getPulseClass(pulse)}">
-                        <i class="mdi mdi-heart-pulse"></i>
-                        <span class="vital-value">${pulse}</span>
-                        <span class="vital-label">Pulse</span>
-                    </div>
-                    <div class="vital-item ${getBPClass(bp)}">
-                        <i class="mdi mdi-water"></i>
-                        <span class="vital-value">${bp}</span>
-                        <span class="vital-label">BP</span>
-                    </div>
-                    <div class="vital-item">
-                        <i class="mdi mdi-lungs"></i>
-                        <span class="vital-value">${rr}</span>
-                        <span class="vital-label">RR</span>
-                    </div>
-                    <div class="vital-item">
-                        <i class="mdi mdi-weight-kilogram"></i>
-                        <span class="vital-value">${weight}kg</span>
-                        <span class="vital-label">Weight</span>
-                    </div>
-                </div>
-            </div>
-        `;
-        $container.append(vitalHtml);
+                `;
+            }
+        }],
+        drawCallback: function() {
+            // Add "Show All" link after table
+            const $wrapper = $('#vitals-table_wrapper');
+            $wrapper.find('.show-all-link').remove();
+            $wrapper.append(`
+                <a href="/patients/show/${currentPatient}?section=vitalsCardBody" target="_blank" class="show-all-link">
+                    Show All Vitals →
+                </a>
+            `);
+        }
     });
-
-    $container.append(`
-        <a href="/patients/show/${currentPatient}?section=vitalsCardBody" target="_blank" class="show-all-link">
-            Show All Vitals →
-        </a>
-    `);
 }
 
 function calculateBMI(weight, height) {
@@ -2448,86 +4158,125 @@ function calculateBMI(weight, height) {
 function getTempClass(temp) {
     if (temp === 'N/A') return '';
     const t = parseFloat(temp);
+    // Based on form: Min: 34, Max: 39
+    if (t < 34 || t > 39) return 'vital-critical';
     if (t < 36.1 || t > 38.0) return 'vital-warning';
     return 'vital-normal';
 }
 
-function getPulseClass(pulse) {
-    if (pulse === 'N/A') return '';
-    const p = parseInt(pulse);
-    if (p < 60 || p > 100) return 'vital-warning';
+function getHeartRateClass(heartRate) {
+    if (heartRate === 'N/A') return '';
+    const hr = parseInt(heartRate);
+    // Based on form: Min: 60, Max: 220
+    if (hr < 50 || hr > 220) return 'vital-critical';
+    if (hr < 60 || hr > 100) return 'vital-warning';
+    return 'vital-normal';
+}
+
+function getRespRateClass(respRate) {
+    if (respRate === 'N/A') return '';
+    const rr = parseInt(respRate);
+    // Based on form: Min: 12, Max: 30
+    if (rr < 10 || rr > 35) return 'vital-critical';
+    if (rr < 12 || rr > 30) return 'vital-warning';
     return 'vital-normal';
 }
 
 function getBPClass(bp) {
     if (bp === 'N/A' || !bp.includes('/')) return '';
     const [systolic, diastolic] = bp.split('/').map(v => parseInt(v));
+    if (systolic > 180 || systolic < 80 || diastolic > 110 || diastolic < 50) return 'vital-critical';
     if (systolic > 140 || systolic < 90 || diastolic > 90 || diastolic < 60) return 'vital-warning';
     return 'vital-normal';
 }
 
 function displayNotes(notes) {
-    const $container = $('#notes-panel-body');
-    $container.empty();
-
-    if (notes.length === 0) {
-        $container.html('<p class="text-muted">No recent doctor notes</p>');
+    // Check if DataTables is loaded
+    if (typeof $.fn.DataTable === 'undefined') {
+        console.error('DataTables library is not loaded');
+        $('#notes-panel-body').html('<p class="text-danger">Error: DataTables library not loaded</p>');
         return;
     }
 
-    notes.forEach((note, index) => {
-        const noteDate = formatDateTime(note.date);
-        const doctor = note.doctor_name || 'Unknown Doctor';
-        const diagnosis = note.diagnosis || 'No diagnosis';
-        const content = note.notes || note.complaints || 'No notes recorded';
-        const truncatedContent = truncateText(content, 150);
-        const noteId = `note-${index}`;
+    // Destroy existing DataTable if present
+    if ($.fn.DataTable.isDataTable('#notes-table')) {
+        $('#notes-table').DataTable().destroy();
+    }
 
-        const noteHtml = `
-            <div class="note-entry">
-                <div class="note-header">
-                    <span class="note-doctor">
-                        <i class="mdi mdi-doctor"></i>
-                        ${doctor}
-                    </span>
-                    <span class="note-date">${noteDate}</span>
-                </div>
-                ${diagnosis !== 'No diagnosis' ? `
-                    <div class="note-diagnosis">
-                        <span class="diagnosis-badge">${diagnosis}</span>
+    // Initialize DataTable with custom card rendering
+    $('#notes-table').DataTable({
+        data: notes,
+        paging: false,
+        searching: false,
+        info: false,
+        ordering: false,
+        dom: 't',
+        language: {
+            emptyTable: '<p class="text-muted">No recent doctor notes</p>'
+        },
+        columns: [{
+            data: null,
+            render: function(data, type, row, meta) {
+                // Use pre-formatted date from server
+                const noteDate = row.date_formatted || row.date;
+                const doctor = row.doctor || 'Unknown Doctor';
+                const specialty = row.specialty || 'N/A';
+                const diagnosis = row.diagnosis || 'No diagnosis';
+                const content = row.notes || row.complaints || 'No notes recorded';
+                const truncatedContent = truncateText(content, 150);
+                const noteId = `note-${meta.row}`;
+
+                return `
+                    <div class="note-entry">
+                        <div class="note-header">
+                            <span class="note-doctor">
+                                <i class="mdi mdi-doctor"></i>
+                                ${doctor}
+                                ${specialty !== 'N/A' ? `<span class="specialty-tag">${specialty}</span>` : ''}
+                            </span>
+                            <span class="note-date">${noteDate}</span>
+                        </div>
+                        ${diagnosis !== 'No diagnosis' ? `
+                            <div class="note-diagnosis">
+                                <span class="diagnosis-badge">${diagnosis}</span>
+                            </div>
+                        ` : ''}
+                        <div class="note-content" id="${noteId}">
+                            <p class="note-text ${content.length > 150 ? 'truncated' : ''}" data-full-text="${escapeHtml(content)}">${truncatedContent}</p>
+                            ${content.length > 150 ? `<a href="#" class="read-more-link" data-note-id="${noteId}">Read More</a>` : ''}
+                        </div>
                     </div>
-                ` : ''}
-                <div class="note-content" id="${noteId}">
-                    <p class="note-text ${content.length > 150 ? 'truncated' : ''}" data-full-text="${escapeHtml(content)}">${truncatedContent}</p>
-                    ${content.length > 150 ? `<a href="#" class="read-more-link" data-note-id="${noteId}">Read More</a>` : ''}
-                </div>
-            </div>
-        `;
-        $container.append(noteHtml);
-    });
+                `;
+            }
+        }],
+        drawCallback: function() {
+            // Add Read More toggle handler
+            $('#notes-table').off('click', '.read-more-link').on('click', '.read-more-link', function(e) {
+                e.preventDefault();
+                const $link = $(this);
+                const $noteText = $link.siblings('.note-text');
+                const fullText = $noteText.data('full-text');
+                const truncatedText = truncateText(fullText, 150);
 
-    // Read More toggle handler
-    $container.on('click', '.read-more-link', function(e) {
-        e.preventDefault();
-        const $link = $(this);
-        const $noteText = $link.siblings('.note-text');
-        const fullText = $noteText.data('full-text');
-        const truncatedText = truncateText(fullText, 150);
+                if ($noteText.hasClass('truncated')) {
+                    $noteText.removeClass('truncated').text(fullText);
+                    $link.text('Read Less');
+                } else {
+                    $noteText.addClass('truncated').text(truncatedText);
+                    $link.text('Read More');
+                }
+            });
 
-        if ($noteText.hasClass('truncated')) {
-            $noteText.removeClass('truncated').text(fullText);
-            $link.text('Read Less');
-        } else {
-            $noteText.addClass('truncated').text(truncatedText);
-            $link.text('Read More');
+            // Add "Show All" link
+            const $wrapper = $('#notes-table_wrapper');
+            $wrapper.find('.show-all-link').remove();
+            $wrapper.append(`
+                <a href="/patients/show/${currentPatient}?section=encountersCardBody" target="_blank" class="show-all-link">
+                    Show All Notes →
+                </a>
+            `);
         }
     });
-
-    $container.append(`
-        <a href="/patients/show/${currentPatient}?section=encountersCardBody" target="_blank" class="show-all-link">
-            Show All Notes →
-        </a>
-    `);
 }
 
 function truncateText(text, maxLength) {
@@ -2542,84 +4291,102 @@ function escapeHtml(text) {
 }
 
 function displayMedications(meds) {
-    const $container = $('#medications-panel-body');
-    $container.empty();
+    const $container = $('#medications-list-container');
+    const $alertBanner = $('#allergy-alert-banner');
+    const $showAll = $('#medications-show-all');
 
-    if (meds.length === 0) {
-        $container.html('<p class="text-muted">No recent medications</p>');
+    // Check for allergies if patient data is available
+    const patientAllergies = currentPatientData?.allergies || [];
+    const allergyAlerts = checkForAllergies(meds, patientAllergies);
+
+    // Display allergy alert if present
+    if (allergyAlerts.length > 0) {
+        $alertBanner.html(displayAllergyAlert(allergyAlerts));
+    } else {
+        $alertBanner.html('');
+    }
+
+    // Check if no medications
+    if (!meds || meds.length === 0) {
+        $container.html('<p class="text-muted text-center">No recent medications</p>');
+        $showAll.html('');
         return;
     }
 
-    // Add filter buttons
-    const filterHtml = `
-        <div class="medication-filters">
-            <button class="medication-filter-btn active" data-filter="all">All (${meds.length})</button>
-            <button class="medication-filter-btn" data-filter="active">Active (${meds.filter(m => m.status === 'active').length})</button>
-            <button class="medication-filter-btn" data-filter="stopped">Stopped (${meds.filter(m => m.status === 'stopped').length})</button>
-        </div>
-    `;
-    $container.append(filterHtml);
-
-    const $medsContainer = $('<div class="medications-list"></div>');
-
+    // Build cards for each medication (matching encounter prescription history style)
+    let html = '';
     meds.forEach(med => {
-        const drugName = med.drug_name || med.product_name || 'Unknown Drug';
-        const dosage = med.dosage || 'N/A';
-        const frequency = med.frequency || 'N/A';
-        const status = med.status || 'active';
-        const statusText = status.charAt(0).toUpperCase() + status.slice(1);
-        const startDate = med.created_at ? formatDate(med.created_at) : 'N/A';
-        const prescribedBy = med.doctor_name || 'Unknown';
+        const drugName = med.drug_name || 'N/A';
+        const productCode = med.product_code || '';
+        const dose = med.dose || 'N/A';
+        const status = med.status || 'pending';
+        const requestedDate = med.requested_date || 'N/A';
+        const prescribedBy = med.doctor || 'N/A';
+        const billedBy = med.billed_by || null;
+        const billedDate = med.billed_date || null;
+        const dispensedBy = med.dispensed_by || null;
+        const dispensedDate = med.dispensed_date || null;
 
-        const medHtml = `
-            <div class="medication-entry" data-status="${status}">
-                <div class="medication-header">
-                    <span class="medication-name">${drugName}</span>
-                    <span class="medication-status-badge status-${status}">${statusText}</span>
-                </div>
-                <div class="medication-details">
-                    <div class="medication-detail-row">
-                        <i class="mdi mdi-pill"></i>
-                        <span><strong>Dosage:</strong> ${dosage}</span>
-                    </div>
-                    <div class="medication-detail-row">
-                        <i class="mdi mdi-clock-outline"></i>
-                        <span><strong>Frequency:</strong> ${frequency}</span>
-                    </div>
-                    <div class="medication-detail-row">
-                        <i class="mdi mdi-calendar"></i>
-                        <span><strong>Started:</strong> ${startDate}</span>
-                    </div>
-                    <div class="medication-detail-row">
-                        <i class="mdi mdi-doctor"></i>
-                        <span><strong>By:</strong> ${prescribedBy}</span>
-                    </div>
-                </div>
-            </div>
-        `;
-        $medsContainer.append(medHtml);
-    });
+        // Check if this medication triggers allergy alert
+        const isAllergic = allergyAlerts.some(alert => alert.medication === drugName);
 
-    $container.append($medsContainer);
-
-    // Filter button handlers
-    $container.on('click', '.medication-filter-btn', function() {
-        const filter = $(this).data('filter');
-        $('.medication-filter-btn').removeClass('active');
-        $(this).addClass('active');
-
-        if (filter === 'all') {
-            $('.medication-entry').show();
+        // Status badge
+        let statusBadge = '';
+        if (status === 'dispensed') {
+            statusBadge = "<span class='badge bg-info'>Dispensed</span>";
+        } else if (status === 'billed') {
+            statusBadge = "<span class='badge bg-primary'>Billed</span>";
         } else {
-            $('.medication-entry').hide();
-            $(`.medication-entry[data-status="${filter}"]`).show();
+            statusBadge = "<span class='badge bg-secondary'>Pending</span>";
         }
+
+        html += '<div class="medication-card card mb-2" style="border-left: 4px solid ' + (isAllergic ? '#dc3545' : '#0d6efd') + ';">';
+        html += '<div class="card-body p-3">';
+
+        // Header with drug name and status
+        html += '<div class="d-flex justify-content-between align-items-start mb-3">';
+        html += "<h6 class='mb-0'><span class='badge bg-success'>[" + productCode + '] ' + drugName + '</span></h6>';
+        html += statusBadge;
+        html += '</div>';
+
+        // Allergy warning if applicable
+        if (isAllergic) {
+            const allergyMatch = allergyAlerts.find(alert => alert.medication === drugName);
+            html += '<div class="alert alert-danger mb-2"><small><i class="fa fa-exclamation-triangle"></i> <b>ALLERGY WARNING:</b> Patient allergic to ' + allergyMatch.allergy + '</small></div>';
+        }
+
+        // Dosage information
+        html += '<div class="alert alert-light mb-3"><small><b><i class="mdi mdi-pill"></i> Dose/Frequency:</b><br>' + dose + '</small></div>';
+
+        // Timeline section
+        html += '<div class="mb-2"><small>';
+        html += '<div class="mb-2"><i class="mdi mdi-account-arrow-right text-primary"></i> <b>Requested by:</b> '
+            + prescribedBy + ' <span class="text-muted">(' + requestedDate + ')</span>';
+        html += '</div>';
+
+        html += '<div class="mb-2"><i class="mdi mdi-cash-multiple text-success"></i> <b>Billed by:</b> '
+            + (billedBy ? billedBy + ' <span class="text-muted">(' + billedDate + ')</span>' : "<span class='badge bg-secondary'>Not billed</span>");
+        html += '</div>';
+
+        html += '<div class="mb-2"><i class="mdi mdi-package-variant text-warning"></i> <b>Dispensed by:</b> '
+            + (dispensedBy ? dispensedBy + ' <span class="text-muted">(' + dispensedDate + ')</span>' : "<span class='badge bg-secondary'>Not dispensed</span>");
+        html += '</div>';
+
+        html += '</small></div>';
+
+        html += '</div>'; // Close card-body
+        html += '</div>'; // Close card
     });
 
-    $container.append(`
-        <a href="/patients/show/${currentPatient}?section=prescriptionsCardBody" target="_blank" class="show-all-link">
-            Show All Medications →
-        </a>
+    $container.html(html);
+
+    // Add "Show All" link
+    $showAll.html(`
+        <div class="text-center mt-3">
+            <a href="/patients/show/${currentPatient}?section=prescriptionsCardBody" target="_blank" class="btn btn-sm btn-outline-primary">
+                Show All Medications <i class="fa fa-arrow-right"></i>
+            </a>
+        </div>
     `);
 }
 
@@ -2646,40 +4413,88 @@ function loadQueueCounts() {
 }
 
 function startQueueRefresh() {
-    queueRefreshInterval = setInterval(loadQueueCounts, 30000); // 30 seconds
+    queueRefreshInterval = setInterval(function() {
+        loadQueueCounts();
+
+        // Also refresh current patient data if a patient is selected
+        if (currentPatient) {
+            refreshCurrentPatientData();
+        }
+
+        // Refresh queue DataTable if queue view is active
+        if ($('#queue-view').hasClass('active') && queueDataTable) {
+            queueDataTable.ajax.reload(null, false);
+        }
+    }, 30000); // 30 seconds
 }
+
+function refreshCurrentPatientData() {
+    if (!currentPatient) return;
+
+    // Silently reload patient requests
+    $.get(`/lab-workbench/patient/${currentPatient}/requests`, function(data) {
+        displayPendingRequests(data.requests);
+        updatePendingSubtabBadges(data.requests);
+    }).fail(function() {
+        console.error('Failed to refresh patient data');
+    });
+}
+
+let lastSyncTimestamp = null;
+let syncTimeUpdateInterval = null;
 
 function updateSyncIndicator() {
-    $('#last-sync-time').text('Just now');
-    // TODO: Implement relative time updates
+    lastSyncTimestamp = Date.now();
+    updateSyncTimeDisplay();
+
+    // Start interval to update relative time every 10 seconds
+    if (syncTimeUpdateInterval) {
+        clearInterval(syncTimeUpdateInterval);
+    }
+    syncTimeUpdateInterval = setInterval(updateSyncTimeDisplay, 10000);
 }
 
-function toggleClinicalPanel() {
-    $('#right-panel').toggleClass('active');
-
-    const isActive = $('#right-panel').hasClass('active');
-    $('#toggle-clinical-btn').html(isActive ? '📊 Clinical Context ×' : '📊 Clinical Context ›');
-
-    // Load data if opening and patient selected
-    if (isActive && currentPatient) {
-        loadClinicalContext(currentPatient);
+function updateSyncTimeDisplay() {
+    if (!lastSyncTimestamp) {
+        $('#last-sync-time').text('Just now');
+        return;
     }
 
-    // Save preference
-    localStorage.setItem('clinicalPanelVisible', isActive);
+    const secondsAgo = Math.floor((Date.now() - lastSyncTimestamp) / 1000);
+
+    if (secondsAgo < 10) {
+        $('#last-sync-time').text('Just now');
+    } else if (secondsAgo < 60) {
+        $('#last-sync-time').text(secondsAgo + 's ago');
+    } else {
+        const minutesAgo = Math.floor(secondsAgo / 60);
+        $('#last-sync-time').text(minutesAgo + 'm ago');
+    }
 }
 
 function refreshClinicalPanel(panel) {
     if (!currentPatient) return;
 
-    const $btn = $(`.refresh-btn[data-panel="${panel}"]`);
+    const $btn = $(`.refresh-clinical-btn[data-panel="${panel}"]`);
     $btn.find('i').addClass('fa-spin');
 
-    // TODO: Reload specific panel data
-
-    setTimeout(() => {
-        $btn.find('i').removeClass('fa-spin');
-    }, 1000);
+    // Reload specific panel data
+    if (panel === 'vitals') {
+        $.get(`/lab-workbench/patient/${currentPatient}/vitals?limit=10`, function(vitals) {
+            displayVitals(vitals);
+            $btn.find('i').removeClass('fa-spin');
+        });
+    } else if (panel === 'notes') {
+        $.get(`/lab-workbench/patient/${currentPatient}/notes?limit=10`, function(notes) {
+            displayNotes(notes);
+            $btn.find('i').removeClass('fa-spin');
+        });
+    } else if (panel === 'medications') {
+        $.get(`/lab-workbench/patient/${currentPatient}/medications?limit=20`, function(meds) {
+            displayMedications(meds);
+            $btn.find('i').removeClass('fa-spin');
+        });
+    }
 }
 
 function switchWorkspaceTab(tab) {
@@ -3557,6 +5372,13 @@ function loadTrashData() {
             $('#dismissed-count').text(data.length);
             updateTrashTotalCount();
 
+            // Check if DataTables is loaded
+            if (typeof $.fn.DataTable === 'undefined') {
+                console.error('DataTables library is not loaded');
+                $('#dismissed-table').html('<tr><td class="text-danger">Error: DataTables library not loaded</td></tr>');
+                return;
+            }
+
             if ($.fn.DataTable.isDataTable('#dismissed-table')) {
                 $('#dismissed-table').DataTable().destroy();
             }
@@ -3586,6 +5408,13 @@ function loadTrashData() {
         success: function(data) {
             $('#deleted-count').text(data.length);
             updateTrashTotalCount();
+
+            // Check if DataTables is loaded
+            if (typeof $.fn.DataTable === 'undefined') {
+                console.error('DataTables library is not loaded');
+                $('#deleted-table').html('<tr><td class="text-danger">Error: DataTables library not loaded</td></tr>');
+                return;
+            }
 
             if ($.fn.DataTable.isDataTable('#deleted-table')) {
                 $('#deleted-table').DataTable().destroy();
@@ -3780,6 +5609,875 @@ $(document).ready(function() {
     }, 60000);
 });
 
+// ============================================
+// ENHANCEMENT FUNCTIONS
+// ============================================
+
+// Create vital tooltip element
+function createVitalTooltip() {
+    vitalTooltip = $('<div class="vital-tooltip"></div>').appendTo('body');
+
+    // Hide on mouse leave
+    $(document).on('mouseleave', '.vital-item', function() {
+        vitalTooltip.removeClass('active');
+    });
+}
+
+// Show vital tooltip with details
+function showVitalTooltip(event, vitalType, value, normalRange) {
+    const tooltip = vitalTooltip;
+    const $target = $(event.currentTarget);
+    const offset = $target.offset();
+
+    let deviation = '';
+    let status = 'Normal';
+
+    // Calculate deviation based on vital type
+    if (vitalType === 'temperature' && value !== 'N/A') {
+        const temp = parseFloat(value);
+        const idealTemp = 37.0;
+        const diff = Math.abs(temp - idealTemp);
+        deviation = temp > idealTemp ? `+${diff.toFixed(1)}°C above ideal` : `-${diff.toFixed(1)}°C below ideal`;
+        status = (temp >= 36.1 && temp <= 38.0) ? 'Normal' : 'Abnormal';
+    } else if (vitalType === 'pulse' && value !== 'N/A') {
+        const pulse = parseInt(value);
+        const idealPulse = 80;
+        const diff = Math.abs(pulse - idealPulse);
+        deviation = pulse > idealPulse ? `+${diff} bpm above ideal` : `-${diff} bpm below ideal`;
+        status = (pulse >= 60 && pulse <= 100) ? 'Normal' : 'Abnormal';
+    } else if (vitalType === 'bp' && value !== 'N/A' && value.includes('/')) {
+        const [sys, dia] = value.split('/').map(v => parseInt(v));
+        status = (sys >= 90 && sys <= 140 && dia >= 60 && dia <= 90) ? 'Normal' : 'Abnormal';
+        deviation = sys > 140 ? 'High BP' : sys < 90 ? 'Low BP' : 'Optimal';
+    }
+
+    const content = `
+        <div style="font-weight: 600; margin-bottom: 0.5rem;">${vitalType.toUpperCase()}</div>
+        <div><strong>Value:</strong> ${value}</div>
+        <div><strong>Normal Range:</strong> ${normalRange}</div>
+        <div><strong>Status:</strong> <span style="color: ${status === 'Normal' ? '#28a745' : '#dc3545'}">${status}</span></div>
+        ${deviation ? `<div><strong>Deviation:</strong> ${deviation}</div>` : ''}
+    `;
+
+    tooltip.html(content);
+    tooltip.css({
+        top: offset.top - tooltip.outerHeight() - 10,
+        left: offset.left + ($target.outerWidth() / 2) - (tooltip.outerWidth() / 2)
+    });
+    tooltip.addClass('active');
+}
+
+// Check for drug allergies
+function checkForAllergies(medications, patientAllergies) {
+    if (!patientAllergies || patientAllergies.length === 0) {
+        return [];
+    }
+
+    const alerts = [];
+    medications.forEach(med => {
+        const drugName = (med.drug_name || med.product_name || '').toLowerCase();
+        patientAllergies.forEach(allergy => {
+            if (drugName.includes(allergy.toLowerCase())) {
+                alerts.push({
+                    medication: med.drug_name || med.product_name,
+                    allergy: allergy
+                });
+            }
+        });
+    });
+
+    return alerts;
+}
+
+// Display allergy alert banner
+function displayAllergyAlert(alerts) {
+    if (alerts.length === 0) return '';
+
+    const allergyList = alerts.map(alert =>
+        `<strong>${alert.medication}</strong> (Allergic to: ${alert.allergy})`
+    ).join('<br>');
+
+    return `
+        <div class="allergy-alert">
+            <div class="allergy-alert-icon">⚠️</div>
+            <div>
+                <strong>ALLERGY WARNING!</strong><br>
+                ${allergyList}
+            </div>
+        </div>
+    `;
+}
+
+// Animate refresh button
+function animateRefresh(buttonElement) {
+    const $btn = $(buttonElement);
+    $btn.addClass('refreshing');
+    setTimeout(() => $btn.removeClass('refreshing'), 600);
+}
+
+// =============================================
+// QUEUE FUNCTIONALITY
+// =============================================
+
+let queueDataTable = null;
+let currentQueueFilter = 'all';
+
+function showQueue(filter) {
+    currentQueueFilter = filter;
+
+    // Update queue title
+    const titles = {
+        'billing': '🟢 Awaiting Billing',
+        'sample': '🟠 Awaiting Sample Collection',
+        'results': '🔴 Awaiting Result Entry',
+        'all': '📋 All Pending Requests'
+    };
+    $('#queue-view-title').html(`<i class="mdi mdi-format-list-bulleted"></i> ${titles[filter] || titles['all']}`);
+
+    // Update active state on queue buttons
+    $('.queue-item').removeClass('active');
+    if (filter !== 'all') {
+        $(`.queue-item[data-filter="${filter}"]`).addClass('active');
+    }
+
+    // Hide other views, show queue view
+    $('#empty-state').hide();
+    $('#patient-header').removeClass('active');
+    $('#workspace-content').removeClass('active');
+    $('#queue-view').addClass('active');
+
+    // On mobile, hide search pane and show main workspace
+    if (window.innerWidth < 768) {
+        $('#left-panel').addClass('hidden');
+        $('#main-workspace').addClass('active');
+    }
+
+    // Initialize or reload DataTable
+    initializeQueueDataTable(filter);
+}
+
+function hideQueue() {
+    $('#queue-view').removeClass('active');
+    $('.queue-item').removeClass('active');
+
+    if (currentPatient) {
+        // If patient was selected, show their workspace
+        $('#patient-header').addClass('active');
+        $('#workspace-content').addClass('active');
+    } else {
+        // Otherwise show empty state
+        $('#empty-state').show();
+    }
+
+    // On mobile, go back to search pane
+    if (window.innerWidth < 768) {
+        $('#main-workspace').removeClass('active');
+        $('#left-panel').removeClass('hidden');
+    }
+}
+
+// ==========================================
+// REPORTS VIEW FUNCTIONS
+// ==========================================
+
+function showReports() {
+    // Hide everything else
+    $('#empty-state').hide();
+    $('#patient-header').removeClass('active');
+    $('#workspace-content').removeClass('active');
+    $('#queue-view').removeClass('active');
+
+    // Show reports view
+    $('#reports-view').addClass('active');
+
+    // On mobile, switch to main workspace
+    if (window.innerWidth < 768) {
+        $('#left-panel').addClass('hidden');
+        $('#main-workspace').addClass('active');
+    }
+
+    // Load statistics and initialize if not already done
+    if (!window.reportsInitialized) {
+        // Don't set default dates - load all records initially
+        // setDefaultDateFilters();
+        loadFilterOptions();
+        loadReportsStatistics();
+        initializeReportsDataTable();
+        // initializeReportsCharts(); // TODO: Implement when Chart.js is added
+        window.reportsInitialized = true;
+    } else {
+        // Refresh statistics
+        loadReportsStatistics();
+        if (window.reportsDataTable) {
+            window.reportsDataTable.ajax.reload();
+        }
+    }
+}
+
+function hideReports() {
+    $('#reports-view').removeClass('active');
+    $('#empty-state').show();
+
+    // On mobile, go back to search pane
+    if (window.innerWidth < 768) {
+        $('#main-workspace').removeClass('active');
+        $('#left-panel').removeClass('hidden');
+    }
+}
+
+function setDefaultDateFilters() {
+    // Set date filters to current month
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    // Format as YYYY-MM-DD
+    const formatDate = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    $('#report-date-from').val(formatDate(firstDay));
+    $('#report-date-to').val(formatDate(lastDay));
+}
+
+function loadFilterOptions() {
+    // Load doctors
+    $.ajax({
+        url: '{{ route("lab.filterDoctors") }}',
+        method: 'GET',
+        success: function(doctors) {
+            let options = '<option value="">All Doctors</option>';
+            doctors.forEach(function(doctor) {
+                options += `<option value="${doctor.id}">${doctor.name}</option>`;
+            });
+            $('#report-doctor-filter').html(options);
+        },
+        error: function(xhr) {
+            console.error('Failed to load doctors:', xhr);
+        }
+    });
+
+    // Load HMOs with optgroups
+    $.ajax({
+        url: '{{ route("lab.filterHmos") }}',
+        method: 'GET',
+        success: function(hmoGroups) {
+            let options = '<option value="">All HMOs</option>';
+            Object.keys(hmoGroups).forEach(function(schemeName) {
+                options += `<optgroup label="${schemeName}">`;
+                hmoGroups[schemeName].forEach(function(hmo) {
+                    options += `<option value="${hmo.id}">${hmo.name}</option>`;
+                });
+                options += '</optgroup>';
+            });
+            $('#report-hmo-filter').html(options);
+        },
+        error: function(xhr) {
+            console.error('Failed to load HMOs:', xhr);
+        }
+    });
+
+    // Load services
+    $.ajax({
+        url: '{{ route("lab.filterServices") }}',
+        method: 'GET',
+        success: function(services) {
+            let options = '<option value="">All Services</option>';
+            services.forEach(function(service) {
+                options += `<option value="${service.id}">${service.name}</option>`;
+            });
+            $('#report-service-filter').html(options);
+        },
+        error: function(xhr) {
+            console.error('Failed to load services:', xhr);
+        }
+    });
+}
+
+/* REPLACED BY NEW IMPLEMENTATION
+function loadReportsStatistics(filters = {}) {
+    // If no filters provided, use current form values
+    if (Object.keys(filters).length === 0) {
+        filters = {
+            date_from: $('#report-date-from').val(),
+            date_to: $('#report-date-to').val(),
+            status: $('#report-status-filter').val(),
+            service_id: $('#report-service-filter').val(),
+            doctor_id: $('#report-doctor-filter').val(),
+            hmo_id: $('#report-hmo-filter').val(),
+            patient_search: $('#report-patient-search').val()
+        };
+    }
+
+    $.ajax({
+        url: '{{ route("lab.statistics") }}',
+        method: 'GET',
+        data: filters,
+        success: function(data) {
+            // Update summary cards
+            $('#stat-total-requests').text(data.summary.total_requests);
+            $('#stat-completed').text(data.summary.completed);
+            $('#stat-pending').text(data.summary.pending);
+            $('#stat-avg-tat').text(data.summary.avg_tat + 'h');
+
+            // Store data for charts
+            window.reportsData = data;
+
+            // Update charts if they exist
+            if (window.statusChart) {
+                updateStatusChart(data.by_status);
+            }
+            if (window.trendsChart) {
+                updateTrendsChart(data.monthly_trends);
+            }
+
+            // Update top services
+            if (data.top_services && data.top_services.length > 0) {
+                let servicesHtml = '<ul class="list-group list-group-flush">';
+                data.top_services.forEach(function(service, index) {
+                    const percentage = data.summary.total_requests > 0 ? Math.round((service.count / data.summary.total_requests) * 100) : 0;
+                    servicesHtml += `<li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <div style="flex: 1; min-width: 0; margin-right: 15px;">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-truncate font-weight-bold" title="${service.service}">${index + 1}. ${service.service}</span>
+                                <span class="badge badge-primary badge-pill">${service.count}</span>
+                            </div>
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar bg-info" role="progressbar" style="width: ${percentage}%" aria-valuenow="${percentage}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                        <small class="text-muted" style="min-width: 35px; text-align: right;">${percentage}%</small>
+                    </li>`;
+                });
+                servicesHtml += '</ul>';
+                $('#top-services-list').html(servicesHtml);
+            } else {
+                $('#top-services-list').html('<p class="text-muted">No data available</p>');
+            }
+        },
+        error: function(xhr) {
+            console.error('Failed to load statistics:', xhr);
+            toastr.error('Failed to load statistics');
+        }
+    });
+}
+*/
+
+function initializeReportsDataTable() {
+    if (window.reportsDataTable) {
+        window.reportsDataTable.destroy();
+    }
+
+    window.reportsDataTable = $('#reports-datatable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: '{{ route("lab.reports") }}',
+            data: function(d) {
+                // Add filter values to request
+                d.date_from = $('#report-date-from').val();
+                d.date_to = $('#report-date-to').val();
+                d.status = $('#report-status-filter').val();
+                d.service_id = $('#report-service-filter').val();
+                d.doctor_id = $('#report-doctor-filter').val();
+                d.hmo_id = $('#report-hmo-filter').val();
+                d.patient_search = $('#report-patient-search').val();
+
+                // Debug: Log what we're sending
+                console.log('DataTable AJAX params:', {
+                    date_from: d.date_from,
+                    date_to: d.date_to,
+                    status: d.status,
+                    service_id: d.service_id,
+                    doctor_id: d.doctor_id,
+                    hmo_id: d.hmo_id,
+                    patient_search: d.patient_search
+                });
+            }
+        },
+        columns: [
+            { data: 'created_at', name: 'created_at' },
+            { data: 'file_no', name: 'patient.file_no' },
+            { data: 'patient_name', name: 'patient_name', orderable: false },
+            { data: 'service_name', name: 'service.service_name' },
+            { data: 'doctor_name', name: 'doctor_name', orderable: false },
+            { data: 'hmo_name', name: 'hmo_name', orderable: false },
+            { data: 'status_badge', name: 'status', orderable: false },
+            { data: 'tat', name: 'tat', orderable: false },
+            { data: 'actions', name: 'actions', orderable: false, searchable: false }
+        ],
+        order: [[0, 'desc']],
+        pageLength: 25,
+        responsive: false,
+        scrollX: true
+    });
+}
+
+function initializeReportsCharts() {
+    // TODO: Implement Chart.js charts
+    // - Status breakdown (bar chart)
+    // - Monthly trends (line chart)
+    console.log('Charts will be implemented with Chart.js');
+}
+
+function updateStatusChart(data) {
+    // TODO: Update status chart with new data
+}
+
+function updateTrendsChart(data) {
+    // TODO: Update trends chart with new data
+}
+
+function renderQueueCard(data) {
+    // Status badges
+    const statusBadges = getStatusBadges(data);
+
+    // Patient meta
+    const patientMeta = `
+        <div class="queue-card-patient-meta">
+            <div class="queue-card-patient-meta-item">
+                <i class="mdi mdi-account"></i>
+                <span>${data.age} • ${data.gender}</span>
+            </div>
+            <div class="queue-card-patient-meta-item">
+                <i class="mdi mdi-card-account-details"></i>
+                <span>${data.file_no}</span>
+            </div>
+            <div class="queue-card-patient-meta-item">
+                <i class="mdi mdi-hospital-building"></i>
+                <span>${data.hmo}</span>
+            </div>
+        </div>
+    `;
+
+    // Note section
+    const noteSection = data.note ? `
+        <div class="queue-card-note">
+            <div class="queue-card-note-label"><i class="mdi mdi-note-text"></i> Request Note</div>
+            <div>${data.note}</div>
+        </div>
+    ` : '';
+
+    // Attachments
+    let attachmentsSection = '';
+    if (data.attachments && data.attachments.length > 0) {
+        const attachmentLinks = data.attachments.map(att => {
+            const icon = getFileIcon(att.type);
+            return `<a href="/storage/${att.path}" target="_blank" class="queue-card-attachment">
+                ${icon} ${att.name}
+            </a>`;
+        }).join('');
+        attachmentsSection = `
+            <div class="queue-card-attachments">
+                <strong><i class="mdi mdi-paperclip"></i> Attachments:</strong>
+                ${attachmentLinks}
+            </div>
+        `;
+    }
+
+    // Result section
+    const resultSection = data.result ? `
+        <div class="queue-card-note" style="background: #f0f9ff; border-color: #0ea5e9;">
+            <div class="queue-card-note-label" style="color: #0ea5e9;"><i class="mdi mdi-flask"></i> Result</div>
+            <div>${data.result}</div>
+        </div>
+    ` : '';
+
+    return `
+        <div class="queue-card" data-patient-id="${data.patient_id}">
+            <div class="queue-card-header">
+                <div class="queue-card-patient">
+                    <div class="queue-card-patient-name">${data.patient_name}</div>
+                    ${patientMeta}
+                </div>
+                <div class="queue-card-service">${data.service_name}</div>
+            </div>
+            <div class="queue-card-body">
+                <div class="queue-card-status-row">
+                    ${statusBadges}
+                </div>
+                ${noteSection}
+                ${resultSection}
+                ${attachmentsSection}
+            </div>
+            <div class="queue-card-actions">
+                <button class="btn btn-primary btn-select-patient-from-queue" data-patient-id="${data.patient_id}">
+                    <i class="mdi mdi-account-arrow-right"></i> Select Patient
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function getStatusBadges(data) {
+    let badges = '';
+
+    // Requested
+    badges += `
+        <div class="queue-card-status-item completed">
+            <div class="queue-card-status-label"><i class="mdi mdi-calendar-check"></i> Requested</div>
+            <div class="queue-card-status-value">${data.requested_by}<br><small>${data.requested_at}</small></div>
+        </div>
+    `;
+
+    // Billing
+    if (data.billed_by && data.billed_at) {
+        badges += `
+            <div class="queue-card-status-item completed">
+                <div class="queue-card-status-label"><i class="mdi mdi-cash-register"></i> Billed</div>
+                <div class="queue-card-status-value">${data.billed_by}<br><small>${data.billed_at}</small></div>
+            </div>
+        `;
+    } else {
+        badges += `
+            <div class="queue-card-status-item pending">
+                <div class="queue-card-status-label"><i class="mdi mdi-cash-register"></i> Billing</div>
+                <div class="queue-card-status-value">Awaiting billing</div>
+            </div>
+        `;
+    }
+
+    // Sample
+    if (data.sample_taken_by && data.sample_taken_at) {
+        badges += `
+            <div class="queue-card-status-item completed">
+                <div class="queue-card-status-label"><i class="mdi mdi-test-tube"></i> Sample Taken</div>
+                <div class="queue-card-status-value">${data.sample_taken_by}<br><small>${data.sample_taken_at}</small></div>
+            </div>
+        `;
+    } else if (data.status >= 2) {
+        badges += `
+            <div class="queue-card-status-item pending">
+                <div class="queue-card-status-label"><i class="mdi mdi-test-tube"></i> Sample</div>
+                <div class="queue-card-status-value">Awaiting sample collection</div>
+            </div>
+        `;
+    }
+
+    // Result
+    if (data.result_by && data.result_at) {
+        badges += `
+            <div class="queue-card-status-item completed">
+                <div class="queue-card-status-label"><i class="mdi mdi-flask"></i> Result</div>
+                <div class="queue-card-status-value">${data.result_by}<br><small>${data.result_at}</small></div>
+            </div>
+        `;
+    } else if (data.status >= 3) {
+        badges += `
+            <div class="queue-card-status-item pending">
+                <div class="queue-card-status-label"><i class="mdi mdi-flask"></i> Result</div>
+                <div class="queue-card-status-value">Awaiting result entry</div>
+            </div>
+        `;
+    }
+
+    return badges;
+}
+
+function getFileIcon(extension) {
+    const icons = {
+        'pdf': '<i class="mdi mdi-file-pdf"></i>',
+        'doc': '<i class="mdi mdi-file-word"></i>',
+        'docx': '<i class="mdi mdi-file-word"></i>',
+        'jpg': '<i class="mdi mdi-file-image"></i>',
+        'jpeg': '<i class="mdi mdi-file-image"></i>',
+        'png': '<i class="mdi mdi-file-image"></i>',
+    };
+    return icons[extension] || '<i class="mdi mdi-file"></i>';
+}
+
+// Handle patient selection from queue
+$(document).on('click', '.btn-select-patient-from-queue', function() {
+    const patientId = $(this).data('patient-id');
+    loadPatient(patientId);
+    hideQueue();
+});
+
+// ==========================================
+// REPORTS VIEW EVENT HANDLERS
+// ==========================================
+
+// Open reports view
+$('#btn-view-reports').on('click', function() {
+    showReports();
+});
+
+// Close reports view
+$('#btn-close-reports').on('click', function() {
+    hideReports();
+});
+
+// Reports filter form submission
+$('#reports-filter-form').on('submit', function(e) {
+    e.preventDefault();
+
+    // Reload statistics with filters
+    const filters = {
+        date_from: $('#report-date-from').val(),
+        date_to: $('#report-date-to').val(),
+        status: $('#report-status-filter').val(),
+        service_id: $('#report-service-filter').val(),
+        doctor_id: $('#report-doctor-filter').val(),
+        hmo_id: $('#report-hmo-filter').val(),
+        patient_search: $('#report-patient-search').val()
+    };
+
+    loadReportsStatistics(filters);
+
+    // Reload DataTable
+    if (window.reportsDataTable) {
+        window.reportsDataTable.ajax.reload();
+    }
+});
+
+// Clear reports filters
+$('#clear-report-filters').on('click', function() {
+    $('#reports-filter-form')[0].reset();
+    loadReportsStatistics();
+    if (window.reportsDataTable) {
+        window.reportsDataTable.ajax.reload();
+    }
+});
+
+// Export buttons (TODO: Implement with DataTables buttons extension)
+$('#export-excel').on('click', function() {
+    toastr.info('Excel export will be implemented with DataTables buttons extension');
+});
+
+$('#export-pdf').on('click', function() {
+    toastr.info('PDF export will be implemented with DataTables buttons extension');
+});
+
+$('#print-report').on('click', function() {
+    toastr.info('Print functionality will be implemented with DataTables buttons extension');
+});
+
+// Show new request button when patient is selected
+function updateQuickActions() {
+    if (currentPatient) {
+        $('#btn-new-request').show();
+    } else {
+        $('#btn-new-request').hide();
+    }
+}
+
+// New request button handler
+$('#btn-new-request').on('click', function() {
+    if (!currentPatient) {
+        toastr.warning('Please select a patient first');
+        return;
+    }
+    switchWorkspaceTab('new-request');
+    $('#new-request-patient-name').text(currentPatient.name);
+});
+
+// ==========================================
+// REPORTS & ANALYTICS HELPER FUNCTIONS
+// ==========================================
+
+function loadReportsStatistics(filters = {}) {
+    // Show loading state
+    $('#stat-total-requests').text('Loading...');
+    $('#stat-completed').text('Loading...');
+    $('#stat-pending').text('Loading...');
+    $('#stat-avg-tat').text('Loading...');
+
+    $.ajax({
+        url: '{{ route("lab.statistics") }}',
+        method: 'GET',
+        data: filters,
+        success: function(response) {
+            // Update Summary Cards
+            updateSummaryCards(response.summary);
+
+            // Render Top Services
+            renderTopServices(response.top_services, response.summary ? response.summary.total_requests : 0);
+
+            // Render Top Doctors
+            renderTopDoctors(response.top_doctors);
+
+            // Initialize/Update Charts
+            initializeReportsCharts(response.by_status, response.monthly_trends);
+        },
+        error: function(xhr) {
+            console.error('Error loading statistics:', xhr);
+            toastr.error('Failed to load report statistics');
+        }
+    });
+}
+
+function updateSummaryCards(summary) {
+    if(!summary) return;
+
+    $('#stat-total-requests').text(summary.total_requests || 0);
+    $('#stat-completed').text(summary.completed_requests || 0);
+    $('#stat-pending').text(summary.pending_requests || 0);
+
+    // Update Avg TAT
+    $('#stat-avg-tat').text((summary.avg_tat || 0) + ' hrs');
+}
+
+function renderTopServices(services, totalRequests = 0) {
+    const container = $('#top-services-list');
+
+    if (!services || services.length === 0) {
+        container.html('<p class="text-muted text-center p-3">No data available for the selected period.</p>');
+        return;
+    }
+
+    let html = '<ul class="list-group list-group-flush">';
+
+    services.forEach((service, index) => {
+        const percentage = totalRequests > 0 ? Math.round((service.count / totalRequests) * 100) : 0;
+
+        html += `<li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <div style="flex: 1; min-width: 0; margin-right: 15px;">
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="text-truncate font-weight-bold" title="${service.name}">${index + 1}. ${service.name}</span>
+                    <span class="badge badge-primary badge-pill">${service.count}</span>
+                </div>
+                <div class="progress" style="height: 6px;">
+                    <div class="progress-bar bg-info" role="progressbar" style="width: ${percentage}%" aria-valuenow="${percentage}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+            </div>
+            <small class="text-muted" style="min-width: 35px; text-align: right;">${percentage}%</small>
+        </li>`;
+    });
+
+    html += '</ul>';
+    container.html(html);
+}
+
+function renderTopDoctors(doctors) {
+    const container = $('#top-doctors-list');
+
+    if (!doctors || doctors.length === 0) {
+        container.html('<p class="text-muted text-center p-3">No data available.</p>');
+        return;
+    }
+
+    let html = '<div class="table-responsive"><table class="table table-hover table-sm"><thead><tr><th>Doctor Name</th><th class="text-center">Requests</th><th class="text-right">Total Revenue</th></tr></thead><tbody>';
+
+    doctors.forEach(doc => {
+        const docName = doc.doctor ? (doc.doctor.firstname + ' ' + doc.doctor.surname) : 'Unknown';
+        html += `
+            <tr>
+                <td><i class="mdi mdi-doctor mr-1"></i> ${docName}</td>
+                <td class="text-center"><span class="badge badge-pill badge-info">${doc.count}</span></td>
+                <td class="text-right">₦${parseFloat(doc.revenue).toLocaleString()}</td>
+            </tr>
+        `;
+    });
+
+    html += '</tbody></table></div>';
+    container.html(html);
+}
+
+let statusChartInstance = null;
+let trendsChartInstance = null;
+
+function initializeReportsCharts(byStatus, monthlyTrends) {
+    // 1. Status Chart (Doughnut)
+    const statusCtx = document.getElementById('status-chart').getContext('2d');
+
+    // Destroy existing chart if it exists
+    if (statusChartInstance) {
+        statusChartInstance.destroy();
+    }
+
+    const statusLabels = [];
+    const statusData = [];
+    const statusColors = [];
+
+    // Map status IDs to names and colors
+    const statusMap = {
+        1: { name: 'Awaiting Billing', color: '#ffc107' },
+        2: { name: 'Awaiting Sample', color: '#17a2b8' },
+        3: { name: 'Awaiting Results', color: '#007bff' },
+        4: { name: 'Completed', color: '#28a745' }
+    };
+
+    if (byStatus && byStatus.length > 0) {
+        byStatus.forEach(item => {
+            const info = statusMap[item.status] || { name: 'Unknown', color: '#6c757d' };
+            statusLabels.push(info.name);
+            statusData.push(item.count);
+            statusColors.push(info.color);
+        });
+    } else {
+        // Empty state
+        statusLabels.push('No Data');
+        statusData.push(0);
+        statusColors.push('#e9ecef');
+    }
+
+    statusChartInstance = new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: statusLabels,
+            datasets: [{
+                data: statusData,
+                backgroundColor: statusColors,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            legend: {
+                position: 'right'
+            }
+        }
+    });
+
+    // 2. Monthly Trends Chart (Line)
+    const trendsCtx = document.getElementById('trends-chart').getContext('2d');
+
+    if (trendsChartInstance) {
+        trendsChartInstance.destroy();
+    }
+
+    const trendLabels = [];
+    const trendData = [];
+
+    if (monthlyTrends && monthlyTrends.length > 0) {
+        monthlyTrends.forEach(item => {
+            trendLabels.push(item.month);
+            trendData.push(item.count);
+        });
+    }
+
+    trendsChartInstance = new Chart(trendsCtx, {
+        type: 'line',
+        data: {
+            labels: trendLabels,
+            datasets: [{
+                label: 'Requests',
+                data: trendData,
+                borderColor: '#007bff',
+                backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true,
+                        precision: 0
+                    }
+                }]
+            }
+        }
+    });
+}
 
 </script>
 @endsection

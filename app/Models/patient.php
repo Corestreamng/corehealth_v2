@@ -11,7 +11,8 @@ class patient extends Model implements Auditable
 {
     use HasFactory;
     use \OwenIt\Auditing\Auditable;
-protected $fillable = [
+
+    protected $fillable = [
         'user_id',
         'file_no',
         'insurance_scheme',
@@ -26,8 +27,14 @@ protected $fillable = [
         'nationality',
         'ethnicity',
         'misc',
+        'allergies',
+        'medical_history',
         'dhis_consult_tracker_id',
         'dhis_consult_enrollment_id'
+    ];
+
+    protected $casts = [
+        'allergies' => 'array',
     ];
 
     public function user()
