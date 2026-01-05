@@ -386,6 +386,12 @@
                 </div>
             </li>
             <li class="nav-item">
+                <a class="nav-link" href="{{ route('lab.workbench') }}">
+                    <i class="mdi mdi-monitor-dashboard menu-icon"></i>
+                    <span class="menu-title">Lab Workbench</span>
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#lab_queue" data-bs-target="#lab_queue" aria-expanded="false"
                     aria-controls="lab_queue">
                     <i class="mdi mdi-test-tube menu-icon"></i>

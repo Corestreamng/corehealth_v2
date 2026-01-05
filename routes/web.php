@@ -186,6 +186,13 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/lab-workbench/patient/{id}/notes', [\App\Http\Controllers\LabWorkbenchController::class, 'getPatientNotes'])->name('lab.patient-notes');
         Route::get('/lab-workbench/patient/{id}/medications', [\App\Http\Controllers\LabWorkbenchController::class, 'getPatientMedications'])->name('lab.patient-medications');
         Route::get('/lab-workbench/patient/{id}/clinical-context', [\App\Http\Controllers\LabWorkbenchController::class, 'getClinicalContext'])->name('lab.clinical-context');
+        Route::post('/lab-workbench/record-billing', [\App\Http\Controllers\LabWorkbenchController::class, 'recordBilling'])->name('lab.recordBilling');
+        Route::post('/lab-workbench/collect-sample', [\App\Http\Controllers\LabWorkbenchController::class, 'collectSample'])->name('lab.collectSample');
+        Route::post('/lab-workbench/dismiss-requests', [\App\Http\Controllers\LabWorkbenchController::class, 'dismissRequests'])->name('lab.dismissRequests');
+        Route::get('/lab-workbench/lab-service-requests/{id}', [\App\Http\Controllers\LabWorkbenchController::class, 'getLabRequest'])->name('lab.getRequest');
+        Route::get('/lab-workbench/lab-service-requests/{id}/attachments', [\App\Http\Controllers\LabWorkbenchController::class, 'getRequestAttachments'])->name('lab.getAttachments');
+        Route::post('/lab-workbench/save-result', [\App\Http\Controllers\LabWorkbenchController::class, 'saveResult'])->name('lab.saveResult');
+        Route::post('/lab-workbench/save-result', [\App\Http\Controllers\LabWorkbenchController::class, 'saveResult'])->name('lab.saveResult');
 
         // Imaging Service Request Routes
         Route::resource('imaging-requests', ImagingServiceRequestController::class);
