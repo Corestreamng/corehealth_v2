@@ -5,11 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class PatientProfile extends Model
+
+use OwenIt\Auditing\Contracts\Auditable;
+class PatientProfile extends Model implements Auditable
 {
     use HasFactory;
-
-    public function patient()
+    use \OwenIt\Auditing\Auditable;
+public function patient()
     {
         return $this->belongsTo(patient::class, 'patient_id', 'id');
     }

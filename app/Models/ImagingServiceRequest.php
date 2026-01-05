@@ -6,11 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class ImagingServiceRequest extends Model
+
+use OwenIt\Auditing\Contracts\Auditable;
+class ImagingServiceRequest extends Model implements Auditable
 {
     use HasFactory, SoftDeletes;
-
-    protected $fillable = [
+    use \OwenIt\Auditing\Auditable;
+protected $fillable = [
         'service_request_id',
         'billed_by',
         'billed_date',

@@ -7,11 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class MedicationSchedule extends Model
+
+use OwenIt\Auditing\Contracts\Auditable;
+class MedicationSchedule extends Model implements Auditable
 {
     use HasFactory;
-
-    protected $fillable = [
+    use \OwenIt\Auditing\Auditable;
+protected $fillable = [
         'patient_id',
         'product_or_service_request_id',
         'scheduled_date',

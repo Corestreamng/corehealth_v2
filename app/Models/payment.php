@@ -5,11 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class payment extends Model
+
+use OwenIt\Auditing\Contracts\Auditable;
+class payment extends Model implements Auditable
 {
     use HasFactory;
-
-    protected $fillable = ['reference_no', 'total', 'payment_type', 'invoice_id', 'patient_id', 'user_id', 'hmo_id', 'total_discount'];
+    use \OwenIt\Auditing\Auditable;
+protected $fillable = ['reference_no', 'total', 'payment_type', 'invoice_id', 'patient_id', 'user_id', 'hmo_id', 'total_discount'];
 
 
 

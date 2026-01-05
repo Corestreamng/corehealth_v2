@@ -6,11 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class LabServiceRequest extends Model
+
+use OwenIt\Auditing\Contracts\Auditable;
+class LabServiceRequest extends Model implements Auditable
 {
     use HasFactory, SoftDeletes;
-
-    protected $fillable = [
+    use \OwenIt\Auditing\Auditable;
+protected $fillable = [
         'service_request_id',
         'billed_by',
         'billed_date',
@@ -29,7 +31,10 @@ class LabServiceRequest extends Model
         'note',
         'status',
         'deleted_by',
-        'deletion_reason'
+        'deletion_reason',
+        'dismissed_at',
+        'dismissed_by',
+        'dismiss_reason'
     ];
 
     protected $casts = [

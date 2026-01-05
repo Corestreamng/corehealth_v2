@@ -6,11 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Encounter extends Model
+
+use OwenIt\Auditing\Contracts\Auditable;
+class Encounter extends Model implements Auditable
 {
     use HasFactory, SoftDeletes;
-
-    protected $fillable = [
+    use \OwenIt\Auditing\Auditable;
+protected $fillable = [
         'doctor_id',
         'service_request_id',
         'service_id',

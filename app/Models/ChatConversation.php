@@ -5,11 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class ChatConversation extends Model
+
+use OwenIt\Auditing\Contracts\Auditable;
+class ChatConversation extends Model implements Auditable
 {
     use HasFactory;
-
-    protected $fillable = ['title', 'is_group'];
+    use \OwenIt\Auditing\Auditable;
+protected $fillable = ['title', 'is_group'];
 
     public function participants()
     {

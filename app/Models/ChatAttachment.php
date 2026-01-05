@@ -5,11 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class ChatAttachment extends Model
+
+use OwenIt\Auditing\Contracts\Auditable;
+class ChatAttachment extends Model implements Auditable
 {
     use HasFactory;
-
-    protected $fillable = ['message_id', 'file_path', 'file_name', 'file_type', 'file_size'];
+    use \OwenIt\Auditing\Auditable;
+protected $fillable = ['message_id', 'file_path', 'file_name', 'file_type', 'file_size'];
 
     public function message()
     {

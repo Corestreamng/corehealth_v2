@@ -5,10 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class IntakeOutputPeriod extends Model
+
+use OwenIt\Auditing\Contracts\Auditable;
+class IntakeOutputPeriod extends Model implements Auditable
 {
     use HasFactory;
-    protected $fillable = [
+    use \OwenIt\Auditing\Auditable;
+protected $fillable = [
         'patient_id',
         'type',
         'started_at',

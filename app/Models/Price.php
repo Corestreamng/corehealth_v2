@@ -6,11 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Permission\Traits\HasRoles;
 
-class Price extends Model
+
+use OwenIt\Auditing\Contracts\Auditable;
+class Price extends Model implements Auditable
 {
     use HasFactory, HasRoles;
-
-    public function product() {
+    use \OwenIt\Auditing\Auditable;
+public function product() {
         return $this->belongsTo(Product::class);
     }
      
