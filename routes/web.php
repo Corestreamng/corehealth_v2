@@ -189,6 +189,7 @@ Route::group(['middleware' => ['auth']], function () {
         // Lab Workbench Routes
         Route::get('/lab-workbench', [\App\Http\Controllers\LabWorkbenchController::class, 'index'])->name('lab.workbench');
         Route::get('/lab-workbench/patient-search', [\App\Http\Controllers\LabWorkbenchController::class, 'searchPatients'])->name('lab.search-patients');
+        Route::get('/lab-workbench/queue', [\App\Http\Controllers\LabWorkbenchController::class, 'getLabQueue'])->name('lab.queue');
         Route::get('/lab-workbench/queue-counts', [\App\Http\Controllers\LabWorkbenchController::class, 'getQueueCounts'])->name('lab.queue-counts');
         Route::get('/lab-workbench/patient/{id}/requests', [\App\Http\Controllers\LabWorkbenchController::class, 'getPatientRequests'])->name('lab.patient-requests');
         Route::get('/lab-workbench/patient/{id}/vitals', [\App\Http\Controllers\LabWorkbenchController::class, 'getPatientVitals'])->name('lab.patient-vitals');
@@ -210,6 +211,14 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/lab-workbench/deleted-requests/{patientId?}', [\App\Http\Controllers\LabWorkbenchController::class, 'getDeletedRequests'])->name('lab.deletedRequests');
         Route::get('/lab-workbench/dismissed-requests/{patientId?}', [\App\Http\Controllers\LabWorkbenchController::class, 'getDismissedRequests'])->name('lab.dismissedRequests');
         Route::get('/lab-workbench/audit-logs', [\App\Http\Controllers\LabWorkbenchController::class, 'getAuditLogs'])->name('lab.auditLogs');
+
+        // New Request & Reports Routes
+        Route::post('/lab-workbench/store-request', [\App\Http\Controllers\LabWorkbenchController::class, 'storeLabRequest'])->name('lab.storeRequest');
+        Route::get('/lab-workbench/reports', [\App\Http\Controllers\LabWorkbenchController::class, 'getLabReports'])->name('lab.reports');
+        Route::get('/lab-workbench/statistics', [\App\Http\Controllers\LabWorkbenchController::class, 'getLabStatistics'])->name('lab.statistics');
+        Route::get('/lab-workbench/filter-doctors', [\App\Http\Controllers\LabWorkbenchController::class, 'getRequestingDoctors'])->name('lab.filterDoctors');
+        Route::get('/lab-workbench/filter-hmos', [\App\Http\Controllers\LabWorkbenchController::class, 'getHmosForFilter'])->name('lab.filterHmos');
+        Route::get('/lab-workbench/filter-services', [\App\Http\Controllers\LabWorkbenchController::class, 'getLabServicesForFilter'])->name('lab.filterServices');
 
         // Imaging Service Request Routes
         Route::resource('imaging-requests', ImagingServiceRequestController::class);

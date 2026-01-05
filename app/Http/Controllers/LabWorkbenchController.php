@@ -14,6 +14,8 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
+use Yajra\DataTables\DataTables;
+
 class LabWorkbenchController extends Controller
 {
     /**
@@ -62,7 +64,7 @@ class LabWorkbenchController extends Controller
                 'id' => $patient->id,
                 'name' => $patient->user->surname . ' ' . $patient->user->firstname . ' ' . $patient->user->othername,
                 'file_no' => $patient->file_no,
-                'age' => $patient->date_of_birth ? \Carbon\Carbon::parse($patient->date_of_birth)->age : 'N/A',
+                'age' => $patient->dob ? \Carbon\Carbon::parse($patient->dob)->age : 'N/A',
                 'gender' => $patient->gender ?? 'N/A',
                 'phone' => $patient->phone_no ?? 'N/A',
                 'photo' => $patient->user->photo ?? 'avatar.png',
@@ -95,7 +97,7 @@ class LabWorkbenchController extends Controller
      */
     public function getPatientRequests($patientId)
     {
-        $patient = Patient::with('user')->findOrFail($patientId);
+        $patient = Patient::with(['user', 'hmo.scheme'])->findOrFail($patientId);
 
         // Get all pending investigation requests
         $requests = LabServiceRequest::with(['service', 'doctor', 'biller', 'patient'])
@@ -109,15 +111,43 @@ class LabWorkbenchController extends Controller
         $sample = $requests->where('status', 2)->values();
         $results = $requests->where('status', 3)->values();
 
+        // Calculate detailed age
+        $ageText = 'N/A';
+        if ($patient->dob) {
+            $dob = \Carbon\Carbon::parse($patient->dob);
+            $now = \Carbon\Carbon::now();
+            $years = $dob->diffInYears($now);
+            $months = $dob->copy()->addYears($years)->diffInMonths($now);
+            $days = $dob->copy()->addYears($years)->addMonths($months)->diffInDays($now);
+
+            $ageParts = [];
+            if ($years > 0) $ageParts[] = $years . 'y';
+            if ($months > 0) $ageParts[] = $months . 'm';
+            if ($days > 0) $ageParts[] = $days . 'd';
+            $ageText = !empty($ageParts) ? implode(' ', $ageParts) : '0d';
+        }
+
         return response()->json([
             'patient' => [
                 'id' => $patient->id,
                 'name' => $patient->user->surname . ' ' . $patient->user->firstname,
                 'file_no' => $patient->file_no,
-                'age' => $patient->date_of_birth ? \Carbon\Carbon::parse($patient->date_of_birth)->age : 'N/A',
+                'age' => $ageText,
                 'gender' => $patient->gender ?? 'N/A',
-                'blood_type' => $patient->blood_type ?? 'N/A',
-                'phone' => $patient->user->phone ?? 'N/A',
+                'blood_group' => $patient->blood_group ?? 'N/A',
+                'genotype' => $patient->genotype ?? 'N/A',
+                'phone' => $patient->phone_no ?? 'N/A',
+                'address' => $patient->address ?? 'N/A',
+                'nationality' => $patient->nationality ?? 'N/A',
+                'ethnicity' => $patient->ethnicity ?? 'N/A',
+                'disability' => $patient->disability == 1 ? 'Yes' : 'No',
+                'hmo' => $patient->hmo ? $patient->hmo->name : 'N/A',
+                'hmo_category' => $patient->hmo && $patient->hmo->scheme ? $patient->hmo->scheme->name : 'N/A',
+                'hmo_no' => $patient->hmo_no ?? 'N/A',
+                'insurance_scheme' => $patient->insurance_scheme ?? 'N/A',
+                'allergies' => $patient->allergies ?? [],
+                'medical_history' => $patient->medical_history ?? 'N/A',
+                'misc' => $patient->misc ?? 'N/A',
             ],
             'requests' => [
                 'billing' => $billing,
@@ -149,7 +179,7 @@ class LabWorkbenchController extends Controller
     {
         $limit = $request->get('limit', 10);
 
-        $encounters = Encounter::with(['doctor'])
+        $encounters = Encounter::with(['doctor.staff_profile.specialization'])
             ->where('patient_id', $patientId)
             ->whereNotNull('notes')
             ->orderBy('created_at', 'desc')
@@ -157,10 +187,17 @@ class LabWorkbenchController extends Controller
             ->get();
 
         $notes = $encounters->map(function ($encounter) {
+            $specialty = 'N/A';
+            if ($encounter->doctor && $encounter->doctor->staff_profile && $encounter->doctor->staff_profile->specialization) {
+                $specialty = $encounter->doctor->staff_profile->specialization->name;
+            }
+
             return [
                 'id' => $encounter->id,
-                'date' => $encounter->created_at->format('M d, Y - h:i A'),
+                'date' => $encounter->created_at->toISOString(), // Send ISO string for JS parsing
+                'date_formatted' => $encounter->created_at->format('M d, Y - h:i A'), // Pre-formatted for display
                 'doctor' => $encounter->doctor ? $encounter->doctor->firstname . ' ' . $encounter->doctor->surname : 'N/A',
+                'specialty' => $specialty,
                 'diagnosis' => $encounter->diagnosis ?? 'N/A',
                 'notes' => $encounter->notes,
                 'notes_preview' => \Illuminate\Support\Str::limit(strip_tags($encounter->notes), 150),
@@ -171,36 +208,169 @@ class LabWorkbenchController extends Controller
     }
 
     /**
+     * Get lab queue data for DataTable
+     */
+    public function getLabQueue(Request $request)
+    {
+        try {
+            // Base query with all necessary relationships
+            $query = LabServiceRequest::with([
+                'service',
+                'patient.user',
+                'patient.hmo.scheme',
+                'doctor',
+                'biller',
+                'resultBy'
+            ]);
+
+            // Filter by status if provided
+            if ($request->has('status') && $request->status !== 'all') {
+                $statuses = explode(',', $request->status);
+                $query->whereIn('status', $statuses);
+            } else {
+                // Default to pending statuses (1, 2, 3)
+                $query->whereIn('status', [1, 2, 3]);
+            }
+
+            // Apply date range filter if provided
+            if ($request->has('start_date') && $request->has('end_date')) {
+                $startDate = \Carbon\Carbon::parse($request->start_date)->startOfDay();
+                $endDate = \Carbon\Carbon::parse($request->end_date)->endOfDay();
+                $query->whereBetween('created_at', [$startDate, $endDate]);
+            }
+
+            $requests = $query->orderBy('created_at', 'desc')->get();
+
+            return Datatables::of($requests)
+                ->addIndexColumn()
+                ->addColumn('card_data', function ($request) {
+                    if (!$request->patient || !$request->patient->user) {
+                        return [
+                            'error' => true,
+                            'message' => 'Invalid patient data'
+                        ];
+                    }
+
+                    // Calculate age
+                    $age = 'N/A';
+                    if ($request->patient->dob) {
+                        $dob = \Carbon\Carbon::parse($request->patient->dob);
+                        $age = $dob->age . 'y';
+                    }
+
+                    return [
+                        'id' => $request->id,
+                        'patient_id' => $request->patient->id,
+                        'patient_name' => $request->patient->user->surname . ' ' . $request->patient->user->firstname,
+                        'file_no' => $request->patient->file_no ?? 'N/A',
+                        'age' => $age,
+                        'gender' => $request->patient->gender ?? 'N/A',
+                        'hmo' => $request->patient->hmo ? $request->patient->hmo->name : 'N/A',
+                        'hmo_category' => $request->patient->hmo && $request->patient->hmo->scheme ? $request->patient->hmo->scheme->name : 'N/A',
+                        'hmo_no' => $request->patient->hmo_no ?? 'N/A',
+                        'service_name' => $request->service ? $request->service->service_name : 'N/A',
+                        'status' => $request->status,
+                        'note' => $request->note ?? null,
+                        'result' => $request->result ?? null,
+                        'attachments' => $request->attachments ?? [],
+                        'requested_by' => $request->doctor ? $request->doctor->surname . ' ' . $request->doctor->firstname : 'N/A',
+                        'requested_at' => $this->formatDateTime($request->created_at),
+                        'billed_by' => $request->biller ? $request->biller->surname . ' ' . $request->biller->firstname : null,
+                        'billed_at' => $this->formatDateTime($request->billed_date),
+                        'sample_taken_by' => $request->sample_taken_by ? userfullname($request->sample_taken_by) : null,
+                        'sample_taken_at' => $this->formatDateTime($request->sample_date),
+                        'result_by' => $request->resultBy ? $request->resultBy->surname . ' ' . $request->resultBy->firstname : null,
+                        'result_at' => $this->formatDateTime($request->result_date),
+                        'updated_at' => $this->formatDateTime($request->updated_at),
+                    ];
+                })
+                ->rawColumns(['card_data'])
+                ->make(true);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'An error occurred while fetching queue data.',
+                'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get queue counts by status
+     */
+    // public function getQueueCounts(Request $request)
+    // {
+    //     try {
+    //         $billing = LabServiceRequest::where('status', 1)->count();
+    //         $sample = LabServiceRequest::where('status', 2)->count();
+    //         $results = LabServiceRequest::where('status', 3)->count();
+    //         $total = $billing + $sample + $results;
+
+    //         return response()->json([
+    //             'billing' => $billing,
+    //             'sample' => $sample,
+    //             'results' => $results,
+    //             'total' => $total
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         return response()->json(['error' => $e->getMessage()], 500);
+    //     }
+    // }
+
+    /**
+     * Format datetime to readable format
+     */
+    private function formatDateTime($datetime)
+    {
+        if (!$datetime) {
+            return null;
+        }
+        return \Carbon\Carbon::parse($datetime)->format('h:i a D M j, Y');
+    }
+
+    /**
      * Get patient's recent medications
      */
     public function getPatientMedications($patientId, Request $request)
     {
         $limit = $request->get('limit', 20);
-        $status = $request->get('status', 'all'); // active, all, stopped
+        $status = $request->get('status', 'all'); // all, pending, billed, dispensed
 
-        $query = ProductRequest::with(['product', 'encounter.doctor'])
+        $query = ProductRequest::with(['product', 'doctor', 'biller', 'dispenser'])
             ->where('patient_id', $patientId)
-            ->where('request_type', 'prescription')
+            ->whereNotNull('product_id')
             ->orderBy('created_at', 'desc');
 
-        if ($status === 'active') {
-            $query->whereNull('stopped_at');
-        } elseif ($status === 'stopped') {
-            $query->whereNotNull('stopped_at');
+        if ($status === 'pending') {
+            $query->whereNull('billed_by');
+        } elseif ($status === 'billed') {
+            $query->whereNotNull('billed_by')->whereNull('dispensed_by');
+        } elseif ($status === 'dispensed') {
+            $query->whereNotNull('dispensed_by');
         }
 
         $medications = $query->limit($limit)->get();
 
         $result = $medications->map(function ($med) {
+            // Determine status
+            $status = 'pending';
+            if ($med->dispensed_by) {
+                $status = 'dispensed';
+            } elseif ($med->billed_by) {
+                $status = 'billed';
+            }
+
             return [
                 'id' => $med->id,
                 'drug_name' => $med->product ? $med->product->product_name : 'N/A',
-                'dosage' => $med->dose ?? 'N/A',
-                'frequency' => $med->frequency ?? 'N/A',
-                'status' => $med->stopped_at ? 'stopped' : 'active',
-                'started' => $med->created_at->format('M d, Y'),
-                'stopped' => $med->stopped_at ? \Carbon\Carbon::parse($med->stopped_at)->format('M d, Y') : null,
-                'doctor' => $med->encounter && $med->encounter->doctor ? $med->encounter->doctor->firstname . ' ' . $med->encounter->doctor->surname : 'N/A',
+                'product_code' => $med->product ? $med->product->product_code : null,
+                'dose' => $med->dose ?? 'N/A',
+                'status' => $status,
+                'requested_date' => $med->created_at->format('h:i a D M j, Y'),
+                'billed_by' => $med->biller ? $med->biller->firstname . ' ' . $med->biller->surname : null,
+                'billed_date' => $med->billed_date ? \Carbon\Carbon::parse($med->billed_date)->format('h:i a D M j, Y') : null,
+                'dispensed_by' => $med->dispenser ? $med->dispenser->firstname . ' ' . $med->dispenser->surname : null,
+                'dispensed_date' => $med->dispense_date ? \Carbon\Carbon::parse($med->dispense_date)->format('h:i a D M j, Y') : null,
+                'doctor' => $med->doctor ? $med->doctor->firstname . ' ' . $med->doctor->surname : 'N/A',
             ];
         });
 
@@ -971,6 +1141,402 @@ class LabWorkbenchController extends Controller
             ]);
         } catch (\Exception $e) {
             \Log::error('Audit log error: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Store a new lab request from workbench
+     */
+    public function storeLabRequest(Request $request)
+    {
+        try {
+            $request->validate([
+                'patient_id' => 'required|exists:patients,id',
+                'service_ids' => 'required|array',
+                'service_ids.*' => 'exists:services,id',
+                'clinical_notes' => 'nullable|string',
+                'special_instructions' => 'nullable|string',
+                'urgency' => 'nullable|in:routine,urgent,stat',
+                'priority' => 'nullable|in:normal,high'
+            ]);
+
+            DB::beginTransaction();
+
+            $createdRequests = [];
+            foreach ($request->service_ids as $index => $serviceId) {
+                $labRequest = new LabServiceRequest();
+                $labRequest->service_id = $serviceId;
+                $labRequest->patient_id = $request->patient_id;
+                $labRequest->doctor_id = Auth::id();
+                $labRequest->note = $request->clinical_notes[$index] ?? $request->clinical_notes ?? '';
+                $labRequest->status = 1; // Billing status
+                $labRequest->urgency = $request->urgency ?? 'routine';
+                $labRequest->priority = $request->priority ?? 'normal';
+                $labRequest->special_instructions = $request->special_instructions ?? '';
+                $labRequest->save();
+
+                $createdRequests[] = $labRequest->id;
+
+                // Log audit
+                $this->logAudit($labRequest->id, 'create', 'Lab request created from workbench');
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => count($createdRequests) . ' lab request(s) created successfully',
+                'request_ids' => $createdRequests
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error creating lab request: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get lab reports with filters for DataTable
+     */
+    public function getLabReports(Request $request)
+    {
+        try {
+            $query = LabServiceRequest::with([
+                'service',
+                'patient.user',
+                'patient.hmo.scheme',
+                'doctor',
+                'biller',
+                'resultBy'
+            ]);
+
+            // Apply filters
+            if ($request->filled('date_from')) {
+                $query->whereDate('created_at', '>=', $request->date_from);
+            }
+
+            if ($request->filled('date_to')) {
+                $query->whereDate('created_at', '<=', $request->date_to);
+            }
+
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+
+            if ($request->filled('service_id')) {
+                $query->where('service_id', $request->service_id);
+            }
+
+            if ($request->filled('doctor_id')) {
+                $query->where('doctor_id', $request->doctor_id);
+            }
+
+            if ($request->filled('hmo_id')) {
+                $query->whereHas('patient', function ($q) use ($request) {
+                    $q->where('hmo_id', $request->hmo_id);
+                });
+            }
+
+            if ($request->filled('patient_search')) {
+                $search = $request->patient_search;
+                $query->whereHas('patient', function ($q) use ($search) {
+                    $q->where('file_no', 'like', "%{$search}%")
+                        ->orWhereHas('user', function ($uq) use ($search) {
+                            $uq->where('surname', 'like', "%{$search}%")
+                                ->orWhere('firstname', 'like', "%{$search}%");
+                        });
+                });
+            }
+
+            return Datatables::of($query)
+                ->addIndexColumn()
+                ->editColumn('created_at', function ($row) {
+                    return $this->formatDateTime($row->created_at);
+                })
+                ->addColumn('file_no', function ($row) {
+                    return $row->patient->file_no ?? 'N/A';
+                })
+                ->addColumn('patient_name', function ($row) {
+                    return $row->patient && $row->patient->user
+                        ? $row->patient->user->surname . ' ' . $row->patient->user->firstname
+                        : 'N/A';
+                })
+                ->addColumn('service_name', function ($row) {
+                    return $row->service->service_name ?? 'N/A';
+                })
+                ->addColumn('doctor_name', function ($row) {
+                    return $row->doctor ? $row->doctor->surname . ' ' . $row->doctor->firstname : 'N/A';
+                })
+                ->addColumn('hmo_name', function ($row) {
+                    return $row->patient && $row->patient->hmo ? $row->patient->hmo->name : 'N/A';
+                })
+                ->addColumn('status_badge', function ($row) {
+                    $badges = [
+                        1 => '<span class="badge badge-warning">Awaiting Billing</span>',
+                        2 => '<span class="badge badge-info">Awaiting Sample</span>',
+                        3 => '<span class="badge badge-primary">Awaiting Results</span>',
+                        4 => '<span class="badge badge-success">Completed</span>'
+                    ];
+                    return $badges[$row->status] ?? '<span class="badge badge-secondary">Unknown</span>';
+                })
+                ->addColumn('tat', function ($row) {
+                    if ($row->status == 4 && $row->result_date) {
+                        $created = Carbon::parse($row->created_at);
+                        $completed = Carbon::parse($row->result_date);
+                        $hours = $created->diffInHours($completed);
+                        return $hours . 'h';
+                    }
+                    return 'N/A';
+                })
+                ->addColumn('actions', function ($row) {
+                    return '<button class="btn btn-sm btn-info view-request-details" data-id="' . $row->id . '">
+                        <i class="mdi mdi-eye"></i>
+                    </button>';
+                })
+                ->rawColumns(['status_badge', 'actions'])
+                ->make(true);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'An error occurred while fetching reports.',
+                'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get doctors who have made lab requests
+     */
+    public function getRequestingDoctors()
+    {
+        try {
+            $doctors = LabServiceRequest::with('doctor')
+                ->select('doctor_id')
+                ->distinct()
+                ->whereNotNull('doctor_id')
+                ->get()
+                ->pluck('doctor')
+                ->filter()
+                ->map(function($doctor) {
+                    return [
+                        'id' => $doctor->id,
+                        'name' => $doctor->surname . ' ' . $doctor->firstname
+                    ];
+                })
+                ->sortBy('name')
+                ->values();
+
+            return response()->json($doctors);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to load doctors',
+                'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get HMOs grouped by scheme for filter dropdown
+     */
+    public function getHmosForFilter()
+    {
+        try {
+            $hmos = \App\Models\Hmo::with('scheme')
+                ->orderBy('name')
+                ->get()
+                ->groupBy(function($hmo) {
+                    return $hmo->scheme ? $hmo->scheme->name : 'Uncategorized';
+                })
+                ->map(function($group) {
+                    return $group->map(function($hmo) {
+                        return [
+                            'id' => $hmo->id,
+                            'name' => $hmo->name
+                        ];
+                    })->values();
+                });
+
+            return response()->json($hmos);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to load HMOs',
+                'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get lab services for filter dropdown
+     */
+    public function getLabServicesForFilter()
+    {
+        try {
+            // Get investigation/lab service category ID from app settings
+            $labCategoryId = appsettings()->investigation_service_cat_id ?? null;
+
+            $query = \App\Models\service::orderBy('service_name');
+
+            // Filter by lab/investigation category if configured
+            if ($labCategoryId) {
+                $query->where('service_cat_id', $labCategoryId);
+            }
+
+            $services = $query->get()
+                ->map(function($service) {
+                    return [
+                        'id' => $service->id,
+                        'name' => $service->service_name
+                    ];
+                });
+
+            return response()->json($services);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to load services',
+                'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get lab statistics for reports dashboard
+     */
+    public function getLabStatistics(Request $request)
+    {
+        try {
+            // Apply same date/filter logic as reports
+            $query = LabServiceRequest::query();
+
+            if ($request->has('date_from') && $request->date_from) {
+                $query->whereDate('created_at', '>=', $request->date_from);
+            }
+
+            if ($request->has('date_to') && $request->date_to) {
+                $query->whereDate('created_at', '<=', $request->date_to);
+            }
+
+            // Apply other filters if present
+            if ($request->has('status') && $request->status) {
+                $query->where('status', $request->status);
+            }
+            if ($request->has('service_id') && $request->service_id) {
+                $query->where('service_id', $request->service_id);
+            }
+            if ($request->has('doctor_id') && $request->doctor_id) {
+                $query->where('doctor_id', $request->doctor_id);
+            }
+
+            // Status counts (global, ignoring status filter for the pie chart usually, but here we filter everything based on user selection?
+            // Usually charts show decomposition of the current selection. If I select status=Pending, the chart is boring (100% Pending).
+            // But let's keep consistency: The base query applies to summary numbers.
+            // For charts, we might want to relax the status filter if we want to show distribution,
+            // but for "Revenue" and "Total" matching the filter is correct.
+
+            $totalRequests = (clone $query)->count();
+            $completed = (clone $query)->where('status', 4)->count();
+            $pending = (clone $query)->whereIn('status', [1, 2, 3])->count();
+
+            // Average TAT
+             $avgTAT = (clone $query)->where('status', 4)
+                ->whereNotNull('result_date')
+                ->whereNotNull('created_at')
+                ->get()
+                ->map(function ($req) {
+                    $created = \Carbon\Carbon::parse($req->created_at);
+                    $completed = \Carbon\Carbon::parse($req->result_date);
+                    return $created->diffInHours($completed);
+                })
+                ->average();
+
+            // Revenue calculation disabled
+            $estimatedRevenue = 0;
+                // Let's look at `topServices` logic again.
+
+            // Requests by status (Format for JS: [{status: 1, count: 10}, ...])
+            $byStatus = (clone $query)
+                ->select('status', DB::raw('count(*) as count'))
+                ->groupBy('status')
+                ->get()
+                ->map(function($item) {
+                     return [
+                         'status' => $item->status,
+                         'count' => $item->count
+                     ];
+                });
+
+            // Monthly trends (last 6 months)
+            $monthlyTrends = [];
+            for ($i = 5; $i >= 0; $i--) {
+                $month = Carbon::now()->subMonths($i);
+                // Filters should apply here too?
+                // Usually trends ignore the date filter (fixed range) or respect if wider.
+                // Let's just use the basic query without date filters for the trend or it will be empty if date range is small.
+                // But we must apply other filters (doctor, service).
+
+                $trendQuery = LabServiceRequest::query();
+                if ($request->has('doctor_id') && $request->doctor_id) $trendQuery->where('doctor_id', $request->doctor_id);
+                // ... apply other non-date filters ...
+
+                $count = $trendQuery->whereYear('created_at', $month->year)
+                    ->whereMonth('created_at', $month->month)
+                    ->count();
+
+                $monthlyTrends[] = [
+                    'month' => $month->format('M Y'),
+                    'count' => $count
+                ];
+            }
+
+            // Top services
+            $topServices = LabServiceRequest::with('service')
+                ->select('service_id', DB::raw('count(*) as total'))
+                ->groupBy('service_id')
+                ->orderBy('total', 'desc')
+                ->limit(10)
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'name' => $item->service->service_name ?? 'N/A', // JS expects 'name'
+                        'count' => $item->total,
+                        'revenue' => 0 // Placeholder
+                    ];
+                });
+
+            // Top doctors
+            $topDoctors = LabServiceRequest::with('doctor')
+                ->select('doctor_id', DB::raw('count(*) as total'))
+                ->whereNotNull('doctor_id')
+                ->groupBy('doctor_id')
+                ->orderBy('total', 'desc')
+                ->limit(10)
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'doctor' => $item->doctor, // Pass full object for JS ({firstname, surname})
+                        'count' => $item->total,
+                        'revenue' => 0 // Placeholder
+                    ];
+                });
+
+            return response()->json([
+                'summary' => [
+                    'total_requests' => $totalRequests,
+                    'completed_requests' => $completed,
+                    'pending_requests' => $pending,
+                    'estimated_revenue' => 0,
+                    'avg_tat' => $avgTAT ? round($avgTAT) : 0
+                ],
+                'by_status' => $byStatus,
+                'monthly_trends' => $monthlyTrends,
+                'top_services' => $topServices,
+                'top_doctors' => $topDoctors
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'An error occurred while fetching statistics.',
+                'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error'
+            ], 500);
         }
     }
 }
