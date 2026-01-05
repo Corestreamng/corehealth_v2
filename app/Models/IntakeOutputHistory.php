@@ -5,11 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class IntakeOutputHistory extends Model
+
+use OwenIt\Auditing\Contracts\Auditable;
+class IntakeOutputHistory extends Model implements Auditable
 {
     use HasFactory;
-
-    protected $fillable = [
+    use \OwenIt\Auditing\Auditable;
+protected $fillable = [
         'period_id',
         'record_id',
         'user_id',

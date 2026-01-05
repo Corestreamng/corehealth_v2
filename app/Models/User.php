@@ -9,15 +9,17 @@ use Laravel\Sanctum\HasApiTokens;
 use Cmgmyr\Messenger\Traits\Messagable;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable
+
+use OwenIt\Auditing\Contracts\Auditable;
+class User extends Authenticatable implements Auditable
 {
     use HasApiTokens;
     use HasFactory;
     use Notifiable;
     use HasRoles;
     use Messagable;
-
-    /**
+    use \OwenIt\Auditing\Auditable;
+/**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>

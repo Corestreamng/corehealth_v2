@@ -5,11 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class ChatMessage extends Model
+
+use OwenIt\Auditing\Contracts\Auditable;
+class ChatMessage extends Model implements Auditable
 {
     use HasFactory;
-
-    protected $fillable = ['conversation_id', 'user_id', 'body', 'type', 'deleted_at', 'deleted_by'];
+    use \OwenIt\Auditing\Auditable;
+protected $fillable = ['conversation_id', 'user_id', 'body', 'type', 'deleted_at', 'deleted_by'];
 
     protected $casts = [
         'deleted_at' => 'datetime',

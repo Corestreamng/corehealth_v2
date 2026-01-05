@@ -5,11 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class ApplicationStatu extends Model
+
+use OwenIt\Auditing\Contracts\Auditable;
+class ApplicationStatu extends Model implements Auditable
 {
     use HasFactory;
-
-    protected $fillable = [
+    use \OwenIt\Auditing\Auditable;
+protected $fillable = [
         'site_name',
         'header_text',
         'footer_text',

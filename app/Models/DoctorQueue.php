@@ -5,11 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class DoctorQueue extends Model
+
+use OwenIt\Auditing\Contracts\Auditable;
+class DoctorQueue extends Model implements Auditable
 {
     use HasFactory;
-
-    protected $fillable = [
+    use \OwenIt\Auditing\Auditable;
+protected $fillable = [
         'patient_id',
         'clinic_id',
         'staff_id',

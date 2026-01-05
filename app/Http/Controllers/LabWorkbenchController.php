@@ -250,6 +250,9 @@ class LabWorkbenchController extends Controller
                     'billed_date' => now(),
                     'service_request_id' => $billReq->id,
                 ]);
+
+                // Log audit
+                $this->logAudit($labRequest->id, 'billing', 'Lab request billed');
             }
 
             DB::commit();
@@ -291,6 +294,9 @@ class LabWorkbenchController extends Controller
                     'sample_date' => now(),
                     'sample_taken' => true
                 ]);
+
+                // Log audit
+                $this->logAudit($labRequest->id, 'sample_collection', 'Sample collected');
             }
 
             DB::commit();
@@ -566,6 +572,12 @@ class LabWorkbenchController extends Controller
             }
 
             $req = LabServiceRequest::where('id', $request->invest_res_entry_id)->update($updateData);
+
+            // Log audit trail
+            $action = $isEdit ? 'edit' : 'result_entry';
+            $description = $isEdit ? 'Result edited' : 'Result entered';
+            $this->logAudit($request->invest_res_entry_id, $action, $description);
+
             DB::commit();
 
             $message = $isEdit ? "Results Updated Successfully" : "Results Saved Successfully";
@@ -685,5 +697,280 @@ class LabWorkbenchController extends Controller
         ];
 
         return $badges[$status] ?? $status;
+    }
+
+    /**
+     * Soft delete a lab request with reason
+     */
+    public function deleteRequest(Request $request, $id)
+    {
+        try {
+            $request->validate([
+                'reason' => 'required|string|min:10'
+            ]);
+
+            $labRequest = LabServiceRequest::findOrFail($id);
+
+            // Check if user has permission to delete
+            if (Auth::id() != $labRequest->doctor_id && !Auth::user()->hasRole('admin')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to delete this request.'
+                ], 403);
+            }
+
+            // Check if request can be deleted (no billing, no results)
+            if ($labRequest->billed_by || $labRequest->result) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete a billed request or one with results.'
+                ], 400);
+            }
+
+            $labRequest->deleted_by = Auth::id();
+            $labRequest->deletion_reason = $request->reason;
+            $labRequest->save();
+            $labRequest->delete();
+
+            // Log audit
+            $this->logAudit($id, 'delete', 'Lab request deleted', null, [
+                'reason' => $request->reason
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Lab request deleted successfully.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting request: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Restore a deleted lab request
+     */
+    public function restoreRequest($id)
+    {
+        try {
+            $labRequest = LabServiceRequest::withTrashed()->findOrFail($id);
+
+            if (!$labRequest->trashed()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This request is not deleted.'
+                ], 400);
+            }
+
+            $labRequest->restore();
+            $labRequest->deleted_by = null;
+            $labRequest->deletion_reason = null;
+            $labRequest->save();
+
+            // Log audit
+            $this->logAudit($id, 'restore', 'Lab request restored from trash');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Lab request restored successfully.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error restoring request: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Dismiss a lab request with reason
+     */
+    public function dismissRequest(Request $request, $id)
+    {
+        try {
+            $request->validate([
+                'reason' => 'required|string|min:10'
+            ]);
+
+            $labRequest = LabServiceRequest::findOrFail($id);
+
+            $labRequest->dismissed_at = now();
+            $labRequest->dismissed_by = Auth::id();
+            $labRequest->dismiss_reason = $request->reason;
+            $labRequest->status = 0; // Set to dismissed status
+            $labRequest->save();
+
+            // Log audit
+            $this->logAudit($id, 'dismiss', 'Lab request dismissed', null, [
+                'reason' => $request->reason
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Lab request dismissed successfully.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error dismissing request: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Restore a dismissed lab request
+     */
+    public function undismissRequest($id)
+    {
+        try {
+            $labRequest = LabServiceRequest::findOrFail($id);
+
+            if (!$labRequest->dismissed_at) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This request is not dismissed.'
+                ], 400);
+            }
+
+            // Restore to appropriate status based on progress
+            $newStatus = 1; // Default to billing
+            if ($labRequest->billed_by) {
+                $newStatus = 2; // Sample collection
+            }
+            if ($labRequest->sample_taken_by) {
+                $newStatus = 3; // Result entry
+            }
+
+            $labRequest->dismissed_at = null;
+            $labRequest->dismissed_by = null;
+            $labRequest->dismiss_reason = null;
+            $labRequest->status = $newStatus;
+            $labRequest->save();
+
+            // Log audit
+            $this->logAudit($id, 'undismiss', 'Lab request restored from dismissed');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Lab request restored successfully.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error restoring request: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get deleted requests
+     */
+    public function getDeletedRequests($patientId = null)
+    {
+        try {
+            $query = LabServiceRequest::onlyTrashed()
+                ->with(['service', 'doctor', 'patient.user']);
+
+            if ($patientId) {
+                $query->where('patient_id', $patientId);
+            }
+
+            $requests = $query->orderBy('deleted_at', 'desc')->get();
+
+            return response()->json($requests);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error loading deleted requests: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get dismissed requests
+     */
+    public function getDismissedRequests($patientId = null)
+    {
+        try {
+            $query = LabServiceRequest::whereNotNull('dismissed_at')
+                ->with(['service', 'doctor', 'patient.user']);
+
+            if ($patientId) {
+                $query->where('patient_id', $patientId);
+            }
+
+            $requests = $query->orderBy('dismissed_at', 'desc')->get();
+
+            return response()->json($requests);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error loading dismissed requests: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get audit logs for a request or patient
+     */
+    public function getAuditLogs(Request $request)
+    {
+        try {
+            $query = \App\Models\LabWorkbenchAuditLog::with(['user', 'labServiceRequest.service']);
+
+            if ($request->has('lab_service_request_id')) {
+                $query->where('lab_service_request_id', $request->lab_service_request_id);
+            }
+
+            if ($request->has('patient_id')) {
+                $query->whereHas('labServiceRequest', function ($q) use ($request) {
+                    $q->where('patient_id', $request->patient_id);
+                });
+            }
+
+            if ($request->has('action')) {
+                $query->where('action', $request->action);
+            }
+
+            if ($request->has('from_date')) {
+                $query->whereDate('created_at', '>=', $request->from_date);
+            }
+
+            if ($request->has('to_date')) {
+                $query->whereDate('created_at', '<=', $request->to_date);
+            }
+
+            $logs = $query->orderBy('created_at', 'desc')->paginate(50);
+
+            return response()->json($logs);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error loading audit logs: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Log audit trail
+     */
+    private function logAudit($labServiceRequestId, $action, $description = null, $oldValues = null, $newValues = null)
+    {
+        try {
+            \App\Models\LabWorkbenchAuditLog::create([
+                'lab_service_request_id' => $labServiceRequestId,
+                'user_id' => Auth::id(),
+                'action' => $action,
+                'description' => $description,
+                'old_values' => $oldValues,
+                'new_values' => $newValues,
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Audit log error: ' . $e->getMessage());
+        }
     }
 }

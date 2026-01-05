@@ -5,11 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class AdmissionRequest extends Model
+
+use OwenIt\Auditing\Contracts\Auditable;
+class AdmissionRequest extends Model implements Auditable
 {
     use HasFactory;
-
-    protected $fillable = [
+    use \OwenIt\Auditing\Auditable;
+protected $fillable = [
         'service_request_id',
         'billed_by',
         'billed_date',

@@ -5,10 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Product extends Model
+
+use OwenIt\Auditing\Contracts\Auditable;
+class Product extends Model implements Auditable
 {
     use HasFactory;
-    protected $fillable = [
+    use \OwenIt\Auditing\Auditable;
+protected $fillable = [
         'user_id',
         'category_id',
         'product_name',

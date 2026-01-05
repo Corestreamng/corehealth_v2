@@ -5,9 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class price_list extends Model
+
+use OwenIt\Auditing\Contracts\Auditable;
+class price_list extends Model implements Auditable
 {
-    protected $table = 'price_list';
+
+
+    use \OwenIt\Auditing\Auditable;
+protected $table = 'price_list';
 
     protected $fillable = ['price'];
     /**

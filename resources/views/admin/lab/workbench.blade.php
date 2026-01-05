@@ -1559,6 +1559,354 @@
         </div>
     </div>
 </div>
+
+<!-- Delete Reason Modal -->
+<div class="modal fade" id="deleteReasonModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fa fa-trash"></i> Delete Lab Request</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form id="deleteRequestForm">
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fa fa-exclamation-triangle"></i>
+                        <strong>Warning:</strong> This action will soft delete the lab request. It can be restored from the trash later.
+                    </div>
+                    <div class="mb-3">
+                        <p><strong>Service:</strong> <span id="delete_service_name"></span></p>
+                        <p><strong>Request ID:</strong> <span id="delete_request_id"></span></p>
+                    </div>
+                    <div class="form-group">
+                        <label for="delete_reason">Reason for Deletion <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="delete_reason" name="reason" rows="4"
+                                  placeholder="Please provide a detailed reason for deleting this lab request (minimum 10 characters)"
+                                  required minlength="10"></textarea>
+                        <small class="form-text text-muted">This reason will be logged for audit purposes.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fa fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fa fa-trash"></i> Delete Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Dismiss Reason Modal -->
+<div class="modal fade" id="dismissReasonModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title"><i class="fa fa-ban"></i> Dismiss Lab Request</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form id="dismissRequestForm">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fa fa-info-circle"></i>
+                        <strong>Info:</strong> Dismissed requests can be restored later from the trash panel.
+                    </div>
+                    <div class="mb-3">
+                        <p><strong>Service:</strong> <span id="dismiss_service_name"></span></p>
+                        <p><strong>Request ID:</strong> <span id="dismiss_request_id"></span></p>
+                    </div>
+                    <div class="form-group">
+                        <label for="dismiss_reason">Reason for Dismissal <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="dismiss_reason" name="reason" rows="4"
+                                  placeholder="Please provide a reason for dismissing this lab request (minimum 10 characters)"
+                                  required minlength="10"></textarea>
+                        <small class="form-text text-muted">This reason will be logged for audit purposes.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fa fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fa fa-ban"></i> Dismiss Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Trash Aside Panel -->
+<div class="trash-panel" id="trashPanel" style="display: none;">
+    <div class="trash-panel-header">
+        <h5><i class="fa fa-trash"></i> Trash & Dismissed</h5>
+        <button class="close-panel-btn" id="closeTrashPanel">&times;</button>
+    </div>
+    <div class="trash-panel-tabs">
+        <button class="trash-tab active" data-trash-tab="dismissed">
+            <i class="fa fa-ban"></i> Dismissed
+            <span class="badge badge-warning" id="dismissed-count">0</span>
+        </button>
+        <button class="trash-tab" data-trash-tab="deleted">
+            <i class="fa fa-trash"></i> Deleted
+            <span class="badge badge-danger" id="deleted-count">0</span>
+        </button>
+    </div>
+    <div class="trash-panel-content">
+        <div class="trash-tab-content active" id="dismissed-content">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover" id="dismissed-table" style="width: 100%">
+                    <thead>
+                        <tr>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+        <div class="trash-tab-content" id="deleted-content">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover" id="deleted-table" style="width: 100%">
+                    <thead>
+                        <tr>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Audit Log Modal -->
+<div class="modal fade" id="auditLogModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="fa fa-clipboard-list"></i> Audit Trail</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label>Action Type</label>
+                        <select class="form-control" id="audit_action_filter">
+                            <option value="">All Actions</option>
+                            <option value="view">View</option>
+                            <option value="edit">Edit</option>
+                            <option value="delete">Delete</option>
+                            <option value="restore">Restore</option>
+                            <option value="dismiss">Dismiss</option>
+                            <option value="undismiss">Undismiss</option>
+                            <option value="billing">Billing</option>
+                            <option value="sample_collection">Sample Collection</option>
+                            <option value="result_entry">Result Entry</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label>From Date</label>
+                        <input type="date" class="form-control" id="audit_from_date">
+                    </div>
+                    <div class="col-md-3">
+                        <label>To Date</label>
+                        <input type="date" class="form-control" id="audit_to_date">
+                    </div>
+                    <div class="col-md-3">
+                        <label>&nbsp;</label>
+                        <button class="btn btn-primary btn-block" id="applyAuditFilter">
+                            <i class="fa fa-filter"></i> Apply Filter
+                        </button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="audit-log-table" style="width: 100%">
+                        <thead>
+                            <tr>
+                                <th>Date/Time</th>
+                                <th>User</th>
+                                <th>Action</th>
+                                <th>Description</th>
+                                <th>IP Address</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="exportAuditLog">
+                    <i class="fa fa-download"></i> Export to Excel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Trash Panel Styles */
+.trash-panel {
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 450px;
+    background: white;
+    box-shadow: -4px 0 15px rgba(0, 0, 0, 0.2);
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+}
+
+.trash-panel-header {
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 3px solid #5a67d8;
+}
+
+.trash-panel-header h5 {
+    margin: 0;
+    font-weight: 700;
+    font-size: 1.25rem;
+}
+
+.trash-panel-tabs {
+    display: flex;
+    background: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.trash-tab {
+    flex: 1;
+    padding: 1rem;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-weight: 600;
+    color: #6c757d;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.trash-tab:hover {
+    background: rgba(0, 123, 255, 0.05);
+    color: #007bff;
+}
+
+.trash-tab.active {
+    color: #007bff;
+    border-bottom-color: #007bff;
+    background: white;
+}
+
+.trash-panel-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+}
+
+.trash-tab-content {
+    display: none;
+}
+
+.trash-tab-content.active {
+    display: block;
+}
+
+/* Floating Trash Button */
+.floating-trash-btn {
+    position: fixed;
+    right: 30px;
+    bottom: 100px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    transition: all 0.3s;
+    z-index: 1000;
+}
+
+.floating-trash-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.floating-trash-btn .badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #dc3545;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+/* Audit Log Button */
+.floating-audit-btn {
+    position: fixed;
+    right: 30px;
+    bottom: 30px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    transition: all 0.3s;
+    z-index: 1000;
+}
+
+.floating-audit-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(240, 147, 251, 0.6);
+}
+</style>
+
+<!-- Floating Action Buttons -->
+<button class="floating-trash-btn" id="openTrashPanel" title="View Trash & Dismissed Requests">
+    <i class="fa fa-trash"></i>
+    <span class="badge" id="trash-total-count">0</span>
+</button>
+
+<button class="floating-audit-btn" id="openAuditLog" title="View Audit Trail">
+    <i class="fa fa-clipboard-list"></i>
+</button>
+
 @endsection
 
 @section('scripts')
@@ -3050,6 +3398,387 @@ function getFileIcon(type) {
     if (type.includes('pdf')) return '<i class="fa fa-file-pdf-o"></i>';
     return '<i class="fa fa-file-o"></i>';
 }
+
+// Delete Lab Request with Reason
+let deleteRequestId = null;
+let deleteEncounterId = null;
+
+function deleteLabRequest(requestId, encounterId, serviceName) {
+    deleteRequestId = requestId;
+    deleteEncounterId = encounterId;
+    $('#delete_service_name').text(serviceName);
+    $('#delete_request_id').text(requestId);
+    $('#delete_reason').val('');
+    $('#deleteReasonModal').modal('show');
+}
+
+$('#deleteRequestForm').on('submit', function(e) {
+    e.preventDefault();
+
+    const reason = $('#delete_reason').val();
+
+    if (reason.length < 10) {
+        alert('Please provide a detailed reason (minimum 10 characters)');
+        return;
+    }
+
+    $.ajax({
+        url: `/lab-workbench/lab-service-requests/${deleteRequestId}`,
+        method: 'DELETE',
+        data: {
+            _token: '{{ csrf_token() }}',
+            reason: reason
+        },
+        success: function(response) {
+            $('#deleteReasonModal').modal('hide');
+            alert(response.message);
+
+            // Reload patient data if we're on a patient
+            if (currentPatient) {
+                loadPatient(currentPatient);
+            }
+
+            // Refresh trash panel if it's open
+            if ($('#trashPanel').is(':visible')) {
+                loadTrashData();
+            }
+        },
+        error: function(xhr) {
+            alert('Error: ' + (xhr.responseJSON?.message || 'Failed to delete request'));
+        }
+    });
+});
+
+// Dismiss Lab Request
+let dismissRequestId = null;
+
+function dismissSingleRequest(requestId, serviceName) {
+    dismissRequestId = requestId;
+    $('#dismiss_service_name').text(serviceName);
+    $('#dismiss_request_id').text(requestId);
+    $('#dismiss_reason').val('');
+    $('#dismissReasonModal').modal('show');
+}
+
+$('#dismissRequestForm').on('submit', function(e) {
+    e.preventDefault();
+
+    const reason = $('#dismiss_reason').val();
+
+    if (reason.length < 10) {
+        alert('Please provide a detailed reason (minimum 10 characters)');
+        return;
+    }
+
+    $.ajax({
+        url: `/lab-workbench/lab-service-requests/${dismissRequestId}/dismiss`,
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            reason: reason
+        },
+        success: function(response) {
+            $('#dismissReasonModal').modal('hide');
+            alert(response.message);
+
+            // Reload patient data
+            if (currentPatient) {
+                loadPatient(currentPatient);
+            }
+
+            // Refresh trash panel
+            if ($('#trashPanel').is(':visible')) {
+                loadTrashData();
+            }
+        },
+        error: function(xhr) {
+            alert('Error: ' + (xhr.responseJSON?.message || 'Failed to dismiss request'));
+        }
+    });
+});
+
+// Restore Request (from deleted or dismissed)
+function restoreRequest(requestId, type) {
+    if (!confirm('Are you sure you want to restore this request?')) return;
+
+    const url = type === 'deleted'
+        ? `/lab-workbench/lab-service-requests/${requestId}/restore`
+        : `/lab-workbench/lab-service-requests/${requestId}/undismiss`;
+
+    $.ajax({
+        url: url,
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}'
+        },
+        success: function(response) {
+            alert(response.message);
+
+            // Reload patient data
+            if (currentPatient) {
+                loadPatient(currentPatient);
+            }
+
+            // Refresh trash panel
+            loadTrashData();
+        },
+        error: function(xhr) {
+            alert('Error: ' + (xhr.responseJSON?.message || 'Failed to restore request'));
+        }
+    });
+}
+
+// Trash Panel Management
+$('#openTrashPanel').on('click', function() {
+    $('#trashPanel').fadeIn(300);
+    loadTrashData();
+});
+
+$('#closeTrashPanel').on('click', function() {
+    $('#trashPanel').fadeOut(300);
+});
+
+$('.trash-tab').on('click', function() {
+    const tab = $(this).data('trash-tab');
+    $('.trash-tab').removeClass('active');
+    $(this).addClass('active');
+    $('.trash-tab-content').removeClass('active');
+    $(`#${tab}-content`).addClass('active');
+});
+
+function loadTrashData() {
+    const patientId = currentPatient || null;
+
+    // Load dismissed requests
+    $.ajax({
+        url: `/lab-workbench/dismissed-requests/${patientId || ''}`,
+        method: 'GET',
+        success: function(data) {
+            $('#dismissed-count').text(data.length);
+            updateTrashTotalCount();
+
+            if ($.fn.DataTable.isDataTable('#dismissed-table')) {
+                $('#dismissed-table').DataTable().destroy();
+            }
+
+            $('#dismissed-table').DataTable({
+                data: data,
+                columns: [{
+                    data: null,
+                    render: function(data) {
+                        return createTrashCard(data, 'dismissed');
+                    }
+                }],
+                ordering: false,
+                searching: true,
+                pageLength: 10,
+                language: {
+                    emptyTable: "No dismissed requests found"
+                }
+            });
+        }
+    });
+
+    // Load deleted requests
+    $.ajax({
+        url: `/lab-workbench/deleted-requests/${patientId || ''}`,
+        method: 'GET',
+        success: function(data) {
+            $('#deleted-count').text(data.length);
+            updateTrashTotalCount();
+
+            if ($.fn.DataTable.isDataTable('#deleted-table')) {
+                $('#deleted-table').DataTable().destroy();
+            }
+
+            $('#deleted-table').DataTable({
+                data: data,
+                columns: [{
+                    data: null,
+                    render: function(data) {
+                        return createTrashCard(data, 'deleted');
+                    }
+                }],
+                ordering: false,
+                searching: true,
+                pageLength: 10,
+                language: {
+                    emptyTable: "No deleted requests found"
+                }
+            });
+        }
+    });
+}
+
+function createTrashCard(data, type) {
+    const serviceName = data.service ? data.service.service_name : 'N/A';
+    const patientName = data.patient ? `${data.patient.user.firstname} ${data.patient.user.surname}` : 'N/A';
+    const fileNo = data.patient ? data.patient.file_no : 'N/A';
+    const doctorName = data.doctor ? `${data.doctor.firstname} ${data.doctor.surname}` : 'N/A';
+
+    const date = type === 'deleted'
+        ? new Date(data.deleted_at).toLocaleString()
+        : new Date(data.dismissed_at).toLocaleString();
+
+    const reason = type === 'deleted' ? data.deletion_reason : data.dismiss_reason;
+
+    const badgeClass = type === 'deleted' ? 'badge-danger' : 'badge-warning';
+    const icon = type === 'deleted' ? 'fa-trash' : 'fa-ban';
+
+    let html = `
+        <div class="card mb-2" style="border-left: 4px solid ${type === 'deleted' ? '#dc3545' : '#ffc107'};">
+            <div class="card-body p-2">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h6 class="mb-0">
+                        <span class="badge ${badgeClass}">
+                            <i class="fa ${icon}"></i> ${serviceName}
+                        </span>
+                    </h6>
+                    <button class="btn btn-sm btn-success" onclick="restoreRequest(${data.id}, '${type}')">
+                        <i class="fa fa-undo"></i> Restore
+                    </button>
+                </div>
+                <small>
+                    <div><strong>Patient:</strong> ${patientName} (${fileNo})</div>
+                    <div><strong>Doctor:</strong> ${doctorName}</div>
+                    <div><strong>${type === 'deleted' ? 'Deleted' : 'Dismissed'}:</strong> ${date}</div>
+                    <div><strong>Reason:</strong> ${reason}</div>
+                </small>
+            </div>
+        </div>
+    `;
+
+    return html;
+}
+
+function updateTrashTotalCount() {
+    const dismissed = parseInt($('#dismissed-count').text()) || 0;
+    const deleted = parseInt($('#deleted-count').text()) || 0;
+    const total = dismissed + deleted;
+    $('#trash-total-count').text(total);
+
+    if (total > 0) {
+        $('#trash-total-count').show();
+    } else {
+        $('#trash-total-count').hide();
+    }
+}
+
+// Audit Log Management
+let auditLogTable = null;
+
+$('#openAuditLog').on('click', function() {
+    $('#auditLogModal').modal('show');
+    loadAuditLogs();
+});
+
+$('#applyAuditFilter').on('click', function() {
+    loadAuditLogs();
+});
+
+function loadAuditLogs() {
+    const filters = {
+        action: $('#audit_action_filter').val(),
+        from_date: $('#audit_from_date').val(),
+        to_date: $('#audit_to_date').val()
+    };
+
+    if (currentPatient) {
+        filters.patient_id = currentPatient;
+    }
+
+    if (auditLogTable) {
+        auditLogTable.destroy();
+    }
+
+    auditLogTable = $('#audit-log-table').DataTable({
+        ajax: {
+            url: '/lab-workbench/audit-logs',
+            data: filters
+        },
+        columns: [
+            {
+                data: 'created_at',
+                render: function(data) {
+                    return new Date(data).toLocaleString();
+                }
+            },
+            {
+                data: 'user',
+                render: function(data) {
+                    return data ? `${data.firstname} ${data.surname}` : 'N/A';
+                }
+            },
+            {
+                data: 'action',
+                render: function(data) {
+                    const badges = {
+                        'view': 'badge-info',
+                        'edit': 'badge-warning',
+                        'delete': 'badge-danger',
+                        'restore': 'badge-success',
+                        'dismiss': 'badge-warning',
+                        'undismiss': 'badge-success',
+                        'billing': 'badge-primary',
+                        'sample_collection': 'badge-info',
+                        'result_entry': 'badge-success'
+                    };
+                    const badgeClass = badges[data] || 'badge-secondary';
+                    return `<span class="badge ${badgeClass}">${data.toUpperCase()}</span>`;
+                }
+            },
+            {
+                data: 'description',
+                render: function(data, type, row) {
+                    let desc = data || 'No description';
+                    if (row.new_values && row.new_values.reason) {
+                        desc += `<br><small class="text-muted">Reason: ${row.new_values.reason}</small>`;
+                    }
+                    return desc;
+                }
+            },
+            { data: 'ip_address' }
+        ],
+        order: [[0, 'desc']],
+        pageLength: 25,
+        language: {
+            emptyTable: "No audit logs found"
+        }
+    });
+}
+
+$('#exportAuditLog').on('click', function() {
+    // TODO: Implement export to Excel functionality
+    alert('Export feature coming soon!');
+});
+
+// Load trash counts on page load
+$(document).ready(function() {
+    loadTrashData();
+
+    // Refresh trash counts every 60 seconds
+    setInterval(function() {
+        if (!$('#trashPanel').is(':visible')) {
+            const patientId = currentPatient || null;
+            $.ajax({
+                url: `/lab-workbench/dismissed-requests/${patientId || ''}`,
+                method: 'GET',
+                success: function(data) {
+                    $('#dismissed-count').text(data.length);
+                    updateTrashTotalCount();
+                }
+            });
+            $.ajax({
+                url: `/lab-workbench/deleted-requests/${patientId || ''}`,
+                method: 'GET',
+                success: function(data) {
+                    $('#deleted-count').text(data.length);
+                    updateTrashTotalCount();
+                }
+            });
+        }
+    }, 60000);
+});
 
 
 </script>

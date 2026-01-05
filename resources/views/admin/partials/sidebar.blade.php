@@ -174,6 +174,12 @@
                     <span class="menu-title">Hospital Config</span>
                 </a>
             </li>
+            <li class="nav-item {{ request()->routeIs('audit-logs.*') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('audit-logs.*') ? 'active' : '' }}" href="{{ route('audit-logs.index') }}">
+                    <i class="mdi mdi-history menu-icon"></i>
+                    <span class="menu-title">Audit Logs</span>
+                </a>
+            </li>
             <li class="nav-item {{ request()->routeIs('staff.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('staff.*') ? 'active' : '' }}" href="{{ route('staff.index') }}">
                     <i class="mdi mdi-account-group menu-icon"></i>

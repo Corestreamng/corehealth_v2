@@ -95,6 +95,15 @@ Route::group(['middleware' => ['auth']], function () {
         Route::put('hospital-config', [HospitalConfigController::class, 'update'])->name('hospital-config.update');
     });
 
+    // Audit Logs
+    Route::group(['middleware' => ['auth']], function () {
+        Route::get('audit-logs', [\App\Http\Controllers\AuditLogController::class, 'index'])->name('audit-logs.index');
+        Route::get('audit-logs/data', [\App\Http\Controllers\AuditLogController::class, 'getData'])->name('audit-logs.data');
+        Route::get('audit-logs/stats', [\App\Http\Controllers\AuditLogController::class, 'stats'])->name('audit-logs.stats');
+        Route::get('audit-logs/export', [\App\Http\Controllers\AuditLogController::class, 'export'])->name('audit-logs.export');
+        Route::get('audit-logs/{id}', [\App\Http\Controllers\AuditLogController::class, 'show'])->name('audit-logs.show');
+    });
+
     Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
         Route::resource('patient', PatientController::class);
@@ -192,7 +201,15 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/lab-workbench/lab-service-requests/{id}', [\App\Http\Controllers\LabWorkbenchController::class, 'getLabRequest'])->name('lab.getRequest');
         Route::get('/lab-workbench/lab-service-requests/{id}/attachments', [\App\Http\Controllers\LabWorkbenchController::class, 'getRequestAttachments'])->name('lab.getAttachments');
         Route::post('/lab-workbench/save-result', [\App\Http\Controllers\LabWorkbenchController::class, 'saveResult'])->name('lab.saveResult');
-        Route::post('/lab-workbench/save-result', [\App\Http\Controllers\LabWorkbenchController::class, 'saveResult'])->name('lab.saveResult');
+
+        // Delete, Restore, Dismiss, Audit
+        Route::delete('/lab-workbench/lab-service-requests/{id}', [\App\Http\Controllers\LabWorkbenchController::class, 'deleteRequest'])->name('lab.deleteRequest');
+        Route::post('/lab-workbench/lab-service-requests/{id}/restore', [\App\Http\Controllers\LabWorkbenchController::class, 'restoreRequest'])->name('lab.restoreRequest');
+        Route::post('/lab-workbench/lab-service-requests/{id}/dismiss', [\App\Http\Controllers\LabWorkbenchController::class, 'dismissRequest'])->name('lab.dismissRequest');
+        Route::post('/lab-workbench/lab-service-requests/{id}/undismiss', [\App\Http\Controllers\LabWorkbenchController::class, 'undismissRequest'])->name('lab.undismissRequest');
+        Route::get('/lab-workbench/deleted-requests/{patientId?}', [\App\Http\Controllers\LabWorkbenchController::class, 'getDeletedRequests'])->name('lab.deletedRequests');
+        Route::get('/lab-workbench/dismissed-requests/{patientId?}', [\App\Http\Controllers\LabWorkbenchController::class, 'getDismissedRequests'])->name('lab.dismissedRequests');
+        Route::get('/lab-workbench/audit-logs', [\App\Http\Controllers\LabWorkbenchController::class, 'getAuditLogs'])->name('lab.auditLogs');
 
         // Imaging Service Request Routes
         Route::resource('imaging-requests', ImagingServiceRequestController::class);
