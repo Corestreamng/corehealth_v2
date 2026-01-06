@@ -18,6 +18,7 @@ use App\Models\ReasonForEncounter;
 use App\Models\Staff;
 use App\Models\User;
 use Carbon\Carbon;
+use App\Helpers\HmoHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -90,14 +91,32 @@ class EncounterController extends Controller
                     return $patient->file_no;
                 })
                 ->addColumn('view', function ($queue) {
+                    $reqEntry = ProductOrServiceRequest::find($queue->request_entry_id);
+                    $deliveryCheck = $reqEntry ? HmoHelper::canDeliverService($reqEntry) : ['can_deliver' => true, 'reason' => 'Ready', 'hint' => ''];
+
                     $url = route(
                         'encounters.create',
                         ['patient_id' => $queue->patient_id, 'req_entry_id' => $queue->request_entry_id, 'queue_id' => $queue->id]
                     );
 
+                    if (!$deliveryCheck['can_deliver']) {
+                        $title = e($deliveryCheck['hint'] ?? $deliveryCheck['reason']);
+                        return '<button class="btn btn-secondary btn-sm" disabled title="' . $title . '"><i class="fa fa-ban"></i> Encounter</button>';
+                    }
+
                     return '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> Encounter</a>';
                 })
-                ->rawColumns(['fullname', 'view'])
+                ->addColumn('delivery_status', function ($queue) {
+                    $reqEntry = ProductOrServiceRequest::find($queue->request_entry_id);
+                    $deliveryCheck = $reqEntry ? HmoHelper::canDeliverService($reqEntry) : ['can_deliver' => true, 'reason' => 'Ready', 'hint' => ''];
+
+                    $badgeClass = $deliveryCheck['can_deliver'] ? 'bg-success' : 'bg-danger';
+                    $label = $deliveryCheck['can_deliver'] ? 'Ready' : $deliveryCheck['reason'];
+                    $title = e($deliveryCheck['hint'] ?? '');
+
+                    return '<span class="badge ' . $badgeClass . '" title="' . $title . '">' . e($label) . '</span>';
+                })
+                ->rawColumns(['fullname', 'view', 'delivery_status'])
                 ->make(true);
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
@@ -173,7 +192,10 @@ class EncounterController extends Controller
                     $url = route('patient.show', $queue->patient_id);
                     return '<a href="' . $url . '" class="btn btn-success btn-sm"><i class="fa fa-street-view"></i> View</a>';
                 })
-                ->rawColumns(['fullname', 'view'])
+                ->addColumn('delivery_status', function () {
+                    return '<span class="badge bg-secondary" title="Completed encounter">Completed</span>';
+                })
+                ->rawColumns(['fullname', 'view', 'delivery_status'])
                 ->make(true);
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
@@ -235,14 +257,33 @@ class EncounterController extends Controller
                     return $patient->file_no;
                 })
                 ->addColumn('view', function ($queue) {
+                    $reqEntry = ProductOrServiceRequest::find($queue->request_entry_id);
+                    $deliveryCheck = $reqEntry ? HmoHelper::canDeliverService($reqEntry) : ['can_deliver' => true, 'reason' => 'Ready', 'hint' => ''];
+
                     $url = route('encounters.create', [
                         'patient_id' => $queue->patient_id,
                         'req_entry_id' => $queue->request_entry_id,
                         'queue_id' => $queue->id
                     ]);
+
+                    if (!$deliveryCheck['can_deliver']) {
+                        $title = e($deliveryCheck['hint'] ?? $deliveryCheck['reason']);
+                        return '<button class="btn btn-secondary btn-sm" disabled title="' . $title . '"><i class="fa fa-ban"></i> Encounter</button>';
+                    }
+
                     return '<a href="' . $url . '" class="btn btn-success btn-sm"><i class="fa fa-street-view"></i> Encounter</a>';
                 })
-                ->rawColumns(['fullname', 'view'])
+                ->addColumn('delivery_status', function ($queue) {
+                    $reqEntry = ProductOrServiceRequest::find($queue->request_entry_id);
+                    $deliveryCheck = $reqEntry ? HmoHelper::canDeliverService($reqEntry) : ['can_deliver' => true, 'reason' => 'Ready', 'hint' => ''];
+
+                    $badgeClass = $deliveryCheck['can_deliver'] ? 'bg-success' : 'bg-danger';
+                    $label = $deliveryCheck['can_deliver'] ? 'Ready' : $deliveryCheck['reason'];
+                    $title = e($deliveryCheck['hint'] ?? '');
+
+                    return '<span class="badge ' . $badgeClass . '" title="' . $title . '">' . e($label) . '</span>';
+                })
+                ->rawColumns(['fullname', 'view', 'delivery_status'])
                 ->make(true);
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
@@ -395,6 +436,20 @@ class EncounterController extends Controller
                     }
                 }
 
+                // Check delivery status (payment + HMO validation)
+                $canDeliver = true;
+                $deliveryCheck = null;
+                if ($his->productOrServiceRequest) {
+                    $deliveryCheck = \App\Helpers\HmoHelper::canDeliverService($his->productOrServiceRequest);
+                    $canDeliver = $deliveryCheck['can_deliver'];
+                    if (!$canDeliver) {
+                        $str .= "<div class='alert alert-warning py-2 mb-2 mt-2'><small>";
+                        $str .= "<i class='fa fa-exclamation-triangle'></i> <b>" . $deliveryCheck['reason'] . "</b><br>";
+                        $str .= $deliveryCheck['hint'];
+                        $str .= "</small></div>";
+                    }
+                }
+
                 // Action buttons
                 $str .= '<div class="btn-group mt-2" role="group">';
 
@@ -404,7 +459,7 @@ class EncounterController extends Controller
                     $resultDate = Carbon::parse($his->result_date);
                     $editDuration = appsettings('result_edit_duration') ?? 60;
                     $editDeadline = $resultDate->copy()->addMinutes($editDuration);
-                    $canEdit = Carbon::now()->lessThanOrEqualTo($editDeadline);
+                    $canEdit = Carbon::now()->lessThanOrEqualTo($editDeadline) && $canDeliver;
                 }
 
                 // Add edit button if within edit window
@@ -576,6 +631,20 @@ class EncounterController extends Controller
                     }
                 }
 
+                // Check delivery status (payment + HMO validation)
+                $canDeliver = true;
+                $deliveryCheck = null;
+                if ($his->productOrServiceRequest) {
+                    $deliveryCheck = \App\Helpers\HmoHelper::canDeliverService($his->productOrServiceRequest);
+                    $canDeliver = $deliveryCheck['can_deliver'];
+                    if (!$canDeliver) {
+                        $str .= "<div class='alert alert-warning py-2 mb-2 mt-2'><small>";
+                        $str .= "<i class='fa fa-exclamation-triangle'></i> <b>" . $deliveryCheck['reason'] . "</b><br>";
+                        $str .= $deliveryCheck['hint'];
+                        $str .= "</small></div>";
+                    }
+                }
+
                 // Action buttons
                 $str .= '<div class="btn-group mt-2" role="group">';
 
@@ -585,7 +654,7 @@ class EncounterController extends Controller
                     $resultDate = Carbon::parse($his->result_date);
                     $editDuration = appsettings('result_edit_duration') ?? 60;
                     $editDeadline = $resultDate->copy()->addMinutes($editDuration);
-                    $canEdit = Carbon::now()->lessThanOrEqualTo($editDeadline);
+                    $canEdit = Carbon::now()->lessThanOrEqualTo($editDeadline) && $canDeliver;
                 }
 
                 // Add edit button if within edit window
@@ -764,6 +833,20 @@ class EncounterController extends Controller
                     . ((isset($his->dispensed_by) && $his->dispensed_by != null) ? (userfullname($his->dispensed_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($his->dispense_date)) . ')</span>') : "<span class='badge bg-secondary'>Not dispensed</span>");
                 $str .= '</div>';
                 $str .= '</small></div>';
+
+                // Check delivery status (payment + HMO validation)
+                $canDeliver = true;
+                $deliveryCheck = null;
+                if ($his->productOrServiceRequest) {
+                    $deliveryCheck = \App\Helpers\HmoHelper::canDeliverService($his->productOrServiceRequest);
+                    $canDeliver = $deliveryCheck['can_deliver'];
+                    if (!$canDeliver) {
+                        $str .= "<div class='alert alert-warning py-2 mb-2 mt-2'><small>";
+                        $str .= "<i class='fa fa-exclamation-triangle'></i> <b>" . $deliveryCheck['reason'] . "</b><br>";
+                        $str .= $deliveryCheck['hint'];
+                        $str .= "</small></div>";
+                    }
+                }
 
                 // Action buttons
                 $str .= '<div class="btn-group mt-2" role="group">';

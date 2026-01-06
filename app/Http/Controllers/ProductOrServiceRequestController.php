@@ -30,54 +30,71 @@ class ProductOrServiceRequestController extends Controller
 
     public function productOrServicesRequestersList(Request $request, $patient_user_id = null)
     {
-        // Disable SQL strict mode to allow group by queries
-        DB::statement("SET SQL_MODE=''");
+        // Extract date filters only when provided (avoid default date clipping)
+        $startDateInput = $request->input('start_date');
+        $endDateInput = $request->input('end_date');
 
-        // Extract date filters from the request
-        $startDate = Carbon::parse($request->input('start_date'));
-        $endDate = Carbon::parse($request->input('end_date'));
+        // Base query: unpaid and not invoiced
+        $query = ProductOrServiceRequest::query()
+            ->whereNull('payment_id')
+            ->whereNull('invoice_id');
 
-        // Base query
-        $query = ProductOrServiceRequest::where('payment_id', '=', null);
-
-        // Apply date filtering if dates are provided
-        if ($startDate && $endDate) {
-            $query->whereBetween('created_at', [$startDate->startOfDay(), $endDate->endOfDay()]);
+        // Apply date filtering only if both dates are supplied
+        if (!empty($startDateInput) && !empty($endDateInput)) {
+            $startDate = Carbon::parse($startDateInput)->startOfDay();
+            $endDate = Carbon::parse($endDateInput)->endOfDay();
+            $query->whereBetween('created_at', [$startDate, $endDate]);
         }
 
         if ($patient_user_id === null) {
-            $req = $query->groupBy('user_id')->orderBy('created_at', 'DESC')->get();
+            // Aggregate unpaid items by patient
+            $req = $query
+                ->select([
+                    'user_id',
+                    DB::raw('COUNT(*) as pending_items'),
+                    DB::raw('SUM(CASE WHEN claims_amount > 0 THEN 1 ELSE 0 END) as pending_claims'),
+                    DB::raw('MAX(created_at) as last_created'),
+                ])
+                ->groupBy('user_id')
+                ->orderByDesc('last_created')
+                ->get();
+
+            // Preload patient + HMO data to avoid N+1
+            $patients = patient::with('hmo')
+                ->whereIn('user_id', $req->pluck('user_id'))
+                ->get()
+                ->keyBy('user_id');
 
             return Datatables::of($req)
                 ->addIndexColumn()
                 ->addColumn('show', function ($r) {
-                    $url = route('servicess', $r->user_id);
-                    return "<a href='$url' class='btn btn-info btn-sm'><i class='fa fa-eye'></i> View</a>";
+                    $claimBadge = ($r->pending_claims ?? 0) > 0
+                        ? " <span class='badge bg-warning text-dark'>HMO claims pending</span>"
+                        : '';
+                    return "<button type='button' class='btn btn-info btn-sm btn-pay' data-user='{$r->user_id}'><i class='fa fa-credit-card'></i> Pay</button>{$claimBadge}";
                 })
-                ->addColumn('patient', function ($r) {
-                    return userfullname($r->user_id);
-                })
-                ->addColumn('file_no', function ($r) {
-                    $p = patient::where('user_id', $r->user_id)->first();
+                ->addColumn('pending', fn($r) => $r->pending_items)
+                ->addColumn('claims', fn($r) => $r->pending_claims ?? 0)
+                ->addColumn('patient', fn($r) => userfullname($r->user_id))
+                ->addColumn('file_no', function ($r) use ($patients) {
+                    $p = $patients->get($r->user_id);
                     return $p->file_no ?? 'N/A';
                 })
-                ->addColumn('hmo', function ($r) {
-                    $p = patient::where('user_id', $r->user_id)->first();
-                    if ($p) {
-                        $hmo = Hmo::find($p->hmo_id);
-                        return $hmo->name ?? 'N/A';
-                    } else {
-                        return 'N/A';
-                    }
+                ->addColumn('hmo', function ($r) use ($patients) {
+                    $p = $patients->get($r->user_id);
+                    return optional($p?->hmo)->name ?? 'N/A';
                 })
-                ->addColumn('hmo_no', function ($r) {
-                    $p = patient::where('user_id', $r->user_id)->first();
+                ->addColumn('hmo_no', function ($r) use ($patients) {
+                    $p = $patients->get($r->user_id);
                     return $p->hmo_no ?? 'N/A';
                 })
                 ->rawColumns(['show'])
                 ->make(true);
         } else {
-            $req = $query->where('user_id', $patient_user_id)->orderBy('created_at', 'DESC')->get();
+            $req = $query
+                ->where('user_id', $patient_user_id)
+                ->orderBy('created_at', 'DESC')
+                ->get();
 
             return Datatables::of($req)
                 ->addIndexColumn()

@@ -17,8 +17,9 @@
                         </div>
                     </div>
                 </div>
-                <form action="{{ route('complete-payment') }}" method="post" id="summaryForm">
+                <form action="{{ route('complete-payment') }}" method="POST" id="summaryForm">
                     @csrf
+                    <input type="hidden" name="_method" value="POST">
                     <div class="card-body">
                         <h4 class="mb-3">Services</h4>
                         <div class="table-responsive">

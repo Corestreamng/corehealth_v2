@@ -735,7 +735,7 @@
 
 <div class="modal fade" id="assignBedModal" tabindex="-1" role="dialog" aria-labelledby="assignBedModalLabel"
     aria-hidden="true">
-    <div class="modal-dialog" role="document">
+    <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <form action="{{ route('assign-bed') }}" method="post">
                 @csrf
@@ -745,11 +745,12 @@
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="assign_bed_req_id" name="assign_bed_req_id">
+                    <input type="hidden" id="assign_bed_patient_id" name="assign_bed_patient_id">
                     {{-- Redundent --}}
                     <input type="hidden" id="assign_bed_reassign" name="assign_bed_reassign">
                     <div class="form-group">
-                        <label for="">Select Bed</label>
-                        <select name="bed_id" class="form-control">
+                        <label for="bed_id_select">Select Bed</label>
+                        <select name="bed_id" id="bed_id_select" class="form-control">
                             <option value="">--select bed--</option>
                             @if(isset($avail_beds))
                                 @foreach ($avail_beds as $bed)
@@ -759,6 +760,30 @@
                                 @endforeach
                             @endif
                         </select>
+                    </div>
+
+                    <!-- HMO Coverage Information -->
+                    <div id="bed_coverage_info" class="mt-3" style="display: none;">
+                        <div class="alert alert-info">
+                            <h6 class="mb-3"><i class="fa fa-info-circle"></i> <strong>Coverage Breakdown</strong></h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-2"><strong>HMO:</strong> <span id="coverage_hmo_name">N/A</span></p>
+                                    <p class="mb-2"><strong>Bed Price:</strong> NGN <span id="coverage_bed_price">0</span>/day</p>
+                                    <p class="mb-2"><strong>Coverage Mode:</strong> <span id="coverage_mode" class="badge bg-secondary">N/A</span></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-2"><strong>Patient Pays:</strong> <span class="text-danger">NGN <span id="coverage_payable">0</span>/day</span></p>
+                                    <p class="mb-2"><strong>HMO Covers:</strong> <span class="text-success">NGN <span id="coverage_claims">0</span>/day</span></p>
+                                    <p class="mb-2" id="validation_required_text" style="display: none;">
+                                        <span class="badge bg-warning"><i class="fa fa-exclamation-triangle"></i> HMO Validation Required</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div id="coverage_error" class="alert alert-warning mt-2" style="display: none;">
+                                <small><i class="fa fa-exclamation-triangle"></i> <span id="coverage_error_text"></span></small>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -771,6 +796,87 @@
         </div>
     </div>
 </div>
+
+<script>
+(function waitForJQuery() {
+    if (!window.jQuery) {
+        setTimeout(waitForJQuery, 50);
+        return;
+    }
+    const $ = window.jQuery;
+    $(document).ready(function() {
+        $('#bed_id_select').on('change', function() {
+            const bedId = $(this).val();
+            const patientId = $('#assign_bed_patient_id').val();
+
+            if (!bedId || !patientId) {
+                $('#bed_coverage_info').hide();
+                return;
+            }
+
+            // Fetch coverage information
+            $.ajax({
+                url: "{{ route('bed-coverage') }}",
+                method: 'GET',
+                data: {
+                    bed_id: bedId,
+                    patient_id: patientId
+                },
+                success: function(response) {
+                    if (response.success && response.coverage) {
+                        const coverage = response.coverage;
+
+                        // Update coverage display
+                        $('#coverage_bed_price').text((coverage.bed_price || 0).toLocaleString());
+                        $('#coverage_payable').text((coverage.payable_amount || 0).toLocaleString());
+                        $('#coverage_claims').text((coverage.claims_amount || 0).toLocaleString());
+
+                        if (coverage.has_hmo) {
+                            $('#coverage_hmo_name').text(coverage.hmo_name || 'N/A');
+
+                            // Coverage mode badge
+                            let modeClass = 'bg-secondary';
+                            if (coverage.coverage_mode === 'express') modeClass = 'bg-success';
+                            else if (coverage.coverage_mode === 'primary') modeClass = 'bg-primary';
+                            else if (coverage.coverage_mode === 'secondary') modeClass = 'bg-warning';
+
+                            $('#coverage_mode').removeClass('bg-secondary bg-success bg-primary bg-warning')
+                                .addClass(modeClass)
+                                .text((coverage.coverage_mode || 'N/A').toUpperCase());
+
+                            // Show validation warning if needed
+                            if (coverage.requires_validation) {
+                                $('#validation_required_text').show();
+                            } else {
+                                $('#validation_required_text').hide();
+                            }
+
+                            // Show error if any
+                            if (coverage.error_message) {
+                                $('#coverage_error_text').text(coverage.error_message);
+                                $('#coverage_error').show();
+                            } else {
+                                $('#coverage_error').hide();
+                            }
+                        } else {
+                            $('#coverage_hmo_name').text('None (Cash Patient)');
+                            $('#coverage_mode').text('CASH').removeClass('bg-success bg-primary bg-warning').addClass('bg-secondary');
+                            $('#validation_required_text').hide();
+                            $('#coverage_error').hide();
+                        }
+
+                        $('#bed_coverage_info').show();
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Error fetching coverage:', xhr);
+                    $('#bed_coverage_info').hide();
+                }
+            });
+        });
+    });
+})();
+</script>
 
 {{-- Edit Encounter Note Modal --}}
 {{-- Edit Encounter Note Modal --}}

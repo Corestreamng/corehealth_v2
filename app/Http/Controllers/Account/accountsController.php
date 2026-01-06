@@ -19,7 +19,8 @@ class accountsController extends Controller
         $products = ProductOrServiceRequest::with(['product.price', 'product.category', 'staff', 'user'])
             ->where('service_id', NULL)
             ->where('user_id', $id)
-            ->where('invoice_id', NULL)
+            ->whereNull('payment_id')
+            ->whereNull('invoice_id')
             ->get();
 
         return DataTables::of($products)
@@ -67,7 +68,8 @@ class accountsController extends Controller
         $services = ProductOrServiceRequest::with(['service.price', 'service.category', 'staff', 'user'])
             ->where('product_id', NULL)
             ->where('user_id', $identify)
-            ->where('invoice_id', NULL)
+            ->whereNull('payment_id')
+            ->whereNull('invoice_id')
             ->get();
 
         return DataTables::of($services)
@@ -153,7 +155,8 @@ class accountsController extends Controller
         $services = ProductOrServiceRequest::with(['service.price', 'service.category', 'staff', 'user'])
             ->where('product_id', NULL)
             ->where('user_id', $id)
-            ->where('invoice_id', NULL)
+            ->whereNull('payment_id')
+            ->whereNull('invoice_id')
             ->get()
             ->map(function ($item) {
                 $cat = $item->service && $item->service->category ? $item->service->category->category_name : '';
@@ -189,7 +192,8 @@ class accountsController extends Controller
         $products = ProductOrServiceRequest::with(['product.price', 'product.category', 'staff', 'user'])
             ->where('service_id', NULL)
             ->where('user_id', $id)
-            ->where('invoice_id', NULL)
+            ->whereNull('payment_id')
+            ->whereNull('invoice_id')
             ->get()
             ->map(function ($item) {
                 $cat = $item->product && $item->product->category ? $item->product->category->category_name : '';
