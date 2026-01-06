@@ -10,6 +10,7 @@ use App\Models\payment;
 use App\Models\Product;
 use App\Models\ProductOrServiceRequest;
 use App\Models\service;
+use App\Models\HmoClaim;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -44,7 +45,11 @@ class paymentController extends Controller
             // $services = service::with('price')->whereIn('id',$requests)->get();
             $total = 0;
             for ($i = 0; $i < count($services); ++$i) {
-                $total += $services[$i]->service->price->sale_price * $serviceQty[$i];
+                // Use payable_amount if set (HMO patient), otherwise use regular price
+                $price = $services[$i]->payable_amount !== null
+                    ? $services[$i]->payable_amount
+                    : $services[$i]->service->price->sale_price;
+                $total += $price * $serviceQty[$i];
             }
             $sumServices = $total;
         }
@@ -55,7 +60,11 @@ class paymentController extends Controller
             $products = ProductOrServiceRequest::with('product.price')->whereIn('id', array_values($inputs))->get();
             $productsTotal = 0;
             for ($j = 0; $j < count($products); ++$j) {
-                $productsTotal += $products[$j]->product->price->current_sale_price * $productQty[$j];
+                // Use payable_amount if set (HMO patient), otherwise use regular price
+                $price = $products[$j]->payable_amount !== null
+                    ? $products[$j]->payable_amount
+                    : $products[$j]->product->price->current_sale_price;
+                $productsTotal += $price * $productQty[$j];
             }
             $sumProducts = $productsTotal;
         }
@@ -124,13 +133,6 @@ class paymentController extends Controller
                 $request->total = 0 - $request->total;
             }
 
-            // Get HMO id if payment type is CLAIMS
-            $hmo_id = null;
-            if (strtolower($request->payment_type) == 'claims') {
-                $patient = \App\Models\patient::find($request->patient_id);
-                $hmo_id = $patient && $patient->hmo_id ? $patient->hmo_id : null;
-            }
-
             // make the payment entry
             $payment = payment::create([
                 'payment_type' => $request->payment_type,
@@ -139,7 +141,6 @@ class paymentController extends Controller
                 'reference_no' => $request->reference_no,
                 'user_id' => Auth::id(),
                 'patient_id' => $request->patient_id,
-                'hmo_id' => $hmo_id,
             ]);
             // dd($payment);
             $pp = patient::find($request->patient_id);
@@ -162,7 +163,10 @@ class paymentController extends Controller
                         ]);
                         $discount = isset($serviceDiscounts[$u]) ? $serviceDiscounts[$u] : 0;
                         $qty = isset($serviceQty[$u]) ? $serviceQty[$u] : 1;
-                        $price = $service->service->price->sale_price;
+                        // Use payable_amount if set (HMO patient), otherwise use regular price
+                        $price = $service->payable_amount !== null
+                            ? $service->payable_amount
+                            : $service->service->price->sale_price;
                         $discountAmount = ($price * $qty) * ($discount / 100);
                         $amountPaid = ($price * $qty) - $discountAmount;
 
@@ -189,7 +193,10 @@ class paymentController extends Controller
                         ]);
                         $discount = isset($productDiscounts[$l]) ? $productDiscounts[$l] : 0;
                         $qty = isset($productQty[$l]) ? $productQty[$l] : 1;
-                        $price = $product->product->price->current_sale_price;
+                        // Use payable_amount if set (HMO patient), otherwise use regular price
+                        $price = $product->payable_amount !== null
+                            ? $product->payable_amount
+                            : $product->product->price->current_sale_price;
                         $discountAmount = ($price * $qty) * ($discount / 100);
                         $amountPaid = ($price * $qty) - $discountAmount;
 
@@ -214,18 +221,52 @@ class paymentController extends Controller
                         'No cash was recieved',
                         'Current account credit is: ' . ($new_bal ?? ''),
                     ];
-                } elseif (strtolower($request->payment_type) == strtolower('CLAIMS')) {
-                    $notes = [
-                        'Payment Billed to claims',
-                        'No cash was recieved',
-                        'Cash to be claimed from HMO',
-                    ];
                 } else {
                     $notes = [
                         'Funds Recieved in good condition - ' . $request->payment_type,
                     ];
                 }
                 $notes = implode('<br>', $notes);
+
+                // Create HMO Claim if patient has HMO and there are claims
+                $patient = patient::find($request->patient_id);
+                if ($patient && $patient->hmo_id) {
+                    $claimsTotal = 0;
+
+                    // Calculate total claims from services
+                    if (null != session('selected')) {
+                        $services = ProductOrServiceRequest::whereIn('id', array_values(session('selected')))->get();
+                        foreach ($services as $service) {
+                            if ($service->claims_amount > 0) {
+                                $qty = isset($serviceQty[array_search($service->id, session('selected'))]) ? $serviceQty[array_search($service->id, session('selected'))] : 1;
+                                $claimsTotal += $service->claims_amount * $qty;
+                            }
+                        }
+                    }
+
+                    // Calculate total claims from products
+                    if (session('products') != null) {
+                        $products = ProductOrServiceRequest::whereIn('id', array_values(session('products')))->get();
+                        foreach ($products as $product) {
+                            if ($product->claims_amount > 0) {
+                                $qty = isset($productQty[array_search($product->id, session('products'))]) ? $productQty[array_search($product->id, session('products'))] : 1;
+                                $claimsTotal += $product->claims_amount * $qty;
+                            }
+                        }
+                    }
+
+                    // Create HMO claim if there are claims
+                    if ($claimsTotal > 0) {
+                        HmoClaim::create([
+                            'hmo_id' => $patient->hmo_id,
+                            'patient_id' => $patient->id,
+                            'payment_id' => $payment->id,
+                            'claims_amount' => $claimsTotal,
+                            'status' => 'pending',
+                            'created_by' => Auth::id(),
+                        ]);
+                    }
+                }
 
                 $site = $app_set;
                 $patientName = userfullname($pp->user_id);

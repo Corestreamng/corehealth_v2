@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\HmoHelper;
+
 use Illuminate\Http\Request;
 use App\Models\LabServiceRequest;
 use App\Models\AdmissionRequest;
@@ -333,11 +335,30 @@ class LabServiceRequestController extends Controller
                 DB::beginTransaction();
                 if (isset($request->selectedInvestBillRows)) {
                     for ($i = 0; $i < count($request->selectedInvestBillRows); $i++) {
-                        $prod_id = LabServiceRequest::where('id', $request->selectedInvestBillRows[$i])->first()->service->id;
+                        $lab_req = LabServiceRequest::where('id', $request->selectedInvestBillRows[$i])->first();
+                        $prod_id = $lab_req->service->id;
                         $bill_req = new ProductOrServiceRequest;
                         $bill_req->user_id = $request->patient_user_id;
                         $bill_req->staff_user_id = Auth::id();
                         $bill_req->service_id = $prod_id;
+
+                        // Apply HMO tariff if patient has HMO
+                        try {
+                            $patient = patient::where('user_id', $request->patient_user_id)->first();
+                            if ($patient) {
+                                $hmoData = HmoHelper::applyHmoTariff($patient->id, null, $prod_id);
+                                if ($hmoData) {
+                                    $bill_req->payable_amount = $hmoData['payable_amount'];
+                                    $bill_req->claims_amount = $hmoData['claims_amount'];
+                                    $bill_req->coverage_mode = $hmoData['coverage_mode'];
+                                    $bill_req->validation_status = $hmoData['validation_status'];
+                                }
+                            }
+                        } catch (\Exception $e) {
+                            DB::rollBack();
+                            return redirect()->back()->withErrors(['error' => 'HMO Tariff Error: ' . $e->getMessage()])->withInput();
+                        }
+
                         $bill_req->save();
 
 
@@ -355,6 +376,24 @@ class LabServiceRequestController extends Controller
                         $bill_req->user_id = $request->patient_user_id;
                         $bill_req->staff_user_id = Auth::id();
                         $bill_req->service_id = $request->addedInvestBillRows[$i];
+
+                        // Apply HMO tariff if patient has HMO
+                        try {
+                            $patient = patient::where('user_id', $request->patient_user_id)->first();
+                            if ($patient) {
+                                $hmoData = HmoHelper::applyHmoTariff($patient->id, null, $request->addedInvestBillRows[$i]);
+                                if ($hmoData) {
+                                    $bill_req->payable_amount = $hmoData['payable_amount'];
+                                    $bill_req->claims_amount = $hmoData['claims_amount'];
+                                    $bill_req->coverage_mode = $hmoData['coverage_mode'];
+                                    $bill_req->validation_status = $hmoData['validation_status'];
+                                }
+                            }
+                        } catch (\Exception $e) {
+                            DB::rollBack();
+                            return redirect()->back()->withErrors(['error' => 'HMO Tariff Error: ' . $e->getMessage()])->withInput();
+                        }
+
                         $bill_req->save();
 
                         $inves = new LabServiceRequest();
@@ -401,6 +440,18 @@ class LabServiceRequestController extends Controller
                 DB::beginTransaction();
                 if (isset($request->selectedInvestSampleRows)) {
                     for ($i = 0; $i < count($request->selectedInvestSampleRows); $i++) {
+                        $labRequest = LabServiceRequest::with('productOrServiceRequest')->findOrFail($request->selectedInvestSampleRows[$i]);
+
+                        // Check HMO access control
+                        if ($labRequest->productOrServiceRequest) {
+                            if (!\App\Helpers\HmoHelper::canPatientAccessService($labRequest->productOrServiceRequest)) {
+                                DB::rollBack();
+                                return redirect()->back()->with([
+                                    'message' => 'Service requires HMO approval for Request ID: ' . $labRequest->id . '. Please contact HMO executive for validation.',
+                                    'message_type' => 'error'
+                                ]);
+                            }
+                        }
 
                         LabServiceRequest::where('id', $request->selectedInvestSampleRows[$i])->update([
                             'status' => 3,

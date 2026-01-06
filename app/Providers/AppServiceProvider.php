@@ -3,6 +3,12 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use App\Models\Product;
+use App\Models\Service;
+use App\Models\Hmo;
+use App\Observers\ProductObserver;
+use App\Observers\ServiceObserver;
+use App\Observers\HmoObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,6 +29,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        // Register HMO tariff auto-generation observers
+        Product::observe(ProductObserver::class);
+        Service::observe(ServiceObserver::class);
+        Hmo::observe(HmoObserver::class);
     }
 }

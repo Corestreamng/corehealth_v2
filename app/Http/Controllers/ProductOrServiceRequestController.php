@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Helpers\HmoHelper;
 use Yajra\DataTables\DataTables;
 
 class ProductOrServiceRequestController extends Controller
@@ -154,6 +155,30 @@ class ProductOrServiceRequestController extends Controller
                                 $req->service_id = $service_ids[$i];
                                 $req->user_id = $user_ids[$i];
                                 $req->staff_user_id = Auth::id();
+
+                                // Apply HMO tariff if patient has HMO
+                                try {
+                                    $p = patient::where('user_id', $user_ids[$i])->first();
+                                    if ($p) {
+                                        $hmoData = HmoHelper::applyHmoTariff(
+                                            $p->id,
+                                            null,
+                                            $service_ids[$i]
+                                        );
+                                        if ($hmoData) {
+                                            $req->payable_amount = $hmoData['payable_amount'];
+                                            $req->claims_amount = $hmoData['claims_amount'];
+                                            $req->coverage_mode = $hmoData['coverage_mode'];
+                                            $req->validation_status = $hmoData['validation_status'];
+                                        }
+                                    }
+                                } catch (\Exception $e) {
+                                    DB::rollBack();
+                                    return redirect()->back()
+                                        ->withErrors(['error' => 'HMO Tariff Error: ' . $e->getMessage()])
+                                        ->withInput();
+                                }
+
                                 $req->save();
 
                                 $queue = new DoctorQueue();

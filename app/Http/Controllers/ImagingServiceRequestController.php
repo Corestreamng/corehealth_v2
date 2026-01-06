@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\HmoHelper;
+
 use Illuminate\Http\Request;
 use App\Models\ImagingServiceRequest;
 use App\Models\Encounter;
@@ -44,6 +46,18 @@ class ImagingServiceRequestController extends Controller
             ]);
 
             $imagingRequest = ImagingServiceRequest::findOrFail($request->imaging_res_entry_id);
+            
+            // Check if service can be delivered (payment + HMO validation)
+            if ($imagingRequest->productOrServiceRequest) {
+                $deliveryCheck = \App\Helpers\HmoHelper::canDeliverService($imagingRequest->productOrServiceRequest);
+                if (!$deliveryCheck['can_deliver']) {
+                    return redirect()->back()->with([
+                        'message' => $deliveryCheck['reason'] . ': ' . $deliveryCheck['hint'],
+                        'message_type' => 'error'
+                    ]);
+                }
+            }
+            
             $isEdit = $request->imaging_res_is_edit == '1';
             $templateVersion = $request->imaging_res_template_version;
 
@@ -317,11 +331,30 @@ class ImagingServiceRequestController extends Controller
                 DB::beginTransaction();
                 if (isset($request->selectedImagingBillRows)) {
                     for ($i = 0; $i < count($request->selectedImagingBillRows); $i++) {
-                        $prod_id = ImagingServiceRequest::where('id', $request->selectedImagingBillRows[$i])->first()->service->id;
+                        $imaging_req = ImagingServiceRequest::where('id', $request->selectedImagingBillRows[$i])->first();
+                        $prod_id = $imaging_req->service->id;
                         $bill_req = new ProductOrServiceRequest;
                         $bill_req->user_id = $request->patient_user_id;
                         $bill_req->staff_user_id = Auth::id();
                         $bill_req->service_id = $prod_id;
+
+                        // Apply HMO tariff if patient has HMO
+                        try {
+                            $patient = patient::where('user_id', $request->patient_user_id)->first();
+                            if ($patient) {
+                                $hmoData = HmoHelper::applyHmoTariff($patient->id, null, $prod_id);
+                                if ($hmoData) {
+                                    $bill_req->payable_amount = $hmoData['payable_amount'];
+                                    $bill_req->claims_amount = $hmoData['claims_amount'];
+                                    $bill_req->coverage_mode = $hmoData['coverage_mode'];
+                                    $bill_req->validation_status = $hmoData['validation_status'];
+                                }
+                            }
+                        } catch (\Exception $e) {
+                            DB::rollBack();
+                            return redirect()->back()->withErrors(['error' => 'HMO Tariff Error: ' . $e->getMessage()])->withInput();
+                        }
+
                         $bill_req->save();
 
                         ImagingServiceRequest::where('id', $request->selectedImagingBillRows[$i])->update([
@@ -338,6 +371,24 @@ class ImagingServiceRequestController extends Controller
                         $bill_req->user_id = $request->patient_user_id;
                         $bill_req->staff_user_id = Auth::id();
                         $bill_req->service_id = $request->addedImagingBillRows[$i];
+
+                        // Apply HMO tariff if patient has HMO
+                        try {
+                            $patient = patient::where('user_id', $request->patient_user_id)->first();
+                            if ($patient) {
+                                $hmoData = HmoHelper::applyHmoTariff($patient->id, null, $request->addedImagingBillRows[$i]);
+                                if ($hmoData) {
+                                    $bill_req->payable_amount = $hmoData['payable_amount'];
+                                    $bill_req->claims_amount = $hmoData['claims_amount'];
+                                    $bill_req->coverage_mode = $hmoData['coverage_mode'];
+                                    $bill_req->validation_status = $hmoData['validation_status'];
+                                }
+                            }
+                        } catch (\Exception $e) {
+                            DB::rollBack();
+                            return redirect()->back()->withErrors(['error' => 'HMO Tariff Error: ' . $e->getMessage()])->withInput();
+                        }
+
                         $bill_req->save();
 
                         $imaging = new ImagingServiceRequest();
