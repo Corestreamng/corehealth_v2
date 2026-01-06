@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\HmoHelper;
+
 use App\Models\ProductRequest;
 use App\Models\AdmissionRequest;
 use App\Models\Clinic;
@@ -180,11 +182,30 @@ class ProductRequestController extends Controller
                 DB::beginTransaction();
                 if (isset($request->selectedPrescBillRows)) {
                     for ($i = 0; $i < count($request->selectedPrescBillRows); $i++) {
-                        $prod_id = ProductRequest::where('id', $request->selectedPrescBillRows[$i])->first()->product->id;
+                        $prod_req = ProductRequest::where('id', $request->selectedPrescBillRows[$i])->first();
+                        $prod_id = $prod_req->product->id;
                         $bill_req = new ProductOrServiceRequest;
                         $bill_req->user_id = $request->patient_user_id;
                         $bill_req->staff_user_id = Auth::id();
                         $bill_req->product_id = $prod_id;
+
+                        // Apply HMO tariff if patient has HMO
+                        try {
+                            $patient = patient::where('user_id', $request->patient_user_id)->first();
+                            if ($patient) {
+                                $hmoData = HmoHelper::applyHmoTariff($patient->id, $prod_id, null);
+                                if ($hmoData) {
+                                    $bill_req->payable_amount = $hmoData['payable_amount'];
+                                    $bill_req->claims_amount = $hmoData['claims_amount'];
+                                    $bill_req->coverage_mode = $hmoData['coverage_mode'];
+                                    $bill_req->validation_status = $hmoData['validation_status'];
+                                }
+                            }
+                        } catch (\Exception $e) {
+                            DB::rollBack();
+                            return redirect()->back()->withErrors(['error' => 'HMO Tariff Error: ' . $e->getMessage()])->withInput();
+                        }
+
                         $bill_req->save();
 
 
@@ -213,6 +234,24 @@ class ProductRequestController extends Controller
                         $bill_req->user_id = $request->patient_user_id;
                         $bill_req->staff_user_id = Auth::id();
                         $bill_req->product_id = $request->addedPrescBillRows[$i];
+
+                        // Apply HMO tariff if patient has HMO
+                        try {
+                            $patient = patient::where('user_id', $request->patient_user_id)->first();
+                            if ($patient) {
+                                $hmoData = HmoHelper::applyHmoTariff($patient->id, $request->addedPrescBillRows[$i], null);
+                                if ($hmoData) {
+                                    $bill_req->payable_amount = $hmoData['payable_amount'];
+                                    $bill_req->claims_amount = $hmoData['claims_amount'];
+                                    $bill_req->coverage_mode = $hmoData['coverage_mode'];
+                                    $bill_req->validation_status = $hmoData['validation_status'];
+                                }
+                            }
+                        } catch (\Exception $e) {
+                            DB::rollBack();
+                            return redirect()->back()->withErrors(['error' => 'HMO Tariff Error: ' . $e->getMessage()])->withInput();
+                        }
+
                         $bill_req->save();
 
                         $presc = new ProductRequest();
@@ -270,6 +309,21 @@ class ProductRequestController extends Controller
                 DB::beginTransaction();
                 if (isset($request->selectedPrescDispenseRows)) {
                     for ($i = 0; $i < count($request->selectedPrescDispenseRows); $i++) {
+                        $productRequest = ProductRequest::with('productOrServiceRequest')->findOrFail($request->selectedPrescDispenseRows[$i]);
+
+                        // Check payment and HMO delivery requirements
+                        if ($productRequest->productOrServiceRequest) {
+                            $deliveryCheck = HmoHelper::canDeliverService($productRequest->productOrServiceRequest);
+                            if (!$deliveryCheck['can_deliver']) {
+                                DB::rollBack();
+                                return redirect()->back()->with([
+                                    'message' => $deliveryCheck['reason'] . ' for Request ID: ' . $productRequest->id,
+                                    'hint' => $deliveryCheck['hint'],
+                                    'message_type' => 'error'
+                                ]);
+                            }
+                        }
+
                         ProductRequest::where('id', $request->selectedPrescDispenseRows[$i])->update([
                             'status' => 3,
                             'dispensed_by' => Auth::id(),

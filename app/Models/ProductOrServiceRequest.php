@@ -20,6 +20,14 @@ protected $fillable = [
         'qty',
         'service_id',
         'discount',
+        'payable_amount',
+        'claims_amount',
+        'coverage_mode',
+        'validation_status',
+        'auth_code',
+        'validated_by',
+        'validated_at',
+        'validation_notes',
     ];
 
     public function product()
@@ -59,6 +67,11 @@ protected $fillable = [
     public function doctor_queue_entry()
     {
         return $this->hasOne(DoctorQueue::class, 'request_entry_id', 'id');
+    }
+
+    public function validator()
+    {
+        return $this->belongsTo(User::class, 'validated_by');
     }
 
     // Add this relationship to get the doctor's order (dose/freq)

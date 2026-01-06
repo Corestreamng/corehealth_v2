@@ -45,8 +45,14 @@
                                                 <td>{{ $service->service->service_name }}</td>
                                                 <td>
                                                     <span>&#8358;</span>
-                                                    <span class="service-price">{{ $service->service->price->sale_price ?? 0 }}</span>
-                                                    <input type="hidden" name="servicePrice[]" value="{{ $service->service->price->sale_price ?? 0 }}">
+                                                    @php
+                                                        $servicePrice = $service->payable_amount !== null ? $service->payable_amount : ($service->service->price->sale_price ?? 0);
+                                                    @endphp
+                                                    <span class="service-price">{{ $servicePrice }}</span>
+                                                    <input type="hidden" name="servicePrice[]" value="{{ $servicePrice }}">
+                                                    @if($service->payable_amount !== null && $service->claims_amount > 0)
+                                                        <br><small class="text-success">HMO covers: &#8358;{{ number_format($service->claims_amount, 2) }}</small>
+                                                    @endif
                                                 </td>
                                                 <td>
                                                     <input type="number" name="serviceQty[]" class="form-control form-control-sm service-qty" value="{{ $serviceQty[$i] }}" min="1" style="width: 70px;">
@@ -93,8 +99,14 @@
                                                 <td>{{ $product->product->product_name }}</td>
                                                 <td>
                                                     <span>&#8358;</span>
-                                                    <span class="product-price">{{ $product->product->price->current_sale_price }}</span>
-                                                    <input type="hidden" name="productPrice[]" value="{{ $product->product->price->current_sale_price }}">
+                                                    @php
+                                                        $productPrice = $product->payable_amount !== null ? $product->payable_amount : $product->product->price->current_sale_price;
+                                                    @endphp
+                                                    <span class="product-price">{{ $productPrice }}</span>
+                                                    <input type="hidden" name="productPrice[]" value="{{ $productPrice }}">
+                                                    @if($product->payable_amount !== null && $product->claims_amount > 0)
+                                                        <br><small class="text-success">HMO covers: &#8358;{{ number_format($product->claims_amount, 2) }}</small>
+                                                    @endif
                                                 </td>
                                                 <td>
                                                     <input type="number" name="productQty[]" class="form-control form-control-sm product-qty" value="{{ $productQty[$j] }}" min="1" style="width: 70px;">
@@ -137,7 +149,6 @@
                                          "N/A")
                                     }})
                                 </option>
-                                <option value="CLAIMS">Claims</option>
                             </select>
                         </div>
                         <div class="form-group">

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\HmoHelper;
+
 use App\Models\MiscBill;
 use App\Models\ProductOrServiceRequest;
 use Illuminate\Http\Request;
@@ -132,11 +134,30 @@ class MiscBillController extends Controller
                 DB::beginTransaction();
                 if (isset($request->selectedMiscBillRows)) {
                     for ($i = 0; $i < count($request->selectedMiscBillRows); ++$i) {
-                        $service_id = MiscBill::where('id', $request->selectedMiscBillRows[$i])->first()->service->id;
+                        $misc_bill = MiscBill::where('id', $request->selectedMiscBillRows[$i])->first();
+                        $service_id = $misc_bill->service->id;
                         $bill_req = new ProductOrServiceRequest();
                         $bill_req->user_id = $request->patient_user_id;
                         $bill_req->staff_user_id = Auth::id();
                         $bill_req->service_id = $service_id;
+
+                        // Apply HMO tariff if patient has HMO
+                        try {
+                            $patient = patient::where('user_id', $request->patient_user_id)->first();
+                            if ($patient) {
+                                $hmoData = HmoHelper::applyHmoTariff($patient->id, null, $service_id);
+                                if ($hmoData) {
+                                    $bill_req->payable_amount = $hmoData['payable_amount'];
+                                    $bill_req->claims_amount = $hmoData['claims_amount'];
+                                    $bill_req->coverage_mode = $hmoData['coverage_mode'];
+                                    $bill_req->validation_status = $hmoData['validation_status'];
+                                }
+                            }
+                        } catch (\Exception $e) {
+                            DB::rollBack();
+                            return redirect()->back()->withErrors(['error' => 'HMO Tariff Error: ' . $e->getMessage()])->withInput();
+                        }
+
                         $bill_req->save();
 
                         MiscBill::where('id', $request->selectedMiscBillRows[$i])->update([

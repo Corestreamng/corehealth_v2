@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\HmoHelper;
+
 use App\Models\AdmissionRequest;
 use App\Models\Bed;
 use App\Models\patient;
@@ -157,7 +159,7 @@ class AdmissionRequestController extends Controller
             ->addColumn('info', function ($r) {
                 $hosColor = appsettings('hos_color', '#007bff');
                 $borderColor = $r->discharged ? '#6c757d' : $hosColor;
-                
+
                 $str = '<div class="card mb-3" style="border-left: 4px solid ' . $borderColor . ';">';
                 $str .= '<div class="card-body p-3">';
 
@@ -173,7 +175,7 @@ class AdmissionRequestController extends Controller
 
                 // Admission Details Row
                 $str .= '<div class="row mb-3">';
-                
+
                 // Left Column - Admission Info
                 $str .= '<div class="col-md-6">';
                 $str .= '<div class="mb-3">';
@@ -232,7 +234,7 @@ class AdmissionRequestController extends Controller
                     }
                     $str .= '</div>';
                     $str .= '</div>'; // End row
-                    
+
                     if ($r->discharge_note) {
                         $str .= '<div class="alert alert-secondary py-2 mt-2 mb-2">';
                         $str .= '<small><strong>Discharge Summary:</strong><br>' . nl2br($r->discharge_note) . '</small>';
@@ -253,10 +255,10 @@ class AdmissionRequestController extends Controller
                         'queue_id' => 'ward_round',
                         'admission_req_id' => $r->id
                     ]);
-                    
+
                     $str .= '<div class="d-flex gap-2 flex-wrap mt-3">';
                     $str .= '<a href="' . $url_ward_round . '" class="btn btn-success btn-sm"><i class="fa fa-plus"></i> New Encounter</a>';
-                    
+
                     if ($r->bed_id == null) {
                         $str .= "<button type='button' class='btn btn-primary btn-sm' onclick='setBedModal(this)' data-id='$r->id' data-reassign='false'>
                             <i class='fa fa-bed'></i> Assign Bed
@@ -271,7 +273,7 @@ class AdmissionRequestController extends Controller
                             <i class='fa fa-dollar'></i> Bill & Release Bed
                         </button>";
                     }
-                    
+
                     $url_discharge = route('discharge-patient', $r->id);
                     $str .= '<a href="' . $url_discharge . '" class="btn btn-warning btn-sm" onclick="return confirm(\'Are you sure you want to discharge this patient?\')">
                         <i class="fa fa-sign-out-alt"></i> Discharge
@@ -344,6 +346,25 @@ class AdmissionRequestController extends Controller
             $bill_req->staff_user_id = Auth::id();
             $bill_req->service_id = $admit_req->service_id;
             $bill_req->qty = $request->days;
+
+            // Apply HMO tariff if patient has HMO
+            try {
+                $hmoData = HmoHelper::applyHmoTariff(
+                    $admit_req->patient_id,
+                    null,
+                    $admit_req->service_id
+                );
+                if ($hmoData) {
+                    $bill_req->payable_amount = $hmoData['payable_amount'];
+                    $bill_req->claims_amount = $hmoData['claims_amount'];
+                    $bill_req->coverage_mode = $hmoData['coverage_mode'];
+                    $bill_req->validation_status = $hmoData['validation_status'];
+                }
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return back()->withErrors(['error' => 'HMO Tariff Error: ' . $e->getMessage()]);
+            }
+
             $bill_req->save();
 
             //release bed after billing

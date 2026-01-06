@@ -174,6 +174,33 @@
                     <span class="menu-title">Hospital Config</span>
                 </a>
             </li>
+            @hasanyrole('SUPERADMIN|ADMIN|HMO Executive')
+            <li class="nav-item {{ request()->routeIs('hmo-tariffs.*', 'hmo.workbench', 'hmo.*') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('hmo-tariffs.*', 'hmo.workbench', 'hmo.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#hmo_management" data-bs-target="#hmo_management" aria-expanded="{{ request()->routeIs('hmo-tariffs.*', 'hmo.workbench', 'hmo.*') ? 'true' : 'false' }}"
+                    aria-controls="hmo_management">
+                    <i class="mdi mdi-medical-bag menu-icon"></i>
+                    <span class="menu-title">HMO Management</span>
+                    <i class="mdi mdi-chevron-right menu-arrow"></i>
+                </a>
+                <div class="collapse {{ request()->routeIs('hmo-tariffs.*', 'hmo.workbench', 'hmo.*') ? 'show' : '' }}" id="hmo_management">
+                    <ul class="nav flex-column sub-menu">
+                        @hasanyrole('SUPERADMIN|ADMIN|HMO Executive')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('hmo.workbench') ? 'active' : '' }}" href="{{ route('hmo.workbench') }}">HMO Workbench</a>
+                        </li>
+                        @endhasanyrole
+                        @hasanyrole('SUPERADMIN|ADMIN')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('hmo-tariffs.*') ? 'active' : '' }}" href="{{ route('hmo-tariffs.index') }}">Tariff Management</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('hmo.index') ? 'active' : '' }}" href="{{ route('hmo.index') }}">HMO Settings</a>
+                        </li>
+                        @endhasanyrole
+                    </ul>
+                </div>
+            </li>
+            @endhasanyrole
             <li class="nav-item {{ request()->routeIs('audit-logs.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('audit-logs.*') ? 'active' : '' }}" href="{{ route('audit-logs.index') }}">
                     <i class="mdi mdi-history menu-icon"></i>

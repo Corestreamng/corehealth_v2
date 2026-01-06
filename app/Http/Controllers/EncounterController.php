@@ -330,6 +330,7 @@ class EncounterController extends Controller
                 $str .= "<h6 class='mb-0'><span class='badge bg-success'>" . (($his->service) ? $his->service->service_name : 'N/A') . '</span></h6>';
 
                 // Status badges
+                $str .= '<div>';
                 $statusBadge = '';
                 if ($his->result) {
                     $statusBadge = "<span class='badge bg-info'>Result Available</span>";
@@ -341,6 +342,14 @@ class EncounterController extends Controller
                     $statusBadge = "<span class='badge bg-secondary'>Pending</span>";
                 }
                 $str .= $statusBadge;
+
+                // HMO Coverage Badge
+                if ($his->productOrServiceRequest && $his->productOrServiceRequest->coverage_mode) {
+                    $coverageClass = $his->productOrServiceRequest->coverage_mode === 'express' ? 'success' :
+                                   ($his->productOrServiceRequest->coverage_mode === 'primary' ? 'warning' : 'danger');
+                    $str .= " <span class='badge bg-{$coverageClass}'>HMO: " . strtoupper($his->productOrServiceRequest->coverage_mode) . '</span>';
+                }
+                $str .= '</div>';
                 $str .= '</div>';
 
                 // Timeline section
@@ -508,6 +517,7 @@ class EncounterController extends Controller
                 $str .= "<h6 class='mb-0'><span class='badge bg-success'>" . (($his->service) ? $his->service->service_name : 'N/A') . '</span></h6>';
 
                 // Status badges
+                $str .= '<div>';
                 $statusBadge = '';
                 if ($his->result) {
                     $statusBadge = "<span class='badge bg-info'>Result Available</span>";
@@ -517,6 +527,14 @@ class EncounterController extends Controller
                     $statusBadge = "<span class='badge bg-secondary'>Pending</span>";
                 }
                 $str .= $statusBadge;
+
+                // HMO Coverage Badge
+                if ($his->productOrServiceRequest && $his->productOrServiceRequest->coverage_mode) {
+                    $coverageClass = $his->productOrServiceRequest->coverage_mode === 'express' ? 'success' :
+                                   ($his->productOrServiceRequest->coverage_mode === 'primary' ? 'warning' : 'danger');
+                    $str .= " <span class='badge bg-{$coverageClass}'>HMO: " . strtoupper($his->productOrServiceRequest->coverage_mode) . '</span>';
+                }
+                $str .= '</div>';
                 $str .= '</div>';
 
                 // Timeline section
@@ -709,6 +727,7 @@ class EncounterController extends Controller
                 $str .= "<h6 class='mb-0'><span class='badge bg-success'>[" . (($his->product->product_code) ? $his->product->product_code : '') . '] ' . $his->product->product_name . '</span></h6>';
 
                 // Status badges
+                $str .= '<div>';
                 $statusBadge = '';
                 if ($his->dispensed_by) {
                     $statusBadge = "<span class='badge bg-info'>Dispensed</span>";
@@ -718,6 +737,14 @@ class EncounterController extends Controller
                     $statusBadge = "<span class='badge bg-secondary'>Pending</span>";
                 }
                 $str .= $statusBadge;
+
+                // HMO Coverage Badge
+                if ($his->productOrServiceRequest && $his->productOrServiceRequest->coverage_mode) {
+                    $coverageClass = $his->productOrServiceRequest->coverage_mode === 'express' ? 'success' :
+                                   ($his->productOrServiceRequest->coverage_mode === 'primary' ? 'warning' : 'danger');
+                    $str .= " <span class='badge bg-{$coverageClass}'>HMO: " . strtoupper($his->productOrServiceRequest->coverage_mode) . '</span>';
+                }
+                $str .= '</div>';
                 $str .= '</div>';
 
                 // Dosage information
@@ -1139,12 +1166,12 @@ class EncounterController extends Controller
             $encounterQuery = Encounter::where('doctor_id', $doctor->id)
                 ->where('patient_id', $patient->id)
                 ->where('completed', false);
-            
+
             // If we have a service request (req_entry_id), use it to identify the encounter
             if ($req_entry) {
                 $encounterQuery->where('service_request_id', $req_entry->id);
             }
-            
+
             $encounter = $encounterQuery->first();
 
             if (!$encounter) {

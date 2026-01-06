@@ -13,6 +13,7 @@ use App\Models\service;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Helpers\HmoHelper;
 
 use Yajra\DataTables\DataTables;
 
@@ -411,6 +412,28 @@ class LabWorkbenchController extends Controller
                 $billReq->user_id = $labRequest->patient->user_id;
                 $billReq->staff_user_id = Auth::id();
                 $billReq->service_id = $labRequest->service_id;
+
+                // Apply HMO tariff if patient has HMO
+                try {
+                    $hmoData = HmoHelper::applyHmoTariff(
+                        $labRequest->patient_id,
+                        null,
+                        $labRequest->service_id
+                    );
+                    if ($hmoData) {
+                        $billReq->payable_amount = $hmoData['payable_amount'];
+                        $billReq->claims_amount = $hmoData['claims_amount'];
+                        $billReq->coverage_mode = $hmoData['coverage_mode'];
+                        $billReq->validation_status = $hmoData['validation_status'];
+                    }
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'HMO Tariff Error: ' . $e->getMessage()
+                    ], 400);
+                }
+
                 $billReq->save();
 
                 // Update lab request status to billed (2)
@@ -456,6 +479,17 @@ class LabWorkbenchController extends Controller
 
             foreach ($request->request_ids as $requestId) {
                 $labRequest = LabServiceRequest::findOrFail($requestId);
+
+                // Check HMO access control
+                if ($labRequest->productOrServiceRequest) {
+                    if (!HmoHelper::canPatientAccessService($labRequest->productOrServiceRequest)) {
+                        DB::rollBack();
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Service requires HMO approval. Request ID: ' . $labRequest->id . '. Please contact HMO executive for validation.'
+                        ], 403);
+                    }
+                }
 
                 // Update lab request status to sample taken (3)
                 $labRequest->update([
@@ -605,6 +639,19 @@ class LabWorkbenchController extends Controller
             ]);
 
             $labRequest = LabServiceRequest::findOrFail($request->invest_res_entry_id);
+            
+            // Check if service can be delivered (payment + HMO validation)
+            if ($labRequest->productOrServiceRequest) {
+                $deliveryCheck = \App\Helpers\HmoHelper::canDeliverService($labRequest->productOrServiceRequest);
+                if (!$deliveryCheck['can_deliver']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $deliveryCheck['reason'],
+                        'hint' => $deliveryCheck['hint']
+                    ], 403);
+                }
+            }
+            
             $isEdit = $request->invest_res_is_edit == '1';
             $templateVersion = $request->invest_res_template_version;
 

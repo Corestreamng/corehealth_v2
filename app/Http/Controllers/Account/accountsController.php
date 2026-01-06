@@ -31,7 +31,22 @@ class accountsController extends Controller
                 return '<input type="number" name="productQty[]" value="' . $pr->qty . '" class="form-control form-control-sm" required>';
             })
             ->addColumn('product.category.category_name', function ($product) {
-                return $product->product && $product->product->category ? $product->product->category->category_name : '';
+                $cat = $product->product && $product->product->category ? $product->product->category->category_name : '';
+
+                // Add HMO coverage badge if applicable
+                if ($product->coverage_mode) {
+                    $badgeColor = $product->coverage_mode === 'express' ? 'success' :
+                                 ($product->coverage_mode === 'primary' ? 'warning' : 'danger');
+                    $cat .= ' <span class="badge badge-' . $badgeColor . '">' . strtoupper($product->coverage_mode) . '</span>';
+                }
+
+                return $cat;
+            })
+            ->editColumn('product.price.current_sale_price', function ($product) {
+                // Use payable_amount if set (HMO patient), otherwise use regular price
+                return $product->payable_amount !== null
+                    ? $product->payable_amount
+                    : ($product->product && $product->product->price ? $product->product->price->current_sale_price : 0);
             })
             ->addColumn('created_at', function ($product) {
                 return $product->created_at ? $product->created_at->format('Y-m-d H:i') : '';
@@ -42,7 +57,7 @@ class accountsController extends Controller
             ->addColumn('patient_name', function ($product) {
                 return $product->user ? userfullname($product->user_id) : '';
             })
-            ->rawColumns(['checkBox', 'qty'])
+            ->rawColumns(['checkBox', 'qty', 'product.category.category_name'])
             ->make(true);
     }
     public function services($id)
@@ -64,7 +79,22 @@ class accountsController extends Controller
                 return '<input type="number" name="serviceQty[]" value="' . $sr->qty . '" class="form-control form-control-sm" required>';
             })
             ->addColumn('service.category.category_name', function ($service) {
-                return $service->service && $service->service->category ? $service->service->category->category_name : '';
+                $cat = $service->service && $service->service->category ? $service->service->category->category_name : '';
+
+                // Add HMO coverage badge if applicable
+                if ($service->coverage_mode) {
+                    $badgeColor = $service->coverage_mode === 'express' ? 'success' :
+                                 ($service->coverage_mode === 'primary' ? 'warning' : 'danger');
+                    $cat .= ' <span class="badge badge-' . $badgeColor . '">' . strtoupper($service->coverage_mode) . '</span>';
+                }
+
+                return $cat;
+            })
+            ->editColumn('service.price.sale_price', function ($service) {
+                // Use payable_amount if set (HMO patient), otherwise use regular price
+                return $service->payable_amount !== null
+                    ? $service->payable_amount
+                    : ($service->service && $service->service->price ? $service->service->price->sale_price : 0);
             })
             ->addColumn('created_at', function ($service) {
                 return $service->created_at ? $service->created_at->format('Y-m-d H:i') : '';
@@ -75,7 +105,7 @@ class accountsController extends Controller
             ->addColumn('patient_name', function ($service) {
                 return $service->user ? userfullname($service->user_id) : '';
             })
-            ->rawColumns(['checkBox', 'qty'])
+            ->rawColumns(['checkBox', 'qty', 'service.category.category_name'])
             ->make(true);
     }
     public function serviceView($id)
@@ -128,12 +158,26 @@ class accountsController extends Controller
             ->map(function ($item) {
                 $cat = $item->service && $item->service->category ? $item->service->category->category_name : '';
                 $type = '<br><span class="badge badge-info">Service</span>';
+
+                // Use payable_amount if set (HMO patient), otherwise use regular price
+                $price = $item->payable_amount !== null
+                    ? $item->payable_amount
+                    : ($item->service && $item->service->price ? $item->service->price->sale_price : 0);
+
+                // Add HMO coverage badge if applicable
+                $coverageBadge = '';
+                if ($item->coverage_mode) {
+                    $badgeColor = $item->coverage_mode === 'express' ? 'success' :
+                                 ($item->coverage_mode === 'primary' ? 'warning' : 'danger');
+                    $coverageBadge = '<br><span class="badge badge-' . $badgeColor . '">' . strtoupper($item->coverage_mode) . '</span>';
+                }
+
                 return [
                     'id' => $item->id,
                     'checkBox' => '<input type="checkbox" value="' . $item->id . '" name="mergedChecked[]" />',
                     'name' => $item->service ? $item->service->service_name : '',
-                    'cat_type' => $cat . ' ' . $type,
-                    'price' => $item->service && $item->service->price ? $item->service->price->sale_price : '',
+                    'cat_type' => $cat . ' ' . $type . $coverageBadge,
+                    'price' => $price,
                     'qty' => '<input type="number" name="serviceQty[]" value="' . $item->qty . '" class="form-control form-control-sm" style="min-width:48px;max-width:70px;padding:2px 4px;text-align:center;" required>',
                     'created_at' => $item->created_at ? $item->created_at->format('Y-m-d H:i') : '',
                     'staff_name' => $item->staff ? userfullname($item->staff_user_id) : '',
@@ -150,12 +194,26 @@ class accountsController extends Controller
             ->map(function ($item) {
                 $cat = $item->product && $item->product->category ? $item->product->category->category_name : '';
                 $type = '<br><span class="badge badge-success">Product</span>';
+
+                // Use payable_amount if set (HMO patient), otherwise use regular price
+                $price = $item->payable_amount !== null
+                    ? $item->payable_amount
+                    : ($item->product && $item->product->price ? $item->product->price->current_sale_price : 0);
+
+                // Add HMO coverage badge if applicable
+                $coverageBadge = '';
+                if ($item->coverage_mode) {
+                    $badgeColor = $item->coverage_mode === 'express' ? 'success' :
+                                 ($item->coverage_mode === 'primary' ? 'warning' : 'danger');
+                    $coverageBadge = '<br><span class="badge badge-' . $badgeColor . '">' . strtoupper($item->coverage_mode) . '</span>';
+                }
+
                 return [
                     'id' => $item->id,
                     'checkBox' => '<input type="checkbox" value="' . $item->id . '" name="mergedChecked[]" />',
                     'name' => $item->product ? $item->product->product_name : '',
-                    'cat_type' => $cat . ' ' . $type,
-                    'price' => $item->product && $item->product->price ? $item->product->price->current_sale_price : '',
+                    'cat_type' => $cat . ' ' . $type . $coverageBadge,
+                    'price' => $price,
                     'qty' => '<input type="number" name="productQty[]" value="' . $item->qty . '" class="form-control form-control-sm" style="min-width:48px;max-width:70px;padding:2px 4px;text-align:center;" required>',
                     'created_at' => $item->created_at ? $item->created_at->format('Y-m-d H:i') : '',
                     'staff_name' => $item->staff ? userfullname($item->staff_user_id) : '',

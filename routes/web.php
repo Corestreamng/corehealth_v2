@@ -11,6 +11,8 @@ use App\Http\Controllers\Doctor\DoctorConsultationsController;
 use App\Http\Controllers\Doctor\DoctorDashboardController;
 use App\Http\Controllers\EncounterController;
 use App\Http\Controllers\HmoController;
+use App\Http\Controllers\HmoWorkbenchController;
+use App\Http\Controllers\Admin\TariffManagementController;
 use App\Http\Controllers\HospitalConfigController;
 use App\Http\Controllers\LabServiceRequestController;
 use App\Http\Controllers\ImagingServiceRequestController;
@@ -227,7 +229,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('imagingResList/{patient_id}', [ImagingServiceRequestController::class, 'imagingResList'])->name('imagingResList');
         Route::get('imagingBillList/{patient_id}', [ImagingServiceRequestController::class, 'imagingBillList'])->name('imagingBillList');
         Route::get('imagingQueueList', [ImagingServiceRequestController::class, 'imagingQueueList'])->name('imagingQueueList');
-        Route::get('imagingHistoryList', [ImagingServiceRequestController::class, 'imagingHistoryList'])->name('imagingHistoryList');
+        Route::get('imagingHistoryList', [ImagingServiceRequestController::class, 'imagingHistoryList'])->name('imaging.historyList');
 
         Route::get('patientNursngNote/{patient_id}/{note_type}', [NursingNoteController::class, 'patientNursngNote'])->name('patientNursngNote');
         Route::get('EncounterHistoryList/{patient_id}', [EncounterController::class, 'EncounterHistoryList'])->name('EncounterHistoryList');
@@ -249,7 +251,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('services/{id}/save-template', [ServiceController::class, 'saveTemplate'])->name('services.save-template');
         Route::get('servicess/{id}', [accountsController::class, 'index'])->name('servicess');
         Route::get('services-list/{id}', [accountsController::class, 'services'])->name('service-list');
-        Route::get('product-list/{id}', [accountsController::class, 'products'])->name('product-list');
+        Route::get('product-list/{id}', [accountsController::class, 'products'])->name('accounts.product-list');
         Route::get('settled-services/{id}', [accountsController::class, 'settledServices'])->name('settled-services');
         Route::get('settled-products/{id}', [accountsController::class, 'settledProducts'])->name('settled-products');
         Route::get('paid-services/{id}', [accountsController::class, 'serviceView'])->name('paid-services');
@@ -323,6 +325,28 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('my-admission-requests-list', [AdmissionRequestController::class, 'myAdmissionRequests'])->name('my-admission-requests-list');
         Route::get('patient-admission-requests-list/{patient_id}', [AdmissionRequestController::class, 'patientAdmissionRequests'])->name('patient-admission-requests-list');
         Route::resource('admission-requests', AdmissionRequestController::class);
+    });
+
+    // HMO Workbench (must come before hmo resource routes to avoid route conflict)
+    Route::group(['middleware' => ['auth', 'role:SUPERADMIN|ADMIN|HMO Executive']], function () {
+        Route::get('hmo/workbench', [HmoWorkbenchController::class, 'index'])->name('hmo.workbench');
+        Route::get('hmo/requests', [HmoWorkbenchController::class, 'getRequests'])->name('hmo.requests');
+        Route::get('hmo/requests/{id}', [HmoWorkbenchController::class, 'show'])->name('hmo.requests.show');
+        Route::post('hmo/requests/{id}/approve', [HmoWorkbenchController::class, 'approveRequest'])->name('hmo.requests.approve');
+        Route::post('hmo/requests/{id}/reject', [HmoWorkbenchController::class, 'rejectRequest'])->name('hmo.requests.reject');
+        Route::get('hmo/queue-counts', [HmoWorkbenchController::class, 'getQueueCounts'])->name('hmo.queue-counts');
+    });
+
+    // HMO Tariff Management
+    Route::group(['middleware' => ['auth', 'role:SUPERADMIN|ADMIN']], function () {
+        Route::get('admin/hmo-tariffs', [TariffManagementController::class, 'index'])->name('hmo-tariffs.index');
+        Route::get('admin/hmo-tariffs/data', [TariffManagementController::class, 'getTariffs'])->name('hmo-tariffs.data');
+        Route::post('admin/hmo-tariffs', [TariffManagementController::class, 'store'])->name('hmo-tariffs.store');
+        Route::get('admin/hmo-tariffs/{id}', [TariffManagementController::class, 'show'])->name('hmo-tariffs.show');
+        Route::put('admin/hmo-tariffs/{id}', [TariffManagementController::class, 'update'])->name('hmo-tariffs.update');
+        Route::delete('admin/hmo-tariffs/{id}', [TariffManagementController::class, 'destroy'])->name('hmo-tariffs.destroy');
+        Route::get('admin/hmo-tariffs/export/csv', [TariffManagementController::class, 'exportCsv'])->name('hmo-tariffs.export');
+        Route::post('admin/hmo-tariffs/import/csv', [TariffManagementController::class, 'importCsv'])->name('hmo-tariffs.import');
     });
 
     Route::group(['middleware' => ['auth']], function () {
