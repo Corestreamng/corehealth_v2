@@ -158,9 +158,14 @@ class paymentController extends Controller
                     $services = ProductOrServiceRequest::with(['user', 'service.price'])->whereIn('id', array_values(session('selected')))->get();
                     $u = 0;
                     foreach ($services as $service) {
-                        ProductOrServiceRequest::where('id', $service->id)->update([
-                            'payment_id' => $payment->id,
-                        ]);
+                        // Assign payment_id to mark as paid
+                        // Mark only the intended row for this patient as paid (avoid touching other patients/items)
+                        ProductOrServiceRequest::where('id', $service->id)
+                            ->where('user_id', $request->patient_id)
+                            ->whereNull('invoice_id')
+                            ->update([
+                                'payment_id' => $payment->id,
+                            ]);
                         $discount = isset($serviceDiscounts[$u]) ? $serviceDiscounts[$u] : 0;
                         $qty = isset($serviceQty[$u]) ? $serviceQty[$u] : 1;
                         // Use payable_amount if set (HMO patient), otherwise use regular price
@@ -188,9 +193,14 @@ class paymentController extends Controller
                     $products = ProductOrServiceRequest::with('product.price')->whereIn('id', array_values(session('products')))->get();
                     $l = 0;
                     foreach ($products as $product) {
-                        ProductOrServiceRequest::where('id', $product->id)->update([
-                            'payment_id' => $payment->id,
-                        ]);
+                        // Assign payment_id to mark as paid
+                        // Mark only the intended row for this patient as paid (avoid touching other patients/items)
+                        ProductOrServiceRequest::where('id', $product->id)
+                            ->where('user_id', $request->patient_id)
+                            ->whereNull('invoice_id')
+                            ->update([
+                                'payment_id' => $payment->id,
+                            ]);
                         $discount = isset($productDiscounts[$l]) ? $productDiscounts[$l] : 0;
                         $qty = isset($productQty[$l]) ? $productQty[$l] : 1;
                         // Use payable_amount if set (HMO patient), otherwise use regular price
@@ -227,6 +237,17 @@ class paymentController extends Controller
                     ];
                 }
                 $notes = implode('<br>', $notes);
+
+                // Safety net: ensure all selected items (services/products) are marked paid for this patient
+                $selectedIds = array_values(session('selected') ?? []);
+                $selectedProductIds = array_values(session('products') ?? []);
+                $allSelectedIds = array_filter(array_merge($selectedIds, $selectedProductIds));
+                if (!empty($allSelectedIds)) {
+                    ProductOrServiceRequest::whereIn('id', $allSelectedIds)
+                        ->where('user_id', $request->patient_id)
+                        ->whereNull('invoice_id')
+                        ->update(['payment_id' => $payment->id]);
+                }
 
                 // Create HMO Claim if patient has HMO and there are claims
                 $patient = patient::find($request->patient_id);
@@ -270,19 +291,29 @@ class paymentController extends Controller
 
                 $site = $app_set;
                 $patientName = userfullname($pp->user_id);
+                $patientFileNo = $pp->file_no ?? 'N/A';
                 $currentUserName = Auth::user() ? userfullname(Auth::id()) : '';
                 $date = now()->format('Y-m-d H:i');
                 $ref = $request->reference_no;
+
+                // Amount in words (Naira and kobo)
+                $amountParts = explode('.', number_format((float) $request->total, 2, '.', ''));
+                $nairaWords = convert_number_to_words((int) $amountParts[0]);
+                $koboWords = ((int) $amountParts[1]) > 0 ? ' and ' . convert_number_to_words((int) $amountParts[1]) . ' Kobo' : '';
+                $amountInWords = ucwords($nairaWords . ' Naira' . $koboWords);
 
                 // Render A4 receipt using blade (full-featured invoice style)
                 $a4 = View::make('admin.Accounts.receipt_a4', [
                     'site' => $site,
                     'patientName' => $patientName,
+                    'patientFileNo' => $patientFileNo,
                     'date' => $date,
                     'ref' => $ref,
                     'receiptDetails' => $receiptDetails,
                     'totalDiscount' => $totalDiscount,
                     'totalPaid' => $request->total,
+                    'amountInWords' => $amountInWords,
+                    'paymentType' => $request->payment_type,
                     'notes' => $notes,
                     'currentUserName' => $currentUserName,
                 ])->render();
@@ -291,16 +322,19 @@ class paymentController extends Controller
                 $thermal = View::make('admin.Accounts.receipt_thermal', [
                     'site' => $site,
                     'patientName' => $patientName,
+                    'patientFileNo' => $patientFileNo,
                     'date' => $date,
                     'ref' => $ref,
                     'receiptDetails' => $receiptDetails,
                     'totalDiscount' => $totalDiscount,
                     'totalPaid' => $request->total,
+                    'amountInWords' => $amountInWords,
+                    'paymentType' => $request->payment_type,
                     'notes' => $notes,
                     'currentUserName' => $currentUserName,
                 ])->render();
 
-                Session::forget('selected', 'serviceQty');
+                Session::forget(['selected', 'serviceQty', 'products', 'productQty']);
                 DB::commit();
 
                 // Show both receipts as tabs/links
@@ -318,6 +352,227 @@ class paymentController extends Controller
             Log::error($e->getMessage(), ['exception' => $e]);
 
             return redirect()->route('product-or-service-request.index')->withInput()->with('err', $e->getMessage());
+        }
+    }
+
+    /**
+     * AJAX: fetch unpaid items (services/products) for a patient.
+     */
+    public function ajaxUnpaid(Request $request, $userId)
+    {
+        $patient = patient::where('user_id', $userId)->with('hmo')->firstOrFail();
+
+        $items = ProductOrServiceRequest::with([
+                'service.price',
+                'service.category',
+                'product.price',
+                'product.category',
+            ])
+            ->where('user_id', $userId)
+            ->whereNull('payment_id')
+            ->whereNull('invoice_id')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($row) {
+                $isService = $row->service_id !== null;
+                $basePrice = $isService
+                    ? optional(optional($row->service)->price)->sale_price
+                    : optional(optional($row->product)->price)->current_sale_price;
+
+                $price = $row->payable_amount !== null ? $row->payable_amount : ($basePrice ?? 0);
+
+                return [
+                    'id' => $row->id,
+                    'type' => $isService ? 'service' : 'product',
+                    'name' => $isService ? optional($row->service)->service_name : optional($row->product)->product_name,
+                    'code' => $isService ? optional($row->service)->service_code : optional($row->product)->product_code,
+                    'category' => $isService ? optional(optional($row->service)->category)->category_name : optional(optional($row->product)->category)->category_name,
+                    'qty' => $row->qty ?? 1,
+                    'price' => $price,
+                    'base_price' => $basePrice ?? 0,
+                    'payable_amount' => $row->payable_amount,
+                    'claims_amount' => $row->claims_amount,
+                    'coverage_mode' => $row->coverage_mode,
+                    'validation_status' => $row->validation_status,
+                    'created_at' => $row->created_at,
+                ];
+            });
+
+        return response()->json([
+            'patient' => [
+                'id' => $patient->id,
+                'user_id' => $patient->user_id,
+                'file_no' => $patient->file_no,
+                'hmo_name' => optional($patient->hmo)->name,
+                'hmo_no' => $patient->hmo_no,
+            ],
+            'items' => $items,
+        ]);
+    }
+
+    /**
+     * AJAX: process payment without session state.
+     */
+    public function ajaxPay(Request $request)
+    {
+        $data = $request->validate([
+            'patient_id' => 'required|integer|exists:patients,id',
+            'payment_type' => 'required|string',
+            'reference_no' => 'nullable|string',
+            'items' => 'required|array|min:1',
+            'items.*.id' => 'required|integer',
+            'items.*.qty' => 'required|numeric|min:1',
+            'items.*.discount' => 'nullable|numeric|min:0|max:100',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $patient = patient::with('hmo')->findOrFail($data['patient_id']);
+
+            $ids = collect($data['items'])->pluck('id')->all();
+
+            $rows = ProductOrServiceRequest::with(['service.price', 'product.price', 'user'])
+                ->whereIn('id', $ids)
+                ->lockForUpdate()
+                ->get();
+
+            if ($rows->count() !== count($ids)) {
+                throw new \Exception('Some selected items could not be found.');
+            }
+
+            $total = 0;
+            $totalDiscount = 0;
+            $receiptDetails = [];
+            $claimsTotal = 0;
+
+            // Validate ownership and build totals
+            foreach ($data['items'] as $itemPayload) {
+                $row = $rows->firstWhere('id', $itemPayload['id']);
+                if (!$row || $row->user_id != $patient->user_id) {
+                    throw new \Exception('Item does not belong to patient or is missing.');
+                }
+                if ($row->payment_id !== null || $row->invoice_id !== null) {
+                    throw new \Exception('One of the items is already paid or invoiced.');
+                }
+
+                $isService = $row->service_id !== null;
+                $basePrice = $isService
+                    ? optional(optional($row->service)->price)->sale_price
+                    : optional(optional($row->product)->price)->current_sale_price;
+                $price = $row->payable_amount !== null ? $row->payable_amount : ($basePrice ?? 0);
+
+                $qty = $itemPayload['qty'];
+                $discountPercent = isset($itemPayload['discount']) ? $itemPayload['discount'] : 0;
+                $discountAmount = ($price * $qty) * ($discountPercent / 100);
+                $lineTotal = ($price * $qty) - $discountAmount;
+
+                $total += $lineTotal;
+                $totalDiscount += $discountAmount;
+
+                // Persist qty/discount to request row
+                $row->qty = $qty;
+                $row->discount = $discountPercent;
+                $row->save();
+
+                if ($row->claims_amount > 0) {
+                    $claimsTotal += $row->claims_amount * $qty;
+                }
+
+                $receiptDetails[] = [
+                    'type' => $isService ? 'Service' : 'Product',
+                    'name' => $isService ? optional($row->service)->service_name : optional($row->product)->product_name,
+                    'price' => $price,
+                    'qty' => $qty,
+                    'discount_percent' => $discountPercent,
+                    'discount_amount' => $discountAmount,
+                    'amount_paid' => $lineTotal,
+                ];
+            }
+
+            // Create payment entry
+            $payment = payment::create([
+                'payment_type' => $data['payment_type'],
+                'total' => $total,
+                'total_discount' => $totalDiscount,
+                'reference_no' => $data['reference_no'],
+                'user_id' => Auth::id(),
+                'patient_id' => $patient->id,
+            ]);
+
+            // Mark items as paid
+            ProductOrServiceRequest::whereIn('id', $ids)
+                ->where('user_id', $patient->user_id)
+                ->whereNull('invoice_id')
+                ->update(['payment_id' => $payment->id]);
+
+            // Create HMO claim if applicable
+            if ($patient->hmo_id && $claimsTotal > 0) {
+                HmoClaim::create([
+                    'hmo_id' => $patient->hmo_id,
+                    'patient_id' => $patient->id,
+                    'payment_id' => $payment->id,
+                    'claims_amount' => $claimsTotal,
+                    'status' => 'pending',
+                    'created_by' => Auth::id(),
+                ]);
+            }
+
+            $site = appsettings();
+            $patientName = userfullname($patient->user_id);
+            $patientFileNo = $patient->file_no ?? 'N/A';
+            $currentUserName = Auth::user() ? userfullname(Auth::id()) : '';
+            $date = now()->format('Y-m-d H:i');
+            $ref = $data['reference_no'];
+
+            $amountParts = explode('.', number_format((float) $total, 2, '.', ''));
+            $nairaWords = convert_number_to_words((int) $amountParts[0]);
+            $koboWords = ((int) $amountParts[1]) > 0 ? ' and ' . convert_number_to_words((int) $amountParts[1]) . ' Kobo' : '';
+            $amountInWords = ucwords($nairaWords . ' Naira' . $koboWords);
+
+            $a4 = View::make('admin.Accounts.receipt_a4', [
+                'site' => $site,
+                'patientName' => $patientName,
+                'patientFileNo' => $patientFileNo,
+                'date' => $date,
+                'ref' => $ref,
+                'receiptDetails' => $receiptDetails,
+                'totalDiscount' => $totalDiscount,
+                'totalPaid' => $total,
+                'amountInWords' => $amountInWords,
+                'paymentType' => $data['payment_type'],
+                'notes' => '',
+                'currentUserName' => $currentUserName,
+            ])->render();
+
+            $thermal = View::make('admin.Accounts.receipt_thermal', [
+                'site' => $site,
+                'patientName' => $patientName,
+                'patientFileNo' => $patientFileNo,
+                'date' => $date,
+                'ref' => $ref,
+                'receiptDetails' => $receiptDetails,
+                'totalDiscount' => $totalDiscount,
+                'totalPaid' => $total,
+                'amountInWords' => $amountInWords,
+                'paymentType' => $data['payment_type'],
+                'notes' => '',
+                'currentUserName' => $currentUserName,
+            ])->render();
+
+            DB::commit();
+
+            return response()->json([
+                'payment_id' => $payment->id,
+                'total' => $total,
+                'total_discount' => $totalDiscount,
+                'receipt_a4' => $a4,
+                'receipt_thermal' => $thermal,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('AJAX payment failed', ['error' => $e->getMessage()]);
+            return response()->json(['message' => $e->getMessage()], 422);
         }
     }
 

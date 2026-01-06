@@ -46,7 +46,7 @@ class ImagingServiceRequestController extends Controller
             ]);
 
             $imagingRequest = ImagingServiceRequest::findOrFail($request->imaging_res_entry_id);
-            
+
             // Check if service can be delivered (payment + HMO validation)
             if ($imagingRequest->productOrServiceRequest) {
                 $deliveryCheck = \App\Helpers\HmoHelper::canDeliverService($imagingRequest->productOrServiceRequest);
@@ -57,7 +57,7 @@ class ImagingServiceRequestController extends Controller
                     ]);
                 }
             }
-            
+
             $isEdit = $request->imaging_res_is_edit == '1';
             $templateVersion = $request->imaging_res_template_version;
 

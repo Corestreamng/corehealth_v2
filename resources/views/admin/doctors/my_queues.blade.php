@@ -73,6 +73,7 @@
                             <th>Clinic</th>
                             <th>Doctor</th>
                             <th>Time</th>
+                            <th>Delivery</th>
                             <th>Action</th>
                         </thead>
                     </table>
@@ -91,6 +92,7 @@
                             <th>Clinic</th>
                             <th>Doctor</th>
                             <th>Time</th>
+                            <th>Delivery</th>
                             <th>Action</th>
                         </thead>
                     </table>
@@ -110,6 +112,7 @@
                             <th>Clinic</th>
                             <th>Doctor</th>
                             <th>Time</th>
+                            <th>Delivery</th>
                             <th>Action</th>
                         </thead>
                     </table>
@@ -239,6 +242,10 @@
                 {
                     data: "created_at",
                     name: "created_at"
+                },
+                {
+                    data: "delivery_status",
+                    name: "delivery_status"
                 },
                 {
                     data: "view",

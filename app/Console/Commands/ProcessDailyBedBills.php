@@ -1,64 +1,41 @@
 <?php
 
-namespace App\Providers;
+namespace App\Console\Commands;
 
-use Illuminate\Support\ServiceProvider;
-use App\Models\Product;
-use App\Models\Service;
-use App\Models\Hmo;
+use Illuminate\Console\Command;
 use App\Models\AdmissionRequest;
 use App\Models\ProductOrServiceRequest;
-use App\Observers\ProductObserver;
-use App\Observers\ServiceObserver;
-use App\Observers\HmoObserver;
 use App\Helpers\HmoHelper;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class AppServiceProvider extends ServiceProvider
+class ProcessDailyBedBills extends Command
 {
     /**
-     * Register any application services.
+     * The name and signature of the console command.
      *
-     * @return void
+     * @var string
      */
-    public function register()
-    {
-        //
-    }
+    protected $signature = 'beds:process-daily-bills';
 
     /**
-     * Bootstrap any application services.
+     * The console command description.
      *
-     * @return void
+     * @var string
      */
-    public function boot()
-    {
-        // Register HMO tariff auto-generation observers
-        Product::observe(ProductObserver::class);
-        Service::observe(ServiceObserver::class);
-        Hmo::observe(HmoObserver::class);
-
-        // Process daily bed bills - runs once per day automatically
-        $this->processDailyBedBills();
-    }
+    protected $description = 'Process daily bed billing for all occupied beds';
 
     /**
-     * Process daily bed billing for all occupied beds
-     * Uses cache to ensure it only runs once per day
+     * Execute the console command.
+     *
+     * @return int
      */
-    protected function processDailyBedBills()
+    public function handle()
     {
+        $this->info('Processing daily bed bills...');
+
         try {
-            // Check if already processed today using cache
-            $cacheKey = 'bed_billing_processed_' . Carbon::today()->format('Y-m-d');
-
-            if (Cache::has($cacheKey)) {
-                return; // Already processed today
-            }
-
             // Get all active admissions with assigned beds
             $admissions = AdmissionRequest::with(['patient.user', 'patient.hmo'])
                 ->where('discharged', 0)
@@ -69,12 +46,13 @@ class AppServiceProvider extends ServiceProvider
                 ->get();
 
             if ($admissions->isEmpty()) {
-                // Mark as processed even if no beds to process
-                Cache::put($cacheKey, true, Carbon::tomorrow());
-                return;
+                $this->info('No occupied beds found.');
+                return Command::SUCCESS;
             }
 
             $billsCreated = 0;
+            $billsSkipped = 0;
+            $errors = 0;
 
             foreach ($admissions as $admission) {
                 try {
@@ -83,10 +61,21 @@ class AppServiceProvider extends ServiceProvider
                     $existingBill = ProductOrServiceRequest::where('user_id', $admission->patient->user->id)
                         ->where('service_id', $admission->service_id)
                         ->whereDate('created_at', $today)
+                        ->whereHas('service', function($q) {
+                            $q->where('category_id', function($sq) {
+                                $sq->selectRaw('id')
+                                    ->from('service_categories')
+                                    ->where('category_name', 'LIKE', '%bed%')
+                                    ->orWhere('category_name', 'LIKE', '%admission%')
+                                    ->limit(1);
+                            });
+                        })
                         ->first();
 
                     if ($existingBill) {
-                        continue; // Skip if bill already exists
+                        $this->line("Skipped: Bill already exists for patient {$admission->patient->user->surname} (ID: {$admission->patient_id})");
+                        $billsSkipped++;
+                        continue;
                     }
 
                     // Create daily bed bill
@@ -120,24 +109,31 @@ class AppServiceProvider extends ServiceProvider
                     }
 
                     $bill_req->save();
+
                     DB::commit();
+
+                    $this->info("✓ Created bed bill for patient {$admission->patient->user->surname} (ID: {$admission->patient_id})");
                     $billsCreated++;
 
                 } catch (\Exception $e) {
                     DB::rollBack();
                     Log::error("Error creating bed bill for admission {$admission->id}: " . $e->getMessage());
+                    $this->error("✗ Error processing patient ID {$admission->patient_id}: " . $e->getMessage());
+                    $errors++;
                 }
             }
 
-            // Mark as processed for today (cache expires at midnight tomorrow)
-            Cache::put($cacheKey, true, Carbon::tomorrow());
+            $this->info("\n=== Summary ===");
+            $this->info("Bills created: {$billsCreated}");
+            $this->info("Bills skipped: {$billsSkipped}");
+            $this->info("Errors: {$errors}");
 
-            if ($billsCreated > 0) {
-                Log::info("Bed billing: Created {$billsCreated} daily bed bills");
-            }
+            return Command::SUCCESS;
 
         } catch (\Exception $e) {
-            Log::error("Fatal error in processDailyBedBills: " . $e->getMessage());
+            Log::error("Fatal error in ProcessDailyBedBills: " . $e->getMessage());
+            $this->error("Fatal error: " . $e->getMessage());
+            return Command::FAILURE;
         }
     }
 }

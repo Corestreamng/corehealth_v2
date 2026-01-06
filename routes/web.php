@@ -246,6 +246,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('discharge-patient-api/{admission_req_id}', [AdmissionRequestController::class, 'dischargePatientApi'])->name('discharge-patient-api');
         Route::post('assign-bed', [AdmissionRequestController::class, 'assignBed'])->name('assign-bed');
         Route::post('assign-bill', [AdmissionRequestController::class, 'assignBill'])->name('assign-bill');
+        Route::get('bed-coverage', [AdmissionRequestController::class, 'getBedCoverage'])->name('bed-coverage');
         Route::get('services-list', [ServiceController::class, 'listServices'])->name('services-list');
         Route::get('services/{id}/build-template', [ServiceController::class, 'buildTemplate'])->name('services.build-template');
         Route::post('services/{id}/save-template', [ServiceController::class, 'saveTemplate'])->name('services.save-template');
@@ -259,6 +260,9 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('back', [paymentController::class, 'back'])->name('back');
         Route::post('service-payment', [paymentController::class, 'process'])->name('service-payment');
         Route::post('complete-payment', [paymentController::class, 'payment'])->name('complete-payment');
+        // AJAX payment (no sessions)
+        Route::get('ajax/unpaid-items/{user}', [paymentController::class, 'ajaxUnpaid'])->name('ajax-unpaid-items');
+        Route::post('ajax/pay', [paymentController::class, 'ajaxPay'])->name('ajax-pay');
         Route::post('product-payment', [ProductAccountController::class, 'process'])->name('product-payment');
         Route::get('listSalesService/{id}', [ServiceController::class, 'listSalesService'])->name('listSalesService');
         Route::get('live-search-services', [ServiceController::class, 'liveSearchServices'])->name('live-search-services');

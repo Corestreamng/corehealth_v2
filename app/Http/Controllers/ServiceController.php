@@ -100,23 +100,49 @@ class ServiceController extends Controller
             ->make(true);
     }
 
-    public function liveSearchServices(Request $request){
+    public function liveSearchServices(Request $request)
+    {
         $request->validate([
-            'term' => 'required|string'
+            'term' => 'required|string',
+            'patient_id' => 'nullable|integer'
         ]);
 
-        // If category_id is provided, use it; otherwise default to INVESTGATION_CATEGORY_ID
         $categoryId = $request->input('category_id', appsettings('investigation_category_id'));
 
-        $pc = service::where('status', '=', 1)
-            ->where('category_id', '=', $categoryId)
+        $pc = service::where('status', 1)
+            ->where('category_id', $categoryId)
             ->whereHas('price')
-            ->where('service_name', 'LIKE', "%$request->term%")
-            ->with('category', 'price')
+            ->where('service_name', 'LIKE', "%{$request->term}%")
+            ->with(['category', 'price'])
             ->orderBy('service_name', 'ASC')
             ->limit(10)
-            ->get();
-        return json_decode($pc);
+            ->get()
+            ->map(function ($service) use ($request) {
+                $basePrice = optional($service->price)->sale_price;
+                $coverage = null;
+
+                if ($request->filled('patient_id')) {
+                    try {
+                        $coverage = \App\Helpers\HmoHelper::applyHmoTariff($request->patient_id, null, $service->id);
+                    } catch (\Exception $e) {
+                        $coverage = null; // fallback to cash if tariff missing
+                    }
+                }
+
+                return [
+                    'id' => $service->id,
+                    'service_name' => $service->service_name,
+                    'service_code' => $service->service_code,
+                    'coverage_mode' => $coverage['coverage_mode'] ?? 'cash',
+                    'payable_amount' => $coverage['payable_amount'] ?? ($basePrice ?? 0),
+                    'claims_amount' => $coverage['claims_amount'] ?? 0,
+                    'validation_status' => $coverage['validation_status'] ?? null,
+                    'category' => $service->category,
+                    'price' => $service->price,
+                ];
+            });
+
+        return response()->json($pc);
     }
 
     public function listSalesService(Request $request, $id)

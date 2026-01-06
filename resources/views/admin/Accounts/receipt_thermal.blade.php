@@ -4,75 +4,87 @@
 <head>
     <title>Receipt (Thermal)</title>
     <style>
-        body { font-family: Arial, sans-serif; font-size: 11px; width: 210px; }
-        .receipt-header { text-align: center; margin-bottom: 6px; }
-        .receipt-header img { width: 60px; }
-        .receipt-table { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
-        .receipt-table th, .receipt-table td { border: 1px solid #888; padding: 2px 4px; font-size: 10px; }
-        .receipt-notes { margin-top: 6px; font-size: 10px; }
-        .receipt-btns { margin-top: 10px; text-align: center; }
-        .receipt-footer { margin-top: 15px; text-align: right; font-size: 10px; }
-        @media print { .receipt-btns { display: none; } }
+        :root {
+            --ink: #111;
+            --muted: #444;
+            --border: #ccc;
+        }
+        * { box-sizing: border-box; }
+        .receipt-thermal { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10px; width: 55mm; margin: 0; padding: 0; color: var(--ink); }
+        .receipt-thermal .wrap { padding: 8px; }
+        .receipt-thermal .receipt-header { text-align: center; margin-bottom: 6px; }
+        .receipt-thermal .receipt-header img { width: 46px; height: auto; }
+        .receipt-thermal .receipt-header .name { font-size: 11px; font-weight: 700; margin-top: 3px; }
+        .receipt-thermal .receipt-header .meta { font-size: 9px; color: var(--muted); line-height: 1.3; }
+        .receipt-thermal .hr { border: 0; border-top: 1px dashed var(--border); margin: 6px 0; }
+        .receipt-thermal .title { font-size: 11px; font-weight: 700; letter-spacing: 0.3px; text-align: center; margin: 3px 0; }
+        .receipt-thermal .details { font-size: 9px; line-height: 1.35; margin-bottom: 6px; }
+        .receipt-thermal table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+        .receipt-thermal th, .receipt-thermal td { border: 1px solid var(--border); padding: 2px 3px; font-size: 9px; }
+        .receipt-thermal thead th { background: #f2f2f2; font-weight: 700; }
+        .receipt-thermal tfoot td { font-weight: 700; }
+        .receipt-thermal .receipt-notes { margin-top: 6px; font-size: 9px; color: var(--muted); }
+        .receipt-thermal .receipt-footer { margin-top: 8px; text-align: right; font-size: 9px; color: var(--muted); }
+        @media print { .receipt-thermal { width: 55mm; margin: 0; padding: 0; } .receipt-thermal .wrap { padding: 6px; } }
     </style>
 </head>
 <body>
-    <div class="receipt-header">
-        <img src="data:image/jpeg;base64,{{ $site->logo }}" alt="Logo"/><br>
-        <strong>{{ $site->site_name }}</strong><br>
-        {{ $site->contact_address }}<br>
-        Phone: {{ $site->contact_phones }}
-        <hr>
-        <div style="font-size: 13px; font-weight: bold;">RECEIPT</div>
+    <div class="receipt-thermal">
+    <div class="wrap">
+        <div class="receipt-header">
+            <img src="data:image/jpeg;base64,{{ $site->logo }}" alt="Logo"/><br>
+            <div class="name">{{ $site->site_name }}</div>
+            <div class="meta">{{ $site->contact_address }}<br>Phone: {{ $site->contact_phones }}</div>
+        </div>
+        <hr class="hr">
+        <div class="title">RECEIPT</div>
+        <div class="details">
+            <b>Patient:</b> {{ $patientName }}<br>
+            <b>File No:</b> {{ $patientFileNo ?? 'N/A' }}<br>
+            <b>Date:</b> {{ $date }}<br>
+            <b>Ref:</b> {{ $ref }}<br>
+            <b>Served By:</b> {{ $currentUserName }}<br>
+        </div>
+        <table class="receipt-table">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Name</th>
+                    <th>Unit</th>
+                    <th>Qty</th>
+                    <th>Disc(%)</th>
+                    <th>Disc(₦)</th>
+                    <th>Paid(₦)</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach($receiptDetails as $row)
+                <tr>
+                    <td>{{ $row['type'] }}</td>
+                    <td>{{ $row['name'] }}</td>
+                    <td>{{ number_format($row['price'], 2) }}</td>
+                    <td>{{ $row['qty'] }}</td>
+                    <td>{{ $row['discount_percent'] }}</td>
+                    <td>{{ number_format($row['discount_amount'], 2) }}</td>
+                    <td>{{ number_format($row['amount_paid'], 2) }}</td>
+                </tr>
+            @endforeach
+                <tr>
+                    <td colspan="5" align="right"><strong>Total Discount:</strong></td>
+                    <td colspan="2"><strong>{{ number_format($totalDiscount, 2) }}</strong></td>
+                </tr>
+                <tr>
+                    <td colspan="5" align="right"><strong>Grand Total Paid:</strong></td>
+                    <td colspan="2"><strong>{{ number_format($totalPaid, 2) }}</strong></td>
+                </tr>
+            </tbody>
+        </table>
+        <div style="margin-top:4px; font-size:9px; color: var(--ink);"><strong>In Words:</strong> {{ $amountInWords ?? '' }}</div>
+        <div class="receipt-notes">{!! !empty($notes) ? $notes : 'Funds received in good condition.' !!}</div>
+        <div class="receipt-footer">
+            <em>Generated by: {{ $currentUserName }} | Received via: {{ $paymentType ?? 'N/A' }}</em>
+        </div>
     </div>
-    <div>
-        <b>Patient:</b> {{ $patientName }}<br>
-        <b>Date:</b> {{ $date }}<br>
-        <b>Ref:</b> {{ $ref }}<br>
-        <b>Served By:</b> {{ $currentUserName }}<br>
-    </div>
-    <table class="receipt-table">
-        <thead>
-            <tr>
-                <th>Type</th>
-                <th>Name</th>
-                <th>Unit</th>
-                <th>Qty</th>
-                <th>Disc(%)</th>
-                <th>Disc(₦)</th>
-                <th>Paid(₦)</th>
-            </tr>
-        </thead>
-        <tbody>
-        @foreach($receiptDetails as $row)
-            <tr>
-                <td>{{ $row['type'] }}</td>
-                <td>{{ $row['name'] }}</td>
-                <td>{{ number_format($row['price'], 2) }}</td>
-                <td>{{ $row['qty'] }}</td>
-                <td>{{ $row['discount_percent'] }}</td>
-                <td>{{ number_format($row['discount_amount'], 2) }}</td>
-                <td>{{ number_format($row['amount_paid'], 2) }}</td>
-            </tr>
-        @endforeach
-            <tr>
-                <td colspan="5" align="right"><strong>Total Discount:</strong></td>
-                <td colspan="2"><strong>{{ number_format($totalDiscount, 2) }}</strong></td>
-            </tr>
-            <tr>
-                <td colspan="5" align="right"><strong>Grand Total Paid:</strong></td>
-                <td colspan="2"><strong>{{ number_format($totalPaid, 2) }}</strong></td>
-            </tr>
-        </tbody>
-    </table>
-    <div class="receipt-notes">
-        {!! $notes !!}
-    </div>
-    <div class="receipt-footer">
-        <em>Generated by: {{ $currentUserName }}</em>
-    </div>
-    <div class="receipt-btns">
-        <button onclick="window.print()">Print</button>
-        <button onclick="window.location.href='{{ url('product-or-service-request') }}'">Close</button>
     </div>
 </body>
 </html>

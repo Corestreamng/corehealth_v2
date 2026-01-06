@@ -104,12 +104,50 @@ class ProductController extends Controller
             ->make(true);
     }
 
-    public function liveSearchProducts(Request $request){
+    public function liveSearchProducts(Request $request)
+    {
         $request->validate([
-            'term' => 'required|string'
+            'term' => 'required|string',
+            'patient_id' => 'nullable|integer'
         ]);
-        $pc = Product::where('status', '=', 1)->where('product_name', 'LIKE', "%$request->term%")->orWhere('product_code', 'LIKE', "%$request->term%")->with('stock', 'category', 'price')->orderBy('product_name', 'ASC')->limit(10)->get();
-        return json_decode($pc);
+
+        $pc = Product::query()
+            ->where('status', 1)
+            ->where(function ($q) use ($request) {
+                $q->where('product_name', 'LIKE', "%{$request->term}%")
+                    ->orWhere('product_code', 'LIKE', "%{$request->term}%");
+            })
+            ->with(['stock', 'category', 'price'])
+            ->orderBy('product_name', 'ASC')
+            ->limit(10)
+            ->get()
+            ->map(function ($product) use ($request) {
+                $basePrice = optional($product->price)->initial_sale_price;
+                $coverage = null;
+
+                if ($request->filled('patient_id')) {
+                    try {
+                        $coverage = \App\Helpers\HmoHelper::applyHmoTariff($request->patient_id, $product->id, null);
+                    } catch (\Exception $e) {
+                        $coverage = null; // fallback to cash if tariff missing
+                    }
+                }
+
+                return [
+                    'id' => $product->id,
+                    'product_name' => $product->product_name,
+                    'product_code' => $product->product_code,
+                    'coverage_mode' => $coverage['coverage_mode'] ?? 'cash',
+                    'payable_amount' => $coverage['payable_amount'] ?? ($basePrice ?? 0),
+                    'claims_amount' => $coverage['claims_amount'] ?? 0,
+                    'validation_status' => $coverage['validation_status'] ?? null,
+                    'category' => $product->category,
+                    'stock' => $product->stock,
+                    'price' => $product->price,
+                ];
+            });
+
+        return response()->json($pc);
     }
 
     public function listSalesProduct(Request $request, $id)

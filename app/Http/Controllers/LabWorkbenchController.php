@@ -221,7 +221,8 @@ class LabWorkbenchController extends Controller
                 'patient.hmo.scheme',
                 'doctor',
                 'biller',
-                'resultBy'
+                'resultBy',
+                'productOrServiceRequest' // Add product/service request for delivery check
             ]);
 
             // Filter by status if provided
@@ -259,6 +260,12 @@ class LabWorkbenchController extends Controller
                         $age = $dob->age . 'y';
                     }
 
+                    // Check delivery status (payment + HMO validation)
+                    $deliveryCheck = null;
+                    if ($request->productOrServiceRequest) {
+                        $deliveryCheck = \App\Helpers\HmoHelper::canDeliverService($request->productOrServiceRequest);
+                    }
+
                     return [
                         'id' => $request->id,
                         'patient_id' => $request->patient->id,
@@ -283,6 +290,7 @@ class LabWorkbenchController extends Controller
                         'result_by' => $request->resultBy ? $request->resultBy->surname . ' ' . $request->resultBy->firstname : null,
                         'result_at' => $this->formatDateTime($request->result_date),
                         'updated_at' => $this->formatDateTime($request->updated_at),
+                        'delivery_check' => $deliveryCheck, // Add delivery status
                     ];
                 })
                 ->rawColumns(['card_data'])
@@ -639,7 +647,7 @@ class LabWorkbenchController extends Controller
             ]);
 
             $labRequest = LabServiceRequest::findOrFail($request->invest_res_entry_id);
-            
+
             // Check if service can be delivered (payment + HMO validation)
             if ($labRequest->productOrServiceRequest) {
                 $deliveryCheck = \App\Helpers\HmoHelper::canDeliverService($labRequest->productOrServiceRequest);
@@ -651,7 +659,7 @@ class LabWorkbenchController extends Controller
                     ], 403);
                 }
             }
-            
+
             $isEdit = $request->invest_res_is_edit == '1';
             $templateVersion = $request->invest_res_template_version;
 

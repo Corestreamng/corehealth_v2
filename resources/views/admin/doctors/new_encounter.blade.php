@@ -1654,11 +1654,12 @@
             $(obj).closest('tr').remove();
         }
 
-        function setSearchValProd(name, id, price) {
+        function setSearchValProd(name, id, price, coverageMode = null, claims = null, payable = null) {
+            const coverageBadge = coverageMode ? `<div class="small mt-1"><span class="badge bg-info">${coverageMode.toUpperCase()}</span> <span class="text-danger">Pay: ${payable ?? price}</span> <span class="text-success">Claims: ${claims ?? 0}</span></div>` : '';
             var mk = `
                 <tr>
-                    <td>${name}</td>
-                    <td>${price}</td>
+                    <td>${name}${coverageBadge}</td>
+                    <td>${payable ?? price}</td>
                     <td>
                         <input type = 'text' class='form-control' name=consult_presc_dose[] required>
                         <input type = 'hidden' name=consult_presc_id[] value='${id}'>
@@ -1679,7 +1680,8 @@
                     method: "GET",
                     dataType: 'json',
                     data: {
-                        term: q
+                        term: q,
+                        patient_id: '{{ $patient->id }}'
                     },
                     success: function(data) {
                         // Clear existing options from the select field
@@ -1688,12 +1690,23 @@
                         // data = JSON.parse(data);
 
                         for (var i = 0; i < data.length; i++) {
-                            // Append the new options to the list field
+                            const item = data[i] || {};
+                            const category = (item.category && item.category.category_name) ? item.category.category_name : 'N/A';
+                            const name = item.product_name || 'Unknown';
+                            const code = item.product_code || '';
+                            const qty = item.stock && item.stock.current_quantity !== undefined ? item.stock.current_quantity : 0;
+                            const price = item.price && item.price.initial_sale_price !== undefined ? item.price.initial_sale_price : 0;
+                            const payable = item.payable_amount !== undefined && item.payable_amount !== null ? item.payable_amount : price;
+                            const claims = item.claims_amount !== undefined && item.claims_amount !== null ? item.claims_amount : 0;
+                            const mode = item.coverage_mode || null;
+                            const coverageBadge = mode ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ${payable}</span> <span class='text-success ms-1'>Claim: ${claims}</span>` : '';
+                            const displayName = `${name}[${code}](${qty} avail.)`;
+
                             var mk =
                                 `<li class='list-group-item'
                                    style="background-color: #f0f0f0;"
-                                   onclick="setSearchValProd('${data[i].product_name}[${data[i].product_code}](${data[i].stock.current_quantity} avail.)', '${data[i].id}', '${data[i].price.initial_sale_price}')">
-                                   [${data[i].category.category_name}]<b>${data[i].product_name}[${data[i].product_code}]</b> (${data[i].stock.current_quantity} avail.) NGN ${data[i].price.initial_sale_price}</li>`;
+                                   onclick="setSearchValProd('${displayName}', '${item.id}', '${price}', '${mode}', '${claims}', '${payable}')">
+                                   [${category}]<b>${name}[${code}]</b> (${qty} avail.) NGN ${price} ${coverageBadge}</li>`;
                             $('#consult_presc_res').append(mk);
                             $('#consult_presc_res').show();
                         }
@@ -1724,11 +1737,12 @@
         }
 
 
-        function setSearchValSer(name, id, price) {
+        function setSearchValSer(name, id, price, coverageMode = null, claims = null, payable = null) {
+            const coverageBadge = coverageMode ? `<div class="small mt-1"><span class="badge bg-info">${coverageMode.toUpperCase()}</span> <span class="text-danger">Pay: ${payable ?? price}</span> <span class="text-success">Claims: ${claims ?? 0}</span></div>` : '';
             var mk = `
                 <tr>
-                    <td>${name}</td>
-                    <td>${price}</td>
+                    <td>${name}${coverageBadge}</td>
+                    <td>${payable ?? price}</td>
                     <td>
                         <input type = 'text' class='form-control' name=consult_invest_note[]>
                         <input type = 'hidden' name=consult_invest_id[] value='${id}'>
@@ -1742,11 +1756,12 @@
 
         }
 
-        function setSearchValImaging(name, id, price) {
+        function setSearchValImaging(name, id, price, coverageMode = null, claims = null, payable = null) {
+            const coverageBadge = coverageMode ? `<div class="small mt-1"><span class="badge bg-info">${coverageMode.toUpperCase()}</span> <span class="text-danger">Pay: ${payable ?? price}</span> <span class="text-success">Claims: ${claims ?? 0}</span></div>` : '';
             var mk = `
                 <tr>
-                    <td>${name}</td>
-                    <td>${price}</td>
+                    <td>${name}${coverageBadge}</td>
+                    <td>${payable ?? price}</td>
                     <td>
                         <input type = 'text' class='form-control' name=consult_imaging_note[]>
                         <input type = 'hidden' name=consult_imaging_id[] value='${id}'>
@@ -1767,7 +1782,8 @@
                     method: "GET",
                     dataType: 'json',
                     data: {
-                        term: q
+                        term: q,
+                        patient_id: '{{ $patient->id }}'
                     },
                     success: function(data) {
                         // Clear existing options from the select field
@@ -1776,12 +1792,22 @@
                         // data = JSON.parse(data);
 
                         for (var i = 0; i < data.length; i++) {
-                            // Append the new options to the list field
+                            const item = data[i] || {};
+                            const category = (item.category && item.category.category_name) ? item.category.category_name : 'N/A';
+                            const name = item.service_name || 'Unknown';
+                            const code = item.service_code || '';
+                            const price = item.price && item.price.sale_price !== undefined ? item.price.sale_price : 0;
+                            const payable = item.payable_amount !== undefined && item.payable_amount !== null ? item.payable_amount : price;
+                            const claims = item.claims_amount !== undefined && item.claims_amount !== null ? item.claims_amount : 0;
+                            const mode = item.coverage_mode || null;
+                            const coverageBadge = mode ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ${payable}</span> <span class='text-success ms-1'>Claim: ${claims}</span>` : '';
+                            const displayName = `${name}[${code}]`;
+
                             var mk =
                                 `<li class='list-group-item'
                                    style="background-color: #f0f0f0;"
-                                   onclick="setSearchValSer('${data[i].service_name}[${data[i].service_code}]', '${data[i].id}', '${data[i].price.sale_price}')">
-                                   [${data[i].category.category_name}]<b>${data[i].service_name}[${data[i].service_code}]</b> NGN ${data[i].price.sale_price}</li>`;
+                                   onclick="setSearchValSer('${displayName}', '${item.id}', '${price}', '${mode}', '${claims}', '${payable}')">
+                                   [${category}]<b>${name}[${code}]</b> NGN ${price} ${coverageBadge}</li>`;
                             $('#consult_invest_res').append(mk);
                             $('#consult_invest_res').show();
                         }
@@ -1802,7 +1828,8 @@
                     dataType: 'json',
                     data: {
                         term: q,
-                        category_id: 6  // Imaging category ID
+                        category_id: 6, // Imaging category ID
+                        patient_id: '{{ $patient->id }}'
                     },
                     success: function(data) {
                         // Clear existing options from the select field
@@ -1811,12 +1838,22 @@
                         // data = JSON.parse(data);
 
                         for (var i = 0; i < data.length; i++) {
-                            // Append the new options to the list field
+                            const item = data[i] || {};
+                            const category = (item.category && item.category.category_name) ? item.category.category_name : 'N/A';
+                            const name = item.service_name || 'Unknown';
+                            const code = item.service_code || '';
+                            const price = item.price && item.price.sale_price !== undefined ? item.price.sale_price : 0;
+                            const payable = item.payable_amount !== undefined && item.payable_amount !== null ? item.payable_amount : price;
+                            const claims = item.claims_amount !== undefined && item.claims_amount !== null ? item.claims_amount : 0;
+                            const mode = item.coverage_mode || null;
+                            const coverageBadge = mode ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ${payable}</span> <span class='text-success ms-1'>Claim: ${claims}</span>` : '';
+                            const displayName = `${name}[${code}]`;
+
                             var mk =
                                 `<li class='list-group-item'
                                    style="background-color: #f0f0f0;"
-                                   onclick="setSearchValImaging('${data[i].service_name}[${data[i].service_code}]', '${data[i].id}', '${data[i].price.sale_price}')">
-                                   [${data[i].category.category_name}]<b>${data[i].service_name}[${data[i].service_code}]</b> NGN ${data[i].price.sale_price}</li>`;
+                                   onclick="setSearchValImaging('${displayName}', '${item.id}', '${price}', '${mode}', '${claims}', '${payable}')">
+                                   [${category}]<b>${name}[${code}]</b> NGN ${price} ${coverageBadge}</li>`;
                             $('#consult_imaging_res').append(mk);
                             $('#consult_imaging_res').show();
                         }

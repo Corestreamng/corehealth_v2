@@ -3943,9 +3943,26 @@ function createRequestCard(request, section) {
     const hasNote = note && note.trim() !== '';
     const noteHtml = hasNote ? `<div class="request-note"><i class="mdi mdi-note-text"></i> ${note}</div>` : '';
 
+    // Check delivery status
+    const deliveryCheck = request.delivery_check;
+    const canDeliver = deliveryCheck ? deliveryCheck.can_deliver : true;
+
+    // Delivery warning message
+    let deliveryWarningHtml = '';
+    if (!canDeliver && deliveryCheck) {
+        deliveryWarningHtml = `
+            <div class="alert alert-warning py-2 px-2 mb-2 mt-2" style="font-size: 0.85rem;">
+                <i class="fa fa-exclamation-triangle"></i> <strong>${deliveryCheck.reason}</strong><br>
+                <small>${deliveryCheck.hint}</small>
+            </div>
+        `;
+    }
+
     // Results section has individual action button instead of checkbox
     const checkboxOrAction = section === 'results' ? `
-        <button class="btn btn-sm btn-primary enter-result-btn" data-request-id="${request.id}">
+        <button class="btn btn-sm btn-primary enter-result-btn"
+                data-request-id="${request.id}"
+                ${!canDeliver ? 'disabled title="' + (deliveryCheck?.reason || 'Cannot deliver service') + '"' : ''}>
             <i class="mdi mdi-file-document-edit"></i>
             Enter Result
         </button>
@@ -3975,6 +3992,7 @@ function createRequestCard(request, section) {
                     </div>
                 </div>
                 ${noteHtml}
+                ${deliveryWarningHtml}
             </div>
         </div>
     `;

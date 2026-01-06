@@ -391,6 +391,41 @@ class AdmissionRequestController extends Controller
         try {
             DB::beginTransaction();
             $req = AdmissionRequest::where('id', $admission_req_id)->first();
+
+            // Check for unpaid/unvalidated bed bills
+            $unpaidBills = ProductOrServiceRequest::where('user_id', $req->patient->user->id)
+                ->where('service_id', $req->service_id)
+                ->whereNull('payment_id')
+                ->whereDate('created_at', '>=', $req->bed_assign_date)
+                ->count();
+
+            if ($unpaidBills > 0) {
+                DB::rollBack();
+                return back()->with([
+                    'message' => "Cannot discharge patient: {$unpaidBills} unpaid bed bill(s) found. Please process all payments before discharge.",
+                    'message_type' => 'error'
+                ]);
+            }
+
+            // Check for pending/rejected HMO validations
+            $invalidBills = ProductOrServiceRequest::where('user_id', $req->patient->user->id)
+                ->where('service_id', $req->service_id)
+                ->whereDate('created_at', '>=', $req->bed_assign_date)
+                ->where(function($q) {
+                    $q->where('validation_status', 'pending')
+                      ->orWhere('validation_status', 'rejected');
+                })
+                ->where('claims_amount', '>', 0)
+                ->count();
+
+            if ($invalidBills > 0) {
+                DB::rollBack();
+                return back()->with([
+                    'message' => "Cannot discharge patient: {$invalidBills} bed bill(s) require HMO validation. Please validate all claims before discharge.",
+                    'message_type' => 'error'
+                ]);
+            }
+
             $req->update([
                 'discharged' => true,
                 'discharged_by' => Auth::id(),
@@ -421,6 +456,38 @@ class AdmissionRequestController extends Controller
 
             if (!$req) {
                 return response()->json(['message' => 'Admission request not found'], 404);
+            }
+
+            // Check for unpaid/unvalidated bed bills
+            $unpaidBills = ProductOrServiceRequest::where('user_id', $req->patient->user->id)
+                ->where('service_id', $req->service_id)
+                ->whereNull('payment_id')
+                ->whereDate('created_at', '>=', $req->bed_assign_date)
+                ->count();
+
+            if ($unpaidBills > 0) {
+                DB::rollBack();
+                return response()->json([
+                    'message' => "Cannot discharge patient: {$unpaidBills} unpaid bed bill(s) found. Please process all payments before discharge."
+                ], 422);
+            }
+
+            // Check for pending/rejected HMO validations
+            $invalidBills = ProductOrServiceRequest::where('user_id', $req->patient->user->id)
+                ->where('service_id', $req->service_id)
+                ->whereDate('created_at', '>=', $req->bed_assign_date)
+                ->where(function($q) {
+                    $q->where('validation_status', 'pending')
+                      ->orWhere('validation_status', 'rejected');
+                })
+                ->where('claims_amount', '>', 0)
+                ->count();
+
+            if ($invalidBills > 0) {
+                DB::rollBack();
+                return response()->json([
+                    'message' => "Cannot discharge patient: {$invalidBills} bed bill(s) require HMO validation. Please validate all claims before discharge."
+                ], 422);
             }
 
             $req->update([
@@ -563,5 +630,83 @@ class AdmissionRequestController extends Controller
     public function destroy(AdmissionRequest $admissionRequest)
     {
         //
+    }
+
+    /**
+     * Get HMO coverage breakdown for a bed assignment
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getBedCoverage(Request $request)
+    {
+        try {
+            $request->validate([
+                'patient_id' => 'required|exists:patients,id',
+                'bed_id' => 'required|exists:beds,id'
+            ]);
+
+            $patient = patient::find($request->patient_id);
+            $bed = Bed::with('service')->find($request->bed_id);
+
+            if (!$bed->service_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This bed does not have an associated service'
+                ], 400);
+            }
+
+            // Get bed price
+            $bedPrice = $bed->service->price->sale_price ?? 0;
+
+            // Apply HMO tariff if patient has HMO
+            $coverage = [
+                'has_hmo' => false,
+                'bed_price' => $bedPrice,
+                'payable_amount' => $bedPrice,
+                'claims_amount' => 0,
+                'coverage_mode' => 'none',
+                'validation_status' => 'n/a',
+                'hmo_name' => null,
+                'requires_validation' => false
+            ];
+
+            if ($patient->hmo_id) {
+                try {
+                    $hmoData = HmoHelper::applyHmoTariff(
+                        $patient->id,
+                        null,
+                        $bed->service_id
+                    );
+
+                    if ($hmoData) {
+                        $coverage = [
+                            'has_hmo' => true,
+                            'bed_price' => $bedPrice,
+                            'payable_amount' => $hmoData['payable_amount'],
+                            'claims_amount' => $hmoData['claims_amount'],
+                            'coverage_mode' => $hmoData['coverage_mode'],
+                            'validation_status' => $hmoData['validation_status'],
+                            'hmo_name' => $patient->hmo->name ?? 'Unknown',
+                            'requires_validation' => $hmoData['claims_amount'] > 0
+                        ];
+                    }
+                } catch (\Exception $e) {
+                    // If HMO tariff fails, return cash pricing
+                    $coverage['error_message'] = 'HMO tariff not available: ' . $e->getMessage();
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'coverage' => $coverage
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching bed coverage: ' . $e->getMessage(), ['exception' => $e]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching coverage information: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

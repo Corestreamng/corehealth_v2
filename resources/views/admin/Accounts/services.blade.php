@@ -17,8 +17,9 @@
                         </div>
                     </div>
                 </div>
-                <form action="{{ route('service-payment') }}" method="post" id="serviceProductForm">
+                <form action="{{ route('service-payment') }}" method="POST" id="serviceProductForm">
                     @csrf
+                    <input type="hidden" name="_method" value="POST">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h3 class="mb-0">Services</h3>
@@ -183,7 +184,7 @@
                     "type": "GET"
                 },
                 "columns": [
-                    { data: "id", name: "DT_RowIndex" },
+                    { data: "DT_RowIndex", name: "DT_RowIndex" },
                     { data: "checkBox", name: "checkBox", orderable: false, searchable: false },
                     { data: "service.service_name", name: "service" },
                     { data: "service.category.category_name", name: "category" },
@@ -207,11 +208,11 @@
                 "processing": true,
                 "serverSide": true,
                 "ajax": {
-                    "url": "{{ route('product-list', ['id' => $id]) }}",
+                    "url": "{{ route('accounts.product-list', ['id' => $id]) }}",
                     "type": "GET"
                 },
                 "columns": [
-                    { data: "id", name: "DT_RowIndex" },
+                    { data: "DT_RowIndex", name: "DT_RowIndex" },
                     { data: "checkBox", name: "checkBox", orderable: false, searchable: false },
                     { data: "product.product_name", name: "product" },
                     { data: "product.category.category_name", name: "category" },
@@ -244,6 +245,20 @@
                 let all = $('#products-list tbody input[type=checkbox][name="productChecked[]"]').length;
                 let checked = $('#products-list tbody input[type=checkbox][name="productChecked[]"]:checked').length;
                 $('#selectAllProducts').prop('checked', all > 0 && all === checked);
+            });
+
+            // Form submission validation
+            $('#serviceProductForm').on('submit', function(e) {
+                let servicesChecked = $('#service-list tbody input[type=checkbox][name="someCheckbox[]"]:checked').length;
+                let productsChecked = $('#products-list tbody input[type=checkbox][name="productChecked[]"]:checked').length;
+
+                if (servicesChecked === 0 && productsChecked === 0) {
+                    e.preventDefault();
+                    alert('Please select at least one service or product to proceed with payment.');
+                    return false;
+                }
+
+                return true;
             });
         });
 
