@@ -4,6 +4,7 @@ use App\Http\Controllers\Account\accountsController;
 use App\Http\Controllers\Account\paymentController;
 use App\Http\Controllers\Account\productAccountController;
 use App\Http\Controllers\AdmissionRequestController;
+use App\Http\Controllers\BankController;
 use App\Http\Controllers\BedController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ClinicController;
@@ -97,6 +98,16 @@ Route::group(['middleware' => ['auth']], function () {
         Route::put('hospital-config', [HospitalConfigController::class, 'update'])->name('hospital-config.update');
     });
 
+    // Bank Configuration
+    Route::group(['middleware' => ['auth', 'role:SUPERADMIN|ADMIN']], function () {
+        Route::get('banks', [BankController::class, 'index'])->name('banks.index');
+        Route::get('banks/list', [BankController::class, 'list'])->name('banks.list');
+        Route::get('banks/active', [BankController::class, 'getActiveBanks'])->name('banks.active');
+        Route::post('banks', [BankController::class, 'store'])->name('banks.store');
+        Route::put('banks/{bank}', [BankController::class, 'update'])->name('banks.update');
+        Route::delete('banks/{bank}', [BankController::class, 'destroy'])->name('banks.destroy');
+    });
+
     // Audit Logs
     Route::group(['middleware' => ['auth']], function () {
         Route::get('audit-logs', [\App\Http\Controllers\AuditLogController::class, 'index'])->name('audit-logs.index');
@@ -187,6 +198,23 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('bill-misc-bill', [MiscBillController::class, 'bill'])->name('bill-misc-bill');
         Route::get('investQueueList', [LabServiceRequestController::class, 'investQueueList'])->name('investQueueList');
         Route::get('investHistoryList', [LabServiceRequestController::class, 'investHistoryList'])->name('investHistoryList');
+
+        // Billing Workbench Routes
+        Route::get('/billing-workbench', [\App\Http\Controllers\BillingWorkbenchController::class, 'index'])->name('billing.workbench');
+        Route::get('/billing-workbench/search-patients', [\App\Http\Controllers\BillingWorkbenchController::class, 'searchPatients'])->name('billing.search-patients');
+        Route::get('/billing-workbench/payment-queue', [\App\Http\Controllers\BillingWorkbenchController::class, 'getPaymentQueue'])->name('billing.payment-queue');
+        Route::get('/billing-workbench/queue-counts', [\App\Http\Controllers\BillingWorkbenchController::class, 'getQueueCounts'])->name('billing.queue-counts');
+        Route::get('/billing-workbench/patient/{id}/billing-data', [\App\Http\Controllers\BillingWorkbenchController::class, 'getPatientBillingData'])->name('billing.patient-billing-data');
+        Route::get('/billing-workbench/patient/{id}/receipts', [\App\Http\Controllers\BillingWorkbenchController::class, 'getPatientReceipts'])->name('billing.patient-receipts');
+        Route::get('/billing-workbench/patient/{id}/transactions', [\App\Http\Controllers\BillingWorkbenchController::class, 'getPatientTransactions'])->name('billing.patient-transactions');
+        Route::get('/billing-workbench/patient/{id}/account-transactions', [\App\Http\Controllers\BillingWorkbenchController::class, 'getAccountTransactions'])->name('billing.patient-account-transactions');
+        Route::get('/billing-workbench/patient/{id}/account-summary', [\App\Http\Controllers\BillingWorkbenchController::class, 'getPatientAccountSummary'])->name('billing.patient-account-summary');
+        Route::post('/billing-workbench/process-payment', [\App\Http\Controllers\BillingWorkbenchController::class, 'processPayment'])->name('billing.process-payment');
+        Route::post('/billing-workbench/print-receipt', [\App\Http\Controllers\BillingWorkbenchController::class, 'printReceipt'])->name('billing.print-receipt');
+        Route::get('/billing-workbench/my-transactions', [\App\Http\Controllers\BillingWorkbenchController::class, 'getMyTransactions'])->name('billing.my-transactions');
+        Route::post('/billing-workbench/create-account', [\App\Http\Controllers\BillingWorkbenchController::class, 'createPatientAccount'])->name('billing.create-account');
+        Route::post('/billing-workbench/make-deposit', [\App\Http\Controllers\BillingWorkbenchController::class, 'makeAccountDeposit'])->name('billing.make-deposit');
+        Route::post('/billing-workbench/account-transaction', [\App\Http\Controllers\BillingWorkbenchController::class, 'processAccountTransaction'])->name('billing.account-transaction');
 
         // Lab Workbench Routes
         Route::get('/lab-workbench', [\App\Http\Controllers\LabWorkbenchController::class, 'index'])->name('lab.workbench');

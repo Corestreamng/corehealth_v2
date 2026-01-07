@@ -581,14 +581,19 @@ class paymentController extends Controller
         $from = $request->input('from', now()->startOfMonth()->toDateString());
         $to = $request->input('to', now()->toDateString());
         $payment_type = $request->input('payment_type', null);
+        $bank_id = $request->input('bank_id', null);
 
         $query = \App\Models\payment::query()
-            ->with(['patient', 'patient.user'])
+            ->with(['patient', 'patient.user', 'bank'])
             ->whereDate('created_at', '>=', $from)
             ->whereDate('created_at', '<=', $to);
 
         if ($payment_type) {
             $query->where('payment_type', $payment_type);
+        }
+
+        if ($bank_id) {
+            $query->where('bank_id', $bank_id);
         }
 
         $transactions = $query->orderBy('created_at', 'desc')->get();
@@ -605,7 +610,10 @@ class paymentController extends Controller
             ];
         });
 
-        return view('admin.Accounts.transactions', compact('transactions', 'from', 'to', 'payment_type', 'total_amount', 'total_discount', 'total_count', 'by_type'));
+        // Get active banks for filter dropdown
+        $banks = \App\Models\Bank::active()->orderBy('name')->get();
+
+        return view('admin.Accounts.transactions', compact('transactions', 'from', 'to', 'payment_type', 'bank_id', 'banks', 'total_amount', 'total_discount', 'total_count', 'by_type'));
     }
 
     public function myTransactions(Request $request)

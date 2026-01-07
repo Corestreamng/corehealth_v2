@@ -114,6 +114,12 @@ class BillingWorkbenchController extends Controller
 
         $queue = $results->map(function ($item) use ($patients) {
             $patient = $patients->get($item->user_id);
+
+            // Skip if patient record not found
+            if (!$patient) {
+                return null;
+            }
+
             return [
                 'patient_id' => $patient->id,
                 'patient_name' => userfullname($item->user_id),
@@ -122,9 +128,9 @@ class BillingWorkbenchController extends Controller
                 'hmo_items' => $item->hmo_items,
                 'hmo' => optional($patient->hmo)->name,
             ];
-        });
+        })->filter(); // Remove null entries
 
-        return response()->json($queue);
+        return response()->json($queue->values());
     }
 
     /**
@@ -226,13 +232,26 @@ class BillingWorkbenchController extends Controller
     /**
      * Get patient's receipts (paid items grouped by payment)
      */
-    public function getPatientReceipts($patientId)
+    public function getPatientReceipts($patientId, Request $request)
     {
         $patient = Patient::findOrFail($patientId);
 
-        $payments = payment::where('patient_id', $patientId)
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $query = payment::where('patient_id', $patientId);
+
+        // Apply date filters
+        if ($request->has('from_date') && $request->from_date) {
+            $query->whereDate('created_at', '>=', $request->from_date);
+        }
+        if ($request->has('to_date') && $request->to_date) {
+            $query->whereDate('created_at', '<=', $request->to_date);
+        }
+
+        // Apply payment type filter
+        if ($request->has('payment_type') && $request->payment_type) {
+            $query->where('payment_type', $request->payment_type);
+        }
+
+        $payments = $query->orderBy('created_at', 'desc')->get();
 
         $receipts = $payments->map(function ($payment) use ($patient) {
             $items = ProductOrServiceRequest::with(['service', 'product'])
@@ -244,12 +263,19 @@ class BillingWorkbenchController extends Controller
                 'reference_no' => $payment->reference_no,
                 'payment_type' => $payment->payment_type,
                 'total' => $payment->total,
-                'total_discount' => $payment->total_discount,
+                'total_discount' => $payment->total_discount ?? 0,
                 'created_at' => $payment->created_at->format('Y-m-d H:i'),
                 'created_by' => userfullname($payment->user_id),
                 'item_count' => $items->count(),
             ];
         });
+
+        // Calculate stats
+        $stats = [
+            'count' => $receipts->count(),
+            'total' => $payments->sum('total'),
+            'discounts' => $payments->sum('total_discount') ?? 0,
+        ];
 
         return response()->json([
             'patient' => [
@@ -258,6 +284,7 @@ class BillingWorkbenchController extends Controller
                 'file_no' => $patient->file_no,
             ],
             'receipts' => $receipts,
+            'stats' => $stats,
         ]);
     }
 
@@ -284,11 +311,118 @@ class BillingWorkbenchController extends Controller
 
         $transactions = $query->orderBy('created_at', 'desc')->get();
 
+        $transactionsFormatted = $transactions->map(function ($tx) {
+            return [
+                'id' => $tx->id,
+                'reference_no' => $tx->reference_no,
+                'payment_type' => $tx->payment_type,
+                'total' => $tx->total,
+                'total_discount' => $tx->total_discount,
+                'created_at' => $tx->created_at->format('Y-m-d H:i'),
+                'cashier' => userfullname($tx->user_id),
+            ];
+        });
+
         return response()->json([
-            'transactions' => $transactions,
+            'transactions' => $transactionsFormatted,
             'total_amount' => $transactions->sum('total'),
             'total_discount' => $transactions->sum('total_discount'),
             'count' => $transactions->count(),
+        ]);
+    }
+
+    /**
+     * Get patient's account-specific transactions (deposits, withdrawals, adjustments)
+     */
+    public function getAccountTransactions($patientId, Request $request)
+    {
+        $patient = Patient::findOrFail($patientId);
+        $account = PatientAccount::where('patient_id', $patientId)->first();
+
+        // Get account-related transactions (deposits, withdrawals/payments, adjustments)
+        // Note: ACC_WITHDRAW is used for both manual withdrawals AND payments from account balance
+        $query = payment::where('patient_id', $patientId)
+            ->whereIn('payment_type', ['ACC_DEPOSIT', 'ACC_WITHDRAW', 'ACC_ADJUSTMENT']);
+
+        // Apply date filters - default to current month if not provided
+        $fromDate = $request->from_date ?: now()->startOfMonth()->format('Y-m-d');
+        $toDate = $request->to_date ?: now()->format('Y-m-d');
+
+        $query->whereDate('created_at', '>=', $fromDate);
+        $query->whereDate('created_at', '<=', $toDate);
+
+        // Apply transaction type filter
+        if ($request->has('tx_type') && $request->tx_type) {
+            $query->where('payment_type', $request->tx_type);
+        }
+
+        $transactions = $query->orderBy('created_at', 'desc')->get();
+
+        // Calculate running balance
+        $runningBalance = $account ? $account->balance : 0;
+        $transactionsFormatted = [];
+
+        // We need to calculate running balance from earliest to latest, then reverse
+        $reversedTransactions = $transactions->reverse()->values();
+        $balanceHistory = [];
+        $currentBalance = 0;
+
+        foreach ($reversedTransactions as $tx) {
+            $currentBalance += $tx->total;
+            $balanceHistory[$tx->id] = $currentBalance;
+        }
+
+        foreach ($transactions as $tx) {
+            $txType = 'Adjustment';
+            $txIcon = 'mdi-swap-horizontal';
+            $txColor = 'info';
+
+            if ($tx->payment_type === 'ACC_DEPOSIT') {
+                $txType = 'Deposit';
+                $txIcon = 'mdi-arrow-down-bold-circle';
+                $txColor = 'success';
+            } elseif ($tx->payment_type === 'ACC_WITHDRAW') {
+                // ACC_WITHDRAW is used for both manual withdrawals and account payments
+                // Negative total = account payment, check if there's an associated payment item
+                $txType = 'Withdrawal';
+                $txIcon = 'mdi-arrow-up-bold-circle';
+                $txColor = 'danger';
+            }
+
+            $transactionsFormatted[] = [
+                'id' => $tx->id,
+                'reference_no' => $tx->reference_no,
+                'payment_type' => $tx->payment_type,
+                'tx_type' => $txType,
+                'tx_icon' => $txIcon,
+                'tx_color' => $txColor,
+                'amount' => $tx->total, // Already stored as negative for withdrawals/payments
+                'description' => $tx->notes ?? '',
+                'running_balance' => $balanceHistory[$tx->id] ?? 0,
+                'created_at' => $tx->created_at->format('M d, Y'),
+                'created_time' => $tx->created_at->format('h:i A'),
+                'cashier' => userfullname($tx->user_id),
+            ];
+        }
+
+        // Calculate summary stats
+        $totalDeposits = payment::where('patient_id', $patientId)
+            ->where('payment_type', 'ACC_DEPOSIT')
+            ->sum('total');
+
+        // Withdrawals (stored as negative values, so abs to get positive)
+        $totalWithdrawals = abs(payment::where('patient_id', $patientId)
+            ->where('payment_type', 'ACC_WITHDRAW')
+            ->sum('total'));
+
+        return response()->json([
+            'transactions' => $transactionsFormatted,
+            'summary' => [
+                'total_deposits' => $totalDeposits,
+                'total_withdrawals' => $totalWithdrawals,
+                'current_balance' => $account ? $account->balance : 0,
+                'transaction_count' => $transactions->count(),
+            ]
         ]);
     }
 
@@ -321,6 +455,11 @@ class BillingWorkbenchController extends Controller
             'pending_claims' => $pendingClaims,
             'unpaid_total' => $unpaidTotal,
             'hmo' => optional($patient->hmo)->name,
+            'account' => $account ? [
+                'id' => $account->id,
+                'balance' => $account->balance,
+                'updated_at' => $account->updated_at,
+            ] : null,
         ]);
     }
 
@@ -332,6 +471,8 @@ class BillingWorkbenchController extends Controller
         $data = $request->validate([
             'patient_id' => 'required|integer|exists:patients,id',
             'payment_type' => 'required|string',
+            'payment_method' => 'nullable|string',
+            'bank_id' => 'nullable|integer|exists:banks,id',
             'reference_no' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.id' => 'required|integer',
@@ -404,10 +545,31 @@ class BillingWorkbenchController extends Controller
                 ];
             }
 
+            // If paying from account, verify and deduct balance
+            // Match original payment summary behavior: use ACC_WITHDRAW and store negative total
+            $paymentType = $data['payment_type'];
+            $paymentTotal = $total;
+
+            if ($data['payment_type'] === 'ACCOUNT') {
+                $account = PatientAccount::where('patient_id', $patient->id)->first();
+                if (!$account || $account->balance < $total) {
+                    throw new \Exception('Insufficient account balance. Available: ₦' . number_format($account ? $account->balance : 0, 2));
+                }
+                // Deduct from account
+                $account->balance -= $total;
+                $account->save();
+
+                // Use ACC_WITHDRAW payment type and negative total (matches original system)
+                $paymentType = 'ACC_WITHDRAW';
+                $paymentTotal = 0 - $total;
+            }
+
             // Create payment entry
             $payment = payment::create([
-                'payment_type' => $data['payment_type'],
-                'total' => $total,
+                'payment_type' => $paymentType,
+                'payment_method' => $data['payment_method'] ?? $data['payment_type'],
+                'bank_id' => $data['bank_id'] ?? null,
+                'total' => $paymentTotal,
                 'total_discount' => $totalDiscount,
                 'reference_no' => $data['reference_no'],
                 'user_id' => Auth::id(),
@@ -595,10 +757,10 @@ class BillingWorkbenchController extends Controller
     {
         $userId = Auth::id();
 
-        $query = payment::where('user_id', $userId)->with('patient.user');
+        $query = payment::where('user_id', $userId)->with(['patient.user', 'bank']);
 
-        // Date filtering
-        $from = $request->input('from', now()->startOfMonth()->toDateString());
+        // Date filtering - default to today
+        $from = $request->input('from', now()->toDateString());
         $to = $request->input('to', now()->toDateString());
 
         $query->whereBetween('created_at', [
@@ -609,6 +771,11 @@ class BillingWorkbenchController extends Controller
         // Payment type filter
         if ($request->has('payment_type') && $request->payment_type) {
             $query->where('payment_type', $request->payment_type);
+        }
+
+        // Bank filter
+        if ($request->has('bank_id') && $request->bank_id) {
+            $query->where('bank_id', $request->bank_id);
         }
 
         $transactions = $query->orderBy('created_at', 'desc')->get();
@@ -633,6 +800,8 @@ class BillingWorkbenchController extends Controller
                 'patient_name' => userfullname($tx->patient->user_id),
                 'file_no' => $tx->patient->file_no,
                 'payment_type' => $tx->payment_type,
+                'payment_method' => $tx->payment_method,
+                'bank_name' => $tx->bank ? $tx->bank->name : null,
                 'total' => $tx->total,
                 'total_discount' => $tx->total_discount,
                 'created_at' => $tx->created_at->format('Y-m-d H:i'),
@@ -645,5 +814,188 @@ class BillingWorkbenchController extends Controller
             'from' => $from,
             'to' => $to
         ]);
+    }
+
+    /**
+     * Create patient account (AJAX)
+     */
+    public function createPatientAccount(Request $request)
+    {
+        $request->validate([
+            'patient_id' => 'required|integer|exists:patients,id',
+        ]);
+
+        // Check if account already exists
+        $existingAccount = PatientAccount::where('patient_id', $request->patient_id)->first();
+        if ($existingAccount) {
+            return response()->json([
+                'message' => 'Account already exists for this patient',
+                'account' => [
+                    'id' => $existingAccount->id,
+                    'balance' => $existingAccount->balance,
+                    'updated_at' => $existingAccount->updated_at,
+                ]
+            ]);
+        }
+
+        try {
+            $account = PatientAccount::create([
+                'patient_id' => $request->patient_id,
+                'balance' => 0,
+            ]);
+
+            return response()->json([
+                'message' => 'Account created successfully',
+                'account' => [
+                    'id' => $account->id,
+                    'balance' => $account->balance,
+                    'updated_at' => $account->updated_at,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to create patient account', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'Failed to create account'], 500);
+        }
+    }
+
+    /**
+     * Make deposit to patient account (AJAX)
+     */
+    public function makeAccountDeposit(Request $request)
+    {
+        $request->validate([
+            'patient_id' => 'required|integer|exists:patients,id',
+            'amount' => 'required|numeric',
+            'description' => 'nullable|string',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $account = PatientAccount::where('patient_id', $request->patient_id)->first();
+
+            if (!$account) {
+                return response()->json(['message' => 'Account not found'], 404);
+            }
+
+            $newBalance = $account->balance + $request->amount;
+            $account->update(['balance' => $newBalance]);
+
+            // Create payment record for tracking
+            $payment = payment::create([
+                'patient_id' => $request->patient_id,
+                'user_id' => Auth::id(),
+                'total' => $request->amount,
+                'reference_no' => generate_invoice_no(),
+                'payment_type' => $request->amount >= 0 ? 'ACC_DEPOSIT' : 'ACC_DEBIT',
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Transaction saved successfully',
+                'new_balance' => $newBalance,
+                'payment_id' => $payment->id,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to make deposit', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'Failed to save transaction'], 500);
+        }
+    }
+
+    /**
+     * Process account transaction (deposit, withdraw, adjust) - AJAX
+     */
+    public function processAccountTransaction(Request $request)
+    {
+        // Different validation rules based on transaction type
+        $amountRule = $request->transaction_type === 'adjust'
+            ? 'required|numeric|not_in:0' // Allow negative for adjustments, but not zero
+            : 'required|numeric|min:0.01'; // Positive only for deposit/withdraw
+
+        $request->validate([
+            'patient_id' => 'required|integer|exists:patients,id',
+            'transaction_type' => 'required|in:deposit,withdraw,adjust',
+            'amount' => $amountRule,
+            'description' => 'nullable|string|max:255',
+            'payment_method' => 'nullable|string|in:CASH,POS,TRANSFER,MOBILE',
+            'bank_id' => 'nullable|integer|exists:banks,id',
+        ]);
+
+        // Require description for adjustments
+        if ($request->transaction_type === 'adjust' && empty($request->description)) {
+            return response()->json(['message' => 'Description is required for adjustments'], 422);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $account = PatientAccount::where('patient_id', $request->patient_id)->first();
+
+            if (!$account) {
+                return response()->json(['message' => 'Account not found. Please create an account first.'], 404);
+            }
+
+            $amount = abs($request->amount);
+            $paymentType = '';
+            $balanceChange = 0;
+            $notes = $request->description ?? '';
+
+            switch ($request->transaction_type) {
+                case 'deposit':
+                    $balanceChange = $amount;
+                    $paymentType = 'ACC_DEPOSIT';
+                    $notes = $notes ?: 'Account deposit';
+                    break;
+
+                case 'withdraw':
+                    $balanceChange = -$amount;
+                    $paymentType = 'ACC_WITHDRAW';
+                    $notes = $notes ?: 'Account withdrawal';
+                    break;
+
+                case 'adjust':
+                    // For adjustments, amount can be positive (credit) or negative (debit)
+                    // Frontend sends positive always, so we check if description hints at debit
+                    $balanceChange = $request->amount; // Keep sign as sent
+                    $paymentType = 'ACC_ADJUSTMENT';
+                    break;
+            }
+
+            $newBalance = $account->balance + $balanceChange;
+            $account->update(['balance' => $newBalance]);
+
+            // Create payment record for tracking
+            // Note: We store description in reference_no field as notes field doesn't exist
+            $refNo = generate_invoice_no();
+            $payment = payment::create([
+                'patient_id' => $request->patient_id,
+                'user_id' => Auth::id(),
+                'total' => $balanceChange,
+                'reference_no' => $refNo,
+                'payment_type' => $paymentType,
+                'payment_method' => $request->payment_method ?? ($paymentType === 'ACC_ADJUSTMENT' ? null : 'CASH'),
+                'bank_id' => $request->bank_id,
+            ]);
+
+            DB::commit();
+
+            $typeLabels = [
+                'deposit' => 'Deposit',
+                'withdraw' => 'Withdrawal',
+                'adjust' => 'Adjustment',
+            ];
+
+            return response()->json([
+                'message' => $typeLabels[$request->transaction_type] . ' saved successfully',
+                'new_balance' => $newBalance,
+                'payment_id' => $payment->id,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to process account transaction', ['error' => $e->getMessage(), 'type' => $request->transaction_type]);
+            return response()->json(['message' => 'Failed to save transaction'], 500);
+        }
     }
 }

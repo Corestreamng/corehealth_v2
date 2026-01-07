@@ -11,7 +11,10 @@ class payment extends Model implements Auditable
 {
     use HasFactory;
     use \OwenIt\Auditing\Auditable;
-protected $fillable = ['reference_no', 'total', 'payment_type', 'invoice_id', 'patient_id', 'user_id', 'hmo_id', 'total_discount'];
+    protected $fillable = [
+        'reference_no', 'total', 'payment_type', 'payment_method', 'bank_id',
+        'invoice_id', 'patient_id', 'user_id', 'hmo_id', 'total_discount'
+    ];
 
 
 
@@ -35,8 +38,13 @@ protected $fillable = ['reference_no', 'total', 'payment_type', 'invoice_id', 'p
         return $this->belongsTo(User::class, 'user_id', 'id');
     }
 
+    public function bank()
+    {
+        return $this->belongsTo(Bank::class, 'bank_id', 'id');
+    }
+
     public function product_or_service_request()
     {
-        return $this->hasMany(ProductOrServiceRequest::class, 'payment_id', 'id');
+        return $this->hasMany(ProductOrServiceRequest::class, 'payment_id', 'id');;
     }
 }
