@@ -110,15 +110,20 @@
                     </ul>
                 </div>
             </li>
-            <li class="nav-item {{ request()->routeIs('product-or-service-request.*', 'my-transactions') ? 'active' : '' }}">
-                <a class="nav-link {{ request()->routeIs('product-or-service-request.*', 'my-transactions') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#acc_patient" data-bs-target="#acc_patient" aria-expanded="{{ request()->routeIs('product-or-service-request.*', 'my-transactions') ? 'true' : 'false' }}"
+            <li class="nav-item {{ request()->routeIs('product-or-service-request.*', 'my-transactions', 'billing.workbench') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('product-or-service-request.*', 'my-transactions', 'billing.workbench') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#acc_patient" data-bs-target="#acc_patient" aria-expanded="{{ request()->routeIs('product-or-service-request.*', 'my-transactions', 'billing.workbench') ? 'true' : 'false' }}"
                     aria-controls="acc_patient">
                     <i class="mdi mdi-cash-multiple menu-icon"></i>
                     <span class="menu-title">Accounts</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
-                <div class="collapse {{ request()->routeIs('product-or-service-request.*', 'my-transactions') ? 'show' : '' }}" id="acc_patient">
+                <div class="collapse {{ request()->routeIs('product-or-service-request.*', 'my-transactions', 'billing.workbench') ? 'show' : '' }}" id="acc_patient">
                     <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('billing.workbench') ? 'active' : '' }}" href="{{ route('billing.workbench') }}">
+                                <i class="mdi mdi-view-dashboard-outline"></i> Billing Workbench
+                            </a>
+                        </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('product-or-service-request.index') ? 'active' : '' }}" href="{{ route('product-or-service-request.index') }}">All Payment
                                 Requests</a>
@@ -174,6 +179,14 @@
                     <span class="menu-title">Hospital Config</span>
                 </a>
             </li>
+            @hasanyrole('SUPERADMIN|ADMIN')
+            <li class="nav-item {{ request()->routeIs('banks.*') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('banks.*') ? 'active' : '' }}" href="{{ route('banks.index') }}">
+                    <i class="mdi mdi-bank menu-icon"></i>
+                    <span class="menu-title">Bank Config</span>
+                </a>
+            </li>
+            @endhasanyrole
             @hasanyrole('SUPERADMIN|ADMIN|HMO Executive')
             <li class="nav-item {{ request()->routeIs('hmo-tariffs.*', 'hmo.workbench', 'hmo.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('hmo-tariffs.*', 'hmo.workbench', 'hmo.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#hmo_management" data-bs-target="#hmo_management" aria-expanded="{{ request()->routeIs('hmo-tariffs.*', 'hmo.workbench', 'hmo.*') ? 'true' : 'false' }}"

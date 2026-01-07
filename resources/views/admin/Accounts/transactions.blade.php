@@ -17,11 +17,20 @@
                         <option value="POS" @if ($payment_type == 'POS') selected @endif>POS</option>
                         <option value="CASH" @if ($payment_type == 'CASH') selected @endif>Cash</option>
                         <option value="TRANSFER" @if ($payment_type == 'TRANSFER') selected @endif>Transfer</option>
+                        <option value="MOBILE" @if ($payment_type == 'MOBILE') selected @endif>Mobile Money</option>
                         <option value="TELLER" @if ($payment_type == 'TELLER') selected @endif>Teller</option>
                         <option value="CHEQUE" @if ($payment_type == 'CHEQUE') selected @endif>Cheque</option>
-                        <option value="ACC_WITHDRAW" @if ($payment_type == 'ACC_WITHDRAW') selected @endif>Credit Account
-                        </option>
+                        <option value="ACC_DEPOSIT" @if ($payment_type == 'ACC_DEPOSIT') selected @endif>Account Deposit</option>
+                        <option value="ACC_WITHDRAW" @if ($payment_type == 'ACC_WITHDRAW') selected @endif>Account Withdrawal</option>
+                        <option value="ACC_ADJUSTMENT" @if ($payment_type == 'ACC_ADJUSTMENT') selected @endif>Account Adjustment</option>
                         <option value="CLAIMS" @if ($payment_type == 'CLAIMS') selected @endif>Claims</option>
+                    </select>
+                    <label class="mr-2">Bank</label>
+                    <select name="bank_id" class="form-control mr-2">
+                        <option value="">All Banks</option>
+                        @foreach ($banks as $bank)
+                            <option value="{{ $bank->id }}" @if ($bank_id == $bank->id) selected @endif>{{ $bank->name }}</option>
+                        @endforeach
                     </select>
                     <button type="submit" class="btn btn-primary">Filter</button>
                 </form>
@@ -79,6 +88,7 @@
                             <th>Date</th>
                             <th>Patient</th>
                             <th>Payment Type</th>
+                            <th>Bank</th>
                             <th>Amount</th>
                             <th>Discount</th>
                             <th>Reference</th>
@@ -91,8 +101,9 @@
                             <tr>
                                 <td>{{ $t->id }}</td>
                                 <td>{{ $t->created_at }}</td>
-                                <td>{{ $t->patient ? userfullname($t->patient->user_id) : '' }} ({{$patient->file_no ?? ''}})</td>
+                                <td>{{ $t->patient ? userfullname($t->patient->user_id) : '' }} ({{$t->patient->file_no ?? ''}})</td>
                                 <td>{{ $t->payment_type }}</td>
+                                <td>{{ $t->bank ? $t->bank->name : '-' }}</td>
                                 <td>&#8358;{{ number_format($t->total, 2) }}</td>
                                 <td>&#8358;{{ number_format($t->total_discount, 2) }}</td>
                                 <td>{{ $t->reference_no }}</td>
