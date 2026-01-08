@@ -3362,6 +3362,9 @@
     <i class="fa fa-clipboard-list"></i>
 </button>
 
+<!-- Include Clinical Context Modal -->
+@include('admin.partials.clinical_context_modal')
+
 @endsection
 
 @section('scripts')
@@ -4235,33 +4238,54 @@ function displayNotes(notes) {
         columns: [{
             data: null,
             render: function(data, type, row, meta) {
-                // Use pre-formatted date from server
                 const noteDate = row.date_formatted || row.date;
                 const doctor = row.doctor || 'Unknown Doctor';
-                const specialty = row.specialty || 'N/A';
-                const diagnosis = row.diagnosis || 'No diagnosis';
-                const content = row.notes || row.complaints || 'No notes recorded';
-                const truncatedContent = truncateText(content, 150);
+                const content = row.notes || 'No notes recorded';
+                const truncatedContent = truncateText(content, 200);
                 const noteId = `note-${meta.row}`;
 
+                // Build reasons for encounter badges
+                let reasonsBadges = '';
+                if (row.reasons_for_encounter && row.reasons_for_encounter.trim() !== '') {
+                    const reasons = row.reasons_for_encounter.split(',');
+                    reasonsBadges = reasons.map(r => `<span class="badge bg-light text-dark me-1 mb-1">${r.trim()}</span>`).join('');
+                }
+
                 return `
-                    <div class="note-entry">
-                        <div class="note-header">
-                            <span class="note-doctor">
-                                <i class="mdi mdi-doctor"></i>
-                                ${doctor}
-                                ${specialty !== 'N/A' ? `<span class="specialty-tag">${specialty}</span>` : ''}
-                            </span>
-                            <span class="note-date">${noteDate}</span>
-                        </div>
-                        ${diagnosis !== 'No diagnosis' ? `
-                            <div class="note-diagnosis">
-                                <span class="diagnosis-badge">${diagnosis}</span>
+                    <div class="card mb-2" style="border-left: 4px solid var(--hospital-primary, #0d6efd);">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="mb-0">
+                                    <i class="mdi mdi-account-circle"></i>
+                                    <span class="text-primary">${doctor}</span>
+                                </h6>
+                                <span class="badge bg-info">${noteDate}</span>
                             </div>
-                        ` : ''}
-                        <div class="note-content" id="${noteId}">
-                            <p class="note-text ${content.length > 150 ? 'truncated' : ''}" data-full-text="${escapeHtml(content)}">${truncatedContent}</p>
-                            ${content.length > 150 ? `<a href="#" class="read-more-link" data-note-id="${noteId}">Read More</a>` : ''}
+
+                            ${reasonsBadges ? `
+                                <div class="mb-2">
+                                    <small><b><i class="mdi mdi-format-list-bulleted"></i> Reason(s) for Encounter/Diagnosis (ICPC-2):</b></small><br>
+                                    ${reasonsBadges}
+                                </div>
+                            ` : ''}
+
+                            ${row.reasons_for_encounter_comment_1 ? `
+                                <div class="mb-2">
+                                    <small><b><i class="mdi mdi-comment-text"></i> Diagnosis Comment 1:</b> ${escapeHtml(row.reasons_for_encounter_comment_1)}</small>
+                                </div>
+                            ` : ''}
+
+                            ${row.reasons_for_encounter_comment_2 ? `
+                                <div class="mb-2">
+                                    <small><b><i class="mdi mdi-comment-text"></i> Diagnosis Comment 2:</b> ${escapeHtml(row.reasons_for_encounter_comment_2)}</small>
+                                </div>
+                            ` : ''}
+
+                            <div class="alert alert-light mb-0 p-2" id="${noteId}">
+                                <small><b><i class="mdi mdi-note-text"></i> Clinical Notes:</b><br>
+                                <span class="note-text ${content.length > 200 ? 'truncated' : ''}" data-full-text="${escapeHtml(content)}">${truncatedContent}</span></small>
+                                ${content.length > 200 ? `<br><a href="#" class="read-more-link small" data-note-id="${noteId}">Read More</a>` : ''}
+                            </div>
                         </div>
                     </div>
                 `;
@@ -4274,13 +4298,13 @@ function displayNotes(notes) {
                 const $link = $(this);
                 const $noteText = $link.siblings('.note-text');
                 const fullText = $noteText.data('full-text');
-                const truncatedText = truncateText(fullText, 150);
+                const truncatedText = truncateText(fullText, 200);
 
                 if ($noteText.hasClass('truncated')) {
-                    $noteText.removeClass('truncated').text(fullText);
+                    $noteText.removeClass('truncated').html(fullText);
                     $link.text('Read Less');
                 } else {
-                    $noteText.addClass('truncated').text(truncatedText);
+                    $noteText.addClass('truncated').html(truncatedText);
                     $link.text('Read More');
                 }
             });

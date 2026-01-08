@@ -238,12 +238,6 @@
                     <span class="menu-title">Clinics Management</span>
                 </a>
             </li>
-            <li class="nav-item {{ request()->routeIs('hmo.*') ? 'active' : '' }}">
-                <a class="nav-link {{ request()->routeIs('hmo.*') ? 'active' : '' }}" href="{{ route('hmo.index') }}">
-                    <i class="mdi mdi-shield-check menu-icon"></i>
-                    <span class="menu-title">HMO Management</span>
-                </a>
-            </li>
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#new_patient_admin" data-bs-target="#new_patient_admin" aria-expanded="false"
                     aria-controls="new_patient_admin">
@@ -460,6 +454,12 @@
                 <span class="nav-item-head">IMAGING</span>
             </li>
             <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('imaging.workbench') ? 'active' : '' }}" href="{{ route('imaging.workbench') }}">
+                    <i class="mdi mdi-monitor-dashboard menu-icon"></i>
+                    <span class="menu-title">Imaging Workbench</span>
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#imaging_queue" data-bs-target="#imaging_queue" aria-expanded="false"
                     aria-controls="imaging_queue">
                     <i class="mdi mdi-image-multiple menu-icon"></i>
@@ -542,6 +542,35 @@
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('add-to-queue') }}">Search</a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+        @endhasanyrole
+        @hasanyrole('SUPERADMIN|ADMIN|HMO Executive')
+            <li class="pt-2 pb-1">
+                <span class="nav-item-head">HMO EXECUTIVE</span>
+            </li>
+            <li class="nav-item {{ request()->routeIs('hmo.workbench') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('hmo.workbench') ? 'active' : '' }}" href="{{ route('hmo.workbench') }}">
+                    <i class="mdi mdi-hospital-building menu-icon"></i>
+                    <span class="menu-title">HMO Workbench</span>
+                </a>
+            </li>
+            <li class="nav-item {{ request()->routeIs('patient.index') ? 'active' : '' }}">
+                <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#hmo_exec_patients" data-bs-target="#hmo_exec_patients" aria-expanded="false"
+                    aria-controls="hmo_exec_patients">
+                    <i class="mdi mdi-account-group menu-icon"></i>
+                    <span class="menu-title">Patients</span>
+                    <i class="mdi mdi-chevron-right menu-arrow"></i>
+                </a>
+                <div class="collapse" id="hmo_exec_patients">
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('patient.index') }}">All Patients</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('patient.index', ['hmo_only' => 1]) }}">HMO Patients</a>
                         </li>
                     </ul>
                 </div>

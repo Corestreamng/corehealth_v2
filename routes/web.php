@@ -250,7 +250,33 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/lab-workbench/filter-hmos', [\App\Http\Controllers\LabWorkbenchController::class, 'getHmosForFilter'])->name('lab.filterHmos');
         Route::get('/lab-workbench/filter-services', [\App\Http\Controllers\LabWorkbenchController::class, 'getLabServicesForFilter'])->name('lab.filterServices');
 
-        // Imaging Service Request Routes
+        // Imaging Workbench Routes
+        Route::get('/imaging-workbench', [\App\Http\Controllers\ImagingWorkbenchController::class, 'index'])->name('imaging.workbench');
+        Route::get('/imaging-workbench/patient-search', [\App\Http\Controllers\ImagingWorkbenchController::class, 'searchPatients'])->name('imaging.search-patients');
+        Route::get('/imaging-workbench/queue', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getImagingQueue'])->name('imaging.queue');
+        Route::get('/imaging-workbench/queue-counts', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getQueueCounts'])->name('imaging.queue-counts');
+        Route::get('/imaging-workbench/patient/{id}/requests', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getPatientRequests'])->name('imaging.patient-requests');
+        Route::get('/imaging-workbench/patient/{id}/vitals', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getPatientVitals'])->name('imaging.patient-vitals');
+        Route::get('/imaging-workbench/patient/{id}/notes', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getPatientNotes'])->name('imaging.patient-notes');
+        Route::get('/imaging-workbench/patient/{id}/medications', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getPatientMedications'])->name('imaging.patient-medications');
+        Route::get('/imaging-workbench/patient/{id}/clinical-context', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getClinicalContext'])->name('imaging.clinical-context');
+        Route::get('/imaging-workbench/patient/{patientId}/history', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getImagingHistoryList'])->name('imaging.patient-history');
+        Route::post('/imaging-workbench/record-billing', [\App\Http\Controllers\ImagingWorkbenchController::class, 'recordBilling'])->name('imaging.recordBilling');
+        Route::post('/imaging-workbench/dismiss-requests', [\App\Http\Controllers\ImagingWorkbenchController::class, 'dismissRequests'])->name('imaging.dismissRequests');
+        Route::get('/imaging-workbench/imaging-service-requests/{id}', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getImagingRequest'])->name('imaging.getRequest');
+        Route::get('/imaging-workbench/imaging-service-requests/{id}/attachments', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getRequestAttachments'])->name('imaging.getAttachments');
+        Route::post('/imaging-workbench/save-result', [\App\Http\Controllers\ImagingWorkbenchController::class, 'saveResult'])->name('imaging.saveResult');
+        Route::delete('/imaging-workbench/imaging-service-requests/{id}', [\App\Http\Controllers\ImagingWorkbenchController::class, 'deleteRequest'])->name('imaging.deleteRequest');
+        Route::post('/imaging-workbench/imaging-service-requests/{id}/restore', [\App\Http\Controllers\ImagingWorkbenchController::class, 'restoreRequest'])->name('imaging.restoreRequest');
+        Route::post('/imaging-workbench/imaging-service-requests/{id}/dismiss', [\App\Http\Controllers\ImagingWorkbenchController::class, 'dismissRequest'])->name('imaging.dismissRequest');
+        Route::post('/imaging-workbench/imaging-service-requests/{id}/undismiss', [\App\Http\Controllers\ImagingWorkbenchController::class, 'undismissRequest'])->name('imaging.undismissRequest');
+        Route::get('/imaging-workbench/deleted-requests/{patientId?}', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getDeletedRequests'])->name('imaging.deletedRequests');
+        Route::get('/imaging-workbench/dismissed-requests/{patientId?}', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getDismissedRequests'])->name('imaging.dismissedRequests');
+        Route::get('/imaging-workbench/audit-logs', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getAuditLog'])->name('imaging.auditLogs');
+        Route::get('/imaging-workbench/search-services', [\App\Http\Controllers\ImagingWorkbenchController::class, 'searchServices'])->name('imaging.searchServices');
+        Route::post('/imaging-workbench/create-request', [\App\Http\Controllers\ImagingWorkbenchController::class, 'createRequest'])->name('imaging.createRequest');
+
+        // Imaging Service Request Routes (Legacy)
         Route::resource('imaging-requests', ImagingServiceRequestController::class);
         Route::post('bill-imaging', [ImagingServiceRequestController::class, 'bill'])->name('bill-imaging');
         Route::post('save-imaging-result', [ImagingServiceRequestController::class, 'saveResult'])->name('save-imaging-result');
@@ -366,7 +392,17 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('hmo/requests/{id}', [HmoWorkbenchController::class, 'show'])->name('hmo.requests.show');
         Route::post('hmo/requests/{id}/approve', [HmoWorkbenchController::class, 'approveRequest'])->name('hmo.requests.approve');
         Route::post('hmo/requests/{id}/reject', [HmoWorkbenchController::class, 'rejectRequest'])->name('hmo.requests.reject');
+        Route::post('hmo/requests/{id}/reverse', [HmoWorkbenchController::class, 'reverseApproval'])->name('hmo.requests.reverse');
+        Route::post('hmo/requests/{id}/reapprove', [HmoWorkbenchController::class, 'reapproveRequest'])->name('hmo.requests.reapprove');
+        Route::post('hmo/batch-approve', [HmoWorkbenchController::class, 'batchApprove'])->name('hmo.batch-approve');
+        Route::post('hmo/batch-reject', [HmoWorkbenchController::class, 'batchReject'])->name('hmo.batch-reject');
         Route::get('hmo/queue-counts', [HmoWorkbenchController::class, 'getQueueCounts'])->name('hmo.queue-counts');
+        Route::get('hmo/financial-summary', [HmoWorkbenchController::class, 'getFinancialSummary'])->name('hmo.financial-summary');
+        Route::get('hmo/export-claims', [HmoWorkbenchController::class, 'exportClaimsReport'])->name('hmo.export-claims');
+        Route::get('hmo/patient/{patientId}/history', [HmoWorkbenchController::class, 'getPatientHistory'])->name('hmo.patient.history');
+        Route::get('hmo/patient/{patientId}/vitals', [HmoWorkbenchController::class, 'getPatientVitals'])->name('hmo.patient.vitals');
+        Route::get('hmo/patient/{patientId}/notes', [HmoWorkbenchController::class, 'getPatientNotes'])->name('hmo.patient.notes');
+        Route::get('hmo/patient/{patientId}/medications', [HmoWorkbenchController::class, 'getPatientMedications'])->name('hmo.patient.medications');
     });
 
     // HMO Tariff Management

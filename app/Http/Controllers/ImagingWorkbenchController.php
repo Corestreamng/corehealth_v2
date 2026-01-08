@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Patient;
-use App\Models\LabServiceRequest;
+use App\Models\ImagingServiceRequest;
 use App\Models\ProductOrServiceRequest;
 use App\Models\VitalSign;
 use App\Models\Encounter;
@@ -17,19 +17,19 @@ use App\Helpers\HmoHelper;
 
 use Yajra\DataTables\DataTables;
 
-class LabWorkbenchController extends Controller
+class ImagingWorkbenchController extends Controller
 {
     /**
-     * Display the lab workbench main page
+     * Display the imaging workbench main page
      */
     public function index()
     {
         // Check permission
         if (!Auth::user()->can('see-investigations')) {
-            abort(403, 'Unauthorized access to Lab Workbench');
+            abort(403, 'Unauthorized access to Imaging Workbench');
         }
 
-        return view('admin.lab.workbench');
+        return view('admin.imaging.workbench');
     }
 
     /**
@@ -57,8 +57,9 @@ class LabWorkbenchController extends Controller
             ->get();
 
         $results = $patients->map(function ($patient) {
-            $pendingCount = LabServiceRequest::where('patient_id', $patient->id)
-                ->whereIn('status', [1, 2, 3])
+            // Count pending imaging requests (status 1 = awaiting billing, 2 = awaiting results)
+            $pendingCount = ImagingServiceRequest::where('patient_id', $patient->id)
+                ->whereIn('status', [1, 2])
                 ->count();
 
             return [
@@ -77,40 +78,47 @@ class LabWorkbenchController extends Controller
     }
 
     /**
-     * Get queue counts (billing, sample, results)
+     * Get queue counts (billing, results) - No sample stage for imaging
      */
     public function getQueueCounts()
     {
-        $billingCount = LabServiceRequest::where('status', 1)->count();
-        $sampleCount = LabServiceRequest::where('status', 2)->count();
-        $resultCount = LabServiceRequest::where('status', 3)->count();
+        $billingCount = ImagingServiceRequest::where('status', 1)->count();
+        $resultCount = ImagingServiceRequest::where('status', 2)->count();
 
         return response()->json([
             'billing' => $billingCount,
-            'sample' => $sampleCount,
             'results' => $resultCount,
-            'total' => $billingCount + $sampleCount + $resultCount,
+            'total' => $billingCount + $resultCount,
         ]);
     }
 
     /**
-     * Get patient's pending requests
+     * Get patient's pending imaging requests
      */
     public function getPatientRequests($patientId)
     {
         $patient = Patient::with(['user', 'hmo.scheme'])->findOrFail($patientId);
 
-        // Get all pending investigation requests
-        $requests = LabServiceRequest::with(['service', 'doctor', 'biller', 'patient'])
+        // Get all pending imaging requests
+        $requests = ImagingServiceRequest::with(['service', 'doctor', 'biller', 'patient', 'productOrServiceRequest'])
             ->where('patient_id', $patientId)
-            ->whereIn('status', [1, 2, 3])
+            ->whereIn('status', [1, 2])
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Group by status
+        // Add delivery check for each request
+        $requests = $requests->map(function ($request) {
+            $deliveryCheck = null;
+            if ($request->productOrServiceRequest) {
+                $deliveryCheck = HmoHelper::canDeliverService($request->productOrServiceRequest);
+            }
+            $request->delivery_check = $deliveryCheck;
+            return $request;
+        });
+
+        // Group by status - No sample stage for imaging
         $billing = $requests->where('status', 1)->values();
-        $sample = $requests->where('status', 2)->values();
-        $results = $requests->where('status', 3)->values();
+        $results = $requests->where('status', 2)->values();
 
         // Calculate detailed age
         $ageText = 'N/A';
@@ -152,7 +160,6 @@ class LabWorkbenchController extends Controller
             ],
             'requests' => [
                 'billing' => $billing,
-                'sample' => $sample,
                 'results' => $results,
             ],
         ]);
@@ -213,20 +220,20 @@ class LabWorkbenchController extends Controller
     }
 
     /**
-     * Get lab queue data for DataTable
+     * Get imaging queue data for DataTable
      */
-    public function getLabQueue(Request $request)
+    public function getImagingQueue(Request $request)
     {
         try {
             // Base query with all necessary relationships
-            $query = LabServiceRequest::with([
+            $query = ImagingServiceRequest::with([
                 'service',
                 'patient.user',
                 'patient.hmo.scheme',
                 'doctor',
                 'biller',
                 'resultBy',
-                'productOrServiceRequest' // Add product/service request for delivery check
+                'productOrServiceRequest'
             ]);
 
             // Filter by status if provided
@@ -234,8 +241,8 @@ class LabWorkbenchController extends Controller
                 $statuses = explode(',', $request->status);
                 $query->whereIn('status', $statuses);
             } else {
-                // Default to pending statuses (1, 2, 3)
-                $query->whereIn('status', [1, 2, 3]);
+                // Default to pending statuses (1 = billing, 2 = results)
+                $query->whereIn('status', [1, 2]);
             }
 
             // Apply date range filter if provided
@@ -289,12 +296,10 @@ class LabWorkbenchController extends Controller
                         'requested_at' => $this->formatDateTime($request->created_at),
                         'billed_by' => $request->biller ? $request->biller->surname . ' ' . $request->biller->firstname : null,
                         'billed_at' => $this->formatDateTime($request->billed_date),
-                        'sample_taken_by' => $request->sample_taken_by ? userfullname($request->sample_taken_by) : null,
-                        'sample_taken_at' => $this->formatDateTime($request->sample_date),
                         'result_by' => $request->resultBy ? $request->resultBy->surname . ' ' . $request->resultBy->firstname : null,
                         'result_at' => $this->formatDateTime($request->result_date),
                         'updated_at' => $this->formatDateTime($request->updated_at),
-                        'delivery_check' => $deliveryCheck, // Add delivery status
+                        'delivery_check' => $deliveryCheck,
                     ];
                 })
                 ->rawColumns(['card_data'])
@@ -306,28 +311,6 @@ class LabWorkbenchController extends Controller
             ], 500);
         }
     }
-
-    /**
-     * Get queue counts by status
-     */
-    // public function getQueueCounts(Request $request)
-    // {
-    //     try {
-    //         $billing = LabServiceRequest::where('status', 1)->count();
-    //         $sample = LabServiceRequest::where('status', 2)->count();
-    //         $results = LabServiceRequest::where('status', 3)->count();
-    //         $total = $billing + $sample + $results;
-
-    //         return response()->json([
-    //             'billing' => $billing,
-    //             'sample' => $sample,
-    //             'results' => $results,
-    //             'total' => $total
-    //         ]);
-    //     } catch (\Exception $e) {
-    //         return response()->json(['error' => $e->getMessage()], 500);
-    //     }
-    // }
 
     /**
      * Format datetime to readable format
@@ -346,7 +329,7 @@ class LabWorkbenchController extends Controller
     public function getPatientMedications($patientId, Request $request)
     {
         $limit = $request->get('limit', 20);
-        $status = $request->get('status', 'all'); // all, pending, billed, dispensed
+        $status = $request->get('status', 'all');
 
         $query = ProductRequest::with(['product', 'doctor', 'biller', 'dispenser'])
             ->where('patient_id', $patientId)
@@ -364,7 +347,6 @@ class LabWorkbenchController extends Controller
         $medications = $query->limit($limit)->get();
 
         $result = $medications->map(function ($med) {
-            // Determine status
             $status = 'pending';
             if ($med->dispensed_by) {
                 $status = 'dispensed';
@@ -403,34 +385,34 @@ class LabWorkbenchController extends Controller
     }
 
     /**
-     * Record billing for selected lab requests
+     * Record billing for selected imaging requests
      */
     public function recordBilling(Request $request)
     {
         try {
             $request->validate([
                 'request_ids' => 'required|array',
-                'request_ids.*' => 'exists:lab_service_requests,id',
+                'request_ids.*' => 'exists:imaging_service_requests,id',
                 'patient_id' => 'required|exists:patients,id'
             ]);
 
             DB::beginTransaction();
 
             foreach ($request->request_ids as $requestId) {
-                $labRequest = LabServiceRequest::findOrFail($requestId);
+                $imagingRequest = ImagingServiceRequest::findOrFail($requestId);
 
                 // Create ProductOrServiceRequest for billing
                 $billReq = new ProductOrServiceRequest();
-                $billReq->user_id = $labRequest->patient->user_id;
+                $billReq->user_id = $imagingRequest->patient->user_id;
                 $billReq->staff_user_id = Auth::id();
-                $billReq->service_id = $labRequest->service_id;
+                $billReq->service_id = $imagingRequest->service_id;
 
                 // Apply HMO tariff if patient has HMO
                 try {
                     $hmoData = HmoHelper::applyHmoTariff(
-                        $labRequest->patient_id,
+                        $imagingRequest->patient_id,
                         null,
-                        $labRequest->service_id
+                        $imagingRequest->service_id
                     );
                     if ($hmoData) {
                         $billReq->payable_amount = $hmoData['payable_amount'];
@@ -448,8 +430,9 @@ class LabWorkbenchController extends Controller
 
                 $billReq->save();
 
-                // Update lab request status to billed (2)
-                $labRequest->update([
+                // Update imaging request status to billed (2 = awaiting results)
+                // No sample collection stage for imaging
+                $imagingRequest->update([
                     'status' => 2,
                     'billed_by' => Auth::id(),
                     'billed_date' => now(),
@@ -457,7 +440,7 @@ class LabWorkbenchController extends Controller
                 ]);
 
                 // Log audit
-                $this->logAudit($labRequest->id, 'billing', 'Lab request billed');
+                $this->logAudit($imagingRequest->id, 'billing', 'Imaging request billed');
             }
 
             DB::commit();
@@ -476,81 +459,29 @@ class LabWorkbenchController extends Controller
     }
 
     /**
-     * Record sample collection for selected lab requests
-     */
-    public function collectSample(Request $request)
-    {
-        try {
-            $request->validate([
-                'request_ids' => 'required|array',
-                'request_ids.*' => 'exists:lab_service_requests,id',
-                'patient_id' => 'required|exists:patients,id'
-            ]);
-
-            DB::beginTransaction();
-
-            foreach ($request->request_ids as $requestId) {
-                $labRequest = LabServiceRequest::findOrFail($requestId);
-
-                // Check HMO access control
-                if ($labRequest->productOrServiceRequest) {
-                    if (!HmoHelper::canPatientAccessService($labRequest->productOrServiceRequest)) {
-                        DB::rollBack();
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'Service requires HMO approval. Request ID: ' . $labRequest->id . '. Please contact HMO executive for validation.'
-                        ], 403);
-                    }
-                }
-
-                // Update lab request status to sample taken (3)
-                $labRequest->update([
-                    'status' => 3,
-                    'sample_taken_by' => Auth::id(),
-                    'sample_date' => now(),
-                    'sample_taken' => true
-                ]);
-
-                // Log audit
-                $this->logAudit($labRequest->id, 'sample_collection', 'Sample collected');
-            }
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => count($request->request_ids) . ' sample(s) collected successfully'
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Error recording sample collection: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Dismiss/cancel selected lab requests
+     * Dismiss/cancel selected imaging requests
      */
     public function dismissRequests(Request $request)
     {
         try {
             $request->validate([
                 'request_ids' => 'required|array',
-                'request_ids.*' => 'exists:lab_service_requests,id',
+                'request_ids.*' => 'exists:imaging_service_requests,id',
                 'patient_id' => 'required|exists:patients,id'
             ]);
 
             DB::beginTransaction();
 
             foreach ($request->request_ids as $requestId) {
-                $labRequest = LabServiceRequest::findOrFail($requestId);
+                $imagingRequest = ImagingServiceRequest::findOrFail($requestId);
 
-                // Update lab request status to dismissed (0)
-                $labRequest->update([
+                // Update imaging request status to dismissed (0)
+                $imagingRequest->update([
                     'status' => 0
                 ]);
+
+                // Log audit
+                $this->logAudit($imagingRequest->id, 'dismiss', 'Imaging request dismissed');
             }
 
             DB::commit();
@@ -569,17 +500,26 @@ class LabWorkbenchController extends Controller
     }
 
     /**
-     * Get single lab request with service details
+     * Get single imaging request with service details
      */
-    public function getLabRequest($id)
+    public function getImagingRequest($id)
     {
         try {
-            $request = LabServiceRequest::with(['service', 'patient.user'])
+            $request = ImagingServiceRequest::with(['service', 'patient.user', 'doctor', 'resultBy'])
                 ->findOrFail($id);
 
             return response()->json([
                 'id' => $request->id,
                 'patient_id' => $request->patient_id,
+                'patient' => [
+                    'file_no' => $request->patient->file_no ?? 'N/A',
+                    'date_of_birth' => $request->patient->dob ?? null,
+                    'gender' => $request->patient->gender ?? 'N/A',
+                    'user' => [
+                        'firstname' => $request->patient->user->firstname ?? 'N/A',
+                        'surname' => $request->patient->user->surname ?? 'N/A'
+                    ]
+                ],
                 'service' => [
                     'name' => $request->service->service_name ?? 'N/A',
                     'template_version' => !empty($request->service->result_template_v2) ? 2 : 1,
@@ -589,26 +529,34 @@ class LabWorkbenchController extends Controller
                 'status' => $request->status,
                 'result' => $request->result,
                 'result_data' => $request->result_data,
-                'result_document' => $request->result_document ?? null
+                'result_date' => $request->result_date,
+                'sample_date' => $request->sample_date ?? null,
+                'attachments' => $request->attachments,
+                'results_person' => [
+                    'firstname' => $request->resultBy->firstname ?? 'N/A',
+                    'surname' => $request->resultBy->surname ?? 'N/A'
+                ],
+                'doctor' => [
+                    'firstname' => $request->doctor->firstname ?? 'N/A',
+                    'surname' => $request->doctor->surname ?? 'N/A'
+                ]
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error loading lab request: ' . $e->getMessage()
+                'message' => 'Error loading imaging request: ' . $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Get attachments for a lab request
+     * Get attachments for an imaging request
      */
     public function getRequestAttachments($id)
     {
         try {
-            $request = LabServiceRequest::findOrFail($id);
+            $request = ImagingServiceRequest::findOrFail($id);
 
-            // Assuming attachments are stored in a JSON field or related table
-            // Adjust based on your actual attachment storage mechanism
             $attachments = [];
 
             if ($request->attachments) {
@@ -637,7 +585,7 @@ class LabWorkbenchController extends Controller
     }
 
     /**
-     * Save result of lab request (Copied from LabServiceRequestController but returns JSON)
+     * Save result of imaging request
      */
     public function saveResult(Request $request)
     {
@@ -650,11 +598,11 @@ class LabWorkbenchController extends Controller
                 'result_attachments.*' => 'nullable|file|max:10240|mimes:pdf,jpg,jpeg,png,doc,docx'
             ]);
 
-            $labRequest = LabServiceRequest::findOrFail($request->invest_res_entry_id);
+            $imagingRequest = ImagingServiceRequest::findOrFail($request->invest_res_entry_id);
 
             // Check if service can be delivered (payment + HMO validation)
-            if ($labRequest->productOrServiceRequest) {
-                $deliveryCheck = \App\Helpers\HmoHelper::canDeliverService($labRequest->productOrServiceRequest);
+            if ($imagingRequest->productOrServiceRequest) {
+                $deliveryCheck = \App\Helpers\HmoHelper::canDeliverService($imagingRequest->productOrServiceRequest);
                 if (!$deliveryCheck['can_deliver']) {
                     return response()->json([
                         'success' => false,
@@ -668,9 +616,9 @@ class LabWorkbenchController extends Controller
             $templateVersion = $request->invest_res_template_version;
 
             // If this is an edit, check if we're within the edit time window
-            if ($isEdit && $labRequest->result_date) {
-                $resultDate = Carbon::parse($labRequest->result_date);
-                $editDuration = appsettings('result_edit_duration') ?? 60; // Default 60 minutes
+            if ($isEdit && $imagingRequest->result_date) {
+                $resultDate = Carbon::parse($imagingRequest->result_date);
+                $editDuration = appsettings('result_edit_duration') ?? 60;
                 $editDeadline = $resultDate->addMinutes($editDuration);
 
                 if (Carbon::now()->greaterThan($editDeadline)) {
@@ -686,18 +634,15 @@ class LabWorkbenchController extends Controller
             $resultData = null;
 
             if ($templateVersion == '2' && $request->invest_res_template_data) {
-                // V2 Template: Store structured data and generate HTML for display
                 $structuredData = json_decode($request->invest_res_template_data, true);
 
                 if ($structuredData) {
-                    // Get the service template for generating HTML
-                    $service = service::find($labRequest->service_id);
+                    $service = service::find($imagingRequest->service_id);
                     $template = $service->result_template_v2;
 
                     if ($template && isset($template['parameters'])) {
-                        // Calculate status for each parameter and generate HTML
                         $enhancedData = [];
-                        $htmlResult = '<div class="lab-result-v2">';
+                        $htmlResult = '<div class="imaging-result-v2">';
                         $htmlResult .= '<table class="table table-bordered">';
                         $htmlResult .= '<thead><tr><th>Parameter</th><th>Value</th><th>Reference Range</th><th>Status</th></tr></thead>';
                         $htmlResult .= '<tbody>';
@@ -712,7 +657,6 @@ class LabWorkbenchController extends Controller
                                     'status' => $status
                                 ];
 
-                                // Generate HTML row
                                 $htmlResult .= '<tr>';
                                 $htmlResult .= '<td><strong>' . htmlspecialchars($param['name']) . '</strong>';
                                 if (isset($param['unit']) && $param['unit']) {
@@ -733,20 +677,13 @@ class LabWorkbenchController extends Controller
                 }
             } else {
                 // V1 Template: Process as before
-                //make all contenteditable section uneditable
                 $resultHtml = str_replace('contenteditable="true"', 'contenteditable="false"', $resultHtml);
                 $resultHtml = str_replace("contenteditable='true'", "contenteditable='false'", $resultHtml);
-                $resultHtml = str_replace('contenteditable = "true"', 'contenteditable="false"', $resultHtml);
-                $resultHtml = str_replace("contenteditable ='true'", "contenteditable='false'", $resultHtml);
-                $resultHtml = str_replace('contenteditable= "true"', 'contenteditable="false"', $resultHtml);
-
-                //remove all black borders and replace with gray
-                $resultHtml = str_replace(' black', ' gray', $resultHtml);
             }
 
             // Handle file uploads
             $attachments = [];
-            $existingAttachments = $labRequest->attachments;
+            $existingAttachments = $imagingRequest->attachments;
             if (is_string($existingAttachments)) {
                 $existingAttachments = json_decode($existingAttachments, true) ?? [];
             } elseif (!is_array($existingAttachments)) {
@@ -758,7 +695,6 @@ class LabWorkbenchController extends Controller
                 $deletedIndexes = json_decode($request->deleted_attachments, true) ?? [];
                 foreach ($deletedIndexes as $index) {
                     if (isset($existingAttachments[$index])) {
-                        // Delete physical file
                         $filePath = storage_path('app/public/' . $existingAttachments[$index]['path']);
                         if (file_exists($filePath)) {
                             @unlink($filePath);
@@ -766,23 +702,22 @@ class LabWorkbenchController extends Controller
                         unset($existingAttachments[$index]);
                     }
                 }
-                $existingAttachments = array_values($existingAttachments); // Re-index array
+                $existingAttachments = array_values($existingAttachments);
             }
 
             if ($request->hasFile('result_attachments')) {
                 foreach ($request->file('result_attachments') as $file) {
                     $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                    $file->storeAs('public/lab_results', $fileName);
+                    $file->storeAs('public/imaging_results', $fileName);
                     $attachments[] = [
                         'name' => $file->getClientOriginalName(),
-                        'path' => 'lab_results/' . $fileName,
+                        'path' => 'imaging_results/' . $fileName,
                         'size' => $file->getSize(),
                         'type' => $file->getClientOriginalExtension()
                     ];
                 }
             }
 
-            // Merge existing and new attachments
             $allAttachments = array_merge($existingAttachments, $attachments);
 
             DB::beginTransaction();
@@ -791,34 +726,30 @@ class LabWorkbenchController extends Controller
                 'result' => $resultHtml,
                 'result_data' => $resultData,
                 'attachments' => !empty($allAttachments) ? json_encode($allAttachments) : null,
-                'status' => 4
+                'status' => 4 // Completed
             ];
 
-            // Only update result_date and result_by if this is not an edit
             if (!$isEdit) {
-                $updateData['result_date'] = date('Y-m-d H:i:s');
+                $updateData['result_date'] = now();
                 $updateData['result_by'] = Auth::id();
             }
 
-            $req = LabServiceRequest::where('id', $request->invest_res_entry_id)->update($updateData);
+            $imagingRequest->update($updateData);
 
-            // Log audit trail
-            $action = $isEdit ? 'edit' : 'result_entry';
-            $description = $isEdit ? 'Result edited' : 'Result entered';
-            $this->logAudit($request->invest_res_entry_id, $action, $description);
+            // Log audit
+            $this->logAudit($imagingRequest->id, $isEdit ? 'result_edit' : 'result_entry', 'Imaging result ' . ($isEdit ? 'updated' : 'entered'));
 
             DB::commit();
 
-            $message = $isEdit ? "Results Updated Successfully" : "Results Saved Successfully";
             return response()->json([
                 'success' => true,
-                'message' => $message
+                'message' => $isEdit ? 'Results updated successfully' : 'Results saved successfully'
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => "An error occurred " . $e->getMessage()
+                'message' => 'Error saving results: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -929,46 +860,19 @@ class LabWorkbenchController extends Controller
     }
 
     /**
-     * Soft delete a lab request with reason
+     * Delete (soft) imaging request
      */
-    public function deleteRequest(Request $request, $id)
+    public function deleteRequest($id)
     {
         try {
-            $request->validate([
-                'reason' => 'required|string|min:10'
-            ]);
+            $imagingRequest = ImagingServiceRequest::findOrFail($id);
+            $imagingRequest->delete();
 
-            $labRequest = LabServiceRequest::findOrFail($id);
-
-            // Check if user has permission to delete
-            if (Auth::id() != $labRequest->doctor_id && !Auth::user()->hasRole('admin')) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'You do not have permission to delete this request.'
-                ], 403);
-            }
-
-            // Check if request can be deleted (no billing, no results)
-            if ($labRequest->billed_by || $labRequest->result) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Cannot delete a billed request or one with results.'
-                ], 400);
-            }
-
-            $labRequest->deleted_by = Auth::id();
-            $labRequest->deletion_reason = $request->reason;
-            $labRequest->save();
-            $labRequest->delete();
-
-            // Log audit
-            $this->logAudit($id, 'delete', 'Lab request deleted', null, [
-                'reason' => $request->reason
-            ]);
+            $this->logAudit($id, 'delete', 'Imaging request deleted');
 
             return response()->json([
                 'success' => true,
-                'message' => 'Lab request deleted successfully.'
+                'message' => 'Request deleted successfully'
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -979,31 +883,19 @@ class LabWorkbenchController extends Controller
     }
 
     /**
-     * Restore a deleted lab request
+     * Restore deleted imaging request
      */
     public function restoreRequest($id)
     {
         try {
-            $labRequest = LabServiceRequest::withTrashed()->findOrFail($id);
+            $imagingRequest = ImagingServiceRequest::withTrashed()->findOrFail($id);
+            $imagingRequest->restore();
 
-            if (!$labRequest->trashed()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'This request is not deleted.'
-                ], 400);
-            }
-
-            $labRequest->restore();
-            $labRequest->deleted_by = null;
-            $labRequest->deletion_reason = null;
-            $labRequest->save();
-
-            // Log audit
-            $this->logAudit($id, 'restore', 'Lab request restored from trash');
+            $this->logAudit($id, 'restore', 'Imaging request restored');
 
             return response()->json([
                 'success' => true,
-                'message' => 'Lab request restored successfully.'
+                'message' => 'Request restored successfully'
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -1014,31 +906,19 @@ class LabWorkbenchController extends Controller
     }
 
     /**
-     * Dismiss a lab request with reason
+     * Dismiss individual imaging request
      */
-    public function dismissRequest(Request $request, $id)
+    public function dismissRequest($id)
     {
         try {
-            $request->validate([
-                'reason' => 'required|string|min:10'
-            ]);
+            $imagingRequest = ImagingServiceRequest::findOrFail($id);
+            $imagingRequest->update(['status' => 0]);
 
-            $labRequest = LabServiceRequest::findOrFail($id);
-
-            $labRequest->dismissed_at = now();
-            $labRequest->dismissed_by = Auth::id();
-            $labRequest->dismiss_reason = $request->reason;
-            $labRequest->status = 0; // Set to dismissed status
-            $labRequest->save();
-
-            // Log audit
-            $this->logAudit($id, 'dismiss', 'Lab request dismissed', null, [
-                'reason' => $request->reason
-            ]);
+            $this->logAudit($id, 'dismiss', 'Imaging request dismissed');
 
             return response()->json([
                 'success' => true,
-                'message' => 'Lab request dismissed successfully.'
+                'message' => 'Request dismissed successfully'
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -1049,58 +929,36 @@ class LabWorkbenchController extends Controller
     }
 
     /**
-     * Restore a dismissed lab request
+     * Undismiss imaging request
      */
     public function undismissRequest($id)
     {
         try {
-            $labRequest = LabServiceRequest::findOrFail($id);
+            $imagingRequest = ImagingServiceRequest::findOrFail($id);
+            $imagingRequest->update(['status' => 1]);
 
-            if (!$labRequest->dismissed_at) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'This request is not dismissed.'
-                ], 400);
-            }
-
-            // Restore to appropriate status based on progress
-            $newStatus = 1; // Default to billing
-            if ($labRequest->billed_by) {
-                $newStatus = 2; // Sample collection
-            }
-            if ($labRequest->sample_taken_by) {
-                $newStatus = 3; // Result entry
-            }
-
-            $labRequest->dismissed_at = null;
-            $labRequest->dismissed_by = null;
-            $labRequest->dismiss_reason = null;
-            $labRequest->status = $newStatus;
-            $labRequest->save();
-
-            // Log audit
-            $this->logAudit($id, 'undismiss', 'Lab request restored from dismissed');
+            $this->logAudit($id, 'undismiss', 'Imaging request undismissed');
 
             return response()->json([
                 'success' => true,
-                'message' => 'Lab request restored successfully.'
+                'message' => 'Request undismissed successfully'
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error restoring request: ' . $e->getMessage()
+                'message' => 'Error undismissing request: ' . $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Get deleted requests
+     * Get deleted imaging requests
      */
     public function getDeletedRequests($patientId = null)
     {
         try {
-            $query = LabServiceRequest::onlyTrashed()
-                ->with(['service', 'doctor', 'patient.user']);
+            $query = ImagingServiceRequest::onlyTrashed()
+                ->with(['service', 'patient.user', 'doctor']);
 
             if ($patientId) {
                 $query->where('patient_id', $patientId);
@@ -1108,7 +966,19 @@ class LabWorkbenchController extends Controller
 
             $requests = $query->orderBy('deleted_at', 'desc')->get();
 
-            return response()->json($requests);
+            $result = $requests->map(function ($req) {
+                return [
+                    'id' => $req->id,
+                    'service_name' => $req->service ? $req->service->service_name : 'N/A',
+                    'patient_name' => $req->patient && $req->patient->user
+                        ? $req->patient->user->surname . ' ' . $req->patient->user->firstname
+                        : 'N/A',
+                    'deleted_at' => $req->deleted_at->format('h:i a D M j, Y'),
+                    'requested_by' => $req->doctor ? $req->doctor->surname . ' ' . $req->doctor->firstname : 'N/A',
+                ];
+            });
+
+            return response()->json($result);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -1118,21 +988,33 @@ class LabWorkbenchController extends Controller
     }
 
     /**
-     * Get dismissed requests
+     * Get dismissed imaging requests
      */
     public function getDismissedRequests($patientId = null)
     {
         try {
-            $query = LabServiceRequest::whereNotNull('dismissed_at')
-                ->with(['service', 'doctor', 'patient.user']);
+            $query = ImagingServiceRequest::where('status', 0)
+                ->with(['service', 'patient.user', 'doctor']);
 
             if ($patientId) {
                 $query->where('patient_id', $patientId);
             }
 
-            $requests = $query->orderBy('dismissed_at', 'desc')->get();
+            $requests = $query->orderBy('updated_at', 'desc')->get();
 
-            return response()->json($requests);
+            $result = $requests->map(function ($req) {
+                return [
+                    'id' => $req->id,
+                    'service_name' => $req->service ? $req->service->service_name : 'N/A',
+                    'patient_name' => $req->patient && $req->patient->user
+                        ? $req->patient->user->surname . ' ' . $req->patient->user->firstname
+                        : 'N/A',
+                    'dismissed_at' => $req->updated_at->format('h:i a D M j, Y'),
+                    'requested_by' => $req->doctor ? $req->doctor->surname . ' ' . $req->doctor->firstname : 'N/A',
+                ];
+            });
+
+            return response()->json($result);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -1142,460 +1024,197 @@ class LabWorkbenchController extends Controller
     }
 
     /**
-     * Get audit logs for a request or patient
+     * Get imaging history for patient (completed requests)
      */
-    public function getAuditLogs(Request $request)
+    public function getImagingHistoryList($patientId)
     {
-        try {
-            $query = \App\Models\LabWorkbenchAuditLog::with(['user', 'labServiceRequest.service']);
+        $history = ImagingServiceRequest::with(['service', 'doctor', 'biller', 'resultBy'])
+            ->where('patient_id', $patientId)
+            ->where('status', 4) // Completed
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-            if ($request->has('lab_service_request_id')) {
-                $query->where('lab_service_request_id', $request->lab_service_request_id);
-            }
+        return Datatables::of($history)
+            ->addIndexColumn()
+            ->addColumn('info', function ($req) {
+                $serviceName = $req->service ? $req->service->service_name : 'N/A';
+                $requestDate = $this->formatDateTime($req->created_at);
+                $resultDate = $this->formatDateTime($req->result_date);
+                $doctorName = $req->doctor ? $req->doctor->surname . ' ' . $req->doctor->firstname : 'N/A';
+                $resultBy = $req->resultBy ? $req->resultBy->surname . ' ' . $req->resultBy->firstname : 'N/A';
 
-            if ($request->has('patient_id')) {
-                $query->whereHas('labServiceRequest', function ($q) use ($request) {
-                    $q->where('patient_id', $request->patient_id);
-                });
-            }
+                // Build attachments HTML
+                $attachmentsHtml = '';
+                if ($req->attachments) {
+                    $attachments = is_string($req->attachments) ? json_decode($req->attachments, true) : $req->attachments;
+                    if (!empty($attachments)) {
+                        $attachmentsHtml = '<div class="mt-2"><strong>Attachments:</strong><br>';
+                        foreach ($attachments as $att) {
+                            $url = asset('storage/' . $att['path']);
+                            $attachmentsHtml .= '<a href="' . $url . '" target="_blank" class="badge badge-info mr-1">';
+                            $attachmentsHtml .= '<i class="fa fa-file"></i> ' . ($att['name'] ?? 'File') . '</a> ';
+                        }
+                        $attachmentsHtml .= '</div>';
+                    }
+                }
 
-            if ($request->has('action')) {
-                $query->where('action', $request->action);
-            }
-
-            if ($request->has('from_date')) {
-                $query->whereDate('created_at', '>=', $request->from_date);
-            }
-
-            if ($request->has('to_date')) {
-                $query->whereDate('created_at', '<=', $request->to_date);
-            }
-
-            $logs = $query->orderBy('created_at', 'desc')->paginate(50);
-
-            return response()->json($logs);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error loading audit logs: ' . $e->getMessage()
-            ], 500);
-        }
+                return '
+                    <div class="history-card p-3 mb-3 border rounded">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="mb-0"><span class="badge badge-primary">' . $serviceName . '</span></h6>
+                            <button class="btn btn-sm btn-success view-invest-result-btn" data-request-id="' . $req->id . '">
+                                <i class="fa fa-eye"></i> View Result
+                            </button>
+                        </div>
+                        <div class="small text-muted">
+                            <p class="mb-1"><strong>Requested:</strong> ' . $requestDate . ' by ' . $doctorName . '</p>
+                            <p class="mb-1"><strong>Result:</strong> ' . $resultDate . ' by ' . $resultBy . '</p>
+                        </div>
+                        ' . $attachmentsHtml . '
+                    </div>
+                ';
+            })
+            ->rawColumns(['info'])
+            ->make(true);
     }
 
     /**
-     * Log audit trail
+     * Search imaging services
      */
-    private function logAudit($labServiceRequestId, $action, $description = null, $oldValues = null, $newValues = null)
+    public function searchServices(Request $request)
     {
-        try {
-            \App\Models\LabWorkbenchAuditLog::create([
-                'lab_service_request_id' => $labServiceRequestId,
-                'user_id' => Auth::id(),
-                'action' => $action,
-                'description' => $description,
-                'old_values' => $oldValues,
-                'new_values' => $newValues,
-                'ip_address' => request()->ip(),
-                'user_agent' => request()->userAgent(),
-            ]);
-        } catch (\Exception $e) {
-            \Log::error('Audit log error: ' . $e->getMessage());
+        $term = $request->get('term', '');
+        $imagingCategory = appsettings('imaging_services_category', null);
+
+        if (strlen($term) < 2) {
+            return response()->json([]);
         }
+
+        $query = service::where('service_name', 'like', "%{$term}%")
+            ->where('is_active', 1);
+
+        // Filter by imaging category if set
+        if ($imagingCategory) {
+            $query->where('category_id', $imagingCategory);
+        }
+
+        $services = $query->limit(15)->get();
+
+        $results = $services->map(function ($service) {
+            return [
+                'id' => $service->id,
+                'name' => $service->service_name,
+                'price' => $service->price ? $service->price->sale_price : 0,
+                'category' => $service->category ? $service->category->name : 'N/A'
+            ];
+        });
+
+        return response()->json($results);
     }
 
     /**
-     * Store a new lab request from workbench
+     * Create new imaging request
      */
-    public function storeLabRequest(Request $request)
+    public function createRequest(Request $request)
     {
         try {
             $request->validate([
                 'patient_id' => 'required|exists:patients,id',
                 'service_ids' => 'required|array',
                 'service_ids.*' => 'exists:services,id',
+                'notes' => 'nullable|array',
                 'clinical_notes' => 'nullable|string',
                 'special_instructions' => 'nullable|string',
-                'urgency' => 'nullable|in:routine,urgent,stat',
-                'priority' => 'nullable|in:normal,high'
+                'urgency' => 'nullable|string|in:routine,urgent,stat',
+                'priority' => 'nullable|string|in:normal,high',
             ]);
 
             DB::beginTransaction();
 
-            $createdRequests = [];
+            $patient = Patient::findOrFail($request->patient_id);
+            $notes = $request->notes ?? [];
+
             foreach ($request->service_ids as $index => $serviceId) {
-                $labRequest = new LabServiceRequest();
-                $labRequest->service_id = $serviceId;
-                $labRequest->patient_id = $request->patient_id;
-                $labRequest->doctor_id = Auth::id();
-                $labRequest->note = $request->clinical_notes[$index] ?? $request->clinical_notes ?? '';
-                $labRequest->status = 1; // Billing status
-                $labRequest->urgency = $request->urgency ?? 'routine';
-                $labRequest->priority = $request->priority ?? 'normal';
-                $labRequest->special_instructions = $request->special_instructions ?? '';
-                $labRequest->save();
+                $imagingRequest = new ImagingServiceRequest();
+                $imagingRequest->patient_id = $patient->id;
+                $imagingRequest->service_id = $serviceId;
+                $imagingRequest->doctor_id = Auth::id();
+                // Use individual note if available, otherwise use clinical_notes
+                $individualNote = isset($notes[$index]) && !empty($notes[$index]) ? $notes[$index] : '';
+                $clinicalNotes = $request->clinical_notes ?? '';
+                $imagingRequest->note = $individualNote ?: $clinicalNotes;
+                $imagingRequest->status = 1; // Awaiting billing
+                $imagingRequest->save();
 
-                $createdRequests[] = $labRequest->id;
-
-                // Log audit
-                $this->logAudit($labRequest->id, 'create', 'Lab request created from workbench');
+                $this->logAudit($imagingRequest->id, 'create', 'Imaging request created from workbench');
             }
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => count($createdRequests) . ' lab request(s) created successfully',
-                'request_ids' => $createdRequests
+                'message' => count($request->service_ids) . ' imaging request(s) created successfully'
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => 'Error creating lab request: ' . $e->getMessage()
+                'message' => 'Error creating request: ' . $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Get lab reports with filters for DataTable
+     * Get audit log for imaging requests
      */
-    public function getLabReports(Request $request)
+    public function getAuditLog(Request $request)
     {
         try {
-            $query = LabServiceRequest::with([
-                'service',
-                'patient.user',
-                'patient.hmo.scheme',
-                'doctor',
-                'biller',
-                'resultBy'
-            ]);
+            $query = DB::table('imaging_audit_log')
+                ->join('users', 'imaging_audit_log.user_id', '=', 'users.id')
+                ->select(
+                    'imaging_audit_log.*',
+                    DB::raw("CONCAT(users.surname, ' ', users.firstname) as user_name")
+                )
+                ->orderBy('imaging_audit_log.created_at', 'desc');
 
-            // Apply filters
-            if ($request->filled('date_from')) {
-                $query->whereDate('created_at', '>=', $request->date_from);
+            if ($request->has('request_id')) {
+                $query->where('imaging_audit_log.request_id', $request->request_id);
             }
 
-            if ($request->filled('date_to')) {
-                $query->whereDate('created_at', '<=', $request->date_to);
+            if ($request->has('start_date') && $request->has('end_date')) {
+                $query->whereBetween('imaging_audit_log.created_at', [
+                    $request->start_date . ' 00:00:00',
+                    $request->end_date . ' 23:59:59'
+                ]);
             }
 
-            if ($request->filled('status')) {
-                $query->where('status', $request->status);
-            }
+            $logs = $query->limit(500)->get();
 
-            if ($request->filled('service_id')) {
-                $query->where('service_id', $request->service_id);
-            }
-
-            if ($request->filled('doctor_id')) {
-                $query->where('doctor_id', $request->doctor_id);
-            }
-
-            if ($request->filled('hmo_id')) {
-                $query->whereHas('patient', function ($q) use ($request) {
-                    $q->where('hmo_id', $request->hmo_id);
-                });
-            }
-
-            if ($request->filled('patient_search')) {
-                $search = $request->patient_search;
-                $query->whereHas('patient', function ($q) use ($search) {
-                    $q->where('file_no', 'like', "%{$search}%")
-                        ->orWhereHas('user', function ($uq) use ($search) {
-                            $uq->where('surname', 'like', "%{$search}%")
-                                ->orWhere('firstname', 'like', "%{$search}%");
-                        });
-                });
-            }
-
-            return Datatables::of($query)
-                ->addIndexColumn()
-                ->editColumn('created_at', function ($row) {
-                    return $this->formatDateTime($row->created_at);
-                })
-                ->addColumn('file_no', function ($row) {
-                    return $row->patient->file_no ?? 'N/A';
-                })
-                ->addColumn('patient_name', function ($row) {
-                    return $row->patient && $row->patient->user
-                        ? $row->patient->user->surname . ' ' . $row->patient->user->firstname
-                        : 'N/A';
-                })
-                ->addColumn('service_name', function ($row) {
-                    return $row->service->service_name ?? 'N/A';
-                })
-                ->addColumn('doctor_name', function ($row) {
-                    return $row->doctor ? $row->doctor->surname . ' ' . $row->doctor->firstname : 'N/A';
-                })
-                ->addColumn('hmo_name', function ($row) {
-                    return $row->patient && $row->patient->hmo ? $row->patient->hmo->name : 'N/A';
-                })
-                ->addColumn('status_badge', function ($row) {
-                    $badges = [
-                        1 => '<span class="badge badge-warning">Awaiting Billing</span>',
-                        2 => '<span class="badge badge-info">Awaiting Sample</span>',
-                        3 => '<span class="badge badge-primary">Awaiting Results</span>',
-                        4 => '<span class="badge badge-success">Completed</span>'
-                    ];
-                    return $badges[$row->status] ?? '<span class="badge badge-secondary">Unknown</span>';
-                })
-                ->addColumn('tat', function ($row) {
-                    if ($row->status == 4 && $row->result_date) {
-                        $created = Carbon::parse($row->created_at);
-                        $completed = Carbon::parse($row->result_date);
-                        $hours = $created->diffInHours($completed);
-                        return $hours . 'h';
-                    }
-                    return 'N/A';
-                })
-                ->addColumn('actions', function ($row) {
-                    return '<button class="btn btn-sm btn-info view-request-details" data-id="' . $row->id . '">
-                        <i class="mdi mdi-eye"></i>
-                    </button>';
-                })
-                ->rawColumns(['status_badge', 'actions'])
-                ->make(true);
+            return response()->json($logs);
         } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'An error occurred while fetching reports.',
-                'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error'
-            ], 500);
+            // If audit log table doesn't exist, return empty array
+            return response()->json([]);
         }
     }
 
     /**
-     * Get doctors who have made lab requests
+     * Log audit entry
      */
-    public function getRequestingDoctors()
+    private function logAudit($requestId, $action, $description)
     {
         try {
-            $doctors = LabServiceRequest::with('doctor')
-                ->select('doctor_id')
-                ->distinct()
-                ->whereNotNull('doctor_id')
-                ->get()
-                ->pluck('doctor')
-                ->filter()
-                ->map(function($doctor) {
-                    return [
-                        'id' => $doctor->id,
-                        'name' => $doctor->surname . ' ' . $doctor->firstname
-                    ];
-                })
-                ->sortBy('name')
-                ->values();
-
-            return response()->json($doctors);
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Failed to load doctors',
-                'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error'
-            ], 500);
-        }
-    }
-
-    /**
-     * Get HMOs grouped by scheme for filter dropdown
-     */
-    public function getHmosForFilter()
-    {
-        try {
-            $hmos = \App\Models\Hmo::with('scheme')
-                ->orderBy('name')
-                ->get()
-                ->groupBy(function($hmo) {
-                    return $hmo->scheme ? $hmo->scheme->name : 'Uncategorized';
-                })
-                ->map(function($group) {
-                    return $group->map(function($hmo) {
-                        return [
-                            'id' => $hmo->id,
-                            'name' => $hmo->name
-                        ];
-                    })->values();
-                });
-
-            return response()->json($hmos);
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Failed to load HMOs',
-                'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error'
-            ], 500);
-        }
-    }
-
-    /**
-     * Get lab services for filter dropdown
-     */
-    public function getLabServicesForFilter()
-    {
-        try {
-            // Get investigation/lab service category ID from app settings
-            $labCategoryId = appsettings()->investigation_service_cat_id ?? null;
-
-            $query = \App\Models\service::orderBy('service_name');
-
-            // Filter by lab/investigation category if configured
-            if ($labCategoryId) {
-                $query->where('service_cat_id', $labCategoryId);
-            }
-
-            $services = $query->get()
-                ->map(function($service) {
-                    return [
-                        'id' => $service->id,
-                        'name' => $service->service_name
-                    ];
-                });
-
-            return response()->json($services);
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Failed to load services',
-                'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error'
-            ], 500);
-        }
-    }
-
-    /**
-     * Get lab statistics for reports dashboard
-     */
-    public function getLabStatistics(Request $request)
-    {
-        try {
-            // Apply same date/filter logic as reports
-            $query = LabServiceRequest::query();
-
-            if ($request->has('date_from') && $request->date_from) {
-                $query->whereDate('created_at', '>=', $request->date_from);
-            }
-
-            if ($request->has('date_to') && $request->date_to) {
-                $query->whereDate('created_at', '<=', $request->date_to);
-            }
-
-            // Apply other filters if present
-            if ($request->has('status') && $request->status) {
-                $query->where('status', $request->status);
-            }
-            if ($request->has('service_id') && $request->service_id) {
-                $query->where('service_id', $request->service_id);
-            }
-            if ($request->has('doctor_id') && $request->doctor_id) {
-                $query->where('doctor_id', $request->doctor_id);
-            }
-
-            // Status counts (global, ignoring status filter for the pie chart usually, but here we filter everything based on user selection?
-            // Usually charts show decomposition of the current selection. If I select status=Pending, the chart is boring (100% Pending).
-            // But let's keep consistency: The base query applies to summary numbers.
-            // For charts, we might want to relax the status filter if we want to show distribution,
-            // but for "Revenue" and "Total" matching the filter is correct.
-
-            $totalRequests = (clone $query)->count();
-            $completed = (clone $query)->where('status', 4)->count();
-            $pending = (clone $query)->whereIn('status', [1, 2, 3])->count();
-
-            // Average TAT
-             $avgTAT = (clone $query)->where('status', 4)
-                ->whereNotNull('result_date')
-                ->whereNotNull('created_at')
-                ->get()
-                ->map(function ($req) {
-                    $created = \Carbon\Carbon::parse($req->created_at);
-                    $completed = \Carbon\Carbon::parse($req->result_date);
-                    return $created->diffInHours($completed);
-                })
-                ->average();
-
-            // Revenue calculation disabled
-            $estimatedRevenue = 0;
-                // Let's look at `topServices` logic again.
-
-            // Requests by status (Format for JS: [{status: 1, count: 10}, ...])
-            $byStatus = (clone $query)
-                ->select('status', DB::raw('count(*) as count'))
-                ->groupBy('status')
-                ->get()
-                ->map(function($item) {
-                     return [
-                         'status' => $item->status,
-                         'count' => $item->count
-                     ];
-                });
-
-            // Monthly trends (last 6 months)
-            $monthlyTrends = [];
-            for ($i = 5; $i >= 0; $i--) {
-                $month = Carbon::now()->subMonths($i);
-                // Filters should apply here too?
-                // Usually trends ignore the date filter (fixed range) or respect if wider.
-                // Let's just use the basic query without date filters for the trend or it will be empty if date range is small.
-                // But we must apply other filters (doctor, service).
-
-                $trendQuery = LabServiceRequest::query();
-                if ($request->has('doctor_id') && $request->doctor_id) $trendQuery->where('doctor_id', $request->doctor_id);
-                // ... apply other non-date filters ...
-
-                $count = $trendQuery->whereYear('created_at', $month->year)
-                    ->whereMonth('created_at', $month->month)
-                    ->count();
-
-                $monthlyTrends[] = [
-                    'month' => $month->format('M Y'),
-                    'count' => $count
-                ];
-            }
-
-            // Top services
-            $topServices = LabServiceRequest::with('service')
-                ->select('service_id', DB::raw('count(*) as total'))
-                ->groupBy('service_id')
-                ->orderBy('total', 'desc')
-                ->limit(10)
-                ->get()
-                ->map(function ($item) {
-                    return [
-                        'name' => $item->service->service_name ?? 'N/A', // JS expects 'name'
-                        'count' => $item->total,
-                        'revenue' => 0 // Placeholder
-                    ];
-                });
-
-            // Top doctors
-            $topDoctors = LabServiceRequest::with('doctor')
-                ->select('doctor_id', DB::raw('count(*) as total'))
-                ->whereNotNull('doctor_id')
-                ->groupBy('doctor_id')
-                ->orderBy('total', 'desc')
-                ->limit(10)
-                ->get()
-                ->map(function ($item) {
-                    return [
-                        'doctor' => $item->doctor, // Pass full object for JS ({firstname, surname})
-                        'count' => $item->total,
-                        'revenue' => 0 // Placeholder
-                    ];
-                });
-
-            return response()->json([
-                'summary' => [
-                    'total_requests' => $totalRequests,
-                    'completed_requests' => $completed,
-                    'pending_requests' => $pending,
-                    'estimated_revenue' => 0,
-                    'avg_tat' => $avgTAT ? round($avgTAT) : 0
-                ],
-                'by_status' => $byStatus,
-                'monthly_trends' => $monthlyTrends,
-                'top_services' => $topServices,
-                'top_doctors' => $topDoctors
+            DB::table('imaging_audit_log')->insert([
+                'request_id' => $requestId,
+                'action' => $action,
+                'description' => $description,
+                'user_id' => Auth::id(),
+                'created_at' => now(),
+                'updated_at' => now()
             ]);
         } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'An error occurred while fetching statistics.',
-                'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error'
-            ], 500);
+            // Silently fail if audit log table doesn't exist
+            \Log::warning('Could not log imaging audit: ' . $e->getMessage());
         }
     }
 }

@@ -1,6 +1,6 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Lab Workbench')
+@section('title', 'Imaging Workbench')
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
@@ -22,7 +22,7 @@
     }
 
     /* Main Layout */
-    .lab-workbench-container {
+    .imaging-workbench-container {
         display: flex;
         min-height: calc(100vh - 100px);
         gap: 0;
@@ -2431,7 +2431,7 @@
 
 </style>
 
-<div class="lab-workbench-container">
+<div class="imaging-workbench-container">
     <!-- Left Panel: Patient Search & Queue -->
     <div class="left-panel" id="left-panel">
         <div class="panel-header">
@@ -2455,10 +2455,7 @@
                 <span class="queue-item-label">🟡 Awaiting Billing</span>
                 <span class="queue-count billing" id="queue-billing-count">0</span>
             </div>
-            <div class="queue-item" data-filter="sample">
-                <span class="queue-item-label">🟠 Sample Collection</span>
-                <span class="queue-count sample" id="queue-sample-count">0</span>
-            </div>
+            <!-- No sample collection stage for imaging -->
             <div class="queue-item" data-filter="results">
                 <span class="queue-item-label">🔴 Result Entry</span>
                 <span class="queue-count results" id="queue-results-count">0</span>
@@ -2834,11 +2831,7 @@
                         <span>Awaiting Billing</span>
                         <span class="subtab-badge" id="billing-subtab-badge">0</span>
                     </button>
-                    <button class="pending-subtab" data-status="sample">
-                        <i class="mdi mdi-test-tube"></i>
-                        <span>Awaiting Sample</span>
-                        <span class="subtab-badge" id="sample-subtab-badge">0</span>
-                    </button>
+                    <!-- No sample collection stage for imaging -->
                     <button class="pending-subtab" data-status="results">
                         <i class="mdi mdi-flask"></i>
                         <span>Awaiting Results</span>
@@ -2853,21 +2846,31 @@
             <div class="workspace-tab-content" id="new-request-tab">
                 <div class="new-request-container">
                     <div class="new-request-header">
-                        <h4><i class="mdi mdi-plus-circle"></i> Create New Lab Request</h4>
-                        <p class="text-muted">Request investigation for <span id="new-request-patient-name"></span></p>
+                        <h4><i class="mdi mdi-plus-circle"></i> Create New Imaging Request</h4>
+                        <p class="text-muted">Request imaging for <span id="new-request-patient-name"></span></p>
                     </div>
-                    <form id="new-lab-request-form" class="new-request-form">
+                    <form id="new-imaging-request-form" class="new-request-form">
                         <div class="form-row">
                             <div class="form-group col-md-12">
-                                <label for="service-search-input"><i class="mdi mdi-magnify"></i> Search Laboratory Services *</label>
-                                <input type="text" class="form-control" id="service-search-input" placeholder="Type to search for lab services..." autocomplete="off">
+                                <label for="service-search-input"><i class="mdi mdi-magnify"></i> Search Imaging Services *</label>
+                                <input type="text" class="form-control" id="service-search-input" placeholder="Type to search for imaging services..." autocomplete="off" onkeyup="searchImagingServices(this.value)">
                                 <ul class="list-group" id="service-search-results" style="display: none; position: absolute; z-index: 1000; max-height: 300px; overflow-y: auto; width: calc(100% - 30px);"></ul>
                             </div>
                         </div>
 
-                        <div id="selected-services-container" style="display: none;">
-                            <label><i class="mdi mdi-test-tube"></i> Selected Services</label>
-                            <div id="selected-services-list" class="mb-3"></div>
+                        <div id="selected-services-container" class="mb-3">
+                            <label><i class="mdi mdi-radioactive"></i> Selected Services</label>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered table-striped">
+                                    <thead>
+                                        <th>Name</th>
+                                        <th>Price</th>
+                                        <th>Notes</th>
+                                        <th>*</th>
+                                    </thead>
+                                    <tbody id="selected-imaging-services"></tbody>
+                                </table>
+                            </div>
                         </div>
 
                         <div class="form-row">
@@ -2911,11 +2914,11 @@
             </div>
 
             <div class="workspace-tab-content" id="history-tab">
-                <h4>Investigation History</h4>
+                <h4>Imaging History</h4>
                 <div class="history-table">
                     <table class="table table-hover" style="width: 100%" id="investigation_history_list">
                         <thead class="table-light">
-                            <th><i class="mdi mdi-test-tube"></i> Laboratory Requests</th>
+                            <th><i class="mdi mdi-radioactive"></i> Imaging Requests</th>
                         </thead>
                     </table>
                 </div>
@@ -2929,26 +2932,206 @@
     <div class="modal-dialog modal-xl" role="document">
         <div class="modal-content">
             <style>
-                .result-table td { padding: 10px 12px; border-bottom: 1px solid #ddd; }
-                .result-table tbody tr:hover { background: #f8f9fa; }
-                .result-table td, .result-table th { word-wrap: break-word; overflow-wrap: break-word; }
-                .result-status-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+                /* Result Modal Header & Branding */
+                .result-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    padding: 20px;
+                    border-bottom: 3px solid {{ $hosColor ?? '#0066cc' }};
+                    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+                }
+                .result-header-left {
+                    display: flex;
+                    align-items: center;
+                    gap: 15px;
+                }
+                .result-logo {
+                    width: 80px;
+                    height: 80px;
+                    object-fit: contain;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                }
+                .result-hospital-name {
+                    font-size: 1.5rem;
+                    font-weight: 700;
+                    color: {{ $hosColor ?? '#0066cc' }};
+                    max-width: 300px;
+                    line-height: 1.3;
+                }
+                .result-header-right {
+                    text-align: right;
+                    font-size: 0.9rem;
+                    color: #495057;
+                    line-height: 1.6;
+                }
+                .result-header-right strong {
+                    color: #212529;
+                }
+
+                /* Result Title Section */
+                .result-title-section {
+                    background: {{ $hosColor ?? '#0066cc' }};
+                    color: white;
+                    text-align: center;
+                    padding: 12px 20px;
+                    font-size: 1.1rem;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                }
+
+                /* Patient Info Section */
+                .result-patient-info {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 20px;
+                    padding: 20px;
+                    background: #f8f9fa;
+                    border-bottom: 1px solid #dee2e6;
+                }
+                .result-info-box {
+                    background: white;
+                    padding: 15px;
+                    border-radius: 8px;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+                }
+                .result-info-row {
+                    display: flex;
+                    margin-bottom: 8px;
+                    padding-bottom: 8px;
+                    border-bottom: 1px dashed #eee;
+                }
+                .result-info-row:last-child {
+                    margin-bottom: 0;
+                    padding-bottom: 0;
+                    border-bottom: none;
+                }
+                .result-info-label {
+                    font-weight: 600;
+                    color: #6c757d;
+                    min-width: 120px;
+                    font-size: 0.9rem;
+                }
+                .result-info-value {
+                    color: #212529;
+                    font-weight: 500;
+                    flex: 1;
+                }
+
+                /* Result Section */
+                .result-section {
+                    padding: 20px;
+                }
+                .result-section-title {
+                    font-size: 1rem;
+                    font-weight: 700;
+                    color: {{ $hosColor ?? '#0066cc' }};
+                    margin-bottom: 15px;
+                    padding-bottom: 10px;
+                    border-bottom: 2px solid {{ $hosColor ?? '#0066cc' }};
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+
+                /* Result Table Styling */
+                .result-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-bottom: 20px;
+                }
+                .result-table th {
+                    background: {{ $hosColor ?? '#0066cc' }};
+                    color: white;
+                    padding: 12px 15px;
+                    text-align: left;
+                    font-weight: 600;
+                    font-size: 0.9rem;
+                }
+                .result-table td {
+                    padding: 12px 15px;
+                    border-bottom: 1px solid #dee2e6;
+                    vertical-align: middle;
+                }
+                .result-table tbody tr:hover {
+                    background: #f8f9fa;
+                }
+                .result-table td, .result-table th {
+                    word-wrap: break-word;
+                    overflow-wrap: break-word;
+                }
+
+                /* Status Badges */
+                .result-status-badge {
+                    display: inline-block;
+                    padding: 4px 10px;
+                    border-radius: 20px;
+                    font-size: 0.75rem;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                }
                 .status-normal { background: #d4edda; color: #155724; }
                 .status-high { background: #f8d7da; color: #721c24; }
                 .status-low { background: #fff3cd; color: #856404; }
                 .status-abnormal { background: #f8d7da; color: #721c24; }
-                .result-attachments { margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; }
-                .result-footer { padding: 20px; border-top: 2px solid #eee; font-size: 12px; color: #999; text-align: center; }
+
+                /* Attachments Section */
+                .result-attachments {
+                    margin: 0 20px 20px 20px;
+                    padding: 15px;
+                    background: #f8f9fa;
+                    border-radius: 8px;
+                    border: 1px solid #dee2e6;
+                }
+                .result-attachments h6 {
+                    color: {{ $hosColor ?? '#0066cc' }};
+                    font-weight: 700;
+                    margin-bottom: 15px;
+                }
+
+                /* Result Footer */
+                .result-footer {
+                    padding: 20px;
+                    border-top: 2px solid #dee2e6;
+                    font-size: 0.85rem;
+                    color: #6c757d;
+                    text-align: center;
+                    background: #f8f9fa;
+                }
+
+                /* Print Styles */
                 @media print {
                     .modal-header, .modal-footer, .result-print-btn { display: none !important; }
                     .modal-dialog { max-width: 100% !important; margin: 0 !important; }
                     .modal-content { border: none !important; box-shadow: none !important; }
                     body { background: white !important; }
+                    .result-header { border-bottom: 3px solid #000 !important; }
+                    .result-title-section { background: #333 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                    .result-table th { background: #333 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                }
+
+                /* Responsive */
+                @media (max-width: 768px) {
+                    .result-header {
+                        flex-direction: column;
+                        gap: 15px;
+                        text-align: center;
+                    }
+                    .result-header-left {
+                        flex-direction: column;
+                    }
+                    .result-header-right {
+                        text-align: center;
+                    }
+                    .result-patient-info {
+                        grid-template-columns: 1fr;
+                    }
                 }
             </style>
 
             <div class="modal-header" style="background: {{ $hosColor }}; color: white;">
-                <h5 class="modal-title" id="investResViewModalLabel"><i class="mdi mdi-file-document-outline"></i> Test Results</h5>
+                <h5 class="modal-title" id="investResViewModalLabel"><i class="mdi mdi-file-document-outline"></i> Imaging Results</h5>
                 <button type="button" class="close"  data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -2968,7 +3151,7 @@
                         </div>
                     </div>
 
-                    <div class="result-title-section">TEST RESULTS</div>
+                    <div class="result-title-section">IMAGING RESULTS</div>
 
                     <div class="result-patient-info">
                         <div class="result-info-box">
@@ -2986,7 +3169,7 @@
                     </div>
 
                     <div class="result-section">
-                        <div class="result-section-title">TEST RESULTS</div>
+                        <div class="result-section-title">IMAGING RESULTS</div>
                         <div id="invest_res"></div>
                     </div>
 
@@ -3015,12 +3198,16 @@
     </div>
 </div>
 
+@include('admin.partials.invest_res_modal', ['save_route' => 'imaging.saveResult'])
+
+@include('admin.partials.clinical_context_modal')
+
 <!-- Delete Reason Modal -->
 <div class="modal fade" id="deleteReasonModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title"><i class="fa fa-trash"></i> Delete Lab Request</h5>
+                <h5 class="modal-title"><i class="fa fa-trash"></i> Delete Imaging Request</h5>
                 <button type="button" class="close text-white"  data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
@@ -3029,7 +3216,7 @@
                 <div class="modal-body">
                     <div class="alert alert-warning">
                         <i class="fa fa-exclamation-triangle"></i>
-                        <strong>Warning:</strong> This action will soft delete the lab request. It can be restored from the trash later.
+                        <strong>Warning:</strong> This action will soft delete the imaging request. It can be restored from the trash later.
                     </div>
                     <div class="mb-3">
                         <p><strong>Service:</strong> <span id="delete_service_name"></span></p>
@@ -3061,7 +3248,7 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header bg-warning">
-                <h5 class="modal-title"><i class="fa fa-ban"></i> Dismiss Lab Request</h5>
+                <h5 class="modal-title"><i class="fa fa-ban"></i> Dismiss Imaging Request</h5>
                 <button type="button" class="close"  data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
@@ -3079,7 +3266,7 @@
                     <div class="form-group">
                         <label for="dismiss_reason">Reason for Dismissal <span class="text-danger">*</span></label>
                         <textarea class="form-control" id="dismiss_reason" name="reason" rows="4"
-                                  placeholder="Please provide a reason for dismissing this lab request (minimum 10 characters)"
+                                  placeholder="Please provide a reason for dismissing this imaging request (minimum 10 characters)"
                                   required minlength="10"></textarea>
                         <small class="form-text text-muted">This reason will be logged for audit purposes.</small>
                     </div>
@@ -3479,7 +3666,7 @@ function initializeEventListeners() {
 
 function searchPatients(query) {
     $.ajax({
-        url: '{{ route("lab.search-patients") }}',
+        url: '{{ route("imaging.search-patients") }}',
         method: 'GET',
         data: { term: query },
         success: function(results) {
@@ -3542,7 +3729,7 @@ function loadPatient(patientId) {
 
     // Load patient requests
     $.ajax({
-        url: `/lab-workbench/patient/${patientId}/requests`,
+        url: `/imaging-workbench/patient/${patientId}/requests`,
         method: 'GET',
         success: function(data) {
             currentPatientData = data.patient; // Store patient data including allergies
@@ -3570,7 +3757,7 @@ function initializeHistoryDataTable(patientId) {
         autoWidth: false,
         dom: '<"top"f>rt<"bottom"lip><"clear">',
         ajax: {
-            url: `/investigationHistoryList/${patientId}`,
+            url: `/imaging-workbench/patient/${patientId}/history`,
             type: 'GET'
         },
         columns: [
@@ -3585,7 +3772,7 @@ function initializeHistoryDataTable(patientId) {
         pageLength: 10,
         lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
         language: {
-            emptyTable: "No investigation history found for this patient",
+            emptyTable: "No imaging history found for this patient",
             processing: '<i class="fa fa-spinner fa-spin fa-2x fa-fw"></i><span class="sr-only">Loading...</span>'
         },
         drawCallback: function() {
@@ -3601,20 +3788,171 @@ function initializeHistoryDataTable(patientId) {
 function viewInvestigationResult(requestId) {
     // Open modal to view completed result
     $.ajax({
-        url: `/lab-workbench/lab-service-requests/${requestId}`,
+        url: `/imaging-workbench/imaging-service-requests/${requestId}`,
         method: 'GET',
         success: function(request) {
-            // Show result in a view-only modal or open in new tab
-            if (request.result_document) {
-                window.open(request.result_document, '_blank');
+            if (request.result || request.result_data) {
+                // Populate the view modal with result data
+                populateResultViewModal(request);
+                $('#investResViewModal').modal('show');
             } else {
-                alert('No result document found');
+                alert('No result data found for this request');
             }
         },
         error: function(xhr) {
             alert('Error loading result: ' + (xhr.responseJSON?.message || 'Unknown error'));
         }
     });
+}
+
+function populateResultViewModal(res_obj) {
+    // Basic service info
+    $('.invest_res_service_name_view').text(res_obj.service ? res_obj.service.name : 'N/A');
+
+    // Patient information (with null checks)
+    let patientName = 'N/A';
+    if (res_obj.patient && res_obj.patient.user) {
+        patientName = (res_obj.patient.user.firstname || '') + ' ' + (res_obj.patient.user.surname || '');
+    }
+    $('#res_patient_name').html(patientName.trim() || 'N/A');
+    $('#res_patient_id').html(res_obj.patient ? res_obj.patient.file_no : 'N/A');
+
+    // Calculate age from date of birth
+    let age = 'N/A';
+    if (res_obj.patient && res_obj.patient.date_of_birth) {
+        let dob = new Date(res_obj.patient.date_of_birth);
+        let today = new Date();
+        let ageYears = today.getFullYear() - dob.getFullYear();
+        let monthDiff = today.getMonth() - dob.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+            ageYears--;
+        }
+        age = ageYears + ' years';
+    }
+    $('#res_patient_age').html(age);
+
+    // Gender
+    let gender = (res_obj.patient && res_obj.patient.gender) ? res_obj.patient.gender.toUpperCase() : 'N/A';
+    $('#res_patient_gender').html(gender);
+
+    // Test information
+    $('#res_test_id').html(res_obj.id || 'N/A');
+    $('#res_sample_date').html(res_obj.sample_date || 'N/A');
+    $('#res_result_date').html(res_obj.result_date || 'N/A');
+
+    // Result by (with null check)
+    let resultByName = 'N/A';
+    if (res_obj.results_person && (res_obj.results_person.firstname || res_obj.results_person.surname)) {
+        resultByName = (res_obj.results_person.firstname || '') + ' ' + (res_obj.results_person.surname || '');
+    }
+    $('#res_result_by').html(resultByName.trim() || 'N/A');
+
+    // Signature date (use result date)
+    $('#res_signature_date').html(res_obj.result_date || '');
+
+    // Generated date (current date)
+    let now = new Date();
+    let generatedDate = now.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    $('#res_generated_date').html(generatedDate);
+
+    // Handle V2 results (structured data)
+    if (res_obj.result_data) {
+        let resultData = res_obj.result_data;
+        if (typeof resultData === 'string') {
+            try {
+                resultData = JSON.parse(resultData);
+            } catch (e) {
+                console.error('Error parsing result data:', e);
+                resultData = null;
+            }
+        }
+
+        if (resultData && typeof resultData === 'object') {
+            let paramsArray = [];
+            if (Array.isArray(resultData)) {
+                paramsArray = resultData;
+            }
+
+            if (paramsArray.length > 0) {
+                let resultsHtml = '<table class="result-table"><thead><tr>';
+                resultsHtml += '<th style="width: 40%;">Test Parameter</th>';
+                resultsHtml += '<th style="width: 25%;">Results</th>';
+                resultsHtml += '<th style="width: 25%;">Reference Range</th>';
+                resultsHtml += '<th style="width: 10%;">Status</th>';
+                resultsHtml += '</tr></thead><tbody>';
+
+                paramsArray.forEach(function(param) {
+                    resultsHtml += '<tr>';
+                    resultsHtml += '<td><strong>' + param.name + '</strong>';
+                    if (param.code) {
+                        resultsHtml += ' <span style="color: #999;">(' + param.code + ')</span>';
+                    }
+                    resultsHtml += '</td>';
+
+                    let valueDisplay = param.value || 'N/A';
+                    if (param.unit) {
+                        valueDisplay += ' ' + param.unit;
+                    }
+                    resultsHtml += '<td>' + valueDisplay + '</td>';
+
+                    let refRange = 'N/A';
+                    if (param.reference_range) {
+                        if (param.reference_range.min !== undefined && param.reference_range.max !== undefined) {
+                            refRange = param.reference_range.min + ' - ' + param.reference_range.max;
+                            if (param.unit) refRange += ' ' + param.unit;
+                        } else if (param.reference_range.text) {
+                            refRange = param.reference_range.text;
+                        }
+                    }
+                    resultsHtml += '<td>' + refRange + '</td>';
+
+                    let statusHtml = '';
+                    if (param.status) {
+                        let statusClass = 'status-' + param.status.toLowerCase().replace(' ', '-');
+                        statusHtml = '<span class="result-status-badge ' + statusClass + '">' + param.status + '</span>';
+                    }
+                    resultsHtml += '<td>' + statusHtml + '</td>';
+                    resultsHtml += '</tr>';
+                });
+
+                resultsHtml += '</tbody></table>';
+                $('#invest_res').html(resultsHtml);
+            } else {
+                $('#invest_res').html(res_obj.result || '<p>No result content available</p>');
+            }
+        } else {
+            $('#invest_res').html(res_obj.result || '<p>No result content available</p>');
+        }
+    } else {
+        // V1 results (HTML content)
+        $('#invest_res').html(res_obj.result || '<p>No result content available</p>');
+    }
+
+    // Handle attachments
+    $('#invest_attachments').html('');
+    if (res_obj.attachments) {
+        let attachments = typeof res_obj.attachments === 'string' ? JSON.parse(res_obj.attachments) : res_obj.attachments;
+        if (attachments && attachments.length > 0) {
+            let attachHtml = '<div class="result-attachments"><h6 style="margin-bottom: 15px;"><i class="mdi mdi-paperclip"></i> Attachments</h6><div class="row">';
+            attachments.forEach(function(attachment) {
+                let url = '{{ asset("storage") }}/' + attachment.path;
+                let icon = getFileIcon(attachment.type);
+                attachHtml += `<div class="col-md-4 mb-2">
+                    <a href="${url}" target="_blank" class="btn btn-outline-primary btn-sm btn-block">
+                        ${icon} ${attachment.name}
+                    </a>
+                </div>`;
+            });
+            attachHtml += '</div></div>';
+            $('#invest_attachments').html(attachHtml);
+        }
+    }
 }
 
 function displayPatientInfo(patient) {
@@ -3797,7 +4135,8 @@ let currentPendingFilter = 'all';
 
 function displayPendingRequests(requests) {
     currentPendingRequests = requests;
-    const totalPending = requests.billing.length + requests.sample.length + requests.results.length;
+    // No sample stage for imaging
+    const totalPending = requests.billing.length + requests.results.length;
     $('#pending-badge').text(totalPending);
 
     updatePendingSubtabBadges(requests);
@@ -3805,10 +4144,10 @@ function displayPendingRequests(requests) {
 }
 
 function updatePendingSubtabBadges(requests) {
-    const totalPending = requests.billing.length + requests.sample.length + requests.results.length;
+    // No sample stage for imaging
+    const totalPending = requests.billing.length + requests.results.length;
     $('#all-pending-badge').text(totalPending);
     $('#billing-subtab-badge').text(requests.billing.length);
-    $('#sample-subtab-badge').text(requests.sample.length);
     $('#results-subtab-badge').text(requests.results.length);
 }
 
@@ -3817,13 +4156,14 @@ function renderPendingSubtabContent(filter) {
 
     currentPendingFilter = filter;
     const requests = currentPendingRequests;
-    const totalPending = requests.billing.length + requests.sample.length + requests.results.length;
+    // No sample stage for imaging
+    const totalPending = requests.billing.length + requests.results.length;
 
     const $container = $('#pending-subtab-container');
     $container.empty();
 
     if (totalPending === 0) {
-        $container.html('<div class="alert alert-info">No pending lab requests for this patient</div>');
+        $container.html('<div class="alert alert-info">No pending imaging requests for this patient</div>');
         return;
     }
 
@@ -3863,43 +4203,9 @@ function renderPendingSubtabContent(filter) {
         });
     }
 
-    // Sample Section (Status 2)
-    if ((filter === 'all' || filter === 'sample') && requests.sample.length > 0) {
-        const sampleHtml = `
-            <div class="request-section" data-section="sample">
-                <div class="request-section-header">
-                    <h5>
-                        <i class="mdi mdi-test-tube"></i>
-                        Sample Collection (${requests.sample.length})
-                    </h5>
-                </div>
-                <div class="request-cards-container" id="sample-cards"></div>
-                <div class="section-actions-footer">
-                    <div class="select-all-container">
-                        <input type="checkbox" id="select-all-sample" class="select-all-checkbox">
-                        <label for="select-all-sample">Select All</label>
-                    </div>
-                    <div class="action-buttons">
-                        <button class="btn-action btn-action-sample" id="btn-collect-sample" disabled>
-                            <i class="mdi mdi-check-circle"></i>
-                            Collect Sample
-                        </button>
-                        <button class="btn-action btn-action-dismiss" id="btn-dismiss-sample" disabled>
-                            <i class="mdi mdi-close-circle"></i>
-                            Dismiss
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        $container.append(sampleHtml);
+    // No sample collection stage for imaging - requests go directly from billing to results
 
-        requests.sample.forEach(request => {
-            $('#sample-cards').append(createRequestCard(request, 'sample'));
-        });
-    }
-
-    // Results Section (Status 3)
+    // Results Section (Status 2 for imaging - awaiting results)
     if ((filter === 'all' || filter === 'results') && requests.results.length > 0) {
         const resultsHtml = `
             <div class="request-section" data-section="results">
@@ -4030,29 +4336,7 @@ function initializeRequestHandlers() {
         }
     });
 
-    // Collect Sample button
-    $('#btn-collect-sample').on('click', function() {
-        const selectedIds = $('.request-checkbox[data-section="sample"]:checked').map(function() {
-            return $(this).data('request-id');
-        }).get();
-
-        if (selectedIds.length > 0) {
-            collectSample(selectedIds);
-        }
-    });
-
-    // Dismiss buttons
-    $('.btn-action-dismiss').on('click', function() {
-        const btnId = $(this).attr('id');
-        const section = btnId.replace('btn-dismiss-', '');
-        const selectedIds = $(`.request-checkbox[data-section="${section}"]:checked`).map(function() {
-            return $(this).data('request-id');
-        }).get();
-
-        if (selectedIds.length > 0) {
-            dismissRequests(selectedIds, section);
-        }
-    });
+    // No sample collection for imaging - removed btn-collect-sample handler
 
     // Enter Result buttons (individual)
     $('.enter-result-btn').on('click', function() {
@@ -4063,17 +4347,17 @@ function initializeRequestHandlers() {
 
 function loadClinicalContext(patientId) {
     // Load vitals
-    $.get(`/lab-workbench/patient/${patientId}/vitals?limit=10`, function(vitals) {
+    $.get(`/imaging-workbench/patient/${patientId}/vitals?limit=10`, function(vitals) {
         displayVitals(vitals);
     });
 
     // Load notes
-    $.get(`/lab-workbench/patient/${patientId}/notes?limit=10`, function(notes) {
+    $.get(`/imaging-workbench/patient/${patientId}/notes?limit=10`, function(notes) {
         displayNotes(notes);
     });
 
     // Load medications
-    $.get(`/lab-workbench/patient/${patientId}/medications?limit=20`, function(meds) {
+    $.get(`/imaging-workbench/patient/${patientId}/medications?limit=20`, function(meds) {
         displayMedications(meds);
     });
 }
@@ -4235,33 +4519,54 @@ function displayNotes(notes) {
         columns: [{
             data: null,
             render: function(data, type, row, meta) {
-                // Use pre-formatted date from server
                 const noteDate = row.date_formatted || row.date;
                 const doctor = row.doctor || 'Unknown Doctor';
-                const specialty = row.specialty || 'N/A';
-                const diagnosis = row.diagnosis || 'No diagnosis';
-                const content = row.notes || row.complaints || 'No notes recorded';
-                const truncatedContent = truncateText(content, 150);
+                const content = row.notes || 'No notes recorded';
+                const truncatedContent = truncateText(content, 200);
                 const noteId = `note-${meta.row}`;
 
+                // Build reasons for encounter badges
+                let reasonsBadges = '';
+                if (row.reasons_for_encounter && row.reasons_for_encounter.trim() !== '') {
+                    const reasons = row.reasons_for_encounter.split(',');
+                    reasonsBadges = reasons.map(r => `<span class="badge bg-light text-dark me-1 mb-1">${r.trim()}</span>`).join('');
+                }
+
                 return `
-                    <div class="note-entry">
-                        <div class="note-header">
-                            <span class="note-doctor">
-                                <i class="mdi mdi-doctor"></i>
-                                ${doctor}
-                                ${specialty !== 'N/A' ? `<span class="specialty-tag">${specialty}</span>` : ''}
-                            </span>
-                            <span class="note-date">${noteDate}</span>
-                        </div>
-                        ${diagnosis !== 'No diagnosis' ? `
-                            <div class="note-diagnosis">
-                                <span class="diagnosis-badge">${diagnosis}</span>
+                    <div class="card mb-2" style="border-left: 4px solid var(--hospital-primary, #0d6efd);">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="mb-0">
+                                    <i class="mdi mdi-account-circle"></i>
+                                    <span class="text-primary">${doctor}</span>
+                                </h6>
+                                <span class="badge bg-info">${noteDate}</span>
                             </div>
-                        ` : ''}
-                        <div class="note-content" id="${noteId}">
-                            <p class="note-text ${content.length > 150 ? 'truncated' : ''}" data-full-text="${escapeHtml(content)}">${truncatedContent}</p>
-                            ${content.length > 150 ? `<a href="#" class="read-more-link" data-note-id="${noteId}">Read More</a>` : ''}
+
+                            ${reasonsBadges ? `
+                                <div class="mb-2">
+                                    <small><b><i class="mdi mdi-format-list-bulleted"></i> Reason(s) for Encounter/Diagnosis (ICPC-2):</b></small><br>
+                                    ${reasonsBadges}
+                                </div>
+                            ` : ''}
+
+                            ${row.reasons_for_encounter_comment_1 ? `
+                                <div class="mb-2">
+                                    <small><b><i class="mdi mdi-comment-text"></i> Diagnosis Comment 1:</b> ${escapeHtml(row.reasons_for_encounter_comment_1)}</small>
+                                </div>
+                            ` : ''}
+
+                            ${row.reasons_for_encounter_comment_2 ? `
+                                <div class="mb-2">
+                                    <small><b><i class="mdi mdi-comment-text"></i> Diagnosis Comment 2:</b> ${escapeHtml(row.reasons_for_encounter_comment_2)}</small>
+                                </div>
+                            ` : ''}
+
+                            <div class="alert alert-light mb-0 p-2" id="${noteId}">
+                                <small><b><i class="mdi mdi-note-text"></i> Clinical Notes:</b><br>
+                                <span class="note-text ${content.length > 200 ? 'truncated' : ''}" data-full-text="${escapeHtml(content)}">${truncatedContent}</span></small>
+                                ${content.length > 200 ? `<br><a href="#" class="read-more-link small" data-note-id="${noteId}">Read More</a>` : ''}
+                            </div>
                         </div>
                     </div>
                 `;
@@ -4274,13 +4579,13 @@ function displayNotes(notes) {
                 const $link = $(this);
                 const $noteText = $link.siblings('.note-text');
                 const fullText = $noteText.data('full-text');
-                const truncatedText = truncateText(fullText, 150);
+                const truncatedText = truncateText(fullText, 200);
 
                 if ($noteText.hasClass('truncated')) {
-                    $noteText.removeClass('truncated').text(fullText);
+                    $noteText.removeClass('truncated').html(fullText);
                     $link.text('Read Less');
                 } else {
-                    $noteText.addClass('truncated').text(truncatedText);
+                    $noteText.addClass('truncated').html(truncatedText);
                     $link.text('Read More');
                 }
             });
@@ -4422,10 +4727,10 @@ function formatDateTime(dateString) {
 }
 
 function loadQueueCounts() {
-    $.get('{{ route("lab.queue-counts") }}', function(counts) {
+    $.get('{{ route("imaging.queue-counts") }}', function(counts) {
         $('#queue-billing-count').text(counts.billing);
-        $('#queue-sample-count').text(counts.sample);
         $('#queue-results-count').text(counts.results);
+        $('#queue-sample-count').text(0); // Imaging doesn't have sample stage
         updateSyncIndicator();
     });
 }
@@ -4450,7 +4755,7 @@ function refreshCurrentPatientData() {
     if (!currentPatient) return;
 
     // Silently reload patient requests
-    $.get(`/lab-workbench/patient/${currentPatient}/requests`, function(data) {
+    $.get(`/imaging-workbench/patient/${currentPatient}/requests`, function(data) {
         displayPendingRequests(data.requests);
         updatePendingSubtabBadges(data.requests);
     }).fail(function() {
@@ -4498,17 +4803,17 @@ function refreshClinicalPanel(panel) {
 
     // Reload specific panel data
     if (panel === 'vitals') {
-        $.get(`/lab-workbench/patient/${currentPatient}/vitals?limit=10`, function(vitals) {
+        $.get(`/imaging-workbench/patient/${currentPatient}/vitals?limit=10`, function(vitals) {
             displayVitals(vitals);
             $btn.find('i').removeClass('fa-spin');
         });
     } else if (panel === 'notes') {
-        $.get(`/lab-workbench/patient/${currentPatient}/notes?limit=10`, function(notes) {
+        $.get(`/imaging-workbench/patient/${currentPatient}/notes?limit=10`, function(notes) {
             displayNotes(notes);
             $btn.find('i').removeClass('fa-spin');
         });
     } else if (panel === 'medications') {
-        $.get(`/lab-workbench/patient/${currentPatient}/medications?limit=20`, function(meds) {
+        $.get(`/imaging-workbench/patient/${currentPatient}/medications?limit=20`, function(meds) {
             displayMedications(meds);
             $btn.find('i').removeClass('fa-spin');
         });
@@ -4531,12 +4836,12 @@ function loadUserPreferences() {
     }
 }
 
-// Action handlers for lab requests
+// Action handlers for imaging requests
 function recordBilling(requestIds) {
     if (!confirm(`Record billing for ${requestIds.length} request(s)?`)) return;
 
     $.ajax({
-        url: '{{ route("lab.recordBilling") }}',
+        url: '{{ route("imaging.recordBilling") }}',
         method: 'POST',
         data: {
             _token: '{{ csrf_token() }}',
@@ -4553,32 +4858,13 @@ function recordBilling(requestIds) {
     });
 }
 
-function collectSample(requestIds) {
-    if (!confirm(`Mark sample collected for ${requestIds.length} request(s)?`)) return;
-
-    $.ajax({
-        url: '{{ route("lab.collectSample") }}',
-        method: 'POST',
-        data: {
-            _token: '{{ csrf_token() }}',
-            request_ids: requestIds,
-            patient_id: currentPatient
-        },
-        success: function(response) {
-            alert('Sample collection recorded successfully!');
-            loadPatient(currentPatient);
-        },
-        error: function(xhr) {
-            alert('Error recording sample: ' + (xhr.responseJSON?.message || 'Unknown error'));
-        }
-    });
-}
+// Note: No collectSample function for imaging - no sample collection stage
 
 function dismissRequests(requestIds, section) {
     if (!confirm(`Dismiss ${requestIds.length} request(s) from ${section} queue?`)) return;
 
     $.ajax({
-        url: '{{ route("lab.dismissRequests") }}',
+        url: '{{ route("imaging.dismissRequests") }}',
         method: 'POST',
         data: {
             _token: '{{ csrf_token() }}',
@@ -4596,12 +4882,12 @@ function dismissRequests(requestIds, section) {
 }
 
 function enterResult(requestId) {
-    // Fetch the lab request data
+    // Fetch the imaging request data
     $.ajax({
-        url: `/lab-workbench/lab-service-requests/${requestId}`,
+        url: `/imaging-workbench/imaging-service-requests/${requestId}`,
         method: 'GET',
         success: function(request) {
-            setResTempInModal(request);
+            setInvestResTempInModal(request);
             $('#investResModal').modal('show');
         },
         error: function(xhr) {
@@ -4610,61 +4896,51 @@ function enterResult(requestId) {
     });
 }
 
-function setResTempInModal(request) {
-    $('#investResModal').find('form').trigger('reset');
+function setInvestResTempInModal(request) {
+    $('#investResForm').trigger('reset');
     $('#invest_res_service_name').text(request.service ? request.service.name : '');
     $('#invest_res_entry_id').val(request.id);
-    $('#invest_res_is_edit').val(0);
+    $('#invest_res_is_edit').val('0');
     $('#deleted_attachments').val('[]');
     $('#existing_attachments_container').hide();
     $('#existing_attachments_list').html('');
 
-    // Check template version
-    const isV2 = request.service && request.service.template_version == 2;
+    // Determine template type
+    let template = request.result || (request.service ? request.service.template : '');
 
-    if (isV2) {
-        let structure = request.service.template_structure;
-        if (typeof structure === 'string') {
-            try {
-                structure = JSON.parse(structure);
-            } catch (e) {
-                console.error('Error parsing V2 template structure:', e);
-                structure = null;
-            }
-        }
-
-        if (structure) {
-            // Parse result_data if available (for edit mode)
-            let existingData = null;
-            if (request.result_data) {
-                try {
-                    existingData = typeof request.result_data === 'string' ? JSON.parse(request.result_data) : request.result_data;
-                } catch (e) {
-                    console.error('Error parsing result_data:', e);
-                }
-            }
-            loadV2Template(structure, existingData);
-        } else {
-            console.error('Invalid V2 template structure');
-            // Fallback or error handling
-        }
-    } else {
-        // Use request.result if available (for edit), otherwise template body
-        let content = request.result || (request.service ? request.service.template_body : '');
-        loadV1Template(content);
+    // Check if it's V2 structure (JSON object) or V1 (HTML string)
+    let isV2 = false;
+    if (typeof template === 'object' && template !== null) {
+        isV2 = true;
+    } else if (typeof template === 'string' && template.trim().startsWith('{')) {
+        try {
+            let parsed = JSON.parse(template);
+            if (typeof parsed === 'object') isV2 = true;
+        } catch(e) {}
     }
 
-    // Load existing attachments if editing (logic to be added if edit mode is supported)
+    if (isV2) {
+       // Logic for V2 would go here if needed to parse, but usually loadV2Template handles the structure object
+       // For now, assuming standard V1 for imaging unless structured
+       // If existing code had loadV2Template, we keep using it
+       // But wait, the original code called loadImagingV1Template unconditionally in setImagingResTempInModal
+       // "Imaging uses V1 templates (WYSIWYG)"
+       loadInvestV1Template(template);
+    } else {
+       loadInvestV1Template(template);
+    }
+
+    // Load existing attachments if editing
     loadExistingAttachments(request.id);
 }
 
-function loadV1Template(template) {
+function loadInvestV1Template(template) {
     $('#invest_res_template_version').val('1');
     $('#v1_template_container').show();
     $('#v2_template_container').hide();
 
     // Re-enable content editing if it was disabled upon save
-    if (template) {
+    if (template && typeof template === 'string') {
         template = template.replace(/contenteditable="false"/g, 'contenteditable="true"');
         template = template.replace(/contenteditable='false'/g, "contenteditable='true'");
     }
@@ -4929,7 +5205,7 @@ function loadExistingAttachments(requestId) {
     wrapper.hide();
 
     $.ajax({
-        url: `/lab-workbench/lab-service-requests/${requestId}/attachments`,
+        url: `/imaging-workbench/imaging-service-requests/${requestId}/attachments`,
         method: 'GET',
         success: function(attachments) {
             if (attachments && attachments.length > 0) {
@@ -4962,14 +5238,34 @@ function markAttachmentForDeletion(attachmentId) {
     $('#deleted_attachments').val(JSON.stringify(deleted));
 }
 
-// Handle result form submission
+// Handle result form submission (copy CKEditor content to hidden field)
+function copyResTemplateToField() {
+    if (window.investResEditor) {
+        $('#invest_res_template_submited').val(window.investResEditor.getData());
+    }
+    return true;
+}
+
+// Handle imaging form submission via AJAX (no page refresh)
 $('#investResForm').on('submit', function(e) {
     e.preventDefault();
 
     // Copy data from editors/inputs to hidden fields
     copyResTemplateToField();
 
+    let isEdit = $('#invest_res_is_edit').val() === '1';
+    let message = isEdit
+        ? 'Are you sure you want to update this result?'
+        : 'Are you sure you wish to save this result entry? It can not be edited after!';
+
+    if (!confirm(message)) {
+        return false;
+    }
+
     const formData = new FormData(this);
+    const $submitBtn = $(this).find('button[type="submit"]');
+    const originalBtnHtml = $submitBtn.html();
+    $submitBtn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Saving...');
 
     $.ajax({
         url: $(this).attr('action'),
@@ -4978,67 +5274,38 @@ $('#investResForm').on('submit', function(e) {
         processData: false,
         contentType: false,
         success: function(response) {
-            alert('Result saved successfully!');
+            toastr.success('Result saved successfully!');
             $('#investResModal').modal('hide');
+            // Refresh patient data and queue counts
             if (currentPatient) {
                 loadPatient(currentPatient);
             }
+            getQueueCounts();
         },
         error: function(xhr) {
-            alert('Error saving result: ' + (xhr.responseJSON?.message || 'Unknown error'));
+            const errorMsg = xhr.responseJSON?.message || 'Unknown error';
+            toastr.error('Error saving result: ' + errorMsg);
+        },
+        complete: function() {
+            $submitBtn.prop('disabled', false).html(originalBtnHtml);
         }
     });
 });
 
-function copyResTemplateToField() {
-    let version = $('#invest_res_template_version').val();
-
-    if (version === '2') {
-        // Collect V2 structured data
-        let data = {};
-        $('.v2-param-field').each(function() {
-            let paramId = $(this).data('param-id');
-            let paramType = $(this).data('param-type');
-            let value = $(this).val();
-
-            // Convert values to appropriate types
-            if (paramType === 'integer') {
-                data[paramId] = value ? parseInt(value) : null;
-            } else if (paramType === 'float') {
-                data[paramId] = value ? parseFloat(value) : null;
-            } else if (paramType === 'boolean') {
-                data[paramId] = value === 'true' ? true : (value === 'false' ? false : null);
-            } else {
-                data[paramId] = value || null;
-            }
-        });
-
-        $('#invest_res_template_data').val(JSON.stringify(data));
-        // For V2, we still save a simple HTML representation to result column for backward compat
-        $('#invest_res_template_submited').val('<p>Structured result data (V2 template)</p>');
-    } else {
-        // V1: Copy from CKEditor
-        if (window.investResEditor) {
-            $('#invest_res_template_submited').val(window.investResEditor.getData());
-        }
-    }
-    return true;
-}
-
-function editLabResult(obj) {
+function editImagingResult(obj) {
     const requestId = $(obj).data('id');
 
     $.ajax({
-        url: `/lab-workbench/lab-service-requests/${requestId}`,
+        url: `/imaging-workbench/imaging-service-requests/${requestId}`,
         method: 'GET',
         success: function(request) {
-            // Populate the form with template structure AND existing result data
-            setResTempInModal(request);
+             // Populate the form with template structure AND existing result data
+            setInvestResTempInModal(request);
 
             // Set Edit Mode UI
-            $('#invest_res_is_edit').val(1);
+            $('#invest_res_is_edit').val('1');
             $('#investResModalLabel').text('Edit Result: ' + (request.service ? request.service.name : ''));
-            $('#invest_res_submit_btn').html('<i class="mdi mdi-content-save"></i> Update Result');
+            $('#investResForm button[type="submit"]').html('<i class="mdi mdi-content-save"></i> Update Result');
 
             $('#investResModal').modal('show');
         },
@@ -5210,18 +5477,50 @@ function setResViewInModal(obj) {
 }
 
 function PrintElem(elem) {
-    var mywindow = window.open('', 'PRINT', 'height=400,width=600');
-    mywindow.document.write('<html><head><title>' + document.title + '</title>');
-    mywindow.document.write('<style>body{font-family: "Segoe UI", sans-serif;} .result-table {width: 100%; border-collapse: collapse;} .result-table th, .result-table td {border: 1px solid #ddd; padding: 8px; text-align: left;} .result-header {display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;} .result-title-section {background: #eee; text-align: center; padding: 10px; font-weight: bold; margin: 20px 0;} .result-patient-info {display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;} .result-info-row {display: flex; margin-bottom: 5px;} .result-info-label {font-weight: bold; width: 120px;} .result-footer {margin-top: 50px; border-top: 1px solid #ccc; padding-top: 10px; text-align: center; font-size: 12px;}</style>');
-    mywindow.document.write('</head><body >');
+    var hosColor = '{{ $hosColor ?? "#0066cc" }}';
+    var mywindow = window.open('', 'PRINT', 'height=600,width=800');
+    mywindow.document.write('<html><head><title>' + document.title + ' - Imaging Results</title>');
+    mywindow.document.write(`<style>
+        body { font-family: "Segoe UI", Arial, sans-serif; margin: 0; padding: 20px; color: #333; }
+        .result-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 20px; border-bottom: 3px solid ${hosColor}; margin-bottom: 0; }
+        .result-header-left { display: flex; align-items: center; gap: 15px; }
+        .result-logo { width: 70px; height: 70px; object-fit: contain; }
+        .result-hospital-name { font-size: 1.4rem; font-weight: 700; color: ${hosColor}; max-width: 280px; line-height: 1.3; }
+        .result-header-right { text-align: right; font-size: 0.85rem; color: #495057; line-height: 1.6; }
+        .result-header-right strong { color: #212529; }
+        .result-title-section { background: ${hosColor}; color: white; text-align: center; padding: 10px 20px; font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .result-patient-info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 15px 20px; background: #f8f9fa; border-bottom: 1px solid #dee2e6; }
+        .result-info-box { background: white; padding: 12px; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .result-info-row { display: flex; margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px dashed #eee; }
+        .result-info-row:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+        .result-info-label { font-weight: 600; color: #6c757d; min-width: 100px; font-size: 0.85rem; }
+        .result-info-value { color: #212529; font-weight: 500; flex: 1; }
+        .result-section { padding: 15px 20px; }
+        .result-section-title { font-size: 0.95rem; font-weight: 700; color: ${hosColor}; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid ${hosColor}; text-transform: uppercase; }
+        .result-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        .result-table th { background: ${hosColor}; color: white; padding: 10px 12px; text-align: left; font-weight: 600; font-size: 0.85rem; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .result-table td { padding: 10px 12px; border-bottom: 1px solid #dee2e6; font-size: 0.9rem; }
+        .result-status-badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 700; }
+        .status-normal { background: #d4edda; color: #155724; }
+        .status-high { background: #f8d7da; color: #721c24; }
+        .status-low { background: #fff3cd; color: #856404; }
+        .status-abnormal { background: #f8d7da; color: #721c24; }
+        .result-attachments { margin: 0 20px 15px 20px; padding: 12px; background: #f8f9fa; border-radius: 6px; border: 1px solid #dee2e6; }
+        .result-attachments h6 { color: ${hosColor}; font-weight: 700; margin-bottom: 10px; font-size: 0.9rem; }
+        .result-footer { padding: 15px 20px; border-top: 2px solid #dee2e6; font-size: 0.8rem; color: #6c757d; text-align: center; background: #f8f9fa; }
+        @media print { body { padding: 0; } }
+    </style>`);
+    mywindow.document.write('</head><body>');
     mywindow.document.write(document.getElementById(elem).innerHTML);
     mywindow.document.write('</body></html>');
 
-    mywindow.document.close(); // necessary for IE >= 10
-    mywindow.focus(); // necessary for IE >= 10*/
+    mywindow.document.close();
+    mywindow.focus();
 
-    mywindow.print();
-    mywindow.close();
+    setTimeout(function() {
+        mywindow.print();
+        mywindow.close();
+    }, 250);
 
     return true;
 }
@@ -5256,7 +5555,7 @@ $('#deleteRequestForm').on('submit', function(e) {
     }
 
     $.ajax({
-        url: `/lab-workbench/lab-service-requests/${deleteRequestId}`,
+        url: `/imaging-workbench/imaging-service-requests/${deleteRequestId}`,
         method: 'DELETE',
         data: {
             _token: '{{ csrf_token() }}',
@@ -5304,7 +5603,7 @@ $('#dismissRequestForm').on('submit', function(e) {
     }
 
     $.ajax({
-        url: `/lab-workbench/lab-service-requests/${dismissRequestId}/dismiss`,
+        url: `/imaging-workbench/imaging-service-requests/${dismissRequestId}/dismiss`,
         method: 'POST',
         data: {
             _token: '{{ csrf_token() }}',
@@ -5335,8 +5634,8 @@ function restoreRequest(requestId, type) {
     if (!confirm('Are you sure you want to restore this request?')) return;
 
     const url = type === 'deleted'
-        ? `/lab-workbench/lab-service-requests/${requestId}/restore`
-        : `/lab-workbench/lab-service-requests/${requestId}/undismiss`;
+        ? `/imaging-workbench/imaging-service-requests/${requestId}/restore`
+        : `/imaging-workbench/imaging-service-requests/${requestId}/undismiss`;
 
     $.ajax({
         url: url,
@@ -5384,7 +5683,7 @@ function loadTrashData() {
 
     // Load dismissed requests
     $.ajax({
-        url: `/lab-workbench/dismissed-requests/${patientId || ''}`,
+        url: `/imaging-workbench/dismissed-requests/${patientId || ''}`,
         method: 'GET',
         success: function(data) {
             $('#dismissed-count').text(data.length);
@@ -5421,7 +5720,7 @@ function loadTrashData() {
 
     // Load deleted requests
     $.ajax({
-        url: `/lab-workbench/deleted-requests/${patientId || ''}`,
+        url: `/imaging-workbench/deleted-requests/${patientId || ''}`,
         method: 'GET',
         success: function(data) {
             $('#deleted-count').text(data.length);
@@ -5540,7 +5839,7 @@ function loadAuditLogs() {
 
     auditLogTable = $('#audit-log-table').DataTable({
         ajax: {
-            url: '/lab-workbench/audit-logs',
+            url: '/imaging-workbench/audit-logs',
             data: filters
         },
         columns: [
@@ -5567,7 +5866,6 @@ function loadAuditLogs() {
                         'dismiss': 'badge-warning',
                         'undismiss': 'badge-success',
                         'billing': 'badge-primary',
-                        'sample_collection': 'badge-info',
                         'result_entry': 'badge-success'
                     };
                     const badgeClass = badges[data] || 'badge-secondary';
@@ -5608,7 +5906,7 @@ $(document).ready(function() {
         if (!$('#trashPanel').is(':visible')) {
             const patientId = currentPatient || null;
             $.ajax({
-                url: `/lab-workbench/dismissed-requests/${patientId || ''}`,
+                url: `/imaging-workbench/dismissed-requests/${patientId || ''}`,
                 method: 'GET',
                 success: function(data) {
                     $('#dismissed-count').text(data.length);
@@ -5616,7 +5914,7 @@ $(document).ready(function() {
                 }
             });
             $.ajax({
-                url: `/lab-workbench/deleted-requests/${patientId || ''}`,
+                url: `/imaging-workbench/deleted-requests/${patientId || ''}`,
                 method: 'GET',
                 success: function(data) {
                     $('#deleted-count').text(data.length);
@@ -5743,10 +6041,9 @@ let currentQueueFilter = 'all';
 function showQueue(filter) {
     currentQueueFilter = filter;
 
-    // Update queue title
+    // Update queue title - No sample stage for imaging
     const titles = {
         'billing': '🟢 Awaiting Billing',
-        'sample': '🟠 Awaiting Sample Collection',
         'results': '🔴 Awaiting Result Entry',
         'all': '📋 All Pending Requests'
     };
@@ -5792,6 +6089,190 @@ function hideQueue() {
         $('#main-workspace').removeClass('active');
         $('#left-panel').removeClass('hidden');
     }
+}
+
+function initializeQueueDataTable(filter) {
+    // Destroy existing DataTable if it exists
+    if (queueDataTable) {
+        queueDataTable.destroy();
+    }
+
+    // Map filter to status
+    let status = '1,2';
+    if (filter === 'billing') status = '1';
+    else if (filter === 'results') status = '2';
+
+    // Initialize DataTable for imaging queue
+    queueDataTable = $('#queue-datatable').DataTable({
+        serverSide: true,
+        processing: true,
+        ajax: {
+            url: '{{ route("imaging.queue") }}',
+            data: { status: status }
+        },
+        columns: [
+            {
+                data: null,
+                orderable: false,
+                render: function(data, type, row) {
+                    const card = row.card_data;
+                    if (!card) return '<div class="text-danger p-2">Error loading data</div>';
+
+                    // Status badge
+                    let statusBadge = '';
+                    if (row.status == 1) {
+                        statusBadge = '<span class="badge badge-warning">Awaiting Billing</span>';
+                    } else if (row.status == 2) {
+                        statusBadge = '<span class="badge badge-danger">Awaiting Results</span>';
+                    }
+
+                    // Format Date
+                    const dateStr = row.created_at ? new Date(row.created_at).toLocaleString() : '';
+                    const serviceName = row.service ? row.service.service_name : 'Imaging Request';
+                    const hmoText = card.hmo && card.hmo !== 'N/A' ? `<br><small><i class="mdi mdi-hospital-building"></i> ${card.hmo}</small>` : '';
+
+                    return `
+                        <div class="queue-patient-item" data-patient-id="${card.patient_id}" style="cursor: pointer; padding: 1rem; border-bottom: 1px solid #e9ecef;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div style="font-weight: 600; font-size: 1rem; color: #212529;">${card.patient_name}</div>
+                                <span class="badge badge-primary">${card.file_no}</span>
+                                ${statusBadge}
+                            </div>
+                            <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #6c757d;">
+                                <i class="mdi mdi-radioactive"></i> ${serviceName}
+                                ${hmoText}
+                            </div>
+                            <div style="margin-top: 0.25rem; font-size: 0.8rem; color: #adb5bd;">
+                                <i class="mdi mdi-clock-outline"></i> ${dateStr}
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+        ],
+        paging: true,
+        pageLength: 10,
+        searching: true,
+        ordering: false,
+        info: true,
+        responsive: true,
+        language: {
+            emptyTable: "No imaging requests in this queue",
+            zeroRecords: "No requests found",
+            info: "Showing _START_ to _END_ of _TOTAL_ requests",
+            infoEmpty: "No requests to show",
+            infoFiltered: "(filtered from _MAX_ total requests)"
+        }
+    });
+
+    // Click handler for patient selection from queue
+    $('#queue-datatable').on('click', '.queue-patient-item', function() {
+        const patientId = $(this).data('patient-id');
+        hideQueue();
+        loadPatient(patientId);
+    });
+}
+
+// Update queue counts
+function getQueueCounts() {
+    $.ajax({
+        url: '{{ route("imaging.queue-counts") }}',
+        method: 'GET',
+        success: function(data) {
+            // Update counts in the queue widget
+            $('#count-billing').text(data.billing || 0);
+            $('#count-sample').text(data.sample || 0); // Might remain 0 as Imaging doesn't have sample
+            $('#count-results').text(data.results || 0);
+
+            // Also update the trash counts if they are part of the queue counts
+            // or rely on the separate calls currently in setInterval
+        },
+        error: function(err) {
+            console.error('Failed to fetch queue counts', err);
+        }
+    });
+}
+
+// Call getQueueCounts on load and every minute
+$(document).ready(function() {
+    getQueueCounts();
+    setInterval(getQueueCounts, 60000);
+});
+
+// Search Imaging Services (New Request)
+function searchImagingServices(q) {
+    if (q != "") {
+        $.ajax({
+            url: "{{ url('live-search-services') }}",
+            method: "GET",
+            dataType: 'json',
+            data: {
+                term: q,
+                category_id: 6, // Imaging category ID
+                patient_id: currentPatient ? currentPatient : null
+            },
+            success: function(data) {
+                console.log('Imaging search results:', data);
+                // Clear existing options from the select field
+                $('#service-search-results').html('');
+
+                for (var i = 0; i < data.length; i++) {
+                    const item = data[i] || {};
+                    const category = (item.category && item.category.category_name) ? item.category.category_name : 'N/A';
+                    const name = item.service_name || 'Unknown';
+                    const code = item.service_code || '';
+                    const price = item.price && item.price.sale_price !== undefined ? item.price.sale_price : 0;
+                    const payable = item.payable_amount !== undefined && item.payable_amount !== null ? item.payable_amount : price;
+                    const claims = item.claims_amount !== undefined && item.claims_amount !== null ? item.claims_amount : 0;
+                    const mode = item.coverage_mode || null;
+                    const coverageBadge = mode ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ${payable}</span> <span class='text-success ms-1'>Claim: ${claims}</span>` : '';
+                    const displayName = `${name}[${code}]`; // Escape quotes if needed
+
+                    // Escape single quotes for use in onclick
+                    const escapedDisplayName = displayName.replace(/'/g, "\\'");
+                    const escapedId = (item.id + '').replace(/'/g, "\\'");
+
+                    var mk =
+                        `<li class='list-group-item'
+                           style="background-color: #f0f0f0; cursor: pointer;"
+                           onclick="setSearchValImaging('${escapedDisplayName}', '${escapedId}', '${price}', '${mode}', '${claims}', '${payable}')">
+                           [${category}] <b>${name}[${code}]</b> NGN ${price} ${coverageBadge}</li>`;
+                    $('#service-search-results').append(mk);
+                    $('#service-search-results').show();
+                }
+            }
+        });
+    } else {
+        $('#service-search-results').html('');
+        $('#service-search-results').hide();
+    }
+}
+
+function setSearchValImaging(name, id, price, coverageMode = null, claims = null, payable = null) {
+    const coverageBadge = coverageMode && coverageMode !== 'null' ? `<div class="small mt-1"><span class="badge bg-info">${coverageMode.toUpperCase()}</span> <span class="text-danger">Pay: ${payable ?? price}</span> <span class="text-success">Claims: ${claims ?? 0}</span></div>` : '';
+
+    // Ensure coverageMode is not 'null' string
+    if (coverageMode === 'null') coverageMode = null;
+
+    var mk = `
+        <tr>
+            <td>${name}${coverageBadge}</td>
+            <td>${payable ?? price}</td>
+            <td>
+                <input type='text' class='form-control' name='consult_imaging_note[]' placeholder='Optional note'>
+                <input type='hidden' name='consult_imaging_id[]' value='${id}'>
+            </td>
+            <td><button type="button" class='btn btn-danger btn-sm' onclick="removeProdRow(this)"><i class="fa fa-times"></i></button></td>
+        </tr>
+    `;
+
+    $('#selected-imaging-services').append(mk);
+    $('#service-search-results').html('').hide();
+    $('#service-search-input').val('');
+}
+
+function removeProdRow(btn) {
+    $(btn).closest('tr').remove();
 }
 
 // ==========================================
@@ -6158,24 +6639,9 @@ function getStatusBadges(data) {
         `;
     }
 
-    // Sample
-    if (data.sample_taken_by && data.sample_taken_at) {
-        badges += `
-            <div class="queue-card-status-item completed">
-                <div class="queue-card-status-label"><i class="mdi mdi-test-tube"></i> Sample Taken</div>
-                <div class="queue-card-status-value">${data.sample_taken_by}<br><small>${data.sample_taken_at}</small></div>
-            </div>
-        `;
-    } else if (data.status >= 2) {
-        badges += `
-            <div class="queue-card-status-item pending">
-                <div class="queue-card-status-label"><i class="mdi mdi-test-tube"></i> Sample</div>
-                <div class="queue-card-status-value">Awaiting sample collection</div>
-            </div>
-        `;
-    }
+    // No sample stage for imaging - skip directly to result status
 
-    // Result
+    // Result - for imaging, status 2 = awaiting results, status 4 = completed
     if (data.result_by && data.result_at) {
         badges += `
             <div class="queue-card-status-item completed">
@@ -6183,7 +6649,7 @@ function getStatusBadges(data) {
                 <div class="queue-card-status-value">${data.result_by}<br><small>${data.result_at}</small></div>
             </div>
         `;
-    } else if (data.status >= 3) {
+    } else if (data.status >= 2) {
         badges += `
             <div class="queue-card-status-item pending">
                 <div class="queue-card-status-label"><i class="mdi mdi-flask"></i> Result</div>
@@ -6289,7 +6755,78 @@ $('#btn-new-request').on('click', function() {
         return;
     }
     switchWorkspaceTab('new-request');
-    $('#new-request-patient-name').text(currentPatient.name);
+    $('#new-request-patient-name').text(currentPatientData ? currentPatientData.name : '');
+});
+
+// New Imaging Request Form Submit Handler
+$('#new-imaging-request-form').on('submit', function(e) {
+    e.preventDefault();
+
+    // Collect selected service IDs
+    const serviceIds = [];
+    const notes = [];
+    $('#selected-imaging-services tr').each(function() {
+        const serviceId = $(this).find('input[name="consult_imaging_id[]"]').val();
+        const note = $(this).find('input[name="consult_imaging_note[]"]').val();
+        if (serviceId) {
+            serviceIds.push(serviceId);
+            notes.push(note || '');
+        }
+    });
+
+    if (serviceIds.length === 0) {
+        toastr.warning('Please select at least one imaging service');
+        return;
+    }
+
+    if (!currentPatient) {
+        toastr.error('No patient selected');
+        return;
+    }
+
+    const $submitBtn = $(this).find('button[type="submit"]');
+    const originalBtnHtml = $submitBtn.html();
+    $submitBtn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Submitting...');
+
+    $.ajax({
+        url: '{{ route("imaging.createRequest") }}',
+        method: 'POST',
+        data: {
+            patient_id: currentPatient,
+            service_ids: serviceIds,
+            notes: notes,
+            clinical_notes: $('#request-clinical-notes').val(),
+            special_instructions: $('#request-special-instructions').val(),
+            urgency: $('#request-urgency').val(),
+            priority: $('#request-priority').val(),
+            _token: $('meta[name="csrf-token"]').attr('content')
+        },
+        success: function(response) {
+            if (response.success) {
+                toastr.success(response.message);
+                // Clear the form
+                $('#selected-imaging-services').empty();
+                $('#request-clinical-notes').val('');
+                $('#request-special-instructions').val('');
+                $('#request-urgency').val('routine');
+                $('#request-priority').val('normal');
+                // Refresh patient data and queue counts
+                loadPatient(currentPatient);
+                getQueueCounts();
+                // Switch to pending tab
+                switchWorkspaceTab('pending');
+            } else {
+                toastr.error(response.message || 'Failed to create request');
+            }
+        },
+        error: function(xhr) {
+            const message = xhr.responseJSON?.message || 'Error creating imaging request';
+            toastr.error(message);
+        },
+        complete: function() {
+            $submitBtn.prop('disabled', false).html(originalBtnHtml);
+        }
+    });
 });
 
 // ==========================================
