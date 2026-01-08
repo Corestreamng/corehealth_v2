@@ -17,6 +17,9 @@ class Kernel extends ConsoleKernel
     {
         // Bed billing now runs automatically via AppServiceProvider
         // No cron/scheduler needed for shared hosting environments
+
+        // Sync HMO executives to messenger group every hour
+        $schedule->command('hmo:sync-executives-group')->hourly();
     }
 
     /**
