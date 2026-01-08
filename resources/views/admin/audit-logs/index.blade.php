@@ -177,7 +177,7 @@
                 <h5 class="modal-title">
                     <i class="fa fa-info-circle"></i> Audit Details
                 </h5>
-                <button type="button" class="close text-white" data-dismiss="modal">
+                <button type="button" class="close text-white"  data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
             </div>
@@ -258,7 +258,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>

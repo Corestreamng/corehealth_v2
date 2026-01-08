@@ -395,7 +395,7 @@ Route::middleware(['auth'])->group(function () {
         <div class="modal-content">
             <div class="modal-header">
                 <h5>Receipt</h5>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body">
                 <ul class="nav nav-tabs">

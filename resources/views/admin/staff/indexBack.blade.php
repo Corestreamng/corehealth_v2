@@ -61,7 +61,7 @@
   <div class="modal-content">
       <!-- <div class="modal-header">
         <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <button type="button" class="close" dal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div> -->
@@ -184,7 +184,7 @@
               </div>
         </div>
       <!-- <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" dal">Close</button>
         <button type="button" class="btn btn-primary">Save changes</button>
       </div> -->
     </div>
@@ -196,7 +196,7 @@
   <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title"></h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <button type="button" class="close" dal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
@@ -271,14 +271,14 @@
 
       </form>
         <!-- <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-secondary" dal">Close</button>
           <button type="button" class="btn btn-primary">Save changes</button>
         </div> -->
         <div class="modal-footer">
-            <button type="button" class="btn btn-primary edit" data-dismiss="modal">
+            <button type="button" class="btn btn-primary edit" dal">
                 <span class='glyphicon glyphicon-check'></span> Edit
             </button>
-            <button type="button" class="btn btn-warning" data-dismiss="modal">
+            <button type="button" class="btn btn-warning" dal">
                 <span class='glyphicon glyphicon-remove'></span> Close
             </button>
         </div>

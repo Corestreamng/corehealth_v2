@@ -57,7 +57,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title"></h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <button type="button" class="close" dal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
@@ -149,10 +149,10 @@
           </form>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-success add" data-dismiss="modal">
+            <button type="button" class="btn btn-success add" dal">
                 <span id="" class='glyphicon glyphicon-check'></span> Add
             </button>
-            <button type="button" class="btn btn-warning" data-dismiss="modal">
+            <button type="button" class="btn btn-warning" dal">
                 <span class='glyphicon glyphicon-remove'></span> Close
             </button>
         </div>
@@ -166,7 +166,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title"></h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <button type="button" class="close" dal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
@@ -246,10 +246,10 @@
         </form>
       </div>
       <div class="modal-footer">
-          <button type="button" class="btn btn-primary edit" data-dismiss="modal">
+          <button type="button" class="btn btn-primary edit" dal">
               <span class='glyphicon glyphicon-check'></span> Edit
           </button>
-          <button type="button" class="btn btn-warning" data-dismiss="modal">
+          <button type="button" class="btn btn-warning" dal">
               <span class='glyphicon glyphicon-remove'></span> Close
           </button>
       </div>
@@ -263,7 +263,7 @@
     <div class="modal-content">
         <div class="modal-header">
             <h4 class="modal-title"></h4>
-            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <button type="button" class="close" dal">&times;</button>
         </div>
         <div class="modal-body">
           <h4 class="text-center">Are you sure you want to delete the following user?</h4>
@@ -277,10 +277,10 @@
           </form>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-danger delete" data-dismiss="modal">
+            <button type="button" class="btn btn-danger delete" dal">
                 <span id="" class='glyphicon glyphicon-trash'></span> Delete
             </button>
-            <button type="button" class="btn btn-warning" data-dismiss="modal">
+            <button type="button" class="btn btn-warning" dal">
                 <span class='glyphicon glyphicon-remove'></span> Close
             </button>
         </div>
