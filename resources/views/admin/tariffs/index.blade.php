@@ -99,7 +99,7 @@
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="tariffModalTitle">Add New Tariff</h5>
-                <button type="button" class="close text-white" data-dismiss="modal">
+                <button type="button" class="close text-white"  data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
             </div>
@@ -214,7 +214,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="saveTariffBtn">
                         <i class="fa fa-save"></i> Save Tariff
                     </button>
@@ -230,7 +230,7 @@
         <div class="modal-content">
             <div class="modal-header bg-warning">
                 <h5 class="modal-title">Import Tariffs from CSV</h5>
-                <button type="button" class="close" data-dismiss="modal">
+                <button type="button" class="close"  data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
             </div>
@@ -255,7 +255,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-warning">
                         <i class="fa fa-upload"></i> Import
                     </button>
@@ -271,7 +271,7 @@
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title">Confirm Delete</h5>
-                <button type="button" class="close text-white" data-dismiss="modal">
+                <button type="button" class="close text-white"  data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
             </div>
@@ -280,7 +280,7 @@
                 <input type="hidden" id="delete_tariff_id">
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
                     <i class="fa fa-trash"></i> Delete
                 </button>

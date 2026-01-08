@@ -46,13 +46,13 @@
 		if (this.$element.parent('.input-append, .input-prepend').find('.add-on').length) {
 			this.$element.parent('.input-append, .input-prepend').find('.add-on').on({
 			  'click.timepicker': $.proxy(this.showWidget, this)
-			});		
+			});
 		} else {
 			this.$element.closest(this.containerClass).find('.add-on').on({
 			  'click.timepicker': $.proxy(this.showWidget, this)
-			});		
+			});
 		}
-		
+
         this.$element.on({
           'focus.timepicker': $.proxy(this.highlightUnit, this),
           'click.timepicker': $.proxy(this.highlightUnit, this),
@@ -327,14 +327,14 @@
       case 'modal':
         template = '<div class="bootstrap-timepicker-widget modal hide fade in" data-backdrop="'+ (this.modalBackdrop ? 'true' : 'false') +'">'+
           '<div class="modal-header">'+
-            '<a href="#" class="close" data-dismiss="modal">×</a>'+
+            '<a href="#" class="close" dal">×</a>'+
             '<h3>Pick a Time</h3>'+
           '</div>'+
           '<div class="modal-content">'+
             templateContent +
           '</div>'+
           '<div class="modal-footer">'+
-            '<a href="#" class="btn btn-primary" data-dismiss="modal">OK</a>'+
+            '<a href="#" class="btn btn-primary" dal">OK</a>'+
           '</div>'+
         '</div>';
         break;

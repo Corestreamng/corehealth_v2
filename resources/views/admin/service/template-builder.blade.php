@@ -569,7 +569,7 @@ function previewTemplate() {
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Template Preview: ${templateData.template_name}</h5>
-                        <button type="button" class="close" data-dismiss="modal">
+                        <button type="button" class="close"  data-bs-dismiss="modal">
                             <span>&times;</span>
                         </button>
                     </div>
@@ -577,7 +577,7 @@ function previewTemplate() {
                         <pre style="max-height: 500px; overflow-y: auto;">${JSON.stringify(templateData, null, 2)}</pre>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Close</button>
                     </div>
                 </div>
             </div>

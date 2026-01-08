@@ -267,7 +267,7 @@
                     self.editor.currentView.element.focus(false);
                     caretBookmark = self.editor.composer.selection.getBookmark();
                     insertImageModal.appendTo('body').modal('show');
-                    insertImageModal.on('click.dismiss.modal', '[data-dismiss="modal"]', function(e) {
+                    insertImageModal.on('click.dismiss.modal', '[ data-bs-dismiss="modal"]', function(e) {
                         e.stopPropagation();
                     });
                     return false;
@@ -326,7 +326,7 @@
                     self.editor.currentView.element.focus(false);
                     caretBookmark = self.editor.composer.selection.getBookmark();
                     insertLinkModal.appendTo('body').modal('show');
-                    insertLinkModal.on('click.dismiss.modal', '[data-dismiss="modal"]', function(e) {
+                    insertLinkModal.on('click.dismiss.modal', '[ data-bs-dismiss="modal"]', function(e) {
                         e.stopPropagation();
                     });
                     return false;

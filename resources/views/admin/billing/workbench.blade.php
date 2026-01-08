@@ -4023,7 +4023,7 @@
         <div class="modal-content">
             <div class="modal-header" style="background: var(--hospital-primary); color: white;">
                 <h5 class="modal-title"><i class="mdi mdi-receipt"></i> My Transactions</h5>
-                <button type="button" class="close text-white" data-dismiss="modal">
+                <button type="button" class="close text-white"  data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
             </div>
@@ -4125,7 +4125,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -4192,7 +4192,7 @@
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title"><i class="mdi mdi-receipt"></i> Receipt Preview</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close text-white"  data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -4217,9 +4217,9 @@
                 <button type="button" class="btn btn-info" id="modal-print-thermal">
                     <i class="mdi mdi-printer"></i> Print Thermal
                 </button>
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                    <i class="mdi mdi-close"></i> Close
-                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fa fa-times"></i> Close
+                    </button>
             </div>
         </div>
     </div>
@@ -4235,7 +4235,7 @@
 let currentPatient = null;
 let currentPatientData = null; // Store full patient data including allergies
 let queueRefreshInterval = null;
-let searchTimeout = null;
+let patientSearchTimeout = null;
 let vitalTooltip = null;
 
 $(document).ready(function() {
@@ -4254,7 +4254,7 @@ function initializeEventListeners() {
 
     // Patient search
     $('#patient-search-input').on('input', function() {
-        clearTimeout(searchTimeout);
+        clearTimeout(patientSearchTimeout);
         const query = $(this).val().trim();
 
         if (query.length < 2) {
@@ -4262,7 +4262,7 @@ function initializeEventListeners() {
             return;
         }
 
-        searchTimeout = setTimeout(() => searchPatients(query), 300);
+        patientSearchTimeout = setTimeout(() => searchPatients(query), 300);
     });
 
     // Close search results when clicking outside

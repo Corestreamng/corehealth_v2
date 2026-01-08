@@ -70,7 +70,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Send To Service Queue</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <button type="button" class="close" dal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
@@ -100,10 +100,10 @@
                 </div>
                 <div class="modal-footer">
                     <button id="myButtonForPaymentValidation" type="button" class="btn btn-primary edit"
-                        data-dismiss="modal">
+                        dal">
                         <span class='glyphicon glyphicon-check'></span> Continue
                     </button>
-                    <button type="button" class="btn btn-warning" data-dismiss="modal">
+                    <button type="button" class="btn btn-warning" dal">
                         <span class='glyphicon glyphicon-remove'></span> Close
                     </button>
                 </div>

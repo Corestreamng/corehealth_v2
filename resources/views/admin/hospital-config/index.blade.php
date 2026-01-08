@@ -481,39 +481,48 @@
                             </div>
                             <div class="card-body" style="padding: 2rem;">
                                 <div class="mb-3">
-                                    <div class="custom-control custom-switch">
-                                        <input type="hidden" name="goonline" value="0">
-                                        <input type="checkbox" class="custom-control-input" id="goonline"
-                                               name="goonline" value="1" {{ $config->goonline ? 'checked' : '' }}>
-                                        <label class="custom-control-label" for="goonline" style="font-weight: 600;">
-                                            Go Online
+                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <label for="goonline" class="mb-0" style="font-weight: 600; cursor: pointer;">
+                                                Go Online
+                                            </label>
+                                            <small class="text-muted d-block">Enable DHIS2 & SuperAdmin sync</small>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" name="goonline" value="1" {{ $config->goonline ? 'checked' : '' }}>
+                                            <span class="toggle-slider"></span>
                                         </label>
                                     </div>
-                                    <small class="text-muted d-block mt-1">Enable DHIS2 & SuperAdmin sync</small>
                                 </div>
 
                                 <div class="mb-3">
-                                    <div class="custom-control custom-switch">
-                                        <input type="hidden" name="requirediagnosis" value="0">
-                                        <input type="checkbox" class="custom-control-input" id="requirediagnosis"
-                                               name="requirediagnosis" value="1" {{ $config->requirediagnosis ? 'checked' : '' }}>
-                                        <label class="custom-control-label" for="requirediagnosis" style="font-weight: 600;">
-                                            Require Diagnosis
+                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <label for="requirediagnosis" class="mb-0" style="font-weight: 600; cursor: pointer;">
+                                                Require Diagnosis
+                                            </label>
+                                            <small class="text-muted d-block">Require diagnosis during consultation</small>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" name="requirediagnosis" value="1" {{ $config->requirediagnosis ? 'checked' : '' }}>
+                                            <span class="toggle-slider"></span>
                                         </label>
                                     </div>
-                                    <small class="text-muted d-block mt-1">Require diagnosis during consultation</small>
                                 </div>
 
                                 <div class="mb-3">
-                                    <div class="custom-control custom-switch">
-                                        <input type="hidden" name="enable_twakto" value="0">
-                                        <input type="checkbox" class="custom-control-input" id="enable_twakto"
-                                               name="enable_twakto" value="1" {{ $config->enable_twakto ? 'checked' : '' }}>
-                                        <label class="custom-control-label" for="enable_twakto" style="font-weight: 600;">
-                                            Enable Tawk.to
+                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <label for="enable_twakto" class="mb-0" style="font-weight: 600; cursor: pointer;">
+                                                Enable Tawk.to
+                                            </label>
+                                            <small class="text-muted d-block">Enable Tawk.to chat support widget</small>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" name="enable_twakto" value="1" {{ $config->enable_twakto ? 'checked' : '' }}>
+                                            <span class="toggle-slider"></span>
                                         </label>
                                     </div>
-                                    <small class="text-muted d-block mt-1">Enable Tawk.to chat support widget</small>
                                 </div>
                             </div>
                         </div>
@@ -532,6 +541,68 @@
 </div>
 
 <style>
+    /* Custom Toggle Switch Styles */
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 52px;
+        height: 28px;
+        margin: 0;
+        cursor: pointer;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: 0.3s;
+        border-radius: 28px;
+    }
+
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 22px;
+        width: 22px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: 0.3s;
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+        background-color: var(--primary-color);
+    }
+
+    .toggle-switch input:checked + .toggle-slider:before {
+        transform: translateX(24px);
+    }
+
+    .toggle-switch input:focus + .toggle-slider {
+        box-shadow: 0 0 0 3px rgba(var(--primary-color), 0.2);
+    }
+
+    .feature-toggle-row {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .feature-toggle-row:last-child {
+        border-bottom: none;
+    }
+
     .custom-control-input:checked ~ .custom-control-label::before {
         background-color: var(--primary-color);
         border-color: var(--primary-color);
