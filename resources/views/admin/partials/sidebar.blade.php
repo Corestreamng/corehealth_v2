@@ -180,6 +180,12 @@
                 </a>
             </li>
             @hasanyrole('SUPERADMIN|ADMIN')
+            <li class="nav-item {{ request()->routeIs('vaccine-schedule.*') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('vaccine-schedule.*') ? 'active' : '' }}" href="{{ route('vaccine-schedule.index') }}">
+                    <i class="mdi mdi-needle menu-icon"></i>
+                    <span class="menu-title">Vaccine Schedule</span>
+                </a>
+            </li>
             <li class="nav-item {{ request()->routeIs('banks.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('banks.*') ? 'active' : '' }}" href="{{ route('banks.index') }}">
                     <i class="mdi mdi-bank menu-icon"></i>
@@ -337,6 +343,12 @@
         @hasanyrole('SUPERADMIN|ADMIN|NURSE')
             <li class="pt-2 pb-1">
                 <span class="nav-item-head">Nursing</span>
+            </li>
+            <li class="nav-item {{ request()->routeIs('nursing-workbench.*') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('nursing-workbench.*') ? 'active' : '' }}" href="{{ route('nursing-workbench.index') }}">
+                    <i class="mdi mdi-hospital-box menu-icon"></i>
+                    <span class="menu-title">Nursing Workbench</span>
+                </a>
             </li>
             <li class="nav-item {{ request()->routeIs('vitals.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('vitals.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#nursing_" data-bs-target="#nursing_" aria-expanded="{{ request()->routeIs('vitals.*') ? 'true' : 'false' }}"
