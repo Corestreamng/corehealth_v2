@@ -71,6 +71,10 @@ Route::get('/csrf-token', function () {
 Route::group(['middleware' => ['auth']], function () {
     // Route::put('staff/updateAvatar/{id}', 'Admin\UserController@updateAvatar')->name('users.updateAvatar');
 
+    // Messages/Chat
+    Route::get('/messages', [MessagesController::class, 'index'])->name('messages');
+    Route::get('/messages/create', [MessagesController::class, 'create'])->name('messages.create');
+
     Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Users
         // Route::put('staff/{id}',[StaffController::class, 'update'])->name('staff.update');
@@ -97,6 +101,38 @@ Route::group(['middleware' => ['auth']], function () {
     Route::group(['middleware' => ['auth', 'role:SUPERADMIN|ADMIN']], function () {
         Route::get('hospital-config', [HospitalConfigController::class, 'index'])->name('hospital-config.index');
         Route::put('hospital-config', [HospitalConfigController::class, 'update'])->name('hospital-config.update');
+    });
+
+    // Vaccine Schedule Configuration
+    Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'role:SUPERADMIN|ADMIN']], function () {
+        Route::get('vaccine-schedule', [\App\Http\Controllers\VaccineScheduleController::class, 'index'])->name('vaccine-schedule.index');
+
+        // Templates
+        Route::get('vaccine-schedule/templates', [\App\Http\Controllers\VaccineScheduleController::class, 'getTemplates'])->name('vaccine-schedule.templates.list');
+        Route::post('vaccine-schedule/templates', [\App\Http\Controllers\VaccineScheduleController::class, 'storeTemplate'])->name('vaccine-schedule.templates.store');
+        Route::get('vaccine-schedule/templates/{id}', [\App\Http\Controllers\VaccineScheduleController::class, 'getTemplate'])->name('vaccine-schedule.templates.show');
+        Route::put('vaccine-schedule/templates/{id}', [\App\Http\Controllers\VaccineScheduleController::class, 'updateTemplate'])->name('vaccine-schedule.templates.update');
+        Route::delete('vaccine-schedule/templates/{id}', [\App\Http\Controllers\VaccineScheduleController::class, 'deleteTemplate'])->name('vaccine-schedule.templates.destroy');
+        Route::post('vaccine-schedule/templates/{id}/set-default', [\App\Http\Controllers\VaccineScheduleController::class, 'setDefaultTemplate'])->name('vaccine-schedule.templates.set-default');
+        Route::post('vaccine-schedule/templates/{id}/duplicate', [\App\Http\Controllers\VaccineScheduleController::class, 'duplicateTemplate'])->name('vaccine-schedule.templates.duplicate');
+        Route::get('vaccine-schedule/templates/{id}/export', [\App\Http\Controllers\VaccineScheduleController::class, 'exportTemplate'])->name('vaccine-schedule.templates.export');
+        Route::post('vaccine-schedule/templates/import', [\App\Http\Controllers\VaccineScheduleController::class, 'importTemplate'])->name('vaccine-schedule.templates.import');
+
+        // Schedule Items
+        Route::post('vaccine-schedule/items', [\App\Http\Controllers\VaccineScheduleController::class, 'storeScheduleItem'])->name('vaccine-schedule.items.store');
+        Route::put('vaccine-schedule/items/{id}', [\App\Http\Controllers\VaccineScheduleController::class, 'updateScheduleItem'])->name('vaccine-schedule.items.update');
+        Route::delete('vaccine-schedule/items/{id}', [\App\Http\Controllers\VaccineScheduleController::class, 'deleteScheduleItem'])->name('vaccine-schedule.items.destroy');
+
+        // Product Mappings
+        Route::get('vaccine-schedule/mappings', [\App\Http\Controllers\VaccineScheduleController::class, 'getProductMappings'])->name('vaccine-schedule.mappings.list');
+        Route::post('vaccine-schedule/mappings', [\App\Http\Controllers\VaccineScheduleController::class, 'storeProductMapping'])->name('vaccine-schedule.mappings.store');
+        Route::put('vaccine-schedule/mappings/{id}', [\App\Http\Controllers\VaccineScheduleController::class, 'updateProductMapping'])->name('vaccine-schedule.mappings.update');
+        Route::delete('vaccine-schedule/mappings/{id}', [\App\Http\Controllers\VaccineScheduleController::class, 'deleteProductMapping'])->name('vaccine-schedule.mappings.destroy');
+        Route::post('vaccine-schedule/mappings/{id}/set-primary', [\App\Http\Controllers\VaccineScheduleController::class, 'setPrimaryMapping'])->name('vaccine-schedule.mappings.set-primary');
+
+        // Helpers
+        Route::get('vaccine-schedule/vaccines', [\App\Http\Controllers\VaccineScheduleController::class, 'getVaccineNames'])->name('vaccine-schedule.vaccines.list');
+        Route::get('vaccine-schedule/products/search', [\App\Http\Controllers\VaccineScheduleController::class, 'searchProducts'])->name('vaccine-schedule.products.search');
     });
 
     // Bank Configuration
