@@ -228,11 +228,11 @@
                                 </div>
                                 <div class="col-md-2">
                                     <label>From Date</label>
-                                    <input type="date" class="form-control form-control-sm" id="filter_date_from">
+                                    <input type="date" class="form-control form-control-sm" id="filter_date_from" value="{{ date('Y-m-01') }}">
                                 </div>
                                 <div class="col-md-2">
                                     <label>To Date</label>
-                                    <input type="date" class="form-control form-control-sm" id="filter_date_to">
+                                    <input type="date" class="form-control form-control-sm" id="filter_date_to" value="{{ date('Y-m-d') }}">
                                 </div>
                                 <div class="col-md-2">
                                     <label>Submission</label>
@@ -440,10 +440,10 @@
                                         </select>
                                     </div>
                                     <div class="col-md-3">
-                                        <input type="date" class="form-control form-control-sm" id="remittance_filter_from" placeholder="From">
+                                        <input type="date" class="form-control form-control-sm" id="remittance_filter_from" placeholder="From" value="{{ date('Y-m-01') }}">
                                     </div>
                                     <div class="col-md-3">
-                                        <input type="date" class="form-control form-control-sm" id="remittance_filter_to" placeholder="To">
+                                        <input type="date" class="form-control form-control-sm" id="remittance_filter_to" placeholder="To" value="{{ date('Y-m-d') }}">
                                     </div>
                                     <div class="col-md-2">
                                         <button class="btn btn-primary btn-sm btn-block" id="filterRemittances">Filter</button>
@@ -630,11 +630,11 @@
                                 </div>
                                 <div class="col-md-2">
                                     <label>From Date</label>
-                                    <input type="date" class="form-control form-control-sm" id="auth_filter_from">
+                                    <input type="date" class="form-control form-control-sm" id="auth_filter_from" value="{{ date('Y-m-01') }}">
                                 </div>
                                 <div class="col-md-2">
                                     <label>To Date</label>
-                                    <input type="date" class="form-control form-control-sm" id="auth_filter_to">
+                                    <input type="date" class="form-control form-control-sm" id="auth_filter_to" value="{{ date('Y-m-d') }}">
                                 </div>
                                 <div class="col-md-3">
                                     <label>&nbsp;</label>
@@ -747,7 +747,7 @@
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Payment Date <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="remittance_payment_date" name="payment_date" required>
+                                <input type="date" class="form-control" id="remittance_payment_date" name="payment_date" value="{{ date('Y-m-d') }}" required>
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -778,13 +778,13 @@
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Period From</label>
-                                <input type="date" class="form-control" id="remittance_period_from" name="period_from">
+                                <input type="date" class="form-control" id="remittance_period_from" name="period_from" value="{{ date('Y-m-01') }}">
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Period To</label>
-                                <input type="date" class="form-control" id="remittance_period_to" name="period_to">
+                                <input type="date" class="form-control" id="remittance_period_to" name="period_to" value="{{ date('Y-m-d') }}">
                             </div>
                         </div>
                     </div>
