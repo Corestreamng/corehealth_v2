@@ -28,6 +28,9 @@ protected $fillable = [
         'validated_by',
         'validated_at',
         'validation_notes',
+        'hmo_remittance_id',
+        'submitted_to_hmo_at',
+        'hmo_submission_batch',
     ];
 
     public function product()
@@ -78,5 +81,13 @@ protected $fillable = [
     public function productRequest()
     {
         return $this->hasOne(ProductRequest::class, 'product_request_id', 'id');
+    }
+
+    /**
+     * Get the HMO remittance associated with this request.
+     */
+    public function remittance()
+    {
+        return $this->belongsTo(HmoRemittance::class, 'hmo_remittance_id');
     }
 }

@@ -13,6 +13,7 @@ use App\Http\Controllers\Doctor\DoctorDashboardController;
 use App\Http\Controllers\EncounterController;
 use App\Http\Controllers\HmoController;
 use App\Http\Controllers\HmoWorkbenchController;
+use App\Http\Controllers\HmoReportsController;
 use App\Http\Controllers\Admin\TariffManagementController;
 use App\Http\Controllers\HospitalConfigController;
 use App\Http\Controllers\LabServiceRequestController;
@@ -403,6 +404,27 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('hmo/patient/{patientId}/vitals', [HmoWorkbenchController::class, 'getPatientVitals'])->name('hmo.patient.vitals');
         Route::get('hmo/patient/{patientId}/notes', [HmoWorkbenchController::class, 'getPatientNotes'])->name('hmo.patient.notes');
         Route::get('hmo/patient/{patientId}/medications', [HmoWorkbenchController::class, 'getPatientMedications'])->name('hmo.patient.medications');
+
+        // HMO Reports
+        Route::get('hmo/reports', [HmoReportsController::class, 'index'])->name('hmo.reports');
+        Route::get('hmo/reports/claims', [HmoReportsController::class, 'getClaimsReport'])->name('hmo.reports.claims');
+        Route::get('hmo/reports/outstanding', [HmoReportsController::class, 'getOutstandingReport'])->name('hmo.reports.outstanding');
+        Route::get('hmo/reports/patient/{patientId}', [HmoReportsController::class, 'getPatientReport'])->name('hmo.reports.patient');
+        Route::get('hmo/reports/patient/{patientId}/print', [HmoReportsController::class, 'getPatientPrintData'])->name('hmo.reports.patient.print');
+        Route::get('hmo/reports/monthly', [HmoReportsController::class, 'getMonthlySummary'])->name('hmo.reports.monthly');
+        Route::get('hmo/reports/utilization', [HmoReportsController::class, 'getUtilizationReport'])->name('hmo.reports.utilization');
+        Route::get('hmo/reports/auth-codes', [HmoReportsController::class, 'getAuthCodeReport'])->name('hmo.reports.auth-codes');
+        Route::get('hmo/reports/remittances', [HmoReportsController::class, 'getRemittances'])->name('hmo.reports.remittances');
+        Route::post('hmo/reports/remittances', [HmoReportsController::class, 'storeRemittance'])->name('hmo.reports.remittances.store');
+        Route::get('hmo/reports/remittances/{id}', [HmoReportsController::class, 'showRemittance'])->name('hmo.reports.remittances.show');
+        Route::put('hmo/reports/remittances/{id}', [HmoReportsController::class, 'updateRemittance'])->name('hmo.reports.remittances.update');
+        Route::delete('hmo/reports/remittances/{id}', [HmoReportsController::class, 'deleteRemittance'])->name('hmo.reports.remittances.delete');
+        Route::post('hmo/reports/mark-submitted', [HmoReportsController::class, 'markAsSubmitted'])->name('hmo.reports.mark-submitted');
+        Route::post('hmo/reports/link-claims', [HmoReportsController::class, 'linkClaimsToRemittance'])->name('hmo.reports.link-claims');
+        Route::get('hmo/reports/print-data', [HmoReportsController::class, 'getPrintData'])->name('hmo.reports.print-data');
+        Route::get('hmo/reports/export-excel', [HmoReportsController::class, 'exportExcel'])->name('hmo.reports.export-excel');
+        Route::get('hmo/reports/export-pdf', [HmoReportsController::class, 'exportPdf'])->name('hmo.reports.export-pdf');
+        Route::get('hmo/reports/search-patients', [HmoReportsController::class, 'searchPatients'])->name('hmo.reports.search-patients');
     });
 
     // HMO Tariff Management
