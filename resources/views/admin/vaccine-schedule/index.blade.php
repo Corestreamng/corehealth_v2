@@ -105,7 +105,7 @@
         <div class="modal-content" style="border-radius: 12px;">
             <div class="modal-header" style="border-bottom: 1px solid #e9ecef;">
                 <h5 class="modal-title" id="templateModalTitle">Add Schedule Template</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close"  data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -137,7 +137,7 @@
                     </div>
                 </div>
                 <div class="modal-footer" style="border-top: 1px solid #e9ecef;">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="btnSaveTemplate">
                         <i class="mdi mdi-content-save"></i> Save Template
                     </button>
@@ -156,7 +156,7 @@
                     <i class="mdi mdi-calendar-clock mr-2"></i>
                     <span id="viewTemplateTitle">Schedule Template</span>
                 </h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close"  data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -185,7 +185,7 @@
                 </div>
             </div>
             <div class="modal-footer" style="border-top: 1px solid #e9ecef;">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -197,7 +197,7 @@
         <div class="modal-content" style="border-radius: 12px;">
             <div class="modal-header" style="border-bottom: 1px solid #e9ecef;">
                 <h5 class="modal-title" id="scheduleItemModalTitle">Add Schedule Item</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close"  data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -271,7 +271,7 @@
                     </div>
                 </div>
                 <div class="modal-footer" style="border-top: 1px solid #e9ecef;">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="btnSaveScheduleItem">
                         <i class="mdi mdi-content-save"></i> Save
                     </button>
@@ -287,7 +287,7 @@
         <div class="modal-content" style="border-radius: 12px;">
             <div class="modal-header" style="border-bottom: 1px solid #e9ecef;">
                 <h5 class="modal-title" id="mappingModalTitle">Add Product Mapping</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close"  data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -324,7 +324,7 @@
                     </div>
                 </div>
                 <div class="modal-footer" style="border-top: 1px solid #e9ecef;">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="btnSaveMapping">
                         <i class="mdi mdi-content-save"></i> Save Mapping
                     </button>
@@ -340,7 +340,7 @@
         <div class="modal-content" style="border-radius: 12px;">
             <div class="modal-header">
                 <h5 class="modal-title">Import Schedule Template</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close"  data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -353,7 +353,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">
                         <i class="mdi mdi-upload"></i> Import
                     </button>
