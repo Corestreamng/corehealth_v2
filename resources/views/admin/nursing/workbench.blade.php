@@ -3226,7 +3226,7 @@
                             <h5 class="modal-title" id="administerVaccineModalLabel">
                                 <i class="mdi mdi-needle"></i> Administer Vaccine
                             </h5>
-                            <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                            <button type="button" class="close text-white"  data-bs-dismiss="modal" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </div>
@@ -3337,7 +3337,7 @@
                             </form>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                            <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">
                                 <i class="mdi mdi-close"></i> Cancel
                             </button>
                             <button type="button" class="btn btn-success" id="modal-submit-immunization">
