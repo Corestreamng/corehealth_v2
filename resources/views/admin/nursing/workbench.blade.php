@@ -3199,8 +3199,8 @@
                                                         <tr>
                                                             <th>Date</th>
                                                             <th>Vaccine</th>
-                                                            <th>Schedule</th>
                                                             <th>Dose #</th>
+                                                            <th>Dose Amount</th>
                                                             <th>Batch</th>
                                                             <th>Site</th>
                                                             <th>Nurse</th>
@@ -8329,12 +8329,39 @@ function resetAdministerModal() {
 }
 
 // Select product in modal
-function selectModalProduct(product) {
+function selectModalProduct(element) {
+    const product = {
+        id: $(element).data('id'),
+        name: $(element).data('name'),
+        code: $(element).data('code'),
+        qty: $(element).data('qty'),
+        price: $(element).data('price'),
+        payable: $(element).data('payable'),
+        claims: $(element).data('claims'),
+        mode: $(element).data('mode'),
+        category: $(element).data('category')
+    };
+
     modalSelectedProduct = product;
     $('#modal-product-id').val(product.id);
-    $('#modal-selected-product-name').text(product.name || product.product_name);
-    $('#modal-selected-product-details').text(`Stock: ${product.stock || 'N/A'}`);
-    $('#modal-selected-product-price').text(`₦${parseFloat(product.price || 0).toLocaleString()}`);
+    $('#modal-selected-product-name').text(product.name);
+    $('#modal-selected-product-details').html(`
+        <span class="mr-2">[${product.code}]</span>
+        <span class="mr-2">${product.category}</span>
+        <span class="${product.qty > 0 ? 'text-success' : 'text-danger'}">${product.qty} in stock</span>
+    `);
+
+    // Show price with HMO info if applicable
+    let priceHtml = `₦${parseFloat(product.price).toLocaleString()}`;
+    if (product.mode && product.mode !== 'cash') {
+        priceHtml = `
+            <span class="badge badge-info mr-1">${product.mode.toUpperCase()}</span>
+            <span class="text-danger">Pay: ₦${parseFloat(product.payable).toLocaleString()}</span>
+            <span class="text-success ml-1">Claim: ₦${parseFloat(product.claims).toLocaleString()}</span>
+        `;
+    }
+    $('#modal-selected-product-price').html(priceHtml);
+
     $('#modal-selected-product-card').removeClass('d-none');
     $('#modal-vaccine-search').val('');
     $('#modal-vaccine-results').hide();
@@ -8347,7 +8374,7 @@ $('#modal-remove-product').click(function() {
     $('#modal-selected-product-card').addClass('d-none');
 });
 
-// Product search in modal
+// Product search in modal - uses same endpoint as injections for HMO pricing
 let modalSearchTimeout;
 $('#modal-vaccine-search').on('input', function() {
     const term = $(this).val();
@@ -8360,34 +8387,64 @@ $('#modal-vaccine-search').on('input', function() {
 
     modalSearchTimeout = setTimeout(function() {
         $.ajax({
-            url: '{{ route("nursing-workbench.search-products") }}',
+            url: "{{ url('live-search-products') }}",
             method: 'GET',
-            data: { term: term },
-            success: function(results) {
-                if (results.length === 0) {
+            dataType: 'json',
+            data: { term: term, patient_id: currentPatient },
+            success: function(data) {
+                $('#modal-vaccine-results').html('');
+
+                if (data.length === 0) {
                     $('#modal-vaccine-results').html('<li class="list-group-item text-muted">No products found</li>').show();
                     return;
                 }
 
-                let html = '';
-                results.forEach(product => {
-                    const hmoInfo = product.hmo_covers
-                        ? `<span class="badge badge-success ml-2">HMO: ₦${parseFloat(product.hmo_covers).toLocaleString()}</span>`
+                data.forEach(function(item) {
+                    const category = (item.category && item.category.category_name) ? item.category.category_name : 'N/A';
+                    const name = item.product_name || 'Unknown';
+                    const code = item.product_code || '';
+                    const qty = item.stock && item.stock.current_quantity !== undefined ? item.stock.current_quantity : 0;
+                    const price = item.price && item.price.initial_sale_price !== undefined ? item.price.initial_sale_price : 0;
+                    const payable = item.payable_amount !== undefined && item.payable_amount !== null ? item.payable_amount : price;
+                    const claims = item.claims_amount !== undefined && item.claims_amount !== null ? item.claims_amount : 0;
+                    const mode = item.coverage_mode || 'cash';
+
+                    const coverageBadge = mode && mode !== 'cash'
+                        ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ₦${payable}</span> <span class='text-success ms-1'>Claim: ₦${claims}</span>`
                         : '';
-                    html += `
-                        <li class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
-                            onclick="selectModalProduct(${JSON.stringify(product).replace(/"/g, '&quot;')})" style="cursor:pointer;">
-                            <div>
-                                <strong>${product.name}</strong>
-                                <br><small class="text-muted">Stock: ${product.qty}</small>
-                            </div>
-                            <div>
-                                <span class="badge badge-primary">₦${parseFloat(product.price).toLocaleString()}</span>
-                                ${hmoInfo}
-                            </div>
-                        </li>`;
+
+                    const qtyClass = qty > 0 ? 'text-success' : 'text-danger';
+
+                    const mk = `<li class='list-group-item list-group-item-action' style="cursor: pointer;"
+                               data-id="${item.id}"
+                               data-name="${name}"
+                               data-code="${code}"
+                               data-qty="${qty}"
+                               data-price="${price}"
+                               data-payable="${payable}"
+                               data-claims="${claims}"
+                               data-mode="${mode}"
+                               data-category="${category}"
+                               onclick="selectModalProduct(this)">
+                               <div class="d-flex justify-content-between align-items-start">
+                                   <div>
+                                       <strong>${name}</strong> <small class="text-muted">[${code}]</small>
+                                       <div class="small text-muted">${category}</div>
+                                   </div>
+                                   <div class="text-end">
+                                       <div class="${qtyClass}"><strong>${qty}</strong> avail.</div>
+                                       <div>₦${price}</div>
+                                   </div>
+                               </div>
+                               ${coverageBadge ? `<div class="small mt-1">${coverageBadge}</div>` : ''}
+                           </li>`;
+                    $('#modal-vaccine-results').append(mk);
                 });
-                $('#modal-vaccine-results').html(html).show();
+                $('#modal-vaccine-results').show();
+            },
+            error: function(xhr) {
+                console.error('Product search failed', xhr);
+                $('#modal-vaccine-results').html('<li class="list-group-item text-danger">Search failed</li>').show();
             }
         });
     }, 300);
@@ -8454,19 +8511,27 @@ $('#modal-submit-immunization').click(function() {
     });
 });
 
-// History view toggle
-$('#immunization-history-container').on('click', '.btn-group .btn', function() {
+// History view toggle - using direct ID selectors for the buttons
+$('#view-timeline-btn, #view-calendar-btn, #view-table-btn').on('click', function() {
     const view = $(this).data('view');
-    $(this).siblings().removeClass('active');
+
+    // Update button states
+    $('#view-timeline-btn, #view-calendar-btn, #view-table-btn').removeClass('active');
     $(this).addClass('active');
 
+    // Show/hide views
     $('.history-view').addClass('d-none');
     $(`#history-${view}-view`).removeClass('d-none');
 
-    if (view === 'calendar' && currentPatient) {
-        loadImmunizationCalendar(currentPatient);
-    } else if (view === 'timeline' && currentPatient) {
-        loadImmunizationTimeline(currentPatient);
+    // Load the appropriate view if patient is selected
+    if (currentPatient) {
+        if (view === 'timeline') {
+            loadImmunizationTimeline(currentPatient);
+        } else if (view === 'calendar') {
+            loadImmunizationCalendar(currentPatient);
+        } else if (view === 'table') {
+            loadImmunizationHistoryTable(currentPatient);
+        }
     }
 });
 
@@ -8605,8 +8670,8 @@ function loadImmunizationCalendar(patientId) {
     });
 }
 
-// Load Immunization History with DataTable
-function loadImmunizationHistory(patientId) {
+// Load Immunization History Table View with DataTable
+function loadImmunizationHistoryTable(patientId) {
     // Destroy existing DataTable if it exists
     if ($.fn.DataTable.isDataTable('#immunization-history-table')) {
         $('#immunization-history-table').DataTable().destroy();
@@ -8616,29 +8681,58 @@ function loadImmunizationHistory(patientId) {
         processing: true,
         serverSide: false,
         ajax: {
-            url: `/nursing-workbench/patient/${patientId}/immunizations`,
-            dataSrc: ''
+            url: `/nursing-workbench/patient/${patientId}/immunization-history`,
+            dataSrc: 'records'
         },
         columns: [
-            { data: 'administered_at' },
             {
-                data: null,
+                data: 'administered_date',
                 render: function(data) {
-                    return data.vaccine_name || data.product_name || 'N/A';
+                    return data || 'N/A';
                 }
             },
-            { data: 'dose_number' },
-            { data: 'batch_number', defaultContent: 'N/A' },
-            { data: 'site' },
-            { data: 'administered_by' }
+            {
+                data: 'vaccine_name',
+                render: function(data) {
+                    return data || 'N/A';
+                }
+            },
+            {
+                data: 'dose_number',
+                render: function(data) {
+                    return data ? `Dose ${data}` : 'N/A';
+                }
+            },
+            {
+                data: 'dose',
+                defaultContent: 'N/A'
+            },
+            {
+                data: 'batch_number',
+                defaultContent: 'N/A'
+            },
+            {
+                data: 'site',
+                defaultContent: 'N/A'
+            },
+            {
+                data: 'administered_by',
+                defaultContent: 'N/A'
+            }
         ],
         order: [[0, 'desc']],
         pageLength: 10,
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
         language: {
-            emptyTable: "No immunization records found"
+            emptyTable: "No immunization records found",
+            processing: '<i class="mdi mdi-loading mdi-spin"></i> Loading...'
         }
     });
+}
+
+// Legacy function for backwards compatibility
+function loadImmunizationHistory(patientId) {
+    loadImmunizationHistoryTable(patientId);
 }
 
 // Service Billing Search

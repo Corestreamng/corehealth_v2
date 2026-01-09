@@ -458,7 +458,7 @@ class NursingWorkbenchController extends Controller
                 $q->where('product_name', 'like', "%{$term}%")
                   ->orWhere('product_code', 'like', "%{$term}%");
             })
-            ->where('visible', 1)
+            ->where('status', 1)
             ->limit(20)
             ->get();
 
@@ -614,7 +614,7 @@ class NursingWorkbenchController extends Controller
 
         // You may want to filter by a specific category for vaccines
         $query = Product::with(['price', 'stock', 'category'])
-            ->where('visible', 1);
+            ->where('status', 1);
 
         if ($term) {
             $query->where(function ($q) use ($term) {
@@ -877,7 +877,7 @@ class NursingWorkbenchController extends Controller
         $categoryId = $request->get('category_id');
 
         $query = Product::with(['price', 'stock', 'category'])
-            ->where('visible', 1);
+            ->where('status', 1);
 
         if ($term) {
             $query->where(function ($q) use ($term) {
@@ -1536,34 +1536,32 @@ class NursingWorkbenchController extends Controller
         ]);
 
         $patient = PatientLowerCase::findOrFail($schedule->patient_id);
-        $product = Product::findOrFail($validated['product_id']);
+        $product = Product::with('price')->findOrFail($validated['product_id']);
 
         DB::beginTransaction();
         try {
-            // Get active admission for encounter
-            $admission = AdmissionRequest::where('patient_id', $schedule->patient_id)
-                ->whereIn('status', ['active', 'admitted'])
-                ->first();
-
-            $encounterId = $admission && $admission->encounter_id ? $admission->encounter_id : null;
-
-            // Apply HMO tariff
-            $priceInfo = HmoHelper::applyHmoTariff($product->id, 'product', $patient);
-
             // Create billing record
-            $billing = ProductOrServiceRequest::create([
-                'encounter_id' => $encounterId,
-                'patient_id' => $schedule->patient_id,
-                'product_id' => $product->id,
-                'qty' => 1,
-                'price' => $priceInfo['price'],
-                'hmo_id' => $patient->hmo_id,
-                'hmo_covers' => $priceInfo['hmo_covers'] ?? 0,
-                'patient_pays' => $priceInfo['patient_pays'] ?? $priceInfo['price'],
-                'hmo_approval_status' => $priceInfo['requires_approval'] ? 'pending' : null,
-                'status' => 'pending',
-                'staff_user_id' => Auth::id(),
-            ]);
+            $billing = new ProductOrServiceRequest();
+            $billing->user_id = $patient->user_id;
+            $billing->staff_user_id = Auth::id();
+            $billing->product_id = $product->id;
+            $billing->qty = 1;
+
+            // Try to apply HMO tariff, fallback to regular price if not found
+            try {
+                $hmoData = HmoHelper::applyHmoTariff($patient->id, $product->id, null);
+                if ($hmoData) {
+                    $billing->payable_amount = $hmoData['payable_amount'];
+                    $billing->claims_amount = $hmoData['claims_amount'];
+                    $billing->coverage_mode = $hmoData['coverage_mode'];
+                    $billing->validation_status = $hmoData['validation_status'];
+                }
+            } catch (\Exception $e) {
+                // If no HMO tariff, use regular price (non-HMO patient or tariff not configured)
+                $billing->payable_amount = $product->price ? $product->price->selling_price : 0;
+            }
+
+            $billing->save();
 
             // Create immunization record
             $immunizationRecord = ImmunizationRecord::create([
@@ -1662,34 +1660,32 @@ class NursingWorkbenchController extends Controller
 
         $schedule = PatientImmunizationSchedule::with('scheduleItem')->findOrFail($validated['schedule_id']);
         $patient = PatientLowerCase::findOrFail($schedule->patient_id);
-        $product = Product::findOrFail($validated['product_id']);
+        $product = Product::with('price')->findOrFail($validated['product_id']);
 
         DB::beginTransaction();
         try {
-            // Get active admission for encounter
-            $admission = AdmissionRequest::where('patient_id', $schedule->patient_id)
-                ->whereIn('status', ['active', 'admitted'])
-                ->first();
-
-            $encounterId = $admission && $admission->encounter_id ? $admission->encounter_id : null;
-
-            // Apply HMO tariff
-            $priceInfo = HmoHelper::applyHmoTariff($product->id, 'product', $patient);
-
             // Create billing record
-            $billing = ProductOrServiceRequest::create([
-                'encounter_id' => $encounterId,
-                'patient_id' => $schedule->patient_id,
-                'product_id' => $product->id,
-                'qty' => 1,
-                'price' => $priceInfo['price'],
-                'hmo_id' => $patient->hmo_id,
-                'hmo_covers' => $priceInfo['hmo_covers'] ?? 0,
-                'patient_pays' => $priceInfo['patient_pays'] ?? $priceInfo['price'],
-                'hmo_approval_status' => $priceInfo['requires_approval'] ? 'pending' : null,
-                'status' => 'pending',
-                'staff_user_id' => Auth::id(),
-            ]);
+            $billing = new ProductOrServiceRequest();
+            $billing->user_id = $patient->user_id;
+            $billing->staff_user_id = Auth::id();
+            $billing->product_id = $product->id;
+            $billing->qty = 1;
+
+            // Try to apply HMO tariff, fallback to regular price if not found
+            try {
+                $hmoData = HmoHelper::applyHmoTariff($patient->id, $product->id, null);
+                if ($hmoData) {
+                    $billing->payable_amount = $hmoData['payable_amount'];
+                    $billing->claims_amount = $hmoData['claims_amount'];
+                    $billing->coverage_mode = $hmoData['coverage_mode'];
+                    $billing->validation_status = $hmoData['validation_status'];
+                }
+            } catch (\Exception $e) {
+                // If no HMO tariff, use regular price (non-HMO patient or tariff not configured)
+                $billing->payable_amount = $product->price ? $product->price->selling_price : 0;
+            }
+
+            $billing->save();
 
             // Create immunization record
             $immunizationRecord = ImmunizationRecord::create([
