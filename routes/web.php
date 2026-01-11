@@ -7,6 +7,7 @@ use App\Http\Controllers\AdmissionRequestController;
 use App\Http\Controllers\BankController;
 use App\Http\Controllers\BedController;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\ChecklistTemplateController;
 use App\Http\Controllers\ClinicController;
 use App\Http\Controllers\Doctor\DoctorConsultationsController;
 use App\Http\Controllers\Doctor\DoctorDashboardController;
@@ -42,6 +43,7 @@ use App\Http\Controllers\VitalSignController;
 use App\Http\Controllers\MessagesController;
 use App\Http\Controllers\PatientProfileController;
 use App\Http\Controllers\SpecializationController;
+use App\Http\Controllers\WardController;
 use App\Models\Clinic;
 use App\Models\PatientProfile;
 use App\Models\Staff;
@@ -332,6 +334,19 @@ Route::group(['middleware' => ['auth']], function () {
         Route::resource('services', ServiceController::class);
         Route::resource('beds', BedController::class);
         Route::get('bed-list', [BedController::class, 'listBeds'])->name('bed-list');
+
+        // Ward Management
+        Route::resource('wards', WardController::class);
+        Route::get('ward-list', [WardController::class, 'listWards'])->name('ward-list');
+        Route::get('wards-for-select', [WardController::class, 'getWardsForSelect'])->name('wards-for-select');
+
+        // Checklist Templates
+        Route::resource('checklist-templates', ChecklistTemplateController::class);
+        Route::get('checklist-template-list', [ChecklistTemplateController::class, 'listTemplates'])->name('checklist-template-list');
+        Route::post('checklist-templates/{template}/items', [ChecklistTemplateController::class, 'addItem'])->name('checklist-templates.add-item');
+        Route::put('checklist-template-items/{item}', [ChecklistTemplateController::class, 'updateItem'])->name('checklist-template-items.update');
+        Route::delete('checklist-template-items/{item}', [ChecklistTemplateController::class, 'deleteItem'])->name('checklist-template-items.delete');
+
         Route::resource('admission-requests', AdmissionRequestController::class);
         Route::get('discharge-patient/{admission_req_id}', [AdmissionRequestController::class, 'dischargePatient'])->name('discharge-patient');
         Route::post('discharge-patient-api/{admission_req_id}', [AdmissionRequestController::class, 'dischargePatientApi'])->name('discharge-patient-api');

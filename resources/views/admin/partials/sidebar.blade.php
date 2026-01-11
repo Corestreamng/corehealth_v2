@@ -180,6 +180,34 @@
                 </a>
             </li>
             @hasanyrole('SUPERADMIN|ADMIN')
+            <!-- Ward & Bed Management -->
+            <li class="nav-item {{ request()->routeIs('wards.*', 'beds.*', 'checklist-templates.*') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('wards.*', 'beds.*', 'checklist-templates.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#ward_bed_management" data-bs-target="#ward_bed_management" aria-expanded="{{ request()->routeIs('wards.*', 'beds.*', 'checklist-templates.*') ? 'true' : 'false' }}"
+                    aria-controls="ward_bed_management">
+                    <i class="mdi mdi-hospital-building menu-icon"></i>
+                    <span class="menu-title">Ward & Bed Setup</span>
+                    <i class="mdi mdi-chevron-right menu-arrow"></i>
+                </a>
+                <div class="collapse {{ request()->routeIs('wards.*', 'beds.*', 'checklist-templates.*') ? 'show' : '' }}" id="ward_bed_management">
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('wards.*') ? 'active' : '' }}" href="{{ route('wards.index') }}">
+                                <i class="mdi mdi-hospital-marker"></i> Wards
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('beds.*') ? 'active' : '' }}" href="{{ route('beds.index') }}">
+                                <i class="mdi mdi-bed"></i> Beds
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('checklist-templates.*') ? 'active' : '' }}" href="{{ route('checklist-templates.index') }}">
+                                <i class="mdi mdi-format-list-checks"></i> Checklist Templates
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
             <li class="nav-item {{ request()->routeIs('vaccine-schedule.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('vaccine-schedule.*') ? 'active' : '' }}" href="{{ route('vaccine-schedule.index') }}">
                     <i class="mdi mdi-needle menu-icon"></i>

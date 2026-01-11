@@ -38,6 +38,14 @@
                 </button>
             </li>
         @endcan
+        @can('see-nursing-notes')
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {{ $section == 'injImmHistoryCardBody' ? 'active' : '' }}" id="injImmHistory-tab"
+                    data-bs-toggle="tab" data-bs-target="#injImmHistoryCardBody" type="button" role="tab">
+                    <i class="fa fa-syringe me-1"></i> Inj/Imm History
+                </button>
+            </li>
+        @endcan
         @can('see-accounts')
             <li class="nav-item" role="presentation">
                 <button class="nav-link {{ $section == 'accountsCardBody' ? 'active' : '' }}" id="accounts-tab"
@@ -114,15 +122,42 @@
         </div>
         @can('see-vitals')
             <div class="tab-pane fade {{ $section == 'vitalsCardBody' ? 'show active' : '' }}" id="vitalsCardBody" role="tabpanel">
-                <div class="card">
-                    <div class="card-body">@include('admin.patients.partials.vitals')</div>
+                <div class="mt-2">
+                    @include('admin.partials.unified_vitals', ['patient' => $patient])
                 </div>
             </div>
+            @push('scripts')
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    var vitalsTab = document.getElementById('vitals-tab');
+                    if(vitalsTab){
+                         vitalsTab.addEventListener('shown.bs.tab', function (event) {
+                            if(window.initUnifiedVitals) {
+                                window.initUnifiedVitals({{ $patient->id }});
+                            }
+                        });
+                         // Handle initial load if tab is active
+                        if (vitalsTab.classList.contains('active')) {
+                            if(window.initUnifiedVitals) {
+                                window.initUnifiedVitals({{ $patient->id }});
+                            }
+                        }
+                    }
+                });
+             </script>
+             @endpush
         @endcan
         @can('see-nursing-notes')
             <div class="tab-pane fade {{ $section == 'nurseChartCardBody' ? 'show active' : '' }}" id="nurseChartCardBody" role="tabpanel">
                 <div class="card">
                     <div class="card-body">@include('admin.patients.partials.nurse_chart')</div>
+                </div>
+            </div>
+        @endcan
+        @can('see-nursing-notes')
+            <div class="tab-pane fade {{ $section == 'injImmHistoryCardBody' ? 'show active' : '' }}" id="injImmHistoryCardBody" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">@include('admin.patients.partials.injection_immunization_history', ['patient' => $patient])</div>
                 </div>
             </div>
         @endcan

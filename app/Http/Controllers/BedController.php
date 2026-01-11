@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bed;
+use App\Models\Ward;
 use App\Models\ServicePrice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -27,13 +28,26 @@ class BedController extends Controller
 
     public function listBeds()
     {
-        $beds = Bed::orderBy('name', 'ASC')->where('status', 1)->get();
+        $beds = Bed::with('wardRelation')->orderBy('name', 'ASC')->where('status', 1)->get();
 
         return Datatables::of($beds)
             ->addIndexColumn()
-            ->addColumn('edit',   '<a href="{{ route(\'beds.edit\', $id)}}" class="btn btn-info btn-sm" ><i class="fa fa-pencil"></i> Edit</a>')
+            ->addColumn('ward_name', function ($bed) {
+                return $bed->wardRelation ? $bed->wardRelation->name : ($bed->ward ?? 'N/A');
+            })
+            ->addColumn('status_badge', function ($bed) {
+                $statusColors = [
+                    'available' => 'success',
+                    'occupied' => 'danger',
+                    'maintenance' => 'warning',
+                    'reserved' => 'info',
+                ];
+                $color = $statusColors[$bed->bed_status] ?? 'secondary';
+                return '<span class="badge badge-' . $color . '">' . ucfirst($bed->bed_status ?? 'available') . '</span>';
+            })
+            ->addColumn('edit', '<a href="{{ route(\'beds.edit\', $id)}}" class="btn btn-info btn-sm" ><i class="fa fa-pencil"></i> Edit</a>')
             ->addColumn('delete', '<button type="button" class="delete-modal btn btn-danger btn-sm" data-toggle="modal" data-id="{{$id}}"><i class="fa fa-trash"></i> Delete</button>')
-            ->rawColumns(['edit', 'delete'])
+            ->rawColumns(['status_badge', 'edit', 'delete'])
             ->make(true);
     }
 
@@ -44,7 +58,8 @@ class BedController extends Controller
      */
     public function create()
     {
-        return view('admin.beds.create');
+        $wards = Ward::where('is_active', true)->orderBy('name')->get();
+        return view('admin.beds.create', compact('wards'));
     }
 
     /**
@@ -56,23 +71,31 @@ class BedController extends Controller
     public function store(Request $request)
     {
         try {
-            $rules =
-                [
-                    'name' => 'required',
-                    'ward' => 'required',
-                    'price' => 'required'
-
-                ];
+            $rules = [
+                'name' => 'required',
+                'ward_id' => 'nullable|exists:wards,id',
+                'ward' => 'required_without:ward_id',
+                'price' => 'required',
+                'bed_status' => 'nullable|in:available,occupied,maintenance,reserved',
+            ];
             $v = Validator::make($request->all(), $rules);
             if ($v->fails()) {
                 return back()->with('errors', $v->messages()->all())->withInput();
             } else {
                 DB::beginTransaction();
+                
+                // Get ward name from ward_id if provided
+                $wardName = $request->ward;
+                if ($request->ward_id) {
+                    $ward = Ward::find($request->ward_id);
+                    $wardName = $ward ? $ward->name : $request->ward;
+                }
+                
                 $bed_servie_entry                      = new service;
                 $bed_servie_entry->user_id             = Auth::user()->id;
                 $bed_servie_entry->category_id         = appsettings('bed_service_category_id', 1);
-                $bed_servie_entry->service_name        = 'Bed ' . $request->name . " " . $request->ward . " " . $request->unit;
-                $bed_servie_entry->service_code        = strtoupper('Bed ' . $request->name . " " . $request->ward . " " . $request->unit);
+                $bed_servie_entry->service_name        = 'Bed ' . $request->name . " " . $wardName . " " . $request->unit;
+                $bed_servie_entry->service_code        = strtoupper('Bed ' . $request->name . " " . $wardName . " " . $request->unit);
                 $bed_servie_entry->status              = 1;
                 $bed_servie_entry->price_assign        = 1;
                 $bed_servie_entry->save();
@@ -87,14 +110,15 @@ class BedController extends Controller
 
                 $bed              = new Bed;
                 $bed->name        = $request->name;
-                $bed->ward        = $request->ward;
+                $bed->ward        = $wardName;
+                $bed->ward_id     = $request->ward_id;
                 $bed->unit        = $request->unit;
                 $bed->price       = $request->price;
+                $bed->bed_status  = $request->bed_status ?? 'available';
                 $bed->service_id  = $bed_servie_entry->id;
 
                 if ($bed->save()) {
                     $msg = 'The bed [' . $bed->name . '] was successfully Saved.';
-                    // dd($request->all());
                     DB::commit();
                     return redirect()->route('beds.index')->withMessage($msg)->withMessageType('success');
                 }
@@ -122,7 +146,8 @@ class BedController extends Controller
      */
     public function edit(Bed $bed)
     {
-        return view('admin.beds.edit', compact('bed'));
+        $wards = Ward::where('is_active', true)->orderBy('name')->get();
+        return view('admin.beds.edit', compact('bed', 'wards'));
     }
 
     /**
@@ -135,22 +160,28 @@ class BedController extends Controller
     public function update(Request $request, Bed $bed)
     {
         try {
-            $rules =
-                [
-                    'name' => 'required',
-                    'price' => 'nullable',
-                    'ward' => 'required'
-
-                ];
+            $rules = [
+                'name' => 'required',
+                'price' => 'nullable',
+                'ward_id' => 'nullable|exists:wards,id',
+                'ward' => 'required_without:ward_id',
+                'bed_status' => 'nullable|in:available,occupied,maintenance,reserved',
+            ];
             $v = Validator::make($request->all(), $rules);
             if ($v->fails()) {
                 return back()->with('errors', $v->messages()->all())->withInput();
             } else {
+                // Get ward name from ward_id if provided
+                $wardName = $request->ward;
+                if ($request->ward_id) {
+                    $ward = Ward::find($request->ward_id);
+                    $wardName = $ward ? $ward->name : $request->ward;
+                }
 
                 $bed_servie_entry                      = service::where('id', $bed->service_id)->first();
                 $bed_servie_entry->category_id         = appsettings('bed_service_category_id', 1);
-                $bed_servie_entry->service_name        = 'Bed ' . $request->name . " " . $request->ward . " " . $request->unit;
-                $bed_servie_entry->service_code        = strtoupper('Bed ' . $request->name . " " . $request->ward . " " . $request->unit);
+                $bed_servie_entry->service_name        = 'Bed ' . $request->name . " " . $wardName . " " . $request->unit;
+                $bed_servie_entry->service_code        = strtoupper('Bed ' . $request->name . " " . $wardName . " " . $request->unit);
                 $bed_servie_entry->update();
 
                 $bed_entry_service_price_entry                 = ServicePrice::where('service_id', $bed->service_id)->first();
@@ -160,9 +191,11 @@ class BedController extends Controller
                 $bed_entry_service_price_entry->update();
 
                 $bed->name        = $request->name;
-                $bed->ward        = $request->ward;
+                $bed->ward        = $wardName;
+                $bed->ward_id     = $request->ward_id;
                 $bed->price       = $request->price;
                 $bed->unit        = $request->unit;
+                $bed->bed_status  = $request->bed_status ?? $bed->bed_status ?? 'available';
 
                 if ($bed->update()) {
                     $msg = 'The bed [' . $bed->name . '] was successfully Updated.';

@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NursingWorkbenchController;
+use App\Http\Controllers\ShiftController;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,6 +24,9 @@ Route::middleware(['web', 'auth'])->prefix('nursing-workbench')->name('nursing-w
     // =====================================
     Route::get('/search-patients', [NursingWorkbenchController::class, 'searchPatients'])->name('search-patients');
     Route::get('/admitted-patients', [NursingWorkbenchController::class, 'getAdmittedPatients'])->name('admitted-patients');
+    Route::get('/queue/vitals', [NursingWorkbenchController::class, 'getVitalsQueue'])->name('vitals-queue');
+    Route::get('/queue/bed-requests', [NursingWorkbenchController::class, 'getBedRequestsQueue'])->name('bed-requests-queue');
+    Route::get('/queue/medication-due', [NursingWorkbenchController::class, 'getMedicationDueQueue'])->name('medication-due');
     Route::get('/queue-counts', [NursingWorkbenchController::class, 'getQueueCounts'])->name('queue-counts');
     Route::get('/wards', [NursingWorkbenchController::class, 'getWards'])->name('wards');
 
@@ -31,6 +35,8 @@ Route::middleware(['web', 'auth'])->prefix('nursing-workbench')->name('nursing-w
     // =====================================
     Route::get('/patient/{patientId}/details', [NursingWorkbenchController::class, 'getPatientDetails'])->name('patient-details');
     Route::get('/patient/{patientId}/vitals', [NursingWorkbenchController::class, 'getPatientVitals'])->name('patient-vitals');
+    Route::get('/patient/{patientId}/vitals-history-dt', [NursingWorkbenchController::class, 'getPatientVitalsDt'])->name('patient-vitals-dt');
+    Route::put('/vitals/{vitalId}', [NursingWorkbenchController::class, 'updateVital'])->name('vitals.update');
     Route::get('/patient/{patientId}/orders', [NursingWorkbenchController::class, 'getPatientOrders'])->name('patient-orders');
 
     // =====================================
@@ -87,4 +93,51 @@ Route::middleware(['web', 'auth'])->prefix('nursing-workbench')->name('nursing-w
     Route::get('/shift-summary', [NursingWorkbenchController::class, 'getShiftSummary'])->name('shift-summary');
     Route::get('/handover-summary', [NursingWorkbenchController::class, 'generateHandoverReport'])->name('handover.summary');
     Route::get('/handover-export', [NursingWorkbenchController::class, 'exportHandoverReport'])->name('handover.export');
+
+    // =====================================
+    // Ward Dashboard
+    // =====================================
+    Route::get('/ward-dashboard/stats', [NursingWorkbenchController::class, 'getWardDashboardStats'])->name('ward-dashboard.stats');
+    Route::get('/ward-dashboard/wards', [NursingWorkbenchController::class, 'getWardDashboardWards'])->name('ward-dashboard.wards');
+    Route::get('/ward-dashboard/admission-queue', [NursingWorkbenchController::class, 'getAdmissionQueue'])->name('ward-dashboard.admission-queue');
+    Route::get('/ward-dashboard/discharge-queue', [NursingWorkbenchController::class, 'getDischargeQueue'])->name('ward-dashboard.discharge-queue');
+    Route::get('/ward-dashboard/available-beds', [NursingWorkbenchController::class, 'getAvailableBeds'])->name('ward-dashboard.available-beds');
+
+    // Bed Management
+    Route::get('/bed/{bedId}/details', [NursingWorkbenchController::class, 'getBedDetails'])->name('bed.details');
+    Route::post('/bed/{bedId}/maintenance', [NursingWorkbenchController::class, 'setBedMaintenance'])->name('bed.maintenance');
+    Route::post('/bed/{bedId}/available', [NursingWorkbenchController::class, 'setBedAvailable'])->name('bed.available');
+
+    // Admission Workflow
+    Route::get('/admission/{admissionId}/checklist', [NursingWorkbenchController::class, 'getAdmissionChecklist'])->name('admission.checklist');
+    Route::post('/admission-checklist/item/{itemId}/complete', [NursingWorkbenchController::class, 'completeAdmissionChecklistItem'])->name('admission-checklist.complete');
+    Route::post('/admission-checklist/item/{itemId}/waive', [NursingWorkbenchController::class, 'waiveAdmissionChecklistItem'])->name('admission-checklist.waive');
+    Route::post('/admission/{admissionId}/assign-bed', [NursingWorkbenchController::class, 'assignBed'])->name('admission.assign-bed');
+
+    // Discharge Workflow
+    Route::get('/admission/{admissionId}/discharge-checklist', [NursingWorkbenchController::class, 'getDischargeChecklist'])->name('discharge.checklist');
+    Route::post('/discharge-checklist/item/{itemId}/complete', [NursingWorkbenchController::class, 'completeDischargeChecklistItem'])->name('discharge-checklist.complete');
+    Route::post('/discharge-checklist/item/{itemId}/waive', [NursingWorkbenchController::class, 'waiveDischargeChecklistItem'])->name('discharge-checklist.waive');
+    Route::post('/admission/{admissionId}/complete-discharge', [NursingWorkbenchController::class, 'completeDischarge'])->name('admission.complete-discharge');
+
+    // =====================================
+    // Shift Management
+    // =====================================
+    Route::get('/shift/check', [ShiftController::class, 'checkActiveShift'])->name('shift.check');
+    Route::get('/shift/pending-handovers', [ShiftController::class, 'getPendingHandovers'])->name('shift.pending-handovers');
+    Route::post('/shift/start', [ShiftController::class, 'startShift'])->name('shift.start');
+    Route::post('/shift/end', [ShiftController::class, 'endShift'])->name('shift.end');
+    Route::get('/shift/preview', [ShiftController::class, 'getShiftPreview'])->name('shift.preview');
+    Route::get('/shift/actions', [ShiftController::class, 'getShiftActions'])->name('shift.actions');
+    Route::get('/shift/wards', [ShiftController::class, 'getWards'])->name('shift.wards');
+    Route::get('/shift/calendar', [ShiftController::class, 'getCalendar'])->name('shift.calendar');
+    Route::get('/shift/statistics', [ShiftController::class, 'getStatistics'])->name('shift.statistics');
+
+    // =====================================
+    // Handovers
+    // =====================================
+    Route::get('/handovers', [ShiftController::class, 'getHandovers'])->name('handovers.list');
+    Route::get('/handover/{id}', [ShiftController::class, 'getHandoverDetails'])->name('handover.details');
+    Route::post('/handover/{id}/acknowledge', [ShiftController::class, 'acknowledgeHandover'])->name('handover.acknowledge');
+    Route::post('/handovers/acknowledge-multiple', [ShiftController::class, 'acknowledgeMultiple'])->name('handovers.acknowledge-multiple');
 });

@@ -34,8 +34,55 @@ use Illuminate\Support\Facades\Validator;
 use App\Helpers\HmoHelper;
 use Yajra\DataTables\DataTables;
 
-class NursingWorkbenchController extends Controller
-{
+class NursingWorkbenchController extends Controller{
+
+    /**
+     * Get patients with medication due (for medication-due queue).
+    */
+    public function getMedicationDueQueue(Request $request)
+    {
+        // Find all admitted patients with overdue or due medications
+        $admissions = AdmissionRequest::with(['patient.user', 'bed'])
+            ->where('discharged', 0)
+            ->whereNotNull('bed_id')
+            ->get();
+
+        $results = $admissions->map(function ($admission) {
+            $patient = $admission->patient;
+
+            // Get overdue medications (scheduled_time < now, not administered)
+            $overdueMeds = MedicationSchedule::where('patient_id', $patient->id)
+                ->where('scheduled_time', '<', \Carbon\Carbon::now())
+                ->whereDoesntHave('administrations', function ($q) {
+                    $q->whereNull('deleted_at');
+                })
+                ->count();
+
+            // Get due medications (scheduled_time <= now, not administered)
+            $dueMeds = MedicationSchedule::where('patient_id', $patient->id)
+                ->where('scheduled_time', '<=', \Carbon\Carbon::now())
+                ->whereDoesntHave('administrations', function ($q) {
+                    $q->whereNull('deleted_at');
+                })
+                ->count();
+
+            if ($overdueMeds > 0 || $dueMeds > 0) {
+                return [
+                    'admission_id' => $admission->id,
+                    'patient_id' => $patient->id,
+                    'name' => userfullname($patient->user_id),
+                    'file_no' => $patient->file_no,
+                    'bed' => $admission->bed ? $admission->bed->ward . ' - ' . $admission->bed->name : 'N/A',
+                    'medication_count' => $dueMeds,
+                    'overdue' => $overdueMeds > 0,
+                ];
+            }
+            return null;
+        })->filter()->values();
+
+        return response()->json($results);
+    }
+
     /**
      * Safely parse a date string to Carbon instance.
      * Handles multiple date formats commonly used in the system.
@@ -339,6 +386,20 @@ class NursingWorkbenchController extends Controller
             ->orderBy('created_at', 'desc')
             ->first();
 
+        // Get latest nursing note
+        $lastNursingNote = NursingNote::with(['createdBy', 'type'])
+            ->where('patient_id', $patientId)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        // Get latest doctor note (Encounter)
+        $lastDoctorNote = Encounter::with('doctor')
+            ->where('patient_id', $patientId)
+            ->whereNotNull('notes')
+            ->where('notes', '!=', '')
+            ->orderBy('created_at', 'desc')
+            ->first();
+
         return response()->json([
             'id' => $patient->id,
             'user_id' => $patient->user_id,
@@ -371,6 +432,19 @@ class NursingWorkbenchController extends Controller
                 'heart_rate' => $lastVitals->heart_rate ?? 'N/A',
                 'resp_rate' => $lastVitals->resp_rate ?? 'N/A',
                 'time' => Carbon::parse($lastVitals->created_at)->format('h:i a, d M'),
+            ] : null,
+            'latest_nurse_note' => $lastNursingNote ? [
+                'note' => \Illuminate\Support\Str::limit(strip_tags($lastNursingNote->note), 150),
+                'type' => $lastNursingNote->type ? $lastNursingNote->type->name : 'General',
+                'created_by' => $lastNursingNote->createdBy ? userfullname($lastNursingNote->createdBy->id) : 'N/A',
+                'created_at' => Carbon::parse($lastNursingNote->created_at)->format('h:i a, d M Y'),
+                'time_ago' => Carbon::parse($lastNursingNote->created_at)->diffForHumans(),
+            ] : null,
+            'latest_doctor_note' => $lastDoctorNote ? [
+                'note' => \Illuminate\Support\Str::limit(strip_tags($lastDoctorNote->notes), 150),
+                'created_by' => $lastDoctorNote->doctor ? userfullname($lastDoctorNote->doctor_id) : 'N/A',
+                'created_at' => Carbon::parse($lastDoctorNote->created_at)->format('h:i a, d M Y'),
+                'time_ago' => Carbon::parse($lastDoctorNote->created_at)->diffForHumans(),
             ] : null,
         ]);
     }
@@ -1137,7 +1211,6 @@ class NursingWorkbenchController extends Controller
      */
     public function getNursingNotes($patientId, Request $request)
     {
-        $limit = $request->get('limit', 20);
         $typeId = $request->get('type_id');
 
         $query = NursingNote::with(['type', 'createdBy'])
@@ -1148,22 +1221,68 @@ class NursingWorkbenchController extends Controller
             $query->where('nursing_note_type_id', $typeId);
         }
 
-        $notes = $query->limit($limit)->get();
+        return \Yajra\DataTables\Facades\DataTables::of($query)
+            ->addColumn('info', function ($note) {
+                // Determine badge color based on note type or status
+                $badgeColor = 'bg-primary';
 
-        $results = $notes->map(function ($note) {
-            return [
-                'id' => $note->id,
-                'type' => $note->type ? $note->type->name : 'N/A',
-                'type_id' => $note->nursing_note_type_id,
-                'note' => $note->note,
-                'note_preview' => \Illuminate\Support\Str::limit(strip_tags($note->note), 150),
-                'completed' => $note->completed,
-                'created_by' => $note->createdBy ? userfullname($note->createdBy->id) : 'N/A',
-                'created_at' => Carbon::parse($note->created_at)->format('h:i a, d M Y'),
-            ];
-        });
+                // Format Date
+                $createdAt = \Carbon\Carbon::parse($note->created_at)->format('h:i a, d M Y');
+                $creatorName = $note->createdBy ? userfullname($note->createdBy->id) : 'N/A';
+                $typeName = $note->type ? $note->type->name : 'N/A';
 
-        return response()->json($results);
+                $html = '<div class="card mb-3 nursing-note-card shadow-sm">';
+
+                // Header
+                $html .= '<div class="card-header bg-light d-flex justify-content-between align-items-center py-2">';
+                $html .= '<div>';
+                $html .= '<span class="badge ' . $badgeColor . ' me-2">' . htmlspecialchars($typeName) . '</span>';
+                $html .= '<small class="text-muted"><i class="mdi mdi-clock-outline"></i> ' . $createdAt . '</small>';
+                $html .= '</div>';
+                $html .= '<div>';
+                $html .= '<small class="text-muted">By: <span class="fw-bold text-dark">' . htmlspecialchars($creatorName) . '</span></small>';
+                $html .= '</div>';
+                $html .= '</div>'; // End Header
+
+                // Body
+                $html .= '<div class="card-body p-3">';
+                $html .= '<div class="note-content">' . $note->note . '</div>';
+                $html .= '</div>'; // End Body
+
+                // Footer (Actions) - Edit Button Logic
+                $canEdit = false;
+                if ($note->created_at) {
+                    $createdDate = \Carbon\Carbon::parse($note->created_at);
+                    $editDuration = appsettings('note_edit_duration') ?? 60; // Default 60 minutes
+                    $editDeadline = $createdDate->copy()->addMinutes($editDuration);
+                    $canEdit = \Carbon\Carbon::now()->lessThanOrEqualTo($editDeadline);
+                }
+
+                // Check if user is creator
+                $isCreator = Auth::id() == $note->created_by;
+
+                if ($canEdit && $isCreator) {
+                     // Escape content for data attributes
+                     $noteContentEscaped = htmlspecialchars($note->note, ENT_QUOTES);
+                     $typeId = $note->nursing_note_type_id;
+
+                     $html .= '<div class="card-footer bg-white border-top-0 d-flex justify-content-end pt-0 pb-3">';
+                     $html .= "<button class='btn btn-sm btn-outline-primary edit-note-btn'
+                                  onclick='openEditNoteModal(this)'
+                                  data-id='{$note->id}'
+                                  data-type-id='{$typeId}'
+                                  data-content='{$noteContentEscaped}'>";
+                     $html .= '<i class="mdi mdi-pencil"></i> Edit Note';
+                     $html .= '</button>';
+                     $html .= '</div>';
+                }
+
+                $html .= '</div>'; // End Card
+
+                return $html;
+            })
+            ->rawColumns(['info'])
+            ->make(true);
     }
 
     /**
@@ -1178,9 +1297,10 @@ class NursingWorkbenchController extends Controller
     /**
      * Save a nursing note.
      */
-    public function saveNursingNote($patientId, Request $request)
+    public function saveNursingNote(Request $request)
     {
         $validator = Validator::make($request->all(), [
+            'patient_id' => 'required|exists:patients,id',
             'note_type_id' => 'required|exists:nursing_note_types,id',
             'note' => 'required|string',
         ]);
@@ -1188,6 +1308,8 @@ class NursingWorkbenchController extends Controller
         if ($validator->fails()) {
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
+
+        $patientId = $request->patient_id;
 
         try {
             // Check if there's an existing open note of this type
@@ -1200,6 +1322,7 @@ class NursingWorkbenchController extends Controller
                 $existingNote->update([
                     'note' => $request->note,
                     'updated_by' => Auth::id(),
+                    'completed' => true,
                 ]);
                 $note = $existingNote;
                 $message = 'Nursing note updated successfully';
@@ -1209,6 +1332,7 @@ class NursingWorkbenchController extends Controller
                     'nursing_note_type_id' => $request->note_type_id,
                     'note' => $request->note,
                     'created_by' => Auth::id(),
+                    'completed' => true,
                 ]);
                 $message = 'Nursing note created successfully';
             }
@@ -1226,17 +1350,76 @@ class NursingWorkbenchController extends Controller
         }
     }
 
+    /**
+     * Update a nursing note.
+     */
+    public function updateNursingNote($noteId, Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'note' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $note = NursingNote::findOrFail($noteId);
+
+            // Check permissions again just to be safe (backend validation)
+            if (Auth::id() != $note->created_by) {
+                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
+
+             // Check time window
+            $createdDate = \Carbon\Carbon::parse($note->created_at);
+            $editDuration = appsettings('note_edit_duration') ?? 60;
+            $editDeadline = $createdDate->copy()->addMinutes($editDuration);
+
+            if (\Carbon\Carbon::now()->greaterThan($editDeadline)) {
+                 return response()->json(['success' => false, 'message' => 'Edit window has expired'], 403);
+            }
+
+            $note->update([
+                'note' => $request->note,
+                'updated_by' => Auth::id(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Nursing note updated successfully',
+                'note' => $note,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating note: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     // =====================================
     // REPORTS
     // =====================================
 
     /**
      * Get shift summary report.
+     * Supports both shift-based and date range queries.
      */
     public function getShiftSummary(Request $request)
     {
-        $shiftStart = $request->get('shift_start', Carbon::today()->setHour(7)->format('Y-m-d H:i:s'));
-        $shiftEnd = $request->get('shift_end', Carbon::today()->setHour(19)->format('Y-m-d H:i:s'));
+        // Support date range from reports module (from/to) or shift times
+        $fromDate = $request->get('from');
+        $toDate = $request->get('to');
+
+        if ($fromDate && $toDate) {
+            $shiftStart = Carbon::parse($fromDate)->startOfDay()->format('Y-m-d H:i:s');
+            $shiftEnd = Carbon::parse($toDate)->endOfDay()->format('Y-m-d H:i:s');
+        } else {
+            $shiftStart = $request->get('shift_start', Carbon::today()->setHour(7)->format('Y-m-d H:i:s'));
+            $shiftEnd = $request->get('shift_end', Carbon::today()->setHour(19)->format('Y-m-d H:i:s'));
+        }
 
         // Admitted patients summary
         $admittedCount = AdmissionRequest::where('discharged', 0)
@@ -1259,6 +1442,14 @@ class NursingWorkbenchController extends Controller
             })
             ->count();
 
+        // Pending medications
+        $medsPending = MedicationSchedule::where('scheduled_time', '>=', Carbon::now())
+            ->where('scheduled_time', '<=', $shiftEnd)
+            ->whereDoesntHave('administrations', function ($q) {
+                $q->whereNull('deleted_at');
+            })
+            ->count();
+
         // Injections given
         $injectionsGiven = InjectionAdministration::whereBetween('administered_at', [$shiftStart, $shiftEnd])
             ->count();
@@ -1271,9 +1462,87 @@ class NursingWorkbenchController extends Controller
         $vitalsTaken = VitalSign::whereBetween('created_at', [$shiftStart, $shiftEnd])
             ->count();
 
+        // Vitals with abnormal values (basic check - could be enhanced with proper ranges)
+        $vitalsAbnormal = VitalSign::whereBetween('created_at', [$shiftStart, $shiftEnd])
+            ->where(function ($q) {
+                $q->where('systolic', '>', 140)
+                    ->orWhere('systolic', '<', 90)
+                    ->orWhere('diastolic', '>', 90)
+                    ->orWhere('diastolic', '<', 60)
+                    ->orWhere('temperature', '>', 38)
+                    ->orWhere('temperature', '<', 36)
+                    ->orWhere('pulse', '>', 100)
+                    ->orWhere('pulse', '<', 60)
+                    ->orWhere('spo2', '<', 95);
+            })
+            ->count();
+
+        // Critical vitals
+        $vitalsCritical = VitalSign::whereBetween('created_at', [$shiftStart, $shiftEnd])
+            ->where(function ($q) {
+                $q->where('systolic', '>', 180)
+                    ->orWhere('systolic', '<', 70)
+                    ->orWhere('temperature', '>', 40)
+                    ->orWhere('temperature', '<', 35)
+                    ->orWhere('pulse', '>', 120)
+                    ->orWhere('pulse', '<', 40)
+                    ->orWhere('spo2', '<', 90);
+            })
+            ->count();
+
+        // Patients seen (unique patients with activity)
+        $patientsSeen = VitalSign::whereBetween('created_at', [$shiftStart, $shiftEnd])
+            ->distinct('patient_id')
+            ->count('patient_id');
+
+        // Admissions during period
+        $admissions = AdmissionRequest::whereBetween('created_at', [$shiftStart, $shiftEnd])
+            ->count();
+
+        // Discharges during period
+        $discharges = AdmissionRequest::whereBetween('updated_at', [$shiftStart, $shiftEnd])
+            ->where('discharged', 1)
+            ->count();
+
+        // Nursing notes (from nurse_notes if exists)
+        $notesCreated = 0;
+        $progressNotes = 0;
+        $incidentReports = 0;
+        if (\Schema::hasTable('nurse_notes')) {
+            $notesCreated = \DB::table('nurse_notes')
+                ->whereBetween('created_at', [$shiftStart, $shiftEnd])
+                ->count();
+            $progressNotes = \DB::table('nurse_notes')
+                ->whereBetween('created_at', [$shiftStart, $shiftEnd])
+                ->where('note_type', 'progress')
+                ->count();
+            $incidentReports = \DB::table('nurse_notes')
+                ->whereBetween('created_at', [$shiftStart, $shiftEnd])
+                ->where('note_type', 'incident')
+                ->count();
+        }
+
+        // Return flat structure for reports UI compatibility
         return response()->json([
             'shift_start' => $shiftStart,
             'shift_end' => $shiftEnd,
+            // Summary stats
+            'patients_seen' => $patientsSeen,
+            'vitals_recorded' => $vitalsTaken,
+            'vitals_abnormal' => $vitalsAbnormal,
+            'vitals_critical' => $vitalsCritical,
+            'medications_administered' => $medsAdministered,
+            'medications_pending' => $medsPending,
+            'medications_missed' => $medsMissed,
+            'admissions' => $admissions,
+            'discharges' => $discharges,
+            'transfers' => 0, // Would need transfer tracking table
+            'notes_created' => $notesCreated,
+            'progress_notes' => $progressNotes,
+            'incident_reports' => $incidentReports,
+            'pending_tasks' => $medsPending,
+            'critical_alerts' => $vitalsCritical + $criticalCount,
+            // Legacy structure for backward compatibility
             'summary' => [
                 'admitted_patients' => $admittedCount,
                 'critical_patients' => $criticalCount,
@@ -1754,5 +2023,972 @@ class NursingWorkbenchController extends Controller
                 ];
             }),
         ]);
+    }
+
+    public function getPatientVitalsDt($patientId)
+    {
+        $query = VitalSign::with(['takenBy'])
+            ->where('patient_id', $patientId)
+            ->orderBy('created_at', 'desc');
+
+        return \Yajra\DataTables\Facades\DataTables::of($query)
+            ->addColumn('info', function ($vital) {
+                // Format Date
+                $createdAt = \Carbon\Carbon::parse($vital->created_at)->format('h:i a, d M Y');
+                $takenByName = $vital->takenBy ? userfullname($vital->takenBy->id) : 'N/A';
+
+                $html = '<div class="card mb-3 vital-card shadow-sm">';
+
+                // Header
+                $html .= '<div class="card-header bg-light d-flex justify-content-between align-items-center py-2">';
+                $html .= '<div>';
+                $html .= '<span class="badge bg-info me-2">Vitals</span>';
+                $html .= '<small class="text-muted"><i class="mdi mdi-clock-outline"></i> ' . $createdAt . '</small>';
+                $html .= '</div>';
+                $html .= '<div>';
+                $html .= '<small class="text-muted">Taken By: <span class="fw-bold text-dark">' . htmlspecialchars($takenByName) . '</span></small>';
+                $html .= '</div>';
+                $html .= '</div>'; // End Header
+
+                // Body
+                $html .= '<div class="card-body p-3">';
+
+                // Row 1: Primary Vitals
+                $html .= '<div class="row mb-2">';
+
+                // BP - with status indicator
+                $bpStatus = $this->getVitalStatus('bp', $vital->blood_pressure);
+                $html .= '<div class="col-6 col-md-4 col-lg-2 mb-2">';
+                $html .= '<div class="d-flex align-items-center">';
+                $html .= '<div class="me-2"><i class="mdi mdi-heart-pulse text-danger fs-4"></i></div>';
+                $html .= '<div><small class="text-muted d-block">Blood Pressure</small>';
+                $html .= '<strong class="' . $bpStatus['class'] . '">' . ($vital->blood_pressure ?? 'N/A') . '</strong>';
+                $html .= ' <span class="text-muted small">mmHg</span></div>';
+                $html .= '</div></div>';
+
+                // Temp - with status indicator
+                $tempStatus = $this->getVitalStatus('temp', $vital->temp);
+                $html .= '<div class="col-6 col-md-4 col-lg-2 mb-2">';
+                $html .= '<div class="d-flex align-items-center">';
+                $html .= '<div class="me-2"><i class="mdi mdi-thermometer text-warning fs-4"></i></div>';
+                $html .= '<div><small class="text-muted d-block">Temperature</small>';
+                $html .= '<strong class="' . $tempStatus['class'] . '">' . ($vital->temp ?? 'N/A') . '</strong>';
+                $html .= ' <span class="text-muted small">°C</span></div>';
+                $html .= '</div></div>';
+
+                // Heart Rate - with status indicator
+                $hrStatus = $this->getVitalStatus('hr', $vital->heart_rate);
+                $html .= '<div class="col-6 col-md-4 col-lg-2 mb-2">';
+                $html .= '<div class="d-flex align-items-center">';
+                $html .= '<div class="me-2"><i class="mdi mdi-heart text-danger fs-4"></i></div>';
+                $html .= '<div><small class="text-muted d-block">Heart Rate</small>';
+                $html .= '<strong class="' . $hrStatus['class'] . '">' . ($vital->heart_rate ?? 'N/A') . '</strong>';
+                $html .= ' <span class="text-muted small">bpm</span></div>';
+                $html .= '</div></div>';
+
+                // Resp Rate - with status indicator
+                $rrStatus = $this->getVitalStatus('rr', $vital->resp_rate);
+                $html .= '<div class="col-6 col-md-4 col-lg-2 mb-2">';
+                $html .= '<div class="d-flex align-items-center">';
+                $html .= '<div class="me-2"><i class="mdi mdi-lungs text-primary fs-4"></i></div>';
+                $html .= '<div><small class="text-muted d-block">Resp. Rate</small>';
+                $html .= '<strong class="' . $rrStatus['class'] . '">' . ($vital->resp_rate ?? 'N/A') . '</strong>';
+                $html .= ' <span class="text-muted small">bpm</span></div>';
+                $html .= '</div></div>';
+
+                // SpO2 - with status indicator
+                $spo2Status = $this->getVitalStatus('spo2', $vital->spo2);
+                $html .= '<div class="col-6 col-md-4 col-lg-2 mb-2">';
+                $html .= '<div class="d-flex align-items-center">';
+                $html .= '<div class="me-2"><i class="mdi mdi-percent text-info fs-4"></i></div>';
+                $html .= '<div><small class="text-muted d-block">SpO2</small>';
+                $html .= '<strong class="' . $spo2Status['class'] . '">' . ($vital->spo2 ?? 'N/A') . '</strong>';
+                $html .= ' <span class="text-muted small">%</span></div>';
+                $html .= '</div></div>';
+
+                // Pain Score - with status indicator
+                $painStatus = $this->getVitalStatus('pain', $vital->pain_score);
+                $html .= '<div class="col-6 col-md-4 col-lg-2 mb-2">';
+                $html .= '<div class="d-flex align-items-center">';
+                $html .= '<div class="me-2"><i class="mdi mdi-emoticon-sad text-secondary fs-4"></i></div>';
+                $html .= '<div><small class="text-muted d-block">Pain Score</small>';
+                $html .= '<strong class="' . $painStatus['class'] . '">' . ($vital->pain_score !== null ? $vital->pain_score . '/10' : 'N/A') . '</strong></div>';
+                $html .= '</div></div>';
+
+                $html .= '</div>'; // End Row 1
+
+                // Row 2: Measurements
+                $html .= '<div class="row">';
+
+                // Weight
+                $html .= '<div class="col-6 col-md-3 mb-2">';
+                $html .= '<div class="d-flex align-items-center">';
+                $html .= '<div class="me-2"><i class="mdi mdi-weight text-success fs-4"></i></div>';
+                $html .= '<div><small class="text-muted d-block">Weight</small>';
+                $html .= '<strong>' . ($vital->weight ?? 'N/A') . '</strong>';
+                $html .= ' <span class="text-muted small">kg</span></div>';
+                $html .= '</div></div>';
+
+                // Height
+                $html .= '<div class="col-6 col-md-3 mb-2">';
+                $html .= '<div class="d-flex align-items-center">';
+                $html .= '<div class="me-2"><i class="mdi mdi-human-male-height text-primary fs-4"></i></div>';
+                $html .= '<div><small class="text-muted d-block">Height</small>';
+                $html .= '<strong>' . ($vital->height ?? 'N/A') . '</strong>';
+                $html .= ' <span class="text-muted small">cm</span></div>';
+                $html .= '</div></div>';
+
+                // BMI
+                $bmiClass = $this->getBmiClass($vital->bmi);
+                $html .= '<div class="col-6 col-md-3 mb-2">';
+                $html .= '<div class="d-flex align-items-center">';
+                $html .= '<div class="me-2"><i class="mdi mdi-calculator text-secondary fs-4"></i></div>';
+                $html .= '<div><small class="text-muted d-block">BMI</small>';
+                $html .= '<strong class="' . $bmiClass . '">' . ($vital->bmi ?? 'N/A') . '</strong></div>';
+                $html .= '</div></div>';
+
+                // Blood Sugar
+                $sugarStatus = $this->getVitalStatus('sugar', $vital->blood_sugar);
+                $html .= '<div class="col-6 col-md-3 mb-2">';
+                $html .= '<div class="d-flex align-items-center">';
+                $html .= '<div class="me-2"><i class="mdi mdi-water text-info fs-4"></i></div>';
+                $html .= '<div><small class="text-muted d-block">Blood Sugar</small>';
+                $html .= '<strong class="' . $sugarStatus['class'] . '">' . ($vital->blood_sugar ?? 'N/A') . '</strong>';
+                $html .= ' <span class="text-muted small">mg/dL</span></div>';
+                $html .= '</div></div>';
+
+                $html .= '</div>'; // End Row 2
+
+                if(!empty($vital->other_notes)){
+                    $html .= '<div class="mt-2 pt-2 border-top">';
+                    $html .= '<small class="text-muted">Notes:</small>';
+                    $html .= '<p class="mb-0 text-dark">' . htmlspecialchars($vital->other_notes) . '</p>';
+                    $html .= '</div>';
+                }
+
+                $html .= '</div>'; // End Body
+
+                // Footer (Actions) - Edit Button Logic
+                $canEdit = false;
+                if ($vital->created_at) {
+                    $createdDate = \Carbon\Carbon::parse($vital->created_at);
+                    $editDuration = appsettings('note_edit_duration') ?? 60; // Default 60 minutes
+                    $editDeadline = $createdDate->copy()->addMinutes($editDuration);
+                    $canEdit = \Carbon\Carbon::now()->lessThanOrEqualTo($editDeadline);
+                }
+
+                // Check if user is creator
+                $isCreator = \Auth::id() == $vital->taken_by;
+
+                if ($canEdit && $isCreator) {
+                    // Encode vital data for edit modal
+                    $vitalData = json_encode([
+                        'id' => $vital->id,
+                        'blood_pressure' => $vital->blood_pressure,
+                        'temp' => $vital->temp,
+                        'weight' => $vital->weight,
+                        'heart_rate' => $vital->heart_rate,
+                        'resp_rate' => $vital->resp_rate,
+                        'height' => $vital->height,
+                        'bmi' => $vital->bmi,
+                        'spo2' => $vital->spo2,
+                        'blood_sugar' => $vital->blood_sugar,
+                        'pain_score' => $vital->pain_score,
+                        'other_notes' => $vital->other_notes,
+                    ]);
+                    $vitalDataEscaped = htmlspecialchars($vitalData, ENT_QUOTES);
+
+                    $html .= '<div class="card-footer bg-white border-top d-flex justify-content-end py-2">';
+                    $html .= "<button class='btn btn-sm btn-outline-primary edit-vital-btn'
+                                 onclick='openEditVitalModal(this)'
+                                 data-vital='{$vitalDataEscaped}'>";
+                    $html .= '<i class="mdi mdi-pencil"></i> Edit Vitals';
+                    $html .= '</button>';
+                    $html .= '</div>';
+                }
+
+                $html .= '</div>'; // End Card
+
+                return $html;
+            })
+            ->rawColumns(['info'])
+            ->make(true);
+    }
+
+    /**
+     * Get vital status indicator (normal, warning, critical)
+     */
+    private function getVitalStatus($type, $value)
+    {
+        if ($value === null || $value === '') {
+            return ['status' => 'unknown', 'class' => ''];
+        }
+
+        switch ($type) {
+            case 'bp':
+                if (!str_contains($value, '/')) {
+                    return ['status' => 'unknown', 'class' => ''];
+                }
+                $parts = explode('/', $value);
+                $sys = (int)$parts[0];
+                $dia = (int)$parts[1];
+                if ($sys > 180 || $sys < 80 || $dia > 110 || $dia < 50) {
+                    return ['status' => 'critical', 'class' => 'text-danger'];
+                } elseif ($sys > 140 || $sys < 90 || $dia > 90 || $dia < 60) {
+                    return ['status' => 'warning', 'class' => 'text-warning'];
+                }
+                return ['status' => 'normal', 'class' => 'text-success'];
+
+            case 'temp':
+                $t = (float)$value;
+                if ($t < 34 || $t > 39) {
+                    return ['status' => 'critical', 'class' => 'text-danger'];
+                } elseif ($t < 36.1 || $t > 38) {
+                    return ['status' => 'warning', 'class' => 'text-warning'];
+                }
+                return ['status' => 'normal', 'class' => 'text-success'];
+
+            case 'hr':
+                $hr = (int)$value;
+                if ($hr < 50 || $hr > 150) {
+                    return ['status' => 'critical', 'class' => 'text-danger'];
+                } elseif ($hr < 60 || $hr > 100) {
+                    return ['status' => 'warning', 'class' => 'text-warning'];
+                }
+                return ['status' => 'normal', 'class' => 'text-success'];
+
+            case 'rr':
+                $rr = (int)$value;
+                if ($rr < 8 || $rr > 30) {
+                    return ['status' => 'critical', 'class' => 'text-danger'];
+                } elseif ($rr < 12 || $rr > 20) {
+                    return ['status' => 'warning', 'class' => 'text-warning'];
+                }
+                return ['status' => 'normal', 'class' => 'text-success'];
+
+            case 'spo2':
+                $spo2 = (float)$value;
+                if ($spo2 < 90) {
+                    return ['status' => 'critical', 'class' => 'text-danger'];
+                } elseif ($spo2 < 95) {
+                    return ['status' => 'warning', 'class' => 'text-warning'];
+                }
+                return ['status' => 'normal', 'class' => 'text-success'];
+
+            case 'sugar':
+                $sugar = (float)$value;
+                if ($sugar < 70 || $sugar > 200) {
+                    return ['status' => 'critical', 'class' => 'text-danger'];
+                } elseif ($sugar < 80 || $sugar > 140) {
+                    return ['status' => 'warning', 'class' => 'text-warning'];
+                }
+                return ['status' => 'normal', 'class' => 'text-success'];
+
+            case 'pain':
+                $pain = (int)$value;
+                if ($pain >= 7) {
+                    return ['status' => 'critical', 'class' => 'text-danger'];
+                } elseif ($pain >= 4) {
+                    return ['status' => 'warning', 'class' => 'text-warning'];
+                }
+                return ['status' => 'normal', 'class' => 'text-success'];
+
+            default:
+                return ['status' => 'unknown', 'class' => ''];
+        }
+    }
+
+    /**
+     * Get BMI classification CSS class
+     */
+    private function getBmiClass($bmi)
+    {
+        if ($bmi === null) {
+            return '';
+        }
+        $bmi = (float)$bmi;
+        if ($bmi < 18.5) {
+            return 'text-warning'; // Underweight
+        } elseif ($bmi < 25) {
+            return 'text-success'; // Normal
+        } elseif ($bmi < 30) {
+            return 'text-warning'; // Overweight
+        }
+        return 'text-danger'; // Obese
+    }
+
+    public function getVitalsQueue(Request $request)
+    {
+        $query = \App\Models\DoctorQueue::with(['patient.user', 'doctor'])
+            ->where(function($q) {
+                $q->where('vitals_taken', 0)
+                  ->orWhereNull('vitals_taken');
+            })
+            ->whereDate('created_at', Carbon::today())
+            ->orderBy('created_at', 'asc');
+
+        return \Yajra\DataTables\Facades\DataTables::of($query)
+            ->addColumn('info', function ($queue) {
+                $patient = $queue->patient;
+                $patientId = $patient ? $patient->id : 0;
+                $patientName = $patient ? $patient->name : 'Unknown';
+                $fileNo = $patient ? $patient->file_no : 'N/A';
+                $doctorName = $queue->doctor ? $queue->doctor->name : 'N/A';
+                $time = $queue->created_at->format('h:i A');
+
+                $html = '<div class="card mb-2 queue-card shadow-sm">';
+                $html .= '<div class="card-body p-3 d-flex justify-content-between align-items-center">';
+                $html .= '<div>';
+                $html .= '<h6 class="mb-1 text-primary fw-bold">' . htmlspecialchars($patientName) . '</h6>';
+                $html .= '<small class="text-muted"><i class="mdi mdi-file-document"></i> ' . htmlspecialchars($fileNo) . '</small> | ';
+                $html .= '<small class="text-muted"><i class="mdi mdi-doctor"></i> ' . htmlspecialchars($doctorName) . '</small>';
+                $html .= '</div>';
+                $html .= '<div>';
+                $html .= '<span class="badge bg-warning text-dark me-2">Pending Vitals</span>';
+                $html .= '<small class="text-muted">' . $time . '</small>';
+                $html .= '<button class="btn btn-sm btn-outline-primary ms-3" onclick="loadPatient('.$patientId.')">Open</button>';
+                $html .= '</div>';
+                $html .= '</div></div>';
+
+                return $html;
+            })
+            ->rawColumns(['info'])
+            ->make(true);
+    }
+
+    public function getBedRequestsQueue(Request $request)
+    {
+        $query = AdmissionRequest::with(['patient.user', 'doctor'])
+            ->whereNull('bed_id')
+            ->where('discharged', 0)
+            ->orderBy('created_at', 'desc');
+
+        return \Yajra\DataTables\Facades\DataTables::of($query)
+             ->addColumn('info', function ($request) {
+                $patient = $request->patient;
+                $patientId = $patient ? $patient->id : 0;
+                $patientName = $patient ? $patient->name : 'Unknown';
+                $fileNo = $patient ? $patient->file_no : 'N/A';
+                $doctorName = $request->doctor ? $request->doctor->name : 'N/A';
+                $time = $request->created_at->format('d M h:i A');
+
+                $html = '<div class="card mb-2 queue-card shadow-sm">';
+                $html .= '<div class="card-body p-3 d-flex justify-content-between align-items-center">';
+                $html .= '<div>';
+                $html .= '<h6 class="mb-1 text-danger fw-bold">' . htmlspecialchars($patientName) . '</h6>';
+                $html .= '<small class="text-muted"><i class="mdi mdi-file-document"></i> ' . htmlspecialchars($fileNo) . '</small> | ';
+                $html .= '<small class="text-muted"><i class="mdi mdi-doctor"></i> ' . htmlspecialchars($doctorName) . '</small>';
+                $html .= '</div>';
+                $html .= '<div>';
+                $html .= '<span class="badge bg-danger me-2">Bed Request</span>';
+                $html .= '<small class="text-muted">' . $time . '</small>';
+                $html .= '<button class="btn btn-sm btn-outline-danger ms-3" onclick="loadPatient('.$patientId.')">Open</button>';
+                $html .= '</div>';
+                $html .= '</div></div>';
+
+                return $html;
+            })
+            ->rawColumns(['info'])
+            ->make(true);
+    }
+
+    /**
+     * Update a vital sign record (with time-based edit restriction).
+     */
+    public function updateVital(Request $request, $vitalId)
+    {
+        $vital = VitalSign::findOrFail($vitalId);
+
+        // Check if user is the creator
+        if (\Auth::id() != $vital->taken_by) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You can only edit vitals that you recorded.'
+            ], 403);
+        }
+
+        // Check edit time window
+        $editDuration = appsettings('note_edit_duration') ?? 60;
+        $editDeadline = \Carbon\Carbon::parse($vital->created_at)->addMinutes($editDuration);
+
+        if (\Carbon\Carbon::now()->greaterThan($editDeadline)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'The edit window has expired. Vitals can only be edited within ' . $editDuration . ' minutes of recording.'
+            ], 403);
+        }
+
+        // Validate and update
+        $validated = $request->validate([
+            'blood_pressure' => 'nullable|string|max:50',
+            'temp' => 'nullable|numeric',
+            'weight' => 'nullable|numeric',
+            'heart_rate' => 'nullable|numeric',
+            'resp_rate' => 'nullable|numeric',
+            'height' => 'nullable|numeric',
+            'bmi' => 'nullable|numeric',
+            'spo2' => 'nullable|numeric',
+            'blood_sugar' => 'nullable|numeric',
+            'other_notes' => 'nullable|string',
+        ]);
+
+        $vital->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Vitals updated successfully.'
+        ]);
+    }
+
+    // ==========================================
+    // WARD DASHBOARD METHODS
+    // ==========================================
+
+    /**
+     * Get ward dashboard statistics
+     */
+    public function getWardDashboardStats()
+    {
+        $totalBeds = Bed::count();
+        $occupiedBeds = Bed::whereHas('currentAdmission', function($q) {
+            $q->where('discharged', 0);
+        })->count();
+        $availableBeds = Bed::where(function($q) {
+            $q->where('bed_status', 'available')
+              ->orWhereNull('bed_status');
+        })->whereDoesntHave('currentAdmission', function($q) {
+            $q->where('discharged', 0);
+        })->count();
+
+        $pendingAdmissions = AdmissionRequest::whereNull('bed_id')
+            ->where('discharged', 0)
+            ->count();
+
+        return response()->json([
+            'total_beds' => $totalBeds,
+            'occupied_beds' => $occupiedBeds,
+            'available_beds' => $availableBeds,
+            'pending_admissions' => $pendingAdmissions,
+        ]);
+    }
+
+    /**
+     * Get all wards with their beds
+     */
+    public function getWardDashboardWards()
+    {
+        // Check if Ward model exists, if not fall back to grouping beds by ward column
+        if (class_exists('\\App\\Models\\Ward')) {
+            $wards = \App\Models\Ward::with(['beds' => function($q) {
+                $q->select('id', 'name', 'ward_id', 'bed_status')
+                  ->with(['currentAdmission.patient.user']);
+            }])->get();
+
+            return response()->json($wards->map(function($ward) {
+                return [
+                    'id' => $ward->id,
+                    'name' => $ward->name,
+                    'type' => $ward->type ?? 'general',
+                    'capacity' => $ward->capacity ?? $ward->beds->count(),
+                    'occupied_beds' => $ward->beds->filter(function($bed) {
+                        return $bed->currentAdmission && !$bed->currentAdmission->discharged;
+                    })->count(),
+                    'available_beds' => $ward->beds->filter(function($bed) {
+                        return (!$bed->currentAdmission || $bed->currentAdmission->discharged)
+                               && ($bed->bed_status === 'available' || $bed->bed_status === null);
+                    })->count(),
+                    'beds' => $ward->beds->map(function($bed) {
+                        $status = 'available';
+                        $currentPatient = null;
+
+                        if ($bed->currentAdmission && !$bed->currentAdmission->discharged) {
+                            $status = 'occupied';
+                            $currentPatient = $bed->currentAdmission->patient
+                                ? userfullname($bed->currentAdmission->patient->user_id)
+                                : 'Unknown';
+                        } elseif ($bed->bed_status === 'maintenance') {
+                            $status = 'maintenance';
+                        } elseif ($bed->bed_status === 'reserved') {
+                            $status = 'reserved';
+                        }
+
+                        return [
+                            'id' => $bed->id,
+                            'name' => $bed->name,
+                            'status' => $status,
+                            'current_patient' => $currentPatient,
+                        ];
+                    }),
+                ];
+            }));
+        }
+
+        // Fallback: Group beds by ward text column
+        $beds = Bed::with(['currentAdmission.patient.user'])->get();
+        $wardGroups = $beds->groupBy('ward');
+
+        return response()->json($wardGroups->map(function($beds, $wardName) {
+            return [
+                'id' => md5($wardName),
+                'name' => $wardName ?: 'Unassigned',
+                'type' => 'general',
+                'capacity' => $beds->count(),
+                'occupied_beds' => $beds->filter(function($bed) {
+                    return $bed->currentAdmission && !$bed->currentAdmission->discharged;
+                })->count(),
+                'available_beds' => $beds->filter(function($bed) {
+                    return !$bed->currentAdmission || $bed->currentAdmission->discharged;
+                })->count(),
+                'beds' => $beds->map(function($bed) {
+                    $status = 'available';
+                    $currentPatient = null;
+
+                    if ($bed->currentAdmission && !$bed->currentAdmission->discharged) {
+                        $status = 'occupied';
+                        $currentPatient = $bed->currentAdmission->patient
+                            ? userfullname($bed->currentAdmission->patient->user_id)
+                            : 'Unknown';
+                    }
+
+                    return [
+                        'id' => $bed->id,
+                        'name' => $bed->name,
+                        'status' => $status,
+                        'current_patient' => $currentPatient,
+                    ];
+                }),
+            ];
+        })->values());
+    }
+
+    /**
+     * Get admission queue (patients awaiting bed assignment)
+     */
+    public function getAdmissionQueue()
+    {
+        $queue = AdmissionRequest::with(['patient.user', 'doctor'])
+            ->whereNull('bed_id')
+            ->where('discharged', 0)
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        return response()->json($queue->map(function($admission) {
+            return [
+                'id' => $admission->id,
+                'patient_name' => userfullname($admission->patient->user_id ?? 0),
+                'file_no' => $admission->patient->file_no ?? 'N/A',
+                'doctor_name' => $admission->doctor ? $admission->doctor->name : 'N/A',
+                'requested_at' => $admission->created_at->format('M d, Y H:i'),
+                'admission_status' => $admission->admission_status ?? 'pending_checklist',
+            ];
+        }));
+    }
+
+    /**
+     * Get discharge queue (patients with discharge requested)
+     */
+    public function getDischargeQueue()
+    {
+        $queue = AdmissionRequest::with(['patient.user', 'bed'])
+            ->whereNotNull('bed_id')
+            ->where('discharged', 0)
+            ->where(function($q) {
+                $q->where('admission_status', 'discharge_requested')
+                  ->orWhere('admission_status', 'discharge_checklist');
+            })
+            ->orderBy('updated_at', 'asc')
+            ->get();
+
+        return response()->json($queue->map(function($admission) {
+            return [
+                'id' => $admission->id,
+                'patient_name' => userfullname($admission->patient->user_id ?? 0),
+                'file_no' => $admission->patient->file_no ?? 'N/A',
+                'bed_name' => $admission->bed ? ($admission->bed->ward . ' - ' . $admission->bed->name) : 'N/A',
+                'discharge_requested_at' => $admission->updated_at->format('M d, Y H:i'),
+            ];
+        }));
+    }
+
+    /**
+     * Get available beds for assignment
+     */
+    public function getAvailableBeds(Request $request)
+    {
+        $query = Bed::whereDoesntHave('currentAdmission', function($q) {
+            $q->where('discharged', 0);
+        })->where(function($q) {
+            $q->where('bed_status', 'available')
+              ->orWhereNull('bed_status');
+        });
+
+        if ($request->has('ward_id') && $request->ward_id) {
+            $query->where('ward_id', $request->ward_id);
+        }
+
+        $beds = $query->get();
+
+        return response()->json($beds->map(function($bed) {
+            return [
+                'id' => $bed->id,
+                'name' => $bed->name,
+                'ward_name' => $bed->ward ?? 'Unassigned',
+            ];
+        }));
+    }
+
+    /**
+     * Get bed details
+     */
+    public function getBedDetails($bedId)
+    {
+        $bed = Bed::with(['currentAdmission.patient.user'])->findOrFail($bedId);
+
+        $currentPatient = null;
+        $admittedDate = null;
+
+        if ($bed->currentAdmission && !$bed->currentAdmission->discharged) {
+            $currentPatient = [
+                'name' => userfullname($bed->currentAdmission->patient->user_id ?? 0),
+                'file_no' => $bed->currentAdmission->patient->file_no ?? 'N/A',
+            ];
+            $admittedDate = $bed->currentAdmission->created_at->format('M d, Y H:i');
+        }
+
+        return response()->json([
+            'id' => $bed->id,
+            'name' => $bed->name,
+            'ward_name' => $bed->ward ?? 'Unassigned',
+            'current_patient' => $currentPatient,
+            'admitted_date' => $admittedDate,
+        ]);
+    }
+
+    /**
+     * Set bed to maintenance status
+     */
+    public function setBedMaintenance($bedId)
+    {
+        $bed = Bed::findOrFail($bedId);
+
+        // Check if bed is occupied
+        if ($bed->currentAdmission && !$bed->currentAdmission->discharged) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot set occupied bed to maintenance'
+            ], 400);
+        }
+
+        $bed->bed_status = 'maintenance';
+        $bed->save();
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Set bed to available status
+     */
+    public function setBedAvailable($bedId)
+    {
+        $bed = Bed::findOrFail($bedId);
+        $bed->bed_status = 'available';
+        $bed->save();
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Get admission checklist for a patient
+     */
+    public function getAdmissionChecklist($admissionId)
+    {
+        $admission = AdmissionRequest::findOrFail($admissionId);
+
+        // Check if checklist exists, create if not
+        if (class_exists('\\App\\Models\\AdmissionChecklist')) {
+            $checklist = \App\Models\AdmissionChecklist::where('admission_request_id', $admissionId)->first();
+
+            if (!$checklist) {
+                // Create from template
+                $template = \App\Models\ChecklistTemplate::where('type', 'admission')
+                    ->where('is_active', true)
+                    ->first();
+
+                if ($template) {
+                    $checklist = \App\Models\AdmissionChecklist::createFromTemplate($admission, $template);
+                } else {
+                    // Create default checklist
+                    $checklist = \App\Models\AdmissionChecklist::create([
+                        'admission_request_id' => $admissionId,
+                        'created_by' => Auth::id(),
+                    ]);
+                }
+            }
+
+            $items = \App\Models\AdmissionChecklistItem::where('admission_checklist_id', $checklist->id)->get();
+            $completedCount = $items->filter(function($item) {
+                return $item->completed || $item->waived;
+            })->count();
+            $totalCount = $items->count();
+            $progress = $totalCount > 0 ? round(($completedCount / $totalCount) * 100) : 100;
+
+            return response()->json([
+                'id' => $checklist->id,
+                'progress' => $progress,
+                'all_complete' => $progress >= 100,
+                'items' => $items->map(function($item) {
+                    return [
+                        'id' => $item->id,
+                        'name' => $item->item_name,
+                        'description' => $item->description,
+                        'completed' => (bool) $item->completed,
+                        'waived' => (bool) $item->waived,
+                        'waived_by' => $item->waivedBy ? userfullname($item->waivedBy->id) : null,
+                        'waived_reason' => $item->waived_reason,
+                        'is_waivable' => true,
+                    ];
+                }),
+            ]);
+        }
+
+        // Fallback: Return empty checklist structure
+        return response()->json([
+            'id' => 0,
+            'progress' => 100,
+            'all_complete' => true,
+            'items' => [],
+        ]);
+    }
+
+    /**
+     * Complete an admission checklist item
+     */
+    public function completeAdmissionChecklistItem(Request $request, $itemId)
+    {
+        if (!class_exists('\\App\\Models\\AdmissionChecklistItem')) {
+            return response()->json(['success' => true, 'progress' => 100]);
+        }
+
+        $item = \App\Models\AdmissionChecklistItem::findOrFail($itemId);
+        $item->completed = $request->completed ?? true;
+        $item->completed_by = Auth::id();
+        $item->completed_at = now();
+        $item->save();
+
+        // Calculate progress
+        $checklist = $item->admissionChecklist;
+        $items = \App\Models\AdmissionChecklistItem::where('admission_checklist_id', $checklist->id)->get();
+        $completedCount = $items->filter(fn($i) => $i->completed || $i->waived)->count();
+        $progress = $items->count() > 0 ? round(($completedCount / $items->count()) * 100) : 100;
+
+        return response()->json([
+            'success' => true,
+            'progress' => $progress,
+        ]);
+    }
+
+    /**
+     * Waive an admission checklist item
+     */
+    public function waiveAdmissionChecklistItem(Request $request, $itemId)
+    {
+        if (!class_exists('\\App\\Models\\AdmissionChecklistItem')) {
+            return response()->json(['success' => true]);
+        }
+
+        $item = \App\Models\AdmissionChecklistItem::findOrFail($itemId);
+        $item->waived = true;
+        $item->waived_by = Auth::id();
+        $item->waived_at = now();
+        $item->waived_reason = $request->reason;
+        $item->save();
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Assign a bed to an admission
+     */
+    public function assignBed(Request $request, $admissionId)
+    {
+        $request->validate([
+            'bed_id' => 'required|exists:beds,id',
+        ]);
+
+        $admission = AdmissionRequest::findOrFail($admissionId);
+        $bed = Bed::findOrFail($request->bed_id);
+
+        // Check if bed is available
+        $existingAdmission = AdmissionRequest::where('bed_id', $bed->id)
+            ->where('discharged', 0)
+            ->first();
+
+        if ($existingAdmission) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This bed is already occupied'
+            ], 400);
+        }
+
+        DB::beginTransaction();
+        try {
+            $admission->bed_id = $bed->id;
+            $admission->admission_status = 'admitted';
+            $admission->save();
+
+            $bed->bed_status = 'occupied';
+            $bed->save();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Bed assigned successfully'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to assign bed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get discharge checklist for an admission
+     */
+    public function getDischargeChecklist($admissionId)
+    {
+        $admission = AdmissionRequest::findOrFail($admissionId);
+
+        if (class_exists('\\App\\Models\\DischargeChecklist')) {
+            $checklist = \App\Models\DischargeChecklist::where('admission_request_id', $admissionId)->first();
+
+            if (!$checklist) {
+                $template = \App\Models\ChecklistTemplate::where('type', 'discharge')
+                    ->where('is_active', true)
+                    ->first();
+
+                if ($template) {
+                    $checklist = \App\Models\DischargeChecklist::createFromTemplate($admission, $template);
+                } else {
+                    $checklist = \App\Models\DischargeChecklist::create([
+                        'admission_request_id' => $admissionId,
+                        'created_by' => Auth::id(),
+                    ]);
+                }
+            }
+
+            $items = \App\Models\DischargeChecklistItem::where('discharge_checklist_id', $checklist->id)->get();
+            $completedCount = $items->filter(fn($item) => $item->completed || $item->waived)->count();
+            $progress = $items->count() > 0 ? round(($completedCount / $items->count()) * 100) : 100;
+
+            return response()->json([
+                'id' => $checklist->id,
+                'progress' => $progress,
+                'all_complete' => $progress >= 100,
+                'items' => $items->map(function($item) {
+                    return [
+                        'id' => $item->id,
+                        'name' => $item->item_name,
+                        'description' => $item->description,
+                        'completed' => (bool) $item->completed,
+                        'waived' => (bool) $item->waived,
+                        'waived_by' => $item->waivedBy ? userfullname($item->waivedBy->id) : null,
+                        'waived_reason' => $item->waived_reason,
+                        'is_waivable' => true,
+                    ];
+                }),
+            ]);
+        }
+
+        return response()->json([
+            'id' => 0,
+            'progress' => 100,
+            'all_complete' => true,
+            'items' => [],
+        ]);
+    }
+
+    /**
+     * Complete a discharge checklist item
+     */
+    public function completeDischargeChecklistItem(Request $request, $itemId)
+    {
+        if (!class_exists('\\App\\Models\\DischargeChecklistItem')) {
+            return response()->json(['success' => true, 'progress' => 100]);
+        }
+
+        $item = \App\Models\DischargeChecklistItem::findOrFail($itemId);
+        $item->completed = $request->completed ?? true;
+        $item->completed_by = Auth::id();
+        $item->completed_at = now();
+        $item->save();
+
+        $checklist = $item->dischargeChecklist;
+        $items = \App\Models\DischargeChecklistItem::where('discharge_checklist_id', $checklist->id)->get();
+        $completedCount = $items->filter(fn($i) => $i->completed || $i->waived)->count();
+        $progress = $items->count() > 0 ? round(($completedCount / $items->count()) * 100) : 100;
+
+        return response()->json([
+            'success' => true,
+            'progress' => $progress,
+        ]);
+    }
+
+    /**
+     * Waive a discharge checklist item
+     */
+    public function waiveDischargeChecklistItem(Request $request, $itemId)
+    {
+        if (!class_exists('\\App\\Models\\DischargeChecklistItem')) {
+            return response()->json(['success' => true]);
+        }
+
+        $item = \App\Models\DischargeChecklistItem::findOrFail($itemId);
+        $item->waived = true;
+        $item->waived_by = Auth::id();
+        $item->waived_at = now();
+        $item->waived_reason = $request->reason;
+        $item->save();
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Complete discharge and release bed
+     */
+    public function completeDischarge(Request $request, $admissionId)
+    {
+        $admission = AdmissionRequest::with('bed')->findOrFail($admissionId);
+
+        DB::beginTransaction();
+        try {
+            // Release bed
+            if ($admission->bed) {
+                $admission->bed->bed_status = 'available';
+                $admission->bed->save();
+            }
+
+            // Mark as discharged
+            $admission->discharged = 1;
+            $admission->admission_status = 'discharged';
+            $admission->discharged_at = now();
+            $admission->discharged_by = Auth::id();
+            $admission->save();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Patient discharged successfully, bed released'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to complete discharge: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

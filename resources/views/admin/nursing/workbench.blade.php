@@ -224,9 +224,15 @@
         gap: 0.5rem;
     }
 
-    .quick-action-btn:hover {
+    .quick-action-btn:hover:not(:disabled) {
         border-color: var(--hospital-primary);
         background: #f8f9fa;
+    }
+
+    .quick-action-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        background: #f5f5f5;
     }
 
     .quick-action-btn i {
@@ -2201,10 +2207,17 @@
         border-color: var(--hospital-primary);
     }
 
-    .btn-clinical-context:hover {
+    .btn-clinical-context:hover:not(:disabled) {
         background: #0056b3;
         border-color: #0056b3;
         color: white;
+    }
+
+    .btn-clinical-context:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        background: #6c757d;
+        border-color: #6c757d;
     }
 
     .panel-header {
@@ -2450,16 +2463,20 @@
         </div>
 
         <div class="queue-widget">
-            <h6>� PATIENT QUEUES</h6>
-            <div class="queue-item" data-queue="admitted" onclick="loadAdmittedPatients()">
+            <h6>📋 PATIENT QUEUES</h6>
+            <div class="queue-item" data-filter="admitted">
                 <span class="queue-item-label">🛏️ Admitted Patients</span>
                 <span class="queue-count billing" id="queue-admitted-count">0</span>
             </div>
-            <div class="queue-item" data-queue="vitals" onclick="loadVitalsQueue()">
+            <div class="queue-item" data-filter="vitals">
                 <span class="queue-item-label">💉 Vitals Queue</span>
                 <span class="queue-count sample" id="queue-vitals-count">0</span>
             </div>
-            <div class="queue-item" data-queue="medication-due" onclick="loadMedicationDue()">
+            <div class="queue-item" data-filter="bed-requests">
+                <span class="queue-item-label">🛏️ Bed Requests</span>
+                <span class="queue-count info" id="queue-bed-count">0</span>
+            </div>
+            <div class="queue-item" data-filter="medication-due">
                 <span class="queue-item-label">💊 Medication Due</span>
                 <span class="queue-count results" id="queue-medication-count">0</span>
             </div>
@@ -2470,17 +2487,42 @@
 
         <div class="quick-actions">
             <h6>⚡ QUICK ACTIONS</h6>
+
+            <!-- Ward & Bed Management -->
+            <button class="quick-action-btn" id="btn-ward-dashboard">
+                <i class="mdi mdi-hospital-building text-primary"></i>
+                <span>Ward Dashboard</span>
+            </button>
+
+            <!-- Quick Vitals (opens modal for fast entry) -->
+            <button class="quick-action-btn" id="btn-quick-vitals" disabled title="Select a patient first">
+                <i class="mdi mdi-heart-pulse text-danger"></i>
+                <span>Quick Vitals</span>
+            </button>
+
+            <!-- Medication Rounds -->
+            <button class="quick-action-btn" data-filter="medication-due">
+                <i class="mdi mdi-pill text-warning"></i>
+                <span>Medication Round</span>
+                <span class="badge bg-danger ms-auto" id="med-round-badge" style="display: none;">0</span>
+            </button>
+
+            <!-- Shift Handover -->
             <button class="quick-action-btn" id="btn-shift-handover">
-                <i class="mdi mdi-clipboard-text"></i>
+                <i class="mdi mdi-clipboard-text text-info"></i>
                 <span>Shift Handover</span>
             </button>
-            <button class="quick-action-btn" id="btn-view-reports">
-                <i class="mdi mdi-chart-box-outline"></i>
-                <span>View Reports</span>
+
+            <!-- Nursing Reports -->
+            <button class="quick-action-btn" id="btn-nursing-reports">
+                <i class="mdi mdi-chart-box-outline text-success"></i>
+                <span>Nursing Reports</span>
             </button>
-            <button class="quick-action-btn" id="btn-ward-dashboard">
-                <i class="mdi mdi-monitor-dashboard"></i>
-                <span>Ward Dashboard</span>
+
+            <!-- Admission/Discharge Summary -->
+            <button class="quick-action-btn" id="btn-admission-summary">
+                <i class="mdi mdi-account-switch text-secondary"></i>
+                <span>Admissions Today</span>
             </button>
         </div>
     </div>
@@ -2496,7 +2538,7 @@
                 <button class="btn-toggle-search" id="btn-toggle-search">
                     <i class="fa fa-bars"></i> Toggle Search
                 </button>
-                <button class="btn-clinical-context" id="btn-clinical-context">
+                <button class="btn-clinical-context" id="btn-clinical-context" disabled title="Select a patient first">
                     <i class="fa fa-heartbeat"></i> Clinical Context
                 </button>
             </div>
@@ -2611,7 +2653,7 @@
                 <!-- Sub Tabs -->
                 <ul class="nav nav-tabs mb-3" id="reports-tabs" role="tablist">
                     <li class="nav-item">
-                        <a class="nav-link active" id="overview-tab" data-toggle="tab" href="#overview-content" role="tab" aria-controls="overview-content" aria-selected="true">
+                        <a class="nav-link active" id="reports-overview-tab" data-toggle="tab" href="#overview-content" role="tab" aria-controls="overview-content" aria-selected="true">
                             <i class="mdi mdi-view-dashboard"></i> Overview
                         </a>
                     </li>
@@ -2630,7 +2672,7 @@
                 <!-- Tab Content -->
                 <div class="tab-content" id="reports-tab-content">
                     <!-- Overview Tab -->
-                    <div class="tab-pane fade show active" id="overview-content" role="tabpanel" aria-labelledby="overview-tab">
+                    <div class="tab-pane fade show active" id="overview-content" role="tabpanel" aria-labelledby="reports-overview-tab">
                         <div class="reports-container">
                             <!-- Summary Statistics Cards -->
                             <div class="row mb-4">
@@ -2787,6 +2829,19 @@
             </div>
         </div>
 
+        <!-- Ward Dashboard View -->
+        <div class="queue-view" id="ward-dashboard-view">
+            <div class="queue-view-header">
+                <h4><i class="mdi mdi-hospital-building"></i> Ward Dashboard</h4>
+                <button class="btn btn-secondary btn-close-queue" id="btn-close-ward-dashboard">
+                    <i class="mdi mdi-close"></i> Close
+                </button>
+            </div>
+            <div class="queue-view-content" style="padding: 1rem; overflow-y: auto;">
+                @include('admin.partials.ward_dashboard')
+            </div>
+        </div>
+
         <!-- Patient Header -->
         <div class="patient-header" id="patient-header">
             <div class="patient-header-top">
@@ -2810,6 +2865,10 @@
                 <button class="workspace-tab active" data-tab="overview">
                     <i class="mdi mdi-account-details"></i>
                     <span>Overview</span>
+                </button>
+                <button class="workspace-tab" data-tab="vitals">
+                    <i class="mdi mdi-heart-pulse"></i>
+                    <span>Vitals</span>
                 </button>
                 <button class="workspace-tab" data-tab="medication">
                     <i class="mdi mdi-pill"></i>
@@ -2919,6 +2978,36 @@
                             </div>
                         </div>
 
+                        <!-- Latest Notes Row -->
+                        <div class="row">
+                            <!-- Latest Nurse Note -->
+                            <div class="col-lg-6 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-header bg-purple text-white py-2">
+                                        <h6 class="mb-0"><i class="mdi mdi-note-text"></i> Latest Nurse Note</h6>
+                                    </div>
+                                    <div class="card-body p-2">
+                                        <div id="overview-nurse-note">
+                                            <p class="text-muted text-center py-2">No nursing notes</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Latest Doctor Note -->
+                            <div class="col-lg-6 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-header bg-dark text-white py-2">
+                                        <h6 class="mb-0"><i class="mdi mdi-stethoscope"></i> Latest Doctor Note</h6>
+                                    </div>
+                                    <div class="card-body p-2">
+                                        <div id="overview-doctor-note">
+                                            <p class="text-muted text-center py-2">No doctor notes</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Allergies & Alerts Row -->
                         <div class="row">
                             <div class="col-12 mb-3">
@@ -2935,6 +3024,13 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Vitals Tab -->
+            <div class="workspace-tab-content" id="vitals-tab">
+                <div class="vitals-container p-3">
+                    @include('admin.partials.unified_vitals', ['patient' => $currentPatient ?? null])
                 </div>
             </div>
 
@@ -3480,7 +3576,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" id="notes-history-tab" data-toggle="tab" href="#notes-history" role="tab">
+                            <a class="nav-link" id="notes-history-tab-link" data-toggle="tab" href="#notes-history" role="tab">
                                 <i class="mdi mdi-history"></i> History
                             </a>
                         </li>
@@ -3495,19 +3591,11 @@
                                 </div>
                                 <div class="card-body">
                                     <form id="nursing-note-form">
-                                        <div class="form-row">
-                                            <div class="form-group col-md-12">
-                                                <label for="note-type"><i class="mdi mdi-format-list-bulleted"></i> Note Type *</label>
-                                                <select class="form-control" id="note-type" required>
-                                                    <option value="">Select Note Type</option>
-                                                </select>
-                                            </div>
-                                        </div>
                                         <div class="form-group">
-                                            <label for="note-content"><i class="mdi mdi-text"></i> Note Content *</label>
-                                            <textarea class="form-control" id="note-content" rows="6" placeholder="Enter your nursing note here..." required></textarea>
+                                            <label for="nursing-note-editor"><i class="mdi mdi-text"></i> Note Content *</label>
+                                            <div id="nursing-note-editor"></div>
                                         </div>
-                                        <div class="form-actions text-right">
+                                        <div class="form-actions text-right mt-3">
                                             <button type="submit" class="btn btn-primary">
                                                 <i class="mdi mdi-content-save"></i> Save Note
                                             </button>
@@ -3518,20 +3606,20 @@
                         </div>
 
                         <!-- Notes History Sub-tab -->
-                        <div class="tab-pane fade" id="notes-history" role="tabpanel">
+                        <div class="tab-pane fade has-timeline" id="notes-history" role="tabpanel">
                             <div class="card">
-                                <div class="card-header py-2">
+                                <div class="card-header py-2 d-flex justify-content-between align-items-center">
                                     <h6 class="mb-0"><i class="mdi mdi-history"></i> Notes History</h6>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="loadNotesHistory(currentPatient)">
+                                        <i class="mdi mdi-refresh"></i> Refresh
+                                    </button>
                                 </div>
-                                <div class="card-body">
+                                <div class="card-body bg-light p-3">
                                     <div class="table-responsive">
-                                        <table class="table table-sm table-hover" id="notes-history-table" style="width:100%">
-                                            <thead>
+                                        <table class="table table-borderless w-100" id="nursing-notes-table">
+                                            <thead class="d-none">
                                                 <tr>
-                                                    <th>Date</th>
-                                                    <th>Type</th>
-                                                    <th>Note</th>
-                                                    <th>By</th>
+                                                    <th>Info</th>
                                                 </tr>
                                             </thead>
                                             <tbody></tbody>
@@ -3562,6 +3650,90 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Note Modal -->
+<div class="modal fade" id="editNoteModal" tabindex="-1" aria-labelledby="editNoteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editNoteModalLabel">Edit Nursing Note</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-note-form">
+                    <input type="hidden" id="edit-note-id">
+                    <div class="form-group">
+                        <label for="edit-note-content">Note Content</label>
+                        <div id="edit-note-editor"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="updatedNote()">Update Note</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Vital Modal -->
+<div class="modal fade" id="editVitalModal" tabindex="-1" aria-labelledby="editVitalModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background-color: {{ $hosColor }}; color: white;">
+                <h5 class="modal-title" id="editVitalModalLabel"><i class="mdi mdi-heart-pulse"></i> Edit Vitals</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-vital-form">
+                    <input type="hidden" id="edit-vital-id">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-blood-pressure" class="form-label"><i class="mdi mdi-heart-pulse text-danger"></i> Blood Pressure</label>
+                            <input type="text" class="form-control" id="edit-blood-pressure" placeholder="e.g., 120/80">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-temp" class="form-label"><i class="mdi mdi-thermometer text-warning"></i> Temperature (°C)</label>
+                            <input type="number" step="0.1" class="form-control" id="edit-temp" placeholder="e.g., 36.5">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-heart-rate" class="form-label"><i class="mdi mdi-heart text-danger"></i> Heart Rate (bpm)</label>
+                            <input type="number" class="form-control" id="edit-heart-rate" placeholder="e.g., 72">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-resp-rate" class="form-label"><i class="mdi mdi-lungs text-primary"></i> Resp. Rate (bpm)</label>
+                            <input type="number" class="form-control" id="edit-resp-rate" placeholder="e.g., 16">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-weight" class="form-label"><i class="mdi mdi-weight text-success"></i> Weight (kg)</label>
+                            <input type="number" step="0.1" class="form-control" id="edit-weight" placeholder="e.g., 70">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-height" class="form-label"><i class="mdi mdi-human-male-height"></i> Height (cm)</label>
+                            <input type="number" step="0.1" class="form-control" id="edit-height" placeholder="e.g., 170">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-spo2" class="form-label"><i class="mdi mdi-percent"></i> SpO2 (%)</label>
+                            <input type="number" step="0.1" class="form-control" id="edit-spo2" placeholder="e.g., 98">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit-blood-sugar" class="form-label"><i class="mdi mdi-water"></i> Blood Sugar (mg/dL)</label>
+                            <input type="number" step="0.1" class="form-control" id="edit-blood-sugar" placeholder="e.g., 100">
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="edit-other-notes" class="form-label"><i class="mdi mdi-note-text"></i> Notes</label>
+                            <textarea class="form-control" id="edit-other-notes" rows="2" placeholder="Any additional notes..."></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="updateVital()"><i class="mdi mdi-check"></i> Update Vitals</button>
             </div>
         </div>
     </div>
@@ -3740,47 +3912,6 @@
     </div>
 </div>
 
-<!-- Trash Aside Panel -->
-<div class="trash-panel" id="trashPanel" style="display: none;">
-    <div class="trash-panel-header">
-        <h5><i class="fa fa-trash"></i> Trash & Dismissed</h5>
-        <button class="close-panel-btn" id="closeTrashPanel">&times;</button>
-    </div>
-    <div class="trash-panel-tabs">
-        <button class="trash-tab active" data-trash-tab="dismissed">
-            <i class="fa fa-ban"></i> Dismissed
-            <span class="badge badge-warning" id="dismissed-count">0</span>
-        </button>
-        <button class="trash-tab" data-trash-tab="deleted">
-            <i class="fa fa-trash"></i> Deleted
-            <span class="badge badge-danger" id="deleted-count">0</span>
-        </button>
-    </div>
-    <div class="trash-panel-content">
-        <div class="trash-tab-content active" id="dismissed-content">
-            <div class="table-responsive">
-                <table class="table table-sm table-hover" id="dismissed-table" style="width: 100%">
-                    <thead>
-                        <tr>
-                            <th>Details</th>
-                        </tr>
-                    </thead>
-                </table>
-            </div>
-        </div>
-        <div class="trash-tab-content" id="deleted-content">
-            <div class="table-responsive">
-                <table class="table table-sm table-hover" id="deleted-table" style="width: 100%">
-                    <thead>
-                        <tr>
-                            <th>Details</th>
-                        </tr>
-                    </thead>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- Audit Log Modal -->
 <div class="modal fade" id="auditLogModal" tabindex="-1" role="dialog">
@@ -3848,162 +3979,664 @@
     </div>
 </div>
 
+
+
+
+<!-- =============================================
+     SHIFT MANAGEMENT UI COMPONENTS
+     ============================================= -->
+
+<!-- Workbench Lock Overlay (shown when no active shift) -->
+<div id="shift-lock-overlay" class="shift-lock-overlay" style="display: none;">
+    <div class="shift-lock-content">
+        <div class="shift-lock-icon">
+            <i class="mdi mdi-clock-alert-outline"></i>
+        </div>
+        <h3>Start Your Shift</h3>
+        <p class="text-muted">Please start your shift to access the nursing workbench and begin documenting patient care.</p>
+        <div id="pending-handovers-preview" class="pending-handovers-preview" style="display: none;">
+            <div class="alert alert-warning mb-3">
+                <i class="mdi mdi-alert-circle"></i>
+                <span id="pending-handovers-count">0</span> handover(s) from the last 24 hours need your attention
+            </div>
+            <div id="pending-handovers-list" class="pending-handovers-list mb-3"></div>
+        </div>
+        <button class="btn btn-lg btn-success" id="start-shift-btn">
+            <i class="mdi mdi-play-circle"></i> Start Shift
+        </button>
+    </div>
+</div>
+
+<!-- Floating Shift Control Button -->
+<div id="shift-control-fab" class="shift-control-fab" style="display: none;">
+    <div class="shift-fab-timer">
+        <span id="shift-elapsed-time">00:00</span>
+    </div>
+    <div class="shift-fab-main">
+        <button class="btn btn-shift-control" id="shift-fab-btn" title="Shift Controls">
+            <i class="mdi mdi-account-clock"></i>
+        </button>
+    </div>
+    <div class="shift-fab-actions" style="display: none;">
+        <button class="btn btn-sm btn-info shift-action-btn" id="view-shift-summary" title="View Shift Summary">
+            <i class="mdi mdi-chart-bar"></i>
+        </button>
+        <button class="btn btn-sm btn-warning shift-action-btn" id="view-handovers-btn" title="View Handovers">
+            <i class="mdi mdi-file-document-multiple"></i>
+        </button>
+        <button class="btn btn-sm btn-danger shift-action-btn" id="end-shift-btn" title="End Shift">
+            <i class="mdi mdi-stop-circle"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Start Shift Modal -->
+<div class="modal fade" id="startShiftModal" tabindex="-1" aria-labelledby="startShiftModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="startShiftModalLabel">
+                    <i class="mdi mdi-play-circle"></i> Start Your Shift
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Step 1: Shift Configuration -->
+                <div id="shift-config-step" class="shift-step">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="shift-ward-select">Ward Assignment</label>
+                                <select class="form-control" id="shift-ward-select">
+                                    <option value="">All Wards (Floating)</option>
+                                </select>
+                                <small class="text-muted">Select your assigned ward to see relevant handovers</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="shift-type-select">Shift Type</label>
+                                <select class="form-control" id="shift-type-select">
+                                    <option value="">Auto-detect</option>
+                                    <option value="morning">🌅 Morning (6AM - 2PM)</option>
+                                    <option value="afternoon">☀️ Afternoon (2PM - 10PM)</option>
+                                    <option value="night">🌙 Night (10PM - 6AM)</option>
+                                </select>
+                                <small class="text-muted">Leave blank to auto-detect based on current time</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center mt-3">
+                        <button type="button" class="btn btn-outline-primary" id="load-ward-handovers-btn">
+                            <i class="mdi mdi-magnify"></i> Check for Handovers
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Pending Handovers (if any) -->
+                <div id="shift-handovers-step" class="shift-step" style="display: none;">
+                    <hr>
+                    <div class="alert alert-info">
+                        <i class="mdi mdi-information-outline"></i>
+                        <strong>Review Previous Handovers</strong><br>
+                        Please review and acknowledge the following handovers before starting your shift.
+                    </div>
+                    <div id="start-shift-handovers-list" class="handovers-acknowledgment-list"></div>
+                    <div class="text-center mt-3">
+                        <button class="btn btn-outline-primary btn-sm" id="load-more-handovers-btn">
+                            <i class="mdi mdi-history"></i> Load Older Handovers
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="confirm-start-shift-btn">
+                    <i class="mdi mdi-play-circle"></i> Start Shift
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- End Shift Modal -->
+<div class="modal fade" id="endShiftModal" tabindex="-1" aria-labelledby="endShiftModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="endShiftModalLabel">
+                    <i class="mdi mdi-stop-circle"></i> End Your Shift
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Shift Summary -->
+                <div class="shift-end-summary mb-4">
+                    <h6 class="text-muted mb-3">Shift Summary</h6>
+                    <div class="row text-center">
+                        <div class="col">
+                            <div class="stat-box">
+                                <div class="stat-value" id="end-shift-duration">--:--</div>
+                                <div class="stat-label">Duration</div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="stat-box">
+                                <div class="stat-value" id="end-shift-vitals">0</div>
+                                <div class="stat-label">Vitals</div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="stat-box">
+                                <div class="stat-value" id="end-shift-medications">0</div>
+                                <div class="stat-label">Medications</div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="stat-box">
+                                <div class="stat-value" id="end-shift-notes">0</div>
+                                <div class="stat-label">Notes</div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="stat-box">
+                                <div class="stat-value" id="end-shift-total">0</div>
+                                <div class="stat-label">Total Actions</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Audit-Based Activity Preview -->
+                <div class="audit-activity-preview mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="text-muted mb-0">
+                            <i class="mdi mdi-history"></i> Recorded Activities (Auto-tracked)
+                        </h6>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="load-shift-preview-btn">
+                            <i class="mdi mdi-refresh"></i> Load Preview
+                        </button>
+                    </div>
+                    <div id="shift-activity-preview" class="border rounded p-3 bg-light" style="max-height: 300px; overflow-y: auto;">
+                        <div class="text-center text-muted py-3">
+                            <i class="mdi mdi-information-outline"></i> Click "Load Preview" to see auto-tracked activities during your shift
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Handover Form -->
+                <div class="handover-form">
+                    <h6 class="text-muted mb-3">Create Handover Document</h6>
+                    
+                    <div class="form-group mb-3">
+                        <label for="end-shift-critical-notes">
+                            <i class="mdi mdi-alert text-danger"></i> Critical Notes
+                            <small class="text-muted">(Urgent items for incoming nurse)</small>
+                        </label>
+                        <textarea class="form-control" id="end-shift-critical-notes" rows="3" 
+                            placeholder="Document any critical patient conditions, pending urgent tasks, or important alerts..."></textarea>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="end-shift-concluding-notes">
+                            <i class="mdi mdi-note-text"></i> Concluding Notes
+                        </label>
+                        <textarea class="form-control" id="end-shift-concluding-notes" rows="3" 
+                            placeholder="General shift summary and observations..."></textarea>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label><i class="mdi mdi-format-list-checks"></i> Pending Tasks</label>
+                        <div id="pending-tasks-container">
+                            <div class="pending-task-row mb-2">
+                                <div class="input-group">
+                                    <select class="form-control form-control-sm pending-task-priority" style="max-width: 100px;">
+                                        <option value="normal">Normal</option>
+                                        <option value="low">Low</option>
+                                        <option value="high">High</option>
+                                        <option value="urgent">Urgent</option>
+                                    </select>
+                                    <input type="text" class="form-control pending-task-desc" placeholder="Describe pending task...">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-outline-danger remove-pending-task" type="button">
+                                            <i class="mdi mdi-close"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary mt-2" id="add-pending-task-btn">
+                            <i class="mdi mdi-plus"></i> Add Task
+                        </button>
+                    </div>
+
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="create-handover-checkbox" checked>
+                        <label class="form-check-label" for="create-handover-checkbox">
+                            Create handover document for incoming nurse
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirm-end-shift-btn">
+                    <i class="mdi mdi-stop-circle"></i> End Shift
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+                    <i class="mdi mdi-stop-circle"></i> End Shift
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Handovers List Modal (DataTable) -->
+<div class="modal fade" id="handoversListModal" tabindex="-1" aria-labelledby="handoversListModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="handoversListModalLabel">
+                    <i class="mdi mdi-file-document-multiple"></i> Shift Handovers
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Filters -->
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label>Ward</label>
+                        <select class="form-control form-control-sm" id="handover-filter-ward">
+                            <option value="">All Wards</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label>Shift Type</label>
+                        <select class="form-control form-control-sm" id="handover-filter-shift">
+                            <option value="">All</option>
+                            <option value="morning">Morning</option>
+                            <option value="afternoon">Afternoon</option>
+                            <option value="night">Night</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label>Status</label>
+                        <select class="form-control form-control-sm" id="handover-filter-status">
+                            <option value="">All</option>
+                            <option value="pending">Pending</option>
+                            <option value="acknowledged">Acknowledged</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label>Date From</label>
+                        <input type="date" class="form-control form-control-sm" id="handover-filter-from">
+                    </div>
+                    <div class="col-md-2">
+                        <label>Date To</label>
+                        <input type="date" class="form-control form-control-sm" id="handover-filter-to">
+                    </div>
+                    <div class="col-md-1 d-flex align-items-end">
+                        <button class="btn btn-sm btn-primary" id="apply-handover-filters">
+                            <i class="mdi mdi-filter"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- DataTable -->
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="handovers-datatable" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Date/Time</th>
+                                <th>Shift</th>
+                                <th>Ward</th>
+                                <th>Created By</th>
+                                <th>Critical</th>
+                                <th>Pending Tasks</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Handover Detail Modal -->
+<div class="modal fade" id="handoverDetailModal" tabindex="-1" aria-labelledby="handoverDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="handoverDetailModalLabel">
+                    <i class="mdi mdi-file-document"></i> Handover Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="handover-detail-content">
+                <!-- Dynamic content loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-success" id="acknowledge-handover-detail-btn" style="display: none;">
+                    <i class="mdi mdi-check-circle"></i> Acknowledge
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Shift Summary Modal -->
+<div class="modal fade" id="shiftSummaryModal" tabindex="-1" aria-labelledby="shiftSummaryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="shiftSummaryModalLabel">
+                    <i class="mdi mdi-chart-bar"></i> Current Shift Summary
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="shift-summary-content">
+                <!-- Dynamic content loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Shift Lock Overlay Styles -->
 <style>
-/* Trash Panel Styles */
-.trash-panel {
-    position: fixed;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 450px;
-    background: white;
-    box-shadow: -4px 0 15px rgba(0, 0, 0, 0.2);
-    z-index: 2000;
-    display: flex;
-    flex-direction: column;
-}
+    /* Audit Details Styles */
+    .audit-details-list {
+        font-size: 0.9rem;
+    }
+    .audit-patient-group {
+        border-bottom: 1px solid #e9ecef;
+        padding-bottom: 1rem;
+    }
+    .audit-patient-group:last-child {
+        border-bottom: none;
+    }
+    .audit-items {
+        border-left: 3px solid var(--hospital-primary, #007bff);
+    }
+    .audit-item {
+        border-left: 2px solid transparent;
+    }
+    .audit-item:hover {
+        border-left-color: var(--hospital-primary, #007bff);
+    }
+    .badge-sm {
+        font-size: 0.7rem;
+        padding: 0.2em 0.5em;
+    }
+    .key-changes-list .patient-changes {
+        border-left: 3px solid var(--hospital-primary, #007bff);
+        padding-left: 10px;
+        margin-bottom: 15px;
+    }
+    .key-changes-list ul {
+        padding-left: 20px;
+        margin: 0;
+    }
+    .key-changes-list li {
+        margin-bottom: 3px;
+    }
 
-.trash-panel-header {
-    padding: 1.5rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 3px solid #5a67d8;
-}
+    /* Shift Lock Overlay */
+    .shift-lock-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.97);
+        z-index: 1040; /* Below Bootstrap modal */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 
-.trash-panel-header h5 {
-    margin: 0;
-    font-weight: 700;
-    font-size: 1.25rem;
-}
+    .shift-lock-overlay.modal-open-hidden {
+        opacity: 0;
+        pointer-events: none;
+    }
 
-.trash-panel-tabs {
-    display: flex;
-    background: #f8f9fa;
-    border-bottom: 2px solid #dee2e6;
-}
+    .shift-lock-content {
+        text-align: center;
+        max-width: 500px;
+        padding: 2rem;
+    }
 
-.trash-tab {
-    flex: 1;
-    padding: 1rem;
-    background: transparent;
-    border: none;
-    border-bottom: 3px solid transparent;
-    cursor: pointer;
-    font-weight: 600;
-    color: #6c757d;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-}
+    .shift-lock-icon {
+        font-size: 5rem;
+        color: var(--hospital-primary);
+        margin-bottom: 1.5rem;
+        animation: pulse 2s infinite;
+    }
 
-.trash-tab:hover {
-    background: rgba(0, 123, 255, 0.05);
-    color: #007bff;
-}
+    @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.7; transform: scale(1.05); }
+    }
 
-.trash-tab.active {
-    color: #007bff;
-    border-bottom-color: #007bff;
-    background: white;
-}
+    .shift-lock-content h3 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+    }
 
-.trash-panel-content {
-    flex: 1;
-    overflow-y: auto;
-    padding: 1rem;
-}
+    .pending-handovers-preview {
+        text-align: left;
+        background: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin: 1.5rem 0;
+    }
 
-.trash-tab-content {
-    display: none;
-}
+    .pending-handovers-list {
+        max-height: 200px;
+        overflow-y: auto;
+    }
 
-.trash-tab-content.active {
-    display: block;
-}
+    .pending-handover-item {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
 
-/* Floating Trash Button */
-.floating-trash-btn {
-    position: fixed;
-    right: 30px;
-    bottom: 100px;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    transition: all 0.3s;
-    z-index: 1000;
-}
+    .pending-handover-item.has-critical {
+        border-left: 3px solid var(--danger);
+    }
 
-.floating-trash-btn:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-}
+    /* Floating Shift Control Button */
+    .shift-control-fab {
+        position: fixed;
+        bottom: 100px;
+        right: 30px;
+        z-index: 1050;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        cursor: move;
+    }
 
-.floating-trash-btn .badge {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    background: #dc3545;
-    color: white;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.75rem;
-    font-weight: 700;
-}
+    .shift-fab-timer {
+        background: rgba(0, 0, 0, 0.8);
+        color: #fff;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        font-family: monospace;
+    }
 
-/* Audit Log Button */
-.floating-audit-btn {
-    position: fixed;
-    right: 30px;
-    bottom: 30px;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    color: white;
-    border: none;
-    box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    transition: all 0.3s;
-    z-index: 1000;
-}
+    .shift-fab-timer.overdue {
+        background: var(--danger);
+        animation: blink 1s infinite;
+    }
 
-.floating-audit-btn:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 20px rgba(240, 147, 251, 0.6);
-}
+    @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    .shift-fab-main .btn-shift-control {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: var(--hospital-primary);
+        color: white;
+        border: none;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        font-size: 1.5rem;
+        transition: all 0.3s;
+    }
+
+    .shift-fab-main .btn-shift-control:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .shift-fab-main .btn-shift-control.active {
+        background: #28a745;
+    }
+
+    .shift-fab-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .shift-fab-actions .shift-action-btn {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Handover Acknowledgment List */
+    .handovers-acknowledgment-list {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .handover-ack-item {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .handover-ack-item.critical {
+        border-left: 4px solid var(--danger);
+        background: #fff5f5;
+    }
+
+    .handover-ack-item.shake-highlight {
+        animation: shake 0.5s ease-in-out;
+        box-shadow: 0 0 10px rgba(220, 53, 69, 0.5);
+    }
+
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        20%, 60% { transform: translateX(-5px); }
+        40%, 80% { transform: translateX(5px); }
+    }
+
+    .handover-ack-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.5rem;
+    }
+
+    .handover-ack-meta {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+
+    .handover-ack-content {
+        font-size: 0.9rem;
+        color: #495057;
+    }
+
+    .handover-ack-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid #dee2e6;
+    }
+
+    /* End Shift Stats */
+    .stat-box {
+        background: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 1rem;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--hospital-primary);
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+        color: #6c757d;
+        text-transform: uppercase;
+    }
+
+    /* Pending Tasks */
+    .pending-task-row {
+        animation: fadeIn 0.3s;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .shift-control-fab {
+            bottom: 80px;
+            right: 15px;
+        }
+
+        .shift-fab-main .btn-shift-control {
+            width: 50px;
+            height: 50px;
+            font-size: 1.25rem;
+        }
+
+        .shift-fab-actions .shift-action-btn {
+            width: 40px;
+            height: 40px;
+        }
+    }
 </style>
-
-<!-- Floating Action Buttons -->
-<button class="floating-trash-btn" id="openTrashPanel" title="View Trash & Dismissed Requests">
-    <i class="fa fa-trash"></i>
-    <span class="badge" id="trash-total-count">0</span>
-</button>
-
-<button class="floating-audit-btn" id="openAuditLog" title="View Audit Trail">
-    <i class="fa fa-clipboard-list"></i>
-</button>
 
 <!-- Include Clinical Context Modal -->
 @include('admin.partials.clinical_context_modal')
@@ -4020,6 +4653,259 @@ let currentPatientData = null; // Store full patient data including allergies
 let queueRefreshInterval = null;
 let patientSearchTimeout = null;
 let vitalTooltip = null;
+let queueDataTable = null;
+let currentQueueFilter = 'admitted';
+
+// =============================================
+// QUEUE FUNCTIONALITY (derived from billing workbench pattern)
+// =============================================
+
+// Show queue view with specific filter
+function showQueue(filter) {
+    currentQueueFilter = filter;
+
+    // Update queue title based on filter type
+    const titles = {
+        'admitted': '🛏️ Admitted Patients',
+        'vitals': '💉 Vitals Queue',
+        'bed-requests': '🛏️ Bed Requests',
+        'medication-due': '💊 Medication Due',
+        'all': '📋 All Patients'
+    };
+    $('#queue-view-title').html(`<i class="mdi mdi-format-list-bulleted"></i> ${titles[filter] || titles['admitted']}`);
+
+    // Update active state on queue buttons
+    $('.queue-item').removeClass('active');
+    $(`.queue-item[data-filter="${filter}"]`).addClass('active');
+
+    // Hide other views, show queue view
+    $('#empty-state').hide();
+    $('#patient-header').removeClass('active');
+    $('#workspace-content').removeClass('active');
+    $('#queue-view').addClass('active').css('display', 'flex');
+
+    // On mobile, hide search pane and show main workspace
+    if (window.innerWidth < 768) {
+        $('#left-panel').addClass('hidden');
+        $('#main-workspace').addClass('active');
+    }
+
+    // Load queue data based on filter
+    loadQueueData(filter);
+}
+
+// Hide queue view
+function hideQueue() {
+    $('#queue-view').removeClass('active').css('display', 'none');
+    $('.queue-item').removeClass('active');
+
+    if (currentPatient) {
+        // If patient was selected, show their workspace
+        $('#patient-header').addClass('active');
+        $('#workspace-content').addClass('active');
+    } else {
+        // Otherwise show empty state
+        $('#empty-state').show();
+    }
+
+    // On mobile, go back to search pane
+    if (window.innerWidth < 768) {
+        $('#main-workspace').removeClass('active');
+        $('#left-panel').removeClass('hidden');
+    }
+}
+
+// Load queue data based on filter type
+function loadQueueData(filter) {
+    const $container = $('#queue-view .queue-view-content');
+    $container.html('<div class="text-center p-4"><i class="fa fa-spinner fa-spin fa-2x"></i><br>Loading...</div>');
+
+    // Determine endpoint and handler based on filter
+    let url = '';
+    let handler = null;
+
+    switch(filter) {
+        case 'admitted':
+            url = '{{ route("nursing-workbench.admitted-patients") }}';
+            handler = displayAdmittedPatientsQueue;
+            break;
+        case 'vitals':
+            url = '{{ route("nursing-workbench.vitals-queue") }}';
+            handler = displayVitalsQueue;
+            break;
+        case 'bed-requests':
+            url = '{{ route("nursing-workbench.bed-requests-queue") }}';
+            handler = displayBedRequestsQueue;
+            break;
+        case 'medication-due':
+            url = '{{ route("nursing-workbench.medication-due") }}';
+            handler = displayMedicationDueQueue;
+            break;
+        default:
+            url = '{{ route("nursing-workbench.admitted-patients") }}';
+            handler = displayAdmittedPatientsQueue;
+    }
+
+    $.ajax({
+        url: url,
+        method: 'GET',
+        success: function(response) {
+            // Handle both array response and DataTables format
+            const data = response.data || response;
+            if (!data || (Array.isArray(data) && data.length === 0)) {
+                $container.html('<div class="text-center p-4 text-muted"><i class="mdi mdi-account-off mdi-48px"></i><br>No patients found in this queue</div>');
+                return;
+            }
+            handler(data);
+        },
+        error: function(xhr) {
+            console.error('Error loading queue:', xhr);
+            $container.html('<div class="text-center p-4 text-danger"><i class="mdi mdi-alert-circle mdi-48px"></i><br>Failed to load patients</div>');
+        }
+    });
+}
+
+// Display admitted patients in queue (card-based)
+function displayAdmittedPatientsQueue(patients) {
+    const $container = $('#queue-view .queue-view-content');
+
+    let html = '<div class="row p-2">';
+    patients.forEach(p => {
+        const priorityClass = p.priority === 'critical' ? 'border-danger' : (p.priority === 'high' ? 'border-warning' : '');
+        html += `
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card ${priorityClass} queue-patient-card" style="cursor: pointer;" onclick="loadPatient(${p.patient_id}); hideQueue();">
+                    <div class="card-body p-3">
+                        <h6 class="mb-1">${p.name || 'N/A'}</h6>
+                        <small class="text-muted d-block">${p.file_no || ''} | ${p.age || ''} ${p.gender || ''}</small>
+                        <hr class="my-2">
+                        <div class="d-flex justify-content-between">
+                            <span><i class="mdi mdi-bed"></i> ${p.bed || 'No bed'}</span>
+                            <span><i class="mdi mdi-calendar"></i> ${p.days_admitted || 0}d</span>
+                        </div>
+                        ${p.overdue_meds > 0 ? `<span class="badge badge-danger mt-2"><i class="mdi mdi-pill"></i> ${p.overdue_meds} overdue</span>` : ''}
+                        ${p.vitals_due ? '<span class="badge badge-warning mt-2 ms-1"><i class="mdi mdi-heart-pulse"></i> Vitals due</span>' : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+
+    $container.html(html);
+}
+
+// Display vitals queue (card-based)
+function displayVitalsQueue(patients) {
+    const $container = $('#queue-view .queue-view-content');
+
+    if (!Array.isArray(patients)) {
+        // Handle DataTables format
+        patients = patients.data || [];
+    }
+
+    let html = '<div class="row p-2">';
+    patients.forEach(p => {
+        html += `
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card border-warning queue-patient-card" style="cursor: pointer;" onclick="loadPatient(${p.patient_id}); hideQueue();">
+                    <div class="card-body p-3">
+                        <h6 class="mb-1">${p.name || p.patient_name || 'N/A'}</h6>
+                        <small class="text-muted d-block">${p.file_no || ''}</small>
+                        <hr class="my-2">
+                        <div class="d-flex justify-content-between">
+                            <span><i class="mdi mdi-clock-outline"></i> ${p.last_vitals || 'No vitals'}</span>
+                        </div>
+                        <span class="badge badge-warning mt-2"><i class="mdi mdi-heart-pulse"></i> Vitals due</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+
+    $container.html(html);
+}
+
+// Display bed requests queue (card-based)
+function displayBedRequestsQueue(requests) {
+    const $container = $('#queue-view .queue-view-content');
+
+    if (!Array.isArray(requests)) {
+        requests = requests.data || [];
+    }
+
+    let html = '<div class="row p-2">';
+    requests.forEach(r => {
+        const statusClass = r.status === 'pending' ? 'border-info' : 'border-success';
+        html += `
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card ${statusClass} queue-patient-card" style="cursor: pointer;" onclick="loadPatient(${r.patient_id}); hideQueue();">
+                    <div class="card-body p-3">
+                        <h6 class="mb-1">${r.patient_name || r.name || 'N/A'}</h6>
+                        <small class="text-muted d-block">${r.file_no || ''}</small>
+                        <hr class="my-2">
+                        <div class="d-flex justify-content-between">
+                            <span><i class="mdi mdi-bed"></i> ${r.requested_ward || 'Any ward'}</span>
+                            <span class="badge badge-${r.priority === 'urgent' ? 'danger' : 'secondary'}">${r.priority || 'routine'}</span>
+                        </div>
+                        <small class="text-muted mt-2 d-block">${r.reason || ''}</small>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+
+    $container.html(html);
+}
+
+// Display medication due queue (card-based)
+function displayMedicationDueQueue(patients) {
+    const $container = $('#queue-view .queue-view-content');
+
+    if (!Array.isArray(patients)) {
+        patients = patients.data || [];
+    }
+
+    if (patients.length === 0) {
+        $container.html('<div class="text-center p-4 text-muted"><i class="mdi mdi-pill mdi-48px"></i><br>No medications due at this time</div>');
+        return;
+    }
+
+    let html = '<div class="row p-2">';
+    patients.forEach(p => {
+        const urgencyClass = p.overdue ? 'border-danger' : 'border-warning';
+        html += `
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card ${urgencyClass} queue-patient-card" style="cursor: pointer;" onclick="loadPatient(${p.patient_id}); hideQueue();">
+                    <div class="card-body p-3">
+                        <h6 class="mb-1">${p.name || p.patient_name || 'N/A'}</h6>
+                        <small class="text-muted d-block">${p.file_no || ''}</small>
+                        <hr class="my-2">
+                        <div class="d-flex justify-content-between">
+                            <span><i class="mdi mdi-pill"></i> ${p.medication_count || 0} medications</span>
+                            ${p.overdue ? '<span class="badge badge-danger">Overdue</span>' : '<span class="badge badge-warning">Due</span>'}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+
+    $container.html(html);
+}
+
+// Create vital tooltip element (defined early to avoid hoisting issues)
+function createVitalTooltip() {
+    vitalTooltip = $('<div class="vital-tooltip"></div>').appendTo('body');
+
+    // Hide on mouse leave
+    $(document).on('mouseleave', '.vital-item', function() {
+        vitalTooltip.removeClass('active');
+    });
+}
 
 $(document).ready(function() {
     // Initialize
@@ -4028,6 +4914,7 @@ $(document).ready(function() {
     initializeEventListeners();
     loadUserPreferences();
     createVitalTooltip();
+    updateQuickActions(); // Set initial state for patient-dependent buttons
 });
 
 function initializeEventListeners() {
@@ -4084,12 +4971,15 @@ function initializeEventListeners() {
     });
 
     $('#btn-clinical-context').on('click', function() {
+        // Check if patient is selected
+        if (!currentPatient) {
+            toastr.warning('Please select a patient first');
+            return;
+        }
         // Open clinical context modal
         $('#clinical-context-modal').modal('show');
-        // Load clinical data if patient selected
-        if (currentPatient) {
-            loadClinicalContext(currentPatient);
-        }
+        // Load clinical data
+        loadClinicalContext(currentPatient);
     });
 
     // Clinical modal refresh buttons
@@ -4106,7 +4996,7 @@ function initializeEventListeners() {
         }
     });
 
-    // Queue filter buttons
+    // Queue filter buttons - use data-filter and showQueue
     $('.queue-item').on('click', function() {
         const filter = $(this).data('filter');
         showQueue(filter);
@@ -4205,12 +5095,16 @@ function loadPatient(patientId) {
             initMedicationChart(patientId);
             initIntakeOutputChart(patientId);
 
+            // Initialize Unified Vitals
+            if(typeof window.initUnifiedVitals === 'function') {
+                window.initUnifiedVitals(patientId);
+            }
+
             // Load other tab data
             loadInjectionHistory(patientId);
             loadImmunizationSchedule(patientId);
             loadImmunizationHistory(patientId);
             loadPendingBills(patientId);
-            loadNoteTypes();
             loadNotesHistory(patientId);
 
             // Switch to overview tab
@@ -5201,13 +6095,7 @@ function refreshClinicalPanel(panel) {
     }
 }
 
-function switchWorkspaceTab(tab) {
-    $('.workspace-tab').removeClass('active');
-    $(`.workspace-tab[data-tab="${tab}"]`).addClass('active');
 
-    $('.workspace-tab-content').removeClass('active');
-    $(`#${tab}-tab`).addClass('active');
-}
 
 function loadUserPreferences() {
     const clinicalVisible = localStorage.getItem('clinicalPanelVisible') === 'true';
@@ -5888,11 +6776,6 @@ $('#deleteRequestForm').on('submit', function(e) {
             if (currentPatient) {
                 loadPatient(currentPatient);
             }
-
-            // Refresh trash panel if it's open
-            if ($('#trashPanel').is(':visible')) {
-                loadTrashData();
-            }
         },
         error: function(xhr) {
             alert('Error: ' + (xhr.responseJSON?.message || 'Failed to delete request'));
@@ -5936,11 +6819,6 @@ $('#dismissRequestForm').on('submit', function(e) {
             if (currentPatient) {
                 loadPatient(currentPatient);
             }
-
-            // Refresh trash panel
-            if ($('#trashPanel').is(':visible')) {
-                loadTrashData();
-            }
         },
         error: function(xhr) {
             alert('Error: ' + (xhr.responseJSON?.message || 'Failed to dismiss request'));
@@ -5948,329 +6826,21 @@ $('#dismissRequestForm').on('submit', function(e) {
     });
 });
 
-// Restore Request (from deleted or dismissed)
-function restoreRequest(requestId, type) {
-    if (!confirm('Are you sure you want to restore this request?')) return;
 
-    const url = type === 'deleted'
-        ? `/lab-workbench/lab-service-requests/${requestId}/restore`
-        : `/lab-workbench/lab-service-requests/${requestId}/undismiss`;
 
-    $.ajax({
-        url: url,
-        method: 'POST',
-        data: {
-            _token: '{{ csrf_token() }}'
-        },
-        success: function(response) {
-            alert(response.message);
 
-            // Reload patient data
-            if (currentPatient) {
-                loadPatient(currentPatient);
-            }
 
-            // Refresh trash panel
-            loadTrashData();
-        },
-        error: function(xhr) {
-            alert('Error: ' + (xhr.responseJSON?.message || 'Failed to restore request'));
-        }
-    });
-}
 
-// Trash Panel Management
-$('#openTrashPanel').on('click', function() {
-    $('#trashPanel').fadeIn(300);
-    loadTrashData();
-});
 
-$('#closeTrashPanel').on('click', function() {
-    $('#trashPanel').fadeOut(300);
-});
 
-$('.trash-tab').on('click', function() {
-    const tab = $(this).data('trash-tab');
-    $('.trash-tab').removeClass('active');
-    $(this).addClass('active');
-    $('.trash-tab-content').removeClass('active');
-    $(`#${tab}-content`).addClass('active');
-});
 
-function loadTrashData() {
-    const patientId = currentPatient || null;
 
-    // Load dismissed requests
-    $.ajax({
-        url: `/lab-workbench/dismissed-requests/${patientId || ''}`,
-        method: 'GET',
-        success: function(data) {
-            $('#dismissed-count').text(data.length);
-            updateTrashTotalCount();
 
-            // Check if DataTables is loaded
-            if (typeof $.fn.DataTable === 'undefined') {
-                console.error('DataTables library is not loaded');
-                $('#dismissed-table').html('<tr><td class="text-danger">Error: DataTables library not loaded</td></tr>');
-                return;
-            }
 
-            if ($.fn.DataTable.isDataTable('#dismissed-table')) {
-                $('#dismissed-table').DataTable().destroy();
-            }
-
-            $('#dismissed-table').DataTable({
-                data: data,
-                columns: [{
-                    data: null,
-                    render: function(data) {
-                        return createTrashCard(data, 'dismissed');
-                    }
-                }],
-                ordering: false,
-                searching: true,
-                pageLength: 10,
-                language: {
-                    emptyTable: "No dismissed requests found"
-                }
-            });
-        }
-    });
-
-    // Load deleted requests
-    $.ajax({
-        url: `/lab-workbench/deleted-requests/${patientId || ''}`,
-        method: 'GET',
-        success: function(data) {
-            $('#deleted-count').text(data.length);
-            updateTrashTotalCount();
-
-            // Check if DataTables is loaded
-            if (typeof $.fn.DataTable === 'undefined') {
-                console.error('DataTables library is not loaded');
-                $('#deleted-table').html('<tr><td class="text-danger">Error: DataTables library not loaded</td></tr>');
-                return;
-            }
-
-            if ($.fn.DataTable.isDataTable('#deleted-table')) {
-                $('#deleted-table').DataTable().destroy();
-            }
-
-            $('#deleted-table').DataTable({
-                data: data,
-                columns: [{
-                    data: null,
-                    render: function(data) {
-                        return createTrashCard(data, 'deleted');
-                    }
-                }],
-                ordering: false,
-                searching: true,
-                pageLength: 10,
-                language: {
-                    emptyTable: "No deleted requests found"
-                }
-            });
-        }
-    });
-}
-
-function createTrashCard(data, type) {
-    const serviceName = data.service ? data.service.service_name : 'N/A';
-    const patientName = data.patient ? `${data.patient.user.firstname} ${data.patient.user.surname}` : 'N/A';
-    const fileNo = data.patient ? data.patient.file_no : 'N/A';
-    const doctorName = data.doctor ? `${data.doctor.firstname} ${data.doctor.surname}` : 'N/A';
-
-    const date = type === 'deleted'
-        ? new Date(data.deleted_at).toLocaleString()
-        : new Date(data.dismissed_at).toLocaleString();
-
-    const reason = type === 'deleted' ? data.deletion_reason : data.dismiss_reason;
-
-    const badgeClass = type === 'deleted' ? 'badge-danger' : 'badge-warning';
-    const icon = type === 'deleted' ? 'fa-trash' : 'fa-ban';
-
-    let html = `
-        <div class="card mb-2" style="border-left: 4px solid ${type === 'deleted' ? '#dc3545' : '#ffc107'};">
-            <div class="card-body p-2">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <h6 class="mb-0">
-                        <span class="badge ${badgeClass}">
-                            <i class="fa ${icon}"></i> ${serviceName}
-                        </span>
-                    </h6>
-                    <button class="btn btn-sm btn-success" onclick="restoreRequest(${data.id}, '${type}')">
-                        <i class="fa fa-undo"></i> Restore
-                    </button>
-                </div>
-                <small>
-                    <div><strong>Patient:</strong> ${patientName} (${fileNo})</div>
-                    <div><strong>Doctor:</strong> ${doctorName}</div>
-                    <div><strong>${type === 'deleted' ? 'Deleted' : 'Dismissed'}:</strong> ${date}</div>
-                    <div><strong>Reason:</strong> ${reason}</div>
-                </small>
-            </div>
-        </div>
-    `;
-
-    return html;
-}
-
-function updateTrashTotalCount() {
-    const dismissed = parseInt($('#dismissed-count').text()) || 0;
-    const deleted = parseInt($('#deleted-count').text()) || 0;
-    const total = dismissed + deleted;
-    $('#trash-total-count').text(total);
-
-    if (total > 0) {
-        $('#trash-total-count').show();
-    } else {
-        $('#trash-total-count').hide();
-    }
-}
-*/
-// END OF LAB-SPECIFIC RESULT FUNCTIONS
-
-// ============================================
-// LAB-SPECIFIC AUDIT LOG FUNCTIONS - DISABLED
-// ============================================
-/*
-// Audit Log Management
-let auditLogTable = null;
-
-$('#openAuditLog').on('click', function() {
-    $('#auditLogModal').modal('show');
-    loadAuditLogs();
-});
-
-$('#applyAuditFilter').on('click', function() {
-    loadAuditLogs();
-});
-
-function loadAuditLogs() {
-    const filters = {
-        action: $('#audit_action_filter').val(),
-        from_date: $('#audit_from_date').val(),
-        to_date: $('#audit_to_date').val()
-    };
-
-    if (currentPatient) {
-        filters.patient_id = currentPatient;
-    }
-
-    if (auditLogTable) {
-        auditLogTable.destroy();
-    }
-
-    auditLogTable = $('#audit-log-table').DataTable({
-        ajax: {
-            url: '/lab-workbench/audit-logs',
-            data: filters
-        },
-        columns: [
-            {
-                data: 'created_at',
-                render: function(data) {
-                    return new Date(data).toLocaleString();
-                }
-            },
-            {
-                data: 'user',
-                render: function(data) {
-                    return data ? `${data.firstname} ${data.surname}` : 'N/A';
-                }
-            },
-            {
-                data: 'action',
-                render: function(data) {
-                    const badges = {
-                        'view': 'badge-info',
-                        'edit': 'badge-warning',
-                        'delete': 'badge-danger',
-                        'restore': 'badge-success',
-                        'dismiss': 'badge-warning',
-                        'undismiss': 'badge-success',
-                        'billing': 'badge-primary',
-                        'sample_collection': 'badge-info',
-                        'result_entry': 'badge-success'
-                    };
-                    const badgeClass = badges[data] || 'badge-secondary';
-                    return `<span class="badge ${badgeClass}">${data.toUpperCase()}</span>`;
-                }
-            },
-            {
-                data: 'description',
-                render: function(data, type, row) {
-                    let desc = data || 'No description';
-                    if (row.new_values && row.new_values.reason) {
-                        desc += `<br><small class="text-muted">Reason: ${row.new_values.reason}</small>`;
-                    }
-                    return desc;
-                }
-            },
-            { data: 'ip_address' }
-        ],
-        order: [[0, 'desc']],
-        pageLength: 25,
-        language: {
-            emptyTable: "No audit logs found"
-        }
-    });
-}
-
-$('#exportAuditLog').on('click', function() {
-    // TODO: Implement export to Excel functionality
-    alert('Export feature coming soon!');
-});
-
-// ============================================
-// LAB-SPECIFIC CODE COMMENTED OUT FOR NURSING WORKBENCH
-// The following trash/audit functionality was copied from lab workbench
-// but is not needed for nursing workbench. Keeping as reference.
-// ============================================
-/*
-// Load trash counts on page load
-$(document).ready(function() {
-    loadTrashData();
-
-    // Refresh trash counts every 60 seconds
-    setInterval(function() {
-        if (!$('#trashPanel').is(':visible')) {
-            const patientId = currentPatient || null;
-            $.ajax({
-                url: `/lab-workbench/dismissed-requests/${patientId || ''}`,
-                method: 'GET',
-                success: function(data) {
-                    $('#dismissed-count').text(data.length);
-                    updateTrashTotalCount();
-                }
-            });
-            $.ajax({
-                url: `/lab-workbench/deleted-requests/${patientId || ''}`,
-                method: 'GET',
-                success: function(data) {
-                    $('#deleted-count').text(data.length);
-                    updateTrashTotalCount();
-                }
-            });
-        }
-    }, 60000);
-});
-*/
 
 // ============================================
 // ENHANCEMENT FUNCTIONS
 // ============================================
-
-// Create vital tooltip element
-function createVitalTooltip() {
-    vitalTooltip = $('<div class="vital-tooltip"></div>').appendTo('body');
-
-    // Hide on mouse leave
-    $(document).on('mouseleave', '.vital-item', function() {
-        vitalTooltip.removeClass('active');
-    });
-}
 
 // Show vital tooltip with details
 function showVitalTooltip(event, vitalType, value, normalRange) {
@@ -6364,121 +6934,6 @@ function animateRefresh(buttonElement) {
     setTimeout(() => $btn.removeClass('refreshing'), 600);
 }
 
-// =============================================
-// QUEUE FUNCTIONALITY
-// =============================================
-
-let queueDataTable = null;
-let currentQueueFilter = 'all';
-
-// Initialize queue data table / view
-function initializeQueueDataTable(filter) {
-    const $container = $('#queue-view .queue-view-content');
-    $container.html('<div class="text-center p-4"><i class="fa fa-spinner fa-spin fa-2x"></i><br>Loading patients...</div>');
-
-    // Fetch admitted patients from nursing workbench
-    $.ajax({
-        url: '{{ route("nursing-workbench.admitted-patients") }}',
-        method: 'GET',
-        data: { filter: filter },
-        success: function(patients) {
-            if (patients.length === 0) {
-                $container.html('<div class="text-center p-4 text-muted"><i class="mdi mdi-account-off mdi-48px"></i><br>No patients found in this queue</div>');
-                return;
-            }
-            displayAdmittedPatientsQueue(patients);
-        },
-        error: function(xhr) {
-            console.error('Error loading queue:', xhr);
-            $container.html('<div class="text-center p-4 text-danger"><i class="mdi mdi-alert-circle mdi-48px"></i><br>Failed to load patients</div>');
-        }
-    });
-}
-
-// Display admitted patients in queue
-function displayAdmittedPatientsQueue(patients) {
-    const $container = $('#queue-view .queue-view-content');
-
-    let html = '<div class="row">';
-    patients.forEach(p => {
-        const priorityClass = p.priority === 'critical' ? 'border-danger' : (p.priority === 'high' ? 'border-warning' : '');
-        html += `
-            <div class="col-md-6 col-lg-4 mb-3">
-                <div class="card ${priorityClass}" style="cursor: pointer;" onclick="loadPatient(${p.patient_id}); hideQueue();">
-                    <div class="card-body p-3">
-                        <h6 class="mb-1">${p.name}</h6>
-                        <small class="text-muted d-block">${p.file_no} | ${p.age} ${p.gender}</small>
-                        <hr class="my-2">
-                        <div class="d-flex justify-content-between">
-                            <span><i class="mdi mdi-bed"></i> ${p.bed}</span>
-                            <span><i class="mdi mdi-calendar"></i> ${p.days_admitted}d</span>
-                        </div>
-                        ${p.overdue_meds > 0 ? `<span class="badge badge-danger mt-2"><i class="mdi mdi-pill"></i> ${p.overdue_meds} overdue</span>` : ''}
-                        ${p.vitals_due ? '<span class="badge badge-warning mt-2 ms-1"><i class="mdi mdi-heart-pulse"></i> Vitals due</span>' : ''}
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-    html += '</div>';
-
-    $container.html(html);
-}
-
-function showQueue(filter) {
-    currentQueueFilter = filter;
-
-    // Update queue title based on nursing context
-    const titles = {
-        'admitted': '🛏️ Admitted Patients',
-        'vitals': '💉 Vitals Queue',
-        'medication': '💊 Medication Due',
-        'all': '📋 All Patients'
-    };
-    $('#queue-view-title').html(`<i class="mdi mdi-format-list-bulleted"></i> ${titles[filter] || titles['all']}`);
-
-    // Update active state on queue buttons
-    $('.queue-item').removeClass('active');
-    if (filter !== 'all') {
-        $(`.queue-item[data-filter="${filter}"]`).addClass('active');
-    }
-
-    // Hide other views, show queue view
-    $('#empty-state').hide();
-    $('#patient-header').removeClass('active');
-    $('#workspace-content').removeClass('active');
-    $('#queue-view').addClass('active');
-
-    // On mobile, hide search pane and show main workspace
-    if (window.innerWidth < 768) {
-        $('#left-panel').addClass('hidden');
-        $('#main-workspace').addClass('active');
-    }
-
-    // Initialize or reload DataTable
-    initializeQueueDataTable(filter);
-}
-
-function hideQueue() {
-    $('#queue-view').removeClass('active');
-    $('.queue-item').removeClass('active');
-
-    if (currentPatient) {
-        // If patient was selected, show their workspace
-        $('#patient-header').addClass('active');
-        $('#workspace-content').addClass('active');
-    } else {
-        // Otherwise show empty state
-        $('#empty-state').show();
-    }
-
-    // On mobile, go back to search pane
-    if (window.innerWidth < 768) {
-        $('#main-workspace').removeClass('active');
-        $('#left-panel').removeClass('hidden');
-    }
-}
-
 // ==========================================
 // REPORTS VIEW FUNCTIONS
 // ==========================================
@@ -6489,40 +6944,6 @@ function showReports() {
     // Temporarily show message that reports are being redesigned for nursing
     toastr.info('Nursing reports feature is being configured. Please use Shift Summary and Handover reports from the left panel.');
     return;
-
-    /* LAB-SPECIFIC REPORTS CODE - DISABLED FOR NURSING WORKBENCH
-    // Hide everything else
-    $('#empty-state').hide();
-    $('#patient-header').removeClass('active');
-    $('#workspace-content').removeClass('active');
-    $('#queue-view').removeClass('active');
-
-    // Show reports view
-    $('#reports-view').addClass('active');
-
-    // On mobile, switch to main workspace
-    if (window.innerWidth < 768) {
-        $('#left-panel').addClass('hidden');
-        $('#main-workspace').addClass('active');
-    }
-
-    // Load statistics and initialize if not already done
-    if (!window.reportsInitialized) {
-        // Don't set default dates - load all records initially
-        // setDefaultDateFilters();
-        loadFilterOptions();
-        loadReportsStatistics();
-        initializeReportsDataTable();
-        // initializeReportsCharts(); // TODO: Implement when Chart.js is added
-        window.reportsInitialized = true;
-    } else {
-        // Refresh statistics
-        loadReportsStatistics();
-        if (window.reportsDataTable) {
-            window.reportsDataTable.ajax.reload();
-        }
-    }
-    */
 }
 
 function hideReports() {
@@ -6912,10 +7333,142 @@ $(document).on('click', '.btn-select-patient-from-queue', function() {
 });
 
 // ==========================================
+// WARD DASHBOARD EVENT HANDLERS
+// ==========================================
+
+// Open ward dashboard view
+$('#btn-ward-dashboard').on('click', function() {
+    showWardDashboard();
+});
+
+// Close ward dashboard view
+$('#btn-close-ward-dashboard').on('click', function() {
+    hideWardDashboard();
+});
+
+function showWardDashboard() {
+    // Hide other views
+    $('#empty-state').hide();
+    $('#queue-view').hide();
+    $('#reports-view').removeClass('active');
+    $('#patient-header').removeClass('active');
+    $('#workspace-content').hide();
+
+    // Show ward dashboard
+    $('#ward-dashboard-view').addClass('active');
+
+    // Initialize ward dashboard
+    if (typeof WardDashboard !== 'undefined') {
+        WardDashboard.init();
+    }
+
+    // On mobile, show main workspace
+    if (window.innerWidth < 768) {
+        $('#main-workspace').addClass('active');
+        $('#left-panel').addClass('hidden');
+    }
+}
+
+function hideWardDashboard() {
+    $('#ward-dashboard-view').removeClass('active');
+    $('#empty-state').show();
+
+    // On mobile, go back to search pane
+    if (window.innerWidth < 768) {
+        $('#main-workspace').removeClass('active');
+        $('#left-panel').removeClass('hidden');
+    }
+}
+
+// ==========================================
+// QUICK ACTION HANDLERS
+// ==========================================
+
+// Quick Vitals button - enabled when patient is selected
+function updateQuickActionsState() {
+    if (currentPatient) {
+        $('#btn-quick-vitals').prop('disabled', false).attr('title', 'Record vitals for ' + (currentPatientData?.name || 'patient'));
+    } else {
+        $('#btn-quick-vitals').prop('disabled', true).attr('title', 'Select a patient first');
+    }
+}
+
+// Quick Vitals button handler
+$('#btn-quick-vitals').on('click', function() {
+    if (!currentPatient) {
+        toastr.warning('Please select a patient first');
+        return;
+    }
+    // Switch to vitals tab
+    $('.workspace-tab[data-tab="vitals"]').click();
+});
+
+// Nursing Reports button handler
+$('#btn-nursing-reports').on('click', function() {
+    // Show nursing-specific reports
+    toastr.info('Nursing reports feature coming soon. Use Shift Handover for current shift summary.');
+    // TODO: Implement nursing reports view similar to ward dashboard
+});
+
+// Admission Summary button handler
+$('#btn-admission-summary').on('click', function() {
+    // Show today's admissions and discharges summary
+    showWardDashboard();
+    // Focus on admission queue
+    setTimeout(function() {
+        $('.queue-tab[data-queue="admission"]').click();
+    }, 100);
+});
+
+// Shift Handover button handler
+$('#btn-shift-handover').on('click', function() {
+    // Open shift handover modal or show handover summary
+    if ($('#shift-handover-modal').length) {
+        $('#shift-handover-modal').modal('show');
+    } else {
+        // Load handover summary from API
+        toastr.info('Loading shift handover summary...');
+        $.get('{{ route("nursing-workbench.handover.summary") }}', function(response) {
+            // Display handover summary in a modal or alert
+            if (response.success) {
+                // Show handover data - could create a modal dynamically
+                toastr.success('Shift handover data loaded. Check console for details.');
+                console.log('Handover Summary:', response);
+            } else {
+                toastr.warning('No handover data available for current shift');
+            }
+        }).fail(function() {
+            toastr.error('Failed to load handover summary');
+        });
+    }
+});
+
+// Medication Round quick action button handler
+$('.quick-action-btn[data-filter="medication-due"]').on('click', function() {
+    showQueue('medication-due');
+});
+
+// Update medication round badge
+function updateMedicationRoundBadge() {
+    $.get('/nursing-workbench/queue-counts', function(counts) {
+        var medCount = counts.medication_due || 0;
+        var $badge = $('#med-round-badge');
+        if (medCount > 0) {
+            $badge.text(medCount).show();
+        } else {
+            $badge.hide();
+        }
+    });
+}
+
+// Call on page load
+updateMedicationRoundBadge();
+
+// ==========================================
 // REPORTS VIEW EVENT HANDLERS
 // ==========================================
 
-// Open reports view
+// Open reports view (btn-view-reports only - btn-nursing-reports has its own handler above)
 $('#btn-view-reports').on('click', function() {
     showReports();
 });
@@ -6970,12 +7523,18 @@ $('#print-report').on('click', function() {
     toastr.info('Print functionality will be implemented with DataTables buttons extension');
 });
 
-// Show new request button when patient is selected
+// Show new request button and update quick actions when patient is selected
 function updateQuickActions() {
     if (currentPatient) {
         $('#btn-new-request').show();
+        // Enable patient-dependent buttons
+        $('#btn-quick-vitals').prop('disabled', false).attr('title', 'Record vitals for ' + (currentPatientData?.name || 'patient'));
+        $('#btn-clinical-context').prop('disabled', false).attr('title', 'View clinical context for ' + (currentPatientData?.name || 'patient'));
     } else {
         $('#btn-new-request').hide();
+        // Disable patient-dependent buttons
+        $('#btn-quick-vitals').prop('disabled', true).attr('title', 'Select a patient first');
+        $('#btn-clinical-context').prop('disabled', true).attr('title', 'Select a patient first');
     }
 }
 
@@ -7251,6 +7810,50 @@ function populateOverviewTab(data) {
     }
     $('#overview-vitals-info').html(vitalsHtml);
 
+    // Populate Latest Nurse Note
+    let nurseNoteHtml = '';
+    if (data.latest_nurse_note) {
+        nurseNoteHtml = `
+            <div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="badge badge-primary">${data.latest_nurse_note.type}</span>
+                    <small class="text-muted">${data.latest_nurse_note.time_ago}</small>
+                </div>
+                <div class="note-preview mb-2" style="font-size: 0.9rem;">
+                    ${data.latest_nurse_note.note}
+                </div>
+                <div class="text-right">
+                    <small class="text-muted">By: <strong>${data.latest_nurse_note.created_by}</strong></small>
+                </div>
+            </div>
+        `;
+    } else {
+        nurseNoteHtml = '<p class="text-muted text-center py-2">No nursing notes</p>';
+    }
+    $('#overview-nurse-note').html(nurseNoteHtml);
+
+    // Populate Latest Doctor Note
+    let doctorNoteHtml = '';
+    if (data.latest_doctor_note) {
+        doctorNoteHtml = `
+            <div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="badge badge-info text-white">Doctor Note</span>
+                    <small class="text-muted">${data.latest_doctor_note.time_ago}</small>
+                </div>
+                <div class="note-preview mb-2" style="font-size: 0.9rem;">
+                    ${data.latest_doctor_note.note}
+                </div>
+                <div class="text-right">
+                    <small class="text-muted">By: <strong>${data.latest_doctor_note.created_by}</strong></small>
+                </div>
+            </div>
+        `;
+    } else {
+        doctorNoteHtml = '<p class="text-muted text-center py-2">No doctor notes</p>';
+    }
+    $('#overview-doctor-note').html(doctorNoteHtml);
+
     // Populate Allergies & Alerts Card
     let allergiesHtml = '';
     if (data.allergies && data.allergies.length > 0) {
@@ -7290,6 +7893,8 @@ function loadPatientOverview(patientId) {
             $('#overview-patient-info').html('<p class="text-danger">Failed to load</p>');
             $('#overview-admission-info').html('<p class="text-danger">Failed to load</p>');
             $('#overview-vitals-info').html('<p class="text-danger">Failed to load</p>');
+            $('#overview-nurse-note').html('<p class="text-danger">Failed to load</p>');
+            $('#overview-doctor-note').html('<p class="text-danger">Failed to load</p>');
             $('#overview-allergies').html('<p class="text-danger">Failed to load</p>');
         }
     });
@@ -7373,8 +7978,55 @@ function loadAdmittedPatients() {
 
 // Load Vitals Queue
 function loadVitalsQueue() {
-    showNotification('info', 'Vitals queue feature coming soon');
-    // TODO: Implement vitals queue loading
+    $('#empty-state').hide();
+    $('#workspace-content').removeClass('active');
+    $('.patient-header').removeClass('active');
+    $('#queue-view').addClass('active').css('display', 'flex');
+    $('#queue-view-title').html('<i class="mdi mdi-heart-pulse"></i> Vitals Queue');
+
+    if ($.fn.DataTable.isDataTable('#queue-datatable')) {
+        $('#queue-datatable').DataTable().destroy();
+    }
+
+    $('#queue-datatable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: '{{ route("nursing-workbench.vitals-queue") }}',
+        columns: [
+            { data: 'info', name: 'info' }
+        ],
+        language: {
+             emptyTable: "No patients pending vitals"
+        },
+        drawCallback: function() {
+            // Attach click handlers to cards
+        }
+    });
+}
+
+// Load Bed Requests Queue
+function loadBedRequestsQueue() {
+    $('#empty-state').hide();
+    $('#workspace-content').removeClass('active');
+    $('.patient-header').removeClass('active');
+    $('#queue-view').addClass('active').css('display', 'flex');
+    $('#queue-view-title').html('<i class="mdi mdi-bed"></i> Bed Requests');
+
+    if ($.fn.DataTable.isDataTable('#queue-datatable')) {
+        $('#queue-datatable').DataTable().destroy();
+    }
+
+    $('#queue-datatable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: '{{ route("nursing-workbench.bed-requests-queue") }}',
+        columns: [
+            { data: 'info', name: 'info' }
+        ],
+        language: {
+             emptyTable: "No pending bed requests"
+        }
+    });
 }
 
 // Load Medication Due
@@ -7547,9 +8199,17 @@ function updateInjectionTotals() {
     $('#injection-total-price').html(`<strong>₦${total.toFixed(2)}</strong>`);
 }
 
-// Recalculate on qty change
+// Recalculate on qty change and clear validation
 $(document).on('change', '.injection-qty', function() {
     updateInjectionTotals();
+    $(this).removeClass('is-invalid');
+    $(this).siblings('.validation-error').remove();
+});
+
+// Clear validation on dose input change
+$(document).on('input', 'input[name="injection_dose[]"]', function() {
+    $(this).removeClass('is-invalid');
+    $(this).siblings('.validation-error').remove();
 });
 
 // Injection Form Submit
@@ -7582,6 +8242,10 @@ $('#injection-form').on('submit', function(e) {
         notes: $('#injection-notes').val()
     };
 
+    // Clear previous validation errors
+    $('#injection-selected-body .is-invalid').removeClass('is-invalid');
+    $('#injection-selected-body .validation-error').remove();
+
     $.ajax({
         url: '{{ route("nursing-workbench.injection.administer") }}',
         method: 'POST',
@@ -7595,7 +8259,58 @@ $('#injection-form').on('submit', function(e) {
             loadInjectionHistory(currentPatient);
         },
         error: function(xhr) {
-            showNotification('error', xhr.responseJSON?.message || 'Failed to administer injection');
+            const response = xhr.responseJSON;
+            
+            // Handle validation errors for each product
+            if (response?.errors) {
+                let errorMessages = [];
+                
+                // Map checked rows to their index (only checked items are sent)
+                const checkedRows = $('#injection-selected-body tr').filter(function() {
+                    return $(this).find('.injection-row-check').is(':checked');
+                });
+                
+                Object.keys(response.errors).forEach(function(field) {
+                    // Parse field like "products.0.dose" or "products.1.qty"
+                    const match = field.match(/^products\.(\d+)\.(\w+)$/);
+                    if (match) {
+                        const index = parseInt(match[1]);
+                        const fieldName = match[2];
+                        const row = checkedRows.eq(index);
+                        
+                        if (row.length) {
+                            const productName = row.find('td:eq(1) strong').text();
+                            let inputField;
+                            
+                            if (fieldName === 'dose') {
+                                inputField = row.find('input[name="injection_dose[]"]');
+                            } else if (fieldName === 'qty') {
+                                inputField = row.find('.injection-qty');
+                            }
+                            
+                            if (inputField && inputField.length) {
+                                inputField.addClass('is-invalid');
+                                // Add error message below input
+                                const errorMsg = response.errors[field][0].replace(/products\.\d+\./, '');
+                                inputField.after(`<div class="validation-error text-danger small">${errorMsg}</div>`);
+                            }
+                            
+                            errorMessages.push(`${productName}: ${response.errors[field][0].replace(/products\.\d+\./, '')}`);
+                        }
+                    } else {
+                        // Non-product field errors
+                        errorMessages.push(response.errors[field][0]);
+                    }
+                });
+                
+                if (errorMessages.length > 0) {
+                    showNotification('error', 'Validation failed: ' + errorMessages.join(', '));
+                } else {
+                    showNotification('error', response.message || 'Validation failed');
+                }
+            } else {
+                showNotification('error', response?.message || 'Failed to administer injection');
+            }
         }
     });
 });
@@ -8955,28 +9670,72 @@ function removeBillItem(id) {
 }
 
 // Load Note Types
-function loadNoteTypes() {
-    $.ajax({
-        url: '{{ route("nursing-workbench.note-types") }}',
-        method: 'GET',
-        success: function(types) {
-            let options = '<option value="">Select Note Type</option>';
-            types.forEach(type => {
-                options += `<option value="${type.id}">${type.name}</option>`;
-            });
-            $('#note-type').html(options);
-        }
-    });
-}
+// Functions for Notes
+// Note Types loading removed as requested
+// function loadNoteTypes() { ... }
 
 // Nursing Note Form Submit
+// Initialize CKEditor for nursing note
+let nursingNoteEditor;
+
+function initNursingNoteCKEditor() {
+    if (document.querySelector('#nursing-note-editor') && !nursingNoteEditor) {
+        ClassicEditor
+            .create(document.querySelector('#nursing-note-editor'), {
+                toolbar: {
+                    items: [
+                        'heading',
+                        '|',
+                        'bold',
+                        'italic',
+                        'bulletedList',
+                        'numberedList',
+                        '|',
+                        'outdent',
+                        'indent',
+                        '|',
+                        'blockQuote',
+                        'insertTable',
+                        'undo',
+                        'redo'
+                    ]
+                }
+            })
+            .then(editor => {
+                nursingNoteEditor = editor;
+            })
+            .catch(error => {
+                console.error(error);
+            });
+    }
+}
+
+// Ensure editor is initialized when tab shown
+$('a[data-toggle="tab"][href="#notes-tab"]').on('shown.bs.tab', function (e) {
+    initNursingNoteCKEditor();
+});
+$('a[data-toggle="tab"][href="#notes-add"]').on('shown.bs.tab', function (e) {
+    initNursingNoteCKEditor();
+});
+
+// Also try to init on page load after a brief delay
+setTimeout(initNursingNoteCKEditor, 1000);
+
 $('#nursing-note-form').on('submit', function(e) {
     e.preventDefault();
 
+    // Get data from CKEditor
+    const noteContent = nursingNoteEditor ? nursingNoteEditor.getData() : '';
+
+    if (!noteContent.trim()) {
+        showNotification('error', 'Please enter note content');
+        return;
+    }
+
     const data = {
         patient_id: currentPatient,
-        note_type_id: $('#note-type').val(),
-        note: $('#note-content').val()
+        note_type_id: 5, // Hardcoded for "Others" as requested
+        note: noteContent
     };
 
     $.ajax({
@@ -8986,7 +9745,11 @@ $('#nursing-note-form').on('submit', function(e) {
         headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
         success: function(response) {
             showNotification('success', response.message || 'Note saved successfully');
-            $('#nursing-note-form')[0].reset();
+            if (nursingNoteEditor) {
+                nursingNoteEditor.setData('');
+            }
+            // Switch to history tab to see the new note
+            $('#notes-history-tab-link').tab('show');
             loadNotesHistory(currentPatient);
         },
         error: function(xhr) {
@@ -8995,43 +9758,37 @@ $('#nursing-note-form').on('submit', function(e) {
     });
 });
 
-// Load Notes History with DataTable
+// Load Notes History with Cards (DataTable)
 function loadNotesHistory(patientId) {
-    // Destroy existing DataTable if it exists
-    if ($.fn.DataTable.isDataTable('#notes-history-table')) {
-        $('#notes-history-table').DataTable().destroy();
-    }
+    if (!patientId) return;
 
-    $('#notes-history-table').DataTable({
-        processing: true,
-        serverSide: false,
-        ajax: {
-            url: `/nursing-workbench/patient/${patientId}/nursing-notes`,
-            dataSrc: ''
-        },
-        columns: [
-            { data: 'created_at' },
-            {
-                data: 'type',
-                render: function(data) {
-                    return `<span class="badge badge-secondary">${data}</span>`;
-                }
-            },
-            {
-                data: 'note_preview',
-                render: function(data, type, row) {
-                    return `<span title="${row.note}">${data}</span>`;
-                }
-            },
-            { data: 'created_by' }
-        ],
-        order: [[0, 'desc']],
-        pageLength: 10,
-        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
-        language: {
-            emptyTable: "No nursing notes found"
-        }
-    });
+    if ($.fn.DataTable.isDataTable('#nursing-notes-table')) {
+        $('#nursing-notes-table').DataTable().ajax.url(`/nursing-workbench/patient/${patientId}/nursing-notes`).load();
+    } else {
+        $('#nursing-notes-table').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: `/nursing-workbench/patient/${patientId}/nursing-notes`,
+            columns: [
+                { data: 'info', name: 'info', orderable: false, searchable: false }
+            ],
+            ordering: false,
+            lengthChange: false,
+            pageLength: 10,
+            searching: false,
+            dom: "<'row'<'col-sm-12'tr>>" +
+                 "<'row'<'col-sm-5'i><'col-sm-7'p>>",
+            language: {
+                emptyTable: `<div class="text-center py-5">
+                                <i class="mdi mdi-note-outline mdi-48px text-muted"></i>
+                                <p class="text-muted mt-2">No nursing notes found</p>
+                            </div>`,
+                processing: `<div class="text-center">
+                                <i class="mdi mdi-loading mdi-spin mdi-24px text-primary"></i>
+                             </div>`
+            }
+        });
+    }
 }
 
 // Initialize nursing-specific features on tab switch
@@ -9075,7 +9832,7 @@ function switchWorkspaceTab(tab) {
             loadPendingBills(currentPatient);
             break;
         case 'notes':
-            loadNoteTypes();
+            // Removed loadNoteTypes call as it is no longer needed
             loadNotesHistory(currentPatient);
             break;
     }
@@ -10169,5 +10926,1446 @@ $(document).on('submit', '#solidRecordForm', function(e) {
     });
 });
 
+// Edit Note Logic
+let editNoteEditor;
+
+function openEditNoteModal(btn) {
+    const noteId = $(btn).data('id');
+    // Get content from the rendered card in the table row
+    // The button is in .card-footer, content is in .card-body > .note-content
+    const card = $(btn).closest('.card');
+    const content = card.find('.note-content').html();
+
+    $('#edit-note-id').val(noteId);
+
+    // Initialize Editor if not exists
+    if (!editNoteEditor) {
+        ClassicEditor
+            .create(document.querySelector('#edit-note-editor'), {
+                toolbar: ['heading', '|', 'bold', 'italic', 'bulletedList', 'numberedList', 'blockQuote', 'undo', 'redo']
+            })
+            .then(editor => {
+                editNoteEditor = editor;
+                editNoteEditor.setData(content);
+                $('#editNoteModal').modal('show');
+            })
+            .catch(error => {
+                console.error(error);
+            });
+    } else {
+        editNoteEditor.setData(content);
+        $('#editNoteModal').modal('show');
+    }
+}
+
+function updatedNote() {
+    const noteId = $('#edit-note-id').val();
+    const content = editNoteEditor.getData();
+
+    if (!content.trim()) {
+        showNotification('error', 'Note content cannot be empty');
+        return;
+    }
+
+    $.ajax({
+        url: `/nursing-workbench/nursing-note/${noteId}`,
+        type: 'PUT',
+        data: {
+            note: content,
+            _token: CSRF_TOKEN
+        },
+        success: function(response) {
+            showNotification('success', 'Note updated successfully');
+            $('#editNoteModal').modal('hide');
+            loadNotesHistory(currentPatient); // Reload table
+        },
+        error: function(xhr) {
+            showNotification('error', xhr.responseJSON?.message || 'Failed to update note');
+        }
+    });
+}
+
+// Edit Vital Logic
+function openEditVitalModal(btn) {
+    const vitalData = JSON.parse($(btn).attr('data-vital'));
+
+    $('#edit-vital-id').val(vitalData.id);
+    $('#edit-blood-pressure').val(vitalData.blood_pressure || '');
+    $('#edit-temp').val(vitalData.temp || '');
+    $('#edit-heart-rate').val(vitalData.heart_rate || '');
+    $('#edit-resp-rate').val(vitalData.resp_rate || '');
+    $('#edit-weight').val(vitalData.weight || '');
+    $('#edit-height').val(vitalData.height || '');
+    $('#edit-spo2').val(vitalData.spo2 || '');
+    $('#edit-blood-sugar').val(vitalData.blood_sugar || '');
+    $('#edit-other-notes').val(vitalData.other_notes || '');
+
+    $('#editVitalModal').modal('show');
+}
+
+function updateVital() {
+    const vitalId = $('#edit-vital-id').val();
+
+    const data = {
+        blood_pressure: $('#edit-blood-pressure').val(),
+        temp: $('#edit-temp').val(),
+        heart_rate: $('#edit-heart-rate').val(),
+        resp_rate: $('#edit-resp-rate').val(),
+        weight: $('#edit-weight').val(),
+        height: $('#edit-height').val(),
+        spo2: $('#edit-spo2').val(),
+        blood_sugar: $('#edit-blood-sugar').val(),
+        other_notes: $('#edit-other-notes').val(),
+        _token: CSRF_TOKEN
+    };
+
+    $.ajax({
+        url: `/nursing-workbench/vitals/${vitalId}`,
+        type: 'PUT',
+        data: data,
+        success: function(response) {
+            if (response.success) {
+                showNotification('success', response.message || 'Vitals updated successfully');
+                $('#editVitalModal').modal('hide');
+                // Reload unified vitals history DataTable (if present)
+                $('.unified-vitals-history-table').each(function() {
+                    if ($.fn.DataTable.isDataTable(this)) {
+                        $(this).DataTable().ajax.reload(null, false);
+                    }
+                });
+                // Reload nursing workbench vitals table (if present)
+                if ($.fn.DataTable.isDataTable('#vitals-table')) {
+                    $('#vitals-table').DataTable().ajax.reload(null, false);
+                }
+            } else {
+                showNotification('error', response.message || 'Failed to update vitals');
+            }
+        },
+        error: function(xhr) {
+            showNotification('error', xhr.responseJSON?.message || 'Failed to update vitals');
+        }
+    });
+}
+
+// =============================================
+// SHIFT MANAGEMENT MODULE
+// =============================================
+
+const ShiftManager = {
+    // State
+    activeShift: null,
+    shiftTimer: null,
+    handoversDataTable: null,
+    acknowledgedHandovers: [],
+    currentHandoverDetail: null,
+
+    // Routes
+    routes: {
+        check: '/nursing-workbench/shift/check',
+        start: '/nursing-workbench/shift/start',
+        end: '/nursing-workbench/shift/end',
+        preview: '/nursing-workbench/shift/preview',
+        pendingHandovers: '/nursing-workbench/shift/pending-handovers',
+        wards: '/nursing-workbench/shift/wards',
+        actions: '/nursing-workbench/shift/actions',
+        handovers: '/nursing-workbench/handovers',
+        handoverDetail: '/nursing-workbench/handover',
+        acknowledge: '/nursing-workbench/handover/{id}/acknowledge',
+        acknowledgeMultiple: '/nursing-workbench/handovers/acknowledge-multiple'
+    },
+
+    // Initialize
+    init: function() {
+        this.bindEvents();
+        this.checkShiftStatus();
+        this.loadWards();
+        this.makeFabDraggable();
+    },
+
+    // Bind event handlers
+    bindEvents: function() {
+        const self = this;
+
+        // Start shift button (on lock overlay)
+        $('#start-shift-btn').on('click', function() {
+            self.showStartShiftModal();
+        });
+
+        // Confirm start shift
+        $('#confirm-start-shift-btn').on('click', function() {
+            self.startShift();
+        });
+
+        // Ward select change - load handovers for that ward
+        $('#shift-ward-select').on('change', function() {
+            // Reset handovers when ward changes
+            $('#shift-handovers-step').hide();
+            self.acknowledgedHandovers = [];
+        });
+
+        // Check for handovers button
+        $('#load-ward-handovers-btn').on('click', function() {
+            self.loadHandoversForWard();
+        });
+
+        // FAB main button toggle
+        $('#shift-fab-btn').on('click', function() {
+            self.toggleFabActions();
+        });
+
+        // End shift button
+        $('#end-shift-btn').on('click', function() {
+            self.showEndShiftModal();
+        });
+
+        // Confirm end shift
+        $('#confirm-end-shift-btn').on('click', function() {
+            self.endShift();
+        });
+
+        // Load shift preview
+        $('#load-shift-preview-btn').on('click', function() {
+            self.loadShiftPreview();
+        });
+
+        // View shift summary
+        $('#view-shift-summary').on('click', function() {
+            self.showShiftSummary();
+        });
+
+        // View handovers button
+        $('#view-handovers-btn').on('click', function() {
+            self.showHandoversList();
+        });
+
+        // Quick action button for handovers
+        $(document).on('click', '#quick-shift-handover', function() {
+            self.showHandoversList();
+        });
+
+        // Add pending task
+        $('#add-pending-task-btn').on('click', function() {
+            self.addPendingTaskRow();
+        });
+
+        // Remove pending task
+        $(document).on('click', '.remove-pending-task', function() {
+            $(this).closest('.pending-task-row').remove();
+        });
+
+        // Apply handover filters
+        $('#apply-handover-filters').on('click', function() {
+            self.reloadHandoversTable();
+        });
+
+        // View handover detail
+        $(document).on('click', '.view-handover', function() {
+            const id = $(this).data('id');
+            self.showHandoverDetail(id);
+        });
+
+        // Acknowledge handover from DataTable
+        $(document).on('click', '.acknowledge-handover', function() {
+            const id = $(this).data('id');
+            self.acknowledgeHandover(id);
+        });
+
+        // Acknowledge handover from detail modal
+        $('#acknowledge-handover-detail-btn').on('click', function() {
+            if (self.currentHandoverDetail) {
+                self.acknowledgeHandover(self.currentHandoverDetail.id, true);
+            }
+        });
+
+        // Load more handovers in start shift modal
+        $('#load-more-handovers-btn').on('click', function() {
+            self.loadPendingHandovers(48); // Load 48 hours
+        });
+
+        // Handover acknowledgment checkboxes
+        $(document).on('change', '.handover-ack-checkbox', function() {
+            const id = $(this).data('id');
+            if ($(this).is(':checked')) {
+                if (!self.acknowledgedHandovers.includes(id)) {
+                    self.acknowledgedHandovers.push(id);
+                }
+            } else {
+                self.acknowledgedHandovers = self.acknowledgedHandovers.filter(h => h !== id);
+            }
+        });
+
+        // Restore overlay when start shift modal is closed without starting
+        $('#startShiftModal').on('hidden.bs.modal', function() {
+            if (!self.activeShift) {
+                $('#shift-lock-overlay').removeClass('modal-open-hidden');
+            }
+        });
+    },
+
+    // Check shift status on load
+    checkShiftStatus: function() {
+        const self = this;
+
+        $.ajax({
+            url: this.routes.check,
+            type: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    if (response.has_active_shift) {
+                        self.activeShift = response.shift;
+                        self.showWorkbench();
+                        self.startShiftTimer();
+                    } else {
+                        self.showLockOverlay();
+                    }
+                }
+            },
+            error: function() {
+                // If check fails, show workbench anyway (graceful degradation)
+                self.showWorkbench();
+            }
+        });
+    },
+
+    // Show lock overlay
+    showLockOverlay: function() {
+        $('#shift-lock-overlay').show();
+        $('#shift-control-fab').hide();
+        // Show a simple count of handovers (user will see details after selecting ward in modal)
+        this.loadPendingHandoversCount();
+    },
+
+    // Show workbench (unlock)
+    showWorkbench: function() {
+        $('#shift-lock-overlay').hide();
+        $('#shift-control-fab').show();
+        this.updateFabDisplay();
+    },
+
+    // Load pending handovers count for lock overlay (just shows count, not details)
+    loadPendingHandoversCount: function() {
+        $.ajax({
+            url: this.routes.pendingHandovers,
+            type: 'GET',
+            data: { hours: 24 },
+            success: function(response) {
+                if (response.success && response.total_pending > 0) {
+                    $('#pending-handovers-count').text(response.total_pending);
+                    $('#pending-handovers-preview').show();
+                    // Show simplified list
+                    let html = '';
+                    response.handovers.slice(0, 3).forEach(function(h) {
+                        html += `
+                            <div class="pending-handover-item ${h.has_critical_notes ? 'has-critical' : ''}">
+                                <div>
+                                    <strong>${h.created_by_name}</strong>
+                                    <span class="text-muted">· ${h.created_at_ago}</span>
+                                    ${h.has_critical_notes ? '<span class="badge badge-danger ml-2">Critical</span>' : ''}
+                                </div>
+                                <span>${h.shift_type_badge}</span>
+                            </div>
+                        `;
+                    });
+                    if (response.total_pending > 3) {
+                        html += `<p class="text-center text-muted mt-2 mb-0">+${response.total_pending - 3} more</p>`;
+                    }
+                    $('#pending-handovers-list').html(html);
+                } else {
+                    $('#pending-handovers-preview').hide();
+                }
+            }
+        });
+    },
+
+    // Load pending handovers preview for lock overlay (DEPRECATED - use loadPendingHandoversCount)
+    loadPendingHandoversPreview: function() {
+        const self = this;
+
+        $.ajax({
+            url: this.routes.pendingHandovers,
+            type: 'GET',
+            data: { hours: 24 },
+            success: function(response) {
+                if (response.success && response.total_pending > 0) {
+                    $('#pending-handovers-count').text(response.total_pending);
+                    
+                    let html = '';
+                    response.handovers.forEach(function(h) {
+                        html += `
+                            <div class="pending-handover-item ${h.has_critical_notes ? 'has-critical' : ''}">
+                                <div>
+                                    <strong>${h.created_by_name}</strong>
+                                    <span class="text-muted">· ${h.created_at_ago}</span>
+                                    ${h.has_critical_notes ? '<span class="badge badge-danger ml-2">Critical</span>' : ''}
+                                </div>
+                                <span>${h.shift_type_badge}</span>
+                            </div>
+                        `;
+                    });
+                    $('#pending-handovers-list').html(html);
+                    $('#pending-handovers-preview').show();
+                } else {
+                    $('#pending-handovers-preview').hide();
+                }
+            }
+        });
+    },
+
+    // Load wards for select
+    loadWards: function() {
+        $.ajax({
+            url: this.routes.wards,
+            type: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    let options = '<option value="">All Wards (Floating)</option>';
+                    response.wards.forEach(function(ward) {
+                        options += `<option value="${ward.id}">${ward.name}</option>`;
+                    });
+                    $('#shift-ward-select, #handover-filter-ward').html(options);
+                }
+            }
+        });
+    },
+
+    // Show start shift modal
+    showStartShiftModal: function() {
+        const self = this;
+        this.acknowledgedHandovers = [];
+        
+        // Show modal with config step first, hide handovers until ward is selected
+        $('#shift-config-step').show();
+        $('#shift-handovers-step').hide();
+        $('#start-shift-handovers-list').html('');
+        
+        // Temporarily hide overlay so modal is visible
+        $('#shift-lock-overlay').addClass('modal-open-hidden');
+        $('#startShiftModal').modal('show');
+    },
+
+    // Load handovers for selected ward (called when ward changes)
+    loadHandoversForWard: function() {
+        const self = this;
+        const wardId = $('#shift-ward-select').val();
+        
+        $.ajax({
+            url: this.routes.pendingHandovers,
+            type: 'GET',
+            data: { 
+                ward_id: wardId || null,
+                hours: 24 
+            },
+            success: function(response) {
+                if (response.success && response.handovers.length > 0) {
+                    self.renderPendingHandovers(response.handovers);
+                    $('#shift-handovers-step').show();
+                } else {
+                    $('#shift-handovers-step').hide();
+                    $('#start-shift-handovers-list').html('<p class="text-muted text-center py-3">No pending handovers for this ward</p>');
+                }
+            },
+            error: function() {
+                $('#shift-handovers-step').hide();
+            }
+        });
+    },
+
+    // Render pending handovers in modal
+    renderPendingHandovers: function(handovers) {
+        const self = this;
+        let html = '';
+        handovers.forEach(function(h) {
+            const isAcked = self.acknowledgedHandovers.includes(h.id);
+            html += `
+                <div class="handover-ack-item ${h.has_critical_notes ? 'critical' : ''}">
+                    <div class="handover-ack-header">
+                        <div>
+                            ${h.shift_type_badge}
+                            <span class="ml-2 text-muted">${h.ward_name}</span>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input handover-ack-checkbox" 
+                                data-id="${h.id}" ${isAcked ? 'checked' : ''}>
+                            <label class="form-check-label">Acknowledged</label>
+                        </div>
+                    </div>
+                    <div class="handover-ack-meta">
+                        <strong>${h.created_by_name}</strong> · ${h.created_at_ago}
+                    </div>
+                    <div class="handover-ack-content mt-2">
+                        ${h.summary_preview}
+                        ${h.has_critical_notes ? '<div class="text-danger mt-1"><i class="mdi mdi-alert"></i> Contains critical notes</div>' : ''}
+                    </div>
+                    <div class="handover-ack-footer">
+                        <span class="text-muted">${h.pending_tasks_count} pending task(s)</span>
+                        <button class="btn btn-sm btn-outline-info view-handover" data-id="${h.id}">
+                            <i class="mdi mdi-eye"></i> View Full
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        $('#start-shift-handovers-list').html(html);
+    },
+
+    // Load pending handovers for acknowledgment
+    loadPendingHandovers: function(hours = 24) {
+        const self = this;
+        const wardId = $('#shift-ward-select').val();
+
+        $.ajax({
+            url: this.routes.pendingHandovers,
+            type: 'GET',
+            data: { 
+                ward_id: wardId,
+                hours: hours 
+            },
+            success: function(response) {
+                if (response.success && response.handovers.length > 0) {
+                    self.renderPendingHandovers(response.handovers);
+                    $('#shift-handovers-step').show();
+                } else {
+                    $('#shift-handovers-step').hide();
+                }
+            }
+        });
+    },
+
+    // Start shift
+    startShift: function() {
+        const self = this;
+        const wardId = $('#shift-ward-select').val();
+        const shiftType = $('#shift-type-select').val();
+
+        // Check if there are critical handovers that need acknowledgment
+        const criticalHandovers = $('.handover-ack-item.critical');
+        const unacknowledgedCritical = criticalHandovers.filter(function() {
+            return !$(this).find('.handover-ack-checkbox').is(':checked');
+        });
+
+        if (unacknowledgedCritical.length > 0) {
+            // Highlight unacknowledged critical handovers
+            unacknowledgedCritical.addClass('shake-highlight');
+            setTimeout(() => unacknowledgedCritical.removeClass('shake-highlight'), 500);
+            
+            toastr.warning('Please acknowledge all critical handovers (marked in red) before starting your shift');
+            
+            // Scroll to first unacknowledged
+            const firstUnacked = unacknowledgedCritical.first();
+            if (firstUnacked.length) {
+                firstUnacked[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            return;
+        }
+
+        const btn = $('#confirm-start-shift-btn');
+        btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Starting...');
+
+        $.ajax({
+            url: this.routes.start,
+            type: 'POST',
+            data: {
+                ward_id: wardId || null,
+                shift_type: shiftType || null,
+                acknowledged_handovers: this.acknowledgedHandovers,
+                _token: CSRF_TOKEN
+            },
+            success: function(response) {
+                if (response.success) {
+                    self.activeShift = response.shift;
+                    $('#startShiftModal').modal('hide');
+                    self.showWorkbench();
+                    self.startShiftTimer();
+                    toastr.success(response.message || 'Shift started successfully');
+                } else if (response.requires_acknowledgment) {
+                    toastr.warning(response.message);
+                    // Highlight unacknowledged critical handovers
+                    btn.prop('disabled', false).html('<i class="mdi mdi-play-circle"></i> Start Shift');
+                } else {
+                    toastr.error(response.message || 'Failed to start shift');
+                    btn.prop('disabled', false).html('<i class="mdi mdi-play-circle"></i> Start Shift');
+                }
+            },
+            error: function(xhr) {
+                const resp = xhr.responseJSON || {};
+                if (resp.requires_acknowledgment) {
+                    toastr.warning(resp.message || 'Please acknowledge critical handovers first');
+                    // Highlight unacknowledged critical handovers
+                    $('.handover-ack-item.critical').each(function() {
+                        if (!$(this).find('.handover-ack-checkbox').is(':checked')) {
+                            $(this).addClass('shake-highlight');
+                            setTimeout(() => $(this).removeClass('shake-highlight'), 500);
+                        }
+                    });
+                } else {
+                    toastr.error(resp.message || 'Failed to start shift');
+                }
+                btn.prop('disabled', false).html('<i class="mdi mdi-play-circle"></i> Start Shift');
+            }
+        });
+    },
+
+    // Show end shift modal
+    showEndShiftModal: function() {
+        if (!this.activeShift) return;
+
+        // Populate summary
+        $('#end-shift-duration').text(this.formatElapsedTime(this.activeShift.elapsed_seconds || 0));
+        $('#end-shift-vitals').text(this.activeShift.counters?.vitals || 0);
+        $('#end-shift-medications').text(this.activeShift.counters?.medications || 0);
+        $('#end-shift-notes').text(this.activeShift.counters?.notes || 0);
+        $('#end-shift-total').text(this.activeShift.total_actions || 0);
+
+        // Clear form
+        $('#end-shift-critical-notes').val('');
+        $('#end-shift-concluding-notes').val('');
+        $('#pending-tasks-container').html(`
+            <div class="pending-task-row mb-2">
+                <div class="input-group">
+                    <select class="form-control form-control-sm pending-task-priority" style="max-width: 100px;">
+                        <option value="normal">Normal</option>
+                        <option value="low">Low</option>
+                        <option value="high">High</option>
+                        <option value="urgent">Urgent</option>
+                    </select>
+                    <input type="text" class="form-control pending-task-desc" placeholder="Describe pending task...">
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-danger remove-pending-task" type="button">
+                            <i class="mdi mdi-close"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `);
+        $('#create-handover-checkbox').prop('checked', true);
+
+        // Reset preview section and show loading state
+        $('#shift-activity-preview').html(`
+            <div class="text-center text-muted py-3">
+                <i class="mdi mdi-loading mdi-spin"></i> Loading activity preview...
+            </div>
+        `);
+
+        $('#endShiftModal').modal('show');
+        
+        // Auto-load preview after modal is shown
+        this.loadShiftPreview();
+    },
+
+    // Load shift preview with audit-based activities
+    loadShiftPreview: function() {
+        const self = this;
+        const btn = $('#load-shift-preview-btn');
+        const container = $('#shift-activity-preview');
+
+        btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Loading...');
+
+        $.ajax({
+            url: this.routes.preview,
+            type: 'GET',
+            success: function(response) {
+                if (response.success && response.preview) {
+                    self.renderShiftPreview(response.preview);
+                } else {
+                    container.html(`
+                        <div class="alert alert-warning mb-0">
+                            <i class="mdi mdi-alert"></i> No activity data found for this shift
+                        </div>
+                    `);
+                }
+                btn.prop('disabled', false).html('<i class="mdi mdi-refresh"></i> Refresh Preview');
+            },
+            error: function(xhr) {
+                container.html(`
+                    <div class="alert alert-danger mb-0">
+                        <i class="mdi mdi-alert-circle"></i> Failed to load preview
+                    </div>
+                `);
+                btn.prop('disabled', false).html('<i class="mdi mdi-refresh"></i> Load Preview');
+            }
+        });
+    },
+
+    // Render shift preview HTML
+    renderShiftPreview: function(preview) {
+        let html = '';
+
+        // Summary stats
+        html += `
+            <div class="d-flex justify-content-around text-center mb-3 pb-3 border-bottom">
+                <div>
+                    <div class="h5 mb-0 text-primary">${preview.total_events || 0}</div>
+                    <small class="text-muted">Total Events</small>
+                </div>
+                <div>
+                    <div class="h5 mb-0 text-info">${preview.total_patients || 0}</div>
+                    <small class="text-muted">Patients</small>
+                </div>
+                <div>
+                    <div class="h5 mb-0 text-secondary">${preview.elapsed_time || '--'}</div>
+                    <small class="text-muted">Duration</small>
+                </div>
+            </div>
+        `;
+
+        // Activity breakdown
+        if (preview.activity_summary && preview.activity_summary.length > 0) {
+            html += '<h6 class="mb-2"><i class="mdi mdi-chart-bar"></i> Activity Breakdown</h6>';
+            html += '<div class="row">';
+            preview.activity_summary.forEach(function(activity) {
+                html += `
+                    <div class="col-6 col-md-4 mb-2">
+                        <div class="d-flex align-items-center p-2 border rounded bg-white">
+                            <i class="mdi ${activity.icon || 'mdi-circle'} text-${activity.color || 'secondary'} mr-2" style="font-size: 1.5rem;"></i>
+                            <div class="flex-grow-1">
+                                <div class="font-weight-bold">${activity.count}</div>
+                                <small class="text-muted">${activity.label}</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+        }
+
+        // Patient highlights (collapsible)
+        if (preview.patient_highlights && preview.patient_highlights.length > 0) {
+            html += `
+                <h6 class="mb-2 mt-3"><i class="mdi mdi-account-group"></i> Patient Highlights</h6>
+                <div class="patient-highlights-preview">
+            `;
+            preview.patient_highlights.slice(0, 5).forEach(function(patient, idx) {
+                html += `
+                    <div class="d-flex justify-content-between align-items-center p-2 border-bottom bg-white">
+                        <div>
+                            <i class="mdi mdi-account text-primary mr-1"></i>
+                            <strong>${patient.patient_name}</strong>
+                            <small class="text-muted ml-1">(${patient.patient_no || 'N/A'})</small>
+                        </div>
+                        <span class="badge badge-primary badge-pill">${patient.total_events} events</span>
+                    </div>
+                `;
+            });
+            if (preview.patient_highlights.length > 5) {
+                html += `<div class="text-center py-2 text-muted small">... and ${preview.patient_highlights.length - 5} more patients</div>`;
+            }
+            html += '</div>';
+        }
+
+        // Auto-generated summary preview
+        if (preview.detailed_summary) {
+            html += `
+                <div class="mt-3 pt-3 border-top">
+                    <h6 class="mb-2"><i class="mdi mdi-clipboard-text"></i> Auto-Generated Summary</h6>
+                    <div class="bg-white p-2 border rounded small" style="max-height: 150px; overflow-y: auto;">
+                        ${preview.detailed_summary.replace(/\n/g, '<br>')}
+                    </div>
+                </div>
+            `;
+        }
+
+        $('#shift-activity-preview').html(html || '<div class="text-center text-muted">No activities recorded yet</div>');
+    },
+
+    // End shift
+    endShift: function() {
+        const self = this;
+        const btn = $('#confirm-end-shift-btn');
+
+        // Gather pending tasks
+        const pendingTasks = [];
+        $('.pending-task-row').each(function() {
+            const desc = $(this).find('.pending-task-desc').val().trim();
+            if (desc) {
+                pendingTasks.push({
+                    description: desc,
+                    priority: $(this).find('.pending-task-priority').val()
+                });
+            }
+        });
+
+        btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Ending...');
+
+        $.ajax({
+            url: this.routes.end,
+            type: 'POST',
+            data: {
+                critical_notes: $('#end-shift-critical-notes').val(),
+                concluding_notes: $('#end-shift-concluding-notes').val(),
+                pending_tasks: pendingTasks,
+                create_handover: $('#create-handover-checkbox').is(':checked'),
+                _token: CSRF_TOKEN
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('#endShiftModal').modal('hide');
+                    self.activeShift = null;
+                    self.stopShiftTimer();
+                    toastr.success(response.message || 'Shift ended successfully');
+                    
+                    if (response.handover_created) {
+                        toastr.info('Handover document created for incoming nurse');
+                    }
+
+                    // Show summary
+                    setTimeout(function() {
+                        self.showLockOverlay();
+                    }, 1000);
+                } else {
+                    toastr.error(response.message || 'Failed to end shift');
+                    btn.prop('disabled', false).html('<i class="mdi mdi-stop-circle"></i> End Shift');
+                }
+            },
+            error: function(xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Failed to end shift');
+                btn.prop('disabled', false).html('<i class="mdi mdi-stop-circle"></i> End Shift');
+            }
+        });
+    },
+
+    // Add pending task row
+    addPendingTaskRow: function() {
+        const html = `
+            <div class="pending-task-row mb-2">
+                <div class="input-group">
+                    <select class="form-control form-control-sm pending-task-priority" style="max-width: 100px;">
+                        <option value="normal">Normal</option>
+                        <option value="low">Low</option>
+                        <option value="high">High</option>
+                        <option value="urgent">Urgent</option>
+                    </select>
+                    <input type="text" class="form-control pending-task-desc" placeholder="Describe pending task...">
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-danger remove-pending-task" type="button">
+                            <i class="mdi mdi-close"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        $('#pending-tasks-container').append(html);
+    },
+
+    // Show handovers list (DataTable modal)
+    showHandoversList: function() {
+        this.initHandoversDataTable();
+        $('#handoversListModal').modal('show');
+    },
+
+    // Initialize handovers DataTable
+    initHandoversDataTable: function() {
+        const self = this;
+
+        if (this.handoversDataTable) {
+            this.handoversDataTable.ajax.reload();
+            return;
+        }
+
+        this.handoversDataTable = $('#handovers-datatable').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: this.routes.handovers,
+                data: function(d) {
+                    d.ward_id = $('#handover-filter-ward').val();
+                    d.shift_type = $('#handover-filter-shift').val();
+                    d.status = $('#handover-filter-status').val();
+                    d.date_from = $('#handover-filter-from').val();
+                    d.date_to = $('#handover-filter-to').val();
+                }
+            },
+            columns: [
+                { data: 'created_at_formatted', name: 'created_at' },
+                { data: 'shift_type_badge', name: 'shift_type' },
+                { data: 'ward_name', name: 'ward_id' },
+                { data: 'created_by_name', name: 'created_by' },
+                { data: 'has_critical', name: 'critical_notes', orderable: false },
+                { data: 'pending_count', name: 'pending_tasks', orderable: false },
+                { data: 'status_badge', name: 'acknowledged_at', orderable: false },
+                { data: 'actions', name: 'actions', orderable: false, searchable: false }
+            ],
+            order: [[0, 'desc']],
+            pageLength: 10,
+            language: {
+                emptyTable: 'No handovers found',
+                processing: '<i class="mdi mdi-loading mdi-spin"></i> Loading...'
+            }
+        });
+    },
+
+    // Reload handovers table with filters
+    reloadHandoversTable: function() {
+        if (this.handoversDataTable) {
+            this.handoversDataTable.ajax.reload();
+        }
+    },
+
+    // Show handover detail
+    showHandoverDetail: function(id) {
+        const self = this;
+
+        $.ajax({
+            url: this.routes.handoverDetail + '/' + id,
+            type: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    self.currentHandoverDetail = response.handover;
+                    self.renderHandoverDetail(response.handover);
+                    
+                    // Show/hide acknowledge button
+                    if (!response.handover.is_acknowledged) {
+                        $('#acknowledge-handover-detail-btn').show();
+                    } else {
+                        $('#acknowledge-handover-detail-btn').hide();
+                    }
+                    
+                    $('#handoverDetailModal').modal('show');
+                } else {
+                    toastr.error('Failed to load handover details');
+                }
+            },
+            error: function() {
+                toastr.error('Failed to load handover details');
+            }
+        });
+    },
+
+    // Render handover detail content
+    renderHandoverDetail: function(h) {
+        let pendingTasksHtml = '';
+        if (h.pending_tasks && h.pending_tasks.length > 0) {
+            pendingTasksHtml = '<ul class="list-group list-group-flush">';
+            h.pending_tasks.forEach(function(task) {
+                const priorityColors = { low: 'secondary', normal: 'primary', high: 'warning', urgent: 'danger' };
+                pendingTasksHtml += `
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        ${task.description}
+                        <span class="badge badge-${priorityColors[task.priority] || 'secondary'}">${task.priority || 'normal'}</span>
+                    </li>
+                `;
+            });
+            pendingTasksHtml += '</ul>';
+        } else {
+            pendingTasksHtml = '<p class="text-muted">No pending tasks</p>';
+        }
+
+        // Build action summary HTML with icons and colors
+        let actionSummaryHtml = '';
+        if (h.action_summary && Object.keys(h.action_summary).length > 0) {
+            actionSummaryHtml = '<div class="row text-center mt-3">';
+            for (const [key, value] of Object.entries(h.action_summary)) {
+                const icon = value.icon || 'mdi-checkbox-blank-circle';
+                const color = value.color || 'secondary';
+                const count = value.count || 0;
+                const label = value.label || key;
+                actionSummaryHtml += `
+                    <div class="col-4 col-md-3 mb-2">
+                        <div class="stat-box p-2 border rounded">
+                            <i class="mdi ${icon} text-${color}" style="font-size: 1.5rem;"></i>
+                            <div class="stat-value h5 mb-0">${count}</div>
+                            <div class="stat-label small text-muted">${label}</div>
+                        </div>
+                    </div>
+                `;
+            }
+            actionSummaryHtml += '</div>';
+        }
+
+        // Build patient highlights HTML
+        let patientHighlightsHtml = '';
+        if (h.patient_highlights && h.patient_highlights.length > 0) {
+            patientHighlightsHtml = `
+                <div class="mt-4">
+                    <h6><i class="mdi mdi-account-group"></i> Patient Activity Summary</h6>
+                    <div class="accordion" id="patientHighlightsAccordion">
+            `;
+            
+            h.patient_highlights.forEach(function(patient, idx) {
+                const collapseId = `patientCollapse${idx}`;
+                patientHighlightsHtml += `
+                    <div class="card mb-2">
+                        <div class="card-header p-2" id="heading${idx}">
+                            <h6 class="mb-0">
+                                <button class="btn btn-link btn-sm w-100 text-left d-flex justify-content-between align-items-center" 
+                                        type="button" data-toggle="collapse" data-target="#${collapseId}">
+                                    <span>
+                                        <i class="mdi mdi-account"></i> ${patient.patient_name}
+                                        <span class="text-muted ml-2">(${patient.patient_no || 'N/A'})</span>
+                                    </span>
+                                    <span class="badge badge-primary badge-pill">${patient.total_events} events</span>
+                                </button>
+                            </h6>
+                        </div>
+                        <div id="${collapseId}" class="collapse${idx === 0 ? ' show' : ''}" data-parent="#patientHighlightsAccordion">
+                            <div class="card-body p-2">
+                                <ul class="list-unstyled mb-0">
+                `;
+                
+                if (patient.activities && patient.activities.length > 0) {
+                    patient.activities.forEach(function(activity) {
+                        patientHighlightsHtml += `
+                            <li class="mb-1">
+                                <i class="mdi ${activity.icon || 'mdi-circle'} text-${activity.color || 'secondary'} mr-1"></i>
+                                <span class="text-muted">${activity.label}:</span> 
+                                <strong>${activity.count}</strong>
+                                ${activity.events && activity.events.length > 0 ? 
+                                    `<span class="text-muted small">(${activity.events.slice(0, 3).join(', ')}${activity.events.length > 3 ? '...' : ''})</span>` 
+                                    : ''
+                                }
+                            </li>
+                        `;
+                    });
+                }
+                
+                patientHighlightsHtml += `
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            patientHighlightsHtml += '</div></div>';
+        }
+
+        // Build audit details HTML (detailed changes)
+        let auditDetailsHtml = '';
+        if (h.audit_details && h.audit_details.length > 0) {
+            auditDetailsHtml = `
+                <div class="mt-4">
+                    <h6><i class="mdi mdi-history"></i> Detailed Activity Log <small class="text-muted">(${h.audit_details.length} changes)</small></h6>
+                    <div class="audit-details-list" style="max-height: 400px; overflow-y: auto;">
+            `;
+            
+            // Group by patient
+            const byPatient = {};
+            h.audit_details.forEach(function(detail) {
+                const patientKey = detail.patient_name || 'General';
+                if (!byPatient[patientKey]) {
+                    byPatient[patientKey] = [];
+                }
+                byPatient[patientKey].push(detail);
+            });
+            
+            for (const [patient, details] of Object.entries(byPatient)) {
+                auditDetailsHtml += `
+                    <div class="audit-patient-group mb-3">
+                        <h6 class="text-primary mb-2">
+                            <i class="mdi mdi-account"></i> ${patient}
+                        </h6>
+                        <div class="audit-items pl-3 border-left">
+                `;
+                
+                details.forEach(function(detail) {
+                    const eventBadge = detail.event === 'created' 
+                        ? '<span class="badge badge-success badge-sm">New</span>'
+                        : detail.event === 'updated'
+                        ? '<span class="badge badge-warning badge-sm">Updated</span>'
+                        : '<span class="badge badge-danger badge-sm">Deleted</span>';
+                    
+                    let changesHtml = '<ul class="list-unstyled mb-0 pl-3 small">';
+                    if (detail.changes && detail.changes.length > 0) {
+                        detail.changes.forEach(function(change) {
+                            if (change.type === 'created') {
+                                changesHtml += '<li><span class="text-muted">' + change.label + ':</span> <strong>' + change.value + '</strong></li>';
+                            } else if (change.type === 'changed') {
+                                changesHtml += '<li><span class="text-muted">' + change.label + ':</span> <del class="text-danger">' + change.old + '</del> → <strong class="text-success">' + change.new + '</strong></li>';
+                            } else if (change.type === 'deleted') {
+                                changesHtml += '<li><span class="text-muted">' + change.label + ':</span> <del class="text-danger">' + change.value + '</del></li>';
+                            }
+                        });
+                    }
+                    changesHtml += '</ul>';
+                    
+                    auditDetailsHtml += `
+                        <div class="audit-item mb-2 p-2 bg-light rounded">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <i class="mdi ${detail.icon} text-${detail.color}"></i>
+                                    <strong class="ml-1">${detail.category}</strong>
+                                    ${eventBadge}
+                                </div>
+                                <small class="text-muted">${detail.time}</small>
+                            </div>
+                            ${changesHtml}
+                        </div>
+                    `;
+                });
+                
+                auditDetailsHtml += '</div></div>';
+            }
+            
+            auditDetailsHtml += '</div></div>';
+        }
+
+        const html = `
+            <div class="handover-detail">
+                <div class="d-flex justify-content-between align-items-start mb-4">
+                    <div>
+                        ${h.shift_type_badge}
+                        <span class="ml-2">${h.ward_name}</span>
+                    </div>
+                    ${h.status_badge}
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <small class="text-muted">Created By</small>
+                        <div><strong>${h.created_by.name}</strong></div>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted">Date/Time</small>
+                        <div>${h.created_at} <span class="text-muted">(${h.created_at_ago})</span></div>
+                    </div>
+                </div>
+
+                ${h.shift_duration ? `<div class="mb-3"><small class="text-muted">Shift Duration</small><div>${h.shift_duration}</div></div>` : ''}
+
+                ${actionSummaryHtml ? `
+                    <div class="mt-3">
+                        <h6><i class="mdi mdi-chart-bar"></i> Activity Summary</h6>
+                        ${actionSummaryHtml}
+                    </div>
+                ` : ''}
+
+                ${h.critical_notes ? `
+                    <div class="alert alert-danger mt-4">
+                        <h6 class="alert-heading"><i class="mdi mdi-alert"></i> Critical Notes</h6>
+                        <div>${h.critical_notes}</div>
+                    </div>
+                ` : ''}
+
+                <div class="mt-4">
+                    <h6><i class="mdi mdi-clipboard-text"></i> Summary</h6>
+                    <div class="bg-light p-3 rounded">${h.summary || '<em>No summary provided</em>'}</div>
+                </div>
+
+                ${h.concluding_notes ? `
+                    <div class="mt-4">
+                        <h6><i class="mdi mdi-note-text"></i> Concluding Notes</h6>
+                        <div class="bg-light p-3 rounded">${h.concluding_notes}</div>
+                    </div>
+                ` : ''}
+
+                ${patientHighlightsHtml}
+
+                ${auditDetailsHtml}
+
+                <div class="mt-4">
+                    <h6><i class="mdi mdi-format-list-checks"></i> Pending Tasks</h6>
+                    ${pendingTasksHtml}
+                </div>
+
+                ${h.is_acknowledged ? `
+                    <div class="mt-4 alert alert-success">
+                        <i class="mdi mdi-check-circle"></i> Acknowledged by <strong>${h.acknowledged_by_name}</strong> on ${h.acknowledged_at}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+
+        $('#handover-detail-content').html(html);
+    },
+
+    // Acknowledge handover
+    acknowledgeHandover: function(id, fromDetail = false) {
+        const self = this;
+
+        $.ajax({
+            url: this.routes.acknowledge.replace('{id}', id),
+            type: 'POST',
+            data: { _token: CSRF_TOKEN },
+            success: function(response) {
+                if (response.success) {
+                    toastr.success('Handover acknowledged');
+                    
+                    if (fromDetail) {
+                        $('#acknowledge-handover-detail-btn').hide();
+                        self.currentHandoverDetail.is_acknowledged = true;
+                        self.currentHandoverDetail.acknowledged_at = response.acknowledged_at;
+                    }
+                    
+                    // Reload DataTable if open
+                    if (self.handoversDataTable) {
+                        self.handoversDataTable.ajax.reload(null, false);
+                    }
+                } else {
+                    toastr.error(response.message || 'Failed to acknowledge');
+                }
+            },
+            error: function(xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Failed to acknowledge');
+            }
+        });
+    },
+
+    // Show shift summary
+    showShiftSummary: function() {
+        if (!this.activeShift) return;
+
+        const self = this;
+
+        // Load actions for current shift
+        $.ajax({
+            url: this.routes.actions,
+            type: 'GET',
+            success: function(response) {
+                self.renderShiftSummary(response);
+                $('#shiftSummaryModal').modal('show');
+            },
+            error: function() {
+                // Still show basic summary
+                self.renderShiftSummary({ actions: {}, total: 0 });
+                $('#shiftSummaryModal').modal('show');
+            }
+        });
+    },
+
+    // Render shift summary
+    renderShiftSummary: function(data) {
+        const shift = this.activeShift;
+        const counters = shift.counters || {};
+
+        let actionsHtml = '';
+        if (data.actions && Object.keys(data.actions).length > 0) {
+            actionsHtml = '<div class="mt-4"><h6>Actions by Type</h6><div class="list-group">';
+            for (const [type, info] of Object.entries(data.actions)) {
+                actionsHtml += `
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><i class="mdi ${info.config.icon} text-${info.config.color}"></i> ${info.config.label}</span>
+                        <span class="badge badge-${info.config.color}">${info.count}</span>
+                    </div>
+                `;
+            }
+            actionsHtml += '</div></div>';
+        }
+
+        const html = `
+            <div class="shift-summary-content">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <i class="mdi mdi-clock-outline text-primary mr-2" style="font-size: 2rem;"></i>
+                            <div>
+                                <div class="text-muted small">Shift Started</div>
+                                <strong>${shift.started_at_full}</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <i class="mdi mdi-timer-outline text-info mr-2" style="font-size: 2rem;"></i>
+                            <div>
+                                <div class="text-muted small">Elapsed Time</div>
+                                <strong id="summary-elapsed-time">${shift.elapsed_time}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="text-muted small">Shift Type</div>
+                        <span class="badge badge-info">${shift.shift_type_label}</span>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-muted small">Ward</div>
+                        <strong>${shift.ward_name}</strong>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-muted small">Scheduled End</div>
+                        <strong>${shift.scheduled_end || 'N/A'}</strong>
+                    </div>
+                </div>
+
+                <h6 class="text-muted mb-3">Activity Summary</h6>
+                <div class="row text-center">
+                    <div class="col">
+                        <div class="stat-box">
+                            <div class="stat-value text-danger">${counters.vitals || 0}</div>
+                            <div class="stat-label">Vitals</div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="stat-box">
+                            <div class="stat-value text-warning">${counters.medications || 0}</div>
+                            <div class="stat-label">Medications</div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="stat-box">
+                            <div class="stat-value text-info">${counters.injections || 0}</div>
+                            <div class="stat-label">Injections</div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="stat-box">
+                            <div class="stat-value text-success">${counters.immunizations || 0}</div>
+                            <div class="stat-label">Immunizations</div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="stat-box">
+                            <div class="stat-value text-primary">${counters.notes || 0}</div>
+                            <div class="stat-label">Notes</div>
+                        </div>
+                    </div>
+                </div>
+
+                ${actionsHtml}
+
+                <div class="mt-4 text-center">
+                    <div class="h4 text-primary">${shift.total_actions || 0}</div>
+                    <div class="text-muted">Total Actions This Shift</div>
+                </div>
+            </div>
+        `;
+
+        $('#shift-summary-content').html(html);
+    },
+
+    // Start shift timer
+    startShiftTimer: function() {
+        const self = this;
+        
+        if (this.shiftTimer) {
+            clearInterval(this.shiftTimer);
+        }
+
+        this.updateFabDisplay();
+
+        this.shiftTimer = setInterval(function() {
+            if (self.activeShift) {
+                self.activeShift.elapsed_seconds = (self.activeShift.elapsed_seconds || 0) + 1;
+                self.updateFabDisplay();
+
+                // Check for overdue
+                if (self.activeShift.remaining_seconds !== null) {
+                    self.activeShift.remaining_seconds = Math.max(0, (self.activeShift.remaining_seconds || 0) - 1);
+                }
+            }
+        }, 1000);
+    },
+
+    // Stop shift timer
+    stopShiftTimer: function() {
+        if (this.shiftTimer) {
+            clearInterval(this.shiftTimer);
+            this.shiftTimer = null;
+        }
+    },
+
+    // Update FAB display
+    updateFabDisplay: function() {
+        if (!this.activeShift) return;
+
+        const elapsed = this.activeShift.elapsed_seconds || 0;
+        $('#shift-elapsed-time').text(this.formatElapsedTime(elapsed));
+
+        // Check if overdue (past max shift duration)
+        if (this.activeShift.is_overdue || elapsed > 12 * 3600) {
+            $('.shift-fab-timer').addClass('overdue');
+        } else {
+            $('.shift-fab-timer').removeClass('overdue');
+        }
+
+        // Update FAB button state
+        $('#shift-fab-btn').addClass('active');
+    },
+
+    // Format elapsed time
+    formatElapsedTime: function(seconds) {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+
+        if (hours > 0) {
+            return `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+        return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    },
+
+    // Toggle FAB actions
+    toggleFabActions: function() {
+        const actions = $('.shift-fab-actions');
+        if (actions.is(':visible')) {
+            actions.slideUp(200);
+        } else {
+            actions.slideDown(200);
+        }
+    },
+
+    // Make FAB draggable
+    makeFabDraggable: function() {
+        const fab = document.getElementById('shift-control-fab');
+        if (!fab) return;
+
+        let isDragging = false;
+        let startX, startY, startLeft, startBottom;
+
+        fab.addEventListener('mousedown', startDrag);
+        fab.addEventListener('touchstart', startDrag, { passive: false });
+
+        function startDrag(e) {
+            if (e.target.tagName === 'BUTTON') return; // Don't drag when clicking buttons
+            
+            isDragging = true;
+            const rect = fab.getBoundingClientRect();
+            
+            if (e.type === 'touchstart') {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+            } else {
+                startX = e.clientX;
+                startY = e.clientY;
+            }
+            
+            startLeft = rect.left;
+            startBottom = window.innerHeight - rect.bottom;
+
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('touchmove', drag, { passive: false });
+            document.addEventListener('mouseup', stopDrag);
+            document.addEventListener('touchend', stopDrag);
+        }
+
+        function drag(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+
+            let clientX, clientY;
+            if (e.type === 'touchmove') {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+
+            const deltaX = clientX - startX;
+            const deltaY = startY - clientY;
+
+            const newRight = window.innerWidth - (startLeft + fab.offsetWidth + deltaX);
+            const newBottom = startBottom + deltaY;
+
+            // Keep within bounds
+            fab.style.right = Math.max(10, Math.min(window.innerWidth - fab.offsetWidth - 10, newRight)) + 'px';
+            fab.style.bottom = Math.max(10, Math.min(window.innerHeight - fab.offsetHeight - 10, newBottom)) + 'px';
+        }
+
+        function stopDrag() {
+            isDragging = false;
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('touchmove', drag);
+            document.removeEventListener('mouseup', stopDrag);
+            document.removeEventListener('touchend', stopDrag);
+        }
+    }
+};
+
+// Initialize Shift Manager on document ready
+$(document).ready(function() {
+    ShiftManager.init();
+});
 </script>
 @endsection
