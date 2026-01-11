@@ -1,6 +1,6 @@
 @extends('admin.layouts.app')
 @section('title', 'New Bed')
-@section('page_name', 'Bed')
+@section('page_name', 'Hospital Setup')
 @section('subpage_name', 'New Bed')
 
 @section('content')
@@ -23,13 +23,33 @@
                                 value="{{ old('name') }}" required autofocus placeholder="Example: Private bed 1">
                         </div>
                     </div>
+                    
                     <div class="form-group">
-                        <label for="ward" class=" control-label">Ward <i class = "text-danger">*</i></label>
+                        <label for="ward_id" class="control-label">Ward <i class="text-danger">*</i></label>
                         <div class="">
-                            <input type="text" class="form-control" id="ward" name="ward"
-                                value="{{ old('ward') }}" placeholder="Pediatrics">
+                            @if(isset($wards) && $wards->count() > 0)
+                                <select class="form-control select2" id="ward_id" name="ward_id">
+                                    <option value="">-- Select Ward --</option>
+                                    @foreach($wards as $ward)
+                                        <option value="{{ $ward->id }}" {{ old('ward_id') == $ward->id ? 'selected' : '' }}>
+                                            {{ $ward->name }} ({{ ucfirst($ward->type) }}) - {{ $ward->location }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <small class="form-text text-muted">Select a ward from the list, or type a custom ward name below</small>
+                            @endif
                         </div>
                     </div>
+                    
+                    <div class="form-group">
+                        <label for="ward" class="control-label">Ward Name (Custom) @if(!isset($wards) || $wards->count() == 0)<i class="text-danger">*</i>@endif</label>
+                        <div class="">
+                            <input type="text" class="form-control" id="ward" name="ward"
+                                value="{{ old('ward') }}" placeholder="Pediatrics (only if ward not selected above)">
+                            <small class="form-text text-muted">Use this only if the ward is not in the list above</small>
+                        </div>
+                    </div>
+                    
                     <div class="form-group">
                         <label for="unit" class=" control-label">Unit(Optional)</label>
                         <div class="">
@@ -37,6 +57,18 @@
                                 value="{{ old('unit') }}" placeholder="Block 2">
                         </div>
                     </div>
+                    
+                    <div class="form-group">
+                        <label for="bed_status" class="control-label">Bed Status</label>
+                        <div class="">
+                            <select class="form-control" id="bed_status" name="bed_status">
+                                <option value="available" {{ old('bed_status') == 'available' ? 'selected' : '' }}>Available</option>
+                                <option value="maintenance" {{ old('bed_status') == 'maintenance' ? 'selected' : '' }}>Under Maintenance</option>
+                                <option value="reserved" {{ old('bed_status') == 'reserved' ? 'selected' : '' }}>Reserved</option>
+                            </select>
+                        </div>
+                    </div>
+                    
                     <div class="form-group">
                         <label for="price" class="control-label">Price <i class = "text-danger">*</i></label>
                         <div>
@@ -73,24 +105,24 @@
 @endsection
 
 @section('scripts')
-    <!-- jQuery -->
-    {{-- <script src="{{ asset('plugins/jQuery/jquery.min.js') }}"></script> --}}
     <script src="{{ asset('plugins/select2/select2.min.js') }}"></script>
-    <!-- Bootstrap 4 -->
-    <!-- <script src="{{ asset('plugins/bootstrap/js/bootstrap.min.js') }}"></script> -->
     <script src="{{ asset('plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-    <!-- DataTables -->
-    <script src="{{ asset('plugins/datatables/jquery.dataTables.js') }}"></script>
-    <script src="{{ asset('plugins/datatables/dataTables.bootstrap4.js') }}"></script>
-    <script src="{{ asset('plugins/ckeditor/ckeditor.js') }}"></script>
 
     <script>
-        // CKEDITOR.replace('content_edit');
-        CKEDITOR.replace('content');
-    </script>
-    <script>
         $(document).ready(function() {
-            $(".select2").select2();
+            $(".select2").select2({
+                width: '100%'
+            });
+            
+            // When ward is selected from dropdown, update the ward text field
+            $('#ward_id').on('change', function() {
+                var selectedText = $(this).find('option:selected').text();
+                if ($(this).val()) {
+                    // Extract just the ward name (before the parenthesis)
+                    var wardName = selectedText.split('(')[0].trim();
+                    $('#ward').val(wardName);
+                }
+            });
         });
     </script>
 

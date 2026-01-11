@@ -17,8 +17,8 @@
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="notes-tab-btn" data-bs-toggle="tab" data-bs-target="#notes-tab" type="button" role="tab">
-                            <i class="mdi mdi-note-text"></i> Clinical Notes
+                        <button class="nav-link" id="enc-notes-tab-btn" data-bs-toggle="tab" data-bs-target="#enc-notes-tab" type="button" role="tab">
+                            <i class="mdi mdi-note-text"></i> Encounter Notes
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
@@ -29,6 +29,11 @@
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="allergies-tab-btn" data-bs-toggle="tab" data-bs-target="#allergies-tab" type="button" role="tab">
                             <i class="mdi mdi-alert-circle"></i> Allergies
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="inj-imm-tab-btn" data-bs-toggle="tab" data-bs-target="#inj-imm-tab" type="button" role="tab">
+                            <i class="mdi mdi-needle"></i> Inj/Imm History
                         </button>
                     </li>
                 </ul>
@@ -55,37 +60,41 @@
                         </div>
                     </div>
 
-                    {{-- Clinical Notes Tab --}}
-                    <div class="tab-pane fade" id="notes-tab" role="tabpanel">
+                    {{-- Encounter Notes Tab --}}
+                    <div class="tab-pane fade" id="enc-notes-tab" role="tabpanel">
                         <div class="clinical-tab-header">
-                            <h6><i class="mdi mdi-note-text"></i> Clinical Notes</h6>
-                            <button class="btn btn-sm btn-outline-primary refresh-clinical-btn" data-panel="notes">
+                            <h6><i class="mdi mdi-note-text"></i> Encounter Notes</h6>
+                            <button class="btn btn-sm btn-outline-primary refresh-clinical-btn" data-panel="enc-notes">
                                 <i class="mdi mdi-refresh"></i> Refresh
                             </button>
                         </div>
-                        <div class="clinical-tab-body" id="notes-panel-body">
-                            <div class="table-responsive">
-                                <table class="table" id="notes-table" style="width: 100%">
-                                    <thead>
-                                        <tr>
-                                            <th>Doctor Notes</th>
-                                        </tr>
-                                    </thead>
-                                </table>
+                        <div class="clinical-tab-body" id="enc-notes-panel-body">
+                            <div id="clinical-enc-notes-container">
+                                <div class="text-center py-4">
+                                    <i class="mdi mdi-loading mdi-spin mdi-36px text-muted"></i>
+                                    <p class="text-muted mt-2">Loading encounter notes...</p>
+                                </div>
                             </div>
+                            <div id="clinical-enc-notes-show-all" class="text-center mt-3"></div>
                         </div>
                     </div>
 
                     {{-- Medications Tab --}}
                     <div class="tab-pane fade" id="meds-tab" role="tabpanel">
                         <div class="clinical-tab-header">
-                            <h6><i class="mdi mdi-pill"></i> Active Medications</h6>
+                            <h6><i class="mdi mdi-pill"></i> Prescription History</h6>
                             <button class="btn btn-sm btn-outline-primary refresh-clinical-btn" data-panel="medications">
                                 <i class="mdi mdi-refresh"></i> Refresh
                             </button>
                         </div>
                         <div class="clinical-tab-body" id="medications-panel-body">
-                            <div id="medications-list-container"></div>
+                            <div id="clinical-meds-container">
+                                <div class="text-center py-4">
+                                    <i class="mdi mdi-loading mdi-spin mdi-36px text-muted"></i>
+                                    <p class="text-muted mt-2">Loading prescriptions...</p>
+                                </div>
+                            </div>
+                            <div id="clinical-meds-show-all" class="text-center mt-3"></div>
                         </div>
                     </div>
 
@@ -99,6 +108,19 @@
                         </div>
                         <div class="clinical-tab-body" id="allergies-panel-body">
                             <div id="allergies-list"></div>
+                        </div>
+                    </div>
+
+                    {{-- Injection/Immunization History Tab --}}
+                    <div class="tab-pane fade" id="inj-imm-tab" role="tabpanel">
+                        <div class="clinical-tab-body p-3" id="inj-imm-panel-body">
+                            <div id="clinical-inj-imm-container">
+                                {{-- Content loaded dynamically --}}
+                                <div class="text-center py-4">
+                                    <i class="mdi mdi-loading mdi-spin mdi-36px text-muted"></i>
+                                    <p class="text-muted mt-2">Loading injection & immunization history...</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -158,7 +180,16 @@
     .clinical-tab-body {
         padding: 1rem;
         max-height: 60vh;
+        min-height: 200px;
         overflow-y: auto;
+    }
+
+    #clinical-tab-content .tab-pane {
+        min-height: 200px;
+    }
+
+    #clinical-notes-container {
+        min-height: 150px;
     }
 
     .refresh-clinical-btn {
@@ -419,3 +450,552 @@
         color: #721c24;
     }
 </style>
+
+<script>
+(function initClinicalEncounterNotesLoader() {
+    // Wait for jQuery to be available
+    if (typeof jQuery === 'undefined') {
+        setTimeout(initClinicalEncounterNotesLoader, 100);
+        return;
+    }
+
+    const $ = jQuery;
+    let clinicalEncounterNotesLoaded = false;
+
+    // Load when tab is shown (using multiple event bindings for reliability)
+    $(document).on('shown.bs.tab', '#enc-notes-tab-btn', function() {
+        if (!clinicalEncounterNotesLoaded) {
+            loadClinicalEncounterNotes();
+        }
+    });
+
+    // Also bind click event as fallback
+    $(document).on('click', '#enc-notes-tab-btn', function() {
+        setTimeout(function() {
+            if (!clinicalEncounterNotesLoaded && $('#enc-notes-tab').hasClass('show')) {
+                loadClinicalEncounterNotes();
+            }
+        }, 150);
+    });
+
+    // Refresh button handler
+    $(document).on('click', '.refresh-clinical-btn[data-panel="enc-notes"]', function() {
+        clinicalEncounterNotesLoaded = false;
+        loadClinicalEncounterNotes();
+    });
+
+    function loadClinicalEncounterNotes() {
+        // Get patient ID from various sources
+        let patientId = null;
+
+        if (typeof currentPatient !== 'undefined' && currentPatient) {
+            patientId = currentPatient;
+        } else if (typeof selectedPatientId !== 'undefined' && selectedPatientId) {
+            patientId = selectedPatientId;
+        } else if ($('#clinical-context-modal').data('patient-id')) {
+            patientId = $('#clinical-context-modal').data('patient-id');
+        }
+
+        if (!patientId) {
+            $('#clinical-enc-notes-container').html(`
+                <div class="alert alert-warning">
+                    <i class="mdi mdi-alert"></i> No patient selected. Please select a patient first.
+                </div>
+            `);
+            return;
+        }
+
+        $('#clinical-enc-notes-container').html(`
+            <div class="text-center py-4">
+                <i class="mdi mdi-loading mdi-spin mdi-36px text-muted"></i>
+                <p class="text-muted mt-2">Loading encounter notes...</p>
+            </div>
+        `);
+
+        $.ajax({
+            url: `/EncounterHistoryList/${patientId}`,
+            method: 'GET',
+            data: { length: 10, start: 0, draw: 1 },
+            success: function(response) {
+                if (!response.data || response.data.length === 0) {
+                    $('#clinical-enc-notes-container').html(`
+                        <div class="text-center py-4">
+                            <i class="mdi mdi-note-off mdi-48px text-muted"></i>
+                            <p class="text-muted mt-2">No encounter notes found for this patient</p>
+                        </div>
+                    `);
+                    $('#clinical-enc-notes-show-all').html('');
+                    return;
+                }
+
+                let html = '';
+                response.data.forEach(function(item) {
+                    // The server returns pre-formatted HTML in 'info' column
+                    // We render it directly without extra wrapping
+                    html += item.info || `<div class="alert alert-light">Note ID: ${item.DT_RowId || 'N/A'}</div>`;
+                });
+
+                $('#clinical-enc-notes-container').html(html);
+                clinicalEncounterNotesLoaded = true;
+
+                // Add show all link
+                $('#clinical-enc-notes-show-all').html(`
+                    <a href="/patients/show/${patientId}?section=encountersCardBody" target="_blank" class="btn btn-outline-primary btn-sm">
+                        <i class="mdi mdi-open-in-new"></i> Show All Notes
+                    </a>
+                `);
+            },
+            error: function() {
+                $('#clinical-enc-notes-container').html(`
+                    <div class="alert alert-danger">
+                        <i class="mdi mdi-alert-circle"></i> Failed to load encounter notes. Please try again.
+                    </div>
+                `);
+            }
+        });
+    }
+
+    // Reset when modal is hidden
+    $(document).on('hidden.bs.modal', '#clinical-context-modal', function() {
+        clinicalEncounterNotesLoaded = false;
+        $('#clinical-enc-notes-container').html(`
+            <div class="text-center py-4">
+                <i class="mdi mdi-loading mdi-spin mdi-36px text-muted"></i>
+                <p class="text-muted mt-2">Loading encounter notes...</p>
+            </div>
+        `);
+        $('#clinical-enc-notes-show-all').html('');
+    });
+})();
+</script>
+
+<script>
+(function initClinicalInjImmHistory() {
+    // Wait for jQuery to be available
+    if (typeof jQuery === 'undefined') {
+        setTimeout(initClinicalInjImmHistory, 100);
+        return;
+    }
+
+    const $ = jQuery;
+    let clinicalInjImmLoaded = false;
+    let clinicalInjectionTableInit = false;
+    let clinicalImmunizationTableInit = false;
+
+    // Load when tab is shown
+    $(document).on('shown.bs.tab', '#inj-imm-tab-btn', function() {
+        if (!clinicalInjImmLoaded) {
+            loadClinicalInjImmContent();
+        }
+    });
+
+    function loadClinicalInjImmContent() {
+        // Get patient ID from the modal or global variable
+        let patientId = null;
+
+        // Try different sources for patient ID
+        if (typeof currentPatient !== 'undefined' && currentPatient) {
+            patientId = currentPatient;
+        } else if (typeof selectedPatientId !== 'undefined' && selectedPatientId) {
+            patientId = selectedPatientId;
+        } else if ($('#clinical-context-modal').data('patient-id')) {
+            patientId = $('#clinical-context-modal').data('patient-id');
+        }
+
+        if (!patientId) {
+            $('#clinical-inj-imm-container').html(`
+                <div class="alert alert-warning">
+                    <i class="mdi mdi-alert"></i> No patient selected. Please select a patient first.
+                </div>
+            `);
+            return;
+        }
+
+        // Build the content with tabs
+        const uniqueId = 'clinical_inj_imm_' + Date.now();
+
+        let html = `
+            <ul class="nav nav-tabs mb-3" id="${uniqueId}-tabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" id="${uniqueId}-injection-tab" data-bs-toggle="tab" href="#${uniqueId}-injection" role="tab">
+                        <i class="mdi mdi-needle me-1"></i> Injection History
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="${uniqueId}-immunization-tab" data-bs-toggle="tab" href="#${uniqueId}-immunization" role="tab">
+                        <i class="mdi mdi-medical-bag me-1"></i> Immunization History
+                    </a>
+                </li>
+            </ul>
+            <div class="tab-content" id="${uniqueId}-content">
+                <div class="tab-pane fade show active" id="${uniqueId}-injection" role="tabpanel">
+                    <div class="card">
+                        <div class="card-header py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0"><i class="mdi mdi-history"></i> Injection History</h6>
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="loadClinicalInjectionTable('${uniqueId}', ${patientId})">
+                                    <i class="mdi mdi-refresh"></i> Refresh
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover" id="${uniqueId}-injection-table" style="width:100%">
+                                    <thead>
+                                        <tr>
+                                            <th>Date/Time</th>
+                                            <th>Drug</th>
+                                            <th>Dose</th>
+                                            <th>Route</th>
+                                            <th>Site</th>
+                                            <th>Nurse</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="${uniqueId}-immunization" role="tabpanel">
+                    <div class="card">
+                        <div class="card-header py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0"><i class="mdi mdi-history"></i> Immunization History</h6>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" class="btn btn-outline-primary active clinical-imm-view-btn" data-uid="${uniqueId}" data-view="timeline" data-patient="${patientId}">
+                                        <i class="mdi mdi-chart-timeline-variant"></i> Timeline
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary clinical-imm-view-btn" data-uid="${uniqueId}" data-view="table" data-patient="${patientId}">
+                                        <i class="mdi mdi-table"></i> Table
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="${uniqueId}-timeline-view">
+                                <div class="text-center py-4">
+                                    <i class="mdi mdi-loading mdi-spin mdi-36px text-muted"></i>
+                                    <p class="text-muted mt-2">Loading timeline...</p>
+                                </div>
+                            </div>
+                            <div id="${uniqueId}-table-view" class="d-none">
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover" id="${uniqueId}-immunization-table" style="width:100%">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Vaccine</th>
+                                                <th>Dose #</th>
+                                                <th>Dose Amount</th>
+                                                <th>Batch</th>
+                                                <th>Site</th>
+                                                <th>Nurse</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        $('#clinical-inj-imm-container').html(html);
+        clinicalInjImmLoaded = true;
+
+        // Load injection table
+        loadClinicalInjectionTable(uniqueId, patientId);
+
+        // Tab switch handler for immunization
+        $(`#${uniqueId}-tabs a[data-bs-toggle="tab"]`).on('shown.bs.tab', function(e) {
+            if ($(e.target).attr('href') === `#${uniqueId}-immunization`) {
+                loadClinicalImmunizationTimeline(uniqueId, patientId);
+            }
+        });
+    }
+
+    // Make functions globally available
+    window.loadClinicalInjectionTable = function(uid, patientId) {
+        const tableId = `#${uid}-injection-table`;
+
+        if (typeof $.fn.DataTable === 'undefined') {
+            setTimeout(function() { loadClinicalInjectionTable(uid, patientId); }, 100);
+            return;
+        }
+
+        if ($.fn.DataTable.isDataTable(tableId)) {
+            $(tableId).DataTable().destroy();
+        }
+
+        $(tableId).DataTable({
+            processing: true,
+            serverSide: false,
+            ajax: {
+                url: `/nursing-workbench/patient/${patientId}/injections`,
+                dataSrc: ''
+            },
+            columns: [
+                { data: 'administered_at', defaultContent: 'N/A' },
+                { data: 'product_name', defaultContent: 'N/A' },
+                { data: 'dose', defaultContent: 'N/A' },
+                { data: 'route', defaultContent: 'N/A' },
+                { data: 'site', defaultContent: 'N/A' },
+                { data: 'administered_by', defaultContent: 'N/A' }
+            ],
+            order: [[0, 'desc']],
+            pageLength: 10,
+            language: {
+                emptyTable: "No injection history found",
+                processing: '<i class="mdi mdi-loading mdi-spin"></i> Loading...'
+            }
+        });
+    };
+
+    window.loadClinicalImmunizationTimeline = function(uid, patientId) {
+        const container = $(`#${uid}-timeline-view`);
+        container.html(`
+            <div class="text-center py-4">
+                <i class="mdi mdi-loading mdi-spin mdi-36px text-muted"></i>
+                <p class="text-muted mt-2">Loading timeline...</p>
+            </div>
+        `);
+
+        $.ajax({
+            url: `/nursing-workbench/patient/${patientId}/immunization-history`,
+            method: 'GET',
+            success: function(response) {
+                if (!response.records || response.records.length === 0) {
+                    container.html(`
+                        <div class="text-center py-4">
+                            <i class="mdi mdi-calendar-blank mdi-48px text-muted"></i>
+                            <p class="text-muted mt-2">No immunization records found</p>
+                        </div>
+                    `);
+                    return;
+                }
+
+                let html = '<div class="timeline-container" style="position: relative; padding-left: 30px; border-left: 3px solid #dee2e6;">';
+                response.records.forEach(record => {
+                    html += `
+                        <div class="timeline-item mb-3" style="position: relative;">
+                            <div class="timeline-marker" style="position: absolute; left: -40px; width: 20px; height: 20px; border-radius: 50%; background: #28a745; border: 3px solid white; box-shadow: 0 0 0 3px #28a745;"></div>
+                            <div class="card">
+                                <div class="card-body py-2">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <strong>${record.vaccine_name}</strong>
+                                            <span class="badge bg-success ms-2">${record.dose_number || 'N/A'}</span>
+                                            <br>
+                                            <small class="text-muted">
+                                                <i class="mdi mdi-calendar"></i> ${record.administered_date}
+                                                ${record.site ? `| <i class="mdi mdi-map-marker"></i> ${record.site}` : ''}
+                                                ${record.batch_number ? `| <i class="mdi mdi-barcode"></i> ${record.batch_number}` : ''}
+                                            </small>
+                                        </div>
+                                        <small class="text-muted">${record.administered_by || ''}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+                html += '</div>';
+                container.html(html);
+            },
+            error: function() {
+                container.html('<div class="alert alert-danger"><i class="mdi mdi-alert-circle"></i> Failed to load timeline</div>');
+            }
+        });
+    };
+
+    window.loadClinicalImmunizationTable = function(uid, patientId) {
+        const tableId = `#${uid}-immunization-table`;
+
+        if (typeof $.fn.DataTable === 'undefined') {
+            setTimeout(function() { loadClinicalImmunizationTable(uid, patientId); }, 100);
+            return;
+        }
+
+        if ($.fn.DataTable.isDataTable(tableId)) {
+            $(tableId).DataTable().destroy();
+        }
+
+        $(tableId).DataTable({
+            processing: true,
+            serverSide: false,
+            ajax: {
+                url: `/nursing-workbench/patient/${patientId}/immunization-history`,
+                dataSrc: 'records'
+            },
+            columns: [
+                { data: 'administered_date', defaultContent: 'N/A' },
+                { data: 'vaccine_name', defaultContent: 'N/A' },
+                { data: 'dose_number', render: function(d) { return d ? `Dose ${d}` : 'N/A'; } },
+                { data: 'dose', defaultContent: 'N/A' },
+                { data: 'batch_number', defaultContent: 'N/A' },
+                { data: 'site', defaultContent: 'N/A' },
+                { data: 'administered_by', defaultContent: 'N/A' }
+            ],
+            order: [[0, 'desc']],
+            pageLength: 10,
+            language: {
+                emptyTable: "No immunization records found",
+                processing: '<i class="mdi mdi-loading mdi-spin"></i> Loading...'
+            }
+        });
+    };
+
+    // View toggle for immunization
+    $(document).on('click', '.clinical-imm-view-btn', function() {
+        const uid = $(this).data('uid');
+        const view = $(this).data('view');
+        const patientId = $(this).data('patient');
+
+        // Update button states
+        $(`.clinical-imm-view-btn[data-uid="${uid}"]`).removeClass('active');
+        $(this).addClass('active');
+
+        // Show/hide views
+        $(`#${uid}-timeline-view, #${uid}-table-view`).addClass('d-none');
+        $(`#${uid}-${view}-view`).removeClass('d-none');
+
+        // Load the appropriate view
+        if (view === 'timeline') {
+            loadClinicalImmunizationTimeline(uid, patientId);
+        } else if (view === 'table') {
+            loadClinicalImmunizationTable(uid, patientId);
+        }
+    });
+
+    // Reset when modal is hidden
+    $(document).on('hidden.bs.modal', '#clinical-context-modal', function() {
+        clinicalInjImmLoaded = false;
+        $('#clinical-inj-imm-container').html(`
+            <div class="text-center py-4">
+                <i class="mdi mdi-loading mdi-spin mdi-36px text-muted"></i>
+                <p class="text-muted mt-2">Loading injection & immunization history...</p>
+            </div>
+        `);
+    });
+})();
+</script>
+
+<script>
+(function initClinicalMedicationsLoader() {
+    // Wait for jQuery to be available
+    if (typeof jQuery === 'undefined') {
+        setTimeout(initClinicalMedicationsLoader, 100);
+        return;
+    }
+
+    const $ = jQuery;
+    let clinicalMedicationsLoaded = false;
+
+    // Load when tab is shown
+    $(document).on('shown.bs.tab', '#meds-tab-btn', function() {
+        if (!clinicalMedicationsLoaded) {
+            loadClinicalMedications();
+        }
+    });
+
+    // Also bind click event as fallback
+    $(document).on('click', '#meds-tab-btn', function() {
+        setTimeout(function() {
+            if (!clinicalMedicationsLoaded && $('#meds-tab').hasClass('show')) {
+                loadClinicalMedications();
+            }
+        }, 150);
+    });
+
+    // Refresh button handler
+    $(document).on('click', '.refresh-clinical-btn[data-panel="medications"]', function() {
+        clinicalMedicationsLoaded = false;
+        loadClinicalMedications();
+    });
+
+    function loadClinicalMedications() {
+        let patientId = null;
+
+        if (typeof currentPatient !== 'undefined' && currentPatient) {
+            patientId = currentPatient;
+        } else if (typeof selectedPatientId !== 'undefined' && selectedPatientId) {
+            patientId = selectedPatientId;
+        } else if ($('#clinical-context-modal').data('patient-id')) {
+            patientId = $('#clinical-context-modal').data('patient-id');
+        }
+
+        if (!patientId) {
+            $('#clinical-meds-container').html(`
+                <div class="alert alert-warning">
+                    <i class="mdi mdi-alert"></i> No patient selected. Please select a patient first.
+                </div>
+            `);
+            return;
+        }
+
+        $('#clinical-meds-container').html(`
+            <div class="text-center py-4">
+                <i class="mdi mdi-loading mdi-spin mdi-36px text-muted"></i>
+                <p class="text-muted mt-2">Loading prescriptions...</p>
+            </div>
+        `);
+
+        // AJAX request to fetch prescription history
+        // Using length=20 as requested
+        $.ajax({
+            url: `/prescHistoryList/${patientId}`,
+            method: 'GET',
+            data: { length: 20, start: 0, draw: 1 },
+            success: function(response) {
+                if (!response.data || response.data.length === 0) {
+                    $('#clinical-meds-container').html(`
+                        <div class="text-center py-4">
+                            <i class="mdi mdi-pill mdi-48px text-muted"></i>
+                            <p class="text-muted mt-2">No prescription history found</p>
+                        </div>
+                    `);
+                    $('#clinical-meds-show-all').html('');
+                    return;
+                }
+
+                let html = '';
+                response.data.forEach(function(item) {
+                     // The 'info' column contains the pre-rendered HTML card
+                    html += item.info || `<div class="alert alert-light">Item: ${item.id}</div>`;
+                });
+
+                $('#clinical-meds-container').html(html);
+                clinicalMedicationsLoaded = true;
+
+                // Add see more link
+                $('#clinical-meds-show-all').html(`
+                    <a href="/patients/show/${patientId}?section=prescriptionsNotesCardBody" target="_blank" class="btn btn-outline-primary btn-sm">
+                        <i class="mdi mdi-open-in-new"></i> See More Prescriptions
+                    </a>
+                `);
+            },
+            error: function() {
+                $('#clinical-meds-container').html(`
+                    <div class="alert alert-danger">
+                        <i class="mdi mdi-alert-circle"></i> Failed to load prescriptions.
+                    </div>
+                `);
+            }
+        });
+    }
+
+    // Reset when modal is hidden
+    $(document).on('hidden.bs.modal', '#clinical-context-modal', function() {
+        clinicalMedicationsLoaded = false;
+        $('#clinical-meds-container').html(`
+            <div class="text-center py-4">
+                <i class="mdi mdi-loading mdi-spin mdi-36px text-muted"></i>
+                <p class="text-muted mt-2">Loading prescriptions...</p>
+            </div>
+        `);
+        $('#clinical-meds-show-all').html('');
+    });
+})();
+</script>

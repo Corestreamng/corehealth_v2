@@ -170,7 +170,7 @@
 
                 <br>
                 <div class="d-flex justify-content-between align-items-center">
-                    <button type="button" onclick="switch_tab(event,'nurse_charts_tab')"
+                    <button type="button" onclick="switch_tab(event,'inj_imm_history_tab')"
                         class="btn btn-secondary">
                         <i class="fa fa-arrow-left"></i> Previous
                     </button>

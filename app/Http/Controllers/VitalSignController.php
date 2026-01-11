@@ -48,9 +48,17 @@ class VitalSignController extends Controller
         try {
             $request->validate([
                 'patient_id' => 'required',
-                'bloodPressure' => 'nullable',
-                'bodyTemperature' => 'required',
-                'datetimeField' => 'required'
+                'bloodPressure' => 'nullable|regex:/^\d{2,3}\/\d{2,3}$/',
+                'bodyTemperature' => 'required|numeric|min:34|max:42',
+                'datetimeField' => 'required',
+                'heartRate' => 'nullable|numeric|min:30|max:250',
+                'respiratoryRate' => 'nullable|numeric|min:5|max:60',
+                'bodyWeight' => 'nullable|numeric|min:0.5|max:500',
+                'height' => 'nullable|numeric|min:30|max:300',
+                'spo2' => 'nullable|numeric|min:50|max:100',
+                'bloodSugar' => 'nullable|numeric|min:20|max:600',
+                'painScore' => 'nullable|integer|min:0|max:10',
+                'bmi' => 'nullable|numeric',
             ]);
 
             DB::beginTransaction();
@@ -63,8 +71,21 @@ class VitalSignController extends Controller
             $vitalSign->heart_rate = $request->heartRate;
             $vitalSign->resp_rate = $request->respiratoryRate;
             $vitalSign->weight = $request->bodyWeight;
+            $vitalSign->height = $request->height;
+            $vitalSign->spo2 = $request->spo2;
+            $vitalSign->blood_sugar = $request->bloodSugar;
+            $vitalSign->pain_score = $request->painScore;
             $vitalSign->other_notes = $request->otherNotes;
             $vitalSign->time_taken = $request->datetimeField;
+
+            // Auto-calculate BMI if weight and height provided
+            if ($request->bmi) {
+                $vitalSign->bmi = $request->bmi;
+            } elseif ($request->bodyWeight && $request->height) {
+                $heightInMeters = $request->height / 100;
+                $vitalSign->bmi = round($request->bodyWeight / ($heightInMeters * $heightInMeters), 1);
+            }
+
             $vitalSign->save();
 
             //update all doc queues for the patient, so that they no longer show on the viatls queue
@@ -72,10 +93,20 @@ class VitalSignController extends Controller
                 'vitals_taken' => true
             ]);
             DB::commit();
+
+            if ($request->wantsJson()) {
+                 return response()->json(['success' => true, 'message' => 'Vitals saved successfully']);
+            }
+
             return back()->withMessage('Vitals saved successfully')->withMessageType('success');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error($e->getMessage(), ['exception' => $e]);
+
+            if ($request->wantsJson()) {
+                 return response()->json(['success' => false, 'message' => "An error occurred " . $e->getMessage()], 500);
+            }
+
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage() . 'line:' . $e->getLine());
         }
     }

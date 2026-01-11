@@ -1822,6 +1822,40 @@ rgba(255, 255, 255, 0.7) !important;
                 transform: translateY(0) translateX(0);
             }
         }
+
+        /* Prevent cards inside dataTables from becoming fullscreen on mobile */
+        @media (max-width: 767.98px) {
+            .dataTables_wrapper .card,
+            .table-responsive .card,
+            .clinical-tab-body .card,
+            table .card {
+                width: 100% !important;
+                max-width: 100% !important;
+                height: auto !important;
+                min-height: 0 !important;
+                position: relative !important;
+                margin-bottom: 1rem !important;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+                transform: none !important;
+                left: auto !important;
+                top: auto !important;
+            }
+
+            .dataTables_wrapper .card .card-body,
+            .table-responsive .card .card-body,
+            table .card .card-body {
+                padding: 1rem !important;
+            }
+
+            /* Ensure the text inside doesn't overflow */
+            .dataTables_wrapper .card *,
+            .table-responsive .card *,
+            table .card * {
+                max-width: 100%;
+                word-wrap: break-word; /* Deprecated but still useful fallback */
+                overflow-wrap: break-word;
+            }
+        }
     </style>
 
     <!-- Chat Styles -->
@@ -1924,6 +1958,7 @@ rgba(255, 255, 255, 0.7) !important;
 
     {{-- <script src="admin/assets/vendors/chart.js/Chart.min.js"></script> --}}
     @yield('scripts')
+    @stack('scripts')
     <!-- endinject -->
     <!-- Plugin js for this page -->
     {{-- <script src="admin/assets/vendors/jquery-bar-rating/jquery.barrating.min.js"></script> --}}

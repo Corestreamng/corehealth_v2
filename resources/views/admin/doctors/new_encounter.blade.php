@@ -99,6 +99,12 @@
             </button>
         </li>
         <li class="nav-item" role="presentation">
+            <button class="nav-link" id="inj_imm_history_tab" data-bs-toggle="tab" data-bs-target="#inj_imm_history"
+                type="button" role="tab" aria-controls="inj_imm_history" aria-selected="false">
+                <i class="fa fa-syringe me-1"></i> Inj/Imm History
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
             <button class="nav-link" id="clinical_notes_tab" data-bs-toggle="tab" data-bs-target="#clinical_notes"
                 type="button" role="tab" aria-controls="clinical_notes" aria-selected="false">
                 <i class="mdi mdi-note-text me-1"></i> Clinical Notes/Diagnosis
@@ -247,122 +253,12 @@
             </div>
         </div>
         <div class="tab-pane fade" id="vitals" role="tabpanel" aria-labelledby="vitals_tab">
-            <div class="card mt-2">
-                <div class="card-body table-responsive">
-
-                    <div class="row">
-                        <div class="col-12">
-                            <form method="post" action="{{ route('vitals.store') }}">
-                                @csrf
-                                <div class="row">
-                                    <div class="form-group col-md-4">
-                                        <input type="hidden" name="patient_id" value="{{ $patient->id }}">
-                                        <label for="bloodPressure">Blood Pressure (mmHg) <span
-                                                class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" id="bloodPressure"
-                                            name="bloodPressure" pattern="\d+/\d+" required>
-                                        <small class="form-text text-muted">Enter in the format of
-                                            "systolic/diastolic", e.g.,
-                                            120/80.</small>
-                                    </div>
-                                    <div class="form-group col-md-4">
-                                        <label for="bodyTemperature">Body Temperature (°C) <span
-                                                class="text-danger">*</span></label>
-                                        <input type="number" class="form-control" id="bodyTemperature"
-                                            name="bodyTemperature" min="34" max="39" step="0.1"
-                                            required>
-                                        <small class="form-text text-muted">Min : 34, Max: 39</small>
-                                    </div>
-                                    <div class="form-group col-md-4">
-                                        <label for="bodyWeight">Body Weight (Kg)
-                                            <input type="number" class="form-control" id="bodyWeight" name="bodyWeight"
-                                                min="1" max="300" step="0.1" required>
-                                            <small class="form-text text-muted">Min : 1, Max: 300</small>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="form-group col-md-6">
-                                        <label for="respiratoryRate">Respiratory Rate (BPM)</label>
-                                        <input type="number" class="form-control" id="respiratoryRate"
-                                            name="respiratoryRate" min="12" max="30">
-                                        <small class="form-text text-muted">Breaths per Minute. Min : 12, Max:
-                                            30</small>
-                                    </div>
-                                    <div class="form-group col-md-6">
-                                        <label for="heartRate">Heart Rate (BPM)</label>
-                                        <input type="number" class="form-control" id="heartRate" name="heartRate"
-                                            min="60" max="220">
-                                        <small class="form-text text-muted">Beats Per Min. Min : 60, Max:
-                                            220</small>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="form-group col-md-6">
-                                        <label for="datetimeField">Time Taken</label>
-                                        <input type="datetime-local" class="form-control" id="datetimeField"
-                                            name="datetimeField" value="{{ date('Y-m-d\TH:i') }}" required>
-                                        <small class="form-text text-muted">The exact time the vitals were
-                                            taken</small>
-                                    </div>
-                                    <div class="form-group col-md-6">
-                                        <label for="otherNotes">Other Notes</label>
-                                        <textarea name="otherNotes" id="otherNotes" class="form-control"></textarea>
-                                        <small class="form-text text-muted">Any other specifics about the
-                                            patient</small>
-                                    </div>
-                                </div>
-                                <button type="submit" class="btn btn-primary">Submit</button>
-                            </form>
-                        </div>
-
-                        <div class="col-12">
-                            <hr>
-                            <h4>Vital Signs Charts(up to last 30 readings)</h4>
-                            <br>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <!-- Blood Pressure Chart -->
-                                    <canvas id="bloodPressureChart"></canvas>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <!-- Temperature Chart -->
-                                    <canvas id="temperatureChart"></canvas>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <!-- Weight Chart -->
-                                    <canvas id="weightChart"></canvas>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <!-- Heart Rate Chart -->
-                                    <canvas id="heartRateChart"></canvas>
-
-                                </div>
-
-                                <div class="col-md-6">
-                                    <!-- Respiratory Rate Chart -->
-                                    <canvas id="respRateChart"></canvas>
-                                </div>
-                            </div>
-
-                        </div>
-                        <hr>
-                        <h4>Vitals History</h4>
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered table-striped" style="width: 100%"
-                                id="vitals_history">
-                                <thead>
-                                    <th>#</th>
-                                    <th>Service</th>
-                                    <th>Details</th>
-                                    {{-- <th>Entry</th> --}}
-                                </thead>
-                            </table>
-                        </div>
-                    </div>
-                    <br><button type="button" onclick="switch_tab(event,'patient_data_tab')"
+            <div class="mt-2">
+                @include('admin.partials.unified_vitals', ['patient' => $patient])
+            </div>
+            <div class="card mt-2 border-0">
+                 <div class="card-body px-0">
+                    <button type="button" onclick="switch_tab(event,'patient_data_tab')"
                         class="btn btn-secondary mr-2">
                         Prev
                     </button>
@@ -371,11 +267,30 @@
                     <a href="{{ route('encounters.index') }}"
                         onclick="return confirm('Are you sure you wish to exit? Changes are yet to be saved')"
                         class="btn btn-light">Exit</a>
-                </div>
+                 </div>
             </div>
         </div>
-
-        {{-- Laboratory Services: Combined Lab History + Lab Request --}}
+        @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var vitalsTab = document.getElementById('vitals_data_tab');
+                if(vitalsTab){
+                     // Bootstrap 5
+                    vitalsTab.addEventListener('shown.bs.tab', function (event) {
+                        if(window.initUnifiedVitals) {
+                            window.initUnifiedVitals({{ $patient->id }});
+                        }
+                    });
+                    // Fallback/Others
+                    $(vitalsTab).on('shown.bs.tab', function (e) {
+                         if(window.initUnifiedVitals) {
+                            window.initUnifiedVitals({{ $patient->id }});
+                        }
+                    });
+                }
+            });
+        </script>
+        @endpush
         <div class="tab-pane fade" id="laboratory_services" role="tabpanel" aria-labelledby="laboratory_services_tab">
             @include('admin.doctors.partials.laboratory_services')
         </div>
@@ -803,6 +718,23 @@
 
                     <div class="mt-4">
                         <button type="button" onclick="switch_tab(event,'nursing_notes_tab')" class="btn btn-secondary me-2">
+                            <i class="mdi mdi-arrow-left me-1"></i> Previous
+                        </button>
+                        <button type="button" onclick="switch_tab(event,'inj_imm_history_tab')" class="btn btn-primary">
+                            Next <i class="mdi mdi-arrow-right ms-1"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{-- Injection & Immunization History Tab --}}
+        <div class="tab-pane fade" id="inj_imm_history" role="tabpanel" aria-labelledby="inj_imm_history_tab">
+            <div class="card mt-2">
+                <div class="card-body">
+                    @include('admin.patients.partials.injection_immunization_history', ['patient' => $patient])
+
+                    <div class="mt-4">
+                        <button type="button" onclick="switch_tab(event,'nurse_charts_tab')" class="btn btn-secondary me-2">
                             <i class="mdi mdi-arrow-left me-1"></i> Previous
                         </button>
                         <button type="button" onclick="switch_tab(event,'clinical_notes_tab')" class="btn btn-primary">

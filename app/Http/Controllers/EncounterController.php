@@ -951,7 +951,7 @@ class EncounterController extends Controller
         // Get the current encounter ID to exclude if provided
         $excludeEncounterId = request()->get('exclude_encounter_id');
 
-        $query = Encounter::with(['doctor', 'patient'])
+        $query = Encounter::with(['doctor.staff_profile.specialization', 'patient'])
             ->where('patient_id', $patient_id)
             ->where('notes', '!=', null)
             ->where('completed', true) // Only show completed encounters
@@ -971,7 +971,11 @@ class EncounterController extends Controller
 
                 // Header with doctor name and status
                 $str .= '<div class="d-flex justify-content-between align-items-start mb-3">';
+                $str .= "<div>";
                 $str .= "<h6 class='mb-0'><i class='mdi mdi-account-circle'></i> <span class='text-primary'>" . userfullname($hist->doctor_id) . "</span></h6>";
+                $specialty = $hist->doctor->staff_profile->specialization->name ?? 'General Practitioner';
+                $str .= "<small class='text-muted' style='margin-left: 1.5rem; display: block; margin-top: 2px;'>" . $specialty . "</small>";
+                $str .= "</div>";
                 $str .= "<span class='badge bg-info'>" . date('h:i a D M j, Y', strtotime($hist->created_at)) . "</span>";
                 $str .= '</div>';
 

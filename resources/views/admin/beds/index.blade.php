@@ -1,6 +1,6 @@
 @extends('admin.layouts.app')
 @section('title', 'List Beds')
-@section('page_name', 'Beds')
+@section('page_name', 'Hospital Setup')
 @section('subpage_name', 'List Beds')
 @section('content')
 
@@ -8,14 +8,19 @@
 
         <div class="col-12">
             <div class="card">
-                <div class="card-header">
-                    <a href="{{ route('beds.create') }}" class="btn btn-primary">New Bed</a>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">Bed Management</h3>
+                    <div>
+                        <a href="{{ route('wards.index') }}" class="btn btn-outline-primary mr-2">
+                            <i class="mdi mdi-hospital-building"></i> Manage Wards
+                        </a>
+                        <a href="{{ route('beds.create') }}" class="btn btn-primary">
+                            <i class="fa fa-plus"></i> New Bed
+                        </a>
+                    </div>
                 </div>
                 <!-- /.card-header -->
                 <div class="card-body">
-                    <div class="pull-right">
-                        <!-- <a href="{{ route('hmo.create') }}" class="btn btn-primary" >New Role</a> -->
-                    </div>
                     <div class="table-responsive">
                         <table id="ghaji" class="table table-sm  table-bordered table-striped display">
                             <thead>
@@ -24,6 +29,7 @@
                                     <th>Name</th>
                                     <th>Ward</th>
                                     <th>Unit</th>
+                                    <th>Status</th>
                                     <th>Price</th>
                                     <th>Edit</th>
                                     <th>Delete</th>
@@ -100,10 +106,13 @@
                         "data": "name"
                     },
                     {
-                        "data": "ward"
+                        "data": "ward_name"
                     },
                     {
                         "data": "unit"
+                    },
+                    {
+                        "data": "status_badge"
                     },
                     {
                         "data": "price"
