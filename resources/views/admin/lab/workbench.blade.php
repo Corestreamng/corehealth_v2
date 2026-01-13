@@ -2683,7 +2683,7 @@
                             <!-- Charts and Top Services -->
                             <div class="row mb-4">
                                 <div class="col-md-6">
-                                    <div class="card">
+                                    <div class="card-modern">
                                         <div class="card-header">
                                             <h6 class="mb-0"><i class="mdi mdi-chart-bar"></i> Requests by Status</h6>
                                         </div>
@@ -2693,7 +2693,7 @@
                                     </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="card">
+                                    <div class="card-modern">
                                         <div class="card-header">
                                             <h6 class="mb-0"><i class="mdi mdi-chart-line"></i> Monthly Trends</h6>
                                         </div>
@@ -2707,7 +2707,7 @@
                             <!-- Top Services -->
                             <div class="row mb-4">
                                 <div class="col-md-12">
-                                    <div class="card" id="top-services-card">
+                                    <div class="card-modern" id="top-services-card">
                                         <div class="card-header">
                                             <h6 class="mb-0"><i class="mdi mdi-test-tube"></i> Top 10 Lab Services</h6>
                                         </div>
@@ -2726,7 +2726,7 @@
                     <div class="tab-pane fade" id="detailed-report-content" role="tabpanel" aria-labelledby="detailed-report-tab">
                         <div class="reports-container">
                             <!-- DataTable -->
-                            <div class="card">
+                            <div class="card-modern">
                                 <div class="card-header d-flex justify-content-between align-items-center">
                                     <h6 class="mb-0"><i class="mdi mdi-table"></i> Detailed Report</h6>
                                     <div>
@@ -2769,7 +2769,7 @@
                         <div class="reports-container">
                             <div class="row">
                                 <div class="col-md-12">
-                                    <div class="card">
+                                    <div class="card-modern">
                                         <div class="card-header">
                                             <h6 class="mb-0"><i class="mdi mdi-doctor"></i> Top Requesting Doctors</h6>
                                         </div>
@@ -4252,7 +4252,7 @@ function displayNotes(notes) {
                 }
 
                 return `
-                    <div class="card mb-2" style="border-left: 4px solid var(--hospital-primary, #0d6efd);">
+                    <div class="card-modern mb-2" style="border-left: 4px solid var(--hospital-primary, #0d6efd);">
                         <div class="card-body p-3">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <h6 class="mb-0">
@@ -5497,7 +5497,7 @@ function createTrashCard(data, type) {
     const icon = type === 'deleted' ? 'fa-trash' : 'fa-ban';
 
     let html = `
-        <div class="card mb-2" style="border-left: 4px solid ${type === 'deleted' ? '#dc3545' : '#ffc107'};">
+        <div class="card-modern mb-2" style="border-left: 4px solid ${type === 'deleted' ? '#dc3545' : '#ffc107'};">
             <div class="card-body p-2">
                 <div class="d-flex justify-content-between align-items-start mb-2">
                     <h6 class="mb-0">

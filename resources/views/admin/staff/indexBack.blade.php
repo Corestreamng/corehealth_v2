@@ -22,7 +22,7 @@
  <section class="content">
 
     <div class="col-12">
-      <div class="card">
+      <div class="card-modern">
         <div class="card-header">
           <h3 class="card-title">User Management</h3>
         </div>
@@ -66,7 +66,7 @@
         </button>
       </div> -->
       <div class="modal-body">
-        <div class="card card-info">
+        <div class="card-modern card-info">
                 <div class="card-header">
                   <h3 class="card-title">Horizontal Form</h3>
                 </div>

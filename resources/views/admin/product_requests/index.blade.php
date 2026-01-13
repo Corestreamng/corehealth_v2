@@ -7,7 +7,7 @@
     <section class="content">
         <div class="container-fluid">
             <!-- Date Range Card -->
-            <div class="card mb-3">
+            <div class="card-modern mb-3">
                 <div class="card-body">
                     <form id="dateRangeForm">
                         <div class="row">
@@ -39,7 +39,7 @@
             </div>
 
             <!-- Table Card -->
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-sm table-bordered table-striped" style="width: 100%"

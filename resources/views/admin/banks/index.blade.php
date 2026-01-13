@@ -18,7 +18,7 @@
             </div>
 
             <!-- Banks Table Card -->
-            <div class="card" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-modern" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef; border-radius: 12px 12px 0 0;">
                     <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
                         <i class="mdi mdi-bank mr-2" style="color: var(--primary-color);"></i>

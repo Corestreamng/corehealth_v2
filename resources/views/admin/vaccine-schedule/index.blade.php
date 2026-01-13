@@ -31,7 +31,7 @@
             <div class="tab-content" id="vaccineConfigTabContent">
                 <!-- Schedule Templates Tab -->
                 <div class="tab-pane fade show active" id="templates" role="tabpanel">
-                    <div class="card" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div class="card-modern" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                         <div class="card-header bg-white d-flex justify-content-between align-items-center" style="border-bottom: 1px solid #e9ecef; border-radius: 12px 12px 0 0;">
                             <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
                                 <i class="mdi mdi-clipboard-list-outline mr-2" style="color: var(--primary-color);"></i>
@@ -65,7 +65,7 @@
 
                 <!-- Product Mappings Tab -->
                 <div class="tab-pane fade" id="mappings" role="tabpanel">
-                    <div class="card" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div class="card-modern" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                         <div class="card-header bg-white d-flex justify-content-between align-items-center" style="border-bottom: 1px solid #e9ecef; border-radius: 12px 12px 0 0;">
                             <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
                                 <i class="mdi mdi-link-variant mr-2" style="color: var(--primary-color);"></i>
@@ -506,7 +506,7 @@ $(document).ready(function() {
             let html = '';
             Object.keys(grouped).forEach(ageDisplay => {
                 html += `
-                    <div class="card mb-3" style="border-radius: 8px;">
+                    <div class="card-modern mb-3" style="border-radius: 8px;">
                         <div class="card-header bg-light py-2">
                             <strong><i class="mdi mdi-clock-outline mr-1"></i>${ageDisplay}</strong>
                             <span class="badge badge-info float-right">${grouped[ageDisplay].length} vaccines</span>

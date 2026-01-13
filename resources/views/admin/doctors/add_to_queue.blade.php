@@ -6,7 +6,7 @@
     <div class="content-fluid spark-screen">
         <div class="row">
             <div class="col-md-12">
-                <div class="card">
+                <div class="card-modern">
                     <div class="card-header with-border">
                         <h3 class="card-title">{{ trans('Returning Patient') }}</h3>
                     </div>

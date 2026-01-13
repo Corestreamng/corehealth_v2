@@ -27,7 +27,7 @@
     </style>
 
     <!-- Action Bar -->
-    <div class="card mb-3 border-0 shadow-sm">
+    <div class="card-modern mb-3 border-0 shadow-sm">
         <div class="card-body py-2">
             <div class="d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center">
@@ -137,7 +137,7 @@
     </ul>
     <div class="tab-content" id="myTabContent">
         <div class="tab-pane fade show active" id="patient_data" role="tabpanel" aria-labelledby="patient_data">
-            <div class="card mt-2">
+            <div class="card-modern mt-2">
                 <div class="card-body table-responsive">
                     <div class="row">
                         <div class="col-md-9">
@@ -256,7 +256,7 @@
             <div class="mt-2">
                 @include('admin.partials.unified_vitals', ['patient' => $patient])
             </div>
-            <div class="card mt-2 border-0">
+            <div class="card-modern mt-2 border-0">
                  <div class="card-body px-0">
                     <button type="button" onclick="switch_tab(event,'patient_data_tab')"
                         class="btn btn-secondary mr-2">
@@ -307,7 +307,7 @@
 
         {{-- Admission History --}}
         <div class="tab-pane fade" id="admissions" role="tabpanel" aria-labelledby="admissions_tab">
-            <div class="card mt-2">
+            <div class="card-modern mt-2">
                 <div class="card-body">
                     @include('admin.patients.partials.admissions')
                 </div>
@@ -319,7 +319,7 @@
             @include('admin.doctors.partials.clinical_notes')
         </div>
         <div class="tab-pane fade" id="nursing_notes" role="tabpanel" aria-labelledby="nursing_notes_tab">
-            <div class="card mt-2">
+            <div class="card-modern mt-2">
                 <div class="card-body table-responsive">
                     @if (isset($admission_request))
                         <ul class="nav nav-tabs" id="myTab" role="tablist">
@@ -602,7 +602,7 @@
             </div>
         </div>
         <div class="tab-pane fade" id="nurse_charts" role="tabpanel" aria-labelledby="nurse_charts_tab">
-            <div class="card mt-2">
+            <div class="card-modern mt-2">
                 <div class="card-body">
                     <!-- Nurse Charts Content -->
                     <div class="alert alert-info">
@@ -611,7 +611,7 @@
                     </div>
 
                     <!-- Date Range Filter -->
-                    <div class="card mb-3">
+                    <div class="card-modern mb-3">
                         <div class="card-header bg-light">
                             <h6 class="mb-0"><i class="mdi mdi-calendar-range me-1"></i> Date Range Filter</h6>
                         </div>
@@ -729,7 +729,7 @@
         </div>
         {{-- Injection & Immunization History Tab --}}
         <div class="tab-pane fade" id="inj_imm_history" role="tabpanel" aria-labelledby="inj_imm_history_tab">
-            <div class="card mt-2">
+            <div class="card-modern mt-2">
                 <div class="card-body">
                     @include('admin.patients.partials.injection_immunization_history', ['patient' => $patient])
 
@@ -747,7 +747,7 @@
         <form action="{{ route('encounters.store') }}" method="post">
             @csrf
             <div class="tab-pane fade d-none" id="my_notes_old" role="tabpanel" aria-labelledby="my_notes_old_tab">
-                <div class="card mt-2">
+                <div class="card-modern mt-2">
                     <div class="card-body table-responsive">
 
                         <input type="hidden" value="{{ $req_entry->service_id ?? 'ward_round' }}"
@@ -866,7 +866,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">x</button>
                 </div>
                 <div class="modal-body">
-                    <div class="card">
+                    <div class="card-modern">
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-10">
@@ -2341,7 +2341,7 @@
                         `;
 
                         // Create medication list view (read-only)
-                        let html = '<div class="card shadow-sm">';
+                        let html = '<div class="card-modern shadow-sm">';
 
                         // Show prescription count in the header
                         // Using the same prescriptionCount from above to avoid duplicate declaration
@@ -2404,7 +2404,7 @@
                         html += '</tbody></table></div></div></div>';
 
                         // Add medication history section
-                        html += '<div class="card shadow-sm mt-3">';
+                        html += '<div class="card-modern shadow-sm mt-3">';
 
                         // Show date range and record count in the header
                         // Using the same administrationCount from above
@@ -2576,7 +2576,7 @@
                 let html = '';
 
                 // Add legend
-                html += `<div class="card mb-2">
+                html += `<div class="card-modern mb-2">
                     <div class="card-body p-2">
                         <div class="d-flex flex-wrap gap-2 align-items-center">
                             <small class="text-muted me-2">Legend:</small>
@@ -2623,7 +2623,7 @@
                     const balanceClass = balance > 0 ? 'text-success' : (balance < 0 ? 'text-danger' : 'text-muted');
 
                     // Period card
-                    html += `<div class="card shadow-sm mb-3 period-card">
+                    html += `<div class="card-modern shadow-sm mb-3 period-card">
                         <div class="card-header bg-light d-flex justify-content-between align-items-center">
                             <div>
                                 <h6 class="mb-0">
@@ -3248,7 +3248,7 @@
                         <h6 style="color: {{ appsettings('hos_color', '#007bff') }};"><i class="fa fa-info-circle"></i> Encounter Summary</h6>
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="card summary-card bg-light mb-3">
+                                <div class="card-modern summary-card bg-light mb-3">
                                     <div class="card-body">
                                         <h6 class="card-title" style="color: {{ appsettings('hos_color', '#007bff') }};"><i class="fa fa-stethoscope"></i> Diagnosis & Notes</h6>
                                         <p class="card-text" id="modal_summary_diagnosis">
@@ -3258,7 +3258,7 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="card summary-card bg-light mb-3">
+                                <div class="card-modern summary-card bg-light mb-3">
                                     <div class="card-body">
                                         <h6 class="card-title" style="color: {{ appsettings('hos_color', '#007bff') }};"><i class="fa fa-flask"></i> Lab Requests</h6>
                                         <p class="card-text" id="modal_summary_labs">
@@ -3268,7 +3268,7 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="card summary-card bg-light mb-3">
+                                <div class="card-modern summary-card bg-light mb-3">
                                     <div class="card-body">
                                         <h6 class="card-title" style="color: {{ appsettings('hos_color', '#007bff') }};"><i class="fa fa-x-ray"></i> Imaging Requests</h6>
                                         <p class="card-text" id="modal_summary_imaging">
@@ -3278,7 +3278,7 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="card summary-card bg-light mb-3">
+                                <div class="card-modern summary-card bg-light mb-3">
                                     <div class="card-body">
                                         <h6 class="card-title" style="color: {{ appsettings('hos_color', '#007bff') }};"><i class="fa fa-pills"></i> Prescriptions</h6>
                                         <p class="card-text" id="modal_summary_prescriptions">

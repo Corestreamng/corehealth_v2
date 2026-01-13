@@ -4,7 +4,7 @@
 @section('subpage_name', 'List Requests')
 @section('content')
 
-    <div class="card mb-2">
+    <div class="card-modern mb-2">
         <div class="card-body">
             <form id="dateRangeForm">
                 <div class="row">
@@ -37,7 +37,7 @@
 
     <section class="content">
         <div class="col-12">
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-header">
                     <h4>Investigation Queue</h4>
                 </div>

@@ -28,7 +28,7 @@
                 <div class="row">
                     <!-- General Settings Card -->
                     <div class="col-lg-8">
-                        <div class="card mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <div class="card-modern mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                             <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef; border-radius: 12px 12px 0 0;">
                                 <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
                                     <i class="mdi mdi-cog-outline mr-2" style="color: var(--primary-color);"></i>
@@ -86,7 +86,7 @@
                         </div>
 
                         <!-- Service Categories Card -->
-                        <div class="card mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <div class="card-modern mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                             <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef;">
                                 <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
                                     <i class="mdi mdi-shape-outline mr-2" style="color: var(--primary-color);"></i>
@@ -144,7 +144,7 @@
                         </div>
 
                         <!-- Time Windows Card -->
-                        <div class="card mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <div class="card-modern mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                             <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef;">
                                 <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
                                     <i class="mdi mdi-clock-outline mr-2" style="color: var(--primary-color);"></i>
@@ -199,7 +199,7 @@
                         </div>
 
                         <!-- Integration Settings Card -->
-                        <div class="card mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <div class="card-modern mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                             <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef;">
                                 <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
                                     <i class="mdi mdi-api mr-2" style="color: var(--primary-color);"></i>
@@ -226,7 +226,7 @@
                         </div>
 
                         <!-- DHIS2 Settings Card -->
-                        <div class="card mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <div class="card-modern mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                             <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef;">
                                 <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
                                     <i class="mdi mdi-server-network mr-2" style="color: var(--primary-color);"></i>
@@ -349,7 +349,7 @@
                         </div>
 
                         <!-- CoreHMS SuperAdmin Card -->
-                        <div class="card mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <div class="card-modern mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                             <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef;">
                                 <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
                                     <i class="mdi mdi-account-supervisor mr-2" style="color: var(--primary-color);"></i>
@@ -387,7 +387,7 @@
                     <!-- Branding & System Settings -->
                     <div class="col-lg-4">
                         <!-- Branding Card -->
-                        <div class="card mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <div class="card-modern mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                             <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef; border-radius: 12px 12px 0 0;">
                                 <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
                                     <i class="mdi mdi-palette-outline mr-2" style="color: var(--primary-color);"></i>
@@ -437,7 +437,7 @@
                         </div>
 
                         <!-- System Settings Card -->
-                        <div class="card mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <div class="card-modern mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                             <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef;">
                                 <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
                                     <i class="mdi mdi-cogs mr-2" style="color: var(--primary-color);"></i>
@@ -472,7 +472,7 @@
                         </div>
 
                         <!-- Feature Flags Card -->
-                        <div class="card mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <div class="card-modern mb-4" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                             <div class="card-header bg-white" style="border-bottom: 1px solid #e9ecef;">
                                 <h5 class="mb-0" style="font-weight: 600; color: #1a1a1a;">
                                     <i class="mdi mdi-flag-variant mr-2" style="color: var(--primary-color);"></i>

@@ -7,7 +7,7 @@
         <div class="container">
 
             <!-- Date Filter Card -->
-            <div class="card mb-2">
+            <div class="card-modern mb-2">
                 <div class="card-body">
                     <form id="dateRangeForm">
                         <div class="row">
@@ -37,7 +37,7 @@
             </div>
 
             <!-- Services and Products Table -->
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-header">
                     <div class="row">
                         <div class="col-md-6">

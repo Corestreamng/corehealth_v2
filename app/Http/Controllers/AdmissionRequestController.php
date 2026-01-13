@@ -160,7 +160,7 @@ class AdmissionRequestController extends Controller
                 $hosColor = appsettings('hos_color', '#007bff');
                 $borderColor = $r->discharged ? '#6c757d' : $hosColor;
 
-                $str = '<div class="card mb-3" style="border-left: 4px solid ' . $borderColor . ';">';
+                $str = '<div class="card-modern mb-3" style="border-left: 4px solid ' . $borderColor . ';">';
                 $str .= '<div class="card-body p-3">';
 
                 // Header with status badge and date

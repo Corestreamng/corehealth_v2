@@ -269,7 +269,7 @@
         <!-- Financial Summary Cards Row -->
         <div class="row mb-3">
             <div class="col-md-3">
-                <div class="card text-white" style="background-color: #007bff;">
+                <div class="card-modern text-white" style="background-color: #007bff;">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -282,7 +282,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card text-white" style="background-color: #28a745;">
+                <div class="card-modern text-white" style="background-color: #28a745;">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -295,7 +295,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card text-white" style="background-color: #dc3545;">
+                <div class="card-modern text-white" style="background-color: #dc3545;">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -308,7 +308,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card text-white" style="background-color: #17a2b8;">
+                <div class="card-modern text-white" style="background-color: #17a2b8;">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -325,7 +325,7 @@
         <!-- Queue Stats Cards -->
         <div class="row mb-3">
             <div class="col-md-2">
-                <div class="card bg-warning text-white cursor-pointer preset-card" data-preset="">
+                <div class="card-modern bg-warning text-white cursor-pointer preset-card" data-preset="">
                     <div class="card-body py-2">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -338,7 +338,7 @@
                 </div>
             </div>
             <div class="col-md-2">
-                <div class="card bg-success text-white cursor-pointer preset-card" data-preset="">
+                <div class="card-modern bg-success text-white cursor-pointer preset-card" data-preset="">
                     <div class="card-body py-2">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -351,7 +351,7 @@
                 </div>
             </div>
             <div class="col-md-2">
-                <div class="card bg-info text-white cursor-pointer preset-card" data-preset="today_approved">
+                <div class="card-modern bg-info text-white cursor-pointer preset-card" data-preset="today_approved">
                     <div class="card-body py-2">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -364,7 +364,7 @@
                 </div>
             </div>
             <div class="col-md-2">
-                <div class="card bg-danger text-white cursor-pointer preset-card" data-preset="today_rejected">
+                <div class="card-modern bg-danger text-white cursor-pointer preset-card" data-preset="today_rejected">
                     <div class="card-body py-2">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -377,7 +377,7 @@
                 </div>
             </div>
             <div class="col-md-2">
-                <div class="card bg-dark text-white cursor-pointer preset-card" data-preset="overdue">
+                <div class="card-modern bg-dark text-white cursor-pointer preset-card" data-preset="overdue">
                     <div class="card-body py-2">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -390,7 +390,7 @@
                 </div>
             </div>
             <div class="col-md-2">
-                <div class="card bg-secondary text-white cursor-pointer preset-card" data-preset="high_value">
+                <div class="card-modern bg-secondary text-white cursor-pointer preset-card" data-preset="high_value">
                     <div class="card-body py-2">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -405,7 +405,7 @@
         </div>
 
         <!-- Filters Card -->
-        <div class="card">
+        <div class="card-modern">
             <div class="card-header bg-primary text-white">
                 <h3 class="card-title"><i class="fa fa-filter"></i> Filters & Search</h3>
                 <div class="card-tools">
@@ -474,7 +474,7 @@
         </div>
 
         <!-- Batch Actions Bar -->
-        <div class="card" id="batchActionsBar" style="display:none;">
+        <div class="card-modern" id="batchActionsBar" style="display:none;">
             <div class="card-body py-2 bg-light">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -496,7 +496,7 @@
         </div>
 
         <!-- Tabs and DataTable -->
-        <div class="card">
+        <div class="card-modern">
             <div class="card-header">
                 <ul class="nav nav-tabs card-header-tabs" id="workbenchTabs" role="tablist">
                     <li class="nav-item">
@@ -876,7 +876,7 @@
             <div class="modal-body">
                 <div class="row mb-3">
                     <div class="col-md-4">
-                        <div class="card bg-info text-white">
+                        <div class="card-modern bg-info text-white">
                             <div class="card-body text-center">
                                 <h5 class="mb-0">Total HMO Claims</h5>
                                 <h3 class="mb-0" id="history_total_claims">₦0</h3>
@@ -884,7 +884,7 @@
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="card bg-primary text-white">
+                        <div class="card-modern bg-primary text-white">
                             <div class="card-body text-center">
                                 <h5 class="mb-0">This Month Claims</h5>
                                 <h3 class="mb-0" id="history_month_claims">₦0</h3>
@@ -892,7 +892,7 @@
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="card bg-success text-white">
+                        <div class="card-modern bg-success text-white">
                             <div class="card-body text-center">
                                 <h5 class="mb-0">Total HMO Visits</h5>
                                 <h3 class="mb-0" id="history_total_visits">0</h3>

@@ -5,7 +5,7 @@
 
 @section('content')
     <section class="container">
-        <div class="card border-info mb-3">
+        <div class="card-modern border-info mb-3">
             <div class="card-header">
                 <h4>Specializations</h4>
                 <a href="{{ route('specializations.create') }}" class="btn btn-primary float-end">Create New</a>

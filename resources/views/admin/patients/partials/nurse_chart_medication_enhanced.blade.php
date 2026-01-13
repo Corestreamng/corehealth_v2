@@ -59,7 +59,7 @@
 
     <!-- Drug Selection and Controls -->
     <div class="mb-4">
-        <div class="card shadow-sm">
+        <div modern shadow-sm">
             <div class="card-body">
                 <div class="row g-3 align-items-end">
                     <div class="col-12">
@@ -141,7 +141,7 @@
 
     <!-- Calendar View -->
     <div id="medication-calendar" class="mb-4" style="display:none;">
-        <div class="card shadow-sm">
+        <div modern shadow-sm">
             <div class="card-header bg-light py-2">
                 <h6 id="calendar-title" class="card-title mb-0 text-center fw-bold"></h6>
             </div>

@@ -6,9 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <title>CoreHealth - Home : Hospital Automation</title>
-    <!-- google font -->
-    <link href="//fonts.googleapis.com/css2?family=Montserrat:wght@100;200;300;400;500;600;700;800;900&display=swap"
-        rel="stylesheet">
+    <!-- Montserrat font -->
+    <link href="{{ asset('assets/css/montserrat-font.css') }}" rel="stylesheet">
     <!-- Template CSS Style link -->
     <link rel="stylesheet" href="{{ asset('assets/css/style-starter.css') }}">
 </head>

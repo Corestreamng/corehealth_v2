@@ -9,7 +9,7 @@
         <div class="container">
 
             {{-- @include('admin.layouts.partials.infoBox') --}}
-            <div class="card">
+            <div modern">
                 <div class="card-header">
                     <h4 class="card-title">All {{ $pp->product_name }} Issue History</h4>
                 </div>

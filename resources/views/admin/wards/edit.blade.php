@@ -6,7 +6,7 @@
 @section('content')
 <section class="content">
     <div class="col-12">
-        <div class="card">
+        <div class="card-modern">
             <div class="card-header">
                 <h3 class="card-title">Edit Ward: {{ $ward->name }}</h3>
             </div>
@@ -14,36 +14,36 @@
                 <form method="POST" action="{{ route('wards.update', $ward->id) }}" class="form-horizontal">
                     @csrf
                     @method('PUT')
-                    
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="name" class="control-label">Ward Name <i class="text-danger">*</i></label>
-                                <input type="text" class="form-control @error('name') is-invalid @enderror" 
-                                    id="name" name="name" value="{{ old('name', $ward->name) }}" 
+                                <input type="text" class="form-control @error('name') is-invalid @enderror"
+                                    id="name" name="name" value="{{ old('name', $ward->name) }}"
                                     required autofocus placeholder="e.g., General Ward A">
                                 @error('name')
                                     <span class="invalid-feedback">{{ $message }}</span>
                                 @enderror
                             </div>
                         </div>
-                        
+
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="code" class="control-label">Ward Code</label>
-                                <input type="text" class="form-control @error('code') is-invalid @enderror" 
-                                    id="code" name="code" value="{{ old('code', $ward->code) }}" 
+                                <input type="text" class="form-control @error('code') is-invalid @enderror"
+                                    id="code" name="code" value="{{ old('code', $ward->code) }}"
                                     maxlength="20" placeholder="e.g., GW-A">
                                 @error('code')
                                     <span class="invalid-feedback">{{ $message }}</span>
                                 @enderror
                             </div>
                         </div>
-                        
+
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="type" class="control-label">Ward Type <i class="text-danger">*</i></label>
-                                <select class="form-control select2 @error('type') is-invalid @enderror" 
+                                <select class="form-control select2 @error('type') is-invalid @enderror"
                                     id="type" name="type" required>
                                     <option value="">-- Select Type --</option>
                                     @foreach($wardTypes as $value => $label)
@@ -58,13 +58,13 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="row">
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="capacity" class="control-label">Capacity</label>
-                                <input type="number" class="form-control @error('capacity') is-invalid @enderror" 
-                                    id="capacity" name="capacity" value="{{ old('capacity', $ward->capacity) }}" 
+                                <input type="number" class="form-control @error('capacity') is-invalid @enderror"
+                                    id="capacity" name="capacity" value="{{ old('capacity', $ward->capacity) }}"
                                     min="1" placeholder="Max beds">
                                 @error('capacity')
                                     <span class="invalid-feedback">{{ $message }}</span>
@@ -74,36 +74,36 @@
                                 </small>
                             </div>
                         </div>
-                        
+
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="building" class="control-label">Building</label>
-                                <input type="text" class="form-control @error('building') is-invalid @enderror" 
-                                    id="building" name="building" value="{{ old('building', $ward->building) }}" 
+                                <input type="text" class="form-control @error('building') is-invalid @enderror"
+                                    id="building" name="building" value="{{ old('building', $ward->building) }}"
                                     placeholder="e.g., Block A">
                                 @error('building')
                                     <span class="invalid-feedback">{{ $message }}</span>
                                 @enderror
                             </div>
                         </div>
-                        
+
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="floor" class="control-label">Floor</label>
-                                <input type="text" class="form-control @error('floor') is-invalid @enderror" 
-                                    id="floor" name="floor" value="{{ old('floor', $ward->floor) }}" 
+                                <input type="text" class="form-control @error('floor') is-invalid @enderror"
+                                    id="floor" name="floor" value="{{ old('floor', $ward->floor) }}"
                                     placeholder="e.g., Ground Floor">
                                 @error('floor')
                                     <span class="invalid-feedback">{{ $message }}</span>
                                 @enderror
                             </div>
                         </div>
-                        
+
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="nurse_station" class="control-label">Nurse Station</label>
-                                <input type="text" class="form-control @error('nurse_station') is-invalid @enderror" 
-                                    id="nurse_station" name="nurse_station" value="{{ old('nurse_station', $ward->nurse_station) }}" 
+                                <input type="text" class="form-control @error('nurse_station') is-invalid @enderror"
+                                    id="nurse_station" name="nurse_station" value="{{ old('nurse_station', $ward->nurse_station) }}"
                                     placeholder="e.g., NS-A1">
                                 @error('nurse_station')
                                     <span class="invalid-feedback">{{ $message }}</span>
@@ -111,25 +111,25 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="row">
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="contact_extension" class="control-label">Contact Extension</label>
-                                <input type="text" class="form-control @error('contact_extension') is-invalid @enderror" 
-                                    id="contact_extension" name="contact_extension" value="{{ old('contact_extension', $ward->contact_extension) }}" 
+                                <input type="text" class="form-control @error('contact_extension') is-invalid @enderror"
+                                    id="contact_extension" name="contact_extension" value="{{ old('contact_extension', $ward->contact_extension) }}"
                                     maxlength="20" placeholder="e.g., 101">
                                 @error('contact_extension')
                                     <span class="invalid-feedback">{{ $message }}</span>
                                 @enderror
                             </div>
                         </div>
-                        
+
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="nurse_patient_ratio" class="control-label">Nurse:Patient Ratio</label>
-                                <input type="number" step="0.1" class="form-control @error('nurse_patient_ratio') is-invalid @enderror" 
-                                    id="nurse_patient_ratio" name="nurse_patient_ratio" value="{{ old('nurse_patient_ratio', $ward->nurse_patient_ratio) }}" 
+                                <input type="number" step="0.1" class="form-control @error('nurse_patient_ratio') is-invalid @enderror"
+                                    id="nurse_patient_ratio" name="nurse_patient_ratio" value="{{ old('nurse_patient_ratio', $ward->nurse_patient_ratio) }}"
                                     min="0" max="1" placeholder="e.g., 0.25">
                                 @error('nurse_patient_ratio')
                                     <span class="invalid-feedback">{{ $message }}</span>
@@ -137,12 +137,12 @@
                                 <small class="form-text text-muted">0.5 = 1:2, 0.25 = 1:4</small>
                             </div>
                         </div>
-                        
+
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="control-label">Status</label>
                                 <div class="custom-control custom-switch mt-2">
-                                    <input type="checkbox" class="custom-control-input" id="is_active" 
+                                    <input type="checkbox" class="custom-control-input" id="is_active"
                                         name="is_active" value="1" {{ old('is_active', $ward->is_active) ? 'checked' : '' }}>
                                     <label class="custom-control-label" for="is_active">Active</label>
                                 </div>
@@ -150,9 +150,9 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Ward Statistics -->
-                    <div class="card bg-light mt-4">
+                    <div class="card-modern bg-light mt-4">
                         <div class="card-header">
                             <h5 class="mb-0"><i class="mdi mdi-chart-bar"></i> Ward Statistics</h5>
                         </div>
@@ -177,9 +177,9 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <hr>
-                    
+
                     <div class="row">
                         <div class="col-md-6">
                             <button type="submit" class="btn btn-success">

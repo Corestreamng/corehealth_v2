@@ -22,7 +22,7 @@
         <!-- Statistics Cards -->
         <div class="row mb-4">
             <div class="col-md-3">
-                <div class="card bg-primary text-white">
+                <div class="card-modern bg-primary text-white">
                     <div class="card-body">
                         <h6 class="card-title">Total Audits</h6>
                         <h3 id="stat-total">-</h3>
@@ -30,7 +30,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card bg-success text-white">
+                <div class="card-modern bg-success text-white">
                     <div class="card-body">
                         <h6 class="card-title">Today</h6>
                         <h3 id="stat-today">-</h3>
@@ -38,7 +38,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card bg-info text-white">
+                <div class="card-modern bg-info text-white">
                     <div class="card-body">
                         <h6 class="card-title">This Week</h6>
                         <h3 id="stat-week">-</h3>
@@ -46,7 +46,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card bg-warning text-white">
+                <div class="card-modern bg-warning text-white">
                     <div class="card-body">
                         <h6 class="card-title">This Month</h6>
                         <h3 id="stat-month">-</h3>
@@ -56,7 +56,7 @@
         </div>
 
         <!-- Filters Card -->
-        <div class="card mb-4">
+        <div class="card-modern mb-4">
             <div class="card-header bg-light">
                 <h5 class="mb-0">
                     <i class="fa fa-filter"></i> Filters
@@ -143,7 +143,7 @@
         </div>
 
         <!-- Data Table Card -->
-        <div class="card">
+        <div class="card-modern">
             <div class="card-header">
                 <h5 class="mb-0"><i class="fa fa-list"></i> Audit Logs</h5>
             </div>
@@ -230,7 +230,7 @@
                 <div class="row">
                     <div class="col-md-6">
                         <h6><i class="fa fa-backward text-warning"></i> Old Values</h6>
-                        <div class="card">
+                        <div class="card-modern">
                             <div class="card-body" style="max-height: 400px; overflow-y: auto;">
                                 <pre id="detail-old-values" style="font-size: 12px; margin: 0;"></pre>
                             </div>
@@ -238,7 +238,7 @@
                     </div>
                     <div class="col-md-6">
                         <h6><i class="fa fa-forward text-success"></i> New Values</h6>
-                        <div class="card">
+                        <div class="card-modern">
                             <div class="card-body" style="max-height: 400px; overflow-y: auto;">
                                 <pre id="detail-new-values" style="font-size: 12px; margin: 0;"></pre>
                             </div>
@@ -249,7 +249,7 @@
                 <div class="row mt-3" id="detail-user-agent-row">
                     <div class="col-12">
                         <h6><i class="fa fa-desktop"></i> User Agent</h6>
-                        <div class="card">
+                        <div class="card-modern">
                             <div class="card-body">
                                 <small id="detail-user-agent" style="word-break: break-all;"></small>
                             </div>

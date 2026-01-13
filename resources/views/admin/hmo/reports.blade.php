@@ -111,7 +111,7 @@
         <!-- Report Type Selection - Row 1 -->
         <div class="row mb-3">
             <div class="col-md-3">
-                <div class="card report-card active" data-report="claims">
+                <div class="card-modern report-card active" data-report="claims">
                     <div class="card-body text-center py-3">
                         <div class="icon-wrapper bg-primary text-white mx-auto mb-2">
                             <i class="mdi mdi-file-document-outline"></i>
@@ -122,7 +122,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card report-card" data-report="outstanding">
+                <div class="card-modern report-card" data-report="outstanding">
                     <div class="card-body text-center py-3">
                         <div class="icon-wrapper bg-danger text-white mx-auto mb-2">
                             <i class="mdi mdi-cash-multiple"></i>
@@ -133,7 +133,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card report-card" data-report="remittances">
+                <div class="card-modern report-card" data-report="remittances">
                     <div class="card-body text-center py-3">
                         <div class="icon-wrapper bg-success text-white mx-auto mb-2">
                             <i class="mdi mdi-bank-transfer-in"></i>
@@ -144,7 +144,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card report-card" data-report="monthly">
+                <div class="card-modern report-card" data-report="monthly">
                     <div class="card-body text-center py-3">
                         <div class="icon-wrapper bg-info text-white mx-auto mb-2">
                             <i class="mdi mdi-chart-bar"></i>
@@ -159,7 +159,7 @@
         <!-- Report Type Selection - Row 2 -->
         <div class="row mb-4">
             <div class="col-md-3">
-                <div class="card report-card" data-report="patient">
+                <div class="card-modern report-card" data-report="patient">
                     <div class="card-body text-center py-3">
                         <div class="icon-wrapper bg-purple text-white mx-auto mb-2" style="background: #6f42c1;">
                             <i class="mdi mdi-account-card-details"></i>
@@ -170,7 +170,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card report-card" data-report="utilization">
+                <div class="card-modern report-card" data-report="utilization">
                     <div class="card-body text-center py-3">
                         <div class="icon-wrapper bg-teal text-white mx-auto mb-2" style="background: #20c997;">
                             <i class="mdi mdi-chart-pie"></i>
@@ -181,7 +181,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card report-card" data-report="authcodes">
+                <div class="card-modern report-card" data-report="authcodes">
                     <div class="card-body text-center py-3">
                         <div class="icon-wrapper bg-orange text-white mx-auto mb-2" style="background: #fd7e14;">
                             <i class="mdi mdi-key-variant"></i>
@@ -200,7 +200,7 @@
         <div id="reportContent">
             <!-- Claims Report Section -->
             <div id="claimsReportSection" class="report-section">
-                <div class="card">
+                <div class="card-modern">
                     <div class="card-header">
                         <h5 class="card-title mb-0"><i class="mdi mdi-file-document-outline"></i> Claims Submission Report</h5>
                     </div>
@@ -345,7 +345,7 @@
 
             <!-- Outstanding Claims Section -->
             <div id="outstandingReportSection" class="report-section" style="display:none;">
-                <div class="card">
+                <div class="card-modern">
                     <div class="card-header">
                         <h5 class="card-title mb-0"><i class="mdi mdi-cash-multiple"></i> Outstanding Claims by HMO</h5>
                     </div>
@@ -353,7 +353,7 @@
                         <!-- Summary Cards -->
                         <div class="row mb-4" id="outstandingSummary">
                             <div class="col-md-3">
-                                <div class="card summary-card info">
+                                <div class="card-modern summary-card info">
                                     <div class="card-body py-3">
                                         <h6 class="text-muted mb-1">Total Claims</h6>
                                         <h4 class="mb-0" id="summaryTotalClaims">₦0.00</h4>
@@ -361,7 +361,7 @@
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <div class="card summary-card success">
+                                <div class="card-modern summary-card success">
                                     <div class="card-body py-3">
                                         <h6 class="text-muted mb-1">Total Paid</h6>
                                         <h4 class="mb-0 text-success" id="summaryTotalPaid">₦0.00</h4>
@@ -369,7 +369,7 @@
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <div class="card summary-card danger">
+                                <div class="card-modern summary-card danger">
                                     <div class="card-body py-3">
                                         <h6 class="text-muted mb-1">Outstanding</h6>
                                         <h4 class="mb-0 text-danger" id="summaryOutstanding">₦0.00</h4>
@@ -377,7 +377,7 @@
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <div class="card summary-card warning">
+                                <div class="card-modern summary-card warning">
                                     <div class="card-body py-3">
                                         <h6 class="text-muted mb-1">Over 90 Days</h6>
                                         <h4 class="mb-0 text-warning" id="summaryOverdue">₦0.00</h4>
@@ -421,7 +421,7 @@
             <div id="remittancesSection" class="report-section" style="display:none;">
                 <div class="row">
                     <div class="col-md-8">
-                        <div class="card">
+                        <div class="card-modern">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h5 class="card-title mb-0"><i class="mdi mdi-bank-transfer-in"></i> HMO Remittances</h5>
                                 <button class="btn btn-primary btn-sm" id="addRemittanceBtn">
@@ -471,7 +471,7 @@
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="card">
+                        <div class="card-modern">
                             <div class="card-header bg-primary text-white">
                                 <h5 class="card-title mb-0"><i class="fa fa-calculator"></i> Quick Summary</h5>
                             </div>
@@ -490,7 +490,7 @@
 
             <!-- Monthly Summary Section -->
             <div id="monthlySummarySection" class="report-section" style="display:none;">
-                <div class="card">
+                <div class="card-modern">
                     <div class="card-header">
                         <div class="row align-items-center">
                             <div class="col-md-6">
@@ -534,7 +534,7 @@
 
             <!-- Patient History Section -->
             <div id="patientHistorySection" class="report-section" style="display:none;">
-                <div class="card">
+                <div class="card-modern">
                     <div class="card-header">
                         <h5 class="card-title mb-0"><i class="mdi mdi-account-card-details"></i> Patient Claims History</h5>
                     </div>
@@ -567,7 +567,7 @@
 
             <!-- Service Utilization Section -->
             <div id="utilizationSection" class="report-section" style="display:none;">
-                <div class="card">
+                <div class="card-modern">
                     <div class="card-header">
                         <div class="row align-items-center">
                             <div class="col-md-6">
@@ -603,7 +603,7 @@
 
             <!-- Auth Code Tracker Section -->
             <div id="authCodesSection" class="report-section" style="display:none;">
-                <div class="card">
+                <div class="card-modern">
                     <div class="card-header">
                         <h5 class="card-title mb-0"><i class="mdi mdi-key-variant"></i> Authorization Code Tracker</h5>
                     </div>
@@ -653,7 +653,7 @@
                         <!-- Auth Codes Stats -->
                         <div class="row mb-3" id="authCodeStats">
                             <div class="col-md-3">
-                                <div class="card bg-success text-white">
+                                <div class="card-modern bg-success text-white">
                                     <div class="card-body py-2 text-center">
                                         <h5 class="mb-0" id="authWithCode">0</h5>
                                         <small>With Auth Code</small>
@@ -661,7 +661,7 @@
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <div class="card bg-warning text-dark">
+                                <div class="card-modern bg-warning text-dark">
                                     <div class="card-body py-2 text-center">
                                         <h5 class="mb-0" id="authWithoutCode">0</h5>
                                         <small>Without Auth Code</small>
@@ -669,7 +669,7 @@
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <div class="card bg-info text-white">
+                                <div class="card-modern bg-info text-white">
                                     <div class="card-body py-2 text-center">
                                         <h5 class="mb-0" id="authTotalClaims">₦0</h5>
                                         <small>Claims with Code</small>
@@ -677,7 +677,7 @@
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <div class="card bg-secondary text-white">
+                                <div class="card-modern bg-secondary text-white">
                                     <div class="card-body py-2 text-center">
                                         <h5 class="mb-0" id="authPendingClaims">₦0</h5>
                                         <small>Claims without Code</small>
@@ -858,8 +858,8 @@
 
 @section('scripts')
 <script src="{{ asset('/plugins/dataT/datatables.js') }}"></script>
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<link href="{{ asset('assets/css/select2.min.css') }}" rel="stylesheet" />
+<script src="{{ asset('assets/js/select2.min.js') }}"></script>
 <script>
 $(function() {
     let claimsTable;
@@ -1011,7 +1011,7 @@ $(function() {
             let html = `
                 <div class="row mb-4">
                     <div class="col-md-3">
-                        <div class="card bg-primary text-white">
+                        <div class="card-modern bg-primary text-white">
                             <div class="card-body text-center">
                                 <h6>Total Claims</h6>
                                 <h3>₦${response.summary.total_claims}</h3>
@@ -1020,7 +1020,7 @@ $(function() {
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card bg-success text-white">
+                        <div class="card-modern bg-success text-white">
                             <div class="card-body text-center">
                                 <h6>Approved</h6>
                                 <h3>₦${response.summary.approved_total}</h3>
@@ -1029,7 +1029,7 @@ $(function() {
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card bg-danger text-white">
+                        <div class="card-modern bg-danger text-white">
                             <div class="card-body text-center">
                                 <h6>Rejected</h6>
                                 <h3>₦${response.summary.rejected_total}</h3>
@@ -1038,7 +1038,7 @@ $(function() {
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card bg-info text-white">
+                        <div class="card-modern bg-info text-white">
                             <div class="card-body text-center">
                                 <h6>Remittances</h6>
                                 <h3>₦${response.summary.total_remittances}</h3>
@@ -1605,7 +1605,7 @@ $(function() {
             let html = `
                 <div class="row mb-4">
                     <div class="col-md-6">
-                        <div class="card border-left-primary">
+                        <div class="card-modern border-left-primary">
                             <div class="card-body">
                                 <h6 class="text-muted mb-2">Patient Details</h6>
                                 <p class="mb-1"><strong>Name:</strong> ${response.patient.name}</p>
@@ -1618,7 +1618,7 @@ $(function() {
                     <div class="col-md-6">
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="card bg-success text-white">
+                                <div class="card-modern bg-success text-white">
                                     <div class="card-body text-center py-3">
                                         <h4 class="mb-0">₦${response.summary.total_claims}</h4>
                                         <small>Total Claims (Approved)</small>
@@ -1626,7 +1626,7 @@ $(function() {
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="card bg-info text-white">
+                                <div class="card-modern bg-info text-white">
                                     <div class="card-body text-center py-3">
                                         <h4 class="mb-0">₦${response.summary.total_patient_paid}</h4>
                                         <small>Patient Paid</small>
@@ -1809,7 +1809,7 @@ $(function() {
             let html = `
                 <div class="row mb-4">
                     <div class="col-md-3">
-                        <div class="card bg-primary text-white">
+                        <div class="card-modern bg-primary text-white">
                             <div class="card-body text-center py-3">
                                 <h4 class="mb-0">₦${formatNumber(response.summary.total_claims)}</h4>
                                 <small>Total HMO Claims</small>
@@ -1817,7 +1817,7 @@ $(function() {
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card bg-info text-white">
+                        <div class="card-modern bg-info text-white">
                             <div class="card-body text-center py-3">
                                 <h4 class="mb-0">₦${formatNumber(response.summary.total_services)}</h4>
                                 <small>Services Revenue</small>
@@ -1825,7 +1825,7 @@ $(function() {
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card bg-success text-white">
+                        <div class="card-modern bg-success text-white">
                             <div class="card-body text-center py-3">
                                 <h4 class="mb-0">₦${formatNumber(response.summary.total_products)}</h4>
                                 <small>Products Revenue</small>
@@ -1833,7 +1833,7 @@ $(function() {
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card bg-secondary text-white">
+                        <div class="card-modern bg-secondary text-white">
                             <div class="card-body text-center py-3">
                                 <h4 class="mb-0">${response.summary.total_count}</h4>
                                 <small>Total Transactions</small>
@@ -1844,7 +1844,7 @@ $(function() {
 
                 <div class="row">
                     <div class="col-md-6">
-                        <div class="card">
+                        <div class="card-modern">
                             <div class="card-header bg-info text-white">
                                 <h6 class="mb-0"><i class="fa fa-star"></i> Top 10 Services</h6>
                             </div>
@@ -1864,7 +1864,7 @@ $(function() {
 
             html += `</tbody></table></div></div></div>
                     <div class="col-md-6">
-                        <div class="card">
+                        <div class="card-modern">
                             <div class="card-header bg-success text-white">
                                 <h6 class="mb-0"><i class="fa fa-star"></i> Top 10 Products</h6>
                             </div>
@@ -1886,7 +1886,7 @@ $(function() {
 
                 <div class="row mt-4">
                     <div class="col-md-6">
-                        <div class="card">
+                        <div class="card-modern">
                             <div class="card-header"><h6 class="mb-0">Service Categories Breakdown</h6></div>
                             <div class="card-body p-0">
                                 <table class="table table-sm mb-0">
@@ -1899,7 +1899,7 @@ $(function() {
 
             html += `</tbody></table></div></div></div>
                     <div class="col-md-6">
-                        <div class="card">
+                        <div class="card-modern">
                             <div class="card-header"><h6 class="mb-0">Product Categories Breakdown</h6></div>
                             <div class="card-body p-0">
                                 <table class="table table-sm mb-0">

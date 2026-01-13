@@ -7,7 +7,7 @@
 <section class="content">
     <div class="container-fluid">
         <!-- Filters Card -->
-        <div class="card">
+        <div class="card-modern">
             <div class="card-header bg-primary text-white">
                 <h3 class="card-title"><i class="fa fa-filter"></i> Filters</h3>
             </div>
@@ -58,7 +58,7 @@
         </div>
 
         <!-- Actions Card -->
-        <div class="card">
+        <div class="card-modern">
             <div class="card-header">
                 <button class="btn btn-success" id="addTariffBtn">
                     <i class="fa fa-plus"></i> Add New Tariff

@@ -1695,6 +1695,146 @@ rgba(255, 255, 255, 0.7) !important;
                 /* Restore the opacity */
             }
         }
+
+        /* Modern Card Styles - Complete Standalone Implementation */
+        .card-modern {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            word-wrap: break-word;
+            background: #fff;
+            background-clip: border-box;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            transition: all 0.2s ease;
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+
+        .card-modern:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-modern > .card-header {
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 0.875rem 1.25rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 0;
+        }
+
+        .card-modern > .card-header:first-child {
+            border-radius: 11px 11px 0 0;
+        }
+
+        .card-modern > .card-body {
+            flex: 1 1 auto;
+            padding: 1.25rem;
+            color: #374151;
+        }
+
+        .card-modern > .card-footer {
+            background: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+            padding: 0.75rem 1.25rem;
+        }
+
+        .card-modern > .card-footer:last-child {
+            border-radius: 0 0 11px 11px;
+        }
+
+        /* Table inside card-modern */
+        .card-modern .table {
+            margin-bottom: 0;
+        }
+
+        .card-modern .table-responsive {
+            margin: 0;
+            border-radius: 0;
+        }
+
+        /* Ensure cards don't go fullscreen on mobile */
+        @media (max-width: 768px) {
+            .card-modern {
+                margin-left: 0;
+                margin-right: 0;
+                border-radius: 8px;
+                width: 100%;
+                max-width: 100%;
+            }
+
+            .card-modern > .card-header:first-child {
+                border-radius: 7px 7px 0 0;
+            }
+
+            .card-modern > .card-footer:last-child {
+                border-radius: 0 0 7px 7px;
+            }
+
+            .card-modern > .card-body {
+                padding: 1rem;
+            }
+
+            .card-modern > .card-header {
+                padding: 0.75rem 1rem;
+            }
+        }
+
+        /* Stat Card Modern Variant */
+        .stat-card-modern {
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            padding: 1.25rem;
+            transition: all 0.2s ease;
+        }
+
+        .stat-card-modern:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .stat-card-modern .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .stat-card-modern .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1f2937;
+            line-height: 1.2;
+        }
+
+        .stat-card-modern .stat-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+
+        @media (max-width: 768px) {
+            .stat-card-modern {
+                padding: 1rem;
+            }
+
+            .stat-card-modern .stat-value {
+                font-size: 1.5rem;
+            }
+
+            .stat-card-modern .stat-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 1.25rem;
+            }
+        }
     </style>
     <script>
         window.onload = function() {

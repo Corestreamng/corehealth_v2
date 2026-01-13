@@ -7,7 +7,7 @@
     <section class="content">
 
         <!-- Date Range Filter Card -->
-        <div class="card mb-2">
+        <div class="card-modern mb-2">
             <div class="card-body">
                 <form id="dateRangeForm">
                     <div class="row">
@@ -40,7 +40,7 @@
 
         <!-- DataTable -->
         <div class="col-12">
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-sm table-bordered table-striped" style="width: 100%" id="vitals_history">

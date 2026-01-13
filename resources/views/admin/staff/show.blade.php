@@ -5,7 +5,7 @@
 @section('content')
 
     <div class="col-12">
-        <div class="card">
+        <div modern">
             <div class="card-header">
                 <h3 class="card-title">View User</h3>
             </div>

@@ -6,7 +6,7 @@
 @section('content')
 <section class="content">
     <div class="col-12">
-        <div class="card">
+        <div class="card-modern">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h3 class="card-title">Admission & Discharge Checklist Templates</h3>
                 <a href="{{ route('checklist-templates.create') }}" class="btn btn-primary">
@@ -15,11 +15,11 @@
             </div>
             <div class="card-body">
                 <div class="alert alert-info">
-                    <i class="mdi mdi-information"></i> 
-                    <strong>About Checklists:</strong> 
+                    <i class="mdi mdi-information"></i>
+                    <strong>About Checklists:</strong>
                     These templates define the checklist items that nurses must complete before a patient can be admitted to a bed or discharged from the hospital.
                 </div>
-                
+
                 <ul class="nav nav-tabs mb-3" id="templateTabs" role="tablist">
                     <li class="nav-item">
                         <a class="nav-link active" data-toggle="tab" href="#all-templates">All Templates</a>
@@ -35,7 +35,7 @@
                         </a>
                     </li>
                 </ul>
-                
+
                 <div class="tab-content">
                     <div class="tab-pane fade show active" id="all-templates">
                         <div class="table-responsive">
@@ -72,7 +72,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h4 class="modal-title">Confirm Delete</h4>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body">
                 <h5 class="text-center">Are you sure you want to delete this template?</h5>
@@ -83,7 +83,7 @@
                 <button type="button" class="btn btn-danger delete-confirm">
                     <i class="fa fa-trash"></i> Delete
                 </button>
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">
                     <i class="fa fa-times"></i> Cancel
                 </button>
             </div>

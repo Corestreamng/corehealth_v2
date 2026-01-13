@@ -3,7 +3,7 @@
 @section('main-content')
 
 	<div id="content-wrapper">
-		
+
 		<div class="content-header">
 		  <div class="container-fluid">
 
@@ -21,15 +21,15 @@
 		      </div>
 
 		    </div>
-		    
+
 		  </div>
 		</div>
 
 		<div class="container">
 
 		    {{-- @include('admin.layouts.partials.infoBox') --}}
-		    
-		    <div class="card">
+
+		    <div modern">
 	            <div class="card-header">
 	              <h3 class="card-title">Data Table With Full Features</h3>
 	            </div>
@@ -59,7 +59,7 @@
 	                  <th>@if($datas->has_have == 1)<a class="btn btn-success btn-xs" data-toggle="tooltip" data-placement="top" title="edit" href=""> Yes</a>
 	                  @else<a class="btn btn-danger btn-xs" data-toggle="tooltip" data-placement="top" title="edit" href=""> No</a>
 	                  @endif </th>
-	              
+
 	                  <th>@if($datas->has_piece == 1)<a class="btn btn-success btn-xs" data-toggle="tooltip" data-placement="top" title="edit" href=""> Yes</a>
 	                  @else<a class="btn btn-danger btn-xs" data-toggle="tooltip" data-placement="top" title="edit" href=""> No</a>
 	                  @endif </th>
@@ -70,19 +70,19 @@
 	                  @endif </th>
 
                       @if($datas->price_assign == 1)
-	                  <th><a class="btn btn-primary btn-xs" data-toggle="tooltip" data-placement="top" title="edit" href="{{ route('prices.edit',$datas->id) }}"><i class="fa fa-pencil"></i> Ajust Price</a> 
+	                  <th><a class="btn btn-primary btn-xs" data-toggle="tooltip" data-placement="top" title="edit" href="{{ route('prices.edit',$datas->id) }}"><i class="fa fa-pencil"></i> Ajust Price</a>
                       </th>
-                      @else <th> <a class="btn btn-warning btn-xs " data-toggle="tooltip" data-placement="top" title="edit" d href="{{ route('prices.show',$datas->id) }}"><i class="fa fa-plus"></i> Add Price</a> 
+                      @else <th> <a class="btn btn-warning btn-xs " data-toggle="tooltip" data-placement="top" title="edit" d href="{{ route('prices.show',$datas->id) }}"><i class="fa fa-plus"></i> Add Price</a>
                       </th>
                       @endif
 
-                      <th><a class="btn btn-primary btn-xs" data-toggle="tooltip" data-placement="top" title="edit" href="{{ route('products.edit',$datas->id) }}"><i class="fa fa-pencil"></i> Edit</a> 
+                      <th><a class="btn btn-primary btn-xs" data-toggle="tooltip" data-placement="top" title="edit" href="{{ route('products.edit',$datas->id) }}"><i class="fa fa-pencil"></i> Edit</a>
                       </th>
 	                </tr>
 	                    <?php  $sn ++ ; ?>
 	                   @endforeach
 	                </tbody>
-	               
+
 	              </table>
 	            </div>
 	            <!-- /.card-body -->
@@ -118,5 +118,5 @@
                     });
                 });
             }) ( jQuery );
-        
+
     </script> --}}

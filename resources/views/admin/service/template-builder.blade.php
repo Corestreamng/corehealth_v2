@@ -71,7 +71,7 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-12">
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-header bg-primary text-white">
                     <div class="row">
                         <div class="col-md-8">
@@ -156,7 +156,7 @@
 @endsection
 
 @section('scripts')
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script src="{{ asset('assets/js/sortable.min.js') }}"></script>
 
 <script>
 let parameterCount = 0;

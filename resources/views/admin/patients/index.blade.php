@@ -6,7 +6,7 @@
     <div id="content-wrapper">
         <div class="container">
 
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-header">
                     <h3 class="card-title">{{ __('Patients ') }}</h3>
                 </div>

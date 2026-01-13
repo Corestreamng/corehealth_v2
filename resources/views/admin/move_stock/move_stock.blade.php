@@ -7,7 +7,7 @@
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-md-12">
-                    <div class="card">
+                    <div modern">
                         <div class="card-header">{{ __('Product Stock') }}</div>
 
                         <div class="card-body">
@@ -24,10 +24,10 @@
                                             <th> Quantity </th>
                                             <th> New Store</th>
                                             <th> Quantity to Transfer</th>
-    
+
                                         </tr>
                                     </thead>
-    
+
                                     <tr>
                                         <td>
                                             <input type="text" name="products" id="products" class=" form-control"
@@ -50,7 +50,7 @@
                                                 class=" form-control"
                                                 value="{{ old('current_quntity') ? old('current_quntity') : $pc->current_quantity }}"
                                                 readonly="1" />
-    
+
                                         </td>
                                         <td>
                                             {!! Form::select('stores ', $stores, null, [
@@ -59,16 +59,16 @@
                                                 'class' => 'select2 show-tick form-control',
                                                 'data-live-search' => 'true',
                                             ]) !!}
-    
+
                                         </td>
-    
+
                                         <td>
-    
+
                                             <input type="number" name="quantity" id="quantity" placeholder=" Quantity"
                                                 class=" form-control" value="{{ old('quantity') }}" required="1" />
                                         </td>
-    
-    
+
+
                                     </tr>
                                 </table>
                             </div>

@@ -7,7 +7,7 @@
     <section class="content">
 
         <div class="col-12">
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title mb-0">Bed Management</h3>
                     <div>
