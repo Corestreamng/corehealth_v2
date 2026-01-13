@@ -55,6 +55,26 @@
                 <div class="profile-card-header">
                     <i class="mdi mdi-shield-account mr-2"></i>Access Control
                 </div>
+                @php
+                    $staffProfile = $user->staff_profile;
+                @endphp
+                @if($staffProfile && ($staffProfile->is_unit_head || $staffProfile->is_dept_head))
+                <div class="mb-3">
+                    <div class="info-label">Leadership Role</div>
+                    <div class="d-flex flex-wrap gap-2" style="gap: 0.5rem;">
+                        @if($staffProfile->is_dept_head)
+                            <span class="badge" style="background: linear-gradient(135deg, #f6ad55, #ed8936); color: white; padding: 0.5rem 0.75rem; border-radius: 8px; font-size: 0.85rem;">
+                                <i class="mdi mdi-shield-crown mr-1"></i> Department Head
+                            </span>
+                        @endif
+                        @if($staffProfile->is_unit_head)
+                            <span class="badge" style="background: linear-gradient(135deg, #63b3ed, #4299e1); color: white; padding: 0.5rem 0.75rem; border-radius: 8px; font-size: 0.85rem;">
+                                <i class="mdi mdi-shield-account mr-1"></i> Unit Head
+                            </span>
+                        @endif
+                    </div>
+                </div>
+                @endif
                 <div class="mb-3">
                     <div class="info-label">Roles Assigned</div>
                     <div>

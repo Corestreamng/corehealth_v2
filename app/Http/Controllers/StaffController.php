@@ -42,7 +42,7 @@ class StaffController extends Controller
 
         $user = User::with(['category' => function ($q) {
             $q->addSelect(['id', 'name']);
-        }])->where('status', '>', 0)->orderBy('id', 'ASC')->where('is_admin', '!=', 19)->get();
+        }, 'staff_profile'])->where('status', '>', 0)->orderBy('id', 'ASC')->where('is_admin', '!=', 19)->get();
         // dd($user);
         // }else{
 
@@ -60,6 +60,18 @@ class StaffController extends Controller
                 $user_category_name = $user->category->name;
 
                 return $user_category_name;
+            })
+            ->addColumn('leadership_role', function ($user) {
+                $badges = [];
+                if ($user->staff_profile) {
+                    if ($user->staff_profile->is_dept_head) {
+                        $badges[] = '<span class="badge badge-warning" title="Department Head"><i class="mdi mdi-shield-crown"></i> Dept Head</span>';
+                    }
+                    if ($user->staff_profile->is_unit_head) {
+                        $badges[] = '<span class="badge badge-info" title="Unit Head"><i class="mdi mdi-shield-account"></i> Unit Head</span>';
+                    }
+                }
+                return count($badges) > 0 ? implode(' ', $badges) : '<span class="text-muted">-</span>';
             })
             ->addColumn('filename', function ($user) {
                 return view('components.user-avatar', [
@@ -103,7 +115,7 @@ class StaffController extends Controller
                 //     return $label;
                 // }
             })
-            ->rawColumns(['filename', 'view', 'edit', 'delete'])
+            ->rawColumns(['filename', 'leadership_role', 'view', 'edit', 'delete'])
             ->make(true);
 
         // }
@@ -494,6 +506,8 @@ class StaffController extends Controller
                 $staff->home_address = $request->address ?? null;
                 $staff->phone_number = $request->phone_number ?? null;
                 $staff->consultation_fee = $request->consultation_fee ?? 0;
+                $staff->is_unit_head = $request->has('is_unit_head') ? true : false;
+                $staff->is_dept_head = $request->has('is_dept_head') ? true : false;
 
                 if ($staff->save()) {
                     if (appsettings('goonline', 0) == 1) {
@@ -746,6 +760,8 @@ class StaffController extends Controller
                 $staff->home_address = $request->address ?? null;
                 $staff->phone_number = $request->phone_number ?? null;
                 $staff->consultation_fee = $request->consultation_fee ?? 0;
+                $staff->is_unit_head = $request->has('is_unit_head') ? true : false;
+                $staff->is_dept_head = $request->has('is_dept_head') ? true : false;
 
                 if ($staff->update()) {
                     // Send User an email with set password link

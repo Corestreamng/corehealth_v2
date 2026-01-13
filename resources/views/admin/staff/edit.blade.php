@@ -212,6 +212,33 @@
                                             {!! Form::select('permissions[]', $permissions, $userPermission, ['class' => 'form-control form-control-modern select2', 'multiple', 'style' => 'width: 100%;', 'data-placeholder' => 'Select permissions...']) !!}
                                         </div>
                                     </div>
+
+                                    <hr class="my-3">
+
+                                    <!-- Leadership Roles -->
+                                    <div class="row g-3">
+                                        <div class="col-12">
+                                            <label class="form-label-modern d-block mb-2">
+                                                <i class="mdi mdi-shield-crown-outline text-primary"></i> Leadership Roles
+                                            </label>
+                                            <div class="d-flex flex-wrap gap-4" style="gap: 1.5rem;">
+                                                <div class="custom-control custom-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="is_unit_head" name="is_unit_head" value="1" {{ ($user->staff_profile->is_unit_head ?? false) ? 'checked' : '' }}>
+                                                    <label class="custom-control-label" for="is_unit_head">
+                                                        <span class="font-weight-bold text-info">Unit Head</span>
+                                                        <small class="d-block text-muted">Leads a specific unit within a department</small>
+                                                    </label>
+                                                </div>
+                                                <div class="custom-control custom-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="is_dept_head" name="is_dept_head" value="1" {{ ($user->staff_profile->is_dept_head ?? false) ? 'checked' : '' }}>
+                                                    <label class="custom-control-label" for="is_dept_head">
+                                                        <span class="font-weight-bold text-warning">Department Head</span>
+                                                        <small class="d-block text-muted">Leads an entire department</small>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

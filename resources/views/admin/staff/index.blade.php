@@ -29,6 +29,7 @@
                                     <th>Surname</th>
                                     <th>Firstname</th>
                                     <th>Category</th>
+                                    <th>Role</th>
                                     <!-- <th>Email</th> -->
                                     <th>View</th>
                                     <th>Edit</th>
@@ -110,6 +111,9 @@
                     },
                     {
                         "data": "is_admin"
+                    },
+                    {
+                        "data": "leadership_role"
                     },
                     // { "data": "email" },
                     {

@@ -163,11 +163,9 @@ class AppServiceProvider extends ServiceProvider
 
             // Find or create the HMO Executives group conversation
             $conversation = ChatConversation::firstOrCreate(
-                ['name' => 'HMO Executives'],
+                ['title' => 'HMO Executives'],
                 [
-                    'type' => 'group',
-                    'created_at' => now(),
-                    'updated_at' => now()
+                    'is_group' => true,
                 ]
             );
 
