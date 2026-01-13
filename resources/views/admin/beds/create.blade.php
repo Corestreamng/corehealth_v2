@@ -8,7 +8,7 @@
     <section class="content">
 
         <div class="col-12">
-            <div class="card">
+            <div modern">
                 <div class="card-header">
                     <h3 class="card-title">Create Bed</h3>
                 </div>
@@ -23,7 +23,7 @@
                                 value="{{ old('name') }}" required autofocus placeholder="Example: Private bed 1">
                         </div>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="ward_id" class="control-label">Ward <i class="text-danger">*</i></label>
                         <div class="">
@@ -40,7 +40,7 @@
                             @endif
                         </div>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="ward" class="control-label">Ward Name (Custom) @if(!isset($wards) || $wards->count() == 0)<i class="text-danger">*</i>@endif</label>
                         <div class="">
@@ -49,7 +49,7 @@
                             <small class="form-text text-muted">Use this only if the ward is not in the list above</small>
                         </div>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="unit" class=" control-label">Unit(Optional)</label>
                         <div class="">
@@ -57,7 +57,7 @@
                                 value="{{ old('unit') }}" placeholder="Block 2">
                         </div>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="bed_status" class="control-label">Bed Status</label>
                         <div class="">
@@ -68,7 +68,7 @@
                             </select>
                         </div>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="price" class="control-label">Price <i class = "text-danger">*</i></label>
                         <div>
@@ -113,7 +113,7 @@
             $(".select2").select2({
                 width: '100%'
             });
-            
+
             // When ward is selected from dropdown, update the ward text field
             $('#ward_id').on('change', function() {
                 var selectedText = $(this).find('option:selected').text();

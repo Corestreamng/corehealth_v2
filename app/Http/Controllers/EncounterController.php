@@ -363,7 +363,7 @@ class EncounterController extends Controller
         // dd($pc);
         return DataTables::of($his)
             ->addColumn('info', function ($his) {
-                $str = '<div class="card mb-2" style="border-left: 4px solid #0d6efd;">';
+                $str = '<div class="card-modern mb-2" style="border-left: 4px solid #0d6efd;">';
                 $str .= '<div class="card-body p-3">';
 
                 // Header with service name and status
@@ -564,7 +564,7 @@ class EncounterController extends Controller
 
         return DataTables::of($his)
             ->addColumn('info', function ($his) {
-                $str = '<div class="card mb-2" style="border-left: 4px solid #0d6efd;">';
+                $str = '<div class="card-modern mb-2" style="border-left: 4px solid #0d6efd;">';
                 $str .= '<div class="card-body p-3">';
 
                 // Header with service name and status
@@ -788,7 +788,7 @@ class EncounterController extends Controller
         // dd($pc);
         return DataTables::of($his)
             ->addColumn('info', function ($his) {
-                $str = '<div class="card mb-2" style="border-left: 4px solid #0d6efd;">';
+                $str = '<div class="card-modern mb-2" style="border-left: 4px solid #0d6efd;">';
                 $str .= '<div class="card-body p-3">';
 
                 // Header with product name and status
@@ -966,7 +966,7 @@ class EncounterController extends Controller
 
         return DataTables::of($hist)
             ->addColumn('info', function ($hist) {
-                $str = '<div class="card mb-2" style="border-left: 4px solid #0d6efd;">';
+                $str = '<div class="card-modern mb-2" style="border-left: 4px solid #0d6efd;">';
                 $str .= '<div class="card-body p-3">';
 
                 // Header with doctor name and status

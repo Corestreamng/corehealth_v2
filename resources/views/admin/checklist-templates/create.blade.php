@@ -40,31 +40,31 @@
 @section('content')
 <section class="content">
     <div class="col-12">
-        <div class="card">
+        <div modern">
             <div class="card-header">
                 <h3 class="card-title">Create New Checklist Template</h3>
             </div>
             <div class="card-body">
                 <form method="POST" action="{{ route('checklist-templates.store') }}" id="templateForm">
                     @csrf
-                    
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="name" class="control-label">Template Name <i class="text-danger">*</i></label>
-                                <input type="text" class="form-control @error('name') is-invalid @enderror" 
-                                    id="name" name="name" value="{{ old('name') }}" 
+                                <input type="text" class="form-control @error('name') is-invalid @enderror"
+                                    id="name" name="name" value="{{ old('name') }}"
                                     required placeholder="e.g., Standard Admission Checklist">
                                 @error('name')
                                     <span class="invalid-feedback">{{ $message }}</span>
                                 @enderror
                             </div>
                         </div>
-                        
+
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="type" class="control-label">Template Type <i class="text-danger">*</i></label>
-                                <select class="form-control @error('type') is-invalid @enderror" 
+                                <select class="form-control @error('type') is-invalid @enderror"
                                     id="type" name="type" required>
                                     <option value="">-- Select Type --</option>
                                     <option value="admission" {{ old('type') == 'admission' ? 'selected' : '' }}>
@@ -80,40 +80,40 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="description" class="control-label">Description</label>
-                        <textarea class="form-control @error('description') is-invalid @enderror" 
-                            id="description" name="description" rows="2" 
+                        <textarea class="form-control @error('description') is-invalid @enderror"
+                            id="description" name="description" rows="2"
                             placeholder="Brief description of when this checklist should be used">{{ old('description') }}</textarea>
                         @error('description')
                             <span class="invalid-feedback">{{ $message }}</span>
                         @enderror
                     </div>
-                    
+
                     <div class="form-group">
                         <div class="custom-control custom-switch">
-                            <input type="checkbox" class="custom-control-input" id="is_active" 
+                            <input type="checkbox" class="custom-control-input" id="is_active"
                                 name="is_active" value="1" {{ old('is_active', true) ? 'checked' : '' }}>
                             <label class="custom-control-label" for="is_active">Active</label>
                         </div>
                     </div>
-                    
+
                     <hr>
-                    
+
                     <h5><i class="mdi mdi-format-list-checks"></i> Checklist Items</h5>
                     <p class="text-muted">Add the items that nurses must verify during the checklist process.</p>
-                    
+
                     <div class="checklist-items-container" id="checklistItems">
                         <!-- Items will be added here -->
                     </div>
-                    
+
                     <button type="button" class="btn btn-outline-primary mt-3" id="addItemBtn">
                         <i class="fa fa-plus"></i> Add Checklist Item
                     </button>
-                    
+
                     <hr>
-                    
+
                     <div class="row">
                         <div class="col-md-6">
                             <button type="submit" class="btn btn-success">
@@ -137,12 +137,12 @@
 <script>
 $(document).ready(function() {
     var itemIndex = 0;
-    
+
     // Add item button
     $('#addItemBtn').click(function() {
         addItemRow();
     });
-    
+
     function addItemRow(name = '', description = '', isRequired = true) {
         var html = `
             <div class="checklist-item-row" data-index="${itemIndex}">
@@ -151,19 +151,19 @@ $(document).ready(function() {
                         <i class="mdi mdi-drag drag-handle"></i>
                     </div>
                     <div class="col-md-4">
-                        <input type="text" class="form-control form-control-sm" 
+                        <input type="text" class="form-control form-control-sm"
                             name="items[${itemIndex}][name]" value="${name}"
                             placeholder="Item name (e.g., Verify Patient ID)" required>
                     </div>
                     <div class="col-md-4">
-                        <input type="text" class="form-control form-control-sm" 
+                        <input type="text" class="form-control form-control-sm"
                             name="items[${itemIndex}][description]" value="${description}"
                             placeholder="Description (optional)">
                     </div>
                     <div class="col-md-2">
                         <div class="custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input" 
-                                id="required_${itemIndex}" name="items[${itemIndex}][is_required]" 
+                            <input type="checkbox" class="custom-control-input"
+                                id="required_${itemIndex}" name="items[${itemIndex}][is_required]"
                                 value="1" ${isRequired ? 'checked' : ''}>
                             <label class="custom-control-label" for="required_${itemIndex}">Required</label>
                         </div>
@@ -176,16 +176,16 @@ $(document).ready(function() {
                 </div>
             </div>
         `;
-        
+
         $('#checklistItems').append(html);
         itemIndex++;
     }
-    
+
     // Remove item
     $(document).on('click', '.btn-remove-item', function() {
         $(this).closest('.checklist-item-row').remove();
     });
-    
+
     // Add default items based on type selection
     $('#type').change(function() {
         var type = $(this).val();
@@ -197,7 +197,7 @@ $(document).ready(function() {
             }
         }
     });
-    
+
     function addDefaultAdmissionItems() {
         var items = [
             { name: 'Verify Patient Identity', description: 'Check patient ID, wristband, and photo ID', required: true },
@@ -207,12 +207,12 @@ $(document).ready(function() {
             { name: 'Patient Belongings Documented', description: 'List and secure patient belongings', required: false },
             { name: 'Orient Patient to Ward', description: 'Explain call bell, visiting hours, meals', required: false },
         ];
-        
+
         items.forEach(function(item) {
             addItemRow(item.name, item.description, item.required);
         });
     }
-    
+
     function addDefaultDischargeItems() {
         var items = [
             { name: 'Discharge Orders Reviewed', description: 'Verify doctor has signed discharge orders', required: true },
@@ -223,12 +223,12 @@ $(document).ready(function() {
             { name: 'Final Vital Signs', description: 'Record final vital signs before discharge', required: false },
             { name: 'Transport Arranged', description: 'Confirm patient has transportation home', required: false },
         ];
-        
+
         items.forEach(function(item) {
             addItemRow(item.name, item.description, item.required);
         });
     }
-    
+
     // Initialize with one empty item
     addItemRow();
 });

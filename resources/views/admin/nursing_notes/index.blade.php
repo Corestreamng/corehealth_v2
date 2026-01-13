@@ -3,7 +3,7 @@
 @section('page_name', 'Home')
 @section('subpage_name', 'Edit Patient')
 @section('content')
-    <div class="card">
+    <div modern">
         <div class="card-header">
             <h3 class="card-title">{{ __('Notes ') }}</h3>
             @if (isset($dependant))

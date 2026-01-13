@@ -4,7 +4,7 @@
 @section('subpage_name', 'Edit Service Price')
 @section('content')
     <section class="container">
-        <div class="card border-info mb-3">
+        <div class="card-modern border-info mb-3">
             <div class="card-header bg-transparent border-info">{{ __(ucwords($data->service->service_name)) }}</div>
             <form class="form-horizontal" method="POST" action="{{ route('service-prices.update', $data->id) }}">
                 {{ csrf_field() }}

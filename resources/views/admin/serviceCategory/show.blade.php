@@ -3,7 +3,7 @@
 @section('page_name', 'Service Category')
 @section('subpage_name', 'Show Category')
 @section('content')
-    <div class="card border-info mb-3">
+    <div class="card-modern border-info mb-3">
         <div class="card-header bg-transparent border-info">{{ __('List of Services') }}</div>
         <div class="card-body">
             <div class="form-group col-md-12">

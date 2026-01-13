@@ -629,7 +629,7 @@
             </ul>
             <div class="tab-content" id="${uniqueId}-content">
                 <div class="tab-pane fade show active" id="${uniqueId}-injection" role="tabpanel">
-                    <div class="card">
+                    <div class="card-modern">
                         <div class="card-header py-2">
                             <div class="d-flex justify-content-between align-items-center">
                                 <h6 class="mb-0"><i class="mdi mdi-history"></i> Injection History</h6>
@@ -658,7 +658,7 @@
                     </div>
                 </div>
                 <div class="tab-pane fade" id="${uniqueId}-immunization" role="tabpanel">
-                    <div class="card">
+                    <div class="card-modern">
                         <div class="card-header py-2">
                             <div class="d-flex justify-content-between align-items-center">
                                 <h6 class="mb-0"><i class="mdi mdi-history"></i> Immunization History</h6>
@@ -782,7 +782,7 @@
                     html += `
                         <div class="timeline-item mb-3" style="position: relative;">
                             <div class="timeline-marker" style="position: absolute; left: -40px; width: 20px; height: 20px; border-radius: 50%; background: #28a745; border: 3px solid white; box-shadow: 0 0 0 3px #28a745;"></div>
-                            <div class="card">
+                            <div class="card-modern">
                                 <div class="card-body py-2">
                                     <div class="d-flex justify-content-between align-items-start">
                                         <div>

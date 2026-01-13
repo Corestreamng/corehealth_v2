@@ -526,13 +526,13 @@
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title"><i class="mdi mdi-bed"></i> Assign Bed to Patient</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" data-bs-dismiss="modal">
+                <button type="button" class="close text-white"  data-bs-dismiss="modal" data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
             </div>
             <div class="modal-body">
                 <!-- Patient Info -->
-                <div class="card mb-3">
+                <div class="card-modern mb-3">
                     <div class="card-body py-2">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -578,7 +578,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" id="proceed-to-bed-selection" style="display: none;">
                     <i class="mdi mdi-arrow-right"></i> Proceed to Bed Selection
                 </button>
@@ -596,13 +596,13 @@
         <div class="modal-content">
             <div class="modal-header bg-warning text-dark">
                 <h5 class="modal-title"><i class="mdi mdi-logout"></i> Process Discharge</h5>
-                <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal">
+                <button type="button" class="close"  data-bs-dismiss="modal" data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
             </div>
             <div class="modal-body">
                 <!-- Patient Info -->
-                <div class="card mb-3">
+                <div class="card-modern mb-3">
                     <div class="card-body py-2">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -633,7 +633,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-warning" id="confirm-discharge" disabled>
                     <i class="mdi mdi-check"></i> Complete Discharge & Release Bed
                 </button>
@@ -648,7 +648,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="mdi mdi-bed"></i> <span id="bed-detail-name">Bed Details</span></h5>
-                <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal">
+                <button type="button" class="close"  data-bs-dismiss="modal" data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
             </div>
@@ -656,7 +656,7 @@
                 <!-- Bed details will be loaded here -->
             </div>
             <div class="modal-footer" id="bed-details-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -1133,7 +1133,7 @@ window.WardDashboard = (function() {
             html += '</div>';
 
             if (bed.current_patient) {
-                html += '<div class="card">';
+                html += '<div class="card-modern">';
                 html += '<div class="card-header bg-light py-2"><strong>Current Patient</strong></div>';
                 html += '<div class="card-body py-2">';
                 html += '<strong>' + bed.current_patient.name + '</strong><br>';
@@ -1146,7 +1146,7 @@ window.WardDashboard = (function() {
             $('#bed-details-content').html(html);
 
             // Add actions to footer
-            var footerHtml = '<button type="button" class="btn btn-secondary" data-dismiss="modal" data-bs-dismiss="modal">Close</button>';
+            var footerHtml = '<button type="button" class="btn btn-secondary"  data-bs-dismiss="modal" data-bs-dismiss="modal">Close</button>';
             if (status === 'available') {
                 footerHtml += ' <button type="button" class="btn btn-warning btn-sm" onclick="WardDashboard.setBedMaintenance(' + bedId + ')"><i class="mdi mdi-wrench"></i> Set Maintenance</button>';
             } else if (status === 'maintenance') {

@@ -646,7 +646,7 @@
     // Render the calendar legend
     function renderLegend() {
         const legendHtml = `
-            <div class="card shadow-sm mb-3">
+            <div class="card-modern shadow-sm mb-3">
                 <div class="card-body p-2">
                     <h6 class="card-title mb-2 d-flex align-items-center">
                         <i class="mdi mdi-information-outline text-primary me-1"></i> Legend

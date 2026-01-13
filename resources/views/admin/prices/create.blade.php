@@ -4,7 +4,7 @@
 @section('subpage_name', 'Product Price Setting')
 @section('content')
     <section class="container">
-        <div class="card border-info mb-3">
+        <div class="card-modern border-info mb-3">
             {!! Form::open(['route' => 'prices.store', 'method' => 'POST', 'class' => 'form-horizontal']) !!}
             @csrf
             <div class="card-header bg-transparent border-info">{{ __('Product Price Setting') }}</div>

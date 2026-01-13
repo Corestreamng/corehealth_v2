@@ -1,6 +1,6 @@
-@extends('admin.layouts.app')
+﻿@extends('admin.layouts.app')
 
-@section('title', 'Billing Workbench')
+@section('title', 'Reception Workbench')
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
@@ -22,7 +22,7 @@
     }
 
     /* Main Layout */
-    .billing-workbench-container {
+    .reception-workbench-container {
         display: flex;
         min-height: calc(100vh - 100px);
         gap: 0;
@@ -2158,6 +2158,435 @@
         border-bottom: 1px solid #dee2e6;
     }
 
+    /* =============================================
+       WALK-IN SALES CART STYLES
+       ============================================= */
+    #walkin-cart-table thead th {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #dee2e6;
+        padding: 0.75rem 0.5rem;
+    }
+
+    #walkin-cart-table tbody td {
+        vertical-align: middle;
+        padding: 0.75rem 0.5rem;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    #walkin-cart-table tbody tr:hover {
+        background: #f8f9fa;
+    }
+
+    #walkin-summary-table td {
+        padding: 0.75rem 1rem;
+    }
+
+    .bg-success-light {
+        background: rgba(40, 167, 69, 0.1) !important;
+    }
+
+    /* Walk-in Cart Tabs */
+    #walkin-cart-tabs {
+        border-bottom: none;
+    }
+
+    #walkin-cart-tabs .nav-link {
+        border: none;
+        border-radius: 0;
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #6c757d;
+        background: #f8f9fa;
+        border-bottom: 2px solid transparent;
+    }
+
+    #walkin-cart-tabs .nav-link:hover {
+        color: var(--primary-color);
+        background: #e9ecef;
+    }
+
+    #walkin-cart-tabs .nav-link.active {
+        color: var(--primary-color);
+        background: #fff;
+        border-bottom-color: var(--primary-color);
+    }
+
+    /* Recent Request Item */
+    .recent-request-item {
+        padding: 0.75rem;
+        border-bottom: 1px solid #f0f0f0;
+        transition: background 0.2s;
+    }
+
+    .recent-request-item:hover {
+        background: #f8f9fa;
+    }
+
+    .recent-request-item:last-child {
+        border-bottom: none;
+    }
+
+    .recent-request-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.5rem;
+    }
+
+    .recent-request-name {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #333;
+    }
+
+    .recent-request-type {
+        font-size: 0.7rem;
+        padding: 0.15rem 0.5rem;
+        border-radius: 0.25rem;
+    }
+
+    .recent-request-details {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.8rem;
+    }
+
+    .recent-request-pricing {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .recent-request-pricing span {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .recent-request-pricing .price-label {
+        font-size: 0.65rem;
+        color: #999;
+        text-transform: uppercase;
+    }
+
+    .recent-request-pricing .price-value {
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+
+    .recent-request-status {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    /* Service Requests Tab Styles */
+    .stat-card-modern {
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
+        padding: 1rem;
+        transition: all 0.2s ease;
+    }
+
+    .stat-card-modern:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-card-modern .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+
+    .stat-card-modern .stat-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1f2937;
+        line-height: 1.2;
+    }
+
+    .stat-card-modern .stat-label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Delivery Status Badges */
+    .delivery-badge {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-weight: 600;
+    }
+
+    .delivery-badge.pending {
+        background: #fef3cd;
+        color: #856404;
+    }
+
+    .delivery-badge.in-progress {
+        background: #cce5ff;
+        color: #004085;
+    }
+
+    .delivery-badge.completed {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .delivery-badge.cancelled {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    /* Billing Status Badges */
+    .billing-badge {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-weight: 600;
+    }
+
+    .billing-badge.pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .billing-badge.billed {
+        background: #cce5ff;
+        color: #004085;
+    }
+
+    .billing-badge.paid {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    /* =============================================
+       REQUEST DETAILS MODAL STYLES
+       ============================================= */
+    #requestDetailsModal .modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-bottom: none;
+    }
+
+    #requestDetailsModal .modal-header.lab-header {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    }
+
+    #requestDetailsModal .modal-header.imaging-header {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #333;
+    }
+
+    #requestDetailsModal .modal-header.imaging-header .close {
+        color: #333;
+    }
+
+    #requestDetailsModal .modal-header.product-header {
+        background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+    }
+
+    .request-header-section h4 {
+        font-weight: 700;
+        color: #333;
+    }
+
+    .badge-lg {
+        font-size: 0.85rem;
+        padding: 0.4rem 0.8rem;
+    }
+
+    /* Timeline Styles */
+    .timeline-vertical {
+        position: relative;
+        padding-left: 30px;
+    }
+
+    .timeline-vertical::before {
+        content: '';
+        position: absolute;
+        left: 10px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #e9ecef;
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-bottom: 1.25rem;
+        padding-left: 20px;
+    }
+
+    .timeline-item:last-child {
+        padding-bottom: 0;
+    }
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -20px;
+        top: 4px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #e9ecef;
+        border: 2px solid white;
+        z-index: 1;
+    }
+
+    .timeline-item.completed::before {
+        background: #28a745;
+    }
+
+    .timeline-item.in-progress::before {
+        background: #17a2b8;
+        animation: pulse 1.5s infinite;
+    }
+
+    .timeline-item.pending::before {
+        background: #6c757d;
+    }
+
+    .timeline-item .timeline-title {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.25rem;
+    }
+
+    .timeline-item .timeline-subtitle {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+
+    .timeline-item .timeline-meta {
+        font-size: 0.75rem;
+        color: #adb5bd;
+    }
+
+    .bg-warning-light {
+        background-color: #fff9e6 !important;
+    }
+
+    /* Billing Badge Styles for Details Modal */
+    .billing-badge.billing-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .billing-badge.billing-billed {
+        background: #cce5ff;
+        color: #004085;
+    }
+
+    .billing-badge.billing-paid {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    /* Delivery Badge Styles for Details Modal */
+    .delivery-badge.delivery-pending {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .delivery-badge.delivery-progress {
+        background: #cce5ff;
+        color: #004085;
+    }
+
+    .delivery-badge.delivery-completed {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    /* =============================================
+       REPORTS VIEW STYLES
+       ============================================= */
+    #reports-view .stat-card {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        background: white;
+        border-radius: 0.75rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        margin-bottom: 1rem;
+    }
+
+    #reports-view .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+    }
+
+    #reports-view .stat-icon i {
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    #reports-view .stat-content h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0;
+        color: #333;
+    }
+
+    #reports-view .stat-content p {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-bottom: 0;
+    }
+
+    #reports-view .reports-filter-panel {
+        background: #f8f9fa;
+    }
+
+    #reports-view .nav-tabs .nav-link {
+        color: #495057;
+        border: none;
+        padding: 0.75rem 1.25rem;
+        font-weight: 500;
+    }
+
+    #reports-view .nav-tabs .nav-link.active {
+        color: #007bff;
+        background: transparent;
+        border-bottom: 3px solid #007bff;
+    }
+
+    #reports-view .nav-tabs .nav-link i {
+        margin-right: 0.5rem;
+    }
+
+    #reports-view .card {
+        border: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        border-radius: 0.75rem;
+    }
+
+    #reports-view .card-header {
+        background: white;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    #top-clinics-table tbody tr:hover {
+        background: #f8f9fa;
+    }
+
     .transactions-summary {
         display: flex;
         gap: 1rem;
@@ -2735,9 +3164,580 @@
         border-radius: 0.5rem;
     }
 
+    /* ============================================
+       PATIENT FORM MODAL STYLES
+       ============================================ */
+
+    #patientFormModal .modal-dialog {
+        max-width: 900px;
+    }
+
+    #patientFormModal .modal-content {
+        border: none;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+
+    #patient-form-header {
+        background: linear-gradient(135deg, var(--hospital-primary) 0%, #0052a3 100%);
+        color: white;
+        padding: 1.25rem 1.5rem;
+        border: none;
+    }
+
+    #patient-form-header.edit-mode {
+        background: linear-gradient(135deg, #28a745 0%, #1e7b34 100%);
+    }
+
+    #patient-form-title {
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Form Stepper */
+    .form-stepper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 1.5rem 2rem;
+        background: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+        gap: 0;
+    }
+
+    .stepper-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        z-index: 1;
+    }
+
+    .stepper-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        color: #6c757d;
+        transition: all 0.3s ease;
+        border: 3px solid transparent;
+    }
+
+    .stepper-item.active .stepper-icon {
+        background: var(--hospital-primary);
+        color: white;
+        border-color: rgba(0, 123, 255, 0.3);
+        box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.15);
+    }
+
+    .stepper-item.completed .stepper-icon {
+        background: #28a745;
+        color: white;
+    }
+
+    .stepper-label {
+        margin-top: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .stepper-item.active .stepper-label {
+        color: var(--hospital-primary);
+    }
+
+    .stepper-item.completed .stepper-label {
+        color: #28a745;
+    }
+
+    .stepper-line {
+        width: 60px;
+        height: 3px;
+        background: #e9ecef;
+        margin: 0 0.5rem;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .stepper-line.completed {
+        background: #28a745;
+    }
+
+    /* Form Steps Container */
+    .form-steps-container {
+        padding: 0;
+        max-height: 55vh;
+        overflow-y: auto;
+    }
+
+    .form-step {
+        display: none;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .form-step.active {
+        display: block;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .step-header {
+        padding: 1.25rem 1.5rem;
+        background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .step-header h6 {
+        margin: 0 0 0.25rem;
+        color: #212529;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .step-header h6 i {
+        color: var(--hospital-primary);
+    }
+
+    .step-content {
+        padding: 1.5rem;
+    }
+
+    /* Floating Labels */
+    .floating-label {
+        position: relative;
+        margin-bottom: 1.25rem;
+    }
+
+    .floating-label label {
+        position: absolute;
+        top: 0.75rem;
+        left: 0.75rem;
+        font-size: 0.875rem;
+        color: #6c757d;
+        transition: all 0.2s ease;
+        pointer-events: none;
+        background: transparent;
+        padding: 0 0.25rem;
+        z-index: 1;
+    }
+
+    .floating-label .form-control {
+        padding: 0.75rem;
+        padding-top: 1.25rem;
+        border: 2px solid #e9ecef;
+        border-radius: 0.5rem;
+        transition: all 0.2s ease;
+        background: #fff;
+    }
+
+    .floating-label .form-control:focus {
+        border-color: var(--hospital-primary);
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+    }
+
+    .floating-label .form-control:focus + label,
+    .floating-label .form-control:not(:placeholder-shown) + label,
+    .floating-label .form-control.has-value + label,
+    .floating-label select.form-control + label {
+        top: -0.5rem;
+        left: 0.5rem;
+        font-size: 0.75rem;
+        background: white;
+        color: var(--hospital-primary);
+        font-weight: 600;
+    }
+
+    .floating-label select.form-control {
+        padding-top: 1.25rem;
+    }
+
+    .floating-label .form-control.is-valid {
+        border-color: #28a745;
+    }
+
+    .floating-label .form-control.is-invalid {
+        border-color: #dc3545;
+    }
+
+    .floating-label .invalid-feedback {
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+    }
+
+    .floating-label .input-addon {
+        position: absolute;
+        right: 0.5rem;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .floating-label .toggle-edit {
+        cursor: pointer;
+        padding: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .floating-label .toggle-edit input {
+        cursor: pointer;
+    }
+
+    .floating-label .toggle-edit i {
+        color: #6c757d;
+        font-size: 1rem;
+    }
+
+    /* File Number Label Row */
+    .file-no-label-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.25rem;
+    }
+
+    .file-no-next-badge {
+        font-size: 0.7rem;
+        color: #6c757d;
+        background: #e9ecef;
+        padding: 0.15rem 0.5rem;
+        border-radius: 0.25rem;
+    }
+
+    .file-no-next-badge strong {
+        color: #28a745;
+    }
+
+    .file-no-next-badge.manual-mode {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .file-no-next-badge.manual-mode strong {
+        color: #fd7e14;
+    }
+
+    /* File Number Button Group */
+    .file-no-btn-group {
+        display: flex;
+        margin-bottom: 0.5rem;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        border: 2px solid #e9ecef;
+    }
+
+    .file-no-mode-btn {
+        flex: 1;
+        padding: 0.5rem 1rem;
+        border: none;
+        background: #f8f9fa;
+        color: #6c757d;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+    }
+
+    .file-no-mode-btn:first-child {
+        border-right: 1px solid #e9ecef;
+    }
+
+    .file-no-mode-btn:hover:not(.active) {
+        background: #e9ecef;
+    }
+
+    .file-no-mode-btn.active[data-mode="auto"] {
+        background: #28a745;
+        color: white;
+    }
+
+    .file-no-mode-btn.active[data-mode="manual"] {
+        background: #fd7e14;
+        color: white;
+    }
+
+    .file-no-mode-btn i {
+        font-size: 1rem;
+    }
+
+    /* File Number Input */
+    .file-no-input {
+        border: 2px solid #e9ecef;
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+        font-size: 1rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+
+    .file-no-input[readonly] {
+        background: #f8f9fa;
+        border-color: #28a745;
+    }
+
+    .file-no-input:not([readonly]) {
+        background: #fff;
+        border-color: #fd7e14;
+    }
+
+    .file-no-input:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(253, 126, 20, 0.15);
+    }
+
+    #pf-file-no-hint {
+        margin-top: 0.35rem;
+    }
+
+    #pf-file-no-hint.manual-mode {
+        color: #fd7e14;
+    }
+
+    #pf-file-no-hint.manual-mode i {
+        animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    /* Allergies Input */
+    .allergies-input-container {
+        border: 2px solid #e9ecef;
+        border-radius: 0.5rem;
+        padding: 0.5rem;
+        background: white;
+        min-height: 80px;
+    }
+
+    .allergies-input-container:focus-within {
+        border-color: var(--hospital-primary);
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+    }
+
+    .allergies-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .allergy-tag-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.375rem 0.75rem;
+        background: linear-gradient(135deg, #ffe5e5 0%, #ffcccc 100%);
+        border: 1px solid #ff9999;
+        border-radius: 2rem;
+        font-size: 0.85rem;
+        color: #cc0000;
+        font-weight: 500;
+    }
+
+    .allergy-tag-item .remove-allergy {
+        cursor: pointer;
+        margin-left: 0.25rem;
+        color: #cc0000;
+        font-size: 1rem;
+        line-height: 1;
+    }
+
+    .allergy-tag-item .remove-allergy:hover {
+        color: #990000;
+    }
+
+    #pf-allergy-input {
+        border: none;
+        outline: none;
+        width: 100%;
+        padding: 0.25rem;
+        font-size: 0.9rem;
+    }
+
+    /* Registration Summary */
+    .registration-summary {
+        background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+        border: 2px solid #81c784;
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+    }
+
+    .registration-summary > h6 {
+        margin: 0 0 1rem;
+        color: #2e7d32;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1rem;
+    }
+
+    .summary-section {
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .summary-section:last-child {
+        margin-bottom: 0;
+    }
+
+    .summary-section-title {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #495057;
+        margin: 0 0 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+        padding-bottom: 0.35rem;
+    }
+
+    .summary-section-title i {
+        color: var(--hospital-primary);
+    }
+
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 0.5rem;
+    }
+
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.35rem 0.5rem;
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 0.25rem;
+        font-size: 0.8rem;
+    }
+
+    .summary-item.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .summary-label {
+        color: #6c757d;
+        font-size: 0.75rem;
+        flex-shrink: 0;
+        margin-right: 0.5rem;
+    }
+
+    .summary-value {
+        font-weight: 600;
+        color: #212529;
+        font-size: 0.8rem;
+        text-align: right;
+        word-break: break-word;
+    }
+
+    .summary-value.text-success {
+        color: #28a745 !important;
+    }
+
+    /* File Upload Preview */
+    .passport-preview, .old-records-info {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem;
+        background: #f8f9fa;
+        border-radius: 0.5rem;
+        border: 1px dashed #dee2e6;
+    }
+
+    .passport-preview img {
+        border: 2px solid #28a745;
+    }
+
+    /* Modal Footer */
+    #patientFormModal .modal-footer {
+        display: flex;
+        justify-content: space-between;
+        padding: 1rem 1.5rem;
+        background: #f8f9fa;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .footer-left, .footer-right {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    #pf-btn-prev, #pf-btn-next, #pf-btn-submit {
+        padding: 0.625rem 1.25rem;
+        font-weight: 600;
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    #pf-btn-submit {
+        background: linear-gradient(135deg, #28a745 0%, #1e7b34 100%);
+        border: none;
+    }
+
+    #pf-btn-submit:hover {
+        background: linear-gradient(135deg, #218838 0%, #196d2e 100%);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .form-stepper {
+            padding: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .stepper-line {
+            display: none;
+        }
+
+        .stepper-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .stepper-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 1rem;
+        }
+
+        .stepper-label {
+            font-size: 0.65rem;
+        }
+
+        .summary-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
 </style>
 
-<div class="billing-workbench-container">
+<div class="reception-workbench-container">
     <!-- Left Panel: Patient Search & Queue -->
     <div class="left-panel" id="left-panel">
         <div class="panel-header">
@@ -2750,43 +3750,49 @@
         <div class="search-container" style="position: relative;">
             <input type="text"
                    id="patient-search-input"
-                   placeholder="🔍 Search patient name or file no..."
+                   placeholder="Search or scan barcode..."
                    autocomplete="off">
             <div class="search-results" id="patient-search-results"></div>
         </div>
 
         <div class="queue-widget">
-            <h6>📊 PAYMENT QUEUE</h6>
-            <div class="queue-item" data-filter="all">
-                <span class="queue-item-label">🟡 All Unpaid</span>
-                <span class="queue-count all-unpaid" id="queue-all-count">0</span>
+            <h6><i class="mdi mdi-format-list-bulleted"></i> DOCTOR QUEUE</h6>
+            <div class="queue-item" data-filter="waiting">
+                <span class="queue-item-label"><i class="mdi mdi-clock-outline text-warning"></i> Waiting</span>
+                <span class="queue-count all-unpaid" id="queue-waiting-count">0</span>
             </div>
-            <div class="queue-item" data-filter="hmo">
-                <span class="queue-item-label">🟢 HMO Items</span>
-                <span class="queue-count hmo-items" id="queue-hmo-count">0</span>
+            <div class="queue-item" data-filter="vitals">
+                <span class="queue-item-label"><i class="mdi mdi-heart-pulse text-info"></i> Vitals Pending</span>
+                <span class="queue-count hmo-items" id="queue-vitals-count">0</span>
             </div>
-            <div class="queue-item" data-filter="credit">
-                <span class="queue-item-label">🟠 Credit Accounts</span>
-                <span class="queue-count credit-accounts" id="queue-credit-count">0</span>
+            <div class="queue-item" data-filter="consultation">
+                <span class="queue-item-label"><i class="mdi mdi-doctor text-success"></i> In Consultation</span>
+                <span class="queue-count credit-accounts" id="queue-consultation-count">0</span>
             </div>
-            <button class="btn-queue-all" id="show-all-queue-btn">
-                📋 Show All Queue →
-            </button>
+            <div class="queue-item" data-filter="admitted">
+                <span class="queue-item-label"><i class="mdi mdi-bed text-danger"></i> Admitted</span>
+                <span class="queue-count all-unpaid" id="queue-admitted-count">0</span>
+            </div>
+            <button class="btn-queue-all" id="show-all-queue-btn"><i class="mdi mdi-format-list-bulleted"></i> View Full Queue</button>
         </div>
 
         <div class="quick-actions">
-            <h6>⚡ QUICK ACTIONS</h6>
-            <button class="quick-action-btn" id="btn-my-transactions">
-                <i class="mdi mdi-receipt"></i>
-                <span>My Transactions</span>
+            <h6><i class="mdi mdi-lightning-bolt"></i> QUICK ACTIONS</h6>
+            <button class="quick-action-btn" id="btn-ward-dashboard">
+                <i class="mdi mdi-hospital-building text-primary"></i>
+                <span>Ward Dashboard</span>
             </button>
-            <button class="quick-action-btn" disabled style="opacity: 0.5;">
-                <i class="mdi mdi-file-invoice-dollar"></i>
-                <span>Generate Invoice (Coming Soon)</span>
+            <button class="quick-action-btn" id="btn-new-patient">
+                <i class="mdi mdi-account-plus"></i>
+                <span>New Patient</span>
             </button>
-            <button class="quick-action-btn" disabled style="opacity: 0.5;">
-                <i class="mdi mdi-wallet"></i>
-                <span>Credit Management (Coming Soon)</span>
+            <button class="quick-action-btn" id="btn-today-stats">
+                <i class="mdi mdi-chart-bar"></i>
+                <span>Today's Stats</span>
+            </button>
+            <button class="quick-action-btn" id="btn-view-reports">
+                <i class="mdi mdi-file-chart"></i>
+                <span>Reports</span>
             </button>
         </div>
     </div>
@@ -2807,102 +3813,123 @@
 
         <!-- Empty State -->
         <div class="empty-state" id="empty-state">
-            <i class="mdi mdi-account-cash"></i>
+            <i class="mdi mdi-account-search"></i>
             <h3>No Patient Selected</h3>
-            <p>Search and select a patient from the queue to begin billing</p>
+            <p>Search and select a patient to manage their visit</p>
             <button class="btn btn-lg btn-primary" id="view-queue-btn">
-                💰 View Payment Queue
+                <i class="mdi mdi-format-list-bulleted"></i> View Today's Queue
             </button>
         </div>
 
         <!-- Queue View -->
         <div class="queue-view" id="queue-view">
             <div class="queue-view-header">
-                <h4 id="queue-view-title"><i class="mdi mdi-format-list-bulleted"></i> Payment Queue</h4>
+                <h4 id="queue-view-title"><i class="mdi mdi-format-list-bulleted"></i> Doctor Queue</h4>
                 <button class="btn-close-queue" id="btn-close-queue">
                     <i class="mdi mdi-close"></i> Close
                 </button>
             </div>
             <div class="queue-view-content">
+                <div class="mb-3">
+                    <select class="form-control" id="queue-clinic-filter" style="max-width: 300px;">
+                        <option value="">All Clinics</option>
+                    </select>
+                </div>
                 <table class="table" id="queue-datatable" style="width: 100%">
                     <thead>
                         <tr>
-                            <th>Queue Items</th>
+                            <th>#</th>
+                            <th>Patient</th>
+                            <th>File No</th>
+                            <th>HMO</th>
+                            <th>Clinic</th>
+                            <th>Doctor</th>
+                            <th>Service</th>
+                            <th>Status</th>
+                            <th>Time</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                 </table>
             </div>
         </div>
 
+        <!-- Ward Dashboard View -->
+        <div class="queue-view" id="ward-dashboard-view">
+            <div class="queue-view-header">
+                <h4><i class="mdi mdi-hospital-building"></i> Ward Dashboard</h4>
+                <button class="btn btn-secondary btn-close-queue" id="btn-close-ward-dashboard">
+                    <i class="mdi mdi-close"></i> Close
+                </button>
+            </div>
+            <div class="queue-view-content" style="padding: 1rem; overflow-y: auto;">
+                @include('admin.partials.ward_dashboard')
+            </div>
+        </div>
+
         <!-- Reports View (Full Screen - Global Access) -->
         <div class="queue-view" id="reports-view">
             <div class="queue-view-header">
-                <h4><i class="mdi mdi-chart-box"></i> Laboratory Reports & Analytics</h4>
+                <h4><i class="mdi mdi-chart-box"></i> Reception Reports & Analytics</h4>
                 <button class="btn btn-secondary btn-close-queue" id="btn-close-reports">
                     <i class="mdi mdi-close"></i> Close
                 </button>
             </div>
-            <div class="queue-view-content" style="padding: 1.5rem;">
+            <div class="queue-view-content" style="padding: 1.5rem; overflow-y: auto;">
                 <!-- Filter Panel -->
-                <div class="reports-filter-panel card mb-4">
-                    <div class="card-header">
+                <div class="reports-filter-panel card-modern mb-4">
+                    <div class="card-header py-2">
                         <h6 class="mb-0"><i class="mdi mdi-filter"></i> Filters</h6>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body py-3">
                         <form id="reports-filter-form">
-                            <div class="form-row">
-                                <div class="form-group col-md-3">
-                                    <label for="report-date-from"><i class="mdi mdi-calendar"></i> Date From</label>
-                                    <input type="date" class="form-control" id="report-date-from" name="date_from">
+                            <div class="row">
+                                <div class="form-group col-md-2">
+                                    <label for="report-date-from" class="small mb-1">Date From</label>
+                                    <input type="date" class="form-control form-control-sm" id="report-date-from" name="date_from">
                                 </div>
-                                <div class="form-group col-md-3">
-                                    <label for="report-date-to"><i class="mdi mdi-calendar"></i> Date To</label>
-                                    <input type="date" class="form-control" id="report-date-to" name="date_to">
+                                <div class="form-group col-md-2">
+                                    <label for="report-date-to" class="small mb-1">Date To</label>
+                                    <input type="date" class="form-control form-control-sm" id="report-date-to" name="date_to">
                                 </div>
-                                <div class="form-group col-md-3">
-                                    <label for="report-status-filter"><i class="mdi mdi-filter-variant"></i> Status</label>
-                                    <select class="form-control" id="report-status-filter" name="status">
-                                        <option value="">All Statuses</option>
-                                        <option value="1">Awaiting Billing</option>
-                                        <option value="2">Awaiting Sample</option>
-                                        <option value="3">Awaiting Results</option>
-                                        <option value="4">Completed</option>
+                                <div class="form-group col-md-2">
+                                    <label for="report-type-filter" class="small mb-1">Report Type</label>
+                                    <select class="form-control form-control-sm" id="report-type-filter" name="report_type">
+                                        <option value="">All Activity</option>
+                                        <option value="registrations">New Registrations</option>
+                                        <option value="queue">Queue Entries</option>
+                                        <option value="visits">Completed Visits</option>
                                     </select>
                                 </div>
-                                <div class="form-group col-md-3">
-                                    <label for="report-service-filter"><i class="mdi mdi-test-tube"></i> Service</label>
-                                    <select class="form-control" id="report-service-filter" name="service_id">
-                                        <option value="">All Services</option>
-                                        <!-- Services will be populated via JS -->
+                                <div class="form-group col-md-2">
+                                    <label for="report-clinic-filter" class="small mb-1">Clinic</label>
+                                    <select class="form-control form-control-sm" id="report-clinic-filter" name="clinic_id">
+                                        <option value="">All Clinics</option>
+                                        @foreach(\App\Models\Clinic::where('status', 1)->orderBy('name')->get() as $clinic)
+                                            <option value="{{ $clinic->id }}">{{ $clinic->name }}</option>
+                                        @endforeach
                                     </select>
                                 </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group col-md-4">
-                                    <label for="report-doctor-filter"><i class="mdi mdi-doctor"></i> Requesting Doctor</label>
-                                    <select class="form-control" id="report-doctor-filter" name="doctor_id">
-                                        <option value="">All Doctors</option>
-                                        <!-- Doctors will be populated via JS -->
-                                    </select>
-                                </div>
-                                <div class="form-group col-md-4">
-                                    <label for="report-hmo-filter"><i class="mdi mdi-hospital-building"></i> HMO</label>
-                                    <select class="form-control" id="report-hmo-filter" name="hmo_id">
+                                <div class="form-group col-md-2">
+                                    <label for="report-hmo-filter" class="small mb-1">HMO</label>
+                                    <select class="form-control form-control-sm" id="report-hmo-filter" name="hmo_id">
                                         <option value="">All HMOs</option>
-                                        <!-- HMOs will be populated via JS -->
+                                        @foreach(\App\Models\Hmo::orderBy('name')->get() as $hmo)
+                                            <option value="{{ $hmo->id }}">{{ $hmo->name }}</option>
+                                        @endforeach
                                     </select>
                                 </div>
-                                <div class="form-group col-md-4">
-                                    <label for="report-patient-search"><i class="mdi mdi-account-search"></i> Patient Search</label>
-                                    <input type="text" class="form-control" id="report-patient-search" name="patient_search" placeholder="File no or name...">
+                                <div class="form-group col-md-2">
+                                    <label for="report-patient-search" class="small mb-1">Patient Search</label>
+                                    <input type="text" class="form-control form-control-sm" id="report-patient-search" name="patient_search" placeholder="File no or name...">
                                 </div>
                             </div>
-                            <div class="form-row">
+                            <div class="row mt-2">
                                 <div class="col-md-12 text-right">
-                                    <button type="button" class="btn btn-secondary" id="clear-report-filters">
+                                    <button type="button" class="btn btn-sm btn-secondary" id="clear-report-filters">
                                         <i class="mdi mdi-refresh"></i> Clear
                                     </button>
-                                    <button type="submit" class="btn btn-primary">
+                                    <button type="submit" class="btn btn-sm btn-primary">
                                         <i class="mdi mdi-filter"></i> Apply Filters
                                     </button>
                                 </div>
@@ -2914,18 +3941,23 @@
                 <!-- Sub Tabs -->
                 <ul class="nav nav-tabs mb-3" id="reports-tabs" role="tablist">
                     <li class="nav-item">
-                        <a class="nav-link active" id="overview-tab" data-toggle="tab" href="#overview-content" role="tab" aria-controls="overview-content" aria-selected="true">
+                        <a class="nav-link active" id="overview-tab" data-toggle="tab" href="#overview-content" role="tab">
                             <i class="mdi mdi-view-dashboard"></i> Overview
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="detailed-report-tab" data-toggle="tab" href="#detailed-report-content" role="tab" aria-controls="detailed-report-content" aria-selected="false">
-                            <i class="mdi mdi-table"></i> Detailed Report
+                        <a class="nav-link" id="registrations-tab" data-toggle="tab" href="#registrations-content" role="tab">
+                            <i class="mdi mdi-account-plus"></i> Registrations
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="analytics-tab" data-toggle="tab" href="#analytics-content" role="tab" aria-controls="analytics-content" aria-selected="false">
-                            <i class="mdi mdi-chart-line"></i> Analytics
+                        <a class="nav-link" id="queue-report-tab" data-toggle="tab" href="#queue-report-content" role="tab">
+                            <i class="mdi mdi-format-list-bulleted"></i> Queue Report
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="visits-tab" data-toggle="tab" href="#visits-content" role="tab">
+                            <i class="mdi mdi-calendar-check"></i> Visits
                         </a>
                     </li>
                 </ul>
@@ -2933,91 +3965,134 @@
                 <!-- Tab Content -->
                 <div class="tab-content" id="reports-tab-content">
                     <!-- Overview Tab -->
-                    <div class="tab-pane fade show active" id="overview-content" role="tabpanel" aria-labelledby="overview-tab">
+                    <div class="tab-pane fade show active" id="overview-content" role="tabpanel">
                         <div class="reports-container">
                             <!-- Summary Statistics Cards -->
                             <div class="row mb-4">
-                                <div class="col-md-3">
+                                <div class="col-md-2 col-6">
                                     <div class="stat-card">
                                         <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                                            <i class="mdi mdi-clipboard-list"></i>
+                                            <i class="mdi mdi-account-plus"></i>
                                         </div>
                                         <div class="stat-content">
-                                            <h3 id="stat-total-requests">0</h3>
-                                            <p>Total Requests</p>
+                                            <h3 id="stat-new-registrations">0</h3>
+                                            <p>New Registrations</p>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2 col-6">
+                                    <div class="stat-card">
+                                        <div class="stat-icon" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                                            <i class="mdi mdi-format-list-bulleted"></i>
+                                        </div>
+                                        <div class="stat-content">
+                                            <h3 id="stat-total-queued">0</h3>
+                                            <p>Total Queued</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2 col-6">
                                     <div class="stat-card">
                                         <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
                                             <i class="mdi mdi-check-circle"></i>
                                         </div>
                                         <div class="stat-content">
-                                            <h3 id="stat-completed">0</h3>
-                                            <p>Completed</p>
+                                            <h3 id="stat-completed-visits">0</h3>
+                                            <p>Completed Visits</p>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2 col-6">
                                     <div class="stat-card">
                                         <div class="stat-icon" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);">
-                                            <i class="mdi mdi-clock"></i>
+                                            <i class="mdi mdi-clock-outline"></i>
                                         </div>
                                         <div class="stat-content">
-                                            <h3 id="stat-pending">0</h3>
-                                            <p>Pending</p>
+                                            <h3 id="stat-pending-queue">0</h3>
+                                            <p>Pending in Queue</p>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2 col-6">
                                     <div class="stat-card">
                                         <div class="stat-icon" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
                                             <i class="mdi mdi-timer"></i>
                                         </div>
                                         <div class="stat-content">
-                                            <h3 id="stat-avg-tat">0</h3>
-                                            <p>Avg TAT</p>
+                                            <h3 id="stat-avg-wait-time">0m</h3>
+                                            <p>Avg Wait Time</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2 col-6">
+                                    <div class="stat-card">
+                                        <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                                            <i class="mdi mdi-refresh"></i>
+                                        </div>
+                                        <div class="stat-content">
+                                            <h3 id="stat-return-rate">0%</h3>
+                                            <p>Return Visits</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Charts and Top Services -->
+                            <!-- Charts -->
                             <div class="row mb-4">
                                 <div class="col-md-6">
-                                    <div class="card">
-                                        <div class="card-header">
-                                            <h6 class="mb-0"><i class="mdi mdi-chart-bar"></i> Requests by Status</h6>
+                                    <div class="card-modern">
+                                        <div class="card-header py-2">
+                                            <h6 class="mb-0"><i class="mdi mdi-chart-bar"></i> Registrations Trend</h6>
                                         </div>
                                         <div class="card-body">
-                                            <canvas id="status-chart" height="200"></canvas>
+                                            <canvas id="registrations-chart" height="200"></canvas>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="card">
-                                        <div class="card-header">
-                                            <h6 class="mb-0"><i class="mdi mdi-chart-line"></i> Monthly Trends</h6>
+                                    <div class="card-modern">
+                                        <div class="card-header py-2">
+                                            <h6 class="mb-0"><i class="mdi mdi-chart-pie"></i> HMO Distribution</h6>
                                         </div>
                                         <div class="card-body">
-                                            <canvas id="trends-chart" height="200"></canvas>
+                                            <canvas id="hmo-distribution-chart" height="200"></canvas>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Top Services -->
+                            <!-- Top Clinics & Peak Hours -->
                             <div class="row mb-4">
-                                <div class="col-md-12">
-                                    <div class="card" id="top-services-card">
-                                        <div class="card-header">
-                                            <h6 class="mb-0"><i class="mdi mdi-test-tube"></i> Top 10 Lab Services</h6>
+                                <div class="col-md-6">
+                                    <div class="card-modern">
+                                        <div class="card-header py-2">
+                                            <h6 class="mb-0"><i class="mdi mdi-hospital-building"></i> Top Clinics</h6>
                                         </div>
-                                        <div class="card-body">
-                                            <div id="top-services-list">
-                                                <p class="text-muted">Loading...</p>
+                                        <div class="card-body p-0">
+                                            <div class="table-responsive">
+                                                <table class="table table-sm table-hover mb-0" id="top-clinics-table">
+                                                    <thead class="bg-light">
+                                                        <tr>
+                                                            <th>Clinic</th>
+                                                            <th class="text-center">Visits</th>
+                                                            <th class="text-right">%</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="top-clinics-body">
+                                                        <tr><td colspan="3" class="text-center text-muted">Loading...</td></tr>
+                                                    </tbody>
+                                                </table>
                                             </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card-modern">
+                                        <div class="card-header py-2">
+                                            <h6 class="mb-0"><i class="mdi mdi-clock"></i> Peak Hours</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <canvas id="peak-hours-chart" height="180"></canvas>
                                         </div>
                                     </div>
                                 </div>
@@ -3025,63 +4100,109 @@
                         </div>
                     </div>
 
-                    <!-- Detailed Report Tab -->
-                    <div class="tab-pane fade" id="detailed-report-content" role="tabpanel" aria-labelledby="detailed-report-tab">
-                        <div class="reports-container">
-                            <!-- DataTable -->
-                            <div class="card">
-                                <div class="card-header d-flex justify-content-between align-items-center">
-                                    <h6 class="mb-0"><i class="mdi mdi-table"></i> Detailed Report</h6>
-                                    <div>
-                                        <button class="btn btn-sm btn-success" id="export-excel">
-                                            <i class="mdi mdi-file-excel"></i> Excel
-                                        </button>
-                                        <button class="btn btn-sm btn-danger" id="export-pdf">
-                                            <i class="mdi mdi-file-pdf"></i> PDF
-                                        </button>
-                                        <button class="btn btn-sm btn-info" id="print-report">
-                                            <i class="mdi mdi-printer"></i> Print
-                                        </button>
-                                    </div>
+                    <!-- Registrations Tab -->
+                    <div class="tab-pane fade" id="registrations-content" role="tabpanel">
+                        <div class="card-modern">
+                            <div class="card-header d-flex justify-content-between align-items-center py-2">
+                                <h6 class="mb-0"><i class="mdi mdi-account-plus"></i> Patient Registrations</h6>
+                                <div>
+                                    <button class="btn btn-sm btn-success" id="export-registrations-excel">
+                                        <i class="mdi mdi-file-excel"></i> Excel
+                                    </button>
+                                    <button class="btn btn-sm btn-info" id="print-registrations">
+                                        <i class="mdi mdi-printer"></i> Print
+                                    </button>
                                 </div>
-                                <div class="card-body">
-                                    <div class="table-responsive">
-                                        <table class="table table-hover" id="reports-datatable" style="width: 100%">
-                                            <thead>
-                                                <tr>
-                                                    <th>Date</th>
-                                                    <th>File No</th>
-                                                    <th>Patient</th>
-                                                    <th>Service</th>
-                                                    <th>Doctor</th>
-                                                    <th>HMO</th>
-                                                    <th>Status</th>
-                                                    <th>TAT</th>
-                                                    <th>Actions</th>
-                                                </tr>
-                                            </thead>
-                                        </table>
-                                    </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-sm" id="registrations-datatable" style="width: 100%">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>File No</th>
+                                                <th>Patient Name</th>
+                                                <th>Gender</th>
+                                                <th>Age</th>
+                                                <th>Phone</th>
+                                                <th>HMO</th>
+                                                <th>Registered By</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                    </table>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Analytics Tab -->
-                    <div class="tab-pane fade" id="analytics-content" role="tabpanel" aria-labelledby="analytics-tab">
-                        <div class="reports-container">
-                            <div class="row">
-                                <div class="col-md-12">
-                                    <div class="card">
-                                        <div class="card-header">
-                                            <h6 class="mb-0"><i class="mdi mdi-doctor"></i> Top Requesting Doctors</h6>
-                                        </div>
-                                        <div class="card-body">
-                                            <div id="top-doctors-list">
-                                                <p class="text-muted">Loading...</p>
-                                            </div>
-                                        </div>
-                                    </div>
+                    <!-- Queue Report Tab -->
+                    <div class="tab-pane fade" id="queue-report-content" role="tabpanel">
+                        <div class="card-modern">
+                            <div class="card-header d-flex justify-content-between align-items-center py-2">
+                                <h6 class="mb-0"><i class="mdi mdi-format-list-bulleted"></i> Queue Entries</h6>
+                                <div>
+                                    <button class="btn btn-sm btn-success" id="export-queue-excel">
+                                        <i class="mdi mdi-file-excel"></i> Excel
+                                    </button>
+                                    <button class="btn btn-sm btn-info" id="print-queue">
+                                        <i class="mdi mdi-printer"></i> Print
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-sm" id="queue-report-datatable" style="width: 100%">
+                                        <thead>
+                                            <tr>
+                                                <th>Date/Time</th>
+                                                <th>File No</th>
+                                                <th>Patient</th>
+                                                <th>Clinic</th>
+                                                <th>Doctor</th>
+                                                <th>Service</th>
+                                                <th>Status</th>
+                                                <th>Wait Time</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Visits Tab -->
+                    <div class="tab-pane fade" id="visits-content" role="tabpanel">
+                        <div class="card-modern">
+                            <div class="card-header d-flex justify-content-between align-items-center py-2">
+                                <h6 class="mb-0"><i class="mdi mdi-calendar-check"></i> Visit History</h6>
+                                <div>
+                                    <button class="btn btn-sm btn-success" id="export-visits-excel">
+                                        <i class="mdi mdi-file-excel"></i> Excel
+                                    </button>
+                                    <button class="btn btn-sm btn-info" id="print-visits">
+                                        <i class="mdi mdi-printer"></i> Print
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-sm" id="visits-datatable" style="width: 100%">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>File No</th>
+                                                <th>Patient</th>
+                                                <th>Clinic</th>
+                                                <th>Doctor</th>
+                                                <th>Reason</th>
+                                                <th>HMO</th>
+                                                <th>Type</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                    </table>
                                 </div>
                             </div>
                         </div>
@@ -3096,11 +4217,20 @@
                 <div style="flex: 1;">
                     <div class="patient-name" id="patient-name"></div>
                     <div class="patient-meta" id="patient-meta"></div>
+                    <div class="patient-allergies" id="patient-allergies" style="display: none;">
+                        <span class="allergy-alert-badge"><i class="mdi mdi-alert"></i> Allergies: <span id="allergy-list"></span></span>
+                    </div>
                 </div>
                 <div class="patient-account-balance" id="patient-header-balance" style="display: none;">
                     <div class="balance-label">Account Balance</div>
                     <div class="balance-value" id="header-balance-amount">₦0.00</div>
                 </div>
+                <button class="btn btn-sm btn-light" id="btn-edit-patient" title="Edit Patient">
+                    <i class="mdi mdi-pencil"></i> Edit
+                </button>
+                <button class="btn btn-sm btn-info" id="btn-print-card" title="Print Hospital Card">
+                    <i class="mdi mdi-card-account-details"></i> Print Card
+                </button>
                 <button class="btn-expand-patient" id="btn-expand-patient" title="Show more details">
                     <span class="btn-expand-text">more biodata</span>
                     <i class="mdi mdi-chevron-down"></i>
@@ -3114,399 +4244,454 @@
         <!-- Workspace Content -->
         <div class="workspace-content" id="workspace-content">
             <div class="workspace-tabs">
-                <button class="workspace-tab active" data-tab="billing">
-                    <i class="mdi mdi-cash-register"></i>
-                    <span>Billing</span>
-                    <span class="workspace-tab-badge" id="billing-badge">0</span>
+                <button class="workspace-tab active" data-tab="profile">
+                    <i class="mdi mdi-account-card-details"></i>
+                    <span>Profile</span>
                 </button>
-                <button class="workspace-tab" data-tab="receipts">
-                    <i class="mdi mdi-receipt"></i>
-                    <span>Receipts</span>
+                <button class="workspace-tab" data-tab="booking">
+                    <i class="mdi mdi-calendar-plus"></i>
+                    <span>Book Service</span>
                 </button>
-                <button class="workspace-tab" data-tab="account">
-                    <i class="mdi mdi-wallet"></i>
-                    <span>Account</span>
+                <button class="workspace-tab" data-tab="walkin">
+                    <i class="mdi mdi-cart-plus"></i>
+                    <span>Walk-in Sales</span>
+                </button>
+                <button class="workspace-tab" data-tab="history">
+                    <i class="mdi mdi-history"></i>
+                    <span>Visit History</span>
+                </button>
+                <button class="workspace-tab" data-tab="requests">
+                    <i class="mdi mdi-clipboard-list"></i>
+                    <span>Service Requests</span>
                 </button>
             </div>
 
-            <div class="workspace-tab-content active" id="billing-tab">
-                <div class="billing-tab-header">
-                    <h4><i class="mdi mdi-cash-register"></i> Patient Billing Items</h4>
-                    <div class="billing-toolbar">
-                        <button class="btn btn-sm btn-secondary" id="refresh-billing-items">
-                            <i class="mdi mdi-refresh"></i> Refresh
-                        </button>
-                        <button class="btn btn-sm btn-success" id="process-payment-btn" disabled>
-                            <i class="mdi mdi-cash"></i> Process Payment
-                        </button>
-                    </div>
-                </div>
-
-                <div class="billing-items-container">
-                    <table class="table table-hover" id="billing-items-table">
-                        <thead>
-                            <tr>
-                                <th width="40"><input type="checkbox" id="select-all-billing-items"></th>
-                                <th>Item</th>
-                                <th>Category</th>
-                                <th>Price</th>
-                                <th width="80">Qty</th>
-                                <th width="80">Discount %</th>
-                                <th>HMO Coverage</th>
-                                <th>Total</th>
-                            </tr>
-                        </thead>
-                        <tbody id="billing-items-tbody">
-                            <tr>
-                                <td colspan="8" class="text-center text-muted py-5">
-                                    <i class="mdi mdi-information-outline" style="font-size: 3rem;"></i>
-                                    <p>No unpaid items for this patient</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Payment Summary Card (appears when items selected) -->
-                <div class="payment-summary-card" id="payment-summary-card" style="display: none;">
-                    <h5><i class="mdi mdi-calculator"></i> Payment Summary</h5>
-
-                    <!-- Account Balance Info -->
-                    <div class="account-balance-info" id="billing-account-balance" style="display: none;">
-                        <div class="balance-row">
-                            <span><i class="mdi mdi-wallet"></i> Account Balance:</span>
-                            <span id="billing-balance-amount" class="balance-amount">₦0.00</span>
-                        </div>
-                    </div>
-
-                    <div class="summary-details">
-                        <div class="summary-row">
-                            <span>Subtotal:</span>
-                            <span id="summary-subtotal">₦0.00</span>
-                        </div>
-                        <div class="summary-row">
-                            <span>Total Discount:</span>
-                            <span id="summary-discount">₦0.00</span>
-                        </div>
-                        <div class="summary-row total">
-                            <span>Total Payable:</span>
-                            <span id="summary-total">₦0.00</span>
-                        </div>
-                    </div>
-                    <div class="payment-method-section">
-                        <label><i class="mdi mdi-cash-multiple"></i> Payment Method</label>
-                        <select class="form-control" id="payment-method">
-                            <option value="CASH">Cash</option>
-                            <option value="POS">POS/Card</option>
-                            <option value="TRANSFER">Bank Transfer</option>
-                            <option value="MOBILE">Mobile Money</option>
-                            <option value="ACCOUNT" id="account-payment-option" style="display: none;">Pay from Account Balance</option>
-                        </select>
-                        <small class="text-muted" id="account-payment-note" style="display: none;">
-                            <i class="mdi mdi-information"></i> Payment will be deducted from account balance
-                        </small>
-                    </div>
-                    <div class="bank-selection-section" id="bank-selection-section" style="display: none;">
-                        <label><i class="mdi mdi-bank"></i> Select Bank</label>
-                        <select class="form-control" id="payment-bank">
-                            <option value="">-- Select Bank --</option>
-                        </select>
-                    </div>
-                    <div class="payment-reference-section">
-                        <label>Reference Number (Optional)</label>
-                        <input type="text" class="form-control" id="payment-reference" placeholder="Enter transaction reference">
-                    </div>
-                    <button class="btn btn-success btn-block btn-lg" id="confirm-payment-btn">
-                        <i class="mdi mdi-check-circle"></i> Confirm Payment
-                    </button>
-                </div>
-
-                <!-- Receipt Display (after payment) -->
-                <div class="receipt-display" id="receipt-display" style="display: none;">
-                    <div class="receipt-tabs">
-                        <button class="receipt-tab active" data-format="a4">A4 Receipt</button>
-                        <button class="receipt-tab" data-format="thermal">Thermal Receipt</button>
-                    </div>
-                    <div class="receipt-content" id="receipt-content-a4"></div>
-                    <div class="receipt-content" id="receipt-content-thermal" style="display: none;"></div>
-                    <div class="receipt-actions">
-                        <button class="btn btn-primary" id="print-a4-receipt">
-                            <i class="mdi mdi-printer"></i> Print A4
-                        </button>
-                        <button class="btn btn-primary" id="print-thermal-receipt">
-                            <i class="mdi mdi-printer"></i> Print Thermal
-                        </button>
-                        <button class="btn btn-secondary" id="close-receipt">
-                            <i class="mdi mdi-close"></i> Close
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="workspace-tab-content" id="receipts-tab">
-                <div class="receipts-tab-header">
-                    <h4><i class="mdi mdi-receipt"></i> Payment Receipts & Transactions</h4>
-                    <div class="receipts-toolbar">
-                        <button class="btn btn-sm btn-secondary" id="refresh-receipts">
-                            <i class="mdi mdi-refresh"></i> Refresh
-                        </button>
-                        <button class="btn btn-sm btn-primary" id="print-selected-receipts" disabled>
-                            <i class="mdi mdi-printer"></i> Print Selected
-                        </button>
-                        <button class="btn btn-sm btn-info" id="export-receipts">
-                            <i class="mdi mdi-download"></i> Export
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Filter Panel -->
-                <div class="transactions-filter-panel">
+            <!-- Profile Tab -->
+            <div class="workspace-tab-content active" id="profile-tab">
+                <div class="profile-tab-content p-4">
                     <div class="row">
-                        <div class="col-md-3">
-                            <label>From Date</label>
-                            <input type="date" class="form-control" id="receipts-from-date">
+                        <div class="col-md-6">
+                            <div class="card-modern">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="mb-0"><i class="mdi mdi-account"></i> Patient Information</h5>
+                                </div>
+                                <div class="card-body" id="profile-info-card">
+                                    <table class="table table-sm table-borderless">
+                                        <tbody id="profile-info-table"></tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <label>To Date</label>
-                            <input type="date" class="form-control" id="receipts-to-date">
-                        </div>
-                        <div class="col-md-3">
-                            <label>Payment Type</label>
-                            <select class="form-control" id="receipts-payment-type">
-                                <option value="">All Types</option>
-                                <option value="Cash">Cash</option>
-                                <option value="Card">Card</option>
-                                <option value="Transfer">Bank Transfer</option>
-                                <option value="Mobile">Mobile Money</option>
-                                <option value="Account">Account Balance</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label>&nbsp;</label>
-                            <button class="btn btn-primary btn-block" id="filter-receipts">
-                                <i class="mdi mdi-filter"></i> Filter
-                            </button>
+                        <div class="col-md-6">
+                            <div class="card-modern mb-3">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0"><i class="mdi mdi-hospital-building"></i> HMO / Insurance</h5>
+                                </div>
+                                <div class="card-body" id="profile-hmo-card">
+                                    <table class="table table-sm table-borderless">
+                                        <tbody id="profile-hmo-table"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="card-modern">
+                                <div class="card-header bg-info text-white">
+                                    <h5 class="mb-0"><i class="mdi mdi-calendar-clock"></i> Current Queue</h5>
+                                </div>
+                                <div class="card-body" id="profile-queue-card">
+                                    <div id="current-queue-entries">
+                                        <p class="text-muted">No active queue entries</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Summary Statistics -->
-                <div class="transactions-summary" id="receipts-summary" style="display: none;">
-                    <div class="stat-card">
-                        <div class="stat-value" id="receipts-total-count">0</div>
-                        <div class="stat-label">Total Transactions</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="receipts-total-amount">₦0.00</div>
-                        <div class="stat-label">Total Amount</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="receipts-total-discounts">₦0.00</div>
-                        <div class="stat-label">Total Discounts</div>
-                    </div>
-                </div>
-
-                <div class="receipts-container">
-                    <table class="table table-hover" id="receipts-table">
-                        <thead>
-                            <tr>
-                                <th width="40"><input type="checkbox" id="select-all-receipts"></th>
-                                <th>Receipt No</th>
-                                <th>Date</th>
-                                <th>Items</th>
-                                <th>Amount</th>
-                                <th>Discount</th>
-                                <th>Method</th>
-                                <th>Cashier</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="receipts-tbody">
-                            <tr>
-                                <td colspan="9" class="text-center text-muted py-5">
-                                    <i class="mdi mdi-receipt" style="font-size: 3rem;"></i>
-                                    <p>No receipts found for this patient</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
                 </div>
             </div>
 
-            <div class="workspace-tab-content" id="account-tab">
-                <!-- Hero Balance Section -->
-                <div class="account-hero-section" id="account-hero-section">
-                    <div class="account-hero-balance" id="account-hero-balance">
-                        <div class="hero-balance-icon">
-                            <i class="mdi mdi-wallet"></i>
-                        </div>
-                        <div class="hero-balance-content">
-                            <span class="hero-balance-label">Current Balance</span>
-                            <span class="hero-balance-amount" id="hero-balance-amount">₦0.00</span>
-                            <span class="hero-balance-status" id="hero-balance-status">Balanced</span>
-                        </div>
-                        <div class="hero-balance-actions">
-                            <div class="action-btn-group">
-                                <button class="btn btn-light btn-sm" id="quick-deposit-btn" title="Make Deposit">
-                                    <i class="mdi mdi-plus-circle text-success"></i> Deposit
-                                </button>
-                                <button class="btn btn-outline-light btn-sm" id="quick-withdraw-btn" title="Withdraw">
-                                    <i class="mdi mdi-minus-circle text-danger"></i> Withdraw
-                                </button>
-                                <button class="btn btn-outline-light btn-sm" id="quick-adjust-btn" title="Adjustment">
-                                    <i class="mdi mdi-swap-horizontal text-info"></i> Adjust
-                                </button>
-                            </div>
-                            <div class="action-btn-group mt-2">
-                                <button class="btn btn-outline-light btn-sm" id="print-statement-btn" title="Print Statement">
-                                    <i class="mdi mdi-printer"></i>
-                                </button>
-                                <button class="btn btn-outline-light btn-sm" id="refresh-account-data" title="Refresh">
-                                    <i class="mdi mdi-refresh"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Account Stats Dashboard -->
-                    <div class="account-stats-grid">
-                        <div class="account-stat-card deposits">
-                            <div class="stat-icon"><i class="mdi mdi-arrow-down-bold-circle"></i></div>
-                            <div class="stat-info">
-                                <span class="stat-value" id="total-deposits-stat">₦0</span>
-                                <span class="stat-label">Total Deposits</span>
-                            </div>
-                        </div>
-                        <div class="account-stat-card withdrawals">
-                            <div class="stat-icon"><i class="mdi mdi-arrow-up-bold-circle"></i></div>
-                            <div class="stat-info">
-                                <span class="stat-value" id="total-withdrawals-stat">₦0</span>
-                                <span class="stat-label">Total Withdrawals</span>
-                            </div>
-                        </div>
-                        <div class="account-stat-card pending">
-                            <div class="stat-icon"><i class="mdi mdi-clock-outline"></i></div>
-                            <div class="stat-info">
-                                <span class="stat-value" id="pending-bills-stat">₦0</span>
-                                <span class="stat-label">Pending Bills</span>
-                            </div>
-                        </div>
-                        <div class="account-stat-card transactions">
-                            <div class="stat-icon"><i class="mdi mdi-swap-horizontal"></i></div>
-                            <div class="stat-info">
-                                <span class="stat-value" id="tx-count-stat">0</span>
-                                <span class="stat-label">Transactions</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- No Account State -->
-                <div class="account-no-account-state" id="no-account-state" style="display: none;">
-                    <div class="no-account-content">
-                        <div class="no-account-icon">
-                            <i class="mdi mdi-wallet-outline"></i>
-                        </div>
-                        <h4>No Account Found</h4>
-                        <p>This patient doesn't have an account yet. Create one to start tracking deposits and payments.</p>
-                        <button class="btn btn-primary btn-lg" id="create-account-btn">
-                            <i class="mdi mdi-plus-circle"></i> Create Account
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Account Transaction Panel (Deposit/Withdraw/Adjust) -->
-                <div class="account-transaction-panel" id="account-transaction-panel" style="display: none;">
-                    <div class="transaction-panel-header" id="transaction-panel-header">
-                        <h5><i class="mdi mdi-cash-plus" id="transaction-panel-icon"></i> <span id="transaction-panel-title">Make Deposit</span></h5>
-                        <button class="btn btn-sm btn-link" id="close-transaction-panel">
-                            <i class="mdi mdi-close"></i>
-                        </button>
-                    </div>
-                    <div class="transaction-panel-body">
-                        <form id="account-transaction-form" class="transaction-form-inline">
-                            <input type="hidden" id="transaction-type" value="deposit">
-                            <div class="form-group">
-                                <label>Amount</label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">₦</span>
-                                    </div>
-                                    <input type="number" step="0.01" class="form-control form-control-lg" id="transaction-amount" placeholder="0.00" required>
+            <!-- Book Service Tab -->
+            <div class="workspace-tab-content" id="booking-tab">
+                <div class="booking-tab-content p-4">
+                    <div class="row">
+                        <div class="col-md-7">
+                            <div class="card-modern">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="mdi mdi-calendar-plus"></i> Book Consultation</h5>
                                 </div>
-                                <small class="form-text text-muted" id="transaction-amount-help">Enter amount to deposit</small>
+                                <div class="card-body">
+                                    <form id="booking-form">
+                                        <div class="form-group mb-3">
+                                            <label><i class="mdi mdi-medical-bag"></i> Service <span class="text-danger">*</span></label>
+                                            <select class="form-control" id="booking-service" required>
+                                                <option value="">-- Select Service --</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group mb-3">
+                                            <label><i class="mdi mdi-hospital-building"></i> Clinic <span class="text-danger">*</span></label>
+                                            <select class="form-control" id="booking-clinic" required>
+                                                <option value="">-- Select Clinic --</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group mb-3">
+                                            <label><i class="mdi mdi-doctor"></i> Doctor</label>
+                                            <select class="form-control" id="booking-doctor">
+                                                <option value="">Any Available Doctor</option>
+                                            </select>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary btn-lg w-100" id="btn-book-consultation">
+                                            <i class="mdi mdi-send"></i> Send to Queue
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
-                            <div class="form-group" id="transaction-payment-method-group">
-                                <label>Payment Method</label>
-                                <select class="form-control" id="transaction-payment-method">
-                                    <option value="CASH">Cash</option>
-                                    <option value="POS">POS/Card</option>
-                                    <option value="TRANSFER">Bank Transfer</option>
-                                    <option value="MOBILE">Mobile Money</option>
-                                </select>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="card-modern" id="tariff-preview-card" style="display: none;">
+                                <div class="card-header bg-warning">
+                                    <h5 class="mb-0"><i class="mdi mdi-calculator"></i> Tariff Preview</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-sm">
+                                        <tbody>
+                                            <tr>
+                                                <td>Service Price:</td>
+                                                <td class="text-right"><strong id="tariff-base-price">₦0</strong></td>
+                                            </tr>
+                                            <tr id="tariff-hmo-row" style="display: none;">
+                                                <td>HMO Coverage (<span id="tariff-coverage-mode"></span>):</td>
+                                                <td class="text-right text-success"><strong id="tariff-claims-amount">₦0</strong></td>
+                                            </tr>
+                                            <tr class="table-primary">
+                                                <td><strong>Patient Pays:</strong></td>
+                                                <td class="text-right"><strong id="tariff-payable-amount">₦0</strong></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <div class="alert alert-info" id="tariff-validation-alert" style="display: none;">
+                                        <i class="mdi mdi-information"></i> <span id="tariff-validation-message"></span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="form-group" id="transaction-bank-group" style="display: none;">
-                                <label>Select Bank</label>
-                                <select class="form-control" id="transaction-bank">
-                                    <option value="">-- Select Bank --</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Description <small class="text-muted">(Required for adjustments)</small></label>
-                                <input type="text" class="form-control" id="transaction-description" placeholder="e.g., Cash deposit, Refund, Correction, etc.">
-                            </div>
-                            <div class="transaction-actions">
-                                <button type="submit" class="btn btn-block" id="transaction-submit-btn">
-                                    <i class="mdi mdi-check"></i> <span id="transaction-submit-text">Confirm Deposit</span>
-                                </button>
-                            </div>
-                        </form>
-
-                        <!-- Balance Preview -->
-                        <div class="balance-preview" id="balance-preview">
-                            <div class="balance-preview-row">
-                                <span>Current Balance:</span>
-                                <span id="preview-current-balance">₦0.00</span>
-                            </div>
-                            <div class="balance-preview-row">
-                                <span id="preview-change-label">After Deposit:</span>
-                                <span id="preview-new-balance">₦0.00</span>
+                            <div class="card-modern mt-3">
+                                <div class="card-header bg-secondary text-white">
+                                    <h5 class="mb-0"><i class="mdi mdi-queue-first-in-last-out"></i> Current Queue</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="booking-current-queue">
+                                        <p class="text-muted">No active queue entries</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Transaction History Section -->
-                <div class="account-transactions-section" id="account-transactions-section">
-                    <div class="transactions-section-header">
-                        <h5><i class="mdi mdi-history"></i> Account Transactions</h5>
-                        <div class="transactions-filters">
-                            <div class="filter-group">
-                                <input type="date" class="form-control form-control-sm" id="account-tx-from-date">
+            <!-- Walk-in Sales Tab -->
+            <div class="workspace-tab-content" id="walkin-tab">
+                <div class="walkin-tab-content p-4">
+                    <div class="row">
+                        <div class="col-md-7">
+                            <div class="card-modern">
+                                <div class="card-header">
+                                    <ul class="nav nav-pills card-header-pills" id="walkin-subtabs">
+                                        <li class="nav-item">
+                                            <a class="nav-link active" href="#walkin-lab" data-toggle="pill" data-type="lab">
+                                                <i class="mdi mdi-test-tube"></i> Lab
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="#walkin-imaging" data-toggle="pill" data-type="imaging">
+                                                <i class="mdi mdi-x-ray"></i> Imaging
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="#walkin-product" data-toggle="pill" data-type="product">
+                                                <i class="mdi mdi-pill"></i> Products
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-group mb-3">
+                                        <input type="text" class="form-control" id="walkin-search"
+                                            placeholder="ðŸ” Search services/products...">
+                                    </div>
+                                    <div class="walkin-search-results" id="walkin-search-results" style="max-height: 300px; overflow-y: auto;">
+                                        <p class="text-muted text-center">Type to search...</p>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="filter-group">
-                                <input type="date" class="form-control form-control-sm" id="account-tx-to-date">
+                        </div>
+                        <div class="col-md-5">
+                            <div class="card-modern">
+                                <!-- Cart Sub-Tabs -->
+                                <div class="card-header p-0">
+                                    <ul class="nav nav-tabs nav-fill" id="walkin-cart-tabs">
+                                        <li class="nav-item">
+                                            <a class="nav-link active" data-toggle="tab" href="#walkin-cart-pane">
+                                                <i class="mdi mdi-cart"></i> Cart
+                                                <span class="badge badge-primary ml-1" id="cart-count-badge">0</span>
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" data-toggle="tab" href="#walkin-recent-pane">
+                                                <i class="mdi mdi-clock-outline"></i> Recent (24h)
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="tab-content">
+                                    <!-- Cart Tab Pane -->
+                                    <div class="tab-pane fade show active" id="walkin-cart-pane">
+                                        <div class="card-body p-0" style="max-height: 300px; overflow-y: auto;">
+                                            <table class="table table-sm mb-0" id="walkin-cart-table">
+                                                <thead class="bg-light">
+                                                    <tr>
+                                                        <th>Item</th>
+                                                        <th class="text-right">Price</th>
+                                                        <th class="text-right text-success">HMO Covers</th>
+                                                        <th class="text-right text-primary">You Pay</th>
+                                                        <th></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="walkin-cart-body">
+                                                    <tr id="walkin-cart-empty">
+                                                        <td colspan="5" class="text-center text-muted py-4">
+                                                            <i class="mdi mdi-cart-outline" style="font-size: 2rem;"></i>
+                                                            <p class="mb-0 mt-2">No items selected</p>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <!-- Payment Summary -->
+                                        <div class="border-top">
+                                            <table class="table table-sm mb-0" id="walkin-summary-table">
+                                                <tbody>
+                                                    <tr class="bg-light">
+                                                        <td colspan="2"><strong>Subtotal (Original Prices):</strong></td>
+                                                        <td class="text-right" colspan="3"><strong id="walkin-subtotal">₦0</strong></td>
+                                                    </tr>
+                                                    <tr id="walkin-hmo-row" style="display: none;" class="bg-success-light">
+                                                        <td colspan="2">
+                                                            <span class="text-success">
+                                                                <i class="mdi mdi-shield-check"></i> <strong>Total HMO Coverage</strong>
+                                                            </span>
+                                                            <small class="d-block" id="walkin-hmo-name"></small>
+                                                        </td>
+                                                        <td class="text-right text-success" colspan="3"><strong id="walkin-hmo-amount">-₦0</strong></td>
+                                                    </tr>
+                                                    <tr class="table-primary">
+                                                        <td colspan="2"><strong style="font-size: 1.1rem;">Patient Pays:</strong></td>
+                                                        <td class="text-right" colspan="3"><strong style="font-size: 1.1rem;" id="walkin-cart-total">₦0</strong></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                            <div class="p-3">
+                                                <button class="btn btn-success btn-lg w-100" id="btn-submit-walkin" disabled>
+                                                    <i class="mdi mdi-send"></i> Create Request (Awaiting Billing)
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Recent Requests Tab Pane -->
+                                    <div class="tab-pane fade" id="walkin-recent-pane">
+                                        <div class="card-body p-2" style="max-height: 400px; overflow-y: auto;">
+                                            <div class="alert alert-info py-2 px-3 mb-2">
+                                                <small><i class="mdi mdi-information"></i> Requests created in the last 24 hours for this patient</small>
+                                            </div>
+                                            <div id="recent-requests-container">
+                                                <div class="text-center text-muted py-4">
+                                                    <i class="mdi mdi-clock-outline" style="font-size: 2rem;"></i>
+                                                    <p class="mb-0 mt-2">No recent requests</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="filter-group">
-                                <select class="form-control form-control-sm" id="account-tx-type-filter">
-                                    <option value="">All Types</option>
-                                    <option value="ACC_DEPOSIT">Deposits</option>
-                                    <option value="ACC_WITHDRAW">Withdrawals/Payments</option>
-                                    <option value="ACC_ADJUSTMENT">Adjustments</option>
-                                </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visit History Tab -->
+            <div class="workspace-tab-content" id="history-tab">
+                <div class="history-tab-content p-4">
+                    <div class="card-modern">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="mdi mdi-history"></i> Visit History</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-hover" id="visit-history-table" style="width: 100%">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Date</th>
+                                        <th>Doctor</th>
+                                        <th>Service</th>
+                                        <th>Reason</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Service Requests Tab -->
+            <div class="workspace-tab-content" id="requests-tab">
+                <div class="requests-tab-content p-4">
+                    <!-- Summary Stats -->
+                    <div class="row mb-4">
+                        <div class="col-md-3 col-6">
+                            <div class="stat-card-modern">
+                                <div class="d-flex align-items-center">
+                                    <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                        <i class="mdi mdi-clipboard-list text-white"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="stat-value" id="req-total-requests">0</div>
+                                        <div class="stat-label">Total Requests</div>
+                                    </div>
+                                </div>
                             </div>
-                            <button class="btn btn-sm btn-primary" id="filter-account-tx">
-                                <i class="mdi mdi-filter"></i> Filter
-                            </button>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="stat-card-modern">
+                                <div class="d-flex align-items-center">
+                                    <div class="stat-icon" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                                        <i class="mdi mdi-shield-check text-white"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="stat-value" id="req-hmo-covered">₦0</div>
+                                        <div class="stat-label">HMO Covered</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="stat-card-modern">
+                                <div class="d-flex align-items-center">
+                                    <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                                        <i class="mdi mdi-cash text-white"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="stat-value" id="req-patient-payable">₦0</div>
+                                        <div class="stat-label">Patient Payable</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="stat-card-modern">
+                                <div class="d-flex align-items-center">
+                                    <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                                        <i class="mdi mdi-check-circle text-white"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="stat-value" id="req-completed-count">0</div>
+                                        <div class="stat-label">Completed</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Transaction Timeline -->
-                    <div class="transaction-timeline" id="transaction-timeline">
-                        <div class="timeline-empty-state">
-                            <i class="mdi mdi-swap-horizontal"></i>
-                            <p>No account transactions yet</p>
-                            <small>Deposits and withdrawals will appear here</small>
+                    <!-- Filters -->
+                    <div class="card-modern mb-4">
+                        <div class="card-header py-2">
+                            <h6 class="mb-0"><i class="mdi mdi-filter"></i> Filters</h6>
+                        </div>
+                        <div class="card-body py-3">
+                            <form id="service-requests-filter-form">
+                                <div class="row">
+                                    <div class="form-group col-md-2">
+                                        <label class="small mb-1">Date From</label>
+                                        <input type="date" class="form-control form-control-sm" id="req-date-from">
+                                    </div>
+                                    <div class="form-group col-md-2">
+                                        <label class="small mb-1">Date To</label>
+                                        <input type="date" class="form-control form-control-sm" id="req-date-to">
+                                    </div>
+                                    <div class="form-group col-md-2">
+                                        <label class="small mb-1">Request Type</label>
+                                        <select class="form-control form-control-sm" id="req-type-filter">
+                                            <option value="">All Types</option>
+                                            <option value="consultation">Consultation</option>
+                                            <option value="lab">Lab Test</option>
+                                            <option value="imaging">Imaging</option>
+                                            <option value="product">Product/Drug</option>
+                                            <option value="procedure">Procedure</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group col-md-2">
+                                        <label class="small mb-1">Billing Status</label>
+                                        <select class="form-control form-control-sm" id="req-billing-filter">
+                                            <option value="">All Status</option>
+                                            <option value="pending">Pending Billing</option>
+                                            <option value="billed">Billed</option>
+                                            <option value="paid">Paid</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group col-md-2">
+                                        <label class="small mb-1">Delivery Status</label>
+                                        <select class="form-control form-control-sm" id="req-delivery-filter">
+                                            <option value="">All Status</option>
+                                            <option value="pending">Pending</option>
+                                            <option value="in_progress">In Progress</option>
+                                            <option value="completed">Completed</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group col-md-2 d-flex align-items-end">
+                                        <button type="button" class="btn btn-sm btn-secondary mr-2" id="clear-req-filters">
+                                            <i class="mdi mdi-refresh"></i>
+                                        </button>
+                                        <button type="submit" class="btn btn-sm btn-primary">
+                                            <i class="mdi mdi-filter"></i> Apply
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Requests DataTable -->
+                    <div class="card-modern">
+                        <div class="card-header d-flex justify-content-between align-items-center py-2">
+                            <h6 class="mb-0"><i class="mdi mdi-clipboard-list"></i> Service Requests</h6>
+                            <div>
+                                <button class="btn btn-sm btn-success" id="export-requests-excel">
+                                    <i class="mdi mdi-file-excel"></i> Excel
+                                </button>
+                                <button class="btn btn-sm btn-danger" id="export-requests-pdf">
+                                    <i class="mdi mdi-file-pdf"></i> PDF
+                                </button>
+                                <button class="btn btn-sm btn-info" id="print-requests">
+                                    <i class="mdi mdi-printer"></i> Print
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover table-sm" id="service-requests-datatable" style="width: 100%">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Request #</th>
+                                            <th>Type</th>
+                                            <th>Service/Item</th>
+                                            <th class="text-right">Price</th>
+                                            <th class="text-right">HMO Covers</th>
+                                            <th class="text-right">Payable</th>
+                                            <th>Billing</th>
+                                            <th>Delivery</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -3723,44 +4908,1299 @@
     </div>
 </div>
 
+<!-- Patient Form Modal (Register/Edit) -->
+<div class="modal fade" id="patientFormModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header" id="patient-form-header">
+                <h5 class="modal-title" id="patient-form-title"><i class="mdi mdi-account-plus"></i> New Patient Registration</h5>
+                <button type="button" class="close text-white"  data-bs-dismiss="modal">&times;</button>
+            </div>
+            <form id="patient-form" novalidate>
+                <input type="hidden" id="patient-form-mode" value="create">
+                <input type="hidden" id="patient-form-id" value="">
+
+                <div class="modal-body p-0">
+                    <!-- Progress Stepper -->
+                    <div class="form-stepper">
+                        <div class="stepper-item active" data-step="1">
+                            <div class="stepper-icon"><i class="mdi mdi-account"></i></div>
+                            <div class="stepper-label">Basic Info</div>
+                        </div>
+                        <div class="stepper-line"></div>
+                        <div class="stepper-item" data-step="2">
+                            <div class="stepper-icon"><i class="mdi mdi-clipboard-pulse"></i></div>
+                            <div class="stepper-label">Medical</div>
+                        </div>
+                        <div class="stepper-line"></div>
+                        <div class="stepper-item" data-step="3">
+                            <div class="stepper-icon"><i class="mdi mdi-account-supervisor"></i></div>
+                            <div class="stepper-label">Next of Kin</div>
+                        </div>
+                        <div class="stepper-line"></div>
+                        <div class="stepper-item" data-step="4">
+                            <div class="stepper-icon"><i class="mdi mdi-shield-account"></i></div>
+                            <div class="stepper-label">Insurance</div>
+                        </div>
+                    </div>
+
+                    <div class="form-steps-container">
+                        <!-- Step 1: Basic Information -->
+                        <div class="form-step active" data-step="1">
+                            <div class="step-header">
+                                <h6><i class="mdi mdi-account"></i> Basic Information</h6>
+                                <p class="text-muted mb-0">Personal details and contact information</p>
+                            </div>
+                            <div class="step-content">
+                                <div class="row align-items-end">
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <div class="file-no-label-row">
+                                                <label class="form-label mb-0">File Number <span class="text-danger">*</span></label>
+                                                <span class="file-no-next-badge" id="pf-file-no-hint" title="Next auto-generated number">
+                                                    Next: <strong id="pf-next-file-no">--</strong>
+                                                </span>
+                                            </div>
+                                            <div class="file-no-btn-group">
+                                                <button type="button" class="file-no-mode-btn active" data-mode="auto">
+                                                    <i class="mdi mdi-autorenew"></i> Auto
+                                                </button>
+                                                <button type="button" class="file-no-mode-btn" data-mode="manual">
+                                                    <i class="mdi mdi-pencil"></i> Manual
+                                                </button>
+                                            </div>
+                                            <input type="text" class="form-control file-no-input" id="pf-file-no" readonly placeholder="Auto-generated">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1">Surname <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="pf-surname" required data-validate="required|min:2" placeholder="Enter surname">
+                                            <div class="invalid-feedback"></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1">First Name <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="pf-firstname" required data-validate="required|min:2" placeholder="Enter first name">
+                                            <div class="invalid-feedback"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1">Other Names</label>
+                                            <input type="text" class="form-control" id="pf-othername" placeholder="Enter other names">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1">Gender <span class="text-danger">*</span></label>
+                                            <select class="form-control" id="pf-gender" required data-validate="required">
+                                                <option value="">Select gender</option>
+                                                <option value="Male">Male</option>
+                                                <option value="Female">Female</option>
+                                                <option value="Others">Others</option>
+                                            </select>
+                                            <div class="invalid-feedback"></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1">Date of Birth <span class="text-danger">*</span></label>
+                                            <input type="date" class="form-control" id="pf-dob" required data-validate="required">
+                                            <div class="invalid-feedback"></div>
+                                            <small class="form-text" id="pf-age-display"></small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1">Phone Number</label>
+                                            <input type="tel" class="form-control" id="pf-phone" data-validate="phone" placeholder="Enter phone number">
+                                            <div class="invalid-feedback"></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1">Email Address</label>
+                                            <input type="email" class="form-control" id="pf-email" data-validate="email" placeholder="Enter email address">
+                                            <div class="invalid-feedback"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1">Residential Address</label>
+                                            <textarea class="form-control" id="pf-address" rows="2" placeholder="Enter residential address"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1"><i class="mdi mdi-camera text-primary"></i> Passport Photo</label>
+                                            <input type="file" class="form-control" id="pf-passport" accept="image/*">
+                                            <small class="form-text text-muted">Upload patient photo (JPG, PNG)</small>
+                                            <!-- Existing passport preview -->
+                                            <div class="passport-preview-container mt-2" style="display: none;">
+                                                <div class="d-flex align-items-center gap-2 p-2 border rounded bg-light">
+                                                    <img src="" alt="Current Photo" id="passport-preview-img" style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 2px solid #007bff;">
+                                                    <div class="flex-grow-1">
+                                                        <small class="text-success d-block"><i class="mdi mdi-check-circle"></i> Current Photo</small>
+                                                        <small class="text-muted">Select new file to replace</small>
+                                                    </div>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" id="pf-clear-passport" title="Remove photo">
+                                                        <i class="mdi mdi-close"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <!-- New file preview -->
+                                            <div class="passport-new-preview mt-2" id="pf-passport-new-preview" style="display: none;">
+                                                <div class="d-flex align-items-center gap-2 p-2 border rounded bg-success-subtle">
+                                                    <img src="" alt="New Photo" id="passport-new-img" style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 2px solid #28a745;">
+                                                    <div class="flex-grow-1">
+                                                        <small class="text-success d-block"><i class="mdi mdi-upload"></i> New Photo Selected</small>
+                                                        <small class="text-muted" id="passport-new-name"></small>
+                                                    </div>
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="pf-cancel-passport" title="Cancel">
+                                                        <i class="mdi mdi-undo"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1"><i class="mdi mdi-file-document text-info"></i> Old Records</label>
+                                            <input type="file" class="form-control" id="pf-old-records" accept=".pdf,.doc,.docx,.jpg,.png">
+                                            <small class="form-text text-muted">Upload previous medical records (PDF, DOC, images)</small>
+                                            <!-- Existing old records preview -->
+                                            <div class="old-records-preview-container mt-2" style="display: none;">
+                                                <div class="d-flex align-items-center gap-2 p-2 border rounded bg-light">
+                                                    <div class="file-icon-preview" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; background: #e9ecef; border-radius: 6px;">
+                                                        <img src="" alt="Record" id="old-records-preview-img" style="max-width: 100%; max-height: 100%; border-radius: 4px; display: none;">
+                                                        <i class="mdi mdi-file-document text-info" id="old-records-preview-icon" style="font-size: 28px; display: none;"></i>
+                                                    </div>
+                                                    <div class="flex-grow-1">
+                                                        <small class="text-success d-block"><i class="mdi mdi-check-circle"></i> Current Record</small>
+                                                        <small class="text-muted text-truncate d-block" id="old-records-preview-name" style="max-width: 150px;"></small>
+                                                    </div>
+                                                    <a href="#" class="btn btn-sm btn-outline-info" id="pf-view-old-records" title="View" target="_blank">
+                                                        <i class="mdi mdi-eye"></i>
+                                                    </a>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" id="pf-clear-old-records" title="Remove">
+                                                        <i class="mdi mdi-close"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <!-- New file preview -->
+                                            <div class="old-records-new-preview mt-2" id="pf-old-records-new-preview" style="display: none;">
+                                                <div class="d-flex align-items-center gap-2 p-2 border rounded bg-success-subtle">
+                                                    <div class="file-icon-preview" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; background: #d4edda; border-radius: 6px;">
+                                                        <i class="mdi mdi-file-upload text-success" style="font-size: 28px;"></i>
+                                                    </div>
+                                                    <div class="flex-grow-1">
+                                                        <small class="text-success d-block"><i class="mdi mdi-upload"></i> New File Selected</small>
+                                                        <small class="text-muted text-truncate d-block" id="old-records-new-name" style="max-width: 150px;"></small>
+                                                    </div>
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="pf-cancel-old-records" title="Cancel">
+                                                        <i class="mdi mdi-undo"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Medical Information -->
+                        <div class="form-step" data-step="2">
+                            <div class="step-header">
+                                <h6><i class="mdi mdi-clipboard-pulse"></i> Medical Information</h6>
+                                <p class="text-muted mb-0">Health and demographic details</p>
+                            </div>
+                            <div class="step-content">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1">Blood Group</label>
+                                            <select class="form-control" id="pf-blood-group">
+                                                <option value="">Select blood group</option>
+                                                <option value="A+">A+</option>
+                                                <option value="A-">A-</option>
+                                                <option value="B+">B+</option>
+                                                <option value="B-">B-</option>
+                                                <option value="AB+">AB+</option>
+                                                <option value="AB-">AB-</option>
+                                                <option value="O+">O+</option>
+                                                <option value="O-">O-</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1">Genotype</label>
+                                            <select class="form-control" id="pf-genotype">
+                                                <option value="">Select genotype</option>
+                                                <option value="AA">AA</option>
+                                                <option value="AS">AS</option>
+                                                <option value="AC">AC</option>
+                                                <option value="SS">SS</option>
+                                                <option value="SC">SC</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1">Disability Status</label>
+                                            <select class="form-control" id="pf-disability">
+                                                <option value="0">No Disability</option>
+                                                <option value="1">Has Disability</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1">Nationality</label>
+                                            <input type="text" class="form-control" id="pf-nationality" value="Nigerian" placeholder="Enter nationality">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1">Ethnicity</label>
+                                            <input type="text" class="form-control" id="pf-ethnicity" placeholder="Enter ethnicity">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1"><i class="mdi mdi-alert-circle text-warning"></i> Known Allergies</label>
+                                            <div class="allergies-input-container">
+                                                <div class="allergies-tags" id="pf-allergies-tags"></div>
+                                                <input type="text" class="form-control" id="pf-allergy-input" placeholder="Type allergy and press Enter">
+                                            </div>
+                                            <input type="hidden" id="pf-allergies" value="[]">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1">Medical History</label>
+                                            <textarea class="form-control" id="pf-medical-history" rows="3" placeholder="Enter relevant medical history"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1">Additional Notes</label>
+                                            <textarea class="form-control" id="pf-misc" rows="2" placeholder="Any additional notes"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Next of Kin -->
+                        <div class="form-step" data-step="3">
+                            <div class="step-header">
+                                <h6><i class="mdi mdi-account-supervisor"></i> Next of Kin / Emergency Contact</h6>
+                                <p class="text-muted mb-0">Emergency contact information</p>
+                            </div>
+                            <div class="step-content">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1">Next of Kin Name</label>
+                                            <input type="text" class="form-control" id="pf-nok-name" placeholder="Enter next of kin name">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1">Next of Kin Phone</label>
+                                            <input type="tel" class="form-control" id="pf-nok-phone" placeholder="Enter phone number">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1">Next of Kin Address</label>
+                                            <textarea class="form-control" id="pf-nok-address" rows="2" placeholder="Enter address"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="alert alert-info mt-3">
+                                    <i class="mdi mdi-information"></i>
+                                    <strong>Tip:</strong> Next of kin information is optional but recommended for emergency situations.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Insurance Information -->
+                        <div class="form-step" data-step="4">
+                            <div class="step-header">
+                                <h6><i class="mdi mdi-shield-account"></i> Insurance / HMO Information</h6>
+                                <p class="text-muted mb-0">Health insurance and payment details</p>
+                            </div>
+                            <div class="step-content">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1">HMO Provider</label>
+                                            <select class="form-control" id="pf-hmo">
+                                                <!-- Options populated by JS, HMO ID 1 (Private) is default -->
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6" id="pf-hmo-no-container" style="display: none;">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1">HMO Enrollment Number</label>
+                                            <input type="text" class="form-control" id="pf-hmo-no" placeholder="Enter enrollment number">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row" id="pf-hmo-no-container-alt" style="display: none;">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1">HMO Plan</label>
+                                            <input type="text" class="form-control" id="pf-hmo-plan" placeholder="Enter HMO plan">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1">Company/Organization</label>
+                                            <input type="text" class="form-control" id="pf-company" placeholder="Enter company name">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Comprehensive Summary Card -->
+                                <div class="registration-summary mt-4" id="registration-summary">
+                                    <h6><i class="mdi mdi-clipboard-check"></i> Registration Summary</h6>
+
+                                    <!-- Basic Information -->
+                                    <div class="summary-section">
+                                        <h6 class="summary-section-title"><i class="mdi mdi-account"></i> Basic Information</h6>
+                                        <div class="summary-grid">
+                                            <div class="summary-item">
+                                                <span class="summary-label">File No:</span>
+                                                <span class="summary-value" id="summary-file-no">-</span>
+                                            </div>
+                                            <div class="summary-item">
+                                                <span class="summary-label">Name:</span>
+                                                <span class="summary-value" id="summary-name">-</span>
+                                            </div>
+                                            <div class="summary-item">
+                                                <span class="summary-label">Gender:</span>
+                                                <span class="summary-value" id="summary-gender">-</span>
+                                            </div>
+                                            <div class="summary-item">
+                                                <span class="summary-label">Date of Birth:</span>
+                                                <span class="summary-value" id="summary-dob">-</span>
+                                            </div>
+                                            <div class="summary-item">
+                                                <span class="summary-label">Age:</span>
+                                                <span class="summary-value" id="summary-age">-</span>
+                                            </div>
+                                            <div class="summary-item">
+                                                <span class="summary-label">Phone:</span>
+                                                <span class="summary-value" id="summary-phone">-</span>
+                                            </div>
+                                            <div class="summary-item">
+                                                <span class="summary-label">Email:</span>
+                                                <span class="summary-value" id="summary-email">-</span>
+                                            </div>
+                                            <div class="summary-item full-width">
+                                                <span class="summary-label">Address:</span>
+                                                <span class="summary-value" id="summary-address">-</span>
+                                            </div>
+                                            <div class="summary-item">
+                                                <span class="summary-label">Passport:</span>
+                                                <span class="summary-value" id="summary-passport">Not uploaded</span>
+                                            </div>
+                                            <div class="summary-item">
+                                                <span class="summary-label">Old Records:</span>
+                                                <span class="summary-value" id="summary-old-records">Not uploaded</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Medical Information -->
+                                    <div class="summary-section">
+                                        <h6 class="summary-section-title"><i class="mdi mdi-clipboard-pulse"></i> Medical Information</h6>
+                                        <div class="summary-grid">
+                                            <div class="summary-item">
+                                                <span class="summary-label">Blood Group:</span>
+                                                <span class="summary-value" id="summary-blood-group">-</span>
+                                            </div>
+                                            <div class="summary-item">
+                                                <span class="summary-label">Genotype:</span>
+                                                <span class="summary-value" id="summary-genotype">-</span>
+                                            </div>
+                                            <div class="summary-item">
+                                                <span class="summary-label">Disability:</span>
+                                                <span class="summary-value" id="summary-disability">-</span>
+                                            </div>
+                                            <div class="summary-item">
+                                                <span class="summary-label">Nationality:</span>
+                                                <span class="summary-value" id="summary-nationality">-</span>
+                                            </div>
+                                            <div class="summary-item">
+                                                <span class="summary-label">Ethnicity:</span>
+                                                <span class="summary-value" id="summary-ethnicity">-</span>
+                                            </div>
+                                            <div class="summary-item full-width">
+                                                <span class="summary-label">Allergies:</span>
+                                                <span class="summary-value" id="summary-allergies">None</span>
+                                            </div>
+                                            <div class="summary-item full-width">
+                                                <span class="summary-label">Medical History:</span>
+                                                <span class="summary-value" id="summary-medical-history">-</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Next of Kin -->
+                                    <div class="summary-section">
+                                        <h6 class="summary-section-title"><i class="mdi mdi-account-supervisor"></i> Next of Kin</h6>
+                                        <div class="summary-grid">
+                                            <div class="summary-item">
+                                                <span class="summary-label">Name:</span>
+                                                <span class="summary-value" id="summary-nok-name">-</span>
+                                            </div>
+                                            <div class="summary-item">
+                                                <span class="summary-label">Phone:</span>
+                                                <span class="summary-value" id="summary-nok-phone">-</span>
+                                            </div>
+                                            <div class="summary-item full-width">
+                                                <span class="summary-label">Address:</span>
+                                                <span class="summary-value" id="summary-nok-address">-</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Insurance Information -->
+                                    <div class="summary-section">
+                                        <h6 class="summary-section-title"><i class="mdi mdi-shield-account"></i> Insurance</h6>
+                                        <div class="summary-grid">
+                                            <div class="summary-item">
+                                                <span class="summary-label">HMO:</span>
+                                                <span class="summary-value" id="summary-hmo">Private</span>
+                                            </div>
+                                            <div class="summary-item">
+                                                <span class="summary-label">HMO No:</span>
+                                                <span class="summary-value" id="summary-hmo-no">-</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <div class="footer-left">
+                        <button type="button" class="btn btn-outline-secondary" id="pf-btn-prev" style="display: none;">
+                            <i class="mdi mdi-chevron-left"></i> Previous
+                        </button>
+                    </div>
+                    <div class="footer-right">
+                        <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="pf-btn-next">
+                            Next <i class="mdi mdi-chevron-right"></i>
+                        </button>
+                        <button type="submit" class="btn btn-success" id="pf-btn-submit" style="display: none;">
+                            <i class="mdi mdi-check"></i> <span id="pf-submit-text">Register Patient</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Register Modal (Legacy - kept for compatibility) -->
+<div class="modal fade" id="quickRegisterModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="mdi mdi-account-plus"></i> Quick Patient Registration</h5>
+                <button type="button" class="close text-white"  data-bs-dismiss="modal">&times;</button>
+            </div>
+            <form id="quick-register-form">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>File Number <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="quick-register-file-no" readonly>
+                                    <div class="input-group-append">
+                                        <div class="input-group-text" style="padding: 0;">
+                                            <label class="mb-0 px-2 d-flex align-items-center" title="Toggle manual edit" style="cursor: pointer;">
+                                                <input type="checkbox" id="toggle-file-no-edit" class="mr-1">
+                                                <i class="mdi mdi-pencil"></i>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <small class="text-muted">Next serial number auto-generated</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Phone Number</label>
+                                <input type="text" class="form-control" id="quick-register-phone" placeholder="08012345678">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>First Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="quick-register-firstname" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Last Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="quick-register-lastname" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Gender <span class="text-danger">*</span></label>
+                                <select class="form-control" id="quick-register-gender" required>
+                                    <option value="">Select Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Date of Birth</label>
+                                <input type="date" class="form-control" id="quick-register-dob">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>HMO</label>
+                                <select class="form-control" id="quick-register-hmo">
+                                    <option value="">No HMO (Private)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row" id="hmo-no-row" style="display: none;">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label>HMO Number</label>
+                                <input type="text" class="form-control" id="quick-register-hmo-no" placeholder="Enter HMO enrollment number">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="mdi mdi-account-plus"></i> Register Patient
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Request Details Modal -->
+<div class="modal fade" id="requestDetailsModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" id="request-details-header">
+                <h5 class="modal-title" id="request-details-title">
+                    <i class="mdi mdi-clipboard-text"></i> Request Details
+                </h5>
+                <button type="button" class="close text-white" data-bs-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body" id="request-details-body">
+                <div class="text-center py-5" id="request-details-loading">
+                    <i class="mdi mdi-loading mdi-spin mdi-36px text-primary"></i>
+                    <p class="mt-2 mb-0">Loading request details...</p>
+                </div>
+                <div id="request-details-content" style="display: none;">
+                    <!-- Header Section -->
+                    <div class="request-header-section mb-4">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h4 class="mb-1" id="detail-request-no"></h4>
+                                <span class="badge badge-lg" id="detail-type-badge"></span>
+                            </div>
+                            <div class="text-right">
+                                <div class="mb-2">
+                                    <span class="mr-2" id="detail-billing-badge"></span>
+                                    <span id="detail-delivery-badge"></span>
+                                </div>
+                                <small class="text-muted" id="detail-requested-at"></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Service/Product Info -->
+                    <div class="card mb-3">
+                        <div class="card-header py-2 bg-light">
+                            <h6 class="mb-0"><i class="mdi mdi-information"></i> <span id="detail-info-title">Service Information</span></h6>
+                        </div>
+                        <div class="card-body py-3">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h5 class="mb-1" id="detail-item-name"></h5>
+                                    <p class="text-muted mb-0" id="detail-item-category"></p>
+                                    <div id="detail-dose-section" style="display: none;" class="mt-2">
+                                        <small class="text-muted">Dosage:</small>
+                                        <strong id="detail-dose"></strong>
+                                    </div>
+                                    <div id="detail-quantity-section" style="display: none;" class="mt-2">
+                                        <small class="text-muted">Quantity:</small>
+                                        <strong id="detail-quantity"></strong>
+                                        <span class="text-muted"> × ₦<span id="detail-unit-price"></span></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-right">
+                                    <table class="table table-sm table-borderless mb-0">
+                                        <tr>
+                                            <td class="text-muted">Price:</td>
+                                            <td class="text-right"><strong id="detail-price"></strong></td>
+                                        </tr>
+                                        <tr id="detail-hmo-row">
+                                            <td class="text-success">HMO Covers:</td>
+                                            <td class="text-right text-success"><strong id="detail-hmo-covers"></strong></td>
+                                        </tr>
+                                        <tr class="border-top">
+                                            <td class="text-primary">Patient Pays:</td>
+                                            <td class="text-right text-primary"><strong id="detail-payable"></strong></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Clinical Note (if any) -->
+                    <div class="card mb-3" id="detail-note-card" style="display: none;">
+                        <div class="card-header py-2 bg-warning-light">
+                            <h6 class="mb-0"><i class="mdi mdi-note-text"></i> Clinical Note</h6>
+                        </div>
+                        <div class="card-body py-3">
+                            <p class="mb-0" id="detail-clinical-note"></p>
+                        </div>
+                    </div>
+
+                    <!-- Timeline / Status History -->
+                    <div class="card mb-3">
+                        <div class="card-header py-2 bg-light">
+                            <h6 class="mb-0"><i class="mdi mdi-timeline"></i> Status Timeline</h6>
+                        </div>
+                        <div class="card-body py-3">
+                            <div class="timeline-vertical" id="detail-timeline">
+                                <!-- Timeline items will be populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Result Summary (Lab/Imaging only) -->
+                    <div class="card mb-3" id="detail-result-card" style="display: none;">
+                        <div class="card-header py-2 bg-success text-white">
+                            <h6 class="mb-0"><i class="mdi mdi-file-document"></i> Result Summary</h6>
+                        </div>
+                        <div class="card-body py-3">
+                            <div id="detail-result-content">
+                                <p class="text-muted mb-0" id="detail-result-summary"></p>
+                            </div>
+                            <div id="detail-no-result" style="display: none;">
+                                <p class="text-muted mb-0"><i class="mdi mdi-clock-outline"></i> Result not yet available</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Info (if paid) -->
+                    <div class="card mb-0" id="detail-payment-card" style="display: none;">
+                        <div class="card-header py-2 bg-success text-white">
+                            <h6 class="mb-0"><i class="mdi mdi-cash-check"></i> Payment Information</h6>
+                        </div>
+                        <div class="card-body py-3">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <small class="text-muted">Payment Reference:</small>
+                                    <p class="mb-2"><strong id="detail-payment-ref"></strong></p>
+                                </div>
+                                <div class="col-md-6 text-right">
+                                    <small class="text-muted">Payment Date:</small>
+                                    <p class="mb-0"><strong id="detail-payment-date"></strong></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Discard Request Modal -->
+<div class="modal fade" id="discardRequestModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="mdi mdi-delete-alert"></i> Discard Request</h5>
+                <button type="button" class="close text-white" data-bs-dismiss="modal">&times;</button>
+            </div>
+            <form id="discardRequestForm">
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="mdi mdi-alert"></i>
+                        <strong>Warning:</strong> This action will discard the request. This cannot be undone easily.
+                    </div>
+                    <div class="mb-3">
+                        <p><strong>Service:</strong> <span id="discard_service_name"></span></p>
+                        <p><strong>Request No:</strong> <span id="discard_request_no"></span></p>
+                    </div>
+                    <div class="form-group">
+                        <label for="discard_reason">Reason for Discarding <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="discard_reason" name="reason" rows="3"
+                                  placeholder="Please provide a reason for discarding this request (minimum 10 characters)"
+                                  required minlength="10"></textarea>
+                        <small class="form-text text-muted">This reason will be logged for audit purposes.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="mdi mdi-close"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-danger" id="confirmDiscardBtn">
+                        <i class="mdi mdi-delete"></i> Discard Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Hospital Patient Card Modal -->
+<div class="modal fade" id="hospitalCardModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background: {{ appsettings()->hos_color ?? '#0066cc' }}; color: white;">
+                <h5 class="modal-title"><i class="mdi mdi-card-account-details"></i> Hospital Patient Card</h5>
+                <button type="button" class="close text-white" data-bs-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body text-center">
+                <!-- Card Preview Container -->
+                <div id="hospital-card-container" style="display: inline-block;">
+                    <!-- FRONT SIDE -->
+                    <div class="hospital-card hospital-card-front" id="hospital-card-preview">
+                        <!-- Card Header with Hospital Info -->
+                        <div class="card-header-section">
+                            <div class="hospital-logo-section">
+                                @if(appsettings()->logo)
+                                    <img src="data:image/jpeg;base64,{{ appsettings()->logo }}" alt="Hospital Logo" class="hospital-logo">
+                                @else
+                                    <div class="hospital-logo-placeholder">
+                                        <i class="mdi mdi-hospital-building"></i>
+                                    </div>
+                                @endif
+                            </div>
+                            <div class="hospital-info-section">
+                                <div class="hospital-name-text">{{ appsettings()->site_name ?? 'Hospital Name' }}</div>
+                                <div class="hospital-address-text">{{ appsettings()->contact_address ?? '' }}</div>
+                                <div class="hospital-phone-text">{{ appsettings()->contact_phones ?? '' }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Card Body -->
+                        <div class="card-body-section">
+                            <div class="patient-photo-section">
+                                <img src="" alt="Patient Photo" id="card-patient-photo" class="patient-photo">
+                            </div>
+                            <div class="patient-info-section">
+                                <div class="patient-name-text" id="card-patient-name">Jane Doe</div>
+                                <div class="patient-details-grid">
+                                    <div class="detail-item">
+                                        <span class="detail-label">Patient ID</span>
+                                        <span class="detail-value" id="card-patient-id">JD123456</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">DOB</span>
+                                        <span class="detail-value" id="card-dob">01/01/1970</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Blood</span>
+                                        <span class="detail-value" id="card-blood-type">O+</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Genotype</span>
+                                        <span class="detail-value" id="card-genotype">AA</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Barcode Section -->
+                        <div class="card-barcode-section">
+                            <svg id="card-barcode"></svg>
+                            <div class="barcode-number" id="card-barcode-number"></div>
+                        </div>
+
+                        <!-- Card Footer -->
+                        <div class="card-footer-section">
+                            <span class="card-type-badge">PATIENT CARD</span>
+                            <span class="powered-by">CoreHealth by corestream.ng</span>
+                        </div>
+                    </div>
+
+                    <!-- BACK SIDE -->
+                    <div class="hospital-card hospital-card-back" id="hospital-card-back" style="margin-top: 15px;">
+                        <!-- Back Header -->
+                        <div class="card-back-header">
+                            <div class="back-title">PATIENT INFORMATION</div>
+                        </div>
+
+                        <!-- Back Body -->
+                        <div class="card-back-body">
+                            <div class="back-info-row">
+                                <span class="back-label">Gender:</span>
+                                <span class="back-value" id="card-gender">Female</span>
+                            </div>
+                            <div class="back-info-row">
+                                <span class="back-label">Phone:</span>
+                                <span class="back-value" id="card-phone">08012345678</span>
+                            </div>
+                            <div class="back-info-row full-width">
+                                <span class="back-label">Address:</span>
+                                <span class="back-value" id="card-address">123 Main Street, Lagos</span>
+                            </div>
+                            <div class="back-info-row full-width">
+                                <span class="back-label">Allergies:</span>
+                                <span class="back-value" id="card-allergies">None known</span>
+                            </div>
+                            <div class="back-divider"></div>
+                            <div class="back-section-title">Emergency Contact</div>
+                            <div class="back-info-row">
+                                <span class="back-label">Name:</span>
+                                <span class="back-value" id="card-nok-name">John Doe</span>
+                            </div>
+                            <div class="back-info-row">
+                                <span class="back-label">Phone:</span>
+                                <span class="back-value" id="card-nok-phone">08098765432</span>
+                            </div>
+                        </div>
+
+                        <!-- Back Footer -->
+                        <div class="card-back-footer">
+                            <div class="emergency-note">In case of emergency, please contact the hospital</div>
+                            <div class="powered-by-back">CoreHealth by corestream.ng</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="btn-print-card-now">
+                    <i class="mdi mdi-printer"></i> Print Card
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Hospital Card Styles - Front */
+.hospital-card {
+    width: 340px;
+    height: 215px;
+    background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%);
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    overflow: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.hospital-card .card-header-section {
+    background: {{ appsettings()->hos_color ?? '#0066cc' }};
+    color: white;
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.hospital-card .hospital-logo-section {
+    width: 35px;
+    height: 35px;
+    flex-shrink: 0;
+}
+
+.hospital-card .hospital-logo {
+    width: 35px;
+    height: 35px;
+    object-fit: contain;
+    background: white;
+    border-radius: 4px;
+    padding: 2px;
+}
+
+.hospital-card .hospital-logo-placeholder {
+    width: 35px;
+    height: 35px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hospital-card .hospital-logo-placeholder i {
+    font-size: 20px;
+}
+
+.hospital-card .hospital-info-section {
+    flex: 1;
+    line-height: 1.2;
+}
+
+.hospital-card .hospital-name-text {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.hospital-card .hospital-address-text {
+    font-size: 7px;
+    opacity: 0.9;
+}
+
+.hospital-card .hospital-phone-text {
+    font-size: 7px;
+    opacity: 0.9;
+}
+
+.hospital-card .card-body-section {
+    display: flex;
+    padding: 8px 10px;
+    gap: 10px;
+    flex: 1;
+    min-height: 0;
+}
+
+.hospital-card .patient-photo-section {
+    flex-shrink: 0;
+}
+
+.hospital-card .patient-photo {
+    width: 60px;
+    height: 75px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 2px solid {{ appsettings()->hos_color ?? '#0066cc' }};
+    background: #f0f0f0;
+}
+
+.hospital-card .patient-info-section {
+    flex: 1;
+    text-align: left;
+    overflow: hidden;
+}
+
+.hospital-card .patient-name-text {
+    font-size: 12px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 4px;
+}
+
+.hospital-card .patient-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 8px;
+}
+
+.hospital-card .detail-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.hospital-card .detail-label {
+    font-size: 6px;
+    color: #888;
+    text-transform: uppercase;
+}
+
+.hospital-card .detail-value {
+    font-size: 9px;
+    font-weight: 600;
+    color: #333;
+}
+
+.hospital-card .card-barcode-section {
+    padding: 2px 10px;
+    text-align: center;
+    flex-shrink: 0;
+    background: #fff;
+}
+
+.hospital-card .card-barcode-section svg {
+    height: 20px;
+    width: auto;
+    max-width: 100%;
+}
+
+.hospital-card .barcode-number {
+    font-size: 8px;
+    font-family: 'Courier New', monospace;
+    color: #333;
+    letter-spacing: 1px;
+}
+
+.hospital-card .card-footer-section {
+    background: {{ appsettings()->hos_color ?? '#0066cc' }};
+    color: white;
+    padding: 3px 10px;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.hospital-card .card-type-badge {
+    font-size: 7px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.hospital-card .powered-by {
+    font-size: 6px;
+    opacity: 0.8;
+}
+
+/* Hospital Card Styles - Back */
+.hospital-card-back {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.hospital-card-back .card-back-header {
+    background: {{ appsettings()->hos_color ?? '#0066cc' }};
+    color: white;
+    padding: 6px 10px;
+    text-align: center;
+}
+
+.hospital-card-back .back-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.hospital-card-back .card-back-body {
+    padding: 8px 10px;
+    flex: 1;
+}
+
+.hospital-card-back .back-info-row {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 4px;
+    font-size: 8px;
+}
+
+.hospital-card-back .back-info-row.full-width {
+    flex-direction: column;
+    gap: 1px;
+}
+
+.hospital-card-back .back-label {
+    font-weight: 600;
+    color: #555;
+    min-width: 50px;
+}
+
+.hospital-card-back .back-value {
+    color: #333;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hospital-card-back .back-info-row.full-width .back-value {
+    white-space: normal;
+    font-size: 7px;
+    line-height: 1.3;
+}
+
+.hospital-card-back .back-divider {
+    border-top: 1px dashed #ccc;
+    margin: 6px 0;
+}
+
+.hospital-card-back .back-section-title {
+    font-size: 8px;
+    font-weight: 700;
+    color: {{ appsettings()->hos_color ?? '#0066cc' }};
+    margin-bottom: 4px;
+    text-transform: uppercase;
+}
+
+.hospital-card-back .card-back-footer {
+    background: {{ appsettings()->hos_color ?? '#0066cc' }};
+    color: white;
+    padding: 4px 10px;
+    text-align: center;
+}
+
+.hospital-card-back .emergency-note {
+    font-size: 7px;
+    opacity: 0.9;
+}
+
+.hospital-card-back .powered-by-back {
+    font-size: 6px;
+    opacity: 0.7;
+    margin-top: 2px;
+}
+
+/* Print Styles for Hospital Card */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+
+    #hospital-card-container, #hospital-card-container * {
+        visibility: visible;
+    }
+
+    #hospital-card-container {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    .hospital-card {
+        box-shadow: none;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .hospital-card-back {
+        page-break-before: always;
+        margin-top: 20px;
+    }
+}
+</style>
+
 @endsection
 
 @section('scripts')
 <script src="{{ asset('plugins/dataT/datatables.min.js') }}"></script>
-<script src="{{ asset('plugins/ckeditor/ckeditor5/ckeditor.js') }}"></script>
+<script src="{{ asset('plugins/select2/js/select2.full.min.js') }}"></script>
+<script src="{{ asset('assets/js/jsbarcode.all.min.js') }}"></script>
 <script>
+// =============================================
+// RECEPTION WORKBENCH JAVASCRIPT
+// =============================================
+
 // Global state
 let currentPatient = null;
-let currentPatientData = null; // Store full patient data including allergies
+let currentPatientData = null;
 let queueRefreshInterval = null;
 let patientSearchTimeout = null;
-let vitalTooltip = null;
+let queueDataTable = null;
+let visitHistoryTable = null;
+
+// Cached reference data
+let cachedClinics = [];
+let cachedServices = { consultation: [], lab: [], imaging: [] };
+let cachedProducts = [];
+let cachedHmos = [];
 
 $(document).ready(function() {
     // Initialize
     loadQueueCounts();
     startQueueRefresh();
     initializeEventListeners();
-    loadUserPreferences();
-    createVitalTooltip();
-    loadBanks(); // Load available banks for payment
+    loadReferenceData();
 });
 
+// =============================================
+// EVENT LISTENERS
+// =============================================
 function initializeEventListeners() {
-    // Generate initial reference number
-    generateReferenceNumber();
+    // Patient search with debounce - supports barcode scanner input
+    let lastInputTime = 0;
+    let inputBuffer = '';
 
-    // Patient search
     $('#patient-search-input').on('input', function() {
         clearTimeout(patientSearchTimeout);
         const query = $(this).val().trim();
+        const currentTime = Date.now();
 
-        if (query.length < 2) {
-            $('#patient-search-results').hide();
-            return;
+        // Detect barcode scanner - rapid input (less than 50ms between characters)
+        if (currentTime - lastInputTime < 50 && inputBuffer.length > 0) {
+            // Likely barcode scanner - wait for complete input
+            inputBuffer = query;
+            patientSearchTimeout = setTimeout(() => {
+                // If input is a file number pattern (fast input complete)
+                if (inputBuffer.length >= 3) {
+                    searchPatients(inputBuffer, true); // true = auto-select if single result
+                }
+                inputBuffer = '';
+            }, 100);
+        } else {
+            inputBuffer = query;
+
+            if (query.length < 2) {
+                $('#patient-search-results').hide();
+                return;
+            }
+
+            patientSearchTimeout = setTimeout(() => searchPatients(query, false), 300);
         }
+        lastInputTime = currentTime;
+    });
 
-        patientSearchTimeout = setTimeout(() => searchPatients(query), 300);
+    // Handle Enter key for barcode scanner (many scanners add Enter at end)
+    $('#patient-search-input').on('keypress', function(e) {
+        if (e.which === 13) { // Enter key
+            e.preventDefault();
+            const query = $(this).val().trim();
+            if (query.length >= 2) {
+                searchPatients(query, true); // Auto-select if single result
+            }
+        }
     });
 
     // Close search results when clicking outside
@@ -3776,29 +6216,18 @@ function initializeEventListeners() {
         switchWorkspaceTab(tab);
     });
 
-    // Pending sub-tabs
-    $('.pending-subtab').on('click', function() {
-        const status = $(this).data('status');
-        $('.pending-subtab').removeClass('active');
-        $(this).addClass('active');
-        renderPendingSubtabContent(status);
-    });
-
-    // Navigation buttons
+    // Navigation buttons (mobile)
     $('#btn-back-to-search').on('click', function() {
-        // Mobile: go back to search pane
         $('#main-workspace').removeClass('active');
         $('#left-panel').removeClass('hidden');
     });
 
     $('#btn-view-work-pane').on('click', function() {
-        // Mobile: switch to work pane without selecting a patient
         $('#left-panel').addClass('hidden');
         $('#main-workspace').addClass('active');
     });
 
     $('#btn-toggle-search').on('click', function() {
-        // Desktop/Tablet: toggle search pane visibility
         $('#left-panel').toggleClass('hidden');
     });
 
@@ -3818,129 +6247,328 @@ function initializeEventListeners() {
         hideQueue();
     });
 
-    // Refresh billing items button
-    $('#refresh-billing-items').on('click', function() {
-        if (currentPatient) {
-            const $btn = $(this);
-            const originalHtml = $btn.html();
-            $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Refreshing...');
-
-            loadPatient(currentPatient);
-
-            // Re-enable button after a short delay
-            setTimeout(() => {
-                $btn.prop('disabled', false).html(originalHtml);
-            }, 1000);
+    // Queue clinic filter
+    $('#queue-clinic-filter').on('change', function() {
+        if (queueDataTable) {
+            queueDataTable.ajax.reload();
         }
     });
 
-    // Payment method change handler
-    $('#payment-method').on('change', function() {
-        const method = $(this).val();
-        if (method === 'ACCOUNT') {
-            $('#account-payment-note').show();
-            $('#bank-selection-section').hide();
-        } else if (['POS', 'TRANSFER', 'MOBILE'].includes(method)) {
-            $('#account-payment-note').hide();
-            $('#bank-selection-section').show();
+    // Quick actions
+    $('#btn-new-patient').on('click', function() {
+        showQuickRegisterModal();
+    });
+
+    $('#btn-today-stats').on('click', function() {
+        showTodayStats();
+    });
+
+    // Ward Dashboard quick action
+    $('#btn-ward-dashboard').on('click', function() {
+        showWardDashboard();
+    });
+
+    $('#btn-close-ward-dashboard').on('click', function() {
+        hideWardDashboard();
+    });
+
+    // Reports quick action
+    $('#btn-view-reports').on('click', function() {
+        showReports();
+    });
+
+    $('#btn-close-reports').on('click', function() {
+        hideReports();
+    });
+
+    // Reports filter form
+    $('#reports-filter-form').on('submit', function(e) {
+        e.preventDefault();
+        reloadReportsData();
+    });
+
+    $('#clear-report-filters').on('click', function() {
+        $('#reports-filter-form')[0].reset();
+        // Reset to default dates (this month)
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        $('#report-date-from').val(firstDay.toISOString().split('T')[0]);
+        $('#report-date-to').val(today.toISOString().split('T')[0]);
+        reloadReportsData();
+    });
+
+    // View patient from reports tables
+    $(document).on('click', '.view-patient-btn', function() {
+        const patientId = $(this).data('id');
+        if (patientId) {
+            hideReports();
+            selectPatient(patientId);
+        }
+    });
+
+    // Edit patient button - open edit modal
+    $('#btn-edit-patient').on('click', function() {
+        if (currentPatient && currentPatientData) {
+            showPatientFormModal('edit', currentPatientData);
+        }
+    });
+
+    // Print Hospital Card button
+    $('#btn-print-card').on('click', function() {
+        if (currentPatient && currentPatientData) {
+            showHospitalCard(currentPatientData);
+        }
+    });
+
+    // Print card button in modal
+    $('#btn-print-card-now').on('click', function() {
+        printHospitalCard();
+    });
+
+    // Expand patient details button
+    $('#btn-expand-patient').on('click', function() {
+        $(this).toggleClass('expanded');
+        $('#patient-details-expanded').toggleClass('show');
+        const $text = $(this).find('.btn-expand-text');
+        if ($(this).hasClass('expanded')) {
+            $text.text('less biodata');
         } else {
-            $('#account-payment-note').hide();
-            $('#bank-selection-section').hide();
+            $text.text('more biodata');
         }
     });
 
-    // Filter receipts
-    $('#filter-receipts').on('click', function() {
-        if (currentPatient) {
-            filterReceipts();
-        }
+    // Book Service tab - Clinic selection
+    $('#booking-clinic').on('change', function() {
+        const clinicId = $(this).val();
+        loadDoctorsByClinic(clinicId);
+        updateServicesByClinic(clinicId);
     });
 
-    // Export receipts
-    $('#export-receipts').on('click', function() {
-        if (currentPatient) {
-            exportReceipts();
-        }
+    // Book Service - Service type selection
+    $('input[name="service-type"]').on('change', function() {
+        const type = $(this).val();
+        updateServiceTypeUI(type);
     });
 
-    // Refresh receipts
-    $('#refresh-receipts').on('click', function() {
-        if (currentPatient) {
-            setDefaultReceiptDates();
-            filterReceipts();
-        }
+    // Book Service - Service selection for tariff preview
+    $('#booking-service, #booking-doctor').on('change', function() {
+        updateTariffPreview();
     });
 
-    // Select all receipts checkbox
-    $(document).on('change', '#select-all-receipts', function() {
-        $('.receipt-checkbox').prop('checked', $(this).is(':checked'));
-        updatePrintSelectedButton();
+    // Book Consultation form submit
+    $('#booking-form').on('submit', function(e) {
+        e.preventDefault();
+        bookConsultation();
     });
 
-    // Individual receipt checkbox change
-    $(document).on('change', '.receipt-checkbox', function() {
-        updatePrintSelectedButton();
+    // Walk-in Sales tab - Search and selection
+    initializeWalkinSales();
+
+    // Walk-in search input
+    $('#walkin-search').on('input', function() {
+        const query = $(this).val().toLowerCase();
+        const activeType = $('#walkin-subtabs .nav-link.active').data('type') || 'lab';
+        searchWalkinServices(query, activeType);
     });
 
-    // Reprint individual receipt
-    $(document).on('click', '.reprint-receipt', function() {
-        const paymentId = $(this).data('id');
-        if (paymentId) {
-            reprintReceipt([paymentId]);
-        }
-    });
-
-    // Create account button
-    $(document).on('click', '#create-account-btn', function() {
-        createPatientAccount();
-    });
-
-    // View services rendered
-    $(document).on('click', '#view-services-rendered', function() {
-        if (currentPatient) {
-            window.open(`/patient-services-rendered/${currentPatient}`, '_blank');
-        }
-    });
-
-    // Receipt format tab switching
-    $(document).on('click', '.receipt-tab', function() {
-        const format = $(this).data('format');
-        $('.receipt-tab').removeClass('active');
+    // Walk-in subtab change
+    $('#walkin-subtabs .nav-link').on('click', function(e) {
+        e.preventDefault();
+        const type = $(this).data('type');
+        $('#walkin-subtabs .nav-link').removeClass('active');
         $(this).addClass('active');
+        const query = $('#walkin-search').val().toLowerCase();
+        searchWalkinServices(query, type);
+    });
 
-        if (format === 'a4') {
-            $('#receipt-content-a4').show();
-            $('#receipt-content-thermal').hide();
+    // Quick Register form
+    $('#quick-register-form').on('submit', function(e) {
+        e.preventDefault();
+        submitQuickRegister();
+    });
+
+    // HMO selection - show/hide HMO number field
+    $('#quick-register-hmo').on('change', function() {
+        const hmoId = $(this).val();
+        if (hmoId) {
+            $('#hmo-no-row').show();
         } else {
-            $('#receipt-content-a4').hide();
-            $('#receipt-content-thermal').show();
+            $('#hmo-no-row').hide();
+            $('#quick-register-hmo-no').val('');
         }
-    });
-
-    // Print A4 receipt
-    $('#print-a4-receipt').on('click', function() {
-        printReceipt('receipt-content-a4');
-    });
-
-    // Print thermal receipt
-    $('#print-thermal-receipt').on('click', function() {
-        printReceipt('receipt-content-thermal');
-    });
-
-    // Close receipt display
-    $('#close-receipt').on('click', function() {
-        $('#receipt-display').hide();
-        $('#receipt-content-a4').empty();
-        $('#receipt-content-thermal').empty();
     });
 }
 
-function searchPatients(query) {
+// =============================================
+// LOAD REFERENCE DATA
+// =============================================
+function loadReferenceData() {
+    // Load clinics
+    $.get('{{ route("reception.clinics") }}', function(data) {
+        cachedClinics = Array.isArray(data) ? data : (data.clinics || []);
+        populateClinicDropdowns();
+    });
+
+    // Load HMOs
+    $.get('{{ route("reception.hmos") }}', function(data) {
+        cachedHmos = Array.isArray(data) ? data : (data.hmos || []);
+        populateHmoDropdown();
+    });
+
+    // Load consultation services
+    $.get('{{ route("reception.services.consultation") }}', function(data) {
+        cachedServices.consultation = Array.isArray(data) ? data : (data.services || []);
+        populateConsultationServices();
+    });
+
+    // Load lab services
+    $.get('{{ route("reception.services.lab") }}', function(data) {
+        cachedServices.lab = Array.isArray(data) ? data : (data.services || []);
+    });
+
+    // Load imaging services
+    $.get('{{ route("reception.services.imaging") }}', function(data) {
+        cachedServices.imaging = Array.isArray(data) ? data : (data.services || []);
+    });
+
+    // Load products
+    $.get('{{ route("reception.products") }}', function(data) {
+        cachedProducts = Array.isArray(data) ? data : (data.products || []);
+    });
+}
+
+function populateClinicDropdowns() {
+    const $bookClinic = $('#booking-clinic');
+    const $queueClinic = $('#queue-clinic-filter');
+
+    $bookClinic.empty().append('<option value="">Select Clinic</option>');
+    $queueClinic.empty().append('<option value="">All Clinics</option>');
+
+    cachedClinics.forEach(clinic => {
+        const option = `<option value="${clinic.id}">${clinic.name}</option>`;
+        $bookClinic.append(option);
+        $queueClinic.append(option);
+    });
+}
+
+function populateHmoDropdown() {
+    // Group HMOs by scheme
+    const hmosByScheme = {};
+    cachedHmos.forEach(hmo => {
+        const scheme = hmo.scheme || 'General';
+        if (!hmosByScheme[scheme]) {
+            hmosByScheme[scheme] = [];
+        }
+        hmosByScheme[scheme].push(hmo);
+    });
+
+    // Populate quick register HMO dropdown with optgroups
+    const $hmoSelect = $('#quick-register-hmo');
+    if ($hmoSelect.length) {
+        $hmoSelect.empty().append('<option value="">No HMO (Private)</option>');
+
+        Object.keys(hmosByScheme).sort().forEach(scheme => {
+            const $optgroup = $(`<optgroup label="${scheme}"></optgroup>`);
+            hmosByScheme[scheme].forEach(hmo => {
+                $optgroup.append(`<option value="${hmo.id}">${hmo.name}</option>`);
+            });
+            $hmoSelect.append($optgroup);
+        });
+    }
+
+    // Populate report HMO filter dropdown with optgroups
+    const $reportHmoSelect = $('#report-hmo-filter');
+    if ($reportHmoSelect.length) {
+        $reportHmoSelect.empty().append('<option value="">All HMOs</option>');
+
+        Object.keys(hmosByScheme).sort().forEach(scheme => {
+            const $optgroup = $(`<optgroup label="${scheme}"></optgroup>`);
+            hmosByScheme[scheme].forEach(hmo => {
+                $optgroup.append(`<option value="${hmo.id}">${hmo.name}</option>`);
+            });
+            $reportHmoSelect.append($optgroup);
+        });
+    }
+}
+
+function loadDoctorsByClinic(clinicId) {
+    const $doctorSelect = $('#booking-doctor');
+    $doctorSelect.empty().append('<option value="">Select Doctor</option>');
+
+    if (!clinicId) return;
+
+    $.get(`{{ url('reception/clinics') }}/${clinicId}/doctors`, function(data) {
+        const doctors = Array.isArray(data) ? data : (data.doctors || []);
+        doctors.forEach(doctor => {
+            $doctorSelect.append(`<option value="${doctor.id}">${doctor.name}</option>`);
+        });
+    });
+}
+
+function updateServicesByClinic(clinicId) {
+    const $serviceSelect = $('#booking-service');
+
+    $serviceSelect.empty().append('<option value="">Select Service</option>');
+
+    // Always use consultation services for booking tab
+    let services = cachedServices.consultation || [];
+
+    services.forEach(service => {
+        const price = service.price ? ` - ₦${parseFloat(service.price).toLocaleString()}` : '';
+        $serviceSelect.append(`<option value="${service.id}" data-price="${service.price || 0}">${service.name}${price}</option>`);
+    });
+}
+
+function populateConsultationServices() {
+    const $serviceSelect = $('#booking-service');
+    $serviceSelect.empty().append('<option value="">Select Service</option>');
+
+    let services = cachedServices.consultation || [];
+
+    services.forEach(service => {
+        const price = service.price ? ` - ₦${parseFloat(service.price).toLocaleString()}` : '';
+        $serviceSelect.append(`<option value="${service.id}" data-price="${service.price || 0}">${service.name}${price}</option>`);
+    });
+}
+
+function updateServiceTypeUI(type) {
+    // Update service dropdown based on type
+    updateServicesByClinic($('#booking-clinic').val());
+
+    // Show/hide doctor selection (only for consultation)
+    if (type === 'consultation') {
+        $('#doctor-selection-group').show();
+    } else {
+        $('#doctor-selection-group').hide();
+    }
+
+    // Update button text
+    const buttonTexts = {
+        consultation: 'Book Consultation',
+        lab: 'Book Lab Test',
+        imaging: 'Book Imaging'
+    };
+    $('#btn-book-consultation').html(`<i class="mdi mdi-check-circle"></i> ${buttonTexts[type] || 'Book Service'}`);
+
+    updateTariffPreview();
+}
+
+// =============================================
+// PATIENT SEARCH & LOAD
+// =============================================
+function searchPatients(query, autoSelectSingle = false) {
     $.ajax({
-        url: '{{ route("billing.search-patients") }}',
+        url: '{{ route("reception.search-patients") }}',
         method: 'GET',
-        data: { term: query },
+        data: { q: query },
         success: function(results) {
+            // Auto-select if single result and barcode scan mode
+            if (autoSelectSingle && results.length === 1) {
+                loadPatient(results[0].id);
+                $('#patient-search-results').hide();
+                $('#patient-search-input').val('');
+                return;
+            }
             displaySearchResults(results);
         },
         error: function() {
@@ -3949,78 +6577,26 @@ function searchPatients(query) {
     });
 }
 
-// Global banks cache
-let availableBanks = [];
-
-function loadBanks() {
-    if (availableBanks.length > 0) {
-        return; // Already loaded
-    }
-
-    $.ajax({
-        url: '/banks/active',
-        method: 'GET',
-        success: function(response) {
-            if (response.success && response.banks) {
-                availableBanks = response.banks;
-                populateBankDropdowns();
-            }
-        },
-        error: function() {
-            console.error('Failed to load banks');
-        }
-    });
-}
-
-function populateBankDropdowns() {
-    const $paymentBank = $('#payment-bank');
-    const $transactionBank = $('#transaction-bank');
-
-    // Clear existing options except the placeholder
-    $paymentBank.find('option:not(:first)').remove();
-    $transactionBank.find('option:not(:first)').remove();
-
-    // Populate with banks
-    availableBanks.forEach(bank => {
-        const optionText = bank.account_number ? `${bank.name} - ${bank.account_number}` : bank.name;
-        const option = `<option value="${bank.id}">${optionText}</option>`;
-        $paymentBank.append(option);
-        $transactionBank.append(option);
-    });
-}
-
-function generateReferenceNumber() {
-    // Generate reference format: PAY-YYYYMMDD-HHMMSS
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-
-    const reference = `PAY-${year}${month}${day}-${hours}${minutes}${seconds}`;
-    $('#payment-reference').val(reference);
-}
-
 function displaySearchResults(results) {
     const $container = $('#patient-search-results');
     $container.empty();
 
     if (results.length === 0) {
-        $container.html('<div class="search-result-item">No patients found</div>');
+        $container.html('<div class="search-result-item text-muted">No patients found</div>');
     } else {
+        const defaultAvatar = '{{ asset("assets/images/default-avatar.png") }}';
         results.forEach((patient, index) => {
+            const photoUrl = patient.photo || defaultAvatar;
             const item = $(`
                 <div class="search-result-item ${index === 0 ? 'active' : ''}" data-patient-id="${patient.id}">
-                    <img src="/storage/image/user/${patient.photo}" alt="${patient.name}">
+                    <img src="${photoUrl}" alt="${patient.name}" onerror="this.onerror=null; this.src='${defaultAvatar}';">
                     <div class="search-result-info">
                         <div class="search-result-name">${patient.name}</div>
                         <div class="search-result-details">
-                            ${patient.file_no} | ${patient.age}y ${patient.gender} | ${patient.phone}
+                            ${patient.file_no} | ${patient.age || 'N/A'} ${patient.gender} | ${patient.phone || 'N/A'}
                         </div>
                     </div>
-                    ${patient.pending_count > 0 ? `<span class="pending-badge">${patient.pending_count}</span>` : ''}
+                    ${patient.hmo_name ? `<span class="badge badge-info">${patient.hmo_name}</span>` : ''}
                 </div>
             `);
 
@@ -4038,48 +6614,41 @@ function displaySearchResults(results) {
 }
 
 function loadPatient(patientId) {
-    console.log('loadPatient called with ID:', patientId);
     currentPatient = patientId;
 
     // Show loading state
     $('#empty-state').hide();
+    $('#queue-view').hide();
     $('#workspace-content').addClass('active');
     $('#patient-header').addClass('active');
 
     // Show loading indicator
     $('#patient-name').html('<i class="mdi mdi-loading mdi-spin"></i> Loading...');
     $('#patient-meta').html('');
-    $('#billing-items-tbody').html(`
-        <tr>
-            <td colspan="8" class="text-center text-muted py-5">
-                <i class="mdi mdi-loading mdi-spin" style="font-size: 3rem;"></i>
-                <p>Loading billing items...</p>
-            </td>
-        </tr>
-    `);
 
     // Mobile: Switch to work pane
     $('#left-panel').addClass('hidden');
     $('#main-workspace').addClass('active');
 
-    // Load patient billing data
+    // Load patient data
     $.ajax({
-        url: `/billing-workbench/patient/${patientId}/billing-data`,
+        url: `{{ url('reception/patient') }}/${patientId}`,
         method: 'GET',
         success: function(data) {
-            console.log('Patient billing data loaded:', data);
             currentPatientData = data.patient;
             displayPatientInfo(data.patient);
 
-            // Load billing items for the active Billing tab
-            renderBillingItems(data.items);
-            updateBillingBadge(data.items.length);
+            // Switch to profile tab by default
+            switchWorkspaceTab('profile');
 
-            // Load account balance
-            loadAccountBalance(patientId);
+            // Initialize visit history DataTable
+            initializeVisitHistoryTable(patientId);
 
-            // Switch to billing tab by default
-            switchWorkspaceTab('billing');
+            // Initialize service requests DataTable
+            initializeServiceRequestsTable(patientId);
+
+            // Load recent requests for walk-in cart
+            loadRecentRequests();
         },
         error: function(xhr) {
             console.error('Error loading patient:', xhr);
@@ -4091,6 +6660,27 @@ function loadPatient(patientId) {
 function displayPatientInfo(patient) {
     $('#patient-name').text(patient.name);
 
+    // Parse allergies
+    let allergiesHtml = '';
+    if (patient.allergies) {
+        let allergies = patient.allergies;
+        if (typeof allergies === 'string') {
+            try {
+                allergies = JSON.parse(allergies);
+            } catch(e) {
+                allergies = [];
+            }
+        }
+        if (Array.isArray(allergies) && allergies.length > 0) {
+            allergiesHtml = `
+                <div class="patient-allergies">
+                    <i class="mdi mdi-alert-circle text-danger"></i>
+                    <span class="text-danger">Allergies: ${allergies.join(', ')}</span>
+                </div>
+            `;
+        }
+    }
+
     const metaHtml = `
         <div class="patient-meta-item">
             <i class="mdi mdi-card-account-details"></i>
@@ -4098,408 +6688,271 @@ function displayPatientInfo(patient) {
         </div>
         <div class="patient-meta-item">
             <i class="mdi mdi-calendar"></i>
-            <span>Age: ${patient.age}</span>
+            <span>${patient.age || 'N/A'}</span>
         </div>
         <div class="patient-meta-item">
             <i class="mdi mdi-gender-${patient.gender === 'Male' ? 'male' : 'female'}"></i>
             <span>${patient.gender}</span>
         </div>
+        <div class="patient-meta-item">
+            <i class="mdi mdi-water"></i>
+            <span>${patient.blood_group || 'N/A'} ${patient.genotype && patient.genotype !== 'N/A' ? '(' + patient.genotype + ')' : ''}</span>
+        </div>
+        <div class="patient-meta-item">
+            <i class="mdi mdi-phone"></i>
+            <span>${patient.phone || 'N/A'}</span>
+        </div>
         ${patient.hmo_name ? `
         <div class="patient-meta-item">
             <i class="mdi mdi-hospital-building"></i>
-            <span>${patient.hmo_name}</span>
+            <span>${patient.hmo_name} ${patient.hmo_category && patient.hmo_category !== 'N/A' ? '[' + patient.hmo_category + ']' : ''} ${patient.hmo_no ? '(' + patient.hmo_no + ')' : ''}</span>
         </div>
         ` : ''}
-        ${patient.hmo_no ? `
-        <div class="patient-meta-item">
-            <i class="mdi mdi-card-account-details-outline"></i>
-            <span>HMO No: ${patient.hmo_no}</span>
-        </div>
-        ` : ''}
+        ${allergiesHtml}
     `;
 
     $('#patient-meta').html(metaHtml);
-}
 
-function initializeHistoryDataTable(patientId) {
-    if ($.fn.DataTable.isDataTable('#investigation_history_list')) {
-        $('#investigation_history_list').DataTable().destroy();
-    }
-
-    $('#investigation_history_list').DataTable({
-        processing: true,
-        serverSide: true,
-        responsive: false,
-        autoWidth: false,
-        dom: '<"top"f>rt<"bottom"lip><"clear">',
-        ajax: {
-            url: `/investigationHistoryList/${patientId}`,
-            type: 'GET'
-        },
-        columns: [
-            {
-                data: "info",
-                name: "info",
-                orderable: false,
-                searchable: true
-            }
-        ],
-        order: [[0, 'desc']],
-        pageLength: 10,
-        lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
-        language: {
-            emptyTable: "No investigation history found for this patient",
-            processing: '<i class="fa fa-spinner fa-spin fa-2x fa-fw"></i><span class="sr-only">Loading...</span>'
-        },
-        drawCallback: function() {
-            // Add click handler for view result buttons
-            $('.view-invest-result-btn').off('click').on('click', function() {
-                const requestId = $(this).data('request-id');
-                viewInvestigationResult(requestId);
-            });
-        }
-    });
-}
-
-function viewInvestigationResult(requestId) {
-    // Open modal to view completed result
-    $.ajax({
-        url: `/lab-workbench/lab-service-requests/${requestId}`,
-        method: 'GET',
-        success: function(request) {
-            // Show result in a view-only modal or open in new tab
-            if (request.result_document) {
-                window.open(request.result_document, '_blank');
-            } else {
-                alert('No result document found');
-            }
-        },
-        error: function(xhr) {
-            alert('Error loading result: ' + (xhr.responseJSON?.message || 'Unknown error'));
-        }
-    });
-}
-
-let currentPendingRequests = null;
-let currentPendingFilter = 'all';
-
-function displayPendingRequests(requests) {
-    currentPendingRequests = requests;
-    const totalPending = requests.billing.length + requests.sample.length + requests.results.length;
-    $('#pending-badge').text(totalPending);
-
-    updatePendingSubtabBadges(requests);
-    renderPendingSubtabContent(currentPendingFilter);
-}
-
-function updatePendingSubtabBadges(requests) {
-    const totalPending = requests.billing.length + requests.sample.length + requests.results.length;
-    $('#all-pending-badge').text(totalPending);
-    $('#billing-subtab-badge').text(requests.billing.length);
-    $('#sample-subtab-badge').text(requests.sample.length);
-    $('#results-subtab-badge').text(requests.results.length);
-}
-
-function renderPendingSubtabContent(filter) {
-    if (!currentPendingRequests) return;
-
-    currentPendingFilter = filter;
-    const requests = currentPendingRequests;
-    const totalPending = requests.billing.length + requests.sample.length + requests.results.length;
-
-    const $container = $('#pending-subtab-container');
-    $container.empty();
-
-    if (totalPending === 0) {
-        $container.html('<div class="alert alert-info">No pending lab requests for this patient</div>');
-        return;
-    }
-
-    // Billing Section (Status 1)
-    if ((filter === 'all' || filter === 'billing') && requests.billing.length > 0) {
-        const billingHtml = `
-            <div class="request-section" data-section="billing">
-                <div class="request-section-header">
-                    <h5>
-                        <i class="mdi mdi-cash-register"></i>
-                        Awaiting Billing (${requests.billing.length})
-                    </h5>
-                </div>
-                <div class="request-cards-container" id="billing-cards"></div>
-                <div class="section-actions-footer">
-                    <div class="select-all-container">
-                        <input type="checkbox" id="select-all-billing" class="select-all-checkbox">
-                        <label for="select-all-billing">Select All</label>
-                    </div>
-                    <div class="action-buttons">
-                        <button class="btn-action btn-action-billing" id="btn-record-billing" disabled>
-                            <i class="mdi mdi-check-circle"></i>
-                            Record Billing
-                        </button>
-                        <button class="btn-action btn-action-dismiss" id="btn-dismiss-billing" disabled>
-                            <i class="mdi mdi-close-circle"></i>
-                            Dismiss
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        $container.append(billingHtml);
-
-        requests.billing.forEach(request => {
-            $('#billing-cards').append(createRequestCard(request, 'billing'));
-        });
-    }
-
-    // Sample Section (Status 2)
-    if ((filter === 'all' || filter === 'sample') && requests.sample.length > 0) {
-        const sampleHtml = `
-            <div class="request-section" data-section="sample">
-                <div class="request-section-header">
-                    <h5>
-                        <i class="mdi mdi-test-tube"></i>
-                        Sample Collection (${requests.sample.length})
-                    </h5>
-                </div>
-                <div class="request-cards-container" id="sample-cards"></div>
-                <div class="section-actions-footer">
-                    <div class="select-all-container">
-                        <input type="checkbox" id="select-all-sample" class="select-all-checkbox">
-                        <label for="select-all-sample">Select All</label>
-                    </div>
-                    <div class="action-buttons">
-                        <button class="btn-action btn-action-sample" id="btn-collect-sample" disabled>
-                            <i class="mdi mdi-check-circle"></i>
-                            Collect Sample
-                        </button>
-                        <button class="btn-action btn-action-dismiss" id="btn-dismiss-sample" disabled>
-                            <i class="mdi mdi-close-circle"></i>
-                            Dismiss
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        $container.append(sampleHtml);
-
-        requests.sample.forEach(request => {
-            $('#sample-cards').append(createRequestCard(request, 'sample'));
-        });
-    }
-
-    // Results Section (Status 3)
-    if ((filter === 'all' || filter === 'results') && requests.results.length > 0) {
-        const resultsHtml = `
-            <div class="request-section" data-section="results">
-                <div class="request-section-header">
-                    <h5>
-                        <i class="mdi mdi-file-document-edit"></i>
-                        Result Entry (${requests.results.length})
-                    </h5>
-                </div>
-                <div class="request-cards-container" id="results-cards"></div>
-                <div class="section-actions-footer">
-                    <div class="select-all-container">
-                        <span class="text-muted"><i class="mdi mdi-information"></i> Results must be entered individually</span>
-                    </div>
-                    <div class="action-buttons">
-                        <button class="btn-action btn-action-dismiss" id="btn-dismiss-results" disabled>
-                            <i class="mdi mdi-close-circle"></i>
-                            Dismiss Selected
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        $container.append(resultsHtml);
-
-        requests.results.forEach(request => {
-            $('#results-cards').append(createRequestCard(request, 'results'));
-        });
-    }
-
-    // Initialize event handlers
-    initializeRequestHandlers();
-}
-
-function createRequestCard(request, section) {
-    const serviceName = request.service?.service_name || 'Unknown Service';
-    const doctorName = request.doctor ? (request.doctor.firstname + ' ' + request.doctor.surname) : 'N/A';
-    const requestDate = formatDateTime(request.created_at);
-    const note = request.note || '';
-
-    const hasNote = note && note.trim() !== '';
-    const noteHtml = hasNote ? `<div class="request-note"><i class="mdi mdi-note-text"></i> ${note}</div>` : '';
-
-    // Check delivery status
-    const deliveryCheck = request.delivery_check;
-    const canDeliver = deliveryCheck ? deliveryCheck.can_deliver : true;
-
-    // Delivery warning message
-    let deliveryWarningHtml = '';
-    if (!canDeliver && deliveryCheck) {
-        deliveryWarningHtml = `
-            <div class="alert alert-warning py-2 px-2 mb-2 mt-2" style="font-size: 0.85rem;">
-                <i class="fa fa-exclamation-triangle"></i> <strong>${deliveryCheck.reason}</strong><br>
-                <small>${deliveryCheck.hint}</small>
-            </div>
-        `;
-    }
-
-    // Results section has individual action button instead of checkbox
-    const checkboxOrAction = section === 'results' ? `
-        <button class="btn btn-sm btn-primary enter-result-btn"
-                data-request-id="${request.id}"
-                ${!canDeliver ? 'disabled title="' + (deliveryCheck?.reason || 'Cannot deliver service') + '"' : ''}>
-            <i class="mdi mdi-file-document-edit"></i>
-            Enter Result
-        </button>
-    ` : `
-        <div class="request-card-checkbox">
-            <input type="checkbox" class="request-checkbox" data-request-id="${request.id}" data-section="${section}">
+    // Populate expanded patient details
+    const expandedDetailsHtml = `
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-water"></i> Blood Group</div>
+            <div class="patient-detail-value">${patient.blood_group || 'N/A'}</div>
         </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-dna"></i> Genotype</div>
+            <div class="patient-detail-value">${patient.genotype || 'N/A'}</div>
+        </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-phone"></i> Phone</div>
+            <div class="patient-detail-value">${patient.phone || 'N/A'}</div>
+        </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-map-marker"></i> Address</div>
+            <div class="patient-detail-value">${patient.address || 'N/A'}</div>
+        </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-flag"></i> Nationality</div>
+            <div class="patient-detail-value">${patient.nationality || 'N/A'}</div>
+        </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-account-group"></i> Ethnicity</div>
+            <div class="patient-detail-value">${patient.ethnicity || 'N/A'}</div>
+        </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-wheelchair-accessibility"></i> Disability</div>
+            <div class="patient-detail-value">${patient.disability || 'No'}</div>
+        </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-hospital-building"></i> HMO</div>
+            <div class="patient-detail-value">${patient.hmo_name || 'Private'}</div>
+        </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-tag"></i> HMO Category</div>
+            <div class="patient-detail-value">${patient.hmo_category || 'N/A'}</div>
+        </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-card-account-details"></i> HMO Number</div>
+            <div class="patient-detail-value">${patient.hmo_no || 'N/A'}</div>
+        </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-shield-account"></i> Insurance Scheme</div>
+            <div class="patient-detail-value">${patient.insurance_scheme || 'N/A'}</div>
+        </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-account-heart"></i> Next of Kin</div>
+            <div class="patient-detail-value">${patient.next_of_kin_name || 'N/A'}</div>
+        </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-phone-outline"></i> NOK Phone</div>
+            <div class="patient-detail-value">${patient.next_of_kin_phone || 'N/A'}</div>
+        </div>
+        <div class="patient-detail-item">
+            <div class="patient-detail-label"><i class="mdi mdi-map-marker-outline"></i> NOK Address</div>
+            <div class="patient-detail-value">${patient.next_of_kin_address || 'N/A'}</div>
+        </div>
+        ${patient.medical_history ? `
+        <div class="patient-detail-item full-width">
+            <div class="patient-detail-label"><i class="mdi mdi-clipboard-text"></i> Medical History</div>
+            <div class="patient-detail-value text-content">${patient.medical_history}</div>
+        </div>
+        ` : ''}
+        ${patient.misc ? `
+        <div class="patient-detail-item full-width">
+            <div class="patient-detail-label"><i class="mdi mdi-note-text"></i> Additional Notes</div>
+            <div class="patient-detail-value text-content">${patient.misc}</div>
+        </div>
+        ` : ''}
     `;
+    $('#patient-details-grid').html(expandedDetailsHtml);
 
-    return `
-        <div class="request-card">
-            ${checkboxOrAction}
-            <div class="request-card-content">
-                <div class="request-card-header">
+    // Update profile tab with patient details
+    updateProfileTab(patient);
+}
+
+function updateProfileTab(patient) {
+    // Populate Patient Information table
+    let allergies = patient.allergies || [];
+    if (typeof allergies === 'string') {
+        try {
+            allergies = JSON.parse(allergies);
+        } catch(e) {
+            allergies = [];
+        }
+    }
+
+    const allergiesBadges = allergies.length > 0
+        ? allergies.map(a => `<span class="badge badge-danger mr-1">${a}</span>`).join(' ')
+        : '<span class="text-muted">No known allergies</span>';
+
+    const profileInfoHtml = `
+        <tr>
+            <td class="text-muted" width="35%">File No:</td>
+            <td><strong>${patient.file_no || 'N/A'}</strong></td>
+        </tr>
+        <tr>
+            <td class="text-muted">Full Name:</td>
+            <td>${patient.name || 'N/A'}</td>
+        </tr>
+        <tr>
+            <td class="text-muted">Phone:</td>
+            <td>${patient.phone || 'N/A'}</td>
+        </tr>
+        <tr>
+            <td class="text-muted">Email:</td>
+            <td>${patient.email || 'N/A'}</td>
+        </tr>
+        <tr>
+            <td class="text-muted">Gender:</td>
+            <td>${patient.gender || 'N/A'}</td>
+        </tr>
+        <tr>
+            <td class="text-muted">Date of Birth:</td>
+            <td>${patient.dob || 'N/A'}</td>
+        </tr>
+        <tr>
+            <td class="text-muted">Age:</td>
+            <td>${patient.age ? `${patient.age} years` : 'N/A'}</td>
+        </tr>
+        <tr>
+            <td class="text-muted">Address:</td>
+            <td>${patient.address || 'N/A'}</td>
+        </tr>
+        <tr>
+            <td class="text-muted">Allergies:</td>
+            <td>${allergiesBadges}</td>
+        </tr>
+    `;
+    $('#profile-info-table').html(profileInfoHtml);
+
+    // Populate HMO Information table
+    const hmoInfoHtml = `
+        <tr>
+            <td class="text-muted" width="35%">HMO/Insurance:</td>
+            <td><strong>${patient.hmo_name || '<span class="text-warning">Private (No HMO)</span>'}</strong></td>
+        </tr>
+        ${patient.hmo_no ? `
+        <tr>
+            <td class="text-muted">HMO Number:</td>
+            <td>${patient.hmo_no}</td>
+        </tr>
+        ` : ''}
+        ${patient.hmo_plan ? `
+        <tr>
+            <td class="text-muted">Plan:</td>
+            <td>${patient.hmo_plan}</td>
+        </tr>
+        ` : ''}
+        ${patient.company ? `
+        <tr>
+            <td class="text-muted">Company:</td>
+            <td>${patient.company}</td>
+        </tr>
+        ` : ''}
+    `;
+    $('#profile-hmo-table').html(hmoInfoHtml);
+
+    // Load current queue entries for this patient
+    loadPatientQueueEntries(patient.id);
+}
+
+function loadPatientQueueEntries(patientId) {
+    $.get(`{{ url('reception/patient') }}/${patientId}/queue`, function(data) {
+        const $container = $('#current-queue-entries');
+        const entries = Array.isArray(data) ? data : (data.entries || []);
+
+        if (entries.length === 0) {
+            $container.html('<p class="text-muted">No active queue entries</p>');
+            return;
+        }
+
+        let html = '<div class="queue-entries-list">';
+        entries.forEach(entry => {
+            const statusClass = {
+                1: 'badge-warning',
+                2: 'badge-info',
+                3: 'badge-primary',
+                4: 'badge-success'
+            }[entry.status] || 'badge-secondary';
+
+            const statusText = {
+                1: 'Waiting',
+                2: 'Vitals Pending',
+                3: 'In Consultation',
+                4: 'Completed'
+            }[entry.status] || 'Unknown';
+
+            html += `
+                <div class="queue-entry-item d-flex justify-content-between align-items-center p-2 border-bottom">
                     <div>
-                        <div class="request-service-name">${serviceName}</div>
-                        <div class="request-card-meta">
-                            <div class="request-meta-item">
-                                <i class="mdi mdi-doctor"></i>
-                                <span>${doctorName}</span>
-                            </div>
-                            <div class="request-meta-item">
-                                <i class="mdi mdi-clock-outline"></i>
-                                <span>${requestDate}</span>
-                            </div>
-                        </div>
+                        <strong>Q-${entry.queue_no || 'N/A'}</strong>
+                        <span class="text-muted ml-2">${entry.clinic_name || 'N/A'}</span>
+                        <br><small><i class="mdi mdi-account"></i> ${entry.patient_name || 'N/A'} <span class="text-muted">(#${entry.patient_file_no || 'N/A'})</span></small>
+                        ${entry.doctor_name ? `<br><small class="text-muted"><i class="mdi mdi-doctor"></i> Dr. ${entry.doctor_name}</small>` : ''}
                     </div>
+                    <span class="badge ${statusClass}">${statusText}</span>
                 </div>
-                ${noteHtml}
-                ${deliveryWarningHtml}
-            </div>
-        </div>
-    `;
+            `;
+        });
+        html += '</div>';
+        $container.html(html);
+    }).fail(function() {
+        $('#current-queue-entries').html('<p class="text-muted">Failed to load queue entries</p>');
+    });
 }
 
-function initializeRequestHandlers() {
-    // Select all checkboxes
-    $('.select-all-checkbox').on('change', function() {
-        const section = $(this).attr('id').replace('select-all-', '');
-        const isChecked = $(this).is(':checked');
-        $(`.request-checkbox[data-section="${section}"]`).prop('checked', isChecked).trigger('change');
-    });
+// =============================================
+// WORKSPACE TABS
+// =============================================
+function switchWorkspaceTab(tab) {
+    // Update tab buttons
+    $('.workspace-tab').removeClass('active');
+    $(`.workspace-tab[data-tab="${tab}"]`).addClass('active');
 
-    // Individual checkboxes
-    $('.request-checkbox').on('change', function() {
-        const section = $(this).data('section');
-        const checkedCount = $(`.request-checkbox[data-section="${section}"]:checked`).length;
+    // Update tab content
+    $('.workspace-tab-content').removeClass('active');
+    $(`#${tab}-tab`).addClass('active');
 
-        // Enable/disable action buttons
-        $(`#btn-record-${section}, #btn-collect-${section}, #btn-dismiss-${section}`).prop('disabled', checkedCount === 0);
-
-        // Update select all checkbox state
-        const totalCount = $(`.request-checkbox[data-section="${section}"]`).length;
-        $(`#select-all-${section}`).prop('checked', checkedCount === totalCount);
-    });
-
-    // Record Billing button
-    $('#btn-record-billing').on('click', function() {
-        const selectedIds = $('.request-checkbox[data-section="billing"]:checked').map(function() {
-            return $(this).data('request-id');
-        }).get();
-
-        if (selectedIds.length > 0) {
-            recordBilling(selectedIds);
+    // Tab-specific actions
+    if (tab === 'history' && currentPatient) {
+        if (visitHistoryTable) {
+            visitHistoryTable.ajax.reload();
         }
-    });
-
-    // Collect Sample button
-    $('#btn-collect-sample').on('click', function() {
-        const selectedIds = $('.request-checkbox[data-section="sample"]:checked').map(function() {
-            return $(this).data('request-id');
-        }).get();
-
-        if (selectedIds.length > 0) {
-            collectSample(selectedIds);
-        }
-    });
-
-    // Dismiss buttons
-    $('.btn-action-dismiss').on('click', function() {
-        const btnId = $(this).attr('id');
-        const section = btnId.replace('btn-dismiss-', '');
-        const selectedIds = $(`.request-checkbox[data-section="${section}"]:checked`).map(function() {
-            return $(this).data('request-id');
-        }).get();
-
-        if (selectedIds.length > 0) {
-            dismissRequests(selectedIds, section);
-        }
-    });
-
-    // Enter Result buttons (individual)
-    $('.enter-result-btn').on('click', function() {
-        const requestId = $(this).data('request-id');
-        enterResult(requestId);
-    });
+    }
 }
 
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    const options = { year: 'numeric', month: 'short', day: 'numeric' };
-    return date.toLocaleDateString('en-US', options);
-}
-
-function formatDateTime(dateString) {
-    const date = new Date(dateString);
-    const dateOptions = { month: 'short', day: 'numeric' };
-    const timeOptions = { hour: '2-digit', minute: '2-digit' };
-    return date.toLocaleDateString('en-US', dateOptions) + ', ' + date.toLocaleTimeString('en-US', timeOptions);
-}
-
-function setDefaultReceiptDates() {
-    const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-    const formatDate = (date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    };
-
-    $('#receipts-from-date').val(formatDate(firstDay));
-    $('#receipts-to-date').val(formatDate(lastDay));
-}
-
-function setDefaultReceiptDates() {
-    const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-    const formatDate = (date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    };
-
-    $('#receipts-from-date').val(formatDate(firstDay));
-    $('#receipts-to-date').val(formatDate(lastDay));
-}
-
+// =============================================
+// QUEUE MANAGEMENT
+// =============================================
 function loadQueueCounts() {
-    $.get('{{ route("billing.queue-counts") }}', function(counts) {
-        $('#queue-all-count').text(counts.total || 0);
-        $('#queue-hmo-count').text(counts.hmo || 0);
-        $('#queue-credit-count').text(counts.credit || 0);
+    $.get('{{ route("reception.queue-counts") }}', function(counts) {
+        $('#queue-waiting-count').text(counts.waiting || 0);
+        $('#queue-vitals-count').text(counts.vitals_pending || 0);
+        $('#queue-consultation-count').text(counts.in_consultation || 0);
+        $('#queue-admitted-count').text(counts.admitted || 0);
         updateSyncIndicator();
+    }).fail(function() {
+        console.error('Failed to load queue counts');
     });
 }
 
@@ -4507,2235 +6960,72 @@ function startQueueRefresh() {
     queueRefreshInterval = setInterval(function() {
         loadQueueCounts();
 
-        // Also refresh current patient data if a patient is selected
-        if (currentPatient) {
-            refreshCurrentPatientData();
-        }
-
-        // Refresh queue DataTable if queue view is active
+        // Refresh queue DataTable if visible
         if ($('#queue-view').hasClass('active') && queueDataTable) {
             queueDataTable.ajax.reload(null, false);
         }
     }, 30000); // 30 seconds
 }
 
-function refreshCurrentPatientData() {
-    if (!currentPatient) return;
-
-    // Silently reload patient requests
-    $.get(`/lab-workbench/patient/${currentPatient}/requests`, function(data) {
-        displayPendingRequests(data.requests);
-        updatePendingSubtabBadges(data.requests);
-    }).fail(function() {
-        console.error('Failed to refresh patient data');
-    });
-}
-
-let lastSyncTimestamp = null;
-let syncTimeUpdateInterval = null;
-
-function updateSyncIndicator() {
-    lastSyncTimestamp = Date.now();
-    updateSyncTimeDisplay();
-
-    // Start interval to update relative time every 10 seconds
-    if (syncTimeUpdateInterval) {
-        clearInterval(syncTimeUpdateInterval);
-    }
-    syncTimeUpdateInterval = setInterval(updateSyncTimeDisplay, 10000);
-}
-
-function updateSyncTimeDisplay() {
-    if (!lastSyncTimestamp) {
-        $('#last-sync-time').text('Just now');
-        return;
-    }
-
-    const secondsAgo = Math.floor((Date.now() - lastSyncTimestamp) / 1000);
-
-    if (secondsAgo < 10) {
-        $('#last-sync-time').text('Just now');
-    } else if (secondsAgo < 60) {
-        $('#last-sync-time').text(secondsAgo + 's ago');
-    } else {
-        const minutesAgo = Math.floor(secondsAgo / 60);
-        $('#last-sync-time').text(minutesAgo + 'm ago');
-    }
-}
-
-function switchWorkspaceTab(tab) {
-    $('.workspace-tab').removeClass('active');
-    $(`.workspace-tab[data-tab="${tab}"]`).addClass('active');
-
-    $('.workspace-tab-content').removeClass('active');
-    $(`#${tab}-tab`).addClass('active');
-
-    // Load tab-specific data
-    if (!currentPatient) return;
-
-    switch(tab) {
-        case 'billing':
-            loadBillingItems();
-            break;
-        case 'receipts':
-            setDefaultReceiptDates();
-            loadPatientReceipts();
-            break;
-        case 'account':
-            loadAccountSummary();
-            break;
-    }
-}
-
-// ========== ACCOUNT BALANCE FUNCTIONS ==========
-
-let currentAccountBalance = 0;
-
-function loadAccountBalance(patientId) {
-    $.ajax({
-        url: `/billing-workbench/patient/${patientId}/account-summary`,
-        method: 'GET',
-        success: function(data) {
-            currentAccountBalance = parseFloat(data.balance) || 0;
-            updateAccountBalanceDisplays(data);
-        },
-        error: function(xhr) {
-            console.error('Failed to load account balance', xhr);
-        }
-    });
-}
-
-function updateAccountBalanceDisplays(accountData) {
-    const balance = parseFloat(accountData.balance) || 0;
-    const formattedBalance = `₦${Math.abs(balance).toLocaleString()}`;
-
-    // Update patient header balance
-    $('#header-balance-amount').text(formattedBalance);
-    $('#patient-header-balance').show();
-
-    // Update billing tab balance
-    $('#billing-balance-amount').text(formattedBalance);
-    if (balance > 0) {
-        $('#billing-account-balance').show();
-        // Show account payment option if balance is positive
-        $('#account-payment-option').show();
-    } else {
-        $('#billing-account-balance').hide();
-        $('#account-payment-option').hide();
-    }
-
-    // Update account tab with new modern UI
-    if (accountData.account) {
-        displayAccountInfo(accountData.account, accountData.unpaid_total);
-        // Initialize filters to current month before loading transactions
-        initAccountTxFilters();
-        loadAccountTransactions();
-    } else {
-        showNoAccountState();
-    }
-}
-
-function displayAccountInfo(account, pendingBills) {
-    const balance = parseFloat(account.balance) || 0;
-    const formattedBalance = `₦${Math.abs(balance).toLocaleString()}`;
-
-    // Update hero balance section
-    const heroBalance = $('#account-hero-balance');
-    heroBalance.removeClass('credit debit');
-
-    $('#hero-balance-amount').text(`₦${balance.toLocaleString()}`);
-
-    if (balance > 0) {
-        heroBalance.addClass('credit');
-        $('#hero-balance-status').text('Credit Balance');
-    } else if (balance < 0) {
-        heroBalance.addClass('debit');
-        $('#hero-balance-status').text(`Debit Balance`);
-    } else {
-        $('#hero-balance-status').text('Balanced');
-    }
-
-    // Update pending bills stat
-    $('#pending-bills-stat').text(`₦${parseFloat(pendingBills || 0).toLocaleString()}`);
-
-    // Show account UI, hide no-account state
-    $('#account-hero-section').show();
-    $('#account-transactions-section').show();
-    $('#no-account-state').hide();
-    $('#account-transaction-panel').hide();
-}
-
-function showNoAccountState() {
-    $('#account-hero-section').hide();
-    $('#account-transactions-section').hide();
-    $('#no-account-state').show();
-}
-
-function loadAccountTransactions() {
-    if (!currentPatient) return;
-
-    const fromDate = $('#account-tx-from-date').val() || '';
-    const toDate = $('#account-tx-to-date').val() || '';
-    const txType = $('#account-tx-type-filter').val() || '';
-
-    // Load account-specific transaction history
-    $.ajax({
-        url: `/billing-workbench/patient/${currentPatient}/account-transactions`,
-        method: 'GET',
-        data: {
-            from_date: fromDate,
-            to_date: toDate,
-            tx_type: txType
-        },
-        success: function(response) {
-            console.log('Account transactions response:', response);
-            const transactions = response.transactions || [];
-            const summary = response.summary || {};
-            renderAccountTransactions(transactions);
-            updateAccountStats(summary);
-        },
-        error: function(xhr) {
-            console.error('Failed to load account transactions', xhr);
-            $('#transaction-timeline').html(`
-                <div class="timeline-empty-state">
-                    <i class="mdi mdi-alert-circle"></i>
-                    <p>Failed to load transactions</p>
-                    <small>Please try refreshing</small>
-                </div>
-            `);
-        }
-    });
-}
-
-function updateAccountStats(summary) {
-    $('#total-deposits-stat').text(`₦${parseFloat(summary.total_deposits || 0).toLocaleString()}`);
-    $('#total-withdrawals-stat').text(`₦${parseFloat(summary.total_withdrawals || 0).toLocaleString()}`);
-    $('#tx-count-stat').text(summary.transaction_count || 0);
-}
-
-function renderAccountTransactions(transactions) {
-    console.log('renderAccountTransactions called with:', transactions);
-    const timeline = $('#transaction-timeline');
-    console.log('Timeline element found:', timeline.length > 0);
-    timeline.empty();
-
-    if (!transactions || transactions.length === 0) {
-        console.log('No transactions to render');
-        timeline.html(`
-            <div class="timeline-empty-state">
-                <i class="mdi mdi-swap-horizontal"></i>
-                <p>No account transactions yet</p>
-                <small>Deposits and withdrawals will appear here</small>
-            </div>
-        `);
-        return;
-    }
-
-    console.log('Rendering', transactions.length, 'transactions');
-    transactions.forEach((tx, index) => {
-        const amountClass = parseFloat(tx.amount) >= 0 ? 'positive' : 'negative';
-        const amountPrefix = parseFloat(tx.amount) >= 0 ? '+' : '';
-
-        const item = `
-            <div class="timeline-item">
-                <div class="timeline-icon ${tx.tx_color}">
-                    <i class="mdi ${tx.tx_icon}"></i>
-                </div>
-                <div class="timeline-content">
-                    <div class="timeline-header">
-                        <span class="timeline-type">${tx.tx_type}</span>
-                        <span class="timeline-amount ${amountClass}">${amountPrefix}₦${Math.abs(parseFloat(tx.amount)).toLocaleString()}</span>
-                    </div>
-                    <div class="timeline-meta">
-                        <span><i class="mdi mdi-calendar"></i> ${tx.created_at}</span>
-                        <span><i class="mdi mdi-clock"></i> ${tx.created_time}</span>
-                        <span><i class="mdi mdi-account"></i> ${tx.cashier}</span>
-                    </div>
-                    ${tx.description ? `<div class="timeline-description">${tx.description}</div>` : ''}
-                    <span class="timeline-balance">Balance after: ₦${parseFloat(tx.running_balance).toLocaleString()}</span>
-                </div>
-            </div>
-        `;
-        console.log('Appending item', index, 'to timeline');
-        timeline.append(item);
-    });
-    console.log('Timeline HTML after render:', timeline.html().substring(0, 200));
-}
-
-// Account Tab Event Handlers - Transaction Panel
-let currentTransactionType = 'deposit';
-
-function openTransactionPanel(type) {
-    currentTransactionType = type;
-    const panel = $('#account-transaction-panel');
-    const icon = $('#transaction-panel-icon');
-    const title = $('#transaction-panel-title');
-    const submitBtn = $('#transaction-submit-btn');
-    const submitText = $('#transaction-submit-text');
-    const amountHelp = $('#transaction-amount-help');
-    const changeLabel = $('#preview-change-label');
-
-    // Reset form
-    $('#account-transaction-form')[0].reset();
-    $('#transaction-type').val(type);
-
-    // Update panel styling based on type
-    panel.removeClass('deposit withdraw adjust');
-    panel.addClass(type);
-
-    // Get current balance for preview
-    const balanceText = $('#hero-balance-amount').text().replace('₦', '').replace(/,/g, '');
-    currentAccountBalance = parseFloat(balanceText) || 0;
-    $('#preview-current-balance').text(`₦${currentAccountBalance.toLocaleString()}`);
-    updateBalancePreview();
-
-    // Show/hide payment method based on transaction type
-    if (type === 'adjust') {
-        // Hide payment method for adjustments
-        $('#transaction-payment-method-group').hide();
-        $('#transaction-bank-group').hide();
-    } else {
-        // Show payment method for deposits and withdrawals
-        $('#transaction-payment-method-group').show();
-        // Reset bank visibility based on current payment method
-        const payMethod = $('#transaction-payment-method').val();
-        if (['POS', 'TRANSFER', 'MOBILE'].includes(payMethod)) {
-            $('#transaction-bank-group').show();
-        } else {
-            $('#transaction-bank-group').hide();
-        }
-    }
-
-    if (type === 'deposit') {
-        icon.attr('class', 'mdi mdi-plus-circle');
-        title.text('Make Deposit');
-        submitText.text('Confirm Deposit');
-        amountHelp.text('Enter amount to add to account');
-        changeLabel.text('After Deposit:');
-        $('#transaction-description').removeAttr('required');
-        $('#transaction-amount').attr('min', '0.01');
-    } else if (type === 'withdraw') {
-        icon.attr('class', 'mdi mdi-minus-circle');
-        title.text('Make Withdrawal');
-        submitText.text('Confirm Withdrawal');
-        amountHelp.text('Enter amount to withdraw from account');
-        changeLabel.text('After Withdrawal:');
-        $('#transaction-description').removeAttr('required');
-        $('#transaction-amount').attr('min', '0.01');
-    } else if (type === 'adjust') {
-        icon.attr('class', 'mdi mdi-swap-horizontal');
-        title.text('Account Adjustment');
-        submitText.text('Confirm Adjustment');
-        amountHelp.text('Enter positive to credit, negative to debit');
-        changeLabel.text('After Adjustment:');
-        $('#transaction-description').attr('required', 'required');
-        $('#transaction-amount').removeAttr('min');
-    }
-
-    panel.slideDown();
-    $('#transaction-amount').focus();
-}
-
-// Transaction payment method change handler
-$(document).on('change', '#transaction-payment-method', function() {
-    const method = $(this).val();
-    if (['POS', 'TRANSFER', 'MOBILE'].includes(method)) {
-        $('#transaction-bank-group').show();
-    } else {
-        $('#transaction-bank-group').hide();
-        $('#transaction-bank').val('');
-    }
-});
-
-function updateBalancePreview() {
-    const amount = parseFloat($('#transaction-amount').val()) || 0;
-    let newBalance = currentAccountBalance;
-
-    if (currentTransactionType === 'deposit') {
-        newBalance = currentAccountBalance + amount;
-    } else if (currentTransactionType === 'withdraw') {
-        newBalance = currentAccountBalance - amount;
-    } else if (currentTransactionType === 'adjust') {
-        newBalance = currentAccountBalance + amount; // Adjustment can be +/-
-    }
-
-    const previewElement = $('#preview-new-balance');
-    previewElement.text(`₦${newBalance.toLocaleString()}`);
-    previewElement.removeClass('positive negative');
-
-    if (newBalance > 0) {
-        previewElement.addClass('positive');
-    } else if (newBalance < 0) {
-        previewElement.addClass('negative');
-    }
-}
-
-$(document).on('click', '#quick-deposit-btn', function() {
-    openTransactionPanel('deposit');
-});
-
-$(document).on('click', '#quick-withdraw-btn', function() {
-    openTransactionPanel('withdraw');
-});
-
-$(document).on('click', '#quick-adjust-btn', function() {
-    openTransactionPanel('adjust');
-});
-
-$(document).on('click', '#close-transaction-panel', function() {
-    $('#account-transaction-panel').slideUp();
-});
-
-$(document).on('input', '#transaction-amount', function() {
-    updateBalancePreview();
-});
-
-$(document).on('submit', '#account-transaction-form', function(e) {
-    e.preventDefault();
-    processAccountTransaction();
-});
-
-function processAccountTransaction() {
-    if (!currentPatientData) return;
-
-    const type = $('#transaction-type').val();
-    const amountInput = $('#transaction-amount').val();
-    const amount = parseFloat(amountInput);
-    const description = $('#transaction-description').val();
-    const paymentMethod = $('#transaction-payment-method').val();
-    const bankId = $('#transaction-bank').val();
-
-    console.log('Processing transaction:', { type, amountInput, amount, description, paymentMethod, bankId });
-
-    // For adjustments, allow any non-zero value (positive or negative)
-    // For deposit/withdraw, require positive values
-    if (type === 'adjust') {
-        if (isNaN(amount) || amount === 0) {
-            toastr.warning('Please enter a valid non-zero amount (positive to credit, negative to debit)');
-            return;
-        }
-    } else {
-        if (isNaN(amount) || amount <= 0) {
-            toastr.warning('Please enter a valid positive amount');
-            return;
-        }
-    }
-
-    if (type === 'adjust' && !description) {
-        toastr.warning('Description is required for adjustments');
-        return;
-    }
-
-    // Validate bank selection for non-cash payments (except adjustments)
-    if (type !== 'adjust' && ['POS', 'TRANSFER', 'MOBILE'].includes(paymentMethod) && !bankId) {
-        toastr.warning('Please select a bank for this payment method');
-        return;
-    }
-
-    // Check if withdraw amount exceeds balance
-    if (type === 'withdraw' && amount > currentAccountBalance) {
-        if (!confirm(`Warning: This withdrawal (₦${amount.toLocaleString()}) exceeds the current balance (₦${currentAccountBalance.toLocaleString()}). Continue anyway?`)) {
-            return;
-        }
-    }
-
-    let confirmMsg = '';
-    if (type === 'deposit') {
-        confirmMsg = `Deposit ₦${amount.toLocaleString()} to this account?`;
-    } else if (type === 'withdraw') {
-        confirmMsg = `Withdraw ₦${amount.toLocaleString()} from this account?`;
-    } else {
-        confirmMsg = `Apply adjustment of ₦${amount.toLocaleString()} to this account?`;
-    }
-
-    if (!confirm(confirmMsg)) return;
-
-    $.ajax({
-        url: '/billing-workbench/account-transaction',
-        method: 'POST',
-        data: {
-            _token: '{{ csrf_token() }}',
-            patient_id: currentPatientData.id,
-            transaction_type: type,
-            amount: amount,
-            description: description,
-            payment_method: type !== 'adjust' ? paymentMethod : null,
-            bank_id: (type !== 'adjust' && bankId) ? bankId : null
-        },
-        success: function(response) {
-            toastr.success(response.message || 'Transaction saved successfully!');
-
-            // Close panel and reset form
-            $('#account-transaction-panel').slideUp();
-            $('#account-transaction-form')[0].reset();
-
-            // Refresh all account data
-            loadAccountBalance(currentPatient);
-            loadAccountSummary();
-            loadAccountTransactions();
-
-            // If on receipts tab, refresh receipts
-            if ($('#receipts-tab').hasClass('active')) {
-                loadPatientReceipts();
-            }
-        },
-        error: function(xhr) {
-            toastr.error(xhr.responseJSON?.message || 'Failed to save transaction');
-        }
-    });
-}
-
-$(document).on('click', '#filter-account-tx', function() {
-    loadAccountTransactions();
-});
-
-$(document).on('click', '#refresh-account-data', function() {
-    loadAccountSummary();
-    loadAccountTransactions();
-    toastr.info('Refreshing account data...');
-});
-
-// Set default dates for account transactions filter
-function initAccountTxFilters() {
-    const today = new Date().toISOString().split('T')[0];
-    const firstDay = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
-    $('#account-tx-from-date').val(firstDay);
-    $('#account-tx-to-date').val(today);
-}
-
-// Initialize when account tab is shown
-$(document).on('shown.bs.tab', 'a[href="#account-tab"]', function() {
-    initAccountTxFilters();
-    if (currentPatient) {
-        loadAccountTransactions();
-    }
-});
-
-// Also call on workspace tab click
-$(document).on('click', '.workspace-tab[data-tab="account-tab"]', function() {
-    setTimeout(() => {
-        initAccountTxFilters();
-        if (currentPatient) {
-            loadAccountTransactions();
-        }
-    }, 100);
-});
-
-function filterReceipts() {
-    if (!currentPatient) return;
-
-    const fromDate = $('#receipts-from-date').val() || '';
-    const toDate = $('#receipts-to-date').val() || '';
-    const paymentType = $('#receipts-payment-type').val() || '';
-
-    const params = {};
-    if (fromDate) params.from_date = fromDate;
-    if (toDate) params.to_date = toDate;
-    if (paymentType) params.payment_type = paymentType;
-
-    $.ajax({
-        url: `/billing-workbench/patient/${currentPatient}/receipts`,
-        method: 'GET',
-        data: params,
-        success: function(data) {
-            renderReceipts(data.receipts);
-            updateReceiptsStats(data.stats);
-        },
-        error: function(xhr) {
-            toastr.error('Failed to filter receipts');
-        }
-    });
-}
-
-function renderReceipts(receipts) {
-    const tbody = $('#receipts-tbody');
-    tbody.empty();
-
-    if (receipts.length === 0) {
-        tbody.html(`
-            <tr>
-                <td colspan="9" class="text-center text-muted py-5">
-                    <i class="mdi mdi-receipt" style="font-size: 3rem;"></i>
-                    <p>No receipts found</p>
-                </td>
-            </tr>
-        `);
-        return;
-    }
-
-    receipts.forEach(receipt => {
-        // Handle different possible field names from backend
-        const paymentId = receipt.payment_id || receipt.id;
-        const referenceNo = receipt.reference_no || receipt.reference_number || 'N/A';
-        const dateValue = receipt.created_at || receipt.date || receipt.payment_date;
-        const itemCount = receipt.item_count || receipt.items_count || 0;
-        const total = parseFloat(receipt.total || 0);
-        const discount = parseFloat(receipt.total_discount || receipt.discount || 0);
-        const paymentType = receipt.payment_type || 'N/A';
-        const cashier = receipt.created_by || receipt.cashier || 'N/A';
-
-        const row = `
-            <tr>
-                <td><input type="checkbox" class="receipt-checkbox" data-id="${paymentId}"></td>
-                <td>${referenceNo}</td>
-                <td>${dateValue}</td>
-                <td>${itemCount} item(s)</td>
-                <td>₦${total.toLocaleString()}</td>
-                <td>₦${discount.toLocaleString()}</td>
-                <td>${paymentType}</td>
-                <td>${cashier}</td>
-                <td>
-                    <button class="btn btn-sm btn-primary reprint-receipt" data-id="${paymentId}">
-                        <i class="mdi mdi-printer"></i> Reprint
-                    </button>
-                </td>
-            </tr>
-        `;
-        tbody.append(row);
-    });
-
-    // Reset select all checkbox
-    $('#select-all-receipts').prop('checked', false);
-
-    // Update print selected button state
-    updatePrintSelectedButton();
-}
-
-function updateReceiptsStats(stats) {
-    if (stats) {
-        $('#receipts-total-count').text(stats.count || 0);
-        $('#receipts-total-amount').text(`₦${parseFloat(stats.total || 0).toLocaleString()}`);
-        $('#receipts-total-discounts').text(`₦${parseFloat(stats.discounts || 0).toLocaleString()}`);
-        $('#receipts-summary').show();
-    }
-}
-
-function exportReceipts() {
-    if (!currentPatient) {
-        toastr.warning('Please select a patient first');
-        return;
-    }
-
-    const fromDate = $('#receipts-from-date').val() || '';
-    const toDate = $('#receipts-to-date').val() || '';
-    const paymentType = $('#receipts-payment-type').val() || '';
-
-    const params = new URLSearchParams();
-    if (fromDate) params.append('from_date', fromDate);
-    if (toDate) params.append('to_date', toDate);
-    if (paymentType) params.append('payment_type', paymentType);
-
-    const url = `/billing-workbench/patient/${currentPatient}/receipts/export?${params.toString()}`;
-    window.open(url, '_blank');
-}
-
-function createPatientAccount() {
-    if (!currentPatientData) return;
-
-    if (!confirm('Create a new account for this patient?')) return;
-
-    $.ajax({
-        url: '/billing-workbench/create-account',
-        method: 'POST',
-        data: {
-            _token: '{{ csrf_token() }}',
-            patient_id: currentPatientData.id
-        },
-        success: function(response) {
-            toastr.success(response.message || 'Account created successfully!');
-
-            // Update patient data with new account info
-            if (response.account) {
-                currentPatientData.account_id = response.account.id;
-            }
-
-            // Reload account balance and all displays
-            loadAccountBalance(currentPatient);
-
-            // Show account UI state
-            $('#no-account-state').hide();
-            $('#account-hero-section').show();
-            $('#account-transactions-section').show();
-
-            // Reload account summary to show full data
-            loadAccountSummary();
-
-            // Load account transactions
-            loadAccountTransactions();
-        },
-        error: function(xhr) {
-            toastr.error(xhr.responseJSON?.message || 'Failed to create account');
-        }
-    });
-}
-
-// ========== BILLING WORKBENCH FUNCTIONS ==========
-
-function loadBillingItems() {
-    if (!currentPatient) return;
-
-    $.ajax({
-        url: `/billing-workbench/patient/${currentPatient}/billing-data`,
-        method: 'GET',
-        success: function(response) {
-            renderBillingItems(response.items);
-            updateBillingBadge(response.items.length);
-        },
-        error: function(xhr) {
-            console.error('Failed to load billing items', xhr);
-            toastr.error('Failed to load billing items');
-        }
-    });
-}
-
-function renderBillingItems(items) {
-    console.log('renderBillingItems called with:', items);
-
-    const tbody = $('#billing-items-tbody');
-    tbody.empty();
-
-    if (items.length === 0) {
-        tbody.html(`
-            <tr>
-                <td colspan="8" class="text-center text-muted py-5">
-                    <i class="mdi mdi-information-outline" style="font-size: 3rem;"></i>
-                    <p>No unpaid items for this patient</p>
-                </td>
-            </tr>
-        `);
-        return;
-    }
-
-    items.forEach(item => {
-        const row = `
-            <tr data-item-id="${item.id}">
-                <td><input type="checkbox" class="billing-item-checkbox" data-id="${item.id}"></td>
-                <td>${item.name}</td>
-                <td>${item.category || 'N/A'}</td>
-                <td>₦${parseFloat(item.price).toLocaleString()}</td>
-                <td><input type="number" class="form-control item-qty-input" value="${item.qty}" min="1" data-id="${item.id}"></td>
-                <td><input type="number" class="form-control item-discount-input" value="${item.discount || 0}" min="0" max="100" data-id="${item.id}"></td>
-                <td>${item.claims_amount > 0 ? `<span class="hmo-badge">₦${parseFloat(item.claims_amount).toLocaleString()}</span>` : '-'}</td>
-                <td class="item-total" data-id="${item.id}">₦${calculateItemTotal(item).toLocaleString()}</td>
-            </tr>
-        `;
-        tbody.append(row);
-    });
-
-    // Attach event listeners
-    $('.billing-item-checkbox').on('change', updatePaymentSummary);
-    $('#select-all-billing-items').on('change', function() {
-        $('.billing-item-checkbox').prop('checked', $(this).is(':checked'));
-        updatePaymentSummary();
-    });
-    $('.item-qty-input, .item-discount-input').on('input', function() {
-        const id = $(this).data('id');
-        recalculateItemTotal(id);
-        updatePaymentSummary();
-    });
-
-    console.log('Rendered', items.length, 'billing items');
-}
-
-function calculateItemTotal(item) {
-    const qty = parseFloat(item.qty) || 1;
-    const price = parseFloat(item.price) || 0;
-    const discount = parseFloat(item.discount) || 0;
-    const subtotal = price * qty;
-    const discountAmount = subtotal * (discount / 100);
-    return subtotal - discountAmount;
-}
-
-function recalculateItemTotal(itemId) {
-    const row = $(`tr[data-item-id="${itemId}"]`);
-    const qty = parseFloat(row.find('.item-qty-input').val()) || 1;
-    const price = parseFloat(row.find('td:eq(3)').text().replace('₦', '').replace(/,/g, ''));
-    const discount = parseFloat(row.find('.item-discount-input').val()) || 0;
-
-    const subtotal = price * qty;
-    const discountAmount = subtotal * (discount / 100);
-    const total = subtotal - discountAmount;
-
-    row.find('.item-total').text(`₦${total.toLocaleString()}`);
-}
-
-function updatePaymentSummary() {
-    const selectedItems = $('.billing-item-checkbox:checked');
-
-    if (selectedItems.length === 0) {
-        $('#payment-summary-card').hide();
-        $('#process-payment-btn').prop('disabled', true);
-        return;
-    }
-
-    let subtotal = 0;
-    let totalDiscount = 0;
-
-    selectedItems.each(function() {
-        const row = $(this).closest('tr');
-        const qty = parseFloat(row.find('.item-qty-input').val()) || 1;
-        const price = parseFloat(row.find('td:eq(3)').text().replace('₦', '').replace(/,/g, ''));
-        const discountPercent = parseFloat(row.find('.item-discount-input').val()) || 0;
-
-        const itemSubtotal = price * qty;
-        const itemDiscount = itemSubtotal * (discountPercent / 100);
-
-        subtotal += itemSubtotal;
-        totalDiscount += itemDiscount;
-    });
-
-    const total = subtotal - totalDiscount;
-
-    $('#summary-subtotal').text(`₦${subtotal.toLocaleString()}`);
-    $('#summary-discount').text(`₦${totalDiscount.toLocaleString()}`);
-    $('#summary-total').text(`₦${total.toLocaleString()}`);
-
-    $('#payment-summary-card').show();
-    $('#process-payment-btn').prop('disabled', false);
-}
-
-// Process payment button click
-$(document).on('click', '#process-payment-btn, #confirm-payment-btn', function() {
-    processPayment();
-});
-
-function processPayment() {
-    const selectedItems = $('.billing-item-checkbox:checked');
-
-    if (selectedItems.length === 0) {
-        toastr.warning('Please select items to process payment');
-        return;
-    }
-
-    const items = [];
-    selectedItems.each(function() {
-        const row = $(this).closest('tr');
-        items.push({
-            id: $(this).data('id'),
-            qty: parseFloat(row.find('.item-qty-input').val()) || 1,
-            discount: parseFloat(row.find('.item-discount-input').val()) || 0
-        });
-    });
-
-    const paymentType = $('#payment-method').val();
-    const referenceNo = $('#payment-reference').val();
-    const bankId = $('#payment-bank').val();
-    const totalPayable = parseFloat($('#summary-total').text().replace('₦', '').replace(/,/g, ''));
-
-    // Validate bank selection for non-cash payments
-    if (['POS', 'TRANSFER', 'MOBILE'].includes(paymentType) && !bankId) {
-        toastr.warning('Please select a bank for this payment method');
-        return;
-    }
-
-    // Validate account balance payment
-    if (paymentType === 'ACCOUNT') {
-        if (currentAccountBalance <= 0) {
-            toastr.error('Insufficient account balance');
-            return;
-        }
-        if (totalPayable > currentAccountBalance) {
-            toastr.error(`Insufficient account balance. Available: ₦${currentAccountBalance.toLocaleString()}`);
-            return;
-        }
-        if (!confirm(`Deduct ₦${totalPayable.toLocaleString()} from account balance?`)) {
-            return;
-        }
-    }
-
-    // Show loading state
-    const $confirmBtn = $('#confirm-payment-btn');
-    const originalText = $confirmBtn.html();
-    $confirmBtn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Processing Payment...');
-
-    $.ajax({
-        url: '/billing-workbench/process-payment',
-        method: 'POST',
-        data: {
-            _token: '{{ csrf_token() }}',
-            patient_id: currentPatient,
-            payment_type: paymentType,
-            payment_method: paymentType,
-            bank_id: bankId || null,
-            reference_no: referenceNo,
-            items: items
-        },
-        success: function(response) {
-            // Reset button state
-            $confirmBtn.prop('disabled', false).html(originalText);
-
-            toastr.success('Payment processed successfully!');
-
-            // Generate new reference number for next payment
-            generateReferenceNumber();
-
-            // Display receipt in modal
-            $('#modal-receipt-a4').html(response.receipt_a4);
-            $('#modal-receipt-thermal').html(response.receipt_thermal);
-
-            // Reset tabs to A4
-            $('.receipt-modal-tab').removeClass('active');
-            $('.receipt-modal-tab[data-format="a4"]').addClass('active');
-            $('#modal-receipt-a4').show();
-            $('#modal-receipt-thermal').hide();
-
-            // Show modal
-            $('#receiptPreviewModal').modal('show');
-
-            $('#payment-summary-card').hide();
-
-            // Clear all billing selections and reset summary
-            $('.billing-item-checkbox').prop('checked', false);
-            $('#select-all-items').prop('checked', false);
-            $('#summary-subtotal').text('₦0.00');
-            $('#summary-discount').text('₦0.00');
-            $('#summary-total').text('₦0.00');
-
-            // Reload billing items
-            loadBillingItems();
-
-            // Reload account balance to reflect payment deduction
-            loadAccountBalance(currentPatient);
-
-            // Refresh receipts to show new payment
-            loadPatientReceipts();
-
-            // If account tab is active, reload it
-            if ($('#account-tab').hasClass('active')) {
-                loadAccountSummary();
-            }
-
-            // Update queue counts
-            loadQueueCounts();
-        },
-        error: function(xhr) {
-            // Reset button state on error
-            $confirmBtn.prop('disabled', false).html(originalText);
-
-            toastr.error(xhr.responseJSON?.message || 'Payment processing failed');
-        }
-    });
-}
-
-$(document).on('click', '#print-thermal-receipt', function() {
-    printReceipt('receipt-content-thermal');
-});
-
-$(document).on('click', '#close-receipt', function() {
-    $('#receipt-display').hide();
-    $('#receipt-content-a4').empty();
-    $('#receipt-content-thermal').empty();
-    $('#payment-summary-card').show();
-});
-
-function printReceipt(elementId) {
-    const content = $(`#${elementId}`).html();
-    const printWindow = window.open('', '', 'height=600,width=800');
-    printWindow.document.write('<html><head><title>Receipt</title>');
-    printWindow.document.write('<style>body{font-family: Arial, sans-serif; padding: 20px;} table{width: 100%; border-collapse: collapse;} th, td{padding: 8px; text-align: left; border-bottom: 1px solid #ddd;}</style>');
-    printWindow.document.write('</head><body>');
-    printWindow.document.write(content);
-    printWindow.document.write('</body></html>');
-    printWindow.document.close();
-    printWindow.print();
-}
-
-function loadPatientReceipts() {
-    if (!currentPatient) return;
-
-    $.ajax({
-        url: `/billing-workbench/patient/${currentPatient}/receipts`,
-        method: 'GET',
-        success: function(response) {
-            renderReceipts(response.receipts);
-            if (response.stats) {
-                updateReceiptsStats(response.stats);
-            }
-        },
-        error: function(xhr) {
-            console.error('Failed to load receipts', xhr);
-            toastr.error('Failed to load receipts');
-        }
-    });
-}
-
-function updatePrintSelectedButton() {
-    const selected = $('.receipt-checkbox:checked').length;
-    $('#print-selected-receipts').prop('disabled', selected === 0);
-}
-
-$(document).on('click', '#print-selected-receipts', function() {
-    const paymentIds = [];
-    $('.receipt-checkbox:checked').each(function() {
-        paymentIds.push($(this).data('id'));
-    });
-    reprintReceipt(paymentIds);
-});
-
-function reprintReceipt(paymentIds) {
-    if (!paymentIds || paymentIds.length === 0) {
-        toastr.warning('Please select receipts to print');
-        return;
-    }
-
-    // Show loading state
-    toastr.info('Generating receipt...');
-
-    $.ajax({
-        url: '/billing-workbench/print-receipt',
-        method: 'POST',
-        data: {
-            _token: '{{ csrf_token() }}',
-            patient_id: currentPatient,
-            payment_ids: paymentIds
-        },
-        success: function(response) {
-            // Show in modal
-            $('#modal-receipt-a4').html(response.receipt_a4);
-            $('#modal-receipt-thermal').html(response.receipt_thermal);
-
-            // Reset tabs to A4
-            $('.receipt-modal-tab').removeClass('active');
-            $('.receipt-modal-tab[data-format="a4"]').addClass('active');
-            $('#modal-receipt-a4').show();
-            $('#modal-receipt-thermal').hide();
-
-            // Show modal
-            $('#receiptPreviewModal').modal('show');
-        },
-        error: function(xhr) {
-            toastr.error(xhr.responseJSON?.message || 'Failed to generate receipt');
-        }
-    });
-}
-
-// Receipt Modal Tab Switching
-$(document).on('click', '.receipt-modal-tab', function() {
-    const format = $(this).data('format');
-
-    $('.receipt-modal-tab').removeClass('active');
-    $(this).addClass('active');
-
-    if (format === 'a4') {
-        $('#modal-receipt-a4').show();
-        $('#modal-receipt-thermal').hide();
-    } else {
-        $('#modal-receipt-a4').hide();
-        $('#modal-receipt-thermal').show();
-    }
-});
-
-// Modal Print Buttons
-$(document).on('click', '#modal-print-a4', function() {
-    printReceiptContent('modal-receipt-a4');
-});
-
-$(document).on('click', '#modal-print-thermal', function() {
-    printReceiptContent('modal-receipt-thermal');
-});
-
-function printReceiptContent(elementId) {
-    const content = $(`#${elementId}`).html();
-    const printWindow = window.open('', '', 'height=600,width=800');
-    printWindow.document.write('<html><head><title>Receipt</title>');
-    printWindow.document.write('<style>');
-    printWindow.document.write('body { font-family: Arial, sans-serif; padding: 20px; margin: 0; }');
-    printWindow.document.write('table { width: 100%; border-collapse: collapse; }');
-    printWindow.document.write('th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }');
-    printWindow.document.write('.text-center { text-align: center; }');
-    printWindow.document.write('.text-right { text-align: right; }');
-    printWindow.document.write('.font-weight-bold { font-weight: bold; }');
-    printWindow.document.write('@media print { body { padding: 0; } }');
-    printWindow.document.write('</style>');
-    printWindow.document.write('</head><body>');
-    printWindow.document.write(content);
-    printWindow.document.write('</body></html>');
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => {
-        printWindow.print();
-    }, 250);
-}
-
-// Account Tab
-function loadAccountSummary() {
-    if (!currentPatient) return;
-
-    $.ajax({
-        url: `/billing-workbench/patient/${currentPatient}/account-summary`,
-        method: 'GET',
-        success: function(response) {
-            renderAccountSummary(response);
-        },
-        error: function(xhr) {
-            toastr.error('Failed to load account summary');
-        }
-    });
-}
-
-function renderAccountSummary(data) {
-    const balance = parseFloat(data.balance);
-
-    // Update hero balance in new UI
-    const heroBalance = $('#account-hero-balance');
-    heroBalance.removeClass('credit debit');
-
-    $('#hero-balance-amount').text(`₦${balance.toLocaleString()}`);
-
-    if (balance > 0) {
-        heroBalance.addClass('credit');
-        $('#hero-balance-status').text('Credit Balance');
-    } else if (balance < 0) {
-        heroBalance.addClass('debit');
-        $('#hero-balance-status').text('Debit Balance');
-    } else {
-        $('#hero-balance-status').text('Balanced');
-    }
-
-    // Update pending bills stat
-    $('#pending-bills-stat').text(`₦${parseFloat(data.unpaid_total || 0).toLocaleString()}`);
-
-    // Also update the account tab cards with new modern UI
-    if (data.account) {
-        displayAccountInfo(data.account, data.unpaid_total);
-    } else {
-        showNoAccountState();
-    }
-}
-
-// My Transactions Modal
-$(document).on('click', '#btn-my-transactions', function() {
-    $('#myTransactionsModal').modal('show');
-    // Set default dates to today
-    const today = new Date().toISOString().split('T')[0];
-    $('#my-trans-from-date').val(today);
-    $('#my-trans-to-date').val(today);
-
-    // Populate bank dropdown
-    populateMyTransactionsBankDropdown();
-});
-
-function populateMyTransactionsBankDropdown() {
-    const $bankSelect = $('#my-trans-bank');
-    $bankSelect.find('option:not(:first)').remove();
-
-    if (availableBanks.length > 0) {
-        availableBanks.forEach(bank => {
-            $bankSelect.append(`<option value="${bank.id}">${bank.name}</option>`);
-        });
-    }
-}
-
-$(document).on('click', '#load-my-transactions', function() {
-    const fromDate = $('#my-trans-from-date').val();
-    const toDate = $('#my-trans-to-date').val();
-    const paymentType = $('#my-trans-payment-type').val();
-    const bankId = $('#my-trans-bank').val();
-
-    loadMyTransactions(fromDate, toDate, paymentType, bankId);
-});
-
-// Print My Transactions
-$(document).on('click', '#print-my-transactions', function() {
-    const printContent = document.getElementById('my-transactions-modal-body').innerHTML;
-    const fromDate = $('#my-trans-from-date').val();
-    const toDate = $('#my-trans-to-date').val();
-
-    const printWindow = window.open('', '_blank', 'width=900,height=700');
-    printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>My Transactions Report</title>
-            <link rel="stylesheet" href="${window.location.origin}/assets/css/bootstrap.min.css">
-            <link rel="stylesheet" href="${window.location.origin}/assets/css/style.css">
-            <style>
-                body {
-                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                    padding: 20px;
-                    background: #fff;
-                }
-                .print-header {
-                    text-align: center;
-                    margin-bottom: 20px;
-                    padding-bottom: 15px;
-                    border-bottom: 2px solid #dee2e6;
-                }
-                .print-header h2 {
-                    margin-bottom: 5px;
-                    color: #333;
-                }
-                .date-range {
-                    color: #666;
-                    margin-bottom: 0;
-                    font-size: 0.9rem;
-                }
-                .print-date {
-                    font-size: 0.8rem;
-                    color: #888;
-                }
-                .table {
-                    width: 100%;
-                    margin-top: 15px;
-                }
-                .table th {
-                    background-color: #f8f9fa;
-                    font-weight: 600;
-                    border-top: 2px solid #dee2e6;
-                }
-                .table td, .table th {
-                    padding: 0.5rem;
-                    font-size: 0.85rem;
-                }
-                .my-transactions-filter { display: none !important; }
-                .summary-section {
-                    background: #f8f9fa;
-                    border-radius: 8px;
-                    padding: 15px;
-                    margin-bottom: 20px;
-                }
-                .summary-stat-card {
-                    display: inline-block;
-                    padding: 12px 20px;
-                    margin: 5px;
-                    background: #fff;
-                    border-radius: 8px;
-                    text-align: center;
-                    min-width: 140px;
-                    border: 1px solid #dee2e6;
-                    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-                }
-                .stat-value {
-                    font-size: 1.25rem;
-                    font-weight: bold;
-                    color: #333;
-                    display: block;
-                }
-                .stat-label {
-                    font-size: 0.75rem;
-                    color: #666;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                }
-                .payment-type-breakdown {
-                    margin-top: 15px;
-                }
-                .card {
-                    border: 1px solid #dee2e6;
-                    box-shadow: none;
-                }
-                .card-body {
-                    padding: 0.75rem;
-                }
-                .btn { display: none !important; }
-                @media print {
-                    body {
-                        padding: 0;
-                        -webkit-print-color-adjust: exact;
-                        print-color-adjust: exact;
-                    }
-                    .no-print { display: none !important; }
-                    .summary-stat-card {
-                        background: #f8f9fa !important;
-                        -webkit-print-color-adjust: exact;
-                        print-color-adjust: exact;
-                    }
-                    .table th {
-                        background-color: #e9ecef !important;
-                        -webkit-print-color-adjust: exact;
-                        print-color-adjust: exact;
-                    }
-                }
-            </style>
-        </head>
-        <body>
-            <div class="container-fluid">
-                <div class="print-header">
-                    <h2>My Transactions Report</h2>
-                    <p class="date-range">Period: ${fromDate} to ${toDate}</p>
-                    <p class="print-date">Printed on: ${new Date().toLocaleString()}</p>
-                </div>
-                ${printContent}
-            </div>
-            <script>
-                // Wait for Bootstrap CSS to load before printing
-                setTimeout(function() {
-                    window.print();
-                }, 500);
-            <\/script>
-        </body>
-        </html>
-    `);
-    printWindow.document.close();
-});
-
-function loadMyTransactions(fromDate, toDate, paymentType, bankId) {
-    $.ajax({
-        url: '/billing-workbench/my-transactions',
-        method: 'GET',
-        data: {
-            from: fromDate,
-            to: toDate,
-            payment_type: paymentType,
-            bank_id: bankId
-        },
-        success: function(response) {
-            renderMyTransactions(response.transactions);
-            renderMyTransactionsSummary(response.summary);
-        },
-        error: function(xhr) {
-            toastr.error('Failed to load transactions');
-        }
-    });
-}
-
-function renderMyTransactions(transactions) {
-    const tbody = $('#my-transactions-tbody');
-    tbody.empty();
-
-    if (transactions.length === 0) {
-        tbody.html(`
-            <tr>
-                <td colspan="8" class="text-center text-muted py-5">
-                    <i class="mdi mdi-information-outline" style="font-size: 3rem;"></i>
-                    <p>No transactions found for the selected period</p>
-                </td>
-            </tr>
-        `);
-        return;
-    }
-
-    transactions.forEach(tx => {
-        const row = `
-            <tr>
-                <td>${tx.created_at}</td>
-                <td>${tx.patient_name}</td>
-                <td>${tx.file_no}</td>
-                <td>${tx.reference_no || 'N/A'}</td>
-                <td>${tx.payment_type}</td>
-                <td>${tx.bank_name || '-'}</td>
-                <td>₦${parseFloat(tx.total).toLocaleString()}</td>
-                <td>₦${parseFloat(tx.total_discount).toLocaleString()}</td>
-            </tr>
-        `;
-        tbody.append(row);
-    });
-}
-
-function renderMyTransactionsSummary(summary) {
-    $('#my-total-transactions').text(summary.count);
-    $('#my-total-amount').text(`₦${parseFloat(summary.total_amount).toLocaleString()}`);
-    $('#my-total-discounts').text(`₦${parseFloat(summary.total_discount).toLocaleString()}`);
-
-    // Render breakdown by payment type
-    const breakdown = $('#payment-type-breakdown');
-    breakdown.empty();
-
-    if (summary.by_type) {
-        let html = '<h6 class="mt-3 mb-2">Breakdown by Payment Type</h6><div class="row">';
-        Object.keys(summary.by_type).forEach(type => {
-            const data = summary.by_type[type];
-            html += `
-                <div class="col-md-3 mb-2">
-                    <div style="padding: 1rem; background: white; border-radius: 0.5rem; border: 1px solid #dee2e6;">
-                        <strong>${type}</strong><br>
-                        <small>${data.count} transactions</small><br>
-                        <span style="font-size: 1.1rem; color: var(--hospital-primary);">₦${parseFloat(data.amount).toLocaleString()}</span>
-                    </div>
-                </div>
-            `;
-        });
-        html += '</div>';
-        breakdown.html(html);
-    }
-
-    $('#my-transactions-summary').show();
-}
-
-function updateBillingBadge(count) {
-    $('#billing-badge').text(count);
-}
-
-// Old lab-specific functions removed, keeping legacy compatibility stubs
-
-function recordBilling(requestIds) {
-    console.warn('Legacy function called - no longer applicable in billing workbench');
-}
-
-function collectSample(requestIds) {
-    console.warn('Legacy function called - no longer applicable in billing workbench');
-}
-
-function dismissRequests(requestIds, section) {
-    console.warn('Legacy function called - no longer applicable in billing workbench');
-}
-
-function setResTempInModal(request) {
-    $('#investResModal').find('form').trigger('reset');
-    $('#invest_res_service_name').text(request.service ? request.service.name : '');
-    $('#invest_res_entry_id').val(request.id);
-    $('#invest_res_is_edit').val(0);
-    $('#deleted_attachments').val('[]');
-    $('#existing_attachments_container').hide();
-    $('#existing_attachments_list').html('');
-
-    // Check template version
-    const isV2 = request.service && request.service.template_version == 2;
-
-    if (isV2) {
-        let structure = request.service.template_structure;
-        if (typeof structure === 'string') {
-            try {
-                structure = JSON.parse(structure);
-            } catch (e) {
-                console.error('Error parsing V2 template structure:', e);
-                structure = null;
-            }
-        }
-
-        if (structure) {
-            // Parse result_data if available (for edit mode)
-            let existingData = null;
-            if (request.result_data) {
-                try {
-                    existingData = typeof request.result_data === 'string' ? JSON.parse(request.result_data) : request.result_data;
-                } catch (e) {
-                    console.error('Error parsing result_data:', e);
-                }
-            }
-            loadV2Template(structure, existingData);
-        } else {
-            console.error('Invalid V2 template structure');
-            // Fallback or error handling
-        }
-    } else {
-        // Use request.result if available (for edit), otherwise template body
-        let content = request.result || (request.service ? request.service.template_body : '');
-        loadV1Template(content);
-    }
-
-    // Load existing attachments if editing (logic to be added if edit mode is supported)
-    loadExistingAttachments(request.id);
-}
-
-function loadV1Template(template) {
-    $('#invest_res_template_version').val('1');
-    $('#v1_template_container').show();
-    $('#v2_template_container').hide();
-
-    // Re-enable content editing if it was disabled upon save
-    if (template) {
-        template = template.replace(/contenteditable="false"/g, 'contenteditable="true"');
-        template = template.replace(/contenteditable='false'/g, "contenteditable='true'");
-    }
-
-    // Initialize CKEditor if not already initialized
-    if (!window.investResEditor) {
-        ClassicEditor
-            .create(document.querySelector('#invest_res_template_editor'), {
-                toolbar: {
-                    items: [
-                        'undo', 'redo',
-                        '|', 'heading',
-                        '|', 'bold', 'italic',
-                        '|', 'link', 'insertTable',
-                        '|', 'bulletedList', 'numberedList', 'outdent', 'indent'
-                    ]
-                }
-            })
-            .then(editor => {
-                window.investResEditor = editor;
-                editor.setData(template || '');
-            })
-            .catch(err => {
-                console.error(err);
-            });
-    } else {
-        window.investResEditor.setData(template || '');
-    }
-}
-
-function loadV2Template(template, existingData) {
-    $('#invest_res_template_version').val('2');
-    $('#v1_template_container').hide();
-    $('#v2_template_container').show();
-
-    let formHtml = '<div class="v2-result-form">';
-    formHtml += '<h6 class="mb-3">' + (template.template_name || 'Result Entry') + '</h6>';
-
-    // Sort parameters by order
-    let parameters = template.parameters ? template.parameters.sort((a, b) => a.order - b.order) : [];
-
-    parameters.forEach(param => {
-        if (param.show_in_report === false) {
-            return; // Skip hidden parameters
-        }
-
-        formHtml += '<div class="form-group row">';
-        formHtml += '<label class="col-md-4 col-form-label">';
-        formHtml += param.name;
-        if (param.unit) {
-            formHtml += ' <small class="text-muted">(' + param.unit + ')</small>';
-        }
-        if (param.required) {
-            formHtml += ' <span class="text-danger">*</span>';
-        }
-        formHtml += '</label>';
-        formHtml += '<div class="col-md-8">';
-
-        let fieldId = 'param_' + param.id;
-        let value = '';
-        if (existingData && existingData[param.id]) {
-            // Handle both direct value and object with value property
-            if (typeof existingData[param.id] === 'object' && existingData[param.id] !== null && existingData[param.id].hasOwnProperty('value')) {
-                value = existingData[param.id].value;
-            } else {
-                value = existingData[param.id];
-            }
-        }
-        if (value === null || value === undefined) value = '';
-
-        // Generate form field based on type
-        if (param.type === 'string') {
-            formHtml += '<input type="text" class="form-control v2-param-field" ';
-            formHtml += 'data-param-id="' + param.id + '" ';
-            formHtml += 'data-param-type="' + param.type + '" ';
-            formHtml += 'id="' + fieldId + '" ';
-            formHtml += 'value="' + value + '" ';
-            if (param.required) formHtml += 'required ';
-            formHtml += 'placeholder="Enter ' + param.name + '">';
-
-        } else if (param.type === 'integer') {
-            formHtml += '<input type="number" step="1" class="form-control v2-param-field" ';
-            formHtml += 'data-param-id="' + param.id + '" ';
-            formHtml += 'data-param-type="' + param.type + '" ';
-            if (param.reference_range) {
-                formHtml += 'data-ref-min="' + (param.reference_range.min || '') + '" ';
-                formHtml += 'data-ref-max="' + (param.reference_range.max || '') + '" ';
-            }
-            formHtml += 'id="' + fieldId + '" ';
-            formHtml += 'value="' + value + '" ';
-            if (param.required) formHtml += 'required ';
-            formHtml += 'placeholder="Enter ' + param.name + '">';
-
-        } else if (param.type === 'float') {
-            formHtml += '<input type="number" step="0.01" class="form-control v2-param-field" ';
-            formHtml += 'data-param-id="' + param.id + '" ';
-            formHtml += 'data-param-type="' + param.type + '" ';
-            if (param.reference_range) {
-                formHtml += 'data-ref-min="' + (param.reference_range.min || '') + '" ';
-                formHtml += 'data-ref-max="' + (param.reference_range.max || '') + '" ';
-            }
-            formHtml += 'id="' + fieldId + '" ';
-            formHtml += 'value="' + value + '" ';
-            if (param.required) formHtml += 'required ';
-            formHtml += 'placeholder="Enter ' + param.name + '">';
-
-        } else if (param.type === 'boolean') {
-            formHtml += '<select class="form-control v2-param-field" ';
-            formHtml += 'data-param-id="' + param.id + '" ';
-            formHtml += 'data-param-type="' + param.type + '" ';
-            if (param.reference_range && param.reference_range.reference_value !== undefined) {
-                formHtml += 'data-ref-value="' + param.reference_range.reference_value + '" ';
-            }
-            formHtml += 'id="' + fieldId + '" ';
-            if (param.required) formHtml += 'required ';
-            formHtml += '>';
-            formHtml += '<option value="">Select</option>';
-            formHtml += '<option value="true" ' + (value === true || value === 'true' ? 'selected' : '') + '>Yes/Positive</option>';
-            formHtml += '<option value="false" ' + (value === false || value === 'false' ? 'selected' : '') + '>No/Negative</option>';
-            formHtml += '</select>';
-
-        } else if (param.type === 'enum') {
-            formHtml += '<select class="form-control v2-param-field" ';
-            formHtml += 'data-param-id="' + param.id + '" ';
-            formHtml += 'data-param-type="' + param.type + '" ';
-            if (param.reference_range && param.reference_range.reference_value) {
-                formHtml += 'data-ref-value="' + param.reference_range.reference_value + '" ';
-            }
-            formHtml += 'id="' + fieldId + '" ';
-            if (param.required) formHtml += 'required ';
-            formHtml += '>';
-            formHtml += '<option value="">Select</option>';
-            if (param.options) {
-                param.options.forEach(opt => {
-                    let optVal = typeof opt === 'object' ? opt.value : opt;
-                    let optLabel = typeof opt === 'object' ? opt.label : opt;
-                    formHtml += '<option value="' + optVal + '" ' + (value === optVal ? 'selected' : '') + '>' + optLabel + '</option>';
-                });
-            }
-            formHtml += '</select>';
-
-        } else if (param.type === 'long_text') {
-            formHtml += '<textarea class="form-control v2-param-field" ';
-            formHtml += 'data-param-id="' + param.id + '" ';
-            formHtml += 'data-param-type="' + param.type + '" ';
-            formHtml += 'id="' + fieldId + '" ';
-            formHtml += 'rows="3" ';
-            if (param.required) formHtml += 'required ';
-            formHtml += 'placeholder="Enter ' + param.name + '">' + value + '</textarea>';
-        }
-
-        // Add reference range info if available
-        if (param.reference_range) {
-            formHtml += '<small class="form-text text-muted">';
-            if (param.type === 'integer' || param.type === 'float') {
-                if (param.reference_range.min !== null && param.reference_range.max !== null) {
-                    formHtml += 'Normal range: ' + param.reference_range.min + ' - ' + param.reference_range.max;
-                }
-            } else if (param.type === 'boolean' && param.reference_range.reference_value !== undefined) {
-                formHtml += 'Normal: ' + (param.reference_range.reference_value ? 'Yes/Positive' : 'No/Negative');
-            } else if (param.type === 'enum' && param.reference_range.reference_value) {
-                formHtml += 'Normal: ' + param.reference_range.reference_value;
-            } else if (param.reference_range.text) {
-                formHtml += param.reference_range.text;
-            }
-            formHtml += '</small>';
-        }
-
-        // Status indicator (will be updated on blur)
-        formHtml += '<div class="mt-1"><span class="param-status" id="status_' + param.id + '"></span></div>';
-
-        formHtml += '</div>';
-        formHtml += '</div>';
-    });
-
-    formHtml += '</div>';
-
-    $('#v2_form_fields').html(formHtml);
-
-    // Add event listeners for value changes to show status
-    $('.v2-param-field').on('blur change', function() {
-        updateParameterStatus($(this));
-    });
-
-    // Trigger status update for pre-filled values
-    $('.v2-param-field').each(function() {
-        if ($(this).val()) {
-            updateParameterStatus($(this));
-        }
-    });
-}
-
-function updateParameterStatus($field) {
-    let paramId = $field.data('param-id');
-    let paramType = $field.data('param-type');
-    let value = $field.val();
-    let $statusSpan = $('#status_' + paramId);
-
-    if (!value || value === '') {
-        $statusSpan.html('');
-        return;
-    }
-
-    let status = '';
-    let statusClass = '';
-
-    if (paramType === 'integer' || paramType === 'float') {
-        let numValue = parseFloat(value);
-        let min = $field.data('ref-min');
-        let max = $field.data('ref-max');
-
-        if (min !== undefined && max !== undefined && min !== '' && max !== '') {
-            if (numValue < min) {
-                status = 'Low';
-                statusClass = 'badge-warning';
-            } else if (numValue > max) {
-                status = 'High';
-                statusClass = 'badge-danger';
-            } else {
-                status = 'Normal';
-                statusClass = 'badge-success';
-            }
-        }
-    } else if (paramType === 'boolean') {
-        let refValue = $field.data('ref-value');
-        if (refValue !== undefined) {
-            let boolValue = value === 'true';
-            let refBool = refValue === true || refValue === 'true';
-
-            if (boolValue === refBool) {
-                status = 'Normal';
-                statusClass = 'badge-success';
-            } else {
-                status = 'Abnormal';
-                statusClass = 'badge-warning';
-            }
-        }
-    } else if (paramType === 'enum') {
-        let refValue = $field.data('ref-value');
-        if (refValue) {
-            if (value === refValue) {
-                status = 'Normal';
-                statusClass = 'badge-success';
-            } else {
-                status = 'Abnormal';
-                statusClass = 'badge-warning';
-            }
-        }
-    }
-
-    if (status) {
-        $statusSpan.html('<span class="badge ' + statusClass + '">' + status + '</span>');
-    } else {
-        $statusSpan.html('');
-    }
-}
-
-function loadExistingAttachments(requestId) {
-    const container = $('#existing_attachments_list');
-    const wrapper = $('#existing_attachments_container');
-    container.empty();
-    wrapper.hide();
-
-    $.ajax({
-        url: `/lab-workbench/lab-service-requests/${requestId}/attachments`,
-        method: 'GET',
-        success: function(attachments) {
-            if (attachments && attachments.length > 0) {
-                wrapper.show();
-                attachments.forEach(att => {
-                    const attDiv = $('<div>').addClass('attachment-item mb-2 d-flex justify-content-between align-items-center');
-                    const link = $('<a>').attr('href', att.url).attr('target', '_blank').text(att.filename);
-                    const deleteBtn = $('<button>')
-                        .addClass('btn btn-sm btn-danger')
-                        .html('<i class="fa fa-trash"></i>')
-                        .on('click', function() {
-                            markAttachmentForDeletion(att.id);
-                            attDiv.remove();
-                            if (container.children().length === 0) {
-                                wrapper.hide();
-                            }
-                        });
-                    attDiv.append(link).append(deleteBtn);
-                    container.append(attDiv);
-                });
-            }
-        }
-    });
-}
-
-function markAttachmentForDeletion(attachmentId) {
-    const current = $('#deleted_attachments').val();
-    const deleted = current ? JSON.parse(current) : [];
-    deleted.push(attachmentId);
-    $('#deleted_attachments').val(JSON.stringify(deleted));
-}
-
-// Handle result form submission
-$('#investResForm').on('submit', function(e) {
-    e.preventDefault();
-
-    // Copy data from editors/inputs to hidden fields
-    copyResTemplateToField();
-
-    const formData = new FormData(this);
-
-    $.ajax({
-        url: $(this).attr('action'),
-        method: 'POST',
-        data: formData,
-        processData: false,
-        contentType: false,
-        success: function(response) {
-            alert('Result saved successfully!');
-            $('#investResModal').modal('hide');
-            if (currentPatient) {
-                loadPatient(currentPatient);
-            }
-        },
-        error: function(xhr) {
-            alert('Error saving result: ' + (xhr.responseJSON?.message || 'Unknown error'));
-        }
-    });
-});
-
-function copyResTemplateToField() {
-    let version = $('#invest_res_template_version').val();
-
-    if (version === '2') {
-        // Collect V2 structured data
-        let data = {};
-        $('.v2-param-field').each(function() {
-            let paramId = $(this).data('param-id');
-            let paramType = $(this).data('param-type');
-            let value = $(this).val();
-
-            // Convert values to appropriate types
-            if (paramType === 'integer') {
-                data[paramId] = value ? parseInt(value) : null;
-            } else if (paramType === 'float') {
-                data[paramId] = value ? parseFloat(value) : null;
-            } else if (paramType === 'boolean') {
-                data[paramId] = value === 'true' ? true : (value === 'false' ? false : null);
-            } else {
-                data[paramId] = value || null;
-            }
-        });
-
-        $('#invest_res_template_data').val(JSON.stringify(data));
-        // For V2, we still save a simple HTML representation to result column for backward compat
-        $('#invest_res_template_submited').val('<p>Structured result data (V2 template)</p>');
-    } else {
-        // V1: Copy from CKEditor
-        if (window.investResEditor) {
-            $('#invest_res_template_submited').val(window.investResEditor.getData());
-        }
-    }
-    return true;
-}
-
-function editLabResult(obj) {
-    const requestId = $(obj).data('id');
-
-    $.ajax({
-        url: `/lab-workbench/lab-service-requests/${requestId}`,
-        method: 'GET',
-        success: function(request) {
-            // Populate the form with template structure AND existing result data
-            setResTempInModal(request);
-
-            // Set Edit Mode UI
-            $('#invest_res_is_edit').val(1);
-            $('#investResModalLabel').text('Edit Result: ' + (request.service ? request.service.name : ''));
-            $('#invest_res_submit_btn').html('<i class="mdi mdi-content-save"></i> Update Result');
-
-            $('#investResModal').modal('show');
-        },
-        error: function(xhr) {
-            alert('Error loading request: ' + (xhr.responseJSON?.message || 'Unknown error'));
-        }
-    });
-}
-
-function setResViewInModal(obj) {
-    let res_obj = JSON.parse($(obj).attr('data-result-obj'));
-
-    // Basic service info
-    $('.invest_res_service_name_view').text($(obj).attr('data-service-name'));
-
-    // Patient information
-    let patientName = res_obj.patient.user.firstname + ' ' + res_obj.patient.user.surname;
-    $('#res_patient_name').html(patientName);
-    $('#res_patient_id').html(res_obj.patient.file_no);
-
-    // Calculate age from date of birth
-    let age = 'N/A';
-    if (res_obj.patient.date_of_birth) {
-        let dob = new Date(res_obj.patient.date_of_birth);
-        let today = new Date();
-        let ageYears = today.getFullYear() - dob.getFullYear();
-        let monthDiff = today.getMonth() - dob.getMonth();
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-            ageYears--;
-        }
-        age = ageYears + ' years';
-    }
-    $('#res_patient_age').html(age);
-
-    // Gender
-    let gender = res_obj.patient.gender ? res_obj.patient.gender.toUpperCase() : 'N/A';
-    $('#res_patient_gender').html(gender);
-
-    // Test information
-    $('#res_test_id').html(res_obj.id);
-    $('#res_sample_date').html(res_obj.sample_date || 'N/A');
-    $('#res_result_date').html(res_obj.result_date || 'N/A');
-    $('#res_result_by').html(res_obj.results_person.firstname + ' ' + res_obj.results_person.surname);
-
-    // Signature date (use result date)
-    $('#res_signature_date').html(res_obj.result_date || '');
-
-    // Generated date (current date)
-    let now = new Date();
-    let generatedDate = now.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-    $('#res_generated_date').html(generatedDate);
-
-    // Handle V2 results (structured data)
-    if (res_obj.result_data) {
-        let resultData = res_obj.result_data;
-        if (typeof resultData === 'string') {
-            try {
-                resultData = JSON.parse(resultData);
-            } catch (e) {
-                console.error('Error parsing result data:', e);
-                resultData = null;
-            }
-        }
-
-        if (resultData && typeof resultData === 'object') {
-            // If it's an object but not an array (e.g. key-value pairs), convert to array if needed
-            // But based on previous code, it expects an array of parameters.
-            // Let's ensure it is an array.
-            let paramsArray = [];
-            if (Array.isArray(resultData)) {
-                paramsArray = resultData;
-            } else {
-                // If it's an object (key: value), we might need to map it back to the template structure
-                // For now, let's assume if it's not an array, we can't iterate it easily without the template
-                console.warn('Result data is not an array:', resultData);
-            }
-
-            if (paramsArray.length > 0) {
-                let resultsHtml = '<table class="result-table"><thead><tr>';
-                resultsHtml += '<th style="width: 40%;">Test Parameter</th>';
-                resultsHtml += '<th style="width: 25%;">Results</th>';
-                resultsHtml += '<th style="width: 25%;">Reference Range</th>';
-                resultsHtml += '<th style="width: 10%;">Status</th>';
-                resultsHtml += '</tr></thead><tbody>';
-
-                paramsArray.forEach(function(param) {
-                    resultsHtml += '<tr>';
-                    resultsHtml += '<td><strong>' + param.name + '</strong>';
-                    if (param.code) {
-                        resultsHtml += ' <span style="color: #999;">(' + param.code + ')</span>';
-                    }
-                    resultsHtml += '</td>';
-
-                    // Value with unit
-                    let valueDisplay = param.value;
-                    if (param.unit) {
-                        valueDisplay += ' ' + param.unit;
-                    }
-                    resultsHtml += '<td>' + valueDisplay + '</td>';
-
-                    // Reference range
-                    let refRange = 'N/A';
-                    if (param.reference_range) {
-                        if (param.type === 'integer' || param.type === 'float') {
-                            if (param.reference_range.min !== undefined && param.reference_range.max !== undefined) {
-                                refRange = param.reference_range.min + ' - ' + param.reference_range.max;
-                                if (param.unit) refRange += ' ' + param.unit;
-                            }
-                        } else if (param.type === 'boolean' || param.type === 'enum') {
-                            refRange = param.reference_range.reference_value || 'N/A';
-                        } else if (param.reference_range.text) {
-                            refRange = param.reference_range.text;
-                        }
-                    }
-                    resultsHtml += '<td>' + refRange + '</td>';
-
-                    // Status badge
-                    let statusHtml = '';
-                    if (param.status) {
-                        let statusClass = 'status-' + param.status.toLowerCase().replace(' ', '-');
-                        statusHtml = '<span class="result-status-badge ' + statusClass + '">' + param.status + '</span>';
-                    }
-                    resultsHtml += '<td>' + statusHtml + '</td>';
-                    resultsHtml += '</tr>';
-                });
-
-                resultsHtml += '</tbody></table>';
-                $('#invest_res').html(resultsHtml);
-            } else {
-                 // Fallback to V1 results (HTML content) if array is empty
-                 $('#invest_res').html(res_obj.result);
-            }
-        } else {
-             // Fallback to V1 results (HTML content)
-             $('#invest_res').html(res_obj.result);
-        }
-    } else {
-        // V1 results (HTML content)
-        $('#invest_res').html(res_obj.result);
-    }
-
-    // Handle attachments
-    $('#invest_attachments').html('');
-    if (res_obj.attachments) {
-        let attachments = typeof res_obj.attachments === 'string' ? JSON.parse(res_obj.attachments) : res_obj.attachments;
-        if (attachments && attachments.length > 0) {
-            let attachHtml = '<div class="result-attachments"><h6 style="margin-bottom: 15px;"><i class="mdi mdi-paperclip"></i> Attachments</h6><div class="row">';
-            attachments.forEach(function(attachment) {
-                let url = '{{ asset("storage") }}/' + attachment.path;
-                let icon = getFileIcon(attachment.type);
-                attachHtml += `<div class="col-md-4 mb-2">
-                    <a href="${url}" target="_blank" class="btn btn-outline-primary btn-sm btn-block">
-                        ${icon} ${attachment.name}
-                    </a>
-                </div>`;
-            });
-            attachHtml += '</div></div>';
-            $('#invest_attachments').html(attachHtml);
-        }
-    }
-
-    $('#investResViewModal').modal('show');
-}
-
-function PrintElem(elem) {
-    var mywindow = window.open('', 'PRINT', 'height=400,width=600');
-    mywindow.document.write('<html><head><title>' + document.title + '</title>');
-    mywindow.document.write('<style>body{font-family: "Segoe UI", sans-serif;} .result-table {width: 100%; border-collapse: collapse;} .result-table th, .result-table td {border: 1px solid #ddd; padding: 8px; text-align: left;} .result-header {display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;} .result-title-section {background: #eee; text-align: center; padding: 10px; font-weight: bold; margin: 20px 0;} .result-patient-info {display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;} .result-info-row {display: flex; margin-bottom: 5px;} .result-info-label {font-weight: bold; width: 120px;} .result-footer {margin-top: 50px; border-top: 1px solid #ccc; padding-top: 10px; text-align: center; font-size: 12px;}</style>');
-    mywindow.document.write('</head><body >');
-    mywindow.document.write(document.getElementById(elem).innerHTML);
-    mywindow.document.write('</body></html>');
-
-    mywindow.document.close(); // necessary for IE >= 10
-    mywindow.focus(); // necessary for IE >= 10*/
-
-    mywindow.print();
-    mywindow.close();
-
-    return true;
-}
-
-function getFileIcon(type) {
-    if (type.includes('image')) return '<i class="fa fa-file-image-o"></i>';
-    if (type.includes('pdf')) return '<i class="fa fa-file-pdf-o"></i>';
-    return '<i class="fa fa-file-o"></i>';
-}
-
-// Delete Lab Request with Reason
-let deleteRequestId = null;
-let deleteEncounterId = null;
-
-function deleteLabRequest(requestId, encounterId, serviceName) {
-    deleteRequestId = requestId;
-    deleteEncounterId = encounterId;
-    $('#delete_service_name').text(serviceName);
-    $('#delete_request_id').text(requestId);
-    $('#delete_reason').val('');
-    $('#deleteReasonModal').modal('show');
-}
-
-$('#deleteRequestForm').on('submit', function(e) {
-    e.preventDefault();
-
-    const reason = $('#delete_reason').val();
-
-    if (reason.length < 10) {
-        alert('Please provide a detailed reason (minimum 10 characters)');
-        return;
-    }
-
-    $.ajax({
-        url: `/lab-workbench/lab-service-requests/${deleteRequestId}`,
-        method: 'DELETE',
-        data: {
-            _token: '{{ csrf_token() }}',
-            reason: reason
-        },
-        success: function(response) {
-            $('#deleteReasonModal').modal('hide');
-            alert(response.message);
-
-            // Reload patient data if we're on a patient
-            if (currentPatient) {
-                loadPatient(currentPatient);
-            }
-        },
-        error: function(xhr) {
-            alert('Error: ' + (xhr.responseJSON?.message || 'Failed to delete request'));
-        }
-    });
-});
-
-// Dismiss Lab Request
-let dismissRequestId = null;
-
-function dismissSingleRequest(requestId, serviceName) {
-    dismissRequestId = requestId;
-    $('#dismiss_service_name').text(serviceName);
-    $('#dismiss_request_id').text(requestId);
-    $('#dismiss_reason').val('');
-    $('#dismissReasonModal').modal('show');
-}
-
-$('#dismissRequestForm').on('submit', function(e) {
-    e.preventDefault();
-
-    const reason = $('#dismiss_reason').val();
-
-    if (reason.length < 10) {
-        alert('Please provide a detailed reason (minimum 10 characters)');
-        return;
-    }
-
-    $.ajax({
-        url: `/lab-workbench/lab-service-requests/${dismissRequestId}/dismiss`,
-        method: 'POST',
-        data: {
-            _token: '{{ csrf_token() }}',
-            reason: reason
-        },
-        success: function(response) {
-            $('#dismissReasonModal').modal('hide');
-            alert(response.message);
-
-            // Reload patient data
-            if (currentPatient) {
-                loadPatient(currentPatient);
-            }
-        },
-        error: function(xhr) {
-            alert('Error: ' + (xhr.responseJSON?.message || 'Failed to dismiss request'));
-        }
-    });
-});
-
-// ============================================
-// ENHANCEMENT FUNCTIONS
-// ============================================
-
-// Create vital tooltip element
-function createVitalTooltip() {
-    vitalTooltip = $('<div class="vital-tooltip"></div>').appendTo('body');
-
-    // Hide on mouse leave
-    $(document).on('mouseleave', '.vital-item', function() {
-        vitalTooltip.removeClass('active');
-    });
-}
-
-// Show vital tooltip with details
-function showVitalTooltip(event, vitalType, value, normalRange) {
-    const tooltip = vitalTooltip;
-    const $target = $(event.currentTarget);
-    const offset = $target.offset();
-
-    let deviation = '';
-    let status = 'Normal';
-
-    // Calculate deviation based on vital type
-    if (vitalType === 'temperature' && value !== 'N/A') {
-        const temp = parseFloat(value);
-        const idealTemp = 37.0;
-        const diff = Math.abs(temp - idealTemp);
-        deviation = temp > idealTemp ? `+${diff.toFixed(1)}°C above ideal` : `-${diff.toFixed(1)}°C below ideal`;
-        status = (temp >= 36.1 && temp <= 38.0) ? 'Normal' : 'Abnormal';
-    } else if (vitalType === 'pulse' && value !== 'N/A') {
-        const pulse = parseInt(value);
-        const idealPulse = 80;
-        const diff = Math.abs(pulse - idealPulse);
-        deviation = pulse > idealPulse ? `+${diff} bpm above ideal` : `-${diff} bpm below ideal`;
-        status = (pulse >= 60 && pulse <= 100) ? 'Normal' : 'Abnormal';
-    } else if (vitalType === 'bp' && value !== 'N/A' && value.includes('/')) {
-        const [sys, dia] = value.split('/').map(v => parseInt(v));
-        status = (sys >= 90 && sys <= 140 && dia >= 60 && dia <= 90) ? 'Normal' : 'Abnormal';
-        deviation = sys > 140 ? 'High BP' : sys < 90 ? 'Low BP' : 'Optimal';
-    }
-
-    const content = `
-        <div style="font-weight: 600; margin-bottom: 0.5rem;">${vitalType.toUpperCase()}</div>
-        <div><strong>Value:</strong> ${value}</div>
-        <div><strong>Normal Range:</strong> ${normalRange}</div>
-        <div><strong>Status:</strong> <span style="color: ${status === 'Normal' ? '#28a745' : '#dc3545'}">${status}</span></div>
-        ${deviation ? `<div><strong>Deviation:</strong> ${deviation}</div>` : ''}
-    `;
-
-    tooltip.html(content);
-    tooltip.css({
-        top: offset.top - tooltip.outerHeight() - 10,
-        left: offset.left + ($target.outerWidth() / 2) - (tooltip.outerWidth() / 2)
-    });
-    tooltip.addClass('active');
-}
-
-// Check for drug allergies
-function checkForAllergies(medications, patientAllergies) {
-    if (!patientAllergies || patientAllergies.length === 0) {
-        return [];
-    }
-
-    const alerts = [];
-    medications.forEach(med => {
-        const drugName = (med.drug_name || med.product_name || '').toLowerCase();
-        patientAllergies.forEach(allergy => {
-            if (drugName.includes(allergy.toLowerCase())) {
-                alerts.push({
-                    medication: med.drug_name || med.product_name,
-                    allergy: allergy
-                });
-            }
-        });
-    });
-
-    return alerts;
-}
-
-// Display allergy alert banner
-function displayAllergyAlert(alerts) {
-    if (alerts.length === 0) return '';
-
-    const allergyList = alerts.map(alert =>
-        `<strong>${alert.medication}</strong> (Allergic to: ${alert.allergy})`
-    ).join('<br>');
-
-    return `
-        <div class="allergy-alert">
-            <div class="allergy-alert-icon">⚠️</div>
-            <div>
-                <strong>ALLERGY WARNING!</strong><br>
-                ${allergyList}
-            </div>
-        </div>
-    `;
-}
-
-// Animate refresh button
-function animateRefresh(buttonElement) {
-    const $btn = $(buttonElement);
-    $btn.addClass('refreshing');
-    setTimeout(() => $btn.removeClass('refreshing'), 600);
-}
-
-// =============================================
-// QUEUE FUNCTIONALITY
-// =============================================
-
-let queueDataTable = null;
-let currentQueueFilter = 'all';
-
 function showQueue(filter) {
-    currentQueueFilter = filter;
-
-    // Update queue title
-    const titles = {
-        'all': '🟡 All Unpaid Items',
-        'hmo': '🟢 HMO Items',
-        'credit': '🟠 Credit Accounts',
-    };
-    $('#queue-view-title').html(`<i class="mdi mdi-format-list-bulleted"></i> ${titles[filter] || titles['all']}`);
-
-    // Update active state on queue buttons
-    $('.queue-item').removeClass('active');
-    if (filter !== 'all') {
-        $(`.queue-item[data-filter="${filter}"]`).addClass('active');
-    }
-
-    // Hide other views, show queue view
     $('#empty-state').hide();
-    $('#patient-header').removeClass('active');
     $('#workspace-content').removeClass('active');
+    $('#patient-header').removeClass('active');
     $('#queue-view').addClass('active');
 
-    // On mobile, hide search pane and show main workspace
-    if (window.innerWidth < 768) {
-        $('#left-panel').addClass('hidden');
-        $('#main-workspace').addClass('active');
-    }
+    // Update filter buttons
+    $('.queue-item').removeClass('active');
+    $(`.queue-item[data-filter="${filter}"]`).addClass('active');
 
-    // Initialize or reload DataTable
     initializeQueueDataTable(filter);
 }
 
 function hideQueue() {
     $('#queue-view').removeClass('active');
-    $('.queue-item').removeClass('active');
 
     if (currentPatient) {
-        // If patient was selected, show their workspace
-        $('#patient-header').addClass('active');
         $('#workspace-content').addClass('active');
+        $('#patient-header').addClass('active');
     } else {
-        // Otherwise show empty state
+        $('#empty-state').show();
+    }
+}
+
+// =============================================
+// WARD DASHBOARD FUNCTIONS
+// =============================================
+function showWardDashboard() {
+    // Hide all other views
+    $('#empty-state').hide();
+    $('#patient-details-panel').hide();
+    $('#queue-view').removeClass('active');
+    $('#reports-view').hide();
+    $('#workspace-content').removeClass('active');
+    $('#patient-header').removeClass('active');
+
+    // Show ward dashboard
+    $('#ward-dashboard-view').show().addClass('active');
+
+    // Initialize ward dashboard
+    if (typeof WardDashboard !== 'undefined') {
+        WardDashboard.init();
+    }
+
+    // On mobile, show main workspace
+    if (window.innerWidth < 768) {
+        $('#main-workspace').addClass('active');
+        $('#left-panel').addClass('hidden');
+    }
+}
+
+function hideWardDashboard() {
+    $('#ward-dashboard-view').hide().removeClass('active');
+
+    // Show appropriate view based on patient selection state
+    if (currentPatient) {
+        $('#patient-header').addClass('active');
+        $('#workspace-content').show().addClass('active');
+    } else {
         $('#empty-state').show();
     }
 
@@ -6746,104 +7036,56 @@ function hideQueue() {
     }
 }
 
-function initializeQueueDataTable(filter) {
-    // Destroy existing DataTable if it exists
-    if (queueDataTable) {
-        queueDataTable.destroy();
-    }
-
-    // Initialize DataTable for payment queue
-    queueDataTable = $('#queue-datatable').DataTable({
-        ajax: {
-            url: '/billing-workbench/payment-queue',
-            data: { filter: filter },
-            dataSrc: ''
-        },
-        columns: [
-            {
-                data: null,
-                orderable: false,
-                render: function(data, type, row) {
-                    return `
-                        <div class="queue-patient-item" data-patient-id="${row.patient_id}" style="cursor: pointer; padding: 1rem; border-bottom: 1px solid #e9ecef;">
-                            <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                <div style="font-weight: 600; font-size: 1rem; color: #212529;">${row.patient_name}</div>
-                                <span class="badge badge-primary">${row.file_no}</span>
-                            </div>
-                            <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #6c757d;">
-                                <i class="mdi mdi-file-document-outline"></i> ${row.unpaid_count} unpaid item(s)
-                                ${row.hmo_items > 0 ? `<span class="hmo-badge ml-2"><i class="mdi mdi-shield-check"></i> ${row.hmo_items} HMO</span>` : ''}
-                                ${row.hmo ? `<br><small><i class="mdi mdi-hospital-building"></i> ${row.hmo}</small>` : ''}
-                            </div>
-                        </div>
-                    `;
-                }
-            }
-        ],
-        paging: true,
-        pageLength: 10,
-        searching: true,
-        ordering: false,
-        info: true,
-        responsive: true,
-        language: {
-            emptyTable: "No patients in this queue",
-            zeroRecords: "No patients found",
-            info: "Showing _START_ to _END_ of _TOTAL_ patients",
-            infoEmpty: "No patients to show",
-            infoFiltered: "(filtered from _MAX_ total patients)"
-        }
-    });
-
-    // Click handler for patient selection from queue
-    $('#queue-datatable').on('click', '.queue-patient-item', function() {
-        const patientId = $(this).data('patient-id');
-        hideQueue();
-        loadPatient(patientId);
-    });
-}
-
-// ==========================================
-// REPORTS VIEW FUNCTIONS
-// ==========================================
+// =============================================
+// REPORTS FUNCTIONS
+// =============================================
+let registrationsDataTable = null;
+let queueReportDataTable = null;
+let visitsDataTable = null;
+let registrationsChart = null;
+let hmoDistributionChart = null;
+let peakHoursChart = null;
 
 function showReports() {
-    // Hide everything else
+    // Hide all other views
     $('#empty-state').hide();
-    $('#patient-header').removeClass('active');
-    $('#workspace-content').removeClass('active');
+    $('#patient-details-panel').hide();
     $('#queue-view').removeClass('active');
+    $('#ward-dashboard-view').hide().removeClass('active');
+    $('#workspace-content').removeClass('active');
+    $('#patient-header').removeClass('active');
 
     // Show reports view
-    $('#reports-view').addClass('active');
+    $('#reports-view').show().addClass('active');
 
-    // On mobile, switch to main workspace
+    // Set default date range (this month)
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    $('#report-date-from').val(firstDay.toISOString().split('T')[0]);
+    $('#report-date-to').val(today.toISOString().split('T')[0]);
+
+    // Load data
+    loadReportsStatistics();
+    loadChartData();
+    initReportsDataTables();
+
+    // On mobile, show main workspace
     if (window.innerWidth < 768) {
-        $('#left-panel').addClass('hidden');
         $('#main-workspace').addClass('active');
-    }
-
-    // Load statistics and initialize if not already done
-    if (!window.reportsInitialized) {
-        // Don't set default dates - load all records initially
-        // setDefaultDateFilters();
-        loadFilterOptions();
-        loadReportsStatistics();
-        initializeReportsDataTable();
-        // initializeReportsCharts(); // TODO: Implement when Chart.js is added
-        window.reportsInitialized = true;
-    } else {
-        // Refresh statistics
-        loadReportsStatistics();
-        if (window.reportsDataTable) {
-            window.reportsDataTable.ajax.reload();
-        }
+        $('#left-panel').addClass('hidden');
     }
 }
 
 function hideReports() {
-    $('#reports-view').removeClass('active');
-    $('#empty-state').show();
+    $('#reports-view').hide().removeClass('active');
+
+    // Show appropriate view based on patient selection state
+    if (currentPatient) {
+        $('#patient-header').addClass('active');
+        $('#workspace-content').show().addClass('active');
+    } else {
+        $('#empty-state').show();
+    }
 
     // On mobile, go back to search pane
     if (window.innerWidth < 768) {
@@ -6852,641 +7094,90 @@ function hideReports() {
     }
 }
 
-function setDefaultDateFilters() {
-    // Set date filters to current month
-    const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-    // Format as YYYY-MM-DD
-    const formatDate = (date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
+function getReportFilters() {
+    return {
+        date_from: $('#report-date-from').val(),
+        date_to: $('#report-date-to').val(),
+        report_type: $('#report-type-filter').val(),
+        clinic_id: $('#report-clinic-filter').val(),
+        hmo_id: $('#report-hmo-filter').val(),
+        patient_search: $('#report-patient-search').val()
     };
-
-    $('#report-date-from').val(formatDate(firstDay));
-    $('#report-date-to').val(formatDate(lastDay));
 }
 
-function loadFilterOptions() {
-    // Load doctors
-    $.ajax({
-        url: '{{ route("lab.filterDoctors") }}',
-        method: 'GET',
-        success: function(doctors) {
-            let options = '<option value="">All Doctors</option>';
-            doctors.forEach(function(doctor) {
-                options += `<option value="${doctor.id}">${doctor.name}</option>`;
-            });
-            $('#report-doctor-filter').html(options);
-        },
-        error: function(xhr) {
-            console.error('Failed to load doctors:', xhr);
-        }
-    });
-
-    // Load HMOs with optgroups
-    $.ajax({
-        url: '{{ route("lab.filterHmos") }}',
-        method: 'GET',
-        success: function(hmoGroups) {
-            let options = '<option value="">All HMOs</option>';
-            Object.keys(hmoGroups).forEach(function(schemeName) {
-                options += `<optgroup label="${schemeName}">`;
-                hmoGroups[schemeName].forEach(function(hmo) {
-                    options += `<option value="${hmo.id}">${hmo.name}</option>`;
-                });
-                options += '</optgroup>';
-            });
-            $('#report-hmo-filter').html(options);
-        },
-        error: function(xhr) {
-            console.error('Failed to load HMOs:', xhr);
-        }
-    });
-
-    // Load services
-    $.ajax({
-        url: '{{ route("lab.filterServices") }}',
-        method: 'GET',
-        success: function(services) {
-            let options = '<option value="">All Services</option>';
-            services.forEach(function(service) {
-                options += `<option value="${service.id}">${service.name}</option>`;
-            });
-            $('#report-service-filter').html(options);
-        },
-        error: function(xhr) {
-            console.error('Failed to load services:', xhr);
-        }
-    });
-}
-
-/* REPLACED BY NEW IMPLEMENTATION
-function loadReportsStatistics(filters = {}) {
-    // If no filters provided, use current form values
-    if (Object.keys(filters).length === 0) {
-        filters = {
-            date_from: $('#report-date-from').val(),
-            date_to: $('#report-date-to').val(),
-            status: $('#report-status-filter').val(),
-            service_id: $('#report-service-filter').val(),
-            doctor_id: $('#report-doctor-filter').val(),
-            hmo_id: $('#report-hmo-filter').val(),
-            patient_search: $('#report-patient-search').val()
-        };
-    }
+function loadReportsStatistics() {
+    const filters = getReportFilters();
 
     $.ajax({
-        url: '{{ route("lab.statistics") }}',
+        url: '{{ route("reception.reports.statistics") }}',
         method: 'GET',
         data: filters,
         success: function(data) {
-            // Update summary cards
-            $('#stat-total-requests').text(data.summary.total_requests);
-            $('#stat-completed').text(data.summary.completed);
-            $('#stat-pending').text(data.summary.pending);
-            $('#stat-avg-tat').text(data.summary.avg_tat + 'h');
+            $('#stat-new-registrations').text(data.new_registrations || 0);
+            $('#stat-total-queued').text(data.total_queued || 0);
+            $('#stat-completed-visits').text(data.completed_visits || 0);
+            $('#stat-pending-queue').text(data.pending_queue || 0);
+            $('#stat-avg-wait-time').text((data.avg_wait_time || 0) + 'm');
+            $('#stat-return-rate').text((data.return_rate || 0) + '%');
 
-            // Store data for charts
-            window.reportsData = data;
-
-            // Update charts if they exist
-            if (window.statusChart) {
-                updateStatusChart(data.by_status);
-            }
-            if (window.trendsChart) {
-                updateTrendsChart(data.monthly_trends);
-            }
-
-            // Update top services
-            if (data.top_services && data.top_services.length > 0) {
-                let servicesHtml = '<ul class="list-group list-group-flush">';
-                data.top_services.forEach(function(service, index) {
-                    const percentage = data.summary.total_requests > 0 ? Math.round((service.count / data.summary.total_requests) * 100) : 0;
-                    servicesHtml += `<li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                        <div style="flex: 1; min-width: 0; margin-right: 15px;">
-                            <div class="d-flex justify-content-between mb-1">
-                                <span class="text-truncate font-weight-bold" title="${service.service}">${index + 1}. ${service.service}</span>
-                                <span class="badge badge-primary badge-pill">${service.count}</span>
-                            </div>
-                            <div class="progress" style="height: 6px;">
-                                <div class="progress-bar bg-info" role="progressbar" style="width: ${percentage}%" aria-valuenow="${percentage}" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                        </div>
-                        <small class="text-muted" style="min-width: 35px; text-align: right;">${percentage}%</small>
-                    </li>`;
+            // Update top clinics table
+            let clinicsHtml = '';
+            if (data.top_clinics && data.top_clinics.length > 0) {
+                data.top_clinics.forEach(function(clinic) {
+                    clinicsHtml += `
+                        <tr>
+                            <td>${clinic.name}</td>
+                            <td class="text-center">${clinic.visits}</td>
+                            <td class="text-right">${clinic.percentage}%</td>
+                        </tr>
+                    `;
                 });
-                servicesHtml += '</ul>';
-                $('#top-services-list').html(servicesHtml);
             } else {
-                $('#top-services-list').html('<p class="text-muted">No data available</p>');
+                clinicsHtml = '<tr><td colspan="3" class="text-center text-muted">No data</td></tr>';
             }
+            $('#top-clinics-body').html(clinicsHtml);
         },
-        error: function(xhr) {
-            console.error('Failed to load statistics:', xhr);
+        error: function() {
             toastr.error('Failed to load statistics');
         }
     });
 }
-*/
 
-function initializeReportsDataTable() {
-    if (window.reportsDataTable) {
-        window.reportsDataTable.destroy();
-    }
-
-    window.reportsDataTable = $('#reports-datatable').DataTable({
-        processing: true,
-        serverSide: true,
-        ajax: {
-            url: '{{ route("lab.reports") }}',
-            data: function(d) {
-                // Add filter values to request
-                d.date_from = $('#report-date-from').val();
-                d.date_to = $('#report-date-to').val();
-                d.status = $('#report-status-filter').val();
-                d.service_id = $('#report-service-filter').val();
-                d.doctor_id = $('#report-doctor-filter').val();
-                d.hmo_id = $('#report-hmo-filter').val();
-                d.patient_search = $('#report-patient-search').val();
-
-                // Debug: Log what we're sending
-                console.log('DataTable AJAX params:', {
-                    date_from: d.date_from,
-                    date_to: d.date_to,
-                    status: d.status,
-                    service_id: d.service_id,
-                    doctor_id: d.doctor_id,
-                    hmo_id: d.hmo_id,
-                    patient_search: d.patient_search
-                });
-            }
-        },
-        columns: [
-            { data: 'created_at', name: 'created_at' },
-            { data: 'file_no', name: 'patient.file_no' },
-            { data: 'patient_name', name: 'patient_name', orderable: false },
-            { data: 'service_name', name: 'service.service_name' },
-            { data: 'doctor_name', name: 'doctor_name', orderable: false },
-            { data: 'hmo_name', name: 'hmo_name', orderable: false },
-            { data: 'status_badge', name: 'status', orderable: false },
-            { data: 'tat', name: 'tat', orderable: false },
-            { data: 'actions', name: 'actions', orderable: false, searchable: false }
-        ],
-        order: [[0, 'desc']],
-        pageLength: 25,
-        responsive: false,
-        scrollX: true
-    });
-}
-
-function initializeReportsCharts() {
-    // TODO: Implement Chart.js charts
-    // - Status breakdown (bar chart)
-    // - Monthly trends (line chart)
-    console.log('Charts will be implemented with Chart.js');
-}
-
-function updateStatusChart(data) {
-    // TODO: Update status chart with new data
-}
-
-function updateTrendsChart(data) {
-    // TODO: Update trends chart with new data
-}
-
-function renderQueueCard(data) {
-    // Status badges
-    const statusBadges = getStatusBadges(data);
-
-    // Patient meta
-    const patientMeta = `
-        <div class="queue-card-patient-meta">
-            <div class="queue-card-patient-meta-item">
-                <i class="mdi mdi-account"></i>
-                <span>${data.age} • ${data.gender}</span>
-            </div>
-            <div class="queue-card-patient-meta-item">
-                <i class="mdi mdi-card-account-details"></i>
-                <span>${data.file_no}</span>
-            </div>
-            <div class="queue-card-patient-meta-item">
-                <i class="mdi mdi-hospital-building"></i>
-                <span>${data.hmo}</span>
-            </div>
-        </div>
-    `;
-
-    // Note section
-    const noteSection = data.note ? `
-        <div class="queue-card-note">
-            <div class="queue-card-note-label"><i class="mdi mdi-note-text"></i> Request Note</div>
-            <div>${data.note}</div>
-        </div>
-    ` : '';
-
-    // Attachments
-    let attachmentsSection = '';
-    if (data.attachments && data.attachments.length > 0) {
-        const attachmentLinks = data.attachments.map(att => {
-            const icon = getFileIcon(att.type);
-            return `<a href="/storage/${att.path}" target="_blank" class="queue-card-attachment">
-                ${icon} ${att.name}
-            </a>`;
-        }).join('');
-        attachmentsSection = `
-            <div class="queue-card-attachments">
-                <strong><i class="mdi mdi-paperclip"></i> Attachments:</strong>
-                ${attachmentLinks}
-            </div>
-        `;
-    }
-
-    // Result section
-    const resultSection = data.result ? `
-        <div class="queue-card-note" style="background: #f0f9ff; border-color: #0ea5e9;">
-            <div class="queue-card-note-label" style="color: #0ea5e9;"><i class="mdi mdi-flask"></i> Result</div>
-            <div>${data.result}</div>
-        </div>
-    ` : '';
-
-    return `
-        <div class="queue-card" data-patient-id="${data.patient_id}">
-            <div class="queue-card-header">
-                <div class="queue-card-patient">
-                    <div class="queue-card-patient-name">${data.patient_name}</div>
-                    ${patientMeta}
-                </div>
-                <div class="queue-card-service">${data.service_name}</div>
-            </div>
-            <div class="queue-card-body">
-                <div class="queue-card-status-row">
-                    ${statusBadges}
-                </div>
-                ${noteSection}
-                ${resultSection}
-                ${attachmentsSection}
-            </div>
-            <div class="queue-card-actions">
-                <button class="btn btn-primary btn-select-patient-from-queue" data-patient-id="${data.patient_id}">
-                    <i class="mdi mdi-account-arrow-right"></i> Select Patient
-                </button>
-            </div>
-        </div>
-    `;
-}
-
-function getStatusBadges(data) {
-    let badges = '';
-
-    // Requested
-    badges += `
-        <div class="queue-card-status-item completed">
-            <div class="queue-card-status-label"><i class="mdi mdi-calendar-check"></i> Requested</div>
-            <div class="queue-card-status-value">${data.requested_by}<br><small>${data.requested_at}</small></div>
-        </div>
-    `;
-
-    // Billing
-    if (data.billed_by && data.billed_at) {
-        badges += `
-            <div class="queue-card-status-item completed">
-                <div class="queue-card-status-label"><i class="mdi mdi-cash-register"></i> Billed</div>
-                <div class="queue-card-status-value">${data.billed_by}<br><small>${data.billed_at}</small></div>
-            </div>
-        `;
-    } else {
-        badges += `
-            <div class="queue-card-status-item pending">
-                <div class="queue-card-status-label"><i class="mdi mdi-cash-register"></i> Billing</div>
-                <div class="queue-card-status-value">Awaiting billing</div>
-            </div>
-        `;
-    }
-
-    // Sample
-    if (data.sample_taken_by && data.sample_taken_at) {
-        badges += `
-            <div class="queue-card-status-item completed">
-                <div class="queue-card-status-label"><i class="mdi mdi-test-tube"></i> Sample Taken</div>
-                <div class="queue-card-status-value">${data.sample_taken_by}<br><small>${data.sample_taken_at}</small></div>
-            </div>
-        `;
-    } else if (data.status >= 2) {
-        badges += `
-            <div class="queue-card-status-item pending">
-                <div class="queue-card-status-label"><i class="mdi mdi-test-tube"></i> Sample</div>
-                <div class="queue-card-status-value">Awaiting sample collection</div>
-            </div>
-        `;
-    }
-
-    // Result
-    if (data.result_by && data.result_at) {
-        badges += `
-            <div class="queue-card-status-item completed">
-                <div class="queue-card-status-label"><i class="mdi mdi-flask"></i> Result</div>
-                <div class="queue-card-status-value">${data.result_by}<br><small>${data.result_at}</small></div>
-            </div>
-        `;
-    } else if (data.status >= 3) {
-        badges += `
-            <div class="queue-card-status-item pending">
-                <div class="queue-card-status-label"><i class="mdi mdi-flask"></i> Result</div>
-                <div class="queue-card-status-value">Awaiting result entry</div>
-            </div>
-        `;
-    }
-
-    return badges;
-}
-
-function getFileIcon(extension) {
-    const icons = {
-        'pdf': '<i class="mdi mdi-file-pdf"></i>',
-        'doc': '<i class="mdi mdi-file-word"></i>',
-        'docx': '<i class="mdi mdi-file-word"></i>',
-        'jpg': '<i class="mdi mdi-file-image"></i>',
-        'jpeg': '<i class="mdi mdi-file-image"></i>',
-        'png': '<i class="mdi mdi-file-image"></i>',
-    };
-    return icons[extension] || '<i class="mdi mdi-file"></i>';
-}
-
-// Handle patient selection from queue
-$(document).on('click', '.btn-select-patient-from-queue', function() {
-    const patientId = $(this).data('patient-id');
-    loadPatient(patientId);
-    hideQueue();
-});
-
-// ==========================================
-// REPORTS VIEW EVENT HANDLERS
-// ==========================================
-
-// Open reports view
-$('#btn-view-reports').on('click', function() {
-    showReports();
-});
-
-// Close reports view
-$('#btn-close-reports').on('click', function() {
-    hideReports();
-});
-
-// Reports filter form submission
-$('#reports-filter-form').on('submit', function(e) {
-    e.preventDefault();
-
-    // Reload statistics with filters
-    const filters = {
-        date_from: $('#report-date-from').val(),
-        date_to: $('#report-date-to').val(),
-        status: $('#report-status-filter').val(),
-        service_id: $('#report-service-filter').val(),
-        doctor_id: $('#report-doctor-filter').val(),
-        hmo_id: $('#report-hmo-filter').val(),
-        patient_search: $('#report-patient-search').val()
-    };
-
-    loadReportsStatistics(filters);
-
-    // Reload DataTable
-    if (window.reportsDataTable) {
-        window.reportsDataTable.ajax.reload();
-    }
-});
-
-// Clear reports filters
-$('#clear-report-filters').on('click', function() {
-    $('#reports-filter-form')[0].reset();
-    loadReportsStatistics();
-    if (window.reportsDataTable) {
-        window.reportsDataTable.ajax.reload();
-    }
-});
-
-// Export buttons (TODO: Implement with DataTables buttons extension)
-$('#export-excel').on('click', function() {
-    toastr.info('Excel export will be implemented with DataTables buttons extension');
-});
-
-$('#export-pdf').on('click', function() {
-    toastr.info('PDF export will be implemented with DataTables buttons extension');
-});
-
-$('#print-report').on('click', function() {
-    toastr.info('Print functionality will be implemented with DataTables buttons extension');
-});
-
-// Show new request button when patient is selected
-function updateQuickActions() {
-    if (currentPatient) {
-        $('#btn-new-request').show();
-    } else {
-        $('#btn-new-request').hide();
-    }
-}
-
-// New request button handler
-$('#btn-new-request').on('click', function() {
-    if (!currentPatient) {
-        toastr.warning('Please select a patient first');
-        return;
-    }
-    switchWorkspaceTab('new-request');
-    $('#new-request-patient-name').text(currentPatient.name);
-});
-
-// ==========================================
-// REPORTS & ANALYTICS HELPER FUNCTIONS
-// ==========================================
-
-function loadReportsStatistics(filters = {}) {
-    // Show loading state
-    $('#stat-total-requests').text('Loading...');
-    $('#stat-completed').text('Loading...');
-    $('#stat-pending').text('Loading...');
-    $('#stat-avg-tat').text('Loading...');
+function loadChartData() {
+    const filters = getReportFilters();
 
     $.ajax({
-        url: '{{ route("lab.statistics") }}',
+        url: '{{ route("reception.reports.chart-data") }}',
         method: 'GET',
         data: filters,
-        success: function(response) {
-            // Update Summary Cards
-            updateSummaryCards(response.summary);
-
-            // Render Top Services
-            renderTopServices(response.top_services, response.summary ? response.summary.total_requests : 0);
-
-            // Render Top Doctors
-            renderTopDoctors(response.top_doctors);
-
-            // Initialize/Update Charts
-            initializeReportsCharts(response.by_status, response.monthly_trends);
+        success: function(data) {
+            renderRegistrationsChart(data.registration_trends);
+            renderHmoDistributionChart(data.hmo_distribution);
+            renderPeakHoursChart(data.peak_hours);
         },
-        error: function(xhr) {
-            console.error('Error loading statistics:', xhr);
-            toastr.error('Failed to load report statistics');
+        error: function() {
+            console.error('Failed to load chart data');
         }
     });
 }
 
-function updateSummaryCards(summary) {
-    if(!summary) return;
+function renderRegistrationsChart(data) {
+    const ctx = document.getElementById('registrations-chart');
+    if (!ctx) return;
 
-    $('#stat-total-requests').text(summary.total_requests || 0);
-    $('#stat-completed').text(summary.completed_requests || 0);
-    $('#stat-pending').text(summary.pending_requests || 0);
-
-    // Update Avg TAT
-    $('#stat-avg-tat').text((summary.avg_tat || 0) + ' hrs');
-}
-
-function renderTopServices(services, totalRequests = 0) {
-    const container = $('#top-services-list');
-
-    if (!services || services.length === 0) {
-        container.html('<p class="text-muted text-center p-3">No data available for the selected period.</p>');
-        return;
+    if (registrationsChart) {
+        registrationsChart.destroy();
     }
 
-    let html = '<ul class="list-group list-group-flush">';
-
-    services.forEach((service, index) => {
-        const percentage = totalRequests > 0 ? Math.round((service.count / totalRequests) * 100) : 0;
-
-        html += `<li class="list-group-item d-flex justify-content-between align-items-center px-0">
-            <div style="flex: 1; min-width: 0; margin-right: 15px;">
-                <div class="d-flex justify-content-between mb-1">
-                    <span class="text-truncate font-weight-bold" title="${service.name}">${index + 1}. ${service.name}</span>
-                    <span class="badge badge-primary badge-pill">${service.count}</span>
-                </div>
-                <div class="progress" style="height: 6px;">
-                    <div class="progress-bar bg-info" role="progressbar" style="width: ${percentage}%" aria-valuenow="${percentage}" aria-valuemin="0" aria-valuemax="100"></div>
-                </div>
-            </div>
-            <small class="text-muted" style="min-width: 35px; text-align: right;">${percentage}%</small>
-        </li>`;
-    });
-
-    html += '</ul>';
-    container.html(html);
-}
-
-function renderTopDoctors(doctors) {
-    const container = $('#top-doctors-list');
-
-    if (!doctors || doctors.length === 0) {
-        container.html('<p class="text-muted text-center p-3">No data available.</p>');
-        return;
-    }
-
-    let html = '<div class="table-responsive"><table class="table table-hover table-sm"><thead><tr><th>Doctor Name</th><th class="text-center">Requests</th><th class="text-right">Total Revenue</th></tr></thead><tbody>';
-
-    doctors.forEach(doc => {
-        const docName = doc.doctor ? (doc.doctor.firstname + ' ' + doc.doctor.surname) : 'Unknown';
-        html += `
-            <tr>
-                <td><i class="mdi mdi-doctor mr-1"></i> ${docName}</td>
-                <td class="text-center"><span class="badge badge-pill badge-info">${doc.count}</span></td>
-                <td class="text-right">₦${parseFloat(doc.revenue).toLocaleString()}</td>
-            </tr>
-        `;
-    });
-
-    html += '</tbody></table></div>';
-    container.html(html);
-}
-
-let statusChartInstance = null;
-let trendsChartInstance = null;
-
-function initializeReportsCharts(byStatus, monthlyTrends) {
-    // 1. Status Chart (Doughnut)
-    const statusCtx = document.getElementById('status-chart').getContext('2d');
-
-    // Destroy existing chart if it exists
-    if (statusChartInstance) {
-        statusChartInstance.destroy();
-    }
-
-    const statusLabels = [];
-    const statusData = [];
-    const statusColors = [];
-
-    // Map status IDs to names and colors
-    const statusMap = {
-        1: { name: 'Awaiting Billing', color: '#ffc107' },
-        2: { name: 'Awaiting Sample', color: '#17a2b8' },
-        3: { name: 'Awaiting Results', color: '#007bff' },
-        4: { name: 'Completed', color: '#28a745' }
-    };
-
-    if (byStatus && byStatus.length > 0) {
-        byStatus.forEach(item => {
-            const info = statusMap[item.status] || { name: 'Unknown', color: '#6c757d' };
-            statusLabels.push(info.name);
-            statusData.push(item.count);
-            statusColors.push(info.color);
-        });
-    } else {
-        // Empty state
-        statusLabels.push('No Data');
-        statusData.push(0);
-        statusColors.push('#e9ecef');
-    }
-
-    statusChartInstance = new Chart(statusCtx, {
-        type: 'doughnut',
-        data: {
-            labels: statusLabels,
-            datasets: [{
-                data: statusData,
-                backgroundColor: statusColors,
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            legend: {
-                position: 'right'
-            }
-        }
-    });
-
-    // 2. Monthly Trends Chart (Line)
-    const trendsCtx = document.getElementById('trends-chart').getContext('2d');
-
-    if (trendsChartInstance) {
-        trendsChartInstance.destroy();
-    }
-
-    const trendLabels = [];
-    const trendData = [];
-
-    if (monthlyTrends && monthlyTrends.length > 0) {
-        monthlyTrends.forEach(item => {
-            trendLabels.push(item.month);
-            trendData.push(item.count);
-        });
-    }
-
-    trendsChartInstance = new Chart(trendsCtx, {
+    registrationsChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: trendLabels,
+            labels: data.labels,
             datasets: [{
-                label: 'Requests',
-                data: trendData,
-                borderColor: '#007bff',
-                backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                borderWidth: 2,
+                label: 'Registrations',
+                data: data.data,
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
                 fill: true,
                 tension: 0.4
             }]
@@ -7494,17 +7185,2473 @@ function initializeReportsCharts(byStatus, monthlyTrends) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
             scales: {
-                yAxes: [{
-                    ticks: {
-                        beginAtZero: true,
-                        precision: 0
-                    }
-                }]
+                y: { beginAtZero: true }
             }
         }
     });
 }
 
+function renderHmoDistributionChart(data) {
+    const ctx = document.getElementById('hmo-distribution-chart');
+    if (!ctx) return;
+
+    if (hmoDistributionChart) {
+        hmoDistributionChart.destroy();
+    }
+
+    const colors = ['#667eea', '#f093fb', '#ffecd2', '#a8edea', '#11998e', '#4facfe'];
+
+    hmoDistributionChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: data.labels,
+            datasets: [{
+                data: data.data,
+                backgroundColor: colors
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: { boxWidth: 12 }
+                }
+            }
+        }
+    });
+}
+
+function renderPeakHoursChart(data) {
+    const ctx = document.getElementById('peak-hours-chart');
+    if (!ctx) return;
+
+    if (peakHoursChart) {
+        peakHoursChart.destroy();
+    }
+
+    peakHoursChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: data.labels,
+            datasets: [{
+                label: 'Queue Entries',
+                data: data.data,
+                backgroundColor: '#11998e'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+}
+
+function initReportsDataTables() {
+    // Initialize Registrations DataTable
+    if (registrationsDataTable) {
+        registrationsDataTable.destroy();
+    }
+
+    registrationsDataTable = $('#registrations-datatable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: '{{ route("reception.reports.registrations") }}',
+            data: function(d) {
+                const filters = getReportFilters();
+                Object.assign(d, filters);
+            }
+        },
+        columns: [
+            { data: 'date', name: 'created_at' },
+            { data: 'file_no', name: 'file_no' },
+            { data: 'patient_name', name: 'patient_name', orderable: false },
+            { data: 'gender', name: 'gender' },
+            { data: 'age', name: 'age', orderable: false },
+            { data: 'phone', name: 'phone_no' },
+            { data: 'hmo', name: 'hmo', orderable: false },
+            { data: 'registered_by', name: 'registered_by', orderable: false },
+            { data: 'actions', name: 'actions', orderable: false, searchable: false }
+        ],
+        order: [[0, 'desc']],
+        pageLength: 15,
+        language: {
+            emptyTable: 'No registrations found for selected period'
+        }
+    });
+
+    // Initialize Queue Report DataTable
+    if (queueReportDataTable) {
+        queueReportDataTable.destroy();
+    }
+
+    queueReportDataTable = $('#queue-report-datatable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: '{{ route("reception.reports.queue") }}',
+            data: function(d) {
+                const filters = getReportFilters();
+                Object.assign(d, filters);
+            }
+        },
+        columns: [
+            { data: 'datetime', name: 'created_at' },
+            { data: 'file_no', name: 'file_no', orderable: false },
+            { data: 'patient_name', name: 'patient_name', orderable: false },
+            { data: 'clinic', name: 'clinic', orderable: false },
+            { data: 'doctor', name: 'doctor', orderable: false },
+            { data: 'service', name: 'service', orderable: false },
+            { data: 'status', name: 'status' },
+            { data: 'wait_time', name: 'wait_time', orderable: false },
+            { data: 'actions', name: 'actions', orderable: false, searchable: false }
+        ],
+        order: [[0, 'desc']],
+        pageLength: 15,
+        language: {
+            emptyTable: 'No queue entries found for selected period'
+        }
+    });
+
+    // Initialize Visits DataTable
+    if (visitsDataTable) {
+        visitsDataTable.destroy();
+    }
+
+    visitsDataTable = $('#visits-datatable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: '{{ route("reception.reports.visits") }}',
+            data: function(d) {
+                const filters = getReportFilters();
+                Object.assign(d, filters);
+            }
+        },
+        columns: [
+            { data: 'date', name: 'created_at' },
+            { data: 'file_no', name: 'file_no', orderable: false },
+            { data: 'patient_name', name: 'patient_name', orderable: false },
+            { data: 'clinic', name: 'clinic', orderable: false },
+            { data: 'doctor', name: 'doctor', orderable: false },
+            { data: 'reason', name: 'reason', orderable: false },
+            { data: 'hmo', name: 'hmo', orderable: false },
+            { data: 'type', name: 'type', orderable: false },
+            { data: 'actions', name: 'actions', orderable: false, searchable: false }
+        ],
+        order: [[0, 'desc']],
+        pageLength: 15,
+        language: {
+            emptyTable: 'No visits found for selected period'
+        }
+    });
+}
+
+function reloadReportsData() {
+    loadReportsStatistics();
+    loadChartData();
+
+    if (registrationsDataTable) {
+        registrationsDataTable.ajax.reload();
+    }
+    if (queueReportDataTable) {
+        queueReportDataTable.ajax.reload();
+    }
+    if (visitsDataTable) {
+        visitsDataTable.ajax.reload();
+    }
+}
+
+function initializeQueueDataTable(filter) {
+    if (queueDataTable) {
+        queueDataTable.destroy();
+    }
+
+    queueDataTable = $('#queue-datatable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: '{{ route("reception.queue-list") }}',
+            data: function(d) {
+                d.filter = filter;
+                d.clinic_id = $('#queue-clinic-filter').val();
+            }
+        },
+        columns: [
+            { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+            { data: 'patient_name', name: 'patient_name' },
+            { data: 'patient_file_no', name: 'patient_file_no' },
+            { data: 'patient_hmo', name: 'patient_hmo' },
+            { data: 'clinic_name', name: 'clinic_name' },
+            { data: 'doctor_name', name: 'doctor_name' },
+            { data: 'service_name', name: 'service_name' },
+            { data: 'status_badge', name: 'status', orderable: false },
+            { data: 'time', name: 'created_at' },
+            {
+                data: 'actions',
+                name: 'actions',
+                orderable: false,
+                render: function(data, type, row) {
+                    return `
+                        <button class="btn btn-sm btn-primary select-queue-patient" data-patient-id="${row.patient_id}">
+                            <i class="mdi mdi-account-search"></i> Select
+                        </button>
+                    `;
+                }
+            }
+        ],
+        order: [[0, 'asc']],
+        pageLength: 15,
+        language: {
+            emptyTable: 'No patients in queue',
+            processing: '<i class="mdi mdi-loading mdi-spin"></i> Loading...'
+        },
+        drawCallback: function() {
+            // Bind click handler for select buttons
+            $('.select-queue-patient').off('click').on('click', function() {
+                const patientId = $(this).data('patient-id');
+                loadPatient(patientId);
+                hideQueue();
+            });
+        }
+    });
+}
+
+// =============================================
+// BOOK SERVICE FUNCTIONALITY
+// =============================================
+function updateTariffPreview() {
+    if (!currentPatient) return;
+
+    const serviceId = $('#booking-service').val();
+    const serviceType = $('input[name="service-type"]:checked').val() || 'consultation';
+
+    if (!serviceId) {
+        $('#tariff-preview-card').hide();
+        return;
+    }
+
+    // Get service price from option data
+    const servicePrice = parseFloat($('#booking-service option:selected').data('price')) || 0;
+
+    $.ajax({
+        url: '{{ route("reception.tariff-preview") }}',
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            patient_id: currentPatient,
+            service_id: serviceId
+        },
+        success: function(data) {
+            displayTariffPreview(data);
+        },
+        error: function() {
+            $('#tariff-preview-card').hide();
+        }
+    });
+}
+
+function displayTariffPreview(data) {
+    const $card = $('#tariff-preview-card');
+
+    // Update tariff values
+    $('#tariff-base-price').text(`₦${parseFloat(data.total_base_price || data.base_price || 0).toLocaleString()}`);
+    $('#tariff-payable-amount').text(`₦${parseFloat(data.payable_amount || 0).toLocaleString()}`);
+
+    if (data.hmo_name && data.claims_amount > 0) {
+        $('#tariff-hmo-row').show();
+        $('#tariff-coverage-mode').text(data.coverage_mode || 'N/A');
+        $('#tariff-claims-amount').text(`₦${parseFloat(data.claims_amount || 0).toLocaleString()}`);
+
+        if (data.validation_required) {
+            $('#tariff-validation-alert').show();
+            $('#tariff-validation-message').text('HMO validation required before service');
+        } else {
+            $('#tariff-validation-alert').hide();
+        }
+    } else {
+        $('#tariff-hmo-row').hide();
+        $('#tariff-validation-alert').hide();
+    }
+
+    $card.show();
+}
+
+function bookConsultation() {
+    if (!currentPatient) {
+        toastr.warning('Please select a patient first');
+        return;
+    }
+
+    const clinicId = $('#booking-clinic').val();
+    const doctorId = $('#booking-doctor').val();
+    const serviceId = $('#booking-service').val();
+    const serviceType = $('input[name="service-type"]:checked').val() || 'consultation';
+    const reason = $('#book-reason').val();
+
+    if (!clinicId) {
+        toastr.warning('Please select a clinic');
+        return;
+    }
+
+    if (serviceType === 'consultation' && !doctorId) {
+        toastr.warning('Please select a doctor');
+        return;
+    }
+
+    if (!serviceId) {
+        toastr.warning('Please select a service');
+        return;
+    }
+
+    const $btn = $('#btn-book-consultation');
+    const originalHtml = $btn.html();
+    $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Booking...');
+
+    $.ajax({
+        url: '{{ route("reception.book-consultation") }}',
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            patient_id: currentPatient,
+            clinic_id: clinicId,
+            doctor_id: doctorId,
+            service_id: serviceId,
+            service_type: serviceType,
+            reason: reason
+        },
+        success: function(response) {
+            if (response.success) {
+                toastr.success(response.message || 'Service booked successfully');
+                // Reset form
+                $('#booking-clinic').val('');
+                $('#booking-doctor').empty().append('<option value="">Select Doctor</option>');
+                $('#booking-service').empty().append('<option value="">Select Service</option>');
+                $('#book-reason').val('');
+                $('#tariff-preview-container').hide();
+
+                // Refresh queue counts
+                loadQueueCounts();
+            } else {
+                toastr.error(response.message || 'Failed to book service');
+            }
+        },
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Failed to book service');
+        },
+        complete: function() {
+            $btn.prop('disabled', false).html(originalHtml);
+        }
+    });
+}
+
+// =============================================
+// WALK-IN SALES
+// =============================================
+function initializeWalkinSales() {
+    // Add to cart
+    $(document).on('click', '.add-to-cart', function() {
+        const serviceId = $(this).data('id');
+        const serviceType = $(this).data('type');
+        const serviceName = $(this).data('name');
+        const servicePrice = $(this).data('price');
+        addToWalkinCart(serviceId, serviceType, serviceName, servicePrice);
+    });
+
+    // Remove from cart
+    $(document).on('click', '.remove-from-cart', function() {
+        const index = $(this).data('index');
+        removeFromWalkinCart(index);
+    });
+
+    // Submit walk-in
+    $('#btn-submit-walkin').on('click', function() {
+        submitWalkinServices();
+    });
+}
+
+let walkinCart = [];
+
+function searchWalkinServices(query, type) {
+    const $container = $('#walkin-search-results');
+    $container.empty();
+
+    let services = [];
+    if (type === 'lab') {
+        services = (cachedServices.lab || []).map(s => ({ ...s, type: 'lab' }));
+    } else if (type === 'imaging') {
+        services = (cachedServices.imaging || []).map(s => ({ ...s, type: 'imaging' }));
+    } else if (type === 'product') {
+        services = (cachedProducts || []).map(p => ({ ...p, type: 'product' }));
+    }
+
+    // Filter by query if provided
+    if (query) {
+        services = services.filter(s => s.name.toLowerCase().includes(query));
+    }
+
+    if (services.length === 0) {
+        $container.html('<p class="text-muted text-center py-3">No services found</p>');
+        return;
+    }
+
+    services.slice(0, 20).forEach(service => {
+        const price = parseFloat(service.price || 0);
+        const typeLabel = type === 'lab' ? 'Lab' : (type === 'imaging' ? 'Imaging' : 'Product');
+        const typeClass = type === 'lab' ? 'info' : (type === 'imaging' ? 'warning' : 'success');
+
+        $container.append(`
+            <div class="walkin-service-item d-flex justify-content-between align-items-center p-2 border-bottom">
+                <div>
+                    <span class="badge badge-${typeClass}">${typeLabel}</span>
+                    <span class="ml-2">${service.name}</span>
+                </div>
+                <div>
+                    <span class="text-muted mr-2">₦${price.toLocaleString()}</span>
+                    <button class="btn btn-sm btn-primary add-to-cart"
+                            data-id="${service.id}"
+                            data-type="${type}"
+                            data-name="${service.name}"
+                            data-price="${price}">
+                        <i class="mdi mdi-plus"></i>
+                    </button>
+                </div>
+            </div>
+        `);
+    });
+}
+
+function addToWalkinCart(id, type, name, price) {
+    if (!currentPatient) {
+        toastr.warning('Please select a patient first');
+        return;
+    }
+
+    // Check if item already in cart
+    const existingIndex = walkinCart.findIndex(item => item.id == id && item.type == type);
+    if (existingIndex >= 0) {
+        toastr.info('Item already in cart');
+        return;
+    }
+
+    // Fetch tariff preview with HMO calculations
+    const isProduct = type === 'product';
+    $.ajax({
+        url: '{{ route("reception.tariff-preview") }}',
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            patient_id: currentPatient,
+            service_id: isProduct ? null : id,
+            product_id: isProduct ? id : null,
+            qty: 1
+        },
+        success: function(data) {
+            walkinCart.push({
+                id: id,
+                type: type,
+                name: name,
+                base_price: parseFloat(data.base_price || price),
+                payable_amount: parseFloat(data.payable_amount || price),
+                claims_amount: parseFloat(data.claims_amount || 0),
+                coverage_mode: data.coverage_mode || null,
+                hmo_name: data.hmo_name || 'Private',
+                quantity: 1
+            });
+            updateWalkinCartUI();
+        },
+        error: function() {
+            // Fallback without HMO
+            walkinCart.push({
+                id: id,
+                type: type,
+                name: name,
+                base_price: parseFloat(price),
+                payable_amount: parseFloat(price),
+                claims_amount: 0,
+                coverage_mode: null,
+                hmo_name: 'Private',
+                quantity: 1
+            });
+            updateWalkinCartUI();
+        }
+    });
+}
+
+function removeFromWalkinCart(index) {
+    walkinCart.splice(index, 1);
+    updateWalkinCartUI();
+}
+
+function updateWalkinCartUI() {
+    const $container = $('#walkin-cart-body');
+    $container.empty();
+
+    // Update cart count badge
+    $('#cart-count-badge').text(walkinCart.length);
+
+    if (walkinCart.length === 0) {
+        $container.html(`
+            <tr id="walkin-cart-empty">
+                <td colspan="5" class="text-center text-muted py-4">
+                    <i class="mdi mdi-cart-outline" style="font-size: 2rem;"></i>
+                    <p class="mb-0 mt-2">No items selected</p>
+                </td>
+            </tr>
+        `);
+        $('#walkin-subtotal').text('₦0');
+        $('#walkin-cart-total').text('₦0');
+        $('#walkin-hmo-row').hide();
+        $('#btn-submit-walkin').prop('disabled', true);
+        return;
+    }
+
+    let subtotal = 0;
+    let totalPayable = 0;
+    let totalClaims = 0;
+    let hmoName = 'Private';
+
+    walkinCart.forEach((item, index) => {
+        const itemSubtotal = item.base_price * item.quantity;
+        const itemPayable = item.payable_amount * item.quantity;
+        const itemClaims = item.claims_amount * item.quantity;
+
+        subtotal += itemSubtotal;
+        totalPayable += itemPayable;
+        totalClaims += itemClaims;
+
+        if (item.hmo_name && item.hmo_name !== 'Private') {
+            hmoName = item.hmo_name;
+        }
+
+        // Coverage info
+        const hasHmoCoverage = itemClaims > 0;
+        const coverageLabel = item.coverage_mode ? item.coverage_mode.charAt(0).toUpperCase() + item.coverage_mode.slice(1) : '';
+        const coverageBadge = hasHmoCoverage
+            ? `<span class="badge badge-success" style="font-size: 0.7rem;">${coverageLabel}</span>`
+            : '';
+
+        $container.append(`
+            <tr>
+                <td>
+                    <strong>${item.name}</strong>
+                    <br>
+                    <small class="text-muted">${item.type}</small>
+                    ${coverageBadge}
+                </td>
+                <td class="text-right">
+                    <span>₦${itemSubtotal.toLocaleString()}</span>
+                </td>
+                <td class="text-right text-success">
+                    ${hasHmoCoverage ? `<span>-₦${itemClaims.toLocaleString()}</span>` : '<span class="text-muted">-</span>'}
+                </td>
+                <td class="text-right text-primary">
+                    <strong>₦${itemPayable.toLocaleString()}</strong>
+                </td>
+                <td class="text-center">
+                    <button class="btn btn-sm btn-outline-danger remove-from-cart" data-index="${index}" title="Remove">
+                        <i class="mdi mdi-close"></i>
+                    </button>
+                </td>
+            </tr>
+        `);
+    });
+
+    // Update summary
+    $('#walkin-subtotal').text(`₦${subtotal.toLocaleString()}`);
+
+    if (totalClaims > 0) {
+        $('#walkin-hmo-row').show();
+        $('#walkin-hmo-name').text(hmoName);
+        $('#walkin-hmo-amount').text(`-₦${totalClaims.toLocaleString()}`);
+    } else {
+        $('#walkin-hmo-row').hide();
+    }
+
+    $('#walkin-cart-total').text(`₦${totalPayable.toLocaleString()}`);
+    $('#btn-submit-walkin').prop('disabled', false);
+}
+
+function submitWalkinServices() {
+    if (!currentPatient) {
+        toastr.warning('Please select a patient first');
+        return;
+    }
+
+    if (walkinCart.length === 0) {
+        toastr.warning('Cart is empty');
+        return;
+    }
+
+    const $btn = $('#btn-submit-walkin');
+    const originalHtml = $btn.html();
+    $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Processing...');
+
+    $.ajax({
+        url: '{{ route("reception.book-walkin") }}',
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            patient_id: currentPatient,
+            items: walkinCart
+        },
+        success: function(response) {
+            if (response.success) {
+                toastr.success(response.message || 'Services created successfully');
+                walkinCart = [];
+                updateWalkinCartUI();
+                // Refresh recent requests
+                loadRecentRequests();
+                // Switch to recent tab to show the new request
+                $('#walkin-cart-tabs a[href="#walkin-recent-pane"]').tab('show');
+            } else {
+                toastr.error(response.message || 'Failed to create services');
+            }
+        },
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Failed to create services');
+        },
+        complete: function() {
+            $btn.prop('disabled', false).html(originalHtml);
+        }
+    });
+}
+
+// =============================================
+// RECENT REQUESTS (Last 24 hours)
+// =============================================
+function loadRecentRequests() {
+    if (!currentPatient) return;
+
+    const $container = $('#recent-requests-container');
+    $container.html('<div class="text-center py-3"><i class="mdi mdi-loading mdi-spin"></i> Loading...</div>');
+
+    $.ajax({
+        url: `{{ url('reception/patient') }}/${currentPatient}/recent-requests`,
+        method: 'GET',
+        success: function(response) {
+            if (response.success && response.requests && response.requests.length > 0) {
+                let html = '';
+                response.requests.forEach(req => {
+                    const typeClass = getTypeClass(req.type);
+                    const billingClass = getBillingStatusClass(req.billing_status);
+                    const deliveryClass = getDeliveryStatusClass(req.delivery_status);
+                    const coverageBadge = req.coverage_mode ? `<span class="badge badge-outline-success ml-1">${req.coverage_mode}</span>` : '';
+                    const createdAt = new Date(req.created_at).toLocaleString('en-GB', {day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'});
+
+                    html += `
+                        <div class="recent-request-item">
+                            <div class="recent-request-header">
+                                <div>
+                                    <span class="recent-request-name">${req.name}</span>
+                                    <span class="badge badge-${typeClass} recent-request-type ml-2">${req.type_label}</span>
+                                    ${coverageBadge}
+                                </div>
+                                <small class="text-muted">${createdAt}</small>
+                            </div>
+                            <div class="recent-request-details">
+                                <div class="recent-request-pricing">
+                                    <span>
+                                        <span class="price-label">Price</span>
+                                        <span class="price-value">₦${parseFloat(req.price || 0).toLocaleString()}</span>
+                                    </span>
+                                    <span>
+                                        <span class="price-label">HMO</span>
+                                        <span class="price-value text-success">${req.hmo_covers > 0 ? '-₦' + parseFloat(req.hmo_covers).toLocaleString() : '-'}</span>
+                                    </span>
+                                    <span>
+                                        <span class="price-label">Payable</span>
+                                        <span class="price-value text-primary">₦${parseFloat(req.payable || 0).toLocaleString()}</span>
+                                    </span>
+                                </div>
+                                <div class="recent-request-status">
+                                    <span class="billing-badge ${billingClass}">${req.billing_status || 'Pending'}</span>
+                                    <span class="delivery-badge ${deliveryClass}">${req.delivery_status || 'Pending'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                $container.html(html);
+            } else {
+                $container.html(`
+                    <div class="text-center text-muted py-4">
+                        <i class="mdi mdi-clock-outline" style="font-size: 2rem;"></i>
+                        <p class="mb-0 mt-2">No recent requests</p>
+                    </div>
+                `);
+            }
+        },
+        error: function() {
+            $container.html(`
+                <div class="text-center text-muted py-4">
+                    <i class="mdi mdi-alert-circle" style="font-size: 2rem;"></i>
+                    <p class="mb-0 mt-2">Failed to load recent requests</p>
+                </div>
+            `);
+        }
+    });
+}
+
+function getTypeClass(type) {
+    const classes = {
+        'lab': 'info',
+        'imaging': 'warning',
+        'product': 'success',
+        'consultation': 'primary',
+        'procedure': 'secondary'
+    };
+    return classes[type?.toLowerCase()] || 'secondary';
+}
+
+function getBillingStatusClass(status) {
+    if (!status) return 'billing-pending';
+    const statusLower = status.toLowerCase();
+    if (statusLower.includes('paid')) return 'billing-paid';
+    if (statusLower.includes('billed')) return 'billing-billed';
+    return 'billing-pending';
+}
+
+function getDeliveryStatusClass(status) {
+    if (!status) return 'delivery-pending';
+    const statusLower = status.toLowerCase();
+    if (statusLower.includes('completed') || statusLower.includes('dispensed')) return 'delivery-completed';
+    if (statusLower.includes('progress') || statusLower.includes('sample') || statusLower.includes('awaiting')) return 'delivery-progress';
+    return 'delivery-pending';
+}
+
+// =============================================
+// SERVICE REQUESTS TAB
+// =============================================
+let serviceRequestsTable = null;
+
+function initializeServiceRequestsTable(patientId) {
+    if (serviceRequestsTable) {
+        serviceRequestsTable.destroy();
+    }
+
+    // Set default date range to this month
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    if (!$('#req-date-from').val()) {
+        $('#req-date-from').val(firstDay.toISOString().split('T')[0]);
+    }
+    if (!$('#req-date-to').val()) {
+        $('#req-date-to').val(lastDay.toISOString().split('T')[0]);
+    }
+
+    serviceRequestsTable = $('#service-requests-datatable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: `{{ url('reception/patient') }}/${patientId}/service-requests`,
+            type: 'GET',
+            data: function(d) {
+                d.date_from = $('#req-date-from').val();
+                d.date_to = $('#req-date-to').val();
+                d.type_filter = $('#req-type-filter').val();
+                d.billing_filter = $('#req-billing-filter').val();
+                d.delivery_filter = $('#req-delivery-filter').val();
+            }
+        },
+        columns: [
+            { data: 'date_formatted', name: 'created_at' },
+            { data: 'request_no', name: 'request_no' },
+            { data: 'type_badge', name: 'type' },
+            { data: 'name', name: 'name' },
+            { data: 'price_formatted', name: 'price', className: 'text-right' },
+            { data: 'hmo_covers_formatted', name: 'hmo_covers', className: 'text-right text-success' },
+            { data: 'payable_formatted', name: 'payable', className: 'text-right text-primary font-weight-bold' },
+            { data: 'billing_badge', name: 'billing_status' },
+            { data: 'delivery_badge', name: 'delivery_status' },
+            { data: 'actions', name: 'actions', orderable: false, searchable: false }
+        ],
+        order: [[0, 'desc']],
+        pageLength: 25,
+        dom: '<"row"<"col-sm-6"l><"col-sm-6"f>>rtip',
+        language: {
+            emptyTable: 'No service requests found',
+            processing: '<i class="mdi mdi-loading mdi-spin"></i> Loading...'
+        },
+        drawCallback: function() {
+            // Update summary stats after table loads
+            loadServiceRequestsStats(patientId);
+        }
+    });
+}
+
+function loadServiceRequestsStats(patientId) {
+    $.ajax({
+        url: `{{ url('reception/patient') }}/${patientId}/service-requests-stats`,
+        method: 'GET',
+        data: {
+            date_from: $('#req-date-from').val(),
+            date_to: $('#req-date-to').val(),
+            type_filter: $('#req-type-filter').val(),
+            billing_filter: $('#req-billing-filter').val(),
+            delivery_filter: $('#req-delivery-filter').val()
+        },
+        success: function(response) {
+            if (response.success && response.stats) {
+                $('#req-total-requests').text(response.stats.total_requests || 0);
+                $('#req-hmo-covered').text(response.stats.hmo_covered || '₦0');
+                $('#req-patient-payable').text(response.stats.patient_payable || '₦0');
+                $('#req-completed-count').text(response.stats.completed || 0);
+            }
+        }
+    });
+}
+
+function reloadServiceRequestsData() {
+    if (serviceRequestsTable) {
+        serviceRequestsTable.ajax.reload();
+    }
+}
+
+// Event handlers for service requests
+$(document).on('submit', '#service-requests-filter-form', function(e) {
+    e.preventDefault();
+    reloadServiceRequestsData();
+});
+
+$(document).on('click', '#clear-req-filters', function() {
+    // Reset to this month defaults
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    $('#req-date-from').val(firstDay.toISOString().split('T')[0]);
+    $('#req-date-to').val(lastDay.toISOString().split('T')[0]);
+    $('#req-type-filter, #req-billing-filter, #req-delivery-filter').val('');
+    reloadServiceRequestsData();
+});
+
+// Export handlers
+$(document).on('click', '#export-requests-excel', function() {
+    if (!currentPatient) return;
+    const params = new URLSearchParams({
+        date_from: $('#req-date-from').val(),
+        date_to: $('#req-date-to').val(),
+        type: $('#req-type-filter').val(),
+        billing_status: $('#req-billing-filter').val(),
+        delivery_status: $('#req-delivery-filter').val(),
+        format: 'excel'
+    });
+    window.location.href = `{{ url('reception/patient') }}/${currentPatient}/service-requests/export?${params}`;
+});
+
+$(document).on('click', '#export-requests-pdf', function() {
+    if (!currentPatient) return;
+    const params = new URLSearchParams({
+        date_from: $('#req-date-from').val(),
+        date_to: $('#req-date-to').val(),
+        type: $('#req-type-filter').val(),
+        billing_status: $('#req-billing-filter').val(),
+        delivery_status: $('#req-delivery-filter').val(),
+        format: 'pdf'
+    });
+    window.location.href = `{{ url('reception/patient') }}/${currentPatient}/service-requests/export?${params}`;
+});
+
+$(document).on('click', '#print-requests', function() {
+    if (!currentPatient) return;
+    const params = new URLSearchParams({
+        date_from: $('#req-date-from').val(),
+        date_to: $('#req-date-to').val(),
+        type: $('#req-type-filter').val(),
+        billing_status: $('#req-billing-filter').val(),
+        delivery_status: $('#req-delivery-filter').val()
+    });
+    window.open(`{{ url('reception/patient') }}/${currentPatient}/service-requests/print?${params}`, '_blank');
+});
+
+// View Request Details Handler
+$(document).on('click', '.view-request-btn', function() {
+    const type = $(this).data('type');
+    const id = $(this).data('id');
+
+    showRequestDetails(type, id);
+});
+
+// Discard Request Handler
+let discardRequestType = null;
+let discardRequestId = null;
+
+$(document).on('click', '.discard-request-btn', function() {
+    discardRequestType = $(this).data('type');
+    discardRequestId = $(this).data('id');
+    const serviceName = $(this).data('name');
+    const requestNo = $(this).data('request-no');
+
+    $('#discard_service_name').text(serviceName);
+    $('#discard_request_no').text(requestNo);
+    $('#discard_reason').val('');
+    $('#discardRequestModal').modal('show');
+});
+
+$('#discardRequestForm').on('submit', function(e) {
+    e.preventDefault();
+
+    const reason = $('#discard_reason').val();
+
+    if (reason.length < 10) {
+        toastr.warning('Please provide a detailed reason (minimum 10 characters)');
+        return;
+    }
+
+    $('#confirmDiscardBtn').prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Discarding...');
+
+    $.ajax({
+        url: `{{ url('reception/request') }}/${discardRequestType}/${discardRequestId}/discard`,
+        method: 'DELETE',
+        data: {
+            _token: '{{ csrf_token() }}',
+            reason: reason
+        },
+        success: function(response) {
+            $('#discardRequestModal').modal('hide');
+            toastr.success(response.message || 'Request discarded successfully');
+
+            // Reload the service requests table
+            reloadServiceRequestsData();
+        },
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Failed to discard request');
+        },
+        complete: function() {
+            $('#confirmDiscardBtn').prop('disabled', false).html('<i class="mdi mdi-delete"></i> Discard Request');
+        }
+    });
+});
+
+function showRequestDetails(type, id) {
+    // Reset modal
+    $('#request-details-loading').show();
+    $('#request-details-content').hide();
+
+    // Set header color based on type
+    const headerClass = type + '-header';
+    $('#request-details-header').removeClass('lab-header imaging-header product-header').addClass(headerClass);
+
+    // Update title icon
+    const icons = {
+        'lab': 'mdi-test-tube',
+        'imaging': 'mdi-x-ray',
+        'product': 'mdi-pill'
+    };
+    $('#request-details-title').html(`<i class="mdi ${icons[type] || 'mdi-clipboard-text'}"></i> Request Details`);
+
+    // Show modal
+    $('#requestDetailsModal').modal('show');
+
+    // Fetch details
+    $.ajax({
+        url: `{{ url('reception/request') }}/${type}/${id}/details`,
+        method: 'GET',
+        success: function(response) {
+            if (response.success && response.details) {
+                populateRequestDetails(response.details);
+                $('#request-details-loading').hide();
+                $('#request-details-content').show();
+            } else {
+                toastr.error('Failed to load request details');
+                $('#requestDetailsModal').modal('hide');
+            }
+        },
+        error: function(xhr) {
+            toastr.error('Failed to load request details');
+            $('#requestDetailsModal').modal('hide');
+        }
+    });
+}
+
+function populateRequestDetails(details) {
+    // Request number and type badge
+    $('#detail-request-no').text(details.request_no);
+
+    const typeBadgeColors = {
+        'lab': 'badge-info',
+        'imaging': 'badge-warning',
+        'product': 'badge-success'
+    };
+    $('#detail-type-badge').removeClass('badge-info badge-warning badge-success badge-primary badge-secondary')
+        .addClass(typeBadgeColors[details.type] || 'badge-secondary')
+        .text(details.type_label);
+
+    // Billing & Delivery badges
+    const billingBadgeClass = getBillingStatusClass(details.billing_status);
+    const deliveryBadgeClass = getDeliveryStatusClass(details.delivery_status);
+    $('#detail-billing-badge').html(`<span class="billing-badge ${billingBadgeClass}">${details.billing_status}</span>`);
+    $('#detail-delivery-badge').html(`<span class="delivery-badge ${deliveryBadgeClass}">${details.delivery_status}</span>`);
+
+    // Requested at
+    $('#detail-requested-at').text('Requested: ' + details.requested_at);
+
+    // Service/Product info
+    if (details.type === 'product') {
+        $('#detail-info-title').text('Product Information');
+        $('#detail-item-name').text(details.product_name);
+        $('#detail-item-category').text(details.product_category);
+        $('#detail-dose-section').toggle(!!details.dose);
+        $('#detail-dose').text(details.dose || '');
+        $('#detail-quantity-section').show();
+        $('#detail-quantity').text(details.quantity);
+        $('#detail-unit-price').text(numberFormat(details.unit_price));
+    } else {
+        $('#detail-info-title').text('Service Information');
+        $('#detail-item-name').text(details.service_name);
+        $('#detail-item-category').text(details.service_category);
+        $('#detail-dose-section').hide();
+        $('#detail-quantity-section').hide();
+    }
+
+    // Pricing
+    $('#detail-price').text('₦' + numberFormat(details.price));
+    $('#detail-hmo-row').toggle(details.hmo_covers > 0);
+    $('#detail-hmo-covers').text('-₦' + numberFormat(details.hmo_covers));
+    $('#detail-payable').text('₦' + numberFormat(details.payable));
+
+    // Clinical note
+    if (details.clinical_note) {
+        $('#detail-note-card').show();
+        $('#detail-clinical-note').text(details.clinical_note);
+    } else {
+        $('#detail-note-card').hide();
+    }
+
+    // Build timeline
+    buildRequestTimeline(details);
+
+    // Result section (lab/imaging only)
+    if (details.type === 'lab' || details.type === 'imaging') {
+        $('#detail-result-card').show();
+        if (details.has_result) {
+            $('#detail-result-content').show();
+            $('#detail-no-result').hide();
+            $('#detail-result-summary').text(details.result_summary || 'Result available - view in ' + details.type_label + ' workbench');
+        } else {
+            $('#detail-result-content').hide();
+            $('#detail-no-result').show();
+        }
+    } else {
+        $('#detail-result-card').hide();
+    }
+
+    // Payment info
+    if (details.payment_reference) {
+        $('#detail-payment-card').show();
+        $('#detail-payment-ref').text(details.payment_reference);
+        $('#detail-payment-date').text(details.payment_date);
+    } else {
+        $('#detail-payment-card').hide();
+    }
+}
+
+function buildRequestTimeline(details) {
+    let timelineHtml = '';
+
+    // 1. Request Created
+    timelineHtml += `
+        <div class="timeline-item completed">
+            <div class="timeline-title"><i class="mdi mdi-plus-circle text-primary"></i> Request Created</div>
+            <div class="timeline-subtitle">${details.requested_by}</div>
+            <div class="timeline-meta">${details.requested_at}</div>
+        </div>
+    `;
+
+    // 2. Billing step
+    if (details.billing_status_code === 'billed' || details.billing_status_code === 'paid') {
+        timelineHtml += `
+            <div class="timeline-item completed">
+                <div class="timeline-title"><i class="mdi mdi-receipt text-info"></i> Billed</div>
+                <div class="timeline-subtitle">${details.billed_by || 'System'}</div>
+                <div class="timeline-meta">${details.billed_at || '-'}</div>
+            </div>
+        `;
+    } else {
+        timelineHtml += `
+            <div class="timeline-item pending">
+                <div class="timeline-title"><i class="mdi mdi-receipt text-muted"></i> Awaiting Billing</div>
+                <div class="timeline-subtitle text-muted">Not yet billed</div>
+            </div>
+        `;
+    }
+
+    // 3. Payment step (if applicable)
+    if (details.billing_status_code === 'paid') {
+        timelineHtml += `
+            <div class="timeline-item completed">
+                <div class="timeline-title"><i class="mdi mdi-cash-check text-success"></i> Paid</div>
+                <div class="timeline-subtitle">${details.payment_reference || 'Payment received'}</div>
+                <div class="timeline-meta">${details.payment_date || '-'}</div>
+            </div>
+        `;
+    } else if (details.billing_status_code === 'billed') {
+        timelineHtml += `
+            <div class="timeline-item in-progress">
+                <div class="timeline-title"><i class="mdi mdi-cash text-warning"></i> Awaiting Payment</div>
+                <div class="timeline-subtitle text-muted">Patient to pay</div>
+            </div>
+        `;
+    }
+
+    // Type-specific steps
+    if (details.type === 'lab') {
+        // Sample collection step
+        if (details.sample_taken) {
+            timelineHtml += `
+                <div class="timeline-item completed">
+                    <div class="timeline-title"><i class="mdi mdi-test-tube text-info"></i> Sample Collected</div>
+                    <div class="timeline-subtitle">${details.sample_taken_by || 'Lab Staff'}</div>
+                    <div class="timeline-meta">${details.sample_date || '-'}</div>
+                </div>
+            `;
+        } else if (details.billing_status_code === 'paid' || details.billing_status_code === 'billed') {
+            timelineHtml += `
+                <div class="timeline-item in-progress">
+                    <div class="timeline-title"><i class="mdi mdi-test-tube text-muted"></i> Awaiting Sample</div>
+                    <div class="timeline-subtitle text-muted">Sample not yet collected</div>
+                </div>
+            `;
+        }
+
+        // Results step
+        if (details.has_result) {
+            timelineHtml += `
+                <div class="timeline-item completed">
+                    <div class="timeline-title"><i class="mdi mdi-file-document text-success"></i> Result Available</div>
+                    <div class="timeline-subtitle">${details.result_by || 'Lab Scientist'}</div>
+                    <div class="timeline-meta">${details.result_date || '-'}</div>
+                </div>
+            `;
+        } else if (details.sample_taken) {
+            timelineHtml += `
+                <div class="timeline-item in-progress">
+                    <div class="timeline-title"><i class="mdi mdi-file-document text-muted"></i> Awaiting Results</div>
+                    <div class="timeline-subtitle text-muted">Processing in lab</div>
+                </div>
+            `;
+        }
+    } else if (details.type === 'imaging') {
+        // Results step
+        if (details.has_result) {
+            timelineHtml += `
+                <div class="timeline-item completed">
+                    <div class="timeline-title"><i class="mdi mdi-file-image text-success"></i> Result Available</div>
+                    <div class="timeline-subtitle">${details.result_by || 'Radiologist'}</div>
+                    <div class="timeline-meta">${details.result_date || '-'}</div>
+                </div>
+            `;
+
+            if (details.has_attachments && details.attachment_count > 0) {
+                timelineHtml += `
+                    <div class="timeline-item completed">
+                        <div class="timeline-title"><i class="mdi mdi-image-multiple text-info"></i> Images Attached</div>
+                        <div class="timeline-subtitle">${details.attachment_count} image(s) uploaded</div>
+                    </div>
+                `;
+            }
+        } else if (details.billing_status_code === 'paid' || details.billing_status_code === 'billed') {
+            timelineHtml += `
+                <div class="timeline-item in-progress">
+                    <div class="timeline-title"><i class="mdi mdi-file-image text-muted"></i> Awaiting Results</div>
+                    <div class="timeline-subtitle text-muted">Processing in imaging</div>
+                </div>
+            `;
+        }
+    } else if (details.type === 'product') {
+        // Dispensing step
+        if (details.dispensed_by) {
+            timelineHtml += `
+                <div class="timeline-item completed">
+                    <div class="timeline-title"><i class="mdi mdi-pill text-success"></i> Dispensed</div>
+                    <div class="timeline-subtitle">${details.dispensed_by}</div>
+                    <div class="timeline-meta">${details.dispense_date || '-'}</div>
+                </div>
+            `;
+        } else if (details.billing_status_code === 'paid' || details.billing_status_code === 'billed') {
+            timelineHtml += `
+                <div class="timeline-item in-progress">
+                    <div class="timeline-title"><i class="mdi mdi-pill text-muted"></i> Awaiting Dispensing</div>
+                    <div class="timeline-subtitle text-muted">Ready for pickup</div>
+                </div>
+            `;
+        }
+    }
+
+    $('#detail-timeline').html(timelineHtml);
+}
+
+function numberFormat(number) {
+    if (number === null || number === undefined) return '0.00';
+    return parseFloat(number).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// =============================================
+// VISIT HISTORY
+// =============================================
+function initializeVisitHistoryTable(patientId) {
+    if (visitHistoryTable) {
+        visitHistoryTable.destroy();
+    }
+
+    visitHistoryTable = $('#visit-history-table').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: `{{ url('reception/patient') }}/${patientId}/visits`,
+            type: 'GET'
+        },
+        columns: [
+            { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+            { data: 'date', name: 'created_at' },
+            { data: 'doctor_name', name: 'doctor_name' },
+            { data: 'service_name', name: 'service_name' },
+            { data: 'reason', name: 'reason' },
+            { data: 'actions', name: 'actions', orderable: false, searchable: false }
+        ],
+        order: [[1, 'desc']],
+        pageLength: 10,
+        language: {
+            emptyTable: 'No visit history found',
+            processing: '<i class="mdi mdi-loading mdi-spin"></i> Loading...'
+        }
+    });
+}
+
+// =============================================
+// QUICK REGISTRATION
+// =============================================
+function showQuickRegisterModal() {
+    $('#quickRegisterModal').modal('show');
+    // Reset the toggle
+    $('#toggle-file-no-edit').prop('checked', false);
+    $('#quick-register-file-no').prop('readonly', true);
+    // Generate new file number from server
+    generateFileNumber();
+}
+
+function generateFileNumber() {
+    $.ajax({
+        url: '/reception/patient/next-file-number',
+        method: 'GET',
+        success: function(response) {
+            $('#quick-register-file-no').val(response.file_no);
+        },
+        error: function() {
+            // Fallback: use timestamp-based number if server fails
+            const now = new Date();
+            const fallbackNo = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
+            $('#quick-register-file-no').val(fallbackNo);
+            toastr.warning('Could not fetch next file number, using auto-generated');
+        }
+    });
+}
+
+// Toggle file number edit
+$('#toggle-file-no-edit').on('change', function() {
+    const isChecked = $(this).is(':checked');
+    $('#quick-register-file-no').prop('readonly', !isChecked);
+    if (isChecked) {
+        $('#quick-register-file-no').focus();
+    }
+});
+
+function submitQuickRegister() {
+    const $form = $('#quick-register-form');
+    const $btn = $form.find('button[type="submit"]');
+    const originalHtml = $btn.html();
+
+    // Basic validation
+    const firstName = $('#quick-register-firstname').val().trim();
+    const lastName = $('#quick-register-lastname').val().trim();
+    const phone = $('#quick-register-phone').val().trim();
+    const gender = $('#quick-register-gender').val();
+
+    if (!firstName || !lastName) {
+        toastr.warning('First name and last name are required');
+        return;
+    }
+
+    if (!gender) {
+        toastr.warning('Please select gender');
+        return;
+    }
+
+    $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Registering...');
+
+    $.ajax({
+        url: '{{ route("reception.patient.quick-register") }}',
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            surname: lastName,
+            firstname: firstName,
+            phone_no: phone,
+            gender: gender,
+            dob: $('#quick-register-dob').val(),
+            hmo_id: $('#quick-register-hmo').val(),
+            hmo_no: $('#quick-register-hmo-no').val()
+        },
+        success: function(response) {
+            if (response.success) {
+                toastr.success('Patient registered successfully');
+                $('#quickRegisterModal').modal('hide');
+                $form[0].reset();
+
+                // Load the newly registered patient
+                if (response.patient && response.patient.id) {
+                    loadPatient(response.patient.id);
+                }
+            } else {
+                toastr.error(response.message || 'Registration failed');
+            }
+        },
+        error: function(xhr) {
+            const errors = xhr.responseJSON?.errors;
+            if (errors) {
+                Object.values(errors).forEach(err => {
+                    toastr.error(err[0]);
+                });
+            } else {
+                toastr.error(xhr.responseJSON?.message || 'Registration failed');
+            }
+        },
+        complete: function() {
+            $btn.prop('disabled', false).html(originalHtml);
+        }
+    });
+}
+
+// =============================================
+// TODAY'S STATS
+// =============================================
+function showTodayStats() {
+    $.ajax({
+        url: '{{ route("reception.today-stats") }}',
+        method: 'GET',
+        success: function(data) {
+            displayTodayStats(data);
+        },
+        error: function() {
+            toastr.error('Failed to load statistics');
+        }
+    });
+}
+
+function displayTodayStats(data) {
+    const html = `
+        <div class="modal fade" id="todayStatsModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="mdi mdi-chart-bar"></i> Today's Statistics</h5>
+                        <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-3 col-6">
+                                <div class="stat-card bg-primary text-white p-3 rounded mb-3">
+                                    <h3 class="mb-0">${data.total_queued || 0}</h3>
+                                    <small>Total Queued Today</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="stat-card bg-success text-white p-3 rounded mb-3">
+                                    <h3 class="mb-0">${data.new_registrations || 0}</h3>
+                                    <small>New Registrations</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="stat-card bg-info text-white p-3 rounded mb-3">
+                                    <h3 class="mb-0">${data.consultations_done || 0}</h3>
+                                    <small>Consultations Done</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="stat-card bg-warning text-white p-3 rounded mb-3">
+                                    <h3 class="mb-0">${data.pending_services || 0}</h3>
+                                    <small>Pending Services</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Remove existing modal if any
+    $('#todayStatsModal').remove();
+
+    // Add and show modal
+    $('body').append(html);
+    $('#todayStatsModal').modal('show');
+
+    // Clean up on close
+    $('#todayStatsModal').on('hidden.bs.modal', function() {
+        $(this).remove();
+    });
+}
+
+// =============================================
+// UTILITY FUNCTIONS
+// =============================================
+function updateSyncIndicator() {
+    const $indicator = $('#sync-indicator');
+    if ($indicator.length) {
+        $indicator.html(`
+            <i class="mdi mdi-check-circle text-success"></i>
+            <small class="text-muted">Synced</small>
+        `);
+    }
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function formatDateTime(dateString) {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) +
+           ' ' + date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+}
+
+// Cleanup on page unload
+$(window).on('beforeunload', function() {
+    if (queueRefreshInterval) {
+        clearInterval(queueRefreshInterval);
+    }
+});
+
+// =============================================
+// HOSPITAL CARD FUNCTIONS
+// =============================================
+function showHospitalCard(patientData) {
+    const defaultAvatar = '{{ asset("assets/images/default-avatar.png") }}';
+
+    // Populate FRONT card data
+    $('#card-patient-photo').attr('src', patientData.photo || defaultAvatar);
+    $('#card-patient-name').text(patientData.name || 'Patient Name');
+    $('#card-patient-id').text(patientData.file_no || 'N/A');
+    $('#card-dob').text(patientData.dob || 'N/A');
+    $('#card-blood-type').text(patientData.blood_group || 'N/A');
+    $('#card-genotype').text(patientData.genotype || 'N/A');
+    $('#card-barcode-number').text(patientData.file_no || '');
+
+    // Populate BACK card data
+    $('#card-gender').text(patientData.gender || 'N/A');
+    $('#card-phone').text(patientData.phone_no || 'N/A');
+    $('#card-address').text(patientData.address || 'Not provided');
+
+    // Handle allergies (may be array or string)
+    let allergiesText = 'None known';
+    if (patientData.allergies) {
+        if (Array.isArray(patientData.allergies)) {
+            allergiesText = patientData.allergies.length > 0 ? patientData.allergies.join(', ') : 'None known';
+        } else {
+            allergiesText = patientData.allergies;
+        }
+    }
+    $('#card-allergies').text(allergiesText);
+
+    $('#card-nok-name').text(patientData.next_of_kin_name || 'Not provided');
+    $('#card-nok-phone').text(patientData.next_of_kin_phone || 'N/A');
+
+    // Generate barcode using JsBarcode if available, otherwise use simple display
+    if (typeof JsBarcode !== 'undefined' && patientData.file_no) {
+        try {
+            JsBarcode('#card-barcode', patientData.file_no, {
+                format: 'CODE128',
+                width: 1.5,
+                height: 30,
+                displayValue: false,
+                margin: 0,
+                background: 'transparent'
+            });
+        } catch (e) {
+            console.error('Barcode generation failed:', e);
+            // Fallback: show text-based barcode
+            generateTextBarcode(patientData.file_no);
+        }
+    } else {
+        // Fallback: generate text-based barcode representation
+        generateTextBarcode(patientData.file_no);
+    }
+
+    // Show modal
+    $('#hospitalCardModal').modal('show');
+}
+
+function generateTextBarcode(code) {
+    // Create a simple CSS-based barcode representation
+    if (!code) return;
+
+    const svg = document.getElementById('card-barcode');
+    const width = 200;
+    const height = 30;
+
+    // Create simple bars based on character codes
+    let bars = '';
+    const barWidth = width / (code.length * 11 + 2);
+    let x = barWidth;
+
+    for (let i = 0; i < code.length; i++) {
+        const charCode = code.charCodeAt(i);
+        // Generate pattern based on character
+        const pattern = charCode.toString(2).padStart(8, '0');
+
+        for (let j = 0; j < pattern.length; j++) {
+            if (pattern[j] === '1') {
+                bars += `<rect x="${x}" y="0" width="${barWidth}" height="${height}" fill="#000"/>`;
+            }
+            x += barWidth;
+        }
+        x += barWidth; // Space between characters
+    }
+
+    svg.innerHTML = bars;
+    svg.setAttribute('width', width);
+    svg.setAttribute('height', height);
+    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+}
+
+function printHospitalCard() {
+    const cardContent = document.getElementById('hospital-card-container').innerHTML;
+    const printWindow = window.open('', '_blank', 'width=450,height=350');
+
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Hospital Patient Card</title>
+            <style>
+                @page {
+                    size: 3.375in 2.125in;
+                    margin: 0;
+                }
+                body {
+                    margin: 0;
+                    padding: 10px;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    min-height: 100vh;
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                }
+                .hospital-card {
+                    width: 340px;
+                    height: 215px;
+                    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                    border-radius: 12px;
+                    overflow: hidden;
+                    position: relative;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
+                .card-header-section {
+                    background: {{ appsettings()->hos_color ?? '#0066cc' }} !important;
+                    color: white;
+                    padding: 8px 12px;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    -webkit-print-color-adjust: exact !important;
+                }
+                .hospital-logo-section { width: 35px; height: 35px; flex-shrink: 0; }
+                .hospital-logo { width: 35px; height: 35px; object-fit: contain; background: white; border-radius: 4px; padding: 2px; }
+                .hospital-logo-placeholder { width: 35px; height: 35px; background: rgba(255,255,255,0.2); border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+                .hospital-info-section { flex: 1; }
+                .hospital-name-text { font-size: 11px; font-weight: 700; text-transform: uppercase; line-height: 1.2; }
+                .card-type-label { font-size: 8px; opacity: 0.9; letter-spacing: 0.5px; }
+                .card-icon-section { font-size: 24px; opacity: 0.7; }
+                .card-body-section { display: flex; padding: 10px 12px; gap: 12px; }
+                .patient-photo-section { flex-shrink: 0; }
+                .patient-photo { width: 65px; height: 80px; object-fit: cover; border-radius: 6px; border: 2px solid {{ appsettings()->hos_color ?? '#0066cc' }}; background: #f0f0f0; }
+                .patient-info-section { flex: 1; text-align: left; }
+                .info-label { font-size: 7px; color: #6c757d; text-transform: uppercase; margin-bottom: 2px; }
+                .patient-name-text { font-size: 13px; font-weight: 700; color: #333; margin-bottom: 6px; }
+                .patient-details-row { font-size: 9px; color: #555; margin-bottom: 3px; }
+                .patient-details-row strong { color: #333; }
+                .card-barcode-section { padding: 0 12px; text-align: center; }
+                .card-barcode-section svg { height: 30px; width: auto; max-width: 100%; }
+                .barcode-number { font-size: 9px; font-family: 'Courier New', monospace; color: #333; letter-spacing: 2px; margin-top: 2px; }
+                .card-footer-section {
+                    background: {{ appsettings()->hos_color ?? '#0066cc' }} !important;
+                    color: white;
+                    padding: 4px 12px;
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    -webkit-print-color-adjust: exact !important;
+                }
+                .contact-info { font-size: 7px; text-align: center; opacity: 0.9; }
+            </style>
+        </head>
+        <body>
+            ${cardContent}
+            <script>
+                window.onload = function() {
+                    setTimeout(function() {
+                        window.print();
+                        window.close();
+                    }, 250);
+                };
+            <\/script>
+        </body>
+        </html>
+    `);
+
+    printWindow.document.close();
+}
+
+// =============================================
+// PATIENT FORM MODAL (REGISTER/EDIT)
+// =============================================
+let patientFormCurrentStep = 1;
+const patientFormTotalSteps = 4;
+let patientFormAllergies = [];
+
+function showPatientFormModal(mode = 'create', patientData = null) {
+    // Reset form
+    resetPatientForm();
+
+    // Set mode
+    $('#patient-form-mode').val(mode);
+
+    if (mode === 'edit' && patientData) {
+        $('#patient-form-id').val(patientData.id);
+        $('#patient-form-title').html('<i class="mdi mdi-account-edit"></i> Edit Patient');
+        $('#patient-form-header').addClass('edit-mode');
+        $('#pf-submit-text').text('Update Patient');
+
+        // Populate form with patient data
+        populatePatientForm(patientData);
+    } else {
+        $('#patient-form-title').html('<i class="mdi mdi-account-plus"></i> New Patient Registration');
+        $('#patient-form-header').removeClass('edit-mode');
+        $('#pf-submit-text').text('Register Patient');
+
+        // Generate new file number
+        generatePatientFormFileNumber();
+    }
+
+    // Populate HMO dropdown
+    populatePatientFormHMO();
+
+    // Show modal
+    $('#patientFormModal').modal('show');
+}
+
+function resetPatientForm() {
+    // Reset form fields
+    $('#patient-form')[0].reset();
+    $('#patient-form-id').val('');
+    $('#patient-form-mode').val('create');
+
+    // Reset file number toggle to Auto mode
+    $('#pf-file-no').prop('readonly', true);
+    $('#pf-file-no-toggle').prop('checked', false);
+    $('#mode-auto-label').addClass('active');
+    $('#mode-manual-label').removeClass('active');
+    $('#pf-file-no-hint').html('<i class="mdi mdi-information-outline"></i> Next number: <strong id="pf-last-file-no">--</strong> + 1 = <strong id="pf-next-file-no">--</strong>').removeClass('manual-mode');
+
+    // Reset stepper
+    patientFormCurrentStep = 1;
+    updatePatientFormStepper();
+
+    // Reset allergies
+    patientFormAllergies = [];
+    updateAllergiesTags();
+
+    // Reset validation states
+    $('#patient-form .form-control').removeClass('is-valid is-invalid');
+
+    // Clear file uploads
+    $('#pf-passport').val('').removeData('existing');
+    $('#pf-old-records').val('').removeData('existing');
+    $('.passport-preview-container').hide();
+    $('#passport-preview-img').attr('src', '');
+    $('#pf-passport-new-preview').hide();
+    $('#passport-new-img').attr('src', '');
+    $('.old-records-preview-container').hide();
+    $('#old-records-preview-img').attr('src', '').hide();
+    $('#old-records-preview-icon').hide();
+    $('#old-records-preview-name').text('');
+    $('#pf-old-records-new-preview').hide();
+    $('#old-records-new-name').text('');
+    $('#pf-view-old-records').attr('href', '#');
+
+    // Show step 1
+    $('.form-step').removeClass('active');
+    $('.form-step[data-step="1"]').addClass('active');
+
+    // Show/hide navigation buttons
+    updatePatientFormNavigation();
+
+    // Clear summary
+    clearPatientFormSummary();
+}
+
+function generatePatientFormFileNumber() {
+    $.ajax({
+        url: '/reception/patient/next-file-number',
+        method: 'GET',
+        success: function(response) {
+            $('#pf-file-no').val(response.file_no);
+            // Show the last and next file numbers
+            $('#pf-last-file-no').text(response.last_file_no || '0');
+            $('#pf-next-file-no').text(response.file_no);
+        },
+        error: function() {
+            const now = new Date();
+            const fallbackNo = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
+            $('#pf-file-no').val(fallbackNo);
+            $('#pf-last-file-no').text('--');
+            $('#pf-next-file-no').text(fallbackNo);
+        }
+    });
+}
+
+function toggleFileNumberEdit(mode) {
+    const $input = $('#pf-file-no');
+    const $hint = $('#pf-file-no-hint');
+    const $buttons = $('.file-no-mode-btn');
+
+    // Update button states
+    $buttons.removeClass('active');
+    $buttons.filter('[data-mode="' + mode + '"]').addClass('active');
+
+    if (mode === 'manual') {
+        // Manual mode - allow editing
+        $input.prop('readonly', false).attr('placeholder', 'Enter file number');
+        $hint.addClass('manual-mode');
+        $input.focus().select();
+    } else {
+        // Auto mode - readonly with generated number
+        $input.prop('readonly', true).attr('placeholder', 'Auto-generated');
+        $hint.removeClass('manual-mode');
+        generatePatientFormFileNumber();
+    }
+}
+
+function populatePatientFormHMO() {
+    const $select = $('#pf-hmo');
+    $select.empty();
+
+    // Group HMOs by scheme
+    if (cachedHmos && cachedHmos.length) {
+        const grouped = {};
+        cachedHmos.forEach(hmo => {
+            const schemeName = hmo.scheme_name || hmo.scheme || 'Other';
+            if (!grouped[schemeName]) {
+                grouped[schemeName] = [];
+            }
+            grouped[schemeName].push(hmo);
+        });
+
+        Object.keys(grouped).sort().forEach(scheme => {
+            const $optgroup = $('<optgroup>').attr('label', scheme);
+            grouped[scheme].forEach(hmo => {
+                // HMO ID 1 is Private and is the default
+                const selected = hmo.id === 1 ? ' selected' : '';
+                $optgroup.append(`<option value="${hmo.id}"${selected}>${hmo.name}</option>`);
+            });
+            $select.append($optgroup);
+        });
+    }
+
+    // Default select HMO ID 1 (Private)
+    $select.val(1);
+}
+
+function populatePatientForm(data) {
+    // Basic info
+    $('#pf-file-no').val(data.file_no || '');
+    $('#pf-surname').val(data.surname || '');
+    $('#pf-firstname').val(data.firstname || '');
+    $('#pf-othername').val(data.othername || '');
+    $('#pf-gender').val(data.gender || '');
+
+    // Parse DOB (may be in d/m/Y format)
+    if (data.dob) {
+        let dob = data.dob;
+        // Check if it's in d/m/Y format
+        if (dob.includes('/')) {
+            const parts = dob.split('/');
+            if (parts.length === 3) {
+                dob = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            }
+        }
+        $('#pf-dob').val(dob);
+        updatePatientFormAge();
+    }
+
+    $('#pf-phone').val(data.phone_no || '');
+    $('#pf-email').val(data.email || '');
+    $('#pf-address').val(data.address || '');
+
+    // Medical info
+    $('#pf-blood-group').val(data.blood_group || '');
+    $('#pf-genotype').val(data.genotype || '');
+    $('#pf-disability').val(data.disability ? '1' : '0');
+    $('#pf-nationality').val(data.nationality || 'Nigerian');
+    $('#pf-ethnicity').val(data.ethnicity || '');
+    $('#pf-medical-history').val(data.medical_history || '');
+    $('#pf-misc').val(data.misc || '');
+
+    // Allergies
+    if (data.allergies) {
+        try {
+            patientFormAllergies = typeof data.allergies === 'string' ? JSON.parse(data.allergies) : data.allergies;
+            updateAllergiesTags();
+        } catch (e) {
+            patientFormAllergies = [];
+        }
+    }
+
+    // Next of Kin
+    $('#pf-nok-name').val(data.next_of_kin_name || '');
+    $('#pf-nok-phone').val(data.next_of_kin_phone || '');
+    $('#pf-nok-address').val(data.next_of_kin_address || '');
+
+    // Insurance
+    if (data.hmo_id) {
+        setTimeout(() => {
+            $('#pf-hmo').val(data.hmo_id);
+            $('#pf-hmo-no').val(data.hmo_no || '');
+            $('#pf-hmo-no-container').show();
+        }, 100);
+    }
+
+    // Handle existing passport photo
+    if (data.passport_url) {
+        $('.passport-preview-container').show();
+        $('#passport-preview-img').attr('src', data.passport_url);
+        // Store existing filename for reference
+        $('#pf-passport').data('existing', data.filename);
+    } else {
+        $('.passport-preview-container').hide();
+        $('#passport-preview-img').attr('src', '');
+    }
+
+    // Handle existing old records
+    if (data.old_records_url) {
+        $('.old-records-preview-container').show();
+        const ext = data.old_records.split('.').pop().toLowerCase();
+        if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
+            $('#old-records-preview-img').attr('src', data.old_records_url).show();
+            $('#old-records-preview-icon').hide();
+        } else {
+            $('#old-records-preview-img').hide();
+            $('#old-records-preview-icon').show();
+        }
+        $('#old-records-preview-name').text(data.old_records);
+        $('#pf-view-old-records').attr('href', data.old_records_url);
+        // Store existing filename for reference
+        $('#pf-old-records').data('existing', data.old_records);
+    } else {
+        $('.old-records-preview-container').hide();
+        $('#old-records-preview-img').attr('src', '').hide();
+        $('#old-records-preview-name').text('');
+        $('#pf-view-old-records').attr('href', '#');
+    }
+
+    // Trigger change for floating labels
+    $('#patient-form .form-control').each(function() {
+        if ($(this).val()) {
+            $(this).addClass('has-value');
+        }
+    });
+}
+
+function updatePatientFormStepper() {
+    $('.stepper-item').each(function() {
+        const step = parseInt($(this).data('step'));
+        $(this).removeClass('active completed');
+
+        if (step < patientFormCurrentStep) {
+            $(this).addClass('completed');
+        } else if (step === patientFormCurrentStep) {
+            $(this).addClass('active');
+        }
+    });
+
+    $('.stepper-line').each(function(index) {
+        $(this).removeClass('completed');
+        if (index + 1 < patientFormCurrentStep) {
+            $(this).addClass('completed');
+        }
+    });
+}
+
+function updatePatientFormNavigation() {
+    // Show/hide prev button
+    if (patientFormCurrentStep === 1) {
+        $('#pf-btn-prev').hide();
+    } else {
+        $('#pf-btn-prev').show();
+    }
+
+    // Show/hide next/submit buttons
+    if (patientFormCurrentStep === patientFormTotalSteps) {
+        $('#pf-btn-next').hide();
+        $('#pf-btn-submit').show();
+        updatePatientFormSummary();
+    } else {
+        $('#pf-btn-next').show();
+        $('#pf-btn-submit').hide();
+    }
+}
+
+function goToPatientFormStep(step) {
+    if (step < 1 || step > patientFormTotalSteps) return;
+
+    // Validate current step before moving forward
+    if (step > patientFormCurrentStep && !validatePatientFormStep(patientFormCurrentStep)) {
+        return;
+    }
+
+    patientFormCurrentStep = step;
+
+    // Show the step
+    $('.form-step').removeClass('active');
+    $(`.form-step[data-step="${step}"]`).addClass('active');
+
+    // Update stepper
+    updatePatientFormStepper();
+
+    // Update navigation
+    updatePatientFormNavigation();
+
+    // Scroll to top of modal body
+    $('.form-steps-container').scrollTop(0);
+}
+
+function validatePatientFormStep(step) {
+    let isValid = true;
+    const $step = $(`.form-step[data-step="${step}"]`);
+
+    // Clear previous validations
+    $step.find('.form-control').removeClass('is-valid is-invalid');
+    $step.find('.invalid-feedback').text('');
+
+    if (step === 1) {
+        // Validate basic info
+        const surname = $('#pf-surname').val().trim();
+        const firstname = $('#pf-firstname').val().trim();
+        const gender = $('#pf-gender').val();
+        const dob = $('#pf-dob').val();
+
+        if (!surname) {
+            $('#pf-surname').addClass('is-invalid');
+            $('#pf-surname').siblings('.invalid-feedback').text('Surname is required');
+            isValid = false;
+        } else {
+            $('#pf-surname').addClass('is-valid');
+        }
+
+        if (!firstname) {
+            $('#pf-firstname').addClass('is-invalid');
+            $('#pf-firstname').siblings('.invalid-feedback').text('First name is required');
+            isValid = false;
+        } else {
+            $('#pf-firstname').addClass('is-valid');
+        }
+
+        if (!gender) {
+            $('#pf-gender').addClass('is-invalid');
+            $('#pf-gender').siblings('.invalid-feedback').text('Gender is required');
+            isValid = false;
+        } else {
+            $('#pf-gender').addClass('is-valid');
+        }
+
+        if (!dob) {
+            $('#pf-dob').addClass('is-invalid');
+            $('#pf-dob').siblings('.invalid-feedback').text('Date of birth is required');
+            isValid = false;
+        } else {
+            $('#pf-dob').addClass('is-valid');
+        }
+
+        // Validate phone if provided
+        const phone = $('#pf-phone').val().trim();
+        if (phone && !isValidPhone(phone)) {
+            $('#pf-phone').addClass('is-invalid');
+            $('#pf-phone').siblings('.invalid-feedback').text('Invalid phone number');
+            isValid = false;
+        }
+
+        // Validate email if provided
+        const email = $('#pf-email').val().trim();
+        if (email && !isValidEmail(email)) {
+            $('#pf-email').addClass('is-invalid');
+            $('#pf-email').siblings('.invalid-feedback').text('Invalid email address');
+            isValid = false;
+        }
+    }
+
+    if (!isValid) {
+        // Focus first invalid field
+        $step.find('.is-invalid:first').focus();
+        toastr.warning('Please fill in all required fields correctly');
+    }
+
+    return isValid;
+}
+
+function isValidPhone(phone) {
+    return /^[\d\s+\-()]{7,20}$/.test(phone);
+}
+
+function isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function updatePatientFormAge() {
+    const dob = $('#pf-dob').val();
+    if (!dob) {
+        $('#pf-age-display').text('');
+        return;
+    }
+
+    const birthDate = new Date(dob);
+    const today = new Date();
+
+    let years = today.getFullYear() - birthDate.getFullYear();
+    let months = today.getMonth() - birthDate.getMonth();
+    let days = today.getDate() - birthDate.getDate();
+
+    if (days < 0) {
+        months--;
+        days += new Date(today.getFullYear(), today.getMonth(), 0).getDate();
+    }
+
+    if (months < 0) {
+        years--;
+        months += 12;
+    }
+
+    let ageText = '';
+    if (years > 0) {
+        ageText = `${years} year${years !== 1 ? 's' : ''}`;
+        if (months > 0) {
+            ageText += `, ${months} month${months !== 1 ? 's' : ''}`;
+        }
+    } else if (months > 0) {
+        ageText = `${months} month${months !== 1 ? 's' : ''}`;
+        if (days > 0) {
+            ageText += `, ${days} day${days !== 1 ? 's' : ''}`;
+        }
+    } else {
+        ageText = `${days} day${days !== 1 ? 's' : ''}`;
+    }
+
+    $('#pf-age-display').html(`<i class="mdi mdi-calendar-account"></i> Age: ${ageText}`);
+}
+
+function updateAllergiesTags() {
+    const $container = $('#pf-allergies-tags');
+    $container.empty();
+
+    patientFormAllergies.forEach((allergy, index) => {
+        $container.append(`
+            <span class="allergy-tag-item">
+                <i class="mdi mdi-alert-circle"></i>
+                ${escapeHtml(allergy)}
+                <span class="remove-allergy" data-index="${index}">&times;</span>
+            </span>
+        `);
+    });
+
+    $('#pf-allergies').val(JSON.stringify(patientFormAllergies));
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.appendChild(document.createTextNode(text));
+    return div.innerHTML;
+}
+
+function updatePatientFormSummary() {
+    const fullName = [
+        $('#pf-surname').val().trim(),
+        $('#pf-firstname').val().trim(),
+        $('#pf-othername').val().trim()
+    ].filter(Boolean).join(' ');
+
+    // Basic Information
+    $('#summary-file-no').text($('#pf-file-no').val() || '-');
+    $('#summary-name').text(fullName || '-');
+    $('#summary-gender').text($('#pf-gender').val() || '-');
+    $('#summary-phone').text($('#pf-phone').val() || 'N/A');
+    $('#summary-email').text($('#pf-email').val() || 'N/A');
+    $('#summary-address').text($('#pf-address').val().trim() || 'N/A');
+
+    // Date of Birth & Age
+    const dob = $('#pf-dob').val();
+    if (dob) {
+        const birthDate = new Date(dob);
+        const options = { year: 'numeric', month: 'short', day: 'numeric' };
+        $('#summary-dob').text(birthDate.toLocaleDateString('en-US', options));
+
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        $('#summary-age').text(`${age} years`);
+    } else {
+        $('#summary-dob').text('-');
+        $('#summary-age').text('-');
+    }
+
+    // File uploads - check for new file or existing file
+    const passportFile = $('#pf-passport')[0].files[0];
+    const existingPassport = $('#pf-passport').data('existing');
+    if (passportFile) {
+        $('#summary-passport').html('<span class="text-success"><i class="mdi mdi-check-circle"></i> ' + passportFile.name + ' <em>(new)</em></span>');
+    } else if (existingPassport) {
+        $('#summary-passport').html('<span class="text-info"><i class="mdi mdi-file-image"></i> ' + existingPassport + ' <em>(existing)</em></span>');
+    } else {
+        $('#summary-passport').text('Not uploaded');
+    }
+
+    const oldRecordsFile = $('#pf-old-records')[0].files[0];
+    const existingOldRecords = $('#pf-old-records').data('existing');
+    if (oldRecordsFile) {
+        $('#summary-old-records').html('<span class="text-success"><i class="mdi mdi-check-circle"></i> ' + oldRecordsFile.name + ' <em>(new)</em></span>');
+    } else if (existingOldRecords) {
+        $('#summary-old-records').html('<span class="text-info"><i class="mdi mdi-file-document"></i> ' + existingOldRecords + ' <em>(existing)</em></span>');
+    } else {
+        $('#summary-old-records').text('Not uploaded');
+    }
+
+    // Medical Information
+    $('#summary-blood-group').text($('#pf-blood-group').val() || '-');
+    $('#summary-genotype').text($('#pf-genotype').val() || '-');
+    $('#summary-disability').text($('#pf-disability option:selected').text() || '-');
+    $('#summary-nationality').text($('#pf-nationality').val() || '-');
+    $('#summary-ethnicity').text($('#pf-ethnicity').val() || '-');
+
+    // Allergies
+    if (patientFormAllergies && patientFormAllergies.length > 0) {
+        $('#summary-allergies').html(patientFormAllergies.map(a => '<span class="badge bg-danger me-1">' + a + '</span>').join(' '));
+    } else {
+        $('#summary-allergies').text('None');
+    }
+
+    $('#summary-medical-history').text($('#pf-medical-history').val().trim() || 'None');
+
+    // Next of Kin
+    $('#summary-nok-name').text($('#pf-nok-name').val().trim() || '-');
+    $('#summary-nok-phone').text($('#pf-nok-phone').val().trim() || '-');
+    $('#summary-nok-address').text($('#pf-nok-address').val().trim() || '-');
+
+    // HMO
+    const hmoId = $('#pf-hmo').val();
+    if (hmoId) {
+        $('#summary-hmo').text($('#pf-hmo option:selected').text());
+    } else {
+        $('#summary-hmo').text('Private');
+    }
+    $('#summary-hmo-no').text($('#pf-hmo-no').val().trim() || '-');
+}
+
+function clearPatientFormSummary() {
+    // Clear all summary fields
+    $('#summary-file-no, #summary-name, #summary-gender, #summary-dob, #summary-age').text('-');
+    $('#summary-phone, #summary-email, #summary-address').text('-');
+    $('#summary-passport, #summary-old-records').text('Not uploaded');
+    $('#summary-blood-group, #summary-genotype, #summary-disability').text('-');
+    $('#summary-nationality, #summary-ethnicity').text('-');
+    $('#summary-allergies').text('None');
+    $('#summary-medical-history').text('-');
+    $('#summary-nok-name, #summary-nok-phone, #summary-nok-address').text('-');
+    $('#summary-hmo').text('Private');
+    $('#summary-hmo-no').text('-');
+}
+
+function submitPatientForm() {
+    // Final validation
+    if (!validatePatientFormStep(1)) {
+        goToPatientFormStep(1);
+        return;
+    }
+
+    const mode = $('#patient-form-mode').val();
+    const patientId = $('#patient-form-id').val();
+    const $btn = $('#pf-btn-submit');
+    const originalHtml = $btn.html();
+
+    $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Saving...');
+
+    // Use FormData for file uploads
+    const formData = new FormData();
+    formData.append('_token', '{{ csrf_token() }}');
+    formData.append('file_no', $('#pf-file-no').val());
+    formData.append('surname', $('#pf-surname').val().trim());
+    formData.append('firstname', $('#pf-firstname').val().trim());
+    formData.append('othername', $('#pf-othername').val().trim());
+    formData.append('gender', $('#pf-gender').val());
+    formData.append('dob', $('#pf-dob').val());
+    formData.append('phone_no', $('#pf-phone').val().trim());
+    formData.append('email', $('#pf-email').val().trim());
+    formData.append('address', $('#pf-address').val().trim());
+    formData.append('blood_group', $('#pf-blood-group').val());
+    formData.append('genotype', $('#pf-genotype').val());
+    formData.append('disability', $('#pf-disability').val());
+    formData.append('nationality', $('#pf-nationality').val());
+    formData.append('ethnicity', $('#pf-ethnicity').val());
+    formData.append('allergies', JSON.stringify(patientFormAllergies));
+    formData.append('medical_history', $('#pf-medical-history').val().trim());
+    formData.append('misc', $('#pf-misc').val().trim());
+    formData.append('next_of_kin_name', $('#pf-nok-name').val().trim());
+    formData.append('next_of_kin_phone', $('#pf-nok-phone').val().trim());
+    formData.append('next_of_kin_address', $('#pf-nok-address').val().trim());
+    formData.append('hmo_id', $('#pf-hmo').val() || 1);
+    formData.append('hmo_no', $('#pf-hmo-no').val().trim());
+
+    // Add file uploads if present
+    const passportFile = $('#pf-passport')[0].files[0];
+    if (passportFile) {
+        formData.append('filename', passportFile);
+    }
+
+    const oldRecordsFile = $('#pf-old-records')[0].files[0];
+    if (oldRecordsFile) {
+        formData.append('old_records', oldRecordsFile);
+    }
+
+    let url;
+    if (mode === 'edit' && patientId) {
+        url = `/reception/patient/${patientId}/update`;
+        formData.append('_method', 'PUT');
+    } else {
+        url = '{{ route("reception.patient.quick-register") }}';
+    }
+
+    $.ajax({
+        url: url,
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            if (response.success) {
+                toastr.success(mode === 'edit' ? 'Patient updated successfully' : 'Patient registered successfully');
+                $('#patientFormModal').modal('hide');
+
+                // Reload patient data if editing current patient or load new patient
+                const newPatientId = response.patient?.id || patientId;
+                if (newPatientId) {
+                    loadPatient(newPatientId);
+                }
+            } else {
+                toastr.error(response.message || 'Operation failed');
+            }
+        },
+        error: function(xhr) {
+            const errors = xhr.responseJSON?.errors;
+            if (errors) {
+                Object.values(errors).forEach(err => {
+                    toastr.error(err[0]);
+                });
+            } else {
+                toastr.error(xhr.responseJSON?.message || 'Operation failed');
+            }
+        },
+        complete: function() {
+            $btn.prop('disabled', false).html(originalHtml);
+        }
+    });
+}
+
+// Patient Form Event Listeners
+$(document).ready(function() {
+    // Stepper navigation
+    $('.stepper-item').on('click', function() {
+        const step = parseInt($(this).data('step'));
+        goToPatientFormStep(step);
+    });
+
+    // Next button
+    $('#pf-btn-next').on('click', function() {
+        goToPatientFormStep(patientFormCurrentStep + 1);
+    });
+
+    // Previous button
+    $('#pf-btn-prev').on('click', function() {
+        goToPatientFormStep(patientFormCurrentStep - 1);
+    });
+
+    // Submit button
+    $('#patient-form').on('submit', function(e) {
+        e.preventDefault();
+        submitPatientForm();
+    });
+
+    // File number mode buttons
+    $(document).on('click', '.file-no-mode-btn', function() {
+        const mode = $(this).data('mode');
+        toggleFileNumberEdit(mode);
+    });
+
+    // DOB change - update age
+    $('#pf-dob').on('change', function() {
+        updatePatientFormAge();
+    });
+
+    // HMO change - show/hide HMO number field
+    $('#pf-hmo').on('change', function() {
+        if ($(this).val() && $(this).val() != 1) {
+            $('#pf-hmo-no-container').show();
+        } else {
+            $('#pf-hmo-no-container').hide();
+            $('#pf-hmo-no').val('');
+        }
+    });
+
+    // Passport file preview - when new file selected
+    $('#pf-passport').on('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                $('#passport-new-img').attr('src', e.target.result);
+                $('#passport-new-name').text(file.name);
+                $('#pf-passport-new-preview').show();
+                // Hide existing preview if showing
+                $('.passport-preview-container').hide();
+            };
+            reader.readAsDataURL(file);
+        } else {
+            $('#pf-passport-new-preview').hide();
+            // Show existing preview back if there was one
+            if ($('#pf-passport').data('existing')) {
+                $('.passport-preview-container').show();
+            }
+        }
+    });
+
+    // Cancel new passport selection - revert to existing
+    $('#pf-cancel-passport').on('click', function() {
+        $('#pf-passport').val('');
+        $('#pf-passport-new-preview').hide();
+        // Show existing preview back if there was one
+        if ($('#pf-passport').data('existing')) {
+            $('.passport-preview-container').show();
+        }
+    });
+
+    // Clear existing passport (mark for removal)
+    $('#pf-clear-passport').on('click', function() {
+        $('#pf-passport').val('').removeData('existing');
+        $('.passport-preview-container').hide();
+        $('#pf-passport-new-preview').hide();
+    });
+
+    // Old records file preview - when new file selected
+    $('#pf-old-records').on('change', function() {
+        const file = this.files[0];
+        if (file) {
+            $('#old-records-new-name').text(file.name);
+            $('#pf-old-records-new-preview').show();
+            // Hide existing preview if showing
+            $('.old-records-preview-container').hide();
+        } else {
+            $('#pf-old-records-new-preview').hide();
+            // Show existing preview back if there was one
+            if ($('#pf-old-records').data('existing')) {
+                $('.old-records-preview-container').show();
+            }
+        }
+    });
+
+    // Cancel new old records selection - revert to existing
+    $('#pf-cancel-old-records').on('click', function() {
+        $('#pf-old-records').val('');
+        $('#pf-old-records-new-preview').hide();
+        // Show existing preview back if there was one
+        if ($('#pf-old-records').data('existing')) {
+            $('.old-records-preview-container').show();
+        }
+    });
+
+    // Clear existing old records (mark for removal)
+    $('#pf-clear-old-records').on('click', function() {
+        $('#pf-old-records').val('').removeData('existing');
+        $('.old-records-preview-container').hide();
+        $('#pf-old-records-new-preview').hide();
+    });
+
+    // Allergies input
+    $('#pf-allergy-input').on('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const allergy = $(this).val().trim();
+            if (allergy && !patientFormAllergies.includes(allergy)) {
+                patientFormAllergies.push(allergy);
+                updateAllergiesTags();
+            }
+            $(this).val('');
+        }
+    });
+
+    // Remove allergy
+    $(document).on('click', '.remove-allergy', function() {
+        const index = $(this).data('index');
+        patientFormAllergies.splice(index, 1);
+        updateAllergiesTags();
+    });
+
+    // Live validation
+    $('#patient-form .form-control[required]').on('blur', function() {
+        const $field = $(this);
+        if ($field.val().trim()) {
+            $field.removeClass('is-invalid').addClass('is-valid');
+        } else {
+            $field.removeClass('is-valid');
+        }
+    });
+
+    // Floating labels - detect value
+    $('#patient-form .form-control').on('input change', function() {
+        if ($(this).val()) {
+            $(this).addClass('has-value');
+        } else {
+            $(this).removeClass('has-value');
+        }
+    });
+
+    // New patient button (update to use new modal)
+    $('#btn-new-patient').off('click').on('click', function() {
+        showPatientFormModal('create');
+    });
+});
+
 </script>
 @endsection
+

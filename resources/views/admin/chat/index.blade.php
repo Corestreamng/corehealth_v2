@@ -19,7 +19,7 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <div class="card" style="height: calc(100vh - 150px);">
+            <div class="card-modern" style="height: calc(100vh - 150px);">
                 <div class="card-body p-0 d-flex h-100">
                     <!-- Sidebar -->
                     <div id="chat-sidebar" class="chat-sidebar border-right" style="width: 380px; display: flex; flex-direction: column;">

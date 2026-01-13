@@ -6,7 +6,7 @@
     <div id="content-wrapper">
         <div class="container">
 
-            <div class="card mt-4 shadow-sm">
+            <div class="card-modern mt-4 shadow-sm">
                 <div class="card-header bg-primary text-white">
                     <div class="row align-items-center">
                         <div class="col-md-6">

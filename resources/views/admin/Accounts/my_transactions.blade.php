@@ -4,7 +4,7 @@
 @section('subpage_name', 'My Payments & Discounts')
 @section('content')
     <div class="container">
-        <div class="card mt-4 mb-3">
+        <div class="card-modern mt-4 mb-3">
             <div class="card-body">
                 <form method="get" class="form-inline">
                     <label class="mr-2">From</label>
@@ -29,7 +29,7 @@
         </div>
         <div class="row mb-3">
             <div class="col-md-3">
-                <div class="card text-white bg-success mb-3">
+                <div class="card-modern text-white bg-success mb-3">
                     <div class="card-body">
                         <h5 class="card-title">Total Amount</h5>
                         <p class="card-text">&#8358;{{ number_format($total_amount, 2) }}</p>
@@ -37,7 +37,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card text-white bg-info mb-3">
+                <div class="card-modern text-white bg-info mb-3">
                     <div class="card-body">
                         <h5 class="card-title">Total Discount</h5>
                         <p class="card-text">&#8358;{{ number_format($total_discount, 2) }}</p>
@@ -45,7 +45,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card text-white bg-secondary mb-3">
+                <div class="card-modern text-white bg-secondary mb-3">
                     <div class="card-body">
                         <h5 class="card-title">Total Transactions</h5>
                         <p class="card-text">{{ $total_count }}</p>
@@ -53,7 +53,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card text-white bg-primary mb-3">
+                <div class="card-modern text-white bg-primary mb-3">
                     <div class="card-body">
                         <h5 class="card-title">By Payment Type</h5>
                         <ul class="mb-0">
@@ -69,7 +69,7 @@
                 </div>
             </div>
         </div>
-        <div class="card">
+        <div class="card-modern">
             <div class="card-header">My Transactions From {{$from}} to {{$to}}</div>
             <div class="card-body table-responsive">
                 <table class="table table-sm table-bordered table-striped">

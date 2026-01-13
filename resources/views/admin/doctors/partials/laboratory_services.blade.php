@@ -23,7 +23,7 @@
     }
 </style>
 
-<div class="card mt-2">
+<div class="card-modern mt-2">
     <div class="card-body">
         {{-- Sub-tabs for History and New Request --}}
         <ul class="nav nav-tabs service-tabs mb-3" role="tablist">

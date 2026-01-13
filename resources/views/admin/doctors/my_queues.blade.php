@@ -3,7 +3,7 @@
 @section('page_name', 'Consultations')
 @section('subpage_name', 'Categories')
 @section('content')
-    <div class="card mb-2">
+    <div class="card-modern mb-2">
         <div class="card-body">
             <form id="dateRangeForm">
                 <div class="row">
@@ -62,7 +62,7 @@
     </ul>
     <div class="tab-content" id="myTabContent">
         <div class="tab-pane fade show active" id="new" role="tabpanel" aria-labelledby="new_tab">
-            <div class="card mt-2">
+            <div class="card-modern mt-2">
                 <div class="card-body table-responsive">
                     <table class="table table-sm table-bordered table-striped" id="new_consult_list" style="width: 100%">
                         <thead>
@@ -81,7 +81,7 @@
             </div>
         </div>
         <div class="tab-pane fade" id="cont" role="tabpanel" aria-labelledby="cont_tab">
-            <div class="card mt-2">
+            <div class="card-modern mt-2">
                 <div class="card-body table-responsive">
                     <table class="table table-sm table-bordered table-striped" id="cont_consult_list" style="width: 100%">
                         <thead>
@@ -100,7 +100,7 @@
             </div>
         </div>
         <div class="tab-pane fade" id="prev" role="tabpanel" aria-labelledby="prev_tab">
-            <div class="card mt-2">
+            <div class="card-modern mt-2">
                 <div class="card-body table-responsive">
                     <table class="table table-sm table-bordered table-striped" id="prev_consult_list"
                         style="width: 100%">
@@ -120,7 +120,7 @@
             </div>
         </div>
         <div class="tab-pane fade" id="my_admissions" role="tabpanel" aria-labelledby="my_admissions_tab">
-            <div class="card mt-2">
+            <div class="card-modern mt-2">
                 <div class="card-body table-responsive">
                     <table class="table table-sm table-bordered table-striped" id="my_admissions_list"
                         style="width: 100%">
@@ -142,7 +142,7 @@
             </div>
         </div>
         <div class="tab-pane fade" id="other_admissions" role="tabpanel" aria-labelledby="other_admissions_tab">
-            <div class="card mt-2">
+            <div class="card-modern mt-2">
                 <div class="card-body table-responsive">
                     <table class="table table-sm table-bordered table-striped" id="other_admissions_list"
                         style="width: 100%">
@@ -164,7 +164,7 @@
             </div>
         </div>
         {{-- <div class="tab-pane fade" id="scheduled" role="tabpanel" aria-labelledby="scheduled_tab">
-            <div class="card mt-2">
+            <div class="card-modern mt-2">
                 <div class="card-body table-responsive">
                     <table class="table table-sm table-bordered table-striped" id="scheduled_consult_list">
                         <thead>

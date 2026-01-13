@@ -126,7 +126,7 @@
     .vital-badge.vital-critical { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
 </style>
 
-<div class="card border-0 shadow-sm unified-vitals-container" id="{{ $vitalsContainerId }}">
+<div class="card-modern border-0 shadow-sm unified-vitals-container" id="{{ $vitalsContainerId }}">
     <div class="card-header bg-white border-bottom">
         <ul class="nav nav-pills" role="tablist">
             <li class="nav-item">
@@ -330,7 +330,7 @@
             <div class="tab-pane fade" id="{{ $vitalsContainerId }}-vitals-charts" role="tabpanel">
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <div class="card">
+                        <div class="card-modern">
                             <div class="card-header py-2 bg-light">
                                 <small class="fw-bold"><i class="mdi mdi-heart-pulse text-danger"></i> Blood Pressure</small>
                             </div>
@@ -340,7 +340,7 @@
                         </div>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <div class="card">
+                        <div class="card-modern">
                             <div class="card-header py-2 bg-light">
                                 <small class="fw-bold"><i class="mdi mdi-thermometer text-warning"></i> Temperature</small>
                             </div>
@@ -350,7 +350,7 @@
                         </div>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <div class="card">
+                        <div class="card-modern">
                             <div class="card-header py-2 bg-light">
                                 <small class="fw-bold"><i class="mdi mdi-heart text-danger"></i> Heart Rate & SpO2</small>
                             </div>
@@ -360,7 +360,7 @@
                         </div>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <div class="card">
+                        <div class="card-modern">
                             <div class="card-header py-2 bg-light">
                                 <small class="fw-bold"><i class="mdi mdi-weight text-success"></i> Weight & BMI</small>
                             </div>
@@ -600,7 +600,7 @@ function destroyVitalsCharts($container) {
 
 function loadVitalsCharts($container, patientId) {
     var containerId = $container.attr('id');
-    
+
     // Destroy existing charts first
     destroyVitalsCharts($container);
     vitalsChartInstances[containerId] = {};

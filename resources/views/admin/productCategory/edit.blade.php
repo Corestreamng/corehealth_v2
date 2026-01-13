@@ -3,7 +3,7 @@
 @section('page_name', 'Product Category')
 @section('subpage_name', 'Edit Product Category')
 @section('content')
-<div class="card border-info mb-3">
+<div class="card-modern border-info mb-3">
     {!! Form::model($productCat, ['method' => 'PATCH', 'route'=> ['product-category.update', $productCat->id], 'class' =>
     'form-horizontal'])
     !!}

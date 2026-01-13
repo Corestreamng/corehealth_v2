@@ -7,7 +7,7 @@
     <section class="content">
 
         <div class="col-12">
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-header">
                     <a href="{{ route('roles.create') }}" class="btn btn-primary">New Role</a>
                 </div>

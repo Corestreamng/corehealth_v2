@@ -5,7 +5,7 @@
 @section('content')
     <section class="container">
 
-        <div class="card  mb-3">
+        <div class="card-modern  mb-3">
             {!! Form::open(['route' => 'services.store', 'method' => 'POST', 'class' => 'form-horizontal']) !!}
             {{ csrf_field() }}
             <div class="card-header bg-transparent ">{{ __('Create Service') }}</div>

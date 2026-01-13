@@ -8,7 +8,7 @@
 @endphp
 
 <div class="col-12">
-    <div class="card">
+    <div class="card-modern">
         <div class="card-header">
             <h3 class="card-title">Patient Data</h3>
         </div>
@@ -116,7 +116,7 @@
     {{-- Tab content --}}
     <div class="tab-content pt-3">
         <div class="tab-pane fade {{ !$section || $section == 'patientInfo' ? 'show active' : '' }}" id="patientInfo" role="tabpanel">
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-body">@include('admin.patients.partials.patient_info')</div>
             </div>
         </div>
@@ -149,35 +149,35 @@
         @endcan
         @can('see-nursing-notes')
             <div class="tab-pane fade {{ $section == 'nurseChartCardBody' ? 'show active' : '' }}" id="nurseChartCardBody" role="tabpanel">
-                <div class="card">
+                <div class="card-modern">
                     <div class="card-body">@include('admin.patients.partials.nurse_chart')</div>
                 </div>
             </div>
         @endcan
         @can('see-nursing-notes')
             <div class="tab-pane fade {{ $section == 'injImmHistoryCardBody' ? 'show active' : '' }}" id="injImmHistoryCardBody" role="tabpanel">
-                <div class="card">
+                <div class="card-modern">
                     <div class="card-body">@include('admin.patients.partials.injection_immunization_history', ['patient' => $patient])</div>
                 </div>
             </div>
         @endcan
         @can('see-accounts')
             <div class="tab-pane fade {{ $section == 'accountsCardBody' ? 'show active' : '' }}" id="accountsCardBody" role="tabpanel">
-                <div class="card">
+                <div class="card-modern">
                     <div class="card-body">@include('admin.patients.partials.accounts')</div>
                 </div>
             </div>
         @endcan
         @can('see-admissions')
             <div class="tab-pane fade {{ $section == 'addmissionsCardBody' ? 'show active' : '' }}" id="addmissionsCardBody" role="tabpanel">
-                <div class="card">
+                <div class="card-modern">
                     <div class="card-body">@include('admin.patients.partials.admissions')</div>
                 </div>
             </div>
         @endcan
         @can('see-procedures')
             <div class="tab-pane fade {{ $section == 'wardNotesCardBody' ? 'show active' : '' }}" id="wardNotesCardBody" role="tabpanel">
-                <div class="card">
+                <div class="card-modern">
                     <div class="card-body">@include('admin.patients.partials.procedure_notes')</div>
                 </div>
             </div>
@@ -185,35 +185,35 @@
         <!-- replaced by new enhbced nurse  notes -->
         <!-- @can('see-nursing-notes')
             <div class="tab-pane fade {{ $section == 'nurseingNotesCardBody' ? 'show active' : '' }}" id="nurseingNotesCardBody" role="tabpanel">
-                <div class="card">
+                <div class="card-modern">
                     <div class="card-body">@include('admin.patients.partials.nurse_notes')</div>
                 </div>
             </div>
         @endcan -->
         @can('see-doctor-notes')
             <div class="tab-pane fade {{ $section == 'doctorNotesCardBody' ? 'show active' : '' }}" id="doctorNotesCardBody" role="tabpanel">
-                <div class="card">
+                <div class="card-modern">
                     <div class="card-body">@include('admin.patients.partials.doctor_notes')</div>
                 </div>
             </div>
         @endcan
         @can('see-prescriptions')
             <div class="tab-pane fade {{ $section == 'prescriptionsNotesCardBody' ? 'show active' : '' }}" id="prescriptionsNotesCardBody" role="tabpanel">
-                <div class="card">
+                <div class="card-modern">
                     <div class="card-body">@include('admin.patients.partials.presc')</div>
                 </div>
             </div>
         @endcan
         @can('see-investigations')
             <div class="tab-pane fade {{ $section == 'investigationsCardBody' ? 'show active' : '' }}" id="investigationsCardBody" role="tabpanel">
-                <div class="card">
+                <div class="card-modern">
                     <div class="card-body">@include('admin.patients.partials.invest')</div>
                 </div>
             </div>
         @endcan
         @can('see-investigations')
             <div class="tab-pane fade {{ $section == 'imagingCardBody' ? 'show active' : '' }}" id="imagingCardBody" role="tabpanel">
-                <div class="card">
+                <div class="card-modern">
                     <div class="card-body">@include('admin.patients.partials.imaging')</div>
                 </div>
             </div>

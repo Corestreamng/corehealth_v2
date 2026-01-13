@@ -1249,7 +1249,7 @@ class NursingWorkbenchController extends Controller{
                 $creatorName = $note->createdBy ? userfullname($note->createdBy->id) : 'N/A';
                 $typeName = $note->type ? $note->type->name : 'N/A';
 
-                $html = '<div class="card mb-3 nursing-note-card shadow-sm">';
+                $html = '<div class="card-modern mb-3 nursing-note-card shadow-sm">';
 
                 // Header
                 $html .= '<div class="card-header bg-light d-flex justify-content-between align-items-center py-2">';
@@ -2055,7 +2055,7 @@ class NursingWorkbenchController extends Controller{
                 $createdAt = \Carbon\Carbon::parse($vital->created_at)->format('h:i a, d M Y');
                 $takenByName = $vital->takenBy ? userfullname($vital->takenBy->id) : 'N/A';
 
-                $html = '<div class="card mb-3 vital-card shadow-sm">';
+                $html = '<div class="card-modern mb-3 vital-card shadow-sm">';
 
                 // Header
                 $html .= '<div class="card-header bg-light d-flex justify-content-between align-items-center py-2">';
@@ -2354,7 +2354,7 @@ class NursingWorkbenchController extends Controller{
                 $doctorName = $queue->doctor ? $queue->doctor->name : 'N/A';
                 $time = $queue->created_at->format('h:i A');
 
-                $html = '<div class="card mb-2 queue-card shadow-sm">';
+                $html = '<div class="card-modern mb-2 queue-card shadow-sm">';
                 $html .= '<div class="card-body p-3 d-flex justify-content-between align-items-center">';
                 $html .= '<div>';
                 $html .= '<h6 class="mb-1 text-primary fw-bold">' . htmlspecialchars($patientName) . '</h6>';
@@ -2390,7 +2390,7 @@ class NursingWorkbenchController extends Controller{
                 $doctorName = $request->doctor ? $request->doctor->name : 'N/A';
                 $time = $request->created_at->format('d M h:i A');
 
-                $html = '<div class="card mb-2 queue-card shadow-sm">';
+                $html = '<div class="card-modern mb-2 queue-card shadow-sm">';
                 $html .= '<div class="card-body p-3 d-flex justify-content-between align-items-center">';
                 $html .= '<div>';
                 $html .= '<h6 class="mb-1 text-danger fw-bold">' . htmlspecialchars($patientName) . '</h6>';

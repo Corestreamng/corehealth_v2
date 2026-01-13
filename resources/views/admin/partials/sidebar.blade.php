@@ -40,8 +40,12 @@
             @hasanyrole('SUPERADMIN|ADMIN|RECEPTIONIST')
             <li class="pt-2 pb-1">
                 <span class="nav-item-head">Receptionist</span>
-            </li>
-            <li class="nav-item {{ request()->routeIs('patient.*') ? 'active' : '' }}">
+            </li>            <li class="nav-item {{ request()->routeIs('reception.workbench') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('reception.workbench') ? 'active' : '' }}" href="{{ route('reception.workbench') }}">
+                    <i class="mdi mdi-desktop-mac-dashboard menu-icon"></i>
+                    <span class="menu-title">Reception Workbench</span>
+                </a>
+            </li>            <li class="nav-item {{ request()->routeIs('patient.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('patient.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#new_patient_receptionist" data-bs-target="#new_patient_receptionist" aria-expanded="{{ request()->routeIs('patient.*') ? 'true' : 'false' }}"
                     aria-controls="new_patient_receptionist">
                     <i class="mdi mdi-account-multiple-outline menu-icon"></i>

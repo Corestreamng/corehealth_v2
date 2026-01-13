@@ -3,7 +3,7 @@
 @section('page_name', 'Reception')
 @section('subpage_name', 'Configure Services')
 @section('content')
-    <div class="card">
+    <div modern">
         <div class="card-header">
             <h4>Configure services</h4>
         </div>

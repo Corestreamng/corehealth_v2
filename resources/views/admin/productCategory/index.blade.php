@@ -7,7 +7,7 @@
 
         <div class="content">
 
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-header">
 
                     <div class="row">

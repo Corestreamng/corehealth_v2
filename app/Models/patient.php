@@ -24,11 +24,15 @@ class patient extends Model implements Auditable
         'genotype',
         'disability',
         'address',
+        'phone_no',
         'nationality',
         'ethnicity',
         'misc',
         'allergies',
         'medical_history',
+        'next_of_kin_name',
+        'next_of_kin_phone',
+        'next_of_kin_address',
         'dhis_consult_tracker_id',
         'dhis_consult_enrollment_id'
     ];

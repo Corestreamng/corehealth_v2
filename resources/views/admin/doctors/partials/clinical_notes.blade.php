@@ -1,5 +1,5 @@
 {{-- Clinical Notes & Diagnosis: Combined History + New Entry --}}
-<div class="card">
+<div class="card-modern">
     <div class="card-body">
         {{-- Nav tabs for History and New Entry --}}
         <ul class="nav nav-tabs nav-tabs-custom" role="tablist">

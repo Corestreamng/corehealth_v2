@@ -3,7 +3,7 @@
 @section('page_name', 'Products')
 @section('subpage_name', 'Edit Product')
 @section('content')
-<div class="card border-info mb-3">
+<div class="card-modern border-info mb-3">
     <form class="form-horizontal" method="POST" action="{{ route('products.update', $product->id) }}">
         {{ csrf_field() }}
         <input name="_method" type="hidden" value="PUT">

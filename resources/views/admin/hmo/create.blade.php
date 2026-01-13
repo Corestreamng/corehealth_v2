@@ -8,7 +8,7 @@
     <section class="content">
 
         <div class="col-12">
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-header">
                     <h3 class="card-title">Create HMO</h3>
                 </div>

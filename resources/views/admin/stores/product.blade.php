@@ -7,7 +7,7 @@
         <div class="container">
 
             {{-- @include('admin.layouts.partials.infoBox') --}}
-            <div class="card">
+            <div modern">
                 <div class="card-header">
                     <h4 class="card-title">Stock Status for ({{ $product->product_name }}) as of {!! $now !!}</h4>
                 </div>

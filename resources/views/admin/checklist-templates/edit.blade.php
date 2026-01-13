@@ -40,7 +40,7 @@
 @section('content')
 <section class="content">
     <div class="col-12">
-        <div class="card">
+        <div modern">
             <div class="card-header">
                 <h3 class="card-title">Edit Checklist Template: {{ $checklistTemplate->name }}</h3>
             </div>
@@ -48,24 +48,24 @@
                 <form method="POST" action="{{ route('checklist-templates.update', $checklistTemplate->id) }}" id="templateForm">
                     @csrf
                     @method('PUT')
-                    
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="name" class="control-label">Template Name <i class="text-danger">*</i></label>
-                                <input type="text" class="form-control @error('name') is-invalid @enderror" 
-                                    id="name" name="name" value="{{ old('name', $checklistTemplate->name) }}" 
+                                <input type="text" class="form-control @error('name') is-invalid @enderror"
+                                    id="name" name="name" value="{{ old('name', $checklistTemplate->name) }}"
                                     required placeholder="e.g., Standard Admission Checklist">
                                 @error('name')
                                     <span class="invalid-feedback">{{ $message }}</span>
                                 @enderror
                             </div>
                         </div>
-                        
+
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="type" class="control-label">Template Type <i class="text-danger">*</i></label>
-                                <select class="form-control @error('type') is-invalid @enderror" 
+                                <select class="form-control @error('type') is-invalid @enderror"
                                     id="type" name="type" required>
                                     <option value="">-- Select Type --</option>
                                     <option value="admission" {{ old('type', $checklistTemplate->type) == 'admission' ? 'selected' : '' }}>
@@ -81,40 +81,40 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="description" class="control-label">Description</label>
-                        <textarea class="form-control @error('description') is-invalid @enderror" 
-                            id="description" name="description" rows="2" 
+                        <textarea class="form-control @error('description') is-invalid @enderror"
+                            id="description" name="description" rows="2"
                             placeholder="Brief description of when this checklist should be used">{{ old('description', $checklistTemplate->description) }}</textarea>
                         @error('description')
                             <span class="invalid-feedback">{{ $message }}</span>
                         @enderror
                     </div>
-                    
+
                     <div class="form-group">
                         <div class="custom-control custom-switch">
-                            <input type="checkbox" class="custom-control-input" id="is_active" 
+                            <input type="checkbox" class="custom-control-input" id="is_active"
                                 name="is_active" value="1" {{ old('is_active', $checklistTemplate->is_active) ? 'checked' : '' }}>
                             <label class="custom-control-label" for="is_active">Active</label>
                         </div>
                     </div>
-                    
+
                     <hr>
-                    
+
                     <h5><i class="mdi mdi-format-list-checks"></i> Checklist Items</h5>
                     <p class="text-muted">Add the items that nurses must verify during the checklist process.</p>
-                    
+
                     <div class="checklist-items-container" id="checklistItems">
                         <!-- Existing items will be loaded here -->
                     </div>
-                    
+
                     <button type="button" class="btn btn-outline-primary mt-3" id="addItemBtn">
                         <i class="fa fa-plus"></i> Add Checklist Item
                     </button>
-                    
+
                     <hr>
-                    
+
                     <div class="row">
                         <div class="col-md-6">
                             <button type="submit" class="btn btn-success">
@@ -139,25 +139,25 @@
 $(document).ready(function() {
     var itemIndex = 0;
     var existingItems = @json($checklistTemplate->items);
-    
+
     // Load existing items
     existingItems.forEach(function(item) {
         addItemRow(item.name, item.description || '', item.is_required, item.id);
     });
-    
+
     // If no items exist, add one empty row
     if (existingItems.length === 0) {
         addItemRow();
     }
-    
+
     // Add item button
     $('#addItemBtn').click(function() {
         addItemRow();
     });
-    
+
     function addItemRow(name = '', description = '', isRequired = true, id = null) {
         var idField = id ? `<input type="hidden" name="items[${itemIndex}][id]" value="${id}">` : '';
-        
+
         var html = `
             <div class="checklist-item-row" data-index="${itemIndex}">
                 ${idField}
@@ -166,19 +166,19 @@ $(document).ready(function() {
                         <i class="mdi mdi-drag drag-handle"></i>
                     </div>
                     <div class="col-md-4">
-                        <input type="text" class="form-control form-control-sm" 
+                        <input type="text" class="form-control form-control-sm"
                             name="items[${itemIndex}][name]" value="${escapeHtml(name)}"
                             placeholder="Item name (e.g., Verify Patient ID)" required>
                     </div>
                     <div class="col-md-4">
-                        <input type="text" class="form-control form-control-sm" 
+                        <input type="text" class="form-control form-control-sm"
                             name="items[${itemIndex}][description]" value="${escapeHtml(description)}"
                             placeholder="Description (optional)">
                     </div>
                     <div class="col-md-2">
                         <div class="custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input" 
-                                id="required_${itemIndex}" name="items[${itemIndex}][is_required]" 
+                            <input type="checkbox" class="custom-control-input"
+                                id="required_${itemIndex}" name="items[${itemIndex}][is_required]"
                                 value="1" ${isRequired ? 'checked' : ''}>
                             <label class="custom-control-label" for="required_${itemIndex}">Required</label>
                         </div>
@@ -191,18 +191,18 @@ $(document).ready(function() {
                 </div>
             </div>
         `;
-        
+
         $('#checklistItems').append(html);
         itemIndex++;
     }
-    
+
     function escapeHtml(text) {
         if (!text) return '';
         var div = document.createElement('div');
         div.appendChild(document.createTextNode(text));
         return div.innerHTML;
     }
-    
+
     // Remove item
     $(document).on('click', '.btn-remove-item', function() {
         $(this).closest('.checklist-item-row').remove();

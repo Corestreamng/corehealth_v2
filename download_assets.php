@@ -26,6 +26,30 @@ $assets = [
     [
         'url' => 'https://fonts.googleapis.com/css?family=Nunito',
         'path' => 'public/assets/css/nunito-font.css'
+    ],
+    // JsBarcode for barcode generation
+    [
+        'url' => 'https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js',
+        'path' => 'public/assets/js/jsbarcode.all.min.js'
+    ],
+    // SortableJS for drag & drop
+    [
+        'url' => 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js',
+        'path' => 'public/assets/js/sortable.min.js'
+    ],
+    // Select2 for searchable dropdowns
+    [
+        'url' => 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css',
+        'path' => 'public/assets/css/select2.min.css'
+    ],
+    [
+        'url' => 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js',
+        'path' => 'public/assets/js/select2.min.js'
+    ],
+    // Montserrat font for welcome page
+    [
+        'url' => 'https://fonts.googleapis.com/css2?family=Montserrat:wght@100;200;300;400;500;600;700;800;900&display=swap',
+        'path' => 'public/assets/css/montserrat-font.css'
     ]
 ];
 

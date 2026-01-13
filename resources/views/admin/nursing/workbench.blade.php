@@ -2954,7 +2954,7 @@
                             <!-- Charts and Top Services -->
                             <div class="row mb-4">
                                 <div class="col-md-6">
-                                    <div class="card">
+                                    <div class="card-modern">
                                         <div class="card-header">
                                             <h6 class="mb-0"><i class="mdi mdi-chart-bar"></i> Requests by Status</h6>
                                         </div>
@@ -2964,7 +2964,7 @@
                                     </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="card">
+                                    <div class="card-modern">
                                         <div class="card-header">
                                             <h6 class="mb-0"><i class="mdi mdi-chart-line"></i> Monthly Trends</h6>
                                         </div>
@@ -2978,7 +2978,7 @@
                             <!-- Top Services -->
                             <div class="row mb-4">
                                 <div class="col-md-12">
-                                    <div class="card" id="top-services-card">
+                                    <div class="card-modern" id="top-services-card">
                                         <div class="card-header">
                                             <h6 class="mb-0"><i class="mdi mdi-test-tube"></i> Top 10 Lab Services</h6>
                                         </div>
@@ -2997,7 +2997,7 @@
                     <div class="tab-pane fade" id="detailed-report-content" role="tabpanel" aria-labelledby="detailed-report-tab">
                         <div class="reports-container">
                             <!-- DataTable -->
-                            <div class="card">
+                            <div class="card-modern">
                                 <div class="card-header d-flex justify-content-between align-items-center">
                                     <h6 class="mb-0"><i class="mdi mdi-table"></i> Detailed Report</h6>
                                     <div>
@@ -3040,7 +3040,7 @@
                         <div class="reports-container">
                             <div class="row">
                                 <div class="col-md-12">
-                                    <div class="card">
+                                    <div class="card-modern">
                                         <div class="card-header">
                                             <h6 class="mb-0"><i class="mdi mdi-doctor"></i> Top Requesting Doctors</h6>
                                         </div>
@@ -3274,7 +3274,7 @@
                             <!-- Charts Row -->
                             <div class="row g-3 mb-4">
                                 <div class="col-md-8">
-                                    <div class="card h-100">
+                                    <div class="card-modern h-100">
                                         <div class="card-header">
                                             <h6 class="mb-0"><i class="mdi mdi-chart-line"></i> Activity Trend</h6>
                                         </div>
@@ -3284,7 +3284,7 @@
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="card h-100">
+                                    <div class="card-modern h-100">
                                         <div class="card-header">
                                             <h6 class="mb-0"><i class="mdi mdi-chart-pie"></i> Activity Distribution</h6>
                                         </div>
@@ -3298,7 +3298,7 @@
                             <!-- Top Performers & Peak Hours -->
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <div class="card">
+                                    <div class="card-modern">
                                         <div class="card-header d-flex justify-content-between align-items-center">
                                             <h6 class="mb-0"><i class="mdi mdi-trophy"></i> Top Performers</h6>
                                         </div>
@@ -3320,7 +3320,7 @@
                                     </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="card">
+                                    <div class="card-modern">
                                         <div class="card-header">
                                             <h6 class="mb-0"><i class="mdi mdi-clock-outline"></i> Peak Activity Hours</h6>
                                         </div>
@@ -3385,7 +3385,7 @@
                             </div>
 
                             <!-- Vitals DataTable -->
-                            <div class="card">
+                            <div class="card-modern">
                                 <div class="card-header d-flex justify-content-between align-items-center">
                                     <h6 class="mb-0"><i class="mdi mdi-table"></i> Vitals Records</h6>
                                     <button class="btn btn-sm btn-success" id="nr-export-vitals">
@@ -3469,7 +3469,7 @@
                             </div>
 
                             <!-- Medications DataTable -->
-                            <div class="card">
+                            <div class="card-modern">
                                 <div class="card-header d-flex justify-content-between align-items-center">
                                     <h6 class="mb-0"><i class="mdi mdi-table"></i> Medication Administration Log</h6>
                                     <button class="btn btn-sm btn-success" id="nr-export-meds">
@@ -3519,7 +3519,7 @@
                             <div class="tab-content">
                                 <!-- Injections List -->
                                 <div class="tab-pane fade show active" id="nr-inj-list">
-                                    <div class="card">
+                                    <div class="card-modern">
                                         <div class="card-header d-flex justify-content-between align-items-center">
                                             <h6 class="mb-0"><i class="mdi mdi-needle"></i> Injection Records</h6>
                                             <button class="btn btn-sm btn-success" id="nr-export-injections">
@@ -3550,7 +3550,7 @@
 
                                 <!-- Immunizations List -->
                                 <div class="tab-pane fade" id="nr-imm-list">
-                                    <div class="card">
+                                    <div class="card-modern">
                                         <div class="card-header d-flex justify-content-between align-items-center">
                                             <h6 class="mb-0"><i class="mdi mdi-shield-check"></i> Immunization Records</h6>
                                             <button class="btn btn-sm btn-success" id="nr-export-immunizations">
@@ -3634,7 +3634,7 @@
                             </div>
 
                             <!-- I/O DataTable -->
-                            <div class="card">
+                            <div class="card-modern">
                                 <div class="card-header d-flex justify-content-between align-items-center">
                                     <h6 class="mb-0"><i class="mdi mdi-table"></i> Intake/Output Records</h6>
                                     <button class="btn btn-sm btn-success" id="nr-export-io">
@@ -3705,7 +3705,7 @@
                             </div>
 
                             <!-- Notes DataTable -->
-                            <div class="card">
+                            <div class="card-modern">
                                 <div class="card-header d-flex justify-content-between align-items-center">
                                     <h6 class="mb-0"><i class="mdi mdi-table"></i> Nursing Notes Log</h6>
                                     <button class="btn btn-sm btn-success" id="nr-export-notes">
@@ -3785,7 +3785,7 @@
                             </div>
 
                             <!-- Shifts DataTable -->
-                            <div class="card">
+                            <div class="card-modern">
                                 <div class="card-header d-flex justify-content-between align-items-center">
                                     <h6 class="mb-0"><i class="mdi mdi-table"></i> Shift History</h6>
                                     <button class="btn btn-sm btn-success" id="nr-export-shifts">
@@ -3871,7 +3871,7 @@
                             <!-- Admission/Discharge Stats -->
                             <div class="row g-3 mb-4">
                                 <div class="col-md-6">
-                                    <div class="card">
+                                    <div class="card-modern">
                                         <div class="card-header">
                                             <h6 class="mb-0"><i class="mdi mdi-account-plus"></i> Admissions</h6>
                                         </div>
@@ -3894,7 +3894,7 @@
                                     </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="card">
+                                    <div class="card-modern">
                                         <div class="card-header">
                                             <h6 class="mb-0"><i class="mdi mdi-account-minus"></i> Discharges</h6>
                                         </div>
@@ -3919,7 +3919,7 @@
                             </div>
 
                             <!-- Ward Breakdown Table -->
-                            <div class="card">
+                            <div class="card-modern">
                                 <div class="card-header d-flex justify-content-between align-items-center">
                                     <h6 class="mb-0"><i class="mdi mdi-hospital-building"></i> Ward Breakdown</h6>
                                     <button class="btn btn-sm btn-success" id="nr-export-occupancy">
@@ -4025,7 +4025,7 @@
                         <div class="row">
                             <!-- Patient Demographics Card -->
                             <div class="col-lg-4 col-md-6 mb-3">
-                                <div class="card h-100">
+                                <div class="card-modern h-100">
                                     <div class="card-header bg-primary text-white py-2">
                                         <h6 class="mb-0"><i class="mdi mdi-account"></i> Patient Information</h6>
                                     </div>
@@ -4039,7 +4039,7 @@
 
                             <!-- Admission Status Card -->
                             <div class="col-lg-4 col-md-6 mb-3">
-                                <div class="card h-100">
+                                <div class="card-modern h-100">
                                     <div class="card-header bg-info text-white py-2">
                                         <h6 class="mb-0"><i class="mdi mdi-bed"></i> Admission Status</h6>
                                     </div>
@@ -4053,7 +4053,7 @@
 
                             <!-- Vital Signs Card -->
                             <div class="col-lg-4 col-md-6 mb-3">
-                                <div class="card h-100">
+                                <div class="card-modern h-100">
                                     <div class="card-header bg-success text-white py-2">
                                         <h6 class="mb-0"><i class="mdi mdi-heart-pulse"></i> Latest Vitals</h6>
                                     </div>
@@ -4070,7 +4070,7 @@
                         <div class="row">
                             <!-- Pending Medications -->
                             <div class="col-lg-6 mb-3">
-                                <div class="card h-100">
+                                <div class="card-modern h-100">
                                     <div class="card-header bg-warning py-2 d-flex justify-content-between align-items-center">
                                         <h6 class="mb-0"><i class="mdi mdi-pill"></i> Pending Medications</h6>
                                         <span class="badge badge-light" id="overview-pending-meds-count">0</span>
@@ -4085,7 +4085,7 @@
 
                             <!-- Today's Tasks -->
                             <div class="col-lg-6 mb-3">
-                                <div class="card h-100">
+                                <div class="card-modern h-100">
                                     <div class="card-header bg-secondary text-white py-2 d-flex justify-content-between align-items-center">
                                         <h6 class="mb-0"><i class="mdi mdi-clipboard-check"></i> Today's Tasks</h6>
                                         <span class="badge badge-light" id="overview-tasks-count">0</span>
@@ -4103,7 +4103,7 @@
                         <div class="row">
                             <!-- Latest Nurse Note -->
                             <div class="col-lg-6 mb-3">
-                                <div class="card h-100">
+                                <div class="card-modern h-100">
                                     <div class="card-header bg-purple text-white py-2">
                                         <h6 class="mb-0"><i class="mdi mdi-note-text"></i> Latest Nurse Note</h6>
                                     </div>
@@ -4116,7 +4116,7 @@
                             </div>
                             <!-- Latest Doctor Note -->
                             <div class="col-lg-6 mb-3">
-                                <div class="card h-100">
+                                <div class="card-modern h-100">
                                     <div class="card-header bg-dark text-white py-2">
                                         <h6 class="mb-0"><i class="mdi mdi-stethoscope"></i> Latest Doctor Note</h6>
                                     </div>
@@ -4132,7 +4132,7 @@
                         <!-- Allergies & Alerts Row -->
                         <div class="row">
                             <div class="col-12 mb-3">
-                                <div class="card border-danger">
+                                <div class="card-modern border-danger">
                                     <div class="card-header bg-danger text-white py-2">
                                         <h6 class="mb-0"><i class="mdi mdi-alert-circle"></i> Allergies & Alerts</h6>
                                     </div>
@@ -4193,7 +4193,7 @@
                     <div class="tab-content" id="injection-sub-content">
                         <!-- Administer Sub-tab -->
                         <div class="tab-pane fade show active" id="injection-administer" role="tabpanel">
-                            <div class="card">
+                            <div class="card-modern">
                                 <div class="card-header bg-primary text-white py-2">
                                     <h6 class="mb-0"><i class="mdi mdi-needle"></i> Administer Injection</h6>
                                 </div>
@@ -4282,7 +4282,7 @@
 
                         <!-- History Sub-tab -->
                         <div class="tab-pane fade" id="injection-history" role="tabpanel">
-                            <div class="card">
+                            <div class="card-modern">
                                 <div class="card-header py-2">
                                     <h6 class="mb-0"><i class="mdi mdi-history"></i> Injection History</h6>
                                 </div>
@@ -4329,7 +4329,7 @@
                     <div class="tab-content" id="immunization-sub-content">
                         <!-- Schedule Sub-tab (Now Primary) -->
                         <div class="tab-pane fade show active" id="immunization-schedule" role="tabpanel">
-                            <div class="card">
+                            <div class="card-modern">
                                 <div class="card-header py-2">
                                     <div class="d-flex justify-content-between align-items-center flex-wrap">
                                         <h6 class="mb-0"><i class="mdi mdi-calendar-check"></i> Immunization Schedules</h6>
@@ -4375,7 +4375,7 @@
 
                         <!-- History & Timeline Sub-tab -->
                         <div class="tab-pane fade" id="immunization-history" role="tabpanel">
-                            <div class="card">
+                            <div class="card-modern">
                                 <div class="card-header py-2">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <h6 class="mb-0"><i class="mdi mdi-history"></i> Immunization History & Timeline</h6>
@@ -4473,7 +4473,7 @@
                             </div>
 
                             <!-- Selected Product Display -->
-                            <div class="card mb-3 d-none" id="modal-selected-product-card">
+                            <div class="card-modern mb-3 d-none" id="modal-selected-product-card">
                                 <div class="card-body py-2">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
@@ -4590,7 +4590,7 @@
                     <div class="tab-content" id="billing-sub-content">
                         <!-- Services Sub-tab -->
                         <div class="tab-pane fade show active" id="billing-services" role="tabpanel">
-                            <div class="card">
+                            <div class="card-modern">
                                 <div class="card-header bg-warning py-2">
                                     <h6 class="mb-0"><i class="mdi mdi-medical-bag"></i> Add Nursing Service</h6>
                                 </div>
@@ -4624,7 +4624,7 @@
 
                         <!-- Consumables Sub-tab -->
                         <div class="tab-pane fade" id="billing-consumables" role="tabpanel">
-                            <div class="card">
+                            <div class="card-modern">
                                 <div class="card-header bg-info text-white py-2">
                                     <h6 class="mb-0"><i class="mdi mdi-package-variant"></i> Add Consumable</h6>
                                 </div>
@@ -4658,7 +4658,7 @@
 
                         <!-- Pending Bills Sub-tab -->
                         <div class="tab-pane fade" id="billing-pending" role="tabpanel">
-                            <div class="card">
+                            <div class="card-modern">
                                 <div class="card-header py-2">
                                     <h6 class="mb-0"><i class="mdi mdi-clock-outline"></i> Pending Bills</h6>
                                 </div>
@@ -4706,7 +4706,7 @@
                     <div class="tab-content" id="notes-sub-content">
                         <!-- Add Note Sub-tab -->
                         <div class="tab-pane fade show active" id="notes-add" role="tabpanel">
-                            <div class="card">
+                            <div class="card-modern">
                                 <div class="card-header bg-primary text-white py-2">
                                     <h6 class="mb-0"><i class="mdi mdi-note-text"></i> Add Nursing Note</h6>
                                 </div>
@@ -4728,7 +4728,7 @@
 
                         <!-- Notes History Sub-tab -->
                         <div class="tab-pane fade has-timeline" id="notes-history" role="tabpanel">
-                            <div class="card">
+                            <div class="card-modern">
                                 <div class="card-header py-2 d-flex justify-content-between align-items-center">
                                     <h6 class="mb-0"><i class="mdi mdi-history"></i> Notes History</h6>
                                     <button class="btn btn-sm btn-outline-primary" onclick="loadNotesHistory(currentPatient)">
@@ -6264,7 +6264,7 @@ function displayAdmittedPatientsQueue(patients) {
         const priorityClass = p.priority === 'critical' ? 'border-danger' : (p.priority === 'high' ? 'border-warning' : '');
         html += `
             <div class="col-md-6 col-lg-4 mb-3">
-                <div class="card ${priorityClass} queue-patient-card" style="cursor: pointer;" onclick="loadPatient(${p.patient_id}); hideQueue();">
+                <div class="card-modern ${priorityClass} queue-patient-card" style="cursor: pointer;" onclick="loadPatient(${p.patient_id}); hideQueue();">
                     <div class="card-body p-3">
                         <h6 class="mb-1">${p.name || 'N/A'}</h6>
                         <small class="text-muted d-block">${p.file_no || ''} | ${p.age || ''} ${p.gender || ''}</small>
@@ -6298,7 +6298,7 @@ function displayVitalsQueue(patients) {
     patients.forEach(p => {
         html += `
             <div class="col-md-6 col-lg-4 mb-3">
-                <div class="card border-warning queue-patient-card" style="cursor: pointer;" onclick="loadPatient(${p.patient_id}); hideQueue();">
+                <div class="card-modern border-warning queue-patient-card" style="cursor: pointer;" onclick="loadPatient(${p.patient_id}); hideQueue();">
                     <div class="card-body p-3">
                         <h6 class="mb-1">${p.name || p.patient_name || 'N/A'}</h6>
                         <small class="text-muted d-block">${p.file_no || ''}</small>
@@ -6330,7 +6330,7 @@ function displayBedRequestsQueue(requests) {
         const statusClass = r.status === 'pending' ? 'border-info' : 'border-success';
         html += `
             <div class="col-md-6 col-lg-4 mb-3">
-                <div class="card ${statusClass} queue-patient-card" style="cursor: pointer;" onclick="loadPatient(${r.patient_id}); hideQueue();">
+                <div class="card-modern ${statusClass} queue-patient-card" style="cursor: pointer;" onclick="loadPatient(${r.patient_id}); hideQueue();">
                     <div class="card-body p-3">
                         <h6 class="mb-1">${r.patient_name || r.name || 'N/A'}</h6>
                         <small class="text-muted d-block">${r.file_no || ''}</small>
@@ -6368,7 +6368,7 @@ function displayMedicationDueQueue(patients) {
         const urgencyClass = p.overdue ? 'border-danger' : 'border-warning';
         html += `
             <div class="col-md-6 col-lg-4 mb-3">
-                <div class="card ${urgencyClass} queue-patient-card" style="cursor: pointer;" onclick="loadPatient(${p.patient_id}); hideQueue();">
+                <div class="card-modern ${urgencyClass} queue-patient-card" style="cursor: pointer;" onclick="loadPatient(${p.patient_id}); hideQueue();">
                     <div class="card-body p-3">
                         <h6 class="mb-1">${p.name || p.patient_name || 'N/A'}</h6>
                         <small class="text-muted d-block">${p.file_no || ''}</small>
@@ -7303,7 +7303,7 @@ function displayNotes(notes) {
                 }
 
                 return `
-                    <div class="card mb-2" style="border-left: 4px solid var(--hospital-primary, #0d6efd);">
+                    <div class="card-modern mb-2" style="border-left: 4px solid var(--hospital-primary, #0d6efd);">
                         <div class="card-body p-3">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <h6 class="mb-0">
@@ -11042,7 +11042,7 @@ function renderScheduleTimeline(response) {
         }
 
         html += `
-            <div class="card mb-2 schedule-age-group" data-age="${ageGroup.age_days}">
+            <div class="card-modern mb-2 schedule-age-group" data-age="${ageGroup.age_days}">
                 <div class="card-header py-2 ${ageHeaderClass}" style="cursor: pointer;"
                      onclick="$(this).next('.card-body').slideToggle(200)">
                     <div class="d-flex justify-content-between align-items-center">
@@ -11111,7 +11111,7 @@ function renderScheduleTimeline(response) {
 
             html += `
                 <div class="col-md-4 col-sm-6 mb-2">
-                    <div class="card h-100 ${vaccine.status === 'overdue' ? 'border-danger' : vaccine.status === 'due' ? 'border-warning' : ''}">
+                    <div class="card-modern h-100 ${vaccine.status === 'overdue' ? 'border-danger' : vaccine.status === 'due' ? 'border-warning' : ''}">
                         <div class="card-body py-2 px-2">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
@@ -11584,7 +11584,7 @@ function loadImmunizationTimeline(patientId) {
                 html += `
                     <div class="timeline-item mb-3" style="position: relative;">
                         <div class="timeline-marker" style="position: absolute; left: -40px; width: 20px; height: 20px; border-radius: 50%; background: var(--${statusClass}); border: 3px solid white; box-shadow: 0 0 0 3px var(--${statusClass});"></div>
-                        <div class="card">
+                        <div class="card-modern">
                             <div class="card-body py-2">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
@@ -11661,7 +11661,7 @@ function loadImmunizationCalendar(patientId) {
                 const group = grouped[key];
                 html += `
                     <div class="col-md-6 col-lg-4 mb-3">
-                        <div class="card h-100">
+                        <div class="card-modern h-100">
                             <div class="card-header bg-primary text-white py-2">
                                 <i class="mdi mdi-calendar-month"></i> ${group.label}
                             </div>
@@ -12595,7 +12595,7 @@ $(document).on('click', '#view-logs-btn', function() {
 
 function renderLegend() {
     const legendHtml = `
-        <div class="card shadow-sm mb-3">
+        <div class="card-modern shadow-sm mb-3">
             <div class="card-body p-2">
                 <h6 class="card-title mb-2"><i class="mdi mdi-information-outline text-primary me-1"></i> Legend</h6>
                 <div class="d-flex flex-wrap gap-1">
@@ -12981,7 +12981,7 @@ function renderFluidPeriods() {
         const statusBadge = isActive ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Ended</span>';
 
         html += `
-            <div class="card period-card mb-3 ${isActive ? 'border-success' : ''}">
+            <div class="card-modern period-card mb-3 ${isActive ? 'border-success' : ''}">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <span><strong>Period:</strong> ${formatDateTime(new Date(period.started_at))} ${statusBadge}</span>
                     <div>
@@ -13020,7 +13020,7 @@ function renderSolidPeriods() {
         const statusBadge = isActive ? '<span class="badge bg-info">Active</span>' : '<span class="badge bg-secondary">Ended</span>';
 
         html += `
-            <div class="card period-card mb-3 ${isActive ? 'border-info' : ''}">
+            <div class="card-modern period-card mb-3 ${isActive ? 'border-info' : ''}">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <span><strong>Period:</strong> ${formatDateTime(new Date(period.started_at))} ${statusBadge}</span>
                     <div>
@@ -14627,7 +14627,7 @@ const ShiftManager = {
             h.patient_highlights.forEach(function(patient, idx) {
                 const collapseId = `patientCollapse${idx}`;
                 patientHighlightsHtml += `
-                    <div class="card mb-2">
+                    <div class="card-modern mb-2">
                         <div class="card-header p-2" id="heading${idx}">
                             <h6 class="mb-0">
                                 <button class="btn btn-link btn-sm w-100 text-left d-flex justify-content-between align-items-center"
