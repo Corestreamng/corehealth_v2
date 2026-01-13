@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 11, 2026 at 02:56 AM
+-- Generation Time: Jan 14, 2026 at 12:50 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -375,7 +375,34 @@ INSERT INTO `audits` (`id`, `user_type`, `user_id`, `event`, `auditable_type`, `
 (180, 'App\\Models\\User', 1, 'created', 'App\\Models\\ShiftHandover', 2, '[]', '{\"shift_id\":2,\"created_by\":1,\"received_by\":null,\"ward_id\":null,\"shift_type\":\"night\",\"shift_started_at\":\"2026-01-11 01:27:32\",\"shift_ended_at\":\"2026-01-11 01:53:01\",\"summary\":\"<p><strong>Patients Attended:<\\/strong> 1 patient(s)<\\/p><ul><li>ALIAS NON-REGISTERED PATIENTS<\\/li><\\/ul><p><strong>Activity Summary:<\\/strong><\\/p><ul><li><strong>Billing<\\/strong>: 1 created<\\/li><li><strong>Injections<\\/strong>: 1 created<\\/li><\\/ul><p><strong>Key Changes:<\\/strong><\\/p><div class=\'key-changes-list\'><div class=\'patient-changes mb-2\'><strong class=\'text-primary\'>Unknown Patient<\\/strong><ul class=\'mb-1\'><li><small class=\'text-muted\'>[01:31]<\\/small> <span class=\\\"badge badge-success badge-sm\\\">New<\\/span> <em>Billing<\\/em>: Product Id: 67<\\/li><li><small class=\'text-muted\'>[01:31]<\\/small> <span class=\\\"badge badge-success badge-sm\\\">New<\\/span> <em>Billing<\\/em>: Quantity: 1<\\/li><li><small class=\'text-muted\'>[01:31]<\\/small> <span class=\\\"badge badge-success badge-sm\\\">New<\\/span> <em>Billing<\\/em>: Amount: 15000.00<\\/li><li><small class=\'text-muted\'>[01:31]<\\/small> <span class=\\\"badge badge-success badge-sm\\\">New<\\/span> <em>Billing<\\/em>: Claims Amount: 0.00<\\/li><li><small class=\'text-muted\'>[01:31]<\\/small> <span class=\\\"badge badge-success badge-sm\\\">New<\\/span> <em>Billing<\\/em>: Coverage Mode: primary<\\/li><li><small class=\'text-muted\'>[01:31]<\\/small> <span class=\\\"badge badge-success badge-sm\\\">New<\\/span> <em>Billing<\\/em>: Validation Status: pending<\\/li><\\/ul><\\/div><div class=\'patient-changes mb-2\'><strong class=\'text-primary\'>ALIAS NON-REGISTERED PATIENTS<\\/strong><ul class=\'mb-1\'><li><small class=\'text-muted\'>[01:31]<\\/small> <span class=\\\"badge badge-success badge-sm\\\">New<\\/span> <em>Injections<\\/em>: Patient Id: 1<\\/li><li><small class=\'text-muted\'>[01:31]<\\/small> <span class=\\\"badge badge-success badge-sm\\\">New<\\/span> <em>Injections<\\/em>: Product Id: 67<\\/li><li><small class=\'text-muted\'>[01:31]<\\/small> <span class=\\\"badge badge-success badge-sm\\\">New<\\/span> <em>Injections<\\/em>: Product Or Service Request Id: 95<\\/li><li><small class=\'text-muted\'>[01:31]<\\/small> <span class=\\\"badge badge-success badge-sm\\\">New<\\/span> <em>Injections<\\/em>: Dose: 700mg<\\/li><li><small class=\'text-muted\'>[01:31]<\\/small> <span class=\\\"badge badge-success badge-sm\\\">New<\\/span> <em>Injections<\\/em>: Route: IM<\\/li><li><small class=\'text-muted\'>[01:31]<\\/small> <span class=\\\"badge badge-success badge-sm\\\">New<\\/span> <em>Injections<\\/em>: Site: Right Arm<\\/li><li><small class=\'text-muted\'>[01:31]<\\/small> <span class=\\\"badge badge-success badge-sm\\\">New<\\/span> <em>Injections<\\/em>: Administered At: Jan 11, 2026 1:31 AM<\\/li><li><small class=\'text-muted\'>[01:31]<\\/small> <span class=\\\"badge badge-success badge-sm\\\">New<\\/span> <em>Injections<\\/em>: Administered By: 1<\\/li><\\/ul><\\/div><\\/div>\",\"critical_notes\":\"tetst\",\"concluding_notes\":\"hasdasdaks\",\"pending_tasks\":\"[{\\\"description\\\":\\\"tastk1\\\",\\\"priority\\\":\\\"normal\\\"},{\\\"description\\\":\\\"task 2\\\",\\\"priority\\\":\\\"normal\\\"}]\",\"patient_highlights\":\"[{\\\"patient_id\\\":1,\\\"patient_name\\\":\\\"ALIAS NON-REGISTERED PATIENTS\\\",\\\"patient_no\\\":\\\"\\\",\\\"activities\\\":[{\\\"type\\\":\\\"Injections\\\",\\\"icon\\\":\\\"mdi-needle\\\",\\\"color\\\":\\\"info\\\",\\\"event\\\":\\\"created\\\",\\\"time\\\":\\\"01:31\\\",\\\"time_ago\\\":\\\"21 minutes ago\\\"}],\\\"activity_counts\\\":{\\\"Injections\\\":1},\\\"total_events\\\":1}]\",\"action_summary\":\"{\\\"App\\\\\\\\Models\\\\\\\\ProductOrServiceRequest\\\":{\\\"label\\\":\\\"Billing\\\",\\\"icon\\\":\\\"mdi-receipt\\\",\\\"color\\\":\\\"secondary\\\",\\\"count\\\":1,\\\"events\\\":{\\\"created\\\":1,\\\"updated\\\":0,\\\"deleted\\\":0},\\\"patients\\\":[]},\\\"App\\\\\\\\Models\\\\\\\\InjectionAdministration\\\":{\\\"label\\\":\\\"Injections\\\",\\\"icon\\\":\\\"mdi-needle\\\",\\\"color\\\":\\\"info\\\",\\\"count\\\":1,\\\"events\\\":{\\\"created\\\":1,\\\"updated\\\":0,\\\"deleted\\\":0},\\\"patients\\\":[{\\\"name\\\":\\\"ALIAS NON-REGISTERED PATIENTS\\\",\\\"patient_no\\\":\\\"\\\"}]}}\",\"audit_details\":\"[{\\\"category\\\":\\\"Billing\\\",\\\"icon\\\":\\\"mdi-receipt\\\",\\\"color\\\":\\\"secondary\\\",\\\"event\\\":\\\"created\\\",\\\"patient_id\\\":null,\\\"patient_name\\\":null,\\\"patient_no\\\":null,\\\"changes\\\":[{\\\"field\\\":\\\"product_id\\\",\\\"label\\\":\\\"Product Id\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"67\\\"},{\\\"field\\\":\\\"qty\\\",\\\"label\\\":\\\"Quantity\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"1\\\"},{\\\"field\\\":\\\"payable_amount\\\",\\\"label\\\":\\\"Amount\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"15000.00\\\"},{\\\"field\\\":\\\"claims_amount\\\",\\\"label\\\":\\\"Claims Amount\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"0.00\\\"},{\\\"field\\\":\\\"coverage_mode\\\",\\\"label\\\":\\\"Coverage Mode\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"primary\\\"},{\\\"field\\\":\\\"validation_status\\\",\\\"label\\\":\\\"Validation Status\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"pending\\\"}],\\\"time\\\":\\\"01:31\\\",\\\"time_full\\\":\\\"Jan 11, 2026 1:31 AM\\\",\\\"time_ago\\\":\\\"21 minutes ago\\\"},{\\\"category\\\":\\\"Injections\\\",\\\"icon\\\":\\\"mdi-needle\\\",\\\"color\\\":\\\"info\\\",\\\"event\\\":\\\"created\\\",\\\"patient_id\\\":1,\\\"patient_name\\\":\\\"ALIAS NON-REGISTERED PATIENTS\\\",\\\"patient_no\\\":\\\"\\\",\\\"changes\\\":[{\\\"field\\\":\\\"patient_id\\\",\\\"label\\\":\\\"Patient Id\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"1\\\"},{\\\"field\\\":\\\"product_id\\\",\\\"label\\\":\\\"Product Id\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"67\\\"},{\\\"field\\\":\\\"product_or_service_request_id\\\",\\\"label\\\":\\\"Product Or Service Request Id\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"95\\\"},{\\\"field\\\":\\\"dose\\\",\\\"label\\\":\\\"Dose\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"700mg\\\"},{\\\"field\\\":\\\"route\\\",\\\"label\\\":\\\"Route\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"IM\\\"},{\\\"field\\\":\\\"site\\\",\\\"label\\\":\\\"Site\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"Right Arm\\\"},{\\\"field\\\":\\\"administered_at\\\",\\\"label\\\":\\\"Administered At\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"Jan 11, 2026 1:31 AM\\\"},{\\\"field\\\":\\\"administered_by\\\",\\\"label\\\":\\\"Administered By\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"1\\\"}],\\\"time\\\":\\\"01:31\\\",\\\"time_full\\\":\\\"Jan 11, 2026 1:31 AM\\\",\\\"time_ago\\\":\\\"21 minutes ago\\\"}]\",\"id\":2}', 'http://127.0.0.1:8000/nursing-workbench/shift/end', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-11 00:53:01', '2026-01-11 00:53:01'),
 (181, 'App\\Models\\User', 1, 'updated', 'App\\Models\\NursingShift', 2, '{\"handover_created\":0}', '{\"handover_created\":true}', 'http://127.0.0.1:8000/nursing-workbench/shift/end', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-11 00:53:01', '2026-01-11 00:53:01'),
 (182, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ShiftHandover', 2, '{\"acknowledged_at\":null,\"acknowledged_by\":null}', '{\"acknowledged_at\":\"2026-01-11 01:53:41\",\"acknowledged_by\":1}', 'http://127.0.0.1:8000/nursing-workbench/handover/2/acknowledge', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-11 00:53:41', '2026-01-11 00:53:41'),
-(183, 'App\\Models\\User', 1, 'created', 'App\\Models\\NursingShift', 3, '[]', '{\"user_id\":1,\"ward_id\":null,\"shift_type\":\"night\",\"started_at\":\"2026-01-11 01:53:59\",\"scheduled_end_at\":\"2026-01-11 13:53:59\",\"status\":\"active\",\"id\":3}', 'http://127.0.0.1:8000/nursing-workbench/shift/start', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-11 00:53:59', '2026-01-11 00:53:59');
+(183, 'App\\Models\\User', 1, 'created', 'App\\Models\\NursingShift', 3, '[]', '{\"user_id\":1,\"ward_id\":null,\"shift_type\":\"night\",\"started_at\":\"2026-01-11 01:53:59\",\"scheduled_end_at\":\"2026-01-11 13:53:59\",\"status\":\"active\",\"id\":3}', 'http://127.0.0.1:8000/nursing-workbench/shift/start', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-11 00:53:59', '2026-01-11 00:53:59'),
+(184, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductOrServiceRequest', 92, '{\"discount\":\"0.00\"}', '{\"discount\":\"0\"}', 'http://127.0.0.1:8000/billing-workbench/process-payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-11 07:45:27', '2026-01-11 07:45:27'),
+(185, 'App\\Models\\User', 1, 'created', 'App\\Models\\payment', 77, '[]', '{\"payment_type\":\"CASH\",\"payment_method\":\"CASH\",\"bank_id\":null,\"total\":1000,\"total_discount\":0,\"reference_no\":\"PAY-20260111-094430\",\"user_id\":1,\"patient_id\":24,\"id\":77}', 'http://127.0.0.1:8000/billing-workbench/process-payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-11 07:45:27', '2026-01-11 07:45:27'),
+(186, 'App\\Models\\User', 1, 'updated', 'App\\Models\\NursingShift', 3, '{\"ended_at\":null,\"status\":\"active\"}', '{\"ended_at\":\"2026-01-13 06:52:43\",\"status\":\"completed\"}', 'http://127.0.0.1:8000/nursing-workbench/shift/end', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-13 05:52:43', '2026-01-13 05:52:43'),
+(187, 'App\\Models\\User', 1, 'created', 'App\\Models\\ShiftHandover', 3, '[]', '{\"shift_id\":3,\"created_by\":1,\"received_by\":null,\"ward_id\":null,\"shift_type\":\"night\",\"shift_started_at\":\"2026-01-11 01:53:59\",\"shift_ended_at\":\"2026-01-13 06:52:43\",\"summary\":\"<p><strong>Activity Summary:<\\/strong><\\/p><ul><li><strong>Billing<\\/strong>: 1 updated<\\/li><\\/ul><p><strong>Key Changes:<\\/strong><\\/p><div class=\'key-changes-list\'><div class=\'patient-changes mb-2\'><strong class=\'text-primary\'>Unknown Patient<\\/strong><ul class=\'mb-1\'><li><small class=\'text-muted\'>[08:45]<\\/small> <span class=\\\"badge badge-warning badge-sm\\\">Updated<\\/span> <em>Billing<\\/em>: Discount: 0.00 \\u2192 0<\\/li><\\/ul><\\/div><\\/div>\",\"critical_notes\":null,\"concluding_notes\":null,\"pending_tasks\":\"[]\",\"patient_highlights\":\"[]\",\"action_summary\":\"{\\\"App\\\\\\\\Models\\\\\\\\ProductOrServiceRequest\\\":{\\\"label\\\":\\\"Billing\\\",\\\"icon\\\":\\\"mdi-receipt\\\",\\\"color\\\":\\\"secondary\\\",\\\"count\\\":1,\\\"events\\\":{\\\"created\\\":0,\\\"updated\\\":1,\\\"deleted\\\":0},\\\"patients\\\":[]}}\",\"audit_details\":\"[{\\\"category\\\":\\\"Billing\\\",\\\"icon\\\":\\\"mdi-receipt\\\",\\\"color\\\":\\\"secondary\\\",\\\"event\\\":\\\"updated\\\",\\\"patient_id\\\":null,\\\"patient_name\\\":null,\\\"patient_no\\\":null,\\\"changes\\\":[{\\\"field\\\":\\\"discount\\\",\\\"label\\\":\\\"Discount\\\",\\\"type\\\":\\\"changed\\\",\\\"old\\\":\\\"0.00\\\",\\\"new\\\":\\\"0\\\"}],\\\"time\\\":\\\"08:45\\\",\\\"time_full\\\":\\\"Jan 11, 2026 8:45 AM\\\",\\\"time_ago\\\":\\\"1 day ago\\\"}]\",\"id\":3}', 'http://127.0.0.1:8000/nursing-workbench/shift/end', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-13 05:52:43', '2026-01-13 05:52:43'),
+(188, 'App\\Models\\User', 1, 'updated', 'App\\Models\\NursingShift', 3, '{\"handover_created\":0}', '{\"handover_created\":true}', 'http://127.0.0.1:8000/nursing-workbench/shift/end', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-13 05:52:43', '2026-01-13 05:52:43'),
+(189, 'App\\Models\\User', 1, 'created', 'App\\Models\\NursingShift', 4, '[]', '{\"user_id\":1,\"ward_id\":null,\"shift_type\":\"morning\",\"started_at\":\"2026-01-13 06:53:35\",\"scheduled_end_at\":\"2026-01-13 18:53:35\",\"status\":\"active\",\"id\":4}', 'http://127.0.0.1:8000/nursing-workbench/shift/start', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-13 05:53:35', '2026-01-13 05:53:35'),
+(190, 'App\\Models\\User', 1, 'updated', 'App\\Models\\User', 1, '{\"password\":\"$2y$10$bZRYeeNL0o8mPqOULj1cDOPKmDNolHFOkJ3dBvfRylcn4syKbYvXa\"}', '{\"password\":\"$2y$10$uV3jA9Xlf79Kj0Vgh2EyX.fjKZyxekSEgofucBdKHf33b5SWSQCDm\"}', 'http://127.0.0.1:8000/staff/1', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-13 07:44:11', '2026-01-13 07:44:11'),
+(191, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Staff', 1, '{\"specialization_id\":2,\"clinic_id\":1,\"date_of_birth\":null,\"is_unit_head\":0,\"is_dept_head\":0}', '{\"specialization_id\":null,\"clinic_id\":null,\"date_of_birth\":\"2025-06-01 00:00:00\",\"is_unit_head\":true,\"is_dept_head\":true}', 'http://127.0.0.1:8000/staff/1', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-13 07:44:11', '2026-01-13 07:44:11'),
+(192, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ShiftHandover', 3, '{\"acknowledged_at\":null,\"acknowledged_by\":null}', '{\"acknowledged_at\":\"2026-01-13 09:26:09\",\"acknowledged_by\":1}', 'http://127.0.0.1:8000/nursing-workbench/handover/3/acknowledge', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-13 08:26:09', '2026-01-13 08:26:09'),
+(193, 'App\\Models\\User', 1, 'created', 'App\\Models\\ProductOrServiceRequest', 97, '[]', '{\"service_id\":\"62\",\"user_id\":132,\"staff_user_id\":1,\"payable_amount\":\"4000.00\",\"claims_amount\":\"0.00\",\"coverage_mode\":\"primary\",\"validation_status\":\"pending\",\"id\":97}', 'http://127.0.0.1:8000/reception/book-consultation', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-13 17:28:38', '2026-01-13 17:28:38'),
+(194, 'App\\Models\\User', 1, 'created', 'App\\Models\\DoctorQueue', 24, '[]', '{\"patient_id\":24,\"clinic_id\":\"1\",\"receptionist_id\":1,\"request_entry_id\":97,\"status\":1,\"staff_id\":\"7\",\"id\":24}', 'http://127.0.0.1:8000/reception/book-consultation', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-13 17:28:38', '2026-01-13 17:28:38'),
+(195, 'App\\Models\\User', 1, 'updated', 'App\\Models\\User', 132, '{\"othername\":\" \"}', '{\"othername\":null}', 'http://127.0.0.1:8000/reception/patient/24/update', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-13 20:05:03', '2026-01-13 20:05:03'),
+(196, 'App\\Models\\User', 1, 'updated', 'App\\Models\\patient', 24, '{\"hmo_no\":null,\"dob\":\"08\\/09\\/2020\",\"disability\":1,\"nationality\":null,\"ethnicity\":\"\",\"allergies\":null}', '{\"hmo_no\":\"3728232\",\"dob\":\"2020-09-08\",\"disability\":\"0\",\"nationality\":\"Nigerian\",\"ethnicity\":\"Igbo\",\"allergies\":\"\\\"[\\\\\\\"almond\\\\\\\",\\\\\\\"peanut\\\\\\\"]\\\"\"}', 'http://127.0.0.1:8000/reception/patient/24/update', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-13 20:05:03', '2026-01-13 20:05:03'),
+(197, 'App\\Models\\User', 1, 'created', 'App\\Models\\User', 4476, '[]', '{\"surname\":\"Apollos\",\"firstname\":\"Walshak\",\"othername\":null,\"email\":\"walshak.apollos.976@hms.com\",\"password\":\"$2y$10$tjbOPppyzHzseYkeH9bITe4rgf.hV6dXz5zfhbkuyhx6Ge0pKiJJu\",\"is_admin\":19,\"status\":1,\"id\":4476}', 'http://127.0.0.1:8000/reception/patient/quick-register', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-13 20:33:09', '2026-01-13 20:33:09'),
+(198, 'App\\Models\\User', 1, 'created', 'App\\Models\\patient', 4182, '[]', '{\"user_id\":4476,\"file_no\":\"22239\",\"gender\":\"Male\",\"dob\":\"2026-01-01\",\"phone_no\":null,\"address\":\"Dankankani Village, Bauchi Ring road\\r\\nFuraka district\",\"blood_group\":null,\"genotype\":null,\"disability\":\"0\",\"nationality\":\"Nigerian\",\"ethnicity\":null,\"allergies\":\"\\\"[]\\\"\",\"medical_history\":null,\"misc\":null,\"next_of_kin_name\":null,\"next_of_kin_phone\":null,\"next_of_kin_address\":null,\"hmo_id\":\"1\",\"hmo_no\":null,\"id\":4182}', 'http://127.0.0.1:8000/reception/patient/quick-register', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-13 20:33:09', '2026-01-13 20:33:09'),
+(199, 'App\\Models\\User', 1, 'created', 'App\\Models\\PatientAccount', 230, '[]', '{\"patient_id\":4182,\"balance\":0,\"id\":230}', 'http://127.0.0.1:8000/reception/patient/quick-register', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-13 20:33:09', '2026-01-13 20:33:09'),
+(200, 'App\\Models\\User', 1, 'created', 'App\\Models\\ProductOrServiceRequest', 98, '[]', '{\"service_id\":\"57\",\"product_id\":null,\"user_id\":132,\"staff_user_id\":1,\"qty\":1,\"payable_amount\":5000,\"claims_amount\":0,\"coverage_mode\":\"primary\",\"validation_status\":\"pending\",\"id\":98}', 'http://127.0.0.1:8000/reception/book-walkin', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-13 21:23:29', '2026-01-13 21:23:29'),
+(201, 'App\\Models\\User', 1, 'created', 'App\\Models\\LabServiceRequest', 73, '[]', '{\"service_request_id\":98,\"service_id\":\"57\",\"patient_id\":24,\"doctor_id\":null,\"status\":1,\"id\":73}', 'http://127.0.0.1:8000/reception/book-walkin', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-13 21:23:29', '2026-01-13 21:23:29'),
+(202, 'App\\Models\\User', 1, 'created', 'App\\Models\\ProductOrServiceRequest', 99, '[]', '{\"service_id\":\"64\",\"product_id\":null,\"user_id\":132,\"staff_user_id\":1,\"qty\":1,\"payable_amount\":4000,\"claims_amount\":6777,\"coverage_mode\":\"primary\",\"validation_status\":\"pending\",\"id\":99}', 'http://127.0.0.1:8000/reception/book-walkin', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-13 21:23:29', '2026-01-13 21:23:29'),
+(203, 'App\\Models\\User', 1, 'created', 'App\\Models\\ImagingServiceRequest', 7, '[]', '{\"service_request_id\":99,\"service_id\":\"64\",\"patient_id\":24,\"doctor_id\":null,\"status\":1,\"id\":7}', 'http://127.0.0.1:8000/reception/book-walkin', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-13 21:23:29', '2026-01-13 21:23:29'),
+(204, 'App\\Models\\User', 1, 'updated', 'App\\Models\\User', 4476, '{\"filename\":null}', '{\"filename\":\"patient_1768346384_4476.jpg\"}', 'http://127.0.0.1:8000/reception/patient/4182/update', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-13 22:19:45', '2026-01-13 22:19:45'),
+(205, 'App\\Models\\User', 1, 'updated', 'App\\Models\\User', 132, '{\"filename\":\"avatar.png\"}', '{\"filename\":\"patient_1768347032_132.jpg\"}', 'http://127.0.0.1:8000/reception/patient/24/update', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-13 22:30:32', '2026-01-13 22:30:32');
+INSERT INTO `audits` (`id`, `user_type`, `user_id`, `event`, `auditable_type`, `auditable_id`, `old_values`, `new_values`, `url`, `ip_address`, `user_agent`, `tags`, `created_at`, `updated_at`) VALUES
+(206, 'App\\Models\\User', 1, 'updated', 'App\\Models\\User', 132, '{\"old_records\":null}', '{\"old_records\":\"records_1768347032_132.pdf\"}', 'http://127.0.0.1:8000/reception/patient/24/update', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-13 22:30:32', '2026-01-13 22:30:32'),
+(209, 'App\\Models\\User', 1, 'updated', 'App\\Models\\LabServiceRequest', 73, '{\"deleted_by\":null,\"deletion_reason\":null}', '{\"deleted_by\":1,\"deletion_reason\":\"hjhsasgagjd\"}', 'http://127.0.0.1:8000/reception/request/lab/73/discard', '127.0.0.1', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1', NULL, '2026-01-13 22:46:16', '2026-01-13 22:46:16'),
+(210, 'App\\Models\\User', 1, 'deleted', 'App\\Models\\LabServiceRequest', 73, '{\"id\":73,\"service_request_id\":98,\"billed_by\":null,\"billed_date\":null,\"service_id\":57,\"encounter_id\":null,\"patient_id\":24,\"result\":null,\"result_data\":null,\"attachments\":null,\"result_date\":null,\"result_by\":null,\"sample_taken\":0,\"sample_date\":null,\"sample_taken_by\":null,\"doctor_id\":null,\"note\":null,\"status\":1,\"old_medical_report_id\":null,\"old_patient_lab_services\":null,\"deleted_by\":1,\"deletion_reason\":\"hjhsasgagjd\",\"dismissed_at\":null,\"dismissed_by\":null,\"dismiss_reason\":null}', '[]', 'http://127.0.0.1:8000/reception/request/lab/73/discard', '127.0.0.1', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1', NULL, '2026-01-13 22:46:16', '2026-01-13 22:46:16'),
+(211, 'App\\Models\\User', 1, 'deleted', 'App\\Models\\ProductOrServiceRequest', 98, '{\"id\":98,\"invoice_id\":null,\"payment_id\":null,\"hmo_remittance_id\":null,\"user_id\":132,\"staff_user_id\":1,\"product_id\":null,\"service_id\":57,\"qty\":1,\"discount\":\"0.00\",\"payable_amount\":\"5000.00\",\"claims_amount\":\"0.00\",\"coverage_mode\":\"primary\",\"validation_status\":\"pending\",\"auth_code\":null,\"validated_by\":null,\"validated_at\":null,\"validation_notes\":null,\"submitted_to_hmo_at\":null,\"hmo_submission_batch\":null}', '[]', 'http://127.0.0.1:8000/reception/request/lab/73/discard', '127.0.0.1', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1', NULL, '2026-01-13 22:46:16', '2026-01-13 22:46:16');
 
 -- --------------------------------------------------------
 
@@ -488,7 +515,8 @@ INSERT INTO `chat_conversations` (`id`, `title`, `is_group`, `created_at`, `upda
 (2, NULL, 1, '2026-01-03 05:50:08', '2026-01-03 05:50:08'),
 (3, NULL, 1, '2026-01-03 06:39:37', '2026-01-03 06:39:37'),
 (4, NULL, 0, '2026-01-03 12:51:26', '2026-01-03 12:51:26'),
-(5, NULL, 1, '2026-01-04 18:13:18', '2026-01-04 18:13:18');
+(5, NULL, 1, '2026-01-04 18:13:18', '2026-01-04 18:13:18'),
+(6, 'HMO Executives', 1, '2026-01-13 08:11:46', '2026-01-13 08:11:46');
 
 -- --------------------------------------------------------
 
@@ -695,7 +723,9 @@ INSERT INTO `chat_participants` (`id`, `conversation_id`, `user_id`, `last_read_
 (12, 5, 9, NULL, '2026-01-04 18:13:18', '2026-01-04 18:13:18'),
 (13, 5, 2, NULL, '2026-01-04 18:13:18', '2026-01-04 18:13:18'),
 (14, 5, 19, NULL, '2026-01-04 18:13:18', '2026-01-04 18:13:18'),
-(15, 5, 1, '2026-01-08 10:55:26', '2026-01-04 18:13:18', '2026-01-08 10:55:26');
+(15, 5, 1, '2026-01-11 07:40:47', '2026-01-04 18:13:18', '2026-01-11 07:40:47'),
+(16, 6, 1, NULL, '2026-01-13 08:11:46', '2026-01-13 08:11:46'),
+(17, 6, 4, NULL, '2026-01-13 08:11:46', '2026-01-13 08:11:46');
 
 -- --------------------------------------------------------
 
@@ -913,7 +943,8 @@ INSERT INTO `doctor_queues` (`id`, `patient_id`, `clinic_id`, `staff_id`, `recep
 (20, 24, 1, 1, 1, 66, 3, '2025-07-15 13:17:17', '2026-01-10 23:36:26', 1),
 (21, 24, 1, 1, 1, 73, 3, '2026-01-03 19:43:45', '2026-01-10 23:36:26', 1),
 (22, 24, 1, 1, 1, 74, 3, '2026-01-04 09:00:47', '2026-01-10 23:36:26', 1),
-(23, 24, 1, 1, 1, 79, 1, '2026-01-06 08:25:39', '2026-01-10 23:36:26', 1);
+(23, 24, 1, 1, 1, 79, 1, '2026-01-06 08:25:39', '2026-01-10 23:36:26', 1),
+(24, 24, 1, 7, 1, 97, 1, '2026-01-13 17:28:38', '2026-01-13 17:28:38', 0);
 
 -- --------------------------------------------------------
 
@@ -967,7 +998,7 @@ INSERT INTO `encounters` (`id`, `doctor_id`, `service_request_id`, `service_id`,
 (219, 1, 74, 62, 24, NULL, NULL, NULL, NULL, '<p>tets new queue<br><br>gge</p>', '2026-01-04 09:14:01', '2026-01-04 18:24:44', NULL, NULL, NULL, NULL, 1, NULL, NULL),
 (220, 1, 74, 62, 24, NULL, NULL, 'NA', 'NA', '<p>make a note we pln to edit asajha</p>', '2026-01-04 18:24:59', '2026-01-04 18:27:49', NULL, NULL, NULL, NULL, 1, NULL, NULL),
 (221, 1, 74, 62, 24, NULL, NULL, NULL, NULL, '<p>make a note we pln to edit asajha</p>', '2026-01-04 18:27:16', '2026-01-08 09:19:18', NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(222, 1, 79, 62, 24, NULL, NULL, NULL, NULL, NULL, '2026-01-06 08:50:01', '2026-01-06 08:50:01', NULL, NULL, NULL, NULL, 0, NULL, NULL);
+(222, 1, 79, 62, 24, NULL, NULL, NULL, NULL, '<p>hdjda</p><p>dadbakd</p><p><br data-cke-filler=\"true\"></p><p>asdad</p>', '2026-01-06 08:50:01', '2026-01-11 09:27:55', NULL, NULL, NULL, NULL, 0, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -2247,7 +2278,7 @@ INSERT INTO `hmo_tariffs` (`id`, `hmo_id`, `product_id`, `service_id`, `claims_a
 (1109, 5, NULL, 59, 0.00, 37000.00, 'primary', '2026-01-05 23:24:00', '2026-01-05 23:24:00'),
 (1110, 5, NULL, 60, 0.00, 15000.00, 'primary', '2026-01-05 23:24:00', '2026-01-05 23:24:00'),
 (1111, 5, NULL, 61, 0.00, 4000.00, 'primary', '2026-01-05 23:24:00', '2026-01-05 23:24:00'),
-(1112, 5, NULL, 62, 0.00, 4000.00, 'primary', '2026-01-05 23:24:00', '2026-01-05 23:24:00'),
+(1112, 5, NULL, 62, 1700.00, 4000.00, 'primary', '2026-01-05 23:24:00', '2026-01-13 20:35:59'),
 (1113, 5, NULL, 63, 0.00, 7777.00, 'primary', '2026-01-05 23:24:00', '2026-01-05 23:24:00'),
 (1114, 5, NULL, 64, 6777.00, 4000.00, 'primary', '2026-01-05 23:24:00', '2026-01-08 14:34:02'),
 (1115, 5, NULL, 65, 4000.00, 6000.00, 'primary', '2026-01-05 23:24:00', '2026-01-08 14:33:46'),
@@ -4747,7 +4778,8 @@ INSERT INTO `imaging_service_requests` (`id`, `service_request_id`, `billed_by`,
 (3, NULL, NULL, NULL, 64, 210, 24, NULL, NULL, NULL, NULL, NULL, 1, NULL, 1, '2026-01-03 21:01:59', '2026-01-03 22:17:18', '2026-01-03 22:17:18', 1, 'Ordered by mistake'),
 (4, 89, 1, '2026-01-08 16:03:37', 65, NULL, 24, NULL, NULL, NULL, NULL, NULL, 1, 'test', 2, '2026-01-08 13:44:18', '2026-01-08 16:03:37', NULL, NULL, NULL),
 (5, 87, 1, '2026-01-08 13:45:04', 64, NULL, 24, '<p>uwalaka results<br><br>new line</p>', NULL, '\"[{\\\"name\\\":\\\"WhatsApp Image 2025-12-21 at 3.00.46 PM.jpeg\\\",\\\"path\\\":\\\"imaging_results\\\\\\/1767884234_695fc5cae1530.jpeg\\\",\\\"size\\\":53508,\\\"type\\\":\\\"jpeg\\\"},{\\\"name\\\":\\\"WhatsApp Image 2025-12-21 at 11.53.10 AM.jpeg\\\",\\\"path\\\":\\\"imaging_results\\\\\\/1767884235_695fc5cb7f032.jpeg\\\",\\\"size\\\":62599,\\\"type\\\":\\\"jpeg\\\"},{\\\"name\\\":\\\"WhatsApp Image 2025-12-21 at 10.41.39 AM.jpeg\\\",\\\"path\\\":\\\"imaging_results\\\\\\/1767884235_695fc5cb7f547.jpeg\\\",\\\"size\\\":30103,\\\"type\\\":\\\"jpeg\\\"}]\"', '2026-01-08 13:57:15', 1, 1, 'test', 4, '2026-01-08 13:44:19', '2026-01-08 13:57:15', NULL, NULL, NULL),
-(6, 88, 1, '2026-01-08 16:03:37', 64, NULL, 24, NULL, NULL, NULL, NULL, NULL, 1, '', 2, '2026-01-08 14:36:05', '2026-01-08 16:03:37', NULL, NULL, NULL);
+(6, 88, 1, '2026-01-08 16:03:37', 64, NULL, 24, NULL, NULL, NULL, NULL, NULL, 1, '', 2, '2026-01-08 14:36:05', '2026-01-08 16:03:37', NULL, NULL, NULL),
+(7, 99, NULL, NULL, 64, NULL, 24, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-13 21:23:29', '2026-01-13 21:23:29', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -5021,7 +5053,8 @@ INSERT INTO `lab_service_requests` (`id`, `service_request_id`, `billed_by`, `bi
 (69, NULL, NULL, NULL, 51, 221, 24, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 1, NULL, 1, '2026-01-05 10:25:24', '2026-01-05 10:25:24', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (70, NULL, NULL, NULL, 3, 221, 24, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 1, NULL, 1, '2026-01-05 10:25:24', '2026-01-05 10:25:24', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (71, NULL, NULL, NULL, 5, 221, 24, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 1, NULL, 1, '2026-01-05 10:25:24', '2026-01-05 10:25:24', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(72, NULL, NULL, NULL, 18, 222, 24, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 1, NULL, 1, '2026-01-06 09:01:58', '2026-01-06 09:01:58', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+(72, NULL, NULL, NULL, 18, 222, 24, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 1, NULL, 1, '2026-01-06 09:01:58', '2026-01-06 09:01:58', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(73, 98, NULL, NULL, 57, NULL, 24, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, 1, '2026-01-13 21:23:29', '2026-01-13 22:46:16', NULL, NULL, '2026-01-13 22:46:16', 1, 'hjhsasgagjd', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -5429,7 +5462,8 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (142, '2026_01_11_000001_create_nursing_shifts_table', 64),
 (143, '2026_01_11_000002_create_shift_handovers_table', 64),
 (144, '2026_01_11_000003_create_shift_actions_table', 64),
-(145, '2026_01_11_100001_add_audit_details_to_shift_handovers_table', 65);
+(145, '2026_01_11_100001_add_audit_details_to_shift_handovers_table', 65),
+(146, '2026_01_13_000001_add_leadership_flags_to_staff_table', 66);
 
 -- --------------------------------------------------------
 
@@ -5603,7 +5637,8 @@ CREATE TABLE `nursing_shifts` (
 INSERT INTO `nursing_shifts` (`id`, `user_id`, `ward_id`, `shift_type`, `started_at`, `ended_at`, `scheduled_end_at`, `status`, `handover_created`, `concluding_notes`, `critical_notes`, `incoming_nurse_id`, `vitals_count`, `medications_count`, `notes_count`, `injections_count`, `immunizations_count`, `bills_count`, `patients_seen`, `created_at`, `updated_at`) VALUES
 (1, 1, NULL, 'night', '2026-01-11 00:30:58', '2026-01-11 01:04:39', '2026-01-11 12:30:58', 'auto_ended', 1, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, '2026-01-10 23:30:58', '2026-01-11 00:04:39'),
 (2, 1, NULL, 'night', '2026-01-11 01:27:32', '2026-01-11 01:53:01', '2026-01-11 13:27:32', 'auto_ended', 1, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, '2026-01-11 00:27:32', '2026-01-11 00:53:01'),
-(3, 1, NULL, 'night', '2026-01-11 01:53:59', NULL, '2026-01-11 13:53:59', 'active', 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, '2026-01-11 00:53:59', '2026-01-11 00:53:59');
+(3, 1, NULL, 'night', '2026-01-11 01:53:59', '2026-01-13 06:52:43', '2026-01-11 13:53:59', 'completed', 1, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, '2026-01-11 00:53:59', '2026-01-13 05:52:43'),
+(4, 1, NULL, 'morning', '2026-01-13 06:53:35', NULL, '2026-01-13 18:53:35', 'active', 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, '2026-01-13 05:53:35', '2026-01-13 05:53:35');
 
 -- --------------------------------------------------------
 
@@ -5709,7 +5744,7 @@ INSERT INTO `patients` (`id`, `user_id`, `file_no`, `insurance_scheme`, `hmo_id`
 (21, 129, 'P0029', NULL, 3, NULL, 'Male', NULL, 'B+', 'AA', 1, 'jos', NULL, NULL, 'Shendam', NULL, NULL, NULL, 'Henry Donlong', NULL, NULL, '07069039327', 'jos', 22, 138, NULL, NULL),
 (22, 130, 'P00340', NULL, 3, NULL, 'Male', '12/6/1971', 'O+', 'AA', 1, 'no 5 flat 5 wase close GRA jos', NULL, NULL, '', NULL, NULL, NULL, 'Evelyn kigun', NULL, NULL, '08036756880', 'no 5 flat 6 wase close jos', 23, 139, NULL, NULL),
 (23, 131, 'P0341', NULL, 3, NULL, 'Male', '10/10/1982', 'O+', 'AA', 1, 'COCIN CHURCH KERKER', NULL, NULL, '', NULL, NULL, NULL, 'PATIENCE MUNDI MWELCHET', NULL, NULL, '08106544137', 'COCIN CHURCH KERKER', 24, 141, NULL, NULL),
-(24, 132, '9426', NULL, 5, NULL, 'Female', '08/09/2020', 'O+', 'AA', 1, 'shaka gold and base jos', NULL, NULL, '', NULL, NULL, NULL, 'gabriel uwalaka', NULL, NULL, '08035970200', 'gold and base shaka', 25, 142, NULL, NULL),
+(24, 132, '9426', NULL, 5, 3728232, 'Female', '2020-09-08', 'O+', 'AA', 0, 'shaka gold and base jos', NULL, 'Nigerian', 'Igbo', NULL, '\"[\\\"almond\\\",\\\"peanut\\\"]\"', NULL, 'gabriel uwalaka', NULL, '2026-01-13 20:05:03', '08035970200', 'gold and base shaka', 25, 142, NULL, NULL),
 (25, 133, '9483', NULL, 1, NULL, 'Male', NULL, 'O+', NULL, 1, 'rayfield', NULL, NULL, '', NULL, NULL, NULL, 'DORIS ONYIBE', NULL, NULL, '08063307247', 'RAYFIELD', 26, 143, NULL, NULL),
 (26, 134, '6847', NULL, 12, NULL, 'Female', '1985-09-24', 'B+', 'AA', 1, 'ZENITH BANK BUKURU', NULL, NULL, 'Umuahia North', NULL, NULL, NULL, 'FAITH GODOBI', NULL, NULL, '07036344454', 'ZENITH BANK BUKURU', 27, 145, NULL, NULL),
 (27, 135, 'P00192', NULL, 3, NULL, 'Female', '1966-06-08', 'B+', NULL, 1, 'NO 115AKWANG ABUJA TUNWADA', NULL, NULL, 'Bassa', NULL, NULL, NULL, 'SAMUEL PAM RAJA', NULL, NULL, '08065310970', 'NO115 AKWANG ABUJA TUDUNWADA', 28, 146, NULL, NULL),
@@ -9883,7 +9918,8 @@ INSERT INTO `patients` (`id`, `user_id`, `file_no`, `insurance_scheme`, `hmo_id`
 (4178, 4472, '', NULL, NULL, NULL, 'Female', '1972-07-14', NULL, NULL, 1, '', NULL, '', '', NULL, NULL, NULL, '', NULL, NULL, '', '', NULL, 1443, NULL, NULL),
 (4179, 4473, '10118', NULL, NULL, NULL, 'Female', '1977-05-07', NULL, NULL, 1, 'WHOLSHE JOS', NULL, NULL, '', NULL, NULL, NULL, '', NULL, NULL, '', '', NULL, 1444, NULL, NULL),
 (4180, 4474, '9667', NULL, NULL, NULL, 'Male', '2022-12-10', NULL, NULL, 1, 'n0 6 nuku road jos', NULL, NULL, '', NULL, NULL, NULL, '', NULL, NULL, '', '', NULL, 1445, NULL, NULL),
-(4181, 4475, '10119', NULL, NULL, NULL, 'Female', '0000-00-00', NULL, NULL, 1, 'RANTYA LAST BUS STOP', NULL, NULL, '', NULL, NULL, NULL, '', NULL, NULL, '', '', NULL, 1446, NULL, NULL);
+(4181, 4475, '10119', NULL, NULL, NULL, 'Female', '0000-00-00', NULL, NULL, 1, 'RANTYA LAST BUS STOP', NULL, NULL, '', NULL, NULL, NULL, '', NULL, NULL, '', '', NULL, 1446, NULL, NULL),
+(4182, 4476, '22239', NULL, 1, NULL, 'Male', '2026-01-01', NULL, NULL, 0, 'Dankankani Village, Bauchi Ring road\r\nFuraka district', NULL, 'Nigerian', NULL, NULL, '\"[]\"', NULL, NULL, '2026-01-13 20:33:09', '2026-01-13 20:33:09', NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -10133,7 +10169,8 @@ INSERT INTO `patient_accounts` (`id`, `patient_id`, `balance`, `created_at`, `up
 (226, 3652, 0.00, '2023-09-30 08:18:00', '2023-09-30 08:18:00', NULL),
 (227, 1469, 53000.00, '2026-01-06 12:21:09', '2026-01-06 13:43:23', NULL),
 (228, 1469, 0.00, '2026-01-06 12:29:12', '2026-01-06 12:29:12', NULL),
-(229, 1, 41000.00, '2026-01-07 07:24:48', '2026-01-07 11:02:44', NULL);
+(229, 1, 41000.00, '2026-01-07 07:24:48', '2026-01-07 11:02:44', NULL),
+(230, 4182, 0.00, '2026-01-13 20:33:09', '2026-01-13 20:33:09', NULL);
 
 -- --------------------------------------------------------
 
@@ -10288,7 +10325,8 @@ INSERT INTO `payments` (`id`, `reference_no`, `total`, `total_discount`, `paymen
 (73, 'PAY-20260107-132200', '4000', 0.00, 'POS', 'POS', '2026-01-07 11:38:29', '2026-01-07 11:38:29', NULL, 2, 1, NULL, 1),
 (74, 'PAY-20260108-154534', '4000', 0.00, 'CASH', 'CASH', '2026-01-08 13:45:55', '2026-01-08 13:45:55', NULL, 24, NULL, NULL, 1),
 (75, 'PAY-20260108-180410', '4000', 0.00, 'CASH', 'CASH', '2026-01-08 16:04:35', '2026-01-08 16:04:35', NULL, 24, NULL, NULL, 1),
-(76, 'PAY-20260108-184717', '6000', 0.00, 'CASH', 'CASH', '2026-01-08 16:47:47', '2026-01-08 16:47:47', NULL, 24, NULL, NULL, 1);
+(76, 'PAY-20260108-184717', '6000', 0.00, 'CASH', 'CASH', '2026-01-08 16:47:47', '2026-01-08 16:47:47', NULL, 24, NULL, NULL, 1),
+(77, 'PAY-20260111-094430', '1000', 0.00, 'CASH', 'CASH', '2026-01-11 07:45:27', '2026-01-11 07:45:27', NULL, 24, NULL, NULL, 1);
 
 -- --------------------------------------------------------
 
@@ -10887,10 +10925,13 @@ INSERT INTO `product_or_service_requests` (`id`, `invoice_id`, `payment_id`, `hm
 (89, NULL, 76, NULL, 132, 1, NULL, 65, 1, 0.00, 6000.00, 4000.00, 'primary', 'approved', NULL, 1, '2026-01-08 16:46:41', NULL, NULL, NULL, '2026-01-08 16:03:37', '2026-01-08 16:47:47'),
 (90, NULL, NULL, NULL, 69, 1, NULL, 3, 1, 0.00, 5000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-08 23:17:38', '2026-01-08 23:17:38'),
 (91, NULL, NULL, NULL, 132, 1, 58, NULL, 1, 0.00, 1000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-09 17:47:57', '2026-01-09 17:47:57'),
-(92, NULL, NULL, NULL, 132, 1, 58, NULL, 1, 0.00, 1000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-09 19:09:27', '2026-01-09 19:09:27'),
+(92, NULL, 77, NULL, 132, 1, 58, NULL, 1, 0.00, 1000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-09 19:09:27', '2026-01-11 07:45:27'),
 (93, NULL, NULL, NULL, 69, 1, NULL, 3, 1, 0.00, 5000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-10 05:48:51', '2026-01-10 05:48:51'),
 (94, NULL, NULL, NULL, 69, 1, NULL, 3, 1, 0.00, 5000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-10 23:00:00', '2026-01-10 23:00:00'),
-(95, NULL, NULL, NULL, 69, 1, 67, NULL, 1, 0.00, 15000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-11 00:31:43', '2026-01-11 00:31:43');
+(95, NULL, NULL, NULL, 69, 1, 67, NULL, 1, 0.00, 15000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-11 00:31:43', '2026-01-11 00:31:43'),
+(96, NULL, NULL, NULL, 69, 1, NULL, 3, 1, 0.00, 5000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-13 05:43:23', '2026-01-13 05:43:23'),
+(97, NULL, NULL, NULL, 132, 1, NULL, 62, 1, 0.00, 4000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-13 17:28:38', '2026-01-13 17:28:38'),
+(99, NULL, NULL, NULL, 132, 1, NULL, 64, 1, 0.00, 4000.00, 6777.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-13 21:23:29', '2026-01-13 21:23:29');
 
 -- --------------------------------------------------------
 
@@ -23596,7 +23637,8 @@ CREATE TABLE `shift_handovers` (
 
 INSERT INTO `shift_handovers` (`id`, `shift_id`, `created_by`, `received_by`, `ward_id`, `shift_type`, `shift_started_at`, `shift_ended_at`, `summary`, `critical_notes`, `concluding_notes`, `pending_tasks`, `patient_highlights`, `action_summary`, `audit_details`, `acknowledged_at`, `acknowledged_by`, `acknowledgment_notes`, `created_at`, `updated_at`) VALUES
 (1, 1, 1, NULL, NULL, 'night', '2026-01-11 00:30:58', '2026-01-11 01:04:39', '<p><strong>Patients Attended:</strong> 1 patient(s)</p><ul><li>Uwalaka Martha   (File No: 9426)</li></ul><p><strong>Activities:</strong></p><ul><li><strong>Vital Signs</strong>: 1 created</li></ul>', 'thjerherh', 'hrjhwrjhw', '[{\"description\":\"jfhwjf\",\"priority\":\"normal\"},{\"description\":\"fhwhfwhf\",\"priority\":\"normal\"}]', '[{\"patient_id\":\"24\",\"patient_name\":\"Uwalaka Martha  \",\"patient_no\":\"9426\",\"activities\":[{\"type\":\"Vital Signs\",\"icon\":\"mdi-heart-pulse\",\"color\":\"danger\",\"event\":\"created\",\"time\":\"00:36\",\"time_ago\":\"28 minutes ago\"}],\"activity_counts\":{\"Vital Signs\":1},\"total_events\":1}]', '{\"App\\\\Models\\\\VitalSign\":{\"label\":\"Vital Signs\",\"icon\":\"mdi-heart-pulse\",\"color\":\"danger\",\"count\":1,\"events\":{\"created\":1,\"updated\":0,\"deleted\":0},\"patients\":[{\"name\":\"Uwalaka Martha  \",\"patient_no\":\"9426\"}]}}', NULL, '2026-01-11 01:27:09', 1, NULL, '2026-01-11 00:04:39', '2026-01-11 00:27:09'),
-(2, 2, 1, NULL, NULL, 'night', '2026-01-11 01:27:32', '2026-01-11 01:53:01', '<p><strong>Patients Attended:</strong> 1 patient(s)</p><ul><li>ALIAS NON-REGISTERED PATIENTS</li></ul><p><strong>Activity Summary:</strong></p><ul><li><strong>Billing</strong>: 1 created</li><li><strong>Injections</strong>: 1 created</li></ul><p><strong>Key Changes:</strong></p><div class=\'key-changes-list\'><div class=\'patient-changes mb-2\'><strong class=\'text-primary\'>Unknown Patient</strong><ul class=\'mb-1\'><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Product Id: 67</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Quantity: 1</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Amount: 15000.00</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Claims Amount: 0.00</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Coverage Mode: primary</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Validation Status: pending</li></ul></div><div class=\'patient-changes mb-2\'><strong class=\'text-primary\'>ALIAS NON-REGISTERED PATIENTS</strong><ul class=\'mb-1\'><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Injections</em>: Patient Id: 1</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Injections</em>: Product Id: 67</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Injections</em>: Product Or Service Request Id: 95</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Injections</em>: Dose: 700mg</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Injections</em>: Route: IM</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Injections</em>: Site: Right Arm</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Injections</em>: Administered At: Jan 11, 2026 1:31 AM</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Injections</em>: Administered By: 1</li></ul></div></div>', 'tetst', 'hasdasdaks', '[{\"description\":\"tastk1\",\"priority\":\"normal\"},{\"description\":\"task 2\",\"priority\":\"normal\"}]', '[{\"patient_id\":1,\"patient_name\":\"ALIAS NON-REGISTERED PATIENTS\",\"patient_no\":\"\",\"activities\":[{\"type\":\"Injections\",\"icon\":\"mdi-needle\",\"color\":\"info\",\"event\":\"created\",\"time\":\"01:31\",\"time_ago\":\"21 minutes ago\"}],\"activity_counts\":{\"Injections\":1},\"total_events\":1}]', '{\"App\\\\Models\\\\ProductOrServiceRequest\":{\"label\":\"Billing\",\"icon\":\"mdi-receipt\",\"color\":\"secondary\",\"count\":1,\"events\":{\"created\":1,\"updated\":0,\"deleted\":0},\"patients\":[]},\"App\\\\Models\\\\InjectionAdministration\":{\"label\":\"Injections\",\"icon\":\"mdi-needle\",\"color\":\"info\",\"count\":1,\"events\":{\"created\":1,\"updated\":0,\"deleted\":0},\"patients\":[{\"name\":\"ALIAS NON-REGISTERED PATIENTS\",\"patient_no\":\"\"}]}}', '[{\"category\":\"Billing\",\"icon\":\"mdi-receipt\",\"color\":\"secondary\",\"event\":\"created\",\"patient_id\":null,\"patient_name\":null,\"patient_no\":null,\"changes\":[{\"field\":\"product_id\",\"label\":\"Product Id\",\"type\":\"created\",\"value\":\"67\"},{\"field\":\"qty\",\"label\":\"Quantity\",\"type\":\"created\",\"value\":\"1\"},{\"field\":\"payable_amount\",\"label\":\"Amount\",\"type\":\"created\",\"value\":\"15000.00\"},{\"field\":\"claims_amount\",\"label\":\"Claims Amount\",\"type\":\"created\",\"value\":\"0.00\"},{\"field\":\"coverage_mode\",\"label\":\"Coverage Mode\",\"type\":\"created\",\"value\":\"primary\"},{\"field\":\"validation_status\",\"label\":\"Validation Status\",\"type\":\"created\",\"value\":\"pending\"}],\"time\":\"01:31\",\"time_full\":\"Jan 11, 2026 1:31 AM\",\"time_ago\":\"21 minutes ago\"},{\"category\":\"Injections\",\"icon\":\"mdi-needle\",\"color\":\"info\",\"event\":\"created\",\"patient_id\":1,\"patient_name\":\"ALIAS NON-REGISTERED PATIENTS\",\"patient_no\":\"\",\"changes\":[{\"field\":\"patient_id\",\"label\":\"Patient Id\",\"type\":\"created\",\"value\":\"1\"},{\"field\":\"product_id\",\"label\":\"Product Id\",\"type\":\"created\",\"value\":\"67\"},{\"field\":\"product_or_service_request_id\",\"label\":\"Product Or Service Request Id\",\"type\":\"created\",\"value\":\"95\"},{\"field\":\"dose\",\"label\":\"Dose\",\"type\":\"created\",\"value\":\"700mg\"},{\"field\":\"route\",\"label\":\"Route\",\"type\":\"created\",\"value\":\"IM\"},{\"field\":\"site\",\"label\":\"Site\",\"type\":\"created\",\"value\":\"Right Arm\"},{\"field\":\"administered_at\",\"label\":\"Administered At\",\"type\":\"created\",\"value\":\"Jan 11, 2026 1:31 AM\"},{\"field\":\"administered_by\",\"label\":\"Administered By\",\"type\":\"created\",\"value\":\"1\"}],\"time\":\"01:31\",\"time_full\":\"Jan 11, 2026 1:31 AM\",\"time_ago\":\"21 minutes ago\"}]', '2026-01-11 01:53:41', 1, NULL, '2026-01-11 00:53:01', '2026-01-11 00:53:41');
+(2, 2, 1, NULL, NULL, 'night', '2026-01-11 01:27:32', '2026-01-11 01:53:01', '<p><strong>Patients Attended:</strong> 1 patient(s)</p><ul><li>ALIAS NON-REGISTERED PATIENTS</li></ul><p><strong>Activity Summary:</strong></p><ul><li><strong>Billing</strong>: 1 created</li><li><strong>Injections</strong>: 1 created</li></ul><p><strong>Key Changes:</strong></p><div class=\'key-changes-list\'><div class=\'patient-changes mb-2\'><strong class=\'text-primary\'>Unknown Patient</strong><ul class=\'mb-1\'><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Product Id: 67</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Quantity: 1</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Amount: 15000.00</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Claims Amount: 0.00</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Coverage Mode: primary</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Validation Status: pending</li></ul></div><div class=\'patient-changes mb-2\'><strong class=\'text-primary\'>ALIAS NON-REGISTERED PATIENTS</strong><ul class=\'mb-1\'><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Injections</em>: Patient Id: 1</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Injections</em>: Product Id: 67</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Injections</em>: Product Or Service Request Id: 95</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Injections</em>: Dose: 700mg</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Injections</em>: Route: IM</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Injections</em>: Site: Right Arm</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Injections</em>: Administered At: Jan 11, 2026 1:31 AM</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Injections</em>: Administered By: 1</li></ul></div></div>', 'tetst', 'hasdasdaks', '[{\"description\":\"tastk1\",\"priority\":\"normal\"},{\"description\":\"task 2\",\"priority\":\"normal\"}]', '[{\"patient_id\":1,\"patient_name\":\"ALIAS NON-REGISTERED PATIENTS\",\"patient_no\":\"\",\"activities\":[{\"type\":\"Injections\",\"icon\":\"mdi-needle\",\"color\":\"info\",\"event\":\"created\",\"time\":\"01:31\",\"time_ago\":\"21 minutes ago\"}],\"activity_counts\":{\"Injections\":1},\"total_events\":1}]', '{\"App\\\\Models\\\\ProductOrServiceRequest\":{\"label\":\"Billing\",\"icon\":\"mdi-receipt\",\"color\":\"secondary\",\"count\":1,\"events\":{\"created\":1,\"updated\":0,\"deleted\":0},\"patients\":[]},\"App\\\\Models\\\\InjectionAdministration\":{\"label\":\"Injections\",\"icon\":\"mdi-needle\",\"color\":\"info\",\"count\":1,\"events\":{\"created\":1,\"updated\":0,\"deleted\":0},\"patients\":[{\"name\":\"ALIAS NON-REGISTERED PATIENTS\",\"patient_no\":\"\"}]}}', '[{\"category\":\"Billing\",\"icon\":\"mdi-receipt\",\"color\":\"secondary\",\"event\":\"created\",\"patient_id\":null,\"patient_name\":null,\"patient_no\":null,\"changes\":[{\"field\":\"product_id\",\"label\":\"Product Id\",\"type\":\"created\",\"value\":\"67\"},{\"field\":\"qty\",\"label\":\"Quantity\",\"type\":\"created\",\"value\":\"1\"},{\"field\":\"payable_amount\",\"label\":\"Amount\",\"type\":\"created\",\"value\":\"15000.00\"},{\"field\":\"claims_amount\",\"label\":\"Claims Amount\",\"type\":\"created\",\"value\":\"0.00\"},{\"field\":\"coverage_mode\",\"label\":\"Coverage Mode\",\"type\":\"created\",\"value\":\"primary\"},{\"field\":\"validation_status\",\"label\":\"Validation Status\",\"type\":\"created\",\"value\":\"pending\"}],\"time\":\"01:31\",\"time_full\":\"Jan 11, 2026 1:31 AM\",\"time_ago\":\"21 minutes ago\"},{\"category\":\"Injections\",\"icon\":\"mdi-needle\",\"color\":\"info\",\"event\":\"created\",\"patient_id\":1,\"patient_name\":\"ALIAS NON-REGISTERED PATIENTS\",\"patient_no\":\"\",\"changes\":[{\"field\":\"patient_id\",\"label\":\"Patient Id\",\"type\":\"created\",\"value\":\"1\"},{\"field\":\"product_id\",\"label\":\"Product Id\",\"type\":\"created\",\"value\":\"67\"},{\"field\":\"product_or_service_request_id\",\"label\":\"Product Or Service Request Id\",\"type\":\"created\",\"value\":\"95\"},{\"field\":\"dose\",\"label\":\"Dose\",\"type\":\"created\",\"value\":\"700mg\"},{\"field\":\"route\",\"label\":\"Route\",\"type\":\"created\",\"value\":\"IM\"},{\"field\":\"site\",\"label\":\"Site\",\"type\":\"created\",\"value\":\"Right Arm\"},{\"field\":\"administered_at\",\"label\":\"Administered At\",\"type\":\"created\",\"value\":\"Jan 11, 2026 1:31 AM\"},{\"field\":\"administered_by\",\"label\":\"Administered By\",\"type\":\"created\",\"value\":\"1\"}],\"time\":\"01:31\",\"time_full\":\"Jan 11, 2026 1:31 AM\",\"time_ago\":\"21 minutes ago\"}]', '2026-01-11 01:53:41', 1, NULL, '2026-01-11 00:53:01', '2026-01-11 00:53:41'),
+(3, 3, 1, NULL, NULL, 'night', '2026-01-11 01:53:59', '2026-01-13 06:52:43', '<p><strong>Activity Summary:</strong></p><ul><li><strong>Billing</strong>: 1 updated</li></ul><p><strong>Key Changes:</strong></p><div class=\'key-changes-list\'><div class=\'patient-changes mb-2\'><strong class=\'text-primary\'>Unknown Patient</strong><ul class=\'mb-1\'><li><small class=\'text-muted\'>[08:45]</small> <span class=\"badge badge-warning badge-sm\">Updated</span> <em>Billing</em>: Discount: 0.00 → 0</li></ul></div></div>', NULL, NULL, '[]', '[]', '{\"App\\\\Models\\\\ProductOrServiceRequest\":{\"label\":\"Billing\",\"icon\":\"mdi-receipt\",\"color\":\"secondary\",\"count\":1,\"events\":{\"created\":0,\"updated\":1,\"deleted\":0},\"patients\":[]}}', '[{\"category\":\"Billing\",\"icon\":\"mdi-receipt\",\"color\":\"secondary\",\"event\":\"updated\",\"patient_id\":null,\"patient_name\":null,\"patient_no\":null,\"changes\":[{\"field\":\"discount\",\"label\":\"Discount\",\"type\":\"changed\",\"old\":\"0.00\",\"new\":\"0\"}],\"time\":\"08:45\",\"time_full\":\"Jan 11, 2026 8:45 AM\",\"time_ago\":\"1 day ago\"}]', '2026-01-13 09:26:09', 1, NULL, '2026-01-13 05:52:43', '2026-01-13 08:26:09');
 
 -- --------------------------------------------------------
 
@@ -23636,6 +23678,8 @@ CREATE TABLE `staff` (
   `home_address` text DEFAULT NULL,
   `phone_number` varchar(255) DEFAULT NULL,
   `consultation_fee` double(8,2) NOT NULL DEFAULT 0.00,
+  `is_unit_head` tinyint(1) NOT NULL DEFAULT 0,
+  `is_dept_head` tinyint(1) NOT NULL DEFAULT 0,
   `status` int(11) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
@@ -23646,75 +23690,75 @@ CREATE TABLE `staff` (
 -- Dumping data for table `staff`
 --
 
-INSERT INTO `staff` (`id`, `user_id`, `specialization_id`, `clinic_id`, `gender`, `date_of_birth`, `home_address`, `phone_number`, `consultation_fee`, `status`, `created_at`, `updated_at`, `old_user_id`) VALUES
-(1, 1, 2, 1, 'Male', NULL, 'jos', '0810000000', 0.00, 1, NULL, '2026-01-02 19:44:06', 58),
-(2, 2, NULL, NULL, 'Others', NULL, NULL, '08160258090', 0.00, 1, NULL, NULL, 59),
-(3, 3, NULL, NULL, 'Others', NULL, NULL, '07035412086', 0.00, 1, NULL, NULL, 60),
-(4, 4, NULL, NULL, 'Others', NULL, NULL, '07034779534', 0.00, 1, NULL, NULL, 61),
-(5, 5, NULL, NULL, 'Others', NULL, NULL, '08069637205', 0.00, 1, NULL, NULL, 62),
-(6, 6, NULL, NULL, 'Others', NULL, NULL, '08163013587', 0.00, 1, NULL, NULL, 63),
-(7, 7, 2, 1, 'Male', '1995-12-16 23:00:00', 'Bida Bidi, Jos North LGA', '08055855367', 4.00, 1, NULL, NULL, 67),
-(8, 8, NULL, NULL, 'Others', NULL, NULL, '08132309188', 0.00, 1, NULL, NULL, 68),
-(9, 9, 2, 1, 'Male', '1995-01-20 23:00:00', '26, Church street Jos', '08168403497', 4.00, 1, NULL, NULL, 74),
-(10, 10, NULL, NULL, 'Others', NULL, NULL, '09136696582', 0.00, 1, NULL, NULL, 75),
-(11, 11, NULL, NULL, 'Others', NULL, NULL, '08064177233', 0.00, 1, NULL, NULL, 77),
-(12, 12, 2, 1, 'Female', '1992-06-17 23:00:00', 'Latya Guratop, Jos', '09156355633', 4.00, 1, NULL, NULL, 78),
-(13, 13, NULL, NULL, 'Others', NULL, NULL, '07035643507', 0.00, 1, NULL, NULL, 85),
-(14, 14, NULL, NULL, 'Others', NULL, NULL, '081123456789', 0.00, 1, NULL, NULL, 129),
-(15, 15, NULL, NULL, 'Others', NULL, NULL, '07067552211', 0.00, 1, NULL, NULL, 134),
-(16, 16, NULL, NULL, 'Others', NULL, NULL, '08108036463', 0.00, 1, NULL, NULL, 135),
-(17, 17, NULL, NULL, 'Others', NULL, NULL, '07034245252', 0.00, 1, NULL, NULL, 140),
-(18, 18, 11, 9, 'Male', '2022-08-28 23:00:00', 'jos', '08037010243', 5000.00, 1, NULL, NULL, 144),
-(19, 19, 1, 8, 'Male', '0000-00-00 00:00:00', 'Diye Bay, Zarmaganda Jos', '08037010988', 5000.00, 1, NULL, NULL, 159),
-(20, 20, 11, 9, 'Male', '1972-06-10 23:00:00', 'E21 Laminga estate, Lamingo, Jos\r\n\r\n&amp;nbsp;', '08034502746', 4000.00, 1, NULL, NULL, 185),
-(21, 21, NULL, NULL, 'Others', NULL, NULL, '08165243457', 0.00, 1, NULL, NULL, 187),
-(22, 22, NULL, NULL, 'Others', NULL, NULL, '08159095479', 0.00, 1, NULL, NULL, 188),
-(23, 23, 15, 15, 'Male', '1984-08-31 23:00:00', 'Opirikwu village, Odiapa-Ito, Obi LGA, Benue state.', '08069217904', 5000.00, 1, NULL, NULL, 209),
-(24, 24, 13, 2, 'Male', '2022-05-31 23:00:00', '7c hospital place jos', '08063146341', 4000.00, 1, NULL, NULL, 215),
-(25, 25, NULL, NULL, 'Others', NULL, NULL, '08163324099', 0.00, 1, NULL, NULL, 267),
-(26, 26, NULL, NULL, 'Others', NULL, NULL, '07030086464', 0.00, 1, NULL, NULL, 268),
-(27, 27, NULL, NULL, 'Others', NULL, NULL, '08060840232', 0.00, 1, NULL, NULL, 269),
-(28, 28, NULL, NULL, 'Others', NULL, NULL, '08036775475', 0.00, 1, NULL, NULL, 350),
-(29, 29, 16, 13, 'Male', '0000-00-00 00:00:00', 'Gura Topp Rayfield&amp;nbsp; Jos.', '08061218727', 4000.00, 1, NULL, NULL, 447),
-(30, 30, 1, 8, 'Female', '1983-11-25 23:00:00', 'DUALA BARRACKS DOGON DUTSE JOS', '08033803872', 4000.00, 1, NULL, NULL, 462),
-(31, 31, 1, 8, 'Male', '1980-04-16 23:00:00', 'Angwan Makeri Rantya, Jos', '08065360052', 4000.00, 1, NULL, NULL, 709),
-(32, 32, NULL, NULL, 'Others', NULL, NULL, '08107757388', 0.00, 1, NULL, NULL, 749),
-(33, 33, 1, 8, 'Male', '1984-11-02 23:00:00', 'Rayfield, jos', '+2348060522983', 4000.00, 1, NULL, NULL, 750),
-(34, 34, 1, 8, 'Male', '0000-00-00 00:00:00', 'No 14, Rayfield-Zarmaganda road, Fwavei, Rayfield, Jos', '08035994898', 4000.00, 1, NULL, NULL, 867),
-(35, 35, 11, 16, 'Male', '2022-09-30 23:00:00', 'Rantya, jos', '08066052254', 5000.00, 1, NULL, NULL, 888),
-(36, 36, 14, 14, 'Male', '1980-11-30 23:00:00', 'Behind st. Fimbar&#039;s Catholic Church Fwavei Rayfield, Jos', '08035937579', 4000.00, 1, NULL, NULL, 916),
-(37, 37, 7, 11, 'Male', '2022-12-29 23:00:00', 'Jos', '08060030649', 5000.00, 1, NULL, NULL, 917),
-(38, 38, NULL, NULL, 'Others', NULL, NULL, '08065806215', 0.00, 1, NULL, NULL, 927),
-(39, 39, NULL, NULL, 'Others', NULL, NULL, '08035976165', 0.00, 1, NULL, NULL, 934),
-(40, 40, 1, 8, 'Female', '2022-12-15 23:00:00', 'jos', 'O8166016875', 5000.00, 1, NULL, NULL, 1392),
-(41, 41, NULL, NULL, 'Others', NULL, NULL, '07030238110', 0.00, 1, NULL, NULL, 1393),
-(42, 42, NULL, NULL, 'Others', NULL, NULL, '08037010988', 0.00, 1, NULL, NULL, 1449),
-(43, 43, NULL, NULL, 'Others', NULL, NULL, '08037010988', 0.00, 1, NULL, NULL, 1450),
-(44, 44, 2, 1, 'Female', '2022-05-31 23:00:00', 'jos', '08106064115', 5000.00, 1, NULL, NULL, 1468),
-(45, 45, 2, 1, 'Male', '1990-04-15 23:00:00', 'jos', '08061906539', 5.00, 1, NULL, NULL, 1469),
-(46, 46, 0, 1, 'Female', '1993-04-26 23:00:00', 'Jos', '08167373005', 0.00, 1, NULL, NULL, 1484),
-(47, 47, NULL, NULL, 'Others', NULL, NULL, '08176193330', 0.00, 1, NULL, NULL, 1574),
-(48, 48, 2, 1, 'Male', '1994-04-16 23:00:00', 'Same as Contact Address', '08148158104', 5000.00, 1, NULL, NULL, 1583),
-(49, 49, NULL, NULL, 'Others', NULL, NULL, '07068620564', 0.00, 1, NULL, NULL, 1690),
-(50, 50, 13, 2, 'Male', '2022-11-01 23:00:00', 'Gold and Base, Jos\r\n\r\n&amp;nbsp;', '08032790813', 5000.00, 1, NULL, NULL, 1890),
-(51, 51, 11, 9, 'Male', '1987-11-13 23:00:00', 'Gwafan estate Haske Lamingo, Jos', '08065072651', 5000.00, 1, NULL, NULL, 1936),
-(52, 52, 13, 2, 'Male', '1988-12-31 23:00:00', 'Jos', '08032790813', 5000.00, 1, NULL, NULL, 1939),
-(53, 53, 1, 8, 'Male', '1984-03-28 23:00:00', 'Jos', '08037022775', 5000.00, 1, NULL, NULL, 1940),
-(54, 54, 10, 17, 'Male', '1990-07-28 23:00:00', 'Fan-milk junction, Zarmaganda, Jos', '07088111868', 5000.00, 1, NULL, NULL, 2030),
-(55, 55, 0, 1, 'Female', '2022-12-18 23:00:00', 'JOs', '07037447458', 0.00, 1, NULL, NULL, 2142),
-(56, 56, NULL, NULL, 'Others', NULL, NULL, '08165354589', 0.00, 1, NULL, NULL, 2220),
-(57, 57, 2, 19, 'Male', '1975-06-25 23:00:00', 'Zarazong, Jos East', '08028438717', 5000.00, 1, NULL, NULL, 2234),
-(58, 58, 0, 1, 'Female', '2003-07-21 23:00:00', 'JOs', '07039062948', 0.00, 1, NULL, NULL, 2308),
-(59, 59, NULL, NULL, 'Others', NULL, NULL, '08133002060', 0.00, 1, NULL, NULL, 2431),
-(60, 60, 0, 1, 'Female', '1995-11-27 23:00:00', 'JOS', '08107623025', 0.00, 1, NULL, NULL, 2530),
-(61, 61, 10, 18, 'Male', '2023-04-26 23:00:00', 'JOS', '08069634805', 5000.00, 1, NULL, NULL, 2595),
-(62, 62, NULL, NULL, 'Others', NULL, NULL, '08035003495', 0.00, 1, NULL, NULL, 2656),
-(63, 63, 1, 8, 'Male', '0000-00-00 00:00:00', 'Jos', '08063208363', 5000.00, 1, NULL, NULL, 2707),
-(64, 64, 2, 1, 'Female', '1993-02-06 23:00:00', 'State lowcost&amp;nbsp;Akwanga&amp;nbsp;Nasarawa.', '08101191500', 5000.00, 1, NULL, NULL, 2828),
-(65, 65, 2, 1, 'Female', '2023-06-30 23:00:00', 'Jos', '08121074489', 5000.00, 1, NULL, NULL, 2955),
-(66, 66, 15, 17, 'Male', '2023-08-04 23:00:00', 'jos', '08036889486', 5000.00, 1, NULL, NULL, 3056),
-(67, 67, 11, 9, 'Male', '2023-05-21 23:00:00', 'Jos', '08069624461', 5000.00, 1, NULL, NULL, 3061),
-(68, 68, NULL, NULL, 'Others', NULL, NULL, '08068137605', 0.00, 1, NULL, NULL, 3062);
+INSERT INTO `staff` (`id`, `user_id`, `specialization_id`, `clinic_id`, `gender`, `date_of_birth`, `home_address`, `phone_number`, `consultation_fee`, `is_unit_head`, `is_dept_head`, `status`, `created_at`, `updated_at`, `old_user_id`) VALUES
+(1, 1, NULL, NULL, 'Male', '2025-05-31 23:00:00', 'jos', '0810000000', 0.00, 1, 1, 1, NULL, '2026-01-13 07:44:11', 58),
+(2, 2, NULL, NULL, 'Others', NULL, NULL, '08160258090', 0.00, 0, 0, 1, NULL, NULL, 59),
+(3, 3, NULL, NULL, 'Others', NULL, NULL, '07035412086', 0.00, 0, 0, 1, NULL, NULL, 60),
+(4, 4, NULL, NULL, 'Others', NULL, NULL, '07034779534', 0.00, 0, 0, 1, NULL, NULL, 61),
+(5, 5, NULL, NULL, 'Others', NULL, NULL, '08069637205', 0.00, 0, 0, 1, NULL, NULL, 62),
+(6, 6, NULL, NULL, 'Others', NULL, NULL, '08163013587', 0.00, 0, 0, 1, NULL, NULL, 63),
+(7, 7, 2, 1, 'Male', '1995-12-16 23:00:00', 'Bida Bidi, Jos North LGA', '08055855367', 4.00, 0, 0, 1, NULL, NULL, 67),
+(8, 8, NULL, NULL, 'Others', NULL, NULL, '08132309188', 0.00, 0, 0, 1, NULL, NULL, 68),
+(9, 9, 2, 1, 'Male', '1995-01-20 23:00:00', '26, Church street Jos', '08168403497', 4.00, 0, 0, 1, NULL, NULL, 74),
+(10, 10, NULL, NULL, 'Others', NULL, NULL, '09136696582', 0.00, 0, 0, 1, NULL, NULL, 75),
+(11, 11, NULL, NULL, 'Others', NULL, NULL, '08064177233', 0.00, 0, 0, 1, NULL, NULL, 77),
+(12, 12, 2, 1, 'Female', '1992-06-17 23:00:00', 'Latya Guratop, Jos', '09156355633', 4.00, 0, 0, 1, NULL, NULL, 78),
+(13, 13, NULL, NULL, 'Others', NULL, NULL, '07035643507', 0.00, 0, 0, 1, NULL, NULL, 85),
+(14, 14, NULL, NULL, 'Others', NULL, NULL, '081123456789', 0.00, 0, 0, 1, NULL, NULL, 129),
+(15, 15, NULL, NULL, 'Others', NULL, NULL, '07067552211', 0.00, 0, 0, 1, NULL, NULL, 134),
+(16, 16, NULL, NULL, 'Others', NULL, NULL, '08108036463', 0.00, 0, 0, 1, NULL, NULL, 135),
+(17, 17, NULL, NULL, 'Others', NULL, NULL, '07034245252', 0.00, 0, 0, 1, NULL, NULL, 140),
+(18, 18, 11, 9, 'Male', '2022-08-28 23:00:00', 'jos', '08037010243', 5000.00, 0, 0, 1, NULL, NULL, 144),
+(19, 19, 1, 8, 'Male', '0000-00-00 00:00:00', 'Diye Bay, Zarmaganda Jos', '08037010988', 5000.00, 0, 0, 1, NULL, NULL, 159),
+(20, 20, 11, 9, 'Male', '1972-06-10 23:00:00', 'E21 Laminga estate, Lamingo, Jos\r\n\r\n&amp;nbsp;', '08034502746', 4000.00, 0, 0, 1, NULL, NULL, 185),
+(21, 21, NULL, NULL, 'Others', NULL, NULL, '08165243457', 0.00, 0, 0, 1, NULL, NULL, 187),
+(22, 22, NULL, NULL, 'Others', NULL, NULL, '08159095479', 0.00, 0, 0, 1, NULL, NULL, 188),
+(23, 23, 15, 15, 'Male', '1984-08-31 23:00:00', 'Opirikwu village, Odiapa-Ito, Obi LGA, Benue state.', '08069217904', 5000.00, 0, 0, 1, NULL, NULL, 209),
+(24, 24, 13, 2, 'Male', '2022-05-31 23:00:00', '7c hospital place jos', '08063146341', 4000.00, 0, 0, 1, NULL, NULL, 215),
+(25, 25, NULL, NULL, 'Others', NULL, NULL, '08163324099', 0.00, 0, 0, 1, NULL, NULL, 267),
+(26, 26, NULL, NULL, 'Others', NULL, NULL, '07030086464', 0.00, 0, 0, 1, NULL, NULL, 268),
+(27, 27, NULL, NULL, 'Others', NULL, NULL, '08060840232', 0.00, 0, 0, 1, NULL, NULL, 269),
+(28, 28, NULL, NULL, 'Others', NULL, NULL, '08036775475', 0.00, 0, 0, 1, NULL, NULL, 350),
+(29, 29, 16, 13, 'Male', '0000-00-00 00:00:00', 'Gura Topp Rayfield&amp;nbsp; Jos.', '08061218727', 4000.00, 0, 0, 1, NULL, NULL, 447),
+(30, 30, 1, 8, 'Female', '1983-11-25 23:00:00', 'DUALA BARRACKS DOGON DUTSE JOS', '08033803872', 4000.00, 0, 0, 1, NULL, NULL, 462),
+(31, 31, 1, 8, 'Male', '1980-04-16 23:00:00', 'Angwan Makeri Rantya, Jos', '08065360052', 4000.00, 0, 0, 1, NULL, NULL, 709),
+(32, 32, NULL, NULL, 'Others', NULL, NULL, '08107757388', 0.00, 0, 0, 1, NULL, NULL, 749),
+(33, 33, 1, 8, 'Male', '1984-11-02 23:00:00', 'Rayfield, jos', '+2348060522983', 4000.00, 0, 0, 1, NULL, NULL, 750),
+(34, 34, 1, 8, 'Male', '0000-00-00 00:00:00', 'No 14, Rayfield-Zarmaganda road, Fwavei, Rayfield, Jos', '08035994898', 4000.00, 0, 0, 1, NULL, NULL, 867),
+(35, 35, 11, 16, 'Male', '2022-09-30 23:00:00', 'Rantya, jos', '08066052254', 5000.00, 0, 0, 1, NULL, NULL, 888),
+(36, 36, 14, 14, 'Male', '1980-11-30 23:00:00', 'Behind st. Fimbar&#039;s Catholic Church Fwavei Rayfield, Jos', '08035937579', 4000.00, 0, 0, 1, NULL, NULL, 916),
+(37, 37, 7, 11, 'Male', '2022-12-29 23:00:00', 'Jos', '08060030649', 5000.00, 0, 0, 1, NULL, NULL, 917),
+(38, 38, NULL, NULL, 'Others', NULL, NULL, '08065806215', 0.00, 0, 0, 1, NULL, NULL, 927),
+(39, 39, NULL, NULL, 'Others', NULL, NULL, '08035976165', 0.00, 0, 0, 1, NULL, NULL, 934),
+(40, 40, 1, 8, 'Female', '2022-12-15 23:00:00', 'jos', 'O8166016875', 5000.00, 0, 0, 1, NULL, NULL, 1392),
+(41, 41, NULL, NULL, 'Others', NULL, NULL, '07030238110', 0.00, 0, 0, 1, NULL, NULL, 1393),
+(42, 42, NULL, NULL, 'Others', NULL, NULL, '08037010988', 0.00, 0, 0, 1, NULL, NULL, 1449),
+(43, 43, NULL, NULL, 'Others', NULL, NULL, '08037010988', 0.00, 0, 0, 1, NULL, NULL, 1450),
+(44, 44, 2, 1, 'Female', '2022-05-31 23:00:00', 'jos', '08106064115', 5000.00, 0, 0, 1, NULL, NULL, 1468),
+(45, 45, 2, 1, 'Male', '1990-04-15 23:00:00', 'jos', '08061906539', 5.00, 0, 0, 1, NULL, NULL, 1469),
+(46, 46, 0, 1, 'Female', '1993-04-26 23:00:00', 'Jos', '08167373005', 0.00, 0, 0, 1, NULL, NULL, 1484),
+(47, 47, NULL, NULL, 'Others', NULL, NULL, '08176193330', 0.00, 0, 0, 1, NULL, NULL, 1574),
+(48, 48, 2, 1, 'Male', '1994-04-16 23:00:00', 'Same as Contact Address', '08148158104', 5000.00, 0, 0, 1, NULL, NULL, 1583),
+(49, 49, NULL, NULL, 'Others', NULL, NULL, '07068620564', 0.00, 0, 0, 1, NULL, NULL, 1690),
+(50, 50, 13, 2, 'Male', '2022-11-01 23:00:00', 'Gold and Base, Jos\r\n\r\n&amp;nbsp;', '08032790813', 5000.00, 0, 0, 1, NULL, NULL, 1890),
+(51, 51, 11, 9, 'Male', '1987-11-13 23:00:00', 'Gwafan estate Haske Lamingo, Jos', '08065072651', 5000.00, 0, 0, 1, NULL, NULL, 1936),
+(52, 52, 13, 2, 'Male', '1988-12-31 23:00:00', 'Jos', '08032790813', 5000.00, 0, 0, 1, NULL, NULL, 1939),
+(53, 53, 1, 8, 'Male', '1984-03-28 23:00:00', 'Jos', '08037022775', 5000.00, 0, 0, 1, NULL, NULL, 1940),
+(54, 54, 10, 17, 'Male', '1990-07-28 23:00:00', 'Fan-milk junction, Zarmaganda, Jos', '07088111868', 5000.00, 0, 0, 1, NULL, NULL, 2030),
+(55, 55, 0, 1, 'Female', '2022-12-18 23:00:00', 'JOs', '07037447458', 0.00, 0, 0, 1, NULL, NULL, 2142),
+(56, 56, NULL, NULL, 'Others', NULL, NULL, '08165354589', 0.00, 0, 0, 1, NULL, NULL, 2220),
+(57, 57, 2, 19, 'Male', '1975-06-25 23:00:00', 'Zarazong, Jos East', '08028438717', 5000.00, 0, 0, 1, NULL, NULL, 2234),
+(58, 58, 0, 1, 'Female', '2003-07-21 23:00:00', 'JOs', '07039062948', 0.00, 0, 0, 1, NULL, NULL, 2308),
+(59, 59, NULL, NULL, 'Others', NULL, NULL, '08133002060', 0.00, 0, 0, 1, NULL, NULL, 2431),
+(60, 60, 0, 1, 'Female', '1995-11-27 23:00:00', 'JOS', '08107623025', 0.00, 0, 0, 1, NULL, NULL, 2530),
+(61, 61, 10, 18, 'Male', '2023-04-26 23:00:00', 'JOS', '08069634805', 5000.00, 0, 0, 1, NULL, NULL, 2595),
+(62, 62, NULL, NULL, 'Others', NULL, NULL, '08035003495', 0.00, 0, 0, 1, NULL, NULL, 2656),
+(63, 63, 1, 8, 'Male', '0000-00-00 00:00:00', 'Jos', '08063208363', 5000.00, 0, 0, 1, NULL, NULL, 2707),
+(64, 64, 2, 1, 'Female', '1993-02-06 23:00:00', 'State lowcost&amp;nbsp;Akwanga&amp;nbsp;Nasarawa.', '08101191500', 5000.00, 0, 0, 1, NULL, NULL, 2828),
+(65, 65, 2, 1, 'Female', '2023-06-30 23:00:00', 'Jos', '08121074489', 5000.00, 0, 0, 1, NULL, NULL, 2955),
+(66, 66, 15, 17, 'Male', '2023-08-04 23:00:00', 'jos', '08036889486', 5000.00, 0, 0, 1, NULL, NULL, 3056),
+(67, 67, 11, 9, 'Male', '2023-05-21 23:00:00', 'Jos', '08069624461', 5000.00, 0, 0, 1, NULL, NULL, 3061),
+(68, 68, NULL, NULL, 'Others', NULL, NULL, '08068137605', 0.00, 0, 0, 1, NULL, NULL, 3062);
 
 -- --------------------------------------------------------
 
@@ -24171,7 +24215,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `is_admin`, `email`, `filename`, `old_records`, `surname`, `firstname`, `othername`, `assignRole`, `assignPermission`, `email_verified_at`, `password`, `status`, `remember_token`, `created_at`, `updated_at`, `old_user_id`, `old_dependant_id`, `next_of_kin_name`, `next_of_kin_phone`, `next_of_kin_address`, `next_of_kin`) VALUES
-(1, 21, 'sysadmin@mail.com', '1767369464-whatsapp image 2025-12-21 at 3.00.46 pm.jpeg', '1698826162-corehealth-qr.pdf', 'Admin', 'System', '001', '1', '0', NULL, '$2y$10$bZRYeeNL0o8mPqOULj1cDOPKmDNolHFOkJ3dBvfRylcn4syKbYvXa', 1, NULL, NULL, '2026-01-02 19:46:24', 58, NULL, NULL, NULL, NULL, NULL),
+(1, 21, 'sysadmin@mail.com', '1767369464-whatsapp image 2025-12-21 at 3.00.46 pm.jpeg', '1698826162-corehealth-qr.pdf', 'Admin', 'System', '001', '1', '0', NULL, '$2y$10$uV3jA9Xlf79Kj0Vgh2EyX.fjKZyxekSEgofucBdKHf33b5SWSQCDm', 1, NULL, NULL, '2026-01-13 07:44:11', 58, NULL, NULL, NULL, NULL, NULL),
 (2, 24, 'ceciliaishaya2019@gmail.com', 'avatar.png', NULL, 'Ishaya', 'Cecilia', 'Umading', '1', '1', NULL, '$2y$10$bZRYeeNL0o8mPqOULj1cDOPKmDNolHFOkJ3dBvfRylcn4syKbYvXa', 1, NULL, NULL, NULL, 59, NULL, NULL, NULL, NULL, NULL),
 (3, 24, 'jennyson60@gmail.com', 'avatar.png', NULL, 'Bakzak', 'Jennifer', ' ', '1', '0', NULL, '$2y$10$DL5Qsen.I7iGms84itSU/eZdJqjIlA0ltE8dz2jgDrKH2953EWYTG', 1, NULL, NULL, NULL, 60, NULL, NULL, NULL, NULL, NULL),
 (4, 24, 'mentasamuel@yahoo.com', 'avatar.png', NULL, 'Menta', 'Samuel', ' ', '1', '0', NULL, '$2y$10$VkAfQrUBgqW99ZbPWwZktu8symJEtyBNLRXE2S9syaYxKoT0W5KH6', 1, NULL, NULL, NULL, 61, NULL, NULL, NULL, NULL, NULL),
@@ -24302,7 +24346,7 @@ INSERT INTO `users` (`id`, `is_admin`, `email`, `filename`, `old_records`, `surn
 (129, 19, 'kevin.donglong@hms.com', 'avatar.png', NULL, 'Donglong', 'Kevin', ' ', '0', '0', NULL, '$2y$10$2CJz7w3an5yUeOIhvbOW1.S0/RWpj1S35xfdUBLC25qptSokgLiPS', 1, NULL, NULL, NULL, 138, NULL, NULL, NULL, NULL, NULL),
 (130, 19, 'james.kigun@hms.com', 'avatar.png', NULL, 'kigun', 'James', 'Ayhu', '0', '0', NULL, '$2y$10$sxWJuJFCib6DBxRW/E2bUOVZf2ITyRIHsk2ITEK9WkmFfJCEsehk2', 1, NULL, NULL, NULL, 139, NULL, NULL, NULL, NULL, NULL),
 (131, 19, 'mundi.mwelchet@hms.com', 'avatar.png', NULL, 'Mwelchet', 'Mundi', ' ', '0', '0', NULL, '$2y$10$DapY.75T07dw6C9T404wku2eqJeB1UvcqUstPa94oRyiye7g5w2Lm', 1, NULL, NULL, NULL, 141, NULL, NULL, NULL, NULL, NULL),
-(132, 19, 'martha.uwalaka@hms.com', 'avatar.png', NULL, 'Uwalaka', 'Martha', ' ', '0', '0', NULL, '$2y$10$pwxAdQoXwE7scl2FnAy2N.voJaOQAefHlkduSCuR4sMrxC3TDzg4S', 1, NULL, NULL, NULL, 142, NULL, NULL, NULL, NULL, NULL),
+(132, 19, 'martha.uwalaka@hms.com', 'patient_1768347032_132.jpg', 'records_1768347032_132.pdf', 'Uwalaka', 'Martha', NULL, '0', '0', NULL, '$2y$10$pwxAdQoXwE7scl2FnAy2N.voJaOQAefHlkduSCuR4sMrxC3TDzg4S', 1, NULL, NULL, '2026-01-13 22:30:32', 142, NULL, NULL, NULL, NULL, NULL),
 (133, 19, 'jerry.onyibe@hms.com', 'avatar.png', NULL, 'Onyibe', 'Jerry', ' ', '0', '0', NULL, '$2y$10$F/uYYCByjmYonwyjLdo12e8ghZfDCbf/7tbUHfxFsFjifUi6t7bou', 1, NULL, NULL, NULL, 143, NULL, NULL, NULL, NULL, NULL),
 (134, 19, 'kelechi.godobi@hms.com', 'avatar.png', '1654672631-godobi-kelechi-6847.pdf', 'GODOBI', 'KELECHI', ' ', '0', '0', NULL, '$2y$10$w8BgjUU4XGNfkVBJOWuVTOTyHkPc0sP3bpBOwwf0.s4ylfRA57u3y', 1, NULL, NULL, NULL, 145, NULL, NULL, NULL, NULL, NULL),
 (135, 19, 'rose pam.rajan@hms.com', 'avatar.png', NULL, 'RAJAN', 'ROSE PAM', ' ', '0', '0', NULL, '$2y$10$P.cudOjdJX6D8eTqATS5sepGflEJPOlRGRKIFM3Pq8u4gLYBuyWBm', 1, NULL, NULL, NULL, 146, NULL, NULL, NULL, NULL, NULL),
@@ -28665,7 +28709,8 @@ INSERT INTO `users` (`id`, `is_admin`, `email`, `filename`, `old_records`, `surn
 (4472, 19, 'panydaps@gmail.com21443', 'avatar.png', NULL, 'YAHAYA', 'AISHA', '', '1', '1', NULL, '$2y$10$1DE5PxuqxNAUo5tRhRvroeqD322R1jGqPMCkvhQ4uLbnRLJK2qYpm', 1, NULL, NULL, NULL, 2707, 1443, NULL, NULL, NULL, NULL),
 (4473, 19, 'dorcas.caleb@hms.com21444', 'avatar.png', NULL, 'IDRIS', 'MAIMUNA', '', '0', '0', NULL, '$2y$10$3H.qoGczTFPp4EgXWIX1A..i2x2rF5GUjINC39cEPZOdvUcV5meUK', 1, NULL, NULL, NULL, 2743, 1444, NULL, NULL, NULL, NULL),
 (4474, 19, 'abdulrazzaq.ismail@hms.com21445', 'avatar.png', NULL, 'MUSA', 'MANFA', 'ZURIEL', '0', '0', NULL, '$2y$10$HkHw5ne.w19g/9ETakm2/OpDBOdG4NATQ//GeNR3UAXPEvVXYrnzm', 1, NULL, NULL, NULL, 1290, 1445, NULL, NULL, NULL, NULL),
-(4475, 19, 'simi.goton@hms.com21446', 'avatar.png', NULL, 'YUSUF', 'LILIAN', '', '0', '0', NULL, '$2y$10$O0XZouG086i1N8tDwdMAmutC1Rdcj23JM5gJ3QxxArC8BkdLfr.Su', 1, NULL, NULL, NULL, 2744, 1446, NULL, NULL, NULL, NULL);
+(4475, 19, 'simi.goton@hms.com21446', 'avatar.png', NULL, 'YUSUF', 'LILIAN', '', '0', '0', NULL, '$2y$10$O0XZouG086i1N8tDwdMAmutC1Rdcj23JM5gJ3QxxArC8BkdLfr.Su', 1, NULL, NULL, NULL, 2744, 1446, NULL, NULL, NULL, NULL),
+(4476, 19, 'walshak.apollos.976@hms.com', 'patient_1768346384_4476.jpg', NULL, 'Apollos', 'Walshak', NULL, NULL, NULL, NULL, '$2y$10$tjbOPppyzHzseYkeH9bITe4rgf.hV6dXz5zfhbkuyhx6Ge0pKiJJu', 1, NULL, '2026-01-13 20:33:09', '2026-01-13 22:19:45', NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -29615,7 +29660,7 @@ ALTER TABLE `application_status`
 -- AUTO_INCREMENT for table `audits`
 --
 ALTER TABLE `audits`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=184;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=212;
 
 --
 -- AUTO_INCREMENT for table `banks`
@@ -29639,7 +29684,7 @@ ALTER TABLE `chat_attachments`
 -- AUTO_INCREMENT for table `chat_conversations`
 --
 ALTER TABLE `chat_conversations`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `chat_conversation_archives`
@@ -29657,7 +29702,7 @@ ALTER TABLE `chat_messages`
 -- AUTO_INCREMENT for table `chat_participants`
 --
 ALTER TABLE `chat_participants`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT for table `checklist_templates`
@@ -29699,7 +29744,7 @@ ALTER TABLE `discharge_checklist_items`
 -- AUTO_INCREMENT for table `doctor_queues`
 --
 ALTER TABLE `doctor_queues`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT for table `encounters`
@@ -29747,7 +29792,7 @@ ALTER TABLE `hmo_tariffs`
 -- AUTO_INCREMENT for table `imaging_service_requests`
 --
 ALTER TABLE `imaging_service_requests`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `immunization_records`
@@ -29789,7 +29834,7 @@ ALTER TABLE `invoices`
 -- AUTO_INCREMENT for table `lab_service_requests`
 --
 ALTER TABLE `lab_service_requests`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=73;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=74;
 
 --
 -- AUTO_INCREMENT for table `lab_workbench_audit_logs`
@@ -29825,7 +29870,7 @@ ALTER TABLE `messages`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=146;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=147;
 
 --
 -- AUTO_INCREMENT for table `misc_bills`
@@ -29849,7 +29894,7 @@ ALTER TABLE `nursing_note_types`
 -- AUTO_INCREMENT for table `nursing_shifts`
 --
 ALTER TABLE `nursing_shifts`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `participants`
@@ -29861,13 +29906,13 @@ ALTER TABLE `participants`
 -- AUTO_INCREMENT for table `patients`
 --
 ALTER TABLE `patients`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4182;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4183;
 
 --
 -- AUTO_INCREMENT for table `patient_accounts`
 --
 ALTER TABLE `patient_accounts`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=230;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=231;
 
 --
 -- AUTO_INCREMENT for table `patient_immunization_schedules`
@@ -29885,7 +29930,7 @@ ALTER TABLE `patient_profiles`
 -- AUTO_INCREMENT for table `payments`
 --
 ALTER TABLE `payments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=77;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=78;
 
 --
 -- AUTO_INCREMENT for table `permissions`
@@ -29927,7 +29972,7 @@ ALTER TABLE `product_categories`
 -- AUTO_INCREMENT for table `product_or_service_requests`
 --
 ALTER TABLE `product_or_service_requests`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=96;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=100;
 
 --
 -- AUTO_INCREMENT for table `product_requests`
@@ -29987,7 +30032,7 @@ ALTER TABLE `shift_actions`
 -- AUTO_INCREMENT for table `shift_handovers`
 --
 ALTER TABLE `shift_handovers`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `specializations`
@@ -30047,7 +30092,7 @@ ALTER TABLE `threads`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4476;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4477;
 
 --
 -- AUTO_INCREMENT for table `user_categories`
