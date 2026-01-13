@@ -339,12 +339,30 @@ class NursingWorkbenchController extends Controller{
      */
     public function getWards()
     {
-        $wards = Bed::select('ward')
-            ->distinct()
-            ->whereNotNull('ward')
-            ->pluck('ward');
+        // Try to get from Ward model first
+        $wards = \App\Models\Ward::where('is_active', true)
+            ->select('id', 'name', 'code', 'type')
+            ->orderBy('name')
+            ->get();
 
-        return response()->json($wards);
+        // If no wards from Ward model, fallback to distinct wards from Bed
+        if ($wards->isEmpty()) {
+            $wardNames = Bed::select('ward')
+                ->distinct()
+                ->whereNotNull('ward')
+                ->pluck('ward');
+
+            $wards = $wardNames->map(function($name, $index) {
+                return [
+                    'id' => $index + 1,
+                    'name' => $name,
+                    'code' => null,
+                    'type' => null
+                ];
+            });
+        }
+
+        return response()->json(['wards' => $wards]);
     }
 
     // =====================================
@@ -2989,6 +3007,738 @@ class NursingWorkbenchController extends Controller{
                 'success' => false,
                 'message' => 'Failed to complete discharge: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    // =====================================
+    // NURSING REPORTS MODULE
+    // =====================================
+
+    /**
+     * Get Activity Summary for Nursing Reports
+     */
+    public function getReportsActivitySummary(Request $request)
+    {
+        $dateRange = $this->getDateRange($request);
+        $wardId = $request->get('ward_id');
+        $nurseId = $request->get('nurse_id');
+        $shiftType = $request->get('shift_type');
+
+        // Build base queries with filters
+        $vitalsQuery = VitalSign::whereBetween('created_at', [$dateRange['from'], $dateRange['to']]);
+        $medsQuery = MedicationAdministration::whereBetween('administered_at', [$dateRange['from'], $dateRange['to']])->whereNull('deleted_at');
+        $injectionsQuery = InjectionAdministration::whereBetween('administered_at', [$dateRange['from'], $dateRange['to']]);
+        $immunizationsQuery = ImmunizationRecord::whereBetween('administered_at', [$dateRange['from'], $dateRange['to']]);
+        $notesQuery = NursingNote::whereBetween('created_at', [$dateRange['from'], $dateRange['to']]);
+        $shiftsQuery = \App\Models\NursingShift::whereBetween('started_at', [$dateRange['from'], $dateRange['to']]);
+        $handoversQuery = \App\Models\ShiftHandover::whereBetween('created_at', [$dateRange['from'], $dateRange['to']]);
+
+        // Apply nurse filter
+        if ($nurseId) {
+            $vitalsQuery->where('taken_by', $nurseId);
+            $medsQuery->where('administered_by', $nurseId);
+            $injectionsQuery->where('administered_by', $nurseId);
+            $immunizationsQuery->where('administered_by', $nurseId);
+            $notesQuery->where('created_by', $nurseId);
+            $shiftsQuery->where('user_id', $nurseId);
+            $handoversQuery->where('outgoing_nurse_id', $nurseId);
+        }
+
+        // Apply ward filter through admissions
+        if ($wardId) {
+            $patientIds = AdmissionRequest::where('discharged', 0)
+                ->whereHas('bed', function($q) use ($wardId) {
+                    $q->where('ward_id', $wardId);
+                })->pluck('patient_id');
+
+            $vitalsQuery->whereIn('patient_id', $patientIds);
+            $medsQuery->whereIn('patient_id', $patientIds);
+            $injectionsQuery->whereIn('patient_id', $patientIds);
+            $notesQuery->whereIn('patient_id', $patientIds);
+            $shiftsQuery->where('ward_id', $wardId);
+            $handoversQuery->where('ward_id', $wardId);
+        }
+
+        // Apply shift type filter
+        if ($shiftType) {
+            $shiftsQuery->where('shift_type', $shiftType);
+        }
+
+        // Get counts
+        $stats = [
+            'patients_served' => $vitalsQuery->clone()->distinct('patient_id')->count('patient_id'),
+            'vitals_recorded' => $vitalsQuery->count(),
+            'medications_given' => $medsQuery->count(),
+            'injections' => $injectionsQuery->count(),
+            'immunizations' => $immunizationsQuery->count(),
+            'notes_written' => $notesQuery->count(),
+            'shifts_completed' => $shiftsQuery->where('status', 'completed')->count(),
+            'handovers' => $handoversQuery->count(),
+        ];
+
+        // Activity trend (daily)
+        $trend = [];
+        $currentDate = Carbon::parse($dateRange['from'])->startOfDay();
+        $endDate = Carbon::parse($dateRange['to'])->endOfDay();
+
+        while ($currentDate <= $endDate) {
+            $dayStart = $currentDate->copy()->startOfDay();
+            $dayEnd = $currentDate->copy()->endOfDay();
+
+            $trend[] = [
+                'date' => $currentDate->format('M d'),
+                'vitals' => VitalSign::whereBetween('created_at', [$dayStart, $dayEnd])->count(),
+                'medications' => MedicationAdministration::whereBetween('administered_at', [$dayStart, $dayEnd])->whereNull('deleted_at')->count(),
+                'injections' => InjectionAdministration::whereBetween('administered_at', [$dayStart, $dayEnd])->count(),
+                'notes' => NursingNote::whereBetween('created_at', [$dayStart, $dayEnd])->count(),
+            ];
+
+            $currentDate->addDay();
+        }
+
+        // Activity distribution
+        $distribution = [
+            ['label' => 'Vitals', 'value' => $stats['vitals_recorded'], 'color' => '#dc3545'],
+            ['label' => 'Medications', 'value' => $stats['medications_given'], 'color' => '#ffc107'],
+            ['label' => 'Injections', 'value' => $stats['injections'], 'color' => '#17a2b8'],
+            ['label' => 'Immunizations', 'value' => $stats['immunizations'], 'color' => '#28a745'],
+            ['label' => 'Notes', 'value' => $stats['notes_written'], 'color' => '#6c757d'],
+        ];
+
+        // Peak hours
+        $peakHours = [];
+        for ($hour = 0; $hour < 24; $hour++) {
+            $count = VitalSign::whereBetween('created_at', [$dateRange['from'], $dateRange['to']])
+                ->whereRaw('HOUR(created_at) = ?', [$hour])
+                ->count();
+            $count += MedicationAdministration::whereBetween('administered_at', [$dateRange['from'], $dateRange['to']])
+                ->whereNull('deleted_at')
+                ->whereRaw('HOUR(administered_at) = ?', [$hour])
+                ->count();
+            $peakHours[] = [
+                'hour' => sprintf('%02d:00', $hour),
+                'count' => $count
+            ];
+        }
+
+        // Top performers
+        $topPerformers = \App\Models\NursingShift::whereBetween('started_at', [$dateRange['from'], $dateRange['to']])
+            ->where('status', 'completed')
+            ->select('user_id')
+            ->selectRaw('COUNT(*) as shifts_count')
+            ->selectRaw('SUM(vitals_count + medications_count + injections_count + immunizations_count + notes_count) as total_actions')
+            ->selectRaw('SUM(patients_seen) as patients')
+            ->groupBy('user_id')
+            ->orderByDesc('total_actions')
+            ->limit(10)
+            ->get()
+            ->map(function($item) {
+                return [
+                    'nurse' => userfullname($item->user_id),
+                    'actions' => $item->total_actions ?? 0,
+                    'patients' => $item->patients ?? 0,
+                    'shifts' => $item->shifts_count,
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'stats' => $stats,
+            'trend' => $trend,
+            'distribution' => $distribution,
+            'peak_hours' => $peakHours,
+            'top_performers' => $topPerformers,
+        ]);
+    }
+
+    /**
+     * Get Vitals Report Data
+     */
+    public function getReportsVitals(Request $request)
+    {
+        $dateRange = $this->getDateRange($request);
+        $wardId = $request->get('ward_id');
+        $nurseId = $request->get('nurse_id');
+
+        $query = VitalSign::with(['patient.user'])
+            ->whereBetween('created_at', [$dateRange['from'], $dateRange['to']]);
+
+        if ($nurseId) {
+            $query->where('taken_by', $nurseId);
+        }
+
+        // Summary stats
+        $total = $query->clone()->count();
+        $abnormal = $query->clone()->where(function($q) {
+            $q->whereRaw("CAST(SUBSTRING_INDEX(blood_pressure, '/', 1) AS UNSIGNED) > 140")
+              ->orWhereRaw("CAST(SUBSTRING_INDEX(blood_pressure, '/', 1) AS UNSIGNED) < 90")
+              ->orWhere('temp', '>', 38)
+              ->orWhere('temp', '<', 36)
+              ->orWhere('heart_rate', '>', 100)
+              ->orWhere('heart_rate', '<', 60)
+              ->orWhere('spo2', '<', 95);
+        })->count();
+
+        $fever = $query->clone()->where('temp', '>', 38)->count();
+        $hypertension = $query->clone()->whereRaw("CAST(SUBSTRING_INDEX(blood_pressure, '/', 1) AS UNSIGNED) > 140")->count();
+
+        // DataTable response
+        if ($request->ajax() && $request->has('draw')) {
+            return DataTables::of($query->orderByDesc('created_at'))
+                ->addColumn('datetime', function($row) {
+                    return $row->created_at->format('M d, Y h:i A');
+                })
+                ->addColumn('patient_name', function($row) {
+                    return $row->patient ? userfullname($row->patient->user_id) : 'N/A';
+                })
+                ->addColumn('file_no', function($row) {
+                    return $row->patient->file_no ?? 'N/A';
+                })
+                ->addColumn('ward_bed', function($row) {
+                    if (!$row->patient) return 'N/A';
+                    $admission = AdmissionRequest::with('bed')
+                        ->where('patient_id', $row->patient->id)
+                        ->where('discharged', 0)
+                        ->first();
+                    return $admission && $admission->bed ? $admission->bed->ward . ' - ' . $admission->bed->name : 'N/A';
+                })
+                ->addColumn('recorded_by', function($row) {
+                    return $row->taken_by ? userfullname($row->taken_by) : 'N/A';
+                })
+                ->addColumn('status', function($row) {
+                    $status = 'normal';
+                    if ($row->temp > 38 || $row->temp < 36) $status = 'warning';
+                    if ($row->heart_rate > 100 || $row->heart_rate < 60) $status = 'warning';
+                    if ($row->spo2 && $row->spo2 < 95) $status = 'warning';
+                    if ($row->spo2 && $row->spo2 < 90) $status = 'critical';
+                    if ($row->temp > 40 || $row->temp < 35) $status = 'critical';
+                    return $status;
+                })
+                ->rawColumns(['status'])
+                ->make(true);
+        }
+
+        return response()->json([
+            'success' => true,
+            'stats' => [
+                'total' => $total,
+                'abnormal' => $abnormal,
+                'fever' => $fever,
+                'hypertension' => $hypertension,
+            ],
+        ]);
+    }
+
+    /**
+     * Get Medications Report Data
+     */
+    public function getReportsMedications(Request $request)
+    {
+        $dateRange = $this->getDateRange($request);
+        $nurseId = $request->get('nurse_id');
+
+        $query = MedicationAdministration::with(['patient.user', 'schedule', 'productOrServiceRequest.product'])
+            ->whereBetween('administered_at', [$dateRange['from'], $dateRange['to']])
+            ->whereNull('deleted_at');
+
+        if ($nurseId) {
+            $query->where('administered_by', $nurseId);
+        }
+
+        // Summary stats
+        $total = $query->clone()->count();
+
+        // Calculate on-time rate
+        $onTimeCount = $query->clone()->whereHas('schedule', function($q) {
+            $q->whereRaw('administered_at <= DATE_ADD(scheduled_time, INTERVAL 30 MINUTE)');
+        })->count();
+
+        $lateCount = $query->clone()->whereHas('schedule', function($q) {
+            $q->whereRaw('administered_at > DATE_ADD(scheduled_time, INTERVAL 30 MINUTE)');
+        })->count();
+
+        // Missed doses (scheduled but not administered)
+        $missedCount = MedicationSchedule::whereBetween('scheduled_time', [$dateRange['from'], $dateRange['to']])
+            ->where('scheduled_time', '<', now())
+            ->whereDoesntHave('administrations', function($q) {
+                $q->whereNull('deleted_at');
+            })->count();
+
+        $onTimeRate = $total > 0 ? round(($onTimeCount / $total) * 100) : 0;
+
+        // DataTable response
+        if ($request->ajax() && $request->has('draw')) {
+            return DataTables::of($query->orderByDesc('administered_at'))
+                ->addColumn('datetime', function($row) {
+                    return Carbon::parse($row->administered_at)->format('M d, Y h:i A');
+                })
+                ->addColumn('patient_name', function($row) {
+                    return $row->patient ? userfullname($row->patient->user_id) : 'N/A';
+                })
+                ->addColumn('medication', function($row) {
+                    return $row->productOrServiceRequest && $row->productOrServiceRequest->product
+                        ? $row->productOrServiceRequest->product->product_name
+                        : 'N/A';
+                })
+                ->addColumn('scheduled_time', function($row) {
+                    return $row->schedule ? Carbon::parse($row->schedule->scheduled_time)->format('h:i A') : 'N/A';
+                })
+                ->addColumn('administered_by_name', function($row) {
+                    return $row->administered_by ? userfullname($row->administered_by) : 'N/A';
+                })
+                ->addColumn('status', function($row) {
+                    if (!$row->schedule) return 'ontime';
+                    $scheduled = Carbon::parse($row->schedule->scheduled_time);
+                    $administered = Carbon::parse($row->administered_at);
+                    return $administered->diffInMinutes($scheduled, false) > 30 ? 'late' : 'ontime';
+                })
+                ->make(true);
+        }
+
+        return response()->json([
+            'success' => true,
+            'stats' => [
+                'total' => $total,
+                'ontime_rate' => $onTimeRate . '%',
+                'late' => $lateCount,
+                'missed' => $missedCount,
+            ],
+        ]);
+    }
+
+    /**
+     * Get Injections Report Data
+     */
+    public function getReportsInjections(Request $request)
+    {
+        $dateRange = $this->getDateRange($request);
+        $nurseId = $request->get('nurse_id');
+
+        $query = InjectionAdministration::with(['patient.user', 'product'])
+            ->whereBetween('administered_at', [$dateRange['from'], $dateRange['to']]);
+
+        if ($nurseId) {
+            $query->where('administered_by', $nurseId);
+        }
+
+        // DataTable response
+        if ($request->ajax() && $request->has('draw')) {
+            return DataTables::of($query->orderByDesc('administered_at'))
+                ->addColumn('datetime', function($row) {
+                    return $row->administered_at->format('M d, Y h:i A');
+                })
+                ->addColumn('patient_name', function($row) {
+                    return $row->patient ? userfullname($row->patient->user_id) : 'N/A';
+                })
+                ->addColumn('drug_name', function($row) {
+                    return $row->product ? $row->product->product_name : 'N/A';
+                })
+                ->addColumn('administered_by_name', function($row) {
+                    return $row->administered_by ? userfullname($row->administered_by) : 'N/A';
+                })
+                ->make(true);
+        }
+
+        return response()->json([
+            'success' => true,
+            'total' => $query->count(),
+        ]);
+    }
+
+    /**
+     * Get Immunizations Report Data
+     */
+    public function getReportsImmunizations(Request $request)
+    {
+        $dateRange = $this->getDateRange($request);
+        $nurseId = $request->get('nurse_id');
+
+        $query = ImmunizationRecord::with(['patient.user', 'product'])
+            ->whereBetween('administered_at', [$dateRange['from'], $dateRange['to']]);
+
+        if ($nurseId) {
+            $query->where('administered_by', $nurseId);
+        }
+
+        // DataTable response
+        if ($request->ajax() && $request->has('draw')) {
+            return DataTables::of($query->orderByDesc('administered_at'))
+                ->addColumn('datetime', function($row) {
+                    return $row->administered_at ? Carbon::parse($row->administered_at)->format('M d, Y h:i A') : 'N/A';
+                })
+                ->addColumn('patient_name', function($row) {
+                    return $row->patient ? userfullname($row->patient->user_id) : 'N/A';
+                })
+                ->addColumn('patient_age', function($row) {
+                    if (!$row->patient || !$row->patient->dob) return 'N/A';
+                    return Carbon::parse($row->patient->dob)->age . ' yrs';
+                })
+                ->addColumn('vaccine', function($row) {
+                    return $row->vaccine_name ?? ($row->product ? $row->product->product_name : 'N/A');
+                })
+                ->addColumn('dose_number', function($row) {
+                    return $row->dose_number ?? 'N/A';
+                })
+                ->addColumn('batch_no', function($row) {
+                    return $row->batch_number ?? 'N/A';
+                })
+                ->addColumn('administered_by_name', function($row) {
+                    return $row->administered_by ? userfullname($row->administered_by) : 'N/A';
+                })
+                ->make(true);
+        }
+
+        return response()->json([
+            'success' => true,
+            'total' => $query->count(),
+        ]);
+    }
+
+    /**
+     * Get I/O Balance Report Data
+     */
+    public function getReportsIO(Request $request)
+    {
+        $dateRange = $this->getDateRange($request);
+        $nurseId = $request->get('nurse_id');
+
+        $query = IntakeOutputPeriod::with(['patient.user', 'records'])
+            ->whereBetween('created_at', [$dateRange['from'], $dateRange['to']]);
+
+        // Summary stats
+        $periods = $query->clone()->get();
+        $total = $periods->count();
+        $positive = 0;
+        $negative = 0;
+        $critical = 0;
+
+        foreach ($periods as $period) {
+            $intake = $period->records->where('type', 'intake')->sum('amount');
+            $output = $period->records->where('type', 'output')->sum('amount');
+            $balance = $intake - $output;
+
+            if ($balance > 0) $positive++;
+            elseif ($balance < 0) $negative++;
+            if (abs($balance) > 500) $critical++;
+        }
+
+        // DataTable response
+        if ($request->ajax() && $request->has('draw')) {
+            return DataTables::of($query->orderByDesc('created_at'))
+                ->addColumn('date_formatted', function($row) {
+                    return $row->created_at->format('M d, Y');
+                })
+                ->addColumn('patient_name', function($row) {
+                    return $row->patient ? userfullname($row->patient->user_id) : 'N/A';
+                })
+                ->addColumn('ward_bed', function($row) {
+                    if (!$row->patient) return 'N/A';
+                    $admission = AdmissionRequest::with('bed')
+                        ->where('patient_id', $row->patient->id)
+                        ->where('discharged', 0)
+                        ->first();
+                    return $admission && $admission->bed ? $admission->bed->ward . ' - ' . $admission->bed->name : 'N/A';
+                })
+                ->addColumn('total_intake', function($row) {
+                    return $row->records->where('type', 'intake')->sum('amount') . ' ml';
+                })
+                ->addColumn('total_output', function($row) {
+                    return $row->records->where('type', 'output')->sum('amount') . ' ml';
+                })
+                ->addColumn('balance', function($row) {
+                    $intake = $row->records->where('type', 'intake')->sum('amount');
+                    $output = $row->records->where('type', 'output')->sum('amount');
+                    $balance = $intake - $output;
+                    return ($balance >= 0 ? '+' : '') . $balance . ' ml';
+                })
+                ->addColumn('status', function($row) {
+                    $intake = $row->records->where('type', 'intake')->sum('amount');
+                    $output = $row->records->where('type', 'output')->sum('amount');
+                    $balance = $intake - $output;
+                    if (abs($balance) > 500) return 'critical';
+                    if ($balance < 0) return 'warning';
+                    return 'normal';
+                })
+                ->addColumn('recorded_by', function($row) {
+                    $nurse = $row->records->first();
+                    return $nurse && $nurse->nurse_id ? userfullname($nurse->nurse_id) : 'N/A';
+                })
+                ->make(true);
+        }
+
+        return response()->json([
+            'success' => true,
+            'stats' => [
+                'records' => $total,
+                'positive' => $positive,
+                'negative' => $negative,
+                'critical' => $critical,
+            ],
+        ]);
+    }
+
+    /**
+     * Get Nursing Notes Report Data
+     */
+    public function getReportsNotes(Request $request)
+    {
+        $dateRange = $this->getDateRange($request);
+        $nurseId = $request->get('nurse_id');
+
+        $query = NursingNote::with(['patient.user', 'type', 'createdBy'])
+            ->whereBetween('created_at', [$dateRange['from'], $dateRange['to']]);
+
+        if ($nurseId) {
+            $query->where('created_by', $nurseId);
+        }
+
+        // Summary stats
+        $total = $query->clone()->count();
+        $critical = $query->clone()->whereHas('type', function($q) {
+            $q->whereIn('name', ['Incident Report', 'Critical', 'Emergency']);
+        })->count();
+        $patients = $query->clone()->distinct('patient_id')->count('patient_id');
+
+        // DataTable response
+        if ($request->ajax() && $request->has('draw')) {
+            return DataTables::of($query->orderByDesc('created_at'))
+                ->addColumn('datetime', function($row) {
+                    return $row->created_at->format('M d, Y h:i A');
+                })
+                ->addColumn('patient_name', function($row) {
+                    return $row->patient ? userfullname($row->patient->user_id) : 'N/A';
+                })
+                ->addColumn('note_type', function($row) {
+                    return $row->type ? $row->type->name : 'General';
+                })
+                ->addColumn('summary', function($row) {
+                    return \Str::limit(strip_tags($row->note), 80);
+                })
+                ->addColumn('written_by', function($row) {
+                    return $row->created_by ? userfullname($row->created_by) : 'N/A';
+                })
+                ->addColumn('status', function($row) {
+                    return $row->completed ? 'completed' : 'pending';
+                })
+                ->make(true);
+        }
+
+        return response()->json([
+            'success' => true,
+            'stats' => [
+                'total' => $total,
+                'critical' => $critical,
+                'patients' => $patients,
+            ],
+        ]);
+    }
+
+    /**
+     * Get Shift Performance Report Data
+     */
+    public function getReportsShifts(Request $request)
+    {
+        $dateRange = $this->getDateRange($request);
+        $wardId = $request->get('ward_id');
+        $nurseId = $request->get('nurse_id');
+        $shiftType = $request->get('shift_type');
+
+        $query = \App\Models\NursingShift::with(['user', 'ward', 'handover'])
+            ->whereBetween('started_at', [$dateRange['from'], $dateRange['to']]);
+
+        if ($wardId) {
+            $query->where('ward_id', $wardId);
+        }
+        if ($nurseId) {
+            $query->where('user_id', $nurseId);
+        }
+        if ($shiftType) {
+            $query->where('shift_type', $shiftType);
+        }
+
+        // Summary stats
+        $total = $query->clone()->where('status', 'completed')->count();
+        $avgDuration = $query->clone()->where('status', 'completed')
+            ->whereNotNull('ended_at')
+            ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, started_at, ended_at)) as avg_hours')
+            ->value('avg_hours') ?? 0;
+
+        $withHandover = $query->clone()->where('handover_created', true)->count();
+        $handoverRate = $total > 0 ? round(($withHandover / $total) * 100) : 0;
+        $overdue = $query->clone()->where('status', 'auto_ended')->count();
+
+        // DataTable response
+        if ($request->ajax() && $request->has('draw')) {
+            return DataTables::of($query->orderByDesc('started_at'))
+                ->addColumn('date', function($row) {
+                    return $row->started_at->format('M d, Y');
+                })
+                ->addColumn('nurse_name', function($row) {
+                    return $row->user ? userfullname($row->user->id) : 'N/A';
+                })
+                ->addColumn('shift_type_label', function($row) {
+                    return ucfirst($row->shift_type);
+                })
+                ->addColumn('ward_name', function($row) {
+                    return $row->ward ? $row->ward->name : 'All Wards';
+                })
+                ->addColumn('start_time', function($row) {
+                    return $row->started_at->format('h:i A');
+                })
+                ->addColumn('end_time', function($row) {
+                    return $row->ended_at ? $row->ended_at->format('h:i A') : '-';
+                })
+                ->addColumn('duration', function($row) {
+                    if (!$row->ended_at) return '-';
+                    $hours = $row->started_at->diffInHours($row->ended_at);
+                    $mins = $row->started_at->diffInMinutes($row->ended_at) % 60;
+                    return "{$hours}h {$mins}m";
+                })
+                ->addColumn('actions_count', function($row) {
+                    return $row->vitals_count + $row->medications_count + $row->injections_count + $row->immunizations_count + $row->notes_count;
+                })
+                ->addColumn('handover_status', function($row) {
+                    return $row->handover_created ? 'Yes' : 'No';
+                })
+                ->addColumn('status_label', function($row) {
+                    return ucfirst(str_replace('_', ' ', $row->status));
+                })
+                ->make(true);
+        }
+
+        return response()->json([
+            'success' => true,
+            'stats' => [
+                'total' => $total,
+                'avg_duration' => round($avgDuration, 1) . 'h',
+                'handover_rate' => $handoverRate . '%',
+                'overdue' => $overdue,
+            ],
+        ]);
+    }
+
+    /**
+     * Get Ward Occupancy Report Data
+     */
+    public function getReportsOccupancy(Request $request)
+    {
+        $wards = \App\Models\Ward::with(['beds'])->get();
+
+        $totalBeds = 0;
+        $occupied = 0;
+        $available = 0;
+        $maintenance = 0;
+        $wardData = [];
+
+        foreach ($wards as $ward) {
+            $wardTotal = $ward->beds->count();
+            $wardOccupied = $ward->beds->where('bed_status', 'occupied')->count();
+            $wardAvailable = $ward->beds->where('bed_status', 'available')->count();
+            $wardMaintenance = $ward->beds->where('bed_status', 'maintenance')->count();
+
+            $totalBeds += $wardTotal;
+            $occupied += $wardOccupied;
+            $available += $wardAvailable;
+            $maintenance += $wardMaintenance;
+
+            $wardData[] = [
+                'ward' => $ward->name,
+                'total' => $wardTotal,
+                'occupied' => $wardOccupied,
+                'available' => $wardAvailable,
+                'maintenance' => $wardMaintenance,
+                'occupancy_rate' => $wardTotal > 0 ? round(($wardOccupied / $wardTotal) * 100) . '%' : '0%',
+            ];
+        }
+
+        // Admission/Discharge stats
+        $today = Carbon::today();
+        $admissionsToday = AdmissionRequest::whereDate('created_at', $today)->count();
+        $dischargestoday = AdmissionRequest::whereDate('updated_at', $today)->where('discharged', 1)->count();
+        $pendingDischarges = AdmissionRequest::where('admission_status', 'discharge_requested')->count();
+
+        // Calculate period stats from date range
+        $dateRange = $this->getDateRange($request);
+        $admissionsPeriod = AdmissionRequest::whereBetween('created_at', [$dateRange['from'], $dateRange['to']])->count();
+        $dischargesPeriod = AdmissionRequest::whereBetween('updated_at', [$dateRange['from'], $dateRange['to']])->where('discharged', 1)->count();
+
+        // Average length of stay
+        $avgLos = AdmissionRequest::where('discharged', 1)
+            ->whereNotNull('discharge_date')
+            ->selectRaw('AVG(DATEDIFF(discharge_date, created_at)) as avg_days')
+            ->value('avg_days') ?? 0;
+
+        return response()->json([
+            'success' => true,
+            'stats' => [
+                'total_beds' => $totalBeds,
+                'occupied' => $occupied,
+                'available' => $available,
+                'maintenance' => $maintenance,
+            ],
+            'admissions' => [
+                'today' => $admissionsToday,
+                'period' => $admissionsPeriod,
+                'avg_los' => round($avgLos, 1) . 'd',
+            ],
+            'discharges' => [
+                'today' => $dischargestoday,
+                'period' => $dischargesPeriod,
+                'pending' => $pendingDischarges,
+            ],
+            'wards' => $wardData,
+        ]);
+    }
+
+    /**
+     * Get available nurses for filter dropdown
+     */
+    public function getReportsNurses()
+    {
+        $nurses = \App\Models\User::whereHas('roles', function($q) {
+            $q->whereIn('name', ['Nurse', 'NURSE', 'Head Nurse', 'Nursing Officer', 'Matron']);
+        })->where('status', 1)->get()->map(function($user) {
+            return [
+                'id' => $user->id,
+                'name' => userfullname($user->id),
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'nurses' => $nurses,
+        ]);
+    }
+
+    /**
+     * Helper to get date range from request
+     */
+    private function getDateRange(Request $request)
+    {
+        $range = $request->get('date_range', '7days');
+        $from = $request->get('date_from');
+        $to = $request->get('date_to');
+
+        if ($from && $to) {
+            return [
+                'from' => Carbon::parse($from)->startOfDay(),
+                'to' => Carbon::parse($to)->endOfDay(),
+            ];
+        }
+
+        switch ($range) {
+            case 'today':
+                return ['from' => Carbon::today(), 'to' => Carbon::today()->endOfDay()];
+            case 'yesterday':
+                return ['from' => Carbon::yesterday(), 'to' => Carbon::yesterday()->endOfDay()];
+            case '7days':
+                return ['from' => Carbon::today()->subDays(6)->startOfDay(), 'to' => Carbon::today()->endOfDay()];
+            case '30days':
+                return ['from' => Carbon::today()->subDays(29)->startOfDay(), 'to' => Carbon::today()->endOfDay()];
+            case 'thismonth':
+                return ['from' => Carbon::today()->startOfMonth(), 'to' => Carbon::today()->endOfDay()];
+            default:
+                return ['from' => Carbon::today()->subDays(6)->startOfDay(), 'to' => Carbon::today()->endOfDay()];
         }
     }
 }

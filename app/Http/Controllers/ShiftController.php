@@ -14,7 +14,7 @@ use Yajra\DataTables\Facades\DataTables;
 
 /**
  * ShiftController
- * 
+ *
  * Handles all shift management operations including:
  * - Starting/ending shifts
  * - Handover creation and acknowledgment
@@ -30,7 +30,7 @@ class ShiftController extends Controller
     {
         try {
             $shift = NursingShift::getActiveForUser(auth()->id());
-            
+
             if ($shift) {
                 return response()->json([
                     'success' => true,
@@ -64,7 +64,7 @@ class ShiftController extends Controller
                     ],
                 ]);
             }
-            
+
             return response()->json([
                 'success' => true,
                 'has_active_shift' => false,
@@ -86,20 +86,20 @@ class ShiftController extends Controller
         try {
             $wardId = $request->ward_id;
             $hours = $request->input('hours', 24);
-            
+
             $query = ShiftHandover::with(['creator', 'shift', 'ward'])
                 ->recent($hours)
                 ->unacknowledged()
                 ->orderBy('created_at', 'desc');
-            
+
             if ($wardId) {
                 $query->where(function($q) use ($wardId) {
                     $q->forWard($wardId)->orWhereNull('ward_id');
                 });
             }
-            
+
             $handovers = $query->limit(10)->get();
-            
+
             // Also get count of unacknowledged critical handovers
             $criticalCount = ShiftHandover::unacknowledged()
                 ->withCriticalNotes()
@@ -109,7 +109,7 @@ class ShiftController extends Controller
                     });
                 })
                 ->count();
-            
+
             return response()->json([
                 'success' => true,
                 'handovers' => $handovers->map(function($handover) {
@@ -169,10 +169,10 @@ class ShiftController extends Controller
             $wardId = $request->ward_id;
             $criticalHandovers = ShiftHandover::getCriticalUnacknowledged($wardId);
             $acknowledgedIds = $request->acknowledged_handovers ?? [];
-            
+
             // Filter out already acknowledged ones
             $remainingCritical = $criticalHandovers->whereNotIn('id', $acknowledgedIds);
-            
+
             if ($remainingCritical->count() > 0 && !$request->force_start) {
                 return response()->json([
                     'success' => false,
@@ -254,7 +254,7 @@ class ShiftController extends Controller
             DB::beginTransaction();
 
             $shift = NursingShift::getActiveForUser(auth()->id());
-            
+
             if (!$shift) {
                 return response()->json([
                     'success' => false,
@@ -263,10 +263,15 @@ class ShiftController extends Controller
             }
 
             // End the shift
-            $shift->endShift(
-                $request->input('concluding_notes'),
-                $request->input('critical_notes')
-            );
+            // First update notes on the shift if provided
+            if ($request->filled('concluding_notes') || $request->filled('critical_notes')) {
+                $shift->update([
+                    'concluding_notes' => $request->input('concluding_notes'),
+                    'critical_notes' => $request->input('critical_notes'),
+                ]);
+            }
+
+            $shift->endShift(false);
 
             // Create handover if requested
             $handover = null;
@@ -316,7 +321,7 @@ class ShiftController extends Controller
     {
         try {
             $shift = NursingShift::getActiveForUser(auth()->id());
-            
+
             if (!$shift) {
                 return response()->json([
                     'success' => false,
@@ -326,13 +331,13 @@ class ShiftController extends Controller
 
             // Get grouped audit logs
             $groupedAuditLogs = $shift->getGroupedAuditLogs();
-            
+
             // Get patient highlights
             $patientHighlights = $shift->getPatientHighlights();
-            
+
             // Generate detailed summary
             $detailedSummary = $shift->generateDetailedSummary();
-            
+
             // Build activity summary for display
             $activitySummary = [];
             foreach ($groupedAuditLogs as $type => $data) {
@@ -351,10 +356,10 @@ class ShiftController extends Controller
                     ];
                 }
             }
-            
+
             // Calculate totals
             $totalEvents = array_sum(array_column($activitySummary, 'count'));
-            
+
             // Calculate unique patients safely
             $totalPatients = 0;
             if (!empty($groupedAuditLogs)) {
@@ -388,7 +393,7 @@ class ShiftController extends Controller
     }
 
     /**
-     * Get handovers list (DataTable compatible)
+     * Get handovers list (Cards or DataTable compatible)
      */
     public function getHandovers(Request $request)
     {
@@ -400,29 +405,62 @@ class ShiftController extends Controller
             if ($request->ward_id) {
                 $query->forWard($request->ward_id);
             }
-            
+
             if ($request->shift_type) {
                 $query->where('shift_type', $request->shift_type);
             }
-            
+
             if ($request->status === 'acknowledged') {
                 $query->acknowledged();
             } elseif ($request->status === 'pending') {
                 $query->unacknowledged();
             }
-            
+
             if ($request->date_from) {
                 $query->whereDate('created_at', '>=', $request->date_from);
             }
-            
+
             if ($request->date_to) {
                 $query->whereDate('created_at', '<=', $request->date_to);
             }
 
-            if ($request->has_critical === 'yes') {
+            // Priority filter
+            if ($request->priority === 'critical') {
                 $query->withCriticalNotes();
+            } elseif ($request->priority === 'has_tasks') {
+                $query->whereRaw("JSON_LENGTH(pending_tasks) > 0");
             }
 
+            // Search filter
+            if ($request->search) {
+                $search = $request->search;
+                $query->where(function($q) use ($search) {
+                    $q->where('summary', 'like', "%{$search}%")
+                      ->orWhere('critical_notes', 'like', "%{$search}%")
+                      ->orWhere('concluding_notes', 'like', "%{$search}%")
+                      ->orWhereHas('creator', function($q2) use ($search) {
+                          $q2->where('firstname', 'like', "%{$search}%")
+                             ->orWhere('surname', 'like', "%{$search}%")
+                             ->orWhere('email', 'like', "%{$search}%");
+                      });
+                });
+            }
+
+            // Sorting
+            if ($request->sort === 'oldest') {
+                $query->reorder('created_at', 'asc');
+            } elseif ($request->sort === 'priority') {
+                $query->reorder()
+                    ->orderByRaw("CASE WHEN critical_notes IS NOT NULL AND critical_notes != '' THEN 0 ELSE 1 END")
+                    ->orderBy('created_at', 'desc');
+            }
+
+            // If format=cards, return paginated card-friendly data
+            if ($request->format === 'cards') {
+                return $this->getHandoversCards($query, $request);
+            }
+
+            // Otherwise return DataTable format
             return DataTables::of($query)
                 ->addColumn('shift_type_badge', function($handover) {
                     return $handover->shift_type_badge;
@@ -440,13 +478,13 @@ class ShiftController extends Controller
                     return $handover->status_badge;
                 })
                 ->addColumn('has_critical', function($handover) {
-                    return $handover->has_critical_notes 
+                    return $handover->has_critical_notes
                         ? '<span class="badge badge-danger"><i class="mdi mdi-alert"></i> Yes</span>'
                         : '<span class="text-muted">-</span>';
                 })
                 ->addColumn('pending_count', function($handover) {
                     $count = is_array($handover->pending_tasks) ? count($handover->pending_tasks) : 0;
-                    return $count > 0 
+                    return $count > 0
                         ? '<span class="badge badge-warning">' . $count . '</span>'
                         : '<span class="text-muted">0</span>';
                 })
@@ -467,6 +505,71 @@ class ShiftController extends Controller
                 'error' => 'Error loading handovers',
             ], 500);
         }
+    }
+
+    /**
+     * Get handovers in cards format with pagination
+     */
+    protected function getHandoversCards($query, Request $request)
+    {
+        $perPage = $request->input('per_page', 12);
+        $page = $request->input('page', 1);
+
+        // Clone query for stats
+        $statsQuery = clone $query;
+
+        // Get stats
+        $totalCount = $statsQuery->count();
+        $pendingCount = (clone $statsQuery)->unacknowledged()->count();
+        $criticalCount = (clone $statsQuery)->withCriticalNotes()->count();
+
+        // Paginate
+        $handovers = $query->paginate($perPage, ['*'], 'page', $page);
+
+        // Format data for cards
+        $data = $handovers->map(function($handover) {
+            $shiftLabels = [
+                'morning' => 'Morning',
+                'afternoon' => 'Afternoon',
+                'night' => 'Night',
+            ];
+
+            return [
+                'id' => $handover->id,
+                'shift_type' => $handover->shift_type,
+                'shift_type_label' => $shiftLabels[$handover->shift_type] ?? ucfirst($handover->shift_type),
+                'ward_name' => $handover->ward->name ?? 'All Wards',
+                'created_by_name' => $handover->creator->name ?? 'Unknown',
+                'created_at' => $handover->created_at->format('M d, Y h:i A'),
+                'created_at_full' => $handover->created_at->format('F d, Y \a\t h:i A'),
+                'created_at_ago' => $handover->created_at->diffForHumans(),
+                'summary_preview' => \Str::limit(strip_tags($handover->summary), 120),
+                'critical_notes_preview' => $handover->critical_notes ? \Str::limit(strip_tags($handover->critical_notes), 80) : null,
+                'has_critical_notes' => $handover->has_critical_notes,
+                'pending_tasks_count' => is_array($handover->pending_tasks) ? count($handover->pending_tasks) : 0,
+                'action_count' => is_array($handover->action_summary) ? array_sum(array_column($handover->action_summary, 'count')) : 0,
+                'is_acknowledged' => $handover->is_acknowledged,
+                'acknowledged_at' => $handover->acknowledged_at ? $handover->acknowledged_at->format('M d, h:i A') : null,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+            'stats' => [
+                'total' => $totalCount,
+                'pending' => $pendingCount,
+                'critical' => $criticalCount,
+            ],
+            'pagination' => [
+                'current_page' => $handovers->currentPage(),
+                'per_page' => $handovers->perPage(),
+                'total' => $handovers->total(),
+                'total_pages' => $handovers->lastPage(),
+                'from' => $handovers->firstItem(),
+                'to' => $handovers->lastItem(),
+            ],
+        ]);
     }
 
     /**
@@ -529,7 +632,7 @@ class ShiftController extends Controller
     {
         try {
             $handover = ShiftHandover::findOrFail($id);
-            
+
             if ($handover->is_acknowledged) {
                 return response()->json([
                     'success' => false,
@@ -601,7 +704,7 @@ class ShiftController extends Controller
     {
         try {
             $shift = NursingShift::getActiveForUser(auth()->id());
-            
+
             if (!$shift) {
                 return response()->json([
                     'success' => false,
@@ -670,7 +773,7 @@ class ShiftController extends Controller
                     'afternoon' => '#17a2b8',
                     'night' => '#6c757d',
                 ];
-                
+
                 return [
                     'id' => $shift->id,
                     'title' => ucfirst($shift->shift_type) . ' Shift',
@@ -756,14 +859,14 @@ class ShiftController extends Controller
         if ($seconds < 60) {
             return $seconds . 's';
         }
-        
+
         $hours = floor($seconds / 3600);
         $minutes = floor(($seconds % 3600) / 60);
-        
+
         if ($hours > 0) {
             return $hours . 'h ' . $minutes . 'm';
         }
-        
+
         return $minutes . 'm';
     }
 }

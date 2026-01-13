@@ -11,7 +11,8 @@ class Staff extends Model implements Auditable
 {
     use HasFactory;
     use \OwenIt\Auditing\Auditable;
-protected $fillable = [
+
+    protected $fillable = [
         'user_id',
         'specialization_id',
         'clinic_id',
@@ -20,7 +21,20 @@ protected $fillable = [
         'home_address',
         'phone_number',
         'consultation_fee',
+        'is_unit_head',
+        'is_dept_head',
         'status',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'is_unit_head' => 'boolean',
+        'is_dept_head' => 'boolean',
+        'date_of_birth' => 'date',
     ];
 
     public function user()

@@ -83,14 +83,14 @@ class BedController extends Controller
                 return back()->with('errors', $v->messages()->all())->withInput();
             } else {
                 DB::beginTransaction();
-                
+
                 // Get ward name from ward_id if provided
                 $wardName = $request->ward;
                 if ($request->ward_id) {
                     $ward = Ward::find($request->ward_id);
                     $wardName = $ward ? $ward->name : $request->ward;
                 }
-                
+
                 $bed_servie_entry                      = new service;
                 $bed_servie_entry->user_id             = Auth::user()->id;
                 $bed_servie_entry->category_id         = appsettings('bed_service_category_id', 1);

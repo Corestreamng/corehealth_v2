@@ -559,3 +559,6 @@ Route::post('update-my-profile', [StaffController::class, 'update_my_profile'])-
 
 // Nurse Chart routes
 require __DIR__ . '/nurse_chart.php';
+
+// Reception Workbench routes
+require __DIR__ . '/reception_workbench.php';

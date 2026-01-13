@@ -636,6 +636,27 @@
                     </div>
                 </div>
 
+                <!-- Leadership Role Badges -->
+                @php
+                    $staffProfile = Auth::user()->staff_profile;
+                @endphp
+                @if($staffProfile && ($staffProfile->is_unit_head || $staffProfile->is_dept_head))
+                <div class="mb-3">
+                    <div class="d-flex flex-wrap justify-content-center" style="gap: 0.5rem;">
+                        @if($staffProfile->is_dept_head)
+                            <span class="badge d-flex align-items-center" style="background: linear-gradient(135deg, #f6ad55, #ed8936); color: white; padding: 0.4rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600;">
+                                <i class="mdi mdi-shield-crown mr-1"></i> Dept Head
+                            </span>
+                        @endif
+                        @if($staffProfile->is_unit_head)
+                            <span class="badge d-flex align-items-center" style="background: linear-gradient(135deg, #63b3ed, #4299e1); color: white; padding: 0.4rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600;">
+                                <i class="mdi mdi-shield-account mr-1"></i> Unit Head
+                            </span>
+                        @endif
+                    </div>
+                </div>
+                @endif
+
                 <a href="{{ route('logout') }}"
                    onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
                    class="btn btn-block d-flex align-items-center justify-content-center py-2"

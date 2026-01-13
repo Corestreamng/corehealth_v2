@@ -2442,6 +2442,235 @@
         z-index: auto !important;
     }
 
+    /* ==========================================
+       NURSING REPORTS STYLES
+       ========================================== */
+
+    /* Reports Filter Panel */
+    .nursing-reports-filters {
+        flex-shrink: 0;
+    }
+
+    /* Reports Tabs Wrapper */
+    .nursing-reports-tabs-wrapper {
+        background: white;
+        border-bottom: 1px solid #dee2e6;
+        flex-shrink: 0;
+    }
+
+    .nursing-reports-tabs {
+        padding: 0 1rem;
+        border-bottom: none;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    .nursing-reports-tabs .nav-item {
+        flex-shrink: 0;
+    }
+
+    .nursing-reports-tabs .nav-link {
+        color: #6c757d;
+        border: none;
+        border-bottom: 3px solid transparent;
+        border-radius: 0;
+        padding: 0.75rem 1rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s;
+    }
+
+    .nursing-reports-tabs .nav-link:hover {
+        color: var(--hospital-primary);
+        background: rgba(0, 123, 255, 0.05);
+    }
+
+    .nursing-reports-tabs .nav-link.active {
+        color: var(--hospital-primary);
+        border-bottom-color: var(--hospital-primary);
+        background: transparent;
+    }
+
+    .nursing-reports-tabs .nav-link i {
+        font-size: 1.1rem;
+    }
+
+    /* Reports Content Area */
+    .nursing-reports-content {
+        flex: 1;
+        overflow-y: auto;
+        background: #f8f9fa;
+    }
+
+    /* Stat Cards */
+    .nr-stat-card {
+        background: white;
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        transition: all 0.2s;
+        height: 100%;
+    }
+
+    .nr-stat-card:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .nr-stat-card-sm {
+        padding: 1rem;
+    }
+
+    .nr-stat-card-sm .nr-stat-icon {
+        width: 45px;
+        height: 45px;
+        font-size: 1.25rem;
+    }
+
+    .nr-stat-card-sm .nr-stat-content h4 {
+        font-size: 1.5rem;
+    }
+
+    .nr-stat-icon {
+        width: 55px;
+        height: 55px;
+        border-radius: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .nr-stat-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .nr-stat-content h3,
+    .nr-stat-content h4 {
+        margin: 0;
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #1a1a2e;
+        line-height: 1.2;
+    }
+
+    .nr-stat-content p {
+        margin: 0;
+        font-size: 0.85rem;
+        color: #6c757d;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Reports Tables */
+    #nursing-reports-view .table {
+        margin-bottom: 0;
+    }
+
+    #nursing-reports-view .table thead th {
+        background: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #495057;
+        white-space: nowrap;
+    }
+
+    #nursing-reports-view .table tbody td {
+        vertical-align: middle;
+        font-size: 0.9rem;
+    }
+
+    /* Reports Cards */
+    #nursing-reports-view .card {
+        border: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        border-radius: 0.75rem;
+    }
+
+    #nursing-reports-view .card-header {
+        background: white;
+        border-bottom: 1px solid #f1f3f5;
+        padding: 1rem 1.25rem;
+    }
+
+    #nursing-reports-view .card-header h6 {
+        margin: 0;
+        font-weight: 600;
+        color: #1a1a2e;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Status badges in tables */
+    .nr-status-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .nr-status-normal { background: #d4edda; color: #155724; }
+    .nr-status-warning { background: #fff3cd; color: #856404; }
+    .nr-status-critical { background: #f8d7da; color: #721c24; }
+    .nr-status-late { background: #fff3cd; color: #856404; }
+    .nr-status-ontime { background: #d4edda; color: #155724; }
+    .nr-status-missed { background: #f8d7da; color: #721c24; }
+
+    /* Sub-tabs styling */
+    #nr-inj-subtabs .nav-link {
+        border-radius: 0.5rem;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+    }
+
+    #nr-inj-subtabs .nav-link.active {
+        background: var(--hospital-primary);
+        color: white;
+    }
+
+    /* Charts container */
+    #nursing-reports-view canvas {
+        max-height: 300px;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .nursing-reports-tabs .nav-link {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.85rem;
+        }
+
+        .nursing-reports-tabs .nav-link span {
+            display: none;
+        }
+
+        .nr-stat-card {
+            padding: 1rem;
+        }
+
+        .nr-stat-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 1.1rem;
+        }
+
+        .nr-stat-content h3 {
+            font-size: 1.25rem;
+        }
+    }
+
 </style>
 
 <div class="nursing-workbench-container">
@@ -2820,6 +3049,898 @@
                                                 <p class="text-muted">Loading...</p>
                                             </div>
                                         </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nursing Reports View -->
+        <div class="queue-view" id="nursing-reports-view">
+            <div class="queue-view-header">
+                <h4><i class="mdi mdi-chart-box-outline"></i> Nursing Reports & Analytics</h4>
+                <button class="btn btn-secondary btn-close-queue" id="btn-close-nursing-reports">
+                    <i class="mdi mdi-close"></i> Close
+                </button>
+            </div>
+            <div class="queue-view-content" style="padding: 0; overflow: hidden;">
+                <!-- Global Filters Panel -->
+                <div class="nursing-reports-filters p-3 bg-light border-bottom">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-2">
+                            <label class="form-label-modern">
+                                <i class="mdi mdi-calendar-range"></i> Date Range
+                            </label>
+                            <select class="form-control form-control-modern" id="nr-date-range">
+                                <option value="today">Today</option>
+                                <option value="yesterday">Yesterday</option>
+                                <option value="7days" selected>Last 7 Days</option>
+                                <option value="30days">Last 30 Days</option>
+                                <option value="thismonth">This Month</option>
+                                <option value="custom">Custom Range</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2" id="nr-custom-dates" style="display: none;">
+                            <label class="form-label-modern">From - To</label>
+                            <div class="d-flex gap-2">
+                                <input type="date" class="form-control form-control-modern" id="nr-date-from" style="height: 40px !important;">
+                                <input type="date" class="form-control form-control-modern" id="nr-date-to" style="height: 40px !important;">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label-modern">
+                                <i class="mdi mdi-hospital-building"></i> Ward
+                            </label>
+                            <select class="form-control form-control-modern" id="nr-ward-filter">
+                                <option value="">All Wards</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label-modern">
+                                <i class="mdi mdi-account-nurse"></i> Nurse
+                            </label>
+                            <select class="form-control form-control-modern" id="nr-nurse-filter">
+                                <option value="">All Nurses</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label-modern">
+                                <i class="mdi mdi-clock-outline"></i> Shift
+                            </label>
+                            <select class="form-control form-control-modern" id="nr-shift-filter">
+                                <option value="">All Shifts</option>
+                                <option value="morning">Morning</option>
+                                <option value="afternoon">Afternoon</option>
+                                <option value="night">Night</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex gap-2">
+                            <button class="btn btn-primary btn-modern flex-grow-1" id="nr-apply-filters">
+                                <i class="mdi mdi-filter"></i> Apply
+                            </button>
+                            <button class="btn btn-outline-secondary btn-modern" id="nr-reset-filters" title="Reset Filters">
+                                <i class="mdi mdi-refresh"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reports Tabs -->
+                <div class="nursing-reports-tabs-wrapper">
+                    <ul class="nav nav-tabs nursing-reports-tabs" id="nursingReportsTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="nr-activity-tab" data-toggle="tab" href="#nr-activity" role="tab">
+                                <i class="mdi mdi-chart-timeline-variant"></i> Activity Summary
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="nr-vitals-tab" data-toggle="tab" href="#nr-vitals" role="tab">
+                                <i class="mdi mdi-heart-pulse"></i> Vitals
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="nr-medications-tab" data-toggle="tab" href="#nr-medications" role="tab">
+                                <i class="mdi mdi-pill"></i> Medications
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="nr-injections-tab" data-toggle="tab" href="#nr-injections" role="tab">
+                                <i class="mdi mdi-needle"></i> Injections
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="nr-io-tab" data-toggle="tab" href="#nr-io" role="tab">
+                                <i class="mdi mdi-water"></i> I/O Balance
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="nr-notes-tab" data-toggle="tab" href="#nr-notes" role="tab">
+                                <i class="mdi mdi-note-text"></i> Notes
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="nr-shifts-tab" data-toggle="tab" href="#nr-shifts" role="tab">
+                                <i class="mdi mdi-account-clock"></i> Shift Performance
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="nr-occupancy-tab" data-toggle="tab" href="#nr-occupancy" role="tab">
+                                <i class="mdi mdi-bed"></i> Ward Occupancy
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Tab Content -->
+                <div class="tab-content nursing-reports-content" id="nursingReportsContent">
+                    <!-- Activity Summary Tab -->
+                    <div class="tab-pane fade show active" id="nr-activity" role="tabpanel">
+                        <div class="p-3">
+                            <!-- Stats Cards -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-3 col-6">
+                                    <div class="nr-stat-card">
+                                        <div class="nr-stat-icon bg-primary">
+                                            <i class="mdi mdi-account-group"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h3 id="nr-stat-patients">0</h3>
+                                            <p>Patients Served</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="nr-stat-card">
+                                        <div class="nr-stat-icon bg-danger">
+                                            <i class="mdi mdi-heart-pulse"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h3 id="nr-stat-vitals">0</h3>
+                                            <p>Vitals Recorded</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="nr-stat-card">
+                                        <div class="nr-stat-icon bg-warning">
+                                            <i class="mdi mdi-pill"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h3 id="nr-stat-medications">0</h3>
+                                            <p>Medications Given</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="nr-stat-card">
+                                        <div class="nr-stat-icon bg-info">
+                                            <i class="mdi mdi-needle"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h3 id="nr-stat-injections">0</h3>
+                                            <p>Injections</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="nr-stat-card">
+                                        <div class="nr-stat-icon bg-success">
+                                            <i class="mdi mdi-shield-check"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h3 id="nr-stat-immunizations">0</h3>
+                                            <p>Immunizations</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="nr-stat-card">
+                                        <div class="nr-stat-icon bg-secondary">
+                                            <i class="mdi mdi-note-text"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h3 id="nr-stat-notes">0</h3>
+                                            <p>Notes Written</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="nr-stat-card">
+                                        <div class="nr-stat-icon" style="background: #6f42c1;">
+                                            <i class="mdi mdi-swap-horizontal"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h3 id="nr-stat-handovers">0</h3>
+                                            <p>Handovers</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="nr-stat-card">
+                                        <div class="nr-stat-icon" style="background: #e83e8c;">
+                                            <i class="mdi mdi-clock-check"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h3 id="nr-stat-shifts">0</h3>
+                                            <p>Shifts Completed</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Charts Row -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-8">
+                                    <div class="card h-100">
+                                        <div class="card-header">
+                                            <h6 class="mb-0"><i class="mdi mdi-chart-line"></i> Activity Trend</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <canvas id="nr-activity-trend-chart" height="250"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card h-100">
+                                        <div class="card-header">
+                                            <h6 class="mb-0"><i class="mdi mdi-chart-pie"></i> Activity Distribution</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <canvas id="nr-activity-distribution-chart" height="250"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Top Performers & Peak Hours -->
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0"><i class="mdi mdi-trophy"></i> Top Performers</h6>
+                                        </div>
+                                        <div class="card-body p-0">
+                                            <div class="table-responsive">
+                                                <table class="table table-hover mb-0" id="nr-top-performers-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>#</th>
+                                                            <th>Nurse</th>
+                                                            <th>Actions</th>
+                                                            <th>Patients</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody></tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0"><i class="mdi mdi-clock-outline"></i> Peak Activity Hours</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <canvas id="nr-peak-hours-chart" height="200"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Vitals Tab -->
+                    <div class="tab-pane fade" id="nr-vitals" role="tabpanel">
+                        <div class="p-3">
+                            <!-- Vitals Summary Cards -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-3">
+                                    <div class="nr-stat-card nr-stat-card-sm">
+                                        <div class="nr-stat-icon bg-primary">
+                                            <i class="mdi mdi-heart-pulse"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h4 id="nr-vitals-total">0</h4>
+                                            <p>Total Records</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="nr-stat-card nr-stat-card-sm">
+                                        <div class="nr-stat-icon bg-danger">
+                                            <i class="mdi mdi-alert-circle"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h4 id="nr-vitals-abnormal">0</h4>
+                                            <p>Abnormal Readings</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="nr-stat-card nr-stat-card-sm">
+                                        <div class="nr-stat-icon bg-warning">
+                                            <i class="mdi mdi-thermometer-alert"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h4 id="nr-vitals-fever">0</h4>
+                                            <p>Fever Cases</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="nr-stat-card nr-stat-card-sm">
+                                        <div class="nr-stat-icon bg-info">
+                                            <i class="mdi mdi-blood-bag"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h4 id="nr-vitals-hypertension">0</h4>
+                                            <p>High BP Cases</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Vitals DataTable -->
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0"><i class="mdi mdi-table"></i> Vitals Records</h6>
+                                    <button class="btn btn-sm btn-success" id="nr-export-vitals">
+                                        <i class="mdi mdi-file-excel"></i> Export
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover" id="nr-vitals-table" style="width: 100%">
+                                            <thead>
+                                                <tr>
+                                                    <th>Date/Time</th>
+                                                    <th>Patient</th>
+                                                    <th>Ward/Bed</th>
+                                                    <th>BP</th>
+                                                    <th>HR</th>
+                                                    <th>Temp</th>
+                                                    <th>RR</th>
+                                                    <th>SpO2</th>
+                                                    <th>Recorded By</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Medications Tab -->
+                    <div class="tab-pane fade" id="nr-medications" role="tabpanel">
+                        <div class="p-3">
+                            <!-- Medication Summary -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-3">
+                                    <div class="nr-stat-card nr-stat-card-sm">
+                                        <div class="nr-stat-icon bg-primary">
+                                            <i class="mdi mdi-pill"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h4 id="nr-meds-total">0</h4>
+                                            <p>Total Administered</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="nr-stat-card nr-stat-card-sm">
+                                        <div class="nr-stat-icon bg-success">
+                                            <i class="mdi mdi-check-circle"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h4 id="nr-meds-ontime">0%</h4>
+                                            <p>On-Time Rate</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="nr-stat-card nr-stat-card-sm">
+                                        <div class="nr-stat-icon bg-warning">
+                                            <i class="mdi mdi-clock-alert"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h4 id="nr-meds-late">0</h4>
+                                            <p>Late Administrations</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="nr-stat-card nr-stat-card-sm">
+                                        <div class="nr-stat-icon bg-danger">
+                                            <i class="mdi mdi-close-circle"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h4 id="nr-meds-missed">0</h4>
+                                            <p>Missed Doses</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Medications DataTable -->
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0"><i class="mdi mdi-table"></i> Medication Administration Log</h6>
+                                    <button class="btn btn-sm btn-success" id="nr-export-meds">
+                                        <i class="mdi mdi-file-excel"></i> Export
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover" id="nr-medications-table" style="width: 100%">
+                                            <thead>
+                                                <tr>
+                                                    <th>Date/Time</th>
+                                                    <th>Patient</th>
+                                                    <th>Medication</th>
+                                                    <th>Dose</th>
+                                                    <th>Route</th>
+                                                    <th>Scheduled</th>
+                                                    <th>Administered By</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Injections Tab -->
+                    <div class="tab-pane fade" id="nr-injections" role="tabpanel">
+                        <div class="p-3">
+                            <!-- Sub-tabs for Injections and Immunizations -->
+                            <ul class="nav nav-pills mb-3" id="nr-inj-subtabs">
+                                <li class="nav-item">
+                                    <a class="nav-link active" data-toggle="pill" href="#nr-inj-list">
+                                        <i class="mdi mdi-needle"></i> Injections
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" data-toggle="pill" href="#nr-imm-list">
+                                        <i class="mdi mdi-shield-check"></i> Immunizations
+                                    </a>
+                                </li>
+                            </ul>
+
+                            <div class="tab-content">
+                                <!-- Injections List -->
+                                <div class="tab-pane fade show active" id="nr-inj-list">
+                                    <div class="card">
+                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0"><i class="mdi mdi-needle"></i> Injection Records</h6>
+                                            <button class="btn btn-sm btn-success" id="nr-export-injections">
+                                                <i class="mdi mdi-file-excel"></i> Export
+                                            </button>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="table-responsive">
+                                                <table class="table table-hover" id="nr-injections-table" style="width: 100%">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Date/Time</th>
+                                                            <th>Patient</th>
+                                                            <th>Drug</th>
+                                                            <th>Dose</th>
+                                                            <th>Route</th>
+                                                            <th>Site</th>
+                                                            <th>Batch No</th>
+                                                            <th>Administered By</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody></tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Immunizations List -->
+                                <div class="tab-pane fade" id="nr-imm-list">
+                                    <div class="card">
+                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0"><i class="mdi mdi-shield-check"></i> Immunization Records</h6>
+                                            <button class="btn btn-sm btn-success" id="nr-export-immunizations">
+                                                <i class="mdi mdi-file-excel"></i> Export
+                                            </button>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="table-responsive">
+                                                <table class="table table-hover" id="nr-immunizations-table" style="width: 100%">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Date/Time</th>
+                                                            <th>Patient</th>
+                                                            <th>Age</th>
+                                                            <th>Vaccine</th>
+                                                            <th>Dose #</th>
+                                                            <th>Batch No</th>
+                                                            <th>Manufacturer</th>
+                                                            <th>Administered By</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody></tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- I/O Balance Tab -->
+                    <div class="tab-pane fade" id="nr-io" role="tabpanel">
+                        <div class="p-3">
+                            <!-- I/O Summary -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-3">
+                                    <div class="nr-stat-card nr-stat-card-sm">
+                                        <div class="nr-stat-icon bg-info">
+                                            <i class="mdi mdi-water"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h4 id="nr-io-records">0</h4>
+                                            <p>Total Records</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="nr-stat-card nr-stat-card-sm">
+                                        <div class="nr-stat-icon bg-success">
+                                            <i class="mdi mdi-plus-circle"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h4 id="nr-io-positive">0</h4>
+                                            <p>Positive Balance</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="nr-stat-card nr-stat-card-sm">
+                                        <div class="nr-stat-icon bg-danger">
+                                            <i class="mdi mdi-minus-circle"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h4 id="nr-io-negative">0</h4>
+                                            <p>Negative Balance</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="nr-stat-card nr-stat-card-sm">
+                                        <div class="nr-stat-icon bg-warning">
+                                            <i class="mdi mdi-alert"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h4 id="nr-io-critical">0</h4>
+                                            <p>Critical Imbalance</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- I/O DataTable -->
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0"><i class="mdi mdi-table"></i> Intake/Output Records</h6>
+                                    <button class="btn btn-sm btn-success" id="nr-export-io">
+                                        <i class="mdi mdi-file-excel"></i> Export
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover" id="nr-io-table" style="width: 100%">
+                                            <thead>
+                                                <tr>
+                                                    <th>Date</th>
+                                                    <th>Patient</th>
+                                                    <th>Ward/Bed</th>
+                                                    <th>Total Intake</th>
+                                                    <th>Total Output</th>
+                                                    <th>Balance</th>
+                                                    <th>Status</th>
+                                                    <th>Recorded By</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notes Tab -->
+                    <div class="tab-pane fade" id="nr-notes" role="tabpanel">
+                        <div class="p-3">
+                            <!-- Notes Summary -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-4">
+                                    <div class="nr-stat-card nr-stat-card-sm">
+                                        <div class="nr-stat-icon bg-primary">
+                                            <i class="mdi mdi-note-text"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h4 id="nr-notes-total">0</h4>
+                                            <p>Total Notes</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="nr-stat-card nr-stat-card-sm">
+                                        <div class="nr-stat-icon bg-danger">
+                                            <i class="mdi mdi-alert-circle"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h4 id="nr-notes-critical">0</h4>
+                                            <p>Critical/Incident</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="nr-stat-card nr-stat-card-sm">
+                                        <div class="nr-stat-icon bg-info">
+                                            <i class="mdi mdi-account-group"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h4 id="nr-notes-patients">0</h4>
+                                            <p>Patients Documented</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Notes DataTable -->
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0"><i class="mdi mdi-table"></i> Nursing Notes Log</h6>
+                                    <button class="btn btn-sm btn-success" id="nr-export-notes">
+                                        <i class="mdi mdi-file-excel"></i> Export
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover" id="nr-notes-table" style="width: 100%">
+                                            <thead>
+                                                <tr>
+                                                    <th>Date/Time</th>
+                                                    <th>Patient</th>
+                                                    <th>Note Type</th>
+                                                    <th>Summary</th>
+                                                    <th>Written By</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Shift Performance Tab -->
+                    <div class="tab-pane fade" id="nr-shifts" role="tabpanel">
+                        <div class="p-3">
+                            <!-- Shift Summary -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-3">
+                                    <div class="nr-stat-card nr-stat-card-sm">
+                                        <div class="nr-stat-icon bg-primary">
+                                            <i class="mdi mdi-clock-check"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h4 id="nr-shifts-total">0</h4>
+                                            <p>Shifts Completed</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="nr-stat-card nr-stat-card-sm">
+                                        <div class="nr-stat-icon bg-info">
+                                            <i class="mdi mdi-timer"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h4 id="nr-shifts-avg-duration">0h</h4>
+                                            <p>Avg Duration</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="nr-stat-card nr-stat-card-sm">
+                                        <div class="nr-stat-icon bg-success">
+                                            <i class="mdi mdi-swap-horizontal"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h4 id="nr-shifts-handovers">0%</h4>
+                                            <p>Handover Rate</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="nr-stat-card nr-stat-card-sm">
+                                        <div class="nr-stat-icon bg-warning">
+                                            <i class="mdi mdi-clock-alert"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h4 id="nr-shifts-overdue">0</h4>
+                                            <p>Overdue Shifts</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Shifts DataTable -->
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0"><i class="mdi mdi-table"></i> Shift History</h6>
+                                    <button class="btn btn-sm btn-success" id="nr-export-shifts">
+                                        <i class="mdi mdi-file-excel"></i> Export
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover" id="nr-shifts-table" style="width: 100%">
+                                            <thead>
+                                                <tr>
+                                                    <th>Date</th>
+                                                    <th>Nurse</th>
+                                                    <th>Shift Type</th>
+                                                    <th>Ward</th>
+                                                    <th>Start</th>
+                                                    <th>End</th>
+                                                    <th>Duration</th>
+                                                    <th>Actions</th>
+                                                    <th>Handover</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ward Occupancy Tab -->
+                    <div class="tab-pane fade" id="nr-occupancy" role="tabpanel">
+                        <div class="p-3">
+                            <!-- Occupancy Summary -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-3">
+                                    <div class="nr-stat-card nr-stat-card-sm">
+                                        <div class="nr-stat-icon bg-primary">
+                                            <i class="mdi mdi-bed"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h4 id="nr-beds-total">0</h4>
+                                            <p>Total Beds</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="nr-stat-card nr-stat-card-sm">
+                                        <div class="nr-stat-icon bg-danger">
+                                            <i class="mdi mdi-bed-empty"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h4 id="nr-beds-occupied">0</h4>
+                                            <p>Occupied</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="nr-stat-card nr-stat-card-sm">
+                                        <div class="nr-stat-icon bg-success">
+                                            <i class="mdi mdi-check-circle"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h4 id="nr-beds-available">0</h4>
+                                            <p>Available</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="nr-stat-card nr-stat-card-sm">
+                                        <div class="nr-stat-icon bg-warning">
+                                            <i class="mdi mdi-wrench"></i>
+                                        </div>
+                                        <div class="nr-stat-content">
+                                            <h4 id="nr-beds-maintenance">0</h4>
+                                            <p>Maintenance</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Admission/Discharge Stats -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0"><i class="mdi mdi-account-plus"></i> Admissions</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-around text-center">
+                                                <div>
+                                                    <h3 class="text-success" id="nr-admissions-today">0</h3>
+                                                    <small>Today</small>
+                                                </div>
+                                                <div>
+                                                    <h3 class="text-primary" id="nr-admissions-period">0</h3>
+                                                    <small>This Period</small>
+                                                </div>
+                                                <div>
+                                                    <h3 class="text-info" id="nr-avg-los">0d</h3>
+                                                    <small>Avg LOS</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0"><i class="mdi mdi-account-minus"></i> Discharges</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-around text-center">
+                                                <div>
+                                                    <h3 class="text-success" id="nr-discharges-today">0</h3>
+                                                    <small>Today</small>
+                                                </div>
+                                                <div>
+                                                    <h3 class="text-primary" id="nr-discharges-period">0</h3>
+                                                    <small>This Period</small>
+                                                </div>
+                                                <div>
+                                                    <h3 class="text-warning" id="nr-pending-discharges">0</h3>
+                                                    <small>Pending</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Ward Breakdown Table -->
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0"><i class="mdi mdi-hospital-building"></i> Ward Breakdown</h6>
+                                    <button class="btn btn-sm btn-success" id="nr-export-occupancy">
+                                        <i class="mdi mdi-file-excel"></i> Export
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover" id="nr-occupancy-table" style="width: 100%">
+                                            <thead>
+                                                <tr>
+                                                    <th>Ward</th>
+                                                    <th>Total Beds</th>
+                                                    <th>Occupied</th>
+                                                    <th>Available</th>
+                                                    <th>Maintenance</th>
+                                                    <th>Occupancy %</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
                                     </div>
                                 </div>
                             </div>
@@ -4167,13 +5288,13 @@
                 <!-- Handover Form -->
                 <div class="handover-form">
                     <h6 class="text-muted mb-3">Create Handover Document</h6>
-                    
+
                     <div class="form-group mb-3">
                         <label for="end-shift-critical-notes">
                             <i class="mdi mdi-alert text-danger"></i> Critical Notes
                             <small class="text-muted">(Urgent items for incoming nurse)</small>
                         </label>
-                        <textarea class="form-control" id="end-shift-critical-notes" rows="3" 
+                        <textarea class="form-control" id="end-shift-critical-notes" rows="3"
                             placeholder="Document any critical patient conditions, pending urgent tasks, or important alerts..."></textarea>
                     </div>
 
@@ -4181,7 +5302,7 @@
                         <label for="end-shift-concluding-notes">
                             <i class="mdi mdi-note-text"></i> Concluding Notes
                         </label>
-                        <textarea class="form-control" id="end-shift-concluding-notes" rows="3" 
+                        <textarea class="form-control" id="end-shift-concluding-notes" rows="3"
                             placeholder="General shift summary and observations..."></textarea>
                     </div>
 
@@ -4234,9 +5355,9 @@
     </div>
 </div>
 
-<!-- Handovers List Modal (DataTable) -->
+<!-- Handovers List Modal (Cards-based with Backend Processing) -->
 <div class="modal fade" id="handoversListModal" tabindex="-1" aria-labelledby="handoversListModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header bg-info text-white">
                 <h5 class="modal-title" id="handoversListModalLabel">
@@ -4244,63 +5365,161 @@
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <!-- Filters -->
-                <div class="row mb-3">
-                    <div class="col-md-3">
-                        <label>Ward</label>
-                        <select class="form-control form-control-sm" id="handover-filter-ward">
-                            <option value="">All Wards</option>
-                        </select>
+            <div class="modal-body p-0">
+                <!-- Filter Panel -->
+                <div class="handover-filter-panel p-3 bg-light border-bottom">
+                    <!-- Primary Filters Row -->
+                    <div class="row g-3 mb-2">
+                        <div class="col-md-3">
+                            <label class="form-label-modern">
+                                <i class="mdi mdi-hospital-building"></i> Ward
+                            </label>
+                            <select class="form-control form-control-modern" id="handover-filter-ward">
+                                <option value="">All Wards</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label-modern">
+                                <i class="mdi mdi-clock-outline"></i> Shift Type
+                            </label>
+                            <select class="form-control form-control-modern" id="handover-filter-shift">
+                                <option value="">All Shifts</option>
+                                <option value="morning">🌅 Morning (6AM - 2PM)</option>
+                                <option value="afternoon">☀️ Afternoon (2PM - 10PM)</option>
+                                <option value="night">🌙 Night (10PM - 6AM)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label-modern">
+                                <i class="mdi mdi-magnify"></i> Search
+                            </label>
+                            <input type="text" class="form-control form-control-modern" id="handover-filter-search"
+                                   placeholder="Search by nurse, summary...">
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end gap-2">
+                            <button class="btn btn-primary flex-grow-1 btn-modern" id="apply-handover-filters">
+                                <i class="mdi mdi-filter"></i> Apply Filters
+                            </button>
+                        </div>
                     </div>
-                    <div class="col-md-2">
-                        <label>Shift Type</label>
-                        <select class="form-control form-control-sm" id="handover-filter-shift">
-                            <option value="">All</option>
-                            <option value="morning">Morning</option>
-                            <option value="afternoon">Afternoon</option>
-                            <option value="night">Night</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label>Status</label>
-                        <select class="form-control form-control-sm" id="handover-filter-status">
-                            <option value="">All</option>
-                            <option value="pending">Pending</option>
-                            <option value="acknowledged">Acknowledged</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label>Date From</label>
-                        <input type="date" class="form-control form-control-sm" id="handover-filter-from">
-                    </div>
-                    <div class="col-md-2">
-                        <label>Date To</label>
-                        <input type="date" class="form-control form-control-sm" id="handover-filter-to">
-                    </div>
-                    <div class="col-md-1 d-flex align-items-end">
-                        <button class="btn btn-sm btn-primary" id="apply-handover-filters">
-                            <i class="mdi mdi-filter"></i>
-                        </button>
+
+                    <!-- Advanced Filters -->
+                    <div id="advancedFiltersSection">
+                        <div class="row g-2 pt-3 border-top mt-2">
+                            <div class="col-md-2">
+                                <label class="form-label-modern">
+                                    <i class="mdi mdi-check-circle-outline"></i> Status
+                                </label>
+                                <select class="form-control form-control-modern" id="handover-filter-status">
+                                    <option value="">All Status</option>
+                                    <option value="pending">⏳ Pending</option>
+                                    <option value="acknowledged">✅ Acknowledged</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label-modern">
+                                    <i class="mdi mdi-alert-circle-outline"></i> Priority
+                                </label>
+                                <select class="form-control form-control-modern" id="handover-filter-priority">
+                                    <option value="">All Priority</option>
+                                    <option value="critical">🔴 Critical Only</option>
+                                    <option value="has_tasks">📋 Has Pending Tasks</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label-modern">
+                                    <i class="mdi mdi-calendar-start"></i> Date From
+                                </label>
+                                <input type="date" class="form-control form-control-modern" id="handover-filter-from">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label-modern">
+                                    <i class="mdi mdi-calendar-end"></i> Date To
+                                </label>
+                                <input type="date" class="form-control form-control-modern" id="handover-filter-to">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label-modern">
+                                    <i class="mdi mdi-sort"></i> Sort By
+                                </label>
+                                <select class="form-control form-control-modern" id="handover-filter-sort">
+                                    <option value="newest">Newest First</option>
+                                    <option value="oldest">Oldest First</option>
+                                    <option value="priority">Priority First</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button class="btn btn-outline-danger w-100 btn-modern" id="clear-handover-filters">
+                                    <i class="mdi mdi-filter-remove"></i> Clear All
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- DataTable -->
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover" id="handovers-datatable" style="width: 100%;">
-                        <thead>
-                            <tr>
-                                <th>Date/Time</th>
-                                <th>Shift</th>
-                                <th>Ward</th>
-                                <th>Created By</th>
-                                <th>Critical</th>
-                                <th>Pending Tasks</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                    </table>
+                <!-- Stats Summary Bar -->
+                <div class="handover-stats-bar px-3 py-2 bg-white border-bottom d-flex align-items-center justify-content-between">
+                    <div class="d-flex gap-3">
+                        <span class="badge bg-secondary" id="handover-total-count">
+                            <i class="mdi mdi-file-document-multiple"></i> Total: <span>0</span>
+                        </span>
+                        <span class="badge bg-warning text-dark" id="handover-pending-count">
+                            <i class="mdi mdi-clock-alert"></i> Pending: <span>0</span>
+                        </span>
+                        <span class="badge bg-danger" id="handover-critical-count">
+                            <i class="mdi mdi-alert-circle"></i> Critical: <span>0</span>
+                        </span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="text-muted small" id="handover-page-info">Page 1 of 1</span>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-secondary" id="handover-view-cards" title="Cards View">
+                                <i class="mdi mdi-view-grid"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary" id="handover-view-list" title="List View">
+                                <i class="mdi mdi-view-list"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cards Container -->
+                <div class="handover-cards-container p-3" id="handover-cards-container">
+                    <!-- Loading State -->
+                    <div class="handover-loading text-center py-5" id="handover-loading">
+                        <div class="spinner-border text-info" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Loading handovers...</p>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div class="handover-empty text-center py-5" id="handover-empty" style="display: none;">
+                        <i class="mdi mdi-file-document-outline text-muted" style="font-size: 4rem;"></i>
+                        <h5 class="mt-3 text-muted">No Handovers Found</h5>
+                        <p class="text-muted small">Try adjusting your filters or select a different ward/shift.</p>
+                    </div>
+
+                    <!-- Cards Grid (populated dynamically) -->
+                    <div class="row g-3" id="handover-cards-grid"></div>
+                </div>
+
+                <!-- Pagination -->
+                <div class="handover-pagination p-3 bg-light border-top d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <label class="form-label-modern mb-0">Per page:</label>
+                        <select class="form-control form-control-modern" id="handover-per-page" style="width: 100px; height: 40px !important;">
+                            <option value="6">6</option>
+                            <option value="12" selected>12</option>
+                            <option value="24">24</option>
+                            <option value="48">48</option>
+                        </select>
+                    </div>
+                    <nav aria-label="Handover pagination">
+                        <ul class="pagination pagination-sm mb-0" id="handover-pagination-list">
+                            <!-- Pagination items populated dynamically -->
+                        </ul>
+                    </nav>
                 </div>
             </div>
             <div class="modal-footer">
@@ -4589,6 +5808,254 @@
         border-top: 1px solid #dee2e6;
     }
 
+    /* =============================================
+       HANDOVER CARDS MODAL STYLES
+       ============================================= */
+    .handover-filter-panel {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .handover-cards-container {
+        min-height: 400px;
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+
+    .handover-card {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 0.75rem;
+        transition: all 0.2s ease;
+        overflow: hidden;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .handover-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .handover-card.critical {
+        border-left: 4px solid #dc3545;
+        background: linear-gradient(to right, #fff5f5 0%, #fff 20%);
+    }
+
+    .handover-card.pending {
+        border-top: 3px solid #ffc107;
+    }
+
+    .handover-card.acknowledged {
+        opacity: 0.85;
+    }
+
+    .handover-card-header {
+        padding: 0.75rem 1rem;
+        background: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .handover-card-shift-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-weight: 600;
+    }
+
+    .handover-card-shift-badge.morning {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .handover-card-shift-badge.afternoon {
+        background: #ffe8cc;
+        color: #cc5500;
+    }
+
+    .handover-card-shift-badge.night {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .handover-card-body {
+        padding: 1rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .handover-card-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+
+    .handover-card-nurse {
+        font-weight: 600;
+        color: #333;
+        font-size: 0.95rem;
+    }
+
+    .handover-card-time {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+
+    .handover-card-ward {
+        font-size: 0.85rem;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+
+    .handover-card-ward i {
+        color: var(--hospital-primary, #007bff);
+    }
+
+    .handover-card-summary {
+        font-size: 0.9rem;
+        color: #495057;
+        line-height: 1.5;
+        flex: 1;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+    }
+
+    .handover-card-critical-preview {
+        background: #fff3f3;
+        border: 1px solid #f5c6cb;
+        border-radius: 0.375rem;
+        padding: 0.5rem 0.75rem;
+        margin-top: 0.75rem;
+        font-size: 0.85rem;
+        color: #721c24;
+    }
+
+    .handover-card-critical-preview i {
+        color: #dc3545;
+    }
+
+    .handover-card-stats {
+        display: flex;
+        gap: 1rem;
+        padding-top: 0.75rem;
+        margin-top: auto;
+        border-top: 1px solid #e9ecef;
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+
+    .handover-card-stat {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .handover-card-stat.danger {
+        color: #dc3545;
+    }
+
+    .handover-card-stat.warning {
+        color: #ffc107;
+    }
+
+    .handover-card-footer {
+        padding: 0.75rem 1rem;
+        background: #f8f9fa;
+        border-top: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .handover-card-status {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 0.25rem;
+    }
+
+    .handover-card-status.acknowledged {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .handover-card-status.pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .handover-card-actions .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+    }
+
+    /* List View Styles */
+    .handover-list-item {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: all 0.2s ease;
+    }
+
+    .handover-list-item:hover {
+        background: #f8f9fa;
+    }
+
+    .handover-list-item.critical {
+        border-left: 4px solid #dc3545;
+    }
+
+    .handover-list-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .handover-list-meta {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .handover-list-summary {
+        font-size: 0.9rem;
+        color: #495057;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Pagination Styles */
+    .handover-pagination .pagination .page-link {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+    }
+
+    /* Stats Bar */
+    .handover-stats-bar .badge {
+        font-size: 0.8rem;
+    }
+
+    /* View Toggle */
+    #handover-view-cards.active,
+    #handover-view-list.active {
+        background: var(--hospital-primary, #007bff);
+        color: white;
+    }
+
     /* End Shift Stats */
     .stat-box {
         background: #f8f9fa;
@@ -4657,11 +6124,37 @@ let queueDataTable = null;
 let currentQueueFilter = 'admitted';
 
 // =============================================
+// VIEW MANAGEMENT HELPERS
+// =============================================
+
+// Hide all overlapping views - call this before showing any new view
+function hideAllViews() {
+    // Hide empty state
+    $('#empty-state').hide();
+
+    // Hide queue view
+    $('#queue-view').removeClass('active').css('display', 'none');
+    $('.queue-item').removeClass('active');
+
+    // Hide reports view
+    $('#reports-view').removeClass('active');
+
+    // Hide ward dashboard
+    $('#ward-dashboard-view').removeClass('active');
+
+    // Hide patient workspace
+    $('#patient-header').removeClass('active');
+    $('#workspace-content').removeClass('active').hide();
+}
+
+// =============================================
 // QUEUE FUNCTIONALITY (derived from billing workbench pattern)
 // =============================================
 
 // Show queue view with specific filter
 function showQueue(filter) {
+    // First hide all other views to prevent stacking
+    hideAllViews();
     currentQueueFilter = filter;
 
     // Update queue title based on filter type
@@ -4678,10 +6171,7 @@ function showQueue(filter) {
     $('.queue-item').removeClass('active');
     $(`.queue-item[data-filter="${filter}"]`).addClass('active');
 
-    // Hide other views, show queue view
-    $('#empty-state').hide();
-    $('#patient-header').removeClass('active');
-    $('#workspace-content').removeClass('active');
+    // Show queue view
     $('#queue-view').addClass('active').css('display', 'flex');
 
     // On mobile, hide search pane and show main workspace
@@ -4702,7 +6192,7 @@ function hideQueue() {
     if (currentPatient) {
         // If patient was selected, show their workspace
         $('#patient-header').addClass('active');
-        $('#workspace-content').addClass('active');
+        $('#workspace-content').show().addClass('active');
     } else {
         // Otherwise show empty state
         $('#empty-state').show();
@@ -5067,9 +6557,11 @@ function loadPatient(patientId) {
     // Set PATIENT_ID for medication and I/O charts
     PATIENT_ID = patientId;
 
-    // Show loading state
-    $('#empty-state').hide();
-    $('#workspace-content').addClass('active');
+    // CRITICAL: Hide all other views first to prevent stacking
+    hideAllViews();
+
+    // Show patient workspace
+    $('#workspace-content').show().addClass('active');
     $('#patient-header').addClass('active');
 
     // Mobile: Switch to work pane
@@ -6948,7 +8440,14 @@ function showReports() {
 
 function hideReports() {
     $('#reports-view').removeClass('active');
-    $('#empty-state').show();
+
+    // Show appropriate view based on patient selection state
+    if (currentPatient) {
+        $('#patient-header').addClass('active');
+        $('#workspace-content').show().addClass('active');
+    } else {
+        $('#empty-state').show();
+    }
 
     // On mobile, go back to search pane
     if (window.innerWidth < 768) {
@@ -7347,12 +8846,8 @@ $('#btn-close-ward-dashboard').on('click', function() {
 });
 
 function showWardDashboard() {
-    // Hide other views
-    $('#empty-state').hide();
-    $('#queue-view').hide();
-    $('#reports-view').removeClass('active');
-    $('#patient-header').removeClass('active');
-    $('#workspace-content').hide();
+    // Hide all other views first to prevent stacking
+    hideAllViews();
 
     // Show ward dashboard
     $('#ward-dashboard-view').addClass('active');
@@ -7371,7 +8866,14 @@ function showWardDashboard() {
 
 function hideWardDashboard() {
     $('#ward-dashboard-view').removeClass('active');
-    $('#empty-state').show();
+
+    // Show appropriate view based on patient selection state
+    if (currentPatient) {
+        $('#patient-header').addClass('active');
+        $('#workspace-content').show().addClass('active');
+    } else {
+        $('#empty-state').show();
+    }
 
     // On mobile, go back to search pane
     if (window.innerWidth < 768) {
@@ -7405,10 +8907,824 @@ $('#btn-quick-vitals').on('click', function() {
 
 // Nursing Reports button handler
 $('#btn-nursing-reports').on('click', function() {
-    // Show nursing-specific reports
-    toastr.info('Nursing reports feature coming soon. Use Shift Handover for current shift summary.');
-    // TODO: Implement nursing reports view similar to ward dashboard
+    NursingReports.show();
 });
+
+// ==========================================
+// NURSING REPORTS MODULE
+// ==========================================
+const NursingReports = (function() {
+    // State
+    let charts = {};
+    let dataTables = {};
+    let isInitialized = false;
+    let currentFilters = {
+        date_range: '7days',
+        date_from: null,
+        date_to: null,
+        ward_id: null,
+        nurse_id: null,
+        shift_type: null
+    };
+
+    // Base URL
+    const BASE_URL = '/nursing-workbench/reports';
+
+    // Initialize
+    function init() {
+        if (isInitialized) return;
+
+        bindEvents();
+        loadNurseOptions();
+        loadWardOptions();
+        setDefaultDateRange();
+        isInitialized = true;
+    }
+
+    // Bind events
+    function bindEvents() {
+        // Close button
+        $('#btn-close-nursing-reports').on('click', hide);
+
+        // Apply filters button
+        $('#nr-apply-filters').on('click', applyFilters);
+
+        // Reset filters button
+        $('#nr-reset-filters').on('click', clearFilters);
+
+        // Date range select
+        $('#nr-date-range').on('change', function() {
+            const val = $(this).val();
+            if (val === 'custom') {
+                $('#nr-custom-dates').show();
+            } else {
+                $('#nr-custom-dates').hide();
+                currentFilters.date_range = val;
+                currentFilters.date_from = null;
+                currentFilters.date_to = null;
+            }
+        });
+
+        // Tab change - load data for the tab
+        $('#nursingReportsTabs a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
+            const target = $(e.target).attr('href');
+            loadTabData(target);
+        });
+    }
+
+    // Show reports view
+    function show() {
+        init();
+        hideAllViews();
+        $('#nursing-reports-view').show();
+
+        // Load activity summary (first tab)
+        loadTabData('#nr-activity');
+    }
+
+    // Hide reports view
+    function hide() {
+        $('#nursing-reports-view').hide();
+    }
+
+    // Set default date range (last 7 days)
+    function setDefaultDateRange() {
+        const today = new Date();
+        const weekAgo = new Date(today);
+        weekAgo.setDate(today.getDate() - 6);
+
+        $('#nr-date-from').val(formatDateInput(weekAgo));
+        $('#nr-date-to').val(formatDateInput(today));
+    }
+
+    // Format date for input
+    function formatDateInput(date) {
+        return date.toISOString().split('T')[0];
+    }
+
+    // Load nurse options
+    function loadNurseOptions() {
+        $.get(BASE_URL + '/nurses', function(response) {
+            if (response.success && response.nurses) {
+                const $select = $('#nr-nurse-filter');
+                $select.find('option:not(:first)').remove();
+                response.nurses.forEach(nurse => {
+                    $select.append(`<option value="${nurse.id}">${nurse.name}</option>`);
+                });
+            }
+        });
+    }
+
+    // Load ward options
+    function loadWardOptions() {
+        $.get('/nursing-workbench/wards', function(response) {
+            if (response.wards) {
+                const $select = $('#nr-ward-filter');
+                $select.find('option:not(:first)').remove();
+                response.wards.forEach(ward => {
+                    $select.append(`<option value="${ward.id}">${ward.name}</option>`);
+                });
+            }
+        });
+    }
+
+    // Get current filters
+    function getFilters() {
+        return {
+            date_range: $('#nr-date-range').val(),
+            date_from: $('#nr-date-from').val(),
+            date_to: $('#nr-date-to').val(),
+            ward_id: $('#nr-ward-filter').val() || null,
+            nurse_id: $('#nr-nurse-filter').val() || null,
+            shift_type: $('#nr-shift-filter').val() || null
+        };
+    }
+
+    // Apply filters
+    function applyFilters() {
+        currentFilters = getFilters();
+        const activeTab = $('#nursingReportsTabs .active').attr('href');
+        loadTabData(activeTab, true);
+    }
+
+    // Clear filters
+    function clearFilters() {
+        $('#nr-date-range').val('7days');
+        $('#nr-custom-dates').hide();
+        $('#nr-ward-filter').val('');
+        $('#nr-nurse-filter').val('');
+        $('#nr-shift-filter').val('');
+        setDefaultDateRange();
+        currentFilters = {
+            date_range: '7days',
+            date_from: null,
+            date_to: null,
+            ward_id: null,
+            nurse_id: null,
+            shift_type: null
+        };
+        applyFilters();
+    }
+
+    // Load data for specific tab
+    function loadTabData(tabId, forceReload = false) {
+        const filters = getFilters();
+
+        switch (tabId) {
+            case '#nr-activity':
+                loadActivitySummary(filters);
+                break;
+            case '#nr-vitals':
+                loadVitalsReport(filters, forceReload);
+                break;
+            case '#nr-medications':
+                loadMedicationsReport(filters, forceReload);
+                break;
+            case '#nr-injections':
+                loadInjectionsReport(filters, forceReload);
+                break;
+            case '#nr-io':
+                loadIOReport(filters, forceReload);
+                break;
+            case '#nr-notes':
+                loadNotesReport(filters, forceReload);
+                break;
+            case '#nr-shifts':
+                loadShiftsReport(filters, forceReload);
+                break;
+            case '#nr-occupancy':
+                loadOccupancyReport(filters);
+                break;
+        }
+    }
+
+    // Load Activity Summary
+    function loadActivitySummary(filters) {
+        showLoading('#nr-activity');
+
+        $.get(BASE_URL + '/activity-summary', filters, function(response) {
+            if (response.success) {
+                // Update stats - matching HTML element IDs
+                $('#nr-stat-patients').text(response.stats.patients_served || 0);
+                $('#nr-stat-vitals').text(response.stats.vitals_recorded || 0);
+                $('#nr-stat-medications').text(response.stats.medications_given || 0);
+                $('#nr-stat-injections').text(response.stats.injections || 0);
+                $('#nr-stat-immunizations').text(response.stats.immunizations || 0);
+                $('#nr-stat-notes').text(response.stats.notes_written || 0);
+                $('#nr-stat-handovers').text(response.stats.handovers || 0);
+                $('#nr-stat-shifts').text(response.stats.shifts_completed || 0);
+
+                // Render charts
+                renderActivityTrendChart(response.trend);
+                renderDistributionChart(response.distribution);
+                renderPeakHoursChart(response.peak_hours);
+                renderTopPerformersTable(response.top_performers);
+            }
+            hideLoading('#nr-activity');
+        }).fail(function() {
+            hideLoading('#nr-activity');
+            toastr.error('Failed to load activity summary');
+        });
+    }
+
+    // Render Activity Trend Chart
+    function renderActivityTrendChart(data) {
+        const ctx = document.getElementById('nr-activity-trend-chart');
+        if (!ctx) return;
+
+        if (charts.activityTrend) {
+            charts.activityTrend.destroy();
+        }
+
+        charts.activityTrend = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.map(d => d.date),
+                datasets: [
+                    {
+                        label: 'Vitals',
+                        data: data.map(d => d.vitals),
+                        borderColor: '#dc3545',
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Medications',
+                        data: data.map(d => d.medications),
+                        borderColor: '#ffc107',
+                        backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Injections',
+                        data: data.map(d => d.injections),
+                        borderColor: '#17a2b8',
+                        backgroundColor: 'rgba(23, 162, 184, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Notes',
+                        data: data.map(d => d.notes),
+                        borderColor: '#6c757d',
+                        backgroundColor: 'rgba(108, 117, 125, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    // Render Distribution Chart
+    function renderDistributionChart(data) {
+        const ctx = document.getElementById('nr-activity-distribution-chart');
+        if (!ctx) return;
+
+        if (charts.distribution) {
+            charts.distribution.destroy();
+        }
+
+        charts.distribution = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: data.map(d => d.label),
+                datasets: [{
+                    data: data.map(d => d.value),
+                    backgroundColor: data.map(d => d.color)
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    }
+
+    // Render Peak Hours Chart
+    function renderPeakHoursChart(data) {
+        const ctx = document.getElementById('nr-peak-hours-chart');
+        if (!ctx) return;
+
+        if (charts.peakHours) {
+            charts.peakHours.destroy();
+        }
+
+        charts.peakHours = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: data.map(d => d.hour),
+                datasets: [{
+                    label: 'Activities',
+                    data: data.map(d => d.count),
+                    backgroundColor: 'rgba(102, 126, 234, 0.7)',
+                    borderColor: '#667eea',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { beginAtZero: true },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Render Top Performers Table
+    function renderTopPerformersTable(data) {
+        const $tbody = $('#nr-top-performers-table tbody');
+        $tbody.empty();
+
+        if (!data || data.length === 0) {
+            $tbody.append('<tr><td colspan="4" class="text-center text-muted">No data available</td></tr>');
+            return;
+        }
+
+        data.forEach((performer, index) => {
+            $tbody.append(`
+                <tr>
+                    <td><span class="badge badge-${index < 3 ? 'primary' : 'secondary'}">#${index + 1}</span> ${performer.nurse}</td>
+                    <td>${performer.actions}</td>
+                    <td>${performer.patients}</td>
+                    <td>${performer.shifts}</td>
+                </tr>
+            `);
+        });
+    }
+
+    // Load Vitals Report
+    function loadVitalsReport(filters, forceReload) {
+        // Load stats
+        $.get(BASE_URL + '/vitals', filters, function(response) {
+            if (response.success) {
+                $('#nr-vitals-total').text(response.stats.total || 0);
+                $('#nr-vitals-abnormal').text(response.stats.abnormal || 0);
+                $('#nr-vitals-fever').text(response.stats.fever || 0);
+                $('#nr-vitals-hypertension').text(response.stats.hypertension || 0);
+            }
+        });
+
+        // Initialize or reload DataTable
+        if (!dataTables.vitals || forceReload) {
+            if (dataTables.vitals) {
+                dataTables.vitals.destroy();
+            }
+            dataTables.vitals = $('#nr-vitals-table').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: BASE_URL + '/vitals',
+                    data: function(d) {
+                        return Object.assign(d, getFilters());
+                    }
+                },
+                columns: [
+                    { data: 'datetime', title: 'Date/Time' },
+                    { data: 'patient_name', title: 'Patient' },
+                    { data: 'file_no', title: 'File No' },
+                    { data: 'temp', title: 'Temp (°C)' },
+                    { data: 'blood_pressure', title: 'BP' },
+                    { data: 'heart_rate', title: 'Pulse' },
+                    { data: 'spo2', title: 'SpO2' },
+                    { data: 'recorded_by', title: 'Recorded By' },
+                    {
+                        data: 'status',
+                        title: 'Status',
+                        render: function(data) {
+                            const colors = { normal: 'success', warning: 'warning', critical: 'danger' };
+                            return `<span class="badge badge-${colors[data] || 'secondary'}">${data}</span>`;
+                        }
+                    }
+                ],
+                order: [[0, 'desc']],
+                pageLength: 15,
+                dom: 'Bfrtip',
+                buttons: ['excel', 'pdf', 'print']
+            });
+        } else {
+            dataTables.vitals.ajax.reload();
+        }
+    }
+
+    // Load Medications Report
+    function loadMedicationsReport(filters, forceReload) {
+        // Load stats
+        $.get(BASE_URL + '/medications', filters, function(response) {
+            if (response.success) {
+                $('#nr-meds-total').text(response.stats.total || 0);
+                $('#nr-meds-ontime').text(response.stats.ontime_rate || '0%');
+                $('#nr-meds-late').text(response.stats.late || 0);
+                $('#nr-meds-missed').text(response.stats.missed || 0);
+            }
+        });
+
+        // Initialize or reload DataTable
+        if (!dataTables.medications || forceReload) {
+            if (dataTables.medications) {
+                dataTables.medications.destroy();
+            }
+            dataTables.medications = $('#nr-medications-table').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: BASE_URL + '/medications',
+                    data: function(d) {
+                        return Object.assign(d, getFilters());
+                    }
+                },
+                columns: [
+                    { data: 'datetime', title: 'Administered At' },
+                    { data: 'patient_name', title: 'Patient' },
+                    { data: 'medication', title: 'Medication' },
+                    { data: 'dose', title: 'Dose' },
+                    { data: 'route', title: 'Route' },
+                    { data: 'scheduled_time', title: 'Scheduled' },
+                    { data: 'administered_by_name', title: 'Given By' },
+                    {
+                        data: 'status',
+                        title: 'Status',
+                        render: function(data) {
+                            return `<span class="badge badge-${data === 'ontime' ? 'success' : 'warning'}">${data === 'ontime' ? 'On Time' : 'Late'}</span>`;
+                        }
+                    }
+                ],
+                order: [[0, 'desc']],
+                pageLength: 15
+            });
+        } else {
+            dataTables.medications.ajax.reload();
+        }
+    }
+
+    // Load Injections Report
+    function loadInjectionsReport(filters, forceReload) {
+        // Stats
+        $.get(BASE_URL + '/injections', filters, function(response) {
+            if (response.success) {
+                $('#nr-injections-total').text(response.total || 0);
+            }
+        });
+
+        $.get(BASE_URL + '/immunizations', filters, function(response) {
+            if (response.success) {
+                $('#nr-immunizations-total').text(response.total || 0);
+            }
+        });
+
+        // Injections DataTable
+        if (!dataTables.injections || forceReload) {
+            if (dataTables.injections) {
+                dataTables.injections.destroy();
+            }
+            dataTables.injections = $('#nr-injections-table').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: BASE_URL + '/injections',
+                    data: function(d) {
+                        return Object.assign(d, getFilters());
+                    }
+                },
+                columns: [
+                    { data: 'datetime', title: 'Date/Time' },
+                    { data: 'patient_name', title: 'Patient' },
+                    { data: 'drug_name', title: 'Drug' },
+                    { data: 'dose', title: 'Dose' },
+                    { data: 'route', title: 'Route' },
+                    { data: 'site', title: 'Site' },
+                    { data: 'administered_by_name', title: 'Given By' }
+                ],
+                order: [[0, 'desc']],
+                pageLength: 15
+            });
+        } else {
+            dataTables.injections.ajax.reload();
+        }
+
+        // Immunizations DataTable
+        if (!dataTables.immunizations || forceReload) {
+            if (dataTables.immunizations) {
+                dataTables.immunizations.destroy();
+            }
+            dataTables.immunizations = $('#nr-immunizations-table').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: BASE_URL + '/immunizations',
+                    data: function(d) {
+                        return Object.assign(d, getFilters());
+                    }
+                },
+                columns: [
+                    { data: 'datetime', title: 'Date/Time' },
+                    { data: 'patient_name', title: 'Patient' },
+                    { data: 'patient_age', title: 'Age' },
+                    { data: 'vaccine', title: 'Vaccine' },
+                    { data: 'dose_number', title: 'Dose #' },
+                    { data: 'batch_no', title: 'Batch No' },
+                    { data: 'administered_by_name', title: 'Given By' }
+                ],
+                order: [[0, 'desc']],
+                pageLength: 15
+            });
+        } else {
+            dataTables.immunizations.ajax.reload();
+        }
+    }
+
+    // Load I/O Report
+    function loadIOReport(filters, forceReload) {
+        // Stats
+        $.get(BASE_URL + '/io', filters, function(response) {
+            if (response.success) {
+                $('#nr-io-records').text(response.stats.records || 0);
+                $('#nr-io-positive').text(response.stats.positive || 0);
+                $('#nr-io-negative').text(response.stats.negative || 0);
+                $('#nr-io-critical').text(response.stats.critical || 0);
+            }
+        });
+
+        // DataTable
+        if (!dataTables.io || forceReload) {
+            if (dataTables.io) {
+                dataTables.io.destroy();
+            }
+            dataTables.io = $('#nr-io-table').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: BASE_URL + '/io',
+                    data: function(d) {
+                        return Object.assign(d, getFilters());
+                    }
+                },
+                columns: [
+                    { data: 'date_formatted', title: 'Date' },
+                    { data: 'patient_name', title: 'Patient' },
+                    { data: 'ward_bed', title: 'Ward / Bed' },
+                    { data: 'total_intake', title: 'Total Intake' },
+                    { data: 'total_output', title: 'Total Output' },
+                    {
+                        data: 'balance',
+                        title: 'Balance',
+                        render: function(data, type, row) {
+                            const cls = row.status === 'critical' ? 'text-danger' : (row.status === 'warning' ? 'text-warning' : 'text-success');
+                            return `<span class="${cls} font-weight-bold">${data}</span>`;
+                        }
+                    },
+                    { data: 'recorded_by', title: 'Recorded By' }
+                ],
+                order: [[0, 'desc']],
+                pageLength: 15
+            });
+        } else {
+            dataTables.io.ajax.reload();
+        }
+    }
+
+    // Load Notes Report
+    function loadNotesReport(filters, forceReload) {
+        // Stats
+        $.get(BASE_URL + '/notes', filters, function(response) {
+            if (response.success) {
+                $('#nr-notes-total').text(response.stats.total || 0);
+                $('#nr-notes-critical').text(response.stats.critical || 0);
+                $('#nr-notes-patients').text(response.stats.patients || 0);
+            }
+        });
+
+        // DataTable
+        if (!dataTables.notes || forceReload) {
+            if (dataTables.notes) {
+                dataTables.notes.destroy();
+            }
+            dataTables.notes = $('#nr-notes-table').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: BASE_URL + '/notes',
+                    data: function(d) {
+                        return Object.assign(d, getFilters());
+                    }
+                },
+                columns: [
+                    { data: 'datetime', title: 'Date/Time' },
+                    { data: 'patient_name', title: 'Patient' },
+                    { data: 'note_type', title: 'Type' },
+                    { data: 'summary', title: 'Summary' },
+                    { data: 'written_by', title: 'Written By' },
+                    {
+                        data: 'status',
+                        title: 'Status',
+                        render: function(data) {
+                            return `<span class="badge badge-${data === 'completed' ? 'success' : 'warning'}">${data}</span>`;
+                        }
+                    }
+                ],
+                order: [[0, 'desc']],
+                pageLength: 15
+            });
+        } else {
+            dataTables.notes.ajax.reload();
+        }
+    }
+
+    // Load Shifts Report
+    function loadShiftsReport(filters, forceReload) {
+        // Stats
+        $.get(BASE_URL + '/shifts', filters, function(response) {
+            if (response.success) {
+                $('#nr-shifts-total').text(response.stats.total || 0);
+                $('#nr-shifts-avg-duration').text(response.stats.avg_duration || '0h');
+                $('#nr-shifts-handovers').text(response.stats.handover_rate || '0%');
+                $('#nr-shifts-overdue').text(response.stats.overdue || 0);
+            }
+        });
+
+        // DataTable
+        if (!dataTables.shifts || forceReload) {
+            if (dataTables.shifts) {
+                dataTables.shifts.destroy();
+            }
+            dataTables.shifts = $('#nr-shifts-table').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: BASE_URL + '/shifts',
+                    data: function(d) {
+                        return Object.assign(d, getFilters());
+                    }
+                },
+                columns: [
+                    { data: 'date', title: 'Date' },
+                    { data: 'nurse_name', title: 'Nurse' },
+                    { data: 'shift_type_label', title: 'Shift' },
+                    { data: 'ward_name', title: 'Ward' },
+                    { data: 'start_time', title: 'Start' },
+                    { data: 'end_time', title: 'End' },
+                    { data: 'duration', title: 'Duration' },
+                    { data: 'actions_count', title: 'Actions' },
+                    {
+                        data: 'handover_status',
+                        title: 'Handover',
+                        render: function(data) {
+                            return `<span class="badge badge-${data === 'Yes' ? 'success' : 'secondary'}">${data}</span>`;
+                        }
+                    },
+                    { data: 'status_label', title: 'Status' }
+                ],
+                order: [[0, 'desc']],
+                pageLength: 15
+            });
+        } else {
+            dataTables.shifts.ajax.reload();
+        }
+    }
+
+    // Load Occupancy Report
+    function loadOccupancyReport(filters) {
+        showLoading('#nr-occupancy');
+
+        $.get(BASE_URL + '/occupancy', filters, function(response) {
+            if (response.success) {
+                // Bed stats
+                $('#nr-beds-total').text(response.stats.total_beds || 0);
+                $('#nr-beds-occupied').text(response.stats.occupied || 0);
+                $('#nr-beds-available').text(response.stats.available || 0);
+                $('#nr-beds-maintenance').text(response.stats.maintenance || 0);
+
+                // Admission/Discharge stats
+                $('#nr-admissions-today').text(response.admissions.today || 0);
+                $('#nr-admissions-period').text(response.admissions.period || 0);
+                $('#nr-avg-los').text(response.admissions.avg_los || '0d');
+                $('#nr-discharges-today').text(response.discharges.today || 0);
+                $('#nr-discharges-period').text(response.discharges.period || 0);
+                $('#nr-pending-discharges').text(response.discharges.pending || 0);
+
+                // Render ward table
+                renderWardOccupancyTable(response.wards);
+
+                // Render occupancy chart
+                renderOccupancyChart(response.stats);
+            }
+            hideLoading('#nr-occupancy');
+        }).fail(function() {
+            hideLoading('#nr-occupancy');
+            toastr.error('Failed to load occupancy data');
+        });
+    }
+
+    // Render Ward Occupancy Table
+    function renderWardOccupancyTable(data) {
+        const $tbody = $('#nr-occupancy-table tbody');
+        $tbody.empty();
+
+        if (!data || data.length === 0) {
+            $tbody.append('<tr><td colspan="6" class="text-center text-muted">No wards configured</td></tr>');
+            return;
+        }
+
+        data.forEach(ward => {
+            const occupancyPct = parseInt(ward.occupancy_rate);
+            const barClass = occupancyPct > 90 ? 'bg-danger' : (occupancyPct > 70 ? 'bg-warning' : 'bg-success');
+            $tbody.append(`
+                <tr>
+                    <td><strong>${ward.ward}</strong></td>
+                    <td>${ward.total}</td>
+                    <td><span class="text-danger">${ward.occupied}</span></td>
+                    <td><span class="text-success">${ward.available}</span></td>
+                    <td><span class="text-warning">${ward.maintenance}</span></td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="progress flex-grow-1" style="height: 8px;">
+                                <div class="progress-bar ${barClass}" style="width: ${ward.occupancy_rate}"></div>
+                            </div>
+                            <span class="ml-2 font-weight-bold">${ward.occupancy_rate}</span>
+                        </div>
+                    </td>
+                </tr>
+            `);
+        });
+    }
+
+    // Render Occupancy Chart
+    function renderOccupancyChart(data) {
+        const ctx = document.getElementById('bed-occupancy-chart');
+        if (!ctx) return;
+
+        if (charts.occupancy) {
+            charts.occupancy.destroy();
+        }
+
+        charts.occupancy = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Occupied', 'Available', 'Maintenance'],
+                datasets: [{
+                    data: [data.occupied, data.available, data.maintenance],
+                    backgroundColor: ['#dc3545', '#28a745', '#ffc107']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    }
+
+    // Show loading state
+    function showLoading(container) {
+        $(container).find('.card-body').each(function() {
+            if (!$(this).find('.loading-overlay').length) {
+                $(this).append('<div class="loading-overlay"><div class="spinner-border text-primary"></div></div>');
+            }
+        });
+    }
+
+    // Hide loading state
+    function hideLoading(container) {
+        $(container).find('.loading-overlay').remove();
+    }
+
+    // Public API
+    return {
+        init: init,
+        show: show,
+        hide: hide,
+        applyFilters: applyFilters,
+        clearFilters: clearFilters
+    };
+})();
+
 
 // Admission Summary button handler
 $('#btn-admission-summary').on('click', function() {
@@ -7422,24 +9738,12 @@ $('#btn-admission-summary').on('click', function() {
 
 // Shift Handover button handler
 $('#btn-shift-handover').on('click', function() {
-    // Open shift handover modal or show handover summary
-    if ($('#shift-handover-modal').length) {
-        $('#shift-handover-modal').modal('show');
+    // Use ShiftManager to show the handovers modal
+    if (typeof ShiftManager !== 'undefined' && ShiftManager.showHandoversList) {
+        ShiftManager.showHandoversList();
     } else {
-        // Load handover summary from API
-        toastr.info('Loading shift handover summary...');
-        $.get('{{ route("nursing-workbench.handover.summary") }}', function(response) {
-            // Display handover summary in a modal or alert
-            if (response.success) {
-                // Show handover data - could create a modal dynamically
-                toastr.success('Shift handover data loaded. Check console for details.');
-                console.log('Handover Summary:', response);
-            } else {
-                toastr.warning('No handover data available for current shift');
-            }
-        }).fail(function() {
-            toastr.error('Failed to load handover summary');
-        });
+        // Fallback - show modal directly
+        $('#handoversListModal').modal('show');
     }
 });
 
@@ -8260,16 +10564,16 @@ $('#injection-form').on('submit', function(e) {
         },
         error: function(xhr) {
             const response = xhr.responseJSON;
-            
+
             // Handle validation errors for each product
             if (response?.errors) {
                 let errorMessages = [];
-                
+
                 // Map checked rows to their index (only checked items are sent)
                 const checkedRows = $('#injection-selected-body tr').filter(function() {
                     return $(this).find('.injection-row-check').is(':checked');
                 });
-                
+
                 Object.keys(response.errors).forEach(function(field) {
                     // Parse field like "products.0.dose" or "products.1.qty"
                     const match = field.match(/^products\.(\d+)\.(\w+)$/);
@@ -8277,24 +10581,24 @@ $('#injection-form').on('submit', function(e) {
                         const index = parseInt(match[1]);
                         const fieldName = match[2];
                         const row = checkedRows.eq(index);
-                        
+
                         if (row.length) {
                             const productName = row.find('td:eq(1) strong').text();
                             let inputField;
-                            
+
                             if (fieldName === 'dose') {
                                 inputField = row.find('input[name="injection_dose[]"]');
                             } else if (fieldName === 'qty') {
                                 inputField = row.find('.injection-qty');
                             }
-                            
+
                             if (inputField && inputField.length) {
                                 inputField.addClass('is-invalid');
                                 // Add error message below input
                                 const errorMsg = response.errors[field][0].replace(/products\.\d+\./, '');
                                 inputField.after(`<div class="validation-error text-danger small">${errorMsg}</div>`);
                             }
-                            
+
                             errorMessages.push(`${productName}: ${response.errors[field][0].replace(/products\.\d+\./, '')}`);
                         }
                     } else {
@@ -8302,7 +10606,7 @@ $('#injection-form').on('submit', function(e) {
                         errorMessages.push(response.errors[field][0]);
                     }
                 });
-                
+
                 if (errorMessages.length > 0) {
                     showNotification('error', 'Validation failed: ' + errorMessages.join(', '));
                 } else {
@@ -11055,9 +13359,14 @@ const ShiftManager = {
     // State
     activeShift: null,
     shiftTimer: null,
-    handoversDataTable: null,
     acknowledgedHandovers: [],
     currentHandoverDetail: null,
+    forceEndShift: false,
+
+    // Handover cards state
+    handoverCurrentPage: 1,
+    handoverPerPage: 12,
+    handoverViewMode: 'cards', // 'cards' or 'list'
 
     // Routes
     routes: {
@@ -11155,7 +13464,52 @@ const ShiftManager = {
 
         // Apply handover filters
         $('#apply-handover-filters').on('click', function() {
-            self.reloadHandoversTable();
+            self.reloadHandoversCards();
+        });
+
+        // Clear handover filters
+        $('#clear-handover-filters').on('click', function() {
+            self.clearHandoverFilters();
+        });
+
+        // Per page change
+        $('#handover-per-page').on('change', function() {
+            self.handoverPerPage = parseInt($(this).val());
+            self.handoverCurrentPage = 1;
+            self.loadHandoversCards();
+        });
+
+        // Pagination click
+        $(document).on('click', '#handover-pagination-list .page-link', function(e) {
+            e.preventDefault();
+            const page = $(this).data('page');
+            if (page && !$(this).parent().hasClass('disabled') && !$(this).parent().hasClass('active')) {
+                self.handoverCurrentPage = page;
+                self.loadHandoversCards();
+            }
+        });
+
+        // View toggle - Cards
+        $('#handover-view-cards').on('click', function() {
+            self.handoverViewMode = 'cards';
+            $(this).addClass('active');
+            $('#handover-view-list').removeClass('active');
+            self.loadHandoversCards();
+        });
+
+        // View toggle - List
+        $('#handover-view-list').on('click', function() {
+            self.handoverViewMode = 'list';
+            $(this).addClass('active');
+            $('#handover-view-cards').removeClass('active');
+            self.loadHandoversCards();
+        });
+
+        // Search input enter key
+        $('#handover-filter-search').on('keypress', function(e) {
+            if (e.which === 13) {
+                self.reloadHandoversCards();
+            }
         });
 
         // View handover detail
@@ -11164,7 +13518,7 @@ const ShiftManager = {
             self.showHandoverDetail(id);
         });
 
-        // Acknowledge handover from DataTable
+        // Acknowledge handover from cards/list
         $(document).on('click', '.acknowledge-handover', function() {
             const id = $(this).data('id');
             self.acknowledgeHandover(id);
@@ -11213,8 +13567,20 @@ const ShiftManager = {
                 if (response.success) {
                     if (response.has_active_shift) {
                         self.activeShift = response.shift;
-                        self.showWorkbench();
-                        self.startShiftTimer();
+
+                        // Check if shift is older than 12 hours (43200 seconds)
+                        const elapsedSeconds = response.shift.elapsed_seconds || 0;
+                        const twelveHoursInSeconds = 12 * 60 * 60; // 43200
+
+                        if (elapsedSeconds > twelveHoursInSeconds) {
+                            // Shift is overdue - force end shift
+                            self.showWorkbench();
+                            self.startShiftTimer();
+                            self.forceEndShiftModal(elapsedSeconds);
+                        } else {
+                            self.showWorkbench();
+                            self.startShiftTimer();
+                        }
                     } else {
                         self.showLockOverlay();
                     }
@@ -11225,6 +13591,87 @@ const ShiftManager = {
                 self.showWorkbench();
             }
         });
+    },
+
+    // Force end shift modal for overdue shifts (>12 hours)
+    forceEndShiftModal: function(elapsedSeconds) {
+        const self = this;
+        const hours = Math.floor(elapsedSeconds / 3600);
+        const minutes = Math.floor((elapsedSeconds % 3600) / 60);
+        const overdueHours = hours - 12;
+
+        // Set flag to prevent modal dismissal
+        this.forceEndShift = true;
+
+        // Show the end shift modal with forced mode
+        this.showEndShiftModal(true);
+
+        // Add overdue warning to the modal
+        const warningHtml = `
+            <div id="overdue-shift-warning" class="alert alert-danger mb-4">
+                <h5 class="alert-heading">
+                    <i class="mdi mdi-alert-octagon"></i> Shift Overdue - Action Required
+                </h5>
+                <hr>
+                <p class="mb-2">
+                    <strong>Your shift has been running for ${hours} hours and ${minutes} minutes.</strong>
+                </p>
+                <p class="mb-2">
+                    Standard shifts are 8-12 hours. Your shift is now <strong class="text-danger">${overdueHours > 0 ? overdueHours + ' hour(s)' : 'more than 12 hours'}</strong> overdue.
+                </p>
+                <p class="mb-0">
+                    <i class="mdi mdi-information-outline"></i>
+                    <strong>You must end this shift to continue.</strong> This ensures proper handover documentation and accurate shift records.
+                    Please review your activities, add any critical notes, and end your shift.
+                </p>
+            </div>
+        `;
+
+        // Insert warning at the top of modal body if not already there
+        if ($('#overdue-shift-warning').length === 0) {
+            $('#endShiftModal .modal-body').prepend(warningHtml);
+        }
+
+        // Change modal header to indicate forced mode
+        $('#endShiftModalLabel').html('<i class="mdi mdi-alert-octagon"></i> End Overdue Shift (Required)');
+
+        // Hide cancel button and prevent modal dismiss
+        $('#endShiftModal .btn-secondary[data-bs-dismiss="modal"]').hide();
+        $('#endShiftModal .btn-close').hide();
+
+        // Make modal static (cannot dismiss by clicking outside)
+        $('#endShiftModal').attr('data-bs-backdrop', 'static');
+        $('#endShiftModal').attr('data-bs-keyboard', 'false');
+
+        // Update end shift button text
+        $('#confirm-end-shift-btn').html('<i class="mdi mdi-stop-circle"></i> End Overdue Shift');
+
+        toastr.warning('Your shift is overdue. Please end your shift and create a handover document.', 'Shift Overdue', {
+            timeOut: 10000,
+            closeButton: true
+        });
+    },
+
+    // Reset end shift modal to normal mode
+    resetEndShiftModal: function() {
+        this.forceEndShift = false;
+
+        // Remove overdue warning
+        $('#overdue-shift-warning').remove();
+
+        // Restore modal header
+        $('#endShiftModalLabel').html('<i class="mdi mdi-stop-circle"></i> End Your Shift');
+
+        // Show cancel button and close button
+        $('#endShiftModal .btn-secondary[data-bs-dismiss="modal"]').show();
+        $('#endShiftModal .btn-close').show();
+
+        // Remove static backdrop
+        $('#endShiftModal').removeAttr('data-bs-backdrop');
+        $('#endShiftModal').removeAttr('data-bs-keyboard');
+
+        // Reset end shift button text
+        $('#confirm-end-shift-btn').html('<i class="mdi mdi-stop-circle"></i> End Shift');
     },
 
     // Show lock overlay
@@ -11288,7 +13735,7 @@ const ShiftManager = {
             success: function(response) {
                 if (response.success && response.total_pending > 0) {
                     $('#pending-handovers-count').text(response.total_pending);
-                    
+
                     let html = '';
                     response.handovers.forEach(function(h) {
                         html += `
@@ -11332,12 +13779,12 @@ const ShiftManager = {
     showStartShiftModal: function() {
         const self = this;
         this.acknowledgedHandovers = [];
-        
+
         // Show modal with config step first, hide handovers until ward is selected
         $('#shift-config-step').show();
         $('#shift-handovers-step').hide();
         $('#start-shift-handovers-list').html('');
-        
+
         // Temporarily hide overlay so modal is visible
         $('#shift-lock-overlay').addClass('modal-open-hidden');
         $('#startShiftModal').modal('show');
@@ -11347,13 +13794,13 @@ const ShiftManager = {
     loadHandoversForWard: function() {
         const self = this;
         const wardId = $('#shift-ward-select').val();
-        
+
         $.ajax({
             url: this.routes.pendingHandovers,
             type: 'GET',
-            data: { 
+            data: {
                 ward_id: wardId || null,
-                hours: 24 
+                hours: 24
             },
             success: function(response) {
                 if (response.success && response.handovers.length > 0) {
@@ -11384,7 +13831,7 @@ const ShiftManager = {
                             <span class="ml-2 text-muted">${h.ward_name}</span>
                         </div>
                         <div class="form-check">
-                            <input type="checkbox" class="form-check-input handover-ack-checkbox" 
+                            <input type="checkbox" class="form-check-input handover-ack-checkbox"
                                 data-id="${h.id}" ${isAcked ? 'checked' : ''}>
                             <label class="form-check-label">Acknowledged</label>
                         </div>
@@ -11416,9 +13863,9 @@ const ShiftManager = {
         $.ajax({
             url: this.routes.pendingHandovers,
             type: 'GET',
-            data: { 
+            data: {
                 ward_id: wardId,
-                hours: hours 
+                hours: hours
             },
             success: function(response) {
                 if (response.success && response.handovers.length > 0) {
@@ -11447,9 +13894,9 @@ const ShiftManager = {
             // Highlight unacknowledged critical handovers
             unacknowledgedCritical.addClass('shake-highlight');
             setTimeout(() => unacknowledgedCritical.removeClass('shake-highlight'), 500);
-            
+
             toastr.warning('Please acknowledge all critical handovers (marked in red) before starting your shift');
-            
+
             // Scroll to first unacknowledged
             const firstUnacked = unacknowledgedCritical.first();
             if (firstUnacked.length) {
@@ -11506,8 +13953,13 @@ const ShiftManager = {
     },
 
     // Show end shift modal
-    showEndShiftModal: function() {
+    showEndShiftModal: function(forced = false) {
         if (!this.activeShift) return;
+
+        // Reset modal to normal mode if not forced
+        if (!forced) {
+            this.resetEndShiftModal();
+        }
 
         // Populate summary
         $('#end-shift-duration').text(this.formatElapsedTime(this.activeShift.elapsed_seconds || 0));
@@ -11547,7 +13999,7 @@ const ShiftManager = {
         `);
 
         $('#endShiftModal').modal('show');
-        
+
         // Auto-load preview after modal is shown
         this.loadShiftPreview();
     },
@@ -11671,6 +14123,7 @@ const ShiftManager = {
     endShift: function() {
         const self = this;
         const btn = $('#confirm-end-shift-btn');
+        const wasForced = this.forceEndShift;
 
         // Gather pending tasks
         const pendingTasks = [];
@@ -11698,11 +14151,20 @@ const ShiftManager = {
             },
             success: function(response) {
                 if (response.success) {
+                    // Reset forced mode before hiding modal
+                    self.resetEndShiftModal();
+
                     $('#endShiftModal').modal('hide');
                     self.activeShift = null;
+                    self.forceEndShift = false;
                     self.stopShiftTimer();
-                    toastr.success(response.message || 'Shift ended successfully');
-                    
+
+                    if (wasForced) {
+                        toastr.success('Overdue shift ended successfully. Thank you for completing the handover.', 'Shift Ended');
+                    } else {
+                        toastr.success(response.message || 'Shift ended successfully');
+                    }
+
                     if (response.handover_created) {
                         toastr.info('Handover document created for incoming nurse');
                     }
@@ -11746,58 +14208,340 @@ const ShiftManager = {
         $('#pending-tasks-container').append(html);
     },
 
-    // Show handovers list (DataTable modal)
+    // Show handovers list (Cards-based modal)
     showHandoversList: function() {
-        this.initHandoversDataTable();
+        const self = this;
+        // Reset pagination and load first page
+        this.handoverCurrentPage = 1;
+        this.handoverPerPage = parseInt($('#handover-per-page').val()) || 12;
+        this.handoverViewMode = 'cards';
+
+        // Set default view toggle
+        $('#handover-view-cards').addClass('active');
+        $('#handover-view-list').removeClass('active');
+
+        // Set default dates (last 2 days)
+        const today = new Date();
+        const twoDaysAgo = new Date(today);
+        twoDaysAgo.setDate(today.getDate() - 2);
+
+        const formatDate = (date) => date.toISOString().split('T')[0];
+        $('#handover-filter-from').val(formatDate(twoDaysAgo));
+        $('#handover-filter-to').val(formatDate(today));
+
+        // Populate wards if not already done
+        if ($('#handover-filter-ward option').length <= 1) {
+            this.populateHandoverWards();
+        }
+
+        this.loadHandoversCards();
         $('#handoversListModal').modal('show');
     },
 
-    // Initialize handovers DataTable
-    initHandoversDataTable: function() {
-        const self = this;
-
-        if (this.handoversDataTable) {
-            this.handoversDataTable.ajax.reload();
-            return;
-        }
-
-        this.handoversDataTable = $('#handovers-datatable').DataTable({
-            processing: true,
-            serverSide: true,
-            ajax: {
-                url: this.routes.handovers,
-                data: function(d) {
-                    d.ward_id = $('#handover-filter-ward').val();
-                    d.shift_type = $('#handover-filter-shift').val();
-                    d.status = $('#handover-filter-status').val();
-                    d.date_from = $('#handover-filter-from').val();
-                    d.date_to = $('#handover-filter-to').val();
+    // Populate ward filter options
+    populateHandoverWards: function() {
+        const select = $('#handover-filter-ward');
+        $.ajax({
+            url: this.routes.wards || '/wards',
+            type: 'GET',
+            success: function(response) {
+                const wards = response.wards || response.data || response;
+                if (Array.isArray(wards)) {
+                    wards.forEach(function(ward) {
+                        select.append(`<option value="${ward.id}">${ward.name}</option>`);
+                    });
                 }
-            },
-            columns: [
-                { data: 'created_at_formatted', name: 'created_at' },
-                { data: 'shift_type_badge', name: 'shift_type' },
-                { data: 'ward_name', name: 'ward_id' },
-                { data: 'created_by_name', name: 'created_by' },
-                { data: 'has_critical', name: 'critical_notes', orderable: false },
-                { data: 'pending_count', name: 'pending_tasks', orderable: false },
-                { data: 'status_badge', name: 'acknowledged_at', orderable: false },
-                { data: 'actions', name: 'actions', orderable: false, searchable: false }
-            ],
-            order: [[0, 'desc']],
-            pageLength: 10,
-            language: {
-                emptyTable: 'No handovers found',
-                processing: '<i class="mdi mdi-loading mdi-spin"></i> Loading...'
             }
         });
     },
 
-    // Reload handovers table with filters
-    reloadHandoversTable: function() {
-        if (this.handoversDataTable) {
-            this.handoversDataTable.ajax.reload();
+    // Load handovers cards with backend processing
+    loadHandoversCards: function() {
+        const self = this;
+        const container = $('#handover-cards-grid');
+        const loadingEl = $('#handover-loading');
+        const emptyEl = $('#handover-empty');
+
+        // Show loading state
+        container.html('');
+        loadingEl.show();
+        emptyEl.hide();
+
+        // Build filter params
+        const params = {
+            page: this.handoverCurrentPage,
+            per_page: this.handoverPerPage,
+            ward_id: $('#handover-filter-ward').val(),
+            shift_type: $('#handover-filter-shift').val(),
+            status: $('#handover-filter-status').val(),
+            priority: $('#handover-filter-priority').val(),
+            date_from: $('#handover-filter-from').val(),
+            date_to: $('#handover-filter-to').val(),
+            search: $('#handover-filter-search').val(),
+            sort: $('#handover-filter-sort').val(),
+            format: 'cards'
+        };
+
+        $.ajax({
+            url: this.routes.handovers,
+            type: 'GET',
+            data: params,
+            success: function(response) {
+                loadingEl.hide();
+
+                if (response.success && response.data && response.data.length > 0) {
+                    self.renderHandoversCards(response.data);
+                    self.updateHandoverStats(response.stats);
+                    self.renderHandoverPagination(response.pagination);
+                } else {
+                    emptyEl.show();
+                    self.updateHandoverStats({ total: 0, pending: 0, critical: 0 });
+                    self.renderHandoverPagination(null);
+                }
+            },
+            error: function() {
+                loadingEl.hide();
+                container.html(`
+                    <div class="col-12">
+                        <div class="alert alert-danger">
+                            <i class="mdi mdi-alert-circle"></i> Failed to load handovers. Please try again.
+                        </div>
+                    </div>
+                `);
+            }
+        });
+    },
+
+    // Render handover cards
+    renderHandoversCards: function(handovers) {
+        const self = this;
+        const container = $('#handover-cards-grid');
+        const viewMode = this.handoverViewMode;
+
+        if (viewMode === 'list') {
+            this.renderHandoversList(handovers);
+            return;
         }
+
+        let html = '';
+        handovers.forEach(function(h) {
+            const isCritical = h.has_critical_notes;
+            const isPending = !h.is_acknowledged;
+            const cardClasses = [
+                'handover-card',
+                isCritical ? 'critical' : '',
+                isPending ? 'pending' : 'acknowledged'
+            ].filter(Boolean).join(' ');
+
+            const shiftBadgeClass = {
+                'morning': 'morning',
+                'afternoon': 'afternoon',
+                'night': 'night'
+            }[h.shift_type] || 'secondary';
+
+            const shiftIcon = {
+                'morning': '🌅',
+                'afternoon': '☀️',
+                'night': '🌙'
+            }[h.shift_type] || '⏰';
+
+            html += `
+                <div class="col-md-6 col-lg-4">
+                    <div class="${cardClasses}" data-handover-id="${h.id}">
+                        <div class="handover-card-header">
+                            <span class="handover-card-shift-badge ${shiftBadgeClass}">
+                                ${shiftIcon} ${h.shift_type_label || h.shift_type}
+                            </span>
+                            <span class="handover-card-time" title="${h.created_at_full}">
+                                ${h.created_at_ago}
+                            </span>
+                        </div>
+                        <div class="handover-card-body">
+                            <div class="handover-card-meta">
+                                <span class="handover-card-nurse">
+                                    <i class="mdi mdi-account-nurse"></i> ${h.created_by_name}
+                                </span>
+                            </div>
+                            <div class="handover-card-ward">
+                                <i class="mdi mdi-hospital-building"></i> ${h.ward_name}
+                            </div>
+                            <div class="handover-card-summary">
+                                ${h.summary_preview || '<span class="text-muted">No summary provided</span>'}
+                            </div>
+                            ${isCritical ? `
+                                <div class="handover-card-critical-preview">
+                                    <i class="mdi mdi-alert-circle"></i>
+                                    <strong>Critical:</strong> ${h.critical_notes_preview || 'See details'}
+                                </div>
+                            ` : ''}
+                            <div class="handover-card-stats">
+                                ${isCritical ? '<span class="handover-card-stat danger"><i class="mdi mdi-alert"></i> Critical</span>' : ''}
+                                ${h.pending_tasks_count > 0 ? `<span class="handover-card-stat warning"><i class="mdi mdi-clipboard-list"></i> ${h.pending_tasks_count} tasks</span>` : ''}
+                                ${h.action_count ? `<span class="handover-card-stat"><i class="mdi mdi-chart-bar"></i> ${h.action_count} actions</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="handover-card-footer">
+                            <span class="handover-card-status ${isPending ? 'pending' : 'acknowledged'}">
+                                ${isPending ? '<i class="mdi mdi-clock-alert"></i> Pending' : '<i class="mdi mdi-check-circle"></i> Acknowledged'}
+                            </span>
+                            <div class="handover-card-actions">
+                                <button class="btn btn-sm btn-outline-primary view-handover" data-id="${h.id}" title="View Details">
+                                    <i class="mdi mdi-eye"></i>
+                                </button>
+                                ${isPending ? `
+                                    <button class="btn btn-sm btn-success acknowledge-handover" data-id="${h.id}" title="Acknowledge">
+                                        <i class="mdi mdi-check"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.html(html);
+    },
+
+    // Render handovers as list
+    renderHandoversList: function(handovers) {
+        const container = $('#handover-cards-grid');
+        let html = '<div class="col-12">';
+
+        handovers.forEach(function(h) {
+            const isCritical = h.has_critical_notes;
+            const isPending = !h.is_acknowledged;
+
+            html += `
+                <div class="handover-list-item ${isCritical ? 'critical' : ''}" data-handover-id="${h.id}">
+                    <div class="handover-list-shift">
+                        <span class="badge badge-${h.shift_type === 'morning' ? 'warning' : h.shift_type === 'afternoon' ? 'info' : 'dark'}">
+                            ${h.shift_type_label || h.shift_type}
+                        </span>
+                    </div>
+                    <div class="handover-list-info">
+                        <div class="handover-list-meta">
+                            <strong>${h.created_by_name}</strong>
+                            <span class="text-muted">•</span>
+                            <span class="text-muted">${h.ward_name}</span>
+                            <span class="text-muted">•</span>
+                            <small class="text-muted">${h.created_at_ago}</small>
+                            ${isCritical ? '<span class="badge badge-danger ms-2">Critical</span>' : ''}
+                        </div>
+                        <div class="handover-list-summary">
+                            ${h.summary_preview || 'No summary'}
+                        </div>
+                    </div>
+                    <div class="handover-list-status">
+                        ${isPending
+                            ? '<span class="badge badge-warning">Pending</span>'
+                            : '<span class="badge badge-success">Acknowledged</span>'}
+                    </div>
+                    <div class="handover-list-actions">
+                        <button class="btn btn-sm btn-outline-primary view-handover" data-id="${h.id}">
+                            <i class="mdi mdi-eye"></i>
+                        </button>
+                        ${isPending ? `
+                            <button class="btn btn-sm btn-success acknowledge-handover ms-1" data-id="${h.id}">
+                                <i class="mdi mdi-check"></i>
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        });
+
+        html += '</div>';
+        container.html(html);
+    },
+
+    // Update handover stats display
+    updateHandoverStats: function(stats) {
+        $('#handover-total-count span').text(stats.total || 0);
+        $('#handover-pending-count span').text(stats.pending || 0);
+        $('#handover-critical-count span').text(stats.critical || 0);
+    },
+
+    // Render pagination
+    renderHandoverPagination: function(pagination) {
+        const self = this;
+        const container = $('#handover-pagination-list');
+        const pageInfo = $('#handover-page-info');
+
+        if (!pagination || pagination.total_pages <= 1) {
+            container.html('');
+            pageInfo.text('');
+            return;
+        }
+
+        pageInfo.text(`Page ${pagination.current_page} of ${pagination.total_pages}`);
+
+        let html = '';
+
+        // Previous button
+        html += `
+            <li class="page-item ${pagination.current_page === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="${pagination.current_page - 1}">
+                    <i class="mdi mdi-chevron-left"></i>
+                </a>
+            </li>
+        `;
+
+        // Page numbers
+        const startPage = Math.max(1, pagination.current_page - 2);
+        const endPage = Math.min(pagination.total_pages, pagination.current_page + 2);
+
+        if (startPage > 1) {
+            html += `<li class="page-item"><a class="page-link" href="#" data-page="1">1</a></li>`;
+            if (startPage > 2) {
+                html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+            }
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            html += `
+                <li class="page-item ${i === pagination.current_page ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>
+            `;
+        }
+
+        if (endPage < pagination.total_pages) {
+            if (endPage < pagination.total_pages - 1) {
+                html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+            }
+            html += `<li class="page-item"><a class="page-link" href="#" data-page="${pagination.total_pages}">${pagination.total_pages}</a></li>`;
+        }
+
+        // Next button
+        html += `
+            <li class="page-item ${pagination.current_page === pagination.total_pages ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="${pagination.current_page + 1}">
+                    <i class="mdi mdi-chevron-right"></i>
+                </a>
+            </li>
+        `;
+
+        container.html(html);
+    },
+
+    // Reload handovers with current filters
+    reloadHandoversCards: function() {
+        this.handoverCurrentPage = 1;
+        this.loadHandoversCards();
+    },
+
+    // Clear all handover filters
+    clearHandoverFilters: function() {
+        $('#handover-filter-ward').val('');
+        $('#handover-filter-shift').val('');
+        $('#handover-filter-status').val('');
+        $('#handover-filter-priority').val('');
+        $('#handover-filter-from').val('');
+        $('#handover-filter-to').val('');
+        $('#handover-filter-search').val('');
+        $('#handover-filter-sort').val('newest');
+        this.reloadHandoversCards();
     },
 
     // Show handover detail
@@ -11811,14 +14555,14 @@ const ShiftManager = {
                 if (response.success) {
                     self.currentHandoverDetail = response.handover;
                     self.renderHandoverDetail(response.handover);
-                    
+
                     // Show/hide acknowledge button
                     if (!response.handover.is_acknowledged) {
                         $('#acknowledge-handover-detail-btn').show();
                     } else {
                         $('#acknowledge-handover-detail-btn').hide();
                     }
-                    
+
                     $('#handoverDetailModal').modal('show');
                 } else {
                     toastr.error('Failed to load handover details');
@@ -11879,14 +14623,14 @@ const ShiftManager = {
                     <h6><i class="mdi mdi-account-group"></i> Patient Activity Summary</h6>
                     <div class="accordion" id="patientHighlightsAccordion">
             `;
-            
+
             h.patient_highlights.forEach(function(patient, idx) {
                 const collapseId = `patientCollapse${idx}`;
                 patientHighlightsHtml += `
                     <div class="card mb-2">
                         <div class="card-header p-2" id="heading${idx}">
                             <h6 class="mb-0">
-                                <button class="btn btn-link btn-sm w-100 text-left d-flex justify-content-between align-items-center" 
+                                <button class="btn btn-link btn-sm w-100 text-left d-flex justify-content-between align-items-center"
                                         type="button" data-toggle="collapse" data-target="#${collapseId}">
                                     <span>
                                         <i class="mdi mdi-account"></i> ${patient.patient_name}
@@ -11900,23 +14644,23 @@ const ShiftManager = {
                             <div class="card-body p-2">
                                 <ul class="list-unstyled mb-0">
                 `;
-                
+
                 if (patient.activities && patient.activities.length > 0) {
                     patient.activities.forEach(function(activity) {
                         patientHighlightsHtml += `
                             <li class="mb-1">
                                 <i class="mdi ${activity.icon || 'mdi-circle'} text-${activity.color || 'secondary'} mr-1"></i>
-                                <span class="text-muted">${activity.label}:</span> 
+                                <span class="text-muted">${activity.label}:</span>
                                 <strong>${activity.count}</strong>
-                                ${activity.events && activity.events.length > 0 ? 
-                                    `<span class="text-muted small">(${activity.events.slice(0, 3).join(', ')}${activity.events.length > 3 ? '...' : ''})</span>` 
+                                ${activity.events && activity.events.length > 0 ?
+                                    `<span class="text-muted small">(${activity.events.slice(0, 3).join(', ')}${activity.events.length > 3 ? '...' : ''})</span>`
                                     : ''
                                 }
                             </li>
                         `;
                     });
                 }
-                
+
                 patientHighlightsHtml += `
                                 </ul>
                             </div>
@@ -11924,7 +14668,7 @@ const ShiftManager = {
                     </div>
                 `;
             });
-            
+
             patientHighlightsHtml += '</div></div>';
         }
 
@@ -11936,7 +14680,7 @@ const ShiftManager = {
                     <h6><i class="mdi mdi-history"></i> Detailed Activity Log <small class="text-muted">(${h.audit_details.length} changes)</small></h6>
                     <div class="audit-details-list" style="max-height: 400px; overflow-y: auto;">
             `;
-            
+
             // Group by patient
             const byPatient = {};
             h.audit_details.forEach(function(detail) {
@@ -11946,7 +14690,7 @@ const ShiftManager = {
                 }
                 byPatient[patientKey].push(detail);
             });
-            
+
             for (const [patient, details] of Object.entries(byPatient)) {
                 auditDetailsHtml += `
                     <div class="audit-patient-group mb-3">
@@ -11955,14 +14699,14 @@ const ShiftManager = {
                         </h6>
                         <div class="audit-items pl-3 border-left">
                 `;
-                
+
                 details.forEach(function(detail) {
-                    const eventBadge = detail.event === 'created' 
+                    const eventBadge = detail.event === 'created'
                         ? '<span class="badge badge-success badge-sm">New</span>'
                         : detail.event === 'updated'
                         ? '<span class="badge badge-warning badge-sm">Updated</span>'
                         : '<span class="badge badge-danger badge-sm">Deleted</span>';
-                    
+
                     let changesHtml = '<ul class="list-unstyled mb-0 pl-3 small">';
                     if (detail.changes && detail.changes.length > 0) {
                         detail.changes.forEach(function(change) {
@@ -11976,7 +14720,7 @@ const ShiftManager = {
                         });
                     }
                     changesHtml += '</ul>';
-                    
+
                     auditDetailsHtml += `
                         <div class="audit-item mb-2 p-2 bg-light rounded">
                             <div class="d-flex justify-content-between align-items-start">
@@ -11991,10 +14735,10 @@ const ShiftManager = {
                         </div>
                     `;
                 });
-                
+
                 auditDetailsHtml += '</div></div>';
             }
-            
+
             auditDetailsHtml += '</div></div>';
         }
 
@@ -12078,17 +14822,15 @@ const ShiftManager = {
             success: function(response) {
                 if (response.success) {
                     toastr.success('Handover acknowledged');
-                    
+
                     if (fromDetail) {
                         $('#acknowledge-handover-detail-btn').hide();
                         self.currentHandoverDetail.is_acknowledged = true;
                         self.currentHandoverDetail.acknowledged_at = response.acknowledged_at;
                     }
-                    
-                    // Reload DataTable if open
-                    if (self.handoversDataTable) {
-                        self.handoversDataTable.ajax.reload(null, false);
-                    }
+
+                    // Reload cards list
+                    self.loadHandoversCards();
                 } else {
                     toastr.error(response.message || 'Failed to acknowledge');
                 }
@@ -12227,7 +14969,7 @@ const ShiftManager = {
     // Start shift timer
     startShiftTimer: function() {
         const self = this;
-        
+
         if (this.shiftTimer) {
             clearInterval(this.shiftTimer);
         }
@@ -12308,10 +15050,10 @@ const ShiftManager = {
 
         function startDrag(e) {
             if (e.target.tagName === 'BUTTON') return; // Don't drag when clicking buttons
-            
+
             isDragging = true;
             const rect = fab.getBoundingClientRect();
-            
+
             if (e.type === 'touchstart') {
                 startX = e.touches[0].clientX;
                 startY = e.touches[0].clientY;
@@ -12319,7 +15061,7 @@ const ShiftManager = {
                 startX = e.clientX;
                 startY = e.clientY;
             }
-            
+
             startLeft = rect.left;
             startBottom = window.innerHeight - rect.bottom;
 

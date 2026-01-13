@@ -94,6 +94,20 @@ Route::middleware(['web', 'auth'])->prefix('nursing-workbench')->name('nursing-w
     Route::get('/handover-summary', [NursingWorkbenchController::class, 'generateHandoverReport'])->name('handover.summary');
     Route::get('/handover-export', [NursingWorkbenchController::class, 'exportHandoverReport'])->name('handover.export');
 
+    // Comprehensive Nursing Reports
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/activity-summary', [NursingWorkbenchController::class, 'getReportsActivitySummary'])->name('activity-summary');
+        Route::get('/vitals', [NursingWorkbenchController::class, 'getReportsVitals'])->name('vitals');
+        Route::get('/medications', [NursingWorkbenchController::class, 'getReportsMedications'])->name('medications');
+        Route::get('/injections', [NursingWorkbenchController::class, 'getReportsInjections'])->name('injections');
+        Route::get('/immunizations', [NursingWorkbenchController::class, 'getReportsImmunizations'])->name('immunizations');
+        Route::get('/io', [NursingWorkbenchController::class, 'getReportsIO'])->name('io');
+        Route::get('/notes', [NursingWorkbenchController::class, 'getReportsNotes'])->name('notes');
+        Route::get('/shifts', [NursingWorkbenchController::class, 'getReportsShifts'])->name('shifts');
+        Route::get('/occupancy', [NursingWorkbenchController::class, 'getReportsOccupancy'])->name('occupancy');
+        Route::get('/nurses', [NursingWorkbenchController::class, 'getReportsNurses'])->name('nurses');
+    });
+
     // =====================================
     // Ward Dashboard
     // =====================================
@@ -140,4 +154,20 @@ Route::middleware(['web', 'auth'])->prefix('nursing-workbench')->name('nursing-w
     Route::get('/handover/{id}', [ShiftController::class, 'getHandoverDetails'])->name('handover.details');
     Route::post('/handover/{id}/acknowledge', [ShiftController::class, 'acknowledgeHandover'])->name('handover.acknowledge');
     Route::post('/handovers/acknowledge-multiple', [ShiftController::class, 'acknowledgeMultiple'])->name('handovers.acknowledge-multiple');
+
+    // =====================================
+    // Nursing Reports Module
+    // =====================================
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/activity-summary', [NursingWorkbenchController::class, 'getReportsActivitySummary'])->name('activity-summary');
+        Route::get('/vitals', [NursingWorkbenchController::class, 'getReportsVitals'])->name('vitals');
+        Route::get('/medications', [NursingWorkbenchController::class, 'getReportsMedications'])->name('medications');
+        Route::get('/injections', [NursingWorkbenchController::class, 'getReportsInjections'])->name('injections');
+        Route::get('/immunizations', [NursingWorkbenchController::class, 'getReportsImmunizations'])->name('immunizations');
+        Route::get('/io', [NursingWorkbenchController::class, 'getReportsIO'])->name('io');
+        Route::get('/notes', [NursingWorkbenchController::class, 'getReportsNotes'])->name('notes');
+        Route::get('/shifts', [NursingWorkbenchController::class, 'getReportsShifts'])->name('shifts');
+        Route::get('/occupancy', [NursingWorkbenchController::class, 'getReportsOccupancy'])->name('occupancy');
+        Route::get('/nurses', [NursingWorkbenchController::class, 'getReportsNurses'])->name('nurses');
+    });
 });
