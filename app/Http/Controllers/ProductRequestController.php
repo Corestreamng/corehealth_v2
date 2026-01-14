@@ -342,6 +342,303 @@ class ProductRequestController extends Controller
     }
 
     /**
+     * AJAX version of bill - returns JSON response
+     */
+    public function billAjax(Request $request)
+    {
+        try {
+            $request->validate([
+                'consult_presc_dose' => 'nullable|array',
+                'addedPrescBillRows' => 'nullable|array',
+                'selectedPrescBillRows' => 'nullable|array',
+                'patient_user_id' => 'required',
+                'patient_id' => 'required'
+            ]);
+
+            DB::beginTransaction();
+            $billedCount = 0;
+            $errors = [];
+
+            // Process selected existing ProductRequests
+            if (isset($request->selectedPrescBillRows) && is_array($request->selectedPrescBillRows)) {
+                foreach ($request->selectedPrescBillRows as $prId) {
+                    $prod_req = ProductRequest::with('product.price')->find($prId);
+                    if (!$prod_req) {
+                        $errors[] = "PR#{$prId}: Not found";
+                        continue;
+                    }
+                    if ($prod_req->status != 1) {
+                        $errors[] = "PR#{$prId}: Already processed";
+                        continue;
+                    }
+
+                    $prod_id = $prod_req->product_id;
+                    $bill_req = new ProductOrServiceRequest;
+                    $bill_req->user_id = $request->patient_user_id;
+                    $bill_req->staff_user_id = Auth::id();
+                    $bill_req->product_id = $prod_id;
+
+                    // Apply HMO tariff
+                    $patient = patient::find($request->patient_id);
+                    if ($patient && $patient->hmo_id) {
+                        try {
+                            $hmoData = HmoHelper::applyHmoTariff($patient->id, $prod_id, null);
+                            if ($hmoData) {
+                                $bill_req->payable_amount = $hmoData['payable_amount'];
+                                $bill_req->claims_amount = $hmoData['claims_amount'];
+                                $bill_req->coverage_mode = $hmoData['coverage_mode'];
+                                $bill_req->validation_status = $hmoData['validation_status'] ?? 'pending';
+                            }
+                        } catch (\Exception $e) {
+                            $price = optional($prod_req->product->price)->current_sale_price ?? 0;
+                            $bill_req->payable_amount = $price;
+                            $bill_req->claims_amount = 0;
+                            $bill_req->coverage_mode = 'none';
+                        }
+                    } else {
+                        $price = optional($prod_req->product->price)->current_sale_price ?? 0;
+                        $bill_req->payable_amount = $price;
+                        $bill_req->claims_amount = 0;
+                        $bill_req->coverage_mode = 'none';
+                    }
+
+                    $bill_req->save();
+
+                    $prod_req->update([
+                        'status' => 2,
+                        'billed_by' => Auth::id(),
+                        'billed_date' => now(),
+                        'product_request_id' => $bill_req->id
+                    ]);
+
+                    // Decrement stock
+                    $product = Product::with('stock')->find($prod_id);
+                    if ($product && $product->stock) {
+                        $qty = $prod_req->qty ?? 1;
+                        $product->stock->decrement('current_quantity', $qty);
+                    }
+
+                    $billedCount++;
+                }
+            }
+
+            // Process newly added products
+            if (isset($request->addedPrescBillRows) && is_array($request->addedPrescBillRows)) {
+                $doses = $request->consult_presc_dose ?? [];
+
+                for ($i = 0; $i < count($request->addedPrescBillRows); $i++) {
+                    $productId = $request->addedPrescBillRows[$i];
+                    $dose = $doses[$i] ?? '';
+
+                    $product = Product::with(['price', 'stock'])->find($productId);
+                    if (!$product) {
+                        $errors[] = "Product #{$productId}: Not found";
+                        continue;
+                    }
+
+                    // Create ProductOrServiceRequest
+                    $bill_req = new ProductOrServiceRequest;
+                    $bill_req->user_id = $request->patient_user_id;
+                    $bill_req->staff_user_id = Auth::id();
+                    $bill_req->product_id = $productId;
+
+                    // Apply HMO tariff
+                    $patient = patient::find($request->patient_id);
+                    if ($patient && $patient->hmo_id) {
+                        try {
+                            $hmoData = HmoHelper::applyHmoTariff($patient->id, $productId, null);
+                            if ($hmoData) {
+                                $bill_req->payable_amount = $hmoData['payable_amount'];
+                                $bill_req->claims_amount = $hmoData['claims_amount'];
+                                $bill_req->coverage_mode = $hmoData['coverage_mode'];
+                                $bill_req->validation_status = $hmoData['validation_status'] ?? 'pending';
+                            }
+                        } catch (\Exception $e) {
+                            $price = optional($product->price)->current_sale_price ?? 0;
+                            $bill_req->payable_amount = $price;
+                            $bill_req->claims_amount = 0;
+                            $bill_req->coverage_mode = 'none';
+                        }
+                    } else {
+                        $price = optional($product->price)->current_sale_price ?? 0;
+                        $bill_req->payable_amount = $price;
+                        $bill_req->claims_amount = 0;
+                        $bill_req->coverage_mode = 'none';
+                    }
+
+                    $bill_req->save();
+
+                    // Create ProductRequest with status=2 (billed)
+                    $presc = new ProductRequest();
+                    $presc->product_id = $productId;
+                    $presc->dose = $dose;
+                    $presc->billed_by = Auth::id();
+                    $presc->billed_date = now();
+                    $presc->patient_id = $request->patient_id;
+                    $presc->doctor_id = Auth::id();
+                    $presc->product_request_id = $bill_req->id;
+                    $presc->status = 2;
+                    $presc->save();
+
+                    // Decrement stock
+                    if ($product->stock) {
+                        $product->stock->decrement('current_quantity', 1);
+                    }
+
+                    $billedCount++;
+                }
+            }
+
+            DB::commit();
+
+            $message = "Successfully billed {$billedCount} item(s)";
+            if (count($errors) > 0) {
+                $message .= ". Errors: " . implode('; ', $errors);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'billed_count' => $billedCount,
+                'errors' => $errors
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error billing items: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * AJAX version of dispense - returns JSON response
+     */
+    public function dispenseAjax(Request $request)
+    {
+        try {
+            $request->validate([
+                'selectedPrescDispenseRows' => 'required|array|min:1',
+                'patient_user_id' => 'required',
+                'patient_id' => 'required'
+            ]);
+
+            DB::beginTransaction();
+            $dispensedCount = 0;
+            $errors = [];
+
+            foreach ($request->selectedPrescDispenseRows as $prId) {
+                $productRequest = ProductRequest::with('productOrServiceRequest')->find($prId);
+
+                if (!$productRequest) {
+                    $errors[] = "PR#{$prId}: Not found";
+                    continue;
+                }
+
+                if ($productRequest->status != 2) {
+                    $errors[] = "PR#{$prId}: Not billed yet";
+                    continue;
+                }
+
+                // Check payment and HMO delivery requirements
+                if ($productRequest->productOrServiceRequest) {
+                    $deliveryCheck = HmoHelper::canDeliverService($productRequest->productOrServiceRequest);
+                    if (!$deliveryCheck['can_deliver']) {
+                        $errors[] = "PR#{$prId}: " . $deliveryCheck['reason'];
+                        continue;
+                    }
+                }
+
+                $productRequest->update([
+                    'status' => 3,
+                    'dispensed_by' => Auth::id(),
+                    'dispense_date' => now(),
+                ]);
+
+                $dispensedCount++;
+            }
+
+            DB::commit();
+
+            $message = "Successfully dispensed {$dispensedCount} item(s)";
+            if (count($errors) > 0) {
+                $message .= ". Errors: " . implode('; ', $errors);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'dispensed_count' => $dispensedCount,
+                'errors' => $errors
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error dispensing items: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * AJAX dismiss prescriptions
+     */
+    public function dismissAjax(Request $request)
+    {
+        try {
+            $request->validate([
+                'prescription_ids' => 'required|array|min:1',
+                'patient_id' => 'required'
+            ]);
+
+            DB::beginTransaction();
+            $dismissedCount = 0;
+            $errors = [];
+
+            foreach ($request->prescription_ids as $prId) {
+                $productRequest = ProductRequest::find($prId);
+
+                if (!$productRequest) {
+                    $errors[] = "PR#{$prId}: Not found";
+                    continue;
+                }
+
+                if ($productRequest->status == 3) {
+                    $errors[] = "PR#{$prId}: Already dispensed - cannot dismiss";
+                    continue;
+                }
+
+                // Soft delete or update status to 0 (dismissed)
+                $productRequest->update(['status' => 0]);
+                $dismissedCount++;
+            }
+
+            DB::commit();
+
+            $message = "Successfully dismissed {$dismissedCount} item(s)";
+            if (count($errors) > 0) {
+                $message .= ". Errors: " . implode('; ', $errors);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'dismissed_count' => $dismissedCount,
+                'errors' => $errors
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error dismissing items: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Show the form for creating a new resource.
      *
      * @return \Illuminate\Http\Response

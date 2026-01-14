@@ -1,6 +1,6 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Billing Workbench')
+@section('title', 'Pharmacy Workbench')
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
@@ -22,10 +22,84 @@
     }
 
     /* Main Layout */
-    .billing-workbench-container {
+    .pharmacy-workbench-container {
         display: flex;
         min-height: calc(100vh - 100px);
         gap: 0;
+    }
+
+    /* Prescription Card Styles */
+    .presc-card {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 12px 15px;
+        margin-bottom: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .presc-card:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-color: #0d6efd;
+    }
+
+    .presc-card.selected {
+        background: #e7f1ff;
+        border-color: #0d6efd;
+    }
+
+    .presc-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 8px;
+    }
+
+    .presc-card-title {
+        font-weight: 600;
+        color: #212529;
+        font-size: 0.95rem;
+    }
+
+    .presc-card-price {
+        font-weight: 700;
+        color: #198754;
+        font-size: 1rem;
+    }
+
+    .presc-card-body {
+        font-size: 0.875rem;
+        color: #495057;
+    }
+
+    .presc-card-detail {
+        margin-bottom: 4px;
+    }
+
+    .presc-card-meta {
+        border-top: 1px solid #f1f3f5;
+        padding-top: 8px;
+        margin-top: 8px;
+    }
+
+    .presc-card-hmo {
+        background: #f8f9fa;
+        border-radius: 4px;
+        padding: 4px 8px;
+    }
+
+    /* DataTable Adjustments for Card View */
+    #presc_bill_list td,
+    #presc_dispense_list td,
+    #presc_history_list td {
+        vertical-align: top;
+        padding: 8px;
+    }
+
+    #presc_bill_list td:first-child,
+    #presc_dispense_list td:first-child {
+        width: 40px;
+        text-align: center;
     }
 
     /* Left Panel - Patient Search */
@@ -2735,9 +2809,263 @@
         border-radius: 0.5rem;
     }
 
+    /* Card-based Layout Styles */
+    .request-section {
+        margin-bottom: 2rem;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        overflow: hidden;
+        background: white;
+    }
+
+    .request-section-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .request-section-header h5 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .request-section-header h5 i {
+        font-size: 1.3rem;
+    }
+
+    .request-cards-container {
+        padding: 1rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1rem;
+    }
+
+    .request-card {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 1rem;
+        background: white;
+        display: flex;
+        gap: 1rem;
+        transition: all 0.2s ease;
+    }
+
+    .request-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border-color: var(--hospital-primary);
+    }
+
+    .card-checkbox {
+        display: flex;
+        align-items: flex-start;
+        padding-top: 0.25rem;
+    }
+
+    .card-checkbox input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+    }
+
+    .card-checkbox input[type="checkbox"]:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+
+    .card-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .card-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.75rem;
+        gap: 1rem;
+    }
+
+    .card-title {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .card-title strong {
+        font-size: 1.05rem;
+        color: #2c3e50;
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+
+    .card-meta {
+        font-size: 0.9rem;
+        color: #6c757d;
+        white-space: nowrap;
+    }
+
+    .card-details {
+        margin-bottom: 0.75rem;
+    }
+
+    .detail-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.4rem;
+        font-size: 0.9rem;
+        color: #495057;
+    }
+
+    .detail-item i {
+        color: #6c757d;
+        font-size: 1rem;
+    }
+
+    .card-pricing {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-top: 0.75rem;
+        padding: 0.75rem;
+        background: #f8f9fa;
+        border-radius: 6px;
+    }
+
+    .pricing-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex: 1;
+        min-width: 120px;
+    }
+
+    .pricing-item .label {
+        font-size: 0.85rem;
+        color: #6c757d;
+        font-weight: 500;
+    }
+
+    .pricing-item .value {
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
+    .card-warning {
+        margin-top: 0.75rem;
+        padding: 0.75rem;
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        border-radius: 6px;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .card-warning i {
+        color: #ff6b6b;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+        margin-top: 0.1rem;
+    }
+
+    .card-warning strong {
+        color: #d63031;
+    }
+
+    .section-actions-footer {
+        padding: 1rem 1.5rem;
+        background: #f8f9fa;
+        border-top: 1px solid #e0e0e0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .select-all-container {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .select-all-container input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+    }
+
+    .select-all-container label {
+        margin: 0;
+        cursor: pointer;
+        font-weight: 500;
+        user-select: none;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .btn-action {
+        padding: 0.5rem 1.25rem;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-action:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .btn-action-billing {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .btn-action-billing:not(:disabled):hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-action-success {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        color: white;
+    }
+
+    .btn-action-success:not(:disabled):hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(17, 153, 142, 0.3);
+    }
+
+    .btn-action-dismiss {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-action-dismiss:not(:disabled):hover {
+        background: #5a6268;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+    }
+
 </style>
 
-<div class="billing-workbench-container">
+<div class="pharmacy-workbench-container">
     <!-- Left Panel: Patient Search & Queue -->
     <div class="left-panel" id="left-panel">
         <div class="panel-header">
@@ -2756,18 +3084,22 @@
         </div>
 
         <div class="queue-widget">
-            <h6>📊 PAYMENT QUEUE</h6>
+            <h6>� PRESCRIPTION QUEUE</h6>
             <div class="queue-item" data-filter="all">
-                <span class="queue-item-label">🟡 All Unpaid</span>
+                <span class="queue-item-label">🟡 All Pending</span>
                 <span class="queue-count all-unpaid" id="queue-all-count">0</span>
             </div>
-            <div class="queue-item" data-filter="hmo">
-                <span class="queue-item-label">🟢 HMO Items</span>
-                <span class="queue-count hmo-items" id="queue-hmo-count">0</span>
+            <div class="queue-item" data-filter="unbilled">
+                <span class="queue-item-label">🟠 Unbilled</span>
+                <span class="queue-count unbilled-items" id="queue-unbilled-count">0</span>
             </div>
-            <div class="queue-item" data-filter="credit">
-                <span class="queue-item-label">🟠 Credit Accounts</span>
-                <span class="queue-count credit-accounts" id="queue-credit-count">0</span>
+            <div class="queue-item" data-filter="billed">
+                <span class="queue-item-label">🟢 Ready to Dispense</span>
+                <span class="queue-count ready-items" id="queue-ready-count">0</span>
+            </div>
+            <div class="queue-item" data-filter="hmo">
+                <span class="queue-item-label">🔵 HMO Items</span>
+                <span class="queue-count hmo-items" id="queue-hmo-count">0</span>
             </div>
             <button class="btn-queue-all" id="show-all-queue-btn">
                 📋 Show All Queue →
@@ -2809,16 +3141,16 @@
         <div class="empty-state" id="empty-state">
             <i class="mdi mdi-account-cash"></i>
             <h3>No Patient Selected</h3>
-            <p>Search and select a patient from the queue to begin billing</p>
+            <p>Search and select a patient from the queue to dispense medications</p>
             <button class="btn btn-lg btn-primary" id="view-queue-btn">
-                💰 View Payment Queue
+                💊 View Prescription Queue
             </button>
         </div>
 
         <!-- Queue View -->
         <div class="queue-view" id="queue-view">
             <div class="queue-view-header">
-                <h4 id="queue-view-title"><i class="mdi mdi-format-list-bulleted"></i> Payment Queue</h4>
+                <h4 id="queue-view-title"><i class="mdi mdi-format-list-bulleted"></i> Prescription Queue</h4>
                 <button class="btn-close-queue" id="btn-close-queue">
                     <i class="mdi mdi-close"></i> Close
                 </button>
@@ -3114,138 +3446,35 @@
         <!-- Workspace Content -->
         <div class="workspace-content" id="workspace-content">
             <div class="workspace-tabs">
-                <button class="workspace-tab active" data-tab="billing">
-                    <i class="mdi mdi-cash-register"></i>
-                    <span>Billing</span>
-                    <span class="workspace-tab-badge" id="billing-badge">0</span>
+                <button class="workspace-tab active" data-tab="pending">
+                    <i class="mdi mdi-pill"></i>
+                    <span>Pending</span>
+                    <span class="workspace-tab-badge" id="pending-badge">0</span>
                 </button>
-                <button class="workspace-tab" data-tab="receipts">
-                    <i class="mdi mdi-receipt"></i>
-                    <span>Receipts</span>
+                <button class="workspace-tab" data-tab="new-request">
+                    <i class="mdi mdi-plus-circle"></i>
+                    <span>New Request</span>
                 </button>
-                <button class="workspace-tab" data-tab="account">
-                    <i class="mdi mdi-wallet"></i>
-                    <span>Account</span>
+                <button class="workspace-tab" data-tab="history">
+                    <i class="mdi mdi-history"></i>
+                    <span>History</span>
                 </button>
             </div>
 
-            <div class="workspace-tab-content active" id="billing-tab">
-                <div class="billing-tab-header">
-                    <h4><i class="mdi mdi-cash-register"></i> Patient Billing Items</h4>
-                    <div class="billing-toolbar">
-                        <button class="btn btn-sm btn-secondary" id="refresh-billing-items">
-                            <i class="mdi mdi-refresh"></i> Refresh
-                        </button>
-                        <button class="btn btn-sm btn-success" id="process-payment-btn" disabled>
-                            <i class="mdi mdi-cash"></i> Process Payment
-                        </button>
-                    </div>
-                </div>
-
-                <div class="billing-items-container">
-                    <table class="table table-hover" id="billing-items-table">
-                        <thead>
-                            <tr>
-                                <th width="40"><input type="checkbox" id="select-all-billing-items"></th>
-                                <th>Item</th>
-                                <th>Category</th>
-                                <th>Price</th>
-                                <th width="80">Qty</th>
-                                <th width="80">Discount %</th>
-                                <th>HMO Coverage</th>
-                                <th>Total</th>
-                            </tr>
-                        </thead>
-                        <tbody id="billing-items-tbody">
-                            <tr>
-                                <td colspan="8" class="text-center text-muted py-5">
-                                    <i class="mdi mdi-information-outline" style="font-size: 3rem;"></i>
-                                    <p>No unpaid items for this patient</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Payment Summary Card (appears when items selected) -->
-                <div class="payment-summary-card" id="payment-summary-card" style="display: none;">
-                    <h5><i class="mdi mdi-calculator"></i> Payment Summary</h5>
-
-                    <!-- Account Balance Info -->
-                    <div class="account-balance-info" id="billing-account-balance" style="display: none;">
-                        <div class="balance-row">
-                            <span><i class="mdi mdi-wallet"></i> Account Balance:</span>
-                            <span id="billing-balance-amount" class="balance-amount">₦0.00</span>
-                        </div>
-                    </div>
-
-                    <div class="summary-details">
-                        <div class="summary-row">
-                            <span>Subtotal:</span>
-                            <span id="summary-subtotal">₦0.00</span>
-                        </div>
-                        <div class="summary-row">
-                            <span>Total Discount:</span>
-                            <span id="summary-discount">₦0.00</span>
-                        </div>
-                        <div class="summary-row total">
-                            <span>Total Payable:</span>
-                            <span id="summary-total">₦0.00</span>
-                        </div>
-                    </div>
-                    <div class="payment-method-section">
-                        <label><i class="mdi mdi-cash-multiple"></i> Payment Method</label>
-                        <select class="form-control" id="payment-method">
-                            <option value="CASH">Cash</option>
-                            <option value="POS">POS/Card</option>
-                            <option value="TRANSFER">Bank Transfer</option>
-                            <option value="MOBILE">Mobile Money</option>
-                            <option value="ACCOUNT" id="account-payment-option" style="display: none;">Pay from Account Balance</option>
-                        </select>
-                        <small class="text-muted" id="account-payment-note" style="display: none;">
-                            <i class="mdi mdi-information"></i> Payment will be deducted from account balance
-                        </small>
-                    </div>
-                    <div class="bank-selection-section" id="bank-selection-section" style="display: none;">
-                        <label><i class="mdi mdi-bank"></i> Select Bank</label>
-                        <select class="form-control" id="payment-bank">
-                            <option value="">-- Select Bank --</option>
-                        </select>
-                    </div>
-                    <div class="payment-reference-section">
-                        <label>Reference Number (Optional)</label>
-                        <input type="text" class="form-control" id="payment-reference" placeholder="Enter transaction reference">
-                    </div>
-                    <button class="btn btn-success btn-block btn-lg" id="confirm-payment-btn">
-                        <i class="mdi mdi-check-circle"></i> Confirm Payment
-                    </button>
-                </div>
-
-                <!-- Receipt Display (after payment) -->
-                <div class="receipt-display" id="receipt-display" style="display: none;">
-                    <div class="receipt-tabs">
-                        <button class="receipt-tab active" data-format="a4">A4 Receipt</button>
-                        <button class="receipt-tab" data-format="thermal">Thermal Receipt</button>
-                    </div>
-                    <div class="receipt-content" id="receipt-content-a4"></div>
-                    <div class="receipt-content" id="receipt-content-thermal" style="display: none;"></div>
-                    <div class="receipt-actions">
-                        <button class="btn btn-primary" id="print-a4-receipt">
-                            <i class="mdi mdi-printer"></i> Print A4
-                        </button>
-                        <button class="btn btn-primary" id="print-thermal-receipt">
-                            <i class="mdi mdi-printer"></i> Print Thermal
-                        </button>
-                        <button class="btn btn-secondary" id="close-receipt">
-                            <i class="mdi mdi-close"></i> Close
-                        </button>
+            <div class="workspace-tab-content active" id="pending-tab">
+                {{-- Use unified prescription component with sub-tabs --}}
+                <div id="pharmacy-presc-container">
+                    {{-- This will be populated dynamically when patient is loaded --}}
+                    <div class="text-center text-muted py-5">
+                        <i class="mdi mdi-pill" style="font-size: 3rem;"></i>
+                        <p>Select a patient to view prescriptions</p>
                     </div>
                 </div>
             </div>
 
-            <div class="workspace-tab-content" id="receipts-tab">
-                <div class="receipts-tab-header">
-                    <h4><i class="mdi mdi-receipt"></i> Payment Receipts & Transactions</h4>
+            <div class="workspace-tab-content" id="history-tab">
+                <div class="history-tab-header">
+                    <h4><i class="mdi mdi-history"></i> Dispensing History</h4>
                     <div class="receipts-toolbar">
                         <button class="btn btn-sm btn-secondary" id="refresh-receipts">
                             <i class="mdi mdi-refresh"></i> Refresh
@@ -3310,20 +3539,19 @@
                     <table class="table table-hover" id="receipts-table">
                         <thead>
                             <tr>
-                                <th width="40"><input type="checkbox" id="select-all-receipts"></th>
-                                <th>Receipt No</th>
                                 <th>Date</th>
-                                <th>Items</th>
-                                <th>Amount</th>
-                                <th>Discount</th>
-                                <th>Method</th>
-                                <th>Cashier</th>
+                                <th>Medication</th>
+                                <th>Qty</th>
+                                <th class="text-right">Default</th>
+                                <th class="text-right">Patient Paid</th>
+                                <th class="text-right">HMO Paid</th>
+                                <th>Dispensed By</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="receipts-tbody">
                             <tr>
-                                <td colspan="9" class="text-center text-muted py-5">
+                                <td colspan="8" class="text-center text-muted py-5">
                                     <i class="mdi mdi-receipt" style="font-size: 3rem;"></i>
                                     <p>No receipts found for this patient</p>
                                 </td>
@@ -3333,300 +3561,168 @@
                 </div>
             </div>
 
-            <div class="workspace-tab-content" id="account-tab">
-                <!-- Hero Balance Section -->
-                <div class="account-hero-section" id="account-hero-section">
-                    <div class="account-hero-balance" id="account-hero-balance">
-                        <div class="hero-balance-icon">
-                            <i class="mdi mdi-wallet"></i>
-                        </div>
-                        <div class="hero-balance-content">
-                            <span class="hero-balance-label">Current Balance</span>
-                            <span class="hero-balance-amount" id="hero-balance-amount">₦0.00</span>
-                            <span class="hero-balance-status" id="hero-balance-status">Balanced</span>
-                        </div>
-                        <div class="hero-balance-actions">
-                            <div class="action-btn-group">
-                                <button class="btn btn-light btn-sm" id="quick-deposit-btn" title="Make Deposit">
-                                    <i class="mdi mdi-plus-circle text-success"></i> Deposit
-                                </button>
-                                <button class="btn btn-outline-light btn-sm" id="quick-withdraw-btn" title="Withdraw">
-                                    <i class="mdi mdi-minus-circle text-danger"></i> Withdraw
-                                </button>
-                                <button class="btn btn-outline-light btn-sm" id="quick-adjust-btn" title="Adjustment">
-                                    <i class="mdi mdi-swap-horizontal text-info"></i> Adjust
-                                </button>
-                            </div>
-                            <div class="action-btn-group mt-2">
-                                <button class="btn btn-outline-light btn-sm" id="print-statement-btn" title="Print Statement">
-                                    <i class="mdi mdi-printer"></i>
-                                </button>
-                                <button class="btn btn-outline-light btn-sm" id="refresh-account-data" title="Refresh">
-                                    <i class="mdi mdi-refresh"></i>
-                                </button>
-                            </div>
-                        </div>
+            <div class="workspace-tab-content" id="new-request-tab">
+                <div class="new-request-container" style="max-width: 100%;">
+                    <div class="new-request-header">
+                        <h4><i class="mdi mdi-plus-circle"></i> Create New Prescription Request</h4>
+                        <p class="text-muted">Request medication for <span id="new-request-patient-name"></span></p>
                     </div>
+                    <form id="new-prescription-request-form" class="new-request-form">
+                        <div class="form-group" style="position: relative; width: 100%;">
+                            <label for="product-search-input"><i class="mdi mdi-magnify"></i> Search Medications/Products</label>
+                            <input type="text" class="form-control" id="product-search-input" placeholder="Type medication name or code..." autocomplete="off">
+                            <ul class="list-group" id="product-search-results" style="display: none; position: absolute; top: 100%; left: 0; z-index: 1050; max-height: 300px; overflow-y: auto; width: 100%; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #ddd; border-radius: 0 0 4px 4px;"></ul>
+                        </div>
 
-                    <!-- Account Stats Dashboard -->
-                    <div class="account-stats-grid">
-                        <div class="account-stat-card deposits">
-                            <div class="stat-icon"><i class="mdi mdi-arrow-down-bold-circle"></i></div>
-                            <div class="stat-info">
-                                <span class="stat-value" id="total-deposits-stat">₦0</span>
-                                <span class="stat-label">Total Deposits</span>
-                            </div>
-                        </div>
-                        <div class="account-stat-card withdrawals">
-                            <div class="stat-icon"><i class="mdi mdi-arrow-up-bold-circle"></i></div>
-                            <div class="stat-info">
-                                <span class="stat-value" id="total-withdrawals-stat">₦0</span>
-                                <span class="stat-label">Total Withdrawals</span>
-                            </div>
-                        </div>
-                        <div class="account-stat-card pending">
-                            <div class="stat-icon"><i class="mdi mdi-clock-outline"></i></div>
-                            <div class="stat-info">
-                                <span class="stat-value" id="pending-bills-stat">₦0</span>
-                                <span class="stat-label">Pending Bills</span>
-                            </div>
-                        </div>
-                        <div class="account-stat-card transactions">
-                            <div class="stat-icon"><i class="mdi mdi-swap-horizontal"></i></div>
-                            <div class="stat-info">
-                                <span class="stat-value" id="tx-count-stat">0</span>
-                                <span class="stat-label">Transactions</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                        <hr class="my-3">
 
-                <!-- No Account State -->
-                <div class="account-no-account-state" id="no-account-state" style="display: none;">
-                    <div class="no-account-content">
-                        <div class="no-account-icon">
-                            <i class="mdi mdi-wallet-outline"></i>
-                        </div>
-                        <h4>No Account Found</h4>
-                        <p>This patient doesn't have an account yet. Create one to start tracking deposits and payments.</p>
-                        <button class="btn btn-primary btn-lg" id="create-account-btn">
-                            <i class="mdi mdi-plus-circle"></i> Create Account
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Account Transaction Panel (Deposit/Withdraw/Adjust) -->
-                <div class="account-transaction-panel" id="account-transaction-panel" style="display: none;">
-                    <div class="transaction-panel-header" id="transaction-panel-header">
-                        <h5><i class="mdi mdi-cash-plus" id="transaction-panel-icon"></i> <span id="transaction-panel-title">Make Deposit</span></h5>
-                        <button class="btn btn-sm btn-link" id="close-transaction-panel">
-                            <i class="mdi mdi-close"></i>
-                        </button>
-                    </div>
-                    <div class="transaction-panel-body">
-                        <form id="account-transaction-form" class="transaction-form-inline">
-                            <input type="hidden" id="transaction-type" value="deposit">
-                            <div class="form-group">
-                                <label>Amount</label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">₦</span>
-                                    </div>
-                                    <input type="number" step="0.01" class="form-control form-control-lg" id="transaction-amount" placeholder="0.00" required>
-                                </div>
-                                <small class="form-text text-muted" id="transaction-amount-help">Enter amount to deposit</small>
+                        <div id="selected-products-container" style="display: none;">
+                            <label><i class="mdi mdi-pill"></i> Selected Medications</label>
+                            <div class="table-responsive" id="selected-products-list" class="mb-3">
+                                <table class="table table-sm table-bordered table-hover" id="selected-products-table">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Medication</th>
+                                            <th class="text-right">Price</th>
+                                            <th class="text-center" style="width: 80px;">Qty</th>
+                                            <th>Dose/Frequency *</th>
+                                            <th class="text-center" style="width: 50px;"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="selected-products-tbody"></tbody>
+                                    <tfoot>
+                                        <tr class="table-light">
+                                            <td class="text-right"><strong>Grand Total:</strong></td>
+                                            <td class="text-right"><strong id="selected-products-total">₦0.00</strong></td>
+                                            <td colspan="3"></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
                             </div>
-                            <div class="form-group" id="transaction-payment-method-group">
-                                <label>Payment Method</label>
-                                <select class="form-control" id="transaction-payment-method">
-                                    <option value="CASH">Cash</option>
-                                    <option value="POS">POS/Card</option>
-                                    <option value="TRANSFER">Bank Transfer</option>
-                                    <option value="MOBILE">Mobile Money</option>
+                        </div>
+
+                        <div class="form-row" style="display: none;">
+                            <div class="form-group col-md-6">
+                                <label for="request-urgency"><i class="mdi mdi-clock-alert"></i> Urgency Level</label>
+                                <select class="form-control" id="request-urgency" name="urgency">
+                                    <option value="routine">Routine</option>
+                                    <option value="urgent">Urgent</option>
+                                    <option value="stat">STAT (Immediate)</option>
                                 </select>
                             </div>
-                            <div class="form-group" id="transaction-bank-group" style="display: none;">
-                                <label>Select Bank</label>
-                                <select class="form-control" id="transaction-bank">
-                                    <option value="">-- Select Bank --</option>
+                            <div class="form-group col-md-6">
+                                <label for="request-send-to-billing"><i class="mdi mdi-cash-register"></i> Send to Billing?</label>
+                                <select class="form-control" id="request-send-to-billing" name="send_to_billing">
+                                    <option value="1">Yes - Send to Billing Queue</option>
+                                    <option value="0">No - Direct Request (e.g., Ward Stock)</option>
                                 </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Description <small class="text-muted">(Required for adjustments)</small></label>
-                                <input type="text" class="form-control" id="transaction-description" placeholder="e.g., Cash deposit, Refund, Correction, etc.">
-                            </div>
-                            <div class="transaction-actions">
-                                <button type="submit" class="btn btn-block" id="transaction-submit-btn">
-                                    <i class="mdi mdi-check"></i> <span id="transaction-submit-text">Confirm Deposit</span>
-                                </button>
-                            </div>
-                        </form>
-
-                        <!-- Balance Preview -->
-                        <div class="balance-preview" id="balance-preview">
-                            <div class="balance-preview-row">
-                                <span>Current Balance:</span>
-                                <span id="preview-current-balance">₦0.00</span>
-                            </div>
-                            <div class="balance-preview-row">
-                                <span id="preview-change-label">After Deposit:</span>
-                                <span id="preview-new-balance">₦0.00</span>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <!-- Transaction History Section -->
-                <div class="account-transactions-section" id="account-transactions-section">
-                    <div class="transactions-section-header">
-                        <h5><i class="mdi mdi-history"></i> Account Transactions</h5>
-                        <div class="transactions-filters">
-                            <div class="filter-group">
-                                <input type="date" class="form-control form-control-sm" id="account-tx-from-date">
-                            </div>
-                            <div class="filter-group">
-                                <input type="date" class="form-control form-control-sm" id="account-tx-to-date">
-                            </div>
-                            <div class="filter-group">
-                                <select class="form-control form-control-sm" id="account-tx-type-filter">
-                                    <option value="">All Types</option>
-                                    <option value="ACC_DEPOSIT">Deposits</option>
-                                    <option value="ACC_WITHDRAW">Withdrawals/Payments</option>
-                                    <option value="ACC_ADJUSTMENT">Adjustments</option>
-                                </select>
-                            </div>
-                            <button class="btn btn-sm btn-primary" id="filter-account-tx">
-                                <i class="mdi mdi-filter"></i> Filter
+                        <div class="form-group">
+                            <label for="request-notes"><i class="mdi mdi-note-text"></i> Notes / Instructions</label>
+                            <textarea class="form-control" id="request-notes" name="notes" rows="3" placeholder="Enter any special instructions or notes..."></textarea>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="switchWorkspaceTab('pending')">
+                                <i class="mdi mdi-close"></i> Cancel
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="mdi mdi-check"></i> Submit Request
                             </button>
                         </div>
-                    </div>
-
-                    <!-- Transaction Timeline -->
-                    <div class="transaction-timeline" id="transaction-timeline">
-                        <div class="timeline-empty-state">
-                            <i class="mdi mdi-swap-horizontal"></i>
-                            <p>No account transactions yet</p>
-                            <small>Deposits and withdrawals will appear here</small>
-                        </div>
-                    </div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- My Transactions Modal (Global Access) -->
-<div class="modal fade" id="myTransactionsModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-xl" role="document">
-        <div class="modal-content">
-            <div class="modal-header" style="background: var(--hospital-primary); color: white;">
-                <h5 class="modal-title"><i class="mdi mdi-receipt"></i> My Transactions</h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">
-                    <span>&times;</span>
-                </button>
-            </div>
-            <div class="modal-body" id="my-transactions-modal-body">
-                <!-- Filter Panel -->
-                <div class="my-transactions-filter">
-                    <div class="row">
-                        <div class="col-md-2">
-                            <label>From Date</label>
-                            <input type="date" class="form-control" id="my-trans-from-date">
-                        </div>
-                        <div class="col-md-2">
-                            <label>To Date</label>
-                            <input type="date" class="form-control" id="my-trans-to-date">
-                        </div>
-                        <div class="col-md-2">
-                            <label>Payment Type</label>
-                            <select class="form-control" id="my-trans-payment-type">
-                                <option value="">All Types</option>
-                                <option value="CASH">Cash</option>
-                                <option value="POS">POS/Card</option>
-                                <option value="TRANSFER">Bank Transfer</option>
-                                <option value="MOBILE">Mobile Money</option>
-                                <option value="ACC_DEPOSIT">Account Deposit</option>
-                                <option value="ACC_WITHDRAW">Account Withdrawal</option>
-                                <option value="ACC_ADJUSTMENT">Adjustment</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label>Bank</label>
-                            <select class="form-control" id="my-trans-bank">
-                                <option value="">All Banks</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label>&nbsp;</label>
-                            <div class="btn-group btn-block">
-                                <button class="btn btn-primary" id="load-my-transactions">
-                                    <i class="mdi mdi-filter"></i> Load
-                                </button>
-                                <button class="btn btn-info" id="print-my-transactions">
-                                    <i class="mdi mdi-printer"></i> Print
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+<style>
+/* New Request Form Styles */
+.new-request-container {
+    padding: 1.5rem;
+    max-width: 900px;
+}
 
-                <!-- Summary Statistics -->
-                <div class="my-transactions-summary" id="my-transactions-summary" style="display: none;">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="summary-stat-card">
-                                <div class="stat-value" id="my-total-transactions">0</div>
-                                <div class="stat-label">Total Transactions</div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="summary-stat-card">
-                                <div class="stat-value" id="my-total-amount">₦0.00</div>
-                                <div class="stat-label">Total Amount</div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="summary-stat-card">
-                                <div class="stat-value" id="my-total-discounts">₦0.00</div>
-                                <div class="stat-label">Total Discounts</div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Breakdown by payment type -->
-                    <div class="payment-type-breakdown" id="payment-type-breakdown"></div>
-                </div>
+.new-request-header h4 {
+    margin-bottom: 0.5rem;
+    color: var(--hospital-primary);
+}
 
-                <!-- Transactions Table -->
-                <div class="my-transactions-container">
-                    <table class="table table-hover" id="my-transactions-table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Patient</th>
-                                <th>File No</th>
-                                <th>Reference</th>
-                                <th>Method</th>
-                                <th>Bank</th>
-                                <th>Amount</th>
-                                <th>Discount</th>
-                            </tr>
-                        </thead>
-                        <tbody id="my-transactions-tbody">
-                            <tr>
-                                <td colspan="8" class="text-center text-muted py-5">
-                                    <i class="mdi mdi-information-outline" style="font-size: 3rem;"></i>
-                                    <p>Click "Load" to fetch your transactions</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
+.new-request-header p {
+    margin-bottom: 1.5rem;
+}
+
+.new-request-form .form-group {
+    margin-bottom: 1rem;
+}
+
+.new-request-form .form-actions {
+    margin-top: 2rem;
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+#selected-products-table {
+    margin-top: 0.5rem;
+}
+
+#selected-products-table input {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.9rem;
+}
+
+#selected-products-table input[type="number"] {
+    min-width: 70px;
+    text-align: center;
+}
+
+#selected-products-table input[type="text"] {
+    min-width: 150px;
+}
+
+/* Dispense Summary Card */
+#dispense-summary-card {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: var(--hospital-primary);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    display: none;
+}
+
+#dispense-summary-card .btn {
+    margin-left: 1rem;
+}
+
+/* Prescription item status badges */
+.status-requested { background: #ffc107; color: #333; }
+.status-billed { background: #17a2b8; color: white; }
+.status-ready { background: #28a745; color: white; }
+.status-dispensed { background: #6c757d; color: white; }
+
+/* Ready to dispense row highlight */
+.table-success td {
+    background-color: rgba(40, 167, 69, 0.1) !important;
+}
+</style>
+
+<!-- Dispense Summary Card (floating) -->
+<div id="dispense-summary-card">
+    <span><strong id="dispense-count">0</strong> items selected</span>
+    <button class="btn btn-light btn-sm" id="print-selected-btn">
+        <i class="mdi mdi-printer"></i> Print
+    </button>
+    <button class="btn btn-success btn-sm" id="dispense-selected-btn">
+        <i class="mdi mdi-pill"></i> Dispense
+    </button>
 </div>
 
 <style>
@@ -3735,6 +3831,12 @@ let currentPatientData = null; // Store full patient data including allergies
 let queueRefreshInterval = null;
 let patientSearchTimeout = null;
 let vitalTooltip = null;
+
+// Utility function to format money
+function formatMoney(amount) {
+    const num = parseFloat(amount || 0);
+    return `₦${num.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
 $(document).ready(function() {
     // Initialize
@@ -3933,11 +4035,341 @@ function initializeEventListeners() {
         $('#receipt-content-a4').empty();
         $('#receipt-content-thermal').empty();
     });
+
+    // ===== PRODUCT SEARCH FOR NEW REQUEST =====
+    let productSearchTimeout = null;
+
+    $('#product-search-input').on('input', function() {
+        clearTimeout(productSearchTimeout);
+        const query = $(this).val().trim();
+
+        if (query.length < 2) {
+            $('#product-search-results').hide();
+            return;
+        }
+
+        productSearchTimeout = setTimeout(() => searchProducts(query), 300);
+    });
+
+    // Close product search results when clicking outside
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#product-search-input, #product-search-results').length) {
+            $('#product-search-results').hide();
+        }
+    });
+
+    // New prescription request form submission
+    $('#new-prescription-request-form').on('submit', function(e) {
+        e.preventDefault();
+        submitNewPrescriptionRequest();
+    });
+}
+
+// ===== PRODUCT SEARCH FUNCTIONS =====
+let selectedProducts = [];
+
+function searchProducts(query) {
+    $.ajax({
+        url: '/pharmacy-workbench/search-products',
+        method: 'GET',
+        data: {
+            term: query,
+            patient_id: currentPatient // Include patient_id for HMO tariff lookup
+        },
+        success: function(results) {
+            displayProductSearchResults(results);
+        },
+        error: function() {
+            console.error('Product search failed');
+            toastr.error('Failed to search products');
+        }
+    });
+}
+
+function displayProductSearchResults(results) {
+    const $container = $('#product-search-results');
+    $container.empty();
+
+    if (results.length === 0) {
+        $container.html('<li class="list-group-item text-muted">No products found</li>');
+        $container.show();
+        return;
+    }
+
+    results.forEach(product => {
+        const isAlreadySelected = selectedProducts.some(p => p.id === product.id);
+        const price = parseFloat(product.price || 0);
+        const stockQty = product.stock_qty || 0;
+        const payableAmount = parseFloat(product.payable_amount || price);
+        const claimsAmount = parseFloat(product.claims_amount || 0);
+        const coverageMode = product.coverage_mode;
+
+        // Build HMO coverage badge (like new_encounter)
+        let coverageBadge = '';
+        if (coverageMode) {
+            coverageBadge = `
+                <div class="mt-1">
+                    <span class="badge badge-info">${coverageMode.toUpperCase()}</span>
+                    <span class="text-danger ml-1">Pay: ₦${payableAmount.toLocaleString()}</span>
+                    <span class="text-success ml-1">Claim: ₦${claimsAmount.toLocaleString()}</span>
+                </div>
+            `;
+        }
+
+        // Stock availability badge
+        let stockBadge = '';
+        if (stockQty > 0) {
+            stockBadge = `<span class="badge badge-success ml-1">${stockQty} avail.</span>`;
+        } else {
+            stockBadge = `<span class="badge badge-danger ml-1">Out of stock</span>`;
+        }
+
+        const item = `
+            <li class="list-group-item list-group-item-action ${isAlreadySelected ? 'disabled' : ''}"
+                style="background-color: #f8f9fa; cursor: ${isAlreadySelected ? 'not-allowed' : 'pointer'};"
+                data-product-id="${product.id}"
+                data-product-name="${product.product_name}"
+                data-product-code="${product.product_code || ''}"
+                data-product-price="${price}"
+                data-product-category="${product.category_name || ''}"
+                data-payable-amount="${payableAmount}"
+                data-claims-amount="${claimsAmount}"
+                data-coverage-mode="${coverageMode || ''}"
+                data-stock-qty="${stockQty}"
+                ${isAlreadySelected ? '' : 'onclick="selectProduct(this)"'}>
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="text-muted">[${product.category_name || 'N/A'}]</span>
+                        <strong>${product.product_name}</strong>
+                        ${product.product_code ? `<span class="text-muted">[${product.product_code}]</span>` : ''}
+                        ${stockBadge}
+                        ${coverageBadge}
+                    </div>
+                    <div class="text-right">
+                        <strong>₦${price.toLocaleString()}</strong>
+                        ${isAlreadySelected ? '<br><span class="badge badge-secondary">Already Added</span>' : ''}
+                    </div>
+                </div>
+            </li>
+        `;
+        $container.append(item);
+    });
+
+    $container.show();
+}
+
+function selectProduct(element) {
+    const $el = $(element);
+    const product = {
+        id: $el.data('product-id'),
+        name: $el.data('product-name'),
+        code: $el.data('product-code'),
+        price: parseFloat($el.data('product-price')) || 0,
+        category: $el.data('product-category'),
+        payableAmount: parseFloat($el.data('payable-amount')) || 0,
+        claimsAmount: parseFloat($el.data('claims-amount')) || 0,
+        coverageMode: $el.data('coverage-mode') || null,
+        stockQty: parseInt($el.data('stock-qty')) || 0,
+        qty: 1,
+        dose: ''
+    };
+
+    // Check if already selected
+    if (selectedProducts.some(p => p.id === product.id)) {
+        toastr.warning('Product already added');
+        return;
+    }
+
+    selectedProducts.push(product);
+    renderSelectedProducts();
+
+    // Clear search
+    $('#product-search-input').val('');
+    $('#product-search-results').hide();
+}
+
+function renderSelectedProducts() {
+    const $tbody = $('#selected-products-tbody');
+    $tbody.empty();
+
+    if (selectedProducts.length === 0) {
+        $('#selected-products-container').hide();
+        return;
+    }
+
+    let grandTotal = 0;
+
+    selectedProducts.forEach((product, index) => {
+        const total = product.price * product.qty;
+        grandTotal += total;
+
+        // Use actual HMO breakdown from product data
+        let patientPays = product.payableAmount || product.price;
+        let hmoPays = product.claimsAmount || 0;
+        let coverage = 'Cash';
+
+        if (product.coverageMode) {
+            coverage = product.coverageMode.toUpperCase();
+        } else if (currentPatientData && currentPatientData.hmo_name && hmoPays > 0) {
+            coverage = 'HMO';
+        }
+
+        // Build HMO coverage badge for display
+        let coverageBadgeHtml = '';
+        if (product.coverageMode) {
+            coverageBadgeHtml = `
+                <div class="small mt-1">
+                    <span class="badge badge-info">${coverage}</span>
+                    <span class="text-danger">Pay: ₦${patientPays.toLocaleString()}</span>
+                    <span class="text-success">Claim: ₦${hmoPays.toLocaleString()}</span>
+                </div>
+            `;
+        }
+
+        const row = `
+            <tr data-index="${index}">
+                <td>
+                    <strong>${product.name}</strong>
+                    ${product.code ? ` <small class="text-muted">[${product.code}]</small>` : ''}
+                    ${coverageBadgeHtml}
+                </td>
+                <td class="text-right">₦${product.price.toLocaleString()}</td>
+                <td class="text-center">
+                    <input type="number" class="form-control form-control-sm product-qty-input text-center"
+                           value="${product.qty}" min="1" max="999" data-index="${index}" style="width: 70px;">
+                </td>
+                <td>
+                    <input type="text" class="form-control form-control-sm product-dose-input"
+                           value="${product.dose}" placeholder="e.g., 1 tab BD x 7/7" data-index="${index}" required>
+                </td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-sm btn-danger" onclick="removeSelectedProduct(${index})">
+                        <i class="mdi mdi-close"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+        $tbody.append(row);
+    });
+
+    $('#selected-products-total').text(`₦${grandTotal.toLocaleString()}`);
+    $('#selected-products-container').show();
+
+    // Attach change handlers
+    $('.product-qty-input').on('change', function() {
+        const index = $(this).data('index');
+        const qty = parseInt($(this).val()) || 1;
+        selectedProducts[index].qty = qty;
+        updateProductTotal(index);
+    });
+
+    $('.product-dose-input').on('change', function() {
+        const index = $(this).data('index');
+        selectedProducts[index].dose = $(this).val();
+    });
+}
+
+function updateProductTotal(index) {
+    const product = selectedProducts[index];
+    const total = product.price * product.qty;
+
+    // Use actual HMO breakdown from product data
+    let patientPays = product.payableAmount || product.price;
+    let hmoPays = product.claimsAmount || 0;
+
+    $(`tr[data-index="${index}"] .product-patient-pays`).html(`<strong class="text-danger">₦${(patientPays * product.qty).toLocaleString()}</strong>`);
+    $(`tr[data-index="${index}"] .product-hmo-pays`).html(`<strong class="text-success">₦${(hmoPays * product.qty).toLocaleString()}</strong>`);
+    $(`tr[data-index="${index}"] .product-total`).html(`<strong>₦${total.toLocaleString()}</strong>`);
+
+    // Update grand total
+    let grandTotal = 0;
+    selectedProducts.forEach(p => grandTotal += p.price * p.qty);
+    $('#selected-products-total').text(`₦${grandTotal.toLocaleString()}`);
+}
+
+function removeSelectedProduct(index) {
+    selectedProducts.splice(index, 1);
+    renderSelectedProducts();
+}
+
+function submitNewPrescriptionRequest() {
+    if (!currentPatient) {
+        toastr.error('Please select a patient first');
+        return;
+    }
+
+    if (selectedProducts.length === 0) {
+        toastr.error('Please add at least one medication');
+        return;
+    }
+
+    // Validate that all products have dose/frequency
+    let missingDose = false;
+    selectedProducts.forEach((p, index) => {
+        if (!p.dose || p.dose.trim() === '') {
+            missingDose = true;
+            $(`.product-dose-input[data-index="${index}"]`).addClass('is-invalid');
+        } else {
+            $(`.product-dose-input[data-index="${index}"]`).removeClass('is-invalid');
+        }
+    });
+
+    if (missingDose) {
+        toastr.error('Please enter dose/frequency for all medications');
+        return;
+    }
+
+    const formData = {
+        patient_id: currentPatient,
+        products: selectedProducts.map(p => ({
+            product_id: p.id,
+            qty: p.qty,
+            dose: p.dose
+        })),
+        urgency: $('#request-urgency').val(),
+        send_to_billing: $('#request-send-to-billing').val(),
+        notes: $('#request-notes').val()
+    };
+
+    const $submitBtn = $('#new-prescription-request-form button[type="submit"]');
+    const originalText = $submitBtn.html();
+    $submitBtn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Submitting...');
+
+    $.ajax({
+        url: '/pharmacy-workbench/create-request',
+        method: 'POST',
+        data: formData,
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        success: function(response) {
+            if (response.success) {
+                toastr.success(response.message || 'Prescription request created successfully');
+                // Reset form
+                selectedProducts = [];
+                renderSelectedProducts();
+                $('#new-prescription-request-form')[0].reset();
+                // Switch to pending tab
+                switchWorkspaceTab('pending');
+                // Refresh prescription items
+                loadPrescriptionItems(currentStatusFilter);
+            } else {
+                toastr.error(response.message || 'Failed to create request');
+            }
+        },
+        error: function(xhr) {
+            console.error('Request creation failed', xhr);
+            toastr.error(xhr.responseJSON?.message || 'Failed to create prescription request');
+        },
+        complete: function() {
+            $submitBtn.prop('disabled', false).html(originalText);
+        }
+    });
 }
 
 function searchPatients(query) {
     $.ajax({
-        url: '{{ route("billing.search-patients") }}',
+        url: '{{ route("pharmacy.search-patients") }}',
         method: 'GET',
         data: { term: query },
         success: function(results) {
@@ -4049,43 +4481,731 @@ function loadPatient(patientId) {
     // Show loading indicator
     $('#patient-name').html('<i class="mdi mdi-loading mdi-spin"></i> Loading...');
     $('#patient-meta').html('');
-    $('#billing-items-tbody').html(`
-        <tr>
-            <td colspan="8" class="text-center text-muted py-5">
-                <i class="mdi mdi-loading mdi-spin" style="font-size: 3rem;"></i>
-                <p>Loading billing items...</p>
-            </td>
-        </tr>
-    `);
 
     // Mobile: Switch to work pane
     $('#left-panel').addClass('hidden');
     $('#main-workspace').addClass('active');
 
-    // Load patient billing data
+    // Load patient prescription data
     $.ajax({
-        url: `/billing-workbench/patient/${patientId}/billing-data`,
+        url: `/pharmacy-workbench/patient/${patientId}/prescription-data`,
         method: 'GET',
         success: function(data) {
-            console.log('Patient billing data loaded:', data);
+            console.log('Patient prescription data loaded:', data);
             currentPatientData = data.patient;
             displayPatientInfo(data.patient);
 
-            // Load billing items for the active Billing tab
-            renderBillingItems(data.items);
-            updateBillingBadge(data.items.length);
+            // Inject unified prescription partial HTML
+            injectUnifiedPrescPartial(data.patient.id, data.patient.user_id);
 
-            // Load account balance
-            loadAccountBalance(patientId);
+            // Initialize unified prescription management
+            if (typeof initPrescManagement === 'function') {
+                initPrescManagement(data.patient.id, data.patient.user_id);
+            }
 
-            // Switch to billing tab by default
-            switchWorkspaceTab('billing');
+            // Update subtab counts
+            updatePendingSubtabCounts(data.counts || {});
+
+            // Switch to pending tab by default
+            switchWorkspaceTab('pending');
         },
         error: function(xhr) {
             console.error('Error loading patient:', xhr);
             toastr.error('Failed to load patient data');
         }
     });
+}
+
+// Inject unified prescription partial HTML into pharmacy container
+function injectUnifiedPrescPartial(patientId, patientUserId) {
+    const html = `
+        <style>
+        /* Prescription Card Styles */
+        .presc-card {
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            transition: all 0.2s ease;
+        }
+        .presc-card:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-color: #0d6efd;
+        }
+        .presc-card.selected {
+            background: #e7f1ff;
+            border-color: #0d6efd;
+        }
+        .presc-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+        .presc-card-title {
+            font-weight: 600;
+            color: #212529;
+            font-size: 0.95rem;
+        }
+        .presc-card-code {
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+        .presc-card-price {
+            font-weight: 700;
+            color: #198754;
+            font-size: 1rem;
+        }
+        .presc-card-body {
+            font-size: 0.875rem;
+            color: #495057;
+        }
+        .presc-card-hmo-info {
+            background: #f8f9fa;
+            border-radius: 4px;
+            padding: 4px 8px;
+            margin-top: 8px;
+        }
+        .presc-card-meta {
+            border-top: 1px solid #f1f3f5;
+            padding-top: 8px;
+            margin-top: 8px;
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        .presc-card-meta-item {
+            display: inline-flex;
+            align-items: center;
+            margin-right: 12px;
+        }
+        .presc-card-meta-item i {
+            margin-right: 4px;
+        }
+        #presc_billing_table td,
+        #presc_dispense_table td,
+        #presc_history_table td {
+            vertical-align: top;
+            padding: 8px;
+        }
+        #presc_billing_table td:first-child,
+        #presc_dispense_table td:first-child {
+            width: 40px;
+            text-align: center;
+        }
+        .presc-card-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        </style>
+
+        <div class="presc-management-container" data-patient-id="${patientId}" data-patient-user-id="${patientUserId}">
+            <!-- Sub-tabs Navigation -->
+            <ul class="nav nav-tabs nav-tabs-modern mb-3" id="prescSubTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="presc-billing-tab" data-bs-toggle="tab"
+                            data-bs-target="#presc-billing-pane" type="button" role="tab">
+                        <i class="mdi mdi-cash-register me-1"></i> Billing
+                        <span class="badge bg-warning ms-1" id="presc-billing-count">0</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="presc-pending-tab" data-bs-toggle="tab"
+                            data-bs-target="#presc-pending-pane" type="button" role="tab">
+                        <i class="mdi mdi-clock-outline me-1"></i> Pending
+                        <span class="badge bg-danger ms-1" id="presc-pending-count">0</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="presc-dispense-tab" data-bs-toggle="tab"
+                            data-bs-target="#presc-dispense-pane" type="button" role="tab">
+                        <i class="mdi mdi-pill me-1"></i> Ready to Dispense
+                        <span class="badge bg-success ms-1" id="presc-dispense-count">0</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="presc-history-tab" data-bs-toggle="tab"
+                            data-bs-target="#presc-history-pane" type="button" role="tab">
+                        <i class="mdi mdi-history me-1"></i> History
+                        <span class="badge bg-secondary ms-1" id="presc-history-count">0</span>
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Sub-tabs Content -->
+            <div class="tab-content" id="prescSubTabsContent">
+                <!-- Billing Tab -->
+                <div class="tab-pane fade show active" id="presc-billing-pane" role="tabpanel">
+                    <div class="card card-modern">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0"><i class="mdi mdi-cash-register"></i> Requested Prescriptions (Awaiting Billing)</h6>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="printSelectedBillingPrescriptions()">
+                                <i class="mdi mdi-printer"></i> Print Selected
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <input type="hidden" id="presc_patient_user_id" value="${patientUserId}">
+                            <input type="hidden" id="presc_patient_id" value="${patientId}">
+
+                            <!-- Billing DataTable with Card Layout -->
+                            <div class="table-responsive">
+                                <table class="table table-hover" style="width: 100%" id="presc_billing_table">
+                                    <thead class="table-light">
+                                        <th style="width: 40px;"><input type="checkbox" id="select-all-billing" onclick="toggleAllPrescBilling(this)"></th>
+                                        <th><i class="mdi mdi-pill"></i> Medication</th>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+
+                            <hr>
+
+                            <!-- Add More Items Section -->
+                            <div class="card card-modern mb-3">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="mdi mdi-plus-circle"></i> Add More Items</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div style="position: relative;">
+                                        <label>Search products</label>
+                                        <input type="text" class="form-control" id="presc_product_search"
+                                               onkeyup="searchProductsForPresc(this.value)"
+                                               placeholder="Search products by name or code..." autocomplete="off">
+                                        <ul class="list-group position-absolute w-100" id="presc_product_results"
+                                            style="display: none; max-height: 300px; overflow-y: auto; z-index: 9999; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #ddd;"></ul>
+                                    </div>
+                                    <br>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered">
+                                            <thead class="table-light">
+                                                <th style="width: 40px;">*</th>
+                                                <th>Product</th>
+                                                <th style="width: 100px;">Price</th>
+                                                <th style="width: 200px;">Dose/Freq.</th>
+                                                <th style="width: 60px;">*</th>
+                                            </thead>
+                                            <tbody id="presc_added_products"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Total and Actions -->
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <label class="fw-bold">Total: </label>
+                                    <span class="fs-5 text-primary" id="presc_billing_total">₦0.00</span>
+                                    <input type="hidden" id="presc_billing_total_val" value="0">
+                                </div>
+                                <div>
+                                    <button type="button" class="btn btn-danger me-2" onclick="dismissPrescItems('billing')">
+                                        <i class="mdi mdi-close"></i> Dismiss Selected
+                                    </button>
+                                    <button type="button" class="btn btn-primary" onclick="billPrescItems()" id="btn-bill-presc">
+                                        <i class="mdi mdi-check"></i> Bill Selected
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pending Tab (Awaiting Payment/Validation) -->
+                <div class="tab-pane fade" id="presc-pending-pane" role="tabpanel">
+                    <div class="card card-modern">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="mdi mdi-clock-outline"></i> Pending Items (Awaiting Payment / HMO Validation)</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-warning mb-3">
+                                <i class="mdi mdi-alert-circle-outline"></i>
+                                <strong>Important:</strong> These items have been billed but are waiting for payment or HMO validation before they can be dispensed.
+                                <ul class="mb-0 mt-2">
+                                    <li><span class="badge bg-danger">Awaiting Payment</span> - Patient needs to pay the billable amount</li>
+                                    <li><span class="badge bg-info">Awaiting HMO Validation</span> - HMO claims need to be validated</li>
+                                </ul>
+                            </div>
+
+                            <div class="mb-3 d-flex gap-2">
+                                <button type="button" class="btn btn-outline-primary" onclick="printSelectedPendingPrescriptions()">
+                                    <i class="mdi mdi-printer"></i> Print Selected
+                                </button>
+                            </div>
+
+                            <!-- Pending DataTable with Card Layout -->
+                            <div class="table-responsive">
+                                <table class="table table-hover" style="width: 100%" id="presc_pending_table">
+                                    <thead class="table-light">
+                                        <th style="width: 40px;"><input type="checkbox" id="select-all-pending" onclick="toggleAllPrescPending(this)"></th>
+                                        <th><i class="mdi mdi-pill"></i> Medication</th>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+
+                            <hr>
+
+                            <!-- Pending Actions -->
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="text-muted small">
+                                    <i class="mdi mdi-information-outline"></i> Items must be paid/validated before they can be dispensed
+                                </div>
+                                <div>
+                                    <button type="button" class="btn btn-danger" onclick="dismissPrescItems('pending')">
+                                        <i class="mdi mdi-close"></i> Dismiss Selected
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dispense Tab (Ready to Dispense) -->
+                <div class="tab-pane fade" id="presc-dispense-pane" role="tabpanel">
+                    <div class="card card-modern">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="mdi mdi-pill"></i> Ready to Dispense</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-success mb-3">
+                                <i class="mdi mdi-check-circle-outline"></i>
+                                <strong>Ready!</strong> All items below have been paid (if applicable) and validated (if HMO). They are ready to be dispensed.
+                            </div>
+
+                            <div class="mb-3 d-flex gap-2">
+                                <button type="button" class="btn btn-outline-primary" onclick="printReadyPrescriptions()">
+                                    <i class="mdi mdi-printer"></i> Print Selected
+                                </button>
+                                <button type="button" class="btn btn-success" onclick="dispenseSelectedPrescriptions()">
+                                    <i class="mdi mdi-pill"></i> Dispense Selected
+                                </button>
+                            </div>
+
+                            <!-- Dispense DataTable with Card Layout -->
+                            <div class="table-responsive">
+                                <table class="table table-hover" style="width: 100%" id="presc_dispense_table">
+                                    <thead class="table-light">
+                                        <th style="width: 40px;"><input type="checkbox" id="select-all-dispense" onclick="toggleAllPrescDispense(this)"></th>
+                                        <th><i class="mdi mdi-pill"></i> Medication</th>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+
+                            <hr>
+
+                            <!-- Dispense Actions -->
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div></div>
+                                <div>
+                                    <button type="button" class="btn btn-danger me-2" onclick="dismissPrescItems('dispense')">
+                                        <i class="mdi mdi-close"></i> Dismiss Selected
+                                    </button>
+                                    <button type="button" class="btn btn-success" onclick="dispensePrescItems()" id="btn-dispense-presc">
+                                        <i class="mdi mdi-pill"></i> Dispense Selected
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- History Tab -->
+                <div class="tab-pane fade" id="presc-history-pane" role="tabpanel">
+                    <div class="card card-modern">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="mdi mdi-history"></i> Dispensed Prescriptions (History)</h6>
+                        </div>
+                        <div class="card-body">
+                            <!-- History DataTable with Card Layout -->
+                            <div class="table-responsive">
+                                <table class="table table-hover" style="width: 100%" id="presc_history_table">
+                                    <thead class="table-light">
+                                        <th><i class="mdi mdi-pill"></i> Dispensed Medication</th>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    $('#pharmacy-presc-container').html(html);
+}
+
+// Initialize DataTables for prescription management (using unified endpoints like presc.blade.php)
+function initializePrescriptionDataTables(patientId) {
+    // Destroy existing DataTables if they exist
+    if ($.fn.DataTable.isDataTable('#presc_billing_table')) {
+        $('#presc_billing_table').DataTable().destroy();
+    }
+    if ($.fn.DataTable.isDataTable('#presc_pending_table')) {
+        $('#presc_pending_table').DataTable().destroy();
+    }
+    if ($.fn.DataTable.isDataTable('#presc_dispense_table')) {
+        $('#presc_dispense_table').DataTable().destroy();
+    }
+    if ($.fn.DataTable.isDataTable('#presc_history_table')) {
+        $('#presc_history_table').DataTable().destroy();
+    }
+
+    // Reset billing total
+    $('#presc_billing_total_val').val(0);
+    prescBillingTotal = 0;
+    updatePrescBillingTotalPharmacy();
+
+    // Initialize Billing List DataTable (status=1 - unbilled items) with card layout
+    $('#presc_billing_table').DataTable({
+        dom: 'rtip',
+        iDisplayLength: 25,
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: `/prescBillList/${patientId}`,
+            type: 'GET'
+        },
+        columns: [
+            {
+                data: null,
+                name: "select",
+                orderable: false,
+                render: function(data, type, row) {
+                    const price = parseFloat(row.payable_amount || row.price || 0);
+                    return `<input type="checkbox" class="presc-billing-checkbox form-check-input"
+                            data-id="${row.id}" data-price="${price}"
+                            onchange="handlePrescBillingCheckPharmacy(this)">`;
+                }
+            },
+            {
+                data: null,
+                name: "info",
+                orderable: false,
+                render: function(data, type, row) {
+                    return renderPrescCardPharmacy(row, 'billing');
+                }
+            }
+        ],
+        paging: true,
+        drawCallback: function() {
+            const info = this.api().page.info();
+            $('#unbilled-subtab-badge, #queue-unbilled-count, #presc-billing-count').text(info.recordsTotal);
+        }
+    });
+
+    // Initialize Pending List DataTable (status=2 but NOT ready - awaiting payment/validation)
+    $('#presc_pending_table').DataTable({
+        dom: 'rtip',
+        iDisplayLength: 25,
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: `/prescPendingList/${patientId}`,
+            type: 'GET'
+        },
+        columns: [
+            {
+                data: null,
+                name: "select",
+                orderable: false,
+                render: function(data, type, row) {
+                    return `<input type="checkbox" class="presc-pending-checkbox form-check-input"
+                            data-id="${row.id}"
+                            onchange="handlePrescPendingCheckPharmacy(this)">`;
+                }
+            },
+            {
+                data: null,
+                name: "info",
+                orderable: false,
+                render: function(data, type, row) {
+                    return renderPrescCardPharmacy(row, 'pending');
+                }
+            }
+        ],
+        paging: true,
+        drawCallback: function() {
+            const info = this.api().page.info();
+            $('#presc-pending-count').text(info.recordsTotal);
+        }
+    });
+
+    // Initialize Dispense List DataTable (status=2, READY - paid/validated as needed)
+    $('#presc_dispense_table').DataTable({
+        dom: 'rtip',
+        iDisplayLength: 25,
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: `/prescReadyList/${patientId}`,
+            type: 'GET'
+        },
+        columns: [
+            {
+                data: null,
+                name: "select",
+                orderable: false,
+                render: function(data, type, row) {
+                    // All items in Ready tab are ready for dispense
+                    return `<input type="checkbox" class="presc-dispense-checkbox form-check-input"
+                            data-id="${row.id}"
+                            onchange="handlePrescDispenseCheckPharmacy(this)">`;
+                }
+            },
+            {
+                data: null,
+                name: "info",
+                orderable: false,
+                render: function(data, type, row) {
+                    return renderPrescCardPharmacy(row, 'dispense');
+                }
+            }
+        ],
+        paging: true,
+        drawCallback: function() {
+            const info = this.api().page.info();
+            $('#billed-subtab-badge, #ready-subtab-badge, #queue-ready-count, #presc-dispense-count').text(info.recordsTotal);
+        }
+    });
+
+    // Initialize History List DataTable (ALL prescription requests) with card layout
+    $('#presc_history_table').DataTable({
+        dom: 'rtip',
+        iDisplayLength: 25,
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: `/prescHistoryList/${patientId}`,
+            type: 'GET'
+        },
+        columns: [
+            {
+                data: null,
+                name: "info",
+                orderable: false,
+                render: function(data, type, row) {
+                    return renderPrescCardPharmacy(row, 'history');
+                }
+            }
+        ],
+        paging: true,
+        drawCallback: function() {
+            const info = this.api().page.info();
+            $('#presc-history-count').text(info.recordsTotal);
+        }
+    });
+}
+
+// Helper to format money
+function formatMoneyPharmacy(amount) {
+    return parseFloat(amount || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// Toggle all checkboxes for billing
+function toggleAllPrescBilling(checkbox) {
+    const isChecked = $(checkbox).is(':checked');
+    $('.presc-billing-checkbox').prop('checked', isChecked);
+    $('.presc-billing-checkbox').each(function() {
+        handlePrescBillingCheckPharmacy(this);
+    });
+}
+
+// Toggle all checkboxes for pending
+function toggleAllPrescPending(checkbox) {
+    const isChecked = $(checkbox).is(':checked');
+    $('.presc-pending-checkbox').prop('checked', isChecked);
+}
+
+// Toggle all checkboxes for dispense
+function toggleAllPrescDispense(checkbox) {
+    const isChecked = $(checkbox).is(':checked');
+    $('.presc-dispense-checkbox').prop('checked', isChecked);
+    $('.presc-dispense-checkbox').each(function() {
+        handlePrescDispenseCheckPharmacy(this);
+    });
+}
+
+// Update billing total display
+function updatePrescBillingTotalPharmacy() {
+    $('#presc_billing_total').text('₦' + formatMoneyPharmacy(prescBillingTotal));
+    $('#presc_billing_total_val').val(prescBillingTotal);
+}
+
+// Checkbox handler for billing
+function handlePrescBillingCheckPharmacy(checkbox) {
+    const price = parseFloat($(checkbox).data('price')) || 0;
+    const card = $(checkbox).closest('tr').find('.presc-card');
+
+    if ($(checkbox).is(':checked')) {
+        prescBillingTotal += price;
+        card.addClass('selected');
+    } else {
+        prescBillingTotal -= price;
+        card.removeClass('selected');
+    }
+
+    if (prescBillingTotal < 0) prescBillingTotal = 0;
+    updatePrescBillingTotalPharmacy();
+}
+
+// Checkbox handler for dispense
+function handlePrescDispenseCheckPharmacy(checkbox) {
+    const card = $(checkbox).closest('tr').find('.presc-card');
+    if ($(checkbox).is(':checked')) {
+        card.addClass('selected');
+    } else {
+        card.removeClass('selected');
+    }
+}
+
+// Checkbox handler for pending (no additional action needed, just for selection)
+function handlePrescPendingCheckPharmacy(checkbox) {
+    // Can add visual feedback if needed
+    const card = $(checkbox).closest('tr').find('.presc-card');
+    if ($(checkbox).is(':checked')) {
+        card.addClass('selected');
+    } else {
+        card.removeClass('selected');
+    }
+}
+
+// Render prescription card for pharmacy workbench (matching presc_unified_scripts.blade.php format)
+function renderPrescCardPharmacy(row, type) {
+    const price = parseFloat(row.price || 0);
+    const qty = parseInt(row.qty || 1);
+    const payableAmount = parseFloat(row.payable_amount || 0);
+    const claimsAmount = parseFloat(row.claims_amount || 0);
+    const totalPrice = price * qty;
+    const isPaid = row.is_paid || false;
+    const isValidated = row.is_validated || false;
+    const pendingReason = row.pending_reason || '';
+
+    let statusBadges = '';
+    let pendingAlert = '';
+    let cardClass = 'presc-card';
+    let cardStyle = '';
+
+    // Different status display based on tab type
+    if (type === 'billing') {
+        statusBadges = '<span class="badge bg-warning text-dark">Unbilled</span>';
+    } else if (type === 'pending') {
+        // Show clear indication of what's pending
+        cardClass += ' border-warning';
+        cardStyle = 'border-left: 4px solid #ffc107;';
+
+        if (payableAmount > 0 && !isPaid) {
+            statusBadges += '<span class="badge bg-danger">Awaiting Payment</span>';
+            pendingAlert = `
+                <div class="alert alert-danger py-2 px-3 mb-2 mt-2" style="font-size: 0.85rem;">
+                    <i class="mdi mdi-cash-clock"></i> <strong>Payment Required:</strong> ₦${formatMoneyPharmacy(payableAmount)}
+                </div>
+            `;
+        }
+        if (claimsAmount > 0 && !isValidated) {
+            statusBadges += ' <span class="badge bg-info">Awaiting HMO Validation</span>';
+            pendingAlert += `
+                <div class="alert alert-info py-2 px-3 mb-2 mt-2" style="font-size: 0.85rem;">
+                    <i class="mdi mdi-shield-alert"></i> <strong>HMO Validation Required:</strong> ₦${formatMoneyPharmacy(claimsAmount)} claim pending
+                </div>
+            `;
+        }
+    } else if (type === 'dispense') {
+        // Items in dispense tab are ready - show green badges
+        cardClass += ' border-success';
+        cardStyle = 'border-left: 4px solid #28a745;';
+
+        if (payableAmount > 0) {
+            statusBadges += '<span class="presc-card-status paid"><i class="mdi mdi-check"></i> Paid</span>';
+        }
+        if (claimsAmount > 0) {
+            statusBadges += ' <span class="presc-card-status validated"><i class="mdi mdi-check"></i> HMO Validated</span>';
+        }
+        if (payableAmount == 0 && claimsAmount == 0) {
+            statusBadges = '<span class="badge bg-success">Ready to Dispense</span>';
+        }
+    } else if (type === 'history') {
+        // History shows all requests - determine status badge based on actual status
+        const status = parseInt(row.status || 0);
+
+        if (status === 0) {
+            statusBadges = '<span class="badge bg-danger">Dismissed</span>';
+            cardClass += ' opacity-75';
+        } else if (status === 1) {
+            statusBadges = '<span class="badge bg-warning text-dark">Unbilled</span>';
+        } else if (status === 2) {
+            // Check if ready to dispense or awaiting something
+            const pendingReasons = [];
+            if (payableAmount > 0 && !isPaid) {
+                pendingReasons.push('Payment');
+            }
+            if (claimsAmount > 0 && !isValidated) {
+                pendingReasons.push('HMO Validation');
+            }
+
+            if (pendingReasons.length > 0) {
+                statusBadges = `<span class="badge bg-info">Awaiting ${pendingReasons.join(' & ')}</span>`;
+            } else {
+                statusBadges = '<span class="badge bg-success">Ready to Dispense</span>';
+            }
+        } else if (status === 3) {
+            statusBadges = '<span class="badge bg-secondary">Dispensed</span>';
+        }
+    }
+
+    // HMO info if applicable
+    let hmoInfo = '';
+    if (row.coverage_mode && row.coverage_mode !== 'null' && row.coverage_mode !== 'none') {
+        hmoInfo = `
+            <div class="presc-card-hmo-info small mt-1 p-2 bg-light rounded">
+                <span class="badge bg-info">${(row.coverage_mode || '').toUpperCase()}</span>
+                <span class="text-danger ms-2">Pay: ₦${formatMoneyPharmacy(payableAmount)}</span>
+                <span class="text-success ms-2">HMO Claim: ₦${formatMoneyPharmacy(claimsAmount)}</span>
+            </div>
+        `;
+    }
+
+    // Meta info
+    let metaInfo = `
+        <div class="presc-card-meta small text-muted mt-2">
+            <div><i class="mdi mdi-account"></i> By: ${row.requested_by || 'N/A'}</div>
+            <div><i class="mdi mdi-clock-outline"></i> ${row.requested_at || row.created_at || ''}</div>
+    `;
+    if (row.billed_by) {
+        metaInfo += `<div><i class="mdi mdi-cash-register"></i> Billed: ${row.billed_by} (${row.billed_at || ''})</div>`;
+    }
+    if (row.dispensed_by) {
+        metaInfo += `<div><i class="mdi mdi-pill"></i> Dispensed: ${row.dispensed_by} (${row.dispensed_at || ''})</div>`;
+    }
+    metaInfo += '</div>';
+
+    return `
+        <div class="${cardClass}" data-id="${row.id}" style="${cardStyle}">
+            <div class="presc-card-header">
+                <div>
+                    <div class="presc-card-title">${row.product_name || 'Unknown Product'}</div>
+                    <small class="text-muted">[${row.product_code || ''}]</small>
+                </div>
+                <div class="text-end">
+                    <div class="presc-card-price">₦${formatMoneyPharmacy(payableAmount || totalPrice)}</div>
+                    ${statusBadges}
+                </div>
+            </div>
+            ${pendingAlert}
+            <div class="presc-card-body mt-2">
+                <div><strong>Dose/Freq:</strong> ${row.dose || 'N/A'}</div>
+                <div><strong>Qty:</strong> ${qty}</div>
+                ${hmoInfo}
+            </div>
+            ${metaInfo}
+        </div>
+    `;
 }
 
 function displayPatientInfo(patient) {
@@ -4161,294 +5281,7 @@ function initializeHistoryDataTable(patientId) {
     });
 }
 
-function viewInvestigationResult(requestId) {
-    // Open modal to view completed result
-    $.ajax({
-        url: `/lab-workbench/lab-service-requests/${requestId}`,
-        method: 'GET',
-        success: function(request) {
-            // Show result in a view-only modal or open in new tab
-            if (request.result_document) {
-                window.open(request.result_document, '_blank');
-            } else {
-                alert('No result document found');
-            }
-        },
-        error: function(xhr) {
-            alert('Error loading result: ' + (xhr.responseJSON?.message || 'Unknown error'));
-        }
-    });
-}
-
-let currentPendingRequests = null;
-let currentPendingFilter = 'all';
-
-function displayPendingRequests(requests) {
-    currentPendingRequests = requests;
-    const totalPending = requests.billing.length + requests.sample.length + requests.results.length;
-    $('#pending-badge').text(totalPending);
-
-    updatePendingSubtabBadges(requests);
-    renderPendingSubtabContent(currentPendingFilter);
-}
-
-function updatePendingSubtabBadges(requests) {
-    const totalPending = requests.billing.length + requests.sample.length + requests.results.length;
-    $('#all-pending-badge').text(totalPending);
-    $('#billing-subtab-badge').text(requests.billing.length);
-    $('#sample-subtab-badge').text(requests.sample.length);
-    $('#results-subtab-badge').text(requests.results.length);
-}
-
-function renderPendingSubtabContent(filter) {
-    if (!currentPendingRequests) return;
-
-    currentPendingFilter = filter;
-    const requests = currentPendingRequests;
-    const totalPending = requests.billing.length + requests.sample.length + requests.results.length;
-
-    const $container = $('#pending-subtab-container');
-    $container.empty();
-
-    if (totalPending === 0) {
-        $container.html('<div class="alert alert-info">No pending lab requests for this patient</div>');
-        return;
-    }
-
-    // Billing Section (Status 1)
-    if ((filter === 'all' || filter === 'billing') && requests.billing.length > 0) {
-        const billingHtml = `
-            <div class="request-section" data-section="billing">
-                <div class="request-section-header">
-                    <h5>
-                        <i class="mdi mdi-cash-register"></i>
-                        Awaiting Billing (${requests.billing.length})
-                    </h5>
-                </div>
-                <div class="request-cards-container" id="billing-cards"></div>
-                <div class="section-actions-footer">
-                    <div class="select-all-container">
-                        <input type="checkbox" id="select-all-billing" class="select-all-checkbox">
-                        <label for="select-all-billing">Select All</label>
-                    </div>
-                    <div class="action-buttons">
-                        <button class="btn-action btn-action-billing" id="btn-record-billing" disabled>
-                            <i class="mdi mdi-check-circle"></i>
-                            Record Billing
-                        </button>
-                        <button class="btn-action btn-action-dismiss" id="btn-dismiss-billing" disabled>
-                            <i class="mdi mdi-close-circle"></i>
-                            Dismiss
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        $container.append(billingHtml);
-
-        requests.billing.forEach(request => {
-            $('#billing-cards').append(createRequestCard(request, 'billing'));
-        });
-    }
-
-    // Sample Section (Status 2)
-    if ((filter === 'all' || filter === 'sample') && requests.sample.length > 0) {
-        const sampleHtml = `
-            <div class="request-section" data-section="sample">
-                <div class="request-section-header">
-                    <h5>
-                        <i class="mdi mdi-test-tube"></i>
-                        Sample Collection (${requests.sample.length})
-                    </h5>
-                </div>
-                <div class="request-cards-container" id="sample-cards"></div>
-                <div class="section-actions-footer">
-                    <div class="select-all-container">
-                        <input type="checkbox" id="select-all-sample" class="select-all-checkbox">
-                        <label for="select-all-sample">Select All</label>
-                    </div>
-                    <div class="action-buttons">
-                        <button class="btn-action btn-action-sample" id="btn-collect-sample" disabled>
-                            <i class="mdi mdi-check-circle"></i>
-                            Collect Sample
-                        </button>
-                        <button class="btn-action btn-action-dismiss" id="btn-dismiss-sample" disabled>
-                            <i class="mdi mdi-close-circle"></i>
-                            Dismiss
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        $container.append(sampleHtml);
-
-        requests.sample.forEach(request => {
-            $('#sample-cards').append(createRequestCard(request, 'sample'));
-        });
-    }
-
-    // Results Section (Status 3)
-    if ((filter === 'all' || filter === 'results') && requests.results.length > 0) {
-        const resultsHtml = `
-            <div class="request-section" data-section="results">
-                <div class="request-section-header">
-                    <h5>
-                        <i class="mdi mdi-file-document-edit"></i>
-                        Result Entry (${requests.results.length})
-                    </h5>
-                </div>
-                <div class="request-cards-container" id="results-cards"></div>
-                <div class="section-actions-footer">
-                    <div class="select-all-container">
-                        <span class="text-muted"><i class="mdi mdi-information"></i> Results must be entered individually</span>
-                    </div>
-                    <div class="action-buttons">
-                        <button class="btn-action btn-action-dismiss" id="btn-dismiss-results" disabled>
-                            <i class="mdi mdi-close-circle"></i>
-                            Dismiss Selected
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        $container.append(resultsHtml);
-
-        requests.results.forEach(request => {
-            $('#results-cards').append(createRequestCard(request, 'results'));
-        });
-    }
-
-    // Initialize event handlers
-    initializeRequestHandlers();
-}
-
-function createRequestCard(request, section) {
-    const serviceName = request.service?.service_name || 'Unknown Service';
-    const doctorName = request.doctor ? (request.doctor.firstname + ' ' + request.doctor.surname) : 'N/A';
-    const requestDate = formatDateTime(request.created_at);
-    const note = request.note || '';
-
-    const hasNote = note && note.trim() !== '';
-    const noteHtml = hasNote ? `<div class="request-note"><i class="mdi mdi-note-text"></i> ${note}</div>` : '';
-
-    // Check delivery status
-    const deliveryCheck = request.delivery_check;
-    const canDeliver = deliveryCheck ? deliveryCheck.can_deliver : true;
-
-    // Delivery warning message
-    let deliveryWarningHtml = '';
-    if (!canDeliver && deliveryCheck) {
-        deliveryWarningHtml = `
-            <div class="alert alert-warning py-2 px-2 mb-2 mt-2" style="font-size: 0.85rem;">
-                <i class="fa fa-exclamation-triangle"></i> <strong>${deliveryCheck.reason}</strong><br>
-                <small>${deliveryCheck.hint}</small>
-            </div>
-        `;
-    }
-
-    // Results section has individual action button instead of checkbox
-    const checkboxOrAction = section === 'results' ? `
-        <button class="btn btn-sm btn-primary enter-result-btn"
-                data-request-id="${request.id}"
-                ${!canDeliver ? 'disabled title="' + (deliveryCheck?.reason || 'Cannot deliver service') + '"' : ''}>
-            <i class="mdi mdi-file-document-edit"></i>
-            Enter Result
-        </button>
-    ` : `
-        <div class="request-card-checkbox">
-            <input type="checkbox" class="request-checkbox" data-request-id="${request.id}" data-section="${section}">
-        </div>
-    `;
-
-    return `
-        <div class="request-card">
-            ${checkboxOrAction}
-            <div class="request-card-content">
-                <div class="request-card-header">
-                    <div>
-                        <div class="request-service-name">${serviceName}</div>
-                        <div class="request-card-meta">
-                            <div class="request-meta-item">
-                                <i class="mdi mdi-doctor"></i>
-                                <span>${doctorName}</span>
-                            </div>
-                            <div class="request-meta-item">
-                                <i class="mdi mdi-clock-outline"></i>
-                                <span>${requestDate}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                ${noteHtml}
-                ${deliveryWarningHtml}
-            </div>
-        </div>
-    `;
-}
-
-function initializeRequestHandlers() {
-    // Select all checkboxes
-    $('.select-all-checkbox').on('change', function() {
-        const section = $(this).attr('id').replace('select-all-', '');
-        const isChecked = $(this).is(':checked');
-        $(`.request-checkbox[data-section="${section}"]`).prop('checked', isChecked).trigger('change');
-    });
-
-    // Individual checkboxes
-    $('.request-checkbox').on('change', function() {
-        const section = $(this).data('section');
-        const checkedCount = $(`.request-checkbox[data-section="${section}"]:checked`).length;
-
-        // Enable/disable action buttons
-        $(`#btn-record-${section}, #btn-collect-${section}, #btn-dismiss-${section}`).prop('disabled', checkedCount === 0);
-
-        // Update select all checkbox state
-        const totalCount = $(`.request-checkbox[data-section="${section}"]`).length;
-        $(`#select-all-${section}`).prop('checked', checkedCount === totalCount);
-    });
-
-    // Record Billing button
-    $('#btn-record-billing').on('click', function() {
-        const selectedIds = $('.request-checkbox[data-section="billing"]:checked').map(function() {
-            return $(this).data('request-id');
-        }).get();
-
-        if (selectedIds.length > 0) {
-            recordBilling(selectedIds);
-        }
-    });
-
-    // Collect Sample button
-    $('#btn-collect-sample').on('click', function() {
-        const selectedIds = $('.request-checkbox[data-section="sample"]:checked').map(function() {
-            return $(this).data('request-id');
-        }).get();
-
-        if (selectedIds.length > 0) {
-            collectSample(selectedIds);
-        }
-    });
-
-    // Dismiss buttons
-    $('.btn-action-dismiss').on('click', function() {
-        const btnId = $(this).attr('id');
-        const section = btnId.replace('btn-dismiss-', '');
-        const selectedIds = $(`.request-checkbox[data-section="${section}"]:checked`).map(function() {
-            return $(this).data('request-id');
-        }).get();
-
-        if (selectedIds.length > 0) {
-            dismissRequests(selectedIds, section);
-        }
-    });
-
-    // Enter Result buttons (individual)
-    $('.enter-result-btn').on('click', function() {
-        const requestId = $(this).data('request-id');
-        enterResult(requestId);
-    });
-}
-
+// Helper functions for date formatting
 function formatDate(dateString) {
     const date = new Date(dateString);
     const options = { year: 'numeric', month: 'short', day: 'numeric' };
@@ -4478,24 +5311,8 @@ function setDefaultReceiptDates() {
     $('#receipts-to-date').val(formatDate(lastDay));
 }
 
-function setDefaultReceiptDates() {
-    const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-    const formatDate = (date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    };
-
-    $('#receipts-from-date').val(formatDate(firstDay));
-    $('#receipts-to-date').val(formatDate(lastDay));
-}
-
 function loadQueueCounts() {
-    $.get('{{ route("billing.queue-counts") }}', function(counts) {
+    $.get('{{ route("pharmacy.queue-counts") }}', function(counts) {
         $('#queue-all-count').text(counts.total || 0);
         $('#queue-hmo-count').text(counts.hmo || 0);
         $('#queue-credit-count').text(counts.credit || 0);
@@ -4522,13 +5339,8 @@ function startQueueRefresh() {
 function refreshCurrentPatientData() {
     if (!currentPatient) return;
 
-    // Silently reload patient requests
-    $.get(`/lab-workbench/patient/${currentPatient}/requests`, function(data) {
-        displayPendingRequests(data.requests);
-        updatePendingSubtabBadges(data.requests);
-    }).fail(function() {
-        console.error('Failed to refresh patient data');
-    });
+    // Silently reload patient prescriptions
+    loadPrescriptionItems(currentStatusFilter);
 }
 
 let lastSyncTimestamp = null;
@@ -4574,17 +5386,29 @@ function switchWorkspaceTab(tab) {
     if (!currentPatient) return;
 
     switch(tab) {
-        case 'billing':
-            loadBillingItems();
+        case 'pending':
+            // Load pending items based on active subtab
+            const activeSubtab = $('.pending-subtab.active').data('status') || 'all';
+            renderPendingSubtabContent(activeSubtab);
             break;
-        case 'receipts':
-            setDefaultReceiptDates();
-            loadPatientReceipts();
+        case 'new-request':
+            // Update patient name in new request form
+            if (currentPatientData) {
+                $('#new-request-patient-name').text(currentPatientData.name || 'Selected Patient');
+            }
             break;
-        case 'account':
-            loadAccountSummary();
+        case 'history':
+            loadPatientDispensingHistory();
             break;
     }
+}
+
+// Current status filter for prescriptions
+let currentStatusFilter = 'all';
+
+function renderPendingSubtabContent(status) {
+    currentStatusFilter = status;
+    loadPrescriptionItems(status);
 }
 
 // ========== ACCOUNT BALANCE FUNCTIONS ==========
@@ -5169,73 +5993,1171 @@ function createPatientAccount() {
     });
 }
 
-// ========== BILLING WORKBENCH FUNCTIONS ==========
+// ========== PHARMACY WORKBENCH FUNCTIONS ==========
 
-function loadBillingItems() {
+function loadPrescriptionItems(statusFilter = 'all') {
     if (!currentPatient) return;
 
+    const params = {};
+    if (statusFilter && statusFilter !== 'all') {
+        params.status = statusFilter;
+    }
+
     $.ajax({
-        url: `/billing-workbench/patient/${currentPatient}/billing-data`,
+        url: `/pharmacy-workbench/patient/${currentPatient}/prescription-data`,
         method: 'GET',
+        data: params,
         success: function(response) {
-            renderBillingItems(response.items);
-            updateBillingBadge(response.items.length);
+            renderPrescriptionItems(response.items);
+            updatePrescriptionBadge(response.items.length);
+            // Update subtab counts
+            updatePendingSubtabCounts(response.counts || {});
         },
         error: function(xhr) {
-            console.error('Failed to load billing items', xhr);
-            toastr.error('Failed to load billing items');
+            console.error('Failed to load prescription items', xhr);
+            toastr.error('Failed to load prescription items');
         }
     });
 }
 
-function renderBillingItems(items) {
-    console.log('renderBillingItems called with:', items);
+// Update pending subtab badge counts
+function updatePendingSubtabCounts(counts) {
+    if (counts.all !== undefined) {
+        $('#all-pending-badge').text(counts.all);
+        $('#queue-all-count').text(counts.all);
+    }
+    if (counts.unbilled !== undefined) {
+        $('#unbilled-subtab-badge').text(counts.unbilled);
+        $('#queue-unbilled-count').text(counts.unbilled);
+    }
+    if (counts.billed !== undefined) {
+        $('#billed-subtab-badge').text(counts.billed);
+    }
+    if (counts.ready !== undefined) {
+        $('#ready-subtab-badge').text(counts.ready);
+        $('#queue-ready-count').text(counts.ready);
+    }
+}
 
-    const tbody = $('#billing-items-tbody');
-    tbody.empty();
+function renderPrescriptionItems(items) {
+    console.log('renderPrescriptionItems called with:', items, 'status filter:', currentStatusFilter);
+
+    const $container = $('#pending-subtab-container');
+
+    // If "All" tab is selected, show widgets; otherwise show filtered table
+    if (currentStatusFilter === 'all') {
+        renderAllPendingWidgets(items);
+    } else {
+        renderStatusTable(items, currentStatusFilter);
+    }
+}
+
+function renderAllPendingWidgets(items) {
+    const $container = $('#pending-subtab-container');
 
     if (items.length === 0) {
+        $container.html(`
+            <div style="text-align: center; padding: 3rem; color: #999;">
+                <i class="mdi mdi-inbox-outline" style="font-size: 3rem;"></i>
+                <p>No pending prescriptions for this patient</p>
+            </div>
+        `);
+        return;
+    }
+
+    const unbilledItems = [];
+    const billedItems = [];
+    const readyItems = [];
+
+    items.forEach(item => {
+        // Use proper logic to categorize items
+        if (item.status == 1) {
+            // Status 1 = Unbilled
+            unbilledItems.push(item);
+        } else if (item.status == 2) {
+            // Status 2 = Billed
+            // Check if ready to dispense using HMO logic
+            const payableAmount = parseFloat(item.payable_amount || 0);
+            const claimsAmount = parseFloat(item.claims_amount || 0);
+            const isPaid = item.payment_id != null;
+            const isValidated = item.validation_status === 'validated' || item.validation_status === 'approved';
+
+            let isReady = false;
+
+            // If payable_amount > 0, must be paid
+            if (payableAmount > 0 && !isPaid) {
+                isReady = false;
+            }
+            // If claims_amount > 0, must be validated
+            else if (claimsAmount > 0 && !isValidated) {
+                isReady = false;
+            }
+            // All requirements met
+            else {
+                isReady = true;
+            }
+
+            if (isReady) {
+                readyItems.push(item);
+            } else {
+                billedItems.push(item);
+            }
+        }
+    });
+
+    $container.empty();
+
+    // Unbilled Section (Status 1)
+    if (unbilledItems.length > 0) {
+        const unbilledHtml = `
+            <div class="request-section" data-section="unbilled">
+                <div class="request-section-header">
+                    <h5>
+                        <i class="mdi mdi-cash-register"></i>
+                        Awaiting Billing (${unbilledItems.length})
+                    </h5>
+                </div>
+                <div class="request-cards-container" id="unbilled-cards"></div>
+                <div class="section-actions-footer">
+                    <div class="select-all-container">
+                        <input type="checkbox" id="select-all-unbilled" class="select-all-checkbox">
+                        <label for="select-all-unbilled">Select All</label>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn-action btn-action-billing" id="btn-record-billing" disabled>
+                            <i class="mdi mdi-check-circle"></i>
+                            Record Billing
+                        </button>
+                        <button class="btn-action btn-action-dismiss" id="btn-dismiss-unbilled" disabled>
+                            <i class="mdi mdi-close-circle"></i>
+                            Dismiss
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        $container.append(unbilledHtml);
+
+        unbilledItems.forEach(item => {
+            $('#unbilled-cards').append(createPrescriptionCard(item, 'unbilled'));
+        });
+    }
+
+    // Billed (Awaiting Payment/Validation) Section
+    if (billedItems.length > 0) {
+        const billedHtml = `
+            <div class="request-section" data-section="billed">
+                <div class="request-section-header">
+                    <h5>
+                        <i class="mdi mdi-receipt"></i>
+                        Billed - Awaiting Payment/Validation (${billedItems.length})
+                    </h5>
+                </div>
+                <div class="request-cards-container" id="billed-cards"></div>
+                <div class="section-actions-footer">
+                    <div class="select-all-container">
+                        <span class="text-muted"><i class="mdi mdi-information"></i> Items must be paid/validated before dispensing</span>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn-action btn-action-dismiss" id="btn-dismiss-billed" disabled>
+                            <i class="mdi mdi-close-circle"></i>
+                            Dismiss Selected
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        $container.append(billedHtml);
+
+        billedItems.forEach(item => {
+            $('#billed-cards').append(createPrescriptionCard(item, 'billed'));
+        });
+    }
+
+    // Ready to Dispense Section
+    if (readyItems.length > 0) {
+        const readyHtml = `
+            <div class="request-section" data-section="ready">
+                <div class="request-section-header" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                    <h5>
+                        <i class="mdi mdi-check-circle"></i>
+                        Ready to Dispense (${readyItems.length})
+                    </h5>
+                </div>
+                <div class="request-cards-container" id="ready-cards"></div>
+                <div class="section-actions-footer">
+                    <div class="select-all-container">
+                        <input type="checkbox" id="select-all-ready" class="select-all-checkbox">
+                        <label for="select-all-ready">Select All</label>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn-action btn-action-success" id="btn-dispense-ready" disabled>
+                            <i class="mdi mdi-pill"></i>
+                            Dispense Selected
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        $container.append(readyHtml);
+
+        readyItems.forEach(item => {
+            $('#ready-cards').append(createPrescriptionCard(item, 'ready'));
+        });
+    }
+
+    // Initialize handlers
+    initializePrescriptionHandlers();
+}
+
+function renderStatusTable(items, status) {
+    let html = `
+        <div class="prescriptions-tab-header">
+            <div class="prescriptions-toolbar">
+                <button class="btn btn-sm btn-secondary" id="refresh-prescriptions">
+                    <i class="mdi mdi-refresh"></i> Refresh
+                </button>
+                <button class="btn btn-sm btn-success" id="dispense-selected-btn" disabled>
+                    <i class="mdi mdi-check-circle"></i> Dispense
+                </button>
+            </div>
+        </div>
+        <div class="prescriptions-container">
+            <table class="table table-hover" id="prescriptions-table">
+                <thead>
+                    <tr>
+                        <th width="40"><input type="checkbox" id="select-all-prescriptions"></th>
+                        <th>Medication</th>
+                        <th>Qty</th>
+                        <th class="text-right">Price</th>
+                        <th>Doctor</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="prescriptions-tbody">
+    `;
+
+    if (items.length === 0) {
+        html += `
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-5">
+                            <i class="mdi mdi-pill" style="font-size: 3rem;"></i>
+                            <p>No prescriptions in this category</p>
+                        </td>
+                    </tr>
+        `;
+    } else {
+        items.forEach(item => {
+            html += createFilteredTableRow(item);
+        });
+    }
+
+    html += `
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    $('#pending-subtab-container').html(html);
+
+    // Attach event listeners
+    $('#select-all-prescriptions').on('change', function() {
+        $('#prescriptions-tbody .prescription-item-checkbox').prop('checked', $(this).is(':checked'));
+        updateDispenseSummary();
+    });
+
+    $('#prescriptions-tbody .prescription-item-checkbox').on('change', updateDispenseSummary);
+
+    $('.dispense-single-btn').on('click', function() {
+        const itemId = $(this).data('id');
+        dispenseItems([itemId]);
+    });
+}
+
+function createFilteredTableRow(item) {
+    const basePrice = parseFloat(item.base_price || item.price || 0);
+    const qty = parseInt(item.qty) || 1;
+
+    // Calculate proper ready status using HMO logic
+    const payableAmount = parseFloat(item.payable_amount || 0);
+    const claimsAmount = parseFloat(item.claims_amount || 0);
+    const isPaid = item.payment_id != null;
+    const isValidated = item.validation_status === 'validated' || item.validation_status === 'approved';
+
+    let isReady = false;
+    let blockingReason = '';
+    let statusText = 'Unbilled';
+    let statusClass = 'status-requested';
+
+    if (item.status == 1) {
+        statusText = 'Unbilled';
+        statusClass = 'status-requested';
+    } else if (item.status == 2) {
+        // Check readiness
+        if (payableAmount > 0 && !isPaid) {
+            isReady = false;
+            blockingReason = 'Awaiting Payment';
+            statusClass = 'status-billed';
+            statusText = 'Awaiting Payment';
+        } else if (claimsAmount > 0 && !isValidated) {
+            isReady = false;
+            blockingReason = 'Awaiting HMO Validation';
+            statusClass = 'status-billed';
+            statusText = 'Awaiting HMO Validation';
+        } else {
+            isReady = true;
+            statusClass = 'status-ready';
+            statusText = 'Ready to Dispense';
+        }
+    }
+
+    // Ready indicators
+    let readyIndicator = '';
+    if (item.status == 2) {
+        if (isPaid) {
+            readyIndicator = '<br><span class="badge badge-success ml-1"><i class="mdi mdi-check"></i> Paid</span>';
+        }
+        if (isValidated) {
+            readyIndicator += '<span class="badge badge-primary ml-1"><i class="mdi mdi-shield-check"></i> Validated</span>';
+        }
+        if (!isReady && blockingReason) {
+            readyIndicator += `<br><small class="text-warning"><i class="mdi mdi-alert"></i> ${blockingReason}</small>`;
+        }
+    }
+
+    return `
+        <tr data-item-id="${item.id}" class="${isReady ? 'table-success' : ''}">
+            <td><input type="checkbox" class="prescription-item-checkbox" data-id="${item.id}" ${isReady || item.status == 1 ? '' : 'disabled'}></td>
+            <td>
+                <strong>${item.product_name || 'Unknown'}</strong>
+                ${item.dose ? `<br><small class="text-muted">Dose: ${item.dose}</small>` : ''}
+            </td>
+            <td class="text-center">${qty}</td>
+            <td class="text-right"><strong>₦${(basePrice * qty).toLocaleString()}</strong></td>
+            <td>${item.doctor_name || 'N/A'}</td>
+            <td>
+                <span class="request-status-badge ${statusClass}">${statusText}</span>
+                ${readyIndicator}
+            </td>
+            <td>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-success btn-sm dispense-single-btn" data-id="${item.id}" title="Dispense" ${isReady ? '' : 'disabled'}>
+                        <i class="mdi mdi-pill"></i>
+                    </button>
+                    <button class="btn btn-primary btn-sm print-single-btn" data-id="${item.id}" title="Print">
+                        <i class="mdi mdi-printer"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `;
+}
+
+function createPrescriptionCard(item, section) {
+    const payableAmount = parseFloat(item.payable_amount || 0);
+    const claimsAmount = parseFloat(item.claims_amount || 0);
+    const isPaid = item.payment_id != null;
+    const isValidated = item.validation_status === 'validated' || item.validation_status === 'approved';
+
+    let canDeliver = true;
+    let blockReason = '';
+    let deliveryHint = '';
+
+    // Determine payment mode display
+    let paymentModeHtml = '';
+    if (payableAmount > 0 && claimsAmount > 0) {
+        paymentModeHtml = '<span class="badge badge-info">Co-Pay</span>';
+    } else if (payableAmount > 0 && claimsAmount === 0) {
+        paymentModeHtml = '<span class="badge badge-secondary">Cash</span>';
+    } else if (payableAmount === 0 && claimsAmount > 0) {
+        paymentModeHtml = '<span class="badge badge-primary">Full HMO</span>';
+    }
+
+    // Check delivery readiness
+    if (payableAmount > 0 && !isPaid) {
+        canDeliver = false;
+        blockReason = 'Awaiting Payment';
+        deliveryHint = `Patient owes ${formatMoney(payableAmount)}`;
+    } else if (claimsAmount > 0 && !isValidated) {
+        canDeliver = false;
+        blockReason = 'Awaiting HMO Validation';
+        deliveryHint = `Claims of ${formatMoney(claimsAmount)} pending validation`;
+    }
+
+    // Payment status badges
+    let paymentStatusHtml = '';
+    if (isPaid && payableAmount > 0) {
+        paymentStatusHtml = '<span class="badge badge-success ml-1"><i class="mdi mdi-check"></i> Paid</span>';
+    }
+    if (isValidated && claimsAmount > 0) {
+        paymentStatusHtml += '<span class="badge badge-success ml-1"><i class="mdi mdi-check"></i> HMO Validated</span>';
+    }
+
+    // Disable checkbox if not ready for sections that can't act
+    let checkboxDisabled = '';
+    if (section === 'billed') {
+        checkboxDisabled = 'disabled';
+    }
+
+    // Warning banner for blocked items
+    let warningHtml = '';
+    if (!canDeliver && blockReason) {
+        warningHtml = `
+            <div class="card-warning">
+                <i class="mdi mdi-alert-circle"></i>
+                <strong>${blockReason}</strong>: ${deliveryHint}
+            </div>
+        `;
+    }
+
+    return `
+        <div class="request-card" data-request-id="${item.id}" data-section="${section}">
+            <div class="card-checkbox">
+                <input type="checkbox"
+                       class="prescription-checkbox"
+                       data-id="${item.id}"
+                       ${checkboxDisabled}>
+            </div>
+            <div class="card-content">
+                <div class="card-header-row">
+                    <div class="card-title">
+                        <strong>${item.product_name || item.medication_name || 'N/A'}</strong>
+                        ${paymentModeHtml}
+                        ${paymentStatusHtml}
+                    </div>
+                    <div class="card-meta">
+                        <span class="text-muted">Qty: ${item.qty || item.quantity || 'N/A'}</span>
+                    </div>
+                </div>
+
+                <div class="card-details">
+                    <div class="detail-item">
+                        <i class="mdi mdi-account-outline"></i>
+                        <span>${item.doctor_name || 'Unknown Doctor'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="mdi mdi-calendar-outline"></i>
+                        <span>${item.created_at || item.created_at_formatted || 'N/A'}</span>
+                    </div>
+                    ${item.dose && item.dose !== 'N/A' ? `
+                        <div class="detail-item">
+                            <i class="mdi mdi-pill"></i>
+                            <span>Dose: ${item.dose}</span>
+                        </div>
+                    ` : ''}
+                    ${item.notes ? `
+                        <div class="detail-item">
+                            <i class="mdi mdi-note-text-outline"></i>
+                            <span>${item.notes}</span>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <div class="card-pricing">
+                    ${payableAmount > 0 ? `
+                        <div class="pricing-item">
+                            <span class="label">Patient Pays:</span>
+                            <span class="value text-primary">${formatMoney(payableAmount)}</span>
+                        </div>
+                    ` : ''}
+                    ${claimsAmount > 0 ? `
+                        <div class="pricing-item">
+                            <span class="label">HMO Pays:</span>
+                            <span class="value text-info">${formatMoney(claimsAmount)}</span>
+                        </div>
+                    ` : ''}
+                </div>
+
+                ${warningHtml}
+            </div>
+        </div>
+    `;
+}
+
+function createPrescriptionRow(item) {
+    // Determine status class and text based on workflow stage
+    let statusClass = 'status-requested';
+    let statusText = 'Unbilled';
+
+    // Calculate proper ready status using HMO logic
+    const payableAmount = parseFloat(item.payable_amount || 0);
+    const claimsAmount = parseFloat(item.claims_amount || 0);
+    const isPaid = item.payment_id != null;
+    const isValidated = item.validation_status === 'validated' || item.validation_status === 'approved';
+
+    let isReady = false;
+    let blockingReason = '';
+
+    if (item.status == 1) {
+        statusClass = 'status-requested';
+        statusText = 'Unbilled';
+    } else if (item.status == 2) {
+        // Check readiness
+        if (payableAmount > 0 && !isPaid) {
+            isReady = false;
+            blockingReason = 'Awaiting Payment';
+            statusClass = 'status-billed';
+            statusText = 'Awaiting Payment';
+        } else if (claimsAmount > 0 && !isValidated) {
+            isReady = false;
+            blockingReason = 'Awaiting HMO Validation';
+            statusClass = 'status-billed';
+            statusText = 'Awaiting HMO Validation';
+        } else {
+            isReady = true;
+            statusClass = 'status-ready';
+            statusText = 'Ready to Dispense';
+        }
+    }
+
+    // Calculate prices
+    const basePrice = parseFloat(item.base_price || item.price || 0);
+    const patientPays = parseFloat(item.payable_amount || basePrice);
+    const hmoPays = parseFloat(item.claims_amount || 0);
+    const qty = parseInt(item.qty) || 1;
+
+    // Determine payment type badge
+    let paymentBadge = '';
+    if (hmoPays > 0 && patientPays > 0) {
+        paymentBadge = '<span class="badge badge-info">Co-Pay</span>';
+    } else if (hmoPays > 0 && patientPays == 0) {
+        paymentBadge = '<span class="badge badge-success">Full HMO</span>';
+    } else {
+        paymentBadge = '<span class="badge badge-secondary">Cash</span>';
+    }
+
+    // Ready indicator
+    let readyIndicator = '';
+    if (item.status == 2) {
+        if (isPaid) {
+            readyIndicator = '<span class="badge badge-success ml-1"><i class="mdi mdi-check"></i> Paid</span>';
+        }
+        if (isValidated) {
+            readyIndicator += '<span class="badge badge-primary ml-1"><i class="mdi mdi-shield-check"></i> HMO Validated</span>';
+        }
+        if (!isReady && blockingReason) {
+            readyIndicator += `<br><small class="text-warning"><i class="mdi mdi-alert"></i> ${blockingReason}</small>`;
+        }
+    }
+
+    if (item.status == 1) {
+        // Unbilled row
+        return `
+            <tr data-item-id="${item.id}" data-product-request-id="${item.product_request_id || item.id}">
+                <td><input type="checkbox" class="prescription-item-checkbox" data-id="${item.id}" data-status="unbilled"></td>
+                <td>
+                    <strong>${item.product_name || 'Unknown'}</strong>
+                    ${item.dose ? `<br><small class="text-muted">Dose: ${item.dose}</small>` : ''}
+                </td>
+                <td class="text-center">${qty}</td>
+                <td class="text-right"><strong>₦${(basePrice * qty).toLocaleString()}</strong></td>
+                <td>${item.doctor_name || 'N/A'}</td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-primary btn-sm mark-billed-btn" data-id="${item.id}" title="Mark Billed">
+                            <i class="mdi mdi-cash-register"></i>
+                        </button>
+                        <button class="btn btn-info btn-sm edit-item-btn" data-id="${item.id}" title="Edit">
+                            <i class="mdi mdi-pencil"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    } else {
+        // Billed or Ready row
+        return `
+            <tr data-item-id="${item.id}" data-product-request-id="${item.product_request_id || item.id}" class="${isReady ? 'table-success' : ''}">
+                <td><input type="checkbox" class="prescription-item-checkbox" data-id="${item.id}" data-status="${isReady ? 'ready' : 'billed'}" ${isReady ? '' : 'disabled'}></td>
+                <td>
+                    <strong>${item.product_name || 'Unknown'}</strong>
+                    ${item.dose ? `<br><small class="text-muted">Dose: ${item.dose}</small>` : ''}
+                </td>
+                <td class="text-center">${qty}</td>
+                <td class="text-right">
+                    <strong class="${patientPays > 0 ? 'text-danger' : 'text-success'}">
+                        ₦${(patientPays * qty).toLocaleString()}
+                    </strong>
+                </td>
+                <td class="text-right">
+                    ${hmoPays > 0 ? `<strong class="text-primary">₦${(hmoPays * qty).toLocaleString()}</strong>` : '<span class="text-muted">-</span>'}
+                </td>
+                <td>
+                    <span class="request-status-badge ${statusClass}">${statusText}</span>
+                    ${readyIndicator}
+                    <br>${paymentBadge}
+                </td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-success btn-sm dispense-single-btn" data-id="${item.id}" title="Dispense" ${isReady ? '' : 'disabled'}>
+                            <i class="mdi mdi-pill"></i>
+                        </button>
+                        <button class="btn btn-primary btn-sm print-single-btn" data-id="${item.id}" title="Print">
+                            <i class="mdi mdi-printer"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }
+}
+
+function attachPrescriptionEventListeners() {
+    // Checkboxes
+    $('.prescription-item-checkbox').off('change').on('change', updateDispenseSummary);
+
+    $('.select-status-checkbox').off('change').on('change', function() {
+        const status = $(this).data('status');
+        $(`#${status}-tbody .prescription-item-checkbox`).prop('checked', $(this).is(':checked'));
+        updateDispenseSummary();
+    });
+
+    // Action buttons
+    $('.dispense-single-btn').off('click').on('click', function() {
+        const itemId = $(this).data('id');
+        dispenseItems([itemId]);
+    });
+
+    $('.print-single-btn').off('click').on('click', function() {
+        const itemId = $(this).data('id');
+        printPrescription([itemId]);
+    });
+
+    $('.mark-billed-btn').off('click').on('click', function() {
+        const itemId = $(this).data('id');
+        markItemBilled(itemId);
+    });
+
+    $('.edit-item-btn').off('click').on('click', function() {
+        const itemId = $(this).data('id');
+        editPrescriptionItem(itemId);
+    });
+}
+
+// Card-based handlers for new layout
+function initializePrescriptionHandlers() {
+    // Select-all handlers
+    $('.select-all-checkbox').off('change').on('change', function() {
+        const isChecked = $(this).is(':checked');
+        const section = $(this).attr('id').replace('select-all-', '');
+
+        $(`.request-section[data-section="${section}"] .prescription-checkbox:not(:disabled)`).prop('checked', isChecked);
+
+        updateSectionButtons(section);
+    });
+
+    // Individual checkbox handlers
+    $('.prescription-checkbox').off('change').on('change', function() {
+        const card = $(this).closest('.request-card');
+        const section = card.data('section');
+
+        updateSectionButtons(section);
+    });
+
+    // Action button handlers
+    $('#btn-record-billing').off('click').on('click', function() {
+        const selected = getSelectedPrescriptions('unbilled');
+        if (selected.length > 0) {
+            recordBillingForPrescriptions(selected);
+        }
+    });
+
+    $('#btn-dispense-ready').off('click').on('click', function() {
+        const selected = getSelectedPrescriptions('ready');
+        if (selected.length > 0) {
+            dispenseItems(selected);
+        }
+    });
+
+    $('#btn-dismiss-unbilled, #btn-dismiss-billed').off('click').on('click', function() {
+        const section = $(this).attr('id').includes('unbilled') ? 'unbilled' : 'billed';
+        const selected = getSelectedPrescriptions(section);
+        if (selected.length > 0) {
+            dismissPrescriptions(selected);
+        }
+    });
+}
+
+function updateSectionButtons(section) {
+    const selectedCount = $(`.request-section[data-section="${section}"] .prescription-checkbox:checked`).length;
+
+    if (section === 'unbilled') {
+        $('#btn-record-billing, #btn-dismiss-unbilled').prop('disabled', selectedCount === 0);
+    } else if (section === 'billed') {
+        $('#btn-dismiss-billed').prop('disabled', selectedCount === 0);
+    } else if (section === 'ready') {
+        $('#btn-dispense-ready').prop('disabled', selectedCount === 0);
+    }
+}
+
+function getSelectedPrescriptions(section) {
+    const selected = [];
+    $(`.request-section[data-section="${section}"] .prescription-checkbox:checked`).each(function() {
+        selected.push($(this).data('id'));
+    });
+    return selected;
+}
+
+function recordBillingForPrescriptions(itemIds) {
+    if (!confirm(`Record billing for ${itemIds.length} prescription(s)?`)) {
+        return;
+    }
+
+    $.ajax({
+        url: '{{ route("pharmacy.record-billing") }}',
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            prescription_ids: itemIds
+        },
+        success: function(response) {
+            toastr.success(response.message || 'Billing recorded successfully');
+            loadPrescriptionItems(currentStatusFilter);
+        },
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Failed to record billing');
+        }
+    });
+}
+
+function dismissPrescriptions(itemIds) {
+    if (!confirm(`Dismiss ${itemIds.length} prescription(s)?`)) {
+        return;
+    }
+
+    $.ajax({
+        url: '{{ route("pharmacy.dismiss") }}',
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            prescription_ids: itemIds
+        },
+        success: function(response) {
+            toastr.success(response.message || 'Prescriptions dismissed');
+            loadPrescriptionItems(currentStatusFilter);
+        },
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Failed to dismiss prescriptions');
+        }
+    });
+}
+
+// Update dispense summary when items are selected
+function updateDispenseSummary() {
+    const selectedItems = $('.prescription-item-checkbox:checked');
+    const count = selectedItems.length;
+
+    if (count === 0) {
+        $('#dispense-summary-card').hide();
+        $('#dispense-selected-btn').prop('disabled', true);
+        $('#print-selected-btn').prop('disabled', true);
+        return;
+    }
+
+    $('#dispense-count').text(count);
+    $('#dispense-summary-card').show();
+    $('#dispense-selected-btn').prop('disabled', false);
+    $('#print-selected-btn').prop('disabled', false);
+}
+
+// Dispense selected items
+function dispenseItems(itemIds) {
+    if (!itemIds || itemIds.length === 0) {
+        toastr.warning('Please select items to dispense');
+        return;
+    }
+
+    if (!confirm(`Dispense ${itemIds.length} medication(s)?`)) {
+        return;
+    }
+
+    $.ajax({
+        url: '{{ route("pharmacy.dispense") }}',
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            patient_id: currentPatient,
+            item_ids: itemIds
+        },
+        success: function(response) {
+            toastr.success('Medications dispensed successfully!');
+            loadPrescriptionItems();
+            loadQueueCounts();
+        },
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Failed to dispense medications');
+        }
+    });
+}
+
+// Mark prescription item as billed
+function markItemBilled(itemId) {
+    if (!confirm('Mark this item as billed?')) {
+        return;
+    }
+
+    $.ajax({
+        url: `/pharmacy-workbench/prescription/${itemId}/mark-billed`,
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}'
+        },
+        success: function(response) {
+            toastr.success('Item marked as billed');
+            loadPrescriptionItems();
+        },
+        error: function(xhr) {
+            toastr.error('Failed to mark item as billed');
+        }
+    });
+}
+
+// Edit prescription item
+function editPrescriptionItem(itemId) {
+    toastr.info('Edit functionality coming soon');
+    // Can implement modal edit dialog here later
+}
+
+// Print prescription slip - Load in modal instead of new window
+function printPrescription(itemIds) {
+    if (!itemIds || itemIds.length === 0) {
+        toastr.warning('Please select items to print');
+        return;
+    }
+
+    // Show loading in modal
+    $('#prescriptionSlipModal').modal('show');
+    $('#prescription-slip-content').html('<div class="text-center p-5"><i class="mdi mdi-loading mdi-spin" style="font-size: 3rem;"></i><p class="mt-3">Loading prescription slip...</p></div>');
+
+    // Fetch prescription slip HTML via AJAX
+    $.ajax({
+        url: '{{ route("pharmacy.print-prescription-slip") }}',
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            product_request_ids: itemIds
+        },
+        success: function(response) {
+            // Load the HTML into modal
+            $('#prescription-slip-content').html(response);
+        },
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Failed to load prescription slip');
+            $('#prescriptionSlipModal').modal('hide');
+        }
+    });
+}
+
+// Print from modal
+function printPrescriptionSlipFromModal() {
+    const printContent = document.getElementById('prescription-slip-content').innerHTML;
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+}
+
+// Print selected billing prescriptions
+function printSelectedBillingPrescriptions() {
+    if (!currentPatient) {
+        toastr.warning('Please select a patient first');
+        return;
+    }
+
+    // Check both DataTable checkboxes and card-based checkboxes
+    const itemIds = [];
+
+    // From DataTable
+    $('.presc-billing-checkbox:checked').each(function() {
+        itemIds.push($(this).data('id'));
+    });
+
+    // From card-based view (unbilled section)
+    $('.request-section[data-section="unbilled"] .prescription-checkbox:checked').each(function() {
+        itemIds.push($(this).data('id'));
+    });
+
+    if (itemIds.length === 0) {
+        toastr.warning('Please select items to print');
+        return;
+    }
+
+    printPrescription(itemIds);
+}
+
+// Print selected pending prescriptions
+function printSelectedPendingPrescriptions() {
+    if (!currentPatient) {
+        toastr.warning('Please select a patient first');
+        return;
+    }
+
+    // Check both DataTable checkboxes and card-based checkboxes
+    const itemIds = [];
+
+    // From DataTable
+    $('.presc-pending-checkbox:checked').each(function() {
+        itemIds.push($(this).data('id'));
+    });
+
+    // From card-based view (billed section - pending payment/validation)
+    $('.request-section[data-section="billed"] .prescription-checkbox:checked').each(function() {
+        itemIds.push($(this).data('id'));
+    });
+
+    if (itemIds.length === 0) {
+        toastr.warning('Please select items to print');
+        return;
+    }
+
+    printPrescription(itemIds);
+}
+
+// Print all pending prescriptions
+function printPendingPrescriptions() {
+    if (!currentPatient) {
+        toastr.warning('Please select a patient first');
+        return;
+    }
+
+    // Get all rows from pending table
+    const pendingTable = $('#presc_pending_table').DataTable();
+    const allData = pendingTable.rows().data().toArray();
+
+    if (allData.length === 0) {
+        toastr.warning('No pending prescriptions to print');
+        return;
+    }
+
+    const itemIds = allData.map(row => row.id);
+    printPrescription(itemIds);
+}
+
+// Print selected ready prescriptions
+function printReadyPrescriptions() {
+    if (!currentPatient) {
+        toastr.warning('Please select a patient first');
+        return;
+    }
+
+    // Check both DataTable checkboxes and card-based checkboxes
+    const itemIds = [];
+
+    // From DataTable
+    $('.presc-dispense-checkbox:checked').each(function() {
+        itemIds.push($(this).data('id'));
+    });
+
+    // From card-based view (ready section)
+    $('.request-section[data-section="ready"] .prescription-checkbox:checked').each(function() {
+        itemIds.push($(this).data('id'));
+    });
+
+    if (itemIds.length === 0) {
+        toastr.warning('Please select items to print');
+        return;
+    }
+
+    printPrescription(itemIds);
+}
+
+// Dispense selected prescriptions from dispense tab
+function dispenseSelectedPrescriptions() {
+    if (!currentPatient) {
+        toastr.warning('Please select a patient first');
+        return;
+    }
+
+    // Check both DataTable checkboxes and card-based checkboxes
+    const itemIds = [];
+
+    // From DataTable
+    $('.presc-dispense-checkbox:checked').each(function() {
+        itemIds.push($(this).data('id'));
+    });
+
+    // From card-based view (ready section)
+    $('.request-section[data-section="ready"] .prescription-checkbox:checked').each(function() {
+        itemIds.push($(this).data('id'));
+    });
+
+    if (itemIds.length === 0) {
+        toastr.warning('Please select items to dispense');
+        return;
+    }
+
+    if (!confirm(`Dispense ${itemIds.length} prescription(s)?`)) {
+        return;
+    }
+
+    $.ajax({
+        url: '{{ route("pharmacy.dispense") }}',
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            patient_id: currentPatient,
+            item_ids: itemIds
+        },
+        success: function(response) {
+            toastr.success(response.message || 'Prescriptions dispensed successfully');
+            initializePrescriptionDataTables(currentPatient);
+            loadQueueCounts();
+        },
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Failed to dispense prescriptions');
+        }
+    });
+}
+
+// Load patient dispensing history
+function loadPatientDispensingHistory() {
+    if (!currentPatient) return;
+
+    const tbody = $('#receipts-tbody'); // Using receipts tbody for history
+    tbody.html(`
+        <tr>
+            <td colspan="6" class="text-center text-muted py-5">
+                <i class="mdi mdi-loading mdi-spin" style="font-size: 3rem;"></i>
+                <p>Loading dispensing history...</p>
+            </td>
+        </tr>
+    `);
+
+    $.ajax({
+        url: `/pharmacy-workbench/patient/${currentPatient}/dispensing-history`,
+        method: 'GET',
+        success: function(response) {
+            renderDispensingHistory(response.items);
+        },
+        error: function(xhr) {
+            console.error('Failed to load dispensing history', xhr);
+            tbody.html(`
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-5">
+                        <i class="mdi mdi-alert-circle" style="font-size: 3rem;"></i>
+                        <p>Failed to load history</p>
+                    </td>
+                </tr>
+            `);
+        }
+    });
+}
+
+// Render dispensing history
+function renderDispensingHistory(history) {
+    const tbody = $('#receipts-tbody');
+    tbody.empty();
+
+    if (!history || history.length === 0) {
         tbody.html(`
             <tr>
-                <td colspan="8" class="text-center text-muted py-5">
-                    <i class="mdi mdi-information-outline" style="font-size: 3rem;"></i>
-                    <p>No unpaid items for this patient</p>
+                <td colspan="6" class="text-center text-muted py-5">
+                    <i class="mdi mdi-history" style="font-size: 3rem;"></i>
+                    <p>No dispensing history for this patient</p>
                 </td>
             </tr>
         `);
         return;
     }
 
-    items.forEach(item => {
+    history.forEach(item => {
+        const basePrice = parseFloat(item.base_price || 0);
+        const patientPaid = parseFloat(item.payable_amount || 0);
+        const hmoPaid = parseFloat(item.claims_amount || 0);
+        const qty = parseInt(item.qty) || 1;
+
         const row = `
-            <tr data-item-id="${item.id}">
-                <td><input type="checkbox" class="billing-item-checkbox" data-id="${item.id}"></td>
-                <td>${item.name}</td>
-                <td>${item.category || 'N/A'}</td>
-                <td>₦${parseFloat(item.price).toLocaleString()}</td>
-                <td><input type="number" class="form-control item-qty-input" value="${item.qty}" min="1" data-id="${item.id}"></td>
-                <td><input type="number" class="form-control item-discount-input" value="${item.discount || 0}" min="0" max="100" data-id="${item.id}"></td>
-                <td>${item.claims_amount > 0 ? `<span class="hmo-badge">₦${parseFloat(item.claims_amount).toLocaleString()}</span>` : '-'}</td>
-                <td class="item-total" data-id="${item.id}">₦${calculateItemTotal(item).toLocaleString()}</td>
+            <tr>
+                <td>${item.dispense_date || 'N/A'}</td>
+                <td>
+                    <strong>${item.product_name || item.medication_name || 'Unknown'}</strong>
+                    ${item.dose ? `<br><small class="text-muted">Dose: ${item.dose}</small>` : ''}
+                </td>
+                <td class="text-center">${qty}</td>
+                <td class="text-right"><span class="text-muted">₦${(basePrice * qty).toLocaleString()}</span></td>
+                <td class="text-right">
+                    <strong class="${patientPaid > 0 ? 'text-danger' : 'text-success'}">
+                        ₦${(patientPaid * qty).toLocaleString()}
+                    </strong>
+                </td>
+                <td class="text-right">
+                    ${hmoPaid > 0 ? `<strong class="text-primary">₦${(hmoPaid * qty).toLocaleString()}</strong>` : '<span class="text-muted">-</span>'}
+                </td>
+                <td>${item.dispensed_by || 'System'}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary reprint-history-btn" data-id="${item.product_request_id}">
+                        <i class="mdi mdi-printer"></i> Reprint
+                    </button>
+                </td>
             </tr>
         `;
         tbody.append(row);
     });
 
-    // Attach event listeners
-    $('.billing-item-checkbox').on('change', updatePaymentSummary);
-    $('#select-all-billing-items').on('change', function() {
-        $('.billing-item-checkbox').prop('checked', $(this).is(':checked'));
-        updatePaymentSummary();
+    // Reprint button handler
+    $('.reprint-history-btn').on('click', function() {
+        const itemId = $(this).data('id');
+        printPrescription([itemId]);
     });
-    $('.item-qty-input, .item-discount-input').on('input', function() {
-        const id = $(this).data('id');
-        recalculateItemTotal(id);
-        updatePaymentSummary();
-    });
-
-    console.log('Rendered', items.length, 'billing items');
 }
+
+// Event handlers for dispense and print selected buttons
+$(document).on('click', '#dispense-selected-btn', function() {
+    const itemIds = [];
+    $('.prescription-item-checkbox:checked').each(function() {
+        itemIds.push($(this).data('id'));
+    });
+    dispenseItems(itemIds);
+});
+
+$(document).on('click', '#print-selected-btn', function() {
+    const itemIds = [];
+    $('.prescription-item-checkbox:checked').each(function() {
+        itemIds.push($(this).data('id'));
+    });
+    printPrescription(itemIds);
+});
+
+// Print tab option handlers
+$(document).on('click', '#print-all-pending', function() {
+    if (!currentPatient) {
+        toastr.warning('Please select a patient first');
+        return;
+    }
+    // Get all pending prescription IDs
+    const itemIds = [];
+    $('.prescription-item-checkbox').each(function() {
+        itemIds.push($(this).data('id'));
+    });
+    if (itemIds.length === 0) {
+        toastr.warning('No pending prescriptions to print');
+        return;
+    }
+    printPrescription(itemIds);
+});
+
+$(document).on('click', '#print-dispensed-today', function() {
+    if (!currentPatient) {
+        toastr.warning('Please select a patient first');
+        return;
+    }
+    toastr.info('Loading today\'s dispensed medications...');
+    // Switch to history tab and filter by today
+    switchWorkspaceTab('history');
+    loadPatientDispensingHistory();
+});
+
+$(document).on('click', '#print-patient-medication-list', function() {
+    if (!currentPatient) {
+        toastr.warning('Please select a patient first');
+        return;
+    }
+    // Print all medications (pending and dispensed)
+    toastr.info('Generating medication list...');
+    printPrescription(['all']); // Special flag for all medications
+});
 
 function calculateItemTotal(item) {
     const qty = parseFloat(item.qty) || 1;
@@ -5384,15 +7306,15 @@ function processPayment() {
 
             $('#payment-summary-card').hide();
 
-            // Clear all billing selections and reset summary
-            $('.billing-item-checkbox').prop('checked', false);
+            // Clear all prescription selections and reset summary
+            $('.prescription-item-checkbox').prop('checked', false);
             $('#select-all-items').prop('checked', false);
             $('#summary-subtotal').text('₦0.00');
             $('#summary-discount').text('₦0.00');
             $('#summary-total').text('₦0.00');
 
-            // Reload billing items
-            loadBillingItems();
+            // Reload prescription items
+            loadPrescriptionItems();
 
             // Reload account balance to reflect payment deduction
             loadAccountBalance(currentPatient);
@@ -5852,8 +7774,13 @@ function renderMyTransactionsSummary(summary) {
     $('#my-transactions-summary').show();
 }
 
+function updatePrescriptionBadge(count) {
+    $('#prescriptions-badge').text(count);
+}
+
+// Legacy function stub for compatibility
 function updateBillingBadge(count) {
-    $('#billing-badge').text(count);
+    updatePrescriptionBadge(count);
 }
 
 // Old lab-specific functions removed, keeping legacy compatibility stubs
@@ -6584,6 +8511,15 @@ $('#dismissRequestForm').on('submit', function(e) {
 // ENHANCEMENT FUNCTIONS
 // ============================================
 
+// Load user preferences from localStorage
+function loadUserPreferences() {
+    const clinicalVisible = localStorage.getItem('pharmacyClinicalPanelVisible') === 'true';
+    if (clinicalVisible) {
+        $('#right-panel').addClass('active');
+        $('#toggle-clinical-btn').html('📊 Clinical Context ×');
+    }
+}
+
 // Create vital tooltip element
 function createVitalTooltip() {
     vitalTooltip = $('<div class="vital-tooltip"></div>').appendTo('body');
@@ -6755,7 +8691,7 @@ function initializeQueueDataTable(filter) {
     // Initialize DataTable for payment queue
     queueDataTable = $('#queue-datatable').DataTable({
         ajax: {
-            url: '/billing-workbench/payment-queue',
+            url: '/pharmacy-workbench/prescription-queue',
             data: { filter: filter },
             dataSrc: ''
         },
@@ -6771,8 +8707,9 @@ function initializeQueueDataTable(filter) {
                                 <span class="badge badge-primary">${row.file_no}</span>
                             </div>
                             <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #6c757d;">
-                                <i class="mdi mdi-file-document-outline"></i> ${row.unpaid_count} unpaid item(s)
-                                ${row.hmo_items > 0 ? `<span class="hmo-badge ml-2"><i class="mdi mdi-shield-check"></i> ${row.hmo_items} HMO</span>` : ''}
+                                <i class="mdi mdi-pill"></i> ${row.prescription_count || 0} prescription(s)
+                                ${row.unbilled_count > 0 ? `<span class="badge badge-warning ml-2">${row.unbilled_count} unbilled</span>` : ''}
+                                ${row.ready_count > 0 ? `<span class="badge badge-success ml-2">${row.ready_count} ready</span>` : ''}
                                 ${row.hmo ? `<br><small><i class="mdi mdi-hospital-building"></i> ${row.hmo}</small>` : ''}
                             </div>
                         </div>
@@ -7507,4 +9444,252 @@ function initializeReportsCharts(byStatus, monthlyTrends) {
 }
 
 </script>
+
+<!-- Prescription Slip Preview Modal -->
+<div class="modal fade" id="prescriptionSlipModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="mdi mdi-file-document"></i> Prescription Slip Preview</h5>
+                <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-0" style="max-height: 70vh; overflow-y: auto;">
+                <div id="prescription-slip-content"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="printPrescriptionSlipFromModal()">
+                    <i class="mdi mdi-printer"></i> Print
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="mdi mdi-close"></i> Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Include unified prescription scripts for shared component --}}
+@include('admin.patients.partials.presc_unified_scripts')
+
+{{-- Pharmacy Workbench Specific Overrides - These MUST come after unified scripts --}}
+<script>
+// Override billPrescItems to use correct checkbox class for pharmacy workbench
+window.billPrescItems = function() {
+    if (!currentPatient) {
+        toastr.error('Please select a patient first');
+        return;
+    }
+
+    // Get selected items from DataTable checkboxes
+    const selectedIds = [];
+    $('.presc-billing-checkbox:checked').each(function() {
+        selectedIds.push($(this).data('id'));
+    });
+
+    // Also check card-based checkboxes (unbilled section)
+    $('.request-section[data-section="unbilled"] .prescription-checkbox:checked').each(function() {
+        selectedIds.push($(this).data('id'));
+    });
+
+    // Get added products
+    const addedProducts = [];
+    const addedDoses = [];
+    $('#presc_added_products tr').each(function() {
+        const checkbox = $(this).find('.presc-added-check');
+        if (checkbox.is(':checked')) {
+            addedProducts.push(checkbox.val());
+            addedDoses.push($(this).find('.presc-added-dose').val());
+        }
+    });
+
+    // Validate
+    if (selectedIds.length === 0 && addedProducts.length === 0) {
+        toastr.warning('Please select at least one item to bill');
+        return;
+    }
+
+    // Validate doses for added items
+    for (let i = 0; i < addedDoses.length; i++) {
+        if (!addedDoses[i] || addedDoses[i].trim() === '') {
+            toastr.error('Please enter dose/frequency for all added medications');
+            return;
+        }
+    }
+
+    if (!confirm('Are you sure you want to bill the selected items?')) {
+        return;
+    }
+
+    const $btn = $('#btn-bill-presc');
+    const originalHtml = $btn.html();
+    $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Billing...');
+
+    $.ajax({
+        url: '/product-bill-patient-ajax',
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        data: {
+            selectedPrescBillRows: selectedIds,
+            addedPrescBillRows: addedProducts,
+            consult_presc_dose: addedDoses,
+            patient_id: currentPatient,
+            patient_user_id: currentPatientData?.user_id || ''
+        },
+        success: function(response) {
+            $btn.prop('disabled', false).html(originalHtml);
+            if (response.success) {
+                toastr.success(response.message || 'Items billed successfully');
+                // Reload DataTables
+                initializePrescriptionDataTables(currentPatient);
+                loadPrescriptionItems(currentStatusFilter);
+                prescBillingTotal = 0;
+                updatePrescBillingTotalPharmacy();
+            } else {
+                toastr.error(response.message || 'Failed to bill items');
+            }
+        },
+        error: function(xhr) {
+            $btn.prop('disabled', false).html(originalHtml);
+            console.error('Billing failed', xhr);
+            toastr.error(xhr.responseJSON?.message || 'Failed to bill items');
+        }
+    });
+};
+
+// Override dismissPrescItems to use correct checkbox class for pharmacy workbench
+window.dismissPrescItems = function(type) {
+    if (!currentPatient) {
+        toastr.error('Please select a patient first');
+        return;
+    }
+
+    const selectedIds = [];
+
+    if (type === 'billing') {
+        // From DataTable
+        $('.presc-billing-checkbox:checked').each(function() {
+            selectedIds.push($(this).data('id'));
+        });
+        // From card-based view
+        $('.request-section[data-section="unbilled"] .prescription-checkbox:checked').each(function() {
+            selectedIds.push($(this).data('id'));
+        });
+    } else if (type === 'pending') {
+        // From DataTable
+        $('.presc-pending-checkbox:checked').each(function() {
+            selectedIds.push($(this).data('id'));
+        });
+        // From card-based view
+        $('.request-section[data-section="billed"] .prescription-checkbox:checked').each(function() {
+            selectedIds.push($(this).data('id'));
+        });
+    } else if (type === 'dispense') {
+        // From DataTable
+        $('.presc-dispense-checkbox:checked').each(function() {
+            selectedIds.push($(this).data('id'));
+        });
+        // From card-based view
+        $('.request-section[data-section="ready"] .prescription-checkbox:checked').each(function() {
+            selectedIds.push($(this).data('id'));
+        });
+    }
+
+    if (selectedIds.length === 0) {
+        toastr.warning('Please select at least one item to dismiss');
+        return;
+    }
+
+    if (!confirm('Are you sure you want to dismiss the selected items? This action cannot be undone.')) {
+        return;
+    }
+
+    $.ajax({
+        url: '/product-dismiss-patient-ajax',
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        data: {
+            prescription_ids: selectedIds,
+            patient_id: currentPatient
+        },
+        success: function(response) {
+            if (response.success) {
+                toastr.success(response.message || 'Items dismissed successfully');
+                // Reload DataTables
+                initializePrescriptionDataTables(currentPatient);
+                loadPrescriptionItems(currentStatusFilter);
+                prescBillingTotal = 0;
+                updatePrescBillingTotalPharmacy();
+            } else {
+                toastr.error(response.message || 'Failed to dismiss items');
+            }
+        },
+        error: function(xhr) {
+            console.error('Dismiss failed', xhr);
+            toastr.error(xhr.responseJSON?.message || 'Failed to dismiss items');
+        }
+    });
+};
+
+// Override dispensePrescItems to use correct checkbox class for pharmacy workbench
+window.dispensePrescItems = function() {
+    if (!currentPatient) {
+        toastr.error('Please select a patient first');
+        return;
+    }
+
+    // Get selected items
+    const itemIds = [];
+
+    // From DataTable
+    $('.presc-dispense-checkbox:checked').each(function() {
+        itemIds.push($(this).data('id'));
+    });
+
+    // From card-based view (ready section)
+    $('.request-section[data-section="ready"] .prescription-checkbox:checked').each(function() {
+        itemIds.push($(this).data('id'));
+    });
+
+    if (itemIds.length === 0) {
+        toastr.warning('Please select at least one item to dispense');
+        return;
+    }
+
+    if (!confirm(`Dispense ${itemIds.length} prescription(s)?`)) {
+        return;
+    }
+
+    const $btn = $('#btn-dispense-presc');
+    const originalHtml = $btn.html();
+    $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Dispensing...');
+
+    $.ajax({
+        url: '{{ route("pharmacy.dispense") }}',
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            patient_id: currentPatient,
+            item_ids: itemIds
+        },
+        success: function(response) {
+            $btn.prop('disabled', false).html(originalHtml);
+            toastr.success(response.message || 'Prescriptions dispensed successfully');
+            initializePrescriptionDataTables(currentPatient);
+            loadPrescriptionItems(currentStatusFilter);
+            loadQueueCounts();
+        },
+        error: function(xhr) {
+            $btn.prop('disabled', false).html(originalHtml);
+            toastr.error(xhr.responseJSON?.message || 'Failed to dispense prescriptions');
+        }
+    });
+};
+</script>
+
 @endsection

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ServicePrice;
+use App\Models\servicePrice;
 use Illuminate\Http\Request;
 use App\Models\service;
 use Yajra\DataTables\DataTables;

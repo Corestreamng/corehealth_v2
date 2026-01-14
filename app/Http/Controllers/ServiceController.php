@@ -9,7 +9,7 @@ use App\Http\Requests\UpdateServiceRequest;
 use App\Models\Sale;
 use App\Models\ApplicationStatu;
 use App\Models\Stock;
-use App\Models\ServiceCategory;
+use App\Models\serviceCategory;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Yajra\DataTables\DataTables;
