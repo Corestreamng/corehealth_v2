@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 14, 2026 at 12:50 AM
+-- Generation Time: Jan 14, 2026 at 11:23 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -402,7 +402,121 @@ INSERT INTO `audits` (`id`, `user_type`, `user_id`, `event`, `auditable_type`, `
 (206, 'App\\Models\\User', 1, 'updated', 'App\\Models\\User', 132, '{\"old_records\":null}', '{\"old_records\":\"records_1768347032_132.pdf\"}', 'http://127.0.0.1:8000/reception/patient/24/update', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-13 22:30:32', '2026-01-13 22:30:32'),
 (209, 'App\\Models\\User', 1, 'updated', 'App\\Models\\LabServiceRequest', 73, '{\"deleted_by\":null,\"deletion_reason\":null}', '{\"deleted_by\":1,\"deletion_reason\":\"hjhsasgagjd\"}', 'http://127.0.0.1:8000/reception/request/lab/73/discard', '127.0.0.1', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1', NULL, '2026-01-13 22:46:16', '2026-01-13 22:46:16'),
 (210, 'App\\Models\\User', 1, 'deleted', 'App\\Models\\LabServiceRequest', 73, '{\"id\":73,\"service_request_id\":98,\"billed_by\":null,\"billed_date\":null,\"service_id\":57,\"encounter_id\":null,\"patient_id\":24,\"result\":null,\"result_data\":null,\"attachments\":null,\"result_date\":null,\"result_by\":null,\"sample_taken\":0,\"sample_date\":null,\"sample_taken_by\":null,\"doctor_id\":null,\"note\":null,\"status\":1,\"old_medical_report_id\":null,\"old_patient_lab_services\":null,\"deleted_by\":1,\"deletion_reason\":\"hjhsasgagjd\",\"dismissed_at\":null,\"dismissed_by\":null,\"dismiss_reason\":null}', '[]', 'http://127.0.0.1:8000/reception/request/lab/73/discard', '127.0.0.1', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1', NULL, '2026-01-13 22:46:16', '2026-01-13 22:46:16'),
-(211, 'App\\Models\\User', 1, 'deleted', 'App\\Models\\ProductOrServiceRequest', 98, '{\"id\":98,\"invoice_id\":null,\"payment_id\":null,\"hmo_remittance_id\":null,\"user_id\":132,\"staff_user_id\":1,\"product_id\":null,\"service_id\":57,\"qty\":1,\"discount\":\"0.00\",\"payable_amount\":\"5000.00\",\"claims_amount\":\"0.00\",\"coverage_mode\":\"primary\",\"validation_status\":\"pending\",\"auth_code\":null,\"validated_by\":null,\"validated_at\":null,\"validation_notes\":null,\"submitted_to_hmo_at\":null,\"hmo_submission_batch\":null}', '[]', 'http://127.0.0.1:8000/reception/request/lab/73/discard', '127.0.0.1', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1', NULL, '2026-01-13 22:46:16', '2026-01-13 22:46:16');
+(211, 'App\\Models\\User', 1, 'deleted', 'App\\Models\\ProductOrServiceRequest', 98, '{\"id\":98,\"invoice_id\":null,\"payment_id\":null,\"hmo_remittance_id\":null,\"user_id\":132,\"staff_user_id\":1,\"product_id\":null,\"service_id\":57,\"qty\":1,\"discount\":\"0.00\",\"payable_amount\":\"5000.00\",\"claims_amount\":\"0.00\",\"coverage_mode\":\"primary\",\"validation_status\":\"pending\",\"auth_code\":null,\"validated_by\":null,\"validated_at\":null,\"validation_notes\":null,\"submitted_to_hmo_at\":null,\"hmo_submission_batch\":null}', '[]', 'http://127.0.0.1:8000/reception/request/lab/73/discard', '127.0.0.1', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1', NULL, '2026-01-13 22:46:16', '2026-01-13 22:46:16'),
+(212, NULL, NULL, 'created', 'App\\Models\\ProductOrServiceRequest', 100, '[]', '{\"user_id\":69,\"staff_user_id\":1,\"service_id\":3,\"qty\":1,\"payable_amount\":\"5000.00\",\"claims_amount\":\"0.00\",\"coverage_mode\":\"primary\",\"validation_status\":\"pending\",\"id\":100}', 'http://127.0.0.1:8000/chat/check-unread', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-13 23:00:00', '2026-01-13 23:00:00'),
+(213, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductRequest', 92, '{\"status\":1}', '{\"status\":2}', 'http://127.0.0.1:8000/pharmacy-workbench/record-billing', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 01:05:48', '2026-01-14 01:05:48'),
+(214, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductRequest', 91, '{\"status\":1}', '{\"status\":2}', 'http://127.0.0.1:8000/pharmacy-workbench/record-billing', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 01:05:48', '2026-01-14 01:05:48'),
+(218, 'App\\Models\\User', 1, 'created', 'App\\Models\\ProductRequest', 102, '[]', '{\"patient_id\":24,\"product_id\":79,\"encounter_id\":null,\"dose\":null,\"doctor_id\":1,\"status\":1,\"id\":102}', 'http://127.0.0.1:8000/pharmacy-workbench/create-request', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 01:33:39', '2026-01-14 01:33:39'),
+(219, 'App\\Models\\User', 1, 'created', 'App\\Models\\ProductOrServiceRequest', 101, '[]', '{\"user_id\":132,\"staff_user_id\":1,\"product_id\":79,\"qty\":\"1\",\"payable_amount\":\"4000.00\",\"claims_amount\":\"0.00\",\"coverage_mode\":\"primary\",\"id\":101}', 'http://127.0.0.1:8000/pharmacy-workbench/create-request', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 01:33:39', '2026-01-14 01:33:39'),
+(220, 'App\\Models\\User', 1, 'created', 'App\\Models\\ProductRequest', 103, '[]', '{\"patient_id\":24,\"product_id\":68,\"encounter_id\":null,\"dose\":\"700 mg 3 days\",\"doctor_id\":1,\"status\":1,\"id\":103}', 'http://127.0.0.1:8000/pharmacy-workbench/create-request', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 01:37:14', '2026-01-14 01:37:14'),
+(221, 'App\\Models\\User', 1, 'created', 'App\\Models\\ProductOrServiceRequest', 102, '[]', '{\"user_id\":132,\"staff_user_id\":1,\"product_id\":68,\"qty\":\"1\",\"payable_amount\":\"15500.00\",\"claims_amount\":\"0.00\",\"coverage_mode\":\"primary\",\"id\":102}', 'http://127.0.0.1:8000/pharmacy-workbench/create-request', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 01:37:14', '2026-01-14 01:37:14'),
+(222, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductRequest', 103, '{\"status\":1}', '{\"status\":2}', 'http://127.0.0.1:8000/pharmacy-workbench/record-billing', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 01:37:29', '2026-01-14 01:37:29'),
+(223, 'App\\Models\\User', 1, 'created', 'App\\Models\\ProductRequest', 104, '[]', '{\"product_id\":\"59\",\"dose\":\"\",\"encounter_id\":222,\"patient_id\":24,\"doctor_id\":1,\"id\":104}', 'http://127.0.0.1:8000/encounters/222/save-prescriptions', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 08:41:00', '2026-01-14 08:41:00'),
+(224, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductRequest', 103, '{\"dispensed_by\":null,\"dispense_date\":null,\"status\":2}', '{\"dispensed_by\":1,\"dispense_date\":\"2026-01-14T10:16:03.974921Z\",\"status\":3}', 'http://127.0.0.1:8000/product-dispense-patient-ajax', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 09:16:03', '2026-01-14 09:16:03'),
+(225, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductRequest', 91, '{\"dispensed_by\":null,\"dispense_date\":null,\"status\":2}', '{\"dispensed_by\":1,\"dispense_date\":\"2026-01-14T10:16:03.989254Z\",\"status\":3}', 'http://127.0.0.1:8000/product-dispense-patient-ajax', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 09:16:03', '2026-01-14 09:16:03'),
+(226, 'App\\Models\\User', 1, 'created', 'App\\Models\\ChatMessage', 133, '[]', '{\"conversation_id\":\"6\",\"user_id\":1,\"body\":\"hello\",\"type\":\"text\",\"id\":133}', 'http://127.0.0.1:8000/chat/send', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 09:30:34', '2026-01-14 09:30:34'),
+(227, 'App\\Models\\User', 1, 'created', 'App\\Models\\ProductOrServiceRequest', 103, '[]', '{\"user_id\":\"132\",\"staff_user_id\":1,\"product_id\":59,\"payable_amount\":\"550.00\",\"claims_amount\":\"0.00\",\"coverage_mode\":\"primary\",\"validation_status\":\"pending\",\"id\":103}', 'http://127.0.0.1:8000/product-bill-patient-ajax', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 12:13:30', '2026-01-14 12:13:30'),
+(228, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductRequest', 104, '{\"product_request_id\":null,\"billed_by\":null,\"billed_date\":null,\"status\":1}', '{\"product_request_id\":103,\"billed_by\":1,\"billed_date\":\"2026-01-14T13:13:30.507293Z\",\"status\":2}', 'http://127.0.0.1:8000/product-bill-patient-ajax', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 12:13:30', '2026-01-14 12:13:30'),
+(229, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Stock', 105, '{\"current_quantity\":45}', '{\"current_quantity\":44}', 'http://127.0.0.1:8000/product-bill-patient-ajax', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 12:13:30', '2026-01-14 12:13:30'),
+(230, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductOrServiceRequest', 103, '{\"discount\":\"0.00\"}', '{\"discount\":\"0\"}', 'http://127.0.0.1:8000/billing-workbench/process-payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 12:14:19', '2026-01-14 12:14:19'),
+(231, 'App\\Models\\User', 1, 'created', 'App\\Models\\payment', 78, '[]', '{\"payment_type\":\"CASH\",\"payment_method\":\"CASH\",\"bank_id\":null,\"total\":550,\"total_discount\":0,\"reference_no\":\"PAY-20260114-141349\",\"user_id\":1,\"patient_id\":24,\"id\":78}', 'http://127.0.0.1:8000/billing-workbench/process-payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 12:14:19', '2026-01-14 12:14:19'),
+(232, 'App\\Models\\User', 1, 'created', 'App\\Models\\ProductRequest', 105, '[]', '{\"patient_id\":24,\"product_id\":7,\"encounter_id\":null,\"dose\":\"87\",\"doctor_id\":1,\"status\":1,\"id\":105}', 'http://127.0.0.1:8000/pharmacy-workbench/create-request', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 12:17:08', '2026-01-14 12:17:08'),
+(233, 'App\\Models\\User', 1, 'updated', 'App\\Models\\NursingShift', 4, '{\"ended_at\":null,\"status\":\"active\"}', '{\"ended_at\":\"2026-01-14 14:59:17\",\"status\":\"completed\"}', 'http://127.0.0.1:8000/nursing-workbench/shift/end', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 13:59:17', '2026-01-14 13:59:17'),
+(234, 'App\\Models\\User', 1, 'created', 'App\\Models\\ShiftHandover', 4, '[]', '{\"shift_id\":4,\"created_by\":1,\"received_by\":null,\"ward_id\":null,\"shift_type\":\"morning\",\"shift_started_at\":\"2026-01-13 06:53:35\",\"shift_ended_at\":\"2026-01-14 14:59:17\",\"summary\":\"<p><strong>Activity Summary:<\\/strong><\\/p><ul><li><strong>Billing<\\/strong>: 6 created, 1 updated, 1 deleted<\\/li><\\/ul><p><strong>Key Changes:<\\/strong><\\/p><div class=\'key-changes-list\'><div class=\'patient-changes mb-2\'><strong class=\'text-primary\'>Unknown Patient<\\/strong><ul class=\'mb-1\'><li><small class=\'text-muted\'>[13:14]<\\/small> <span class=\\\"badge badge-warning badge-sm\\\">Updated<\\/span> <em>Billing<\\/em>: Discount: 0.00 \\u2192 0<\\/li><li><small class=\'text-muted\'>[13:13]<\\/small> <span class=\\\"badge badge-success badge-sm\\\">New<\\/span> <em>Billing<\\/em>: Product Id: 59<\\/li><li><small class=\'text-muted\'>[13:13]<\\/small> <span class=\\\"badge badge-success badge-sm\\\">New<\\/span> <em>Billing<\\/em>: Amount: 550.00<\\/li><li><small class=\'text-muted\'>[13:13]<\\/small> <span class=\\\"badge badge-success badge-sm\\\">New<\\/span> <em>Billing<\\/em>: Claims Amount: 0.00<\\/li><li><small class=\'text-muted\'>[13:13]<\\/small> <span class=\\\"badge badge-success badge-sm\\\">New<\\/span> <em>Billing<\\/em>: Coverage Mode: primary<\\/li><li><small class=\'text-muted\'>[13:13]<\\/small> <span class=\\\"badge badge-success badge-sm\\\">New<\\/span> <em>Billing<\\/em>: Validation Status: pending<\\/li><li><small class=\'text-muted\'>[02:37]<\\/small> <span class=\\\"badge badge-success badge-sm\\\">New<\\/span> <em>Billing<\\/em>: Product Id: 68<\\/li><li><small class=\'text-muted\'>[02:37]<\\/small> <span class=\\\"badge badge-success badge-sm\\\">New<\\/span> <em>Billing<\\/em>: Quantity: 1<\\/li><li><small class=\'text-muted\'>[02:37]<\\/small> <span class=\\\"badge badge-success badge-sm\\\">New<\\/span> <em>Billing<\\/em>: Amount: 15500.00<\\/li><li><small class=\'text-muted\'>[02:37]<\\/small> <span class=\\\"badge badge-success badge-sm\\\">New<\\/span> <em>Billing<\\/em>: Claims Amount: 0.00<\\/li><li><small class=\'text-muted\'>[02:37]<\\/small> <span class=\\\"badge badge-success badge-sm\\\">New<\\/span> <em>Billing<\\/em>: Coverage Mode: primary<\\/li><li><small class=\'text-muted\'>[02:33]<\\/small> <span class=\\\"badge badge-success badge-sm\\\">New<\\/span> <em>Billing<\\/em>: Product Id: 79<\\/li><li><small class=\'text-muted\'>[02:33]<\\/small> <span class=\\\"badge badge-success badge-sm\\\">New<\\/span> <em>Billing<\\/em>: Quantity: 1<\\/li><li><small class=\'text-muted\'>[02:33]<\\/small> <span class=\\\"badge badge-success badge-sm\\\">New<\\/span> <em>Billing<\\/em>: Amount: 4000.00<\\/li><li><small class=\'text-muted\'>[02:33]<\\/small> <span class=\\\"badge badge-success badge-sm\\\">New<\\/span> <em>Billing<\\/em>: Claims Amount: 0.00<\\/li><li><small class=\'text-muted\'>[02:33]<\\/small> <span class=\\\"badge badge-success badge-sm\\\">New<\\/span> <em>Billing<\\/em>: Coverage Mode: primary<\\/li><li><small class=\'text-muted\'>[23:46]<\\/small> <span class=\\\"badge badge-danger badge-sm\\\">Deleted<\\/span> <em>Billing<\\/em>: Service Id: 57 (removed)<\\/li><li><small class=\'text-muted\'>[23:46]<\\/small> <span class=\\\"badge badge-danger badge-sm\\\">Deleted<\\/span> <em>Billing<\\/em>: Quantity: 1 (removed)<\\/li><li><small class=\'text-muted\'>[23:46]<\\/small> <span class=\\\"badge badge-danger badge-sm\\\">Deleted<\\/span> <em>Billing<\\/em>: Discount: 0.00 (removed)<\\/li><li><small class=\'text-muted\'>[23:46]<\\/small> <span class=\\\"badge badge-danger badge-sm\\\">Deleted<\\/span> <em>Billing<\\/em>: Amount: 5000.00 (removed)<\\/li><\\/ul><\\/div><\\/div>\",\"critical_notes\":null,\"concluding_notes\":null,\"pending_tasks\":\"[]\",\"patient_highlights\":\"[]\",\"action_summary\":\"{\\\"App\\\\\\\\Models\\\\\\\\ProductOrServiceRequest\\\":{\\\"label\\\":\\\"Billing\\\",\\\"icon\\\":\\\"mdi-receipt\\\",\\\"color\\\":\\\"secondary\\\",\\\"count\\\":8,\\\"events\\\":{\\\"created\\\":6,\\\"updated\\\":1,\\\"deleted\\\":1},\\\"patients\\\":[]}}\",\"audit_details\":\"[{\\\"category\\\":\\\"Billing\\\",\\\"icon\\\":\\\"mdi-receipt\\\",\\\"color\\\":\\\"secondary\\\",\\\"event\\\":\\\"updated\\\",\\\"patient_id\\\":null,\\\"patient_name\\\":null,\\\"patient_no\\\":null,\\\"changes\\\":[{\\\"field\\\":\\\"discount\\\",\\\"label\\\":\\\"Discount\\\",\\\"type\\\":\\\"changed\\\",\\\"old\\\":\\\"0.00\\\",\\\"new\\\":\\\"0\\\"}],\\\"time\\\":\\\"13:14\\\",\\\"time_full\\\":\\\"Jan 14, 2026 1:14 PM\\\",\\\"time_ago\\\":\\\"1 hour ago\\\"},{\\\"category\\\":\\\"Billing\\\",\\\"icon\\\":\\\"mdi-receipt\\\",\\\"color\\\":\\\"secondary\\\",\\\"event\\\":\\\"created\\\",\\\"patient_id\\\":null,\\\"patient_name\\\":null,\\\"patient_no\\\":null,\\\"changes\\\":[{\\\"field\\\":\\\"product_id\\\",\\\"label\\\":\\\"Product Id\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"59\\\"},{\\\"field\\\":\\\"payable_amount\\\",\\\"label\\\":\\\"Amount\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"550.00\\\"},{\\\"field\\\":\\\"claims_amount\\\",\\\"label\\\":\\\"Claims Amount\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"0.00\\\"},{\\\"field\\\":\\\"coverage_mode\\\",\\\"label\\\":\\\"Coverage Mode\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"primary\\\"},{\\\"field\\\":\\\"validation_status\\\",\\\"label\\\":\\\"Validation Status\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"pending\\\"}],\\\"time\\\":\\\"13:13\\\",\\\"time_full\\\":\\\"Jan 14, 2026 1:13 PM\\\",\\\"time_ago\\\":\\\"1 hour ago\\\"},{\\\"category\\\":\\\"Billing\\\",\\\"icon\\\":\\\"mdi-receipt\\\",\\\"color\\\":\\\"secondary\\\",\\\"event\\\":\\\"created\\\",\\\"patient_id\\\":null,\\\"patient_name\\\":null,\\\"patient_no\\\":null,\\\"changes\\\":[{\\\"field\\\":\\\"product_id\\\",\\\"label\\\":\\\"Product Id\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"68\\\"},{\\\"field\\\":\\\"qty\\\",\\\"label\\\":\\\"Quantity\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"1\\\"},{\\\"field\\\":\\\"payable_amount\\\",\\\"label\\\":\\\"Amount\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"15500.00\\\"},{\\\"field\\\":\\\"claims_amount\\\",\\\"label\\\":\\\"Claims Amount\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"0.00\\\"},{\\\"field\\\":\\\"coverage_mode\\\",\\\"label\\\":\\\"Coverage Mode\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"primary\\\"}],\\\"time\\\":\\\"02:37\\\",\\\"time_full\\\":\\\"Jan 14, 2026 2:37 AM\\\",\\\"time_ago\\\":\\\"12 hours ago\\\"},{\\\"category\\\":\\\"Billing\\\",\\\"icon\\\":\\\"mdi-receipt\\\",\\\"color\\\":\\\"secondary\\\",\\\"event\\\":\\\"created\\\",\\\"patient_id\\\":null,\\\"patient_name\\\":null,\\\"patient_no\\\":null,\\\"changes\\\":[{\\\"field\\\":\\\"product_id\\\",\\\"label\\\":\\\"Product Id\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"79\\\"},{\\\"field\\\":\\\"qty\\\",\\\"label\\\":\\\"Quantity\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"1\\\"},{\\\"field\\\":\\\"payable_amount\\\",\\\"label\\\":\\\"Amount\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"4000.00\\\"},{\\\"field\\\":\\\"claims_amount\\\",\\\"label\\\":\\\"Claims Amount\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"0.00\\\"},{\\\"field\\\":\\\"coverage_mode\\\",\\\"label\\\":\\\"Coverage Mode\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"primary\\\"}],\\\"time\\\":\\\"02:33\\\",\\\"time_full\\\":\\\"Jan 14, 2026 2:33 AM\\\",\\\"time_ago\\\":\\\"12 hours ago\\\"},{\\\"category\\\":\\\"Billing\\\",\\\"icon\\\":\\\"mdi-receipt\\\",\\\"color\\\":\\\"secondary\\\",\\\"event\\\":\\\"deleted\\\",\\\"patient_id\\\":null,\\\"patient_name\\\":null,\\\"patient_no\\\":null,\\\"changes\\\":[{\\\"field\\\":\\\"service_id\\\",\\\"label\\\":\\\"Service Id\\\",\\\"type\\\":\\\"deleted\\\",\\\"value\\\":\\\"57\\\"},{\\\"field\\\":\\\"qty\\\",\\\"label\\\":\\\"Quantity\\\",\\\"type\\\":\\\"deleted\\\",\\\"value\\\":\\\"1\\\"},{\\\"field\\\":\\\"discount\\\",\\\"label\\\":\\\"Discount\\\",\\\"type\\\":\\\"deleted\\\",\\\"value\\\":\\\"0.00\\\"},{\\\"field\\\":\\\"payable_amount\\\",\\\"label\\\":\\\"Amount\\\",\\\"type\\\":\\\"deleted\\\",\\\"value\\\":\\\"5000.00\\\"},{\\\"field\\\":\\\"claims_amount\\\",\\\"label\\\":\\\"Claims Amount\\\",\\\"type\\\":\\\"deleted\\\",\\\"value\\\":\\\"0.00\\\"},{\\\"field\\\":\\\"coverage_mode\\\",\\\"label\\\":\\\"Coverage Mode\\\",\\\"type\\\":\\\"deleted\\\",\\\"value\\\":\\\"primary\\\"},{\\\"field\\\":\\\"validation_status\\\",\\\"label\\\":\\\"Validation Status\\\",\\\"type\\\":\\\"deleted\\\",\\\"value\\\":\\\"pending\\\"}],\\\"time\\\":\\\"23:46\\\",\\\"time_full\\\":\\\"Jan 13, 2026 11:46 PM\\\",\\\"time_ago\\\":\\\"15 hours ago\\\"},{\\\"category\\\":\\\"Billing\\\",\\\"icon\\\":\\\"mdi-receipt\\\",\\\"color\\\":\\\"secondary\\\",\\\"event\\\":\\\"created\\\",\\\"patient_id\\\":null,\\\"patient_name\\\":null,\\\"patient_no\\\":null,\\\"changes\\\":[{\\\"field\\\":\\\"service_id\\\",\\\"label\\\":\\\"Service Id\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"57\\\"},{\\\"field\\\":\\\"qty\\\",\\\"label\\\":\\\"Quantity\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"1\\\"},{\\\"field\\\":\\\"payable_amount\\\",\\\"label\\\":\\\"Amount\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"5000\\\"},{\\\"field\\\":\\\"claims_amount\\\",\\\"label\\\":\\\"Claims Amount\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"0\\\"},{\\\"field\\\":\\\"coverage_mode\\\",\\\"label\\\":\\\"Coverage Mode\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"primary\\\"},{\\\"field\\\":\\\"validation_status\\\",\\\"label\\\":\\\"Validation Status\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"pending\\\"}],\\\"time\\\":\\\"22:23\\\",\\\"time_full\\\":\\\"Jan 13, 2026 10:23 PM\\\",\\\"time_ago\\\":\\\"16 hours ago\\\"},{\\\"category\\\":\\\"Billing\\\",\\\"icon\\\":\\\"mdi-receipt\\\",\\\"color\\\":\\\"secondary\\\",\\\"event\\\":\\\"created\\\",\\\"patient_id\\\":null,\\\"patient_name\\\":null,\\\"patient_no\\\":null,\\\"changes\\\":[{\\\"field\\\":\\\"service_id\\\",\\\"label\\\":\\\"Service Id\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"64\\\"},{\\\"field\\\":\\\"qty\\\",\\\"label\\\":\\\"Quantity\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"1\\\"},{\\\"field\\\":\\\"payable_amount\\\",\\\"label\\\":\\\"Amount\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"4000\\\"},{\\\"field\\\":\\\"claims_amount\\\",\\\"label\\\":\\\"Claims Amount\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"6777\\\"},{\\\"field\\\":\\\"coverage_mode\\\",\\\"label\\\":\\\"Coverage Mode\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"primary\\\"},{\\\"field\\\":\\\"validation_status\\\",\\\"label\\\":\\\"Validation Status\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"pending\\\"}],\\\"time\\\":\\\"22:23\\\",\\\"time_full\\\":\\\"Jan 13, 2026 10:23 PM\\\",\\\"time_ago\\\":\\\"16 hours ago\\\"},{\\\"category\\\":\\\"Billing\\\",\\\"icon\\\":\\\"mdi-receipt\\\",\\\"color\\\":\\\"secondary\\\",\\\"event\\\":\\\"created\\\",\\\"patient_id\\\":null,\\\"patient_name\\\":null,\\\"patient_no\\\":null,\\\"changes\\\":[{\\\"field\\\":\\\"service_id\\\",\\\"label\\\":\\\"Service Id\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"62\\\"},{\\\"field\\\":\\\"payable_amount\\\",\\\"label\\\":\\\"Amount\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"4000.00\\\"},{\\\"field\\\":\\\"claims_amount\\\",\\\"label\\\":\\\"Claims Amount\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"0.00\\\"},{\\\"field\\\":\\\"coverage_mode\\\",\\\"label\\\":\\\"Coverage Mode\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"primary\\\"},{\\\"field\\\":\\\"validation_status\\\",\\\"label\\\":\\\"Validation Status\\\",\\\"type\\\":\\\"created\\\",\\\"value\\\":\\\"pending\\\"}],\\\"time\\\":\\\"18:28\\\",\\\"time_full\\\":\\\"Jan 13, 2026 6:28 PM\\\",\\\"time_ago\\\":\\\"20 hours ago\\\"}]\",\"id\":4}', 'http://127.0.0.1:8000/nursing-workbench/shift/end', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 13:59:17', '2026-01-14 13:59:17'),
+(235, 'App\\Models\\User', 1, 'updated', 'App\\Models\\NursingShift', 4, '{\"handover_created\":0}', '{\"handover_created\":true}', 'http://127.0.0.1:8000/nursing-workbench/shift/end', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 13:59:17', '2026-01-14 13:59:17'),
+(236, 'App\\Models\\User', 1, 'created', 'App\\Models\\NursingShift', 5, '[]', '{\"user_id\":1,\"ward_id\":null,\"shift_type\":\"afternoon\",\"started_at\":\"2026-01-14 14:59:29\",\"scheduled_end_at\":\"2026-01-15 02:59:29\",\"status\":\"active\",\"id\":5}', 'http://127.0.0.1:8000/nursing-workbench/shift/start', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 13:59:29', '2026-01-14 13:59:29'),
+(237, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Stock', 104, '{\"current_quantity\":104}', '{\"current_quantity\":103}', 'http://127.0.0.1:8000/nursing-workbench/administer-injection', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:00:32', '2026-01-14 14:00:32'),
+(238, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Stock', 104, '{\"quantity_sale\":4}', '{\"quantity_sale\":5}', 'http://127.0.0.1:8000/nursing-workbench/administer-injection', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:00:32', '2026-01-14 14:00:32'),
+(239, 'App\\Models\\User', 1, 'created', 'App\\Models\\ProductOrServiceRequest', 104, '[]', '{\"user_id\":69,\"staff_user_id\":1,\"product_id\":58,\"dispensed_from_store_id\":\"2\",\"qty\":1,\"payable_amount\":\"1000.00\",\"claims_amount\":\"0.00\",\"coverage_mode\":\"primary\",\"validation_status\":\"pending\",\"id\":104}', 'http://127.0.0.1:8000/nursing-workbench/administer-injection', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:00:32', '2026-01-14 14:00:32'),
+(240, 'App\\Models\\User', 1, 'created', 'App\\Models\\InjectionAdministration', 3, '[]', '{\"patient_id\":1,\"product_id\":58,\"product_or_service_request_id\":104,\"dose\":\"500g\",\"route\":\"IM\",\"site\":\"Left Arm\",\"administered_at\":\"2026-01-14 14:59:00\",\"administered_by\":1,\"dispensed_from_store_id\":\"2\",\"id\":3}', 'http://127.0.0.1:8000/nursing-workbench/administer-injection', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:00:32', '2026-01-14 14:00:32'),
+(241, 'App\\Models\\User', 1, 'updated', 'App\\Models\\StoreStock', 2, '{\"current_quantity\":10}', '{\"current_quantity\":9}', 'http://127.0.0.1:8000/nursing-workbench/administer-injection', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:17:56', '2026-01-14 14:17:56'),
+(242, 'App\\Models\\User', 1, 'updated', 'App\\Models\\StoreStock', 2, '{\"quantity_sale\":0}', '{\"quantity_sale\":1}', 'http://127.0.0.1:8000/nursing-workbench/administer-injection', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:17:56', '2026-01-14 14:17:56'),
+(243, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Stock', 3, '{\"current_quantity\":118}', '{\"current_quantity\":117}', 'http://127.0.0.1:8000/nursing-workbench/administer-injection', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:17:56', '2026-01-14 14:17:56'),
+(244, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Stock', 3, '{\"quantity_sale\":4}', '{\"quantity_sale\":5}', 'http://127.0.0.1:8000/nursing-workbench/administer-injection', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:17:56', '2026-01-14 14:17:56'),
+(245, 'App\\Models\\User', 1, 'created', 'App\\Models\\ProductOrServiceRequest', 105, '[]', '{\"user_id\":69,\"staff_user_id\":1,\"product_id\":2,\"dispensed_from_store_id\":\"2\",\"qty\":1,\"payable_amount\":\"1500.00\",\"claims_amount\":\"0.00\",\"coverage_mode\":\"primary\",\"validation_status\":\"pending\",\"id\":105}', 'http://127.0.0.1:8000/nursing-workbench/administer-injection', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:17:56', '2026-01-14 14:17:56'),
+(246, 'App\\Models\\User', 1, 'created', 'App\\Models\\InjectionAdministration', 4, '[]', '{\"patient_id\":1,\"product_id\":2,\"product_or_service_request_id\":105,\"dose\":\"7677\",\"route\":\"IM\",\"site\":\"Right Arm\",\"administered_at\":\"2026-01-14 15:15:00\",\"administered_by\":1,\"dispensed_from_store_id\":\"2\",\"id\":4}', 'http://127.0.0.1:8000/nursing-workbench/administer-injection', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:17:56', '2026-01-14 14:17:56'),
+(247, 'App\\Models\\User', 1, 'created', 'App\\Models\\PatientImmunizationSchedule', 23, '[]', '{\"patient_id\":\"1\",\"schedule_item_id\":1,\"due_date\":\"2022-07-16 00:00:00\",\"status\":\"overdue\",\"id\":23}', 'http://127.0.0.1:8000/nursing-workbench/patient/1/generate-schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:18:14', '2026-01-14 14:18:14'),
+(248, 'App\\Models\\User', 1, 'created', 'App\\Models\\PatientImmunizationSchedule', 24, '[]', '{\"patient_id\":\"1\",\"schedule_item_id\":2,\"due_date\":\"2022-07-16 00:00:00\",\"status\":\"overdue\",\"id\":24}', 'http://127.0.0.1:8000/nursing-workbench/patient/1/generate-schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(249, 'App\\Models\\User', 1, 'created', 'App\\Models\\PatientImmunizationSchedule', 25, '[]', '{\"patient_id\":\"1\",\"schedule_item_id\":3,\"due_date\":\"2022-07-16 00:00:00\",\"status\":\"overdue\",\"id\":25}', 'http://127.0.0.1:8000/nursing-workbench/patient/1/generate-schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(250, 'App\\Models\\User', 1, 'created', 'App\\Models\\PatientImmunizationSchedule', 26, '[]', '{\"patient_id\":\"1\",\"schedule_item_id\":4,\"due_date\":\"2022-08-27 00:00:00\",\"status\":\"overdue\",\"id\":26}', 'http://127.0.0.1:8000/nursing-workbench/patient/1/generate-schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(251, 'App\\Models\\User', 1, 'created', 'App\\Models\\PatientImmunizationSchedule', 27, '[]', '{\"patient_id\":\"1\",\"schedule_item_id\":5,\"due_date\":\"2022-08-27 00:00:00\",\"status\":\"overdue\",\"id\":27}', 'http://127.0.0.1:8000/nursing-workbench/patient/1/generate-schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(252, 'App\\Models\\User', 1, 'created', 'App\\Models\\PatientImmunizationSchedule', 28, '[]', '{\"patient_id\":\"1\",\"schedule_item_id\":6,\"due_date\":\"2022-08-27 00:00:00\",\"status\":\"overdue\",\"id\":28}', 'http://127.0.0.1:8000/nursing-workbench/patient/1/generate-schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(253, 'App\\Models\\User', 1, 'created', 'App\\Models\\PatientImmunizationSchedule', 29, '[]', '{\"patient_id\":\"1\",\"schedule_item_id\":7,\"due_date\":\"2022-08-27 00:00:00\",\"status\":\"overdue\",\"id\":29}', 'http://127.0.0.1:8000/nursing-workbench/patient/1/generate-schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(254, 'App\\Models\\User', 1, 'created', 'App\\Models\\PatientImmunizationSchedule', 30, '[]', '{\"patient_id\":\"1\",\"schedule_item_id\":8,\"due_date\":\"2022-09-24 00:00:00\",\"status\":\"overdue\",\"id\":30}', 'http://127.0.0.1:8000/nursing-workbench/patient/1/generate-schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(255, 'App\\Models\\User', 1, 'created', 'App\\Models\\PatientImmunizationSchedule', 31, '[]', '{\"patient_id\":\"1\",\"schedule_item_id\":9,\"due_date\":\"2022-09-24 00:00:00\",\"status\":\"overdue\",\"id\":31}', 'http://127.0.0.1:8000/nursing-workbench/patient/1/generate-schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(256, 'App\\Models\\User', 1, 'created', 'App\\Models\\PatientImmunizationSchedule', 32, '[]', '{\"patient_id\":\"1\",\"schedule_item_id\":10,\"due_date\":\"2022-09-24 00:00:00\",\"status\":\"overdue\",\"id\":32}', 'http://127.0.0.1:8000/nursing-workbench/patient/1/generate-schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(257, 'App\\Models\\User', 1, 'created', 'App\\Models\\PatientImmunizationSchedule', 33, '[]', '{\"patient_id\":\"1\",\"schedule_item_id\":11,\"due_date\":\"2022-09-24 00:00:00\",\"status\":\"overdue\",\"id\":33}', 'http://127.0.0.1:8000/nursing-workbench/patient/1/generate-schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(258, 'App\\Models\\User', 1, 'created', 'App\\Models\\PatientImmunizationSchedule', 34, '[]', '{\"patient_id\":\"1\",\"schedule_item_id\":12,\"due_date\":\"2022-10-22 00:00:00\",\"status\":\"overdue\",\"id\":34}', 'http://127.0.0.1:8000/nursing-workbench/patient/1/generate-schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(259, 'App\\Models\\User', 1, 'created', 'App\\Models\\PatientImmunizationSchedule', 35, '[]', '{\"patient_id\":\"1\",\"schedule_item_id\":13,\"due_date\":\"2022-10-22 00:00:00\",\"status\":\"overdue\",\"id\":35}', 'http://127.0.0.1:8000/nursing-workbench/patient/1/generate-schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(260, 'App\\Models\\User', 1, 'created', 'App\\Models\\PatientImmunizationSchedule', 36, '[]', '{\"patient_id\":\"1\",\"schedule_item_id\":14,\"due_date\":\"2022-10-22 00:00:00\",\"status\":\"overdue\",\"id\":36}', 'http://127.0.0.1:8000/nursing-workbench/patient/1/generate-schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(261, 'App\\Models\\User', 1, 'created', 'App\\Models\\PatientImmunizationSchedule', 37, '[]', '{\"patient_id\":\"1\",\"schedule_item_id\":15,\"due_date\":\"2022-10-22 00:00:00\",\"status\":\"overdue\",\"id\":37}', 'http://127.0.0.1:8000/nursing-workbench/patient/1/generate-schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(262, 'App\\Models\\User', 1, 'created', 'App\\Models\\PatientImmunizationSchedule', 38, '[]', '{\"patient_id\":\"1\",\"schedule_item_id\":16,\"due_date\":\"2022-10-22 00:00:00\",\"status\":\"overdue\",\"id\":38}', 'http://127.0.0.1:8000/nursing-workbench/patient/1/generate-schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(263, 'App\\Models\\User', 1, 'created', 'App\\Models\\PatientImmunizationSchedule', 39, '[]', '{\"patient_id\":\"1\",\"schedule_item_id\":17,\"due_date\":\"2023-01-12 00:00:00\",\"status\":\"overdue\",\"id\":39}', 'http://127.0.0.1:8000/nursing-workbench/patient/1/generate-schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(264, 'App\\Models\\User', 1, 'created', 'App\\Models\\PatientImmunizationSchedule', 40, '[]', '{\"patient_id\":\"1\",\"schedule_item_id\":18,\"due_date\":\"2023-04-12 00:00:00\",\"status\":\"overdue\",\"id\":40}', 'http://127.0.0.1:8000/nursing-workbench/patient/1/generate-schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(265, 'App\\Models\\User', 1, 'created', 'App\\Models\\PatientImmunizationSchedule', 41, '[]', '{\"patient_id\":\"1\",\"schedule_item_id\":19,\"due_date\":\"2023-04-12 00:00:00\",\"status\":\"overdue\",\"id\":41}', 'http://127.0.0.1:8000/nursing-workbench/patient/1/generate-schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(266, 'App\\Models\\User', 1, 'created', 'App\\Models\\PatientImmunizationSchedule', 42, '[]', '{\"patient_id\":\"1\",\"schedule_item_id\":20,\"due_date\":\"2023-04-12 00:00:00\",\"status\":\"overdue\",\"id\":42}', 'http://127.0.0.1:8000/nursing-workbench/patient/1/generate-schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(267, 'App\\Models\\User', 1, 'created', 'App\\Models\\PatientImmunizationSchedule', 43, '[]', '{\"patient_id\":\"1\",\"schedule_item_id\":21,\"due_date\":\"2023-04-12 00:00:00\",\"status\":\"overdue\",\"id\":43}', 'http://127.0.0.1:8000/nursing-workbench/patient/1/generate-schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(268, 'App\\Models\\User', 1, 'created', 'App\\Models\\PatientImmunizationSchedule', 44, '[]', '{\"patient_id\":\"1\",\"schedule_item_id\":22,\"due_date\":\"2023-10-15 00:00:00\",\"status\":\"overdue\",\"id\":44}', 'http://127.0.0.1:8000/nursing-workbench/patient/1/generate-schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(272, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Stock', 105, '{\"current_quantity\":44}', '{\"current_quantity\":43}', 'http://127.0.0.1:8000/pharmacy-workbench/dispense', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:22:31', '2026-01-14 14:22:31'),
+(273, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Stock', 105, '{\"quantity_sale\":0}', '{\"quantity_sale\":1}', 'http://127.0.0.1:8000/pharmacy-workbench/dispense', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:22:31', '2026-01-14 14:22:31'),
+(274, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductRequest', 104, '{\"dispensed_by\":null,\"dispense_date\":null,\"dispensed_from_store_id\":null,\"status\":2}', '{\"dispensed_by\":1,\"dispense_date\":\"2026-01-14T15:22:31.554117Z\",\"dispensed_from_store_id\":\"2\",\"status\":3}', 'http://127.0.0.1:8000/pharmacy-workbench/dispense', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:22:31', '2026-01-14 14:22:31'),
+(275, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductOrServiceRequest', 103, '{\"dispensed_from_store_id\":null}', '{\"dispensed_from_store_id\":\"2\"}', 'http://127.0.0.1:8000/pharmacy-workbench/dispense', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:22:31', '2026-01-14 14:22:31'),
+(276, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Stock', 207, '{\"current_quantity\":9920}', '{\"current_quantity\":9919}', 'http://127.0.0.1:8000/pharmacy-workbench/dispense', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:22:31', '2026-01-14 14:22:31'),
+(277, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Stock', 207, '{\"quantity_sale\":79}', '{\"quantity_sale\":80}', 'http://127.0.0.1:8000/pharmacy-workbench/dispense', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:22:31', '2026-01-14 14:22:31'),
+(278, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductRequest', 98, '{\"dispensed_by\":null,\"dispense_date\":null,\"dispensed_from_store_id\":null,\"status\":2}', '{\"dispensed_by\":1,\"dispense_date\":\"2026-01-14T15:22:31.582042Z\",\"dispensed_from_store_id\":\"2\",\"status\":3}', 'http://127.0.0.1:8000/pharmacy-workbench/dispense', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:22:31', '2026-01-14 14:22:31'),
+(279, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductOrServiceRequest', 84, '{\"dispensed_from_store_id\":null}', '{\"dispensed_from_store_id\":\"2\"}', 'http://127.0.0.1:8000/pharmacy-workbench/dispense', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:22:31', '2026-01-14 14:22:31'),
+(280, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Stock', 204, '{\"current_quantity\":17}', '{\"current_quantity\":16}', 'http://127.0.0.1:8000/pharmacy-workbench/dispense', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:22:31', '2026-01-14 14:22:31'),
+(281, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Stock', 204, '{\"quantity_sale\":2}', '{\"quantity_sale\":3}', 'http://127.0.0.1:8000/pharmacy-workbench/dispense', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:22:31', '2026-01-14 14:22:31'),
+(282, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductRequest', 96, '{\"dispensed_by\":null,\"dispense_date\":null,\"dispensed_from_store_id\":null,\"status\":2}', '{\"dispensed_by\":1,\"dispense_date\":\"2026-01-14T15:22:31.599691Z\",\"dispensed_from_store_id\":\"2\",\"status\":3}', 'http://127.0.0.1:8000/pharmacy-workbench/dispense', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:22:31', '2026-01-14 14:22:31'),
+(283, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductOrServiceRequest', 82, '{\"dispensed_from_store_id\":null}', '{\"dispensed_from_store_id\":\"2\"}', 'http://127.0.0.1:8000/pharmacy-workbench/dispense', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:22:31', '2026-01-14 14:22:31'),
+(284, 'App\\Models\\User', 1, 'created', 'App\\Models\\ProductOrServiceRequest', 109, '[]', '{\"user_id\":69,\"staff_user_id\":1,\"product_id\":2,\"qty\":1,\"payable_amount\":\"1500.00\",\"claims_amount\":\"0.00\",\"coverage_mode\":\"primary\",\"validation_status\":\"pending\",\"id\":109}', 'http://127.0.0.1:8000/nursing-workbench/administer-from-schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:29:30', '2026-01-14 14:29:30'),
+(285, 'App\\Models\\User', 1, 'created', 'App\\Models\\ImmunizationRecord', 2, '[]', '{\"patient_id\":1,\"product_id\":2,\"product_or_service_request_id\":109,\"vaccine_name\":\"BCG\",\"dose_number\":1,\"dose\":\"BCG\",\"route\":\"SC\",\"site\":\"Left Deltoid\",\"administered_at\":\"2026-01-14 16:18:00\",\"administered_by\":1,\"batch_number\":null,\"expiry_date\":null,\"manufacturer\":null,\"notes\":null,\"dispensed_from_store_id\":\"2\",\"id\":2}', 'http://127.0.0.1:8000/nursing-workbench/administer-from-schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:29:30', '2026-01-14 14:29:30'),
+(286, 'App\\Models\\User', 1, 'updated', 'App\\Models\\PatientImmunizationSchedule', 23, '{\"administered_date\":null,\"status\":\"overdue\",\"immunization_record_id\":null,\"updated_by\":null}', '{\"administered_date\":\"2026-01-14 00:00:00\",\"status\":\"administered\",\"immunization_record_id\":2,\"updated_by\":1}', 'http://127.0.0.1:8000/nursing-workbench/administer-from-schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:29:30', '2026-01-14 14:29:30'),
+(287, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Stock', 187, '{\"current_quantity\":8}', '{\"current_quantity\":7}', 'http://127.0.0.1:8000/pharmacy-workbench/dispense', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:50:39', '2026-01-14 14:50:39'),
+(288, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Stock', 187, '{\"quantity_sale\":0}', '{\"quantity_sale\":1}', 'http://127.0.0.1:8000/pharmacy-workbench/dispense', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:50:39', '2026-01-14 14:50:39'),
+(289, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductRequest', 94, '{\"dispensed_by\":null,\"dispense_date\":null,\"dispensed_from_store_id\":null,\"status\":2}', '{\"dispensed_by\":1,\"dispense_date\":\"2026-01-14T15:50:39.235666Z\",\"dispensed_from_store_id\":\"2\",\"status\":3}', 'http://127.0.0.1:8000/pharmacy-workbench/dispense', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:50:39', '2026-01-14 14:50:39'),
+(290, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductOrServiceRequest', 80, '{\"dispensed_from_store_id\":null}', '{\"dispensed_from_store_id\":\"2\"}', 'http://127.0.0.1:8000/pharmacy-workbench/dispense', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 14:50:39', '2026-01-14 14:50:39'),
+(291, 'App\\Models\\User', 1, 'created', 'App\\Models\\ProductRequest', 106, '[]', '{\"patient_id\":24,\"product_id\":2,\"encounter_id\":null,\"qty\":\"1\",\"dose\":\"64\",\"doctor_id\":1,\"status\":1,\"id\":106}', 'http://127.0.0.1:8000/pharmacy-workbench/create-request', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 16:09:24', '2026-01-14 16:09:24'),
+(292, 'App\\Models\\User', 1, 'created', 'App\\Models\\ProductOrServiceRequest', 110, '[]', '{\"user_id\":\"132\",\"staff_user_id\":1,\"product_id\":2,\"payable_amount\":\"1500.00\",\"claims_amount\":\"0.00\",\"coverage_mode\":\"primary\",\"validation_status\":\"pending\",\"id\":110}', 'http://127.0.0.1:8000/product-bill-patient-ajax', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 16:09:56', '2026-01-14 16:09:56'),
+(293, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductRequest', 106, '{\"product_request_id\":null,\"billed_by\":null,\"billed_date\":null,\"status\":1}', '{\"product_request_id\":110,\"billed_by\":1,\"billed_date\":\"2026-01-14T17:09:56.421547Z\",\"status\":2}', 'http://127.0.0.1:8000/product-bill-patient-ajax', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 16:09:56', '2026-01-14 16:09:56'),
+(294, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Stock', 3, '{\"current_quantity\":117}', '{\"current_quantity\":116}', 'http://127.0.0.1:8000/product-bill-patient-ajax', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 16:09:56', '2026-01-14 16:09:56'),
+(295, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductOrServiceRequest', 110, '{\"discount\":\"0.00\"}', '{\"discount\":\"0\"}', 'http://127.0.0.1:8000/billing-workbench/process-payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 16:10:59', '2026-01-14 16:10:59'),
+(296, 'App\\Models\\User', 1, 'created', 'App\\Models\\payment', 79, '[]', '{\"payment_type\":\"CASH\",\"payment_method\":\"CASH\",\"bank_id\":null,\"total\":1500,\"total_discount\":0,\"reference_no\":\"PAY-20260114-181031\",\"user_id\":1,\"patient_id\":24,\"id\":79}', 'http://127.0.0.1:8000/billing-workbench/process-payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 16:10:59', '2026-01-14 16:10:59');
+INSERT INTO `audits` (`id`, `user_type`, `user_id`, `event`, `auditable_type`, `auditable_id`, `old_values`, `new_values`, `url`, `ip_address`, `user_agent`, `tags`, `created_at`, `updated_at`) VALUES
+(297, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductOrServiceRequest', 102, '{\"discount\":\"0.00\"}', '{\"discount\":\"0\"}', 'http://127.0.0.1:8000/billing-workbench/process-payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 17:11:43', '2026-01-14 17:11:43'),
+(298, 'App\\Models\\User', 1, 'created', 'App\\Models\\payment', 80, '[]', '{\"payment_type\":\"CASH\",\"payment_method\":\"CASH\",\"bank_id\":null,\"total\":15500,\"total_discount\":0,\"reference_no\":\"PAY-20260114-191058\",\"user_id\":1,\"patient_id\":24,\"id\":80}', 'http://127.0.0.1:8000/billing-workbench/process-payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 17:11:43', '2026-01-14 17:11:43'),
+(299, 'App\\Models\\User', 1, 'created', 'App\\Models\\MedicationSchedule', 114, '[]', '{\"patient_id\":\"1\",\"product_or_service_request_id\":\"109\",\"scheduled_time\":\"2026-01-14 22:43\",\"dose\":\"600mg\",\"route\":\"Oral\",\"created_by\":1,\"id\":114}', 'http://127.0.0.1:8000/patients/nurse-chart/medication/schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 20:43:36', '2026-01-14 20:43:36'),
+(300, 'App\\Models\\User', 1, 'created', 'App\\Models\\MedicationSchedule', 115, '[]', '{\"patient_id\":\"1\",\"product_or_service_request_id\":\"109\",\"scheduled_time\":\"2026-01-14 22:43\",\"dose\":\"600mg\",\"route\":\"Oral\",\"created_by\":1,\"id\":115}', 'http://127.0.0.1:8000/patients/nurse-chart/medication/schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 20:45:05', '2026-01-14 20:45:05'),
+(301, 'App\\Models\\User', 1, 'deleted', 'App\\Models\\MedicationSchedule', 114, '{\"id\":114,\"patient_id\":1,\"product_or_service_request_id\":109,\"scheduled_time\":\"2026-01-14 22:43:00\",\"dose\":\"600mg\",\"route\":\"Oral\",\"created_by\":1,\"deleted_at\":null}', '[]', 'http://127.0.0.1:8000/patients/nurse-chart/medication/remove-schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 20:45:19', '2026-01-14 20:45:19'),
+(302, 'App\\Models\\User', 1, 'created', 'App\\Models\\MedicationHistory', 12, '[]', '{\"patient_id\":\"1\",\"product_or_service_request_id\":\"109\",\"action\":\"discontinue\",\"reason\":\"test\",\"user_id\":1,\"id\":12}', 'http://127.0.0.1:8000/patients/nurse-chart/medication/discontinue', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 20:45:36', '2026-01-14 20:45:36'),
+(303, 'App\\Models\\User', 1, 'created', 'App\\Models\\MedicationHistory', 13, '[]', '{\"patient_id\":\"1\",\"product_or_service_request_id\":\"109\",\"action\":\"resume\",\"reason\":\"test\",\"user_id\":1,\"id\":13}', 'http://127.0.0.1:8000/patients/nurse-chart/medication/resume', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 20:46:03', '2026-01-14 20:46:03'),
+(304, 'App\\Models\\User', 1, 'created', 'App\\Models\\MedicationSchedule', 116, '[]', '{\"patient_id\":\"1\",\"product_or_service_request_id\":\"109\",\"scheduled_time\":\"2026-01-14 22:43\",\"dose\":\"600mg\",\"route\":\"Oral\",\"created_by\":1,\"id\":116}', 'http://127.0.0.1:8000/patients/nurse-chart/medication/schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 20:48:15', '2026-01-14 20:48:15'),
+(305, 'App\\Models\\User', 1, 'created', 'App\\Models\\MedicationSchedule', 117, '[]', '{\"patient_id\":\"1\",\"product_or_service_request_id\":\"109\",\"scheduled_time\":\"2026-01-15 22:43\",\"dose\":\"600mg\",\"route\":\"Oral\",\"created_by\":1,\"id\":117}', 'http://127.0.0.1:8000/patients/nurse-chart/medication/schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 20:48:15', '2026-01-14 20:48:15'),
+(306, 'App\\Models\\User', 1, 'created', 'App\\Models\\MedicationSchedule', 118, '[]', '{\"patient_id\":\"1\",\"product_or_service_request_id\":\"109\",\"scheduled_time\":\"2026-01-16 22:43\",\"dose\":\"600mg\",\"route\":\"Oral\",\"created_by\":1,\"id\":118}', 'http://127.0.0.1:8000/patients/nurse-chart/medication/schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 20:48:15', '2026-01-14 20:48:15'),
+(307, 'App\\Models\\User', 1, 'created', 'App\\Models\\MedicationSchedule', 119, '[]', '{\"patient_id\":\"1\",\"product_or_service_request_id\":\"109\",\"scheduled_time\":\"2026-01-17 22:43\",\"dose\":\"600mg\",\"route\":\"Oral\",\"created_by\":1,\"id\":119}', 'http://127.0.0.1:8000/patients/nurse-chart/medication/schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 20:48:15', '2026-01-14 20:48:15'),
+(308, 'App\\Models\\User', 1, 'created', 'App\\Models\\MedicationSchedule', 120, '[]', '{\"patient_id\":\"1\",\"product_or_service_request_id\":\"109\",\"scheduled_time\":\"2026-01-18 22:43\",\"dose\":\"600mg\",\"route\":\"Oral\",\"created_by\":1,\"id\":120}', 'http://127.0.0.1:8000/patients/nurse-chart/medication/schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 20:48:15', '2026-01-14 20:48:15'),
+(309, 'App\\Models\\User', 1, 'created', 'App\\Models\\MedicationSchedule', 121, '[]', '{\"patient_id\":\"1\",\"product_or_service_request_id\":\"109\",\"scheduled_time\":\"2026-01-19 22:43\",\"dose\":\"600mg\",\"route\":\"Oral\",\"created_by\":1,\"id\":121}', 'http://127.0.0.1:8000/patients/nurse-chart/medication/schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 20:48:15', '2026-01-14 20:48:15'),
+(310, 'App\\Models\\User', 1, 'created', 'App\\Models\\MedicationSchedule', 122, '[]', '{\"patient_id\":\"1\",\"product_or_service_request_id\":\"109\",\"scheduled_time\":\"2026-01-20 22:43\",\"dose\":\"600mg\",\"route\":\"Oral\",\"created_by\":1,\"id\":122}', 'http://127.0.0.1:8000/patients/nurse-chart/medication/schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 20:48:15', '2026-01-14 20:48:15'),
+(311, 'App\\Models\\User', 1, 'created', 'App\\Models\\MedicationSchedule', 123, '[]', '{\"patient_id\":\"1\",\"product_or_service_request_id\":\"109\",\"scheduled_time\":\"2026-01-21 22:43\",\"dose\":\"600mg\",\"route\":\"Oral\",\"created_by\":1,\"id\":123}', 'http://127.0.0.1:8000/patients/nurse-chart/medication/schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 20:48:15', '2026-01-14 20:48:15'),
+(312, 'App\\Models\\User', 1, 'created', 'App\\Models\\MedicationSchedule', 124, '[]', '{\"patient_id\":\"1\",\"product_or_service_request_id\":\"109\",\"scheduled_time\":\"2026-01-22 22:43\",\"dose\":\"600mg\",\"route\":\"Oral\",\"created_by\":1,\"id\":124}', 'http://127.0.0.1:8000/patients/nurse-chart/medication/schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 20:48:15', '2026-01-14 20:48:15'),
+(313, 'App\\Models\\User', 1, 'created', 'App\\Models\\MedicationSchedule', 125, '[]', '{\"patient_id\":\"1\",\"product_or_service_request_id\":\"109\",\"scheduled_time\":\"2026-01-23 22:43\",\"dose\":\"600mg\",\"route\":\"Oral\",\"created_by\":1,\"id\":125}', 'http://127.0.0.1:8000/patients/nurse-chart/medication/schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 20:48:15', '2026-01-14 20:48:15'),
+(314, 'App\\Models\\User', 1, 'created', 'App\\Models\\MedicationAdministration', 13, '[]', '{\"patient_id\":1,\"schedule_id\":\"115\",\"product_or_service_request_id\":109,\"administered_at\":\"2026-01-14T21:48\",\"dose\":\"600mg\",\"route\":\"Oral\",\"comment\":null,\"administered_by\":1,\"id\":13}', 'http://127.0.0.1:8000/patients/nurse-chart/medication/administer', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 20:48:33', '2026-01-14 20:48:33'),
+(315, 'App\\Models\\User', 1, 'deleted', 'App\\Models\\MedicationSchedule', 117, '{\"id\":117,\"patient_id\":1,\"product_or_service_request_id\":109,\"scheduled_time\":\"2026-01-15 22:43:00\",\"dose\":\"600mg\",\"route\":\"Oral\",\"created_by\":1,\"deleted_at\":null}', '[]', 'http://127.0.0.1:8000/patients/nurse-chart/medication/remove-schedule', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 20:48:44', '2026-01-14 20:48:44'),
+(316, 'App\\Models\\User', 1, 'created', 'App\\Models\\IntakeOutputPeriod', 15, '[]', '{\"patient_id\":\"1\",\"type\":\"fluid\",\"started_at\":\"2026-01-14T21:49:56.434639Z\",\"nurse_id\":1,\"id\":15}', 'http://127.0.0.1:8000/patients/nurse-chart/intake-output/start', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 20:49:56', '2026-01-14 20:49:56'),
+(317, 'App\\Models\\User', 1, 'created', 'App\\Models\\IntakeOutputPeriod', 16, '[]', '{\"patient_id\":\"1\",\"type\":\"fluid\",\"started_at\":\"2026-01-14T21:56:05.498141Z\",\"nurse_id\":1,\"id\":16}', 'http://127.0.0.1:8000/patients/nurse-chart/intake-output/start', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 20:56:05', '2026-01-14 20:56:05'),
+(318, 'App\\Models\\User', 1, 'created', 'App\\Models\\IntakeOutputPeriod', 17, '[]', '{\"patient_id\":\"1\",\"type\":\"solid\",\"started_at\":\"2026-01-14T21:57:29.994881Z\",\"nurse_id\":1,\"id\":17}', 'http://127.0.0.1:8000/patients/nurse-chart/intake-output/start', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 20:57:30', '2026-01-14 20:57:30'),
+(319, 'App\\Models\\User', 1, 'created', 'App\\Models\\IntakeOutputPeriod', 18, '[]', '{\"patient_id\":\"1\",\"type\":\"fluid\",\"started_at\":\"2026-01-14T22:01:51.188156Z\",\"nurse_id\":1,\"id\":18}', 'http://127.0.0.1:8000/patients/nurse-chart/intake-output/start', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 21:01:51', '2026-01-14 21:01:51'),
+(320, 'App\\Models\\User', 1, 'created', 'App\\Models\\IntakeOutputPeriod', 19, '[]', '{\"patient_id\":\"1\",\"type\":\"fluid\",\"started_at\":\"2026-01-14T22:04:25.211993Z\",\"nurse_id\":1,\"id\":19}', 'http://127.0.0.1:8000/patients/nurse-chart/intake-output/start', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 21:04:25', '2026-01-14 21:04:25'),
+(321, 'App\\Models\\User', 1, 'created', 'App\\Models\\IntakeOutputRecord', 12, '[]', '{\"period_id\":\"19\",\"type\":\"intake\",\"amount\":\"100\",\"description\":\"test\",\"recorded_at\":\"2026-01-14T23:06\",\"nurse_id\":1,\"id\":12}', 'http://127.0.0.1:8000/patients/nurse-chart/intake-output/record', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 21:06:15', '2026-01-14 21:06:15'),
+(322, 'App\\Models\\User', 1, 'created', 'App\\Models\\IntakeOutputRecord', 13, '[]', '{\"period_id\":\"19\",\"type\":\"intake\",\"amount\":\"100\",\"description\":\"test\",\"recorded_at\":\"2026-01-14T23:07\",\"nurse_id\":1,\"id\":13}', 'http://127.0.0.1:8000/patients/nurse-chart/intake-output/record', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 21:07:15', '2026-01-14 21:07:15'),
+(323, 'App\\Models\\User', 1, 'created', 'App\\Models\\IntakeOutputRecord', 14, '[]', '{\"period_id\":\"19\",\"type\":\"output\",\"amount\":\"77\",\"description\":\"test\",\"recorded_at\":\"2026-01-14T23:11\",\"nurse_id\":1,\"id\":14}', 'http://127.0.0.1:8000/patients/nurse-chart/intake-output/record', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 21:11:51', '2026-01-14 21:11:51'),
+(324, 'App\\Models\\User', 1, 'deleted', 'App\\Models\\IntakeOutputRecord', 13, '{\"id\":13,\"period_id\":19,\"type\":\"intake\",\"amount\":\"100.00\",\"description\":\"test\",\"recorded_at\":\"2026-01-14 23:07:00\",\"edited_at\":null,\"edited_by\":null,\"edit_reason\":null,\"deleted_at\":null,\"deleted_by\":null,\"delete_reason\":null,\"nurse_id\":1}', '[]', 'http://127.0.0.1:8000/patients/nurse-chart/intake-output/record/13', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 21:17:07', '2026-01-14 21:17:07'),
+(325, 'App\\Models\\User', 1, 'created', 'App\\Models\\IntakeOutputRecord', 15, '[]', '{\"period_id\":\"17\",\"type\":\"intake\",\"amount\":\"300\",\"description\":\"test\",\"recorded_at\":\"2026-01-14T23:17\",\"nurse_id\":1,\"id\":15}', 'http://127.0.0.1:8000/patients/nurse-chart/intake-output/record', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 21:17:31', '2026-01-14 21:17:31'),
+(326, 'App\\Models\\User', 1, 'created', 'App\\Models\\IntakeOutputRecord', 16, '[]', '{\"period_id\":\"17\",\"type\":\"output\",\"amount\":\"40\",\"description\":\"test\",\"recorded_at\":\"2026-01-14T23:17\",\"nurse_id\":1,\"id\":16}', 'http://127.0.0.1:8000/patients/nurse-chart/intake-output/record', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 21:17:51', '2026-01-14 21:17:51'),
+(327, 'App\\Models\\User', 1, 'created', 'App\\Models\\IntakeOutputRecord', 17, '[]', '{\"period_id\":\"17\",\"type\":\"output\",\"amount\":\"77\",\"description\":\"Axamansard\",\"recorded_at\":\"2026-01-14T23:21\",\"nurse_id\":1,\"id\":17}', 'http://127.0.0.1:8000/patients/nurse-chart/intake-output/record', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 21:21:16', '2026-01-14 21:21:16'),
+(328, 'App\\Models\\User', 1, 'deleted', 'App\\Models\\IntakeOutputRecord', 17, '{\"id\":17,\"period_id\":17,\"type\":\"output\",\"amount\":\"77.00\",\"description\":\"Axamansard\",\"recorded_at\":\"2026-01-14 23:21:00\",\"edited_at\":null,\"edited_by\":null,\"edit_reason\":null,\"deleted_at\":null,\"deleted_by\":null,\"delete_reason\":null,\"nurse_id\":1}', '[]', 'http://127.0.0.1:8000/patients/nurse-chart/intake-output/record/17', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 21:21:26', '2026-01-14 21:21:26'),
+(329, 'App\\Models\\User', 1, 'updated', 'App\\Models\\IntakeOutputPeriod', 17, '{\"ended_at\":null}', '{\"ended_at\":\"2026-01-14T22:21:33.242082Z\"}', 'http://127.0.0.1:8000/patients/nurse-chart/intake-output/end', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 21:21:33', '2026-01-14 21:21:33'),
+(330, 'App\\Models\\User', 1, 'updated', 'App\\Models\\IntakeOutputPeriod', 19, '{\"ended_at\":null}', '{\"ended_at\":\"2026-01-14T22:21:53.709047Z\"}', 'http://127.0.0.1:8000/patients/nurse-chart/intake-output/end', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-14 21:21:53', '2026-01-14 21:21:53');
 
 -- --------------------------------------------------------
 
@@ -687,7 +801,8 @@ INSERT INTO `chat_messages` (`id`, `conversation_id`, `user_id`, `body`, `type`,
 (129, 1, 1, '<p>hlleo baby</p><p>&nbsp;</p><p>we are testin the stuf</p><p>&nbsp;</p>', 'text', '2026-01-03 14:20:30', '2026-01-03 14:20:30', NULL, NULL),
 (130, 1, 1, '<p>hello</p><p>&nbsp;</p>', 'text', '2026-01-03 14:21:22', '2026-01-03 14:21:22', NULL, NULL),
 (131, 5, 1, 'hello', 'text', '2026-01-04 18:13:43', '2026-01-04 18:13:43', NULL, NULL),
-(132, 5, 1, 'caption', 'file', '2026-01-04 18:14:04', '2026-01-04 18:14:04', NULL, NULL);
+(132, 5, 1, 'caption', 'file', '2026-01-04 18:14:04', '2026-01-04 18:14:04', NULL, NULL),
+(133, 6, 1, 'hello', 'text', '2026-01-14 09:30:34', '2026-01-14 09:30:34', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -724,7 +839,7 @@ INSERT INTO `chat_participants` (`id`, `conversation_id`, `user_id`, `last_read_
 (13, 5, 2, NULL, '2026-01-04 18:13:18', '2026-01-04 18:13:18'),
 (14, 5, 19, NULL, '2026-01-04 18:13:18', '2026-01-04 18:13:18'),
 (15, 5, 1, '2026-01-11 07:40:47', '2026-01-04 18:13:18', '2026-01-11 07:40:47'),
-(16, 6, 1, NULL, '2026-01-13 08:11:46', '2026-01-13 08:11:46'),
+(16, 6, 1, '2026-01-14 09:30:34', '2026-01-13 08:11:46', '2026-01-14 09:30:34'),
 (17, 6, 4, NULL, '2026-01-13 08:11:46', '2026-01-13 08:11:46');
 
 -- --------------------------------------------------------
@@ -998,7 +1113,7 @@ INSERT INTO `encounters` (`id`, `doctor_id`, `service_request_id`, `service_id`,
 (219, 1, 74, 62, 24, NULL, NULL, NULL, NULL, '<p>tets new queue<br><br>gge</p>', '2026-01-04 09:14:01', '2026-01-04 18:24:44', NULL, NULL, NULL, NULL, 1, NULL, NULL),
 (220, 1, 74, 62, 24, NULL, NULL, 'NA', 'NA', '<p>make a note we pln to edit asajha</p>', '2026-01-04 18:24:59', '2026-01-04 18:27:49', NULL, NULL, NULL, NULL, 1, NULL, NULL),
 (221, 1, 74, 62, 24, NULL, NULL, NULL, NULL, '<p>make a note we pln to edit asajha</p>', '2026-01-04 18:27:16', '2026-01-08 09:19:18', NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(222, 1, 79, 62, 24, NULL, NULL, NULL, NULL, '<p>hdjda</p><p>dadbakd</p><p><br data-cke-filler=\"true\"></p><p>asdad</p>', '2026-01-06 08:50:01', '2026-01-11 09:27:55', NULL, NULL, NULL, NULL, 0, NULL, NULL);
+(222, 1, 79, 62, 24, NULL, NULL, NULL, NULL, '<p>hdjda</p><p>dadbakd</p><p><br data-cke-filler=\"true\"></p><p>asdad</p>', '2026-01-06 08:50:01', '2026-01-14 21:22:55', NULL, NULL, NULL, NULL, 0, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -4799,6 +4914,7 @@ CREATE TABLE `immunization_records` (
   `site` varchar(100) DEFAULT NULL,
   `administered_at` datetime NOT NULL,
   `administered_by` bigint(20) UNSIGNED NOT NULL,
+  `dispensed_from_store_id` bigint(20) UNSIGNED DEFAULT NULL,
   `batch_number` varchar(50) DEFAULT NULL,
   `manufacturer` varchar(200) DEFAULT NULL,
   `expiry_date` date DEFAULT NULL,
@@ -4814,8 +4930,9 @@ CREATE TABLE `immunization_records` (
 -- Dumping data for table `immunization_records`
 --
 
-INSERT INTO `immunization_records` (`id`, `patient_id`, `product_id`, `product_or_service_request_id`, `vaccine_name`, `dose_number`, `dose`, `route`, `site`, `administered_at`, `administered_by`, `batch_number`, `manufacturer`, `expiry_date`, `next_due_date`, `adverse_reaction`, `notes`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 24, 58, 92, 'BCG', 1, 'BCG', 'Oral', 'Left Deltoid', '2026-01-09 21:02:00', 1, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-09 19:09:27', '2026-01-09 19:09:27', NULL);
+INSERT INTO `immunization_records` (`id`, `patient_id`, `product_id`, `product_or_service_request_id`, `vaccine_name`, `dose_number`, `dose`, `route`, `site`, `administered_at`, `administered_by`, `dispensed_from_store_id`, `batch_number`, `manufacturer`, `expiry_date`, `next_due_date`, `adverse_reaction`, `notes`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 24, 58, 92, 'BCG', 1, 'BCG', 'Oral', 'Left Deltoid', '2026-01-09 21:02:00', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-09 19:09:27', '2026-01-09 19:09:27', NULL),
+(2, 1, 2, 109, 'BCG', 1, 'BCG', 'SC', 'Left Deltoid', '2026-01-14 16:18:00', 1, 2, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-14 14:29:30', '2026-01-14 14:29:30', NULL);
 
 -- --------------------------------------------------------
 
@@ -4833,6 +4950,7 @@ CREATE TABLE `injection_administrations` (
   `site` varchar(100) DEFAULT NULL,
   `administered_at` datetime NOT NULL,
   `administered_by` bigint(20) UNSIGNED NOT NULL,
+  `dispensed_from_store_id` bigint(20) UNSIGNED DEFAULT NULL,
   `notes` text DEFAULT NULL,
   `batch_number` varchar(50) DEFAULT NULL,
   `expiry_date` date DEFAULT NULL,
@@ -4845,9 +4963,11 @@ CREATE TABLE `injection_administrations` (
 -- Dumping data for table `injection_administrations`
 --
 
-INSERT INTO `injection_administrations` (`id`, `patient_id`, `product_id`, `product_or_service_request_id`, `dose`, `route`, `site`, `administered_at`, `administered_by`, `notes`, `batch_number`, `expiry_date`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 24, 58, 91, '600mg', 'IM', 'Left Arm', '2026-01-09 18:47:00', 1, NULL, NULL, NULL, '2026-01-09 17:47:58', '2026-01-09 17:47:58', NULL),
-(2, 1, 67, 95, '700mg', 'IM', 'Right Arm', '2026-01-11 01:31:00', 1, NULL, NULL, NULL, '2026-01-11 00:31:43', '2026-01-11 00:31:43', NULL);
+INSERT INTO `injection_administrations` (`id`, `patient_id`, `product_id`, `product_or_service_request_id`, `dose`, `route`, `site`, `administered_at`, `administered_by`, `dispensed_from_store_id`, `notes`, `batch_number`, `expiry_date`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 24, 58, 91, '600mg', 'IM', 'Left Arm', '2026-01-09 18:47:00', 1, NULL, NULL, NULL, NULL, '2026-01-09 17:47:58', '2026-01-09 17:47:58', NULL),
+(2, 1, 67, 95, '700mg', 'IM', 'Right Arm', '2026-01-11 01:31:00', 1, NULL, NULL, NULL, NULL, '2026-01-11 00:31:43', '2026-01-11 00:31:43', NULL),
+(3, 1, 58, 104, '500g', 'IM', 'Left Arm', '2026-01-14 14:59:00', 1, 2, NULL, NULL, NULL, '2026-01-14 14:00:32', '2026-01-14 14:00:32', NULL),
+(4, 1, 2, 105, '7677', 'IM', 'Right Arm', '2026-01-14 15:15:00', 1, 2, NULL, NULL, NULL, '2026-01-14 14:17:56', '2026-01-14 14:17:56', NULL);
 
 -- --------------------------------------------------------
 
@@ -4904,7 +5024,12 @@ INSERT INTO `intake_output_periods` (`id`, `patient_id`, `type`, `started_at`, `
 (11, 512, 'fluid', '2025-12-24 17:22:45', NULL, NULL, 1, '2025-12-24 16:22:45', '2025-12-24 16:22:45'),
 (12, 24, 'fluid', '2026-01-03 22:13:46', NULL, NULL, 1, '2026-01-03 21:13:46', '2026-01-03 21:13:46'),
 (13, 24, 'fluid', '2026-01-03 22:14:07', NULL, NULL, 1, '2026-01-03 21:14:07', '2026-01-03 21:14:07'),
-(14, 24, 'fluid', '2026-01-04 10:38:00', NULL, NULL, 1, '2026-01-04 09:38:00', '2026-01-04 09:38:00');
+(14, 24, 'fluid', '2026-01-04 10:38:00', NULL, NULL, 1, '2026-01-04 09:38:00', '2026-01-04 09:38:00'),
+(15, 1, 'fluid', '2026-01-14 21:49:56', NULL, NULL, 1, '2026-01-14 20:49:56', '2026-01-14 20:49:56'),
+(16, 1, 'fluid', '2026-01-14 21:56:05', NULL, NULL, 1, '2026-01-14 20:56:05', '2026-01-14 20:56:05'),
+(17, 1, 'solid', '2026-01-14 21:57:29', '2026-01-14 22:21:33', NULL, 1, '2026-01-14 20:57:30', '2026-01-14 21:21:33'),
+(18, 1, 'fluid', '2026-01-14 22:01:51', NULL, NULL, 1, '2026-01-14 21:01:51', '2026-01-14 21:01:51'),
+(19, 1, 'fluid', '2026-01-14 22:04:25', '2026-01-14 22:21:53', NULL, 1, '2026-01-14 21:04:25', '2026-01-14 21:21:53');
 
 -- --------------------------------------------------------
 
@@ -4945,7 +5070,11 @@ INSERT INTO `intake_output_records` (`id`, `period_id`, `type`, `amount`, `descr
 (8, 6, 'output', 400.00, 'tt', '2025-07-15 16:07:00', NULL, NULL, NULL, NULL, NULL, NULL, 1, '2025-07-15 14:07:45', '2025-07-15 14:07:45'),
 (9, 6, 'output', 4007.00, 'tt', '2025-07-15 16:07:00', NULL, NULL, NULL, NULL, NULL, NULL, 1, '2025-07-15 14:07:55', '2025-07-15 14:07:55'),
 (10, 6, 'intake', 4007.00, 'tt', '2025-07-15 16:07:00', NULL, NULL, NULL, NULL, NULL, NULL, 1, '2025-07-15 14:08:06', '2025-07-15 14:08:06'),
-(11, 13, 'intake', 200.00, 'tttt', '2026-01-04 20:46:00', NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-04 18:47:26', '2026-01-04 18:47:26');
+(11, 13, 'intake', 200.00, 'tttt', '2026-01-04 20:46:00', NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-04 18:47:26', '2026-01-04 18:47:26'),
+(12, 19, 'intake', 100.00, 'test', '2026-01-14 23:06:00', NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-14 21:06:15', '2026-01-14 21:06:15'),
+(14, 19, 'output', 77.00, 'test', '2026-01-14 23:11:00', NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-14 21:11:51', '2026-01-14 21:11:51'),
+(15, 17, 'intake', 300.00, 'test', '2026-01-14 23:17:00', NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-14 21:17:31', '2026-01-14 21:17:31'),
+(16, 17, 'output', 40.00, 'test', '2026-01-14 23:17:00', NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-14 21:17:51', '2026-01-14 21:17:51');
 
 -- --------------------------------------------------------
 
@@ -5128,7 +5257,8 @@ INSERT INTO `medication_administrations` (`id`, `patient_id`, `product_or_servic
 (9, 24, 65, 13, '2025-07-15 23:20:00', '600mg', 'Oral', 'edited', 1, 1, '2025-07-15 22:51:16', 'yyyy', '{\"administered_at\":\"2025-07-15 23:20:00\",\"dose\":\"600mg\",\"route\":\"Oral\",\"comment\":\"uup\"}', NULL, NULL, NULL, '2025-07-15 21:20:15', '2025-07-15 21:51:16'),
 (10, 24, 67, 84, '2025-07-16 00:22:00', '500mg', 'Topical', NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-15 22:22:11', '2025-07-15 22:22:11'),
 (11, 512, 69, 106, '2025-12-24 18:16:00', '600mg', 'Oral', 'patient stable', 1, NULL, NULL, NULL, NULL, '2025-12-24 16:17:11', 1, 'this was an error', '2025-12-24 16:16:46', '2025-12-24 16:17:11'),
-(12, 512, 69, 111, '2025-12-24 18:17:00', '600mg', 'Oral', 'patient stable', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-12-24 16:17:32', '2025-12-24 16:17:32');
+(12, 512, 69, 111, '2025-12-24 18:17:00', '600mg', 'Oral', 'patient stable', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-12-24 16:17:32', '2025-12-24 16:17:32'),
+(13, 1, 109, 115, '2026-01-14 21:48:00', '600mg', 'Oral', NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-14 20:48:33', '2026-01-14 20:48:33');
 
 -- --------------------------------------------------------
 
@@ -5162,7 +5292,9 @@ INSERT INTO `medication_histories` (`id`, `patient_id`, `product_or_service_requ
 (8, 24, 65, 'resume', 'jdsfs', 1, '2025-07-15 11:03:03', '2025-07-15 11:03:03'),
 (9, 24, 65, 'discontinue', 'test', 1, '2025-07-15 21:26:45', '2025-07-15 21:26:45'),
 (10, 24, 65, 'resume', 'hhhh', 1, '2025-07-15 21:27:17', '2025-07-15 21:27:17'),
-(11, 512, 69, 'discontinue', 'patient recoverd', 1, '2025-12-24 16:18:23', '2025-12-24 16:18:23');
+(11, 512, 69, 'discontinue', 'patient recoverd', 1, '2025-12-24 16:18:23', '2025-12-24 16:18:23'),
+(12, 1, 109, 'discontinue', 'test', 1, '2026-01-14 20:45:36', '2026-01-14 20:45:36'),
+(13, 1, 109, 'resume', 'test', 1, '2026-01-14 20:46:03', '2026-01-14 20:46:03');
 
 -- --------------------------------------------------------
 
@@ -5297,7 +5429,17 @@ INSERT INTO `medication_schedules` (`id`, `patient_id`, `product_or_service_requ
 (110, 512, 69, '2026-01-04 19:14:00', '600mg', 'Oral', 1, '2025-12-24 16:15:15', '2025-12-24 16:15:15', NULL),
 (111, 512, 69, '2025-12-27 22:14:00', '600mg', 'Oral', 1, '2025-12-24 16:15:59', '2025-12-24 16:15:59', NULL),
 (112, 512, 69, '2025-12-30 22:14:00', '600mg', 'Oral', 1, '2025-12-24 16:15:59', '2025-12-24 16:15:59', NULL),
-(113, 512, 69, '2026-01-03 22:14:00', '600mg', 'Oral', 1, '2025-12-24 16:15:59', '2025-12-24 16:15:59', NULL);
+(113, 512, 69, '2026-01-03 22:14:00', '600mg', 'Oral', 1, '2025-12-24 16:15:59', '2025-12-24 16:15:59', NULL),
+(115, 1, 109, '2026-01-14 22:43:00', '600mg', 'Oral', 1, '2026-01-14 20:45:05', '2026-01-14 20:45:05', NULL),
+(116, 1, 109, '2026-01-14 22:43:00', '600mg', 'Oral', 1, '2026-01-14 20:48:15', '2026-01-14 20:48:15', NULL),
+(118, 1, 109, '2026-01-16 22:43:00', '600mg', 'Oral', 1, '2026-01-14 20:48:15', '2026-01-14 20:48:15', NULL),
+(119, 1, 109, '2026-01-17 22:43:00', '600mg', 'Oral', 1, '2026-01-14 20:48:15', '2026-01-14 20:48:15', NULL),
+(120, 1, 109, '2026-01-18 22:43:00', '600mg', 'Oral', 1, '2026-01-14 20:48:15', '2026-01-14 20:48:15', NULL),
+(121, 1, 109, '2026-01-19 22:43:00', '600mg', 'Oral', 1, '2026-01-14 20:48:15', '2026-01-14 20:48:15', NULL),
+(122, 1, 109, '2026-01-20 22:43:00', '600mg', 'Oral', 1, '2026-01-14 20:48:15', '2026-01-14 20:48:15', NULL),
+(123, 1, 109, '2026-01-21 22:43:00', '600mg', 'Oral', 1, '2026-01-14 20:48:15', '2026-01-14 20:48:15', NULL),
+(124, 1, 109, '2026-01-22 22:43:00', '600mg', 'Oral', 1, '2026-01-14 20:48:15', '2026-01-14 20:48:15', NULL),
+(125, 1, 109, '2026-01-23 22:43:00', '600mg', 'Oral', 1, '2026-01-14 20:48:15', '2026-01-14 20:48:15', NULL);
 
 -- --------------------------------------------------------
 
@@ -5463,7 +5605,8 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (143, '2026_01_11_000002_create_shift_handovers_table', 64),
 (144, '2026_01_11_000003_create_shift_actions_table', 64),
 (145, '2026_01_11_100001_add_audit_details_to_shift_handovers_table', 65),
-(146, '2026_01_13_000001_add_leadership_flags_to_staff_table', 66);
+(146, '2026_01_13_000001_add_leadership_flags_to_staff_table', 66),
+(147, '2026_01_14_135819_add_dispensed_from_store_id_to_related_tables', 67);
 
 -- --------------------------------------------------------
 
@@ -5638,7 +5781,8 @@ INSERT INTO `nursing_shifts` (`id`, `user_id`, `ward_id`, `shift_type`, `started
 (1, 1, NULL, 'night', '2026-01-11 00:30:58', '2026-01-11 01:04:39', '2026-01-11 12:30:58', 'auto_ended', 1, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, '2026-01-10 23:30:58', '2026-01-11 00:04:39'),
 (2, 1, NULL, 'night', '2026-01-11 01:27:32', '2026-01-11 01:53:01', '2026-01-11 13:27:32', 'auto_ended', 1, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, '2026-01-11 00:27:32', '2026-01-11 00:53:01'),
 (3, 1, NULL, 'night', '2026-01-11 01:53:59', '2026-01-13 06:52:43', '2026-01-11 13:53:59', 'completed', 1, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, '2026-01-11 00:53:59', '2026-01-13 05:52:43'),
-(4, 1, NULL, 'morning', '2026-01-13 06:53:35', NULL, '2026-01-13 18:53:35', 'active', 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, '2026-01-13 05:53:35', '2026-01-13 05:53:35');
+(4, 1, NULL, 'morning', '2026-01-13 06:53:35', '2026-01-14 14:59:17', '2026-01-13 18:53:35', 'completed', 1, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, '2026-01-13 05:53:35', '2026-01-14 13:59:17'),
+(5, 1, NULL, 'afternoon', '2026-01-14 14:59:29', NULL, '2026-01-15 02:59:29', 'active', 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, '2026-01-14 13:59:29', '2026-01-14 13:59:29');
 
 -- --------------------------------------------------------
 
@@ -10219,7 +10363,29 @@ INSERT INTO `patient_immunization_schedules` (`id`, `patient_id`, `schedule_item
 (19, 24, 19, '2021-05-06', NULL, 'overdue', NULL, NULL, NULL, NULL, '2026-01-09 18:37:39', '2026-01-09 18:37:39'),
 (20, 24, 20, '2021-05-06', NULL, 'overdue', NULL, NULL, NULL, NULL, '2026-01-09 18:37:39', '2026-01-09 18:37:39'),
 (21, 24, 21, '2021-05-06', NULL, 'overdue', NULL, NULL, NULL, NULL, '2026-01-09 18:37:39', '2026-01-09 18:37:39'),
-(22, 24, 22, '2021-11-08', NULL, 'overdue', NULL, NULL, NULL, NULL, '2026-01-09 18:37:39', '2026-01-09 18:37:39');
+(22, 24, 22, '2021-11-08', NULL, 'overdue', NULL, NULL, NULL, NULL, '2026-01-09 18:37:39', '2026-01-09 18:37:39'),
+(23, 1, 1, '2022-07-16', '2026-01-14', 'administered', 2, NULL, NULL, 1, '2026-01-14 14:18:14', '2026-01-14 14:29:30'),
+(24, 1, 2, '2022-07-16', NULL, 'overdue', NULL, NULL, NULL, NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(25, 1, 3, '2022-07-16', NULL, 'overdue', NULL, NULL, NULL, NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(26, 1, 4, '2022-08-27', NULL, 'overdue', NULL, NULL, NULL, NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(27, 1, 5, '2022-08-27', NULL, 'overdue', NULL, NULL, NULL, NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(28, 1, 6, '2022-08-27', NULL, 'overdue', NULL, NULL, NULL, NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(29, 1, 7, '2022-08-27', NULL, 'overdue', NULL, NULL, NULL, NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(30, 1, 8, '2022-09-24', NULL, 'overdue', NULL, NULL, NULL, NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(31, 1, 9, '2022-09-24', NULL, 'overdue', NULL, NULL, NULL, NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(32, 1, 10, '2022-09-24', NULL, 'overdue', NULL, NULL, NULL, NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(33, 1, 11, '2022-09-24', NULL, 'overdue', NULL, NULL, NULL, NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(34, 1, 12, '2022-10-22', NULL, 'overdue', NULL, NULL, NULL, NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(35, 1, 13, '2022-10-22', NULL, 'overdue', NULL, NULL, NULL, NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(36, 1, 14, '2022-10-22', NULL, 'overdue', NULL, NULL, NULL, NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(37, 1, 15, '2022-10-22', NULL, 'overdue', NULL, NULL, NULL, NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(38, 1, 16, '2022-10-22', NULL, 'overdue', NULL, NULL, NULL, NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(39, 1, 17, '2023-01-12', NULL, 'overdue', NULL, NULL, NULL, NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(40, 1, 18, '2023-04-12', NULL, 'overdue', NULL, NULL, NULL, NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(41, 1, 19, '2023-04-12', NULL, 'overdue', NULL, NULL, NULL, NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(42, 1, 20, '2023-04-12', NULL, 'overdue', NULL, NULL, NULL, NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(43, 1, 21, '2023-04-12', NULL, 'overdue', NULL, NULL, NULL, NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15'),
+(44, 1, 22, '2023-10-15', NULL, 'overdue', NULL, NULL, NULL, NULL, '2026-01-14 14:18:15', '2026-01-14 14:18:15');
 
 -- --------------------------------------------------------
 
@@ -10326,7 +10492,10 @@ INSERT INTO `payments` (`id`, `reference_no`, `total`, `total_discount`, `paymen
 (74, 'PAY-20260108-154534', '4000', 0.00, 'CASH', 'CASH', '2026-01-08 13:45:55', '2026-01-08 13:45:55', NULL, 24, NULL, NULL, 1),
 (75, 'PAY-20260108-180410', '4000', 0.00, 'CASH', 'CASH', '2026-01-08 16:04:35', '2026-01-08 16:04:35', NULL, 24, NULL, NULL, 1),
 (76, 'PAY-20260108-184717', '6000', 0.00, 'CASH', 'CASH', '2026-01-08 16:47:47', '2026-01-08 16:47:47', NULL, 24, NULL, NULL, 1),
-(77, 'PAY-20260111-094430', '1000', 0.00, 'CASH', 'CASH', '2026-01-11 07:45:27', '2026-01-11 07:45:27', NULL, 24, NULL, NULL, 1);
+(77, 'PAY-20260111-094430', '1000', 0.00, 'CASH', 'CASH', '2026-01-11 07:45:27', '2026-01-11 07:45:27', NULL, 24, NULL, NULL, 1),
+(78, 'PAY-20260114-141349', '550', 0.00, 'CASH', 'CASH', '2026-01-14 12:14:19', '2026-01-14 12:14:19', NULL, 24, NULL, NULL, 1),
+(79, 'PAY-20260114-181031', '1500', 0.00, 'CASH', 'CASH', '2026-01-14 16:10:59', '2026-01-14 16:10:59', NULL, 24, NULL, NULL, 1),
+(80, 'PAY-20260114-191058', '15500', 0.00, 'CASH', 'CASH', '2026-01-14 17:11:43', '2026-01-14 17:11:43', NULL, 24, NULL, NULL, 1);
 
 -- --------------------------------------------------------
 
@@ -10827,6 +10996,7 @@ CREATE TABLE `product_or_service_requests` (
   `hmo_remittance_id` bigint(20) UNSIGNED DEFAULT NULL,
   `user_id` bigint(20) UNSIGNED NOT NULL,
   `staff_user_id` bigint(20) UNSIGNED NOT NULL,
+  `dispensed_from_store_id` bigint(20) UNSIGNED DEFAULT NULL,
   `product_id` bigint(20) UNSIGNED DEFAULT NULL,
   `service_id` bigint(20) UNSIGNED DEFAULT NULL,
   `qty` int(11) NOT NULL DEFAULT 1,
@@ -10849,89 +11019,97 @@ CREATE TABLE `product_or_service_requests` (
 -- Dumping data for table `product_or_service_requests`
 --
 
-INSERT INTO `product_or_service_requests` (`id`, `invoice_id`, `payment_id`, `hmo_remittance_id`, `user_id`, `staff_user_id`, `product_id`, `service_id`, `qty`, `discount`, `payable_amount`, `claims_amount`, `coverage_mode`, `validation_status`, `auth_code`, `validated_by`, `validated_at`, `validation_notes`, `submitted_to_hmo_at`, `hmo_submission_batch`, `created_at`, `updated_at`) VALUES
-(1, 1, NULL, NULL, 2, 12, NULL, 1, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-03-15 11:03:15', '2023-04-27 14:06:29'),
-(2, 1, NULL, NULL, 2, 12, NULL, 1, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-03-15 11:26:19', '2023-04-27 14:06:29'),
-(3, 6, 1, NULL, 2, 12, NULL, 1, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-03-15 11:32:51', '2023-07-08 07:25:50'),
-(4, 6, 1, NULL, 2, 12, NULL, 1, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-03-15 11:36:24', '2023-07-08 07:25:50'),
-(5, 7, 2, NULL, 2, 12, NULL, 1, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-03-15 11:38:19', '2023-07-08 07:32:34'),
-(6, 9, 2, NULL, 2, 12, NULL, 1, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-03-15 17:17:38', '2023-07-08 07:47:58'),
-(7, 16, 19, NULL, 2, 12, NULL, 1, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-03-15 17:24:32', '2023-07-23 21:23:45'),
-(8, 12, NULL, NULL, 2, 12, NULL, 1, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-03-15 17:28:42', '2023-07-15 01:41:25'),
-(17, 16, 19, NULL, 2, 12, 2, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-08 10:29:40', '2023-07-23 21:23:45'),
-(18, 14, 16, NULL, 2, 12, 4, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-08 10:29:40', '2023-07-15 01:55:34'),
-(19, 12, NULL, NULL, 2, 12, 4, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-08 10:34:10', '2023-07-15 01:41:25'),
-(24, 14, 16, NULL, 2, 12, NULL, 1, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-10 08:16:44', '2023-07-15 01:55:34'),
-(25, 10, NULL, NULL, 2, 12, NULL, 1, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-10 08:16:44', '2023-07-15 01:17:51'),
-(26, 10, NULL, NULL, 2, 12, NULL, 2, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-10 13:53:29', '2023-07-15 01:17:51'),
-(27, 10, NULL, NULL, 2, 12, 2, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-10 14:24:35', '2023-07-15 01:17:51'),
-(28, 10, NULL, NULL, 2, 12, 4, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-10 14:24:35', '2023-07-15 01:17:51'),
-(29, 18, 21, NULL, 2, 12, NULL, 2, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-17 14:13:14', '2023-07-24 08:33:48'),
-(30, 18, 21, NULL, 2, 12, 2, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-23 21:04:00', '2023-07-24 08:33:48'),
-(31, NULL, NULL, NULL, 2, 12, NULL, 3, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-24 06:58:37', '2023-07-24 06:58:37'),
-(32, 26, 30, NULL, 2, 12, 4, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-25 13:00:40', '2023-08-20 10:51:27'),
-(33, 30, 34, NULL, 2, 12, 2, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-25 13:00:40', '2023-08-20 11:17:28'),
-(34, 29, 33, NULL, 2, 12, 2, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-25 13:03:02', '2023-08-20 11:06:01'),
-(35, 28, 32, NULL, 2, 12, 2, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-25 13:13:49', '2023-08-20 10:59:24'),
-(36, NULL, NULL, NULL, 18, 12, NULL, 2, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-26 12:06:25', '2023-07-26 12:06:25'),
-(37, NULL, NULL, NULL, 18, 12, NULL, 2, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-26 12:17:00', '2023-07-26 12:17:00'),
-(38, 32, 36, NULL, 2, 12, NULL, 2, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-02 21:41:58', '2023-08-20 11:37:55'),
-(41, 30, 34, NULL, 2, 12, NULL, 2, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-02 21:51:28', '2023-08-20 11:17:28'),
-(44, 29, 33, NULL, 2, 12, NULL, 2, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-02 21:56:51', '2023-08-20 11:06:01'),
-(45, NULL, NULL, NULL, 17, 12, NULL, 2, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-02 21:56:51', '2023-08-02 21:56:51'),
-(46, 31, 35, NULL, 19, 12, NULL, 2, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-03 07:12:35', '2023-08-20 11:35:17'),
-(47, 28, 32, NULL, 2, 12, NULL, 1, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-08 08:02:42', '2023-08-20 10:59:24'),
-(48, 27, 31, NULL, 2, 12, NULL, 5, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-09 05:29:04', '2023-08-20 10:58:28'),
-(49, NULL, NULL, NULL, 2, 12, NULL, 3, 12, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-20 12:10:28', '2023-08-20 12:10:28'),
-(50, NULL, NULL, NULL, 2, 12, NULL, 3, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-20 12:41:40', '2023-08-20 12:41:40'),
-(51, NULL, NULL, NULL, 2, 12, NULL, 3, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-20 12:43:52', '2023-08-20 12:43:52'),
-(52, NULL, NULL, NULL, 2, 12, NULL, 3, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-20 12:49:30', '2023-08-20 12:49:30'),
-(53, NULL, 60, NULL, 1742, 12, NULL, 63, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-22 11:00:07', '2026-01-06 10:25:56'),
-(54, NULL, 66, NULL, 1742, 12, NULL, 62, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-22 11:02:16', '2026-01-06 19:57:24'),
-(55, NULL, 60, NULL, 1742, 12, NULL, 51, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-22 13:29:59', '2026-01-06 10:25:56'),
-(56, NULL, 65, NULL, 1742, 12, 37, NULL, 1, 4.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-22 13:39:37', '2026-01-06 19:26:35'),
-(57, NULL, 58, NULL, 1742, 12, 39, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-22 13:39:37', '2026-01-06 10:17:17'),
-(58, NULL, 58, NULL, 1742, 12, 3, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-22 13:39:37', '2026-01-06 10:17:17'),
-(59, NULL, 57, NULL, 72, 1, NULL, 8, 1, 3.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-09-30 08:27:48', '2026-01-06 10:12:57'),
-(60, NULL, NULL, NULL, 69, 1, 121, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-09-30 08:52:13', '2026-01-06 09:25:43'),
-(61, NULL, 70, NULL, 69, 1, NULL, 8, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-09-30 08:54:00', '2026-01-07 07:54:54'),
-(62, NULL, 71, NULL, 69, 1, NULL, 47, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-09-30 08:54:00', '2026-01-07 10:04:14'),
-(63, NULL, 59, NULL, 132, 1, NULL, 62, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-10-11 10:11:02', '2026-01-06 10:21:48'),
-(64, NULL, 73, NULL, 72, 1, NULL, 62, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2024-03-19 06:14:28', '2026-01-07 11:38:29'),
-(65, NULL, 48, NULL, 132, 1, 34, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-14 09:00:09', '2026-01-06 08:47:04'),
-(66, NULL, 55, NULL, 132, 1, NULL, 62, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-15 13:17:17', '2026-01-06 09:59:00'),
-(67, NULL, 47, NULL, 132, 1, 123, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-15 22:00:13', '2026-01-06 08:31:29'),
-(68, NULL, 46, NULL, 132, 1, 111, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-15 22:00:13', '2026-01-06 07:27:37'),
-(69, NULL, 39, NULL, 731, 1, 1, NULL, 1, 1.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-12-24 16:13:29', '2025-12-24 16:28:22'),
-(70, NULL, 55, NULL, 132, 1, NULL, 8, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-03 16:05:42', '2026-01-06 09:59:00'),
-(71, NULL, 56, NULL, 132, 1, NULL, 64, 1, 2.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-03 16:40:11', '2026-01-06 10:08:22'),
-(72, NULL, 54, NULL, 132, 1, NULL, 57, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-03 18:51:37', '2026-01-06 09:55:16'),
-(73, NULL, 53, NULL, 132, 1, NULL, 62, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-03 19:43:45', '2026-01-06 09:53:07'),
-(74, NULL, 49, NULL, 132, 1, NULL, 62, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-04 09:00:47', '2026-01-06 08:47:50'),
-(75, NULL, 48, NULL, 132, 1, NULL, 51, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-04 20:10:44', '2026-01-06 08:47:04'),
-(76, NULL, 46, NULL, 132, 1, NULL, 8, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-05 08:05:14', '2026-01-06 07:27:37'),
-(77, NULL, 45, NULL, 132, 1, 102, NULL, 1, 0.00, 2500.00, 3000.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-06 05:39:28', '2026-01-06 07:25:27'),
-(78, NULL, 62, NULL, 69, 1, NULL, 3, 1, 0.00, 5000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-06 06:45:54', '2026-01-06 13:39:20'),
-(79, NULL, 47, NULL, 132, 1, NULL, 62, 1, 0.00, 4000.00, 0.00, 'primary', 'approved', NULL, 1, '2026-01-06 08:28:43', NULL, NULL, NULL, '2026-01-06 08:25:39', '2026-01-06 08:31:29'),
-(80, NULL, 48, NULL, 132, 1, 111, NULL, 1, 0.00, 2500.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-06 08:38:31', '2026-01-06 08:47:04'),
-(81, NULL, 49, NULL, 132, 1, 102, NULL, 1, 0.00, 2500.00, 3000.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-06 08:43:17', '2026-01-06 08:47:50'),
-(82, NULL, 53, NULL, 132, 1, 117, NULL, 1, 0.00, 800.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-06 09:16:51', '2026-01-06 09:53:07'),
-(83, NULL, 54, NULL, 132, 1, 102, NULL, 1, 0.00, 2500.00, 3000.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-06 09:18:10', '2026-01-06 09:55:16'),
-(84, NULL, 61, NULL, 132, 1, 120, NULL, 2, 3.00, 10.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-06 09:57:26', '2026-01-06 11:51:44'),
-(85, NULL, 70, NULL, 69, 1, NULL, 3, 1, 0.00, 5000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-07 04:30:47', '2026-01-07 07:54:54'),
-(86, NULL, NULL, NULL, 69, 1, NULL, 3, 1, 0.00, 5000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-07 23:00:01', '2026-01-07 23:00:01'),
-(87, NULL, 74, NULL, 132, 1, NULL, 64, 1, 0.00, 4000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-08 13:45:04', '2026-01-08 13:45:55'),
-(88, NULL, 75, NULL, 132, 1, NULL, 64, 1, 0.00, 4000.00, 6777.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-08 16:03:37', '2026-01-08 16:04:35'),
-(89, NULL, 76, NULL, 132, 1, NULL, 65, 1, 0.00, 6000.00, 4000.00, 'primary', 'approved', NULL, 1, '2026-01-08 16:46:41', NULL, NULL, NULL, '2026-01-08 16:03:37', '2026-01-08 16:47:47'),
-(90, NULL, NULL, NULL, 69, 1, NULL, 3, 1, 0.00, 5000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-08 23:17:38', '2026-01-08 23:17:38'),
-(91, NULL, NULL, NULL, 132, 1, 58, NULL, 1, 0.00, 1000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-09 17:47:57', '2026-01-09 17:47:57'),
-(92, NULL, 77, NULL, 132, 1, 58, NULL, 1, 0.00, 1000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-09 19:09:27', '2026-01-11 07:45:27'),
-(93, NULL, NULL, NULL, 69, 1, NULL, 3, 1, 0.00, 5000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-10 05:48:51', '2026-01-10 05:48:51'),
-(94, NULL, NULL, NULL, 69, 1, NULL, 3, 1, 0.00, 5000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-10 23:00:00', '2026-01-10 23:00:00'),
-(95, NULL, NULL, NULL, 69, 1, 67, NULL, 1, 0.00, 15000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-11 00:31:43', '2026-01-11 00:31:43'),
-(96, NULL, NULL, NULL, 69, 1, NULL, 3, 1, 0.00, 5000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-13 05:43:23', '2026-01-13 05:43:23'),
-(97, NULL, NULL, NULL, 132, 1, NULL, 62, 1, 0.00, 4000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-13 17:28:38', '2026-01-13 17:28:38'),
-(99, NULL, NULL, NULL, 132, 1, NULL, 64, 1, 0.00, 4000.00, 6777.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-13 21:23:29', '2026-01-13 21:23:29');
+INSERT INTO `product_or_service_requests` (`id`, `invoice_id`, `payment_id`, `hmo_remittance_id`, `user_id`, `staff_user_id`, `dispensed_from_store_id`, `product_id`, `service_id`, `qty`, `discount`, `payable_amount`, `claims_amount`, `coverage_mode`, `validation_status`, `auth_code`, `validated_by`, `validated_at`, `validation_notes`, `submitted_to_hmo_at`, `hmo_submission_batch`, `created_at`, `updated_at`) VALUES
+(1, 1, NULL, NULL, 2, 12, NULL, NULL, 1, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-03-15 11:03:15', '2023-04-27 14:06:29'),
+(2, 1, NULL, NULL, 2, 12, NULL, NULL, 1, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-03-15 11:26:19', '2023-04-27 14:06:29'),
+(3, 6, 1, NULL, 2, 12, NULL, NULL, 1, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-03-15 11:32:51', '2023-07-08 07:25:50'),
+(4, 6, 1, NULL, 2, 12, NULL, NULL, 1, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-03-15 11:36:24', '2023-07-08 07:25:50'),
+(5, 7, 2, NULL, 2, 12, NULL, NULL, 1, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-03-15 11:38:19', '2023-07-08 07:32:34'),
+(6, 9, 2, NULL, 2, 12, NULL, NULL, 1, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-03-15 17:17:38', '2023-07-08 07:47:58'),
+(7, 16, 19, NULL, 2, 12, NULL, NULL, 1, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-03-15 17:24:32', '2023-07-23 21:23:45'),
+(8, 12, NULL, NULL, 2, 12, NULL, NULL, 1, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-03-15 17:28:42', '2023-07-15 01:41:25'),
+(17, 16, 19, NULL, 2, 12, NULL, 2, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-08 10:29:40', '2023-07-23 21:23:45'),
+(18, 14, 16, NULL, 2, 12, NULL, 4, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-08 10:29:40', '2023-07-15 01:55:34'),
+(19, 12, NULL, NULL, 2, 12, NULL, 4, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-08 10:34:10', '2023-07-15 01:41:25'),
+(24, 14, 16, NULL, 2, 12, NULL, NULL, 1, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-10 08:16:44', '2023-07-15 01:55:34'),
+(25, 10, NULL, NULL, 2, 12, NULL, NULL, 1, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-10 08:16:44', '2023-07-15 01:17:51'),
+(26, 10, NULL, NULL, 2, 12, NULL, NULL, 2, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-10 13:53:29', '2023-07-15 01:17:51'),
+(27, 10, NULL, NULL, 2, 12, NULL, 2, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-10 14:24:35', '2023-07-15 01:17:51'),
+(28, 10, NULL, NULL, 2, 12, NULL, 4, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-10 14:24:35', '2023-07-15 01:17:51'),
+(29, 18, 21, NULL, 2, 12, NULL, NULL, 2, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-17 14:13:14', '2023-07-24 08:33:48'),
+(30, 18, 21, NULL, 2, 12, NULL, 2, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-23 21:04:00', '2023-07-24 08:33:48'),
+(31, NULL, NULL, NULL, 2, 12, NULL, NULL, 3, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-24 06:58:37', '2023-07-24 06:58:37'),
+(32, 26, 30, NULL, 2, 12, NULL, 4, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-25 13:00:40', '2023-08-20 10:51:27'),
+(33, 30, 34, NULL, 2, 12, NULL, 2, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-25 13:00:40', '2023-08-20 11:17:28'),
+(34, 29, 33, NULL, 2, 12, NULL, 2, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-25 13:03:02', '2023-08-20 11:06:01'),
+(35, 28, 32, NULL, 2, 12, NULL, 2, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-25 13:13:49', '2023-08-20 10:59:24'),
+(36, NULL, NULL, NULL, 18, 12, NULL, NULL, 2, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-26 12:06:25', '2023-07-26 12:06:25'),
+(37, NULL, NULL, NULL, 18, 12, NULL, NULL, 2, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-07-26 12:17:00', '2023-07-26 12:17:00'),
+(38, 32, 36, NULL, 2, 12, NULL, NULL, 2, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-02 21:41:58', '2023-08-20 11:37:55'),
+(41, 30, 34, NULL, 2, 12, NULL, NULL, 2, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-02 21:51:28', '2023-08-20 11:17:28'),
+(44, 29, 33, NULL, 2, 12, NULL, NULL, 2, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-02 21:56:51', '2023-08-20 11:06:01'),
+(45, NULL, NULL, NULL, 17, 12, NULL, NULL, 2, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-02 21:56:51', '2023-08-02 21:56:51'),
+(46, 31, 35, NULL, 19, 12, NULL, NULL, 2, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-03 07:12:35', '2023-08-20 11:35:17'),
+(47, 28, 32, NULL, 2, 12, NULL, NULL, 1, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-08 08:02:42', '2023-08-20 10:59:24'),
+(48, 27, 31, NULL, 2, 12, NULL, NULL, 5, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-09 05:29:04', '2023-08-20 10:58:28'),
+(49, NULL, NULL, NULL, 2, 12, NULL, NULL, 3, 12, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-20 12:10:28', '2023-08-20 12:10:28'),
+(50, NULL, NULL, NULL, 2, 12, NULL, NULL, 3, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-20 12:41:40', '2023-08-20 12:41:40'),
+(51, NULL, NULL, NULL, 2, 12, NULL, NULL, 3, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-20 12:43:52', '2023-08-20 12:43:52'),
+(52, NULL, NULL, NULL, 2, 12, NULL, NULL, 3, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-20 12:49:30', '2023-08-20 12:49:30'),
+(53, NULL, 60, NULL, 1742, 12, NULL, NULL, 63, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-22 11:00:07', '2026-01-06 10:25:56'),
+(54, NULL, 66, NULL, 1742, 12, NULL, NULL, 62, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-22 11:02:16', '2026-01-06 19:57:24'),
+(55, NULL, 60, NULL, 1742, 12, NULL, NULL, 51, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-22 13:29:59', '2026-01-06 10:25:56'),
+(56, NULL, 65, NULL, 1742, 12, NULL, 37, NULL, 1, 4.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-22 13:39:37', '2026-01-06 19:26:35'),
+(57, NULL, 58, NULL, 1742, 12, NULL, 39, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-22 13:39:37', '2026-01-06 10:17:17'),
+(58, NULL, 58, NULL, 1742, 12, NULL, 3, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-08-22 13:39:37', '2026-01-06 10:17:17'),
+(59, NULL, 57, NULL, 72, 1, NULL, NULL, 8, 1, 3.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-09-30 08:27:48', '2026-01-06 10:12:57'),
+(60, NULL, NULL, NULL, 69, 1, NULL, 121, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-09-30 08:52:13', '2026-01-06 09:25:43'),
+(61, NULL, 70, NULL, 69, 1, NULL, NULL, 8, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-09-30 08:54:00', '2026-01-07 07:54:54'),
+(62, NULL, 71, NULL, 69, 1, NULL, NULL, 47, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-09-30 08:54:00', '2026-01-07 10:04:14'),
+(63, NULL, 59, NULL, 132, 1, NULL, NULL, 62, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-10-11 10:11:02', '2026-01-06 10:21:48'),
+(64, NULL, 73, NULL, 72, 1, NULL, NULL, 62, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2024-03-19 06:14:28', '2026-01-07 11:38:29'),
+(65, NULL, 48, NULL, 132, 1, NULL, 34, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-14 09:00:09', '2026-01-06 08:47:04'),
+(66, NULL, 55, NULL, 132, 1, NULL, NULL, 62, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-15 13:17:17', '2026-01-06 09:59:00'),
+(67, NULL, 47, NULL, 132, 1, NULL, 123, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-15 22:00:13', '2026-01-06 08:31:29'),
+(68, NULL, 46, NULL, 132, 1, NULL, 111, NULL, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-15 22:00:13', '2026-01-06 07:27:37'),
+(69, NULL, 39, NULL, 731, 1, NULL, 1, NULL, 1, 1.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-12-24 16:13:29', '2025-12-24 16:28:22'),
+(70, NULL, 55, NULL, 132, 1, NULL, NULL, 8, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-03 16:05:42', '2026-01-06 09:59:00'),
+(71, NULL, 56, NULL, 132, 1, NULL, NULL, 64, 1, 2.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-03 16:40:11', '2026-01-06 10:08:22'),
+(72, NULL, 54, NULL, 132, 1, NULL, NULL, 57, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-03 18:51:37', '2026-01-06 09:55:16'),
+(73, NULL, 53, NULL, 132, 1, NULL, NULL, 62, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-03 19:43:45', '2026-01-06 09:53:07'),
+(74, NULL, 49, NULL, 132, 1, NULL, NULL, 62, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-04 09:00:47', '2026-01-06 08:47:50'),
+(75, NULL, 48, NULL, 132, 1, NULL, NULL, 51, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-04 20:10:44', '2026-01-06 08:47:04'),
+(76, NULL, 46, NULL, 132, 1, NULL, NULL, 8, 1, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-05 08:05:14', '2026-01-06 07:27:37'),
+(77, NULL, 45, NULL, 132, 1, NULL, 102, NULL, 1, 0.00, 2500.00, 3000.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-06 05:39:28', '2026-01-06 07:25:27'),
+(78, NULL, 62, NULL, 69, 1, NULL, NULL, 3, 1, 0.00, 5000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-06 06:45:54', '2026-01-06 13:39:20'),
+(79, NULL, 47, NULL, 132, 1, NULL, NULL, 62, 1, 0.00, 4000.00, 0.00, 'primary', 'approved', NULL, 1, '2026-01-06 08:28:43', NULL, NULL, NULL, '2026-01-06 08:25:39', '2026-01-06 08:31:29'),
+(80, NULL, 48, NULL, 132, 1, 2, 111, NULL, 1, 0.00, 2500.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-06 08:38:31', '2026-01-14 14:50:39'),
+(81, NULL, 49, NULL, 132, 1, NULL, 102, NULL, 1, 0.00, 2500.00, 3000.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-06 08:43:17', '2026-01-06 08:47:50'),
+(82, NULL, 53, NULL, 132, 1, 2, 117, NULL, 1, 0.00, 800.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-06 09:16:51', '2026-01-14 14:22:31'),
+(83, NULL, 54, NULL, 132, 1, NULL, 102, NULL, 1, 0.00, 2500.00, 3000.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-06 09:18:10', '2026-01-06 09:55:16'),
+(84, NULL, 61, NULL, 132, 1, 2, 120, NULL, 2, 3.00, 10.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-06 09:57:26', '2026-01-14 14:22:31'),
+(85, NULL, 70, NULL, 69, 1, NULL, NULL, 3, 1, 0.00, 5000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-07 04:30:47', '2026-01-07 07:54:54'),
+(86, NULL, NULL, NULL, 69, 1, NULL, NULL, 3, 1, 0.00, 5000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-07 23:00:01', '2026-01-07 23:00:01'),
+(87, NULL, 74, NULL, 132, 1, NULL, NULL, 64, 1, 0.00, 4000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-08 13:45:04', '2026-01-08 13:45:55'),
+(88, NULL, 75, NULL, 132, 1, NULL, NULL, 64, 1, 0.00, 4000.00, 6777.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-08 16:03:37', '2026-01-08 16:04:35'),
+(89, NULL, 76, NULL, 132, 1, NULL, NULL, 65, 1, 0.00, 6000.00, 4000.00, 'primary', 'approved', NULL, 1, '2026-01-08 16:46:41', NULL, NULL, NULL, '2026-01-08 16:03:37', '2026-01-08 16:47:47'),
+(90, NULL, NULL, NULL, 69, 1, NULL, NULL, 3, 1, 0.00, 5000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-08 23:17:38', '2026-01-08 23:17:38'),
+(91, NULL, NULL, NULL, 132, 1, NULL, 58, NULL, 1, 0.00, 1000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-09 17:47:57', '2026-01-09 17:47:57'),
+(92, NULL, 77, NULL, 132, 1, NULL, 58, NULL, 1, 0.00, 1000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-09 19:09:27', '2026-01-11 07:45:27'),
+(93, NULL, NULL, NULL, 69, 1, NULL, NULL, 3, 1, 0.00, 5000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-10 05:48:51', '2026-01-10 05:48:51'),
+(94, NULL, NULL, NULL, 69, 1, NULL, NULL, 3, 1, 0.00, 5000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-10 23:00:00', '2026-01-10 23:00:00'),
+(95, NULL, NULL, NULL, 69, 1, NULL, 67, NULL, 1, 0.00, 15000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-11 00:31:43', '2026-01-11 00:31:43'),
+(96, NULL, NULL, NULL, 69, 1, NULL, NULL, 3, 1, 0.00, 5000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-13 05:43:23', '2026-01-13 05:43:23'),
+(97, NULL, NULL, NULL, 132, 1, NULL, NULL, 62, 1, 0.00, 4000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-13 17:28:38', '2026-01-13 17:28:38'),
+(99, NULL, NULL, NULL, 132, 1, NULL, NULL, 64, 1, 0.00, 4000.00, 6777.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-13 21:23:29', '2026-01-13 21:23:29'),
+(100, NULL, NULL, NULL, 69, 1, NULL, NULL, 3, 1, 0.00, 5000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-13 23:00:00', '2026-01-13 23:00:00'),
+(101, NULL, NULL, NULL, 132, 1, NULL, 79, NULL, 1, 0.00, 4000.00, 0.00, 'primary', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-14 01:33:39', '2026-01-14 01:33:39'),
+(102, NULL, 80, NULL, 132, 1, NULL, 68, NULL, 1, 0.00, 15500.00, 0.00, 'primary', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-14 01:37:14', '2026-01-14 17:11:43'),
+(103, NULL, 78, NULL, 132, 1, 2, 59, NULL, 1, 0.00, 550.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-14 12:13:30', '2026-01-14 14:22:31'),
+(104, NULL, NULL, NULL, 69, 1, 2, 58, NULL, 1, 0.00, 1000.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-14 14:00:32', '2026-01-14 14:00:32'),
+(105, NULL, NULL, NULL, 69, 1, 2, 2, NULL, 1, 0.00, 1500.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-14 14:17:56', '2026-01-14 14:17:56'),
+(109, NULL, NULL, NULL, 69, 1, NULL, 2, NULL, 1, 0.00, 1500.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-14 14:29:30', '2026-01-14 14:29:30'),
+(110, NULL, 79, NULL, 132, 1, NULL, 2, NULL, 1, 0.00, 1500.00, 0.00, 'primary', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-14 16:09:56', '2026-01-14 16:10:59');
 
 -- --------------------------------------------------------
 
@@ -10945,12 +11123,14 @@ CREATE TABLE `product_requests` (
   `billed_by` bigint(20) UNSIGNED DEFAULT NULL,
   `dispensed_by` bigint(20) UNSIGNED DEFAULT NULL,
   `dispense_date` timestamp NULL DEFAULT NULL,
+  `dispensed_from_store_id` bigint(20) UNSIGNED DEFAULT NULL,
   `billed_date` timestamp NULL DEFAULT NULL,
   `product_id` bigint(20) UNSIGNED NOT NULL,
   `encounter_id` bigint(20) UNSIGNED DEFAULT NULL,
   `patient_id` bigint(20) UNSIGNED NOT NULL,
   `doctor_id` bigint(20) UNSIGNED DEFAULT NULL,
   `dose` text DEFAULT NULL,
+  `qty` int(11) NOT NULL DEFAULT 1,
   `status` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
@@ -10964,23 +11144,28 @@ CREATE TABLE `product_requests` (
 -- Dumping data for table `product_requests`
 --
 
-INSERT INTO `product_requests` (`id`, `product_request_id`, `billed_by`, `dispensed_by`, `dispense_date`, `billed_date`, `product_id`, `encounter_id`, `patient_id`, `doctor_id`, `dose`, `status`, `created_at`, `updated_at`, `old_medical_report_id`, `deleted_at`, `deleted_by`, `deletion_reason`) VALUES
-(78, NULL, NULL, NULL, NULL, NULL, 34, 203, 3, 1, '7/7', 1, '2023-08-31 07:27:26', '2023-08-31 07:27:26', NULL, NULL, NULL, NULL),
-(79, NULL, NULL, NULL, NULL, NULL, 56, 204, 3, 1, 'tht', 1, '2023-08-31 10:27:56', '2023-08-31 10:27:56', NULL, NULL, NULL, NULL),
-(80, 60, 1, 1, '2023-09-30 08:52:56', '2023-09-30 08:52:13', 121, 207, 1, 1, '1bd', 3, '2023-09-30 08:50:43', '2023-09-30 08:52:56', NULL, NULL, NULL, NULL),
-(81, 65, 1, NULL, NULL, '2025-07-14 09:00:09', 34, NULL, 24, 1, '500mg TID 3days', 2, '2025-07-14 09:00:09', '2025-07-14 09:00:09', NULL, NULL, NULL, NULL),
-(82, 67, 1, NULL, NULL, '2025-07-15 22:00:13', 123, 209, 24, 1, '500mg TID 3days', 2, '2025-07-15 13:59:08', '2025-07-15 22:00:13', NULL, NULL, NULL, NULL),
-(83, 68, 1, NULL, NULL, '2025-07-15 22:00:13', 111, 209, 24, 1, '500mg TID 3days', 2, '2025-07-15 13:59:08', '2025-07-15 22:00:13', NULL, NULL, NULL, NULL),
-(84, 69, 1, NULL, NULL, '2025-12-24 16:13:29', 1, NULL, 512, 1, '500mg TID 3days', 2, '2025-12-24 16:13:29', '2025-12-24 16:13:29', NULL, NULL, NULL, NULL),
-(90, NULL, NULL, NULL, NULL, NULL, 81, 210, 24, 1, '500mg TID 3days', 1, '2026-01-03 21:02:32', '2026-01-03 22:17:37', NULL, '2026-01-03 22:17:37', 1, 'Patient declined'),
-(91, NULL, NULL, NULL, NULL, NULL, 111, 212, 24, 1, '70mg TID 2days', 1, '2026-01-04 03:58:36', '2026-01-04 03:58:36', NULL, NULL, NULL, NULL),
-(92, NULL, NULL, NULL, NULL, NULL, 123, 213, 24, 1, '70mg TID 2days', 1, '2026-01-04 04:11:58', '2026-01-04 04:11:58', NULL, NULL, NULL, NULL),
-(93, 77, 1, NULL, NULL, '2026-01-06 05:39:28', 102, NULL, 24, 1, 'ggg', 2, '2026-01-06 05:39:28', '2026-01-06 05:39:28', NULL, NULL, NULL, NULL),
-(94, 80, 1, NULL, NULL, '2026-01-06 08:38:31', 111, NULL, 24, 1, 'thahga', 2, '2026-01-06 08:38:31', '2026-01-06 08:38:31', NULL, NULL, NULL, NULL),
-(95, 81, 1, NULL, NULL, '2026-01-06 08:43:17', 102, NULL, 24, 1, 'hasd', 2, '2026-01-06 08:43:17', '2026-01-06 08:43:17', NULL, NULL, NULL, NULL),
-(96, 82, 1, NULL, NULL, '2026-01-06 09:16:51', 117, NULL, 24, 1, 'hhdd', 2, '2026-01-06 09:16:51', '2026-01-06 09:16:51', NULL, NULL, NULL, NULL),
-(97, 83, 1, NULL, NULL, '2026-01-06 09:18:10', 102, NULL, 24, 1, 'hshs', 2, '2026-01-06 09:18:10', '2026-01-06 09:18:10', NULL, NULL, NULL, NULL),
-(98, 84, 1, NULL, NULL, '2026-01-06 09:57:26', 120, NULL, 24, 1, 'sgs', 2, '2026-01-06 09:57:26', '2026-01-06 09:57:26', NULL, NULL, NULL, NULL);
+INSERT INTO `product_requests` (`id`, `product_request_id`, `billed_by`, `dispensed_by`, `dispense_date`, `dispensed_from_store_id`, `billed_date`, `product_id`, `encounter_id`, `patient_id`, `doctor_id`, `dose`, `qty`, `status`, `created_at`, `updated_at`, `old_medical_report_id`, `deleted_at`, `deleted_by`, `deletion_reason`) VALUES
+(78, NULL, NULL, NULL, NULL, NULL, NULL, 34, 203, 3, 1, '7/7', 1, 1, '2023-08-31 07:27:26', '2023-08-31 07:27:26', NULL, NULL, NULL, NULL),
+(79, NULL, NULL, NULL, NULL, NULL, NULL, 56, 204, 3, 1, 'tht', 1, 1, '2023-08-31 10:27:56', '2023-08-31 10:27:56', NULL, NULL, NULL, NULL),
+(80, 60, 1, 1, '2023-09-30 08:52:56', NULL, '2023-09-30 08:52:13', 121, 207, 1, 1, '1bd', 1, 3, '2023-09-30 08:50:43', '2023-09-30 08:52:56', NULL, NULL, NULL, NULL),
+(81, 65, 1, NULL, NULL, NULL, '2025-07-14 09:00:09', 34, NULL, 24, 1, '500mg TID 3days', 1, 2, '2025-07-14 09:00:09', '2025-07-14 09:00:09', NULL, NULL, NULL, NULL),
+(82, 67, 1, NULL, NULL, NULL, '2025-07-15 22:00:13', 123, 209, 24, 1, '500mg TID 3days', 1, 2, '2025-07-15 13:59:08', '2025-07-15 22:00:13', NULL, NULL, NULL, NULL),
+(83, 68, 1, NULL, NULL, NULL, '2025-07-15 22:00:13', 111, 209, 24, 1, '500mg TID 3days', 1, 2, '2025-07-15 13:59:08', '2025-07-15 22:00:13', NULL, NULL, NULL, NULL),
+(84, 69, 1, NULL, NULL, NULL, '2025-12-24 16:13:29', 1, NULL, 512, 1, '500mg TID 3days', 1, 2, '2025-12-24 16:13:29', '2025-12-24 16:13:29', NULL, NULL, NULL, NULL),
+(90, NULL, NULL, NULL, NULL, NULL, NULL, 81, 210, 24, 1, '500mg TID 3days', 1, 1, '2026-01-03 21:02:32', '2026-01-03 22:17:37', NULL, '2026-01-03 22:17:37', 1, 'Patient declined'),
+(91, NULL, NULL, 1, '2026-01-14 09:16:03', NULL, NULL, 111, 212, 24, 1, '70mg TID 2days', 1, 3, '2026-01-04 03:58:36', '2026-01-14 09:16:03', NULL, NULL, NULL, NULL),
+(92, NULL, NULL, NULL, NULL, NULL, NULL, 123, 213, 24, 1, '70mg TID 2days', 1, 2, '2026-01-04 04:11:58', '2026-01-14 01:05:48', NULL, NULL, NULL, NULL),
+(93, 77, 1, NULL, NULL, NULL, '2026-01-06 05:39:28', 102, NULL, 24, 1, 'ggg', 1, 2, '2026-01-06 05:39:28', '2026-01-06 05:39:28', NULL, NULL, NULL, NULL),
+(94, 80, 1, 1, '2026-01-14 14:50:39', 2, '2026-01-06 08:38:31', 111, NULL, 24, 1, 'thahga', 1, 3, '2026-01-06 08:38:31', '2026-01-14 14:50:39', NULL, NULL, NULL, NULL),
+(95, 81, 1, NULL, NULL, NULL, '2026-01-06 08:43:17', 102, NULL, 24, 1, 'hasd', 1, 2, '2026-01-06 08:43:17', '2026-01-06 08:43:17', NULL, NULL, NULL, NULL),
+(96, 82, 1, 1, '2026-01-14 14:22:31', 2, '2026-01-06 09:16:51', 117, NULL, 24, 1, 'hhdd', 1, 3, '2026-01-06 09:16:51', '2026-01-14 14:22:31', NULL, NULL, NULL, NULL),
+(97, 83, 1, NULL, NULL, NULL, '2026-01-06 09:18:10', 102, NULL, 24, 1, 'hshs', 1, 2, '2026-01-06 09:18:10', '2026-01-06 09:18:10', NULL, NULL, NULL, NULL),
+(98, 84, 1, 1, '2026-01-14 14:22:31', 2, '2026-01-06 09:57:26', 120, NULL, 24, 1, 'sgs', 1, 3, '2026-01-06 09:57:26', '2026-01-14 14:22:31', NULL, NULL, NULL, NULL),
+(102, NULL, NULL, NULL, NULL, NULL, NULL, 79, NULL, 24, 1, NULL, 1, 1, '2026-01-14 01:33:39', '2026-01-14 01:33:39', NULL, NULL, NULL, NULL),
+(103, NULL, NULL, 1, '2026-01-14 09:16:03', NULL, NULL, 68, NULL, 24, 1, '700 mg 3 days', 1, 3, '2026-01-14 01:37:14', '2026-01-14 09:16:03', NULL, NULL, NULL, NULL),
+(104, 103, 1, 1, '2026-01-14 14:22:31', 2, '2026-01-14 12:13:30', 59, 222, 24, 1, '', 1, 3, '2026-01-14 08:41:00', '2026-01-14 14:22:31', NULL, NULL, NULL, NULL),
+(105, NULL, NULL, NULL, NULL, NULL, NULL, 7, NULL, 24, 1, '87', 1, 1, '2026-01-14 12:17:08', '2026-01-14 12:17:08', NULL, NULL, NULL, NULL),
+(106, 110, 1, NULL, NULL, NULL, '2026-01-14 16:09:56', 2, NULL, 24, 1, '64', 1, 2, '2026-01-14 16:09:24', '2026-01-14 16:09:56', NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -23638,7 +23823,8 @@ CREATE TABLE `shift_handovers` (
 INSERT INTO `shift_handovers` (`id`, `shift_id`, `created_by`, `received_by`, `ward_id`, `shift_type`, `shift_started_at`, `shift_ended_at`, `summary`, `critical_notes`, `concluding_notes`, `pending_tasks`, `patient_highlights`, `action_summary`, `audit_details`, `acknowledged_at`, `acknowledged_by`, `acknowledgment_notes`, `created_at`, `updated_at`) VALUES
 (1, 1, 1, NULL, NULL, 'night', '2026-01-11 00:30:58', '2026-01-11 01:04:39', '<p><strong>Patients Attended:</strong> 1 patient(s)</p><ul><li>Uwalaka Martha   (File No: 9426)</li></ul><p><strong>Activities:</strong></p><ul><li><strong>Vital Signs</strong>: 1 created</li></ul>', 'thjerherh', 'hrjhwrjhw', '[{\"description\":\"jfhwjf\",\"priority\":\"normal\"},{\"description\":\"fhwhfwhf\",\"priority\":\"normal\"}]', '[{\"patient_id\":\"24\",\"patient_name\":\"Uwalaka Martha  \",\"patient_no\":\"9426\",\"activities\":[{\"type\":\"Vital Signs\",\"icon\":\"mdi-heart-pulse\",\"color\":\"danger\",\"event\":\"created\",\"time\":\"00:36\",\"time_ago\":\"28 minutes ago\"}],\"activity_counts\":{\"Vital Signs\":1},\"total_events\":1}]', '{\"App\\\\Models\\\\VitalSign\":{\"label\":\"Vital Signs\",\"icon\":\"mdi-heart-pulse\",\"color\":\"danger\",\"count\":1,\"events\":{\"created\":1,\"updated\":0,\"deleted\":0},\"patients\":[{\"name\":\"Uwalaka Martha  \",\"patient_no\":\"9426\"}]}}', NULL, '2026-01-11 01:27:09', 1, NULL, '2026-01-11 00:04:39', '2026-01-11 00:27:09'),
 (2, 2, 1, NULL, NULL, 'night', '2026-01-11 01:27:32', '2026-01-11 01:53:01', '<p><strong>Patients Attended:</strong> 1 patient(s)</p><ul><li>ALIAS NON-REGISTERED PATIENTS</li></ul><p><strong>Activity Summary:</strong></p><ul><li><strong>Billing</strong>: 1 created</li><li><strong>Injections</strong>: 1 created</li></ul><p><strong>Key Changes:</strong></p><div class=\'key-changes-list\'><div class=\'patient-changes mb-2\'><strong class=\'text-primary\'>Unknown Patient</strong><ul class=\'mb-1\'><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Product Id: 67</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Quantity: 1</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Amount: 15000.00</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Claims Amount: 0.00</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Coverage Mode: primary</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Validation Status: pending</li></ul></div><div class=\'patient-changes mb-2\'><strong class=\'text-primary\'>ALIAS NON-REGISTERED PATIENTS</strong><ul class=\'mb-1\'><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Injections</em>: Patient Id: 1</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Injections</em>: Product Id: 67</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Injections</em>: Product Or Service Request Id: 95</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Injections</em>: Dose: 700mg</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Injections</em>: Route: IM</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Injections</em>: Site: Right Arm</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Injections</em>: Administered At: Jan 11, 2026 1:31 AM</li><li><small class=\'text-muted\'>[01:31]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Injections</em>: Administered By: 1</li></ul></div></div>', 'tetst', 'hasdasdaks', '[{\"description\":\"tastk1\",\"priority\":\"normal\"},{\"description\":\"task 2\",\"priority\":\"normal\"}]', '[{\"patient_id\":1,\"patient_name\":\"ALIAS NON-REGISTERED PATIENTS\",\"patient_no\":\"\",\"activities\":[{\"type\":\"Injections\",\"icon\":\"mdi-needle\",\"color\":\"info\",\"event\":\"created\",\"time\":\"01:31\",\"time_ago\":\"21 minutes ago\"}],\"activity_counts\":{\"Injections\":1},\"total_events\":1}]', '{\"App\\\\Models\\\\ProductOrServiceRequest\":{\"label\":\"Billing\",\"icon\":\"mdi-receipt\",\"color\":\"secondary\",\"count\":1,\"events\":{\"created\":1,\"updated\":0,\"deleted\":0},\"patients\":[]},\"App\\\\Models\\\\InjectionAdministration\":{\"label\":\"Injections\",\"icon\":\"mdi-needle\",\"color\":\"info\",\"count\":1,\"events\":{\"created\":1,\"updated\":0,\"deleted\":0},\"patients\":[{\"name\":\"ALIAS NON-REGISTERED PATIENTS\",\"patient_no\":\"\"}]}}', '[{\"category\":\"Billing\",\"icon\":\"mdi-receipt\",\"color\":\"secondary\",\"event\":\"created\",\"patient_id\":null,\"patient_name\":null,\"patient_no\":null,\"changes\":[{\"field\":\"product_id\",\"label\":\"Product Id\",\"type\":\"created\",\"value\":\"67\"},{\"field\":\"qty\",\"label\":\"Quantity\",\"type\":\"created\",\"value\":\"1\"},{\"field\":\"payable_amount\",\"label\":\"Amount\",\"type\":\"created\",\"value\":\"15000.00\"},{\"field\":\"claims_amount\",\"label\":\"Claims Amount\",\"type\":\"created\",\"value\":\"0.00\"},{\"field\":\"coverage_mode\",\"label\":\"Coverage Mode\",\"type\":\"created\",\"value\":\"primary\"},{\"field\":\"validation_status\",\"label\":\"Validation Status\",\"type\":\"created\",\"value\":\"pending\"}],\"time\":\"01:31\",\"time_full\":\"Jan 11, 2026 1:31 AM\",\"time_ago\":\"21 minutes ago\"},{\"category\":\"Injections\",\"icon\":\"mdi-needle\",\"color\":\"info\",\"event\":\"created\",\"patient_id\":1,\"patient_name\":\"ALIAS NON-REGISTERED PATIENTS\",\"patient_no\":\"\",\"changes\":[{\"field\":\"patient_id\",\"label\":\"Patient Id\",\"type\":\"created\",\"value\":\"1\"},{\"field\":\"product_id\",\"label\":\"Product Id\",\"type\":\"created\",\"value\":\"67\"},{\"field\":\"product_or_service_request_id\",\"label\":\"Product Or Service Request Id\",\"type\":\"created\",\"value\":\"95\"},{\"field\":\"dose\",\"label\":\"Dose\",\"type\":\"created\",\"value\":\"700mg\"},{\"field\":\"route\",\"label\":\"Route\",\"type\":\"created\",\"value\":\"IM\"},{\"field\":\"site\",\"label\":\"Site\",\"type\":\"created\",\"value\":\"Right Arm\"},{\"field\":\"administered_at\",\"label\":\"Administered At\",\"type\":\"created\",\"value\":\"Jan 11, 2026 1:31 AM\"},{\"field\":\"administered_by\",\"label\":\"Administered By\",\"type\":\"created\",\"value\":\"1\"}],\"time\":\"01:31\",\"time_full\":\"Jan 11, 2026 1:31 AM\",\"time_ago\":\"21 minutes ago\"}]', '2026-01-11 01:53:41', 1, NULL, '2026-01-11 00:53:01', '2026-01-11 00:53:41'),
-(3, 3, 1, NULL, NULL, 'night', '2026-01-11 01:53:59', '2026-01-13 06:52:43', '<p><strong>Activity Summary:</strong></p><ul><li><strong>Billing</strong>: 1 updated</li></ul><p><strong>Key Changes:</strong></p><div class=\'key-changes-list\'><div class=\'patient-changes mb-2\'><strong class=\'text-primary\'>Unknown Patient</strong><ul class=\'mb-1\'><li><small class=\'text-muted\'>[08:45]</small> <span class=\"badge badge-warning badge-sm\">Updated</span> <em>Billing</em>: Discount: 0.00 → 0</li></ul></div></div>', NULL, NULL, '[]', '[]', '{\"App\\\\Models\\\\ProductOrServiceRequest\":{\"label\":\"Billing\",\"icon\":\"mdi-receipt\",\"color\":\"secondary\",\"count\":1,\"events\":{\"created\":0,\"updated\":1,\"deleted\":0},\"patients\":[]}}', '[{\"category\":\"Billing\",\"icon\":\"mdi-receipt\",\"color\":\"secondary\",\"event\":\"updated\",\"patient_id\":null,\"patient_name\":null,\"patient_no\":null,\"changes\":[{\"field\":\"discount\",\"label\":\"Discount\",\"type\":\"changed\",\"old\":\"0.00\",\"new\":\"0\"}],\"time\":\"08:45\",\"time_full\":\"Jan 11, 2026 8:45 AM\",\"time_ago\":\"1 day ago\"}]', '2026-01-13 09:26:09', 1, NULL, '2026-01-13 05:52:43', '2026-01-13 08:26:09');
+(3, 3, 1, NULL, NULL, 'night', '2026-01-11 01:53:59', '2026-01-13 06:52:43', '<p><strong>Activity Summary:</strong></p><ul><li><strong>Billing</strong>: 1 updated</li></ul><p><strong>Key Changes:</strong></p><div class=\'key-changes-list\'><div class=\'patient-changes mb-2\'><strong class=\'text-primary\'>Unknown Patient</strong><ul class=\'mb-1\'><li><small class=\'text-muted\'>[08:45]</small> <span class=\"badge badge-warning badge-sm\">Updated</span> <em>Billing</em>: Discount: 0.00 → 0</li></ul></div></div>', NULL, NULL, '[]', '[]', '{\"App\\\\Models\\\\ProductOrServiceRequest\":{\"label\":\"Billing\",\"icon\":\"mdi-receipt\",\"color\":\"secondary\",\"count\":1,\"events\":{\"created\":0,\"updated\":1,\"deleted\":0},\"patients\":[]}}', '[{\"category\":\"Billing\",\"icon\":\"mdi-receipt\",\"color\":\"secondary\",\"event\":\"updated\",\"patient_id\":null,\"patient_name\":null,\"patient_no\":null,\"changes\":[{\"field\":\"discount\",\"label\":\"Discount\",\"type\":\"changed\",\"old\":\"0.00\",\"new\":\"0\"}],\"time\":\"08:45\",\"time_full\":\"Jan 11, 2026 8:45 AM\",\"time_ago\":\"1 day ago\"}]', '2026-01-13 09:26:09', 1, NULL, '2026-01-13 05:52:43', '2026-01-13 08:26:09'),
+(4, 4, 1, NULL, NULL, 'morning', '2026-01-13 06:53:35', '2026-01-14 14:59:17', '<p><strong>Activity Summary:</strong></p><ul><li><strong>Billing</strong>: 6 created, 1 updated, 1 deleted</li></ul><p><strong>Key Changes:</strong></p><div class=\'key-changes-list\'><div class=\'patient-changes mb-2\'><strong class=\'text-primary\'>Unknown Patient</strong><ul class=\'mb-1\'><li><small class=\'text-muted\'>[13:14]</small> <span class=\"badge badge-warning badge-sm\">Updated</span> <em>Billing</em>: Discount: 0.00 → 0</li><li><small class=\'text-muted\'>[13:13]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Product Id: 59</li><li><small class=\'text-muted\'>[13:13]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Amount: 550.00</li><li><small class=\'text-muted\'>[13:13]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Claims Amount: 0.00</li><li><small class=\'text-muted\'>[13:13]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Coverage Mode: primary</li><li><small class=\'text-muted\'>[13:13]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Validation Status: pending</li><li><small class=\'text-muted\'>[02:37]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Product Id: 68</li><li><small class=\'text-muted\'>[02:37]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Quantity: 1</li><li><small class=\'text-muted\'>[02:37]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Amount: 15500.00</li><li><small class=\'text-muted\'>[02:37]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Claims Amount: 0.00</li><li><small class=\'text-muted\'>[02:37]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Coverage Mode: primary</li><li><small class=\'text-muted\'>[02:33]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Product Id: 79</li><li><small class=\'text-muted\'>[02:33]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Quantity: 1</li><li><small class=\'text-muted\'>[02:33]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Amount: 4000.00</li><li><small class=\'text-muted\'>[02:33]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Claims Amount: 0.00</li><li><small class=\'text-muted\'>[02:33]</small> <span class=\"badge badge-success badge-sm\">New</span> <em>Billing</em>: Coverage Mode: primary</li><li><small class=\'text-muted\'>[23:46]</small> <span class=\"badge badge-danger badge-sm\">Deleted</span> <em>Billing</em>: Service Id: 57 (removed)</li><li><small class=\'text-muted\'>[23:46]</small> <span class=\"badge badge-danger badge-sm\">Deleted</span> <em>Billing</em>: Quantity: 1 (removed)</li><li><small class=\'text-muted\'>[23:46]</small> <span class=\"badge badge-danger badge-sm\">Deleted</span> <em>Billing</em>: Discount: 0.00 (removed)</li><li><small class=\'text-muted\'>[23:46]</small> <span class=\"badge badge-danger badge-sm\">Deleted</span> <em>Billing</em>: Amount: 5000.00 (removed)</li></ul></div></div>', NULL, NULL, '[]', '[]', '{\"App\\\\Models\\\\ProductOrServiceRequest\":{\"label\":\"Billing\",\"icon\":\"mdi-receipt\",\"color\":\"secondary\",\"count\":8,\"events\":{\"created\":6,\"updated\":1,\"deleted\":1},\"patients\":[]}}', '[{\"category\":\"Billing\",\"icon\":\"mdi-receipt\",\"color\":\"secondary\",\"event\":\"updated\",\"patient_id\":null,\"patient_name\":null,\"patient_no\":null,\"changes\":[{\"field\":\"discount\",\"label\":\"Discount\",\"type\":\"changed\",\"old\":\"0.00\",\"new\":\"0\"}],\"time\":\"13:14\",\"time_full\":\"Jan 14, 2026 1:14 PM\",\"time_ago\":\"1 hour ago\"},{\"category\":\"Billing\",\"icon\":\"mdi-receipt\",\"color\":\"secondary\",\"event\":\"created\",\"patient_id\":null,\"patient_name\":null,\"patient_no\":null,\"changes\":[{\"field\":\"product_id\",\"label\":\"Product Id\",\"type\":\"created\",\"value\":\"59\"},{\"field\":\"payable_amount\",\"label\":\"Amount\",\"type\":\"created\",\"value\":\"550.00\"},{\"field\":\"claims_amount\",\"label\":\"Claims Amount\",\"type\":\"created\",\"value\":\"0.00\"},{\"field\":\"coverage_mode\",\"label\":\"Coverage Mode\",\"type\":\"created\",\"value\":\"primary\"},{\"field\":\"validation_status\",\"label\":\"Validation Status\",\"type\":\"created\",\"value\":\"pending\"}],\"time\":\"13:13\",\"time_full\":\"Jan 14, 2026 1:13 PM\",\"time_ago\":\"1 hour ago\"},{\"category\":\"Billing\",\"icon\":\"mdi-receipt\",\"color\":\"secondary\",\"event\":\"created\",\"patient_id\":null,\"patient_name\":null,\"patient_no\":null,\"changes\":[{\"field\":\"product_id\",\"label\":\"Product Id\",\"type\":\"created\",\"value\":\"68\"},{\"field\":\"qty\",\"label\":\"Quantity\",\"type\":\"created\",\"value\":\"1\"},{\"field\":\"payable_amount\",\"label\":\"Amount\",\"type\":\"created\",\"value\":\"15500.00\"},{\"field\":\"claims_amount\",\"label\":\"Claims Amount\",\"type\":\"created\",\"value\":\"0.00\"},{\"field\":\"coverage_mode\",\"label\":\"Coverage Mode\",\"type\":\"created\",\"value\":\"primary\"}],\"time\":\"02:37\",\"time_full\":\"Jan 14, 2026 2:37 AM\",\"time_ago\":\"12 hours ago\"},{\"category\":\"Billing\",\"icon\":\"mdi-receipt\",\"color\":\"secondary\",\"event\":\"created\",\"patient_id\":null,\"patient_name\":null,\"patient_no\":null,\"changes\":[{\"field\":\"product_id\",\"label\":\"Product Id\",\"type\":\"created\",\"value\":\"79\"},{\"field\":\"qty\",\"label\":\"Quantity\",\"type\":\"created\",\"value\":\"1\"},{\"field\":\"payable_amount\",\"label\":\"Amount\",\"type\":\"created\",\"value\":\"4000.00\"},{\"field\":\"claims_amount\",\"label\":\"Claims Amount\",\"type\":\"created\",\"value\":\"0.00\"},{\"field\":\"coverage_mode\",\"label\":\"Coverage Mode\",\"type\":\"created\",\"value\":\"primary\"}],\"time\":\"02:33\",\"time_full\":\"Jan 14, 2026 2:33 AM\",\"time_ago\":\"12 hours ago\"},{\"category\":\"Billing\",\"icon\":\"mdi-receipt\",\"color\":\"secondary\",\"event\":\"deleted\",\"patient_id\":null,\"patient_name\":null,\"patient_no\":null,\"changes\":[{\"field\":\"service_id\",\"label\":\"Service Id\",\"type\":\"deleted\",\"value\":\"57\"},{\"field\":\"qty\",\"label\":\"Quantity\",\"type\":\"deleted\",\"value\":\"1\"},{\"field\":\"discount\",\"label\":\"Discount\",\"type\":\"deleted\",\"value\":\"0.00\"},{\"field\":\"payable_amount\",\"label\":\"Amount\",\"type\":\"deleted\",\"value\":\"5000.00\"},{\"field\":\"claims_amount\",\"label\":\"Claims Amount\",\"type\":\"deleted\",\"value\":\"0.00\"},{\"field\":\"coverage_mode\",\"label\":\"Coverage Mode\",\"type\":\"deleted\",\"value\":\"primary\"},{\"field\":\"validation_status\",\"label\":\"Validation Status\",\"type\":\"deleted\",\"value\":\"pending\"}],\"time\":\"23:46\",\"time_full\":\"Jan 13, 2026 11:46 PM\",\"time_ago\":\"15 hours ago\"},{\"category\":\"Billing\",\"icon\":\"mdi-receipt\",\"color\":\"secondary\",\"event\":\"created\",\"patient_id\":null,\"patient_name\":null,\"patient_no\":null,\"changes\":[{\"field\":\"service_id\",\"label\":\"Service Id\",\"type\":\"created\",\"value\":\"57\"},{\"field\":\"qty\",\"label\":\"Quantity\",\"type\":\"created\",\"value\":\"1\"},{\"field\":\"payable_amount\",\"label\":\"Amount\",\"type\":\"created\",\"value\":\"5000\"},{\"field\":\"claims_amount\",\"label\":\"Claims Amount\",\"type\":\"created\",\"value\":\"0\"},{\"field\":\"coverage_mode\",\"label\":\"Coverage Mode\",\"type\":\"created\",\"value\":\"primary\"},{\"field\":\"validation_status\",\"label\":\"Validation Status\",\"type\":\"created\",\"value\":\"pending\"}],\"time\":\"22:23\",\"time_full\":\"Jan 13, 2026 10:23 PM\",\"time_ago\":\"16 hours ago\"},{\"category\":\"Billing\",\"icon\":\"mdi-receipt\",\"color\":\"secondary\",\"event\":\"created\",\"patient_id\":null,\"patient_name\":null,\"patient_no\":null,\"changes\":[{\"field\":\"service_id\",\"label\":\"Service Id\",\"type\":\"created\",\"value\":\"64\"},{\"field\":\"qty\",\"label\":\"Quantity\",\"type\":\"created\",\"value\":\"1\"},{\"field\":\"payable_amount\",\"label\":\"Amount\",\"type\":\"created\",\"value\":\"4000\"},{\"field\":\"claims_amount\",\"label\":\"Claims Amount\",\"type\":\"created\",\"value\":\"6777\"},{\"field\":\"coverage_mode\",\"label\":\"Coverage Mode\",\"type\":\"created\",\"value\":\"primary\"},{\"field\":\"validation_status\",\"label\":\"Validation Status\",\"type\":\"created\",\"value\":\"pending\"}],\"time\":\"22:23\",\"time_full\":\"Jan 13, 2026 10:23 PM\",\"time_ago\":\"16 hours ago\"},{\"category\":\"Billing\",\"icon\":\"mdi-receipt\",\"color\":\"secondary\",\"event\":\"created\",\"patient_id\":null,\"patient_name\":null,\"patient_no\":null,\"changes\":[{\"field\":\"service_id\",\"label\":\"Service Id\",\"type\":\"created\",\"value\":\"62\"},{\"field\":\"payable_amount\",\"label\":\"Amount\",\"type\":\"created\",\"value\":\"4000.00\"},{\"field\":\"claims_amount\",\"label\":\"Claims Amount\",\"type\":\"created\",\"value\":\"0.00\"},{\"field\":\"coverage_mode\",\"label\":\"Coverage Mode\",\"type\":\"created\",\"value\":\"primary\"},{\"field\":\"validation_status\",\"label\":\"Validation Status\",\"type\":\"created\",\"value\":\"pending\"}],\"time\":\"18:28\",\"time_full\":\"Jan 13, 2026 6:28 PM\",\"time_ago\":\"20 hours ago\"}]', NULL, NULL, NULL, '2026-01-14 13:59:17', '2026-01-14 13:59:17');
 
 -- --------------------------------------------------------
 
@@ -23785,7 +23971,7 @@ CREATE TABLE `stocks` (
 INSERT INTO `stocks` (`id`, `product_id`, `initial_quantity`, `order_quantity`, `current_quantity`, `quantity_sale`, `created_at`, `updated_at`, `old_stock_id`) VALUES
 (1, 0, 0, 0, 0, 0, NULL, NULL, 1),
 (2, 1, 0, 25, 21, 3, NULL, '2025-12-24 16:13:29', 2),
-(3, 2, 0, 122, 118, 4, NULL, NULL, 3),
+(3, 2, 0, 122, 116, 5, NULL, '2026-01-14 16:09:56', 3),
 (4, 0, 0, 0, 0, 0, NULL, NULL, 4),
 (5, 0, 0, 0, 0, 0, NULL, NULL, 5),
 (6, 3, 0, 20, 20, 0, NULL, NULL, 6),
@@ -23886,8 +24072,8 @@ INSERT INTO `stocks` (`id`, `product_id`, `initial_quantity`, `order_quantity`, 
 (101, 0, 0, 0, 0, 0, NULL, NULL, 101),
 (102, 56, 0, 20, 20, 0, NULL, NULL, 102),
 (103, 57, 20, 70, 80, 10, NULL, NULL, 103),
-(104, 58, 76, 30, 104, 4, NULL, NULL, 104),
-(105, 59, 0, 45, 45, 0, NULL, NULL, 105),
+(104, 58, 76, 30, 103, 5, NULL, '2026-01-14 14:00:32', 104),
+(105, 59, 0, 45, 43, 1, NULL, '2026-01-14 14:22:31', 105),
 (106, 60, 0, 20, 20, 0, NULL, NULL, 106),
 (107, 61, 0, 40, 39, 1, NULL, NULL, 107),
 (108, 62, 0, 5, 5, 0, NULL, NULL, 108),
@@ -23969,7 +24155,7 @@ INSERT INTO `stocks` (`id`, `product_id`, `initial_quantity`, `order_quantity`, 
 (184, 110, 0, 10, 10, 0, NULL, NULL, 184),
 (185, 0, 0, 0, 0, 0, NULL, NULL, 185),
 (186, 0, 0, 0, 0, 0, NULL, NULL, 186),
-(187, 111, 0, 10, 8, 0, NULL, '2026-01-06 08:38:31', 187),
+(187, 111, 0, 10, 7, 1, NULL, '2026-01-14 14:50:39', 187),
 (188, 0, 0, 0, 0, 0, NULL, NULL, 188),
 (189, 0, 0, 0, 0, 0, NULL, NULL, 189),
 (190, 112, 0, 10, 10, 0, NULL, NULL, 190),
@@ -23986,10 +24172,10 @@ INSERT INTO `stocks` (`id`, `product_id`, `initial_quantity`, `order_quantity`, 
 (201, 0, 0, 0, 0, 0, NULL, NULL, 201),
 (202, 0, 0, 0, 0, 0, NULL, NULL, 202),
 (203, 0, 0, 0, 0, 0, NULL, NULL, 203),
-(204, 117, 0, 20, 17, 2, NULL, '2026-01-06 09:16:51', 204),
+(204, 117, 0, 20, 16, 3, NULL, '2026-01-14 14:22:31', 204),
 (205, 118, 0, 2, 2, 0, NULL, NULL, 205),
 (206, 119, 0, 2300, 2221, 79, NULL, NULL, 206),
-(207, 120, 0, 10000, 9920, 79, NULL, '2026-01-06 09:57:26', 207),
+(207, 120, 0, 10000, 9919, 80, NULL, '2026-01-14 14:22:31', 207),
 (208, 121, 0, 2500, 2351, 148, NULL, '2023-09-30 08:52:13', 208),
 (209, 122, 10, 5, 14, 1, NULL, NULL, 209),
 (210, 123, 10, 10, 18, 1, NULL, '2025-07-15 22:00:13', 210),
@@ -24124,7 +24310,7 @@ CREATE TABLE `store_stocks` (
 
 INSERT INTO `store_stocks` (`id`, `store_id`, `product_id`, `initial_quantity`, `quantity_sale`, `order_quantity`, `current_quantity`, `created_at`, `updated_at`) VALUES
 (1, 1, 2, 170, 0, 70, 160, '2023-03-09 10:46:57', '2023-03-09 11:03:06'),
-(2, 2, 2, 0, 0, 0, 10, '2023-03-09 11:03:06', '2023-03-09 11:03:06'),
+(2, 2, 2, 0, 1, 0, 9, '2023-03-09 11:03:06', '2026-01-14 14:17:56'),
 (3, 1, 3, 0, 0, 388, 388, '2023-03-09 13:53:24', '2023-03-09 13:53:24'),
 (4, 2, 4, 0, 0, 20, 20, '2023-03-09 14:02:37', '2023-03-09 14:02:37');
 
@@ -29161,7 +29347,8 @@ ALTER TABLE `immunization_records`
   ADD KEY `immunization_records_administered_by_foreign` (`administered_by`),
   ADD KEY `immunization_records_patient_id_administered_at_index` (`patient_id`,`administered_at`),
   ADD KEY `immunization_records_patient_id_vaccine_name_index` (`patient_id`,`vaccine_name`),
-  ADD KEY `immunization_records_product_id_index` (`product_id`);
+  ADD KEY `immunization_records_product_id_index` (`product_id`),
+  ADD KEY `immunization_records_dispensed_from_store_id_foreign` (`dispensed_from_store_id`);
 
 --
 -- Indexes for table `injection_administrations`
@@ -29171,7 +29358,8 @@ ALTER TABLE `injection_administrations`
   ADD KEY `injection_administrations_product_or_service_request_id_foreign` (`product_or_service_request_id`),
   ADD KEY `injection_administrations_administered_by_foreign` (`administered_by`),
   ADD KEY `injection_administrations_patient_id_administered_at_index` (`patient_id`,`administered_at`),
-  ADD KEY `injection_administrations_product_id_index` (`product_id`);
+  ADD KEY `injection_administrations_product_id_index` (`product_id`),
+  ADD KEY `injection_administrations_dispensed_from_store_id_foreign` (`dispensed_from_store_id`);
 
 --
 -- Indexes for table `intake_output_histories`
@@ -29430,7 +29618,8 @@ ALTER TABLE `product_categories`
 ALTER TABLE `product_or_service_requests`
   ADD PRIMARY KEY (`id`),
   ADD KEY `product_or_service_requests_payment_id_foreign` (`payment_id`),
-  ADD KEY `product_or_service_requests_validated_by_foreign` (`validated_by`);
+  ADD KEY `product_or_service_requests_validated_by_foreign` (`validated_by`),
+  ADD KEY `product_or_service_requests_dispensed_from_store_id_foreign` (`dispensed_from_store_id`);
 
 --
 -- Indexes for table `product_requests`
@@ -29443,7 +29632,8 @@ ALTER TABLE `product_requests`
   ADD KEY `product_requests_patient_id_foreign` (`patient_id`),
   ADD KEY `product_requests_doctor_id_foreign` (`doctor_id`),
   ADD KEY `product_requests_dispensed_by_foreign` (`dispensed_by`),
-  ADD KEY `product_requests_deleted_by_foreign` (`deleted_by`);
+  ADD KEY `product_requests_deleted_by_foreign` (`deleted_by`),
+  ADD KEY `product_requests_dispensed_from_store_id_foreign` (`dispensed_from_store_id`);
 
 --
 -- Indexes for table `promotions`
@@ -29660,7 +29850,7 @@ ALTER TABLE `application_status`
 -- AUTO_INCREMENT for table `audits`
 --
 ALTER TABLE `audits`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=212;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=331;
 
 --
 -- AUTO_INCREMENT for table `banks`
@@ -29696,7 +29886,7 @@ ALTER TABLE `chat_conversation_archives`
 -- AUTO_INCREMENT for table `chat_messages`
 --
 ALTER TABLE `chat_messages`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=133;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=134;
 
 --
 -- AUTO_INCREMENT for table `chat_participants`
@@ -29798,13 +29988,13 @@ ALTER TABLE `imaging_service_requests`
 -- AUTO_INCREMENT for table `immunization_records`
 --
 ALTER TABLE `immunization_records`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `injection_administrations`
 --
 ALTER TABLE `injection_administrations`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `intake_output_histories`
@@ -29816,13 +30006,13 @@ ALTER TABLE `intake_output_histories`
 -- AUTO_INCREMENT for table `intake_output_periods`
 --
 ALTER TABLE `intake_output_periods`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT for table `intake_output_records`
 --
 ALTER TABLE `intake_output_records`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT for table `invoices`
@@ -29846,19 +30036,19 @@ ALTER TABLE `lab_workbench_audit_logs`
 -- AUTO_INCREMENT for table `medication_administrations`
 --
 ALTER TABLE `medication_administrations`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `medication_histories`
 --
 ALTER TABLE `medication_histories`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `medication_schedules`
 --
 ALTER TABLE `medication_schedules`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=114;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=126;
 
 --
 -- AUTO_INCREMENT for table `messages`
@@ -29870,7 +30060,7 @@ ALTER TABLE `messages`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=147;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=148;
 
 --
 -- AUTO_INCREMENT for table `misc_bills`
@@ -29894,7 +30084,7 @@ ALTER TABLE `nursing_note_types`
 -- AUTO_INCREMENT for table `nursing_shifts`
 --
 ALTER TABLE `nursing_shifts`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `participants`
@@ -29918,7 +30108,7 @@ ALTER TABLE `patient_accounts`
 -- AUTO_INCREMENT for table `patient_immunization_schedules`
 --
 ALTER TABLE `patient_immunization_schedules`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
 
 --
 -- AUTO_INCREMENT for table `patient_profiles`
@@ -29930,7 +30120,7 @@ ALTER TABLE `patient_profiles`
 -- AUTO_INCREMENT for table `payments`
 --
 ALTER TABLE `payments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=78;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=81;
 
 --
 -- AUTO_INCREMENT for table `permissions`
@@ -29972,13 +30162,13 @@ ALTER TABLE `product_categories`
 -- AUTO_INCREMENT for table `product_or_service_requests`
 --
 ALTER TABLE `product_or_service_requests`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=100;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=111;
 
 --
 -- AUTO_INCREMENT for table `product_requests`
 --
 ALTER TABLE `product_requests`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=99;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=107;
 
 --
 -- AUTO_INCREMENT for table `promotions`
@@ -30032,7 +30222,7 @@ ALTER TABLE `shift_actions`
 -- AUTO_INCREMENT for table `shift_handovers`
 --
 ALTER TABLE `shift_handovers`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `specializations`
@@ -30270,6 +30460,7 @@ ALTER TABLE `imaging_service_requests`
 --
 ALTER TABLE `immunization_records`
   ADD CONSTRAINT `immunization_records_administered_by_foreign` FOREIGN KEY (`administered_by`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `immunization_records_dispensed_from_store_id_foreign` FOREIGN KEY (`dispensed_from_store_id`) REFERENCES `stores` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `immunization_records_patient_id_foreign` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `immunization_records_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `immunization_records_product_or_service_request_id_foreign` FOREIGN KEY (`product_or_service_request_id`) REFERENCES `product_or_service_requests` (`id`) ON DELETE SET NULL;
@@ -30279,6 +30470,7 @@ ALTER TABLE `immunization_records`
 --
 ALTER TABLE `injection_administrations`
   ADD CONSTRAINT `injection_administrations_administered_by_foreign` FOREIGN KEY (`administered_by`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `injection_administrations_dispensed_from_store_id_foreign` FOREIGN KEY (`dispensed_from_store_id`) REFERENCES `stores` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `injection_administrations_patient_id_foreign` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `injection_administrations_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `injection_administrations_product_or_service_request_id_foreign` FOREIGN KEY (`product_or_service_request_id`) REFERENCES `product_or_service_requests` (`id`) ON DELETE SET NULL;
@@ -30395,13 +30587,15 @@ ALTER TABLE `procedures`
 -- Constraints for table `product_or_service_requests`
 --
 ALTER TABLE `product_or_service_requests`
+  ADD CONSTRAINT `product_or_service_requests_dispensed_from_store_id_foreign` FOREIGN KEY (`dispensed_from_store_id`) REFERENCES `stores` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `product_or_service_requests_validated_by_foreign` FOREIGN KEY (`validated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `product_requests`
 --
 ALTER TABLE `product_requests`
-  ADD CONSTRAINT `product_requests_deleted_by_foreign` FOREIGN KEY (`deleted_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `product_requests_deleted_by_foreign` FOREIGN KEY (`deleted_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `product_requests_dispensed_from_store_id_foreign` FOREIGN KEY (`dispensed_from_store_id`) REFERENCES `stores` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `shift_actions`
