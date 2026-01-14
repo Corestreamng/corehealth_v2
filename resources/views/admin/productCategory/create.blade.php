@@ -5,7 +5,7 @@
 @section('content')
     <section class="content">
 
-        <div modern mb-3">
+        <div class="card-modern mb-3">
 
             <div class="card-header bg-transparent ">
                 <div class="row">

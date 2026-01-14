@@ -96,6 +96,15 @@ function initPrescPendingTable() {
                 data: null,
                 orderable: false,
                 render: function(data, type, row) {
+                    return `<input type="checkbox" class="presc-card-checkbox presc-pending-check"
+                            data-id="${row.id}"
+                            onclick="handlePrescPendingCheck(this)">`;
+                }
+            },
+            {
+                data: null,
+                orderable: false,
+                render: function(data, type, row) {
                     return renderPrescCard(row, 'pending');
                 }
             }
@@ -130,7 +139,7 @@ function initPrescDispenseTable() {
                 render: function(data, type, row) {
                     // All items in this tab are ready, so always enable checkbox
                     return `<input type="checkbox" class="presc-card-checkbox presc-dispense-check"
-                            data-id="${row.id}"
+                            data-id="${row.id}" data-product-id="${row.product_id || ''}"
                             onclick="handlePrescDispenseCheck(this)">`;
                 }
             },
@@ -315,7 +324,7 @@ function renderPrescCard(row, type) {
     }
 
     return `
-        <div class="${cardClass}" data-id="${row.id}" style="${type === 'pending' ? 'border-left: 4px solid #ffc107;' : (type === 'dispense' ? 'border-left: 4px solid #28a745;' : '')}">
+        <div class="${cardClass}" data-id="${row.id}" data-product-id="${row.product_id || ''}" style="${type === 'pending' ? 'border-left: 4px solid #ffc107;' : (type === 'dispense' ? 'border-left: 4px solid #28a745;' : '')}">
             <div class="presc-card-header">
                 <div>
                     <div class="presc-card-title">${productName}</div>
@@ -368,6 +377,15 @@ function handlePrescDispenseCheck(checkbox) {
     }
 }
 
+function handlePrescPendingCheck(checkbox) {
+    const card = $(checkbox).closest('tr').find('.presc-card');
+    if ($(checkbox).is(':checked')) {
+        card.addClass('selected');
+    } else {
+        card.removeClass('selected');
+    }
+}
+
 function toggleAllPrescBilling(masterCheckbox) {
     const isChecked = $(masterCheckbox).is(':checked');
     prescBillingTotal = 0;
@@ -391,6 +409,21 @@ function toggleAllPrescDispense(masterCheckbox) {
     const isChecked = $(masterCheckbox).is(':checked');
 
     $('.presc-dispense-check:not(:disabled)').each(function() {
+        $(this).prop('checked', isChecked);
+        const card = $(this).closest('tr').find('.presc-card');
+
+        if (isChecked) {
+            card.addClass('selected');
+        } else {
+            card.removeClass('selected');
+        }
+    });
+}
+
+function toggleAllPrescPending(masterCheckbox) {
+    const isChecked = $(masterCheckbox).is(':checked');
+
+    $('.presc-pending-check').each(function() {
         $(this).prop('checked', isChecked);
         const card = $(this).closest('tr').find('.presc-card');
 
