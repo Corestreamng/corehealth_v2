@@ -1,338 +1,295 @@
+{{-- Prescription Slip - Clean A4 Style --}}
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prescription Slip - {{ $patient->file_no }}</title>
     <style>
-        @page {
-            size: A5;
-            margin: 10mm;
+        :root {
+            --brand: {{ $appsettings->hos_color ?? '#0a6cf2' }};
+            --ink: #1d1d1f;
+            --muted: #5f6368;
+            --border: #d7d9dc;
+            --bg: #f7f9fb;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        .prescription-slip {
+            padding: 24px;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 14px;
+            color: var(--ink);
+            background: var(--bg);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        .sheet {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+            max-width: 900px;
+            width: 100%;
+            margin: 0 auto;
         }
 
-        body {
-            font-family: 'Arial', sans-serif;
-            font-size: 11pt;
-            line-height: 1.4;
-            color: #333;
-            padding: 15px;
-        }
-
-        .prescription-header {
-            border-bottom: 3px solid {{ $appsettings->hos_color ?? '#0066cc' }};
-            padding-bottom: 15px;
-            margin-bottom: 20px;
+        .brand-bar {
             display: flex;
             align-items: center;
             justify-content: space-between;
+            border-bottom: 2px solid var(--brand);
+            padding-bottom: 12px;
+            margin-bottom: 16px;
         }
 
-        .hospital-logo {
-            width: 80px;
-            height: 80px;
-            object-fit: contain;
-        }
-
-        .hospital-info {
-            flex: 1;
-            text-align: center;
-            padding: 0 15px;
-        }
-
-        .hospital-name {
-            font-size: 20pt;
-            font-weight: bold;
-            color: {{ $appsettings->hos_color ?? '#0066cc' }};
-            margin-bottom: 5px;
-        }
-
-        .hospital-address {
-            font-size: 9pt;
-            color: #666;
-            margin-bottom: 3px;
-        }
-
-        .prescription-title {
-            font-size: 16pt;
-            font-weight: bold;
-            text-align: center;
-            color: {{ $appsettings->hos_color ?? '#0066cc' }};
-            margin: 20px 0 15px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .patient-section {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 12px 15px;
-            margin-bottom: 20px;
-        }
-
-        .patient-row {
+        .brand-left {
             display: flex;
-            margin-bottom: 5px;
-            font-size: 10pt;
+            align-items: center;
+            gap: 12px;
         }
 
-        .patient-row strong {
-            min-width: 120px;
-            color: #555;
+        .brand-left img {
+            width: 72px;
+            height: auto;
         }
 
-        .prescriptions-section {
-            margin: 20px 0;
+        .brand-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--brand);
+            letter-spacing: 0.5px;
         }
 
-        .prescription-item {
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            padding: 12px 15px;
-            margin-bottom: 12px;
-            background: #fff;
-            page-break-inside: avoid;
+        .brand-meta {
+            font-size: 12px;
+            color: var(--muted);
+            line-height: 1.4;
         }
 
-        .medication-name {
-            font-size: 12pt;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 5px;
+        .doc-title {
+            text-align: right;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: var(--ink);
         }
 
-        .medication-code {
-            font-size: 9pt;
-            color: #666;
-            background: #e9ecef;
-            padding: 2px 6px;
-            border-radius: 3px;
+        .doc-title small {
+            display: block;
+            font-size: 12px;
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 8px 16px;
+            margin-bottom: 16px;
+        }
+
+        .details div {
+            font-size: 13px;
+            color: var(--ink);
+        }
+
+        .badge {
             display: inline-block;
-            margin-left: 8px;
+            background: rgba(10,108,242,0.08);
+            color: var(--brand);
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
         }
 
-        .dose-info {
-            background: #e7f3ff;
-            border-left: 3px solid {{ $appsettings->hos_color ?? '#0066cc' }};
-            padding: 8px 12px;
-            margin: 8px 0;
-            font-size: 11pt;
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
         }
 
-        .dose-label {
-            font-weight: bold;
-            color: {{ $appsettings->hos_color ?? '#0066cc' }};
+        th, td {
+            border: 1px solid var(--border);
+            padding: 8px 10px;
+            font-size: 13px;
         }
 
-        .doctor-info {
-            font-size: 9pt;
-            color: #666;
-            margin-top: 5px;
+        thead th {
+            background: rgba(10,108,242,0.06);
+            color: var(--ink);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
         }
 
-        .signatures-section {
-            margin-top: 40px;
+        tbody tr:nth-child(odd) {
+            background: #fbfcfd;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #fff;
+        }
+
+        .dose-cell {
+            color: var(--brand);
+            font-weight: 500;
+        }
+
+        .hmo-badge {
+            display: inline-block;
+            background: #fff3cd;
+            color: #856404;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        .instructions {
+            margin-top: 16px;
+            font-size: 12px;
+            color: var(--muted);
+            border-left: 3px solid var(--brand);
+            padding-left: 10px;
+        }
+
+        .instructions ul {
+            margin: 6px 0 0 16px;
+            padding: 0;
+        }
+
+        .instructions li {
+            margin-bottom: 2px;
+        }
+
+        .signatures {
             display: flex;
             justify-content: space-between;
+            margin-top: 32px;
+            gap: 40px;
         }
 
-        .signature-box {
-            width: 45%;
-        }
-
-        .signature-line {
-            border-top: 1px solid #333;
-            margin-top: 50px;
-            padding-top: 5px;
+        .sig-box {
+            flex: 1;
             text-align: center;
         }
 
-        .signature-label {
-            font-size: 10pt;
-            font-weight: bold;
-            margin-bottom: 3px;
+        .sig-line {
+            border-top: 1px solid var(--ink);
+            margin-top: 40px;
+            padding-top: 6px;
         }
 
-        .signature-name {
-            font-size: 9pt;
-            color: #666;
+        .sig-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--ink);
+        }
+
+        .sig-name {
+            font-size: 11px;
+            color: var(--muted);
         }
 
         .footer {
-            margin-top: 30px;
-            padding-top: 15px;
-            border-top: 2px solid #dee2e6;
+            margin-top: 20px;
             text-align: center;
-            font-size: 8pt;
-            color: #999;
-        }
-
-        .print-date {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            font-size: 8pt;
-            color: #999;
+            font-size: 11px;
+            color: var(--muted);
+            border-top: 1px solid var(--border);
+            padding-top: 12px;
         }
 
         @media print {
-            body {
-                padding: 0;
-            }
-
-            .prescription-item {
-                border-color: #333;
-            }
-
-            @page {
-                margin: 10mm;
-            }
-        }
-
-        /* HMO Info Styling */
-        .hmo-info {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
-            border-radius: 5px;
-            padding: 8px 12px;
-            margin-top: 10px;
-            font-size: 9pt;
-        }
-
-        .hmo-label {
-            font-weight: bold;
-            color: #856404;
-        }
-
-        .watermark {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-45deg);
-            font-size: 80pt;
-            color: rgba(0, 0, 0, 0.03);
-            font-weight: bold;
-            z-index: -1;
-            pointer-events: none;
+            @page { size: A4; margin: 10mm; }
+            .prescription-slip { background: #fff; padding: 0; }
+            .sheet { box-shadow: none; border: none; margin: 0; width: 100%; max-width: none; padding: 0; }
         }
     </style>
 </head>
 <body>
-    <div class="watermark">{{ $appsettings->hospital_name ?? 'HOSPITAL' }}</div>
-
-    <div class="print-date">
-        Printed: {{ $print_date }}
-    </div>
-
-    <!-- Hospital Header -->
-    <div class="prescription-header">
-        @if($appsettings->logo)
-            <img src="data:image/jpeg;base64,{{ $appsettings->logo }}" alt="Hospital Logo" class="hospital-logo">
-        @endif
-
-        <div class="hospital-info">
-            <div class="hospital-name">{{ $appsettings->hospital_name ?? 'HOSPITAL NAME' }}</div>
-            <div class="hospital-address">{{ $appsettings->address ?? 'Hospital Address' }}</div>
-            <div class="hospital-address">
-                Tel: {{ $appsettings->phone ?? 'N/A' }} |
-                Email: {{ $appsettings->email ?? 'N/A' }}
-            </div>
-            @if($appsettings->website)
-                <div class="hospital-address">{{ $appsettings->website }}</div>
+<div class="prescription-slip">
+<div class="sheet">
+    <!-- Header -->
+    <div class="brand-bar">
+        <div class="brand-left">
+            @if($appsettings->logo)
+                <img src="data:image/png;base64,{{ $appsettings->logo }}" alt="Logo">
             @endif
+            <div>
+                <div class="brand-name">{{ $appsettings->site_name ?? 'HOSPITAL' }}</div>
+                <div class="brand-meta">
+                    {{ $appsettings->contact_address ?? '' }}<br>
+                    @if($appsettings->contact_phones || $appsettings->contact_emails)
+                        Phone: {{ $appsettings->contact_phones ?? 'N/A' }} | Email: {{ $appsettings->contact_emails ?? 'N/A' }}
+                    @endif
+                </div>
+            </div>
         </div>
-
-        @if($appsettings->logo)
-            <div style="width: 80px;"></div> <!-- Spacer for balance -->
-        @endif
+        <div class="doc-title">
+            PRESCRIPTION
+            <small>{{ $print_date }}</small>
+        </div>
     </div>
 
-    <div class="prescription-title">📋 PRESCRIPTION SLIP</div>
-
-    <!-- Patient Information -->
-    <div class="patient-section">
-        <div class="patient-row">
-            <strong>Patient Name:</strong>
-            <span>{{ userfullname($patient->user_id) }}</span>
-        </div>
-        <div class="patient-row">
-            <strong>File Number:</strong>
-            <span>{{ $patient->file_no }}</span>
-        </div>
-        <div class="patient-row">
-            <strong>Age/Gender:</strong>
-            <span>{{ $patient->dob ? \Carbon\Carbon::parse($patient->dob)->age : 'N/A' }} years / {{ $patient->gender ?? 'N/A' }}</span>
-        </div>
+    <!-- Patient Details -->
+    <div class="details">
+        <div><span class="badge">Patient</span><br>{{ userfullname($patient->user_id) }}</div>
+        <div><span class="badge">File No.</span><br>{{ $patient->file_no }}</div>
+        <div><span class="badge">Age / Gender</span><br>{{ $patient->dob ? \Carbon\Carbon::parse($patient->dob)->age . ' yrs' : 'N/A' }} / {{ $patient->gender ?? 'N/A' }}</div>
+        <div><span class="badge">Date</span><br>{{ \Carbon\Carbon::now()->format('d M Y') }}</div>
         @if($patient->hmo)
-            <div class="patient-row">
-                <strong>HMO:</strong>
-                <span>{{ $patient->hmo->name }} ({{ $patient->hmo_no ?? 'N/A' }})</span>
-            </div>
+            <div><span class="badge">HMO</span><br>{{ $patient->hmo->name }} ({{ $patient->hmo_no ?? 'N/A' }})</div>
         @endif
-        <div class="patient-row">
-            <strong>Date:</strong>
-            <span>{{ \Carbon\Carbon::now()->format('d M Y') }}</span>
-        </div>
     </div>
 
-    <!-- Prescriptions -->
-    <div class="prescriptions-section">
-        <h3 style="font-size: 12pt; margin-bottom: 15px; color: #555;">💊 Prescribed Medications</h3>
-
-        @foreach($prescriptions as $index => $prescription)
-            <div class="prescription-item">
-                <div>
-                    <span class="medication-name">{{ $index + 1 }}. {{ $prescription->product->product_name }}</span>
-                    @if($prescription->product->product_code)
-                        <span class="medication-code">{{ $prescription->product->product_code }}</span>
-                    @endif
-                </div>
-
-                @if($prescription->dose)
-                    <div class="dose-info">
-                        <span class="dose-label">Dosage & Frequency:</span> {{ $prescription->dose }}
-                    </div>
-                @else
-                    <div class="dose-info">
-                        <span class="dose-label">Dosage & Frequency:</span> As directed by physician
-                    </div>
-                @endif
-
-                <div class="doctor-info">
-                    <strong>Prescribed by:</strong>
-                    Dr. {{ $prescription->doctor ? userfullname($prescription->doctor_id) : 'N/A' }}
-                    @if($prescription->created_at)
-                        ({{ \Carbon\Carbon::parse($prescription->created_at)->format('d M Y H:i') }})
-                    @endif
-                </div>
-
-                @if($prescription->productOrServiceRequest)
-                    @php
-                        $posr = $prescription->productOrServiceRequest;
-                    @endphp
-                    @if($posr->coverage_mode && $posr->coverage_mode != 'none')
-                        <div class="hmo-info">
-                            <span class="hmo-label">HMO Coverage:</span>
-                            {{ ucfirst($posr->coverage_mode) }} Coverage -
-                            Patient Pays: ₦{{ number_format($posr->payable_amount ?? 0, 2) }},
-                            HMO Claims: ₦{{ number_format($posr->claims_amount ?? 0, 2) }}
-                        </div>
-                    @endif
-                @endif
-            </div>
-        @endforeach
-    </div>
+    <!-- Prescriptions Table -->
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 5%;">#</th>
+                <th style="width: 30%;">Medication</th>
+                <th style="width: 30%;">Dosage / Frequency</th>
+                <th style="width: 8%;">Qty</th>
+                <th style="width: 27%;">Prescribed By</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($prescriptions as $index => $prescription)
+                @php
+                    $posr = $prescription->productOrServiceRequest;
+                    $hasHmo = $posr && $posr->coverage_mode && $posr->coverage_mode != 'none';
+                @endphp
+                <tr>
+                    <td>{{ $index + 1 }}</td>
+                    <td>
+                        <strong>{{ $prescription->product->product_name }}</strong>
+                        @if($prescription->product->product_code)
+                            <br><small style="color: var(--muted);">[{{ $prescription->product->product_code }}]</small>
+                        @endif
+                        @if($hasHmo)
+                            <br><span class="hmo-badge">HMO: ₦{{ number_format($posr->claims_amount ?? 0, 2) }} | Pay: ₦{{ number_format($posr->payable_amount ?? 0, 2) }}</span>
+                        @endif
+                    </td>
+                    <td class="dose-cell">{{ $prescription->dose ?: 'As directed by physician' }}</td>
+                    <td style="text-align: center; font-weight: 600;">{{ $prescription->qty ?? 1 }}</td>
+                    <td>
+                        {{ $prescription->doctor ? userfullname($prescription->doctor_id) : 'N/A' }}
+                        @if($prescription->created_at)
+                            <br><small style="color: var(--muted);">{{ \Carbon\Carbon::parse($prescription->created_at)->format('d M Y H:i') }}</small>
+                        @endif
+                    </td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
 
     <!-- Instructions -->
-    <div style="background: #e9ecef; padding: 10px 15px; border-radius: 5px; margin: 20px 0; font-size: 9pt;">
-        <strong>⚠️ Instructions:</strong>
-        <ul style="margin: 5px 0 0 20px;">
+    <div class="instructions">
+        <strong>⚠️ Important Instructions:</strong>
+        <ul>
             <li>Take medications exactly as prescribed by your doctor</li>
             <li>Complete the full course of treatment even if symptoms improve</li>
             <li>Consult your doctor if you experience any adverse reactions</li>
@@ -341,41 +298,27 @@
     </div>
 
     <!-- Signatures -->
-    <div class="signatures-section">
-        <div class="signature-box">
-            <div class="signature-line">
-                <div class="signature-label">Attending Pharmacist</div>
-                <div class="signature-name">{{ $pharmacist }}</div>
-                <div style="font-size: 8pt; color: #999; margin-top: 3px;">
-                    {{ \Carbon\Carbon::now()->format('d M Y H:i') }}
-                </div>
+    <div class="signatures">
+        <div class="sig-box">
+            <div class="sig-line">
+                <div class="sig-label">Attending Pharmacist</div>
+                <div class="sig-name">{{ $pharmacist }}</div>
             </div>
         </div>
-
-        <div class="signature-box">
-            <div class="signature-line">
-                <div class="signature-label">Patient/Guardian Signature</div>
-                <div style="font-size: 8pt; color: #999; margin-top: 20px;">
-                    _______________________
-                </div>
+        <div class="sig-box">
+            <div class="sig-line">
+                <div class="sig-label">Patient / Guardian Signature</div>
+                <div class="sig-name">_______________________</div>
             </div>
         </div>
     </div>
 
     <!-- Footer -->
     <div class="footer">
-        <p>This prescription slip was generated electronically by {{ $appsettings->hospital_name ?? 'Hospital' }}</p>
-        <p>For inquiries, contact: {{ $appsettings->phone ?? 'N/A' }} | {{ $appsettings->email ?? 'N/A' }}</p>
-        <p style="margin-top: 10px; font-size: 7pt;">
-            <em>This is an official hospital document. Keep for your records.</em>
-        </p>
+        {{ $appsettings->site_name ?? 'Hospital' }} | {{ $appsettings->contact_phones ?? '' }} | {{ $appsettings->contact_emails ?? '' }}<br>
+        <em>This is an official prescription document. Please retain for your records.</em>
     </div>
-
-    <script>
-        // Auto print when page loads
-        window.onload = function() {
-            window.print();
-        };
-    </script>
+</div>
+</div>
 </body>
 </html>

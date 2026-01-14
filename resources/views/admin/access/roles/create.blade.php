@@ -8,7 +8,7 @@
     <section class="content">
 
         <div class="col-12">
-            <div modern">
+            <div class="card-modern">
                 <div class="card-header">
                     <h3 class="card-title">Create Role</h3>
                 </div>

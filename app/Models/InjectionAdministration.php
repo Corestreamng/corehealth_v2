@@ -21,6 +21,7 @@ class InjectionAdministration extends Model implements Auditable
         'site',
         'administered_at',
         'administered_by',
+        'dispensed_from_store_id',
         'notes',
         'batch_number',
         'expiry_date',
@@ -69,5 +70,13 @@ class InjectionAdministration extends Model implements Auditable
     public function nurse()
     {
         return $this->belongsTo(User::class, 'administered_by');
+    }
+
+    /**
+     * Get the store from which the injection was dispensed.
+     */
+    public function dispensedFromStore()
+    {
+        return $this->belongsTo(Store::class, 'dispensed_from_store_id');
     }
 }

@@ -1895,6 +1895,365 @@
         border-color: #adb5bd;
     }
 
+    .btn-clinical-context {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border: 1px solid #17a2b8;
+        border-radius: 0.5rem;
+        background: #17a2b8;
+        color: white;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-clinical-context:hover:not(:disabled) {
+        background: #138496;
+        border-color: #138496;
+    }
+
+    .btn-clinical-context:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* ============================================
+       PHARMACY REPORTS PANE STYLES
+       ============================================ */
+
+    #pharmacy-reports-view {
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+    }
+
+    #pharmacy-reports-view .queue-view-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .reports-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .date-presets-bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .date-preset-btn {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        transition: all 0.2s;
+    }
+
+    .date-preset-btn.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: #667eea;
+        color: white;
+    }
+
+    #pharmacy-reports-filter-card .card-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    #pharmacy-reports-filter-card .filter-collapse-icon {
+        transition: transform 0.3s ease;
+    }
+
+    #pharmacy-reports-filter-card .card-header[aria-expanded="true"] .filter-collapse-icon {
+        transform: rotate(180deg);
+    }
+
+    /* Mini Stat Cards */
+    .stat-card-mini {
+        background: white;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+    }
+
+    .stat-card-mini:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .stat-icon-mini {
+        width: 45px;
+        height: 45px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .stat-icon-mini i {
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    .stat-content-mini h4 {
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin: 0;
+        color: #1e293b;
+        line-height: 1.2;
+    }
+
+    .stat-content-mini small {
+        font-size: 0.7rem;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Report Tabs Styling */
+    #pharmacy-report-tabs {
+        background: white;
+        border-radius: 0.5rem;
+        padding: 0.25rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    #pharmacy-report-tabs .nav-link {
+        border: none;
+        border-radius: 0.4rem;
+        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #64748b;
+        transition: all 0.2s;
+    }
+
+    #pharmacy-report-tabs .nav-link:hover {
+        color: #667eea;
+        background: rgba(102, 126, 234, 0.1);
+    }
+
+    #pharmacy-report-tabs .nav-link.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    #pharmacy-report-tabs .nav-link i {
+        margin-right: 0.4rem;
+    }
+
+    /* Report Cards */
+    #pharmacy-report-tab-content .card {
+        border: none;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+
+    #pharmacy-report-tab-content .card-header {
+        background: white;
+        border-bottom: 1px solid #e9ecef;
+        padding: 0.75rem 1rem;
+    }
+
+    #pharmacy-report-tab-content .card-header h6 {
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    /* Stock Status Badges */
+    .stock-status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.25rem 0.6rem;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .stock-status-badge.in-stock {
+        background: rgba(40, 167, 69, 0.15);
+        color: #28a745;
+    }
+
+    .stock-status-badge.low-stock {
+        background: rgba(255, 193, 7, 0.2);
+        color: #d39e00;
+    }
+
+    .stock-status-badge.critical {
+        background: rgba(253, 126, 20, 0.2);
+        color: #e85d04;
+    }
+
+    .stock-status-badge.out-of-stock {
+        background: rgba(220, 53, 69, 0.15);
+        color: #dc3545;
+    }
+
+    /* Store Breakdown Mini Display */
+    .store-stock-breakdown {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .store-stock-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.2rem 0.5rem;
+        background: #f8f9fa;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        border: 1px solid #e9ecef;
+    }
+
+    .store-stock-item .store-name {
+        font-weight: 600;
+        color: #495057;
+    }
+
+    .store-stock-item .store-qty {
+        font-weight: 700;
+        padding: 0.1rem 0.3rem;
+        border-radius: 3px;
+    }
+
+    .store-stock-item .store-qty.qty-ok {
+        background: rgba(40, 167, 69, 0.2);
+        color: #28a745;
+    }
+
+    .store-stock-item .store-qty.qty-low {
+        background: rgba(255, 193, 7, 0.3);
+        color: #d39e00;
+    }
+
+    .store-stock-item .store-qty.qty-out {
+        background: rgba(220, 53, 69, 0.2);
+        color: #dc3545;
+    }
+
+    /* DataTable Styles within Reports */
+    #pharmacy-reports-view .dataTables_wrapper {
+        font-size: 0.85rem;
+    }
+
+    #pharmacy-reports-view table thead th {
+        background: #1e293b;
+        color: white;
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 0.75rem;
+        white-space: nowrap;
+    }
+
+    #pharmacy-reports-view table tbody td {
+        padding: 0.6rem 0.75rem;
+        vertical-align: middle;
+    }
+
+    #pharmacy-reports-view table tfoot td {
+        background: #e9ecef;
+        font-weight: 700;
+    }
+
+    /* Revenue Grouping Buttons */
+    #pharm-revenue-content .btn-group .btn-check:checked + .btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: #667eea;
+    }
+
+    /* Performance Indicators */
+    .perf-indicator {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 5px;
+    }
+
+    .perf-indicator.excellent { background: #28a745; }
+    .perf-indicator.good { background: #17a2b8; }
+    .perf-indicator.average { background: #ffc107; }
+    .perf-indicator.below { background: #dc3545; }
+
+    /* Chart Container */
+    #pharmacy-reports-view canvas {
+        max-height: 280px;
+    }
+
+    /* Export Buttons */
+    .reports-header-actions .btn-outline-success:hover {
+        background: #28a745;
+        color: white;
+    }
+
+    .reports-header-actions .btn-outline-danger:hover {
+        background: #dc3545;
+        color: white;
+    }
+
+    .reports-header-actions .btn-outline-info:hover {
+        background: #17a2b8;
+        color: white;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .date-presets-bar {
+            justify-content: center;
+        }
+
+        .stat-card-mini {
+            padding: 0.75rem;
+        }
+
+        .stat-icon-mini {
+            width: 40px;
+            height: 40px;
+        }
+
+        .stat-content-mini h4 {
+            font-size: 1rem;
+        }
+
+        #pharmacy-report-tabs .nav-link {
+            padding: 0.5rem 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        #pharmacy-report-tabs .nav-link i {
+            margin-right: 0;
+            display: block;
+            text-align: center;
+        }
+
+        .store-stock-breakdown {
+            flex-direction: column;
+        }
+    }
+
+    /* ============================================
+       END PHARMACY REPORTS PANE STYLES
+       ============================================ */
+
     .panel-header {
         padding: 1rem;
         background: var(--hospital-primary);
@@ -2800,6 +3159,25 @@
         color: white;
         border-radius: 0.5rem;
         text-align: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s;
+    }
+
+    .summary-stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        opacity: 0.9;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
     .payment-type-breakdown {
@@ -2807,6 +3185,88 @@
         padding: 1rem;
         background: #f8f9fa;
         border-radius: 0.5rem;
+    }
+
+    .chart-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        height: 280px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chart-card h6 {
+        margin-bottom: 1rem;
+        font-weight: 600;
+        color: #333;
+        flex-shrink: 0;
+    }
+
+    .chart-card canvas {
+        max-height: 200px;
+        flex: 1;
+    }
+
+    .my-trans-date-preset {
+        transition: all 0.2s;
+    }
+
+    .my-trans-date-preset.active {
+        transform: scale(1.05);
+    }
+
+    #my-transactions-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-top: 2px solid #dee2e6;
+    }
+
+    #my-transactions-table tbody tr {
+        transition: background 0.2s;
+    }
+
+    #my-transactions-table tbody tr:hover {
+        background: #f8f9fa;
+    }
+
+    .view-transaction-details {
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Transaction Details Modal */
+    .detail-group {
+        margin-bottom: 1rem;
+    }
+
+    .detail-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #6c757d;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .detail-value {
+        font-size: 1rem;
+        color: #212529;
+        font-weight: 500;
+    }
+
+    #transactionDetailsModal hr {
+        margin: 1.5rem 0;
+        border-top: 2px solid #e9ecef;
     }
 
     /* Card-based Layout Styles */
@@ -3112,13 +3572,13 @@
                 <i class="mdi mdi-receipt"></i>
                 <span>My Transactions</span>
             </button>
+            <button class="quick-action-btn" id="btn-pharmacy-reports">
+                <i class="mdi mdi-chart-box-outline"></i>
+                <span>Reports & Analytics</span>
+            </button>
             <button class="quick-action-btn" disabled style="opacity: 0.5;">
                 <i class="mdi mdi-file-invoice-dollar"></i>
                 <span>Generate Invoice (Coming Soon)</span>
-            </button>
-            <button class="quick-action-btn" disabled style="opacity: 0.5;">
-                <i class="mdi mdi-wallet"></i>
-                <span>Credit Management (Coming Soon)</span>
             </button>
         </div>
     </div>
@@ -3133,6 +3593,9 @@
             <div class="workspace-navbar-actions">
                 <button class="btn-toggle-search" id="btn-toggle-search">
                     <i class="fa fa-bars"></i> Toggle Search
+                </button>
+                <button class="btn-clinical-context" id="btn-clinical-context" disabled title="Select a patient first">
+                    <i class="fa fa-heartbeat"></i> Clinical Context
                 </button>
             </div>
         </div>
@@ -3166,190 +3629,316 @@
             </div>
         </div>
 
-        <!-- Reports View (Full Screen - Global Access) -->
-        <div class="queue-view" id="reports-view">
+        <!-- Pharmacy Reports View (Full Screen) -->
+        <div class="queue-view" id="pharmacy-reports-view">
             <div class="queue-view-header">
-                <h4><i class="mdi mdi-chart-box"></i> Laboratory Reports & Analytics</h4>
-                <button class="btn btn-secondary btn-close-queue" id="btn-close-reports">
-                    <i class="mdi mdi-close"></i> Close
-                </button>
+                <h4><i class="mdi mdi-chart-box"></i> Pharmacy Reports & Analytics</h4>
+                <div class="reports-header-actions">
+                    <button class="btn btn-sm btn-outline-success" id="export-reports-excel" title="Export to Excel">
+                        <i class="mdi mdi-file-excel"></i> Excel
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" id="export-reports-pdf" title="Export to PDF">
+                        <i class="mdi mdi-file-pdf-box"></i> PDF
+                    </button>
+                    <button class="btn btn-sm btn-outline-info" id="print-reports" title="Print">
+                        <i class="mdi mdi-printer"></i> Print
+                    </button>
+                    <button class="btn btn-secondary btn-close-queue" id="btn-close-pharmacy-reports">
+                        <i class="mdi mdi-close"></i> Close
+                    </button>
+                </div>
             </div>
-            <div class="queue-view-content" style="padding: 1.5rem;">
-                <!-- Filter Panel -->
-                <div class="reports-filter-panel card mb-4">
-                    <div class="card-header">
-                        <h6 class="mb-0"><i class="mdi mdi-filter"></i> Filters</h6>
+            <div class="queue-view-content" style="padding: 1.5rem; overflow-y: auto; max-height: calc(100vh - 180px);">
+
+                <!-- Quick Date Presets -->
+                <div class="date-presets-bar mb-3">
+                    <span class="text-muted me-2">Quick Filters:</span>
+                    <button class="btn btn-sm btn-outline-primary date-preset-btn active" data-preset="today">Today</button>
+                    <button class="btn btn-sm btn-outline-primary date-preset-btn" data-preset="yesterday">Yesterday</button>
+                    <button class="btn btn-sm btn-outline-primary date-preset-btn" data-preset="week">This Week</button>
+                    <button class="btn btn-sm btn-outline-primary date-preset-btn" data-preset="month">This Month</button>
+                    <button class="btn btn-sm btn-outline-primary date-preset-btn" data-preset="quarter">This Quarter</button>
+                    <button class="btn btn-sm btn-outline-primary date-preset-btn" data-preset="year">This Year</button>
+                    <button class="btn btn-sm btn-outline-secondary date-preset-btn" data-preset="all">All Time</button>
+                </div>
+
+                <!-- Advanced Filters Panel (Collapsible) -->
+                <div class="card mb-4" id="pharmacy-reports-filter-card">
+                    <div class="card-header d-flex justify-content-between align-items-center py-2" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#pharmacy-reports-filters">
+                        <h6 class="mb-0"><i class="mdi mdi-filter-variant"></i> Advanced Filters</h6>
+                        <i class="mdi mdi-chevron-down filter-collapse-icon"></i>
                     </div>
-                    <div class="card-body">
-                        <form id="reports-filter-form">
-                            <div class="form-row">
-                                <div class="form-group col-md-3">
-                                    <label for="report-date-from"><i class="mdi mdi-calendar"></i> Date From</label>
-                                    <input type="date" class="form-control" id="report-date-from" name="date_from">
+                    <div class="collapse" id="pharmacy-reports-filters">
+                        <div class="card-body">
+                            <form id="pharmacy-reports-filter-form">
+                                <div class="row g-3">
+                                    <div class="col-md-2">
+                                        <label class="form-label small"><i class="mdi mdi-calendar"></i> Date From</label>
+                                        <input type="date" class="form-control form-control-sm" id="pharm-report-date-from" name="date_from">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small"><i class="mdi mdi-calendar"></i> Date To</label>
+                                        <input type="date" class="form-control form-control-sm" id="pharm-report-date-to" name="date_to">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small"><i class="mdi mdi-filter-variant"></i> Status</label>
+                                        <select class="form-control form-control-sm" id="pharm-report-status" name="status">
+                                            <option value="">All Statuses</option>
+                                            <option value="1">Unbilled</option>
+                                            <option value="2">Billed/Pending</option>
+                                            <option value="3">Dispensed</option>
+                                            <option value="0">Dismissed</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small"><i class="mdi mdi-store"></i> Store</label>
+                                        <select class="form-control form-control-sm" id="pharm-report-store" name="store_id">
+                                            <option value="">All Stores</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small"><i class="mdi mdi-cash"></i> Payment Type</label>
+                                        <select class="form-control form-control-sm" id="pharm-report-payment-type" name="payment_type">
+                                            <option value="">All Types</option>
+                                            <option value="CASH">Cash</option>
+                                            <option value="CARD">Card</option>
+                                            <option value="TRANSFER">Transfer</option>
+                                            <option value="HMO">HMO</option>
+                                            <option value="ACCOUNT">Account Balance</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small"><i class="mdi mdi-hospital-building"></i> HMO</label>
+                                        <select class="form-control form-control-sm" id="pharm-report-hmo" name="hmo_id">
+                                            <option value="">All HMOs</option>
+                                        </select>
+                                    </div>
                                 </div>
-                                <div class="form-group col-md-3">
-                                    <label for="report-date-to"><i class="mdi mdi-calendar"></i> Date To</label>
-                                    <input type="date" class="form-control" id="report-date-to" name="date_to">
+                                <div class="row g-3 mt-2">
+                                    <div class="col-md-2">
+                                        <label class="form-label small"><i class="mdi mdi-doctor"></i> Doctor</label>
+                                        <select class="form-control form-control-sm" id="pharm-report-doctor" name="doctor_id">
+                                            <option value="">All Doctors</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small"><i class="mdi mdi-account-tie"></i> Pharmacist</label>
+                                        <select class="form-control form-control-sm" id="pharm-report-pharmacist" name="pharmacist_id">
+                                            <option value="">All Pharmacists</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small"><i class="mdi mdi-shape"></i> Category</label>
+                                        <select class="form-control form-control-sm" id="pharm-report-category" name="category_id">
+                                            <option value="">All Categories</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small"><i class="mdi mdi-account-search"></i> Patient</label>
+                                        <input type="text" class="form-control form-control-sm" id="pharm-report-patient" name="patient_search" placeholder="Name or File No...">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small"><i class="mdi mdi-cash-minus"></i> Min Amount</label>
+                                        <input type="number" class="form-control form-control-sm" id="pharm-report-min-amount" name="min_amount" placeholder="0">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small"><i class="mdi mdi-cash-plus"></i> Max Amount</label>
+                                        <input type="number" class="form-control form-control-sm" id="pharm-report-max-amount" name="max_amount" placeholder="999999">
+                                    </div>
                                 </div>
-                                <div class="form-group col-md-3">
-                                    <label for="report-status-filter"><i class="mdi mdi-filter-variant"></i> Status</label>
-                                    <select class="form-control" id="report-status-filter" name="status">
-                                        <option value="">All Statuses</option>
-                                        <option value="1">Awaiting Billing</option>
-                                        <option value="2">Awaiting Sample</option>
-                                        <option value="3">Awaiting Results</option>
-                                        <option value="4">Completed</option>
-                                    </select>
+                                <div class="row mt-3">
+                                    <div class="col-12 text-end">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="clear-pharmacy-report-filters">
+                                            <i class="mdi mdi-refresh"></i> Clear All
+                                        </button>
+                                        <button type="submit" class="btn btn-sm btn-primary">
+                                            <i class="mdi mdi-filter"></i> Apply Filters
+                                        </button>
+                                    </div>
                                 </div>
-                                <div class="form-group col-md-3">
-                                    <label for="report-service-filter"><i class="mdi mdi-test-tube"></i> Service</label>
-                                    <select class="form-control" id="report-service-filter" name="service_id">
-                                        <option value="">All Services</option>
-                                        <!-- Services will be populated via JS -->
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group col-md-4">
-                                    <label for="report-doctor-filter"><i class="mdi mdi-doctor"></i> Requesting Doctor</label>
-                                    <select class="form-control" id="report-doctor-filter" name="doctor_id">
-                                        <option value="">All Doctors</option>
-                                        <!-- Doctors will be populated via JS -->
-                                    </select>
-                                </div>
-                                <div class="form-group col-md-4">
-                                    <label for="report-hmo-filter"><i class="mdi mdi-hospital-building"></i> HMO</label>
-                                    <select class="form-control" id="report-hmo-filter" name="hmo_id">
-                                        <option value="">All HMOs</option>
-                                        <!-- HMOs will be populated via JS -->
-                                    </select>
-                                </div>
-                                <div class="form-group col-md-4">
-                                    <label for="report-patient-search"><i class="mdi mdi-account-search"></i> Patient Search</label>
-                                    <input type="text" class="form-control" id="report-patient-search" name="patient_search" placeholder="File no or name...">
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="col-md-12 text-right">
-                                    <button type="button" class="btn btn-secondary" id="clear-report-filters">
-                                        <i class="mdi mdi-refresh"></i> Clear
-                                    </button>
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="mdi mdi-filter"></i> Apply Filters
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
+                            </form>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Sub Tabs -->
-                <ul class="nav nav-tabs mb-3" id="reports-tabs" role="tablist">
-                    <li class="nav-item">
-                        <a class="nav-link active" id="overview-tab" data-toggle="tab" href="#overview-content" role="tab" aria-controls="overview-content" aria-selected="true">
+                <!-- Summary Statistics Cards -->
+                <div class="row g-3 mb-4" id="pharmacy-stats-row">
+                    <div class="col-6 col-md-3 col-lg-2">
+                        <div class="stat-card-mini" style="border-left: 4px solid #667eea;">
+                            <div class="stat-icon-mini" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                <i class="mdi mdi-pill"></i>
+                            </div>
+                            <div class="stat-content-mini">
+                                <h4 id="pharm-stat-dispensed">0</h4>
+                                <small>Dispensed</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3 col-lg-2">
+                        <div class="stat-card-mini" style="border-left: 4px solid #28a745;">
+                            <div class="stat-icon-mini" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                                <i class="mdi mdi-cash-multiple"></i>
+                            </div>
+                            <div class="stat-content-mini">
+                                <h4 id="pharm-stat-revenue">₦0</h4>
+                                <small>Total Revenue</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3 col-lg-2">
+                        <div class="stat-card-mini" style="border-left: 4px solid #17a2b8;">
+                            <div class="stat-icon-mini" style="background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%);">
+                                <i class="mdi mdi-cash"></i>
+                            </div>
+                            <div class="stat-content-mini">
+                                <h4 id="pharm-stat-cash">₦0</h4>
+                                <small>Cash Sales</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3 col-lg-2">
+                        <div class="stat-card-mini" style="border-left: 4px solid #fd7e14;">
+                            <div class="stat-icon-mini" style="background: linear-gradient(135deg, #fd7e14 0%, #e83e8c 100%);">
+                                <i class="mdi mdi-hospital-building"></i>
+                            </div>
+                            <div class="stat-content-mini">
+                                <h4 id="pharm-stat-hmo">₦0</h4>
+                                <small>HMO Claims</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3 col-lg-2">
+                        <div class="stat-card-mini" style="border-left: 4px solid #6f42c1;">
+                            <div class="stat-icon-mini" style="background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);">
+                                <i class="mdi mdi-account-group"></i>
+                            </div>
+                            <div class="stat-content-mini">
+                                <h4 id="pharm-stat-patients">0</h4>
+                                <small>Patients</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3 col-lg-2">
+                        <div class="stat-card-mini" style="border-left: 4px solid #dc3545;">
+                            <div class="stat-icon-mini" style="background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);">
+                                <i class="mdi mdi-clock-alert"></i>
+                            </div>
+                            <div class="stat-content-mini">
+                                <h4 id="pharm-stat-pending">0</h4>
+                                <small>Pending</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report Tabs -->
+                <ul class="nav nav-tabs nav-fill mb-3" id="pharmacy-report-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="pharm-overview-tab" data-bs-toggle="tab" data-bs-target="#pharm-overview-content" type="button" role="tab">
                             <i class="mdi mdi-view-dashboard"></i> Overview
-                        </a>
+                        </button>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="detailed-report-tab" data-toggle="tab" href="#detailed-report-content" role="tab" aria-controls="detailed-report-content" aria-selected="false">
-                            <i class="mdi mdi-table"></i> Detailed Report
-                        </a>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="pharm-dispensing-tab" data-bs-toggle="tab" data-bs-target="#pharm-dispensing-content" type="button" role="tab">
+                            <i class="mdi mdi-pill"></i> Dispensing
+                        </button>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="analytics-tab" data-toggle="tab" href="#analytics-content" role="tab" aria-controls="analytics-content" aria-selected="false">
-                            <i class="mdi mdi-chart-line"></i> Analytics
-                        </a>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="pharm-revenue-tab" data-bs-toggle="tab" data-bs-target="#pharm-revenue-content" type="button" role="tab">
+                            <i class="mdi mdi-cash-register"></i> Revenue
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="pharm-stock-tab" data-bs-toggle="tab" data-bs-target="#pharm-stock-content" type="button" role="tab">
+                            <i class="mdi mdi-package-variant"></i> Stock
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="pharm-performance-tab" data-bs-toggle="tab" data-bs-target="#pharm-performance-content" type="button" role="tab">
+                            <i class="mdi mdi-account-tie"></i> Performance
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="pharm-hmo-tab" data-bs-toggle="tab" data-bs-target="#pharm-hmo-content" type="button" role="tab">
+                            <i class="mdi mdi-hospital-building"></i> HMO Claims
+                        </button>
                     </li>
                 </ul>
 
                 <!-- Tab Content -->
-                <div class="tab-content" id="reports-tab-content">
+                <div class="tab-content" id="pharmacy-report-tab-content">
+
                     <!-- Overview Tab -->
-                    <div class="tab-pane fade show active" id="overview-content" role="tabpanel" aria-labelledby="overview-tab">
-                        <div class="reports-container">
-                            <!-- Summary Statistics Cards -->
-                            <div class="row mb-4">
-                                <div class="col-md-3">
-                                    <div class="stat-card">
-                                        <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                                            <i class="mdi mdi-clipboard-list"></i>
-                                        </div>
-                                        <div class="stat-content">
-                                            <h3 id="stat-total-requests">0</h3>
-                                            <p>Total Requests</p>
-                                        </div>
+                    <div class="tab-pane fade show active" id="pharm-overview-content" role="tabpanel">
+                        <div class="row g-4">
+                            <!-- Dispensing Trend Chart -->
+                            <div class="col-md-8">
+                                <div class="card h-100">
+                                    <div class="card-header py-2">
+                                        <h6 class="mb-0"><i class="mdi mdi-chart-line"></i> Dispensing Trends</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="pharm-trend-chart" height="250"></canvas>
                                     </div>
                                 </div>
-                                <div class="col-md-3">
-                                    <div class="stat-card">
-                                        <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                                            <i class="mdi mdi-check-circle"></i>
-                                        </div>
-                                        <div class="stat-content">
-                                            <h3 id="stat-completed">0</h3>
-                                            <p>Completed</p>
-                                        </div>
+                            </div>
+                            <!-- Revenue Breakdown -->
+                            <div class="col-md-4">
+                                <div class="card h-100">
+                                    <div class="card-header py-2">
+                                        <h6 class="mb-0"><i class="mdi mdi-chart-pie"></i> Revenue Breakdown</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="pharm-revenue-pie" height="250"></canvas>
                                     </div>
                                 </div>
-                                <div class="col-md-3">
-                                    <div class="stat-card">
-                                        <div class="stat-icon" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);">
-                                            <i class="mdi mdi-clock"></i>
-                                        </div>
-                                        <div class="stat-content">
-                                            <h3 id="stat-pending">0</h3>
-                                            <p>Pending</p>
-                                        </div>
+                            </div>
+                            <!-- Top Products -->
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header py-2">
+                                        <h6 class="mb-0"><i class="mdi mdi-star"></i> Top 10 Products</h6>
                                     </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="stat-card">
-                                        <div class="stat-icon" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
-                                            <i class="mdi mdi-timer"></i>
-                                        </div>
-                                        <div class="stat-content">
-                                            <h3 id="stat-avg-tat">0</h3>
-                                            <p>Avg TAT</p>
+                                    <div class="card-body p-0">
+                                        <div class="table-responsive" style="max-height: 300px;">
+                                            <table class="table table-sm table-hover mb-0">
+                                                <thead class="table-light sticky-top">
+                                                    <tr>
+                                                        <th>#</th>
+                                                        <th>Product</th>
+                                                        <th class="text-center">Qty</th>
+                                                        <th class="text-end">Revenue</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="pharm-top-products-tbody">
+                                                    <tr><td colspan="4" class="text-center text-muted py-3">Loading...</td></tr>
+                                                </tbody>
+                                            </table>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Charts and Top Services -->
-                            <div class="row mb-4">
-                                <div class="col-md-6">
-                                    <div class="card-modern">
-                                        <div class="card-header">
-                                            <h6 class="mb-0"><i class="mdi mdi-chart-bar"></i> Requests by Status</h6>
-                                        </div>
-                                        <div class="card-body">
-                                            <canvas id="status-chart" height="200"></canvas>
-                                        </div>
+                            <!-- Payment Methods -->
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header py-2">
+                                        <h6 class="mb-0"><i class="mdi mdi-credit-card-multiple"></i> Payment Methods</h6>
                                     </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="card-modern">
-                                        <div class="card-header">
-                                            <h6 class="mb-0"><i class="mdi mdi-chart-line"></i> Monthly Trends</h6>
-                                        </div>
-                                        <div class="card-body">
-                                            <canvas id="trends-chart" height="200"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Top Services -->
-                            <div class="row mb-4">
-                                <div class="col-md-12">
-                                    <div class="card-modern" id="top-services-card">
-                                        <div class="card-header">
-                                            <h6 class="mb-0"><i class="mdi mdi-test-tube"></i> Top 10 Lab Services</h6>
-                                        </div>
-                                        <div class="card-body">
-                                            <div id="top-services-list">
-                                                <p class="text-muted">Loading...</p>
-                                            </div>
+                                    <div class="card-body p-0">
+                                        <div class="table-responsive" style="max-height: 300px;">
+                                            <table class="table table-sm table-hover mb-0">
+                                                <thead class="table-light sticky-top">
+                                                    <tr>
+                                                        <th>Method</th>
+                                                        <th class="text-center">Transactions</th>
+                                                        <th class="text-end">Amount</th>
+                                                        <th class="text-end">%</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="pharm-payment-methods-tbody">
+                                                    <tr><td colspan="4" class="text-center text-muted py-3">Loading...</td></tr>
+                                                </tbody>
+                                            </table>
                                         </div>
                                     </div>
                                 </div>
@@ -3357,63 +3946,200 @@
                         </div>
                     </div>
 
-                    <!-- Detailed Report Tab -->
-                    <div class="tab-pane fade" id="detailed-report-content" role="tabpanel" aria-labelledby="detailed-report-tab">
-                        <div class="reports-container">
-                            <!-- DataTable -->
-                            <div class="card-modern">
-                                <div class="card-header d-flex justify-content-between align-items-center">
-                                    <h6 class="mb-0"><i class="mdi mdi-table"></i> Detailed Report</h6>
-                                    <div>
-                                        <button class="btn btn-sm btn-success" id="export-excel">
-                                            <i class="mdi mdi-file-excel"></i> Excel
-                                        </button>
-                                        <button class="btn btn-sm btn-danger" id="export-pdf">
-                                            <i class="mdi mdi-file-pdf"></i> PDF
-                                        </button>
-                                        <button class="btn btn-sm btn-info" id="print-report">
-                                            <i class="mdi mdi-printer"></i> Print
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <div class="table-responsive">
-                                        <table class="table table-hover" id="reports-datatable" style="width: 100%">
-                                            <thead>
-                                                <tr>
-                                                    <th>Date</th>
-                                                    <th>File No</th>
-                                                    <th>Patient</th>
-                                                    <th>Service</th>
-                                                    <th>Doctor</th>
-                                                    <th>HMO</th>
-                                                    <th>Status</th>
-                                                    <th>TAT</th>
-                                                    <th>Actions</th>
-                                                </tr>
-                                            </thead>
-                                        </table>
-                                    </div>
+                    <!-- Dispensing Report Tab -->
+                    <div class="tab-pane fade" id="pharm-dispensing-content" role="tabpanel">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-striped" id="pharm-dispensing-table" style="width: 100%">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>Date/Time</th>
+                                                <th>Ref #</th>
+                                                <th>Patient</th>
+                                                <th>Product</th>
+                                                <th>Qty</th>
+                                                <th>Amount</th>
+                                                <th>Payment</th>
+                                                <th>Store</th>
+                                                <th>Pharmacist</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                    </table>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Analytics Tab -->
-                    <div class="tab-pane fade" id="analytics-content" role="tabpanel" aria-labelledby="analytics-tab">
-                        <div class="reports-container">
-                            <div class="row">
-                                <div class="col-md-12">
-                                    <div class="card-modern">
-                                        <div class="card-header">
-                                            <h6 class="mb-0"><i class="mdi mdi-doctor"></i> Top Requesting Doctors</h6>
-                                        </div>
-                                        <div class="card-body">
-                                            <div id="top-doctors-list">
-                                                <p class="text-muted">Loading...</p>
-                                            </div>
-                                        </div>
-                                    </div>
+                    <!-- Revenue Report Tab -->
+                    <div class="tab-pane fade" id="pharm-revenue-content" role="tabpanel">
+                        <div class="card">
+                            <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0"><i class="mdi mdi-cash-register"></i> Revenue Summary</h6>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <input type="radio" class="btn-check" name="revenue-group" id="revenue-daily" value="daily" checked>
+                                    <label class="btn btn-outline-primary" for="revenue-daily">Daily</label>
+                                    <input type="radio" class="btn-check" name="revenue-group" id="revenue-weekly" value="weekly">
+                                    <label class="btn btn-outline-primary" for="revenue-weekly">Weekly</label>
+                                    <input type="radio" class="btn-check" name="revenue-group" id="revenue-monthly" value="monthly">
+                                    <label class="btn btn-outline-primary" for="revenue-monthly">Monthly</label>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-striped" id="pharm-revenue-table" style="width: 100%">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>Period</th>
+                                                <th class="text-center">Transactions</th>
+                                                <th class="text-end">Cash</th>
+                                                <th class="text-end">Card</th>
+                                                <th class="text-end">Transfer</th>
+                                                <th class="text-end">HMO</th>
+                                                <th class="text-end">Total</th>
+                                                <th class="text-end">Avg/Txn</th>
+                                            </tr>
+                                        </thead>
+                                        <tfoot class="table-secondary fw-bold">
+                                            <tr>
+                                                <td>TOTAL</td>
+                                                <td class="text-center" id="revenue-total-txn">0</td>
+                                                <td class="text-end" id="revenue-total-cash">₦0</td>
+                                                <td class="text-end" id="revenue-total-card">₦0</td>
+                                                <td class="text-end" id="revenue-total-transfer">₦0</td>
+                                                <td class="text-end" id="revenue-total-hmo">₦0</td>
+                                                <td class="text-end" id="revenue-total-all">₦0</td>
+                                                <td class="text-end" id="revenue-total-avg">₦0</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stock Report Tab -->
+                    <div class="tab-pane fade" id="pharm-stock-content" role="tabpanel">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <select class="form-select" id="stock-report-store-filter">
+                                    <option value="">All Stores (Combined)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <select class="form-select" id="stock-report-category-filter">
+                                    <option value="">All Categories</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check form-switch mt-2">
+                                    <input class="form-check-input" type="checkbox" id="stock-show-low-only">
+                                    <label class="form-check-label" for="stock-show-low-only">Show Low Stock Only</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-striped" id="pharm-stock-table" style="width: 100%">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>Product</th>
+                                                <th>Code</th>
+                                                <th>Category</th>
+                                                <th class="text-center">Reorder Level</th>
+                                                <th class="text-center">Global Stock</th>
+                                                <th>Store Breakdown</th>
+                                                <th class="text-center">Dispensed (Period)</th>
+                                                <th class="text-end">Unit Price</th>
+                                                <th class="text-end">Stock Value</th>
+                                                <th class="text-center">Status</th>
+                                            </tr>
+                                        </thead>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Performance Report Tab -->
+                    <div class="tab-pane fade" id="pharm-performance-content" role="tabpanel">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0"><i class="mdi mdi-account-tie"></i> Pharmacist Performance</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-striped" id="pharm-performance-table" style="width: 100%">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>Pharmacist</th>
+                                                <th class="text-center">Total Dispensed</th>
+                                                <th class="text-end">Total Revenue</th>
+                                                <th class="text-center">Cash Txns</th>
+                                                <th class="text-center">HMO Txns</th>
+                                                <th class="text-end">Cash Amount</th>
+                                                <th class="text-end">HMO Amount</th>
+                                                <th class="text-center">Avg TAT (mins)</th>
+                                                <th class="text-center">Unique Patients</th>
+                                            </tr>
+                                        </thead>
+                                        <tfoot class="table-secondary fw-bold">
+                                            <tr>
+                                                <td>TOTAL</td>
+                                                <td class="text-center" id="perf-total-dispensed">0</td>
+                                                <td class="text-end" id="perf-total-revenue">₦0</td>
+                                                <td class="text-center" id="perf-total-cash-txn">0</td>
+                                                <td class="text-center" id="perf-total-hmo-txn">0</td>
+                                                <td class="text-end" id="perf-total-cash-amt">₦0</td>
+                                                <td class="text-end" id="perf-total-hmo-amt">₦0</td>
+                                                <td class="text-center" id="perf-avg-tat">-</td>
+                                                <td class="text-center" id="perf-total-patients">0</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- HMO Claims Tab -->
+                    <div class="tab-pane fade" id="pharm-hmo-content" role="tabpanel">
+                        <div class="card">
+                            <div class="card-header py-2">
+                                <h6 class="mb-0"><i class="mdi mdi-hospital-building"></i> HMO Claims Summary</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-striped" id="pharm-hmo-table" style="width: 100%">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>HMO Provider</th>
+                                                <th class="text-center">Total Claims</th>
+                                                <th class="text-end">Total Amount</th>
+                                                <th class="text-center">Validated</th>
+                                                <th class="text-end">Validated Amt</th>
+                                                <th class="text-center">Pending</th>
+                                                <th class="text-end">Pending Amt</th>
+                                                <th class="text-center">Rejected</th>
+                                                <th class="text-end">Rejected Amt</th>
+                                            </tr>
+                                        </thead>
+                                        <tfoot class="table-secondary fw-bold">
+                                            <tr>
+                                                <td>TOTAL</td>
+                                                <td class="text-center" id="hmo-total-claims">0</td>
+                                                <td class="text-end" id="hmo-total-amount">₦0</td>
+                                                <td class="text-center" id="hmo-total-validated">0</td>
+                                                <td class="text-end" id="hmo-total-validated-amt">₦0</td>
+                                                <td class="text-center" id="hmo-total-pending">0</td>
+                                                <td class="text-end" id="hmo-total-pending-amt">₦0</td>
+                                                <td class="text-center" id="hmo-total-rejected">0</td>
+                                                <td class="text-end" id="hmo-total-rejected-amt">₦0</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
                                 </div>
                             </div>
                         </div>
@@ -3780,6 +4506,288 @@
 }
 </style>
 
+<!-- My Transactions Modal (Global Access) -->
+<div class="modal fade" id="myTransactionsModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background: var(--hospital-primary); color: white;">
+                <h5 class="modal-title"><i class="mdi mdi-receipt"></i> My Transactions</h5>
+                <button type="button" class="close text-white" data-bs-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="my-transactions-modal-body">
+                <!-- Filter Panel -->
+                <div class="my-transactions-filter">
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label class="font-weight-bold">Quick Date Filters</label>
+                            <div class="btn-group btn-group-sm w-100" role="group">
+                                <button type="button" class="btn btn-outline-primary my-trans-date-preset" data-preset="today">Today</button>
+                                <button type="button" class="btn btn-outline-primary my-trans-date-preset" data-preset="yesterday">Yesterday</button>
+                                <button type="button" class="btn btn-outline-primary my-trans-date-preset" data-preset="this_week">This Week</button>
+                                <button type="button" class="btn btn-outline-primary my-trans-date-preset" data-preset="last_7_days">Last 7 Days</button>
+                                <button type="button" class="btn btn-outline-primary my-trans-date-preset" data-preset="this_month">This Month</button>
+                                <button type="button" class="btn btn-outline-primary my-trans-date-preset" data-preset="last_month">Last Month</button>
+                                <button type="button" class="btn btn-outline-secondary my-trans-date-preset" data-preset="custom">Custom</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-2">
+                            <label>From Date</label>
+                            <input type="date" class="form-control" id="my-trans-from-date">
+                        </div>
+                        <div class="col-md-2">
+                            <label>To Date</label>
+                            <input type="date" class="form-control" id="my-trans-to-date">
+                        </div>
+                        <div class="col-md-2">
+                            <label>Payment Type</label>
+                            <select class="form-control" id="my-trans-payment-type">
+                                <option value="">All Types</option>
+                                <option value="CASH">Cash</option>
+                                <option value="POS">POS/Card</option>
+                                <option value="TRANSFER">Bank Transfer</option>
+                                <option value="MOBILE">Mobile Money</option>
+                                <option value="HMO">HMO</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label>Bank</label>
+                            <select class="form-control" id="my-trans-bank">
+                                <option value="">All Banks</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label>&nbsp;</label>
+                            <div class="btn-group btn-block">
+                                <button class="btn btn-primary" id="load-my-transactions">
+                                    <i class="mdi mdi-filter"></i> Load
+                                </button>
+                                <button class="btn btn-success" id="export-my-transactions-excel">
+                                    <i class="mdi mdi-file-excel"></i> Excel
+                                </button>
+                                <button class="btn btn-info" id="print-my-transactions">
+                                    <i class="mdi mdi-printer"></i> Print
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary Statistics -->
+                <div class="my-transactions-summary" id="my-transactions-summary" style="display: none;">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="summary-stat-card">
+                                <div class="stat-value" id="my-total-transactions">0</div>
+                                <div class="stat-label">Total Transactions</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="summary-stat-card">
+                                <div class="stat-value" id="my-total-amount">₦0.00</div>
+                                <div class="stat-label">Gross Amount</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="summary-stat-card">
+                                <div class="stat-value" id="my-total-discounts">₦0.00</div>
+                                <div class="stat-label">Total Discounts</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="summary-stat-card">
+                                <div class="stat-value" id="my-net-amount">₦0.00</div>
+                                <div class="stat-label">Net Amount</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Section -->
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="chart-card">
+                                <h6>Payment Method Distribution</h6>
+                                <div style="position: relative; height: 200px;">
+                                    <canvas id="my-trans-payment-chart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chart-card">
+                                <h6>Top 5 Products Dispensed</h6>
+                                <div style="position: relative; height: 200px;">
+                                    <canvas id="my-trans-products-chart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Breakdown by payment type -->
+                    <div class="payment-type-breakdown" id="payment-type-breakdown"></div>
+                </div>
+
+                <!-- Transactions Table -->
+                <div class="my-transactions-container">
+                    <table class="table table-hover table-sm" id="my-transactions-table">
+                        <thead>
+                            <tr>
+                                <th>Date/Time</th>
+                                <th>Patient</th>
+                                <th>File No</th>
+                                <th>Reference</th>
+                                <th>Product</th>
+                                <th>Qty</th>
+                                <th>Unit Price</th>
+                                <th>Method</th>
+                                <th>Bank</th>
+                                <th>Amount</th>
+                                <th>Discount</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="my-transactions-tbody">
+                            <tr>
+                                <td colspan="12" class="text-center text-muted py-5">
+                                    <i class="mdi mdi-information-outline" style="font-size: 3rem;"></i>
+                                    <p>Select a date range and click "Load" to fetch your transactions</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Transaction Details Modal -->
+<div class="modal fade" id="transactionDetailsModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background: var(--hospital-primary); color: white;">
+                <h5 class="modal-title"><i class="mdi mdi-file-document-outline"></i> Transaction Details</h5>
+                <button type="button" class="close text-white" data-bs-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="transaction-details-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="detail-group">
+                            <label class="detail-label">Transaction ID</label>
+                            <div class="detail-value" id="detail-id"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-group">
+                            <label class="detail-label">Date & Time</label>
+                            <div class="detail-value" id="detail-datetime"></div>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="detail-group">
+                            <label class="detail-label">Patient Name</label>
+                            <div class="detail-value" id="detail-patient"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-group">
+                            <label class="detail-label">File Number</label>
+                            <div class="detail-value" id="detail-file-no"></div>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="detail-group">
+                            <label class="detail-label">Product</label>
+                            <div class="detail-value" id="detail-product"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="detail-group">
+                            <label class="detail-label">Quantity</label>
+                            <div class="detail-value" id="detail-quantity"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="detail-group">
+                            <label class="detail-label">Unit Price</label>
+                            <div class="detail-value" id="detail-unit-price"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="detail-group">
+                            <label class="detail-label">Subtotal</label>
+                            <div class="detail-value" id="detail-subtotal"></div>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="detail-group">
+                            <label class="detail-label">Payment Method</label>
+                            <div class="detail-value" id="detail-payment-method"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="detail-group">
+                            <label class="detail-label">Bank</label>
+                            <div class="detail-value" id="detail-bank"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="detail-group">
+                            <label class="detail-label">Reference No</label>
+                            <div class="detail-value" id="detail-reference"></div>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="detail-group">
+                            <label class="detail-label">Total Amount</label>
+                            <div class="detail-value text-primary" style="font-size: 1.2rem; font-weight: bold;" id="detail-total"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="detail-group">
+                            <label class="detail-label">Discount</label>
+                            <div class="detail-value text-danger" style="font-size: 1.2rem; font-weight: bold;" id="detail-discount"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="detail-group">
+                            <label class="detail-label">Net Amount</label>
+                            <div class="detail-value text-success" style="font-size: 1.2rem; font-weight: bold;" id="detail-net"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="print-transaction-detail">
+                    <i class="mdi mdi-printer"></i> Print Receipt
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Receipt Preview Modal -->
 <div class="modal fade" id="receiptPreviewModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
@@ -3819,11 +4827,111 @@
     </div>
 </div>
 
+<!-- Dispense Cart Modal -->
+<div class="modal fade" id="dispenseCartModal" tabindex="-1" role="dialog" aria-labelledby="dispenseCartModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="dispenseCartModalLabel">
+                    <i class="mdi mdi-cart-check"></i> Dispense Cart
+                    <span id="modal-cart-count" class="badge bg-light text-success ms-2">0</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <!-- Store Selection in Modal -->
+                <div class="p-3 bg-light border-bottom">
+                    <div class="row align-items-center">
+                        <div class="col-md-5">
+                            <label class="form-label fw-bold mb-1 small">
+                                <i class="mdi mdi-store text-success"></i> Dispensing Store
+                            </label>
+                            <select id="modal-store-select" class="form-select">
+                                <option value="">-- Select Store --</option>
+                                @foreach($stores as $store)
+                                    <option value="{{ $store->id }}">{{ $store->store_name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-7">
+                            <div id="modal-store-status" class="small">
+                                <span class="text-muted"><i class="mdi mdi-information-outline"></i> Select a store to check stock availability</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cart Empty State -->
+                <div id="modal-cart-empty" class="text-center py-5">
+                    <i class="mdi mdi-cart-outline mdi-48px text-muted"></i>
+                    <p class="text-muted mt-2 mb-0">Your cart is empty</p>
+                    <p class="text-muted small">Select items from the list and click "Add to Cart & Review"</p>
+                </div>
+
+                <!-- Cart Items Table -->
+                <div id="modal-cart-content" style="display: none;">
+                    <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+                        <table class="table table-sm table-hover mb-0" id="modal-cart-table">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th style="width: 40%;">Medication</th>
+                                    <th style="width: 12%;" class="text-center">Qty</th>
+                                    <th style="width: 15%;" class="text-center">Stock</th>
+                                    <th style="width: 15%;" class="text-end">Amount</th>
+                                    <th style="width: 10%;">Status</th>
+                                    <th style="width: 8%;" class="text-center"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="modal-cart-body">
+                                <!-- Cart items rendered here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Cart Summary -->
+                    <div class="p-3 bg-light border-top">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <div id="modal-stock-warning" class="text-danger small" style="display: none;">
+                                    <i class="mdi mdi-alert-circle"></i>
+                                    <span id="modal-stock-warning-text">Some items have insufficient stock</span>
+                                </div>
+                                <div id="modal-stock-status">
+                                    <span class="badge bg-secondary">Select items</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <span class="text-muted">Total:</span>
+                                <span id="modal-cart-total" class="fs-5 fw-bold text-success ms-2">₦0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" onclick="clearDispenseCart()">
+                    <i class="mdi mdi-cart-remove"></i> Clear Cart
+                </button>
+                <button type="button" class="btn btn-outline-primary" onclick="printCartPrescriptions()">
+                    <i class="mdi mdi-printer"></i> Print
+                </button>
+                <button type="button" class="btn btn-success btn-lg px-4" id="btn-dispense-cart" onclick="dispenseFromCart()" disabled>
+                    <i class="mdi mdi-pill"></i> Dispense All
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @section('scripts')
 <script src="{{ asset('plugins/dataT/datatables.min.js') }}"></script>
 <script src="{{ asset('plugins/ckeditor/ckeditor5/ckeditor.js') }}"></script>
+<!-- Chart.js for transaction analytics -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- SheetJS for Excel export -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 // Global state
 let currentPatient = null;
@@ -3886,6 +4994,13 @@ function initializeEventListeners() {
         renderPendingSubtabContent(status);
     });
 
+    // Prescription sub-tabs (Billing/Pending/Dispense/History) - refresh on tab switch
+    $(document).on('shown.bs.tab', '#prescSubTabs button[data-bs-toggle="tab"]', function(e) {
+        const targetPane = $(e.target).data('bs-target');
+        console.log('Prescription subtab switched to:', targetPane);
+        refreshPrescSubtab(targetPane);
+    });
+
     // Navigation buttons
     $('#btn-back-to-search').on('click', function() {
         // Mobile: go back to search pane
@@ -3902,6 +5017,24 @@ function initializeEventListeners() {
     $('#btn-toggle-search').on('click', function() {
         // Desktop/Tablet: toggle search pane visibility
         $('#left-panel').toggleClass('hidden');
+    });
+
+    // Clinical context button
+    $('#btn-clinical-context').on('click', function() {
+        if (!currentPatient) {
+            toastr.warning('Please select a patient first');
+            return;
+        }
+        // Open clinical context modal
+        $('#clinical-context-modal').modal('show');
+        // Load clinical data
+        loadClinicalContext(currentPatient);
+    });
+
+    // Clinical modal refresh buttons
+    $('.refresh-clinical-btn').on('click', function() {
+        const panel = $(this).data('panel');
+        refreshClinicalPanel(panel);
     });
 
     // Queue filter buttons
@@ -4652,8 +5785,10 @@ function injectUnifiedPrescPartial(patientId, patientUserId) {
                             <div class="table-responsive">
                                 <table class="table table-hover" style="width: 100%" id="presc_billing_table">
                                     <thead class="table-light">
-                                        <th style="width: 40px;"><input type="checkbox" id="select-all-billing" onclick="toggleAllPrescBilling(this)"></th>
-                                        <th><i class="mdi mdi-pill"></i> Medication</th>
+                                        <tr>
+                                            <th style="width: 40px;"><input type="checkbox" id="select-all-billing" onclick="toggleAllPrescBilling(this)"></th>
+                                            <th><i class="mdi mdi-pill"></i> Medication</th>
+                                        </tr>
                                     </thead>
                                     <tbody></tbody>
                                 </table>
@@ -4737,8 +5872,10 @@ function injectUnifiedPrescPartial(patientId, patientUserId) {
                             <div class="table-responsive">
                                 <table class="table table-hover" style="width: 100%" id="presc_pending_table">
                                     <thead class="table-light">
-                                        <th style="width: 40px;"><input type="checkbox" id="select-all-pending" onclick="toggleAllPrescPending(this)"></th>
-                                        <th><i class="mdi mdi-pill"></i> Medication</th>
+                                        <tr>
+                                            <th style="width: 40px;"><input type="checkbox" id="select-all-pending" onclick="toggleAllPrescPending(this)"></th>
+                                            <th><i class="mdi mdi-pill"></i> Medication</th>
+                                        </tr>
                                     </thead>
                                     <tbody></tbody>
                                 </table>
@@ -4764,21 +5901,24 @@ function injectUnifiedPrescPartial(patientId, patientUserId) {
                 <!-- Dispense Tab (Ready to Dispense) -->
                 <div class="tab-pane fade" id="presc-dispense-pane" role="tabpanel">
                     <div class="card card-modern">
-                        <div class="card-header bg-light">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
                             <h6 class="mb-0"><i class="mdi mdi-pill"></i> Ready to Dispense</h6>
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="openDispenseCartModal()" id="btn-header-cart">
+                                <i class="mdi mdi-cart"></i> Cart <span id="header-cart-count" class="badge bg-primary ms-1" style="display: none;">0</span>
+                            </button>
                         </div>
                         <div class="card-body">
-                            <div class="alert alert-success mb-3">
-                                <i class="mdi mdi-check-circle-outline"></i>
-                                <strong>Ready!</strong> All items below have been paid (if applicable) and validated (if HMO). They are ready to be dispensed.
-                            </div>
+                            <!-- Step 2: Dispense Cart - Shows selected items with stock status -->
+                            <!-- Cart is now a modal - see dispenseCartModal below -->
 
-                            <div class="mb-3 d-flex gap-2">
-                                <button type="button" class="btn btn-outline-primary" onclick="printReadyPrescriptions()">
-                                    <i class="mdi mdi-printer"></i> Print Selected
-                                </button>
-                                <button type="button" class="btn btn-success" onclick="dispenseSelectedPrescriptions()">
-                                    <i class="mdi mdi-pill"></i> Dispense Selected
+                            <div class="alert alert-success mb-3 d-flex align-items-center justify-content-between">
+                                <div>
+                                    <i class="mdi mdi-check-circle-outline"></i>
+                                    <strong>Ready to Dispense</strong> — Select items and review stock before dispensing
+                                </div>
+                                <button type="button" class="btn btn-outline-success btn-sm" onclick="openDispenseCartModal()" id="btn-open-cart">
+                                    <i class="mdi mdi-cart"></i> View Cart
+                                    <span id="floating-cart-count" class="badge bg-success ms-1" style="display: none;">0</span>
                                 </button>
                             </div>
 
@@ -4786,8 +5926,10 @@ function injectUnifiedPrescPartial(patientId, patientUserId) {
                             <div class="table-responsive">
                                 <table class="table table-hover" style="width: 100%" id="presc_dispense_table">
                                     <thead class="table-light">
-                                        <th style="width: 40px;"><input type="checkbox" id="select-all-dispense" onclick="toggleAllPrescDispense(this)"></th>
-                                        <th><i class="mdi mdi-pill"></i> Medication</th>
+                                        <tr>
+                                            <th style="width: 40px;"><input type="checkbox" id="select-all-dispense" onclick="toggleAllPrescDispense(this)"></th>
+                                            <th><i class="mdi mdi-pill"></i> Medication</th>
+                                        </tr>
                                     </thead>
                                     <tbody></tbody>
                                 </table>
@@ -4795,17 +5937,14 @@ function injectUnifiedPrescPartial(patientId, patientUserId) {
 
                             <hr>
 
-                            <!-- Dispense Actions -->
+                            <!-- Dispense Actions - Simplified -->
                             <div class="d-flex justify-content-between align-items-center">
-                                <div></div>
-                                <div>
-                                    <button type="button" class="btn btn-danger me-2" onclick="dismissPrescItems('dispense')">
-                                        <i class="mdi mdi-close"></i> Dismiss Selected
-                                    </button>
-                                    <button type="button" class="btn btn-success" onclick="dispensePrescItems()" id="btn-dispense-presc">
-                                        <i class="mdi mdi-pill"></i> Dispense Selected
-                                    </button>
-                                </div>
+                                <button type="button" class="btn btn-outline-danger" onclick="dismissPrescItems('dispense')">
+                                    <i class="mdi mdi-close"></i> Dismiss Selected
+                                </button>
+                                <button type="button" class="btn btn-success btn-lg px-4" onclick="addSelectedToCartAndOpen()">
+                                    <i class="mdi mdi-cart-plus"></i> Add to Cart &amp; Review
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -4822,7 +5961,9 @@ function injectUnifiedPrescPartial(patientId, patientUserId) {
                             <div class="table-responsive">
                                 <table class="table table-hover" style="width: 100%" id="presc_history_table">
                                     <thead class="table-light">
-                                        <th><i class="mdi mdi-pill"></i> Dispensed Medication</th>
+                                        <tr>
+                                            <th><i class="mdi mdi-pill"></i> Dispensed Medication</th>
+                                        </tr>
                                     </thead>
                                     <tbody></tbody>
                                 </table>
@@ -4876,7 +6017,7 @@ function initializePrescriptionDataTables(patientId) {
                 orderable: false,
                 render: function(data, type, row) {
                     const price = parseFloat(row.payable_amount || row.price || 0);
-                    return `<input type="checkbox" class="presc-billing-checkbox form-check-input"
+                    return `<input type="checkbox" class="presc-card-checkbox presc-billing-check form-check-input"
                             data-id="${row.id}" data-price="${price}"
                             onchange="handlePrescBillingCheckPharmacy(this)">`;
                 }
@@ -4894,6 +6035,8 @@ function initializePrescriptionDataTables(patientId) {
         drawCallback: function() {
             const info = this.api().page.info();
             $('#unbilled-subtab-badge, #queue-unbilled-count, #presc-billing-count').text(info.recordsTotal);
+            // Restore checked items after redraw
+            restoreCheckedItemsState('#presc_billing_table', 'presc-billing-check');
         }
     });
 
@@ -4914,7 +6057,7 @@ function initializePrescriptionDataTables(patientId) {
                 name: "select",
                 orderable: false,
                 render: function(data, type, row) {
-                    return `<input type="checkbox" class="presc-pending-checkbox form-check-input"
+                    return `<input type="checkbox" class="presc-card-checkbox presc-pending-check form-check-input"
                             data-id="${row.id}"
                             onchange="handlePrescPendingCheckPharmacy(this)">`;
                 }
@@ -4932,6 +6075,8 @@ function initializePrescriptionDataTables(patientId) {
         drawCallback: function() {
             const info = this.api().page.info();
             $('#presc-pending-count').text(info.recordsTotal);
+            // Restore checked items after redraw
+            restoreCheckedItemsState('#presc_pending_table', 'presc-pending-check');
         }
     });
 
@@ -4953,8 +6098,9 @@ function initializePrescriptionDataTables(patientId) {
                 orderable: false,
                 render: function(data, type, row) {
                     // All items in Ready tab are ready for dispense
-                    return `<input type="checkbox" class="presc-dispense-checkbox form-check-input"
-                            data-id="${row.id}"
+                    const productId = row && row.product_id ? row.product_id : '';
+                    return `<input type="checkbox" class="presc-card-checkbox presc-dispense-check form-check-input"
+                            data-id="${row ? row.id : ''}" data-product-id="${productId}"
                             onchange="handlePrescDispenseCheckPharmacy(this)">`;
                 }
             },
@@ -4971,6 +6117,8 @@ function initializePrescriptionDataTables(patientId) {
         drawCallback: function() {
             const info = this.api().page.info();
             $('#billed-subtab-badge, #ready-subtab-badge, #queue-ready-count, #presc-dispense-count').text(info.recordsTotal);
+            // Restore checked items after redraw
+            restoreCheckedItemsState('#presc_dispense_table', 'presc-dispense-check');
         }
     });
 
@@ -5011,8 +6159,8 @@ function formatMoneyPharmacy(amount) {
 // Toggle all checkboxes for billing
 function toggleAllPrescBilling(checkbox) {
     const isChecked = $(checkbox).is(':checked');
-    $('.presc-billing-checkbox').prop('checked', isChecked);
-    $('.presc-billing-checkbox').each(function() {
+    $('.presc-billing-check').prop('checked', isChecked);
+    $('.presc-billing-check').each(function() {
         handlePrescBillingCheckPharmacy(this);
     });
 }
@@ -5020,14 +6168,14 @@ function toggleAllPrescBilling(checkbox) {
 // Toggle all checkboxes for pending
 function toggleAllPrescPending(checkbox) {
     const isChecked = $(checkbox).is(':checked');
-    $('.presc-pending-checkbox').prop('checked', isChecked);
+    $('.presc-pending-check').prop('checked', isChecked);
 }
 
 // Toggle all checkboxes for dispense
 function toggleAllPrescDispense(checkbox) {
     const isChecked = $(checkbox).is(':checked');
-    $('.presc-dispense-checkbox').prop('checked', isChecked);
-    $('.presc-dispense-checkbox').each(function() {
+    $('.presc-dispense-check').prop('checked', isChecked);
+    $('.presc-dispense-check').each(function() {
         handlePrescDispenseCheckPharmacy(this);
     });
 }
@@ -5185,8 +6333,33 @@ function renderPrescCardPharmacy(row, type) {
     }
     metaInfo += '</div>';
 
+    // Stock information
+    let stockInfo = '';
+    const globalStock = parseInt(row.global_stock) || 0;
+    const storeStocks = row.store_stocks || [];
+
+    if (type === 'dispense' || type === 'billing') {
+        const stockClass = globalStock >= qty ? 'text-success' : 'text-danger';
+        const stockIcon = globalStock >= qty ? 'mdi-check-circle' : 'mdi-alert-circle';
+        stockInfo = `
+            <div class="presc-card-stock small mt-2 p-2 bg-light rounded">
+                <div class="${stockClass}">
+                    <i class="mdi ${stockIcon}"></i> <strong>Stock:</strong> ${globalStock} available
+                    ${globalStock < qty ? '<span class="badge bg-danger ms-2">Low Stock</span>' : ''}
+                </div>
+        `;
+        if (storeStocks.length > 0) {
+            stockInfo += '<div class="mt-1"><strong>By Store:</strong></div>';
+            storeStocks.forEach(function(ss) {
+                const storeClass = ss.quantity >= qty ? 'text-success' : 'text-warning';
+                stockInfo += `<div class="${storeClass}"><i class="mdi mdi-store"></i> ${ss.store_name}: ${ss.quantity}</div>`;
+            });
+        }
+        stockInfo += '</div>';
+    }
+
     return `
-        <div class="${cardClass}" data-id="${row.id}" style="${cardStyle}">
+        <div class="${cardClass}" data-id="${row.id}" data-product-id="${row.product_id || ''}" style="${cardStyle}">
             <div class="presc-card-header">
                 <div>
                     <div class="presc-card-title">${row.product_name || 'Unknown Product'}</div>
@@ -5202,6 +6375,7 @@ function renderPrescCardPharmacy(row, type) {
                 <div><strong>Dose/Freq:</strong> ${row.dose || 'N/A'}</div>
                 <div><strong>Qty:</strong> ${qty}</div>
                 ${hmoInfo}
+                ${stockInfo}
             </div>
             ${metaInfo}
         </div>
@@ -5239,6 +6413,9 @@ function displayPatientInfo(patient) {
     `;
 
     $('#patient-meta').html(metaHtml);
+
+    // Enable clinical context button
+    $('#btn-clinical-context').prop('disabled', false).attr('title', 'View clinical context for ' + patient.name);
 }
 
 function initializeHistoryDataTable(patientId) {
@@ -5336,11 +6513,129 @@ function startQueueRefresh() {
     }, 30000); // 30 seconds
 }
 
+// ===========================================
+// CHECKED ITEMS STATE MANAGEMENT
+// ===========================================
+
+// Store checked item IDs for each table
+let checkedItemsState = {
+    billing: new Set(),
+    pending: new Set(),
+    dispense: new Set()
+};
+
+// Check if any tab has checked items
+function hasCheckedItems() {
+    return checkedItemsState.billing.size > 0 ||
+           checkedItemsState.pending.size > 0 ||
+           checkedItemsState.dispense.size > 0;
+}
+
+// Get checked items for a specific tab
+function getCheckedItemsCount(tab) {
+    return checkedItemsState[tab]?.size || 0;
+}
+
+// Save checked items state before refresh
+function saveCheckedItemsState(tableId, checkboxClass) {
+    const tabKey = tableId.includes('billing') ? 'billing' :
+                   tableId.includes('pending') ? 'pending' :
+                   tableId.includes('dispense') ? 'dispense' : null;
+
+    if (!tabKey) return;
+
+    checkedItemsState[tabKey].clear();
+    $(`${tableId} .${checkboxClass}:checked`).each(function() {
+        const id = $(this).attr('data-id') || $(this).data('id');
+        if (id) checkedItemsState[tabKey].add(String(id));
+    });
+}
+
+// Restore checked items state after refresh
+function restoreCheckedItemsState(tableId, checkboxClass) {
+    const tabKey = tableId.includes('billing') ? 'billing' :
+                   tableId.includes('pending') ? 'pending' :
+                   tableId.includes('dispense') ? 'dispense' : null;
+
+    if (!tabKey || checkedItemsState[tabKey].size === 0) return;
+
+    $(`${tableId} .${checkboxClass}`).each(function() {
+        const id = $(this).attr('data-id') || $(this).data('id');
+        if (id && checkedItemsState[tabKey].has(String(id))) {
+            $(this).prop('checked', true);
+            // Trigger change event to update totals
+            $(this).trigger('change');
+        }
+    });
+}
+
+// Clear checked items for a specific tab
+function clearCheckedItems(tab) {
+    if (checkedItemsState[tab]) {
+        checkedItemsState[tab].clear();
+    }
+}
+
+// Track checkbox changes for state management
+$(document).on('change', '.presc-billing-check', function() {
+    const id = $(this).attr('data-id') || $(this).data('id');
+    if (id) {
+        if ($(this).is(':checked')) {
+            checkedItemsState.billing.add(String(id));
+        } else {
+            checkedItemsState.billing.delete(String(id));
+        }
+    }
+});
+
+$(document).on('change', '.presc-pending-check', function() {
+    const id = $(this).attr('data-id') || $(this).data('id');
+    if (id) {
+        if ($(this).is(':checked')) {
+            checkedItemsState.pending.add(String(id));
+        } else {
+            checkedItemsState.pending.delete(String(id));
+        }
+    }
+});
+
+$(document).on('change', '.presc-dispense-check', function() {
+    const id = $(this).attr('data-id') || $(this).data('id');
+    if (id) {
+        if ($(this).is(':checked')) {
+            checkedItemsState.dispense.add(String(id));
+        } else {
+            checkedItemsState.dispense.delete(String(id));
+        }
+    }
+});
+
 function refreshCurrentPatientData() {
     if (!currentPatient) return;
 
+    // Skip auto-refresh if there are checked items in active tab
+    const activeSubtab = $('#prescSubTabs button.active').data('bs-target');
+    if (activeSubtab) {
+        const tabKey = activeSubtab.includes('billing') ? 'billing' :
+                       activeSubtab.includes('pending') ? 'pending' :
+                       activeSubtab.includes('dispense') ? 'dispense' : null;
+
+        if (tabKey && checkedItemsState[tabKey].size > 0) {
+            console.log('Skipping auto-refresh: active tab has checked items');
+            return;
+        }
+    }
+
     // Silently reload patient prescriptions
     loadPrescriptionItems(currentStatusFilter);
+
+    // Also refresh the active prescription subtab's DataTable
+    if (activeSubtab) {
+        refreshPrescSubtab(activeSubtab);
+    }
+
+    // Update sync indicator
+    updateSyncIndicator();
 }
 
 let lastSyncTimestamp = null;
@@ -5372,6 +6667,61 @@ function updateSyncTimeDisplay() {
     } else {
         const minutesAgo = Math.floor(secondsAgo / 60);
         $('#last-sync-time').text(minutesAgo + 'm ago');
+    }
+}
+
+// ========== LIVE DATA REFRESH FUNCTIONS ==========
+
+/**
+ * Refresh all prescription DataTables (billing, pending, dispense, history)
+ * Call this after billing/dispensing actions to update all tabs
+ */
+function refreshAllPrescTables() {
+    const tables = [
+        '#presc_billing_table',
+        '#presc_pending_table',
+        '#presc_dispense_table',
+        '#presc_history_table'
+    ];
+
+    tables.forEach(tableId => {
+        if ($.fn.DataTable.isDataTable(tableId)) {
+            $(tableId).DataTable().ajax.reload(null, false);
+        }
+    });
+
+    // Update sync indicator
+    updateSyncIndicator();
+}
+
+/**
+ * Refresh a specific prescription subtab's DataTable
+ * @param {string} paneId - The tab pane ID (e.g., '#presc-billing-pane')
+ */
+function refreshPrescSubtab(paneId) {
+    if (!prescPatientId) return;
+
+    switch(paneId) {
+        case '#presc-billing-pane':
+            if ($.fn.DataTable.isDataTable('#presc_billing_table')) {
+                $('#presc_billing_table').DataTable().ajax.reload(null, false);
+            }
+            break;
+        case '#presc-pending-pane':
+            if ($.fn.DataTable.isDataTable('#presc_pending_table')) {
+                $('#presc_pending_table').DataTable().ajax.reload(null, false);
+            }
+            break;
+        case '#presc-dispense-pane':
+            if ($.fn.DataTable.isDataTable('#presc_dispense_table')) {
+                $('#presc_dispense_table').DataTable().ajax.reload(null, false);
+            }
+            break;
+        case '#presc-history-pane':
+            if ($.fn.DataTable.isDataTable('#presc_history_table')) {
+                $('#presc_history_table').DataTable().ajax.reload(null, false);
+            }
+            break;
     }
 }
 
@@ -6778,7 +8128,7 @@ function dispenseItems(itemIds) {
         data: {
             _token: '{{ csrf_token() }}',
             patient_id: currentPatient,
-            item_ids: itemIds
+            product_request_ids: itemIds
         },
         success: function(response) {
             toastr.success('Medications dispensed successfully!');
@@ -6852,11 +8202,25 @@ function printPrescription(itemIds) {
 // Print from modal
 function printPrescriptionSlipFromModal() {
     const printContent = document.getElementById('prescription-slip-content').innerHTML;
-    const printWindow = window.open('', '_blank', 'width=800,height=600');
-    printWindow.document.write(printContent);
+    const printWindow = window.open('', '_blank', 'width=900,height=700');
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Prescription Slip</title>
+        </head>
+        <body>
+            ${printContent}
+            <script>
+                window.onload = function() {
+                    window.print();
+                    window.onafterprint = function() { window.close(); };
+                };
+            <\/script>
+        </body>
+        </html>
+    `);
     printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
 }
 
 // Print selected billing prescriptions
@@ -6869,15 +8233,24 @@ function printSelectedBillingPrescriptions() {
     // Check both DataTable checkboxes and card-based checkboxes
     const itemIds = [];
 
-    // From DataTable
-    $('.presc-billing-checkbox:checked').each(function() {
-        itemIds.push($(this).data('id'));
+    // Debug: Check all checkboxes in the table (not just checked)
+    console.log('Billing - Total checkboxes in table:', $('#presc_billing_table').find('.presc-billing-check').length);
+    console.log('Billing - Checked checkboxes:', $('#presc_billing_table').find('.presc-billing-check:checked').length);
+
+    // From DataTable - use attr to get the raw value
+    $('#presc_billing_table').find('.presc-billing-check:checked').each(function() {
+        const id = $(this).attr('data-id') || $(this).data('id');
+        console.log('Found checked checkbox with data-id:', id);
+        if (id) itemIds.push(id);
     });
 
     // From card-based view (unbilled section)
     $('.request-section[data-section="unbilled"] .prescription-checkbox:checked').each(function() {
-        itemIds.push($(this).data('id'));
+        const id = $(this).attr('data-id') || $(this).data('id');
+        if (id) itemIds.push(id);
     });
+
+    console.log('Billing print - Item IDs:', itemIds);
 
     if (itemIds.length === 0) {
         toastr.warning('Please select items to print');
@@ -6897,15 +8270,20 @@ function printSelectedPendingPrescriptions() {
     // Check both DataTable checkboxes and card-based checkboxes
     const itemIds = [];
 
-    // From DataTable
-    $('.presc-pending-checkbox:checked').each(function() {
-        itemIds.push($(this).data('id'));
+    // From DataTable - use attr to get the raw value
+    $('#presc_pending_table').find('.presc-pending-check:checked').each(function() {
+        const id = $(this).attr('data-id') || $(this).data('id');
+        if (id) itemIds.push(id);
     });
 
     // From card-based view (billed section - pending payment/validation)
     $('.request-section[data-section="billed"] .prescription-checkbox:checked').each(function() {
-        itemIds.push($(this).data('id'));
+        const id = $(this).attr('data-id') || $(this).data('id');
+        if (id) itemIds.push(id);
     });
+
+    console.log('Pending print - Found checkboxes:', $('#presc_pending_table').find('.presc-pending-check:checked').length);
+    console.log('Pending print - Item IDs:', itemIds);
 
     if (itemIds.length === 0) {
         toastr.warning('Please select items to print');
@@ -6945,15 +8323,20 @@ function printReadyPrescriptions() {
     // Check both DataTable checkboxes and card-based checkboxes
     const itemIds = [];
 
-    // From DataTable
-    $('.presc-dispense-checkbox:checked').each(function() {
-        itemIds.push($(this).data('id'));
+    // From DataTable - use attr to get the raw value
+    $('#presc_dispense_table').find('.presc-dispense-check:checked').each(function() {
+        const id = $(this).attr('data-id') || $(this).data('id');
+        if (id) itemIds.push(id);
     });
 
     // From card-based view (ready section)
     $('.request-section[data-section="ready"] .prescription-checkbox:checked').each(function() {
-        itemIds.push($(this).data('id'));
+        const id = $(this).attr('data-id') || $(this).data('id');
+        if (id) itemIds.push(id);
     });
+
+    console.log('Ready print - Found checkboxes:', $('#presc_dispense_table').find('.presc-dispense-check:checked').length);
+    console.log('Ready print - Item IDs:', itemIds);
 
     if (itemIds.length === 0) {
         toastr.warning('Please select items to print');
@@ -6970,11 +8353,19 @@ function dispenseSelectedPrescriptions() {
         return;
     }
 
+    // Get selected store
+    const storeId = $('#dispense-store-select').val();
+    if (!storeId) {
+        toastr.warning('Please select a store to dispense from');
+        $('#dispense-store-select').focus();
+        return;
+    }
+
     // Check both DataTable checkboxes and card-based checkboxes
     const itemIds = [];
 
     // From DataTable
-    $('.presc-dispense-checkbox:checked').each(function() {
+    $('.presc-dispense-check:checked').each(function() {
         itemIds.push($(this).data('id'));
     });
 
@@ -6988,7 +8379,7 @@ function dispenseSelectedPrescriptions() {
         return;
     }
 
-    if (!confirm(`Dispense ${itemIds.length} prescription(s)?`)) {
+    if (!confirm(`Dispense ${itemIds.length} prescription(s) from selected store?`)) {
         return;
     }
 
@@ -6998,7 +8389,8 @@ function dispenseSelectedPrescriptions() {
         data: {
             _token: '{{ csrf_token() }}',
             patient_id: currentPatient,
-            item_ids: itemIds
+            product_request_ids: itemIds,
+            store_id: storeId
         },
         success: function(response) {
             toastr.success(response.message || 'Prescriptions dispensed successfully');
@@ -7535,6 +8927,10 @@ $(document).on('click', '#btn-my-transactions', function() {
 
     // Populate bank dropdown
     populateMyTransactionsBankDropdown();
+
+    // Highlight today preset
+    $('.my-trans-date-preset').removeClass('active btn-primary').addClass('btn-outline-primary');
+    $('.my-trans-date-preset[data-preset="today"]').removeClass('btn-outline-primary').addClass('active btn-primary');
 });
 
 function populateMyTransactionsBankDropdown() {
@@ -7548,11 +8944,72 @@ function populateMyTransactionsBankDropdown() {
     }
 }
 
+// Date Preset Handlers
+$(document).on('click', '.my-trans-date-preset', function() {
+    const preset = $(this).data('preset');
+    const today = new Date();
+    let fromDate, toDate;
+
+    $('.my-trans-date-preset').removeClass('active btn-primary').addClass('btn-outline-primary');
+    $(this).removeClass('btn-outline-primary').addClass('active btn-primary');
+
+    switch(preset) {
+        case 'today':
+            fromDate = toDate = today;
+            break;
+        case 'yesterday':
+            fromDate = toDate = new Date(today.setDate(today.getDate() - 1));
+            break;
+        case 'this_week':
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - today.getDay());
+            fromDate = startOfWeek;
+            toDate = new Date();
+            break;
+        case 'last_7_days':
+            fromDate = new Date(today.setDate(today.getDate() - 7));
+            toDate = new Date();
+            break;
+        case 'this_month':
+            fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
+            toDate = new Date();
+            break;
+        case 'last_month':
+            fromDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+            toDate = new Date(today.getFullYear(), today.getMonth(), 0);
+            break;
+        case 'custom':
+            // Just enable date inputs
+            $('#my-trans-from-date').focus();
+            return;
+    }
+
+    if (fromDate && toDate) {
+        $('#my-trans-from-date').val(fromDate.toISOString().split('T')[0]);
+        $('#my-trans-to-date').val(toDate.toISOString().split('T')[0]);
+
+        // Auto-load transactions
+        const paymentType = $('#my-trans-payment-type').val();
+        const bankId = $('#my-trans-bank').val();
+        loadMyTransactions(
+            $('#my-trans-from-date').val(),
+            $('#my-trans-to-date').val(),
+            paymentType,
+            bankId
+        );
+    }
+});
+
 $(document).on('click', '#load-my-transactions', function() {
     const fromDate = $('#my-trans-from-date').val();
     const toDate = $('#my-trans-to-date').val();
     const paymentType = $('#my-trans-payment-type').val();
     const bankId = $('#my-trans-bank').val();
+
+    if (!fromDate || !toDate) {
+        toastr.warning('Please select date range');
+        return;
+    }
 
     loadMyTransactions(fromDate, toDate, paymentType, bankId);
 });
@@ -7691,21 +9148,115 @@ $(document).on('click', '#print-my-transactions', function() {
     printWindow.document.close();
 });
 
+// Excel Export for My Transactions
+$(document).on('click', '#export-my-transactions-excel', function() {
+    const fromDate = $('#my-trans-from-date').val();
+    const toDate = $('#my-trans-to-date').val();
+    const paymentType = $('#my-trans-payment-type').val();
+    const bankId = $('#my-trans-bank').val();
+
+    if (!fromDate || !toDate) {
+        toastr.warning('Please load transactions first');
+        return;
+    }
+
+    const transactions = [];
+    $('#my-transactions-tbody tr').each(function() {
+        if ($(this).find('td').length > 1) {
+            const row = {};
+            row['Date'] = $(this).find('td:eq(0)').text().trim();
+            row['Patient'] = $(this).find('td:eq(1)').text().trim();
+            row['File No'] = $(this).find('td:eq(2)').text().trim();
+            row['Reference'] = $(this).find('td:eq(3)').text().trim();
+            row['Product'] = $(this).find('td:eq(4)').text().trim();
+            row['Quantity'] = $(this).find('td:eq(5)').text().trim();
+            row['Unit Price'] = $(this).find('td:eq(6)').text().trim();
+            row['Payment Method'] = $(this).find('td:eq(7)').text().trim();
+            row['Bank'] = $(this).find('td:eq(8)').text().trim();
+            row['Amount'] = $(this).find('td:eq(9)').text().trim();
+            row['Discount'] = $(this).find('td:eq(10)').text().trim();
+            transactions.push(row);
+        }
+    });
+
+    if (transactions.length === 0) {
+        toastr.warning('No transactions to export');
+        return;
+    }
+
+    // Create summary data
+    const summary = {
+        'Total Transactions': $('#my-total-transactions').text(),
+        'Gross Amount': $('#my-total-amount').text(),
+        'Total Discounts': $('#my-total-discounts').text(),
+        'Net Amount': $('#my-net-amount').text()
+    };
+
+    // Generate Excel file
+    const wb = XLSX.utils.book_new();
+
+    // Summary Sheet
+    const summaryData = Object.keys(summary).map(key => [key, summary[key]]);
+    summaryData.unshift(['My Transactions Report']);
+    summaryData.push([]);
+    summaryData.push(['Period', `${fromDate} to ${toDate}`]);
+    summaryData.push(['Generated', new Date().toLocaleString()]);
+    summaryData.push([]);
+
+    const ws1 = XLSX.utils.aoa_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(wb, ws1, 'Summary');
+
+    // Transactions Sheet
+    const ws2 = XLSX.utils.json_to_sheet(transactions);
+    XLSX.utils.book_append_sheet(wb, ws2, 'Transactions');
+
+    // Download
+    XLSX.writeFile(wb, `My_Transactions_${fromDate}_to_${toDate}.xlsx`);
+    toastr.success('Excel file downloaded successfully');
+});
+
+// Store current transactions globally for exports
+let currentMyTransactions = [];
+let currentMyTransactionsSummary = {};
+
 function loadMyTransactions(fromDate, toDate, paymentType, bankId) {
+    // Show loading indicator
+    $('#my-transactions-tbody').html(`
+        <tr>
+            <td colspan="12" class="text-center py-5">
+                <i class="mdi mdi-loading mdi-spin" style="font-size: 3rem;"></i>
+                <p>Loading transactions...</p>
+            </td>
+        </tr>
+    `);
+
     $.ajax({
-        url: '/billing-workbench/my-transactions',
+        url: '/pharmacy-workbench/my-transactions',
         method: 'GET',
         data: {
-            from: fromDate,
-            to: toDate,
+            from_date: fromDate,
+            to_date: toDate,
             payment_type: paymentType,
             bank_id: bankId
         },
         success: function(response) {
-            renderMyTransactions(response.transactions);
-            renderMyTransactionsSummary(response.summary);
+            // Store globally for exports
+            currentMyTransactions = response.transactions || response.items || [];
+            currentMyTransactionsSummary = response.summary || response.stats || {};
+
+            renderMyTransactions(currentMyTransactions);
+            renderMyTransactionsSummary(currentMyTransactionsSummary);
+            renderMyTransactionsCharts(currentMyTransactions, currentMyTransactionsSummary);
         },
         error: function(xhr) {
+            $('#my-transactions-tbody').html(`
+                <tr>
+                    <td colspan="12" class="text-center text-danger py-5">
+                        <i class="mdi mdi-alert-circle-outline" style="font-size: 3rem;"></i>
+                        <p>Failed to load transactions</p>
+                    </td>
+                </tr>
+            `);
             toastr.error('Failed to load transactions');
         }
     });
@@ -7718,7 +9269,7 @@ function renderMyTransactions(transactions) {
     if (transactions.length === 0) {
         tbody.html(`
             <tr>
-                <td colspan="8" class="text-center text-muted py-5">
+                <td colspan="12" class="text-center text-muted py-5">
                     <i class="mdi mdi-information-outline" style="font-size: 3rem;"></i>
                     <p>No transactions found for the selected period</p>
                 </td>
@@ -7728,41 +9279,74 @@ function renderMyTransactions(transactions) {
     }
 
     transactions.forEach(tx => {
+        const date = new Date(tx.created_at);
+        const formattedDate = date.toLocaleDateString('en-GB');
+        const formattedTime = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
         const row = `
             <tr>
-                <td>${tx.created_at}</td>
+                <td>
+                    <div>${formattedDate}</div>
+                    <small class="text-muted">${formattedTime}</small>
+                </td>
                 <td>${tx.patient_name}</td>
                 <td>${tx.file_no}</td>
-                <td>${tx.reference_no || 'N/A'}</td>
-                <td>${tx.payment_type}</td>
+                <td><span class="badge badge-info">${tx.reference_no || 'N/A'}</span></td>
+                <td>
+                    <div>${tx.product_name || 'N/A'}</div>
+                </td>
+                <td>${tx.quantity || 1}</td>
+                <td>₦${parseFloat(tx.unit_price || 0).toLocaleString()}</td>
+                <td><span class="badge badge-${getPaymentTypeBadgeClass(tx.payment_type)}">${tx.payment_type}</span></td>
                 <td>${tx.bank_name || '-'}</td>
-                <td>₦${parseFloat(tx.total).toLocaleString()}</td>
-                <td>₦${parseFloat(tx.total_discount).toLocaleString()}</td>
+                <td class="font-weight-bold">₦${parseFloat(tx.total).toLocaleString()}</td>
+                <td class="text-danger">₦${parseFloat(tx.total_discount || 0).toLocaleString()}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary view-transaction-details" data-id="${tx.id}" title="View Details">
+                        <i class="mdi mdi-eye"></i>
+                    </button>
+                </td>
             </tr>
         `;
         tbody.append(row);
     });
 }
 
+function getPaymentTypeBadgeClass(type) {
+    const badges = {
+        'CASH': 'success',
+        'POS': 'primary',
+        'TRANSFER': 'info',
+        'MOBILE': 'warning',
+        'HMO': 'secondary'
+    };
+    return badges[type] || 'secondary';
+}
+
 function renderMyTransactionsSummary(summary) {
-    $('#my-total-transactions').text(summary.count);
-    $('#my-total-amount').text(`₦${parseFloat(summary.total_amount).toLocaleString()}`);
-    $('#my-total-discounts').text(`₦${parseFloat(summary.total_discount).toLocaleString()}`);
+    $('#my-total-transactions').text(summary.count || 0);
+    $('#my-total-amount').text(`₦${parseFloat(summary.total_amount || 0).toLocaleString()}`);
+    $('#my-total-discounts').text(`₦${parseFloat(summary.total_discount || 0).toLocaleString()}`);
+    $('#my-net-amount').text(`₦${parseFloat(summary.net_amount || 0).toLocaleString()}`);
 
     // Render breakdown by payment type
     const breakdown = $('#payment-type-breakdown');
     breakdown.empty();
 
-    if (summary.by_type) {
+    if (summary.by_type && Object.keys(summary.by_type).length > 0) {
         let html = '<h6 class="mt-3 mb-2">Breakdown by Payment Type</h6><div class="row">';
         Object.keys(summary.by_type).forEach(type => {
             const data = summary.by_type[type];
             html += `
-                <div class="col-md-3 mb-2">
+                <div class="col-md-3 col-sm-6 mb-2">
                     <div style="padding: 1rem; background: white; border-radius: 0.5rem; border: 1px solid #dee2e6;">
-                        <strong>${type}</strong><br>
-                        <small>${data.count} transactions</small><br>
-                        <span style="font-size: 1.1rem; color: var(--hospital-primary);">₦${parseFloat(data.amount).toLocaleString()}</span>
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge badge-${getPaymentTypeBadgeClass(type)} mr-2">${type}</span>
+                            <small class="text-muted">${data.count} txns</small>
+                        </div>
+                        <div style="font-size: 1.2rem; color: var(--hospital-primary); font-weight: 600;">
+                            ₦${parseFloat(data.amount).toLocaleString()}
+                        </div>
                     </div>
                 </div>
             `;
@@ -7773,6 +9357,235 @@ function renderMyTransactionsSummary(summary) {
 
     $('#my-transactions-summary').show();
 }
+
+function renderMyTransactionsCharts(transactions, summary) {
+    // Payment Method Pie Chart
+    if (summary.by_type && Object.keys(summary.by_type).length > 0) {
+        const ctx = document.getElementById('my-trans-payment-chart');
+        if (ctx) {
+            // Destroy existing chart
+            if (window.myTransPaymentChart) {
+                window.myTransPaymentChart.destroy();
+            }
+
+            const labels = Object.keys(summary.by_type);
+            const data = labels.map(type => summary.by_type[type].amount);
+            const colors = labels.map(type => {
+                const colorMap = {
+                    'CASH': '#28a745',
+                    'POS': '#007bff',
+                    'TRANSFER': '#17a2b8',
+                    'MOBILE': '#ffc107',
+                    'HMO': '#6c757d'
+                };
+                return colorMap[type] || '#6c757d';
+            });
+
+            window.myTransPaymentChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors,
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ₦' + context.parsed.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // Top Products Bar Chart
+    if (transactions && transactions.length > 0) {
+        const productSales = {};
+        transactions.forEach(tx => {
+            if (tx.product_name) {
+                if (!productSales[tx.product_name]) {
+                    productSales[tx.product_name] = 0;
+                }
+                productSales[tx.product_name] += parseFloat(tx.total);
+            }
+        });
+
+        const sortedProducts = Object.entries(productSales)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5);
+
+        if (sortedProducts.length > 0) {
+            const ctx = document.getElementById('my-trans-products-chart');
+            if (ctx) {
+                // Destroy existing chart
+                if (window.myTransProductsChart) {
+                    window.myTransProductsChart.destroy();
+                }
+
+                window.myTransProductsChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: sortedProducts.map(p => p[0].length > 20 ? p[0].substring(0, 20) + '...' : p[0]),
+                        datasets: [{
+                            label: 'Sales Amount',
+                            data: sortedProducts.map(p => p[1]),
+                            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return '₦' + value.toLocaleString();
+                                    }
+                                }
+                            },
+                            y: {
+                                ticks: {
+                                    autoSkip: false,
+                                    font: {
+                                        size: 11
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return 'Sales: ₦' + context.parsed.x.toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    }
+}
+
+// View Transaction Details
+$(document).on('click', '.view-transaction-details', function() {
+    const txId = $(this).data('id');
+    const transaction = currentMyTransactions.find(tx => tx.id == txId);
+
+    if (!transaction) {
+        toastr.error('Transaction not found');
+        return;
+    }
+
+    // Populate modal
+    const date = new Date(transaction.created_at);
+    $('#detail-id').text(transaction.id);
+    $('#detail-datetime').text(date.toLocaleString('en-GB'));
+    $('#detail-patient').text(transaction.patient_name);
+    $('#detail-file-no').text(transaction.file_no);
+    $('#detail-product').text(transaction.product_name || 'N/A');
+    $('#detail-quantity').text(transaction.quantity || 1);
+    $('#detail-unit-price').text('₦' + parseFloat(transaction.unit_price || 0).toLocaleString());
+    $('#detail-subtotal').text('₦' + (parseFloat(transaction.unit_price || 0) * parseInt(transaction.quantity || 1)).toLocaleString());
+    $('#detail-payment-method').html(`<span class="badge badge-${getPaymentTypeBadgeClass(transaction.payment_type)}">${transaction.payment_type}</span>`);
+    $('#detail-bank').text(transaction.bank_name || '-');
+    $('#detail-reference').text(transaction.reference_no || 'N/A');
+    $('#detail-total').text('₦' + parseFloat(transaction.total).toLocaleString());
+    $('#detail-discount').text('₦' + parseFloat(transaction.total_discount || 0).toLocaleString());
+
+    const netAmount = parseFloat(transaction.total) - parseFloat(transaction.total_discount || 0);
+    $('#detail-net').text('₦' + netAmount.toLocaleString());
+
+    $('#transactionDetailsModal').modal('show');
+});
+
+// Print Transaction Detail
+$(document).on('click', '#print-transaction-detail', function() {
+    const content = $('#transaction-details-body').html();
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Transaction Receipt</title>
+            <link rel="stylesheet" href="${window.location.origin}/assets/css/bootstrap.min.css">
+            <style>
+                body {
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    padding: 20px;
+                    background: #fff;
+                }
+                .detail-group {
+                    margin-bottom: 1rem;
+                }
+                .detail-label {
+                    font-size: 0.75rem;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    color: #6c757d;
+                    font-weight: 600;
+                    margin-bottom: 0.25rem;
+                }
+                .detail-value {
+                    font-size: 1rem;
+                    color: #212529;
+                    font-weight: 500;
+                }
+                hr {
+                    margin: 1.5rem 0;
+                    border-top: 2px solid #e9ecef;
+                }
+                .header {
+                    text-align: center;
+                    margin-bottom: 2rem;
+                    padding-bottom: 1rem;
+                    border-bottom: 2px solid #dee2e6;
+                }
+                @media print {
+                    body {
+                        padding: 0;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h2>Transaction Receipt</h2>
+                <p>Printed: ${new Date().toLocaleString()}</p>
+            </div>
+            ${content}
+            <script>
+                setTimeout(function() {
+                    window.print();
+                }, 500);
+            <\/script>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+});
 
 function updatePrescriptionBadge(count) {
     $('#prescriptions-badge').text(count);
@@ -8744,15 +10557,15 @@ function initializeQueueDataTable(filter) {
 // REPORTS VIEW FUNCTIONS
 // ==========================================
 
-function showReports() {
+function showPharmacyReports() {
     // Hide everything else
     $('#empty-state').hide();
     $('#patient-header').removeClass('active');
     $('#workspace-content').removeClass('active');
     $('#queue-view').removeClass('active');
 
-    // Show reports view
-    $('#reports-view').addClass('active');
+    // Show pharmacy reports view
+    $('#pharmacy-reports-view').addClass('active');
 
     // On mobile, switch to main workspace
     if (window.innerWidth < 768) {
@@ -8760,26 +10573,21 @@ function showReports() {
         $('#main-workspace').addClass('active');
     }
 
-    // Load statistics and initialize if not already done
-    if (!window.reportsInitialized) {
-        // Don't set default dates - load all records initially
-        // setDefaultDateFilters();
-        loadFilterOptions();
-        loadReportsStatistics();
-        initializeReportsDataTable();
-        // initializeReportsCharts(); // TODO: Implement when Chart.js is added
-        window.reportsInitialized = true;
+    // Initialize reports if not already done
+    if (!window.pharmacyReportsInitialized) {
+        initPharmacyReportsFilters();
+        loadPharmacyReportsData();
+        initPharmacyReportsDataTables();
+        initPharmacyReportsCharts();
+        window.pharmacyReportsInitialized = true;
     } else {
-        // Refresh statistics
-        loadReportsStatistics();
-        if (window.reportsDataTable) {
-            window.reportsDataTable.ajax.reload();
-        }
+        // Refresh data
+        loadPharmacyReportsData();
     }
 }
 
-function hideReports() {
-    $('#reports-view').removeClass('active');
+function hidePharmacyReports() {
+    $('#pharmacy-reports-view').removeClass('active');
     $('#empty-state').show();
 
     // On mobile, go back to search pane
@@ -8787,6 +10595,15 @@ function hideReports() {
         $('#main-workspace').removeClass('active');
         $('#left-panel').removeClass('hidden');
     }
+}
+
+// Legacy showReports for backward compatibility
+function showReports() {
+    showPharmacyReports();
+}
+
+function hideReports() {
+    hidePharmacyReports();
 }
 
 function setDefaultDateFilters() {
@@ -9455,7 +11272,7 @@ function initializeReportsCharts(byStatus, monthlyTrends) {
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body p-0" style="max-height: 70vh; overflow-y: auto;">
+            <div class="modal-body" style="max-height: 75vh; overflow-y: auto; background: #f7f9fb;">
                 <div id="prescription-slip-content"></div>
             </div>
             <div class="modal-footer">
@@ -9482,16 +11299,21 @@ window.billPrescItems = function() {
         return;
     }
 
-    // Get selected items from DataTable checkboxes
+    // Get selected items from DataTable checkboxes - use scoped selector and attr
     const selectedIds = [];
-    $('.presc-billing-checkbox:checked').each(function() {
-        selectedIds.push($(this).data('id'));
+    $('#presc_billing_table').find('.presc-billing-check:checked').each(function() {
+        const id = $(this).attr('data-id') || $(this).data('id');
+        if (id) selectedIds.push(id);
     });
 
     // Also check card-based checkboxes (unbilled section)
     $('.request-section[data-section="unbilled"] .prescription-checkbox:checked').each(function() {
-        selectedIds.push($(this).data('id'));
+        const id = $(this).attr('data-id') || $(this).data('id');
+        if (id) selectedIds.push(id);
     });
+
+    console.log('Bill - Found checkboxes:', $('#presc_billing_table').find('.presc-billing-check:checked').length);
+    console.log('Bill - Selected IDs:', selectedIds);
 
     // Get added products
     const addedProducts = [];
@@ -9543,11 +11365,13 @@ window.billPrescItems = function() {
             $btn.prop('disabled', false).html(originalHtml);
             if (response.success) {
                 toastr.success(response.message || 'Items billed successfully');
-                // Reload DataTables
-                initializePrescriptionDataTables(currentPatient);
+                // Refresh all prescription tables for live update
+                refreshAllPrescTables();
                 loadPrescriptionItems(currentStatusFilter);
                 prescBillingTotal = 0;
                 updatePrescBillingTotalPharmacy();
+                // Update queue counts as items may have moved
+                loadQueueCounts();
             } else {
                 toastr.error(response.message || 'Failed to bill items');
             }
@@ -9570,33 +11394,41 @@ window.dismissPrescItems = function(type) {
     const selectedIds = [];
 
     if (type === 'billing') {
-        // From DataTable
-        $('.presc-billing-checkbox:checked').each(function() {
-            selectedIds.push($(this).data('id'));
+        // From DataTable - use scoped selector and attr
+        $('#presc_billing_table').find('.presc-billing-check:checked').each(function() {
+            const id = $(this).attr('data-id') || $(this).data('id');
+            if (id) selectedIds.push(id);
         });
         // From card-based view
         $('.request-section[data-section="unbilled"] .prescription-checkbox:checked').each(function() {
-            selectedIds.push($(this).data('id'));
+            const id = $(this).attr('data-id') || $(this).data('id');
+            if (id) selectedIds.push(id);
         });
     } else if (type === 'pending') {
-        // From DataTable
-        $('.presc-pending-checkbox:checked').each(function() {
-            selectedIds.push($(this).data('id'));
+        // From DataTable - use scoped selector and attr
+        $('#presc_pending_table').find('.presc-pending-check:checked').each(function() {
+            const id = $(this).attr('data-id') || $(this).data('id');
+            if (id) selectedIds.push(id);
         });
         // From card-based view
         $('.request-section[data-section="billed"] .prescription-checkbox:checked').each(function() {
-            selectedIds.push($(this).data('id'));
+            const id = $(this).attr('data-id') || $(this).data('id');
+            if (id) selectedIds.push(id);
         });
     } else if (type === 'dispense') {
-        // From DataTable
-        $('.presc-dispense-checkbox:checked').each(function() {
-            selectedIds.push($(this).data('id'));
+        // From DataTable - use scoped selector and attr
+        $('#presc_dispense_table').find('.presc-dispense-check:checked').each(function() {
+            const id = $(this).attr('data-id') || $(this).data('id');
+            if (id) selectedIds.push(id);
         });
         // From card-based view
         $('.request-section[data-section="ready"] .prescription-checkbox:checked').each(function() {
-            selectedIds.push($(this).data('id'));
+            const id = $(this).attr('data-id') || $(this).data('id');
+            if (id) selectedIds.push(id);
         });
     }
+
+    console.log('Dismiss - Type:', type, 'Selected IDs:', selectedIds);
 
     if (selectedIds.length === 0) {
         toastr.warning('Please select at least one item to dismiss');
@@ -9636,36 +11468,581 @@ window.dismissPrescItems = function(type) {
     });
 };
 
-// Override dispensePrescItems to use correct checkbox class for pharmacy workbench
-window.dispensePrescItems = function() {
+// ===========================================
+// CLINICAL CONTEXT FUNCTIONS
+// ===========================================
+
+function loadClinicalContext(patientId) {
+    // Load vitals - use nursing workbench endpoint
+    $.get(`/nursing-workbench/patient/${patientId}/vitals?limit=10`, function(vitals) {
+        displayVitals(vitals);
+    }).fail(function() {
+        $('#vitals-panel-body').html('<p class="text-muted text-center py-3">Could not load vitals</p>');
+    });
+
+    // Load notes
+    $.get(`/nursing-workbench/patient/${patientId}/nursing-notes?limit=10`, function(notes) {
+        displayNotes(notes);
+    }).fail(function() {
+        $('#enc-notes-panel-body').html('<p class="text-muted text-center py-3">Could not load notes</p>');
+    });
+
+    // Load medications/prescriptions
+    $.get(`/prescHistoryList/${patientId}?length=10`, function(response) {
+        displayMedications(response.data || []);
+    }).fail(function() {
+        $('#medications-panel-body').html('<p class="text-muted text-center py-3">Could not load medications</p>');
+    });
+
+    // Load allergies
+    $.get(`/patient/${patientId}/allergies`, function(allergies) {
+        displayAllergies(allergies);
+    }).fail(function() {
+        $('#allergies-panel-body').html('<p class="text-muted text-center py-3">Could not load allergies</p>');
+    });
+}
+
+function displayVitals(vitals) {
+    if (!vitals || vitals.length === 0) {
+        $('#vitals-panel-body').html('<p class="text-muted text-center py-3">No recent vitals recorded</p>');
+        return;
+    }
+
+    // Destroy existing DataTable if present
+    if ($.fn.DataTable.isDataTable('#vitals-table')) {
+        $('#vitals-table').DataTable().destroy();
+    }
+
+    $('#vitals-table').DataTable({
+        data: vitals,
+        paging: false,
+        searching: false,
+        info: false,
+        ordering: false,
+        dom: 't',
+        columns: [{
+            data: null,
+            render: function(data, type, row) {
+                const vitalDate = formatDateTimePharmacy(row.time_taken || row.created_at);
+                const temp = row.temp || 'N/A';
+                const heartRate = row.heart_rate || 'N/A';
+                const bp = row.blood_pressure || 'N/A';
+                const respRate = row.resp_rate || 'N/A';
+                const weight = row.weight || 'N/A';
+
+                return `
+                    <div class="vital-entry p-2 border-bottom">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted small">${vitalDate}</span>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-4 col-md-2 text-center">
+                                <i class="mdi mdi-thermometer text-danger"></i>
+                                <div class="fw-bold">${temp}°C</div>
+                                <small class="text-muted">Temp</small>
+                            </div>
+                            <div class="col-4 col-md-2 text-center">
+                                <i class="mdi mdi-heart-pulse text-success"></i>
+                                <div class="fw-bold">${heartRate}</div>
+                                <small class="text-muted">HR</small>
+                            </div>
+                            <div class="col-4 col-md-2 text-center">
+                                <i class="mdi mdi-water text-primary"></i>
+                                <div class="fw-bold">${bp}</div>
+                                <small class="text-muted">BP</small>
+                            </div>
+                            <div class="col-4 col-md-2 text-center">
+                                <i class="mdi mdi-lungs text-info"></i>
+                                <div class="fw-bold">${respRate}</div>
+                                <small class="text-muted">RR</small>
+                            </div>
+                            <div class="col-4 col-md-2 text-center">
+                                <i class="mdi mdi-weight-kilogram text-secondary"></i>
+                                <div class="fw-bold">${weight}</div>
+                                <small class="text-muted">Wt(kg)</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }]
+    });
+}
+
+function displayNotes(notes) {
+    if (!notes || notes.length === 0) {
+        $('#clinical-enc-notes-container').html('<p class="text-muted text-center py-3">No recent notes</p>');
+        return;
+    }
+
+    let html = '';
+    notes.forEach(function(note) {
+        const noteDate = formatDateTimePharmacy(note.created_at);
+        const noteText = note.note || note.content || 'No content';
+        html += `
+            <div class="note-item p-3 border-bottom">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted small">${noteDate}</span>
+                    <span class="badge bg-secondary">${note.created_by_name || 'Staff'}</span>
+                </div>
+                <p class="mb-0">${noteText}</p>
+            </div>
+        `;
+    });
+    $('#clinical-enc-notes-container').html(html);
+}
+
+function displayMedications(meds) {
+    if (!meds || meds.length === 0) {
+        $('#clinical-meds-container').html('<p class="text-muted text-center py-3">No prescription history</p>');
+        return;
+    }
+
+    let html = '';
+    meds.forEach(function(med) {
+        const medDate = formatDateTimePharmacy(med.created_at);
+        const statusBadge = med.status == 3 ? '<span class="badge bg-success">Dispensed</span>' :
+                           med.status == 2 ? '<span class="badge bg-info">Ready</span>' :
+                           med.status == 1 ? '<span class="badge bg-warning">Unbilled</span>' :
+                           '<span class="badge bg-secondary">Dismissed</span>';
+        html += `
+            <div class="med-item p-3 border-bottom">
+                <div class="d-flex justify-content-between mb-1">
+                    <strong>${med.product_name || 'Unknown'}</strong>
+                    ${statusBadge}
+                </div>
+                <div class="d-flex justify-content-between text-muted small">
+                    <span>Qty: ${med.qty || 1} | ${med.dose || 'N/A'}</span>
+                    <span>${medDate}</span>
+                </div>
+            </div>
+        `;
+    });
+    $('#clinical-meds-container').html(html);
+}
+
+function displayAllergies(allergies) {
+    const $container = $('#allergies-panel-body, #clinical-allergies-container');
+    if (!$container.length) return;
+
+    if (!allergies || allergies.length === 0) {
+        $container.html('<p class="text-muted text-center py-3">No known allergies recorded</p>');
+        return;
+    }
+
+    let html = '<div class="p-3"><div class="row g-2">';
+    allergies.forEach(function(allergy) {
+        const name = typeof allergy === 'string' ? allergy : (allergy.name || allergy.allergen || allergy);
+        html += `
+            <div class="col-auto">
+                <span class="badge bg-danger p-2"><i class="mdi mdi-alert-circle me-1"></i>${name}</span>
+            </div>
+        `;
+    });
+    html += '</div></div>';
+    $container.html(html);
+}
+
+function refreshClinicalPanel(panel) {
+    if (!currentPatient) return;
+
+    switch(panel) {
+        case 'vitals':
+            $('#vitals-panel-body').html('<div class="text-center py-3"><i class="mdi mdi-loading mdi-spin mdi-24px"></i></div>');
+            $.get(`/nursing-workbench/patient/${currentPatient}/vitals?limit=10`, displayVitals);
+            break;
+        case 'enc-notes':
+            $('#clinical-enc-notes-container').html('<div class="text-center py-3"><i class="mdi mdi-loading mdi-spin mdi-24px"></i></div>');
+            $.get(`/nursing-workbench/patient/${currentPatient}/nursing-notes?limit=10`, displayNotes);
+            break;
+        case 'medications':
+            $('#clinical-meds-container').html('<div class="text-center py-3"><i class="mdi mdi-loading mdi-spin mdi-24px"></i></div>');
+            $.get(`/prescHistoryList/${currentPatient}?length=10`, function(response) {
+                displayMedications(response.data || []);
+            });
+            break;
+    }
+}
+
+function formatDateTimePharmacy(dateString) {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+// ===========================================
+// DISPENSE CART MANAGEMENT (MODAL-BASED)
+// ===========================================
+
+// Cart data structure
+let dispenseCart = [];
+
+// Open the dispense cart modal
+function openDispenseCartModal() {
+    renderDispenseCart();
+    $('#dispenseCartModal').modal('show');
+
+    // If store is selected and cart has items, fetch stock
+    const storeId = $('#modal-store-select').val();
+    if (storeId && dispenseCart.length > 0) {
+        fetchCartStockLevels();
+    }
+}
+
+// Add selected items to cart and open modal
+function addSelectedToCartAndOpen() {
+    if (!currentPatient) {
+        toastr.warning('Please select a patient first');
+        return;
+    }
+
+    // Get selected items from DataTable
+    const $checkedItems = $('#presc_dispense_table').find('.presc-dispense-check:checked');
+
+    if ($checkedItems.length === 0) {
+        toastr.warning('Please select items to add to cart');
+        return;
+    }
+
+    let addedCount = 0;
+    $checkedItems.each(function() {
+        const $checkbox = $(this);
+        const $card = $checkbox.closest('tr').find('.presc-card');
+        const id = $checkbox.attr('data-id') || $checkbox.data('id');
+
+        // Skip if already in cart
+        if (dispenseCart.find(item => item.id == id)) {
+            return;
+        }
+
+        // Get item details from card data or DOM
+        const productId = $card.attr('data-product-id') || $checkbox.attr('data-product-id');
+        const productName = $card.find('.presc-card-title').text().trim() || 'Unknown Product';
+        const qtyMatch = $card.find('.presc-card-body').text().match(/Qty:\s*(\d+)/);
+        const qty = qtyMatch ? parseInt(qtyMatch[1]) : 1;
+        const price = parseFloat($card.find('.presc-card-price').text().replace(/[^0-9.]/g, '')) || 0;
+
+        dispenseCart.push({
+            id: id,
+            product_id: productId,
+            product_name: productName,
+            qty: qty,
+            price: price,
+            stock: null,
+            stock_status: 'pending' // Will check when store is selected
+        });
+
+        addedCount++;
+        $checkbox.prop('checked', false);
+    });
+
+    // Uncheck select all
+    $('#select-all-dispense').prop('checked', false);
+
+    if (addedCount > 0) {
+        toastr.success(`Added ${addedCount} item(s) to cart`);
+    }
+
+    // Open modal
+    renderDispenseCart();
+    $('#dispenseCartModal').modal('show');
+
+    // If store already selected, fetch stock
+    const storeId = $('#modal-store-select').val();
+    if (storeId) {
+        fetchCartStockLevels();
+    }
+}
+
+// Legacy function for backward compatibility
+function addSelectedToCart() {
+    addSelectedToCartAndOpen();
+}
+
+// Render the dispense cart in modal
+function renderDispenseCart() {
+    const $cartBody = $('#modal-cart-body');
+    const $cartEmpty = $('#modal-cart-empty');
+    const $cartContent = $('#modal-cart-content');
+    const $cartTotal = $('#modal-cart-total');
+    const $modalCartCount = $('#modal-cart-count');
+    const $headerCartCount = $('#header-cart-count');
+    const $floatingCartCount = $('#floating-cart-count');
+
+    // Update all cart count badges
+    const cartCount = dispenseCart.length;
+    $modalCartCount.text(cartCount);
+
+    if (cartCount > 0) {
+        $headerCartCount.text(cartCount).show();
+        $floatingCartCount.text(cartCount).show();
+    } else {
+        $headerCartCount.hide();
+        $floatingCartCount.hide();
+    }
+
+    if (dispenseCart.length === 0) {
+        $cartEmpty.show();
+        $cartContent.hide();
+        updateCartStockStatus();
+        return;
+    }
+
+    $cartEmpty.hide();
+    $cartContent.show();
+
+    let totalPrice = 0;
+    let html = '';
+
+    dispenseCart.forEach((item, index) => {
+        totalPrice += item.price * item.qty;
+
+        let stockDisplay = '';
+        let statusBadge = '';
+        let rowClass = '';
+
+        if (item.stock_status === 'pending') {
+            stockDisplay = '<span class="text-muted">—</span>';
+            statusBadge = '<span class="badge bg-light text-muted badge-sm">Select store</span>';
+        } else if (item.stock_status === 'loading') {
+            stockDisplay = '<span class="text-muted"><i class="mdi mdi-loading mdi-spin"></i></span>';
+            statusBadge = '<span class="badge bg-secondary badge-sm">...</span>';
+        } else if (item.stock_status === 'sufficient') {
+            stockDisplay = `<span class="text-success"><i class="mdi mdi-check-circle"></i> ${item.stock}</span>`;
+            statusBadge = '<span class="badge bg-success badge-sm"><i class="mdi mdi-check"></i></span>';
+        } else if (item.stock_status === 'insufficient') {
+            stockDisplay = `<span class="text-danger"><i class="mdi mdi-alert-circle"></i> ${item.stock}</span>`;
+            statusBadge = '<span class="badge bg-danger badge-sm"><i class="mdi mdi-alert"></i></span>';
+            rowClass = 'table-danger';
+        } else {
+            stockDisplay = '<span class="text-warning"><i class="mdi mdi-help-circle"></i></span>';
+            statusBadge = '<span class="badge bg-warning badge-sm">?</span>';
+        }
+
+        html += `
+            <tr class="${rowClass}" data-cart-index="${index}" data-item-id="${item.id}" data-product-id="${item.product_id || ''}">
+                <td>
+                    <strong class="d-block">${item.product_name}</strong>
+                    <small class="text-muted">PR #${item.id} | Prod #${item.product_id || 'N/A'}</small>
+                </td>
+                <td class="text-center">${item.qty}</td>
+                <td class="text-center cart-stock-cell">${stockDisplay}</td>
+                <td class="text-end">₦${(item.price * item.qty).toLocaleString('en-NG', {minimumFractionDigits: 2})}</td>
+                <td class="text-center">${statusBadge}</td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="removeFromCart(${index})" title="Remove">
+                        <i class="mdi mdi-close-circle"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+
+    $cartBody.html(html);
+    $cartTotal.text('₦' + totalPrice.toLocaleString('en-NG', {minimumFractionDigits: 2}));
+
+    updateCartStockStatus();
+}
+
+// Remove item from cart
+function removeFromCart(index) {
+    dispenseCart.splice(index, 1);
+    renderDispenseCart();
+
+    if (dispenseCart.length === 0) {
+        toastr.info('Cart is now empty');
+    }
+}
+
+// Clear entire cart
+function clearDispenseCart() {
+    if (dispenseCart.length === 0) {
+        toastr.info('Cart is already empty');
+        return;
+    }
+
+    dispenseCart = [];
+    renderDispenseCart();
+    toastr.info('Cart cleared');
+}
+
+// Get current store ID from modal
+function getCurrentStoreId() {
+    return $('#modal-store-select').val();
+}
+
+// Fetch stock levels for all cart items
+function fetchCartStockLevels() {
+    const storeId = getCurrentStoreId();
+    console.log('fetchCartStockLevels called, storeId:', storeId, 'cart length:', dispenseCart.length);
+
+    if (!storeId) {
+        $('#modal-store-status').html('<span class="text-warning"><i class="mdi mdi-store-alert"></i> Select a store above to check availability</span>');
+        updateCartStockStatus();
+        return;
+    }
+
+    const storeName = $('#modal-store-select option:selected').text();
+    $('#modal-store-status').html(`<span class="text-info"><i class="mdi mdi-loading mdi-spin"></i> Checking stock at ${storeName}...</span>`);
+
+    if (dispenseCart.length === 0) {
+        $('#modal-store-status').html(`<span class="text-muted"><i class="mdi mdi-store"></i> Ready to dispense from: <strong>${storeName}</strong></span>`);
+        return;
+    }
+
+    let pendingChecks = dispenseCart.length;
+
+    dispenseCart.forEach((item, index) => {
+        console.log('Checking item:', index, 'product_id:', item.product_id);
+
+        if (item.product_id) {
+            fetchPharmacyProductStock(item.product_id, function(stockData) {
+                console.log('Stock data received for product', item.product_id, ':', stockData);
+
+                const storeStock = stockData.stores.find(s => s.store_id == storeId);
+                const availableQty = storeStock ? storeStock.quantity : 0;
+
+                dispenseCart[index].stock = availableQty;
+                dispenseCart[index].stock_status = availableQty >= item.qty ? 'sufficient' : 'insufficient';
+
+                updateCartRowStock(index);
+
+                pendingChecks--;
+                console.log('Pending checks remaining:', pendingChecks);
+
+                if (pendingChecks <= 0) {
+                    updateCartStockStatus();
+                    $('#modal-store-status').html(`<span class="text-muted"><i class="mdi mdi-store"></i> Dispensing from: <strong>${storeName}</strong></span>`);
+                }
+            });
+        } else {
+            console.warn('Cart item missing product_id:', item);
+            dispenseCart[index].stock = 0;
+            dispenseCart[index].stock_status = 'insufficient';
+            updateCartRowStock(index);
+            pendingChecks--;
+        }
+    });
+}
+
+// Update a single cart row's stock display
+function updateCartRowStock(index) {
+    const item = dispenseCart[index];
+    const $row = $(`#modal-cart-body tr[data-cart-index="${index}"]`);
+
+    if (!$row.length) return;
+
+    let stockDisplay = '';
+    let statusBadge = '';
+
+    if (item.stock_status === 'sufficient') {
+        stockDisplay = `<span class="text-success"><i class="mdi mdi-check-circle"></i> ${item.stock}</span>`;
+        statusBadge = '<span class="badge bg-success badge-sm"><i class="mdi mdi-check"></i></span>';
+        $row.removeClass('table-danger');
+    } else if (item.stock_status === 'insufficient') {
+        stockDisplay = `<span class="text-danger"><i class="mdi mdi-alert-circle"></i> ${item.stock}</span>`;
+        statusBadge = '<span class="badge bg-danger badge-sm"><i class="mdi mdi-alert"></i></span>';
+        $row.addClass('table-danger');
+    }
+
+    $row.find('.cart-stock-cell').html(stockDisplay);
+    $row.find('td:eq(4)').html(statusBadge);
+}
+
+// Update overall cart stock status
+function updateCartStockStatus() {
+    const $statusDiv = $('#modal-stock-status');
+    const $warning = $('#modal-stock-warning');
+    const $dispenseBtn = $('#btn-dispense-cart');
+
+    if (dispenseCart.length === 0) {
+        $statusDiv.html('<span class="badge bg-secondary">Cart empty</span>');
+        $warning.hide();
+        $dispenseBtn.prop('disabled', true);
+        return;
+    }
+
+    const storeId = getCurrentStoreId();
+    if (!storeId) {
+        $statusDiv.html('<span class="badge bg-warning text-dark"><i class="mdi mdi-store-alert"></i> Select a store to check stock</span>');
+        $warning.hide();
+        $dispenseBtn.prop('disabled', true);
+        return;
+    }
+
+    const hasPending = dispenseCart.some(i => i.stock_status === 'pending');
+    const hasLoading = dispenseCart.some(i => i.stock_status === 'loading');
+    const hasInsufficient = dispenseCart.some(i => i.stock_status === 'insufficient');
+    const allSufficient = dispenseCart.every(i => i.stock_status === 'sufficient');
+
+    if (hasPending) {
+        // Stock not checked yet - trigger check
+        fetchCartStockLevels();
+        return;
+    }
+
+    if (hasLoading) {
+        $statusDiv.html('<span class="badge bg-info"><i class="mdi mdi-loading mdi-spin"></i> Checking stock...</span>');
+        $warning.hide();
+        $dispenseBtn.prop('disabled', true);
+    } else if (hasInsufficient) {
+        const insufficientCount = dispenseCart.filter(i => i.stock_status === 'insufficient').length;
+        $statusDiv.html(`<span class="badge bg-danger"><i class="mdi mdi-alert-circle"></i> ${insufficientCount} item(s) low stock</span>`);
+        $warning.show();
+        $('#modal-stock-warning-text').text(`${insufficientCount} item(s) have insufficient stock`);
+        $dispenseBtn.prop('disabled', true);
+    } else if (allSufficient) {
+        $statusDiv.html(`<span class="badge bg-success"><i class="mdi mdi-check-circle"></i> All items ready</span>`);
+        $warning.hide();
+        $dispenseBtn.prop('disabled', false);
+    }
+}
+
+// Dispense from cart
+function dispenseFromCart() {
     if (!currentPatient) {
         toastr.error('Please select a patient first');
         return;
     }
 
-    // Get selected items
-    const itemIds = [];
-
-    // From DataTable
-    $('.presc-dispense-checkbox:checked').each(function() {
-        itemIds.push($(this).data('id'));
-    });
-
-    // From card-based view (ready section)
-    $('.request-section[data-section="ready"] .prescription-checkbox:checked').each(function() {
-        itemIds.push($(this).data('id'));
-    });
-
-    if (itemIds.length === 0) {
-        toastr.warning('Please select at least one item to dispense');
+    const storeId = getCurrentStoreId();
+    if (!storeId) {
+        toastr.warning('Please select a dispensing store');
         return;
     }
 
-    if (!confirm(`Dispense ${itemIds.length} prescription(s)?`)) {
+    if (dispenseCart.length === 0) {
+        toastr.warning('Cart is empty');
         return;
     }
 
-    const $btn = $('#btn-dispense-presc');
+    // Check for insufficient stock
+    const insufficientItems = dispenseCart.filter(i => i.stock_status === 'insufficient');
+    if (insufficientItems.length > 0) {
+        toastr.error('Cannot dispense: Some items have insufficient stock');
+        return;
+    }
+
+    // Check for loading items
+    const loadingItems = dispenseCart.filter(i => i.stock_status === 'loading');
+    if (loadingItems.length > 0) {
+        toastr.warning('Please wait for stock check to complete');
+        return;
+    }
+
+    const storeName = $('#modal-store-select option:selected').text();
+    if (!confirm(`Dispense ${dispenseCart.length} item(s) from ${storeName}?`)) {
+        return;
+    }
+
+    const itemIds = dispenseCart.map(i => i.id);
+    const $btn = $('#btn-dispense-cart');
     const originalHtml = $btn.html();
     $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Dispensing...');
 
@@ -9675,21 +12052,1445 @@ window.dispensePrescItems = function() {
         data: {
             _token: '{{ csrf_token() }}',
             patient_id: currentPatient,
-            item_ids: itemIds
+            product_request_ids: itemIds,
+            store_id: storeId
         },
         success: function(response) {
             $btn.prop('disabled', false).html(originalHtml);
             toastr.success(response.message || 'Prescriptions dispensed successfully');
-            initializePrescriptionDataTables(currentPatient);
+
+            // Clear the cart and close modal
+            dispenseCart = [];
+            renderDispenseCart();
+            $('#dispenseCartModal').modal('hide');
+
+            // Refresh tables
+            refreshAllPrescTables();
             loadPrescriptionItems(currentStatusFilter);
             loadQueueCounts();
         },
         error: function(xhr) {
             $btn.prop('disabled', false).html(originalHtml);
-            toastr.error(xhr.responseJSON?.message || 'Failed to dispense prescriptions');
+
+            if (xhr.status === 422 && xhr.responseJSON?.validation_errors) {
+                const errors = xhr.responseJSON.validation_errors;
+                let errorHtml = '<strong>Cannot Dispense:</strong><ul class="mb-0 mt-1">';
+                errors.forEach(err => {
+                    errorHtml += `<li>${err.product || 'Item'}: ${err.error}</li>`;
+                });
+                errorHtml += '</ul>';
+
+                toastr.error(errorHtml, 'Validation Failed', {
+                    closeButton: true,
+                    timeOut: 10000,
+                    extendedTimeOut: 5000,
+                    escapeHtml: false
+                });
+
+                fetchCartStockLevels();
+            } else {
+                toastr.error(xhr.responseJSON?.message || 'Failed to dispense prescriptions');
+            }
         }
     });
+}
+
+// Print cart prescriptions
+function printCartPrescriptions() {
+    if (dispenseCart.length === 0) {
+        toastr.warning('Cart is empty');
+        return;
+    }
+
+    const itemIds = dispenseCart.map(i => i.id);
+    printPrescription(itemIds);
+}
+
+// Modal store change handler - use event delegation to ensure it works
+$(document).on('change', '#modal-store-select', function() {
+    const storeId = $(this).val();
+    console.log('Store changed to:', storeId); // Debug log
+
+    if (dispenseCart.length > 0 && storeId) {
+        // Reset stock status and re-fetch
+        dispenseCart.forEach((item, index) => {
+            dispenseCart[index].stock = null;
+            dispenseCart[index].stock_status = 'loading';
+        });
+        renderDispenseCart();
+        fetchCartStockLevels();
+    } else if (!storeId) {
+        // No store selected - update status
+        updateCartStockStatus();
+    }
+});
+
+// ===========================================
+// DISPENSE STORE SELECTION & STOCK DISPLAY
+// ===========================================
+
+// Fetch product stock by store
+function fetchPharmacyProductStock(productId, callback) {
+    const url = `/pharmacy-workbench/product/${productId}/stock`;
+    console.log('Fetching stock from:', url);
+
+    $.ajax({
+        url: url,
+        method: 'GET',
+        success: function(response) {
+            console.log('Stock API success for product', productId, ':', response);
+            callback(response);
+        },
+        error: function(xhr, status, error) {
+            console.error('Stock API error for product', productId, ':', status, error, xhr.responseText);
+            callback({ global_stock: 0, stores: [] });
+        }
+    });
+}
+// Override dispensePrescItems to use cart flow instead
+window.dispensePrescItems = function() {
+    // Redirect to cart flow
+    addSelectedToCartAndOpen();
 };
+
+// ===========================================
+// PHARMACY REPORTS & ANALYTICS MODULE
+// ===========================================
+
+// Global report variables
+window.pharmacyReportsInitialized = false;
+window.pharmDispensingTable = null;
+window.pharmRevenueTable = null;
+window.pharmStockTable = null;
+window.pharmPerformanceTable = null;
+window.pharmHmoTable = null;
+window.pharmTrendChart = null;
+window.pharmRevenuePieChart = null;
+
+// Current filter state
+let pharmReportFilters = {
+    date_from: null,
+    date_to: null,
+    status: '',
+    store_id: '',
+    payment_type: '',
+    hmo_id: '',
+    doctor_id: '',
+    pharmacist_id: '',
+    category_id: '',
+    patient_search: '',
+    min_amount: '',
+    max_amount: ''
+};
+
+// Open pharmacy reports view
+$('#btn-pharmacy-reports').on('click', function() {
+    showPharmacyReports();
+});
+
+// Close pharmacy reports view
+$('#btn-close-pharmacy-reports').on('click', function() {
+    hidePharmacyReports();
+});
+
+// Initialize filter dropdowns
+function initPharmacyReportsFilters() {
+    // Set default date to today
+    const today = new Date().toISOString().split('T')[0];
+    $('#pharm-report-date-from').val(today);
+    $('#pharm-report-date-to').val(today);
+    pharmReportFilters.date_from = today;
+    pharmReportFilters.date_to = today;
+
+    // Load filter options
+    loadPharmReportFilterOptions();
+}
+
+// Load filter dropdown options
+function loadPharmReportFilterOptions() {
+    // Load stores
+    $.get('/pharmacy-workbench/stores', function(stores) {
+        const $storeSelect = $('#pharm-report-store, #stock-report-store-filter');
+        $storeSelect.find('option:not(:first)').remove();
+        stores.forEach(store => {
+            $storeSelect.append(`<option value="${store.id}">${store.name}</option>`);
+        });
+    });
+
+    // Load HMOs with optgroups
+    $.get('/pharmacy-workbench/filter-hmos', function(hmoGroups) {
+        const $hmoSelect = $('#pharm-report-hmo');
+        $hmoSelect.find('option:not(:first)').remove();
+        Object.keys(hmoGroups).forEach(function(schemeName) {
+            let optgroup = `<optgroup label="${schemeName}">`;
+            hmoGroups[schemeName].forEach(function(hmo) {
+                optgroup += `<option value="${hmo.id}">${hmo.name}</option>`;
+            });
+            optgroup += '</optgroup>';
+            $hmoSelect.append(optgroup);
+        });
+    });
+
+    // Load doctors
+    $.get('/pharmacy-workbench/filter-doctors', function(doctors) {
+        const $doctorSelect = $('#pharm-report-doctor');
+        $doctorSelect.find('option:not(:first)').remove();
+        (doctors || []).forEach(doctor => {
+            $doctorSelect.append(`<option value="${doctor.id}">${doctor.name}</option>`);
+        });
+    });
+
+    // Load pharmacists (staff with pharmacy role)
+    $.get('/pharmacy-workbench/pharmacists', function(pharmacists) {
+        const $pharmSelect = $('#pharm-report-pharmacist');
+        $pharmSelect.find('option:not(:first)').remove();
+        (pharmacists || []).forEach(p => {
+            $pharmSelect.append(`<option value="${p.id}">${p.name}</option>`);
+        });
+    });
+
+    // Load product categories
+    $.get('/pharmacy-workbench/product-categories', function(categories) {
+        const $catSelect = $('#pharm-report-category, #stock-report-category-filter');
+        $catSelect.find('option:not(:first)').remove();
+        (categories || []).forEach(cat => {
+            $catSelect.append(`<option value="${cat.id}">${cat.name}</option>`);
+        });
+    });
+}
+
+// Date preset buttons
+$('.date-preset-btn').on('click', function() {
+    $('.date-preset-btn').removeClass('active');
+    $(this).addClass('active');
+
+    const preset = $(this).data('preset');
+    const today = new Date();
+    let dateFrom, dateTo;
+
+    switch(preset) {
+        case 'today':
+            dateFrom = dateTo = today;
+            break;
+        case 'yesterday':
+            dateFrom = dateTo = new Date(today.setDate(today.getDate() - 1));
+            break;
+        case 'week':
+            const weekStart = new Date(today);
+            weekStart.setDate(today.getDate() - today.getDay());
+            dateFrom = weekStart;
+            dateTo = new Date();
+            break;
+        case 'month':
+            dateFrom = new Date(today.getFullYear(), today.getMonth(), 1);
+            dateTo = new Date();
+            break;
+        case 'quarter':
+            const quarter = Math.floor(today.getMonth() / 3);
+            dateFrom = new Date(today.getFullYear(), quarter * 3, 1);
+            dateTo = new Date();
+            break;
+        case 'year':
+            dateFrom = new Date(today.getFullYear(), 0, 1);
+            dateTo = new Date();
+            break;
+        case 'all':
+            dateFrom = null;
+            dateTo = null;
+            break;
+    }
+
+    if (dateFrom && dateTo) {
+        $('#pharm-report-date-from').val(formatDateInput(dateFrom));
+        $('#pharm-report-date-to').val(formatDateInput(dateTo));
+        pharmReportFilters.date_from = formatDateInput(dateFrom);
+        pharmReportFilters.date_to = formatDateInput(dateTo);
+    } else {
+        $('#pharm-report-date-from').val('');
+        $('#pharm-report-date-to').val('');
+        pharmReportFilters.date_from = null;
+        pharmReportFilters.date_to = null;
+    }
+
+    loadPharmacyReportsData();
+});
+
+function formatDateInput(date) {
+    if (!date) return '';
+    return date.toISOString().split('T')[0];
+}
+
+// Filter form submission
+$('#pharmacy-reports-filter-form').on('submit', function(e) {
+    e.preventDefault();
+    collectFilters();
+    loadPharmacyReportsData();
+});
+
+// Clear filters
+$('#clear-pharmacy-report-filters').on('click', function() {
+    $('#pharmacy-reports-filter-form')[0].reset();
+    const today = new Date().toISOString().split('T')[0];
+    $('#pharm-report-date-from').val(today);
+    $('#pharm-report-date-to').val(today);
+    collectFilters();
+    loadPharmacyReportsData();
+});
+
+function collectFilters() {
+    pharmReportFilters = {
+        date_from: $('#pharm-report-date-from').val() || null,
+        date_to: $('#pharm-report-date-to').val() || null,
+        status: $('#pharm-report-status').val(),
+        store_id: $('#pharm-report-store').val(),
+        payment_type: $('#pharm-report-payment-type').val(),
+        hmo_id: $('#pharm-report-hmo').val(),
+        doctor_id: $('#pharm-report-doctor').val(),
+        pharmacist_id: $('#pharm-report-pharmacist').val(),
+        category_id: $('#pharm-report-category').val(),
+        patient_search: $('#pharm-report-patient').val(),
+        min_amount: $('#pharm-report-min-amount').val(),
+        max_amount: $('#pharm-report-max-amount').val()
+    };
+}
+
+// Main data loader
+function loadPharmacyReportsData() {
+    loadPharmacyStatistics();
+    loadTopProducts();
+    loadPaymentMethods();
+    refreshPharmacyDataTables();
+}
+
+// Load summary statistics
+function loadPharmacyStatistics() {
+    $.ajax({
+        url: '/pharmacy-workbench/reports/statistics',
+        method: 'GET',
+        data: pharmReportFilters,
+        success: function(stats) {
+            $('#pharm-stat-dispensed').text(formatNumber(stats.total_dispensed || 0));
+            $('#pharm-stat-revenue').text(formatCurrency(stats.total_revenue || 0));
+            $('#pharm-stat-cash').text(formatCurrency(stats.cash_sales || 0));
+            $('#pharm-stat-hmo').text(formatCurrency(stats.hmo_claims || 0));
+            $('#pharm-stat-patients').text(formatNumber(stats.unique_patients || 0));
+            $('#pharm-stat-pending').text(formatNumber(stats.pending_count || 0));
+
+            // Update charts
+            updateTrendChart(stats.trend_data || []);
+            updateRevenuePieChart(stats.revenue_breakdown || {});
+        },
+        error: function() {
+            console.error('Failed to load pharmacy statistics');
+        }
+    });
+}
+
+// Load top products
+function loadTopProducts() {
+    $.ajax({
+        url: '/pharmacy-workbench/reports/top-products',
+        method: 'GET',
+        data: pharmReportFilters,
+        success: function(products) {
+            const $tbody = $('#pharm-top-products-tbody');
+            $tbody.empty();
+
+            if (!products.length) {
+                $tbody.html('<tr><td colspan="4" class="text-center text-muted py-3">No data available</td></tr>');
+                return;
+            }
+
+            products.forEach((p, i) => {
+                $tbody.append(`
+                    <tr>
+                        <td><span class="badge bg-secondary">${i + 1}</span></td>
+                        <td>${escapeHtml(p.product_name)}</td>
+                        <td class="text-center">${formatNumber(p.quantity)}</td>
+                        <td class="text-end">${formatCurrency(p.revenue)}</td>
+                    </tr>
+                `);
+            });
+        },
+        error: function() {
+            $('#pharm-top-products-tbody').html('<tr><td colspan="4" class="text-center text-danger">Failed to load</td></tr>');
+        }
+    });
+}
+
+// Load payment methods breakdown
+function loadPaymentMethods() {
+    $.ajax({
+        url: '/pharmacy-workbench/reports/payment-methods',
+        method: 'GET',
+        data: pharmReportFilters,
+        success: function(methods) {
+            const $tbody = $('#pharm-payment-methods-tbody');
+            $tbody.empty();
+
+            if (!methods.length) {
+                $tbody.html('<tr><td colspan="4" class="text-center text-muted py-3">No data available</td></tr>');
+                return;
+            }
+
+            const total = methods.reduce((sum, m) => sum + parseFloat(m.amount || 0), 0);
+
+            methods.forEach(m => {
+                const percent = total > 0 ? ((parseFloat(m.amount || 0) / total) * 100).toFixed(1) : 0;
+                const icon = getPaymentIcon(m.payment_type);
+                $tbody.append(`
+                    <tr>
+                        <td><i class="mdi ${icon} me-1"></i>${m.payment_type || 'Unknown'}</td>
+                        <td class="text-center">${formatNumber(m.count)}</td>
+                        <td class="text-end">${formatCurrency(m.amount)}</td>
+                        <td class="text-end"><span class="badge bg-info">${percent}%</span></td>
+                    </tr>
+                `);
+            });
+        },
+        error: function() {
+            $('#pharm-payment-methods-tbody').html('<tr><td colspan="4" class="text-center text-danger">Failed to load</td></tr>');
+        }
+    });
+}
+
+function getPaymentIcon(type) {
+    const icons = {
+        'CASH': 'mdi-cash',
+        'CARD': 'mdi-credit-card',
+        'TRANSFER': 'mdi-bank-transfer',
+        'HMO': 'mdi-hospital-building',
+        'ACCOUNT': 'mdi-wallet'
+    };
+    return icons[type] || 'mdi-cash-multiple';
+}
+
+// Initialize DataTables
+function initPharmacyReportsDataTables() {
+    // Dispensing Report Table
+    if ($.fn.DataTable.isDataTable('#pharm-dispensing-table')) {
+        $('#pharm-dispensing-table').DataTable().destroy();
+    }
+
+    window.pharmDispensingTable = $('#pharm-dispensing-table').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: '/pharmacy-workbench/reports/dispensing',
+            data: function(d) {
+                return $.extend({}, d, pharmReportFilters);
+            }
+        },
+        columns: [
+            { data: 'dispensed_at', render: data => formatDateTimeShort(data) },
+            { data: 'reference_no' },
+            { data: 'patient_name' },
+            { data: 'product_name' },
+            { data: 'quantity', className: 'text-center' },
+            { data: 'amount', className: 'text-end', render: data => formatCurrency(data) },
+            { data: 'payment_type', render: data => `<span class="badge bg-secondary">${data || 'N/A'}</span>` },
+            { data: 'store_name' },
+            { data: 'pharmacist_name' },
+            {
+                data: 'id',
+                orderable: false,
+                render: function(data, type, row) {
+                    return `<button class="btn btn-xs btn-outline-info" onclick="viewDispensingDetail(${data})" title="View Details">
+                        <i class="mdi mdi-eye"></i>
+                    </button>`;
+                }
+            }
+        ],
+        order: [[0, 'desc']],
+        pageLength: 25,
+        dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip'
+    });
+
+    // Stock Report Table
+    if ($.fn.DataTable.isDataTable('#pharm-stock-table')) {
+        $('#pharm-stock-table').DataTable().destroy();
+    }
+
+    window.pharmStockTable = $('#pharm-stock-table').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: '/pharmacy-workbench/reports/stock',
+            data: function(d) {
+                return $.extend({}, d, {
+                    store_id: $('#stock-report-store-filter').val(),
+                    category_id: $('#stock-report-category-filter').val(),
+                    low_stock_only: $('#stock-show-low-only').is(':checked') ? 1 : 0,
+                    date_from: pharmReportFilters.date_from,
+                    date_to: pharmReportFilters.date_to
+                });
+            }
+        },
+        columns: [
+            { data: 'product_name' },
+            { data: 'product_code' },
+            { data: 'category_name' },
+            { data: 'reorder_level', className: 'text-center' },
+            { data: 'global_stock', className: 'text-center fw-bold' },
+            {
+                data: 'store_breakdown',
+                orderable: false,
+                render: function(data) {
+                    if (!data || !data.length) return '<span class="text-muted">N/A</span>';
+                    return '<div class="store-stock-breakdown">' +
+                        data.map(s => {
+                            const qtyClass = s.quantity <= 0 ? 'qty-out' : (s.quantity <= s.reorder_level ? 'qty-low' : 'qty-ok');
+                            return `<span class="store-stock-item">
+                                <span class="store-name">${escapeHtml(s.store_name)}:</span>
+                                <span class="store-qty ${qtyClass}">${s.quantity}</span>
+                            </span>`;
+                        }).join('') + '</div>';
+                }
+            },
+            { data: 'dispensed_qty', className: 'text-center' },
+            { data: 'unit_price', className: 'text-end', render: data => formatCurrency(data) },
+            { data: 'stock_value', className: 'text-end', render: data => formatCurrency(data) },
+            {
+                data: 'status',
+                className: 'text-center',
+                render: function(data, type, row) {
+                    const globalStock = row.global_stock || 0;
+                    const reorder = row.reorder_level || 0;
+
+                    if (globalStock <= 0) {
+                        return '<span class="stock-status-badge out-of-stock"><i class="mdi mdi-alert-circle"></i> Out</span>';
+                    } else if (globalStock <= reorder * 0.5) {
+                        return '<span class="stock-status-badge critical"><i class="mdi mdi-alert"></i> Critical</span>';
+                    } else if (globalStock <= reorder) {
+                        return '<span class="stock-status-badge low-stock"><i class="mdi mdi-alert-outline"></i> Low</span>';
+                    } else {
+                        return '<span class="stock-status-badge in-stock"><i class="mdi mdi-check-circle"></i> OK</span>';
+                    }
+                }
+            }
+        ],
+        order: [[4, 'asc']],
+        pageLength: 25,
+        dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip'
+    });
+
+    // Performance Report Table
+    if ($.fn.DataTable.isDataTable('#pharm-performance-table')) {
+        $('#pharm-performance-table').DataTable().destroy();
+    }
+
+    window.pharmPerformanceTable = $('#pharm-performance-table').DataTable({
+        processing: true,
+        serverSide: false,
+        ajax: {
+            url: '/pharmacy-workbench/reports/performance',
+            data: function(d) {
+                return $.extend({}, d, pharmReportFilters);
+            },
+            dataSrc: function(json) {
+                updatePerformanceTotals(json.totals || {});
+                return json.data || [];
+            }
+        },
+        columns: [
+            { data: 'pharmacist_name' },
+            { data: 'total_dispensed', className: 'text-center' },
+            { data: 'total_revenue', className: 'text-end', render: data => formatCurrency(data) },
+            { data: 'cash_transactions', className: 'text-center' },
+            { data: 'hmo_transactions', className: 'text-center' },
+            { data: 'cash_amount', className: 'text-end', render: data => formatCurrency(data) },
+            { data: 'hmo_amount', className: 'text-end', render: data => formatCurrency(data) },
+            { data: 'avg_tat', className: 'text-center', render: data => data ? `${data} min` : '-' },
+            { data: 'unique_patients', className: 'text-center' }
+        ],
+        order: [[2, 'desc']],
+        pageLength: 25,
+        footerCallback: function() {}
+    });
+
+    // HMO Claims Table
+    if ($.fn.DataTable.isDataTable('#pharm-hmo-table')) {
+        $('#pharm-hmo-table').DataTable().destroy();
+    }
+
+    window.pharmHmoTable = $('#pharm-hmo-table').DataTable({
+        processing: true,
+        serverSide: false,
+        ajax: {
+            url: '/pharmacy-workbench/reports/hmo-claims',
+            data: function(d) {
+                return $.extend({}, d, pharmReportFilters);
+            },
+            dataSrc: function(json) {
+                updateHmoTotals(json.totals || {});
+                return json.data || [];
+            }
+        },
+        columns: [
+            { data: 'hmo_name' },
+            { data: 'total_claims', className: 'text-center' },
+            { data: 'total_amount', className: 'text-end', render: data => formatCurrency(data) },
+            { data: 'validated_count', className: 'text-center' },
+            { data: 'validated_amount', className: 'text-end', render: data => formatCurrency(data) },
+            { data: 'pending_count', className: 'text-center' },
+            { data: 'pending_amount', className: 'text-end', render: data => formatCurrency(data) },
+            { data: 'rejected_count', className: 'text-center' },
+            { data: 'rejected_amount', className: 'text-end', render: data => formatCurrency(data) }
+        ],
+        order: [[2, 'desc']],
+        pageLength: 25
+    });
+
+    // Revenue Table (custom implementation)
+    initRevenueTable();
+}
+
+// Revenue table with grouping
+function initRevenueTable() {
+    if ($.fn.DataTable.isDataTable('#pharm-revenue-table')) {
+        $('#pharm-revenue-table').DataTable().destroy();
+    }
+
+    loadRevenueData('daily');
+}
+
+$('input[name="revenue-group"]').on('change', function() {
+    loadRevenueData($(this).val());
+});
+
+function loadRevenueData(groupBy) {
+    $.ajax({
+        url: '/pharmacy-workbench/reports/revenue',
+        method: 'GET',
+        data: $.extend({}, pharmReportFilters, { group_by: groupBy }),
+        success: function(response) {
+            const $tbody = $('#pharm-revenue-table tbody');
+            $tbody.empty();
+
+            if (!response.data || !response.data.length) {
+                $tbody.html('<tr><td colspan="8" class="text-center text-muted py-3">No revenue data available</td></tr>');
+                updateRevenueTotals({});
+                return;
+            }
+
+            response.data.forEach(row => {
+                $tbody.append(`
+                    <tr>
+                        <td>${escapeHtml(row.period)}</td>
+                        <td class="text-center">${formatNumber(row.transactions)}</td>
+                        <td class="text-end">${formatCurrency(row.cash)}</td>
+                        <td class="text-end">${formatCurrency(row.card)}</td>
+                        <td class="text-end">${formatCurrency(row.transfer)}</td>
+                        <td class="text-end">${formatCurrency(row.hmo)}</td>
+                        <td class="text-end fw-bold">${formatCurrency(row.total)}</td>
+                        <td class="text-end">${formatCurrency(row.avg_transaction)}</td>
+                    </tr>
+                `);
+            });
+
+            updateRevenueTotals(response.totals || {});
+        }
+    });
+}
+
+function updateRevenueTotals(totals) {
+    $('#revenue-total-txn').text(formatNumber(totals.transactions || 0));
+    $('#revenue-total-cash').text(formatCurrency(totals.cash || 0));
+    $('#revenue-total-card').text(formatCurrency(totals.card || 0));
+    $('#revenue-total-transfer').text(formatCurrency(totals.transfer || 0));
+    $('#revenue-total-hmo').text(formatCurrency(totals.hmo || 0));
+    $('#revenue-total-all').text(formatCurrency(totals.total || 0));
+    $('#revenue-total-avg').text(formatCurrency(totals.avg_transaction || 0));
+}
+
+function updatePerformanceTotals(totals) {
+    $('#perf-total-dispensed').text(formatNumber(totals.total_dispensed || 0));
+    $('#perf-total-revenue').text(formatCurrency(totals.total_revenue || 0));
+    $('#perf-total-cash-txn').text(formatNumber(totals.cash_transactions || 0));
+    $('#perf-total-hmo-txn').text(formatNumber(totals.hmo_transactions || 0));
+    $('#perf-total-cash-amt').text(formatCurrency(totals.cash_amount || 0));
+    $('#perf-total-hmo-amt').text(formatCurrency(totals.hmo_amount || 0));
+    $('#perf-avg-tat').text(totals.avg_tat ? `${totals.avg_tat} min` : '-');
+    $('#perf-total-patients').text(formatNumber(totals.unique_patients || 0));
+}
+
+function updateHmoTotals(totals) {
+    $('#hmo-total-claims').text(formatNumber(totals.total_claims || 0));
+    $('#hmo-total-amount').text(formatCurrency(totals.total_amount || 0));
+    $('#hmo-total-validated').text(formatNumber(totals.validated_count || 0));
+    $('#hmo-total-validated-amt').text(formatCurrency(totals.validated_amount || 0));
+    $('#hmo-total-pending').text(formatNumber(totals.pending_count || 0));
+    $('#hmo-total-pending-amt').text(formatCurrency(totals.pending_amount || 0));
+    $('#hmo-total-rejected').text(formatNumber(totals.rejected_count || 0));
+    $('#hmo-total-rejected-amt').text(formatCurrency(totals.rejected_amount || 0));
+}
+
+// Refresh all DataTables
+function refreshPharmacyDataTables() {
+    if (window.pharmDispensingTable) window.pharmDispensingTable.ajax.reload();
+    if (window.pharmStockTable) window.pharmStockTable.ajax.reload();
+    if (window.pharmPerformanceTable) window.pharmPerformanceTable.ajax.reload();
+    if (window.pharmHmoTable) window.pharmHmoTable.ajax.reload();
+    loadRevenueData($('input[name="revenue-group"]:checked').val() || 'daily');
+}
+
+// Stock report filter handlers
+$('#stock-report-store-filter, #stock-report-category-filter').on('change', function() {
+    if (window.pharmStockTable) window.pharmStockTable.ajax.reload();
+});
+
+$('#stock-show-low-only').on('change', function() {
+    if (window.pharmStockTable) window.pharmStockTable.ajax.reload();
+});
+
+// Initialize Charts
+function initPharmacyReportsCharts() {
+    // Trend Chart
+    const trendCtx = document.getElementById('pharm-trend-chart');
+    if (trendCtx) {
+        window.pharmTrendChart = new Chart(trendCtx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Dispensed Items',
+                        data: [],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Revenue (₦)',
+                        data: [],
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                if (context.datasetIndex === 1) {
+                                    return `Revenue: ${formatCurrency(context.raw)}`;
+                                }
+                                return `${context.dataset.label}: ${context.raw}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: { display: true, text: 'Items' }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: { display: true, text: 'Revenue (₦)' },
+                        grid: { drawOnChartArea: false }
+                    }
+                }
+            }
+        });
+    }
+
+    // Revenue Pie Chart
+    const pieCtx = document.getElementById('pharm-revenue-pie');
+    if (pieCtx) {
+        window.pharmRevenuePieChart = new Chart(pieCtx.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Cash', 'Card', 'Transfer', 'HMO', 'Account'],
+                datasets: [{
+                    data: [0, 0, 0, 0, 0],
+                    backgroundColor: [
+                        '#28a745',
+                        '#17a2b8',
+                        '#6f42c1',
+                        '#fd7e14',
+                        '#e83e8c'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 12, padding: 10 } },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = total > 0 ? ((context.raw / total) * 100).toFixed(1) : 0;
+                                return `${context.label}: ${formatCurrency(context.raw)} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+}
+
+// Update charts with data
+function updateTrendChart(data) {
+    if (!window.pharmTrendChart || !data.length) return;
+
+    window.pharmTrendChart.data.labels = data.map(d => d.date);
+    window.pharmTrendChart.data.datasets[0].data = data.map(d => d.items);
+    window.pharmTrendChart.data.datasets[1].data = data.map(d => d.revenue);
+    window.pharmTrendChart.update();
+}
+
+function updateRevenuePieChart(breakdown) {
+    if (!window.pharmRevenuePieChart) return;
+
+    window.pharmRevenuePieChart.data.datasets[0].data = [
+        breakdown.cash || 0,
+        breakdown.card || 0,
+        breakdown.transfer || 0,
+        breakdown.hmo || 0,
+        breakdown.account || 0
+    ];
+    window.pharmRevenuePieChart.update();
+}
+
+// Export functions
+$('#export-reports-excel').on('click', function() {
+    exportReportsToExcel();
+});
+
+$('#export-reports-pdf').on('click', function() {
+    toastr.info('PDF export will be generated. Please use Print > Save as PDF for now.');
+    printReports();
+});
+
+$('#print-reports').on('click', function() {
+    printReports();
+});
+
+function exportReportsToExcel() {
+    const activeTabId = $('#pharmacy-report-tabs .nav-link.active').attr('id');
+    const tabName = $('#pharmacy-report-tabs .nav-link.active').text().trim();
+
+    toastr.info('Preparing Excel export...');
+
+    try {
+        const wb = XLSX.utils.book_new();
+
+        // Add summary sheet with statistics
+        const summaryData = [
+            ['Pharmacy Reports & Analytics'],
+            ['Generated:', new Date().toLocaleString()],
+            ['Report Type:', tabName],
+            ['Date Range:', `${$('#pharm-report-date-from').val() || 'All'} to ${$('#pharm-report-date-to').val() || 'All'}`],
+            [],
+            ['Key Statistics:'],
+            ['Dispensed:', $('#pharm-stat-dispensed').text()],
+            ['Total Revenue:', $('#pharm-stat-revenue').text()],
+            ['Cash Sales:', $('#pharm-stat-cash').text()],
+            ['HMO Claims:', $('#pharm-stat-hmo').text()],
+            ['Patients:', $('#pharm-stat-patients').text()],
+            ['Pending:', $('#pharm-stat-pending').text()],
+        ];
+
+        const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+        XLSX.utils.book_append_sheet(wb, summarySheet, 'Summary');
+
+        // Export based on active tab
+        switch(activeTabId) {
+            case 'pharm-overview-tab':
+                exportOverviewData(wb);
+                break;
+            case 'pharm-dispensing-tab':
+                exportDispensingData(wb);
+                break;
+            case 'pharm-revenue-tab':
+                exportRevenueData(wb);
+                break;
+            case 'pharm-stock-tab':
+                exportStockData(wb);
+                break;
+            case 'pharm-performance-tab':
+                exportPerformanceData(wb);
+                break;
+            case 'pharm-hmo-tab':
+                exportHmoData(wb);
+                break;
+        }
+
+        // Download file
+        const fileName = `Pharmacy_${tabName.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+        toastr.success('Excel file downloaded successfully');
+
+    } catch (error) {
+        console.error('Export error:', error);
+        toastr.error('Failed to export data');
+    }
+}
+
+function exportOverviewData(wb) {
+    // Top Products
+    const topProducts = [];
+    $('#pharm-top-products-tbody tr').each(function() {
+        if ($(this).find('td').length > 1) {
+            topProducts.push({
+                'Rank': $(this).find('td:eq(0)').text(),
+                'Product': $(this).find('td:eq(1)').text(),
+                'Quantity': $(this).find('td:eq(2)').text(),
+                'Revenue': $(this).find('td:eq(3)').text()
+            });
+        }
+    });
+    if (topProducts.length > 0) {
+        const ws1 = XLSX.utils.json_to_sheet(topProducts);
+        XLSX.utils.book_append_sheet(wb, ws1, 'Top Products');
+    }
+
+    // Payment Methods
+    const paymentMethods = [];
+    $('#pharm-payment-methods-tbody tr').each(function() {
+        if ($(this).find('td').length > 1) {
+            paymentMethods.push({
+                'Method': $(this).find('td:eq(0)').text(),
+                'Transactions': $(this).find('td:eq(1)').text(),
+                'Amount': $(this).find('td:eq(2)').text(),
+                'Percentage': $(this).find('td:eq(3)').text()
+            });
+        }
+    });
+    if (paymentMethods.length > 0) {
+        const ws2 = XLSX.utils.json_to_sheet(paymentMethods);
+        XLSX.utils.book_append_sheet(wb, ws2, 'Payment Methods');
+    }
+}
+
+function exportDispensingData(wb) {
+    if ($.fn.DataTable.isDataTable('#pharm-dispensing-table')) {
+        const table = $('#pharm-dispensing-table').DataTable();
+        const data = table.rows({ search: 'applied' }).data().toArray();
+
+        const exportData = data.map(row => ({
+            'Date/Time': row[0],
+            'Ref #': row[1],
+            'Patient': row[2],
+            'File No': row[3],
+            'Product': row[4],
+            'Quantity': row[5],
+            'Pharmacist': row[6],
+            'Store': row[7],
+            'Amount': row[8],
+            'Payment': row[9],
+            'Status': row[10]
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        XLSX.utils.book_append_sheet(wb, ws, 'Dispensing Records');
+    }
+}
+
+function exportRevenueData(wb) {
+    if ($.fn.DataTable.isDataTable('#pharm-revenue-table')) {
+        const table = $('#pharm-revenue-table').DataTable();
+        const data = table.rows({ search: 'applied' }).data().toArray();
+
+        const exportData = data.map(row => ({
+            'Date': row[0],
+            'Ref #': row[1],
+            'Patient': row[2],
+            'File No': row[3],
+            'Services': row[4],
+            'Gross Amount': row[5],
+            'Discount': row[6],
+            'Net Amount': row[7],
+            'Payment Method': row[8],
+            'HMO': row[9]
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        XLSX.utils.book_append_sheet(wb, ws, 'Revenue Records');
+    }
+}
+
+function exportStockData(wb) {
+    if ($.fn.DataTable.isDataTable('#pharm-stock-table')) {
+        const table = $('#pharm-stock-table').DataTable();
+        const data = table.rows({ search: 'applied' }).data().toArray();
+
+        const exportData = data.map(row => ({
+            'Product': row[0],
+            'Category': row[1],
+            'Total Stock': row[2],
+            'Available': row[3],
+            'Allocated': row[4],
+            'Reorder Level': row[5],
+            'Status': row[6],
+            'Store Breakdown': row[7]
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        XLSX.utils.book_append_sheet(wb, ws, 'Stock Status');
+    }
+}
+
+function exportPerformanceData(wb) {
+    if ($.fn.DataTable.isDataTable('#pharm-performance-table')) {
+        const table = $('#pharm-performance-table').DataTable();
+        const data = table.rows({ search: 'applied' }).data().toArray();
+
+        const exportData = data.map(row => ({
+            'Pharmacist': row[0],
+            'Transactions': row[1],
+            'Items Dispensed': row[2],
+            'Total Revenue': row[3],
+            'Avg Transaction': row[4],
+            'Patients Served': row[5],
+            'Work Hours': row[6],
+            'Efficiency': row[7]
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        XLSX.utils.book_append_sheet(wb, ws, 'Performance Metrics');
+    }
+}
+
+function exportHmoData(wb) {
+    if ($.fn.DataTable.isDataTable('#pharm-hmo-table')) {
+        const table = $('#pharm-hmo-table').DataTable();
+        const data = table.rows({ search: 'applied' }).data().toArray();
+
+        const exportData = data.map(row => ({
+            'Date': row[0],
+            'Ref #': row[1],
+            'Patient': row[2],
+            'File No': row[3],
+            'HMO': row[4],
+            'Services': row[5],
+            'Amount': row[6],
+            'Validation Status': row[7],
+            'Validated By': row[8],
+            'Remarks': row[9]
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        XLSX.utils.book_append_sheet(wb, ws, 'HMO Claims');
+    }
+}
+
+function printReports() {
+    const activeTabId = $('#pharmacy-report-tabs .nav-link.active').attr('id');
+    const tabName = $('#pharmacy-report-tabs .nav-link.active').text().trim();
+    const dateFrom = $('#pharm-report-date-from').val() || 'All';
+    const dateTo = $('#pharm-report-date-to').val() || 'All';
+
+    // Get statistics
+    const stats = {
+        dispensed: $('#pharm-stat-dispensed').text(),
+        revenue: $('#pharm-stat-revenue').text(),
+        cash: $('#pharm-stat-cash').text(),
+        hmo: $('#pharm-stat-hmo').text(),
+        patients: $('#pharm-stat-patients').text(),
+        pending: $('#pharm-stat-pending').text()
+    };
+
+    let reportContent = '';
+
+    // Build content based on active tab
+    switch(activeTabId) {
+        case 'pharm-overview-tab':
+            reportContent = buildOverviewPrintContent();
+            break;
+        case 'pharm-dispensing-tab':
+            reportContent = buildDispensingPrintContent();
+            break;
+        case 'pharm-revenue-tab':
+            reportContent = buildRevenuePrintContent();
+            break;
+        case 'pharm-stock-tab':
+            reportContent = buildStockPrintContent();
+            break;
+        case 'pharm-performance-tab':
+            reportContent = buildPerformancePrintContent();
+            break;
+        case 'pharm-hmo-tab':
+            reportContent = buildHmoPrintContent();
+            break;
+    }
+
+    const printWindow = window.open('', '_blank', 'width=1200,height=800');
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Pharmacy Report - ${tabName}</title>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+            <style>
+                body {
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    padding: 20px;
+                    font-size: 11px;
+                }
+                .print-header {
+                    text-align: center;
+                    margin-bottom: 25px;
+                    padding-bottom: 15px;
+                    border-bottom: 3px solid #667eea;
+                }
+                .print-header h2 {
+                    color: #667eea;
+                    margin-bottom: 5px;
+                    font-weight: bold;
+                }
+                .stats-grid {
+                    display: grid;
+                    grid-template-columns: repeat(6, 1fr);
+                    gap: 10px;
+                    margin-bottom: 20px;
+                }
+                .stat-box {
+                    text-align: center;
+                    padding: 10px;
+                    background: #f8f9fa;
+                    border-radius: 5px;
+                    border-left: 3px solid #667eea;
+                }
+                .stat-box h5 {
+                    margin: 0;
+                    font-size: 16px;
+                    color: #333;
+                    font-weight: bold;
+                }
+                .stat-box small {
+                    color: #666;
+                    font-size: 10px;
+                    text-transform: uppercase;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-bottom: 20px;
+                    font-size: 10px;
+                }
+                th, td {
+                    border: 1px solid #ddd;
+                    padding: 6px 8px;
+                    text-align: left;
+                }
+                th {
+                    background: #667eea;
+                    color: white;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                }
+                tbody tr:nth-child(even) {
+                    background: #f8f9fa;
+                }
+                .no-print {
+                    display: none;
+                }
+                @media print {
+                    body { padding: 10px; }
+                    .no-print { display: none !important; }
+                    table { page-break-inside: auto; }
+                    tr { page-break-inside: avoid; page-break-after: auto; }
+                    thead { display: table-header-group; }
+                }
+                .info-section {
+                    margin-bottom: 15px;
+                    padding: 10px;
+                    background: #e7f1ff;
+                    border-radius: 5px;
+                }
+                .footer {
+                    margin-top: 30px;
+                    padding-top: 15px;
+                    border-top: 2px solid #ddd;
+                    text-align: center;
+                    font-size: 9px;
+                    color: #666;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="print-header">
+                <h2>Pharmacy Reports & Analytics</h2>
+                <h4>${tabName}</h4>
+                <p style="margin: 5px 0; color: #666;">
+                    Date Range: ${dateFrom} to ${dateTo} |
+                    Generated: ${new Date().toLocaleString()}
+                </p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <h5>${stats.dispensed}</h5>
+                    <small>Dispensed</small>
+                </div>
+                <div class="stat-box">
+                    <h5>${stats.revenue}</h5>
+                    <small>Revenue</small>
+                </div>
+                <div class="stat-box">
+                    <h5>${stats.cash}</h5>
+                    <small>Cash</small>
+                </div>
+                <div class="stat-box">
+                    <h5>${stats.hmo}</h5>
+                    <small>HMO</small>
+                </div>
+                <div class="stat-box">
+                    <h5>${stats.patients}</h5>
+                    <small>Patients</small>
+                </div>
+                <div class="stat-box">
+                    <h5>${stats.pending}</h5>
+                    <small>Pending</small>
+                </div>
+            </div>
+
+            ${reportContent}
+
+            <div class="footer">
+                <p><strong>{{ appsettings('hos_name', 'Hospital Management System') }}</strong></p>
+                <p>This is a system-generated report</p>
+            </div>
+
+            <script>
+                window.onload = function() {
+                    setTimeout(function() {
+                        window.print();
+                    }, 500);
+                };
+            </script>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+}
+
+function buildOverviewPrintContent() {
+    let html = '<div class="info-section"><h5>Overview Report</h5></div>';
+
+    // Top Products
+    html += '<h6>Top 10 Products</h6><table><thead><tr><th>#</th><th>Product</th><th>Qty</th><th>Revenue</th></tr></thead><tbody>';
+    $('#pharm-top-products-tbody tr').each(function() {
+        if ($(this).find('td').length > 1) {
+            html += '<tr>';
+            $(this).find('td').each(function() {
+                html += `<td>${$(this).text()}</td>`;
+            });
+            html += '</tr>';
+        }
+    });
+    html += '</tbody></table>';
+
+    // Payment Methods
+    html += '<h6>Payment Methods</h6><table><thead><tr><th>Method</th><th>Transactions</th><th>Amount</th><th>%</th></tr></thead><tbody>';
+    $('#pharm-payment-methods-tbody tr').each(function() {
+        if ($(this).find('td').length > 1) {
+            html += '<tr>';
+            $(this).find('td').each(function() {
+                html += `<td>${$(this).text()}</td>`;
+            });
+            html += '</tr>';
+        }
+    });
+    html += '</tbody></table>';
+
+    return html;
+}
+
+function buildDispensingPrintContent() {
+    let html = '<div class="info-section"><h5>Dispensing Report</h5></div><table>';
+
+    if ($.fn.DataTable.isDataTable('#pharm-dispensing-table')) {
+        const table = $('#pharm-dispensing-table').DataTable();
+        html += '<thead><tr>';
+        table.columns().header().each(function() {
+            html += `<th>${$(this).text()}</th>`;
+        });
+        html += '</tr></thead><tbody>';
+
+        table.rows({ search: 'applied' }).every(function() {
+            const data = this.data();
+            html += '<tr>';
+            data.forEach(cell => {
+                // Strip HTML tags for clean printing
+                const cleanText = $('<div>').html(cell).text();
+                html += `<td>${cleanText}</td>`;
+            });
+            html += '</tr>';
+        });
+        html += '</tbody>';
+    }
+
+    html += '</table>';
+    return html;
+}
+
+function buildRevenuePrintContent() {
+    let html = '<div class="info-section"><h5>Revenue Report</h5></div><table>';
+
+    if ($.fn.DataTable.isDataTable('#pharm-revenue-table')) {
+        const table = $('#pharm-revenue-table').DataTable();
+        html += '<thead><tr>';
+        table.columns().header().each(function() {
+            html += `<th>${$(this).text()}</th>`;
+        });
+        html += '</tr></thead><tbody>';
+
+        table.rows({ search: 'applied' }).every(function() {
+            const data = this.data();
+            html += '<tr>';
+            data.forEach(cell => {
+                const cleanText = $('<div>').html(cell).text();
+                html += `<td>${cleanText}</td>`;
+            });
+            html += '</tr>';
+        });
+        html += '</tbody>';
+    }
+
+    html += '</table>';
+    return html;
+}
+
+function buildStockPrintContent() {
+    let html = '<div class="info-section"><h5>Stock Status Report</h5></div><table>';
+
+    if ($.fn.DataTable.isDataTable('#pharm-stock-table')) {
+        const table = $('#pharm-stock-table').DataTable();
+        html += '<thead><tr>';
+        table.columns().header().each(function() {
+            html += `<th>${$(this).text()}</th>`;
+        });
+        html += '</tr></thead><tbody>';
+
+        table.rows({ search: 'applied' }).every(function() {
+            const data = this.data();
+            html += '<tr>';
+            data.forEach(cell => {
+                const cleanText = $('<div>').html(cell).text();
+                html += `<td>${cleanText}</td>`;
+            });
+            html += '</tr>';
+        });
+        html += '</tbody>';
+    }
+
+    html += '</table>';
+    return html;
+}
+
+function buildPerformancePrintContent() {
+    let html = '<div class="info-section"><h5>Performance Report</h5></div><table>';
+
+    if ($.fn.DataTable.isDataTable('#pharm-performance-table')) {
+        const table = $('#pharm-performance-table').DataTable();
+        html += '<thead><tr>';
+        table.columns().header().each(function() {
+            html += `<th>${$(this).text()}</th>`;
+        });
+        html += '</tr></thead><tbody>';
+
+        table.rows({ search: 'applied' }).every(function() {
+            const data = this.data();
+            html += '<tr>';
+            data.forEach(cell => {
+                const cleanText = $('<div>').html(cell).text();
+                html += `<td>${cleanText}</td>`;
+            });
+            html += '</tr>';
+        });
+        html += '</tbody>';
+    }
+
+    html += '</table>';
+    return html;
+}
+
+function buildHmoPrintContent() {
+    let html = '<div class="info-section"><h5>HMO Claims Report</h5></div><table>';
+
+    if ($.fn.DataTable.isDataTable('#pharm-hmo-table')) {
+        const table = $('#pharm-hmo-table').DataTable();
+        html += '<thead><tr>';
+        table.columns().header().each(function() {
+            html += `<th>${$(this).text()}</th>`;
+        });
+        html += '</tr></thead><tbody>';
+
+        table.rows({ search: 'applied' }).every(function() {
+            const data = this.data();
+            html += '<tr>';
+            data.forEach(cell => {
+                const cleanText = $('<div>').html(cell).text();
+                html += `<td>${cleanText}</td>`;
+            });
+            html += '</tr>';
+        });
+        html += '</tbody>';
+    }
+
+    html += '</table>';
+    return html;
+}
+
+// Helper functions
+function formatNumber(num) {
+    return new Intl.NumberFormat().format(num || 0);
+}
+
+function formatCurrency(amount) {
+    return '₦' + new Intl.NumberFormat().format(parseFloat(amount || 0).toFixed(2));
+}
+
+function formatDateTimeShort(dateString) {
+    if (!dateString) return 'N/A';
+    const d = new Date(dateString);
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) +
+           ' ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function viewDispensingDetail(id) {
+    // TODO: Implement detail view modal
+    toastr.info('Detail view coming soon');
+}
+
+// Tab change handler - lazy load data
+$('#pharmacy-report-tabs button[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
+    const tabId = $(e.target).attr('id');
+    // Tables are already initialized, just let DataTables handle it
+});
+
+// ===========================================
+// END PHARMACY REPORTS MODULE
+// ===========================================
 </script>
+
+{{-- Clinical Context Modal --}}
+@include('admin.partials.clinical_context_modal')
 
 @endsection

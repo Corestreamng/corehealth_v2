@@ -9,7 +9,7 @@
 
             {{-- @include('admin.layouts.partials.infoBox') --}}
 
-            <div modern">
+            <div class="card-modern">
 
                 <!-- /.card-header -->
                 <div class="card-body">

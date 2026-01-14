@@ -790,6 +790,9 @@ class EncounterController extends Controller
             ->addColumn('id', function ($item) {
                 return $item->id;
             })
+            ->addColumn('product_id', function ($item) {
+                return $item->product_id;
+            })
             ->addColumn('product_name', function ($item) {
                 return optional($item->product)->product_name ?? 'Unknown';
             })
@@ -839,6 +842,9 @@ class EncounterController extends Controller
             ->addIndexColumn()
             ->addColumn('id', function ($item) {
                 return $item->id;
+            })
+            ->addColumn('product_id', function ($item) {
+                return $item->product_id;
             })
             ->addColumn('product_name', function ($item) {
                 return optional($item->product)->product_name ?? 'Unknown';
@@ -923,6 +929,9 @@ class EncounterController extends Controller
             ->addIndexColumn()
             ->addColumn('id', function ($item) {
                 return $item->id;
+            })
+            ->addColumn('product_id', function ($item) {
+                return $item->product_id;
             })
             ->addColumn('product_name', function ($item) {
                 return optional($item->product)->product_name ?? 'Unknown';
@@ -1031,6 +1040,9 @@ class EncounterController extends Controller
             ->addColumn('id', function ($item) {
                 return $item->id;
             })
+            ->addColumn('product_id', function ($item) {
+                return $item->product_id;
+            })
             ->addColumn('product_name', function ($item) {
                 return optional($item->product)->product_name ?? 'Unknown';
             })
@@ -1091,6 +1103,9 @@ class EncounterController extends Controller
             ->addIndexColumn()
             ->addColumn('id', function ($item) {
                 return $item->id;
+            })
+            ->addColumn('product_id', function ($item) {
+                return $item->product_id;
             })
             ->addColumn('status', function ($item) {
                 return $item->status;

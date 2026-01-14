@@ -164,8 +164,10 @@
                     <div class="table-responsive">
                         <table class="table table-hover" style="width: 100%" id="presc_billing_table">
                             <thead class="table-light">
-                                <th style="width: 40px;"><input type="checkbox" id="select-all-billing" onclick="toggleAllPrescBilling(this)"></th>
-                                <th><i class="mdi mdi-pill"></i> Medication</th>
+                                <tr>
+                                    <th style="width: 40px;"><input type="checkbox" id="select-all-billing" onclick="toggleAllPrescBilling(this)"></th>
+                                    <th><i class="mdi mdi-pill"></i> Medication</th>
+                                </tr>
                             </thead>
                             <tbody></tbody>
                         </table>
@@ -243,10 +245,25 @@
                     <div class="table-responsive">
                         <table class="table table-hover" style="width: 100%" id="presc_pending_table">
                             <thead class="table-light">
-                                <th><i class="mdi mdi-pill"></i> Medication</th>
+                                <tr>
+                                    <th style="width: 40px;"><input type="checkbox" id="select-all-pending" onclick="toggleAllPrescPending(this)"></th>
+                                    <th><i class="mdi mdi-pill"></i> Medication</th>
+                                </tr>
                             </thead>
                             <tbody></tbody>
                         </table>
+                    </div>
+
+                    <!-- Pending Actions -->
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <div class="text-muted small">
+                            <i class="mdi mdi-information-outline"></i> Items must be paid/validated before they can be dispensed
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-danger" onclick="dismissPrescItems('pending')">
+                                <i class="mdi mdi-close"></i> Dismiss Selected
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -268,8 +285,10 @@
                     <div class="table-responsive">
                         <table class="table table-hover" style="width: 100%" id="presc_dispense_table">
                             <thead class="table-light">
-                                <th style="width: 40px;"><input type="checkbox" id="select-all-dispense" onclick="toggleAllPrescDispense(this)"></th>
-                                <th><i class="mdi mdi-pill"></i> Medication</th>
+                                <tr>
+                                    <th style="width: 40px;"><input type="checkbox" id="select-all-dispense" onclick="toggleAllPrescDispense(this)"></th>
+                                    <th><i class="mdi mdi-pill"></i> Medication</th>
+                                </tr>
                             </thead>
                             <tbody></tbody>
                         </table>

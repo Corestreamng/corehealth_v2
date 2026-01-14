@@ -1,6 +1,6 @@
 <div class="fluid-intake-output-section">
     <!-- Date Range Filter -->
-    <div modern mb-3">
+    <div class="card-modern mb-3">
         <div class="card-header bg-light">
             <h6 class="mb-0"><i class="mdi mdi-calendar-range me-1"></i> Date Range Filter</h6>
         </div>
@@ -29,7 +29,7 @@
     </div>
 
     <!-- Date Range Navigation -->
-    <div modern mb-3">
+    <div class="card-modern mb-3">
         <div class="card-body p-2">
             <div class="d-flex justify-content-between align-items-center">
                 <div class="btn-group">
@@ -49,7 +49,7 @@
     </div>
 
     <!-- Fluid Legend -->
-    <div modern mb-2">
+    <div class="card-modern mb-2">
         <div class="card-body p-2">
             <div class="d-flex flex-wrap gap-2 align-items-center">
                 <small class="text-muted me-2">Legend:</small>

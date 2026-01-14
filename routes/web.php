@@ -271,6 +271,10 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/pharmacy-workbench/queue-counts', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getQueueCounts'])->name('pharmacy.queue-counts');
         Route::get('/pharmacy-workbench/patient/{id}/prescription-data', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getPatientPrescriptionData'])->name('pharmacy.patient-prescription-data');
         Route::get('/pharmacy-workbench/patient/{id}/dispensing-history', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getPatientDispensingHistory'])->name('pharmacy.patient-dispensing-history');
+        // Store and stock routes
+        Route::get('/pharmacy-workbench/stores', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getStores'])->name('pharmacy.stores');
+        Route::get('/pharmacy-workbench/product/{id}/stock', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getProductStockByStore'])->name('pharmacy.product-stock');
+        Route::post('/pharmacy-workbench/validate-cart-stock', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'validateCartStock'])->name('pharmacy.validate-cart-stock');
         // DataTables endpoints (matching presc.blade.php pattern)
         Route::get('/pharmacy-workbench/presc-bill-list/{patient_id}', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'prescBillList'])->name('pharmacy.presc-bill-list');
         Route::get('/pharmacy-workbench/presc-dispense-list/{patient_id}', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'prescDispenseList'])->name('pharmacy.presc-dispense-list');
@@ -282,6 +286,21 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/pharmacy-workbench/create-request', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'createPrescriptionRequest'])->name('pharmacy.create-request');
         Route::get('/pharmacy-workbench/my-transactions', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getMyTransactions'])->name('pharmacy.my-transactions');
         Route::post('/pharmacy-workbench/print-prescription-slip', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'printPrescriptionSlip'])->name('pharmacy.print-prescription-slip');
+
+        // Pharmacy Reports & Analytics Routes
+        Route::get('/pharmacy-workbench/pharmacists', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getPharmacists'])->name('pharmacy.pharmacists');
+        Route::get('/pharmacy-workbench/filter-hmos', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getHmosForFilter'])->name('pharmacy.filterHmos');
+        Route::get('/pharmacy-workbench/filter-doctors', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getDoctorsForFilter'])->name('pharmacy.filterDoctors');
+        Route::get('/pharmacy-workbench/product-categories', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getProductCategories'])->name('pharmacy.productCategories');
+        Route::get('/pharmacy-workbench/reports/statistics', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getReportStatistics'])->name('pharmacy.reports.statistics');
+        Route::get('/pharmacy-workbench/reports/dispensing', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getDispensingReport'])->name('pharmacy.reports.dispensing');
+        Route::get('/pharmacy-workbench/reports/revenue', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getRevenueReport'])->name('pharmacy.reports.revenue');
+        Route::get('/pharmacy-workbench/reports/stock', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getStockReport'])->name('pharmacy.reports.stock');
+        Route::get('/pharmacy-workbench/reports/performance', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getPerformanceReport'])->name('pharmacy.reports.performance');
+        Route::get('/pharmacy-workbench/reports/hmo-claims', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getHmoClaimsReport'])->name('pharmacy.reports.hmo-claims');
+        Route::get('/pharmacy-workbench/reports/top-products', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getTopProducts'])->name('pharmacy.reports.top-products');
+        Route::get('/pharmacy-workbench/reports/payment-methods', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getPaymentMethodsBreakdown'])->name('pharmacy.reports.payment-methods');
+        Route::get('/pharmacy-workbench/reports/export', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'exportReports'])->name('pharmacy.reports.export');
 
         // Lab Workbench Routes
         Route::get('/lab-workbench', [\App\Http\Controllers\LabWorkbenchController::class, 'index'])->name('lab.workbench');

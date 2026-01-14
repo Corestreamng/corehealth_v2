@@ -10,7 +10,7 @@
         <div class="container">
             <div class="row justify-content-center">
                 <div class="raw">
-                    <div modern">
+                    <div class="card-modern">
                         <div class="card-header">{{ $products->product_name }} -{{ __(' Price Setting') }}</div>
 
                         <div class="card-body">
