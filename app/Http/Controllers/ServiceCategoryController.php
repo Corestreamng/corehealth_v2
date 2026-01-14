@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ServiceCategory;
+use App\Models\serviceCategory;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use App\Http\Requests\StoreServiceCategoryRequest;

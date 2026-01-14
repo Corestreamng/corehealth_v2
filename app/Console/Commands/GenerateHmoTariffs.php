@@ -5,7 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Models\Hmo;
 use App\Models\Product;
-use App\Models\Service;
+use App\Models\service;
 use App\Models\HmoTariff;
 
 class GenerateHmoTariffs extends Command
@@ -45,7 +45,7 @@ class GenerateHmoTariffs extends Command
 
         $hmos = Hmo::where('status', 1)->get();
         $products = Product::all();
-        $services = Service::all();
+        $services = service::all();
 
         if ($hmos->isEmpty()) {
             $this->warn('No active HMOs found.');

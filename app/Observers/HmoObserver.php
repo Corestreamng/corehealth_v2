@@ -4,7 +4,7 @@ namespace App\Observers;
 
 use App\Models\Hmo;
 use App\Models\Product;
-use App\Models\Service;
+use App\Models\service;
 use App\Models\HmoTariff;
 use Illuminate\Support\Facades\Log;
 
@@ -47,7 +47,7 @@ class HmoObserver
             }
 
             // Generate tariffs for all services
-            $services = Service::all();
+            $services = service::all();
             foreach ($services as $service) {
                 // Check if tariff already exists
                 $exists = HmoTariff::where('hmo_id', $hmo->id)

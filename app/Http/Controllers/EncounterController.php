@@ -780,169 +780,450 @@ class EncounterController extends Controller
             ->make(true);
     }
 
-    public function prescHistoryList($patient_id)
-    {
-        $his = ProductRequest::with(['product', 'encounter', 'patient', 'productOrServiceRequest', 'doctor', 'biller'])
-            ->where('status', '>', 0)->where('patient_id', $patient_id)->orderBy('created_at', 'DESC')->get();
-
-        // dd($pc);
-        return DataTables::of($his)
-            ->addColumn('info', function ($his) {
-                $str = '<div class="card-modern mb-2" style="border-left: 4px solid #0d6efd;">';
-                $str .= '<div class="card-body p-3">';
-
-                // Header with product name and status
-                $str .= '<div class="d-flex justify-content-between align-items-start mb-3">';
-                $str .= "<h6 class='mb-0'><span class='badge bg-success'>[" . (($his->product->product_code) ? $his->product->product_code : '') . '] ' . $his->product->product_name . '</span></h6>';
-
-                // Status badges
-                $str .= '<div>';
-                $statusBadge = '';
-                if ($his->dispensed_by) {
-                    $statusBadge = "<span class='badge bg-info'>Dispensed</span>";
-                } elseif ($his->billed_by) {
-                    $statusBadge = "<span class='badge bg-primary'>Billed</span>";
-                } else {
-                    $statusBadge = "<span class='badge bg-secondary'>Pending</span>";
-                }
-                $str .= $statusBadge;
-
-                // HMO Coverage Badge
-                if ($his->productOrServiceRequest && $his->productOrServiceRequest->coverage_mode) {
-                    $coverageClass = $his->productOrServiceRequest->coverage_mode === 'express' ? 'success' :
-                                   ($his->productOrServiceRequest->coverage_mode === 'primary' ? 'warning' : 'danger');
-                    $str .= " <span class='badge bg-{$coverageClass}'>HMO: " . strtoupper($his->productOrServiceRequest->coverage_mode) . '</span>';
-                }
-                $str .= '</div>';
-                $str .= '</div>';
-
-                // Dosage information
-                $str .= '<div class="alert alert-light mb-3"><small><b><i class="mdi mdi-pill"></i> Dose/Frequency:</b><br>' . ($his->dose ?? 'N/A') . '</small></div>';
-
-                // Timeline section
-                $str .= '<div class="mb-3"><small>';
-                $str .= '<div class="mb-2"><i class="mdi mdi-account-arrow-right text-primary"></i> <b>Requested by:</b> '
-                    . ((isset($his->doctor_id) && $his->doctor_id != null) ? (userfullname($his->doctor_id) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($his->created_at)) . ')</span>') : "<span class='badge bg-secondary'>N/A</span>");
-                $str .= '</div>';
-
-                $str .= '<div class="mb-2"><i class="mdi mdi-cash-multiple text-success"></i> <b>Billed by:</b> '
-                    . ((isset($his->billed_by) && $his->billed_by != null) ? (userfullname($his->billed_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($his->billed_date)) . ')</span>') : "<span class='badge bg-secondary'>Not billed</span>");
-                $str .= '</div>';
-
-                $str .= '<div class="mb-2"><i class="mdi mdi-package-variant text-warning"></i> <b>Dispensed by:</b> '
-                    . ((isset($his->dispensed_by) && $his->dispensed_by != null) ? (userfullname($his->dispensed_by) . ' <span class="text-muted">(' . date('h:i a D M j, Y', strtotime($his->dispense_date)) . ')</span>') : "<span class='badge bg-secondary'>Not dispensed</span>");
-                $str .= '</div>';
-                $str .= '</small></div>';
-
-                // Check delivery status (payment + HMO validation)
-                $canDeliver = true;
-                $deliveryCheck = null;
-                if ($his->productOrServiceRequest) {
-                    $deliveryCheck = \App\Helpers\HmoHelper::canDeliverService($his->productOrServiceRequest);
-                    $canDeliver = $deliveryCheck['can_deliver'];
-                    if (!$canDeliver) {
-                        $str .= "<div class='alert alert-warning py-2 mb-2 mt-2'><small>";
-                        $str .= "<i class='fa fa-exclamation-triangle'></i> <b>" . $deliveryCheck['reason'] . "</b><br>";
-                        $str .= $deliveryCheck['hint'];
-                        $str .= "</small></div>";
-                    }
-                }
-
-                // Action buttons
-                $str .= '<div class="btn-group mt-2" role="group">';
-
-                // Show delete button only if:
-                // 1. Current user is the doctor who created the request
-                // 2. Status is pending (1) or in progress (2)
-                // 3. Not yet billed
-                // 4. Not yet dispensed
-                $canDelete = (Auth::id() == $his->doctor_id)
-                    && ($his->status == 1 || $his->status == 2)
-                    && empty($his->billed_by)
-                    && empty($his->dispensed_by);
-
-                if ($canDelete) {
-                    $productName = $his->product ? $his->product->product_name : 'N/A';
-                    $str .= "<button type='button' class='btn btn-danger btn-sm'
-                        onclick='deletePrescription({$his->id}, {$his->encounter_id}, \"{$productName}\")'
-                        title='Delete this prescription'>
-                        <i class='fa fa-trash'></i> Delete
-                    </button>";
-                }
-
-                $str .= '</div>'; // Close btn-group
-                $str .= '</div>'; // Close card-body
-                $str .= '</div>'; // Close card
-
-                return $str;
-            })
-            ->rawColumns(['info'])
-            ->make(true);
-    }
-
     public function prescBillList($patient_id)
     {
-        $his = ProductRequest::with(['product', 'encounter', 'patient', 'productOrServiceRequest', 'doctor', 'biller'])
+        $items = ProductRequest::with(['product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest', 'doctor', 'biller'])
             ->where('status', 1)->where('patient_id', $patient_id)->orderBy('created_at', 'DESC')->get();
 
-        // dd($pc);
-        return DataTables::of($his)
+        return DataTables::of($items)
             ->addIndexColumn()
-            ->addColumn('select', function ($h) {
-                $str = "<input type='checkbox' name='selectedPrescBillRows[]' onclick='checkPrescBillRow(this)' data-price = '" . $h->product->price->current_sale_price . "' value='$h->id' class='form-control'> ";
-
-                return $str;
+            ->addColumn('id', function ($item) {
+                return $item->id;
             })
-            ->editColumn('created_at', function ($h) {
-                $str = '<small>';
-                $str .= '<b >Requested By: </b>' . ((isset($h->doctor_id) && $h->doctor_id != null) ? (userfullname($h->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>") . '<br>';
-                $str .= '<b >Last Updated On: </b>' . date('h:i a D M j, Y', strtotime($h->updated_at)) . '<br>';
-                $str .= '<b >Billed By: </b>' . ((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span><br>");
-                $str .= '<br><b >Dispensed By: </b>' . ((isset($h->dispensed_by) && $h->dispensed_by != null) ? (userfullname($h->dispensed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->dispense_date)) . ')') : "<span class='badge badge-secondary'>Not dispensed</span><br>");
-                $str .= '</small>';
-
-                return $str;
+            ->addColumn('product_name', function ($item) {
+                return optional($item->product)->product_name ?? 'Unknown';
             })
-            ->editColumn('dose', function ($his) {
-                $str = "<span class = 'badge badge-success'>[" . (($his->product->product_code) ? $his->product->product_code : '') . ']' . $his->product->product_name . '</span>';
-                $str .= '<hr> <b>Dose/Freq:</b> ' . ($his->dose ?? 'N/A');
-
-                return $str;
+            ->addColumn('product_code', function ($item) {
+                return optional($item->product)->product_code ?? '';
             })
-            ->rawColumns(['created_at', 'dose', 'select'])
+            ->addColumn('dose', function ($item) {
+                return $item->dose ?? 'N/A';
+            })
+            ->addColumn('qty', function ($item) {
+                return $item->qty ?? 1;
+            })
+            ->addColumn('price', function ($item) {
+                return optional(optional($item->product)->price)->current_sale_price ?? 0;
+            })
+            ->addColumn('payable_amount', function ($item) {
+                $posr = $item->productOrServiceRequest;
+                return $posr ? ($posr->payable_amount ?? 0) : (optional(optional($item->product)->price)->current_sale_price ?? 0);
+            })
+            ->addColumn('claims_amount', function ($item) {
+                return optional($item->productOrServiceRequest)->claims_amount ?? 0;
+            })
+            ->addColumn('coverage_mode', function ($item) {
+                return optional($item->productOrServiceRequest)->coverage_mode ?? 'none';
+            })
+            ->addColumn('requested_by', function ($item) {
+                return $item->doctor_id ? userfullname($item->doctor_id) : 'N/A';
+            })
+            ->addColumn('requested_at', function ($item) {
+                return $item->created_at ? date('M j, Y h:i A', strtotime($item->created_at)) : '';
+            })
+            ->addColumn('billed_by', function ($item) {
+                return $item->billed_by ? userfullname($item->billed_by) : null;
+            })
+            ->addColumn('billed_at', function ($item) {
+                return $item->billed_date ? date('M j, Y h:i A', strtotime($item->billed_date)) : '';
+            })
             ->make(true);
     }
 
     public function prescDispenseList($patient_id)
     {
-        $his = ProductRequest::with(['product', 'encounter', 'patient', 'productOrServiceRequest', 'doctor', 'biller'])
+        $items = ProductRequest::with(['product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest.payment', 'doctor', 'biller'])
             ->where('status', 2)->where('patient_id', $patient_id)->orderBy('created_at', 'DESC')->get();
 
-        // dd($pc);
-        return DataTables::of($his)
+        return DataTables::of($items)
             ->addIndexColumn()
-            ->addColumn('select', function ($h) {
-                $str = "<input type='checkbox' name='selectedPrescDispenseRows[]' value='$h->id' class='form-control'> ";
-
-                return $str;
+            ->addColumn('id', function ($item) {
+                return $item->id;
             })
-            ->editColumn('created_at', function ($h) {
-                $str = '<small>';
-                $str .= '<b >Requested By: </b>' . ((isset($h->doctor_id) && $h->doctor_id != null) ? (userfullname($h->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($h->created_at)) . ')') : "<span class='badge badge-secondary'>N/A</span>") . '<br>';
-                $str .= '<b >Last Updated On: </b>' . date('h:i a D M j, Y', strtotime($h->updated_at)) . '<br>';
-                $str .= '<b >Billed By: </b>' . ((isset($h->billed_by) && $h->billed_by != null) ? (userfullname($h->billed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->billed_date)) . ')') : "<span class='badge badge-secondary'>Not billed</span><br>");
-                $str .= '<br><b >Dispensed By: </b>' . ((isset($h->dispensed_by) && $h->dispensed_by != null) ? (userfullname($h->dispensed_by) . ' (' . date('h:i a D M j, Y', strtotime($h->dispense_date)) . ')') : "<span class='badge badge-secondary'>Not dispensed</span><br>");
-                $str .= '</small>';
-
-                return $str;
+            ->addColumn('product_name', function ($item) {
+                return optional($item->product)->product_name ?? 'Unknown';
             })
-            ->editColumn('dose', function ($his) {
-                $str = "<span class = 'badge badge-success'>[" . (($his->product->product_code) ? $his->product->product_code : '') . ']' . $his->product->product_name . '</span>';
-                $str .= '<hr> <b>Dose/Freq:</b> ' . ($his->dose ?? 'N/A');
-
-                return $str;
+            ->addColumn('product_code', function ($item) {
+                return optional($item->product)->product_code ?? '';
             })
-            ->rawColumns(['created_at', 'dose', 'select'])
+            ->addColumn('dose', function ($item) {
+                return $item->dose ?? 'N/A';
+            })
+            ->addColumn('qty', function ($item) {
+                return $item->qty ?? 1;
+            })
+            ->addColumn('price', function ($item) {
+                return optional(optional($item->product)->price)->current_sale_price ?? 0;
+            })
+            ->addColumn('payable_amount', function ($item) {
+                $posr = $item->productOrServiceRequest;
+                return $posr ? ($posr->payable_amount ?? 0) : (optional(optional($item->product)->price)->current_sale_price ?? 0);
+            })
+            ->addColumn('claims_amount', function ($item) {
+                return optional($item->productOrServiceRequest)->claims_amount ?? 0;
+            })
+            ->addColumn('coverage_mode', function ($item) {
+                return optional($item->productOrServiceRequest)->coverage_mode ?? 'none';
+            })
+            ->addColumn('is_paid', function ($item) {
+                return optional(optional($item->productOrServiceRequest)->payment)->payment_status === 'paid';
+            })
+            ->addColumn('is_validated', function ($item) {
+                return optional($item->productOrServiceRequest)->validation_status === 'validated';
+            })
+            ->addColumn('can_dispense', function ($item) {
+                $posr = $item->productOrServiceRequest;
+                if (!$posr) return true; // No POSR means self-pay, can dispense
+                $isPaid = optional($posr->payment)->payment_status === 'paid';
+                $isValidated = $posr->validation_status === 'validated';
+                return $isPaid || $isValidated;
+            })
+            ->addColumn('requested_by', function ($item) {
+                return $item->doctor_id ? userfullname($item->doctor_id) : 'N/A';
+            })
+            ->addColumn('requested_at', function ($item) {
+                return $item->created_at ? date('M j, Y h:i A', strtotime($item->created_at)) : '';
+            })
+            ->addColumn('billed_by', function ($item) {
+                return $item->billed_by ? userfullname($item->billed_by) : null;
+            })
+            ->addColumn('billed_at', function ($item) {
+                return $item->billed_date ? date('M j, Y h:i A', strtotime($item->billed_date)) : '';
+            })
+            ->make(true);
+    }
+
+    /**
+     * Get billed items that are PENDING payment or HMO validation
+     * (status=2 but NOT ready to dispense)
+     */
+    public function prescPendingList($patient_id)
+    {
+        $items = ProductRequest::with(['product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest.payment', 'doctor', 'biller'])
+            ->where('status', 2)
+            ->where('patient_id', $patient_id)
+            ->whereHas('productOrServiceRequest', function($q) {
+                $q->where(function($query) {
+                    // Items awaiting payment (payable > 0 and not paid - payment_id is null)
+                    $query->where('payable_amount', '>', 0)
+                          ->whereNull('payment_id');
+                })->orWhere(function($query) {
+                    // Items awaiting HMO validation (claims > 0 and not validated)
+                    $query->where('claims_amount', '>', 0)
+                          ->where(function($q2) {
+                              $q2->whereNull('validation_status')
+                                 ->orWhereNotIn('validation_status', ['validated', 'approved']);
+                          });
+                });
+            })
+            ->orderBy('created_at', 'DESC')
+            ->get();
+
+        return DataTables::of($items)
+            ->addIndexColumn()
+            ->addColumn('id', function ($item) {
+                return $item->id;
+            })
+            ->addColumn('product_name', function ($item) {
+                return optional($item->product)->product_name ?? 'Unknown';
+            })
+            ->addColumn('product_code', function ($item) {
+                return optional($item->product)->product_code ?? '';
+            })
+            ->addColumn('dose', function ($item) {
+                return $item->dose ?? 'N/A';
+            })
+            ->addColumn('qty', function ($item) {
+                return $item->qty ?? 1;
+            })
+            ->addColumn('price', function ($item) {
+                return optional(optional($item->product)->price)->current_sale_price ?? 0;
+            })
+            ->addColumn('payable_amount', function ($item) {
+                $posr = $item->productOrServiceRequest;
+                return $posr ? ($posr->payable_amount ?? 0) : (optional(optional($item->product)->price)->current_sale_price ?? 0);
+            })
+            ->addColumn('claims_amount', function ($item) {
+                return optional($item->productOrServiceRequest)->claims_amount ?? 0;
+            })
+            ->addColumn('coverage_mode', function ($item) {
+                return optional($item->productOrServiceRequest)->coverage_mode ?? 'none';
+            })
+            ->addColumn('is_paid', function ($item) {
+                // Payment exists if payment_id is not null
+                return optional($item->productOrServiceRequest)->payment_id !== null;
+            })
+            ->addColumn('is_validated', function ($item) {
+                $status = optional($item->productOrServiceRequest)->validation_status;
+                return in_array($status, ['validated', 'approved']);
+            })
+            ->addColumn('pending_reason', function ($item) {
+                $posr = $item->productOrServiceRequest;
+                if (!$posr) return '';
+                $reasons = [];
+                $isPaid = $posr->payment_id !== null;
+                $isValidated = in_array($posr->validation_status, ['validated', 'approved']);
+                if ($posr->payable_amount > 0 && !$isPaid) {
+                    $reasons[] = 'Awaiting Payment';
+                }
+                if ($posr->claims_amount > 0 && !$isValidated) {
+                    $reasons[] = 'Awaiting HMO Validation';
+                }
+                return implode(', ', $reasons);
+            })
+            ->addColumn('requested_by', function ($item) {
+                return $item->doctor_id ? userfullname($item->doctor_id) : 'N/A';
+            })
+            ->addColumn('requested_at', function ($item) {
+                return $item->created_at ? date('M j, Y h:i A', strtotime($item->created_at)) : '';
+            })
+            ->addColumn('billed_by', function ($item) {
+                return $item->billed_by ? userfullname($item->billed_by) : null;
+            })
+            ->addColumn('billed_at', function ($item) {
+                return $item->billed_date ? date('M j, Y h:i A', strtotime($item->billed_date)) : '';
+            })
+            ->make(true);
+    }
+
+    /**
+     * Get billed items that are READY for dispense
+     * (status=2 AND paid/validated as needed)
+     */
+    public function prescReadyList($patient_id)
+    {
+        $items = ProductRequest::with(['product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest.payment', 'doctor', 'biller'])
+            ->where('status', 2)
+            ->where('patient_id', $patient_id)
+            ->where(function($q) {
+                // Items without POSR (direct billing) - always ready
+                $q->whereDoesntHave('productOrServiceRequest')
+                  // OR items with POSR that are ready
+                  ->orWhereHas('productOrServiceRequest', function($query) {
+                      $query->where(function($q2) {
+                          // Cash items: payable > 0, claims = 0 or null, paid (payment_id not null)
+                          $q2->where('payable_amount', '>', 0)
+                             ->where(function($q3) {
+                                 $q3->where('claims_amount', '<=', 0)->orWhereNull('claims_amount');
+                             })
+                             ->whereNotNull('payment_id');
+                      })->orWhere(function($q2) {
+                          // Full HMO items: payable = 0 or null, claims > 0, validated
+                          $q2->where(function($q3) {
+                                 $q3->where('payable_amount', '<=', 0)->orWhereNull('payable_amount');
+                             })
+                             ->where('claims_amount', '>', 0)
+                             ->whereIn('validation_status', ['validated', 'approved']);
+                      })->orWhere(function($q2) {
+                          // Co-pay items: payable > 0, claims > 0, both paid and validated
+                          $q2->where('payable_amount', '>', 0)
+                             ->where('claims_amount', '>', 0)
+                             ->whereIn('validation_status', ['validated', 'approved'])
+                             ->whereNotNull('payment_id');
+                      });
+                  });
+            })
+            ->orderBy('created_at', 'DESC')
+            ->get();
+
+        return DataTables::of($items)
+            ->addIndexColumn()
+            ->addColumn('id', function ($item) {
+                return $item->id;
+            })
+            ->addColumn('product_name', function ($item) {
+                return optional($item->product)->product_name ?? 'Unknown';
+            })
+            ->addColumn('product_code', function ($item) {
+                return optional($item->product)->product_code ?? '';
+            })
+            ->addColumn('dose', function ($item) {
+                return $item->dose ?? 'N/A';
+            })
+            ->addColumn('qty', function ($item) {
+                return $item->qty ?? 1;
+            })
+            ->addColumn('price', function ($item) {
+                return optional(optional($item->product)->price)->current_sale_price ?? 0;
+            })
+            ->addColumn('payable_amount', function ($item) {
+                $posr = $item->productOrServiceRequest;
+                return $posr ? ($posr->payable_amount ?? 0) : (optional(optional($item->product)->price)->current_sale_price ?? 0);
+            })
+            ->addColumn('claims_amount', function ($item) {
+                return optional($item->productOrServiceRequest)->claims_amount ?? 0;
+            })
+            ->addColumn('coverage_mode', function ($item) {
+                return optional($item->productOrServiceRequest)->coverage_mode ?? 'none';
+            })
+            ->addColumn('is_paid', function ($item) {
+                // Payment exists if payment_id is not null
+                return optional($item->productOrServiceRequest)->payment_id !== null;
+            })
+            ->addColumn('is_validated', function ($item) {
+                $status = optional($item->productOrServiceRequest)->validation_status;
+                return in_array($status, ['validated', 'approved']);
+            })
+            ->addColumn('requested_by', function ($item) {
+                return $item->doctor_id ? userfullname($item->doctor_id) : 'N/A';
+            })
+            ->addColumn('requested_at', function ($item) {
+                return $item->created_at ? date('M j, Y h:i A', strtotime($item->created_at)) : '';
+            })
+            ->addColumn('billed_by', function ($item) {
+                return $item->billed_by ? userfullname($item->billed_by) : null;
+            })
+            ->addColumn('billed_at', function ($item) {
+                return $item->billed_date ? date('M j, Y h:i A', strtotime($item->billed_date)) : '';
+            })
+            ->make(true);
+    }
+
+    public function prescHistoryList($patient_id)
+    {
+        // Show ALL prescription requests (not just dispensed) for complete history
+        $items = ProductRequest::with(['product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest.payment', 'doctor', 'biller', 'dispenser'])
+            ->where('patient_id', $patient_id)
+            ->orderBy('created_at', 'DESC')
+            ->get();
+
+        return DataTables::of($items)
+            ->addIndexColumn()
+            ->addColumn('id', function ($item) {
+                return $item->id;
+            })
+            ->addColumn('status', function ($item) {
+                return $item->status;
+            })
+            ->addColumn('product_name', function ($item) {
+                return optional($item->product)->product_name ?? 'Unknown';
+            })
+            ->addColumn('product_code', function ($item) {
+                return optional($item->product)->product_code ?? '';
+            })
+            ->addColumn('dose', function ($item) {
+                return $item->dose ?? 'N/A';
+            })
+            ->addColumn('qty', function ($item) {
+                return $item->qty ?? 1;
+            })
+            ->addColumn('price', function ($item) {
+                return optional(optional($item->product)->price)->current_sale_price ?? 0;
+            })
+            ->addColumn('payable_amount', function ($item) {
+                $posr = $item->productOrServiceRequest;
+                return $posr ? ($posr->payable_amount ?? 0) : (optional(optional($item->product)->price)->current_sale_price ?? 0);
+            })
+            ->addColumn('claims_amount', function ($item) {
+                return optional($item->productOrServiceRequest)->claims_amount ?? 0;
+            })
+            ->addColumn('coverage_mode', function ($item) {
+                return optional($item->productOrServiceRequest)->coverage_mode ?? 'none';
+            })
+            ->addColumn('is_paid', function ($item) {
+                return optional($item->productOrServiceRequest)->payment_id !== null;
+            })
+            ->addColumn('is_validated', function ($item) {
+                $status = optional($item->productOrServiceRequest)->validation_status;
+                return in_array($status, ['validated', 'approved']);
+            })
+            ->addColumn('requested_by', function ($item) {
+                return $item->doctor_id ? userfullname($item->doctor_id) : 'N/A';
+            })
+            ->addColumn('requested_at', function ($item) {
+                return $item->created_at ? date('M j, Y h:i A', strtotime($item->created_at)) : '';
+            })
+            ->addColumn('billed_by', function ($item) {
+                return $item->billed_by ? userfullname($item->billed_by) : null;
+            })
+            ->addColumn('billed_at', function ($item) {
+                return $item->billed_date ? date('M j, Y h:i A', strtotime($item->billed_date)) : '';
+            })
+            ->addColumn('dispensed_by', function ($item) {
+                return $item->dispensed_by ? userfullname($item->dispensed_by) : null;
+            })
+            ->addColumn('dispensed_at', function ($item) {
+                return $item->dispense_date ? date('M j, Y h:i A', strtotime($item->dispense_date)) : '';
+            })
+            ->addColumn('info', function ($item) {
+                // Build info HTML for new_encounter.blade.php compatibility
+                $productName = optional($item->product)->product_name ?? 'Unknown';
+                $productCode = optional($item->product)->product_code ?? '';
+                $dose = $item->dose ?? 'N/A';
+                $qty = $item->qty ?? 1;
+                $price = optional(optional($item->product)->price)->current_sale_price ?? 0;
+                $requestedBy = $item->doctor_id ? userfullname($item->doctor_id) : 'N/A';
+                $requestedAt = $item->created_at ? date('M j, Y h:i A', strtotime($item->created_at)) : 'N/A';
+                $billedBy = $item->billed_by ? userfullname($item->billed_by) : null;
+                $billedAt = $item->billed_date ? date('M j, Y h:i A', strtotime($item->billed_date)) : null;
+                $dispensedBy = $item->dispensed_by ? userfullname($item->dispensed_by) : null;
+                $dispensedAt = $item->dispense_date ? date('M j, Y h:i A', strtotime($item->dispense_date)) : null;
+
+                // Determine status badge based on status value
+                $status = $item->status;
+                $statusBadge = '';
+                $statusInfo = '';
+
+                if ($status == 0) {
+                    $statusBadge = "<span class='badge bg-danger'>Dismissed</span>";
+                    $statusInfo = "<div class='mt-1 text-muted small'><i class='mdi mdi-account'></i> Requested by: {$requestedBy} on {$requestedAt}</div>";
+                } elseif ($status == 1) {
+                    $statusBadge = "<span class='badge bg-warning text-dark'>Unbilled</span>";
+                    $statusInfo = "<div class='mt-1 text-muted small'><i class='mdi mdi-account'></i> Requested by: {$requestedBy} on {$requestedAt}</div>";
+                } elseif ($status == 2) {
+                    // Check if ready to dispense or awaiting payment/validation
+                    $payableAmount = optional($item->productOrServiceRequest)->payable_amount ?? 0;
+                    $claimsAmount = optional($item->productOrServiceRequest)->claims_amount ?? 0;
+                    $isPaid = optional($item->productOrServiceRequest)->payment_id !== null;
+                    $validationStatus = optional($item->productOrServiceRequest)->validation_status;
+                    $isValidated = in_array($validationStatus, ['validated', 'approved']);
+
+                    $pendingReasons = [];
+                    if ($payableAmount > 0 && !$isPaid) {
+                        $pendingReasons[] = 'Payment';
+                    }
+                    if ($claimsAmount > 0 && !$isValidated) {
+                        $pendingReasons[] = 'HMO Validation';
+                    }
+
+                    if (count($pendingReasons) > 0) {
+                        $statusBadge = "<span class='badge bg-info'>Awaiting " . implode(' & ', $pendingReasons) . "</span>";
+                    } else {
+                        $statusBadge = "<span class='badge bg-success'>Ready to Dispense</span>";
+                    }
+
+                    $statusInfo = "<div class='mt-1 text-muted small'><i class='mdi mdi-account'></i> Requested by: {$requestedBy} on {$requestedAt}</div>";
+                    if ($billedBy) {
+                        $statusInfo .= "<div class='text-muted small'><i class='mdi mdi-receipt'></i> Billed by: {$billedBy} on {$billedAt}</div>";
+                    }
+                } elseif ($status == 3) {
+                    $statusBadge = "<span class='badge bg-secondary'>Dispensed</span>";
+                    $statusInfo = "<div class='mt-1 text-muted small'><i class='mdi mdi-account'></i> Requested by: {$requestedBy} on {$requestedAt}</div>";
+                    if ($billedBy) {
+                        $statusInfo .= "<div class='text-muted small'><i class='mdi mdi-receipt'></i> Billed by: {$billedBy} on {$billedAt}</div>";
+                    }
+                    if ($dispensedBy) {
+                        $statusInfo .= "<div class='text-muted small'><i class='mdi mdi-truck-delivery'></i> Dispensed by: {$dispensedBy} on {$dispensedAt}</div>";
+                    }
+                }
+
+                return "
+                    <div class='p-2 border-bottom'>
+                        <div class='d-flex justify-content-between'>
+                            <strong>{$productName}</strong>
+                            {$statusBadge}
+                        </div>
+                        <small class='text-muted'>{$productCode}</small>
+                        <div class='mt-1'>
+                            <span><i class='mdi mdi-pill'></i> {$dose}</span>
+                            <span class='ms-2'><i class='mdi mdi-numeric'></i> Qty: {$qty}</span>
+                            <span class='ms-2'><i class='mdi mdi-cash'></i> ₦" . number_format($price, 2) . "</span>
+                        </div>
+                        {$statusInfo}
+                    </div>
+                ";
+            })
+            ->rawColumns(['info'])
             ->make(true);
     }
 

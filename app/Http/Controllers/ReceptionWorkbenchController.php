@@ -17,7 +17,7 @@ use App\Models\Product;
 use App\Models\ProductOrServiceRequest;
 use App\Models\ProductRequest;
 use App\Models\service;
-use App\Models\ServiceCategory;
+use App\Models\serviceCategory;
 use App\Models\Staff;
 use App\Models\User;
 use Carbon\Carbon;
