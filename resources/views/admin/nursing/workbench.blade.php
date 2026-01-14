@@ -12671,6 +12671,7 @@ var intakeOutputChartLogsRoute = "{{ route('nurse.intake_output.logs', ['patient
 var intakeOutputChartStartRoute = "{{ route('nurse.intake_output.start') }}";
 var intakeOutputChartEndRoute = "{{ route('nurse.intake_output.end') }}";
 var intakeOutputChartRecordRoute = "{{ route('nurse.intake_output.record') }}";
+var intakeOutputChartDeleteRecordRoute = "{{ route('nurse.intake_output.delete_record', ['record' => ':record']) }}";
 
 // Edit window from settings
 var NOTE_EDIT_WINDOW = {{ appsettings('note_edit_window', 30) }};
@@ -13407,21 +13408,29 @@ $(document).on('change', 'input[name="repeat_type"]', function() {
 // =============================================
 
 function loadFluidPeriods() {
-    if (!PATIENT_ID) return;
+    console.log('loadFluidPeriods called, PATIENT_ID:', PATIENT_ID);
+    if (!PATIENT_ID) {
+        console.log('No PATIENT_ID, returning');
+        return;
+    }
 
     const url = intakeOutputChartIndexRoute.replace(':patient', PATIENT_ID);
     const startDate = $('#fluid_start_date').val();
     const endDate = $('#fluid_end_date').val();
+    console.log('Fetching from:', url, 'with dates:', startDate, endDate);
 
     $.ajax({
         url: url,
         type: 'GET',
         data: { type: 'fluid', start_date: startDate, end_date: endDate },
         success: function(data) {
-            fluidPeriods = data.periods || [];
+            console.log('loadFluidPeriods response:', data);
+            fluidPeriods = data.fluidPeriods || [];
+            console.log('fluidPeriods array:', fluidPeriods);
             renderFluidPeriods();
         },
-        error: function() {
+        error: function(xhr) {
+            console.error('loadFluidPeriods error:', xhr);
             $('#fluid-periods-list').html('<p class="text-danger">Failed to load fluid data.</p>');
         }
     });
@@ -13439,7 +13448,7 @@ function loadSolidPeriods() {
         type: 'GET',
         data: { type: 'solid', start_date: startDate, end_date: endDate },
         success: function(data) {
-            solidPeriods = data.periods || [];
+            solidPeriods = data.solidPeriods || [];
             renderSolidPeriods();
         },
         error: function() {
@@ -13449,15 +13458,60 @@ function loadSolidPeriods() {
 }
 
 function renderFluidPeriods() {
+    console.log('renderFluidPeriods called, fluidPeriods:', fluidPeriods);
     if (fluidPeriods.length === 0) {
+        console.log('No periods, showing empty message');
         $('#fluid-periods-list').html('<p class="text-muted">No fluid intake/output periods found. Click "Start New Period" to begin.</p>');
         return;
     }
 
     let html = '';
     fluidPeriods.forEach(period => {
+        console.log('Rendering period:', period);
         const isActive = !period.ended_at;
         const statusBadge = isActive ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Ended</span>';
+        const totalIntake = period.total_intake || 0;
+        const totalOutput = period.total_output || 0;
+        const balance = totalIntake - totalOutput;
+
+        // Build records table
+        let recordsHtml = '';
+        if (period.records && period.records.length > 0) {
+            recordsHtml = `
+                <div class="table-responsive mt-3">
+                    <table class="table table-sm table-striped mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Time</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Description</th>
+                                <th>Nurse</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+            period.records.forEach(record => {
+                const recordTime = new Date(record.recorded_at);
+                const typeBadge = record.type === 'intake'
+                    ? '<span class="badge bg-primary">Intake</span>'
+                    : '<span class="badge bg-warning text-dark">Output</span>';
+                const deleteBtn = record.can_delete
+                    ? `<button class="btn btn-sm btn-outline-danger delete-io-record-btn" data-record-id="${record.id}" data-type="fluid" title="Delete record"><i class="mdi mdi-delete"></i></button>`
+                    : '';
+                recordsHtml += `
+                    <tr>
+                        <td><small>${formatDateTime(recordTime)}</small></td>
+                        <td>${typeBadge}</td>
+                        <td>${record.amount} ml</td>
+                        <td>${record.description || '-'}</td>
+                        <td><small>${record.nurse_name || 'Unknown'}</small></td>
+                        <td class="text-end">${deleteBtn}</td>
+                    </tr>`;
+            });
+            recordsHtml += '</tbody></table></div>';
+        } else {
+            recordsHtml = '<div class="text-muted small mt-2"><em>No records yet. Click "Add Record" to add intake/output.</em></div>';
+        }
 
         html += `
             <div class="card-modern period-card mb-3 ${isActive ? 'border-success' : ''}">
@@ -13470,16 +13524,17 @@ function renderFluidPeriods() {
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-6">
-                            <h6 class="text-primary"><i class="mdi mdi-water"></i> Total Intake: ${period.total_intake || 0} ml</h6>
+                        <div class="col-md-4">
+                            <h6 class="text-primary mb-0"><i class="mdi mdi-water"></i> Intake: ${totalIntake} ml</h6>
                         </div>
-                        <div class="col-md-6">
-                            <h6 class="text-warning"><i class="mdi mdi-water-off"></i> Total Output: ${period.total_output || 0} ml</h6>
+                        <div class="col-md-4">
+                            <h6 class="text-warning mb-0"><i class="mdi mdi-water-off"></i> Output: ${totalOutput} ml</h6>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="mb-0"><strong>Balance:</strong> <span class="${balance >= 0 ? 'text-success' : 'text-danger'}">${balance} ml</span></h6>
                         </div>
                     </div>
-                    <div class="mt-2">
-                        <strong>Balance:</strong> <span class="${(period.total_intake - period.total_output) >= 0 ? 'text-success' : 'text-danger'}">${period.total_intake - period.total_output} ml</span>
-                    </div>
+                    ${recordsHtml}
                 </div>
             </div>`;
     });
@@ -13497,6 +13552,49 @@ function renderSolidPeriods() {
     solidPeriods.forEach(period => {
         const isActive = !period.ended_at;
         const statusBadge = isActive ? '<span class="badge bg-info">Active</span>' : '<span class="badge bg-secondary">Ended</span>';
+        const totalIntake = period.total_intake || 0;
+        const totalOutput = period.total_output || 0;
+        const balance = totalIntake - totalOutput;
+
+        // Build records table
+        let recordsHtml = '';
+        if (period.records && period.records.length > 0) {
+            recordsHtml = `
+                <div class="table-responsive mt-3">
+                    <table class="table table-sm table-striped mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Time</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Description</th>
+                                <th>Nurse</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+            period.records.forEach(record => {
+                const recordTime = new Date(record.recorded_at);
+                const typeBadge = record.type === 'intake'
+                    ? '<span class="badge bg-success">Intake</span>'
+                    : '<span class="badge bg-danger">Output</span>';
+                const deleteBtn = record.can_delete 
+                    ? `<button class="btn btn-sm btn-outline-danger delete-io-record-btn" data-record-id="${record.id}" data-type="solid" title="Delete record"><i class="mdi mdi-delete"></i></button>`
+                    : '';
+                recordsHtml += `
+                    <tr>
+                        <td><small>${formatDateTime(recordTime)}</small></td>
+                        <td>${typeBadge}</td>
+                        <td>${record.amount} g</td>
+                        <td>${record.description || '-'}</td>
+                        <td><small>${record.nurse_name || 'Unknown'}</small></td>
+                        <td class="text-end">${deleteBtn}</td>
+                    </tr>`;
+            });
+            recordsHtml += '</tbody></table></div>';
+        } else {
+            recordsHtml = '<div class="text-muted small mt-2"><em>No records yet. Click "Add Record" to add intake/output.</em></div>';
+        }
 
         html += `
             <div class="card-modern period-card mb-3 ${isActive ? 'border-info' : ''}">
@@ -13509,13 +13607,17 @@ function renderSolidPeriods() {
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-6">
-                            <h6 class="text-success"><i class="mdi mdi-food-apple"></i> Total Intake: ${period.total_intake || 0} g</h6>
+                        <div class="col-md-4">
+                            <h6 class="text-success mb-0"><i class="mdi mdi-food-apple"></i> Intake: ${totalIntake} g</h6>
                         </div>
-                        <div class="col-md-6">
-                            <h6 class="text-danger"><i class="mdi mdi-delete-empty"></i> Total Output: ${period.total_output || 0} g</h6>
+                        <div class="col-md-4">
+                            <h6 class="text-danger mb-0"><i class="mdi mdi-delete-empty"></i> Output: ${totalOutput} g</h6>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="mb-0"><strong>Balance:</strong> <span class="${balance >= 0 ? 'text-success' : 'text-danger'}">${balance} g</span></h6>
                         </div>
                     </div>
+                    ${recordsHtml}
                 </div>
             </div>`;
     });
@@ -13553,6 +13655,7 @@ $(document).on('click', '#solid_reset_filter_btn', function() {
 
 // Start fluid period
 $(document).on('click', '#startFluidPeriodBtn', function() {
+    console.log('startFluidPeriodBtn clicked, PATIENT_ID:', PATIENT_ID);
     if (!PATIENT_ID) {
         toastr.warning('Please select a patient first.');
         return;
@@ -13563,14 +13666,17 @@ $(document).on('click', '#startFluidPeriodBtn', function() {
         type: 'POST',
         data: { patient_id: PATIENT_ID, type: 'fluid', _token: CSRF_TOKEN },
         success: function(response) {
+            console.log('Start period response:', response);
             if (response.success) {
                 toastr.success('Fluid period started.');
+                console.log('Calling loadFluidPeriods...');
                 loadFluidPeriods();
             } else {
                 toastr.error(response.message || 'Failed to start period.');
             }
         },
         error: function(xhr) {
+            console.error('Start period error:', xhr);
             toastr.error(xhr.responseJSON?.message || 'Failed to start period.');
         }
     });
@@ -13659,6 +13765,35 @@ $(document).on('click', '.add-solid-record-btn', function() {
     currentSolidPeriodId = $(this).data('period-id');
     $('#solid_period_id').val(currentSolidPeriodId);
     $('#solidRecordModal').modal('show');
+});
+
+// Delete I/O record handler
+$(document).on('click', '.delete-io-record-btn', function() {
+    const recordId = $(this).data('record-id');
+    const type = $(this).data('type');
+    if (!recordId) return;
+    if (!confirm('Delete this record? This cannot be undone.')) return;
+    const url = intakeOutputChartDeleteRecordRoute.replace(':record', recordId);
+    $.ajax({
+        url: url,
+        type: 'DELETE',
+        data: { _token: CSRF_TOKEN },
+        success: function(response) {
+            if (response.success) {
+                toastr.success('Record deleted.');
+                if (type === 'fluid') {
+                    loadFluidPeriods();
+                } else {
+                    loadSolidPeriods();
+                }
+            } else {
+                toastr.error(response.message || 'Failed to delete record.');
+            }
+        },
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Failed to delete record.');
+        }
+    });
 });
 
 // Fluid record form submit
