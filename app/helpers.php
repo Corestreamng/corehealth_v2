@@ -396,7 +396,7 @@ if (!function_exists('generateCashPaymentTransaction')) {
 
 // function getLabId($id)
 // {
-//     $getLab = LabService::find($id);
+//     $getLab = Labservice::find($id);
 //     $getLab_id = $getLab->lab_id;
 //     return $getLab_id;
 // }

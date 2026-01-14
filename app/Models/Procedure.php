@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use PhpOffice\PhpSpreadsheet\Calculation\Web\Service;
+use PhpOffice\PhpSpreadsheet\Calculation\Web\service;
 
 
 use OwenIt\Auditing\Contracts\Auditable;
@@ -28,7 +28,7 @@ protected $fillable = [
 
     public function service()
     {
-        return $this->belongsTo(Service::class, 'service_id', 'id');
+        return $this->belongsTo(service::class, 'service_id', 'id');
     }
 
     public function requester()

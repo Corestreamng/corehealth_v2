@@ -31,11 +31,12 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#" onclick="popMessengerWindow()">
+                <a class="nav-link" href="{{ route('chat.index') }}" target="_blank">
                     <i class="mdi mdi-message-text-outline menu-icon"></i>
                     <span class="menu-title">Messenger</span>
+                    @include('messenger.unread-count')
                 </a>
-        </li>
+            </li>
 
             @hasanyrole('SUPERADMIN|ADMIN|RECEPTIONIST')
             <li class="pt-2 pb-1">
@@ -315,6 +316,12 @@
         @hasanyrole('SUPERADMIN|ADMIN|STORE|PHARMACIST')
             <li class="pt-2 pb-1">
                 <span class="nav-item-head">Store/ Pharmacy</span>
+            </li>
+            <li class="nav-item {{ request()->routeIs('pharmacy.workbench') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('pharmacy.workbench') ? 'active' : '' }}" href="{{ route('pharmacy.workbench') }}">
+                    <i class="mdi mdi-pill menu-icon"></i>
+                    <span class="menu-title">Pharmacy Workbench</span>
+                </a>
             </li>
             <li class="nav-item {{ request()->routeIs('product-requests.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('product-requests.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#pharm_queue" data-bs-target="#pharm_queue" aria-expanded="{{ request()->routeIs('product-requests.*') ? 'true' : 'false' }}"

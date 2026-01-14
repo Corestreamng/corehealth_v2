@@ -2,7 +2,7 @@
 
 namespace App\Observers;
 
-use App\Models\Service;
+use App\Models\service;
 use App\Models\Hmo;
 use App\Models\HmoTariff;
 use Illuminate\Support\Facades\Log;
@@ -13,7 +13,7 @@ class ServiceObserver
      * Handle the Service "created" event.
      * Automatically generates tariff entries for all existing HMOs.
      *
-     * @param  \App\Models\Service  $service
+     * @param  \App\Models\service  $service
      * @return void
      */
     public function created(Service $service)

@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Bed;
 use App\Models\Ward;
-use App\Models\ServicePrice;
+use App\Models\servicePrice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;

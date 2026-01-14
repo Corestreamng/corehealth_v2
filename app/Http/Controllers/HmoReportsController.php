@@ -7,7 +7,7 @@ use App\Models\HmoRemittance;
 use App\Models\ProductOrServiceRequest;
 use App\Models\PatientProfile;
 use App\Models\patient;
-use App\Models\ServiceCategory;
+use App\Models\serviceCategory;
 use App\Models\ProductCategory;
 use App\Models\service;
 use App\Models\Product;

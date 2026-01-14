@@ -238,7 +238,7 @@
     <script src="{{ asset('plugins/jQuery/jquery.min.js') }}"></script>
     <script src="{{ asset('plugins/select2/select2.min.js') }}"></script>
     <!-- Bootstrap 4 -->
-    <script src="{{ asset('/plugins/dataT/datatables.min.js') }}" defer></script>
+    <script src="{{ asset('/plugins/dataT/datatables.min.js') }}"></script>
     <script src="{{ asset('plugins/ckeditor/ckeditor5/ckeditor.js') }}"></script>
     <script>
         ClassicEditor
@@ -376,34 +376,6 @@
     </script>
     <script>
         $(function() {
-            $('#presc_history_list').DataTable({
-                "dom": 'Bfrtip',
-                "iDisplayLength": 50,
-                "lengthMenu": [
-                    [10, 25, 50, 100, -1],
-                    [10, 25, 50, 100, "All"]
-                ],
-                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
-                "processing": true,
-                "serverSide": true,
-                "ajax": {
-                    "url": "{{ url('prescHistoryList', $patient->id) }}",
-                    "type": "GET"
-                },
-                "columns": [
-                    {
-                        data: "info",
-                        name: "info",
-                        orderable: false
-                    }
-                ],
-
-                "paging": true
-            });
-        });
-    </script>
-    <script>
-        $(function() {
             $('#admission-request-list').DataTable({
                 "dom": 'Bfrtip',
                 "iDisplayLength": 50,
@@ -423,44 +395,6 @@
                     name: "info",
                     orderable: false
                 }],
-                "paging": true
-            });
-        });
-    </script>
-    <script>
-        $(function() {
-            $('#presc_history_bills').DataTable({
-                "dom": 'Bfrtip',
-                "iDisplayLength": 50,
-                "lengthMenu": [
-                    [10, 25, 50, 100, -1],
-                    [10, 25, 50, 100, "All"]
-                ],
-                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
-                "processing": true,
-                "serverSide": true,
-                "ajax": {
-                    "url": "{{ url('prescBillList', $patient->id) }}",
-                    "type": "GET"
-                },
-                "columns": [{
-                        data: "DT_RowIndex",
-                        name: "DT_RowIndex"
-                    },
-                    {
-                        data: "select",
-                        name: "select"
-                    },
-                    {
-                        data: "dose",
-                        name: "dose"
-                    },
-                    {
-                        data: "created_at",
-                        name: "created_at"
-                    },
-                ],
-
                 "paging": true
             });
         });
@@ -522,44 +456,6 @@
                 "columns": [{
                         data: "DT_RowIndex",
                         name: "DT_RowIndex"
-                    },
-                    {
-                        data: "dose",
-                        name: "dose"
-                    },
-                    {
-                        data: "created_at",
-                        name: "created_at"
-                    },
-                ],
-
-                "paging": true
-            });
-        });
-    </script>
-    <script>
-        $(function() {
-            $('#presc_history_dispense').DataTable({
-                "dom": 'Bfrtip',
-                "iDisplayLength": 50,
-                "lengthMenu": [
-                    [10, 25, 50, 100, -1],
-                    [10, 25, 50, 100, "All"]
-                ],
-                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
-                "processing": true,
-                "serverSide": true,
-                "ajax": {
-                    "url": "{{ url('prescDispenseList', $patient->id) }}",
-                    "type": "GET"
-                },
-                "columns": [{
-                        data: "DT_RowIndex",
-                        name: "DT_RowIndex"
-                    },
-                    {
-                        data: "select",
-                        name: "select"
                     },
                     {
                         data: "dose",
@@ -2605,4 +2501,5 @@
 
     @include('admin.partials.vitals-scripts')
     @include('admin.patients.partials.nurse_chart_scripts_enhanced')
+    @include('admin.patients.partials.presc_unified_scripts')
 @endsection

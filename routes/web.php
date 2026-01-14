@@ -32,9 +32,9 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductOrServiceRequestController;
 use App\Http\Controllers\ProductRequestController;
 use App\Http\Controllers\RoleController;
-use App\Http\Controllers\ServiceCategoryController;
-use App\Http\Controllers\ServiceController;
-use App\Http\Controllers\ServicePriceController;
+use App\Http\Controllers\serviceCategoryController;
+use App\Http\Controllers\serviceController;
+use App\Http\Controllers\servicePriceController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\StoreController;
@@ -187,8 +187,14 @@ Route::group(['middleware' => ['auth']], function () {
         Route::resource('product-requests', ProductRequestController::class);
         Route::post('product-bill-patient', [ProductRequestController::class, 'bill'])->name('product-bill-patient');
         Route::post('product-dispense-patient', [ProductRequestController::class, 'dispense'])->name('product-dispense-patient');
+        // AJAX versions for unified prescription component
+        Route::post('product-bill-patient-ajax', [ProductRequestController::class, 'billAjax'])->name('product-bill-patient-ajax');
+        Route::post('product-dispense-patient-ajax', [ProductRequestController::class, 'dispenseAjax'])->name('product-dispense-patient-ajax');
+        Route::post('product-dismiss-patient-ajax', [ProductRequestController::class, 'dismissAjax'])->name('product-dismiss-patient-ajax');
         Route::get('prescQueueList', [ProductRequestController::class, 'prescQueueList'])->name('prescQueueList');
         Route::get('prescQueueHistoryList', [ProductRequestController::class, 'prescQueueHistoryList'])->name('prescQueueHistoryList');
+        // Prescription history DataTable endpoint
+        Route::get('prescHistoryList/{patient_id}', [EncounterController::class, 'prescHistoryList'])->name('prescHistoryList');
         Route::post('service-bill-patient', [LabServiceRequestController::class, 'bill'])->name('service-bill-patient');
         Route::post('service-sample-patient', [LabServiceRequestController::class, 'takeSample'])->name('service-sample-patient');
         Route::post('service-save-result', [LabServiceRequestController::class, 'saveResult'])->name('service-save-result');
@@ -227,6 +233,8 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('imagingBillList/{patient_id}', [EncounterController::class, 'imagingBillList'])->name('imagingBillList');
         Route::get('prescHistoryList/{patient_id}', [EncounterController::class, 'prescHistoryList'])->name('prescHistoryList');
         Route::get('prescBillList/{patient_id}', [EncounterController::class, 'prescBillList'])->name('prescBillList');
+        Route::get('prescPendingList/{patient_id}', [EncounterController::class, 'prescPendingList'])->name('prescPendingList');
+        Route::get('prescReadyList/{patient_id}', [EncounterController::class, 'prescReadyList'])->name('prescReadyList');
         Route::get('prescDispenseList/{patient_id}', [EncounterController::class, 'prescDispenseList'])->name('prescDispenseList');
         Route::get('investBillList/{patient_id}', [EncounterController::class, 'investBillList'])->name('investBillList');
         Route::get('investSampleList/{patient_id}', [EncounterController::class, 'investSampleList'])->name('investSampleList');
@@ -254,6 +262,26 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/billing-workbench/create-account', [\App\Http\Controllers\BillingWorkbenchController::class, 'createPatientAccount'])->name('billing.create-account');
         Route::post('/billing-workbench/make-deposit', [\App\Http\Controllers\BillingWorkbenchController::class, 'makeAccountDeposit'])->name('billing.make-deposit');
         Route::post('/billing-workbench/account-transaction', [\App\Http\Controllers\BillingWorkbenchController::class, 'processAccountTransaction'])->name('billing.account-transaction');
+
+        // Pharmacy Workbench Routes
+        Route::get('/pharmacy-workbench', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'index'])->name('pharmacy.workbench');
+        Route::get('/pharmacy-workbench/search-patients', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'searchPatients'])->name('pharmacy.search-patients');
+        Route::get('/pharmacy-workbench/search-products', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'searchProducts'])->name('pharmacy.search-products');
+        Route::get('/pharmacy-workbench/prescription-queue', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getPrescriptionQueue'])->name('pharmacy.prescription-queue');
+        Route::get('/pharmacy-workbench/queue-counts', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getQueueCounts'])->name('pharmacy.queue-counts');
+        Route::get('/pharmacy-workbench/patient/{id}/prescription-data', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getPatientPrescriptionData'])->name('pharmacy.patient-prescription-data');
+        Route::get('/pharmacy-workbench/patient/{id}/dispensing-history', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getPatientDispensingHistory'])->name('pharmacy.patient-dispensing-history');
+        // DataTables endpoints (matching presc.blade.php pattern)
+        Route::get('/pharmacy-workbench/presc-bill-list/{patient_id}', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'prescBillList'])->name('pharmacy.presc-bill-list');
+        Route::get('/pharmacy-workbench/presc-dispense-list/{patient_id}', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'prescDispenseList'])->name('pharmacy.presc-dispense-list');
+        Route::get('/pharmacy-workbench/presc-history-list/{patient_id}', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'prescHistoryList'])->name('pharmacy.presc-history-list');
+        Route::post('/pharmacy-workbench/dispense', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'dispenseMedication'])->name('pharmacy.dispense');
+        Route::post('/pharmacy-workbench/record-billing', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'recordBilling'])->name('pharmacy.record-billing');
+        Route::post('/pharmacy-workbench/bill', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'billPrescriptions'])->name('pharmacy.bill');
+        Route::post('/pharmacy-workbench/dismiss', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'dismissPrescriptions'])->name('pharmacy.dismiss');
+        Route::post('/pharmacy-workbench/create-request', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'createPrescriptionRequest'])->name('pharmacy.create-request');
+        Route::get('/pharmacy-workbench/my-transactions', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getMyTransactions'])->name('pharmacy.my-transactions');
+        Route::post('/pharmacy-workbench/print-prescription-slip', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'printPrescriptionSlip'])->name('pharmacy.print-prescription-slip');
 
         // Lab Workbench Routes
         Route::get('/lab-workbench', [\App\Http\Controllers\LabWorkbenchController::class, 'index'])->name('lab.workbench');
