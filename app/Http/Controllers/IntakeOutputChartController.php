@@ -15,11 +15,16 @@ class IntakeOutputChartController extends Controller
         $startDate = $request->query('start_date');
         $endDate = $request->query('end_date');
 
-        // Default to last 30 days if no dates provided
-        if (!$startDate) {
+        // Parse and adjust dates to include full day range
+        if ($startDate) {
+            $startDate = \Carbon\Carbon::parse($startDate)->startOfDay();
+        } else {
             $startDate = now()->subDays(30)->startOfDay();
         }
-        if (!$endDate) {
+
+        if ($endDate) {
+            $endDate = \Carbon\Carbon::parse($endDate)->endOfDay();
+        } else {
             $endDate = now()->endOfDay();
         }
 
@@ -33,19 +38,24 @@ class IntakeOutputChartController extends Controller
             ->where('type', 'fluid')
             ->when($startDate && $endDate, function($query) use ($startDate, $endDate) {
                 return $query->where(function($q) use ($startDate, $endDate) {
-                    // Include periods that overlap with the date range
+                    // Include periods that:
+                    // 1. Started within the date range
                     $q->whereBetween('started_at', [$startDate, $endDate])
+                      // 2. OR ended within the date range
                       ->orWhereBetween('ended_at', [$startDate, $endDate])
+                      // 3. OR are still active (not ended) and started before or within the range
+                      ->orWhere(function($innerQ) use ($endDate) {
+                          $innerQ->whereNull('ended_at')
+                                 ->where('started_at', '<=', $endDate);
+                      })
+                      // 4. OR span the entire date range (started before and ended after)
                       ->orWhere(function($innerQ) use ($startDate, $endDate) {
-                          // Include periods that span the entire date range
                           $innerQ->where('started_at', '<=', $startDate)
-                                 ->where(function($deepQ) use ($endDate) {
-                                     $deepQ->where('ended_at', '>=', $endDate)
-                                           ->orWhereNull('ended_at');
-                                 });
+                                 ->where('ended_at', '>=', $endDate);
                       });
                 });
             })
+            ->orderBy('started_at', 'desc')
             ->get();
 
         // Apply date filtering to solid periods
@@ -58,33 +68,55 @@ class IntakeOutputChartController extends Controller
             ->where('type', 'solid')
             ->when($startDate && $endDate, function($query) use ($startDate, $endDate) {
                 return $query->where(function($q) use ($startDate, $endDate) {
-                    // Include periods that overlap with the date range
+                    // Include periods that:
+                    // 1. Started within the date range
                     $q->whereBetween('started_at', [$startDate, $endDate])
+                      // 2. OR ended within the date range
                       ->orWhereBetween('ended_at', [$startDate, $endDate])
+                      // 3. OR are still active (not ended) and started before or within the range
+                      ->orWhere(function($innerQ) use ($endDate) {
+                          $innerQ->whereNull('ended_at')
+                                 ->where('started_at', '<=', $endDate);
+                      })
+                      // 4. OR span the entire date range (started before and ended after)
                       ->orWhere(function($innerQ) use ($startDate, $endDate) {
-                          // Include periods that span the entire date range
                           $innerQ->where('started_at', '<=', $startDate)
-                                 ->where(function($deepQ) use ($endDate) {
-                                     $deepQ->where('ended_at', '>=', $endDate)
-                                           ->orWhereNull('ended_at');
-                                 });
+                                 ->where('ended_at', '>=', $endDate);
                       });
                 });
             })
+            ->orderBy('started_at', 'desc')
             ->get();
 
-        // Add nurse names to periods and records
-        $fluidPeriods->each(function($period) {
+        // Get edit duration for determining if records can be deleted
+        $editDuration = appsettings('note_edit_duration') ?? 60;
+        $cutoffTime = now()->subMinutes($editDuration);
+        $currentUserId = Auth::id();
+
+        // Add nurse names and calculate totals for periods and records
+        $fluidPeriods->each(function($period) use ($currentUserId, $cutoffTime) {
             $period->nurse_name = $period->nurse_id ? userfullname($period->nurse_id) : 'Unknown';
-            $period->records->each(function($record) {
+            $period->total_intake = $period->records->where('type', 'intake')->sum('amount');
+            $period->total_output = $period->records->where('type', 'output')->sum('amount');
+            $period->records->each(function($record) use ($currentUserId, $cutoffTime) {
                 $record->nurse_name = $record->nurse_id ? userfullname($record->nurse_id) : 'Unknown';
+                // Check if the current user can delete this record
+                $isOwner = $record->nurse_id == $currentUserId;
+                $isWithinTime = \Carbon\Carbon::parse($record->created_at)->gte($cutoffTime);
+                $record->can_delete = $isOwner && $isWithinTime;
             });
         });
 
-        $solidPeriods->each(function($period) {
+        $solidPeriods->each(function($period) use ($currentUserId, $cutoffTime) {
             $period->nurse_name = $period->nurse_id ? userfullname($period->nurse_id) : 'Unknown';
-            $period->records->each(function($record) {
+            $period->total_intake = $period->records->where('type', 'intake')->sum('amount');
+            $period->total_output = $period->records->where('type', 'output')->sum('amount');
+            $period->records->each(function($record) use ($currentUserId, $cutoffTime) {
                 $record->nurse_name = $record->nurse_id ? userfullname($record->nurse_id) : 'Unknown';
+                // Check if the current user can delete this record
+                $isOwner = $record->nurse_id == $currentUserId;
+                $isWithinTime = \Carbon\Carbon::parse($record->created_at)->gte($cutoffTime);
+                $record->can_delete = $isOwner && $isWithinTime;
             });
         });
 
@@ -146,6 +178,49 @@ class IntakeOutputChartController extends Controller
         $record->nurse_name = userfullname($nurseId);
 
         return response()->json(['success' => true, 'record' => $record]);
+    }
+
+    /**
+     * Delete an I/O record (only within edit time window and by the creator)
+     */
+    public function deleteRecord($recordId)
+    {
+        $record = IntakeOutputRecord::findOrFail($recordId);
+
+        // Check if the current user is the one who created the record
+        if ($record->nurse_id !== Auth::id()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You can only delete your own records.'
+            ], 403);
+        }
+
+        // Get the edit duration from app settings (in minutes)
+        $editDuration = appsettings('note_edit_duration') ?? 60;
+
+        // Check if the record is within the edit time window
+        $createdAt = \Carbon\Carbon::parse($record->created_at);
+        $cutoffTime = now()->subMinutes($editDuration);
+
+        if ($createdAt->lt($cutoffTime)) {
+            return response()->json([
+                'success' => false,
+                'message' => "You can only delete records within {$editDuration} minutes of creation."
+            ], 403);
+        }
+
+        // Get the period type for the response
+        $period = $record->period;
+        $periodType = $period ? $period->type : 'fluid';
+
+        // Delete the record
+        $record->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Record deleted successfully.',
+            'period_type' => $periodType
+        ]);
     }
 
     /**
