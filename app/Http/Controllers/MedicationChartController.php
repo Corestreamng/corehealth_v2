@@ -260,10 +260,12 @@ class MedicationChartController extends Controller
             'time' => 'required',
             'dose' => 'required|string',
             'route' => 'required|string',
-            'repeat_daily' => 'boolean',
-            'selected_days' => 'array',
+            'repeat_type' => 'nullable|string|in:daily,specific,selected,once',
+            'repeat_daily' => 'nullable|boolean',
+            'selected_days' => 'nullable|array',
             'duration_days' => 'required|integer|min:1',
-            'start_date' => 'required|date'
+            'start_date' => 'required|date',
+            'note' => 'nullable|string'
         ]);
 
         if ($validator->fails()) {
@@ -276,10 +278,17 @@ class MedicationChartController extends Controller
         $time = $data['time'];
         $dose = $data['dose'];
         $route = $data['route'];
-        $repeatDaily = $data['repeat_daily'] ?? false;
-        $selectedDays = $data['selected_days'] ?? [];
+        $note = $data['note'] ?? null;
         $durationDays = $data['duration_days'];
         $startDate = Carbon::parse($data['start_date'])->startOfDay();
+
+        // Handle both repeat_type and repeat_daily for backward compatibility
+        // 'selected' is an alias for 'specific' (specific days of week)
+        $repeatType = $data['repeat_type'] ?? ($data['repeat_daily'] ?? false ? 'daily' : 'once');
+        if ($repeatType === 'selected') {
+            $repeatType = 'specific';
+        }
+        $selectedDays = $data['selected_days'] ?? [];
 
         try {
             DB::beginTransaction();
@@ -290,15 +299,14 @@ class MedicationChartController extends Controller
             for ($i = 0; $i < $durationDays; $i++) {
                 $currentDate = $startDate->copy()->addDays($i);
 
-                // Check if this day should be scheduled
-                $shouldSchedule = $repeatDaily;
+                // Check if this day should be scheduled based on repeat type
+                $shouldSchedule = false;
 
-                if (!$repeatDaily && in_array($currentDate->dayOfWeek, $selectedDays)) {
+                if ($repeatType === 'daily') {
+                    // Schedule every day
                     $shouldSchedule = true;
-                }
-
-                if ($shouldSchedule) {
-                    // Combine date and time
+                } elseif ($repeatType === 'specific' && !empty($selectedDays)) {
+                    // Schedule only on selected days of week (0=Sunday, 1=Monday, etc.)
                     $scheduledDateTime = $currentDate->format('Y-m-d') . ' ' . $time;
 
                     // Create schedule
@@ -316,9 +324,16 @@ class MedicationChartController extends Controller
             }
 
             DB::commit();
+
+            // Load relationships for response
+            $schedules = collect($schedules)->map(function($schedule) {
+                return $schedule->load(['patient', 'productOrServiceRequest', 'creator']);
+            });
+
             return response()->json([
                 'success' => true,
                 'message' => 'Medication schedule created successfully',
+                'count' => count($schedules),
                 'schedules' => $schedules
             ]);
         } catch (\Exception $e) {
