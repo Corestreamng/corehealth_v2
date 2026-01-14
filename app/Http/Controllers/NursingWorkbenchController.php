@@ -32,6 +32,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use App\Helpers\HmoHelper;
+use App\Models\Store;
+use App\Models\StoreStock;
 use Yajra\DataTables\DataTables;
 
 class NursingWorkbenchController extends Controller{
@@ -152,7 +154,10 @@ class NursingWorkbenchController extends Controller{
             abort(403, 'Unauthorized access to Nursing Workbench');
         }
 
-        return view('admin.nursing.workbench');
+        // Get active stores for store selection
+        $stores = Store::where('status', 1)->orderBy('store_name')->get();
+
+        return view('admin.nursing.workbench', compact('stores'));
     }
 
     // =====================================
@@ -600,11 +605,13 @@ class NursingWorkbenchController extends Controller{
 
     /**
      * Administer an injection (creates billing record + injection record).
+     * Stock is deducted from selected store at administration time.
      */
     public function administerInjection(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'patient_id' => 'required|exists:patients,id',
+            'store_id' => 'required|exists:stores,id',
             'products' => 'required|array|min:1',
             'products.*.product_id' => 'required|exists:products,id',
             'products.*.dose' => 'required|string|max:100',
@@ -624,17 +631,45 @@ class NursingWorkbenchController extends Controller{
             DB::beginTransaction();
 
             $patient = PatientLowerCase::findOrFail($request->patient_id);
+            $storeId = $request->store_id;
             $injections = [];
 
             // Process each product
             foreach ($request->products as $productData) {
-                $product = Product::with('price')->findOrFail($productData['product_id']);
+                $product = Product::with(['price', 'stock'])->findOrFail($productData['product_id']);
+
+                // Check and deduct stock from selected store
+                $storeStock = StoreStock::where('store_id', $storeId)
+                    ->where('product_id', $product->id)
+                    ->first();
+
+                $qty = 1;
+                if (!$storeStock || $storeStock->current_quantity < $qty) {
+                    // Try global stock
+                    if ($product->stock && $product->stock->current_quantity >= $qty) {
+                        $product->stock->decrement('current_quantity', $qty);
+                        $product->stock->increment('quantity_sale', $qty);
+                    } else {
+                        throw new \Exception("Insufficient stock for {$product->product_name} (need {$qty}, store has " . ($storeStock ? $storeStock->current_quantity : 0) . ")");
+                    }
+                } else {
+                    // Deduct from store stock
+                    $storeStock->decrement('current_quantity', $qty);
+                    $storeStock->increment('quantity_sale', $qty);
+
+                    // Also deduct from global stock
+                    if ($product->stock) {
+                        $product->stock->decrement('current_quantity', $qty);
+                        $product->stock->increment('quantity_sale', $qty);
+                    }
+                }
 
                 // Create ProductOrServiceRequest for billing
                 $billReq = new ProductOrServiceRequest();
                 $billReq->user_id = $patient->user_id;
                 $billReq->staff_user_id = Auth::id();
                 $billReq->product_id = $product->id;
+                $billReq->dispensed_from_store_id = $storeId;
                 $billReq->qty = 1;
 
                 // Use provided HMO tariff data from frontend
@@ -670,6 +705,7 @@ class NursingWorkbenchController extends Controller{
                     'site' => $request->site,
                     'administered_at' => $request->administered_at,
                     'administered_by' => Auth::id(),
+                    'dispensed_from_store_id' => $storeId,
                 ]);
 
                 $injections[] = $injection;
@@ -825,11 +861,13 @@ class NursingWorkbenchController extends Controller{
 
     /**
      * Administer an immunization.
+     * Stock is deducted from selected store at administration time.
      */
     public function administerImmunization(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'patient_id' => 'required|exists:patients,id',
+            'store_id' => 'required|exists:stores,id',
             'products' => 'required|array|min:1',
             'products.*.product_id' => 'required|exists:products,id',
             'products.*.dose_number' => 'required|string|max:100',
@@ -849,17 +887,45 @@ class NursingWorkbenchController extends Controller{
             DB::beginTransaction();
 
             $patient = PatientLowerCase::findOrFail($request->patient_id);
+            $storeId = $request->store_id;
             $immunizations = [];
 
             // Process each vaccine product
             foreach ($request->products as $productData) {
-                $product = Product::with('price')->findOrFail($productData['product_id']);
+                $product = Product::with(['price', 'stock'])->findOrFail($productData['product_id']);
+
+                // Check and deduct stock from selected store
+                $storeStock = StoreStock::where('store_id', $storeId)
+                    ->where('product_id', $product->id)
+                    ->first();
+
+                $qty = 1;
+                if (!$storeStock || $storeStock->current_quantity < $qty) {
+                    // Try global stock
+                    if ($product->stock && $product->stock->current_quantity >= $qty) {
+                        $product->stock->decrement('current_quantity', $qty);
+                        $product->stock->increment('quantity_sale', $qty);
+                    } else {
+                        throw new \Exception("Insufficient stock for {$product->product_name} (need {$qty}, store has " . ($storeStock ? $storeStock->current_quantity : 0) . ")");
+                    }
+                } else {
+                    // Deduct from store stock
+                    $storeStock->decrement('current_quantity', $qty);
+                    $storeStock->increment('quantity_sale', $qty);
+
+                    // Also deduct from global stock
+                    if ($product->stock) {
+                        $product->stock->decrement('current_quantity', $qty);
+                        $product->stock->increment('quantity_sale', $qty);
+                    }
+                }
 
                 // Create ProductOrServiceRequest for billing
                 $billReq = new ProductOrServiceRequest();
                 $billReq->user_id = $patient->user_id;
                 $billReq->staff_user_id = Auth::id();
                 $billReq->product_id = $product->id;
+                $billReq->dispensed_from_store_id = $storeId;
                 $billReq->qty = 1;
 
                 // Use provided HMO tariff data from frontend
@@ -896,6 +962,7 @@ class NursingWorkbenchController extends Controller{
                     'site' => $request->site,
                     'administered_at' => $request->administered_at,
                     'administered_by' => Auth::id(),
+                    'dispensed_from_store_id' => $storeId,
                 ]);
 
                 $immunizations[] = $immunization;
@@ -1124,11 +1191,13 @@ class NursingWorkbenchController extends Controller{
 
     /**
      * Add a consumable (product) bill for a patient.
+     * Stock is deducted from selected store at billing time.
      */
     public function addConsumableBill(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'patient_id' => 'required|exists:patients,id',
+            'store_id' => 'required|exists:stores,id',
             'product_id' => 'required|exists:products,id',
             'qty' => 'required|integer|min:1',
         ]);
@@ -1141,12 +1210,40 @@ class NursingWorkbenchController extends Controller{
             DB::beginTransaction();
 
             $patient = PatientLowerCase::findOrFail($request->patient_id);
-            $product = Product::with('price')->findOrFail($request->product_id);
+            $product = Product::with(['price', 'stock'])->findOrFail($request->product_id);
+            $storeId = $request->store_id;
+            $qty = $request->qty;
+
+            // Check and deduct stock from selected store
+            $storeStock = StoreStock::where('store_id', $storeId)
+                ->where('product_id', $product->id)
+                ->first();
+
+            if (!$storeStock || $storeStock->current_quantity < $qty) {
+                // Try global stock
+                if ($product->stock && $product->stock->current_quantity >= $qty) {
+                    $product->stock->decrement('current_quantity', $qty);
+                    $product->stock->increment('quantity_sale', $qty);
+                } else {
+                    throw new \Exception("Insufficient stock for {$product->product_name} (need {$qty}, store has " . ($storeStock ? $storeStock->current_quantity : 0) . ")");
+                }
+            } else {
+                // Deduct from store stock
+                $storeStock->decrement('current_quantity', $qty);
+                $storeStock->increment('quantity_sale', $qty);
+
+                // Also deduct from global stock
+                if ($product->stock) {
+                    $product->stock->decrement('current_quantity', $qty);
+                    $product->stock->increment('quantity_sale', $qty);
+                }
+            }
 
             $billReq = new ProductOrServiceRequest();
             $billReq->user_id = $patient->user_id;
             $billReq->staff_user_id = Auth::id();
             $billReq->product_id = $product->id;
+            $billReq->dispensed_from_store_id = $storeId;
             $billReq->qty = $request->qty;
 
             // Apply HMO tariff if applicable
@@ -1820,7 +1917,22 @@ class NursingWorkbenchController extends Controller{
             'expiry_date' => 'nullable|date',
             'administered_at' => 'required|date',
             'notes' => 'nullable|string',
+            'store_id' => 'nullable|exists:stores,id',
         ]);
+
+        // Map full route names to abbreviations for database ENUM
+        $routeMap = [
+            'Intramuscular' => 'IM',
+            'Subcutaneous' => 'SC',
+            'Intradermal' => 'ID',
+            'Oral' => 'Oral',
+            'Intranasal' => 'Oral',
+            'IM' => 'IM',
+            'SC' => 'SC',
+            'ID' => 'ID',
+        ];
+        $inputRoute = $validated['route'] ?? $schedule->scheduleItem->route ?? 'IM';
+        $route = $routeMap[$inputRoute] ?? 'IM';
 
         $patient = PatientLowerCase::findOrFail($schedule->patient_id);
         $product = Product::with('price')->findOrFail($validated['product_id']);
@@ -1858,13 +1970,14 @@ class NursingWorkbenchController extends Controller{
                 'vaccine_name' => $schedule->scheduleItem->vaccine_name,
                 'dose_number' => $schedule->scheduleItem->dose_number,
                 'dose' => $validated['dose'] ?? $schedule->scheduleItem->dose_label,
-                'route' => $validated['route'] ?? $schedule->scheduleItem->route,
+                'route' => $route, // Use mapped route abbreviation
                 'site' => $validated['site'],
                 'administered_at' => $validated['administered_at'],
                 'administered_by' => Auth::id(),
                 'batch_number' => $validated['batch_number'],
                 'expiry_date' => $validated['expiry_date'],
                 'notes' => $validated['notes'],
+                'dispensed_from_store_id' => $validated['store_id'] ?? null,
             ]);
 
             // Update schedule entry
@@ -1943,7 +2056,21 @@ class NursingWorkbenchController extends Controller{
             'manufacturer' => 'nullable|string|max:200',
             'vis_date' => 'nullable|date',
             'notes' => 'nullable|string',
+            'store_id' => 'nullable|exists:stores,id',
         ]);
+
+        // Map full route names to abbreviations for database ENUM
+        $routeMap = [
+            'Intramuscular' => 'IM',
+            'Subcutaneous' => 'SC',
+            'Intradermal' => 'ID',
+            'Oral' => 'Oral',
+            'Intranasal' => 'Oral', // Map intranasal to closest option
+            'IM' => 'IM',
+            'SC' => 'SC',
+            'ID' => 'ID',
+        ];
+        $route = $routeMap[$validated['route']] ?? 'IM';
 
         $schedule = PatientImmunizationSchedule::with('scheduleItem')->findOrFail($validated['schedule_id']);
         $patient = PatientLowerCase::findOrFail($schedule->patient_id);
@@ -1982,15 +2109,15 @@ class NursingWorkbenchController extends Controller{
                 'vaccine_name' => $schedule->scheduleItem->vaccine_name,
                 'dose_number' => $schedule->scheduleItem->dose_number,
                 'dose' => $schedule->scheduleItem->dose_label,
-                'route' => $validated['route'],
+                'route' => $route, // Use mapped route abbreviation
                 'site' => $validated['site'],
                 'administered_at' => $validated['administered_at'],
                 'administered_by' => Auth::id(),
                 'batch_number' => $validated['batch_number'],
                 'expiry_date' => $validated['expiry_date'],
                 'manufacturer' => $validated['manufacturer'],
-                'vis_date' => $validated['vis_date'],
                 'notes' => $validated['notes'],
+                'dispensed_from_store_id' => $validated['store_id'] ?? null,
             ]);
 
             // Update schedule entry

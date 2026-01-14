@@ -15,6 +15,7 @@ protected $fillable = [
         'invoice_id',
         'user_id',
         'staff_user_id',
+        'dispensed_from_store_id',
         'product_id',
         'payment_id',
         'qty',
@@ -89,5 +90,13 @@ protected $fillable = [
     public function remittance()
     {
         return $this->belongsTo(HmoRemittance::class, 'hmo_remittance_id');
+    }
+
+    /**
+     * Get the store from which this item was dispensed.
+     */
+    public function dispensedFromStore()
+    {
+        return $this->belongsTo(Store::class, 'dispensed_from_store_id');
     }
 }

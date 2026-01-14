@@ -4198,25 +4198,55 @@
                                     <h6 class="mb-0"><i class="mdi mdi-needle"></i> Administer Injection</h6>
                                 </div>
                                 <div class="card-body">
-                                    <!-- Drug Search -->
+                                    <!-- Step 1: Store Selection - Primary Action -->
+                                    <div class="store-selection-panel mb-4 p-3 rounded" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border: 2px solid #90caf9;">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-bold mb-2" style="font-size: 1rem;">
+                                                    <i class="mdi mdi-store text-primary"></i> Step 1: Select Dispensing Store
+                                                </label>
+                                                <select id="injection-store" class="form-control form-control-lg" style="border: 2px solid #1976d2; font-weight: 500;" required>
+                                                    <option value="">-- Choose Store --</option>
+                                                    @foreach($stores ?? [] as $store)
+                                                        <option value="{{ $store->id }}">{{ $store->store_name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div id="injection-store-info" class="p-3 bg-white rounded shadow-sm" style="display: none;">
+                                                    <h6 class="text-primary mb-2"><i class="mdi mdi-package-variant"></i> Selected Store Stock</h6>
+                                                    <div id="injection-store-stock-summary" class="small">
+                                                        <!-- Stock will show here when items are selected -->
+                                                    </div>
+                                                </div>
+                                                <div id="injection-store-placeholder" class="p-3 text-muted text-center">
+                                                    <i class="mdi mdi-arrow-left-bold mdi-24px"></i>
+                                                    <p class="mb-0 small">Select store first, then add drugs</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Step 2: Drug Search (enabled after store selection) -->
                                     <div class="form-group mb-3">
-                                        <label for="injection-drug-search"><i class="mdi mdi-magnify"></i> Search Drug/Product</label>
+                                        <label for="injection-drug-search"><i class="mdi mdi-magnify"></i> Step 2: Search Drug/Product</label>
                                         <input type="text" class="form-control" id="injection-drug-search"
                                                placeholder="Type to search for any drug or product..." autocomplete="off">
                                         <ul class="list-group" id="injection-drug-results"
                                             style="display: none; position: absolute; z-index: 1000; max-height: 250px; overflow-y: auto; width: calc(100% - 30px); box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></ul>
                                     </div>
 
-                                    <!-- Selected Drugs Table -->
+                                    <!-- Selected Drugs Table with Stock Column -->
                                     <div class="table-responsive mb-3">
                                         <table class="table table-sm table-bordered table-striped" id="injection-selected-drugs">
                                             <thead class="bg-light">
                                                 <tr>
                                                     <th width="5%">*</th>
-                                                    <th width="30%">Drug/Product</th>
+                                                    <th width="25%">Drug/Product</th>
                                                     <th width="10%">Qty</th>
-                                                    <th width="15%">Price</th>
-                                                    <th width="20%">HMO Coverage</th>
+                                                    <th width="12%">Stock</th>
+                                                    <th width="13%">Price</th>
+                                                    <th width="15%">HMO Coverage</th>
                                                     <th width="15%">Dose</th>
                                                     <th width="5%">*</th>
                                                 </tr>
@@ -4226,7 +4256,7 @@
                                             </tbody>
                                             <tfoot>
                                                 <tr class="bg-light">
-                                                    <td colspan="3" class="text-right"><strong>Total:</strong></td>
+                                                    <td colspan="4" class="text-right"><strong>Total:</strong></td>
                                                     <td id="injection-total-price"><strong>₦0.00</strong></td>
                                                     <td id="injection-total-coverage">-</td>
                                                     <td colspan="2"></td>
@@ -4235,8 +4265,9 @@
                                         </table>
                                     </div>
 
-                                    <!-- Administration Details -->
+                                    <!-- Step 3: Administration Details -->
                                     <form id="injection-form">
+                                        <h6 class="text-muted mb-3"><i class="mdi mdi-clipboard-text"></i> Step 3: Administration Details</h6>
                                         <div class="form-row">
                                             <div class="form-group col-md-4">
                                                 <label for="injection-route"><i class="mdi mdi-routes"></i> Route *</label>
@@ -4271,7 +4302,7 @@
                                             <textarea class="form-control" id="injection-notes" rows="2" placeholder="Any additional notes..."></textarea>
                                         </div>
                                         <div class="form-actions text-right">
-                                            <button type="submit" class="btn btn-primary">
+                                            <button type="submit" class="btn btn-primary btn-lg">
                                                 <i class="mdi mdi-check"></i> Administer Injection
                                             </button>
                                         </div>
@@ -4463,22 +4494,52 @@
                                 </div>
                             </div>
 
-                            <!-- Vaccine Product Selection -->
+                            <!-- Step 1: Store Selection - Primary Action -->
+                            <div class="store-selection-panel mb-4 p-3 rounded" style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border: 2px solid #81c784;">
+                                <div class="row align-items-center">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold mb-2" style="font-size: 1rem;">
+                                            <i class="mdi mdi-store text-success"></i> Step 1: Select Dispensing Store
+                                        </label>
+                                        <select id="modal-vaccine-store" class="form-control form-control-lg" style="border: 2px solid #388e3c; font-weight: 500;" required>
+                                            <option value="">-- Choose Store --</option>
+                                            @foreach($stores ?? [] as $store)
+                                                <option value="{{ $store->id }}">{{ $store->store_name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div id="modal-vaccine-store-info" class="p-3 bg-white rounded shadow-sm" style="display: none;">
+                                            <h6 class="text-success mb-2"><i class="mdi mdi-package-variant"></i> Store Stock</h6>
+                                            <div id="modal-vaccine-store-stock" class="small">
+                                                <!-- Stock will show here when product is selected -->
+                                            </div>
+                                        </div>
+                                        <div id="modal-vaccine-store-placeholder" class="p-3 text-muted text-center">
+                                            <i class="mdi mdi-arrow-left-bold mdi-24px"></i>
+                                            <p class="mb-0 small">Select store first</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Step 2: Vaccine Product Selection -->
                             <div class="form-group mb-3">
-                                <label for="modal-vaccine-search"><i class="mdi mdi-magnify"></i> Search Vaccine Product *</label>
+                                <label for="modal-vaccine-search"><i class="mdi mdi-magnify"></i> Step 2: Search Vaccine Product *</label>
                                 <input type="text" class="form-control" id="modal-vaccine-search"
                                        placeholder="Type to search for vaccine product from inventory..." autocomplete="off">
                                 <ul class="list-group" id="modal-vaccine-results"
                                     style="display: none; position: absolute; z-index: 1050; max-height: 200px; overflow-y: auto; width: calc(100% - 30px); box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></ul>
                             </div>
 
-                            <!-- Selected Product Display -->
+                            <!-- Selected Product Display with Stock Info -->
                             <div class="card-modern mb-3 d-none" id="modal-selected-product-card">
                                 <div class="card-body py-2">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
                                             <strong id="modal-selected-product-name">-</strong>
                                             <br><small class="text-muted" id="modal-selected-product-details">-</small>
+                                            <br><small id="modal-selected-product-stock" class="text-success"></small>
                                         </div>
                                         <div class="text-right">
                                             <span class="badge badge-primary" id="modal-selected-product-price">₦0.00</span>
@@ -4493,7 +4554,8 @@
                             <input type="hidden" id="modal-schedule-id">
                             <input type="hidden" id="modal-product-id">
 
-                            <!-- Administration Details Form -->
+                            <!-- Step 3: Administration Details Form -->
+                            <h6 class="text-muted mb-3"><i class="mdi mdi-clipboard-text"></i> Step 3: Administration Details</h6>
                             <form id="modal-immunization-form">
                                 <div class="form-row">
                                     <div class="form-group col-md-6">
@@ -4557,7 +4619,7 @@
                             <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">
                                 <i class="mdi mdi-close"></i> Cancel
                             </button>
-                            <button type="button" class="btn btn-success" id="modal-submit-immunization">
+                            <button type="button" class="btn btn-success btn-lg" id="modal-submit-immunization">
                                 <i class="mdi mdi-check"></i> Record Immunization
                             </button>
                         </div>
@@ -4629,10 +4691,40 @@
                                     <h6 class="mb-0"><i class="mdi mdi-package-variant"></i> Add Consumable</h6>
                                 </div>
                                 <div class="card-body">
+                                    <!-- Step 1: Store Selection - Primary Action -->
+                                    <div class="store-selection-panel mb-4 p-3 rounded" style="background: linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 100%); border: 2px solid #4fc3f7;">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-bold mb-2" style="font-size: 1rem;">
+                                                    <i class="mdi mdi-store text-info"></i> Step 1: Select Dispensing Store
+                                                </label>
+                                                <select id="consumable-store" class="form-control form-control-lg" style="border: 2px solid #0288d1; font-weight: 500;" required>
+                                                    <option value="">-- Choose Store --</option>
+                                                    @foreach($stores ?? [] as $store)
+                                                        <option value="{{ $store->id }}">{{ $store->store_name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div id="consumable-store-info" class="p-3 bg-white rounded shadow-sm" style="display: none;">
+                                                    <h6 class="text-info mb-2"><i class="mdi mdi-package-variant"></i> Store Stock</h6>
+                                                    <div id="consumable-store-stock-summary" class="small">
+                                                        <!-- Stock summary will be loaded here -->
+                                                    </div>
+                                                </div>
+                                                <div id="consumable-store-placeholder" class="p-3 text-muted text-center">
+                                                    <i class="mdi mdi-arrow-left-bold mdi-24px"></i>
+                                                    <p class="mb-0 small">Select store first, then search product</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <form id="consumable-billing-form">
+                                        <!-- Step 2: Product Search & Selection -->
                                         <div class="form-row">
                                             <div class="form-group col-md-6">
-                                                <label for="consumable-search"><i class="mdi mdi-magnify"></i> Search Consumable *</label>
+                                                <label for="consumable-search"><i class="mdi mdi-magnify"></i> Step 2: Search Consumable *</label>
                                                 <input type="text" class="form-control" id="consumable-search" placeholder="Type to search for products..." autocomplete="off">
                                                 <input type="hidden" id="consumable-id">
                                                 <ul class="list-group" id="consumable-search-results" style="display: none; position: absolute; z-index: 1000; max-height: 200px; overflow-y: auto; width: calc(50% - 30px);"></ul>
@@ -4646,8 +4738,22 @@
                                                 <input type="text" class="form-control" id="consumable-price" readonly placeholder="Auto-calculated">
                                             </div>
                                         </div>
+
+                                        <!-- Selected Product Stock Info -->
+                                        <div id="consumable-selected-stock" class="alert alert-light mb-3" style="display: none;">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <strong id="consumable-selected-name">-</strong>
+                                                    <br><small class="text-muted" id="consumable-selected-code">-</small>
+                                                </div>
+                                                <div id="consumable-stock-info" class="text-right">
+                                                    <!-- Stock info will show here -->
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <div class="form-actions text-right">
-                                            <button type="submit" class="btn btn-info">
+                                            <button type="submit" class="btn btn-info btn-lg">
                                                 <i class="mdi mdi-plus"></i> Add Consumable
                                             </button>
                                         </div>
@@ -10441,6 +10547,14 @@ function addInjectionDrug(element) {
     const claims = parseFloat($el.data('claims')) || 0;
     const mode = $el.data('mode') || 'cash';
 
+    // Check if store is selected first
+    const storeId = $('#injection-store').val();
+    if (!storeId) {
+        showNotification('warning', 'Please select a store first');
+        $('#injection-store').focus();
+        return;
+    }
+
     // Check if already added
     if ($(`#injection-selected-body tr[data-product-id="${id}"]`).length > 0) {
         showNotification('warning', 'This drug is already in the list');
@@ -10463,8 +10577,10 @@ function addInjectionDrug(element) {
             </td>
             <td>
                 <input type="number" class="form-control form-control-sm injection-qty"
-                       name="injection_qty[]" value="1" min="1" max="${qty}" style="width: 70px;">
-                <small class="text-muted">${qty} avail.</small>
+                       name="injection_qty[]" value="1" min="1" style="width: 70px;">
+            </td>
+            <td class="stock-cell">
+                <span class="text-muted"><i class="mdi mdi-loading mdi-spin"></i></span>
             </td>
             <td>₦${payable.toFixed(2)}</td>
             <td>${coverageInfo}</td>
@@ -10482,6 +10598,7 @@ function addInjectionDrug(element) {
 
     $('#injection-selected-body').append(row);
     updateInjectionTotals();
+    updateInjectionStockDisplay(); // Update stock for the new row
     $('#injection-drug-results').hide();
     $('#injection-drug-search').val('');
 }
@@ -10506,6 +10623,7 @@ function updateInjectionTotals() {
 // Recalculate on qty change and clear validation
 $(document).on('change', '.injection-qty', function() {
     updateInjectionTotals();
+    updateInjectionStockDisplay();
     $(this).removeClass('is-invalid');
     $(this).siblings('.validation-error').remove();
 });
@@ -10516,16 +10634,235 @@ $(document).on('input', 'input[name="injection_dose[]"]', function() {
     $(this).siblings('.validation-error').remove();
 });
 
+// ===========================================
+// STORE STOCK DISPLAY HELPERS
+// ===========================================
+
+// Fetch product stock by store
+function fetchProductStockByStore(productId, callback) {
+    $.ajax({
+        url: `/pharmacy-workbench/product/${productId}/stock`,
+        method: 'GET',
+        success: function(response) {
+            callback(response);
+        },
+        error: function() {
+            callback({ global_stock: 0, stores: [] });
+        }
+    });
+}
+
+// Update injection stock display when store changes
+$('#injection-store').on('change', function() {
+    const storeId = $(this).val();
+    if (storeId) {
+        $('#injection-store-placeholder').hide();
+        $('#injection-store-info').show();
+        updateInjectionStockDisplay();
+    } else {
+        $('#injection-store-info').hide();
+        $('#injection-store-placeholder').show();
+    }
+});
+
+// Update injection table stock display
+function updateInjectionStockDisplay() {
+    const storeId = $('#injection-store').val();
+    if (!storeId) return;
+
+    let stockSummaryHtml = '';
+    const rows = $('#injection-selected-body tr');
+
+    if (rows.length === 0) {
+        stockSummaryHtml = '<p class="text-muted mb-0">Add drugs to see stock</p>';
+    } else {
+        rows.each(function() {
+            const productId = $(this).data('product-id');
+            const productName = $(this).find('td:eq(1) strong').text();
+            const qty = parseInt($(this).find('.injection-qty').val()) || 1;
+            const $stockCell = $(this).find('.stock-cell');
+
+            fetchProductStockByStore(productId, function(stockData) {
+                const storeStock = stockData.stores.find(s => s.store_id == storeId);
+                const availableQty = storeStock ? storeStock.quantity : 0;
+                const stockClass = availableQty >= qty ? 'text-success' : 'text-danger';
+                const stockIcon = availableQty >= qty ? 'mdi-check-circle' : 'mdi-alert-circle';
+
+                $stockCell.html(`<span class="${stockClass}"><i class="mdi ${stockIcon}"></i> ${availableQty}</span>`);
+            });
+        });
+    }
+
+    $('#injection-store-stock-summary').html(stockSummaryHtml || '<p class="text-muted mb-0">Stock shown in table</p>');
+}
+
+// Consumable store change handler
+$('#consumable-store').on('change', function() {
+    const storeId = $(this).val();
+    if (storeId) {
+        $('#consumable-store-placeholder').hide();
+        $('#consumable-store-info').show();
+        updateConsumableStockDisplay();
+    } else {
+        $('#consumable-store-info').hide();
+        $('#consumable-store-placeholder').show();
+    }
+});
+
+// Update consumable stock display
+function updateConsumableStockDisplay() {
+    const storeId = $('#consumable-store').val();
+    const productId = $('#consumable-id').val();
+
+    if (!storeId || !productId) {
+        $('#consumable-store-stock-summary').html('<p class="text-muted mb-0">Select a product to see stock</p>');
+        return;
+    }
+
+    fetchProductStockByStore(productId, function(stockData) {
+        const storeStock = stockData.stores.find(s => s.store_id == storeId);
+        const availableQty = storeStock ? storeStock.quantity : 0;
+        const qty = parseInt($('#consumable-quantity').val()) || 1;
+        const stockClass = availableQty >= qty ? 'text-success' : 'text-danger';
+        const stockIcon = availableQty >= qty ? 'mdi-check-circle' : 'mdi-alert-circle';
+
+        let html = `<div class="${stockClass}"><i class="mdi ${stockIcon}"></i> Available: <strong>${availableQty}</strong></div>`;
+        if (availableQty < qty) {
+            html += `<div class="text-danger small"><i class="mdi mdi-alert"></i> Insufficient stock!</div>`;
+        }
+
+        $('#consumable-store-stock-summary').html(html);
+        $('#consumable-stock-info').html(`<span class="${stockClass}"><i class="mdi ${stockIcon}"></i> Stock: ${availableQty}</span>`);
+    });
+}
+
+// Immunization modal store change handler
+$('#modal-vaccine-store').on('change', function() {
+    const storeId = $(this).val();
+    if (storeId) {
+        $('#modal-vaccine-store-placeholder').hide();
+        $('#modal-vaccine-store-info').show();
+        updateImmunizationStockDisplay();
+    } else {
+        $('#modal-vaccine-store-info').hide();
+        $('#modal-vaccine-store-placeholder').show();
+    }
+});
+
+// Update immunization stock display
+function updateImmunizationStockDisplay() {
+    const storeId = $('#modal-vaccine-store').val();
+    const productId = $('#modal-product-id').val();
+
+    if (!storeId || !productId) {
+        $('#modal-vaccine-store-stock').html('<p class="text-muted mb-0">Select a vaccine to see stock</p>');
+        return;
+    }
+
+    fetchProductStockByStore(productId, function(stockData) {
+        const storeStock = stockData.stores.find(s => s.store_id == storeId);
+        const availableQty = storeStock ? storeStock.quantity : 0;
+        const stockClass = availableQty > 0 ? 'text-success' : 'text-danger';
+        const stockIcon = availableQty > 0 ? 'mdi-check-circle' : 'mdi-alert-circle';
+
+        let html = `<div class="${stockClass}"><i class="mdi ${stockIcon}"></i> Available: <strong>${availableQty}</strong></div>`;
+        if (availableQty <= 0) {
+            html += `<div class="text-danger small"><i class="mdi mdi-alert"></i> Out of stock!</div>`;
+        }
+
+        $('#modal-vaccine-store-stock').html(html);
+        $('#modal-selected-product-stock').html(`<span class="${stockClass}"><i class="mdi ${stockIcon}"></i> Stock in selected store: ${availableQty}</span>`);
+    });
+}
+
+// Update consumable quantity change
+$('#consumable-quantity').on('change', function() {
+    updateConsumableStockDisplay();
+});
+
+// ===========================================
+// STOCK VALIDATION HELPERS
+// ===========================================
+
+// Check stock availability before submission - returns Promise
+function validateStockAvailability(storeId, products) {
+    return new Promise((resolve, reject) => {
+        const stockChecks = products.map(p => {
+            return new Promise((res) => {
+                fetchProductStockByStore(p.product_id, function(stockData) {
+                    const storeStock = stockData.stores.find(s => s.store_id == storeId);
+                    const availableQty = storeStock ? storeStock.quantity : 0;
+                    res({
+                        product_id: p.product_id,
+                        product_name: p.product_name || 'Product',
+                        requested_qty: parseInt(p.qty) || 1,
+                        available_qty: availableQty,
+                        sufficient: availableQty >= (parseInt(p.qty) || 1)
+                    });
+                });
+            });
+        });
+
+        Promise.all(stockChecks).then(results => {
+            const insufficientItems = results.filter(r => !r.sufficient);
+            if (insufficientItems.length > 0) {
+                reject({
+                    type: 'insufficient_stock',
+                    items: insufficientItems,
+                    message: insufficientItems.map(i =>
+                        `${i.product_name}: Need ${i.requested_qty}, only ${i.available_qty} available`
+                    ).join('\n')
+                });
+            } else {
+                resolve(results);
+            }
+        });
+    });
+}
+
+// Show stock validation error with visual feedback
+function showStockValidationError(items, tableSelector) {
+    let errorHtml = '<div class="alert alert-danger alert-dismissible fade show" role="alert">';
+    errorHtml += '<strong><i class="mdi mdi-alert-circle"></i> Insufficient Stock!</strong><br>';
+    errorHtml += '<ul class="mb-0 pl-3">';
+
+    items.forEach(item => {
+        errorHtml += `<li>${item.product_name || 'Item'}: Requested <strong>${item.requested_qty}</strong>, Available <strong>${item.available_qty}</strong></li>`;
+
+        // Highlight the row in the table
+        if (tableSelector) {
+            const $row = $(`${tableSelector} tr[data-product-id="${item.product_id}"]`);
+            $row.addClass('table-danger').find('.stock-cell').addClass('text-danger fw-bold');
+            $row.find('.injection-qty, .vaccine-qty').addClass('is-invalid');
+        }
+    });
+
+    errorHtml += '</ul>';
+    errorHtml += '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>';
+    errorHtml += '</div>';
+
+    return errorHtml;
+}
+
 // Injection Form Submit
 $('#injection-form').on('submit', function(e) {
     e.preventDefault();
 
-    // Collect selected products
+    // Validate store selection
+    const storeId = $('#injection-store').val();
+    if (!storeId) {
+        showNotification('error', 'Please select a store to dispense from');
+        $('#injection-store').focus();
+        return;
+    }
+
+    // Collect selected products with names for validation feedback
     const products = [];
     $('#injection-selected-body tr').each(function() {
         if ($(this).find('.injection-row-check').is(':checked')) {
             products.push({
                 product_id: $(this).data('product-id'),
+                product_name: $(this).find('td:eq(1) strong').text(),
                 qty: $(this).find('.injection-qty').val(),
                 dose: $(this).find('input[name="injection_dose[]"]').val()
             });
@@ -10537,87 +10874,112 @@ $('#injection-form').on('submit', function(e) {
         return;
     }
 
-    const data = {
-        patient_id: currentPatient,
-        products: products,
-        route: $('#injection-route').val(),
-        site: $('#injection-site').val(),
-        administered_at: $('#injection-time').val(),
-        notes: $('#injection-notes').val()
-    };
-
     // Clear previous validation errors
     $('#injection-selected-body .is-invalid').removeClass('is-invalid');
     $('#injection-selected-body .validation-error').remove();
+    $('#injection-selected-body tr').removeClass('table-danger');
+    $('#injection-stock-error').remove();
 
-    $.ajax({
-        url: '{{ route("nursing-workbench.injection.administer") }}',
-        method: 'POST',
-        data: data,
-        headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
-        success: function(response) {
-            showNotification('success', response.message || 'Injection administered successfully');
-            $('#injection-form')[0].reset();
-            $('#injection-selected-body').empty();
-            updateInjectionTotals();
-            loadInjectionHistory(currentPatient);
-        },
-        error: function(xhr) {
-            const response = xhr.responseJSON;
+    // Validate stock before submission
+    const $submitBtn = $(this).find('button[type="submit"]');
+    const originalBtnHtml = $submitBtn.html();
+    $submitBtn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Checking Stock...');
 
-            // Handle validation errors for each product
-            if (response?.errors) {
-                let errorMessages = [];
+    validateStockAvailability(storeId, products)
+        .then(() => {
+            // Stock OK - proceed with submission
+            $submitBtn.html('<i class="mdi mdi-loading mdi-spin"></i> Administering...');
 
-                // Map checked rows to their index (only checked items are sent)
-                const checkedRows = $('#injection-selected-body tr').filter(function() {
-                    return $(this).find('.injection-row-check').is(':checked');
-                });
+            const data = {
+                patient_id: currentPatient,
+                products: products.map(p => ({ product_id: p.product_id, qty: p.qty, dose: p.dose })),
+                route: $('#injection-route').val(),
+                site: $('#injection-site').val(),
+                administered_at: $('#injection-time').val(),
+                notes: $('#injection-notes').val(),
+                store_id: storeId
+            };
 
-                Object.keys(response.errors).forEach(function(field) {
-                    // Parse field like "products.0.dose" or "products.1.qty"
-                    const match = field.match(/^products\.(\d+)\.(\w+)$/);
-                    if (match) {
-                        const index = parseInt(match[1]);
-                        const fieldName = match[2];
-                        const row = checkedRows.eq(index);
+            $.ajax({
+                url: '{{ route("nursing-workbench.injection.administer") }}',
+                method: 'POST',
+                data: data,
+                headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
+                success: function(response) {
+                    $submitBtn.prop('disabled', false).html(originalBtnHtml);
+                    showNotification('success', response.message || 'Injection administered successfully');
+                    $('#injection-form')[0].reset();
+                    $('#injection-selected-body').empty();
+                    updateInjectionTotals();
+                    loadInjectionHistory(currentPatient);
+                },
+                error: function(xhr) {
+                    $submitBtn.prop('disabled', false).html(originalBtnHtml);
+                    const response = xhr.responseJSON;
+                    handleInjectionSubmitError(response, products);
+                }
+            });
+        })
+        .catch(stockError => {
+            // Stock insufficient - show error
+            $submitBtn.prop('disabled', false).html(originalBtnHtml);
 
-                        if (row.length) {
-                            const productName = row.find('td:eq(1) strong').text();
-                            let inputField;
+            const errorHtml = showStockValidationError(stockError.items, '#injection-selected-body');
+            $('#injection-selected-drugs').before(`<div id="injection-stock-error">${errorHtml}</div>`);
 
-                            if (fieldName === 'dose') {
-                                inputField = row.find('input[name="injection_dose[]"]');
-                            } else if (fieldName === 'qty') {
-                                inputField = row.find('.injection-qty');
-                            }
+            showNotification('error', 'Insufficient stock for one or more items');
+        });
+});
 
-                            if (inputField && inputField.length) {
-                                inputField.addClass('is-invalid');
-                                // Add error message below input
-                                const errorMsg = response.errors[field][0].replace(/products\.\d+\./, '');
-                                inputField.after(`<div class="validation-error text-danger small">${errorMsg}</div>`);
-                            }
+// Handle injection submit error (separated for cleaner code)
+function handleInjectionSubmitError(response, products) {
+    const checkedRows = $('#injection-selected-body tr').filter(function() {
+        return $(this).find('.injection-row-check').is(':checked');
+    });
 
-                            errorMessages.push(`${productName}: ${response.errors[field][0].replace(/products\.\d+\./, '')}`);
-                        }
-                    } else {
-                        // Non-product field errors
-                        errorMessages.push(response.errors[field][0]);
+    if (response?.errors) {
+        let errorMessages = [];
+
+        Object.keys(response.errors).forEach(function(field) {
+            // Parse field like "products.0.dose" or "products.1.qty"
+            const match = field.match(/^products\.(\d+)\.(\w+)$/);
+            if (match) {
+                const index = parseInt(match[1]);
+                const fieldName = match[2];
+                const row = checkedRows.eq(index);
+
+                if (row.length) {
+                    const productName = row.find('td:eq(1) strong').text();
+                    let inputField;
+
+                    if (fieldName === 'dose') {
+                        inputField = row.find('input[name="injection_dose[]"]');
+                    } else if (fieldName === 'qty') {
+                        inputField = row.find('.injection-qty');
                     }
-                });
 
-                if (errorMessages.length > 0) {
-                    showNotification('error', 'Validation failed: ' + errorMessages.join(', '));
-                } else {
-                    showNotification('error', response.message || 'Validation failed');
+                    if (inputField && inputField.length) {
+                        inputField.addClass('is-invalid');
+                        const errorMsg = response.errors[field][0].replace(/products\.\d+\./, '');
+                        inputField.after(`<div class="validation-error text-danger small">${errorMsg}</div>`);
+                    }
+
+                    errorMessages.push(`${productName}: ${response.errors[field][0].replace(/products\.\d+\./, '')}`);
                 }
             } else {
-                showNotification('error', response?.message || 'Failed to administer injection');
+                errorMessages.push(response.errors[field][0]);
             }
+        });
+
+        if (errorMessages.length > 0) {
+            showNotification('error', 'Validation failed: ' + errorMessages.join(', '));
+        } else {
+            showNotification('error', response.message || 'Validation failed');
         }
-    });
-});
+    } else {
+        showNotification('error', response?.message || 'Failed to administer injection');
+    }
+}
 
 // Load Injection History with DataTable
 function loadInjectionHistory(patientId) {
@@ -11349,6 +11711,14 @@ function resetAdministerModal() {
 
 // Select product in modal
 function selectModalProduct(element) {
+    // Check if store is selected first
+    const storeId = $('#modal-vaccine-store').val();
+    if (!storeId) {
+        showNotification('warning', 'Please select a store first');
+        $('#modal-vaccine-store').focus();
+        return;
+    }
+
     const product = {
         id: $(element).data('id'),
         name: $(element).data('name'),
@@ -11367,7 +11737,6 @@ function selectModalProduct(element) {
     $('#modal-selected-product-details').html(`
         <span class="mr-2">[${product.code}]</span>
         <span class="mr-2">${product.category}</span>
-        <span class="${product.qty > 0 ? 'text-success' : 'text-danger'}">${product.qty} in stock</span>
     `);
 
     // Show price with HMO info if applicable
@@ -11384,6 +11753,9 @@ function selectModalProduct(element) {
     $('#modal-selected-product-card').removeClass('d-none');
     $('#modal-vaccine-search').val('');
     $('#modal-vaccine-results').hide();
+
+    // Update stock display for selected product
+    updateImmunizationStockDisplay();
 }
 
 // Remove selected product
@@ -11478,7 +11850,7 @@ $(document).on('click', function(e) {
 
 // Submit immunization from modal
 $('#modal-submit-immunization').click(function() {
-    // Validate
+    // Validate fields
     if (!$('#modal-product-id').val()) {
         toastr.error('Please select a vaccine product');
         return;
@@ -11495,38 +11867,80 @@ $('#modal-submit-immunization').click(function() {
         toastr.error('Please enter administration time');
         return;
     }
+    if (!$('#modal-vaccine-store').val()) {
+        toastr.error('Please select a store to dispense from');
+        $('#modal-vaccine-store').focus();
+        return;
+    }
 
-    const data = {
-        schedule_id: $('#modal-schedule-id').val(),
-        product_id: $('#modal-product-id').val(),
-        site: $('#modal-vaccine-site').val(),
-        route: $('#modal-vaccine-route').val(),
-        batch_number: $('#modal-vaccine-batch').val(),
-        expiry_date: $('#modal-vaccine-expiry').val(),
-        administered_at: $('#modal-vaccine-time').val(),
-        manufacturer: $('#modal-vaccine-manufacturer').val(),
-        vis_date: $('#modal-vaccine-vis').val(),
-        notes: $('#modal-vaccine-notes').val()
-    };
+    const productId = $('#modal-product-id').val();
+    const productName = modalSelectedProduct?.name || $('#modal-selected-product-name').text();
+    const storeId = $('#modal-vaccine-store').val();
 
-    $.ajax({
-        url: '/nursing-workbench/administer-from-schedule',
-        method: 'POST',
-        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-        data: data,
-        success: function(response) {
-            if (response.success) {
-                toastr.success(response.message || 'Vaccine administered successfully');
-                $('#administerVaccineModal').modal('hide');
-                loadImmunizationSchedule(currentPatient);
-                loadImmunizationHistory(currentPatient);
-            } else {
-                toastr.error(response.message || 'Failed to administer vaccine');
+    // Clear previous errors
+    $('#modal-immunization-stock-error').remove();
+
+    const $btn = $(this);
+    const originalBtnHtml = $btn.html();
+    $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Checking Stock...');
+
+    // Validate stock before submission
+    validateStockAvailability(storeId, [{
+        product_id: productId,
+        product_name: productName,
+        qty: 1
+    }])
+    .then(() => {
+        // Stock OK - proceed
+        $btn.html('<i class="mdi mdi-loading mdi-spin"></i> Administering...');
+
+        const data = {
+            schedule_id: $('#modal-schedule-id').val(),
+            product_id: productId,
+            site: $('#modal-vaccine-site').val(),
+            route: $('#modal-vaccine-route').val(),
+            batch_number: $('#modal-vaccine-batch').val(),
+            expiry_date: $('#modal-vaccine-expiry').val(),
+            administered_at: $('#modal-vaccine-time').val(),
+            manufacturer: $('#modal-vaccine-manufacturer').val(),
+            vis_date: $('#modal-vaccine-vis').val(),
+            notes: $('#modal-vaccine-notes').val(),
+            store_id: storeId
+        };
+
+        $.ajax({
+            url: '/nursing-workbench/administer-from-schedule',
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            data: data,
+            success: function(response) {
+                $btn.prop('disabled', false).html(originalBtnHtml);
+                if (response.success) {
+                    toastr.success(response.message || 'Vaccine administered successfully');
+                    $('#administerVaccineModal').modal('hide');
+                    loadImmunizationSchedule(currentPatient);
+                    loadImmunizationHistory(currentPatient);
+                } else {
+                    toastr.error(response.message || 'Failed to administer vaccine');
+                }
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false).html(originalBtnHtml);
+                toastr.error(xhr.responseJSON?.message || 'Failed to administer vaccine');
             }
-        },
-        error: function(xhr) {
-            toastr.error(xhr.responseJSON?.message || 'Failed to administer vaccine');
-        }
+        });
+    })
+    .catch(stockError => {
+        $btn.prop('disabled', false).html(originalBtnHtml);
+
+        const errorHtml = `<div id="modal-immunization-stock-error" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong><i class="mdi mdi-alert-circle"></i> Insufficient Stock!</strong><br>
+            ${stockError.items[0].product_name}: Only <strong>${stockError.items[0].available_qty}</strong> available in selected store
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        </div>`;
+
+        $('#modal-immunization-form').prepend(errorHtml);
+        toastr.error('Insufficient stock for selected vaccine');
     });
 });
 
@@ -11801,8 +12215,12 @@ $('#consumable-search').on('input', function() {
         success: function(results) {
             let html = '';
             results.forEach(product => {
-                html += `<li class="list-group-item list-group-item-action" onclick="selectConsumable(${product.id}, '${product.name.replace(/'/g, "\\'")}', ${product.price || 0})">
-                    <strong>${product.name}</strong><br>
+                const escapedName = (product.name || '').replace(/'/g, "\\'");
+                const code = (product.code || '').replace(/'/g, "\\'");
+                html += `<li class="list-group-item list-group-item-action" onclick="selectConsumable(${product.id}, '${escapedName}', ${product.price || 0}, '${code}')">
+                    <strong>${product.name}</strong>
+                    <span class="badge bg-secondary float-right">[${product.code || 'N/A'}]</span>
+                    <br>
                     <small class="text-muted">₦${product.price || 'N/A'}/unit</small>
                 </li>`;
             });
@@ -11811,11 +12229,25 @@ $('#consumable-search').on('input', function() {
     });
 });
 
-function selectConsumable(id, name, unitPrice) {
+function selectConsumable(id, name, unitPrice, code) {
+    // Check if store is selected first
+    const storeId = $('#consumable-store').val();
+    if (!storeId) {
+        showNotification('warning', 'Please select a store first');
+        $('#consumable-store').focus();
+        return;
+    }
+
     $('#consumable-id').val(id);
     $('#consumable-search').val(name);
     updateConsumablePrice(unitPrice);
     $('#consumable-search-results').hide();
+
+    // Show selected product info with stock
+    $('#consumable-selected-name').text(name);
+    $('#consumable-selected-code').text(`[${code || 'N/A'}]`);
+    $('#consumable-selected-stock').show();
+    updateConsumableStockDisplay();
 }
 
 // Update consumable price on quantity change
@@ -11873,31 +12305,78 @@ $('#service-billing-form').on('submit', function(e) {
 $('#consumable-billing-form').on('submit', function(e) {
     e.preventDefault();
 
-    const data = {
-        patient_id: currentPatient,
-        product_id: $('#consumable-id').val(),
-        quantity: $('#consumable-quantity').val()
-    };
+    const storeId = $('#consumable-store').val();
+    if (!storeId) {
+        showNotification('error', 'Please select a store to dispense from');
+        $('#consumable-store').focus();
+        return;
+    }
 
-    if (!data.product_id) {
+    const productId = $('#consumable-id').val();
+    const productName = $('#consumable-search').val();
+    const quantity = parseInt($('#consumable-quantity').val()) || 1;
+
+    if (!productId) {
         showNotification('error', 'Please select a consumable');
         return;
     }
 
-    $.ajax({
-        url: '{{ route("nursing-workbench.billing.add-consumable") }}',
-        method: 'POST',
-        data: data,
-        headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
-        success: function(response) {
-            showNotification('success', response.message || 'Consumable added successfully');
-            $('#consumable-billing-form')[0].reset();
-            $('#consumable-id').val('');
-            loadPendingBills(currentPatient);
-        },
-        error: function(xhr) {
-            showNotification('error', xhr.responseJSON?.message || 'Failed to add consumable');
-        }
+    // Clear previous errors
+    $('#consumable-stock-error').remove();
+    $('#consumable-quantity').removeClass('is-invalid');
+
+    const $submitBtn = $(this).find('button[type="submit"]');
+    const originalBtnHtml = $submitBtn.html();
+    $submitBtn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Checking Stock...');
+
+    // Validate stock before submission
+    validateStockAvailability(storeId, [{
+        product_id: productId,
+        product_name: productName,
+        qty: quantity
+    }])
+    .then(() => {
+        // Stock OK - proceed
+        $submitBtn.html('<i class="mdi mdi-loading mdi-spin"></i> Adding...');
+
+        const data = {
+            patient_id: currentPatient,
+            product_id: productId,
+            quantity: quantity,
+            store_id: storeId
+        };
+
+        $.ajax({
+            url: '{{ route("nursing-workbench.billing.add-consumable") }}',
+            method: 'POST',
+            data: data,
+            headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
+            success: function(response) {
+                $submitBtn.prop('disabled', false).html(originalBtnHtml);
+                showNotification('success', response.message || 'Consumable added successfully');
+                $('#consumable-billing-form')[0].reset();
+                $('#consumable-id').val('');
+                $('#consumable-store-stock-summary').html('<p class="text-muted mb-0">Select a product to see stock</p>');
+                loadPendingBills(currentPatient);
+            },
+            error: function(xhr) {
+                $submitBtn.prop('disabled', false).html(originalBtnHtml);
+                showNotification('error', xhr.responseJSON?.message || 'Failed to add consumable');
+            }
+        });
+    })
+    .catch(stockError => {
+        $submitBtn.prop('disabled', false).html(originalBtnHtml);
+        $('#consumable-quantity').addClass('is-invalid');
+
+        const errorHtml = `<div id="consumable-stock-error" class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
+            <strong><i class="mdi mdi-alert-circle"></i> Insufficient Stock!</strong><br>
+            ${stockError.items[0].product_name}: Need <strong>${stockError.items[0].requested_qty}</strong>, only <strong>${stockError.items[0].available_qty}</strong> available
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        </div>`;
+
+        $('#consumable-billing-form').prepend(errorHtml);
+        showNotification('error', 'Insufficient stock');
     });
 });
 

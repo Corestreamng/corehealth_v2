@@ -7,7 +7,11 @@ use App\Models\Patient;
 use App\Models\ProductRequest;
 use App\Models\ProductOrServiceRequest;
 use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Models\User;
+use App\Models\Store;
+use App\Models\StoreStock;
+use App\Models\Hmo;
 use App\Helpers\HmoHelper;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -31,7 +35,45 @@ class PharmacyWorkbenchController extends Controller
      */
     public function index()
     {
-        return view('admin.pharmacy.workbench');
+        $stores = Store::where('status', 1)->get();
+        return view('admin.pharmacy.workbench', compact('stores'));
+    }
+
+    /**
+     * Get all active stores for dropdown selection
+     */
+    public function getStores()
+    {
+        $stores = Store::where('status', 1)
+            ->select('id', 'store_name', 'location')
+            ->get();
+
+        return response()->json($stores);
+    }
+
+    /**
+     * Get stock availability for a product across all stores
+     */
+    public function getProductStockByStore($productId)
+    {
+        $product = Product::with(['stock', 'storeStock.store'])->find($productId);
+
+        if (!$product) {
+            return response()->json(['error' => 'Product not found'], 404);
+        }
+
+        $stocks = [
+            'global_stock' => $product->stock ? $product->stock->current_quantity : 0,
+            'stores' => $product->storeStock->map(function ($ss) {
+                return [
+                    'store_id' => $ss->store_id,
+                    'store_name' => $ss->store ? $ss->store->store_name : 'Unknown',
+                    'quantity' => $ss->current_quantity
+                ];
+            })
+        ];
+
+        return response()->json($stocks);
     }
 
     /**
@@ -405,6 +447,30 @@ class PharmacyWorkbenchController extends Controller
                     $statusLabel = 'Ready to Dispense';
                 }
 
+                // Get stock information
+                $globalStock = 0;
+                $storeStocks = [];
+                if ($pr->product) {
+                    // Global stock
+                    $stockRecord = $pr->product->stock;
+                    if ($stockRecord) {
+                        $globalStock = $stockRecord->current_quantity ?? 0;
+                    }
+
+                    // Per-store stock
+                    $storeStockRecords = StoreStock::with('store')
+                        ->where('product_id', $pr->product->id)
+                        ->where('current_quantity', '>', 0)
+                        ->get();
+                    foreach ($storeStockRecords as $ss) {
+                        $storeStocks[] = [
+                            'store_id' => $ss->store_id,
+                            'store_name' => optional($ss->store)->store_name ?? 'Unknown',
+                            'quantity' => $ss->current_quantity ?? 0
+                        ];
+                    }
+                }
+
                 return [
                     'id' => $pr->id,
                     'product_request_id' => $pr->id,
@@ -428,6 +494,8 @@ class PharmacyWorkbenchController extends Controller
                     'billed_by' => $pr->billed_by ? userfullname($pr->billed_by) : null,
                     'billed_date' => $pr->billed_date ? Carbon::parse($pr->billed_date)->format('Y-m-d H:i') : null,
                     'created_at' => $pr->created_at->format('Y-m-d H:i'),
+                    'global_stock' => $globalStock,
+                    'store_stocks' => $storeStocks,
                 ];
             });
 
@@ -536,72 +604,260 @@ class PharmacyWorkbenchController extends Controller
     }
 
     /**
-     * Dispense medication (single or bulk)
+     * Validate stock availability for cart items before dispense
+     * Returns detailed stock info for each item
+     */
+    public function validateCartStock(Request $request)
+    {
+        $request->validate([
+            'product_request_ids' => 'required|array',
+            'product_request_ids.*' => 'exists:product_requests,id',
+            'store_id' => 'required|exists:stores,id'
+        ]);
+
+        $storeId = $request->store_id;
+        $store = Store::find($storeId);
+        $validationResults = [];
+        $allValid = true;
+        $totalIssues = 0;
+
+        foreach ($request->product_request_ids as $prId) {
+            $productRequest = ProductRequest::with(['productOrServiceRequest', 'product.stock'])->find($prId);
+
+            if (!$productRequest) {
+                $validationResults[] = [
+                    'product_request_id' => $prId,
+                    'valid' => false,
+                    'error' => 'Product request not found',
+                    'error_type' => 'not_found'
+                ];
+                $allValid = false;
+                $totalIssues++;
+                continue;
+            }
+
+            $result = [
+                'product_request_id' => $prId,
+                'product_id' => $productRequest->product_id,
+                'product_name' => $productRequest->product->name ?? 'Unknown',
+                'qty_required' => $productRequest->qty ?? 1,
+                'valid' => true,
+                'error' => null,
+                'error_type' => null
+            ];
+
+            // Check status
+            if ($productRequest->status != 2) {
+                $result['valid'] = false;
+                $result['error'] = 'Item not billed (status: ' . $productRequest->status . ')';
+                $result['error_type'] = 'not_billed';
+                $allValid = false;
+                $totalIssues++;
+                $validationResults[] = $result;
+                continue;
+            }
+
+            // Check HMO delivery requirements
+            if ($productRequest->productOrServiceRequest) {
+                $deliveryCheck = HmoHelper::canDeliverService($productRequest->productOrServiceRequest);
+                if (!$deliveryCheck['can_deliver']) {
+                    $result['valid'] = false;
+                    $result['error'] = $deliveryCheck['reason'];
+                    $result['error_type'] = 'hmo_block';
+                    $allValid = false;
+                    $totalIssues++;
+                    $validationResults[] = $result;
+                    continue;
+                }
+            }
+
+            // Check store stock
+            $qty = $productRequest->qty ?? 1;
+            $storeStock = StoreStock::where('store_id', $storeId)
+                ->where('product_id', $productRequest->product_id)
+                ->first();
+
+            $storeQty = $storeStock ? $storeStock->current_quantity : 0;
+            $result['store_qty_available'] = $storeQty;
+
+            if ($storeQty < $qty) {
+                $result['valid'] = false;
+                $result['error'] = "Insufficient stock in {$store->name}: need {$qty}, have {$storeQty}";
+                $result['error_type'] = 'insufficient_stock';
+                $result['shortage'] = $qty - $storeQty;
+                $allValid = false;
+                $totalIssues++;
+            }
+
+            $validationResults[] = $result;
+        }
+
+        return response()->json([
+            'success' => true,
+            'all_valid' => $allValid,
+            'total_items' => count($request->product_request_ids),
+            'total_issues' => $totalIssues,
+            'store_id' => $storeId,
+            'store_name' => $store->name ?? '',
+            'validation_results' => $validationResults
+        ]);
+    }
+
+    /**
+     * Dispense medication (single or bulk) - STRICT VALIDATION
+     * Will fail the entire batch if ANY item has insufficient stock
      *
      * References:
      * - Plan Section: Phase 3.2 - Dispense Medication
      * - Related: ProductRequestController::dispense()
      * - Uses: HmoHelper::canDeliverService()
+     * - Stock is deducted from selected store at dispense time
      */
     public function dispenseMedication(Request $request)
     {
         $request->validate([
             'product_request_ids' => 'required|array',
-            'product_request_ids.*' => 'exists:product_requests,id'
+            'product_request_ids.*' => 'exists:product_requests,id',
+            'store_id' => 'required|exists:stores,id'
         ]);
 
+        $storeId = $request->store_id;
+        $store = Store::find($storeId);
+
+        // PHASE 1: Pre-validate ALL items before any changes
+        $itemsToDispense = [];
+        $validationErrors = [];
+
+        foreach ($request->product_request_ids as $prId) {
+            $productRequest = ProductRequest::with(['productOrServiceRequest', 'product.stock'])->find($prId);
+
+            if (!$productRequest) {
+                $validationErrors[] = [
+                    'id' => $prId,
+                    'error' => 'Product request not found'
+                ];
+                continue;
+            }
+
+            // Validate status - must be billed (status 2)
+            if ($productRequest->status != 2) {
+                $statusLabels = [0 => 'Pending', 1 => 'Ready', 2 => 'Billed', 3 => 'Dispensed', 4 => 'Cancelled'];
+                $statusLabel = $statusLabels[$productRequest->status] ?? 'Unknown';
+                $validationErrors[] = [
+                    'id' => $prId,
+                    'product' => $productRequest->product->name ?? 'Unknown',
+                    'error' => "Cannot dispense - item is '{$statusLabel}' (must be 'Billed')"
+                ];
+                continue;
+            }
+
+            // Check HMO delivery requirements
+            if ($productRequest->productOrServiceRequest) {
+                $deliveryCheck = HmoHelper::canDeliverService($productRequest->productOrServiceRequest);
+                if (!$deliveryCheck['can_deliver']) {
+                    $validationErrors[] = [
+                        'id' => $prId,
+                        'product' => $productRequest->product->name ?? 'Unknown',
+                        'error' => $deliveryCheck['reason']
+                    ];
+                    continue;
+                }
+            }
+
+            // Get quantity to dispense
+            $qty = $productRequest->qty ?? 1;
+
+            // STRICT store stock check - no fallback to global
+            $storeStock = StoreStock::where('store_id', $storeId)
+                ->where('product_id', $productRequest->product_id)
+                ->first();
+
+            $availableQty = $storeStock ? $storeStock->current_quantity : 0;
+
+            if ($availableQty < $qty) {
+                $validationErrors[] = [
+                    'id' => $prId,
+                    'product' => $productRequest->product->name ?? 'Unknown',
+                    'error' => "Insufficient stock in '{$store->name}': need {$qty}, available {$availableQty}",
+                    'shortage' => $qty - $availableQty
+                ];
+                continue;
+            }
+
+            // Item passed validation - add to dispense list
+            $itemsToDispense[] = [
+                'productRequest' => $productRequest,
+                'storeStock' => $storeStock,
+                'qty' => $qty
+            ];
+        }
+
+        // If ANY validation errors, reject the entire batch
+        if (count($validationErrors) > 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot dispense: ' . count($validationErrors) . ' item(s) failed validation. Fix all issues before proceeding.',
+                'validation_errors' => $validationErrors,
+                'dispensed_count' => 0
+            ], 422);
+        }
+
+        // PHASE 2: All validations passed - now execute dispense in transaction
         try {
             DB::beginTransaction();
 
             $dispensedCount = 0;
-            $errors = [];
 
-            foreach ($request->product_request_ids as $prId) {
-                $productRequest = ProductRequest::with('productOrServiceRequest')->find($prId);
+            foreach ($itemsToDispense as $item) {
+                $productRequest = $item['productRequest'];
+                $storeStock = $item['storeStock'];
+                $qty = $item['qty'];
 
-                // Validate status
-                if ($productRequest->status != 2) {
-                    $errors[] = "PR#{$prId}: Not billed";
-                    continue;
+                // Deduct from store stock
+                $storeStock->decrement('current_quantity', $qty);
+                $storeStock->increment('quantity_sale', $qty);
+
+                // Also deduct from global stock for consistency
+                $globalStock = $productRequest->product->stock;
+                if ($globalStock) {
+                    $globalStock->decrement('current_quantity', $qty);
+                    $globalStock->increment('quantity_sale', $qty);
                 }
 
-                // Check HMO delivery requirements
-                if ($productRequest->productOrServiceRequest) {
-                    $deliveryCheck = HmoHelper::canDeliverService($productRequest->productOrServiceRequest);
-                    if (!$deliveryCheck['can_deliver']) {
-                        $errors[] = "PR#{$prId}: {$deliveryCheck['reason']}";
-                        continue;
-                    }
-                }
-
-                // Dispense
+                // Update product request status to dispensed
                 $productRequest->update([
                     'status' => 3,
                     'dispensed_by' => Auth::id(),
-                    'dispense_date' => now()
+                    'dispense_date' => now(),
+                    'dispensed_from_store_id' => $storeId
                 ]);
+
+                // Also update the ProductOrServiceRequest with store info
+                if ($productRequest->productOrServiceRequest) {
+                    $productRequest->productOrServiceRequest->update([
+                        'dispensed_from_store_id' => $storeId
+                    ]);
+                }
 
                 $dispensedCount++;
             }
 
             DB::commit();
 
-            $message = "Successfully dispensed {$dispensedCount} medication(s)";
-            if (count($errors) > 0) {
-                $message .= ". Errors: " . implode('; ', $errors);
-            }
-
             return response()->json([
                 'success' => true,
-                'message' => $message,
+                'message' => "Successfully dispensed {$dispensedCount} medication(s) from '{$store->name}'",
                 'dispensed_count' => $dispensedCount,
-                'errors' => $errors
+                'store_name' => $store->name
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Pharmacy dispense error: ' . $e->getMessage());
-            return response()->json(['message' => 'Dispense error: ' . $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Dispense error: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -613,7 +869,7 @@ class PharmacyWorkbenchController extends Controller
      */
     public function getMyTransactions(Request $request)
     {
-        $query = ProductRequest::with(['product', 'patient.user', 'productOrServiceRequest.payment'])
+        $query = ProductRequest::with(['product.price', 'patient.user', 'productOrServiceRequest.payment'])
             ->where('dispensed_by', Auth::id())
             ->where('status', 3);
 
@@ -625,37 +881,67 @@ class PharmacyWorkbenchController extends Controller
             $query->whereDate('dispense_date', '<=', $request->to_date);
         }
 
+        // Apply payment type filter
+        if ($request->has('payment_type') && $request->payment_type) {
+            $query->whereHas('productOrServiceRequest.payment', function($q) use ($request) {
+                $q->where('payment_type', $request->payment_type);
+            });
+        }
+
+        // Apply bank filter
+        if ($request->has('bank_id') && $request->bank_id) {
+            $query->whereHas('productOrServiceRequest.payment', function($q) use ($request) {
+                $q->where('bank_id', $request->bank_id);
+            });
+        }
+
         $transactions = $query->orderBy('dispense_date', 'desc')->get();
 
         $items = $transactions->map(function ($pr) {
             $posr = $pr->productOrServiceRequest;
+            $payment = optional($posr)->payment;
+            $price = optional(optional($pr->product)->price)->current_sale_price ?? 0;
+            $amount = $pr->qty * $price;
+
             return [
-                'product_request_id' => $pr->id,
+                'id' => $pr->id,
+                'created_at' => $pr->dispense_date ? Carbon::parse($pr->dispense_date)->format('Y-m-d H:i:s') : '',
                 'patient_name' => userfullname($pr->patient->user_id),
                 'file_no' => $pr->patient->file_no,
+                'reference_no' => optional($payment)->reference_no,
+                'payment_type' => optional($payment)->payment_type ?? 'N/A',
+                'bank_name' => optional($payment)->bank ? optional($payment)->bank->name : null,
                 'product_name' => optional($pr->product)->product_name,
-                'dose' => $pr->dose ?? 'N/A',
-                'dispense_date' => $pr->dispense_date ? Carbon::parse($pr->dispense_date)->format('Y-m-d H:i') : null,
-                'payment_type' => optional($posr->payment)->payment_type ?? 'N/A',
-                'amount' => $posr ? $posr->payable_amount : 0,
+                'quantity' => $pr->qty,
+                'unit_price' => $price,
+                'total' => $amount,
+                'total_discount' => optional($posr)->discount ?? 0,
             ];
         });
 
-        $totalAmount = $items->sum('amount');
-        $cashCount = $transactions->filter(function($pr) {
-            return optional($pr->productOrServiceRequest)->coverage_mode == 'none';
-        })->count();
+        // Calculate statistics
+        $totalAmount = $items->sum('total');
+        $totalDiscount = $items->sum('total_discount');
 
-        $stats = [
+        // Group by payment type
+        $byType = $items->groupBy('payment_type')->map(function($group, $type) {
+            return [
+                'count' => $group->count(),
+                'amount' => $group->sum('total')
+            ];
+        });
+
+        $summary = [
             'count' => $items->count(),
-            'total' => $totalAmount,
-            'cash_count' => $cashCount,
-            'hmo_count' => $items->count() - $cashCount,
+            'total_amount' => $totalAmount,
+            'total_discount' => $totalDiscount,
+            'net_amount' => $totalAmount - $totalDiscount,
+            'by_type' => $byType
         ];
 
         return response()->json([
-            'items' => $items,
-            'stats' => $stats,
+            'transactions' => $items->values(),
+            'summary' => $summary,
         ]);
     }
 
@@ -910,20 +1196,13 @@ class PharmacyWorkbenchController extends Controller
                     $billReq->save();
 
                     // Update ProductRequest to billed status
+                    // Note: Stock is NOT deducted at billing - it will be deducted at dispense
                     $productRequest->update([
                         'status' => 2,
                         'billed_by' => Auth::id(),
                         'billed_date' => now(),
                         'product_request_id' => $billReq->id
                     ]);
-
-                    // Decrement stock
-                    $product = Product::with('stock')->find($prodId);
-                    if ($product && $product->stock) {
-                        $qty = $productRequest->qty ?? 1;
-                        $product->stock->decrement('current_quantity', $qty);
-                        $product->stock->save();
-                    }
 
                     $billedCount++;
                 }
@@ -955,9 +1234,11 @@ class PharmacyWorkbenchController extends Controller
                     $billReq->save();
 
                     // Create ProductRequest with status=2 (billed)
+                    // Note: Stock is NOT deducted at billing - it will be deducted at dispense
                     $productRequest = new ProductRequest();
                     $productRequest->product_id = $productId;
                     $productRequest->dose = $dose;
+                    $productRequest->qty = 1;
                     $productRequest->billed_by = Auth::id();
                     $productRequest->billed_date = now();
                     $productRequest->patient_id = $patient->id;
@@ -965,12 +1246,6 @@ class PharmacyWorkbenchController extends Controller
                     $productRequest->product_request_id = $billReq->id;
                     $productRequest->status = 2; // Billed
                     $productRequest->save();
-
-                    // Decrement stock
-                    if ($product->stock) {
-                        $product->stock->decrement('current_quantity', 1);
-                        $product->stock->save();
-                    }
 
                     $billedCount++;
                 }
@@ -1092,4 +1367,639 @@ class PharmacyWorkbenchController extends Controller
             return response()->json(['message' => 'Failed to dismiss prescriptions: ' . $e->getMessage()], 500);
         }
     }
+
+    // ============================================
+    // PHARMACY REPORTS & ANALYTICS ENDPOINTS
+    // ============================================
+
+    /**
+     * Get list of pharmacists (staff with pharmacy role)
+     */
+    public function getPharmacists()
+    {
+        $pharmacists = User::where(function($q) {
+                $q->whereHas('roles', function ($query) {
+                    $query->whereIn('name', ['pharmacist', 'pharmacy', 'pharmacy-staff']);
+                })
+                ->orWhere('is_admin', 23); // 23 = Pharmacist in user_categories
+            })
+            ->select('id', 'surname', 'firstname')
+            ->get()
+            ->map(function($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => trim($user->surname . ' ' . $user->firstname)
+                ];
+            })
+            ->sortBy('name')
+            ->values();
+
+        return response()->json($pharmacists);
+    }
+
+    /**
+     * Get list of HMOs for filter dropdown
+     */
+    public function getHmosForFilter()
+    {
+        $hmos = Hmo::select('id', 'name', 'hmo_scheme_id')
+            ->with('scheme:id,name')
+            ->orderBy('name')
+            ->get()
+            ->groupBy(function ($hmo) {
+                return $hmo->scheme ? $hmo->scheme->name : 'Others';
+            })
+            ->map(function ($group) {
+                return $group->map(function ($hmo) {
+                    return ['id' => $hmo->id, 'name' => $hmo->name];
+                });
+            });
+
+        return response()->json($hmos);
+    }
+
+    /**
+     * Get list of doctors for filter dropdown
+     */
+    public function getDoctorsForFilter()
+    {
+        $doctors = User::where(function($q) {
+                $q->whereHas('roles', function ($query) {
+                    $query->whereIn('name', ['doctor', 'Doctor', 'physician', 'consultant']);
+                })
+                ->orWhere('is_admin', 21); // 21 = Doctor in user_categories
+            })
+            ->select('id', 'surname', 'firstname')
+            ->get()
+            ->map(function($doctor) {
+                return [
+                    'id' => $doctor->id,
+                    'name' => trim($doctor->surname . ' ' . $doctor->firstname)
+                ];
+            })
+            ->sortBy('name')
+            ->values();
+
+        return response()->json($doctors);
+    }
+
+    /**
+     * Get list of product categories for filter dropdown
+     */
+    public function getProductCategories()
+    {
+        $categories = ProductCategory::where('status', 1)
+            ->select('id', 'category_name as name')
+            ->orderBy('category_name')
+            ->get();
+
+        return response()->json($categories);
+    }
+
+    /**
+     * Get summary statistics for pharmacy reports
+     */
+    public function getReportStatistics(Request $request)
+    {
+        $query = ProductRequest::query();
+        $this->applyReportFilters($query, $request);
+
+        // Total dispensed
+        $totalDispensed = (clone $query)->where('status', 3)->count();
+
+        // Revenue calculations
+        $revenueQuery = (clone $query)->where('status', 3);
+
+        // Join with product_or_service_requests for payment info
+        $revenueData = DB::table('product_requests as pr')
+            ->join('product_or_service_requests as posr', 'pr.product_request_id', '=', 'posr.id')
+            ->leftJoin('payments as pay', 'posr.payment_id', '=', 'pay.id')
+            ->leftJoin('products as p', 'pr.product_id', '=', 'p.id')
+            ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
+            ->where('pr.status', 3)
+            ->when($request->date_from, fn($q) => $q->whereDate('pr.updated_at', '>=', $request->date_from))
+            ->when($request->date_to, fn($q) => $q->whereDate('pr.updated_at', '<=', $request->date_to))
+            ->when($request->store_id, fn($q) => $q->where('pr.dispensed_from_store_id', $request->store_id))
+            ->when($request->hmo_id, fn($q) => $q->where('pay.hmo_id', $request->hmo_id))
+            ->when($request->pharmacist_id, fn($q) => $q->where('pr.dispensed_by', $request->pharmacist_id))
+            ->selectRaw('
+                COALESCE(SUM(pr.qty * COALESCE(pp.current_sale_price, 0)), 0) as total_revenue,
+                COALESCE(SUM(CASE WHEN pay.payment_type IN ("CASH", "cash") THEN pr.qty * COALESCE(pp.current_sale_price, 0) ELSE 0 END), 0) as cash_sales,
+                COALESCE(SUM(CASE WHEN pay.payment_type IN ("HMO", "hmo") OR pay.hmo_id IS NOT NULL THEN pr.qty * COALESCE(pp.current_sale_price, 0) ELSE 0 END), 0) as hmo_claims
+            ')
+            ->first();
+
+        // Unique patients
+        $uniquePatients = (clone $query)->where('status', 3)->distinct('patient_id')->count('patient_id');
+
+        // Pending count
+        $pendingCount = ProductRequest::whereBetween('status', [1, 2])
+            ->when($request->date_from, fn($q) => $q->whereDate('created_at', '>=', $request->date_from))
+            ->when($request->date_to, fn($q) => $q->whereDate('created_at', '<=', $request->date_to))
+            ->count();
+
+        // Trend data (last 7 days or filter range)
+        $trendData = $this->getTrendData($request);
+
+        // Revenue breakdown by payment type
+        $revenueBreakdown = $this->getRevenueBreakdownData($request);
+
+        return response()->json([
+            'total_dispensed' => $totalDispensed,
+            'total_revenue' => $revenueData->total_revenue ?? 0,
+            'cash_sales' => $revenueData->cash_sales ?? 0,
+            'hmo_claims' => $revenueData->hmo_claims ?? 0,
+            'unique_patients' => $uniquePatients,
+            'pending_count' => $pendingCount,
+            'trend_data' => $trendData,
+            'revenue_breakdown' => $revenueBreakdown
+        ]);
+    }
+
+    /**
+     * Get dispensing report data for DataTables
+     */
+    public function getDispensingReport(Request $request)
+    {
+        $query = DB::table('product_requests as pr')
+            ->join('patients as pat', 'pr.patient_id', '=', 'pat.id')
+            ->leftJoin('users as pat_user', 'pat.user_id', '=', 'pat_user.id')
+            ->leftJoin('products as p', 'pr.product_id', '=', 'p.id')
+            ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
+            ->leftJoin('product_or_service_requests as posr', 'pr.product_request_id', '=', 'posr.id')
+            ->leftJoin('payments as pay', 'posr.payment_id', '=', 'pay.id')
+            ->leftJoin('stores as s', 'pr.dispensed_from_store_id', '=', 's.id')
+            ->leftJoin('users as u', 'pr.dispensed_by', '=', 'u.id')
+            ->where('pr.status', 3)
+            ->whereNull('pr.deleted_at')
+            ->select([
+                'pr.id',
+                'pr.updated_at as dispensed_at',
+                'pay.reference_no',
+                DB::raw("CONCAT(pat_user.surname, ' ', pat_user.firstname) as patient_name"),
+                'p.product_name',
+                'pr.qty as quantity',
+                DB::raw('(pr.qty * COALESCE(pp.current_sale_price, 0)) as amount'),
+                'pay.payment_type as payment_type',
+                's.store_name',
+                DB::raw("CONCAT(u.surname, ' ', u.firstname) as pharmacist_name")
+            ]);
+
+        // Apply filters
+        if ($request->date_from) {
+            $query->whereDate('pr.updated_at', '>=', $request->date_from);
+        }
+        if ($request->date_to) {
+            $query->whereDate('pr.updated_at', '<=', $request->date_to);
+        }
+        if ($request->store_id) {
+            $query->where('pr.dispensed_from_store_id', $request->store_id);
+        }
+        if ($request->payment_type) {
+            $query->where('pay.payment_type', $request->payment_type);
+        }
+        if ($request->pharmacist_id) {
+            $query->where('pr.dispensed_by', $request->pharmacist_id);
+        }
+        if ($request->hmo_id) {
+            $query->where('pay.hmo_id', $request->hmo_id);
+        }
+        if ($request->patient_search) {
+            $search = $request->patient_search;
+            $query->where(function ($q) use ($search) {
+                $q->where('pat.first_name', 'LIKE', "%{$search}%")
+                  ->orWhere('pat.last_name', 'LIKE', "%{$search}%")
+                  ->orWhere('pat.file_no', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return DataTables::of($query)
+            ->addIndexColumn()
+            ->make(true);
+    }
+
+    /**
+     * Get revenue report grouped by period
+     */
+    public function getRevenueReport(Request $request)
+    {
+        $groupBy = $request->group_by ?? 'daily';
+
+        // Build the date grouping expression
+        $dateGroup = match ($groupBy) {
+            'weekly' => "DATE_FORMAT(pr.updated_at, '%Y-W%u')",
+            'monthly' => "DATE_FORMAT(pr.updated_at, '%Y-%m')",
+            default => "DATE(pr.updated_at)"
+        };
+
+        $query = DB::table('product_requests as pr')
+            ->join('product_or_service_requests as posr', 'pr.product_request_id', '=', 'posr.id')
+            ->leftJoin('payments as pay', 'posr.payment_id', '=', 'pay.id')
+            ->leftJoin('products as p', 'pr.product_id', '=', 'p.id')
+            ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
+            ->where('pr.status', 3)
+            ->whereNull('pr.deleted_at');
+
+        if ($request->date_from) {
+            $query->whereDate('pr.updated_at', '>=', $request->date_from);
+        }
+        if ($request->date_to) {
+            $query->whereDate('pr.updated_at', '<=', $request->date_to);
+        }
+        if ($request->store_id) {
+            $query->where('pr.dispensed_from_store_id', $request->store_id);
+        }
+
+        $data = $query->selectRaw("
+                {$dateGroup} as period,
+                COUNT(DISTINCT pr.id) as transactions,
+                SUM(CASE WHEN pay.payment_type = 'CASH' THEN pr.qty * COALESCE(pp.current_sale_price, 0) ELSE 0 END) as cash,
+                SUM(CASE WHEN pay.payment_type = 'CARD' THEN pr.qty * COALESCE(pp.current_sale_price, 0) ELSE 0 END) as card,
+                SUM(CASE WHEN pay.payment_type = 'TRANSFER' THEN pr.qty * COALESCE(pp.current_sale_price, 0) ELSE 0 END) as transfer,
+                SUM(CASE WHEN pay.payment_type = 'HMO' OR pay.hmo_id IS NOT NULL THEN pr.qty * COALESCE(pp.current_sale_price, 0) ELSE 0 END) as hmo,
+                SUM(pr.qty * COALESCE(pp.current_sale_price, 0)) as total,
+                AVG(pr.qty * COALESCE(pp.current_sale_price, 0)) as avg_transaction
+            ")
+            ->groupBy(DB::raw($dateGroup))
+            ->orderBy('period', 'desc')
+            ->get();
+
+        // Calculate totals
+        $totals = [
+            'transactions' => $data->sum('transactions'),
+            'cash' => $data->sum('cash'),
+            'card' => $data->sum('card'),
+            'transfer' => $data->sum('transfer'),
+            'hmo' => $data->sum('hmo'),
+            'total' => $data->sum('total'),
+            'avg_transaction' => $data->count() > 0 ? $data->sum('total') / max($data->sum('transactions'), 1) : 0
+        ];
+
+        return response()->json([
+            'data' => $data,
+            'totals' => $totals
+        ]);
+    }
+
+    /**
+     * Get stock report with store breakdown
+     */
+    public function getStockReport(Request $request)
+    {
+        $query = DB::table('products as p')
+            ->leftJoin('product_categories as pc', 'p.category_id', '=', 'pc.id')
+            ->leftJoin('stocks as st', 'p.id', '=', 'st.product_id')
+            ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
+            ->where('p.status', 1)
+            ->select([
+                'p.id',
+                'p.product_name',
+                'p.product_code',
+                'pc.category_name',
+                'p.reorder_alert as reorder_level',
+                DB::raw('COALESCE(st.current_quantity, 0) as global_stock'),
+                DB::raw('COALESCE(pp.current_sale_price, 0) as unit_price'),
+                DB::raw('COALESCE(st.current_quantity, 0) * COALESCE(pp.current_sale_price, 0) as stock_value')
+            ]);
+
+        if ($request->category_id) {
+            $query->where('p.category_id', $request->category_id);
+        }
+
+        if ($request->low_stock_only) {
+            $query->whereRaw('COALESCE(st.current_quantity, 0) <= COALESCE(p.reorder_alert, 0)');
+        }
+
+        // Get dispensed quantity for the period
+        $products = $query->get();
+
+        // Add store breakdown and dispensed qty for each product
+        $products = $products->map(function ($product) use ($request) {
+            // Get store breakdown
+            $storeBreakdown = StoreStock::where('product_id', $product->id)
+                ->join('stores', 'store_stocks.store_id', '=', 'stores.id')
+                ->select('stores.store_name', 'store_stocks.current_quantity as quantity')
+                ->get()
+                ->map(function ($s) use ($product) {
+                    $s->reorder_level = $product->reorder_level ?? 0;
+                    return $s;
+                });
+
+            // Get dispensed quantity in period
+            $dispensedQty = ProductRequest::where('product_id', $product->id)
+                ->where('status', 3)
+                ->when($request->date_from, fn($q) => $q->whereDate('updated_at', '>=', $request->date_from))
+                ->when($request->date_to, fn($q) => $q->whereDate('updated_at', '<=', $request->date_to))
+                ->sum('qty');
+
+            $product->store_breakdown = $storeBreakdown;
+            $product->dispensed_qty = $dispensedQty;
+
+            return $product;
+        });
+
+        // Apply store filter after getting breakdown
+        if ($request->store_id) {
+            $storeId = $request->store_id;
+            $products = $products->filter(function ($p) use ($storeId) {
+                return $p->store_breakdown->contains('store_id', $storeId);
+            });
+        }
+
+        return DataTables::of($products)
+            ->addIndexColumn()
+            ->make(true);
+    }
+
+    /**
+     * Get pharmacist performance report
+     */
+    public function getPerformanceReport(Request $request)
+    {
+        $query = DB::table('product_requests as pr')
+            ->join('users as u', 'pr.dispensed_by', '=', 'u.id')
+            ->leftJoin('product_or_service_requests as posr', 'pr.product_request_id', '=', 'posr.id')
+            ->leftJoin('payments as pay', 'posr.payment_id', '=', 'pay.id')
+            ->leftJoin('products as p', 'pr.product_id', '=', 'p.id')
+            ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
+            ->where('pr.status', 3)
+            ->whereNull('pr.deleted_at')
+            ->whereNotNull('pr.dispensed_by');
+
+        if ($request->date_from) {
+            $query->whereDate('pr.updated_at', '>=', $request->date_from);
+        }
+        if ($request->date_to) {
+            $query->whereDate('pr.updated_at', '<=', $request->date_to);
+        }
+
+        $data = $query->selectRaw("
+                u.id as pharmacist_id,
+                CONCAT(u.surname, ' ', u.firstname) as pharmacist_name,
+                COUNT(pr.id) as total_dispensed,
+                SUM(pr.qty * COALESCE(pp.current_sale_price, 0)) as total_revenue,
+                SUM(CASE WHEN pay.payment_type = 'CASH' THEN 1 ELSE 0 END) as cash_transactions,
+                SUM(CASE WHEN pay.payment_type = 'HMO' OR pay.hmo_id IS NOT NULL THEN 1 ELSE 0 END) as hmo_transactions,
+                SUM(CASE WHEN pay.payment_type = 'CASH' THEN pr.qty * COALESCE(pp.current_sale_price, 0) ELSE 0 END) as cash_amount,
+                SUM(CASE WHEN pay.payment_type = 'HMO' OR pay.hmo_id IS NOT NULL THEN pr.qty * COALESCE(pp.current_sale_price, 0) ELSE 0 END) as hmo_amount,
+                AVG(TIMESTAMPDIFF(MINUTE, pr.created_at, pr.updated_at)) as avg_tat,
+                COUNT(DISTINCT pr.patient_id) as unique_patients
+            ")
+            ->groupBy('u.id', 'u.surname', 'u.firstname')
+            ->orderBy('total_revenue', 'desc')
+            ->get();
+
+        // Calculate totals
+        $totals = [
+            'total_dispensed' => $data->sum('total_dispensed'),
+            'total_revenue' => $data->sum('total_revenue'),
+            'cash_transactions' => $data->sum('cash_transactions'),
+            'hmo_transactions' => $data->sum('hmo_transactions'),
+            'cash_amount' => $data->sum('cash_amount'),
+            'hmo_amount' => $data->sum('hmo_amount'),
+            'avg_tat' => $data->count() > 0 ? round($data->avg('avg_tat'), 1) : null,
+            'unique_patients' => $data->sum('unique_patients')
+        ];
+
+        return response()->json([
+            'data' => $data,
+            'totals' => $totals
+        ]);
+    }
+
+    /**
+     * Get HMO claims summary report
+     */
+    public function getHmoClaimsReport(Request $request)
+    {
+        $query = DB::table('product_requests as pr')
+            ->join('product_or_service_requests as posr', 'pr.product_request_id', '=', 'posr.id')
+            ->leftJoin('payments as pay', 'posr.payment_id', '=', 'pay.id')
+            ->join('hmos as h', 'pay.hmo_id', '=', 'h.id')
+            ->leftJoin('products as p', 'pr.product_id', '=', 'p.id')
+            ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
+            ->where('pr.status', 3)
+            ->whereNull('pr.deleted_at')
+            ->whereNotNull('pay.hmo_id');
+
+        if ($request->date_from) {
+            $query->whereDate('pr.updated_at', '>=', $request->date_from);
+        }
+        if ($request->date_to) {
+            $query->whereDate('pr.updated_at', '<=', $request->date_to);
+        }
+        if ($request->hmo_id) {
+            $query->where('pay.hmo_id', $request->hmo_id);
+        }
+
+        $data = $query->selectRaw("
+                h.id as hmo_id,
+                h.name as hmo_name,
+                COUNT(pr.id) as total_claims,
+                SUM(pr.qty * COALESCE(pp.current_sale_price, 0)) as total_amount,
+                SUM(CASE WHEN posr.validation_status = 'approved' THEN 1 ELSE 0 END) as validated_count,
+                SUM(CASE WHEN posr.validation_status = 'approved' THEN pr.qty * COALESCE(pp.current_sale_price, 0) ELSE 0 END) as validated_amount,
+                SUM(CASE WHEN posr.validation_status = 'pending' OR posr.validation_status IS NULL THEN 1 ELSE 0 END) as pending_count,
+                SUM(CASE WHEN posr.validation_status = 'pending' OR posr.validation_status IS NULL THEN pr.qty * COALESCE(pp.current_sale_price, 0) ELSE 0 END) as pending_amount,
+                SUM(CASE WHEN posr.validation_status = 'rejected' THEN 1 ELSE 0 END) as rejected_count,
+                SUM(CASE WHEN posr.validation_status = 'rejected' THEN pr.qty * COALESCE(pp.current_sale_price, 0) ELSE 0 END) as rejected_amount
+            ")
+            ->groupBy('h.id', 'h.name')
+            ->orderBy('total_amount', 'desc')
+            ->get();
+
+        // Calculate totals
+        $totals = [
+            'total_claims' => $data->sum('total_claims'),
+            'total_amount' => $data->sum('total_amount'),
+            'validated_count' => $data->sum('validated_count'),
+            'validated_amount' => $data->sum('validated_amount'),
+            'pending_count' => $data->sum('pending_count'),
+            'pending_amount' => $data->sum('pending_amount'),
+            'rejected_count' => $data->sum('rejected_count'),
+            'rejected_amount' => $data->sum('rejected_amount')
+        ];
+
+        return response()->json([
+            'data' => $data,
+            'totals' => $totals
+        ]);
+    }
+
+    /**
+     * Get top 10 products by dispensing volume
+     */
+    public function getTopProducts(Request $request)
+    {
+        $query = DB::table('product_requests as pr')
+            ->join('products as p', 'pr.product_id', '=', 'p.id')
+            ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
+            ->where('pr.status', 3)
+            ->whereNull('pr.deleted_at');
+
+        if ($request->date_from) {
+            $query->whereDate('pr.updated_at', '>=', $request->date_from);
+        }
+        if ($request->date_to) {
+            $query->whereDate('pr.updated_at', '<=', $request->date_to);
+        }
+        if ($request->store_id) {
+            $query->where('pr.dispensed_from_store_id', $request->store_id);
+        }
+
+        $products = $query->selectRaw("
+                p.id,
+                p.product_name,
+                SUM(pr.qty) as quantity,
+                SUM(pr.qty * COALESCE(pp.current_sale_price, 0)) as revenue
+            ")
+            ->groupBy('p.id', 'p.product_name')
+            ->orderBy('quantity', 'desc')
+            ->limit(10)
+            ->get();
+
+        return response()->json($products);
+    }
+
+    /**
+     * Get payment methods breakdown
+     */
+    public function getPaymentMethodsBreakdown(Request $request)
+    {
+        $query = DB::table('product_requests as pr')
+            ->join('product_or_service_requests as posr', 'pr.product_request_id', '=', 'posr.id')
+            ->leftJoin('payments as pay', 'posr.payment_id', '=', 'pay.id')
+            ->leftJoin('products as p', 'pr.product_id', '=', 'p.id')
+            ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
+            ->where('pr.status', 3)
+            ->whereNull('pr.deleted_at');
+
+        if ($request->date_from) {
+            $query->whereDate('pr.updated_at', '>=', $request->date_from);
+        }
+        if ($request->date_to) {
+            $query->whereDate('pr.updated_at', '<=', $request->date_to);
+        }
+        if ($request->store_id) {
+            $query->where('pr.dispensed_from_store_id', $request->store_id);
+        }
+
+        $methods = $query->selectRaw("
+                COALESCE(pay.payment_type, 'Unknown') as payment_type,
+                COUNT(pr.id) as count,
+                SUM(pr.qty * COALESCE(pp.current_sale_price, 0)) as amount
+            ")
+            ->groupBy('pay.payment_type')
+            ->orderBy('amount', 'desc')
+            ->get();
+
+        return response()->json($methods);
+    }
+
+    /**
+     * Export reports (placeholder for Excel/PDF generation)
+     */
+    public function exportReports(Request $request)
+    {
+        // This would use Laravel Excel or DomPDF for actual exports
+        // For now, return a simple CSV-style download
+
+        $tab = $request->tab ?? 'pharm-dispensing-tab';
+        $format = $request->format ?? 'excel';
+
+        // TODO: Implement actual export logic based on tab and format
+        return response()->json([
+            'message' => 'Export functionality coming soon',
+            'tab' => $tab,
+            'format' => $format
+        ]);
+    }
+
+    /**
+     * Helper: Apply common report filters to query
+     */
+    private function applyReportFilters($query, Request $request)
+    {
+        if ($request->date_from) {
+            $query->whereDate('updated_at', '>=', $request->date_from);
+        }
+        if ($request->date_to) {
+            $query->whereDate('updated_at', '<=', $request->date_to);
+        }
+        if ($request->status) {
+            $query->where('status', $request->status);
+        }
+        if ($request->store_id) {
+            $query->where('store_id', $request->store_id);
+        }
+        if ($request->pharmacist_id) {
+            $query->where('dispensed_by', $request->pharmacist_id);
+        }
+
+        return $query;
+    }
+
+    /**
+     * Helper: Get trend data for charts
+     */
+    private function getTrendData(Request $request)
+    {
+        $dateFrom = $request->date_from ?? Carbon::now()->subDays(7)->format('Y-m-d');
+        $dateTo = $request->date_to ?? Carbon::now()->format('Y-m-d');
+
+        return DB::table('product_requests as pr')
+            ->leftJoin('products as p', 'pr.product_id', '=', 'p.id')
+            ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
+            ->where('pr.status', 3)
+            ->whereNull('pr.deleted_at')
+            ->whereDate('pr.updated_at', '>=', $dateFrom)
+            ->whereDate('pr.updated_at', '<=', $dateTo)
+            ->selectRaw("
+                DATE(pr.updated_at) as date,
+                COUNT(pr.id) as items,
+                SUM(pr.qty * COALESCE(pp.current_sale_price, 0)) as revenue
+            ")
+            ->groupBy(DB::raw('DATE(pr.updated_at)'))
+            ->orderBy('date')
+            ->get();
+    }
+
+    /**
+     * Helper: Get revenue breakdown by payment type
+     */
+    private function getRevenueBreakdownData(Request $request)
+    {
+        $query = DB::table('product_requests as pr')
+            ->join('product_or_service_requests as posr', 'pr.product_request_id', '=', 'posr.id')
+            ->leftJoin('payments as pay', 'posr.payment_id', '=', 'pay.id')
+            ->leftJoin('products as p', 'pr.product_id', '=', 'p.id')
+            ->leftJoin('prices as pp', 'p.id', '=', 'pp.product_id')
+            ->where('pr.status', 3)
+            ->whereNull('pr.deleted_at');
+
+        if ($request->date_from) {
+            $query->whereDate('pr.updated_at', '>=', $request->date_from);
+        }
+        if ($request->date_to) {
+            $query->whereDate('pr.updated_at', '<=', $request->date_to);
+        }
+
+        $breakdown = $query->selectRaw("
+                SUM(CASE WHEN pay.payment_type = 'CASH' THEN pr.qty * COALESCE(pp.current_sale_price, 0) ELSE 0 END) as cash,
+                SUM(CASE WHEN pay.payment_type = 'CARD' THEN pr.qty * COALESCE(pp.current_sale_price, 0) ELSE 0 END) as card,
+                SUM(CASE WHEN pay.payment_type = 'TRANSFER' THEN pr.qty * COALESCE(pp.current_sale_price, 0) ELSE 0 END) as transfer,
+                SUM(CASE WHEN pay.payment_type = 'HMO' OR pay.hmo_id IS NOT NULL THEN pr.qty * COALESCE(pp.current_sale_price, 0) ELSE 0 END) as hmo,
+                SUM(CASE WHEN pay.payment_type = 'ACCOUNT' THEN pr.qty * COALESCE(pp.current_sale_price, 0) ELSE 0 END) as account
+            ")
+            ->first();
+
+        return [
+            'cash' => $breakdown->cash ?? 0,
+            'card' => $breakdown->card ?? 0,
+            'transfer' => $breakdown->transfer ?? 0,
+            'hmo' => $breakdown->hmo ?? 0,
+            'account' => $breakdown->account ?? 0
+        ];
+    }
 }
+

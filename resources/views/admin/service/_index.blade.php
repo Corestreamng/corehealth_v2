@@ -29,7 +29,7 @@
 
 		    {{-- @include('admin.layouts.partials.infoBox') --}}
 
-		    <div modern">
+		    <div class="card-modern">
 	            <div class="card-header">
 	              <h3 class="card-title">Data Table With Full Features</h3>
 	            </div>

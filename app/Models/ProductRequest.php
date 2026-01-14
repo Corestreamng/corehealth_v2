@@ -18,11 +18,13 @@ protected $fillable = [
         'billed_date',
         'dispensed_by',
         'dispense_date',
+        'dispensed_from_store_id',
         'product_id',
         'encounter_id',
         'patient_id',
         'doctor_id',
         'dose',
+        'qty',
         'status',
         'deleted_by',
         'deletion_reason'
@@ -61,5 +63,13 @@ protected $fillable = [
     public function dispenser()
     {
         return $this->belongsTo(User::class, 'dispensed_by', 'id');
+    }
+
+    /**
+     * Get the store from which this item was dispensed.
+     */
+    public function dispensedFromStore()
+    {
+        return $this->belongsTo(Store::class, 'dispensed_from_store_id', 'id');
     }
 }
