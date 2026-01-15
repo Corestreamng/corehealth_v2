@@ -11,7 +11,7 @@ $app = require_once __DIR__ . '/bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
-use App\Models\Patient;
+use App\Models\patient;
 use OwenIt\Auditing\Models\Audit;
 
 echo "Testing Laravel Auditing Integration...\n\n";

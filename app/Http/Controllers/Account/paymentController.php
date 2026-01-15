@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Account;
 use App\Http\Controllers\Controller;
 use App\Models\invoice as in;
 use App\Models\patient;
-use App\Models\PatientAccount;
+use App\Models\patientAccount;
 use App\Models\payment;
 use App\Models\Product;
 use App\Models\ProductOrServiceRequest;
@@ -125,7 +125,7 @@ class paymentController extends Controller
 
             // deduct from acc bal if user is paying from acc
             if (strtolower($request->payment_type) == strtolower('ACC_WITHDRAW')) {
-                $acc = \App\Models\PatientAccount::where('patient_id', $request->patient_id)->first();
+                $acc = \App\Models\patientAccount::where('patient_id', $request->patient_id)->first();
                 $new_bal = $acc->balance - $request->total;
                 $acc->update([
                     'balance' => $new_bal,
