@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\serviceProvider;
+use Illuminate\Support\ServiceProvider;
 use App\Models\Product;
 use App\Models\service;
 use App\Models\Hmo;
