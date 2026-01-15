@@ -23,7 +23,7 @@ use App\Http\Controllers\MiscBillController;
 use App\Http\Controllers\MoveStockController;
 use App\Http\Controllers\NursingNoteController;
 use App\Http\Controllers\NursingNoteTypeController;
-use App\Http\Controllers\patientAccountController;
+use App\Http\Controllers\PatientAccountController;
 use App\Http\Controllers\patientController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PriceController;
