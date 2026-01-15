@@ -12,7 +12,7 @@ use App\Models\HmoTariff;
 use App\Models\ImagingServiceRequest;
 use App\Models\LabServiceRequest;
 use App\Models\patient;
-use App\Models\patientAccount;
+use App\Models\PatientAccount;
 use App\Models\Product;
 use App\Models\ProductOrServiceRequest;
 use App\Models\ProductRequest;

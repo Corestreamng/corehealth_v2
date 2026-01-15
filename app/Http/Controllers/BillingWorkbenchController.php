@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\patient;
 use App\Models\ProductOrServiceRequest;
 use App\Models\payment;
-use App\Models\patientAccount;
+use App\Models\PatientAccount;
 use App\Models\HmoClaim;
 use App\Models\Hmo;
 use Carbon\Carbon;
