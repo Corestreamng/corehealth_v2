@@ -37,10 +37,139 @@
     }
 
     .schedule-slot:hover {
-        transform: scale(1.1);
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        transform: scale(1.05);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        z-index: 10;
     }
 
+    /* Calendar Grid Layout */
+    .calendar-weekday-header {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 1px;
+        background-color: #dee2e6;
+        border: 1px solid #dee2e6;
+        border-bottom: none;
+    }
+
+    .weekday-name {
+        background-color: #f8f9fa;
+        padding: 10px 8px;
+        text-align: center;
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #495057;
+    }
+
+    .medication-calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 1px;
+        background-color: #dee2e6;
+        border: 1px solid #dee2e6;
+    }
+
+    .calendar-day-cell {
+        background-color: white;
+        padding: 8px;
+        min-height: 100px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .calendar-day-header {
+        font-weight: 600;
+        font-size: 0.7rem;
+        color: #888;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+        padding-bottom: 4px;
+        border-bottom: 1px solid #e0e0e0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .calendar-day-date {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #333;
+    }
+
+    .calendar-schedules {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-top: 4px;
+        overflow-y: auto;
+        max-height: 120px;
+    }
+
+    .calendar-schedule-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .calendar-schedule-item .schedule-slot {
+        font-size: 0.7rem;
+        padding: 3px 6px;
+        flex: 1;
+    }
+
+    .calendar-schedule-item .remove-schedule-btn {
+        padding: 2px 4px;
+        font-size: 0.6rem;
+        line-height: 1;
+        flex-shrink: 0;
+    }
+
+    .calendar-day-cell.today {
+        background-color: #e3f2fd;
+        border: 2px solid #2196F3;
+    }
+
+    .calendar-day-cell.today .calendar-day-date {
+        color: #1976D2;
+    }
+
+    .calendar-day-cell.weekend {
+        background-color: #fff9f0;
+    }
+
+    .calendar-day-cell.past-date {
+        opacity: 0.7;
+        background-color: #fafafa;
+    }
+
+    .calendar-day-cell.empty-day {
+        background-color: #f5f5f5;
+        opacity: 0.5;
+        min-height: 60px;
+    }
+
+    /* Legend styling */
+    #calendar-legend .badge {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.7rem;
+        font-weight: 500;
+    }
+
+    /* Card modern enhancements */
+    .card-modern {
+        border: none;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .card-modern .card-header {
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    /* Responsive adjustments */
     @media (max-width: 992px) {
         .date-range-group {
             margin-top: 0.5rem;
@@ -50,6 +179,49 @@
         .date-range-group .form-control {
             flex: 1;
             min-width: 0;
+        }
+
+        .medication-calendar-grid {
+            grid-template-columns: repeat(7, minmax(60px, 1fr));
+            font-size: 0.75rem;
+        }
+
+        .calendar-day-cell {
+            min-height: 80px;
+            padding: 4px;
+        }
+
+        .calendar-day-header {
+            font-size: 0.6rem;
+        }
+
+        .calendar-day-date {
+            font-size: 0.85rem;
+        }
+
+        .calendar-schedule-item .schedule-slot {
+            font-size: 0.6rem;
+            padding: 2px 4px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .medication-calendar-grid {
+            grid-template-columns: repeat(7, minmax(40px, 1fr));
+        }
+
+        .calendar-day-cell {
+            min-height: 60px;
+            padding: 2px;
+        }
+
+        .weekday-name {
+            font-size: 0.65rem;
+            padding: 6px 2px;
+        }
+
+        .calendar-schedule-item .schedule-slot i {
+            display: none;
         }
     }
 </style>
@@ -141,24 +313,14 @@
 
     <!-- Calendar View -->
     <div id="medication-calendar" class="mb-4" style="display:none;">
-        <div modern shadow-sm">
+        <div class="card-modern shadow-sm">
             <div class="card-header bg-light py-2">
                 <h6 id="calendar-title" class="card-title mb-0 text-center fw-bold"></h6>
             </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-bordered table-striped table-sm mb-0">
-                        <thead>
-                            <tr class="bg-light">
-                                <th style="width: 60px;" class="text-center">Day</th>
-                                <th style="width: 120px;">Date</th>
-                                <th>Schedule</th>
-                            </tr>
-                        </thead>
-                        <tbody id="calendar-body">
-                            <!-- Will be populated via JavaScript -->
-                        </tbody>
-                    </table>
+            <div class="card-body p-2">
+                <!-- Calendar Container - weekday header + grid will be rendered here -->
+                <div id="calendar-container">
+                    <!-- Will be populated via JavaScript -->
                 </div>
             </div>
         </div>
@@ -279,20 +441,43 @@
         <div class="modal-dialog modal-dialog-centered">
             <form id="administerForm">
                 <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="administerModalLabel">Administer Medication</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                            aria-label="Close">x</button>
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title" id="administerModalLabel"><i class="mdi mdi-needle"></i> Administer Medication</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <input type="hidden" id="administer_schedule_id" name="schedule_id">
+                        <input type="hidden" id="administer_product_id" name="product_id">
 
                         <div class="mb-3">
-                            <label id="administer-medication-info" class="form-label fw-bold"></label>
+                            <label id="administer-medication-info" class="form-label fw-bold text-primary"></label>
                         </div>
 
                         <div class="mb-3">
                             <label id="administer-scheduled-time" class="form-label text-muted"></label>
+                        </div>
+
+                        <!-- Store Selection with Stock Display -->
+                        <div class="mb-3 p-3 rounded" style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border: 2px solid #81c784;">
+                            <label for="administer_store_id" class="form-label fw-bold">
+                                <i class="mdi mdi-store text-success"></i> Select Dispensing Store <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="administer_store_id" name="store_id" required>
+                                <option value="">-- Choose Store --</option>
+                                @foreach($stores ?? [] as $store)
+                                    <option value="{{ $store->id }}">{{ $store->store_name }}</option>
+                                @endforeach
+                            </select>
+                            <div id="administer-stock-info" class="mt-2 p-2 bg-white rounded shadow-sm" style="display: none;">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <span class="small text-muted"><i class="mdi mdi-package-variant"></i> Available Stock:</span>
+                                    <span id="administer-stock-qty" class="badge bg-secondary">--</span>
+                                </div>
+                            </div>
+                            <div id="administer-stock-warning" class="alert alert-danger mt-2 py-2 small" style="display: none;">
+                                <i class="mdi mdi-alert-circle"></i> <span id="administer-stock-warning-text">Insufficient stock!</span>
+                            </div>
                         </div>
 
                         <div class="mb-3">
@@ -328,7 +513,10 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-success">Confirm Administration</button>
+                        <button type="submit" class="btn btn-success" id="administerSubmitBtn">
+                            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                            <i class="mdi mdi-check"></i> Confirm Administration
+                        </button>
                     </div>
                 </div>
             </form>
@@ -460,8 +648,8 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="edit_note" class="form-label">Notes</label>
-                            <textarea class="form-control" id="edit_note" name="note" rows="2"></textarea>
+                            <label for="edit_comment" class="form-label">Notes</label>
+                            <textarea class="form-control" id="edit_comment" name="comment" rows="2"></textarea>
                         </div>
 
                         <div class="mb-3">

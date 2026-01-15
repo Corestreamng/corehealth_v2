@@ -2686,36 +2686,36 @@
         <div class="search-container" style="position: relative;">
             <input type="text"
                    id="patient-search-input"
-                   placeholder="🔍 Search patient name or file no..."
+                   placeholder="≡ƒöì Search patient name or file no..."
                    autocomplete="off">
             <div class="search-results" id="patient-search-results"></div>
         </div>
 
         <div class="queue-widget">
-            <h6>📋 PATIENT QUEUES</h6>
+            <h6>≡ƒôï PATIENT QUEUES</h6>
             <div class="queue-item" data-filter="admitted">
-                <span class="queue-item-label">🛏️ Admitted Patients</span>
+                <span class="queue-item-label">≡ƒ¢Å∩╕Å Admitted Patients</span>
                 <span class="queue-count billing" id="queue-admitted-count">0</span>
             </div>
             <div class="queue-item" data-filter="vitals">
-                <span class="queue-item-label">💉 Vitals Queue</span>
+                <span class="queue-item-label">≡ƒÆë Vitals Queue</span>
                 <span class="queue-count sample" id="queue-vitals-count">0</span>
             </div>
             <div class="queue-item" data-filter="bed-requests">
-                <span class="queue-item-label">🛏️ Bed Requests</span>
+                <span class="queue-item-label">≡ƒ¢Å∩╕Å Bed Requests</span>
                 <span class="queue-count info" id="queue-bed-count">0</span>
             </div>
             <div class="queue-item" data-filter="medication-due">
-                <span class="queue-item-label">💊 Medication Due</span>
+                <span class="queue-item-label">≡ƒÆè Medication Due</span>
                 <span class="queue-count results" id="queue-medication-count">0</span>
             </div>
             <button class="btn-queue-all" id="refresh-queues-btn">
-                🔄 Refresh Queues
+                ≡ƒöä Refresh Queues
             </button>
         </div>
 
         <div class="quick-actions">
-            <h6>⚡ QUICK ACTIONS</h6>
+            <h6>ΓÜí QUICK ACTIONS</h6>
 
             <!-- Ward & Bed Management -->
             <button class="quick-action-btn" id="btn-ward-dashboard">
@@ -2779,7 +2779,7 @@
             <h3>Select a patient to begin</h3>
             <p>Use the search box or select from patient queues</p>
             <button class="btn btn-lg btn-primary" id="view-queue-btn">
-                📋 View All Pending Requests
+                ≡ƒôï View All Pending Requests
             </button>
         </div>
 
@@ -4257,7 +4257,7 @@
                                             <tfoot>
                                                 <tr class="bg-light">
                                                     <td colspan="4" class="text-right"><strong>Total:</strong></td>
-                                                    <td id="injection-total-price"><strong>₦0.00</strong></td>
+                                                    <td id="injection-total-price"><strong>Γéª0.00</strong></td>
                                                     <td id="injection-total-coverage">-</td>
                                                     <td colspan="2"></td>
                                                 </tr>
@@ -4542,7 +4542,7 @@
                                             <br><small id="modal-selected-product-stock" class="text-success"></small>
                                         </div>
                                         <div class="text-right">
-                                            <span class="badge badge-primary" id="modal-selected-product-price">₦0.00</span>
+                                            <span class="badge badge-primary" id="modal-selected-product-price">Γéª0.00</span>
                                             <button type="button" class="btn btn-sm btn-outline-danger ml-2" id="modal-remove-product">
                                                 <i class="mdi mdi-close"></i>
                                             </button>
@@ -4924,7 +4924,7 @@
                             <input type="text" class="form-control" id="edit-blood-pressure" placeholder="e.g., 120/80">
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="edit-temp" class="form-label"><i class="mdi mdi-thermometer text-warning"></i> Temperature (°C)</label>
+                            <label for="edit-temp" class="form-label"><i class="mdi mdi-thermometer text-warning"></i> Temperature (┬░C)</label>
                             <input type="number" step="0.1" class="form-control" id="edit-temp" placeholder="e.g., 36.5">
                         </div>
                         <div class="col-md-6 mb-3">
@@ -5285,9 +5285,9 @@
                                 <label for="shift-type-select">Shift Type</label>
                                 <select class="form-control" id="shift-type-select">
                                     <option value="">Auto-detect</option>
-                                    <option value="morning">🌅 Morning (6AM - 2PM)</option>
-                                    <option value="afternoon">☀️ Afternoon (2PM - 10PM)</option>
-                                    <option value="night">🌙 Night (10PM - 6AM)</option>
+                                    <option value="morning">≡ƒîà Morning (6AM - 2PM)</option>
+                                    <option value="afternoon">ΓÿÇ∩╕Å Afternoon (2PM - 10PM)</option>
+                                    <option value="night">≡ƒîÖ Night (10PM - 6AM)</option>
                                 </select>
                                 <small class="text-muted">Leave blank to auto-detect based on current time</small>
                             </div>
@@ -5490,9 +5490,9 @@
                             </label>
                             <select class="form-control form-control-modern" id="handover-filter-shift">
                                 <option value="">All Shifts</option>
-                                <option value="morning">🌅 Morning (6AM - 2PM)</option>
-                                <option value="afternoon">☀️ Afternoon (2PM - 10PM)</option>
-                                <option value="night">🌙 Night (10PM - 6AM)</option>
+                                <option value="morning">≡ƒîà Morning (6AM - 2PM)</option>
+                                <option value="afternoon">ΓÿÇ∩╕Å Afternoon (2PM - 10PM)</option>
+                                <option value="night">≡ƒîÖ Night (10PM - 6AM)</option>
                             </select>
                         </div>
                         <div class="col-md-3">
@@ -5518,8 +5518,8 @@
                                 </label>
                                 <select class="form-control form-control-modern" id="handover-filter-status">
                                     <option value="">All Status</option>
-                                    <option value="pending">⏳ Pending</option>
-                                    <option value="acknowledged">✅ Acknowledged</option>
+                                    <option value="pending">ΓÅ│ Pending</option>
+                                    <option value="acknowledged">Γ£à Acknowledged</option>
                                 </select>
                             </div>
                             <div class="col-md-2">
@@ -5528,8 +5528,8 @@
                                 </label>
                                 <select class="form-control form-control-modern" id="handover-filter-priority">
                                     <option value="">All Priority</option>
-                                    <option value="critical">🔴 Critical Only</option>
-                                    <option value="has_tasks">📋 Has Pending Tasks</option>
+                                    <option value="critical">≡ƒö┤ Critical Only</option>
+                                    <option value="has_tasks">≡ƒôï Has Pending Tasks</option>
                                 </select>
                             </div>
                             <div class="col-md-2">
@@ -6265,11 +6265,11 @@ function showQueue(filter) {
 
     // Update queue title based on filter type
     const titles = {
-        'admitted': '🛏️ Admitted Patients',
-        'vitals': '💉 Vitals Queue',
-        'bed-requests': '🛏️ Bed Requests',
-        'medication-due': '💊 Medication Due',
-        'all': '📋 All Patients'
+        'admitted': '≡ƒ¢Å∩╕Å Admitted Patients',
+        'vitals': '≡ƒÆë Vitals Queue',
+        'bed-requests': '≡ƒ¢Å∩╕Å Bed Requests',
+        'medication-due': '≡ƒÆè Medication Due',
+        'all': '≡ƒôï All Patients'
     };
     $('#queue-view-title').html(`<i class="mdi mdi-format-list-bulleted"></i> ${titles[filter] || titles['admitted']}`);
 
@@ -7282,9 +7282,9 @@ function displayVitals(vitals) {
                         </div>
                         <div class="vital-entry-grid">
                             <div class="vital-item ${getTempClass(temp)}"
-                                 onmouseenter="showVitalTooltip(event, 'temperature', '${temp}', '34°C - 39°C')">
+                                 onmouseenter="showVitalTooltip(event, 'temperature', '${temp}', '34┬░C - 39┬░C')">
                                 <i class="mdi mdi-thermometer"></i>
-                                <span class="vital-value">${temp}°C</span>
+                                <span class="vital-value">${temp}┬░C</span>
                                 <span class="vital-label">Temp</span>
                             </div>
                             <div class="vital-item ${getHeartRateClass(heartRate)}"
@@ -7320,7 +7320,7 @@ function displayVitals(vitals) {
             $wrapper.find('.show-all-link').remove();
             $wrapper.append(`
                 <a href="/patients/show/${currentPatient}?section=vitalsCardBody" target="_blank" class="show-all-link">
-                    Show All Vitals →
+                    Show All Vitals ΓåÆ
                 </a>
             `);
         }
@@ -7471,7 +7471,7 @@ function displayNotes(notes) {
             $wrapper.find('.show-all-link').remove();
             $wrapper.append(`
                 <a href="/patients/show/${currentPatient}?section=encountersCardBody" target="_blank" class="show-all-link">
-                    Show All Notes →
+                    Show All Notes ΓåÆ
                 </a>
             `);
         }
@@ -7699,7 +7699,7 @@ function loadUserPreferences() {
     const clinicalVisible = localStorage.getItem('clinicalPanelVisible') === 'true';
     if (clinicalVisible) {
         $('#right-panel').addClass('active');
-        $('#toggle-clinical-btn').html('📊 Clinical Context ×');
+        $('#toggle-clinical-btn').html('≡ƒôè Clinical Context ├ù');
     }
 }
 
@@ -8454,7 +8454,7 @@ function showVitalTooltip(event, vitalType, value, normalRange) {
         const temp = parseFloat(value);
         const idealTemp = 37.0;
         const diff = Math.abs(temp - idealTemp);
-        deviation = temp > idealTemp ? `+${diff.toFixed(1)}°C above ideal` : `-${diff.toFixed(1)}°C below ideal`;
+        deviation = temp > idealTemp ? `+${diff.toFixed(1)}┬░C above ideal` : `-${diff.toFixed(1)}┬░C below ideal`;
         status = (temp >= 36.1 && temp <= 38.0) ? 'Normal' : 'Abnormal';
     } else if (vitalType === 'pulse' && value !== 'N/A') {
         const pulse = parseInt(value);
@@ -8516,7 +8516,7 @@ function displayAllergyAlert(alerts) {
 
     return `
         <div class="allergy-alert">
-            <div class="allergy-alert-icon">⚠️</div>
+            <div class="allergy-alert-icon">ΓÜá∩╕Å</div>
             <div>
                 <strong>ALLERGY WARNING!</strong><br>
                 ${allergyList}
@@ -8781,7 +8781,7 @@ function renderQueueCard(data) {
         <div class="queue-card-patient-meta">
             <div class="queue-card-patient-meta-item">
                 <i class="mdi mdi-account"></i>
-                <span>${data.age} • ${data.gender}</span>
+                <span>${data.age} ΓÇó ${data.gender}</span>
             </div>
             <div class="queue-card-patient-meta-item">
                 <i class="mdi mdi-card-account-details"></i>
@@ -9414,7 +9414,7 @@ const NursingReports = (function() {
                     { data: 'datetime', title: 'Date/Time' },
                     { data: 'patient_name', title: 'Patient' },
                     { data: 'file_no', title: 'File No' },
-                    { data: 'temp', title: 'Temp (°C)' },
+                    { data: 'temp', title: 'Temp (┬░C)' },
                     { data: 'blood_pressure', title: 'BP' },
                     { data: 'heart_rate', title: 'Pulse' },
                     { data: 'spo2', title: 'SpO2' },
@@ -10054,7 +10054,7 @@ function renderTopDoctors(doctors) {
             <tr>
                 <td><i class="mdi mdi-doctor mr-1"></i> ${docName}</td>
                 <td class="text-center"><span class="badge badge-pill badge-info">${doc.count}</span></td>
-                <td class="text-right">₦${parseFloat(doc.revenue).toLocaleString()}</td>
+                <td class="text-right">Γéª${parseFloat(doc.revenue).toLocaleString()}</td>
             </tr>
         `;
     });
@@ -10210,7 +10210,7 @@ function populateOverviewTab(data) {
             <table class="table table-sm mb-0">
                 <tr><th width="50%">BP:</th><td>${data.last_vitals.bp || 'N/A'}</td></tr>
                 <tr><th>Heart Rate:</th><td>${data.last_vitals.heart_rate || 'N/A'} bpm</td></tr>
-                <tr><th>Temp:</th><td>${data.last_vitals.temp || 'N/A'} °C</td></tr>
+                <tr><th>Temp:</th><td>${data.last_vitals.temp || 'N/A'} ┬░C</td></tr>
                 <tr><th>Resp Rate:</th><td>${data.last_vitals.resp_rate || 'N/A'} /min</td></tr>
                 <tr><th>Recorded:</th><td><small class="text-muted">${data.last_vitals.time || 'N/A'}</small></td></tr>
             </table>
@@ -10485,7 +10485,7 @@ $('#injection-drug-search').on('input', function() {
                     const mode = item.coverage_mode || 'cash';
 
                     const coverageBadge = mode && mode !== 'cash'
-                        ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ₦${payable}</span> <span class='text-success ms-1'>Claim: ₦${claims}</span>`
+                        ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: Γéª${payable}</span> <span class='text-success ms-1'>Claim: Γéª${claims}</span>`
                         : '';
 
                     const qtyClass = qty > 0 ? 'text-success' : 'text-danger';
@@ -10508,7 +10508,7 @@ $('#injection-drug-search').on('input', function() {
                                    </div>
                                    <div class="text-end">
                                        <div class="${qtyClass}"><strong>${qty}</strong> avail.</div>
-                                       <div>₦${price}</div>
+                                       <div>Γéª${price}</div>
                                    </div>
                                </div>
                                ${coverageBadge ? `<div class="small mt-1">${coverageBadge}</div>` : ''}
@@ -10564,7 +10564,7 @@ function addInjectionDrug(element) {
     }
 
     const coverageInfo = mode && mode !== 'cash'
-        ? `<span class="badge bg-info">${mode.toUpperCase()}</span><br><small class="text-danger">Pay: ₦${payable}</small><br><small class="text-success">Claim: ₦${claims}</small>`
+        ? `<span class="badge bg-info">${mode.toUpperCase()}</span><br><small class="text-danger">Pay: Γéª${payable}</small><br><small class="text-success">Claim: Γéª${claims}</small>`
         : '<span class="badge bg-secondary">Cash</span>';
 
     const row = `
@@ -10582,7 +10582,7 @@ function addInjectionDrug(element) {
             <td class="stock-cell">
                 <span class="text-muted"><i class="mdi mdi-loading mdi-spin"></i></span>
             </td>
-            <td>₦${payable.toFixed(2)}</td>
+            <td>Γéª${payable.toFixed(2)}</td>
             <td>${coverageInfo}</td>
             <td>
                 <input type="text" class="form-control form-control-sm"
@@ -10617,7 +10617,7 @@ function updateInjectionTotals() {
         const qty = parseInt($(this).find('.injection-qty').val()) || 1;
         total += price * qty;
     });
-    $('#injection-total-price').html(`<strong>₦${total.toFixed(2)}</strong>`);
+    $('#injection-total-price').html(`<strong>Γéª${total.toFixed(2)}</strong>`);
 }
 
 // Recalculate on qty change and clear validation
@@ -11052,7 +11052,7 @@ $('#vaccine-drug-search').on('input', function() {
                     const mode = item.coverage_mode || 'cash';
 
                     const coverageBadge = mode && mode !== 'cash'
-                        ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ₦${payable}</span> <span class='text-success ms-1'>Claim: ₦${claims}</span>`
+                        ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: Γéª${payable}</span> <span class='text-success ms-1'>Claim: Γéª${claims}</span>`
                         : '';
 
                     const qtyClass = qty > 0 ? 'text-success' : 'text-danger';
@@ -11075,7 +11075,7 @@ $('#vaccine-drug-search').on('input', function() {
                                    </div>
                                    <div class="text-end">
                                        <div class="${qtyClass}"><strong>${qty}</strong> avail.</div>
-                                       <div>₦${price}</div>
+                                       <div>Γéª${price}</div>
                                    </div>
                                </div>
                                ${coverageBadge ? `<div class="small mt-1">${coverageBadge}</div>` : ''}
@@ -11113,7 +11113,7 @@ function addVaccineDrug(element) {
     }
 
     const coverageInfo = mode && mode !== 'cash'
-        ? `<span class="badge bg-info">${mode.toUpperCase()}</span><br><small class="text-danger">Pay: ₦${payable}</small><br><small class="text-success">Claim: ₦${claims}</small>`
+        ? `<span class="badge bg-info">${mode.toUpperCase()}</span><br><small class="text-danger">Pay: Γéª${payable}</small><br><small class="text-success">Claim: Γéª${claims}</small>`
         : '<span class="badge bg-secondary">Cash</span>';
 
     const row = `
@@ -11129,7 +11129,7 @@ function addVaccineDrug(element) {
                        name="vaccine_qty[]" value="1" min="1" max="${qty}" style="width: 70px;">
                 <small class="text-muted">${qty} avail.</small>
             </td>
-            <td>₦${payable.toFixed(2)}</td>
+            <td>Γéª${payable.toFixed(2)}</td>
             <td>${coverageInfo}</td>
             <td>
                 <input type="text" class="form-control form-control-sm"
@@ -11163,7 +11163,7 @@ function updateVaccineTotals() {
         const qty = parseInt($(this).find('.vaccine-qty').val()) || 1;
         total += price * qty;
     });
-    $('#vaccine-total-price').html(`<strong>₦${total.toFixed(2)}</strong>`);
+    $('#vaccine-total-price').html(`<strong>Γéª${total.toFixed(2)}</strong>`);
 }
 
 // Recalculate on qty change
@@ -11740,12 +11740,12 @@ function selectModalProduct(element) {
     `);
 
     // Show price with HMO info if applicable
-    let priceHtml = `₦${parseFloat(product.price).toLocaleString()}`;
+    let priceHtml = `Γéª${parseFloat(product.price).toLocaleString()}`;
     if (product.mode && product.mode !== 'cash') {
         priceHtml = `
             <span class="badge badge-info mr-1">${product.mode.toUpperCase()}</span>
-            <span class="text-danger">Pay: ₦${parseFloat(product.payable).toLocaleString()}</span>
-            <span class="text-success ml-1">Claim: ₦${parseFloat(product.claims).toLocaleString()}</span>
+            <span class="text-danger">Pay: Γéª${parseFloat(product.payable).toLocaleString()}</span>
+            <span class="text-success ml-1">Claim: Γéª${parseFloat(product.claims).toLocaleString()}</span>
         `;
     }
     $('#modal-selected-product-price').html(priceHtml);
@@ -11801,7 +11801,7 @@ $('#modal-vaccine-search').on('input', function() {
                     const mode = item.coverage_mode || 'cash';
 
                     const coverageBadge = mode && mode !== 'cash'
-                        ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ₦${payable}</span> <span class='text-success ms-1'>Claim: ₦${claims}</span>`
+                        ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: Γéª${payable}</span> <span class='text-success ms-1'>Claim: Γéª${claims}</span>`
                         : '';
 
                     const qtyClass = qty > 0 ? 'text-success' : 'text-danger';
@@ -11824,7 +11824,7 @@ $('#modal-vaccine-search').on('input', function() {
                                    </div>
                                    <div class="text-end">
                                        <div class="${qtyClass}"><strong>${qty}</strong> avail.</div>
-                                       <div>₦${price}</div>
+                                       <div>Γéª${price}</div>
                                    </div>
                                </div>
                                ${coverageBadge ? `<div class="small mt-1">${coverageBadge}</div>` : ''}
@@ -12185,7 +12185,7 @@ $('#service-search').on('input', function() {
             results.forEach(service => {
                 html += `<li class="list-group-item list-group-item-action" onclick="selectService(${service.id}, '${service.name.replace(/'/g, "\\'")}', '${service.price || 0}')">
                     <strong>${service.name}</strong><br>
-                    <small class="text-muted">₦${service.price || 'N/A'}</small>
+                    <small class="text-muted">Γéª${service.price || 'N/A'}</small>
                 </li>`;
             });
             $('#service-search-results').html(html).show();
@@ -12196,7 +12196,7 @@ $('#service-search').on('input', function() {
 function selectService(id, name, price) {
     $('#service-id').val(id);
     $('#service-search').val(name);
-    $('#service-price').val('₦' + price);
+    $('#service-price').val('Γéª' + price);
     $('#service-search-results').hide();
 }
 
@@ -12221,7 +12221,7 @@ $('#consumable-search').on('input', function() {
                     <strong>${product.name}</strong>
                     <span class="badge bg-secondary float-right">[${product.code || 'N/A'}]</span>
                     <br>
-                    <small class="text-muted">₦${product.price || 'N/A'}/unit</small>
+                    <small class="text-muted">Γéª${product.price || 'N/A'}/unit</small>
                 </li>`;
             });
             $('#consumable-search-results').html(html).show();
@@ -12265,7 +12265,7 @@ $('#consumable-quantity').on('input', function() {
 function updateConsumablePrice(unitPrice) {
     const quantity = $('#consumable-quantity').val() || 1;
     const total = unitPrice * quantity;
-    $('#consumable-price').val('₦' + total.toFixed(2));
+    $('#consumable-price').val('Γéª' + total.toFixed(2));
     $('#consumable-quantity').data('unit-price', unitPrice);
 }
 
@@ -12407,9 +12407,9 @@ function loadPendingBills(patientId) {
             {
                 data: 'payable_amount',
                 render: function(data, type, row) {
-                    let html = `₦${parseFloat(data || 0).toFixed(2)}`;
+                    let html = `Γéª${parseFloat(data || 0).toFixed(2)}`;
                     if (row.claims_amount > 0) {
-                        html += `<br><small class="text-success">Claims: ₦${parseFloat(row.claims_amount).toFixed(2)}</small>`;
+                        html += `<br><small class="text-success">Claims: Γéª${parseFloat(row.claims_amount).toFixed(2)}</small>`;
                     }
                     return html;
                 }
@@ -13120,17 +13120,40 @@ function renderCalendarView(medication, schedules, administrations, period) {
         days.push(new Date(d));
     }
 
-    let calendarHtml = '';
+    // Build weekday header
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    let headerHtml = '<div class="calendar-weekday-header">';
+    weekdays.forEach(day => {
+        headerHtml += `<div class="weekday-name">${day}</div>`;
+    });
+    headerHtml += '</div>';
 
+    // Build calendar grid
+    let gridHtml = '<div class="medication-calendar-grid">';
+
+    // Add empty cells for padding to align first day with correct weekday
+    const firstDayOfWeek = days.length > 0 ? days[0].getDay() : 0;
+    for (let i = 0; i < firstDayOfWeek; i++) {
+        gridHtml += '<div class="calendar-day-cell empty-day"></div>';
+    }
+
+    // Add day cells
     days.forEach((day) => {
         const isToday = day.toDateString() === today.toDateString();
-        const rowClass = isToday ? 'table-info' : '';
+        const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+        const isPast = day < today;
 
-        calendarHtml += `
-            <tr class="${rowClass}">
-                <td class="text-center">${getDayOfWeek(day)}</td>
-                <td>${formatDate(day)}</td>
-                <td><div class="d-flex flex-wrap schedule-slots" data-date="${formatDateForApi(day)}">`;
+        let cellClasses = 'calendar-day-cell';
+        if (isToday) cellClasses += ' today';
+        if (isWeekend) cellClasses += ' weekend';
+        if (isPast && !isToday) cellClasses += ' past-date';
+
+        gridHtml += `<div class="${cellClasses}" data-date="${formatDateForApi(day)}">`;
+        gridHtml += `<div class="calendar-day-header">`;
+        gridHtml += `<span>${getDayOfWeek(day)}</span>`;
+        gridHtml += `<span class="calendar-day-date">${day.getDate()}</span>`;
+        gridHtml += `</div>`;
+        gridHtml += `<div class="calendar-schedules">`;
 
         const daySchedules = schedules.filter(s => {
             const scheduleDate = new Date(s.scheduled_time);
@@ -13138,7 +13161,7 @@ function renderCalendarView(medication, schedules, administrations, period) {
         });
 
         if (daySchedules.length === 0) {
-            calendarHtml += `<span class="text-muted small">No schedules</span>`;
+            gridHtml += `<span class="text-muted small fst-italic">No schedules</span>`;
         } else {
             daySchedules.forEach(schedule => {
                 const scheduleTime = new Date(schedule.scheduled_time);
@@ -13184,17 +13207,29 @@ function renderCalendarView(medication, schedules, administrations, period) {
 
                 let removeBtn = '';
                 if (!admin && !isDiscontinued) {
-                    removeBtn = `<button class='btn btn-sm btn-outline-danger ms-1 remove-schedule-btn' data-schedule-id='${schedule.id}' title='Remove schedule'><i class='mdi mdi-trash-can-outline'></i></button>`;
+                    removeBtn = `<button class='btn btn-sm btn-outline-danger remove-schedule-btn' data-schedule-id='${schedule.id}' title='Remove schedule'><i class='mdi mdi-trash-can-outline'></i></button>`;
                 }
 
-                calendarHtml += `<span class="schedule-slot badge ${badgeClass} rounded-pill me-1" ${adminAction} data-bs-toggle="tooltip" data-bs-html="true" data-bs-title="${tooltipContent}">${badgeContent}</span>${removeBtn}`;
+                gridHtml += `<div class="calendar-schedule-item">`;
+                gridHtml += `<span class="schedule-slot badge ${badgeClass}" ${adminAction} data-bs-toggle="tooltip" data-bs-html="true" data-bs-title="${tooltipContent}">${badgeContent}</span>`;
+                gridHtml += removeBtn;
+                gridHtml += `</div>`;
             });
         }
 
-        calendarHtml += `</div></td></tr>`;
+        gridHtml += `</div></div>`;
     });
 
-    $('#calendar-body').html(calendarHtml);
+    // Add trailing empty cells to complete the last week row
+    const lastDayOfWeek = days.length > 0 ? days[days.length - 1].getDay() : 6;
+    for (let i = lastDayOfWeek + 1; i < 7; i++) {
+        gridHtml += '<div class="calendar-day-cell empty-day"></div>';
+    }
+
+    gridHtml += '</div>';
+
+    // Output to container
+    $('#calendar-container').html(headerHtml + gridHtml);
 
     // Initialize tooltips
     $('.schedule-slot[data-bs-toggle="tooltip"]').tooltip('dispose');
@@ -13352,6 +13387,9 @@ $(document).on('submit', '#resumeForm', function(e) {
     });
 });
 
+// Store stock data cache for medication administration
+var administerStockData = null;
+
 // Administer modal population
 $(document).on('click', '[data-bs-target="#administerModal"]', function() {
     const scheduleId = $(this).data('schedule-id');
@@ -13359,37 +13397,356 @@ $(document).on('click', '[data-bs-target="#administerModal"]', function() {
 
     if (schedule) {
         $('#administer_schedule_id').val(scheduleId);
+        const med = medications.find(m => m.id == selectedMedication);
+        const productId = med?.product?.id || med?.product_id;
+        const productName = med?.product?.product_name || 'N/A';
+
+        $('#administer_product_id').val(productId);
+        $('#administer-medication-info').html(`<i class="mdi mdi-pill"></i> ${productName}`);
+
         const scheduledTime = new Date(schedule.scheduled_time);
-        $('#administer-medication-info').text(`Medication: ${medications.find(m => m.id == selectedMedication)?.product?.product_name || 'N/A'}`);
-        $('#administer-scheduled-time').text(`Scheduled: ${formatDateTime(scheduledTime)}`);
+        $('#administer-scheduled-time').html(`<i class="mdi mdi-clock-outline"></i> Scheduled: ${formatDateTime(scheduledTime)}`);
         $('#administered_at').val(new Date().toISOString().slice(0, 16));
         $('#administered_dose').val(schedule.dose);
         $('#administered_route').val(schedule.route);
         $('#administered_note').val('');
+
+        // Reset store selection and stock info
+        $('#administer_store_id').val('');
+        $('#administer-stock-info').hide();
+        $('#administer-stock-warning').hide();
+        administerStockData = null;
+
+        // Fetch product stock data
+        if (productId) {
+            fetchProductStockByStore(productId, function(stockData) {
+                administerStockData = stockData;
+                console.log('Stock data loaded for medication:', stockData);
+            });
+        }
     }
 });
 
-// Administer form submit
+// Store selection change - show stock for selected store
+$(document).on('change', '#administer_store_id', function() {
+    const storeId = $(this).val();
+    const $stockInfo = $('#administer-stock-info');
+    const $stockQty = $('#administer-stock-qty');
+    const $stockWarning = $('#administer-stock-warning');
+
+    if (!storeId) {
+        $stockInfo.hide();
+        $stockWarning.hide();
+        return;
+    }
+
+    $stockInfo.show();
+    $stockQty.removeClass('bg-success bg-warning bg-danger').addClass('bg-secondary').text('Loading...');
+
+    if (administerStockData && administerStockData.stores) {
+        const storeStock = administerStockData.stores.find(s => s.store_id == storeId);
+        const availableQty = storeStock ? storeStock.quantity : 0;
+
+        $stockQty.text(availableQty + ' units');
+
+        if (availableQty <= 0) {
+            $stockQty.removeClass('bg-secondary bg-success bg-warning').addClass('bg-danger');
+            $stockWarning.show();
+            $('#administer-stock-warning-text').text('No stock available in this store!');
+        } else if (availableQty < 5) {
+            $stockQty.removeClass('bg-secondary bg-success bg-danger').addClass('bg-warning');
+            $stockWarning.hide();
+        } else {
+            $stockQty.removeClass('bg-secondary bg-warning bg-danger').addClass('bg-success');
+            $stockWarning.hide();
+        }
+    } else {
+        // Fetch stock if not already loaded
+        const productId = $('#administer_product_id').val();
+        if (productId) {
+            fetchProductStockByStore(productId, function(stockData) {
+                administerStockData = stockData;
+                const storeStock = stockData.stores.find(s => s.store_id == storeId);
+                const availableQty = storeStock ? storeStock.quantity : 0;
+
+                $stockQty.text(availableQty + ' units');
+
+                if (availableQty <= 0) {
+                    $stockQty.removeClass('bg-secondary bg-success bg-warning').addClass('bg-danger');
+                    $stockWarning.show();
+                    $('#administer-stock-warning-text').text('No stock available in this store!');
+                } else if (availableQty < 5) {
+                    $stockQty.removeClass('bg-secondary bg-success bg-danger').addClass('bg-warning');
+                    $stockWarning.hide();
+                } else {
+                    $stockQty.removeClass('bg-secondary bg-warning bg-danger').addClass('bg-success');
+                    $stockWarning.hide();
+                }
+            });
+        }
+    }
+});
+
+// Administer form submit with stock validation
 $(document).on('submit', '#administerForm', function(e) {
     e.preventDefault();
 
+    const storeId = $('#administer_store_id').val();
+    const productId = $('#administer_product_id').val();
+
+    // Validate store selection
+    if (!storeId) {
+        toastr.error('Please select a dispensing store');
+        $('#administer_store_id').focus();
+        return;
+    }
+
+    const $btn = $('#administerSubmitBtn');
+    const originalBtnHtml = $btn.html();
+    $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Checking stock...');
+
+    // Check stock before submitting
+    const checkStock = function(callback) {
+        if (administerStockData && administerStockData.stores) {
+            const storeStock = administerStockData.stores.find(s => s.store_id == storeId);
+            const availableQty = storeStock ? storeStock.quantity : 0;
+            callback(availableQty);
+        } else if (productId) {
+            fetchProductStockByStore(productId, function(stockData) {
+                administerStockData = stockData;
+                const storeStock = stockData.stores.find(s => s.store_id == storeId);
+                const availableQty = storeStock ? storeStock.quantity : 0;
+                callback(availableQty);
+            });
+        } else {
+            callback(0);
+        }
+    };
+
+    checkStock(function(availableQty) {
+        if (availableQty <= 0) {
+            $btn.prop('disabled', false).html(originalBtnHtml);
+            toastr.error('Insufficient stock in selected store!');
+            $('#administer-stock-warning').show();
+            $('#administer-stock-warning-text').text('No stock available in this store!');
+            return;
+        }
+
+        // Stock OK - proceed with submission
+        $btn.html('<span class="spinner-border spinner-border-sm"></span> Administering...');
+
+        $.ajax({
+            url: medicationChartAdministerRoute,
+            type: 'POST',
+            data: $('#administerForm').serialize() + '&_token=' + CSRF_TOKEN,
+            success: function(response) {
+                $btn.prop('disabled', false).html(originalBtnHtml);
+                if (response.success) {
+                    toastr.success('Medication administered and stock deducted.');
+                    $('#administerModal').modal('hide');
+                    // Reset stock data to force refresh on next open
+                    administerStockData = null;
+                    if (selectedMedication) {
+                        loadMedicationCalendarWithDateRange(selectedMedication, $('#med-start-date').val(), $('#med-end-date').val());
+                    }
+                } else {
+                    toastr.error(response.message || 'Failed to administer.');
+                }
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false).html(originalBtnHtml);
+                const errorMsg = xhr.responseJSON?.message || xhr.responseJSON?.errors?.store_id?.[0] || 'Failed to administer.';
+                toastr.error(errorMsg);
+            }
+        });
+    });
+});
+
+// Administration Details Modal - show details when clicking administered badge
+$(document).on('click', '[data-bs-target="#adminDetailsModal"]', function() {
+    const adminId = $(this).data('admin-id');
+    const admin = currentAdministrations.find(a => a.id == adminId);
+
+    if (admin) {
+        const med = medications.find(m => m.id == selectedMedication);
+        const productName = med?.product?.product_name || 'Medication';
+        const adminTime = new Date(admin.administered_at);
+
+        let detailsHtml = `
+            <div class="mb-3">
+                <h6 class="text-primary fw-bold"><i class="mdi mdi-pill"></i> ${productName}</h6>
+            </div>
+            <table class="table table-sm table-borderless">
+                <tr>
+                    <td class="text-muted" width="40%"><i class="mdi mdi-clock-outline"></i> Administered At:</td>
+                    <td class="fw-bold">${formatDateTime(adminTime)}</td>
+                </tr>
+                <tr>
+                    <td class="text-muted"><i class="mdi mdi-medical-bag"></i> Dose:</td>
+                    <td class="fw-bold">${admin.dose || '-'}</td>
+                </tr>
+                <tr>
+                    <td class="text-muted"><i class="mdi mdi-routes"></i> Route:</td>
+                    <td class="fw-bold">${admin.route || '-'}</td>
+                </tr>
+                <tr>
+                    <td class="text-muted"><i class="mdi mdi-account"></i> Administered By:</td>
+                    <td class="fw-bold">${admin.administered_by_name || admin.administeredBy?.name || 'Unknown'}</td>
+                </tr>`;
+
+        if (admin.store_name) {
+            detailsHtml += `
+                <tr>
+                    <td class="text-muted"><i class="mdi mdi-store"></i> Dispensed From:</td>
+                    <td class="fw-bold">${admin.store_name}</td>
+                </tr>`;
+        }
+
+        if (admin.comment) {
+            detailsHtml += `
+                <tr>
+                    <td class="text-muted"><i class="mdi mdi-note-text"></i> Notes:</td>
+                    <td>${admin.comment}</td>
+                </tr>`;
+        }
+
+        if (admin.edited_at) {
+            detailsHtml += `
+                <tr class="table-info">
+                    <td class="text-muted"><i class="mdi mdi-pencil"></i> Edited At:</td>
+                    <td>${formatDateTime(new Date(admin.edited_at))}</td>
+                </tr>
+                <tr class="table-info">
+                    <td class="text-muted"><i class="mdi mdi-account-edit"></i> Edited By:</td>
+                    <td>${admin.edited_by_name || admin.editedBy?.name || '-'}</td>
+                </tr>`;
+        }
+
+        if (admin.deleted_at) {
+            detailsHtml += `
+                <tr class="table-danger">
+                    <td class="text-muted"><i class="mdi mdi-delete"></i> Deleted At:</td>
+                    <td>${formatDateTime(new Date(admin.deleted_at))}</td>
+                </tr>
+                <tr class="table-danger">
+                    <td class="text-muted"><i class="mdi mdi-account-remove"></i> Deleted By:</td>
+                    <td>${admin.deleted_by_name || admin.deletedBy?.name || '-'}</td>
+                </tr>`;
+        }
+
+        detailsHtml += '</table>';
+
+        $('#admin-details-content').html(detailsHtml);
+
+        // Store admin id for edit/delete buttons
+        $('#edit-admin-btn').data('admin-id', adminId);
+        $('#delete-admin-btn').data('admin-id', adminId);
+
+        // Show/hide edit/delete buttons based on status
+        if (admin.deleted_at) {
+            $('#edit-admin-btn, #delete-admin-btn').hide();
+        } else {
+            $('#edit-admin-btn, #delete-admin-btn').show();
+        }
+    } else {
+        $('#admin-details-content').html('<div class="alert alert-warning">Administration details not found.</div>');
+    }
+});
+
+// Edit administration button handler
+$(document).on('click', '#edit-admin-btn', function() {
+    const adminId = $(this).data('admin-id');
+    const admin = currentAdministrations.find(a => a.id == adminId);
+
+    if (admin) {
+        // Close details modal and open edit modal
+        $('#adminDetailsModal').modal('hide');
+
+        // Populate edit form
+        $('#edit_admin_id').val(adminId);
+        $('#edit_administered_at').val(admin.administered_at.replace(' ', 'T').slice(0, 16));
+        $('#edit_dose').val(admin.dose);
+        $('#edit_route').val(admin.route);
+        $('#edit_comment').val(admin.comment || '');
+        $('#edit_reason').val('');
+
+        $('#editAdminModal').modal('show');
+    }
+});
+
+// Delete administration button handler
+$(document).on('click', '#delete-admin-btn', function() {
+    const adminId = $(this).data('admin-id');
+
+    if (adminId) {
+        // Close details modal and open delete modal
+        $('#adminDetailsModal').modal('hide');
+
+        $('#delete_admin_id').val(adminId);
+        $('#delete_reason').val('');
+
+        $('#deleteAdminModal').modal('show');
+    }
+});
+
+// Edit Administration Form Submit
+$(document).on('submit', '#editAdminForm', function(e) {
+    e.preventDefault();
+
+    const $btn = $('#editAdminSubmitBtn');
+    const originalBtnHtml = $btn.html();
+    $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Saving...');
+
     $.ajax({
-        url: medicationChartAdministerRoute,
+        url: medicationChartEditRoute,
         type: 'POST',
         data: $(this).serialize() + '&_token=' + CSRF_TOKEN,
         success: function(response) {
+            $btn.prop('disabled', false).html(originalBtnHtml);
             if (response.success) {
-                toastr.success('Medication administered.');
-                $('#administerModal').modal('hide');
+                toastr.success('Administration updated successfully.');
+                $('#editAdminModal').modal('hide');
                 if (selectedMedication) {
                     loadMedicationCalendarWithDateRange(selectedMedication, $('#med-start-date').val(), $('#med-end-date').val());
                 }
             } else {
-                toastr.error(response.message || 'Failed to administer.');
+                toastr.error(response.message || 'Failed to update administration.');
             }
         },
         error: function(xhr) {
-            toastr.error(xhr.responseJSON?.message || 'Failed to administer.');
+            $btn.prop('disabled', false).html(originalBtnHtml);
+            toastr.error(xhr.responseJSON?.message || 'Failed to update administration.');
+        }
+    });
+});
+
+// Delete Administration Form Submit
+$(document).on('submit', '#deleteAdminForm', function(e) {
+    e.preventDefault();
+
+    const $btn = $('#deleteAdminSubmitBtn');
+    const originalBtnHtml = $btn.html();
+    $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Deleting...');
+
+    $.ajax({
+        url: medicationChartDeleteRoute,
+        type: 'POST',
+        data: $(this).serialize() + '&_token=' + CSRF_TOKEN,
+        success: function(response) {
+            $btn.prop('disabled', false).html(originalBtnHtml);
+            if (response.success) {
+                toastr.success('Administration deleted successfully.');
+                $('#deleteAdminModal').modal('hide');
+                if (selectedMedication) {
+                    loadMedicationCalendarWithDateRange(selectedMedication, $('#med-start-date').val(), $('#med-end-date').val());
+                }
+            } else {
+                toastr.error(response.message || 'Failed to delete administration.');
+            }
+        },
+        error: function(xhr) {
+            $btn.prop('disabled', false).html(originalBtnHtml);
+            toastr.error(xhr.responseJSON?.message || 'Failed to delete administration.');
         }
     });
 });
@@ -13578,7 +13935,7 @@ function renderSolidPeriods() {
                 const typeBadge = record.type === 'intake'
                     ? '<span class="badge bg-success">Intake</span>'
                     : '<span class="badge bg-danger">Output</span>';
-                const deleteBtn = record.can_delete 
+                const deleteBtn = record.can_delete
                     ? `<button class="btn btn-sm btn-outline-danger delete-io-record-btn" data-record-id="${record.id}" data-type="solid" title="Delete record"><i class="mdi mdi-delete"></i></button>`
                     : '';
                 recordsHtml += `
@@ -14320,7 +14677,7 @@ const ShiftManager = {
                             <div class="pending-handover-item ${h.has_critical_notes ? 'has-critical' : ''}">
                                 <div>
                                     <strong>${h.created_by_name}</strong>
-                                    <span class="text-muted">· ${h.created_at_ago}</span>
+                                    <span class="text-muted">┬╖ ${h.created_at_ago}</span>
                                     ${h.has_critical_notes ? '<span class="badge badge-danger ml-2">Critical</span>' : ''}
                                 </div>
                                 <span>${h.shift_type_badge}</span>
@@ -14356,7 +14713,7 @@ const ShiftManager = {
                             <div class="pending-handover-item ${h.has_critical_notes ? 'has-critical' : ''}">
                                 <div>
                                     <strong>${h.created_by_name}</strong>
-                                    <span class="text-muted">· ${h.created_at_ago}</span>
+                                    <span class="text-muted">┬╖ ${h.created_at_ago}</span>
                                     ${h.has_critical_notes ? '<span class="badge badge-danger ml-2">Critical</span>' : ''}
                                 </div>
                                 <span>${h.shift_type_badge}</span>
@@ -14451,7 +14808,7 @@ const ShiftManager = {
                         </div>
                     </div>
                     <div class="handover-ack-meta">
-                        <strong>${h.created_by_name}</strong> · ${h.created_at_ago}
+                        <strong>${h.created_by_name}</strong> ┬╖ ${h.created_at_ago}
                     </div>
                     <div class="handover-ack-content mt-2">
                         ${h.summary_preview}
@@ -14954,10 +15311,10 @@ const ShiftManager = {
             }[h.shift_type] || 'secondary';
 
             const shiftIcon = {
-                'morning': '🌅',
-                'afternoon': '☀️',
-                'night': '🌙'
-            }[h.shift_type] || '⏰';
+                'morning': '≡ƒîà',
+                'afternoon': 'ΓÿÇ∩╕Å',
+                'night': '≡ƒîÖ'
+            }[h.shift_type] || 'ΓÅ░';
 
             html += `
                 <div class="col-md-6 col-lg-4">
@@ -15036,9 +15393,9 @@ const ShiftManager = {
                     <div class="handover-list-info">
                         <div class="handover-list-meta">
                             <strong>${h.created_by_name}</strong>
-                            <span class="text-muted">•</span>
+                            <span class="text-muted">ΓÇó</span>
                             <span class="text-muted">${h.ward_name}</span>
-                            <span class="text-muted">•</span>
+                            <span class="text-muted">ΓÇó</span>
                             <small class="text-muted">${h.created_at_ago}</small>
                             ${isCritical ? '<span class="badge badge-danger ms-2">Critical</span>' : ''}
                         </div>
@@ -15327,7 +15684,7 @@ const ShiftManager = {
                             if (change.type === 'created') {
                                 changesHtml += '<li><span class="text-muted">' + change.label + ':</span> <strong>' + change.value + '</strong></li>';
                             } else if (change.type === 'changed') {
-                                changesHtml += '<li><span class="text-muted">' + change.label + ':</span> <del class="text-danger">' + change.old + '</del> → <strong class="text-success">' + change.new + '</strong></li>';
+                                changesHtml += '<li><span class="text-muted">' + change.label + ':</span> <del class="text-danger">' + change.old + '</del> ΓåÆ <strong class="text-success">' + change.new + '</strong></li>';
                             } else if (change.type === 'deleted') {
                                 changesHtml += '<li><span class="text-muted">' + change.label + ':</span> <del class="text-danger">' + change.value + '</del></li>';
                             }

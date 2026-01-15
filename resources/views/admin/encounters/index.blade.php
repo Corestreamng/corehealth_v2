@@ -5,7 +5,7 @@
 @section('content')
 
     <!-- Date Filter Form -->
-    <div modern mb-2">
+    <div class="card-modern mb-2">
         <div class="card-body">
             <form id="dateRangeForm">
                 <div class="row">
@@ -45,7 +45,7 @@
     </ul>
     <div class="tab-content" id="myTabContent">
         <div class="tab-pane fade show active" id="cont" role="tabpanel" aria-labelledby="cont_data_tab">
-            <div modern mt-2">
+            <div class="card-modern mt-2">
                 <div class="card-body table-responsive">
                     <table class="table table-sm table-bordered table-striped" id="all_prev_consult_list" style="width: 100%">
                         <thead>

@@ -1,7 +1,7 @@
 <div class="row">
 
     <div class="col-md-6 stretch-card grid-margin">
-        <div modern">
+        <div class="card-modern">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div class="card-title"> Procedures <small class="d-block text-muted">Queue For Procedures</small>
@@ -21,7 +21,7 @@
         </div>
     </div>
     <div class="col-md-6 stretch-card grid-margin">
-        <div modern">
+        <div class="card-modern">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div class="card-title"> Consultations <small class="d-block text-muted">Manage In-queue</small>
@@ -41,7 +41,7 @@
         </div>
     </div>
     <div class="col-md-6 stretch-card grid-margin">
-        <div modern">
+        <div class="card-modern">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div class="card-title"> Ward Rounds <small class="d-block text-muted">See patients on admission </small>
@@ -62,7 +62,7 @@
     </div>
 
     <div class="col-md-6 stretch-card grid-margin">
-        <div modern">
+        <div class="card-modern">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div class="card-title"> Calender <small class="d-block text-muted">Register and manage appointments</small>

@@ -1,6 +1,6 @@
 <div class="row">
     <div class="col-md-6 stretch-card grid-margin">
-        <div modern">
+        <div class="card-modern">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div class="card-title"> New Patients <small class="d-block text-muted">Register new patients</small>
@@ -20,7 +20,7 @@
         </div>
     </div>
     <div class="col-md-6 stretch-card grid-margin">
-        <div modern">
+        <div class="card-modern">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div class="card-title"> Returning Patients <small class="d-block text-muted">Queue returning patients</small>
@@ -40,7 +40,7 @@
         </div>
     </div>
     <div class="col-md-6 stretch-card grid-margin">
-        <div modern">
+        <div class="card-modern">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div class="card-title"> Admissions <small class="d-block text-muted">Manage in-patients</small>
@@ -60,7 +60,7 @@
         </div>
     </div>
     <div class="col-md-6 stretch-card grid-margin">
-        <div modern">
+        <div class="card-modern">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div class="card-title"> Bookings <small class="d-block text-muted">Register and manage appointments</small>
