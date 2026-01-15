@@ -21,7 +21,7 @@ use App\Models\Bed;
 use App\Models\Encounter;
 use App\Models\LabServiceRequest;
 use App\Models\MiscBill;
-use App\Models\patientAccount;
+use App\Models\PatientAccount;
 use App\Models\ProductRequest;
 use App\Models\ReasonForEncounter;
 use Illuminate\Support\Facades\File;
