@@ -2229,15 +2229,17 @@
                 return 'N/A';
             }
 
-            // Date utility functions
+            // Date utility functions - 30 days with today in the middle
             function getDefaultStartDate() {
                 const date = new Date();
-                date.setDate(date.getDate() - 30); // Default to last 30 days
+                date.setDate(date.getDate() - 15); // 15 days before today
                 return date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
             }
 
             function getDefaultEndDate() {
-                return new Date().toISOString().split('T')[0]; // Today
+                const date = new Date();
+                date.setDate(date.getDate() + 15); // 15 days after today
+                return date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
             }
 
             function formatDateForApi(dateString) {
@@ -2323,7 +2325,6 @@
                 fetch(url)
                     .then(response => response.json())
                     .then(data => {
-                        // Log data structure for debugging
                         console.log('Medication Chart Data:', data);
                         const container = document.getElementById('medication-chart-content');
 
@@ -2340,156 +2341,556 @@
                             </span>
                         `;
 
-                        // Create medication list view (read-only)
-                        let html = '<div class="card-modern shadow-sm">';
-
-                        // Show prescription count in the header
-                        // Using the same prescriptionCount from above to avoid duplicate declaration
-                        html += `<div class="card-header bg-light">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h6 class="mb-0"><i class="mdi mdi-pill me-1"></i> Current Medications</h6>
-                                <small class="text-muted">${prescriptionCount} medications found</small>
-                            </div>
-                        </div>`;
-                        html += '<div class="card-body p-0"><div class="table-responsive">';
-                        html += '<table class="table table-sm table-hover mb-0">';
-                        html += '<thead class="table-light"><tr>';
-                        html += '<th>Medication</th>';
-                        html += '<th>Dose</th>';
-                        html += '<th>Route</th>';
-                        html += '<th>Frequency</th>';
-                        html += '<th>Status</th>';
-                        html += '</tr></thead><tbody>';
-
-                        if (data.prescriptions && data.prescriptions.length > 0) {
-                            data.prescriptions.forEach(prescription => {
-                                // Use our helper function to get the medication name
-                                const medicationName = extractMedicationName(prescription, null);
-
-                                // Get schedule info
-                                const schedules = prescription.schedules || [];
-                                const isDiscontinued = schedules.some(s => s.discontinued_at);
-
-                                // Get dosage from various possible properties
-                                let dosage = 'N/A';
-                                if (prescription.dosage) {
-                                    dosage = prescription.dosage;
-                                } else if (prescription.dose) {
-                                    // If dose contains both med name and dosage (format: "Med Name: Dosage")
-                                    if (typeof prescription.dose === 'string' && prescription.dose.includes(':')) {
-                                        const parts = prescription.dose.split(':');
-                                        if (parts.length > 1) dosage = parts[1].trim();
-                                        else dosage = prescription.dose;
-                                    } else {
-                                        dosage = prescription.dose;
-                                    }
-                                }
-
-                                html += '<tr>';
-                                html += `<td>${medicationName}</td>`;
-                                html += `<td>${dosage}</td>`;
-                                html += `<td>${prescription.route || 'Oral'}</td>`;
-                                html += `<td>${prescription.frequency || prescription.timing || 'N/A'}</td>`;
-                                if (isDiscontinued) {
-                                    html += '<td><span class="badge bg-danger">Discontinued</span></td>';
-                                } else {
-                                    html += '<td><span class="badge bg-success">Active</span></td>';
-                                }
-                                html += '</tr>';
-                            });
-                        } else {
-                            html += '<tr><td colspan="5" class="text-center">No medication records found</td></tr>';
-                        }
-
-                        html += '</tbody></table></div></div></div>';
-
-                        // Add medication history section
-                        html += '<div class="card-modern shadow-sm mt-3">';
-
-                        // Show date range and record count in the header
-                        // Using the same administrationCount from above
-                        html += `<div class="card-header bg-light">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h6 class="mb-0"><i class="mdi mdi-history me-1"></i> Recent Administrations</h6>
-                                <small class="text-muted">${administrationCount} records found</small>
-                            </div>
-                        </div>`;
-                        html += '<div class="card-body p-0"><div class="table-responsive">';
-                        html += '<table class="table table-sm table-hover mb-0">';
-                        html += '<thead class="table-light"><tr>';
-                        html += '<th>Time</th>';
-                        html += '<th>Medication</th>';
-                        html += '<th>Dose</th>';
-                        html += '<th>Route</th>';
-                        html += '<th>Given By</th>';
-                        html += '<th>Status</th>';
-                        html += '</tr></thead><tbody>';
-
-                        if (data.administrations && data.administrations.length > 0) {
-                            // Sort administrations by time, newest first
-                            const administrations = [...data.administrations].sort((a, b) => {
-                                return new Date(b.administered_at) - new Date(a.administered_at);
-                            });
-
-                            // Log first administration entry for structure inspection
-                            if (administrations.length > 0) {
-                                console.log('Sample Administration Entry:', administrations[0]);
-                            }
-
-                            // Get prescriptions array for mapping
-                            const prescriptions = data.prescriptions || [];
-
-                            // Log the prescriptions array for debugging
-                            console.log(`Found ${prescriptions.length} prescriptions for mapping administration records`);
-
-                            administrations.slice(0, 10).forEach(admin => {
-                                // Log the mapping attempt
-                                if (admin.product_or_service_request_id) {
-                                    const matchedPrescription = prescriptions.find(p => p.id === admin.product_or_service_request_id);
-                                    console.log(`Mapping administration ID ${admin.id || 'unknown'} to prescription ID ${admin.product_or_service_request_id}:`,
-                                        matchedPrescription ? 'Found match' : 'No match found');
-                                }
-
-                                // Extract medication name using our helper function, passing prescriptions for mapping
-                                const medication = extractMedicationName(admin, prescriptions);
-
-                                // Format date for display
-                                const time = new Date(admin.administered_at);
-                                const timeStr = time.toLocaleString();
-
-                                // Get dosage from any available property
-                                const dosage = admin.dosage || admin.dose || 'N/A';
-
-                                html += '<tr>';
-                                html += `<td>${timeStr}</td>`;
-                                html += `<td>${medication}</td>`;
-                                html += `<td>${dosage}</td>`;
-                                html += `<td>${admin.route || 'Oral'}</td>`;
-                                html += `<td>${admin.administered_by_name || 'Unknown'}</td>`;
-
-                                if (admin.deleted_at) {
-                                    html += '<td><span class="badge bg-danger">Deleted</span></td>';
-                                } else if (admin.edited_at) {
-                                    html += '<td><span class="badge bg-warning">Edited</span></td>';
-                                } else {
-                                    html += '<td><span class="badge bg-success">Given</span></td>';
-                                }
-
-                                html += '</tr>';
-                            });
-                        } else {
-                            html += '<tr><td colspan="6" class="text-center">No administration records found</td></tr>';
-                        }
-
-                        html += '</tbody></table></div></div></div>';
-
-                        container.innerHTML = html;
+                        // Render calendar grid view
+                        renderDoctorMedicationCalendar(data, startDate, endDate);
                     })
                     .catch(error => {
                         console.error('Error loading medication chart:', error);
                         document.getElementById('medication-chart-content').innerHTML =
                             '<div class="alert alert-danger">Failed to load medication chart data. Please try again later.</div>';
                     });
+            }
+
+            // Function to render medication calendar grid for doctor's view (read-only)
+            // Unified calendar showing ALL medications in one grid
+            function renderDoctorMedicationCalendar(data, startDateStr, endDateStr) {
+                const container = document.getElementById('medication-chart-content');
+
+                console.log('Rendering unified calendar with data:', data);
+                console.log('Prescriptions count:', data.prescriptions ? data.prescriptions.length : 0);
+                console.log('Administrations count:', data.administrations ? data.administrations.length : 0);
+
+                if (!data.prescriptions || data.prescriptions.length === 0) {
+                    container.innerHTML = '<div class="alert alert-info">No active medications found for this period.</div>';
+                    return;
+                }
+
+                // Assign unique colors to each medication
+                const medicationColors = [
+                    { bg: '#e3f2fd', border: '#1976d2', text: '#0d47a1' },  // Blue
+                    { bg: '#e8f5e9', border: '#388e3c', text: '#1b5e20' },  // Green
+                    { bg: '#fff3e0', border: '#f57c00', text: '#e65100' },  // Orange
+                    { bg: '#f3e5f5', border: '#8e24aa', text: '#6a1b9a' },  // Purple
+                    { bg: '#e0f7fa', border: '#0097a7', text: '#006064' },  // Cyan
+                    { bg: '#fce4ec', border: '#c2185b', text: '#880e4f' },  // Pink
+                    { bg: '#fff8e1', border: '#ffa000', text: '#ff6f00' },  // Amber
+                    { bg: '#e8eaf6', border: '#3f51b5', text: '#1a237e' },  // Indigo
+                    { bg: '#efebe9', border: '#6d4c41', text: '#3e2723' },  // Brown
+                    { bg: '#eceff1', border: '#546e7a', text: '#263238' },  // Blue Grey
+                ];
+
+                // Build medication color map
+                const medColorMap = {};
+                data.prescriptions.forEach((p, idx) => {
+                    medColorMap[p.id] = medicationColors[idx % medicationColors.length];
+                });
+
+                // Add unified calendar CSS
+                let html = `<style>
+                    .unified-med-calendar .calendar-weekday-header {
+                        display: grid;
+                        grid-template-columns: repeat(7, 1fr);
+                        gap: 1px;
+                        background-color: #4a5568;
+                    }
+                    .unified-med-calendar .weekday-name {
+                        padding: 10px;
+                        text-align: center;
+                        font-weight: 600;
+                        font-size: 12px;
+                        text-transform: uppercase;
+                        color: white;
+                        background-color: #4a5568;
+                    }
+                    .unified-med-calendar .medication-calendar-grid {
+                        display: grid;
+                        grid-template-columns: repeat(7, 1fr);
+                        gap: 1px;
+                        background-color: #dee2e6;
+                        border: 1px solid #dee2e6;
+                    }
+                    .unified-med-calendar .calendar-day-cell {
+                        background-color: white;
+                        min-height: 100px;
+                        padding: 6px;
+                        display: flex;
+                        flex-direction: column;
+                    }
+                    .unified-med-calendar .calendar-day-cell.empty-day {
+                        background-color: #f8f9fa;
+                        min-height: 50px;
+                    }
+                    .unified-med-calendar .calendar-day-cell.today {
+                        background-color: #e3f2fd;
+                        border: 2px solid #2196F3;
+                    }
+                    .unified-med-calendar .calendar-day-cell.weekend {
+                        background-color: #fffde7;
+                    }
+                    .unified-med-calendar .calendar-day-cell.past-date {
+                        opacity: 0.8;
+                        background-color: #fafafa;
+                    }
+                    .unified-med-calendar .day-header {
+                        display: flex;
+                        justify-content: space-between;
+                        margin-bottom: 4px;
+                        padding-bottom: 4px;
+                        border-bottom: 1px solid #eee;
+                    }
+                    .unified-med-calendar .day-name {
+                        font-size: 10px;
+                        color: #666;
+                        text-transform: uppercase;
+                    }
+                    .unified-med-calendar .day-number {
+                        font-weight: bold;
+                        font-size: 14px;
+                        color: #333;
+                    }
+                    .unified-med-calendar .schedule-items {
+                        flex: 1;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 2px;
+                        overflow-y: auto;
+                        max-height: 150px;
+                    }
+                    .unified-med-calendar .med-item {
+                        font-size: 10px;
+                        padding: 4px 6px;
+                        border-radius: 4px;
+                        display: flex;
+                        align-items: center;
+                        gap: 4px;
+                        cursor: default;
+                        border-left: 3px solid;
+                    }
+                    .unified-med-calendar .med-item.given {
+                        opacity: 1;
+                    }
+                    .unified-med-calendar .med-item.scheduled {
+                        opacity: 0.9;
+                    }
+                    .unified-med-calendar .med-item.missed {
+                        opacity: 0.7;
+                    }
+                    .unified-med-calendar .med-item.discontinued {
+                        opacity: 0.5;
+                        text-decoration: line-through;
+                    }
+                    .unified-med-calendar .med-item i {
+                        font-size: 12px;
+                        flex-shrink: 0;
+                    }
+                    .unified-med-calendar .med-details {
+                        flex: 1;
+                        min-width: 0;
+                    }
+                    .unified-med-calendar .med-name {
+                        font-weight: 600;
+                        font-size: 10px;
+                        display: block;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                    }
+                    .unified-med-calendar .med-time {
+                        font-size: 9px;
+                        opacity: 0.8;
+                        display: block;
+                    }
+                    .unified-med-calendar .no-schedules {
+                        font-size: 10px;
+                        color: #999;
+                        font-style: italic;
+                        text-align: center;
+                        padding: 10px;
+                    }
+                    /* CSS-based tooltip */
+                    .unified-med-calendar .med-item {
+                        position: relative;
+                    }
+                    .unified-med-calendar .med-item .med-tooltip {
+                        visibility: hidden;
+                        opacity: 0;
+                        position: absolute;
+                        bottom: 100%;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        background-color: #333;
+                        color: white;
+                        padding: 8px 12px;
+                        border-radius: 6px;
+                        font-size: 11px;
+                        white-space: nowrap;
+                        z-index: 1000;
+                        transition: opacity 0.2s;
+                        pointer-events: none;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                        margin-bottom: 5px;
+                    }
+                    .unified-med-calendar .med-item .med-tooltip::after {
+                        content: '';
+                        position: absolute;
+                        top: 100%;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        border-width: 5px;
+                        border-style: solid;
+                        border-color: #333 transparent transparent transparent;
+                    }
+                    .unified-med-calendar .med-item:hover .med-tooltip {
+                        visibility: visible;
+                        opacity: 1;
+                    }
+                </style>`;
+
+                // Parse dates - default 30 days with today in the middle
+                let start, end;
+                if (startDateStr) {
+                    start = new Date(startDateStr);
+                } else {
+                    start = new Date();
+                    start.setDate(start.getDate() - 15);
+                }
+                if (endDateStr) {
+                    end = new Date(endDateStr);
+                } else {
+                    end = new Date();
+                    end.setDate(end.getDate() + 15);
+                }
+                start.setHours(0, 0, 0, 0);
+                end.setHours(23, 59, 59, 999);
+
+                html += '<div class="unified-med-calendar">';
+
+                // Weekday header
+                html += '<div class="calendar-weekday-header">';
+                ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(day => {
+                    html += `<div class="weekday-name">${day}</div>`;
+                });
+                html += '</div>';
+
+                // Calendar grid
+                html += '<div class="medication-calendar-grid">';
+
+                // Add empty cells for alignment
+                const daysBeforeStart = start.getDay();
+                for (let i = 0; i < daysBeforeStart; i++) {
+                    html += '<div class="calendar-day-cell empty-day"></div>';
+                }
+
+                // Today reference
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                // Generate days
+                const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                let currentDate = new Date(start);
+
+                while (currentDate <= end) {
+                    const dateStr = currentDate.toISOString().split('T')[0];
+                    const dayNum = currentDate.getDate();
+                    const dayOfWeek = currentDate.getDay();
+                    const isToday = currentDate.toDateString() === today.toDateString();
+                    const isPast = currentDate < today;
+                    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+                    // Build cell classes
+                    let cellClass = 'calendar-day-cell';
+                    if (isToday) cellClass += ' today';
+                    else if (isPast) cellClass += ' past-date';
+                    if (isWeekend && !isToday) cellClass += ' weekend';
+
+                    html += `<div class="${cellClass}">`;
+                    html += `<div class="day-header">
+                        <span class="day-name">${dayNames[dayOfWeek]}</span>
+                        <span class="day-number">${dayNum}</span>
+                    </div>`;
+                    html += '<div class="schedule-items">';
+
+                    // Collect all items for this day across ALL medications
+                    let dayItems = [];
+
+                    data.prescriptions.forEach(prescription => {
+                        const medicationName = extractMedicationName(prescription, null);
+                        const color = medColorMap[prescription.id];
+                        const schedules = prescription.schedules || [];
+                        const administrations = (data.administrations || []).filter(a =>
+                            a.product_or_service_request_id === prescription.id
+                        );
+
+                        // Log for debugging
+                        if (currentDate.toDateString() === today.toDateString()) {
+                            console.log(`${medicationName}: ${schedules.length} schedules, ${administrations.length} administrations`);
+                        }
+
+                        // Find schedules for this day
+                        const daySchedules = schedules.filter(s => {
+                            if (!s.scheduled_time && !s.scheduled_at) return false;
+                            const schedTime = s.scheduled_time || s.scheduled_at;
+                            const schedDate = new Date(schedTime);
+                            return schedDate.toDateString() === currentDate.toDateString();
+                        });
+
+                        // Find administrations for this day
+                        const dayAdministrations = administrations.filter(a => {
+                            if (!a.administered_at) return false;
+                            const adminDate = new Date(a.administered_at);
+                            return adminDate.toDateString() === currentDate.toDateString();
+                        });
+
+                        // Process schedules
+                        daySchedules.forEach(schedule => {
+                            const schedTime = schedule.scheduled_time || schedule.scheduled_at;
+                            const schedDate = new Date(schedTime);
+                            const time = schedDate.toLocaleTimeString('en-US', {
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                hour12: true
+                            });
+
+                            // Check if administered
+                            const admin = dayAdministrations.find(a => a.schedule_id === schedule.id);
+
+                            // Check if discontinued
+                            const isDiscontinued = prescription.discontinued_at &&
+                                new Date(prescription.discontinued_at) < new Date(schedTime);
+
+                            let status = 'scheduled';
+                            let icon = 'mdi-clock-outline';
+                            let tooltip = `<strong>${medicationName}</strong><br>Scheduled: ${time}<br>Dose: ${schedule.dose || 'N/A'}<br>Route: ${schedule.route || 'N/A'}`;
+
+                            if (isDiscontinued) {
+                                status = 'discontinued';
+                                icon = 'mdi-close-circle-outline';
+                                tooltip = `<strong>${medicationName}</strong><br>Discontinued<br>Time: ${time}`;
+                            } else if (admin) {
+                                status = 'given';
+                                icon = 'mdi-check-circle';
+                                const adminTime = new Date(admin.administered_at).toLocaleTimeString('en-US', {
+                                    hour: 'numeric',
+                                    minute: '2-digit',
+                                    hour12: true
+                                });
+                                tooltip = `<strong>${medicationName}</strong><br>Given at ${adminTime}<br>Dose: ${admin.dose || schedule.dose || 'N/A'}<br>By: ${admin.administered_by_name || 'Unknown'}`;
+                            } else if (isPast) {
+                                status = 'missed';
+                                icon = 'mdi-alert-circle';
+                                tooltip = `<strong>${medicationName}</strong><br>Missed<br>Scheduled: ${time}<br>Dose: ${schedule.dose || 'N/A'}`;
+                            }
+
+                            dayItems.push({
+                                sortTime: schedDate.getTime(),
+                                time: time,
+                                medName: medicationName,
+                                color: color,
+                                status: status,
+                                icon: icon,
+                                tooltip: tooltip,
+                                isPrn: false
+                            });
+                        });
+
+                        // Process PRN (unscheduled) administrations
+                        dayAdministrations.filter(a => !a.schedule_id).forEach(admin => {
+                            const adminDate = new Date(admin.administered_at);
+                            const adminTime = adminDate.toLocaleTimeString('en-US', {
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                hour12: true
+                            });
+                            const tooltip = `<strong>${medicationName}</strong><br>PRN Given at ${adminTime}<br>Dose: ${admin.dose || 'N/A'}<br>By: ${admin.administered_by_name || 'Unknown'}`;
+
+                            dayItems.push({
+                                sortTime: adminDate.getTime(),
+                                time: adminTime,
+                                medName: medicationName,
+                                color: color,
+                                status: 'given',
+                                icon: 'mdi-plus-circle',
+                                tooltip: tooltip,
+                                isPrn: true
+                            });
+                        });
+                    });
+
+                    // Sort items by time
+                    dayItems.sort((a, b) => a.sortTime - b.sortTime);
+
+                    if (dayItems.length === 0) {
+                        html += '<span class="no-schedules">-</span>';
+                    } else {
+                        dayItems.forEach(item => {
+                            const iconColor = item.status === 'given' ? 'text-success' :
+                                              item.status === 'missed' ? 'text-danger' :
+                                              item.status === 'discontinued' ? 'text-muted' : 'text-primary';
+                            const prnLabel = item.isPrn ? ' (PRN)' : '';
+
+                            html += `<div class="med-item ${item.status}"
+                                style="background-color: ${item.color.bg}; border-left-color: ${item.color.border}; color: ${item.color.text};">
+                                <i class="mdi ${item.icon} ${iconColor}"></i>
+                                <div class="med-details">
+                                    <span class="med-name">${item.medName}${prnLabel}</span>
+                                    <span class="med-time">${item.time}</span>
+                                </div>
+                                <div class="med-tooltip">${item.tooltip}</div>
+                            </div>`;
+                        });
+                    }
+
+                    html += '</div></div>';
+
+                    // Next day
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+
+                html += '</div></div>';
+
+                container.innerHTML = html;
+            }
+
+            // Build calendar grid HTML for a single medication (kept for compatibility)
+            function buildMedicationCalendarGrid(prescription, schedules, allAdministrations, startDate, endDate) {
+                // Filter administrations for this prescription
+                const administrations = (allAdministrations || []).filter(a =>
+                    a.product_or_service_request_id === prescription.id
+                );
+
+                let html = '';
+
+                // Weekday header
+                html += '<div class="calendar-weekday-header">';
+                ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(day => {
+                    html += `<div class="weekday-name">${day}</div>`;
+                });
+                html += '</div>';
+
+                // Calendar grid
+                html += '<div class="medication-calendar-grid">';
+
+                // Add empty cells for alignment
+                const daysBeforeStart = startDate.getDay();
+                for (let i = 0; i < daysBeforeStart; i++) {
+                    html += '<div class="calendar-day-cell empty-day"></div>';
+                }
+
+                // Today reference
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                // Generate days
+                const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                let currentDate = new Date(startDate);
+
+                while (currentDate <= endDate) {
+                    const dateStr = currentDate.toISOString().split('T')[0];
+                    const dayNum = currentDate.getDate();
+                    const dayOfWeek = currentDate.getDay();
+                    const isToday = currentDate.toDateString() === today.toDateString();
+                    const isPast = currentDate < today;
+                    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+                    // Build cell classes
+                    let cellClass = 'calendar-day-cell';
+                    if (isToday) cellClass += ' today';
+                    else if (isPast) cellClass += ' past-date';
+                    if (isWeekend && !isToday) cellClass += ' weekend';
+
+                    // Find schedules for this day
+                    const daySchedules = schedules.filter(s => {
+                        if (!s.scheduled_time && !s.scheduled_at) return false;
+                        const schedTime = s.scheduled_time || s.scheduled_at;
+                        const schedDate = new Date(schedTime);
+                        return schedDate.toDateString() === currentDate.toDateString();
+                    });
+
+                    // Find administrations for this day
+                    const dayAdministrations = administrations.filter(a => {
+                        if (!a.administered_at) return false;
+                        const adminDate = new Date(a.administered_at);
+                        return adminDate.toDateString() === currentDate.toDateString();
+                    });
+
+                    html += `<div class="${cellClass}">`;
+                    html += `<div class="day-header">
+                        <span class="day-name">${dayNames[dayOfWeek]}</span>
+                        <span class="day-number">${dayNum}</span>
+                    </div>`;
+                    html += '<div class="schedule-items">';
+
+                    if (daySchedules.length === 0 && dayAdministrations.length === 0) {
+                        html += '<span class="no-schedules">-</span>';
+                    } else {
+                        // Render scheduled doses
+                        daySchedules.forEach(schedule => {
+                            const schedTime = schedule.scheduled_time || schedule.scheduled_at;
+                            const time = new Date(schedTime).toLocaleTimeString('en-US', {
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                hour12: true
+                            });
+
+                            // Check if administered
+                            const admin = dayAdministrations.find(a => a.schedule_id === schedule.id);
+
+                            // Check if discontinued
+                            const isDiscontinued = prescription.discontinued_at &&
+                                new Date(prescription.discontinued_at) < new Date(schedTime);
+
+                            let badgeClass = 'scheduled';
+                            let icon = 'mdi-clock-outline';
+                            let tooltip = `Scheduled: ${time}<br>Dose: ${schedule.dose || 'N/A'}<br>Route: ${schedule.route || 'N/A'}`;
+
+                            if (isDiscontinued) {
+                                badgeClass = 'discontinued';
+                                icon = 'mdi-close-circle-outline';
+                                tooltip = `Discontinued<br>Time: ${time}`;
+                            } else if (admin) {
+                                badgeClass = 'given';
+                                icon = 'mdi-check-circle';
+                                const adminTime = new Date(admin.administered_at).toLocaleTimeString('en-US', {
+                                    hour: 'numeric',
+                                    minute: '2-digit',
+                                    hour12: true
+                                });
+                                tooltip = `Given at ${adminTime}<br>Dose: ${admin.dose || schedule.dose || 'N/A'}<br>By: ${admin.administered_by_name || 'Unknown'}<br>Store: ${admin.store_name || 'N/A'}`;
+                            } else if (isPast) {
+                                badgeClass = 'missed';
+                                icon = 'mdi-alert-circle';
+                                tooltip = `Missed<br>Scheduled: ${time}<br>Dose: ${schedule.dose || 'N/A'}`;
+                            }
+
+                            html += `<div class="schedule-badge ${badgeClass}" data-bs-toggle="tooltip" data-bs-html="true" title="${tooltip}">
+                                <i class="mdi ${icon}"></i> ${time}
+                            </div>`;
+                        });
+
+                        // Render PRN (unscheduled) administrations
+                        dayAdministrations.filter(a => !a.schedule_id).forEach(admin => {
+                            const adminTime = new Date(admin.administered_at).toLocaleTimeString('en-US', {
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                hour12: true
+                            });
+                            const tooltip = `PRN Given at ${adminTime}<br>Dose: ${admin.dose || 'N/A'}<br>By: ${admin.administered_by_name || 'Unknown'}<br>Store: ${admin.store_name || 'N/A'}`;
+
+                            html += `<div class="schedule-badge prn" data-bs-toggle="tooltip" data-bs-html="true" title="${tooltip}">
+                                <i class="mdi mdi-plus-circle"></i> ${adminTime}
+                            </div>`;
+                        });
+                    }
+
+                    html += '</div></div>';
+
+                    // Next day
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+
+                html += '</div>';
+
+                return html;
             }
 
             // Function to load intake/output charts

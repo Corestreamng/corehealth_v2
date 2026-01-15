@@ -5,7 +5,7 @@
 @section('content')
     <section class="content row">
         <div class="col-12">
-            <div modern">
+            <div class="card-modern">
                 <div class="card-header">
                     <h3 class="card-title">Create Store</h3>
                 </div>

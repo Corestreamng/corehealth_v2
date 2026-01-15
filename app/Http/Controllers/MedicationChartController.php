@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use App\Models\ProductOrServiceRequest;
 use App\Models\Patient;
 use App\Models\User;
+use App\Models\Store;
+use App\Models\StoreStock;
+use App\Models\ProductStock;
 use Illuminate\Support\Facades\Auth;
 use App\Models\MedicationAdministration;
 use App\Models\MedicationSchedule;
@@ -46,17 +49,46 @@ class MedicationChartController extends Controller
         $patient = Patient::findOrFail($patientId);
         $userId = $patient->user_id ?? $patient->user->id ?? null;
 
-        // No date filtering for medications anymore - removed all date filtering
+        // Get date range from request or use defaults (30 days with today in middle)
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
 
-        // Get all prescriptions without date filtering
+        if ($startDate) {
+            $startDate = Carbon::parse($startDate)->startOfDay();
+        } else {
+            $startDate = Carbon::now()->subDays(15)->startOfDay();
+        }
+
+        if ($endDate) {
+            $endDate = Carbon::parse($endDate)->endOfDay();
+        } else {
+            $endDate = Carbon::now()->addDays(15)->endOfDay();
+        }
+
+        // Get all prescriptions
         $prescriptions = ProductOrServiceRequest::where('user_id', $userId)
             ->with(['product.category', 'product.price', 'product.stock'])
             ->whereNotNull('product_id')
             ->latest('created_at')
             ->get();
 
-        // Get all administrations with user information (no date filtering)
+        // Load schedules for each prescription within the date range
+        $prescriptionIds = $prescriptions->pluck('id')->toArray();
+        $allSchedules = MedicationSchedule::whereIn('product_or_service_request_id', $prescriptionIds)
+            ->where('patient_id', $patientId)
+            ->whereBetween('scheduled_time', [$startDate, $endDate])
+            ->orderBy('scheduled_time')
+            ->get()
+            ->groupBy('product_or_service_request_id');
+
+        // Attach schedules to each prescription
+        $prescriptions->each(function ($prescription) use ($allSchedules) {
+            $prescription->schedules = $allSchedules->get($prescription->id, collect())->values();
+        });
+
+        // Get all administrations within the date range
         $administrations = MedicationAdministration::where('patient_id', $patientId)
+            ->whereBetween('administered_at', [$startDate, $endDate])
             ->with(['administeredBy', 'editedBy', 'deletedBy'])
             ->get();
 
@@ -81,7 +113,7 @@ class MedicationChartController extends Controller
             }
         });
 
-        // Return data without date range information
+        // Return data with schedules included
         return response()->json([
             'prescriptions' => $prescriptions,
             'administrations' => $administrations
@@ -307,9 +339,17 @@ class MedicationChartController extends Controller
                     $shouldSchedule = true;
                 } elseif ($repeatType === 'specific' && !empty($selectedDays)) {
                     // Schedule only on selected days of week (0=Sunday, 1=Monday, etc.)
+                    $dayOfWeek = $currentDate->dayOfWeek; // 0=Sunday, 6=Saturday
+                    $shouldSchedule = in_array($dayOfWeek, array_map('intval', $selectedDays));
+                } elseif ($repeatType === 'once') {
+                    // Only schedule on the first day
+                    $shouldSchedule = ($i === 0);
+                }
+
+                // Create schedule if this day should be scheduled
+                if ($shouldSchedule) {
                     $scheduledDateTime = $currentDate->format('Y-m-d') . ' ' . $time;
 
-                    // Create schedule
                     $schedule = new MedicationSchedule();
                     $schedule->patient_id = $patientId;
                     $schedule->product_or_service_request_id = $medicationId;
@@ -352,7 +392,9 @@ class MedicationChartController extends Controller
             'administered_at' => 'required|date',
             'administered_dose' => 'required|string',
             'route' => 'required|string',
-            'comment' => 'nullable|string'
+            'comment' => 'nullable|string',
+            'store_id' => 'required|exists:stores,id',
+            'product_id' => 'nullable|exists:products,id'
         ]);
 
         if ($validator->fails()) {
@@ -361,6 +403,7 @@ class MedicationChartController extends Controller
 
         $data = $validator->validated();
         $scheduleId = $data['schedule_id'];
+        $storeId = $data['store_id'];
 
         try {
             DB::beginTransaction();
@@ -390,6 +433,37 @@ class MedicationChartController extends Controller
                 ], 422);
             }
 
+            // Get product ID from medication or request
+            $productId = $data['product_id'] ?? $medication->product_id ?? null;
+
+            // Deduct stock from selected store if product exists
+            if ($productId && $storeId) {
+                $storeStock = StoreStock::where('store_id', $storeId)
+                    ->where('product_id', $productId)
+                    ->first();
+
+                if ($storeStock && $storeStock->current_quantity >= 1) {
+                    // Deduct from store stock
+                    $storeStock->decrement('current_quantity', 1);
+                } else {
+                    // Try global stock as fallback
+                    $productStock = ProductStock::where('product_id', $productId)->first();
+                    if ($productStock && $productStock->current_quantity >= 1) {
+                        $productStock->decrement('current_quantity', 1);
+                        $productStock->increment('quantity_sale', 1);
+                    } else {
+                        DB::rollBack();
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Insufficient stock to administer medication'
+                        ], 422);
+                    }
+                }
+            }
+
+            // Get store name
+            $store = Store::find($storeId);
+
             // Create administration record
             $admin = new MedicationAdministration();
             $admin->patient_id = $schedule->patient_id;
@@ -401,6 +475,7 @@ class MedicationChartController extends Controller
             $admin->comment = $data['comment'] ?? null;
             $userId = Auth::id();
             $admin->administered_by = $userId;
+            $admin->store_id = $storeId;
             $admin->save();
 
             // Reload the administration with its relationships
@@ -409,6 +484,7 @@ class MedicationChartController extends Controller
 
             // Add name property for frontend display
             $admin->administered_by_name = userfullname($userId);
+            $admin->store_name = $store ? $store->store_name : null;
 
             // Also update name in related object
             if ($admin->administeredBy) {

@@ -5,7 +5,7 @@
 @section('content')
     <div id="content-wrapper">
         <div class="container">
-            <div modern">
+            <div class="card-modern">
                 <div class="card-header">
                     <div class="clearfix">
                         <h3 class="float-left">{{ __('Store List') }}</h3>

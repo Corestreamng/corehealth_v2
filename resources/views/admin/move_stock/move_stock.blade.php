@@ -7,7 +7,7 @@
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-md-12">
-                    <div modern">
+                    <div class="card-modern">
                         <div class="card-header">{{ __('Product Stock') }}</div>
 
                         <div class="card-body">

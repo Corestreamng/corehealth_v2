@@ -3,7 +3,7 @@
 @section('page_name', 'Services Rendered')
 @section('subpage_name', 'History')
 @section('content')
-    <div modern">
+    <div class="card-modern">
         <div class="card-header">
             <h3 class="card-title">
                 {{ userfullname($patient->user_id) }} [{{ $patient->file_no }}]

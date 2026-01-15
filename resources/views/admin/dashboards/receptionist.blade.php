@@ -1,6 +1,6 @@
 <div class="row g-4 mb-5">
     <div class="col-xl-3 col-lg-6">
-        <div modern border-0 shadow-lg position-relative overflow-hidden" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px;">
+        <div class="card-modern border-0 shadow-lg position-relative overflow-hidden" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px;">
             <div class="card-body m-3 text-white position-relative">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
@@ -19,7 +19,7 @@
         </div>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div modern border-0 shadow-lg position-relative overflow-hidden" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 20px;">
+        <div class="card-modern border-0 shadow-lg position-relative overflow-hidden" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 20px;">
             <div class="card-body m-3 text-white position-relative">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
@@ -38,7 +38,7 @@
         </div>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div modern border-0 shadow-lg position-relative overflow-hidden" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 20px;">
+        <div class="card-modern border-0 shadow-lg position-relative overflow-hidden" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 20px;">
             <div class="card-body m-3 text-white position-relative">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
@@ -57,7 +57,7 @@
         </div>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div modern border-0 shadow-lg position-relative overflow-hidden" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); border-radius: 20px;">
+        <div class="card-modern border-0 shadow-lg position-relative overflow-hidden" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); border-radius: 20px;">
             <div class="card-body m-3 text-white position-relative">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
@@ -86,7 +86,7 @@
         ['title' => 'Total Encounters', 'id' => 'stat-total-encounters', 'icon' => 'mdi-stethoscope']
     ] as $stat)
     <div class="col-xl-3 col-lg-6">
-        <div modern border-0 shadow-sm h-100" style="border-radius: 16px; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);">
+        <div class="card-modern border-0 shadow-sm h-100" style="border-radius: 16px; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);">
             <div class="card-body m-3">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -108,7 +108,7 @@
     {{-- Receptionist Shortcuts --}}
     @hasanyrole('SUPERADMIN|ADMIN|RECEPTIONIST')
     <div class="col-xl-6 col-lg-12">
-        <div modern border-0 shadow-lg" style="border-radius: 20px; background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%); backdrop-filter: blur(10px);">
+        <div class="card-modern border-0 shadow-lg" style="border-radius: 20px; background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%); backdrop-filter: blur(10px);">
             <div class="card-body m-3">
                 <div class="d-flex align-items-center mb-4">
                     <div class="bg-primary bg-opacity-10 rounded-circle p-3 me-3">
@@ -156,7 +156,7 @@
     {{-- Doctor Shortcuts --}}
     @hasanyrole('SUPERADMIN|ADMIN|DOCTOR')
     <div class="col-xl-6 col-lg-12">
-        <div modern border-0 shadow-lg" style="border-radius: 20px; background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%); backdrop-filter: blur(10px);">
+        <div class="card-modern border-0 shadow-lg" style="border-radius: 20px; background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%); backdrop-filter: blur(10px);">
             <div class="card-body m-3">
                 <div class="d-flex align-items-center mb-4">
                     <div class="bg-success bg-opacity-10 rounded-circle p-3 me-3">
@@ -189,7 +189,7 @@
     {{-- Nurse Shortcuts --}}
     @hasanyrole('SUPERADMIN|ADMIN|NURSE')
     <div class="col-xl-6 col-lg-12">
-        <div modern border-0 shadow-lg" style="border-radius: 20px; background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%); backdrop-filter: blur(10px);">
+        <div class="card-modern border-0 shadow-lg" style="border-radius: 20px; background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%); backdrop-filter: blur(10px);">
             <div class="card-body m-3">
                 <div class="d-flex align-items-center mb-4">
                     <div class="bg-danger bg-opacity-10 rounded-circle p-3 me-3">
@@ -232,7 +232,7 @@
     {{-- Lab/Investigation Shortcuts --}}
     @hasanyrole('SUPERADMIN|ADMIN|LAB SCIENTIST|RADIOLOGIST')
     <div class="col-xl-6 col-lg-12">
-        <div modern border-0 shadow-lg" style="border-radius: 20px; background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%); backdrop-filter: blur(10px);">
+        <div class="card-modern border-0 shadow-lg" style="border-radius: 20px; background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%); backdrop-filter: blur(10px);">
             <div class="card-body m-3">
                 <div class="d-flex align-items-center mb-4">
                     <div class="bg-info bg-opacity-10 rounded-circle p-3 me-3">
@@ -275,7 +275,7 @@
     {{-- Store/Pharmacy Shortcuts --}}
     @hasanyrole('SUPERADMIN|ADMIN|STORE|PHARMACIST')
     <div class="col-xl-6 col-lg-12">
-        <div modern border-0 shadow-lg" style="border-radius: 20px; background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%); backdrop-filter: blur(10px);">
+        <div class="card-modern border-0 shadow-lg" style="border-radius: 20px; background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%); backdrop-filter: blur(10px);">
             <div class="card-body m-3">
                 <div class="d-flex align-items-center mb-4">
                     <div class="bg-warning bg-opacity-10 rounded-circle p-3 me-3">
@@ -323,7 +323,7 @@
     {{-- Admin Shortcuts --}}
     @hasanyrole('SUPERADMIN|ADMIN')
     <div class="col-xl-6 col-lg-12">
-        <div modern border-0 shadow-lg" style="border-radius: 20px; background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%); backdrop-filter: blur(10px);">
+        <div class="card-modern border-0 shadow-lg" style="border-radius: 20px; background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%); backdrop-filter: blur(10px);">
             <div class="card-body m-3">
                 <div class="d-flex align-items-center mb-4">
                     <div class="bg-dark bg-opacity-10 rounded-circle p-3 me-3">
@@ -372,7 +372,7 @@
 <!-- Chart Filters - Modern Design -->
 <div class="row mb-4">
     <div class="col-12">
-        <div modern border-0 shadow-sm" style="border-radius: 8px; background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);">
+        <div class="card-modern border-0 shadow-sm" style="border-radius: 8px; background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);">
             <div class="card-body m-3">
                 <div class="d-flex flex-wrap align-items-center gap-3">
                     <div class="d-flex align-items-center">
@@ -407,7 +407,7 @@
         ['title' => 'Queue Status Overview', 'id' => 'queueStatusChart', 'icon' => 'mdi-chart-pie', 'color' => 'warning']
     ] as $chart)
     <div class="col-xl-6 col-lg-12">
-        <div modern border-0 shadow-lg h-400" style="border-radius: 10px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(2px);">
+        <div class="card-modern border-0 shadow-lg h-400" style="border-radius: 10px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(2px);">
             <div class="card-header border-0 bg-transparent pt-4 pb-2">
                 <div class="d-flex align-items-center justify-content-between">
                     <div class="d-flex align-items-center">

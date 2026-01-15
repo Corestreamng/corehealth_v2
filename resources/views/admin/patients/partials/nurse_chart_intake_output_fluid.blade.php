@@ -6,15 +6,15 @@
         </div>
         <div class="card-body">
             <div class="row g-3">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label for="fluid_start_date" class="form-label">Start Date</label>
                     <input type="date" class="form-control" id="fluid_start_date">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label for="fluid_end_date" class="form-label">End Date</label>
                     <input type="date" class="form-control" id="fluid_end_date">
                 </div>
-                <div class="col-md-4 d-flex align-items-end">
+                <div class="col-md-3 d-flex align-items-end">
                     <div class="btn-group w-100">
                         <button type="button" class="btn btn-primary" id="fluid_apply_filter_btn">
                             <i class="mdi mdi-filter"></i> Apply
@@ -24,6 +24,57 @@
                         </button>
                     </div>
                 </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <div class="btn-group w-100">
+                        <button type="button" class="btn btn-sm btn-outline-primary fluid-date-preset" data-days="0" title="Today">
+                            Today
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary fluid-date-preset" data-days="7" title="Last 7 days">
+                            7D
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary fluid-date-preset" data-days="30" title="Last 30 days">
+                            30D
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Statistics Dashboard -->
+    <div class="card-modern mb-3" id="fluid-statistics-card" style="display: none;">
+        <div class="card-header bg-light">
+            <h6 class="mb-0"><i class="mdi mdi-chart-bar me-1"></i> Statistics & Trends</h6>
+        </div>
+        <div class="card-body">
+            <div class="row text-center mb-3">
+                <div class="col-md-3">
+                    <div class="stat-box">
+                        <h3 class="text-primary mb-0" id="fluid-total-intake">0</h3>
+                        <small class="text-muted">Total Intake (ml)</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-box">
+                        <h3 class="text-warning mb-0" id="fluid-total-output">0</h3>
+                        <small class="text-muted">Total Output (ml)</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-box">
+                        <h3 id="fluid-net-balance" class="mb-0">0</h3>
+                        <small class="text-muted">Net Balance (ml)</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-box">
+                        <h3 class="text-info mb-0" id="fluid-record-count">0</h3>
+                        <small class="text-muted">Total Records</small>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-container" style="position: relative; height: 300px;">
+                <canvas id="fluidTrendsChart"></canvas>
             </div>
         </div>
     </div>
@@ -71,9 +122,14 @@
 
     <div class="d-flex justify-content-between align-items-center mb-2">
         <h6><i class="mdi mdi-water text-primary me-1"></i>Fluid Intake & Output</h6>
-        <button class="btn btn-success btn-sm rounded-pill" id="startFluidPeriodBtn">
-            <i class="mdi mdi-plus-circle me-1"></i> Start New Period
-        </button>
+        <div class="btn-group">
+            <button class="btn btn-outline-secondary btn-sm" id="exportFluidPdfBtn" title="Export to PDF">
+                <i class="mdi mdi-file-pdf"></i> Export PDF
+            </button>
+            <button class="btn btn-success btn-sm rounded-pill" id="startFluidPeriodBtn">
+                <i class="mdi mdi-plus-circle me-1"></i> Start New Period
+            </button>
+        </div>
     </div>
     <div id="fluid-periods-list">
         <!-- Periods and records will be loaded via AJAX -->

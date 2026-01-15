@@ -5,7 +5,7 @@
 
 @section('content')
     <section class="container">
-        <div modern border-info mb-3">
+        <div class="card-modern border-info mb-3">
             <div class="card-header">
                 <h4>Create Clinic</h4>
                 <a href="{{ route('clinics.index') }}" class="btn btn-secondary float-end">Back to List</a>
