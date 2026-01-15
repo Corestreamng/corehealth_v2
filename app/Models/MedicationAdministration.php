@@ -20,6 +20,7 @@ protected $fillable = [
         'route',
         'comment',
         'administered_by',
+        'store_id',
         'edited_by',
         'edited_at',
         'edit_reason',
@@ -33,6 +34,7 @@ protected $fillable = [
     public function administeredBy() { return $this->belongsTo(User::class, 'administered_by'); }
     public function editedBy() { return $this->belongsTo(User::class, 'edited_by'); }
     public function deletedBy() { return $this->belongsTo(User::class, 'deleted_by'); }
+    public function store() { return $this->belongsTo(Store::class, 'store_id'); }
 
     // Keep the old nurse relationship for backward compatibility
     public function nurse() { return $this->belongsTo(User::class, 'administered_by'); }
