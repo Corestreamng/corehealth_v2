@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\ProductOrServiceRequest;
-use App\Models\Patient;
+use App\Models\patient;
 use App\Models\User;
 use App\Models\Store;
 use App\Models\StoreStock;
