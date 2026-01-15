@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Patient;
+use App\Models\patient;
 use App\Models\ImagingServiceRequest;
 use App\Models\ProductOrServiceRequest;
 use App\Models\VitalSign;

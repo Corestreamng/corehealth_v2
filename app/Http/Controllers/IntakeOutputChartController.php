@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\IntakeOutputPeriod;
 use App\Models\IntakeOutputRecord;
-use App\Models\Patient;
+use App\Models\patient;
 use Illuminate\Support\Facades\Auth;
 
 class IntakeOutputChartController extends Controller

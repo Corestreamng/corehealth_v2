@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Patient;
+use App\Models\patient;
 use App\Models\patient as PatientLowerCase;
 use App\Models\AdmissionRequest;
 use App\Models\Bed;
@@ -26,7 +26,7 @@ use App\Models\ImmunizationRecord;
 use App\Models\VaccineScheduleTemplate;
 use App\Models\VaccineScheduleItem;
 use App\Models\VaccineProductMapping;
-use App\Models\PatientImmunizationSchedule;
+use App\Models\patientImmunizationSchedule;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;

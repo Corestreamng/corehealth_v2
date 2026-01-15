@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\MiscBill;
 use App\Models\patient;
-use App\Models\PatientAccount;
+use App\Models\patientAccount;
 use App\Models\payment;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -182,7 +182,7 @@ class PatientAccountController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\PatientAccount  $patientAccount
+     * @param  \App\Models\patientAccount  $patientAccount
      * @return \Illuminate\Http\Response
      */
     public function show(PatientAccount $patientAccount)
@@ -193,7 +193,7 @@ class PatientAccountController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\PatientAccount  $patientAccount
+     * @param  \App\Models\patientAccount  $patientAccount
      * @return \Illuminate\Http\Response
      */
     public function edit(PatientAccount $patientAccount)
@@ -205,7 +205,7 @@ class PatientAccountController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\PatientAccount  $patientAccount
+     * @param  \App\Models\patientAccount  $patientAccount
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, PatientAccount $patientAccount)
@@ -216,7 +216,7 @@ class PatientAccountController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\PatientAccount  $patientAccount
+     * @param  \App\Models\patientAccount  $patientAccount
      * @return \Illuminate\Http\Response
      */
     public function destroy(PatientAccount $patientAccount)

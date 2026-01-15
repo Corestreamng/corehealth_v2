@@ -9,10 +9,10 @@ use Carbon\Carbon;
 
 /**
  * NursingShift Model
- * 
+ *
  * Represents a nurse's work shift with activity tracking.
  * Shifts auto-end after 12 hours if not manually ended.
- * 
+ *
  * @property int $id
  * @property int $user_id
  * @property int|null $ward_id
@@ -276,7 +276,7 @@ class NursingShift extends Model implements Auditable
     public function incrementAction(string $type, int $count = 1): void
     {
         $column = $type . '_count';
-        if (in_array($column, ['vitals_count', 'medications_count', 'notes_count', 
+        if (in_array($column, ['vitals_count', 'medications_count', 'notes_count',
                                'injections_count', 'immunizations_count', 'bills_count'])) {
             $this->increment($column, $count);
         }
@@ -299,27 +299,27 @@ class NursingShift extends Model implements Auditable
         // Core Nursing Activities
         'App\\Models\\VitalSign' => ['label' => 'Vital Signs', 'icon' => 'mdi-heart-pulse', 'color' => 'danger'],
         'App\\Models\\NursingNote' => ['label' => 'Nursing Notes', 'icon' => 'mdi-note-text', 'color' => 'primary'],
-        
+
         // Injection & Immunization
         'App\\Models\\InjectionAdministration' => ['label' => 'Injections', 'icon' => 'mdi-needle', 'color' => 'info'],
         'App\\Models\\ImmunizationRecord' => ['label' => 'Immunizations', 'icon' => 'mdi-shield-check', 'color' => 'success'],
-        'App\\Models\\PatientImmunizationSchedule' => ['label' => 'Immunization Schedule', 'icon' => 'mdi-calendar-check', 'color' => 'success'],
-        
+        'App\\Models\\patientImmunizationSchedule' => ['label' => 'Immunization Schedule', 'icon' => 'mdi-calendar-check', 'color' => 'success'],
+
         // Medication Management
         'App\\Models\\MedicationAdministration' => ['label' => 'Medication Administration', 'icon' => 'mdi-pill', 'color' => 'warning'],
         'App\\Models\\MedicationSchedule' => ['label' => 'Medication Schedule', 'icon' => 'mdi-clock-outline', 'color' => 'warning'],
-        
+
         // I/O Charting
         'App\\Models\\IntakeOutputPeriod' => ['label' => 'I/O Period', 'icon' => 'mdi-chart-line', 'color' => 'info'],
         'App\\Models\\IntakeOutputRecord' => ['label' => 'I/O Record', 'icon' => 'mdi-water', 'color' => 'info'],
-        
+
         // Billing
         'App\\Models\\ProductOrServiceRequest' => ['label' => 'Billing', 'icon' => 'mdi-receipt', 'color' => 'secondary'],
-        
+
         // Admissions & Bed Management
         'App\\Models\\AdmissionRequest' => ['label' => 'Admissions', 'icon' => 'mdi-bed', 'color' => 'primary'],
         'App\\Models\\Bed' => ['label' => 'Bed Management', 'icon' => 'mdi-bed-outline', 'color' => 'info'],
-        
+
         // Checklists
         'App\\Models\\AdmissionChecklist' => ['label' => 'Admission Checklists', 'icon' => 'mdi-clipboard-check', 'color' => 'primary'],
         'App\\Models\\AdmissionChecklistItem' => ['label' => 'Admission Checklist Items', 'icon' => 'mdi-checkbox-marked', 'color' => 'primary'],
@@ -333,7 +333,7 @@ class NursingShift extends Model implements Auditable
     public function getShiftAuditLogs()
     {
         $auditableTypes = array_keys(self::NURSING_AUDITABLE_TYPES);
-        
+
         return \OwenIt\Auditing\Models\Audit::where('user_id', $this->user_id)
             ->whereIn('auditable_type', $auditableTypes)
             ->where('created_at', '>=', $this->started_at)
@@ -353,7 +353,7 @@ class NursingShift extends Model implements Auditable
         foreach ($audits as $audit) {
             $type = $audit->auditable_type;
             $config = self::NURSING_AUDITABLE_TYPES[$type] ?? ['label' => class_basename($type), 'icon' => 'mdi-file', 'color' => 'secondary'];
-            
+
             if (!isset($grouped[$type])) {
                 $grouped[$type] = [
                     'label' => $config['label'],
@@ -372,7 +372,7 @@ class NursingShift extends Model implements Auditable
             // Try to get patient info from the audit
             $patientId = null;
             $patientName = null;
-            
+
             // Check new_values first, then old_values for patient_id
             $values = $audit->new_values ?? $audit->old_values ?? [];
             if (isset($values['patient_id'])) {
@@ -398,10 +398,10 @@ class NursingShift extends Model implements Auditable
             }
 
             $patientInfo = $grouped[$type]['patients'][$patientId] ?? null;
-            
+
             // Parse changes between old and new values
             $changes = $this->parseAuditChanges($audit->event, $audit->old_values ?? [], $audit->new_values ?? [], $type);
-            
+
             $grouped[$type]['items'][] = [
                 'id' => $audit->id,
                 'event' => $audit->event,
@@ -426,10 +426,10 @@ class NursingShift extends Model implements Auditable
     protected function parseAuditChanges(string $event, array $oldValues, array $newValues, string $modelType): array
     {
         $changes = [];
-        
+
         // Fields to ignore (internal/technical fields)
         $ignoreFields = ['id', 'created_at', 'updated_at', 'deleted_at', 'user_id', 'staff_user_id'];
-        
+
         // Human-readable field labels
         $fieldLabels = [
             'blood_pressure' => 'Blood Pressure',
@@ -474,7 +474,7 @@ class NursingShift extends Model implements Auditable
             'is_discontinued' => 'Discontinued',
             'discontinue_reason' => 'Discontinue Reason',
         ];
-        
+
         if ($event === 'created') {
             // For created events, show key new values
             foreach ($newValues as $field => $value) {
@@ -522,7 +522,7 @@ class NursingShift extends Model implements Auditable
                 ];
             }
         }
-        
+
         return $changes;
     }
 
@@ -540,7 +540,7 @@ class NursingShift extends Model implements Auditable
         if (is_array($value)) {
             return json_encode($value);
         }
-        
+
         // Date/time fields
         if (in_array($field, ['administered_at', 'recorded_at', 'scheduled_date', 'due_date', 'next_due_date', 'administered_date'])) {
             try {
@@ -549,12 +549,12 @@ class NursingShift extends Model implements Auditable
                 return (string) $value;
             }
         }
-        
+
         // Boolean-like fields
         if (in_array($field, ['is_completed', 'is_discontinued', 'is_repeating'])) {
             return $value ? 'Yes' : 'No';
         }
-        
+
         return (string) $value;
     }
 
@@ -565,15 +565,15 @@ class NursingShift extends Model implements Auditable
     {
         $grouped = $this->getGroupedAuditLogs();
         $details = [];
-        
+
         foreach ($grouped as $type => $data) {
             $config = self::NURSING_AUDITABLE_TYPES[$type] ?? ['label' => class_basename($type), 'icon' => 'mdi-file', 'color' => 'secondary'];
-            
+
             foreach ($data['items'] as $item) {
                 if (empty($item['changes'])) {
                     continue;
                 }
-                
+
                 $details[] = [
                     'category' => $config['label'],
                     'icon' => $config['icon'],
@@ -589,7 +589,7 @@ class NursingShift extends Model implements Auditable
                 ];
             }
         }
-        
+
         return $details;
     }
 
@@ -616,14 +616,14 @@ class NursingShift extends Model implements Auditable
                 if ($data['events']['deleted'] > 0) {
                     $eventDetails[] = $data['events']['deleted'] . ' deleted';
                 }
-                
+
                 $parts[] = "<strong>{$data['label']}</strong>: " . implode(', ', $eventDetails);
-                
+
                 // Collect unique patients
                 foreach ($data['patients'] as $pid => $pinfo) {
                     $patientsSeen[$pid] = $pinfo;
                 }
-                
+
                 // Collect key changes for the summary
                 foreach ($data['items'] as $item) {
                     if (!empty($item['changes'])) {
@@ -631,7 +631,7 @@ class NursingShift extends Model implements Auditable
                         if ($item['patient_no']) {
                             $patientDisplay .= " ({$item['patient_no']})";
                         }
-                        
+
                         foreach ($item['changes'] as $change) {
                             $changeDesc = '';
                             if ($change['type'] === 'created') {
@@ -641,7 +641,7 @@ class NursingShift extends Model implements Auditable
                             } elseif ($change['type'] === 'deleted') {
                                 $changeDesc = "{$change['label']}: {$change['value']} (removed)";
                             }
-                            
+
                             if ($changeDesc) {
                                 $keyChanges[] = [
                                     'category' => $data['label'],
@@ -658,7 +658,7 @@ class NursingShift extends Model implements Auditable
         }
 
         $summary = "";
-        
+
         if (!empty($patientsSeen)) {
             $summary .= "<p><strong>Patients Attended:</strong> " . count($patientsSeen) . " patient(s)</p>";
             $summary .= "<ul>";
@@ -683,13 +683,13 @@ class NursingShift extends Model implements Auditable
         if (!empty($keyChanges)) {
             $summary .= "<p><strong>Key Changes:</strong></p>";
             $summary .= "<div class='key-changes-list'>";
-            
+
             // Group by patient for better readability
             $byPatient = [];
             foreach (array_slice($keyChanges, 0, 20) as $kc) {
                 $byPatient[$kc['patient']][] = $kc;
             }
-            
+
             foreach ($byPatient as $patient => $changes) {
                 $summary .= "<div class='patient-changes mb-2'>";
                 $summary .= "<strong class='text-primary'>{$patient}</strong>";
@@ -725,7 +725,7 @@ class NursingShift extends Model implements Auditable
 
         foreach ($grouped as $type => $data) {
             $config = self::NURSING_AUDITABLE_TYPES[$type] ?? ['label' => class_basename($type), 'icon' => 'mdi-file', 'color' => 'secondary'];
-            
+
             foreach ($data['items'] as $item) {
                 if ($item['patient_id']) {
                     $pid = $item['patient_id'];
@@ -743,7 +743,7 @@ class NursingShift extends Model implements Auditable
                     }
 
                     $activityType = $config['label'];
-                    $patientActivities[$pid]['activity_counts'][$activityType] = 
+                    $patientActivities[$pid]['activity_counts'][$activityType] =
                         ($patientActivities[$pid]['activity_counts'][$activityType] ?? 0) + 1;
                     $patientActivities[$pid]['total_events']++;
 
@@ -776,7 +776,7 @@ class NursingShift extends Model implements Auditable
         $groupedAudits = $this->getGroupedAuditLogs();
         $patientHighlights = $this->getPatientHighlights();
         $auditDetails = $this->generateAuditDetails();
-        
+
         // Build the detailed action summary from audits
         $actionSummary = [];
         foreach ($groupedAudits as $type => $auditData) {
