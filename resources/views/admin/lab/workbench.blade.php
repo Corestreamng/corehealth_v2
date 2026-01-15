@@ -3748,9 +3748,25 @@ function displayPatientInfo(patient) {
         </div>
     `;
 
-    // Allergies
-    if (patient.allergies && patient.allergies.length > 0) {
-        const allergiesList = patient.allergies.map(allergy =>
+    // Allergies - handle array, comma-separated string, JSON string, object, or null
+    let allergiesArray = [];
+    if (patient.allergies) {
+        if (Array.isArray(patient.allergies)) {
+            allergiesArray = patient.allergies;
+        } else if (typeof patient.allergies === 'string') {
+            try {
+                const parsed = JSON.parse(patient.allergies);
+                allergiesArray = Array.isArray(parsed) ? parsed : (parsed ? [parsed] : []);
+            } catch(e) {
+                allergiesArray = patient.allergies.split(',').map(a => a.trim()).filter(a => a);
+            }
+        } else if (typeof patient.allergies === 'object') {
+            allergiesArray = Object.values(patient.allergies).filter(a => a);
+        }
+    }
+
+    if (allergiesArray.length > 0) {
+        const allergiesList = allergiesArray.map(allergy =>
             `<span class="allergy-tag"><i class="mdi mdi-alert"></i> ${allergy}</span>`
         ).join('');
         detailsHtml += `

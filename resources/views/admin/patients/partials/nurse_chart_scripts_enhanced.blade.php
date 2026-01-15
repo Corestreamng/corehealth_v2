@@ -314,18 +314,42 @@
             endDate.setDate(endDate.getDate() + 30);
         }
         $('#med-end-date').val(endDate instanceof Date ? endDate.toISOString().split('T')[0] : endDate);
+
+        // Update date range summary
+        updateDateRangeSummary();
+    }
+
+    // Update date range summary display
+    function updateDateRangeSummary() {
+        const startDate = $('#med-start-date').val();
+        const endDate = $('#med-end-date').val();
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const days = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
+            $('#date-range-summary').html(`<i class="mdi mdi-calendar me-1"></i>${days} days`);
+        }
     }
 
     // Initialize date range on page load
     initializeMedicationDateRange();
 
+    // Reset date range button
+    $('#reset-date-range-btn').on('click', function() {
+        initializeMedicationDateRange();
+        if (selectedMedication) {
+            const startDateStr = $('#med-start-date').val();
+            const endDateStr = $('#med-end-date').val();
+            loadMedicationCalendarWithDateRange(selectedMedication, startDateStr, endDateStr);
+        }
+        // If on overview tab, reload overview
+        if ($('#med-overview-tab').hasClass('active')) {
+            loadOverviewCalendar();
+        }
+    });
+
     // Handle the apply date range button click
     $('#apply-date-range-btn').on('click', function() {
-        if (!selectedMedication) {
-            toastr.warning('Please select a medication first.');
-            return;
-        }
-
         const startDateStr = $('#med-start-date').val();
         const endDateStr = $('#med-end-date').val();
 
@@ -342,10 +366,393 @@
             return;
         }
 
-        // Update the calendar start date and load the calendar with the custom range
-        calendarStartDate = startDate;
-        loadMedicationCalendarWithDateRange(selectedMedication, startDateStr, endDateStr);
+        // Update summary
+        updateDateRangeSummary();
+
+        // Check which tab is active
+        if ($('#med-overview-tab').hasClass('active')) {
+            // Load overview calendar
+            loadOverviewCalendar();
+        } else if (selectedMedication) {
+            // Load entry calendar for selected medication
+            calendarStartDate = startDate;
+            loadMedicationCalendarWithDateRange(selectedMedication, startDateStr, endDateStr);
+        } else {
+            toastr.info('Please select a medication on the Entry tab, or switch to Overview to see all medications.');
+        }
     });
+
+    // =============================================
+    // OVERVIEW TAB FUNCTIONALITY
+    // =============================================
+
+    // Medication colors for overview calendar
+    const overviewMedColors = [
+        { bg: '#e3f2fd', border: '#1976d2', text: '#0d47a1' },  // Blue
+        { bg: '#e8f5e9', border: '#388e3c', text: '#1b5e20' },  // Green
+        { bg: '#fff3e0', border: '#f57c00', text: '#e65100' },  // Orange
+        { bg: '#f3e5f5', border: '#8e24aa', text: '#6a1b9a' },  // Purple
+        { bg: '#e0f7fa', border: '#0097a7', text: '#006064' },  // Cyan
+        { bg: '#fce4ec', border: '#c2185b', text: '#880e4f' },  // Pink
+        { bg: '#fff8e1', border: '#ffa000', text: '#ff6f00' },  // Amber
+        { bg: '#e8eaf6', border: '#3f51b5', text: '#1a237e' },  // Indigo
+        { bg: '#efebe9', border: '#6d4c41', text: '#3e2723' },  // Brown
+        { bg: '#eceff1', border: '#546e7a', text: '#263238' },  // Blue Grey
+    ];
+
+    // Overview tab shown event - load calendar when tab is shown
+    $('#med-overview-tab').on('shown.bs.tab', function() {
+        loadOverviewCalendar();
+    });
+
+    // Overview navigation buttons
+    $('#overview-prev-btn').on('click', function() {
+        const currentStart = new Date($('#med-start-date').val());
+        const currentEnd = new Date($('#med-end-date').val());
+        const range = Math.round((currentEnd - currentStart) / (1000 * 60 * 60 * 24));
+
+        currentStart.setDate(currentStart.getDate() - range);
+        currentEnd.setDate(currentEnd.getDate() - range);
+
+        $('#med-start-date').val(currentStart.toISOString().split('T')[0]);
+        $('#med-end-date').val(currentEnd.toISOString().split('T')[0]);
+        updateDateRangeSummary();
+        loadOverviewCalendar();
+    });
+
+    $('#overview-next-btn').on('click', function() {
+        const currentStart = new Date($('#med-start-date').val());
+        const currentEnd = new Date($('#med-end-date').val());
+        const range = Math.round((currentEnd - currentStart) / (1000 * 60 * 60 * 24));
+
+        currentStart.setDate(currentStart.getDate() + range);
+        currentEnd.setDate(currentEnd.getDate() + range);
+
+        $('#med-start-date').val(currentStart.toISOString().split('T')[0]);
+        $('#med-end-date').val(currentEnd.toISOString().split('T')[0]);
+        updateDateRangeSummary();
+        loadOverviewCalendar();
+    });
+
+    $('#overview-today-btn').on('click', function() {
+        initializeMedicationDateRange();
+        loadOverviewCalendar();
+    });
+
+    // Load overview calendar data
+    function loadOverviewCalendar() {
+        let startDate = $('#med-start-date').val();
+        let endDate = $('#med-end-date').val();
+
+        if (!startDate || !endDate) {
+            initializeMedicationDateRange();
+            // Re-read values after initialization
+            startDate = $('#med-start-date').val();
+            endDate = $('#med-end-date').val();
+        }
+
+        $('#overview-loading').show();
+        $('#unified-overview-container').html('');
+
+        const url = medicationChartIndexRoute.replace(':patient', PATIENT_ID) +
+                    '?start_date=' + encodeURIComponent(startDate) +
+                    '&end_date=' + encodeURIComponent(endDate);
+
+        $.ajax({
+            url: url,
+            type: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                $('#overview-loading').hide();
+                renderOverviewCalendar(data, startDate, endDate);
+                updateOverviewStats(data);
+            },
+            error: function(xhr, status, error) {
+                $('#overview-loading').hide();
+                $('#unified-overview-container').html(
+                    '<div class="alert alert-danger">Failed to load medication data. Please try again.</div>'
+                );
+                console.error('Overview load error:', error);
+            }
+        });
+    }
+
+    // Update overview statistics
+    function updateOverviewStats(data) {
+        const prescriptions = data.prescriptions || [];
+        const administrations = data.administrations || [];
+
+        // Count total medications
+        $('#stat-total-meds').text(prescriptions.length);
+
+        // Count given doses (non-deleted administrations)
+        const givenCount = administrations.filter(a => !a.deleted_at).length;
+        $('#stat-given').text(givenCount);
+
+        // Count scheduled (schedules without administrations)
+        let scheduledCount = 0;
+        let missedCount = 0;
+        const now = new Date();
+
+        prescriptions.forEach(p => {
+            if (p.schedules) {
+                p.schedules.forEach(s => {
+                    const hasAdmin = administrations.some(a => a.schedule_id === s.id && !a.deleted_at);
+                    if (!hasAdmin) {
+                        const scheduleTime = new Date(s.scheduled_time);
+                        if (scheduleTime < now) {
+                            missedCount++;
+                        } else {
+                            scheduledCount++;
+                        }
+                    }
+                });
+            }
+        });
+
+        $('#stat-scheduled').text(scheduledCount);
+        $('#stat-missed').text(missedCount);
+    }
+
+    // Render the unified overview calendar
+    function renderOverviewCalendar(data, startDateStr, endDateStr) {
+        const container = document.getElementById('unified-overview-container');
+
+        if (!data.prescriptions || data.prescriptions.length === 0) {
+            container.innerHTML = '<div class="alert alert-info">No medications found for this period.</div>';
+            return;
+        }
+
+        // Build medication color map
+        const medColorMap = {};
+        data.prescriptions.forEach((p, idx) => {
+            medColorMap[p.id] = overviewMedColors[idx % overviewMedColors.length];
+        });
+
+        // Parse dates
+        const startDate = new Date(startDateStr);
+        const endDate = new Date(endDateStr);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // Calculate first day of week for calendar alignment
+        const firstCalendarDay = new Date(startDate);
+        firstCalendarDay.setDate(firstCalendarDay.getDate() - firstCalendarDay.getDay());
+
+        // Build administrations lookup by schedule_id
+        const adminBySchedule = {};
+        (data.administrations || []).forEach(admin => {
+            if (!adminBySchedule[admin.schedule_id]) {
+                adminBySchedule[admin.schedule_id] = [];
+            }
+            adminBySchedule[admin.schedule_id].push(admin);
+        });
+
+        // Build HTML
+        let html = '';
+
+        // Weekday header
+        html += '<div class="calendar-weekday-header">';
+        const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        weekdays.forEach(day => {
+            html += `<div class="weekday-name">${day}</div>`;
+        });
+        html += '</div>';
+
+        // Calendar grid
+        html += '<div class="medication-calendar-grid">';
+
+        let currentDate = new Date(firstCalendarDay);
+        const lastCalendarDay = new Date(endDate);
+        lastCalendarDay.setDate(lastCalendarDay.getDate() + (6 - lastCalendarDay.getDay()));
+
+        while (currentDate <= lastCalendarDay) {
+            const dateStr = currentDate.toISOString().split('T')[0];
+            const dayOfWeek = currentDate.getDay();
+            const isToday = currentDate.toDateString() === today.toDateString();
+            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+            const isPast = currentDate < today;
+            const isInRange = currentDate >= startDate && currentDate <= endDate;
+
+            let cellClass = 'calendar-day-cell';
+            if (!isInRange) cellClass += ' empty-day';
+            if (isToday) cellClass += ' today';
+            if (isWeekend && isInRange) cellClass += ' weekend';
+            if (isPast && isInRange) cellClass += ' past-date';
+
+            html += `<div class="${cellClass}">`;
+
+            if (isInRange) {
+                const dayName = weekdays[dayOfWeek];
+                const dayNum = currentDate.getDate();
+
+                html += `<div class="day-header">
+                    <span class="day-name">${dayName}</span>
+                    <span class="day-number">${dayNum}</span>
+                </div>`;
+
+                html += '<div class="schedule-items">';
+
+                // Find all schedules for this date across all prescriptions
+                data.prescriptions.forEach(prescription => {
+                    const medName = extractMedicationName(prescription);
+                    const color = medColorMap[prescription.id];
+
+                    if (prescription.schedules) {
+                        prescription.schedules.forEach(schedule => {
+                            const scheduleDate = new Date(schedule.scheduled_time).toISOString().split('T')[0];
+
+                            if (scheduleDate === dateStr) {
+                                const scheduleTime = new Date(schedule.scheduled_time);
+                                const timeStr = scheduleTime.toLocaleTimeString('en-US', {
+                                    hour: 'numeric',
+                                    minute: '2-digit',
+                                    hour12: true
+                                });
+
+                                // Check administration status
+                                const admins = adminBySchedule[schedule.id] || [];
+                                const activeAdmin = admins.find(a => !a.deleted_at);
+
+                                let status = 'scheduled';
+                                let statusIcon = '⏳';
+
+                                if (activeAdmin) {
+                                    status = 'given';
+                                    statusIcon = '✓';
+                                } else if (scheduleTime < today) {
+                                    status = 'missed';
+                                    statusIcon = '✗';
+                                }
+
+                                // Build item data for modal
+                                const itemData = JSON.stringify({
+                                    medName: medName,
+                                    dose: schedule.dose,
+                                    route: schedule.route,
+                                    scheduledTime: timeStr,
+                                    scheduledDate: dateStr,
+                                    status: status,
+                                    administeredAt: activeAdmin ? activeAdmin.administered_at : null,
+                                    administeredBy: activeAdmin ? (activeAdmin.administered_by_name || 'Unknown') : null,
+                                    comment: activeAdmin ? activeAdmin.comment : null,
+                                    color: color
+                                }).replace(/"/g, '&quot;');
+
+                                html += `<div class="med-item status-${status}"
+                                            style="background-color: ${color.bg}; border-left-color: ${color.border}; color: ${color.text};"
+                                            onclick="showOverviewMedDetails(this)" data-med-details="${itemData}">
+                                    <span class="med-time">${timeStr}</span>
+                                    <span class="med-name">${medName}</span>
+                                    <span class="med-status">${statusIcon}</span>
+                                </div>`;
+                            }
+                        });
+                    }
+                });
+
+                html += '</div>';
+            }
+
+            html += '</div>';
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        html += '</div>';
+
+        container.innerHTML = html;
+    }
+
+    // Show medication details modal for overview
+    window.showOverviewMedDetails = function(element) {
+        const data = JSON.parse(element.getAttribute('data-med-details'));
+
+        // Status badge
+        let statusBadge = '';
+        switch(data.status) {
+            case 'given':
+                statusBadge = '<span class="badge bg-success"><i class="mdi mdi-check-circle me-1"></i>Given</span>';
+                break;
+            case 'scheduled':
+                statusBadge = '<span class="badge bg-primary"><i class="mdi mdi-clock-outline me-1"></i>Scheduled</span>';
+                break;
+            case 'missed':
+                statusBadge = '<span class="badge bg-danger"><i class="mdi mdi-alert-circle me-1"></i>Missed</span>';
+                break;
+        }
+
+        // Build modal content
+        let content = `
+            <div class="row">
+                <div class="col-12 mb-3">
+                    <h5 class="mb-2" style="color: ${data.color.text};">
+                        <i class="mdi mdi-pill me-2"></i>${data.medName}
+                    </h5>
+                    ${statusBadge}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="text-muted small">Dose</label>
+                    <div class="fw-bold">${data.dose || 'N/A'}</div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="text-muted small">Route</label>
+                    <div class="fw-bold">${data.route || 'N/A'}</div>
+                </div>
+            </div>`;
+
+        if (data.scheduledTime) {
+            content += `
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="text-muted small">Scheduled Date</label>
+                    <div class="fw-bold"><i class="mdi mdi-calendar me-1"></i>${data.scheduledDate}</div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="text-muted small">Scheduled Time</label>
+                    <div class="fw-bold"><i class="mdi mdi-clock me-1"></i>${data.scheduledTime}</div>
+                </div>
+            </div>`;
+        }
+
+        if (data.status === 'given' && data.administeredAt) {
+            const adminTime = new Date(data.administeredAt);
+            content += `
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="text-muted small">Administered At</label>
+                    <div class="fw-bold"><i class="mdi mdi-clock-check me-1"></i>${adminTime.toLocaleString()}</div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="text-muted small">Administered By</label>
+                    <div class="fw-bold"><i class="mdi mdi-account me-1"></i>${data.administeredBy}</div>
+                </div>
+            </div>`;
+        }
+
+        if (data.comment) {
+            content += `
+            <div class="row">
+                <div class="col-12">
+                    <label class="text-muted small">Notes</label>
+                    <div class="p-2 bg-light rounded">${data.comment}</div>
+                </div>
+            </div>`;
+        }
+
+        document.getElementById('overviewMedDetailsModalBody').innerHTML = content;
+        document.getElementById('overviewMedDetailsModalLabel').textContent = 'Medication Details';
+
+        // Move modal to body to avoid z-index issues
+        const modalEl = document.getElementById('overviewMedDetailsModal');
+        if (modalEl.parentElement !== document.body) {
+            document.body.appendChild(modalEl);
+        }
+
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    };
 
     // Function to load medication calendar with a specific date range
     function loadMedicationCalendarWithDateRange(medicationId, startDate, endDate) {

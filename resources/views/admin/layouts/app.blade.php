@@ -1409,6 +1409,18 @@ rgba(255, 255, 255, 0.7) !important;
             text-shadow: none !important;
         }
 
+        /* Fix for modals inside overflow containers - ensure proper stacking */
+        .modal {
+            position: fixed !important;
+            z-index: 1055 !important;
+        }
+        .modal-backdrop {
+            z-index: 1050 !important;
+        }
+        .modal.show .modal-dialog {
+            z-index: 1056 !important;
+        }
+
         /* Mobile responsive */
         @media (max-width: 991px) {
             .ch-navbar {
@@ -2100,6 +2112,17 @@ rgba(255, 255, 255, 0.7) !important;
     @yield('scripts')
     @stack('scripts')
     <!-- endinject -->
+
+    <!-- Global Modal Fix: Move modals to body to avoid z-index/overflow issues -->
+    <script>
+        document.addEventListener('show.bs.modal', function(event) {
+            const modal = event.target;
+            if (modal.parentElement !== document.body) {
+                document.body.appendChild(modal);
+            }
+        });
+    </script>
+
     <!-- Plugin js for this page -->
     {{-- <script src="admin/assets/vendors/jquery-bar-rating/jquery.barrating.min.js"></script> --}}
     {{-- <script src="admin/assets/vendors/flot/jquery.flot.js"></script>
