@@ -2686,36 +2686,36 @@
         <div class="search-container" style="position: relative;">
             <input type="text"
                    id="patient-search-input"
-                   placeholder="≡ƒöì Search patient name or file no..."
+                   placeholder="Search patient name or file no..."
                    autocomplete="off">
             <div class="search-results" id="patient-search-results"></div>
         </div>
 
         <div class="queue-widget">
-            <h6>≡ƒôï PATIENT QUEUES</h6>
+            <h6><i class="mdi mdi-clipboard-list"></i> PATIENT QUEUES</h6>
             <div class="queue-item" data-filter="admitted">
-                <span class="queue-item-label">≡ƒ¢Å∩╕Å Admitted Patients</span>
+                <span class="queue-item-label"><i class="mdi mdi-bed"></i> Admitted Patients</span>
                 <span class="queue-count billing" id="queue-admitted-count">0</span>
             </div>
             <div class="queue-item" data-filter="vitals">
-                <span class="queue-item-label">≡ƒÆë Vitals Queue</span>
+                <span class="queue-item-label"><i class="mdi mdi-heart-pulse"></i> Vitals Queue</span>
                 <span class="queue-count sample" id="queue-vitals-count">0</span>
             </div>
             <div class="queue-item" data-filter="bed-requests">
-                <span class="queue-item-label">≡ƒ¢Å∩╕Å Bed Requests</span>
+                <span class="queue-item-label"><i class="mdi mdi-bed-empty"></i> Bed Requests</span>
                 <span class="queue-count info" id="queue-bed-count">0</span>
             </div>
             <div class="queue-item" data-filter="medication-due">
-                <span class="queue-item-label">≡ƒÆè Medication Due</span>
+                <span class="queue-item-label"><i class="mdi mdi-pill"></i> Medication Due</span>
                 <span class="queue-count results" id="queue-medication-count">0</span>
             </div>
             <button class="btn-queue-all" id="refresh-queues-btn">
-                ≡ƒöä Refresh Queues
+                <i class="mdi mdi-refresh"></i> Refresh Queues
             </button>
         </div>
 
         <div class="quick-actions">
-            <h6>ΓÜí QUICK ACTIONS</h6>
+            <h6><i class="mdi mdi-lightning-bolt"></i> QUICK ACTIONS</h6>
 
             <!-- Ward & Bed Management -->
             <button class="quick-action-btn" id="btn-ward-dashboard">
@@ -6904,9 +6904,29 @@ function displayPatientInfo(patient) {
         </div>
     `;
 
-    // Allergies
-    if (patient.allergies && patient.allergies.length > 0) {
-        const allergiesList = patient.allergies.map(allergy =>
+    // Allergies - handle array, comma-separated string, JSON string, object, or null
+    let allergiesArray = [];
+    if (patient.allergies) {
+        if (Array.isArray(patient.allergies)) {
+            // Already an array
+            allergiesArray = patient.allergies;
+        } else if (typeof patient.allergies === 'string') {
+            // Try parsing as JSON first
+            try {
+                const parsed = JSON.parse(patient.allergies);
+                allergiesArray = Array.isArray(parsed) ? parsed : (parsed ? [parsed] : []);
+            } catch(e) {
+                // Not JSON, treat as comma-separated string
+                allergiesArray = patient.allergies.split(',').map(a => a.trim()).filter(a => a);
+            }
+        } else if (typeof patient.allergies === 'object') {
+            // Object - extract values
+            allergiesArray = Object.values(patient.allergies).filter(a => a);
+        }
+    }
+
+    if (allergiesArray.length > 0) {
+        const allergiesList = allergiesArray.map(allergy =>
             `<span class="allergy-tag"><i class="mdi mdi-alert"></i> ${allergy}</span>`
         ).join('');
         detailsHtml += `
@@ -10264,11 +10284,27 @@ function populateOverviewTab(data) {
     }
     $('#overview-doctor-note').html(doctorNoteHtml);
 
-    // Populate Allergies & Alerts Card
+    // Populate Allergies & Alerts Card - handle array, comma-separated string, JSON string, object, or null
     let allergiesHtml = '';
-    if (data.allergies && data.allergies.length > 0) {
+    let allergiesArray = [];
+    if (data.allergies) {
+        if (Array.isArray(data.allergies)) {
+            allergiesArray = data.allergies;
+        } else if (typeof data.allergies === 'string') {
+            try {
+                const parsed = JSON.parse(data.allergies);
+                allergiesArray = Array.isArray(parsed) ? parsed : (parsed ? [parsed] : []);
+            } catch(e) {
+                allergiesArray = data.allergies.split(',').map(a => a.trim()).filter(a => a);
+            }
+        } else if (typeof data.allergies === 'object') {
+            allergiesArray = Object.values(data.allergies).filter(a => a);
+        }
+    }
+
+    if (allergiesArray.length > 0) {
         allergiesHtml = '<div class="d-flex flex-wrap">';
-        data.allergies.forEach(function(allergy) {
+        allergiesArray.forEach(function(allergy) {
             allergiesHtml += `<span class="badge badge-danger m-1 p-2"><i class="mdi mdi-alert"></i> ${allergy}</span>`;
         });
         allergiesHtml += '</div>';
