@@ -367,19 +367,20 @@
 }
 </style>
 
+@push('scripts')
 <script>
 // AJAX Search for Diagnosis Reasons
-let selectedReasons = [];
-let searchTimeout;
+var clinicalSelectedReasons = [];
+var clinicalReasonSearchTimeout;
 
 // Add a reason to selected list
 function addReason(value, display, code, name) {
     // Check if already selected
-    if (selectedReasons.some(r => r.value === value)) {
+    if (clinicalSelectedReasons.some(r => r.value === value)) {
         return;
     }
 
-    selectedReasons.push({value, display, code, name});
+    clinicalSelectedReasons.push({value, display, code, name});
     updateSelectedReasonsDisplay();
 
     // Clear search
@@ -389,7 +390,7 @@ function addReason(value, display, code, name) {
 
 // Remove a reason from selected list
 function removeReason(value) {
-    selectedReasons = selectedReasons.filter(r => r.value !== value);
+    clinicalSelectedReasons = clinicalSelectedReasons.filter(r => r.value !== value);
     updateSelectedReasonsDisplay();
 }
 
@@ -397,14 +398,14 @@ function removeReason(value) {
 function updateSelectedReasonsDisplay() {
     const container = $('#selected_reasons_list');
 
-    if (selectedReasons.length === 0) {
+    if (clinicalSelectedReasons.length === 0) {
         container.html('<span class="text-muted"><i>No diagnoses selected yet</i></span>');
         $('#reasons_for_encounter_data').val('[]');
         return;
     }
 
     let html = '';
-    selectedReasons.forEach(reason => {
+    clinicalSelectedReasons.forEach(reason => {
         html += `
             <div class="diagnosis-badge">
                 <span class="reason-code">${reason.code}</span>
@@ -419,7 +420,7 @@ function updateSelectedReasonsDisplay() {
     container.html(html);
 
     // Update hidden input with JSON data
-    $('#reasons_for_encounter_data').val(JSON.stringify(selectedReasons));
+    $('#reasons_for_encounter_data').val(JSON.stringify(clinicalSelectedReasons));
 }
 
 // Search for reasons via AJAX
@@ -495,11 +496,11 @@ $(document).ready(function() {
     });
 
     // Search input handler
-    let searchTimeout;
+    var clinicalSearchTimeout;
     $('#reasons_for_encounter_search').on('input', function() {
-        clearTimeout(searchTimeout);
+        clearTimeout(clinicalSearchTimeout);
         const query = $(this).val();
-        searchTimeout = setTimeout(() => searchReasons(query), 300);
+        clinicalSearchTimeout = setTimeout(() => searchReasons(query), 300);
     });
 
     // Hide results when clicking outside
@@ -510,3 +511,4 @@ $(document).ready(function() {
     });
 });
 </script>
+@endpush

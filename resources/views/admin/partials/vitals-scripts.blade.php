@@ -50,8 +50,10 @@
             const heartRate = response.map(item => parseInt(item.heart_rate));
             const respRate = response.map(item => parseInt(item.resp_rate));
 
-            // Create the Blood Pressure Chart
-            new Chart(document.getElementById("bloodPressureChart"), {
+            // Create the Blood Pressure Chart (with null check)
+            var bpChartEl = document.getElementById("bloodPressureChart");
+            if (bpChartEl) {
+            new Chart(bpChartEl, {
                 type: "line",
                 data: {
                     labels: timeTaken,
@@ -91,9 +93,12 @@
                     },
                 },
             });
+            } // end if bpChartEl
 
-            // Create the Weight Chart
-            new Chart(document.getElementById("weightChart"), {
+            // Create the Weight Chart (with null check)
+            var weightChartEl = document.getElementById("weightChart");
+            if (weightChartEl) {
+            new Chart(weightChartEl, {
                 type: "line",
                 data: {
                     labels: timeTaken,
@@ -125,9 +130,12 @@
                     },
                 },
             });
+            } // end if weightChartEl
 
-            // Create the Temperature Chart
-            new Chart(document.getElementById("temperatureChart"), {
+            // Create the Temperature Chart (with null check)
+            var tempChartEl = document.getElementById("temperatureChart");
+            if (tempChartEl) {
+            new Chart(tempChartEl, {
                 type: "line",
                 data: {
                     labels: timeTaken,
@@ -159,9 +167,12 @@
                     },
                 },
             });
+            } // end if tempChartEl
 
-            // Create the Heart Rate Chart
-            new Chart(document.getElementById("heartRateChart"), {
+            // Create the Heart Rate Chart (with null check)
+            var hrChartEl = document.getElementById("heartRateChart");
+            if (hrChartEl) {
+            new Chart(hrChartEl, {
                 type: "line",
                 data: {
                     labels: timeTaken,
@@ -193,9 +204,12 @@
                     },
                 },
             });
+            } // end if hrChartEl
 
-            // Create the Respiratory Rate Chart
-            new Chart(document.getElementById("respRateChart"), {
+            // Create the Respiratory Rate Chart (with null check)
+            var respChartEl = document.getElementById("respRateChart");
+            if (respChartEl) {
+            new Chart(respChartEl, {
                 type: "line",
                 data: {
                     labels: timeTaken,
@@ -227,6 +241,7 @@
                     },
                 },
             });
+            } // end if respChartEl
         },
         error: function(xhr, status, error) {
             // Error handler: handle the error

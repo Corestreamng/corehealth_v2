@@ -224,14 +224,228 @@
             display: none;
         }
     }
+
+    /* Sub-tab styling */
+    .med-sub-tabs {
+        border-bottom: 2px solid #e9ecef;
+        margin-bottom: 0;
+    }
+    .med-sub-tabs .nav-link {
+        border: none;
+        border-bottom: 3px solid transparent;
+        color: #6c757d;
+        font-weight: 500;
+        padding: 0.75rem 1.5rem;
+        transition: all 0.2s ease;
+        background: transparent;
+        margin-bottom: -2px;
+    }
+    .med-sub-tabs .nav-link:hover {
+        color: #495057;
+        border-bottom-color: #dee2e6;
+        background: transparent;
+    }
+    .med-sub-tabs .nav-link.active {
+        color: #0d6efd;
+        border-bottom-color: #0d6efd;
+        background: transparent;
+    }
+    .med-sub-tabs .nav-link i {
+        margin-right: 6px;
+    }
+
+    /* Unified Overview Calendar Styles */
+    .unified-overview-calendar .calendar-weekday-header {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 1px;
+        background-color: #4a5568;
+    }
+    .unified-overview-calendar .weekday-name {
+        padding: 10px;
+        text-align: center;
+        font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+        color: white;
+        background-color: #4a5568;
+    }
+    .unified-overview-calendar .medication-calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 1px;
+        background-color: #dee2e6;
+        border: 1px solid #dee2e6;
+    }
+    .unified-overview-calendar .calendar-day-cell {
+        background-color: white;
+        min-height: 100px;
+        padding: 6px;
+        display: flex;
+        flex-direction: column;
+    }
+    .unified-overview-calendar .calendar-day-cell.empty-day {
+        background-color: #f8f9fa;
+        min-height: 50px;
+    }
+    .unified-overview-calendar .calendar-day-cell.today {
+        background-color: #e3f2fd;
+        border: 2px solid #2196F3;
+    }
+    .unified-overview-calendar .calendar-day-cell.weekend {
+        background-color: #fffde7;
+    }
+    .unified-overview-calendar .calendar-day-cell.past-date {
+        opacity: 0.8;
+        background-color: #fafafa;
+    }
+    .unified-overview-calendar .day-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 4px;
+        padding-bottom: 4px;
+        border-bottom: 1px solid #eee;
+    }
+    .unified-overview-calendar .day-name {
+        font-size: 10px;
+        color: #666;
+        text-transform: uppercase;
+    }
+    .unified-overview-calendar .day-number {
+        font-weight: bold;
+        font-size: 14px;
+        color: #333;
+    }
+    .unified-overview-calendar .schedule-items {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        overflow-y: auto;
+        max-height: 180px;
+        padding: 2px;
+    }
+    .unified-overview-calendar .med-item {
+        font-size: 11px;
+        padding: 6px 8px;
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        border-left: 3px solid;
+        transition: all 0.15s ease;
+    }
+    .unified-overview-calendar .med-item:hover {
+        transform: translateX(2px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .unified-overview-calendar .med-item .med-time {
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    .unified-overview-calendar .med-item .med-name {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: 500;
+    }
+    .unified-overview-calendar .med-item .med-status {
+        font-size: 14px;
+    }
+    .unified-overview-calendar .med-item.status-given {
+        opacity: 0.9;
+    }
+    .unified-overview-calendar .med-item.status-given .med-name {
+        text-decoration: line-through;
+        opacity: 0.8;
+    }
+    .unified-overview-calendar .med-item.status-missed {
+        background-color: #ffebee !important;
+        border-left-color: #f44336 !important;
+    }
+    .unified-overview-calendar .med-item.status-discontinued {
+        opacity: 0.5;
+        text-decoration: line-through;
+    }
+
+    /* Stats cards in overview */
+    .overview-stat-card {
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        transition: transform 0.2s;
+    }
+    .overview-stat-card:hover {
+        transform: translateY(-2px);
+    }
+    .overview-stat-card .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    .overview-stat-card .stat-label {
+        font-size: 0.85rem;
+        opacity: 0.9;
+    }
 </style>
 
 <div class="medication-chart-section">
-    <h5>Medication Chart / Treatment Sheet</h5>
+    <h5 class="mb-3">Medication Chart / Treatment Sheet</h5>
+
+    <!-- Shared Date Filter - accessible by both tabs -->
+    <div class="card shadow-sm mb-3">
+        <div class="card-body py-2">
+            <div class="row align-items-center">
+                <div class="col-auto">
+                    <span class="fw-bold text-muted small">
+                        <i class="mdi mdi-calendar-range me-1"></i>Date Range:
+                    </span>
+                </div>
+                <div class="col-auto">
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="date" class="form-control form-control-sm" id="med-start-date" style="width: 140px;">
+                        <span class="text-muted">to</span>
+                        <input type="date" class="form-control form-control-sm" id="med-end-date" style="width: 140px;">
+                        <button type="button" class="btn btn-primary btn-sm" id="apply-date-range-btn">
+                            <i class="mdi mdi-filter"></i> Apply
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="reset-date-range-btn">
+                            <i class="mdi mdi-refresh"></i> Reset
+                        </button>
+                    </div>
+                </div>
+                <div class="col-auto ms-auto">
+                    <span id="date-range-summary" class="badge bg-info"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sub-tabs: Entry and Overview -->
+    <ul class="nav med-sub-tabs" id="medSubTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="med-entry-tab" data-bs-toggle="tab" data-bs-target="#med-entry-content"
+                    type="button" role="tab" aria-controls="med-entry-content" aria-selected="true">
+                <i class="mdi mdi-pencil-plus"></i>Entry
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="med-overview-tab" data-bs-toggle="tab" data-bs-target="#med-overview-content"
+                    type="button" role="tab" aria-controls="med-overview-content" aria-selected="false">
+                <i class="mdi mdi-view-grid"></i>Overview
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content pt-3" id="medSubTabsContent">
+        <!-- ENTRY TAB -->
+        <div class="tab-pane fade show active" id="med-entry-content" role="tabpanel" aria-labelledby="med-entry-tab">
 
     <!-- Drug Selection and Controls -->
     <div class="mb-4">
-        <div modern shadow-sm">
+        <div class="card shadow-sm">
             <div class="card-body">
                 <div class="row g-3 align-items-end">
                     <div class="col-12">
@@ -274,18 +488,6 @@
                                     <i class="mdi mdi-chevron-right"></i>
                                 </button>
                             </div>
-                            <!-- Custom Date Range -->
-                            <div class="btn-group date-range-group ms-2">
-                                <input type="date" class="form-control form-control-sm" id="med-start-date"
-                                    placeholder="Start Date">
-                                <span class="input-group-text">to</span>
-                                <input type="date" class="form-control form-control-sm" id="med-end-date"
-                                    placeholder="End Date">
-                                <button type="button" class="btn btn-primary btn-sm" id="apply-date-range-btn">
-                                    <i class="mdi mdi-filter"></i>
-                                    <span class="d-none d-sm-inline">Apply</span>
-                                </button>
-                            </div>
                             <button type="button" class="btn btn-info btn-sm" id="view-logs-btn">
                                 <i class="mdi mdi-history"></i>
                                 <span class="d-none d-sm-inline">View Logs</span>
@@ -324,6 +526,74 @@
                 </div>
             </div>
         </div>
+    </div>
+
+        </div>
+        <!-- END ENTRY TAB -->
+
+        <!-- OVERVIEW TAB -->
+        <div class="tab-pane fade" id="med-overview-content" role="tabpanel" aria-labelledby="med-overview-tab">
+
+            <!-- Summary Stats -->
+            <div class="row mb-4" id="overview-stats-row">
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="overview-stat-card bg-primary bg-opacity-10">
+                        <div class="stat-number text-primary" id="stat-total-meds">0</div>
+                        <div class="stat-label text-primary">Active Medications</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="overview-stat-card bg-success bg-opacity-10">
+                        <div class="stat-number text-success" id="stat-given">0</div>
+                        <div class="stat-label text-success">Doses Given</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="overview-stat-card bg-warning bg-opacity-10">
+                        <div class="stat-number text-warning" id="stat-scheduled">0</div>
+                        <div class="stat-label text-warning">Scheduled</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="overview-stat-card bg-danger bg-opacity-10">
+                        <div class="stat-number text-danger" id="stat-missed">0</div>
+                        <div class="stat-label text-danger">Missed</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading indicator for overview -->
+            <div class="text-center my-4" id="overview-loading" style="display:none;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div class="mt-2 text-primary">Loading overview...</div>
+            </div>
+
+            <!-- Unified Calendar Overview -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
+                    <h6 class="mb-0 fw-bold">
+                        <i class="mdi mdi-calendar-month me-2"></i>Medication Overview Calendar
+                    </h6>
+                    <div class="btn-group btn-group-sm">
+                        <button type="button" class="btn btn-outline-secondary" id="overview-prev-btn">
+                            <i class="mdi mdi-chevron-left"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" id="overview-today-btn">Today</button>
+                        <button type="button" class="btn btn-outline-secondary" id="overview-next-btn">
+                            <i class="mdi mdi-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-2">
+                    <div id="unified-overview-container" class="unified-overview-calendar">
+                        <!-- Calendar will be rendered here via JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END OVERVIEW TAB -->
     </div>
 
     <!-- Set Schedule Modal -->
@@ -736,6 +1006,26 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <button type="button" class="btn btn-primary" id="edit-admin-btn">Edit</button>
                     <button type="button" class="btn btn-danger" id="delete-admin-btn">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview Medication Details Modal -->
+    <div class="modal fade" id="overviewMedDetailsModal" tabindex="-1" aria-labelledby="overviewMedDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title" id="overviewMedDetailsModalLabel">
+                        <i class="mdi mdi-pill me-2"></i>Medication Details
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="overviewMedDetailsModalBody">
+                    <!-- Content populated by JavaScript -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>

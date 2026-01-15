@@ -24,6 +24,18 @@
             outline-width: 3px !important;
             /* Thicker outline on focus for better accessibility */
         }
+
+        /* Fix for modals inside overflow containers */
+        .modal {
+            position: fixed !important;
+            z-index: 1055 !important;
+        }
+        .modal-backdrop {
+            z-index: 1050 !important;
+        }
+        .modal-dialog {
+            z-index: 1056 !important;
+        }
     </style>
 
     <!-- Action Bar -->
@@ -857,6 +869,27 @@
                 {{-- Old conclusion tab content removed - now using modal instead --}}
         </form>
     </div>
+
+    <!-- Medication Details Modal (Read-Only for Doctors) -->
+    <div class="modal fade" id="medDetailsModal" tabindex="-1" aria-labelledby="medDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title" id="medDetailsModalLabel">
+                        <i class="mdi mdi-pill me-2"></i>Medication Details
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="medDetailsModalBody">
+                    <!-- Content populated by JavaScript -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!--Profile / Form  Modal -->
     <div class="modal fade" id="profileModal" tabindex="-1" aria-labelledby="profileModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl">
@@ -2452,19 +2485,25 @@
                         flex: 1;
                         display: flex;
                         flex-direction: column;
-                        gap: 2px;
+                        gap: 4px;
                         overflow-y: auto;
-                        max-height: 150px;
+                        max-height: 180px;
+                        padding: 2px;
                     }
                     .unified-med-calendar .med-item {
-                        font-size: 10px;
-                        padding: 4px 6px;
-                        border-radius: 4px;
+                        font-size: 11px;
+                        padding: 6px 8px;
+                        border-radius: 5px;
                         display: flex;
                         align-items: center;
-                        gap: 4px;
-                        cursor: default;
-                        border-left: 3px solid;
+                        gap: 6px;
+                        cursor: pointer;
+                        border-left: 4px solid;
+                        transition: transform 0.1s, box-shadow 0.1s;
+                    }
+                    .unified-med-calendar .med-item:hover {
+                        transform: translateY(-1px);
+                        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
                     }
                     .unified-med-calendar .med-item.given {
                         opacity: 1;
@@ -2473,14 +2512,14 @@
                         opacity: 0.9;
                     }
                     .unified-med-calendar .med-item.missed {
-                        opacity: 0.7;
+                        opacity: 0.8;
                     }
                     .unified-med-calendar .med-item.discontinued {
-                        opacity: 0.5;
+                        opacity: 0.6;
                         text-decoration: line-through;
                     }
                     .unified-med-calendar .med-item i {
-                        font-size: 12px;
+                        font-size: 14px;
                         flex-shrink: 0;
                     }
                     .unified-med-calendar .med-details {
@@ -2488,16 +2527,17 @@
                         min-width: 0;
                     }
                     .unified-med-calendar .med-name {
-                        font-weight: 600;
-                        font-size: 10px;
+                        font-weight: 700;
+                        font-size: 11px;
                         display: block;
                         white-space: nowrap;
                         overflow: hidden;
                         text-overflow: ellipsis;
                     }
                     .unified-med-calendar .med-time {
-                        font-size: 9px;
-                        opacity: 0.8;
+                        font-size: 10px;
+                        font-weight: 600;
+                        opacity: 0.85;
                         display: block;
                     }
                     .unified-med-calendar .no-schedules {
@@ -2506,43 +2546,6 @@
                         font-style: italic;
                         text-align: center;
                         padding: 10px;
-                    }
-                    /* CSS-based tooltip */
-                    .unified-med-calendar .med-item {
-                        position: relative;
-                    }
-                    .unified-med-calendar .med-item .med-tooltip {
-                        visibility: hidden;
-                        opacity: 0;
-                        position: absolute;
-                        bottom: 100%;
-                        left: 50%;
-                        transform: translateX(-50%);
-                        background-color: #333;
-                        color: white;
-                        padding: 8px 12px;
-                        border-radius: 6px;
-                        font-size: 11px;
-                        white-space: nowrap;
-                        z-index: 1000;
-                        transition: opacity 0.2s;
-                        pointer-events: none;
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-                        margin-bottom: 5px;
-                    }
-                    .unified-med-calendar .med-item .med-tooltip::after {
-                        content: '';
-                        position: absolute;
-                        top: 100%;
-                        left: 50%;
-                        transform: translateX(-50%);
-                        border-width: 5px;
-                        border-style: solid;
-                        border-color: #333 transparent transparent transparent;
-                    }
-                    .unified-med-calendar .med-item:hover .med-tooltip {
-                        visibility: visible;
-                        opacity: 1;
                     }
                 </style>`;
 
@@ -2674,11 +2677,9 @@
                                     minute: '2-digit',
                                     hour12: true
                                 });
-                                tooltip = `<strong>${medicationName}</strong><br>Given at ${adminTime}<br>Dose: ${admin.dose || schedule.dose || 'N/A'}<br>By: ${admin.administered_by_name || 'Unknown'}`;
                             } else if (isPast) {
                                 status = 'missed';
                                 icon = 'mdi-alert-circle';
-                                tooltip = `<strong>${medicationName}</strong><br>Missed<br>Scheduled: ${time}<br>Dose: ${schedule.dose || 'N/A'}`;
                             }
 
                             dayItems.push({
@@ -2688,8 +2689,16 @@
                                 color: color,
                                 status: status,
                                 icon: icon,
-                                tooltip: tooltip,
-                                isPrn: false
+                                isPrn: false,
+                                // Detailed data for modal
+                                dose: admin ? (admin.dose || schedule.dose) : schedule.dose,
+                                route: admin ? (admin.route || schedule.route) : schedule.route,
+                                scheduledTime: time,
+                                administeredTime: admin ? new Date(admin.administered_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : null,
+                                administeredBy: admin ? admin.administered_by_name : null,
+                                comment: admin ? admin.comment : null,
+                                scheduleId: schedule.id,
+                                adminId: admin ? admin.id : null
                             });
                         });
 
@@ -2701,7 +2710,6 @@
                                 minute: '2-digit',
                                 hour12: true
                             });
-                            const tooltip = `<strong>${medicationName}</strong><br>PRN Given at ${adminTime}<br>Dose: ${admin.dose || 'N/A'}<br>By: ${admin.administered_by_name || 'Unknown'}`;
 
                             dayItems.push({
                                 sortTime: adminDate.getTime(),
@@ -2710,8 +2718,16 @@
                                 color: color,
                                 status: 'given',
                                 icon: 'mdi-plus-circle',
-                                tooltip: tooltip,
-                                isPrn: true
+                                isPrn: true,
+                                // Detailed data for modal
+                                dose: admin.dose,
+                                route: admin.route,
+                                scheduledTime: null,
+                                administeredTime: adminTime,
+                                administeredBy: admin.administered_by_name,
+                                comment: admin.comment,
+                                scheduleId: null,
+                                adminId: admin.id
                             });
                         });
                     });
@@ -2722,20 +2738,23 @@
                     if (dayItems.length === 0) {
                         html += '<span class="no-schedules">-</span>';
                     } else {
-                        dayItems.forEach(item => {
+                        dayItems.forEach((item, idx) => {
                             const iconColor = item.status === 'given' ? 'text-success' :
                                               item.status === 'missed' ? 'text-danger' :
                                               item.status === 'discontinued' ? 'text-muted' : 'text-primary';
                             const prnLabel = item.isPrn ? ' (PRN)' : '';
 
+                            // Encode item data as JSON for the click handler
+                            const itemData = JSON.stringify(item).replace(/"/g, '&quot;');
+
                             html += `<div class="med-item ${item.status}"
-                                style="background-color: ${item.color.bg}; border-left-color: ${item.color.border}; color: ${item.color.text};">
+                                style="background-color: ${item.color.bg}; border-left-color: ${item.color.border}; color: ${item.color.text};"
+                                onclick="showMedDetails(this)" data-med-details="${itemData}">
                                 <i class="mdi ${item.icon} ${iconColor}"></i>
                                 <div class="med-details">
                                     <span class="med-name">${item.medName}${prnLabel}</span>
                                     <span class="med-time">${item.time}</span>
                                 </div>
-                                <div class="med-tooltip">${item.tooltip}</div>
                             </div>`;
                         });
                     }
@@ -2749,6 +2768,114 @@
                 html += '</div></div>';
 
                 container.innerHTML = html;
+            }
+
+            // Show medication details modal - exposed globally for onclick handlers
+            window.showMedDetails = function(element) {
+                const data = JSON.parse(element.getAttribute('data-med-details'));
+
+                // Status badge
+                let statusBadge = '';
+                switch(data.status) {
+                    case 'given':
+                        statusBadge = '<span class="badge bg-success"><i class="mdi mdi-check-circle me-1"></i>Given</span>';
+                        break;
+                    case 'scheduled':
+                        statusBadge = '<span class="badge bg-primary"><i class="mdi mdi-clock-outline me-1"></i>Scheduled</span>';
+                        break;
+                    case 'missed':
+                        statusBadge = '<span class="badge bg-danger"><i class="mdi mdi-alert-circle me-1"></i>Missed</span>';
+                        break;
+                    case 'discontinued':
+                        statusBadge = '<span class="badge bg-secondary"><i class="mdi mdi-close-circle me-1"></i>Discontinued</span>';
+                        break;
+                }
+
+                if (data.isPrn) {
+                    statusBadge += ' <span class="badge bg-purple"><i class="mdi mdi-plus-circle me-1"></i>PRN</span>';
+                }
+
+                // Build modal content
+                let content = `
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <h5 class="mb-2" style="color: ${data.color.text};">
+                                <i class="mdi mdi-pill me-2"></i>${data.medName}
+                            </h5>
+                            ${statusBadge}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Dose</label>
+                            <div class="fw-bold">${data.dose || 'N/A'}</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Route</label>
+                            <div class="fw-bold">${data.route || 'N/A'}</div>
+                        </div>
+                    </div>`;
+
+                if (data.scheduledTime) {
+                    content += `
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Scheduled Time</label>
+                            <div class="fw-bold"><i class="mdi mdi-clock-outline me-1 text-primary"></i>${data.scheduledTime}</div>
+                        </div>`;
+
+                    if (data.administeredTime) {
+                        content += `
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Administered Time</label>
+                            <div class="fw-bold"><i class="mdi mdi-check-circle me-1 text-success"></i>${data.administeredTime}</div>
+                        </div>`;
+                    } else {
+                        content += `<div class="col-md-6 mb-3"></div>`;
+                    }
+                    content += `</div>`;
+                } else if (data.administeredTime) {
+                    content += `
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Administered Time</label>
+                            <div class="fw-bold"><i class="mdi mdi-check-circle me-1 text-success"></i>${data.administeredTime}</div>
+                        </div>
+                        <div class="col-md-6 mb-3"></div>
+                    </div>`;
+                }
+
+                if (data.administeredBy) {
+                    content += `
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label class="text-muted small">Administered By</label>
+                            <div class="fw-bold"><i class="mdi mdi-account me-1"></i>${data.administeredBy}</div>
+                        </div>
+                    </div>`;
+                }
+
+                if (data.comment) {
+                    content += `
+                    <div class="row">
+                        <div class="col-12">
+                            <label class="text-muted small">Notes</label>
+                            <div class="p-2 bg-light rounded">${data.comment}</div>
+                        </div>
+                    </div>`;
+                }
+
+                document.getElementById('medDetailsModalBody').innerHTML = content;
+                document.getElementById('medDetailsModalLabel').textContent = 'Medication Details';
+
+                // Move modal to body to avoid z-index/overflow issues
+                const modalEl = document.getElementById('medDetailsModal');
+                if (modalEl.parentElement !== document.body) {
+                    document.body.appendChild(modalEl);
+                }
+
+                const modal = new bootstrap.Modal(modalEl);
+                modal.show();
             }
 
             // Build calendar grid HTML for a single medication (kept for compatibility)
@@ -3156,22 +3283,22 @@
             if (diagnosisApplicable) {
                 // Get selected reasons from the new AJAX search component
                 const reasonsData = $('#reasons_for_encounter_data').val();
-                let selectedReasons = [];
+                let parsedReasons = [];
 
                 try {
-                    selectedReasons = JSON.parse(reasonsData);
+                    parsedReasons = JSON.parse(reasonsData);
                 } catch (e) {
                     console.error('Error parsing reasons data:', e);
                 }
 
-                if (!selectedReasons || selectedReasons.length === 0) {
+                if (!parsedReasons || parsedReasons.length === 0) {
                     showMessage('diagnosis_save_message', 'Please select at least one diagnosis reason or toggle off "Diagnosis Applicable"', 'error');
                     setButtonLoading('save_diagnosis_btn', false);
                     return;
                 }
 
                 // Send reasons as values (code-name format)
-                selectedReasons.forEach(reason => {
+                parsedReasons.forEach(reason => {
                     formData.append('reasons_for_encounter[]', reason.value);
                 });
 
