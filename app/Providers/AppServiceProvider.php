@@ -12,7 +12,7 @@ use App\Models\ChatConversation;
 use App\Models\ChatParticipant;
 use App\Models\User;
 use App\Observers\ProductObserver;
-use App\Observers\serviceObserver;
+use App\Observers\ServiceObserver;
 use App\Observers\HmoObserver;
 use App\Helpers\HmoHelper;
 use Carbon\Carbon;
