@@ -46,7 +46,8 @@
                     <i class="mdi mdi-desktop-mac-dashboard menu-icon"></i>
                     <span class="menu-title">Reception Workbench</span>
                 </a>
-            </li>            <li class="nav-item {{ request()->routeIs('patient.*') ? 'active' : '' }}">
+            </li>
+            <li class="nav-item {{ request()->routeIs('patient.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('patient.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#new_patient_receptionist" data-bs-target="#new_patient_receptionist" aria-expanded="{{ request()->routeIs('patient.*') ? 'true' : 'false' }}"
                     aria-controls="new_patient_receptionist">
                     <i class="mdi mdi-account-multiple-outline menu-icon"></i>
@@ -64,7 +65,7 @@
                     </ul>
                 </div>
             </li>
-            <li class="nav-item {{ request()->routeIs('add-to-queue') ? 'active' : '' }}">
+            <!-- <li class="nav-item {{ request()->routeIs('add-to-queue') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('add-to-queue') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#returning_patient_receptionist" data-bs-target="#returning_patient_receptionist" aria-expanded="{{ request()->routeIs('add-to-queue') ? 'true' : 'false' }}"
                     aria-controls="returning_patient_receptionist">
                     <i class="mdi mdi-account-search-outline menu-icon"></i>
@@ -78,8 +79,8 @@
                         </li>
                     </ul>
                 </div>
-            </li>
-            <li class="nav-item {{ request()->routeIs('admission-requests.*', 'beds.*') ? 'active' : '' }}">
+            </li> -->
+            <!-- <li class="nav-item {{ request()->routeIs('admission-requests.*', 'beds.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('admission-requests.*', 'beds.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#admissions_receptionist" data-bs-target="#admissions_receptionist" aria-expanded="{{ request()->routeIs('admission-requests.*', 'beds.*') ? 'true' : 'false' }}"
                     aria-controls="admissions_receptionist">
                     <i class="mdi mdi-hotel menu-icon"></i>
@@ -96,8 +97,8 @@
                         </li>
                     </ul>
                 </div>
-            </li>
-            <li class="nav-item">
+            </li> -->
+            <!-- <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#bookings" data-bs-target="#bookings" aria-expanded="false"
                     aria-controls="bookings">
                     <i class="mdi mdi-calendar-check menu-icon"></i>
@@ -114,7 +115,73 @@
                         </li>
                     </ul>
                 </div>
+            </li> -->
+            <li class="nav-item {{ request()->routeIs('product-or-service-request.*', 'my-transactions', 'billing.workbench') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('product-or-service-request.*', 'my-transactions', 'billing.workbench') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#acc_patient" data-bs-target="#acc_patient" aria-expanded="{{ request()->routeIs('product-or-service-request.*', 'my-transactions', 'billing.workbench') ? 'true' : 'false' }}"
+                    aria-controls="acc_patient">
+                    <i class="mdi mdi-cash-multiple menu-icon"></i>
+                    <span class="menu-title">Accounts</span>
+                    <i class="mdi mdi-chevron-right menu-arrow"></i>
+                </a>
+                <div class="collapse {{ request()->routeIs('product-or-service-request.*', 'my-transactions', 'billing.workbench') ? 'show' : '' }}" id="acc_patient">
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('billing.workbench') ? 'active' : '' }}" href="{{ route('billing.workbench') }}">
+                                <i class="mdi mdi-view-dashboard-outline"></i> Billing Workbench
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('product-or-service-request.index') ? 'active' : '' }}" href="{{ route('product-or-service-request.index') }}">All Payment
+                                Requests</a>
+                        </li>
+                    </ul>
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('my-transactions') ? 'active' : '' }}" href="{{ route('my-transactions') }}">All My Transactions</a>
+                        </li>
+                    </ul>
+                </div>
             </li>
+            <li class="nav-item {{ request()->routeIs('allPrevEncounters') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('allPrevEncounters') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#prev_consult" data-bs-target="#prev_consult" aria-expanded="{{ request()->routeIs('allPrevEncounters') ? 'true' : 'false' }}"
+                    aria-controls="prev_consult">
+                    <i class="mdi mdi-stethoscope menu-icon"></i>
+                    <span class="menu-title">Consultations</span>
+                    <i class="mdi mdi-chevron-right menu-arrow"></i>
+                </a>
+                <div class="collapse {{ request()->routeIs('allPrevEncounters') ? 'show' : '' }}" id="prev_consult">
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('allPrevEncounters') ? 'active' : '' }}" href="{{ route('allPrevEncounters') }}">All Previous Consultations</a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+        @endhasanyrole
+
+        @hasanyrole('SUPERADMIN|ADMIN|ACCOUNTS|BILLER')
+            <li class="pt-2 pb-1">
+                <span class="nav-item-head">Biller</span>
+            </li>
+            <li class="nav-item {{ request()->routeIs('patient.*') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('patient.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#new_patient_receptionist" data-bs-target="#new_patient_receptionist" aria-expanded="{{ request()->routeIs('patient.*') ? 'true' : 'false' }}"
+                    aria-controls="new_patient_receptionist">
+                    <i class="mdi mdi-account-multiple-outline menu-icon"></i>
+                    <span class="menu-title">Patients</span>
+                    <i class="mdi mdi-chevron-right menu-arrow"></i>
+                </a>
+                <div class="collapse {{ request()->routeIs('patient.*') ? 'show' : '' }}" id="new_patient_receptionist">
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('patient.create') ? 'active' : '' }}" href="{{ route('patient.create') }}">New Registration</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('patient.index') ? 'active' : '' }}" href="{{ route('patient.index') }}">All Patients</a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+
             <li class="nav-item {{ request()->routeIs('product-or-service-request.*', 'my-transactions', 'billing.workbench') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('product-or-service-request.*', 'my-transactions', 'billing.workbench') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#acc_patient" data-bs-target="#acc_patient" aria-expanded="{{ request()->routeIs('product-or-service-request.*', 'my-transactions', 'billing.workbench') ? 'true' : 'false' }}"
                     aria-controls="acc_patient">
@@ -323,7 +390,7 @@
                     <span class="menu-title">Pharmacy Workbench</span>
                 </a>
             </li>
-            <li class="nav-item {{ request()->routeIs('product-requests.*') ? 'active' : '' }}">
+            <!-- <li class="nav-item {{ request()->routeIs('product-requests.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('product-requests.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#pharm_queue" data-bs-target="#pharm_queue" aria-expanded="{{ request()->routeIs('product-requests.*') ? 'true' : 'false' }}"
                     aria-controls="pharm_queue">
                     <i class="mdi mdi-format-list-checks menu-icon"></i>
@@ -341,7 +408,7 @@
                         </li>
                     </ul>
                 </div>
-            </li>
+            </li> -->
             <li class="nav-item {{ request()->routeIs('product-category.*', 'stores.*', 'products.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('product-category.*', 'stores.*', 'products.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#products" data-bs-target="#products" aria-expanded="{{ request()->routeIs('product-category.*', 'stores.*', 'products.*') ? 'true' : 'false' }}"
                     aria-controls="products">
@@ -389,7 +456,7 @@
                     <span class="menu-title">Nursing Workbench</span>
                 </a>
             </li>
-            <li class="nav-item {{ request()->routeIs('vitals.*') ? 'active' : '' }}">
+            <!-- <li class="nav-item {{ request()->routeIs('vitals.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('vitals.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#nursing_" data-bs-target="#nursing_" aria-expanded="{{ request()->routeIs('vitals.*') ? 'true' : 'false' }}"
                     aria-controls="nursing_">
                     <i class="mdi mdi-clipboard-pulse-outline menu-icon"></i>
@@ -406,7 +473,7 @@
                         </li>
                     </ul>
                 </div>
-            </li>
+            </li> -->
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#admissions_nursing" data-bs-target="#admissions_nursing" aria-expanded="false"
                     aria-controls="admissions_nursing">
@@ -440,7 +507,7 @@
                     </ul>
                 </div>
             </li>
-            <li class="nav-item">
+            <!-- <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#returning_patient_nursing" data-bs-target="#returning_patient_nursing" aria-expanded="false"
                     aria-controls="returning_patient_nursing">
                     <i class="mdi mdi-crosshairs-gps menu-icon"></i>
@@ -454,7 +521,7 @@
                         </li>
                     </ul>
                 </div>
-            </li>
+            </li> -->
         @endhasallroles
         @hasanyrole('SUPERADMIN|ADMIN|LAB SCIENTIST|RADIOLOGIST')
             <li class="pt-2 pb-1">
@@ -487,7 +554,7 @@
                     <span class="menu-title">Lab Workbench</span>
                 </a>
             </li>
-            <li class="nav-item">
+            <!-- <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#lab_queue" data-bs-target="#lab_queue" aria-expanded="false"
                     aria-controls="lab_queue">
                     <i class="mdi mdi-test-tube menu-icon"></i>
@@ -505,7 +572,7 @@
                         </li>
                     </ul>
                 </div>
-            </li>
+            </li> -->
             <li class="pt-2 pb-1">
                 <span class="nav-item-head">IMAGING</span>
             </li>
@@ -515,7 +582,7 @@
                     <span class="menu-title">Imaging Workbench</span>
                 </a>
             </li>
-            <li class="nav-item">
+            <!-- <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#imaging_queue" data-bs-target="#imaging_queue" aria-expanded="false"
                     aria-controls="imaging_queue">
                     <i class="mdi mdi-image-multiple menu-icon"></i>
@@ -533,7 +600,7 @@
                         </li>
                     </ul>
                 </div>
-            </li>
+            </li> -->
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#new_patient_lab" data-bs-target="#new_patient_lab" aria-expanded="false"
                     aria-controls="new_patient_lab">
