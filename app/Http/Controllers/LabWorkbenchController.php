@@ -84,11 +84,13 @@ class LabWorkbenchController extends Controller
         $billingCount = LabServiceRequest::where('status', 1)->count();
         $sampleCount = LabServiceRequest::where('status', 2)->count();
         $resultCount = LabServiceRequest::where('status', 3)->count();
+        $completedCount = LabServiceRequest::where('status', 4)->count();
 
         return response()->json([
             'billing' => $billingCount,
             'sample' => $sampleCount,
             'results' => $resultCount,
+            'completed' => $completedCount,
             'total' => $billingCount + $sampleCount + $resultCount,
         ]);
     }
