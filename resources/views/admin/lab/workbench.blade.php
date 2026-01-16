@@ -142,11 +142,29 @@
         margin-bottom: 0.5rem;
         cursor: pointer;
         transition: all 0.2s;
+        border: 2px solid transparent;
     }
 
     .queue-item:hover {
         transform: translateX(5px);
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .queue-item.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: #667eea;
+        transform: translateX(5px);
+        box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    .queue-item.active .queue-item-label {
+        color: white;
+        font-weight: 600;
+    }
+
+    .queue-item.active .queue-count {
+        background: white;
+        color: #667eea;
     }
 
     .queue-item-label {
@@ -2463,6 +2481,10 @@
                 <span class="queue-item-label">🔴 Result Entry</span>
                 <span class="queue-count results" id="queue-results-count">0</span>
             </div>
+            <div class="queue-item" data-filter="completed">
+                <span class="queue-item-label">🟢 Completed</span>
+                <span class="queue-count completed" id="queue-completed-count">0</span>
+            </div>
             <button class="btn-queue-all" id="show-all-queue-btn">
                 📋 Show All Queue →
             </button>
@@ -2521,6 +2543,43 @@
                 </button>
             </div>
             <div class="queue-view-content">
+                <!-- Date Filter Section -->
+                <div class="card mb-3" style="border: none; background: #f8f9fa;">
+                    <div class="card-body" style="padding: 1rem;">
+                        <div class="row align-items-center">
+                            <div class="col-md-3">
+                                <h6 class="mb-0" id="current-queue-title" style="color: #495057;">
+                                    <i class="mdi mdi-filter"></i> Viewing: <span style="font-weight: 700; color: #667eea;">All Pending</span>
+                                </h6>
+                            </div>
+                            <div class="col-md-9">
+                                <div class="row align-items-center">
+                                    <div class="col-auto">
+                                        <label class="mb-0" style="font-size: 0.875rem; color: #6c757d;">Date Range:</label>
+                                    </div>
+                                    <div class="col-auto">
+                                        <input type="date" id="queue-start-date" class="form-control form-control-sm" style="width: 150px;">
+                                    </div>
+                                    <div class="col-auto">
+                                        <span style="color: #6c757d;">to</span>
+                                    </div>
+                                    <div class="col-auto">
+                                        <input type="date" id="queue-end-date" class="form-control form-control-sm" style="width: 150px;">
+                                    </div>
+                                    <div class="col-auto">
+                                        <button class="btn btn-sm btn-primary" id="apply-queue-filter">
+                                            <i class="mdi mdi-filter-check"></i> Apply
+                                        </button>
+                                        <button class="btn btn-sm btn-secondary" id="reset-queue-filter">
+                                            <i class="mdi mdi-filter-off"></i> Reset
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- DataTable -->
                 <table class="table" id="queue-datatable" style="width: 100%">
                     <thead>
                         <tr>
@@ -3362,6 +3421,9 @@
     <i class="fa fa-clipboard-list"></i>
 </button>
 
+<!-- Include Investigation Result Entry Modal -->
+@include('admin.partials.invest_res_modal', ['save_route' => 'lab.saveResult'])
+
 <!-- Include Clinical Context Modal -->
 @include('admin.partials.clinical_context_modal')
 
@@ -3477,6 +3539,25 @@ function initializeEventListeners() {
     // Close queue button
     $('#btn-close-queue').on('click', function() {
         hideQueue();
+    });
+
+    // Apply queue date filter
+    $('#apply-queue-filter').on('click', function() {
+        if (currentQueueFilter) {
+            initializeQueueDataTable(currentQueueFilter);
+        }
+    });
+
+    // Reset queue date filter
+    $('#reset-queue-filter').on('click', function() {
+        const now = new Date();
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        $('#queue-start-date').val(firstDay.toISOString().split('T')[0]);
+        $('#queue-end-date').val(lastDay.toISOString().split('T')[0]);
+        if (currentQueueFilter) {
+            initializeQueueDataTable(currentQueueFilter);
+        }
     });
 }
 
@@ -4466,6 +4547,7 @@ function loadQueueCounts() {
         $('#queue-billing-count').text(counts.billing);
         $('#queue-sample-count').text(counts.sample);
         $('#queue-results-count').text(counts.results);
+        $('#queue-completed-count').text(counts.completed);
         updateSyncIndicator();
     });
 }
@@ -5785,17 +5867,37 @@ function showQueue(filter) {
 
     // Update queue title
     const titles = {
-        'billing': '🟢 Awaiting Billing',
+        'billing': '� Awaiting Billing',
         'sample': '🟠 Awaiting Sample Collection',
         'results': '🔴 Awaiting Result Entry',
+        'completed': '🟢 Completed Requests',
         'all': '📋 All Pending Requests'
     };
     $('#queue-view-title').html(`<i class="mdi mdi-format-list-bulleted"></i> ${titles[filter] || titles['all']}`);
+
+    // Update current queue title display
+    const titleNames = {
+        'billing': 'Awaiting Billing',
+        'sample': 'Sample Collection',
+        'results': 'Result Entry',
+        'completed': 'Completed',
+        'all': 'All Pending'
+    };
+    $('#current-queue-title').html(`<i class="mdi mdi-filter"></i> Viewing: <span style="font-weight: 700; color: #667eea;">${titleNames[filter] || titleNames['all']}</span>`);
 
     // Update active state on queue buttons
     $('.queue-item').removeClass('active');
     if (filter !== 'all') {
         $(`.queue-item[data-filter="${filter}"]`).addClass('active');
+    }
+
+    // Set default date range to current month if not already set
+    if (!$('#queue-start-date').val()) {
+        const now = new Date();
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        $('#queue-start-date').val(firstDay.toISOString().split('T')[0]);
+        $('#queue-end-date').val(lastDay.toISOString().split('T')[0]);
     }
 
     // Hide other views, show queue view
@@ -5832,6 +5934,99 @@ function hideQueue() {
         $('#main-workspace').removeClass('active');
         $('#left-panel').removeClass('hidden');
     }
+}
+
+function initializeQueueDataTable(filter) {
+    // Destroy existing DataTable if it exists
+    if (queueDataTable) {
+        queueDataTable.destroy();
+    }
+
+    // Map filter to status codes
+    // billing = 1, sample = 2, results = 3, completed = 4, all = show all pending (1,2,3)
+    const filterMap = {
+        'billing': '1',
+        'sample': '2',
+        'results': '3',
+        'completed': '4',
+        'all': 'all'
+    };
+    const status = filterMap[filter] || 'all';
+
+    // Get date range values
+    const startDate = $('#queue-start-date').val();
+    const endDate = $('#queue-end-date').val();
+
+    // Initialize DataTable for lab queue
+    queueDataTable = $('#queue-datatable').DataTable({
+        ajax: {
+            url: '/lab-workbench/queue',
+            data: function(d) {
+                d.status = status;
+                if (startDate && endDate) {
+                    d.start_date = startDate;
+                    d.end_date = endDate;
+                }
+                return d;
+            },
+            dataSrc: 'data'
+        },
+        columns: [
+            {
+                data: 'card_data',
+                orderable: false,
+                render: function(data, type, row) {
+                    // Use card_data from the controller response
+                    const cardData = row.card_data;
+
+                    let statusBadge = '';
+                    if (cardData.status === 1) {
+                        statusBadge = '<span class="badge badge-warning"><i class="mdi mdi-currency-usd"></i> Awaiting Payment</span>';
+                    } else if (cardData.status === 2) {
+                        statusBadge = '<span class="badge badge-info"><i class="mdi mdi-test-tube"></i> Sample Collection</span>';
+                    } else if (cardData.status === 3) {
+                        statusBadge = '<span class="badge badge-danger"><i class="mdi mdi-clipboard-text"></i> Awaiting Results</span>';
+                    } else if (cardData.status === 4) {
+                        statusBadge = '<span class="badge badge-success"><i class="mdi mdi-check-circle"></i> Completed</span>';
+                    }
+
+                    return `
+                        <div class="queue-patient-item" data-patient-id="${cardData.patient_id}" style="cursor: pointer; padding: 1rem; border-bottom: 1px solid #e9ecef;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div style="font-weight: 600; font-size: 1rem; color: #212529;">${cardData.patient_name}</div>
+                                <span class="badge badge-primary">${cardData.file_no}</span>
+                            </div>
+                            <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #6c757d;">
+                                <i class="mdi mdi-flask-outline"></i> ${cardData.service_name}
+                                ${statusBadge ? '<br>' + statusBadge : ''}
+                                ${cardData.hmo && cardData.hmo !== 'N/A' ? `<br><small><i class="mdi mdi-hospital-building"></i> ${cardData.hmo}</small>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+        ],
+        paging: true,
+        pageLength: 10,
+        searching: true,
+        ordering: false,
+        info: true,
+        responsive: true,
+        language: {
+            emptyTable: "No patients in this queue",
+            zeroRecords: "No patients found",
+            info: "Showing _START_ to _END_ of _TOTAL_ patients",
+            infoEmpty: "No patients to show",
+            infoFiltered: "(filtered from _MAX_ total patients)"
+        }
+    });
+
+    // Click handler for patient selection from queue
+    $('#queue-datatable tbody').off('click').on('click', '.queue-patient-item', function() {
+        const patientId = $(this).data('patient-id');
+        hideQueue();
+        loadPatient(patientId);
+    });
 }
 
 // ==========================================

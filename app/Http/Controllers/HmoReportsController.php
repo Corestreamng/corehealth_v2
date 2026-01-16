@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Hmo;
 use App\Models\HmoRemittance;
 use App\Models\ProductOrServiceRequest;
-use App\Models\patientProfile;
+use App\Models\PatientProfile;
 use App\Models\patient;
 use App\Models\serviceCategory;
 use App\Models\ProductCategory;
