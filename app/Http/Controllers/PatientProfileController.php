@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\patientProfile;
+use App\Models\PatientProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -358,7 +358,7 @@ class PatientProfileController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\patientProfile  $patientProfile
+     * @param  \App\Models\PatientProfile  $patientProfile
      * @return \Illuminate\Http\Response
      */
     public function show(PatientProfile $patientProfile)
@@ -369,7 +369,7 @@ class PatientProfileController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\patientProfile  $patientProfile
+     * @param  \App\Models\PatientProfile  $patientProfile
      * @return \Illuminate\Http\Response
      */
     public function edit(PatientProfile $patientProfile)
@@ -381,7 +381,7 @@ class PatientProfileController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\patientProfile  $patientProfile
+     * @param  \App\Models\PatientProfile  $patientProfile
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, PatientProfile $patientProfile)
@@ -392,7 +392,7 @@ class PatientProfileController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\patientProfile  $patientProfile
+     * @param  \App\Models\PatientProfile  $patientProfile
      * @return \Illuminate\Http\Response
      */
     public function destroy(PatientProfile $patientProfile)
