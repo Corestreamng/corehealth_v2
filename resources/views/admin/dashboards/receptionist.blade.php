@@ -138,7 +138,12 @@
                         </a>
                     </div>
                     <div class="col-6 col-md-4">
-                        <a href="#" class="btn btn-outline-warning w-100 rounded-pill py-2 text-start">
+                        <a href="{{ route('billing.workbench') }}" class="btn btn-outline-warning w-100 rounded-pill py-2 text-start">
+                            <i class="mdi mdi-cash-register me-2"></i>Billing
+                        </a>
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <a href="#" class="btn btn-outline-secondary w-100 rounded-pill py-2 text-start">
                             <i class="mdi mdi-calendar-edit me-2"></i>Bookings
                         </a>
                     </div>
@@ -198,13 +203,18 @@
                     <h5 class="card-title mb-0 fw-bold">Nursing Shortcuts</h5>
                 </div>
                 <div class="row g-2">
-                    <div class="col-6 col-md-4">
-                        <a href="{{ route('vitals.index') }}" class="btn btn-outline-primary w-100 rounded-pill py-2 text-start">
-                            <i class="mdi mdi-heart-pulse me-2"></i>Queue
+                    <div class="col-12 col-md-6">
+                        <a href="{{ route('nursing-workbench.index') }}" class="btn btn-outline-primary w-100 rounded-pill py-2 text-start">
+                            <i class="mdi mdi-hospital-box me-2"></i>Nursing Workbench
                         </a>
                     </div>
-                    <div class="col-6 col-md-4">
-                        <a href="{{ route('vitals.index', ['history' => true]) }}" class="btn btn-outline-info w-100 rounded-pill py-2 text-start">
+                    <div class="col-6 col-md-3">
+                        <a href="{{ route('vitals.index') }}" class="btn btn-outline-info w-100 rounded-pill py-2 text-start">
+                            <i class="mdi mdi-heart-pulse me-2"></i>Vitals Queue
+                        </a>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <a href="{{ route('vitals.index', ['history' => true]) }}" class="btn btn-outline-secondary w-100 rounded-pill py-2 text-start">
                             <i class="mdi mdi-history me-2"></i>History
                         </a>
                     </div>
@@ -241,23 +251,28 @@
                     <h5 class="card-title mb-0 fw-bold">Lab/Investigation Shortcuts</h5>
                 </div>
                 <div class="row g-2">
-                    <div class="col-6 col-md-4">
-                        <a href="{{ route('services-category.index') }}" class="btn btn-outline-primary w-100 rounded-pill py-2 text-start">
-                            <i class="mdi mdi-flask me-2"></i>Categories
+                    <div class="col-12 col-md-6">
+                        <a href="{{ route('lab.workbench') }}" class="btn btn-outline-primary w-100 rounded-pill py-2 text-start">
+                            <i class="mdi mdi-flask me-2"></i>Lab Workbench
+                        </a>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <a href="{{ route('imaging.workbench') }}" class="btn btn-outline-info w-100 rounded-pill py-2 text-start">
+                            <i class="mdi mdi-radiobox-marked me-2"></i>Imaging Workbench
                         </a>
                     </div>
                     <div class="col-6 col-md-4">
-                        <a href="{{ route('services.index') }}" class="btn btn-outline-info w-100 rounded-pill py-2 text-start">
+                        <a href="{{ route('services-category.index') }}" class="btn btn-outline-secondary w-100 rounded-pill py-2 text-start">
+                            <i class="mdi mdi-tag-multiple me-2"></i>Categories
+                        </a>
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <a href="{{ route('services.index') }}" class="btn btn-outline-secondary w-100 rounded-pill py-2 text-start">
                             <i class="mdi mdi-flask-outline me-2"></i>Services
                         </a>
                     </div>
                     <div class="col-6 col-md-4">
-                        <a href="{{ route('service-requests.index') }}" class="btn btn-outline-warning w-100 rounded-pill py-2 text-start">
-                            <i class="mdi mdi-format-list-bulleted me-2"></i>Queue
-                        </a>
-                    </div>
-                    <div class="col-6 col-md-4">
-                        <a href="{{ route('service-requests.index', ['history' => true]) }}" class="btn btn-outline-success w-100 rounded-pill py-2 text-start">
+                        <a href="{{ route('service-requests.index', ['history' => true]) }}" class="btn btn-outline-secondary w-100 rounded-pill py-2 text-start">
                             <i class="mdi mdi-history me-2"></i>History
                         </a>
                     </div>
@@ -284,23 +299,28 @@
                     <h5 class="card-title mb-0 fw-bold">Store/Pharmacy Shortcuts</h5>
                 </div>
                 <div class="row g-2">
-                    <div class="col-6 col-md-4">
-                        <a href="{{ route('product-requests.index') }}" class="btn btn-outline-primary w-100 rounded-pill py-2 text-start">
-                            <i class="mdi mdi-cart me-2"></i>My Queue
+                    <div class="col-12 col-md-6">
+                        <a href="{{ route('pharmacy.workbench') }}" class="btn btn-outline-primary w-100 rounded-pill py-2 text-start">
+                            <i class="mdi mdi-pill me-2"></i>Pharmacy Workbench
                         </a>
                     </div>
-                    <div class="col-6 col-md-4">
-                        <a href="{{ route('product-requests.index', ['history' => true]) }}" class="btn btn-outline-info w-100 rounded-pill py-2 text-start">
+                    <div class="col-6 col-md-3">
+                        <a href="{{ route('product-requests.index') }}" class="btn btn-outline-info w-100 rounded-pill py-2 text-start">
+                            <i class="mdi mdi-cart me-2"></i>Queue
+                        </a>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <a href="{{ route('product-requests.index', ['history' => true]) }}" class="btn btn-outline-secondary w-100 rounded-pill py-2 text-start">
                             <i class="mdi mdi-history me-2"></i>History
                         </a>
                     </div>
                     <div class="col-6 col-md-4">
-                        <a href="{{ route('product-category.index') }}" class="btn btn-outline-warning w-100 rounded-pill py-2 text-start">
+                        <a href="{{ route('product-category.index') }}" class="btn btn-outline-secondary w-100 rounded-pill py-2 text-start">
                             <i class="mdi mdi-tag-multiple me-2"></i>Categories
                         </a>
                     </div>
                     <div class="col-6 col-md-4">
-                        <a href="{{ route('stores.index') }}" class="btn btn-outline-success w-100 rounded-pill py-2 text-start">
+                        <a href="{{ route('stores.index') }}" class="btn btn-outline-secondary w-100 rounded-pill py-2 text-start">
                             <i class="mdi mdi-store me-2"></i>Stores
                         </a>
                     </div>

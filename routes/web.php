@@ -24,7 +24,7 @@ use App\Http\Controllers\MoveStockController;
 use App\Http\Controllers\NursingNoteController;
 use App\Http\Controllers\NursingNoteTypeController;
 use App\Http\Controllers\PatientAccountController;
-use App\Http\Controllers\patientController;
+use App\Http\Controllers\PatientController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PriceController;
 use App\Http\Controllers\ProductCategoryController;
@@ -578,6 +578,17 @@ Route::prefix('api/chart/clinic')->group(function () {
 
 // Dashboard stats API
 Route::get('/dashboard/receptionist-stats', [App\Http\Controllers\HomeController::class, 'dashboardStats'])->name('dashboard.receptionist-stats');
+Route::get('/dashboard/biller-stats', [App\Http\Controllers\HomeController::class, 'billerStats'])->name('dashboard.biller-stats');
+Route::get('/dashboard/admin-stats', [App\Http\Controllers\HomeController::class, 'adminStats'])->name('dashboard.admin-stats');
+Route::get('/dashboard/pharmacy-stats', [App\Http\Controllers\HomeController::class, 'pharmacyStats'])->name('dashboard.pharmacy-stats');
+Route::get('/dashboard/nursing-stats', [App\Http\Controllers\HomeController::class, 'nursingStats'])->name('dashboard.nursing-stats');
+Route::get('/dashboard/lab-stats', [App\Http\Controllers\HomeController::class, 'labStats'])->name('dashboard.lab-stats');
+Route::get('/dashboard/doctor-stats', [App\Http\Controllers\HomeController::class, 'doctorStats'])->name('dashboard.doctor-stats');
+Route::get('/dashboard/hmo-stats', [App\Http\Controllers\HomeController::class, 'hmoStats'])->name('dashboard.hmo-stats');
+
+// Dashboard charts API
+Route::get('/dashboard/chart/revenue', [App\Http\Controllers\HomeController::class, 'chartRevenueOverTime'])->name('dashboard.chart.revenue');
+Route::get('/dashboard/chart/registrations', [App\Http\Controllers\HomeController::class, 'chartPatientRegistrations'])->name('dashboard.chart.registrations');
 
 Route::get('/accounts', [App\Http\Controllers\Account\accountsController::class, 'index']);
 
