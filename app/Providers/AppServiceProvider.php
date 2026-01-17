@@ -15,6 +15,7 @@ use App\Observers\ProductObserver;
 use App\Observers\ServiceObserver;
 use App\Observers\HmoObserver;
 use App\Helpers\HmoHelper;
+use App\Services\DepartmentNotificationService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -29,7 +30,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        // Register the DepartmentNotificationService as a singleton
+        $this->app->singleton(DepartmentNotificationService::class, function ($app) {
+            return new DepartmentNotificationService();
+        });
     }
 
     /**
@@ -47,8 +51,22 @@ class AppServiceProvider extends ServiceProvider
         // Process daily bed bills - runs once per day automatically
         $this->processDailyBedBills();
 
-        // Sync HMO executives to messenger group - runs once per hour
-        $this->syncHmoExecutivesGroup();
+        // Run department notification checks - runs once per hour
+        $this->runDepartmentNotificationChecks();
+    }
+
+    /**
+     * Run department notification checks
+     * Runs on every request but uses caching to prevent duplicate notifications
+     */
+    protected function runDepartmentNotificationChecks()
+    {
+        try {
+            $notificationService = app(DepartmentNotificationService::class);
+            $notificationService->runChecks();
+        } catch (\Exception $e) {
+            Log::error("Error running department notification checks: " . $e->getMessage());
+        }
     }
 
     /**
@@ -144,80 +162,6 @@ class AppServiceProvider extends ServiceProvider
 
         } catch (\Exception $e) {
             Log::error("Fatal error in processDailyBedBills: " . $e->getMessage());
-        }
-    }
-
-    /**
-     * Sync HMO executives to a messenger group for notifications
-     * Uses cache to ensure it only runs once per hour
-     */
-    protected function syncHmoExecutivesGroup()
-    {
-        try {
-            // Check if already synced within the last hour
-            $cacheKey = 'hmo_executives_sync_' . Carbon::now()->format('Y-m-d-H');
-
-            if (Cache::has($cacheKey)) {
-                return; // Already synced this hour
-            }
-
-            // Find or create the HMO Executives group conversation
-            $conversation = ChatConversation::firstOrCreate(
-                ['title' => 'HMO Executives'],
-                [
-                    'is_group' => true,
-                ]
-            );
-
-            // Get all HMO executives (users with HMO Executive role)
-            $hmoExecutives = User::whereHas('roles', function($query) {
-                $query->where('name', 'HMO Executive');
-            })->pluck('id');
-
-            // Also add SUPERADMIN and ADMIN for oversight
-            $admins = User::whereHas('roles', function($query) {
-                $query->whereIn('name', ['SUPERADMIN', 'ADMIN']);
-            })->pluck('id');
-
-            // Combine all user IDs
-            $allUserIds = $hmoExecutives->merge($admins)->unique();
-
-            if ($allUserIds->isEmpty()) {
-                Cache::put($cacheKey, true, 3600); // Cache for 1 hour
-                return;
-            }
-
-            // Get existing participant IDs
-            $existingParticipants = ChatParticipant::where('conversation_id', $conversation->id)
-                ->pluck('user_id');
-
-            // Find users who need to be added
-            $usersToAdd = $allUserIds->diff($existingParticipants);
-
-            $addedCount = 0;
-            foreach ($usersToAdd as $userId) {
-                try {
-                    ChatParticipant::create([
-                        'conversation_id' => $conversation->id,
-                        'user_id' => $userId,
-                        'joined_at' => now()
-                    ]);
-                    $addedCount++;
-                } catch (\Exception $e) {
-                    // Skip if participant already exists (race condition)
-                    continue;
-                }
-            }
-
-            // Cache the sync status for 1 hour
-            Cache::put($cacheKey, true, 3600);
-
-            if ($addedCount > 0) {
-                Log::info("HMO Executives Group: Added {$addedCount} new participants");
-            }
-
-        } catch (\Exception $e) {
-            Log::error("Error syncing HMO executives group: " . $e->getMessage());
         }
     }
 }
