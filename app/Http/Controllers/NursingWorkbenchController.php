@@ -308,9 +308,19 @@ class NursingWorkbenchController extends Controller{
      */
     public function getQueueCounts()
     {
-        // Admitted patients count
+        // Admitted patients count (with bed assigned)
         $admittedCount = AdmissionRequest::where('discharged', 0)
             ->whereNotNull('bed_id')
+            ->count();
+
+        // Bed requests count (admitted but no bed yet)
+        $bedRequestsCount = AdmissionRequest::where('discharged', 0)
+            ->whereNull('bed_id')
+            ->count();
+
+        // Discharge requests count (waiting for nurse to process discharge checklist)
+        $dischargeRequestsCount = AdmissionRequest::where('admission_status', 'discharge_requested')
+            ->where('discharged', 0)
             ->count();
 
         // Patients with overdue medications
@@ -332,8 +342,12 @@ class NursingWorkbenchController extends Controller{
 
         return response()->json([
             'admitted' => $admittedCount,
+            'bed_requests' => $bedRequestsCount,
+            'discharge_requests' => $dischargeRequestsCount,
             'overdue_meds' => $overdueMedsCount,
             'vitals_queue' => $vitalsQueueCount,
+            'vitals' => $vitalsQueueCount, // alias for frontend
+            'medication_due' => $overdueMedsCount, // alias for frontend
             'critical' => $criticalCount,
             'total' => $admittedCount,
         ]);
@@ -2503,19 +2517,56 @@ class NursingWorkbenchController extends Controller{
 
     public function getBedRequestsQueue(Request $request)
     {
-        $query = AdmissionRequest::with(['patient.user', 'doctor'])
+        $query = AdmissionRequest::with(['patient.user', 'doctor', 'encounter'])
             ->whereNull('bed_id')
             ->where('discharged', 0)
             ->orderBy('created_at', 'desc');
 
         return \Yajra\DataTables\Facades\DataTables::of($query)
-             ->addColumn('info', function ($request) {
-                $patient = $request->patient;
+            ->addColumn('admission_id', function ($admission) {
+                return $admission->id;
+            })
+            ->addColumn('patient_id', function ($admission) {
+                return $admission->patient ? $admission->patient->id : 0;
+            })
+            ->addColumn('patient_name', function ($admission) {
+                if ($admission->patient && $admission->patient->user) {
+                    return $admission->patient->user->name ?? 'Unknown';
+                }
+                return 'Unknown';
+            })
+            ->addColumn('name', function ($admission) {
+                // Alias for patient_name for card display
+                if ($admission->patient && $admission->patient->user) {
+                    return $admission->patient->user->name ?? 'Unknown';
+                }
+                return 'Unknown';
+            })
+            ->addColumn('file_no', function ($admission) {
+                return $admission->patient ? $admission->patient->file_no : 'N/A';
+            })
+            ->addColumn('requested_ward', function ($admission) {
+                // Check if there's a preferred ward stored or get from admission reason
+                return $admission->admission_reason ?? 'Any ward';
+            })
+            ->addColumn('priority', function ($admission) {
+                return strtoupper($admission->priority ?? 'routine');
+            })
+            ->addColumn('reason', function ($admission) {
+                return $admission->note ?? '';
+            })
+            ->addColumn('status', function ($admission) {
+                return $admission->admission_status ?? 'pending';
+            })
+            ->addColumn('info', function ($admission) {
+                $patient = $admission->patient;
                 $patientId = $patient ? $patient->id : 0;
-                $patientName = $patient ? $patient->name : 'Unknown';
+                $patientName = ($patient && $patient->user) ? $patient->user->name : 'Unknown';
                 $fileNo = $patient ? $patient->file_no : 'N/A';
-                $doctorName = $request->doctor ? $request->doctor->name : 'N/A';
-                $time = $request->created_at->format('d M h:i A');
+                $doctorName = $admission->doctor ? $admission->doctor->name : 'N/A';
+                $time = $admission->created_at->format('d M h:i A');
+                $priority = strtoupper($admission->priority ?? 'routine');
+                $priorityClass = $admission->priority === 'urgent' || $admission->priority === 'emergency' ? 'bg-danger' : 'bg-info';
 
                 $html = '<div class="card-modern mb-2 queue-card shadow-sm">';
                 $html .= '<div class="card-body p-3 d-flex justify-content-between align-items-center">';
@@ -2525,7 +2576,7 @@ class NursingWorkbenchController extends Controller{
                 $html .= '<small class="text-muted"><i class="mdi mdi-doctor"></i> ' . htmlspecialchars($doctorName) . '</small>';
                 $html .= '</div>';
                 $html .= '<div>';
-                $html .= '<span class="badge bg-danger me-2">Bed Request</span>';
+                $html .= '<span class="badge ' . $priorityClass . ' me-2">' . $priority . '</span>';
                 $html .= '<small class="text-muted">' . $time . '</small>';
                 $html .= '<button class="btn btn-sm btn-outline-danger ms-3" onclick="loadPatient('.$patientId.')">Open</button>';
                 $html .= '</div>';
@@ -2735,7 +2786,6 @@ class NursingWorkbenchController extends Controller{
     public function getDischargeQueue()
     {
         $queue = AdmissionRequest::with(['patient.user', 'bed'])
-            ->whereNotNull('bed_id')
             ->where('discharged', 0)
             ->where(function($q) {
                 $q->where('admission_status', 'discharge_requested')
@@ -2747,10 +2797,15 @@ class NursingWorkbenchController extends Controller{
         return response()->json($queue->map(function($admission) {
             return [
                 'id' => $admission->id,
+                'admission_id' => $admission->id,
+                'patient_id' => $admission->patient_id,
                 'patient_name' => userfullname($admission->patient->user_id ?? 0),
                 'file_no' => $admission->patient->file_no ?? 'N/A',
-                'bed_name' => $admission->bed ? ($admission->bed->ward . ' - ' . $admission->bed->name) : 'N/A',
+                'bed_name' => $admission->bed ? ($admission->bed->ward . ' - ' . $admission->bed->name) : 'No bed assigned',
+                'discharge_reason' => $admission->discharge_reason ?? 'Not specified',
+                'discharge_note' => $admission->discharge_note ?? '',
                 'discharge_requested_at' => $admission->updated_at->format('M d, Y H:i'),
+                'admission_status' => $admission->admission_status,
             ];
         }));
     }
@@ -2843,6 +2898,122 @@ class NursingWorkbenchController extends Controller{
     }
 
     /**
+     * Get full admission details for modal display
+     */
+    public function getAdmissionDetails($admissionId)
+    {
+        $admission = AdmissionRequest::with(['patient.user', 'bed', 'encounter.doctor'])
+            ->findOrFail($admissionId);
+
+        // Get requesting doctor info
+        $requestingDoctor = $admission->doctor_id ? userfullname($admission->doctor_id) : 'N/A';
+
+        // Get patient vitals (most recent)
+        $latestVitals = VitalSign::where('patient_id', $admission->patient_id)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        // Get patient allergies
+        $allergies = [];
+        if ($admission->patient) {
+            $allergies = [
+                'drug' => $admission->patient->drug_allergies ?? 'None documented',
+                'food' => $admission->patient->food_allergies ?? 'None documented',
+                'other' => $admission->patient->other_allergies ?? 'None documented',
+            ];
+        }
+
+        // Get active medications (scheduled but not yet fully administered)
+        $activeMedications = [];
+        if (class_exists('\\App\\Models\\MedicationSchedule')) {
+            try {
+                $activeMedications = MedicationSchedule::where('patient_id', $admission->patient_id)
+                    ->whereNull('deleted_at')
+                    ->with('productOrServiceRequest.product')
+                    ->get()
+                    ->map(function($med) {
+                        $product = $med->productOrServiceRequest->product ?? null;
+                        return [
+                            'name' => $product->name ?? 'Unknown',
+                            'dosage' => $med->dose ?? $med->productOrServiceRequest->dosage ?? '',
+                            'frequency' => $med->productOrServiceRequest->frequency ?? '',
+                            'route' => $med->route ?? $med->productOrServiceRequest->route ?? '',
+                        ];
+                    })
+                    ->unique('name')
+                    ->values();
+            } catch (\Exception $e) {
+                // If there's any issue, just return empty
+                $activeMedications = [];
+            }
+        }
+
+        // Get diagnosis from encounter
+        $diagnosis = [];
+        if ($admission->encounter) {
+            $diagnosis = [
+                'primary' => $admission->encounter->diagnosis ?? null,
+                'secondary' => $admission->encounter->secondary_diagnosis ?? null,
+                'clinical_notes' => $admission->encounter->clinical_notes ?? null,
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'admission' => [
+                'id' => $admission->id,
+                'patient_id' => $admission->patient_id,
+                'patient_name' => userfullname($admission->patient->user_id ?? 0),
+                'file_no' => $admission->patient->file_no ?? 'N/A',
+                'gender' => $admission->patient->gender ?? 'N/A',
+                'age' => $admission->patient->dob ? \Carbon\Carbon::parse($admission->patient->dob)->age . ' years' : 'N/A',
+                'phone' => $admission->patient->user->phone ?? $admission->patient->phone ?? 'N/A',
+                'blood_group' => $admission->patient->blood_group ?? 'Not recorded',
+
+                // Admission details
+                'admission_reason' => $admission->admission_reason ?? 'Not specified',
+                'admission_notes' => $admission->note ?? 'No notes provided',
+                'priority' => ucfirst($admission->priority ?? 'routine'),
+                'admission_status' => $admission->admission_status ?? 'pending_checklist',
+                'requested_at' => $admission->created_at ? $admission->created_at->format('M d, Y h:i A') : 'N/A',
+                'requesting_doctor' => $requestingDoctor,
+
+                // Bed info
+                'bed_id' => $admission->bed_id,
+                'bed_name' => $admission->bed ? $admission->bed->name : null,
+                'ward_name' => $admission->bed ? $admission->bed->ward : null,
+                'bed_assigned_at' => $admission->bed_assign_date ? $admission->bed_assign_date->format('M d, Y h:i A') : null,
+
+                // Discharge info (if applicable)
+                'discharge_reason' => $admission->discharge_reason,
+                'discharge_note' => $admission->discharge_note,
+                'followup_instructions' => $admission->followup_instructions,
+                'discharge_requested_at' => $admission->admission_status === 'discharge_requested'
+                    ? $admission->updated_at->format('M d, Y h:i A') : null,
+
+                // Clinical info
+                'diagnosis' => $diagnosis,
+                'allergies' => $allergies,
+                'latest_vitals' => $latestVitals ? [
+                    'temperature' => $latestVitals->temperature,
+                    'pulse' => $latestVitals->pulse,
+                    'blood_pressure' => $latestVitals->systolic && $latestVitals->diastolic
+                        ? $latestVitals->systolic . '/' . $latestVitals->diastolic : null,
+                    'respiratory_rate' => $latestVitals->respiratory_rate,
+                    'spo2' => $latestVitals->spo2,
+                    'recorded_at' => $latestVitals->created_at->format('M d, Y h:i A'),
+                ] : null,
+                'active_medications' => $activeMedications,
+
+                // HMO info
+                'payment_type' => $admission->patient->payment_type ?? 'Cash',
+                'hmo_name' => $admission->patient->hmo->scheme->name ?? null,
+                'hmo_id' => $admission->patient->hmo_id ?? null,
+            ]
+        ]);
+    }
+
+    /**
      * Get admission checklist for a patient
      */
     public function getAdmissionChecklist($admissionId)
@@ -2860,7 +3031,7 @@ class NursingWorkbenchController extends Controller{
                     ->first();
 
                 if ($template) {
-                    $checklist = \App\Models\AdmissionChecklist::createFromTemplate($admission, $template);
+                    $checklist = \App\Models\AdmissionChecklist::createFromTemplate($admissionId, $template);
                 } else {
                     // Create default checklist
                     $checklist = \App\Models\AdmissionChecklist::create([
@@ -2872,7 +3043,7 @@ class NursingWorkbenchController extends Controller{
 
             $items = \App\Models\AdmissionChecklistItem::where('admission_checklist_id', $checklist->id)->get();
             $completedCount = $items->filter(function($item) {
-                return $item->completed || $item->waived;
+                return $item->is_completed;
             })->count();
             $totalCount = $items->count();
             $progress = $totalCount > 0 ? round(($completedCount / $totalCount) * 100) : 100;
@@ -2884,13 +3055,14 @@ class NursingWorkbenchController extends Controller{
                 'items' => $items->map(function($item) {
                     return [
                         'id' => $item->id,
-                        'name' => $item->item_name,
-                        'description' => $item->description,
-                        'completed' => (bool) $item->completed,
-                        'waived' => (bool) $item->waived,
-                        'waived_by' => $item->waivedBy ? userfullname($item->waivedBy->id) : null,
-                        'waived_reason' => $item->waived_reason,
-                        'is_waivable' => true,
+                        'name' => $item->item_text,
+                        'description' => $item->comment,
+                        'completed' => (bool) $item->is_completed,
+                        'waived' => false, // Waiver is at checklist level, not item level
+                        'waived_by' => null,
+                        'waived_reason' => null,
+                        'is_required' => (bool) $item->is_required,
+                        'is_waivable' => !$item->is_required, // Only non-required items can be skipped
                     ];
                 }),
             ]);
@@ -2915,15 +3087,18 @@ class NursingWorkbenchController extends Controller{
         }
 
         $item = \App\Models\AdmissionChecklistItem::findOrFail($itemId);
-        $item->completed = $request->completed ?? true;
+        $item->is_completed = ($request->completed ?? true) ? 1 : 0;
         $item->completed_by = Auth::id();
         $item->completed_at = now();
+        if ($request->has('comment')) {
+            $item->comment = $request->comment;
+        }
         $item->save();
 
         // Calculate progress
-        $checklist = $item->admissionChecklist;
+        $checklist = $item->checklist;
         $items = \App\Models\AdmissionChecklistItem::where('admission_checklist_id', $checklist->id)->get();
-        $completedCount = $items->filter(fn($i) => $i->completed || $i->waived)->count();
+        $completedCount = $items->filter(fn($i) => $i->is_completed)->count();
         $progress = $items->count() > 0 ? round(($completedCount / $items->count()) * 100) : 100;
 
         return response()->json([
@@ -2933,22 +3108,33 @@ class NursingWorkbenchController extends Controller{
     }
 
     /**
-     * Waive an admission checklist item
+     * Waive an admission checklist item (marks as complete with waiver reason as comment)
      */
     public function waiveAdmissionChecklistItem(Request $request, $itemId)
     {
         if (!class_exists('\\App\\Models\\AdmissionChecklistItem')) {
-            return response()->json(['success' => true]);
+            return response()->json(['success' => true, 'progress' => 100]);
         }
 
         $item = \App\Models\AdmissionChecklistItem::findOrFail($itemId);
-        $item->waived = true;
-        $item->waived_by = Auth::id();
-        $item->waived_at = now();
-        $item->waived_reason = $request->reason;
+
+        // Mark as completed with waiver reason in comment
+        $item->is_completed = 1;
+        $item->completed_by = Auth::id();
+        $item->completed_at = now();
+        $item->comment = 'WAIVED: ' . ($request->reason ?? 'No reason provided');
         $item->save();
 
-        return response()->json(['success' => true]);
+        // Calculate progress
+        $checklist = $item->checklist;
+        $items = \App\Models\AdmissionChecklistItem::where('admission_checklist_id', $checklist->id)->get();
+        $completedCount = $items->filter(fn($i) => $i->is_completed)->count();
+        $progress = $items->count() > 0 ? round(($completedCount / $items->count()) * 100) : 100;
+
+        return response()->json([
+            'success' => true,
+            'progress' => $progress,
+        ]);
     }
 
     /**
@@ -3015,17 +3201,17 @@ class NursingWorkbenchController extends Controller{
                     ->first();
 
                 if ($template) {
-                    $checklist = \App\Models\DischargeChecklist::createFromTemplate($admission, $template);
+                    $checklist = \App\Models\DischargeChecklist::createFromTemplate((int)$admissionId, $template);
                 } else {
                     $checklist = \App\Models\DischargeChecklist::create([
                         'admission_request_id' => $admissionId,
-                        'created_by' => Auth::id(),
+                        'status' => 'pending',
                     ]);
                 }
             }
 
             $items = \App\Models\DischargeChecklistItem::where('discharge_checklist_id', $checklist->id)->get();
-            $completedCount = $items->filter(fn($item) => $item->completed || $item->waived)->count();
+            $completedCount = $items->filter(fn($item) => $item->is_completed)->count();
             $progress = $items->count() > 0 ? round(($completedCount / $items->count()) * 100) : 100;
 
             return response()->json([
@@ -3035,13 +3221,14 @@ class NursingWorkbenchController extends Controller{
                 'items' => $items->map(function($item) {
                     return [
                         'id' => $item->id,
-                        'name' => $item->item_name,
-                        'description' => $item->description,
-                        'completed' => (bool) $item->completed,
-                        'waived' => (bool) $item->waived,
-                        'waived_by' => $item->waivedBy ? userfullname($item->waivedBy->id) : null,
-                        'waived_reason' => $item->waived_reason,
-                        'is_waivable' => true,
+                        'name' => $item->item_text,
+                        'description' => $item->comment,
+                        'completed' => (bool) $item->is_completed,
+                        'waived' => false,
+                        'waived_by' => null,
+                        'waived_reason' => null,
+                        'is_required' => (bool) $item->is_required,
+                        'is_waivable' => !$item->is_required,
                     ];
                 }),
             ]);
@@ -3065,14 +3252,17 @@ class NursingWorkbenchController extends Controller{
         }
 
         $item = \App\Models\DischargeChecklistItem::findOrFail($itemId);
-        $item->completed = $request->completed ?? true;
+        $item->is_completed = ($request->completed ?? true) ? 1 : 0;
         $item->completed_by = Auth::id();
         $item->completed_at = now();
+        if ($request->has('comment')) {
+            $item->comment = $request->comment;
+        }
         $item->save();
 
-        $checklist = $item->dischargeChecklist;
+        $checklist = $item->checklist;
         $items = \App\Models\DischargeChecklistItem::where('discharge_checklist_id', $checklist->id)->get();
-        $completedCount = $items->filter(fn($i) => $i->completed || $i->waived)->count();
+        $completedCount = $items->filter(fn($i) => $i->is_completed)->count();
         $progress = $items->count() > 0 ? round(($completedCount / $items->count()) * 100) : 100;
 
         return response()->json([
@@ -3087,17 +3277,28 @@ class NursingWorkbenchController extends Controller{
     public function waiveDischargeChecklistItem(Request $request, $itemId)
     {
         if (!class_exists('\\App\\Models\\DischargeChecklistItem')) {
-            return response()->json(['success' => true]);
+            return response()->json(['success' => true, 'progress' => 100]);
         }
 
         $item = \App\Models\DischargeChecklistItem::findOrFail($itemId);
-        $item->waived = true;
-        $item->waived_by = Auth::id();
-        $item->waived_at = now();
-        $item->waived_reason = $request->reason;
+
+        // Mark as completed with waiver reason in comment
+        $item->is_completed = 1;
+        $item->completed_by = Auth::id();
+        $item->completed_at = now();
+        $item->comment = 'WAIVED: ' . ($request->reason ?? 'No reason provided');
         $item->save();
 
-        return response()->json(['success' => true]);
+        // Calculate progress
+        $checklist = $item->checklist;
+        $items = \App\Models\DischargeChecklistItem::where('discharge_checklist_id', $checklist->id)->get();
+        $completedCount = $items->filter(fn($i) => $i->is_completed)->count();
+        $progress = $items->count() > 0 ? round(($completedCount / $items->count()) * 100) : 100;
+
+        return response()->json([
+            'success' => true,
+            'progress' => $progress,
+        ]);
     }
 
     /**
@@ -3105,20 +3306,58 @@ class NursingWorkbenchController extends Controller{
      */
     public function completeDischarge(Request $request, $admissionId)
     {
-        $admission = AdmissionRequest::with('bed')->findOrFail($admissionId);
+        $admission = AdmissionRequest::with(['bed', 'patient.user'])->findOrFail($admissionId);
 
         DB::beginTransaction();
         try {
+            // Check for unpaid/unvalidated bed bills before releasing
+            if ($admission->bed_id && $admission->service_id && $admission->bed_assign_date) {
+                // Check for unpaid bed bills
+                $unpaidBills = ProductOrServiceRequest::where('user_id', $admission->patient->user->id)
+                    ->where('service_id', $admission->service_id)
+                    ->whereNull('payment_id')
+                    ->whereDate('created_at', '>=', $admission->bed_assign_date)
+                    ->count();
+
+                if ($unpaidBills > 0) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Cannot discharge patient: {$unpaidBills} unpaid bed bill(s) found. Please process all payments before discharge."
+                    ], 422);
+                }
+
+                // Check for pending/rejected HMO validations
+                $invalidBills = ProductOrServiceRequest::where('user_id', $admission->patient->user->id)
+                    ->where('service_id', $admission->service_id)
+                    ->whereDate('created_at', '>=', $admission->bed_assign_date)
+                    ->where(function($q) {
+                        $q->where('validation_status', 'pending')
+                          ->orWhere('validation_status', 'rejected');
+                    })
+                    ->where('claims_amount', '>', 0)
+                    ->count();
+
+                if ($invalidBills > 0) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Cannot discharge patient: {$invalidBills} bed bill(s) require HMO validation. Please validate all claims before discharge."
+                    ], 422);
+                }
+            }
+
             // Release bed
             if ($admission->bed) {
                 $admission->bed->bed_status = 'available';
+                $admission->bed->occupant_id = null;
                 $admission->bed->save();
             }
 
             // Mark as discharged
             $admission->discharged = 1;
             $admission->admission_status = 'discharged';
-            $admission->discharged_at = now();
+            $admission->discharge_date = now();
             $admission->discharged_by = Auth::id();
             $admission->save();
 

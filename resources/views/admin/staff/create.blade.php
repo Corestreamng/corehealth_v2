@@ -114,7 +114,7 @@
                             <div class="row g-3">
                                 <div class="col-lg-4 col-md-6">
                                     <label class="form-label-modern">Staff Category <span class="text-danger">*</span></label>
-                                    {!! Form::select('statuses', $statuses, old('is_admin'), ['class' => 'form-control form-control-modern select2', 'placeholder' => 'Select Category', 'required' => 'true']) !!}
+                                    {!! Form::select('is_admin', $statuses, old('is_admin'), ['class' => 'form-control form-control-modern select2', 'placeholder' => 'Select Category', 'required' => 'true']) !!}
                                 </div>
                                 <div class="col-lg-4 col-md-6">
                                     <label class="form-label-modern">Specialization <small class="text-muted">(Doctors)</small></label>

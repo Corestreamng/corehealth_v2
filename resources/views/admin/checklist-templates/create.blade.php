@@ -143,7 +143,7 @@ $(document).ready(function() {
         addItemRow();
     });
 
-    function addItemRow(name = '', description = '', isRequired = true) {
+    function addItemRow(itemText = '', guidance = '', isRequired = true) {
         var html = `
             <div class="checklist-item-row" data-index="${itemIndex}">
                 <div class="row align-items-center">
@@ -152,13 +152,13 @@ $(document).ready(function() {
                     </div>
                     <div class="col-md-4">
                         <input type="text" class="form-control form-control-sm"
-                            name="items[${itemIndex}][name]" value="${name}"
+                            name="items[${itemIndex}][item_text]" value="${itemText}"
                             placeholder="Item name (e.g., Verify Patient ID)" required>
                     </div>
                     <div class="col-md-4">
                         <input type="text" class="form-control form-control-sm"
-                            name="items[${itemIndex}][description]" value="${description}"
-                            placeholder="Description (optional)">
+                            name="items[${itemIndex}][guidance]" value="${guidance}"
+                            placeholder="Guidance (optional)">
                     </div>
                     <div class="col-md-2">
                         <div class="custom-control custom-checkbox">
@@ -200,32 +200,32 @@ $(document).ready(function() {
 
     function addDefaultAdmissionItems() {
         var items = [
-            { name: 'Verify Patient Identity', description: 'Check patient ID, wristband, and photo ID', required: true },
-            { name: 'Review Medical History', description: 'Confirm allergies, medications, and conditions', required: true },
-            { name: 'Vital Signs Recorded', description: 'Complete baseline vital signs assessment', required: true },
-            { name: 'Consent Forms Signed', description: 'Ensure all required consent forms are signed', required: true },
-            { name: 'Patient Belongings Documented', description: 'List and secure patient belongings', required: false },
-            { name: 'Orient Patient to Ward', description: 'Explain call bell, visiting hours, meals', required: false },
+            { text: 'Verify Patient Identity', guidance: 'Check patient ID, wristband, and photo ID', required: true },
+            { text: 'Review Medical History', guidance: 'Confirm allergies, medications, and conditions', required: true },
+            { text: 'Vital Signs Recorded', guidance: 'Complete baseline vital signs assessment', required: true },
+            { text: 'Consent Forms Signed', guidance: 'Ensure all required consent forms are signed', required: true },
+            { text: 'Patient Belongings Documented', guidance: 'List and secure patient belongings', required: false },
+            { text: 'Orient Patient to Ward', guidance: 'Explain call bell, visiting hours, meals', required: false },
         ];
 
         items.forEach(function(item) {
-            addItemRow(item.name, item.description, item.required);
+            addItemRow(item.text, item.guidance, item.required);
         });
     }
 
     function addDefaultDischargeItems() {
         var items = [
-            { name: 'Discharge Orders Reviewed', description: 'Verify doctor has signed discharge orders', required: true },
-            { name: 'Medications Explained', description: 'Review discharge medications with patient', required: true },
-            { name: 'Follow-up Appointments Scheduled', description: 'Confirm follow-up appointments are booked', required: true },
-            { name: 'Patient Education Completed', description: 'Provide care instructions and warning signs', required: true },
-            { name: 'Belongings Returned', description: 'Return all documented patient belongings', required: true },
-            { name: 'Final Vital Signs', description: 'Record final vital signs before discharge', required: false },
-            { name: 'Transport Arranged', description: 'Confirm patient has transportation home', required: false },
+            { text: 'Discharge Orders Reviewed', guidance: 'Verify doctor has signed discharge orders', required: true },
+            { text: 'Medications Explained', guidance: 'Review discharge medications with patient', required: true },
+            { text: 'Follow-up Appointments Scheduled', guidance: 'Confirm follow-up appointments are booked', required: true },
+            { text: 'Patient Education Completed', guidance: 'Provide care instructions and warning signs', required: true },
+            { text: 'Belongings Returned', guidance: 'Return all documented patient belongings', required: true },
+            { text: 'Final Vital Signs', guidance: 'Record final vital signs before discharge', required: false },
+            { text: 'Transport Arranged', guidance: 'Confirm patient has transportation home', required: false },
         ];
 
         items.forEach(function(item) {
-            addItemRow(item.name, item.description, item.required);
+            addItemRow(item.text, item.guidance, item.required);
         });
     }
 

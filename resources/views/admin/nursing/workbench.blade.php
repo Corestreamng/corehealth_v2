@@ -2705,6 +2705,10 @@
                 <span class="queue-item-label"><i class="mdi mdi-bed-empty"></i> Bed Requests</span>
                 <span class="queue-count info" id="queue-bed-count">0</span>
             </div>
+            <div class="queue-item" data-filter="discharge-requests">
+                <span class="queue-item-label"><i class="mdi mdi-account-minus"></i> Discharge Requests</span>
+                <span class="queue-count results" id="queue-discharge-count">0</span>
+            </div>
             <div class="queue-item" data-filter="medication-due">
                 <span class="queue-item-label"><i class="mdi mdi-pill"></i> Medication Due</span>
                 <span class="queue-count results" id="queue-medication-count">0</span>
@@ -6268,6 +6272,7 @@ function showQueue(filter) {
         'admitted': '≡ƒ¢Å∩╕Å Admitted Patients',
         'vitals': '≡ƒÆë Vitals Queue',
         'bed-requests': '≡ƒ¢Å∩╕Å Bed Requests',
+        'discharge-requests': '≡ƒ¢Å∩╕Å Discharge Requests',
         'medication-due': '≡ƒÆè Medication Due',
         'all': '≡ƒôï All Patients'
     };
@@ -6332,6 +6337,10 @@ function loadQueueData(filter) {
         case 'bed-requests':
             url = '{{ route("nursing-workbench.bed-requests-queue") }}';
             handler = displayBedRequestsQueue;
+            break;
+        case 'discharge-requests':
+            url = '{{ route("nursing-workbench.discharge-queue") }}';
+            handler = displayDischargeRequestsQueue;
             break;
         case 'medication-due':
             url = '{{ route("nursing-workbench.medication-due") }}';
@@ -6431,9 +6440,21 @@ function displayBedRequestsQueue(requests) {
         requests = requests.data || [];
     }
 
+    if (requests.length === 0) {
+        $container.html('<div class="text-center p-4 text-muted"><i class="mdi mdi-bed-empty mdi-48px"></i><br>No bed requests at this time</div>');
+        return;
+    }
+
     let html = '<div class="row p-2">';
     requests.forEach(r => {
-        const statusClass = r.status === 'pending' ? 'border-info' : 'border-success';
+        const priorityLower = (r.priority || 'routine').toLowerCase();
+        const statusClass = priorityLower === 'urgent' || priorityLower === 'emergency' ? 'border-danger' : 'border-info';
+        const badgeClass = priorityLower === 'urgent' || priorityLower === 'emergency' ? 'badge-danger' : 'badge-secondary';
+
+        // Escape quotes for use in onclick attributes
+        const patientName = (r.patient_name || r.name || 'N/A').replace(/'/g, "\\'");
+        const fileNo = (r.file_no || '').replace(/'/g, "\\'");
+
         html += `
             <div class="col-md-6 col-lg-4 mb-3">
                 <div class="card-modern ${statusClass} queue-patient-card" style="cursor: pointer;" onclick="loadPatient(${r.patient_id}); hideQueue();">
@@ -6443,9 +6464,62 @@ function displayBedRequestsQueue(requests) {
                         <hr class="my-2">
                         <div class="d-flex justify-content-between">
                             <span><i class="mdi mdi-bed"></i> ${r.requested_ward || 'Any ward'}</span>
-                            <span class="badge badge-${r.priority === 'urgent' ? 'danger' : 'secondary'}">${r.priority || 'routine'}</span>
+                            <span class="badge ${badgeClass}">${(r.priority || 'routine').toUpperCase()}</span>
                         </div>
                         <small class="text-muted mt-2 d-block">${r.reason || ''}</small>
+                        <div class="mt-2">
+                            <button class="btn btn-sm btn-info" onclick="event.stopPropagation(); WardDashboard.openBedAssignment(${r.admission_id || r.id}, '${patientName}', '${fileNo}');">
+                                <i class="mdi mdi-clipboard-check"></i> Process Admission
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+
+    $container.html(html);
+}
+
+// Display discharge requests queue (card-based)
+function displayDischargeRequestsQueue(requests) {
+    const $container = $('#queue-view .queue-view-content');
+
+    if (!Array.isArray(requests)) {
+        requests = requests.data || [];
+    }
+
+    if (requests.length === 0) {
+        $container.html('<div class="text-center p-4 text-muted"><i class="mdi mdi-account-minus mdi-48px"></i><br>No discharge requests at this time</div>');
+        return;
+    }
+
+    let html = '<div class="row p-2">';
+    requests.forEach(r => {
+        // Escape quotes for use in onclick attributes
+        const patientName = (r.patient_name || r.name || 'N/A').replace(/'/g, "\\'");
+        const fileNo = (r.file_no || '').replace(/'/g, "\\'");
+        const bedName = (r.bed_name || 'No bed').replace(/'/g, "\\'");
+
+        html += `
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card-modern border-warning queue-patient-card" style="cursor: pointer;" onclick="loadPatient(${r.patient_id}); hideQueue();">
+                    <div class="card-body p-3">
+                        <h6 class="mb-1">${r.patient_name || r.name || 'N/A'}</h6>
+                        <small class="text-muted d-block">${r.file_no || ''}</small>
+                        <hr class="my-2">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="mdi mdi-bed"></i> ${r.bed_name || 'No bed'}</span>
+                            <span class="badge badge-warning">Discharge Requested</span>
+                        </div>
+                        <small class="text-muted d-block"><i class="mdi mdi-account-arrow-right"></i> Reason: ${r.discharge_reason || 'Not specified'}</small>
+                        <small class="text-muted d-block"><i class="mdi mdi-clock"></i> Requested: ${r.discharge_requested_at || r.updated_at || 'N/A'}</small>
+                        <div class="mt-2">
+                            <button class="btn btn-sm btn-warning" onclick="event.stopPropagation(); WardDashboard.openDischarge(${r.admission_id}, '${patientName}', '${fileNo}', '${bedName}');">
+                                <i class="mdi mdi-clipboard-check"></i> Process Discharge
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -7626,6 +7700,8 @@ function loadQueueCounts() {
     $.get('{{ route("nursing-workbench.queue-counts") }}', function(counts) {
         $('#queue-admitted-count').text(counts.admitted || 0);
         $('#queue-vitals-count').text(counts.vitals || 0);
+        $('#queue-bed-count').text(counts.bed_requests || 0);
+        $('#queue-discharge-count').text(counts.discharge_requests || 0);
         $('#queue-medication-count').text(counts.medication_due || 0);
         updateSyncIndicator();
     });

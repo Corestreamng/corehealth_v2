@@ -40,11 +40,11 @@
 
             @hasanyrole('SUPERADMIN|ADMIN|RECEPTIONIST')
             <li class="pt-2 pb-1">
-                <span class="nav-item-head">Receptionist</span>
+                <span class="nav-item-head">Health Records</span>
             </li>            <li class="nav-item {{ request()->routeIs('reception.workbench') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('reception.workbench') ? 'active' : '' }}" href="{{ route('reception.workbench') }}">
                     <i class="mdi mdi-desktop-mac-dashboard menu-icon"></i>
-                    <span class="menu-title">Reception Workbench</span>
+                    <span class="menu-title">Health Records Workbench</span>
                 </a>
             </li>
             <li class="nav-item {{ request()->routeIs('patient.*') ? 'active' : '' }}">

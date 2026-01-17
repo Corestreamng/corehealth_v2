@@ -142,7 +142,7 @@ $(document).ready(function() {
 
     // Load existing items
     existingItems.forEach(function(item) {
-        addItemRow(item.name, item.description || '', item.is_required, item.id);
+        addItemRow(item.item_text, item.guidance || '', item.is_required, item.id);
     });
 
     // If no items exist, add one empty row
@@ -155,7 +155,7 @@ $(document).ready(function() {
         addItemRow();
     });
 
-    function addItemRow(name = '', description = '', isRequired = true, id = null) {
+    function addItemRow(itemText = '', guidance = '', isRequired = true, id = null) {
         var idField = id ? `<input type="hidden" name="items[${itemIndex}][id]" value="${id}">` : '';
 
         var html = `
@@ -167,13 +167,13 @@ $(document).ready(function() {
                     </div>
                     <div class="col-md-4">
                         <input type="text" class="form-control form-control-sm"
-                            name="items[${itemIndex}][name]" value="${escapeHtml(name)}"
+                            name="items[${itemIndex}][item_text]" value="${escapeHtml(itemText)}"
                             placeholder="Item name (e.g., Verify Patient ID)" required>
                     </div>
                     <div class="col-md-4">
                         <input type="text" class="form-control form-control-sm"
-                            name="items[${itemIndex}][description]" value="${escapeHtml(description)}"
-                            placeholder="Description (optional)">
+                            name="items[${itemIndex}][guidance]" value="${escapeHtml(guidance)}"
+                            placeholder="Guidance (optional)">
                     </div>
                     <div class="col-md-2">
                         <div class="custom-control custom-checkbox">

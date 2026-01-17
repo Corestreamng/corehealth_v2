@@ -26,6 +26,7 @@ Route::middleware(['web', 'auth'])->prefix('nursing-workbench')->name('nursing-w
     Route::get('/admitted-patients', [NursingWorkbenchController::class, 'getAdmittedPatients'])->name('admitted-patients');
     Route::get('/queue/vitals', [NursingWorkbenchController::class, 'getVitalsQueue'])->name('vitals-queue');
     Route::get('/queue/bed-requests', [NursingWorkbenchController::class, 'getBedRequestsQueue'])->name('bed-requests-queue');
+    Route::get('/queue/discharge-requests', [NursingWorkbenchController::class, 'getDischargeQueue'])->name('discharge-queue');
     Route::get('/queue/medication-due', [NursingWorkbenchController::class, 'getMedicationDueQueue'])->name('medication-due');
     Route::get('/queue-counts', [NursingWorkbenchController::class, 'getQueueCounts'])->name('queue-counts');
     Route::get('/wards', [NursingWorkbenchController::class, 'getWards'])->name('wards');
@@ -123,6 +124,7 @@ Route::middleware(['web', 'auth'])->prefix('nursing-workbench')->name('nursing-w
     Route::post('/bed/{bedId}/available', [NursingWorkbenchController::class, 'setBedAvailable'])->name('bed.available');
 
     // Admission Workflow
+    Route::get('/admission/{admissionId}/details', [NursingWorkbenchController::class, 'getAdmissionDetails'])->name('admission.details');
     Route::get('/admission/{admissionId}/checklist', [NursingWorkbenchController::class, 'getAdmissionChecklist'])->name('admission.checklist');
     Route::post('/admission-checklist/item/{itemId}/complete', [NursingWorkbenchController::class, 'completeAdmissionChecklistItem'])->name('admission-checklist.complete');
     Route::post('/admission-checklist/item/{itemId}/waive', [NursingWorkbenchController::class, 'waiveAdmissionChecklistItem'])->name('admission-checklist.waive');

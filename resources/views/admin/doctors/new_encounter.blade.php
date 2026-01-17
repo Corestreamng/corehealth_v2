@@ -55,23 +55,36 @@
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     @if (isset($admission_request))
-                        <!-- Patient is admitted - show status and discharge button -->
+                        <!-- Patient has admission request - show status and discharge button -->
                         <div class="d-flex align-items-center me-2 px-3 py-1 bg-light rounded border">
                             <i class="fa fa-bed me-2" style="color: {{ appsettings('hos_color', '#007bff') }};"></i>
                             <div class="d-flex flex-column lh-1">
-                                <span class="fw-bold text-dark" style="font-size: 0.8rem;">Admitted</span>
-                                <small class="text-muted" style="font-size: 0.7rem;">
-                                    {{ $admission_request->bed ? $admission_request->bed->name : 'N/A' }}
-                                </small>
+                                @if($admission_request->admission_status === 'discharge_requested')
+                                    <span class="fw-bold text-warning" style="font-size: 0.8rem;">Discharge Requested</span>
+                                    <small class="text-muted" style="font-size: 0.7rem;">Awaiting Nursing</small>
+                                @elseif($admission_request->admission_status === 'pending_checklist')
+                                    <span class="fw-bold text-info" style="font-size: 0.8rem;">Admission Requested</span>
+                                    <small class="text-muted" style="font-size: 0.7rem;">Pending Checklist</small>
+                                @elseif($admission_request->discharged)
+                                    <span class="fw-bold text-secondary" style="font-size: 0.8rem;">Discharged</span>
+                                    <small class="text-muted" style="font-size: 0.7rem;">{{ $admission_request->discharge_date ? date('M j, Y', strtotime($admission_request->discharge_date)) : '' }}</small>
+                                @else
+                                    <span class="fw-bold text-dark" style="font-size: 0.8rem;">Admitted</span>
+                                    <small class="text-muted" style="font-size: 0.7rem;">
+                                        {{ $admission_request->bed ? $admission_request->bed->name : 'Pending Bed' }}
+                                    </small>
+                                @endif
                             </div>
                         </div>
+                        @if(!$admission_request->discharged && $admission_request->admission_status !== 'discharge_requested')
                         <button type="button" class="btn btn-warning btn-sm d-flex align-items-center shadow-sm" onclick="openDischargeModal()">
-                            <i class="fa fa-sign-out-alt me-2"></i> Discharge
+                            <i class="fa fa-sign-out-alt me-2"></i> Request Discharge
                         </button>
+                        @endif
                     @else
                         <!-- Patient not admitted - show admit button -->
                         <button type="button" class="btn btn-info btn-sm text-white d-flex align-items-center shadow-sm" onclick="openAdmitModal()">
-                            <i class="fa fa-bed me-2"></i> Admit Patient
+                            <i class="fa fa-bed me-2"></i> Request Admission
                         </button>
                     @endif
 
@@ -224,27 +237,63 @@
                     </div>
                     @if (isset($admission_request))
                         <hr>
-                        <h4>Admission Info <a href="{{ route('discharge-patient', $admission_request->id) }}"
-                                class="btn btn-warning"
-                                onclick="return confirm('Are you sure you wish to discharge ths patient?')">Discharge</a>
+                        <h4>Admission Info
+                            @if($admission_request->admission_status === 'discharge_requested')
+                                <span class="badge bg-warning text-dark">Discharge Requested</span>
+                            @elseif($admission_request->discharged)
+                                <span class="badge bg-secondary">Discharged</span>
+                            @else
+                                <button type="button" class="btn btn-warning btn-sm" onclick="openDischargeModal()">
+                                    <i class="fa fa-sign-out-alt"></i> Request Discharge
+                                </button>
+                            @endif
                         </h4>
                         <div class="table-responsive">
                             <table class="table table-bordered table-striped">
                                 <tr>
-                                    <th>Admitted By</th>
+                                    <th>Requested By</th>
                                     <td>{{ userfullname($admission_request->doctor_id) }}</td>
-                                    <th>Admitted On </th>
+                                    <th>Requested On</th>
                                     <td>{{ date('h:i a D M j, Y', strtotime($admission_request->created_at)) }}</td>
                                 </tr>
                                 <tr>
                                     <th>Bed</th>
-                                    <td>{{ $admission_request->bed ? $admission_request->bed->name : 'N/A' }}</td>
+                                    <td>{{ $admission_request->bed ? $admission_request->bed->name : 'Pending Assignment' }}</td>
                                     <th>Ward</th>
                                     <td>{{ $admission_request->bed ? $admission_request->bed->ward : 'N/A' }},
                                         <b>Unit:</b>
                                         {{ $admission_request->bed ? $admission_request->bed->unit : 'N/A' }}
                                     </td>
                                 </tr>
+                                @if($admission_request->admission_status)
+                                <tr>
+                                    <th>Status</th>
+                                    <td colspan="3">
+                                        @switch($admission_request->admission_status)
+                                            @case('pending_checklist')
+                                                <span class="badge bg-info">Pending Admission Checklist</span>
+                                                @break
+                                            @case('checklist_complete')
+                                                <span class="badge bg-primary">Checklist Complete - Awaiting Bed</span>
+                                                @break
+                                            @case('admitted')
+                                                <span class="badge bg-success">Admitted</span>
+                                                @break
+                                            @case('discharge_requested')
+                                                <span class="badge bg-warning text-dark">Discharge Requested - Awaiting Nursing</span>
+                                                @break
+                                            @case('discharge_checklist')
+                                                <span class="badge bg-warning text-dark">Discharge Checklist In Progress</span>
+                                                @break
+                                            @case('discharged')
+                                                <span class="badge bg-secondary">Discharged</span>
+                                                @break
+                                            @default
+                                                <span class="badge bg-secondary">{{ ucfirst(str_replace('_', ' ', $admission_request->admission_status)) }}</span>
+                                        @endswitch
+                                    </td>
+                                </tr>
+                                @endif
                             </table>
 
                         </div>
@@ -3628,19 +3677,19 @@
     </style>
 
     <script>
-    // Open modal for admission
+    // Open modal for admission request
     function openAdmitModal() {
         // Reset form
         document.getElementById('admitDischargeForm').reset();
         document.getElementById('modal_action').value = 'admit';
 
-        // Update UI for admission
-        document.getElementById('modal_title_text').textContent = 'Admit Patient';
+        // Update UI for admission request
+        document.getElementById('modal_title_text').textContent = 'Request Patient Admission';
         document.getElementById('modal_icon').className = 'fa fa-bed';
-        document.getElementById('btn_text').textContent = 'Submit Admission';
+        document.getElementById('btn_text').textContent = 'Submit Admission Request';
         document.getElementById('btn_icon').className = 'fa fa-bed';
         document.getElementById('modal_submit_btn').className = 'btn btn-info btn-lg text-white';
-        document.getElementById('warning_text').textContent = 'This will create an admission request.';
+        document.getElementById('warning_text').textContent = 'This will create an admission request. Nursing staff will complete the admission checklist and assign a bed.';
 
         // Show/hide sections
         document.getElementById('admission_section').style.display = 'block';
@@ -3649,19 +3698,19 @@
         $('#admitDischargeModal').modal('show');
     }
 
-    // Open modal for discharge
+    // Open modal for discharge request
     function openDischargeModal() {
         // Reset form
         document.getElementById('admitDischargeForm').reset();
         document.getElementById('modal_action').value = 'discharge';
 
-        // Update UI for discharge
-        document.getElementById('modal_title_text').textContent = 'Discharge Patient';
+        // Update UI for discharge request
+        document.getElementById('modal_title_text').textContent = 'Request Patient Discharge';
         document.getElementById('modal_icon').className = 'fa fa-sign-out-alt';
-        document.getElementById('btn_text').textContent = 'Submit Discharge';
+        document.getElementById('btn_text').textContent = 'Submit Discharge Request';
         document.getElementById('btn_icon').className = 'fa fa-sign-out-alt';
         document.getElementById('modal_submit_btn').className = 'btn btn-warning btn-lg';
-        document.getElementById('warning_text').textContent = 'This will discharge the patient and free up the bed.';
+        document.getElementById('warning_text').textContent = 'This will create a discharge request. Nursing staff will complete the discharge checklist before releasing the bed.';
 
         // Show/hide sections
         document.getElementById('admission_section').style.display = 'none';
@@ -3715,9 +3764,9 @@
             contentType: false,
             success: function(response) {
                 const successMsg = action === 'admit'
-                    ? 'Admission request submitted successfully!'
-                    : 'Patient discharged successfully!';
-                showMessage('modal_message', successMsg, 'success');
+                    ? 'Admission request submitted! Nursing staff will process the admission checklist.'
+                    : 'Discharge request submitted! Nursing staff will complete the discharge checklist before releasing the bed.';
+                showMessage('modal_message', response.message || successMsg, 'success');
                 setTimeout(() => {
                     location.reload();
                 }, 1500);
@@ -3726,7 +3775,7 @@
                 const message = xhr.responseJSON?.message || 'Error processing request';
                 showMessage('modal_message', message, 'error');
                 btn.disabled = false;
-                const originalText = action === 'admit' ? 'Submit Admission' : 'Submit Discharge';
+                const originalText = action === 'admit' ? 'Submit Admission Request' : 'Submit Discharge Request';
                 const originalIcon = action === 'admit' ? 'fa-bed' : 'fa-sign-out-alt';
                 btn.innerHTML = `<i class=\"fa ${originalIcon}\"></i> ${originalText}`;
             }
