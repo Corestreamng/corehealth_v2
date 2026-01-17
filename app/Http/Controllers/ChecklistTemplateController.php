@@ -83,11 +83,11 @@ class ChecklistTemplateController extends Controller
             'name' => 'required|string|max:255',
             'type' => 'required|in:admission,discharge',
             'description' => 'nullable|string',
-            'is_active' => 'boolean',
+            'is_active' => 'nullable',
             'items' => 'nullable|array',
-            'items.*.name' => 'required|string|max:255',
-            'items.*.description' => 'nullable|string',
-            'items.*.is_required' => 'boolean',
+            'items.*.item_text' => 'nullable|string|max:255',
+            'items.*.guidance' => 'nullable|string',
+            'items.*.is_required' => 'nullable',
         ];
 
         $validator = Validator::make($request->all(), $rules);
@@ -103,21 +103,24 @@ class ChecklistTemplateController extends Controller
                 'name' => $request->name,
                 'type' => $request->type,
                 'description' => $request->description,
-                'is_active' => $request->has('is_active'),
+                'is_active' => $request->has('is_active') ? 1 : 0,
             ]);
 
             // Add items if provided
-            if ($request->has('items')) {
-                foreach ($request->items as $index => $itemData) {
-                    if (!empty($itemData['name'])) {
-                        ChecklistTemplateItem::create([
-                            'checklist_template_id' => $template->id,
-                            'name' => $itemData['name'],
-                            'description' => $itemData['description'] ?? null,
-                            'is_required' => isset($itemData['is_required']) && $itemData['is_required'],
-                            'sort_order' => $index + 1,
-                        ]);
+            if ($request->has('items') && is_array($request->items)) {
+                $sortOrder = 1;
+                foreach ($request->items as $itemData) {
+                    // Skip items without item_text
+                    if (empty($itemData['item_text'])) {
+                        continue;
                     }
+                    ChecklistTemplateItem::create([
+                        'template_id' => $template->id,
+                        'item_text' => trim($itemData['item_text']),
+                        'guidance' => $itemData['guidance'] ?? null,
+                        'is_required' => !empty($itemData['is_required']) ? 1 : 0,
+                        'sort_order' => $sortOrder++,
+                    ]);
                 }
             }
 
@@ -171,12 +174,12 @@ class ChecklistTemplateController extends Controller
             'name' => 'required|string|max:255',
             'type' => 'required|in:admission,discharge',
             'description' => 'nullable|string',
-            'is_active' => 'boolean',
+            'is_active' => 'nullable',
             'items' => 'nullable|array',
-            'items.*.id' => 'nullable|exists:checklist_template_items,id',
-            'items.*.name' => 'required|string|max:255',
-            'items.*.description' => 'nullable|string',
-            'items.*.is_required' => 'boolean',
+            'items.*.id' => 'nullable|integer',
+            'items.*.item_text' => 'nullable|string|max:255',
+            'items.*.guidance' => 'nullable|string',
+            'items.*.is_required' => 'nullable',
         ];
 
         $validator = Validator::make($request->all(), $rules);
@@ -192,7 +195,7 @@ class ChecklistTemplateController extends Controller
                 'name' => $request->name,
                 'type' => $request->type,
                 'description' => $request->description,
-                'is_active' => $request->has('is_active'),
+                'is_active' => $request->has('is_active') ? 1 : 0,
             ]);
 
             // Get existing item IDs
@@ -200,32 +203,36 @@ class ChecklistTemplateController extends Controller
             $updatedItemIds = [];
 
             // Update or create items
-            if ($request->has('items')) {
-                foreach ($request->items as $index => $itemData) {
-                    if (!empty($itemData['name'])) {
-                        if (!empty($itemData['id'])) {
-                            // Update existing item
-                            $item = ChecklistTemplateItem::find($itemData['id']);
-                            if ($item && $item->checklist_template_id == $checklistTemplate->id) {
-                                $item->update([
-                                    'name' => $itemData['name'],
-                                    'description' => $itemData['description'] ?? null,
-                                    'is_required' => isset($itemData['is_required']) && $itemData['is_required'],
-                                    'sort_order' => $index + 1,
-                                ]);
-                                $updatedItemIds[] = $item->id;
-                            }
-                        } else {
-                            // Create new item
-                            $newItem = ChecklistTemplateItem::create([
-                                'checklist_template_id' => $checklistTemplate->id,
-                                'name' => $itemData['name'],
-                                'description' => $itemData['description'] ?? null,
-                                'is_required' => isset($itemData['is_required']) && $itemData['is_required'],
-                                'sort_order' => $index + 1,
+            if ($request->has('items') && is_array($request->items)) {
+                $sortOrder = 1;
+                foreach ($request->items as $itemData) {
+                    // Skip items without item_text
+                    if (empty($itemData['item_text'])) {
+                        continue;
+                    }
+
+                    if (!empty($itemData['id'])) {
+                        // Update existing item
+                        $item = ChecklistTemplateItem::find($itemData['id']);
+                        if ($item && $item->template_id == $checklistTemplate->id) {
+                            $item->update([
+                                'item_text' => trim($itemData['item_text']),
+                                'guidance' => $itemData['guidance'] ?? null,
+                                'is_required' => !empty($itemData['is_required']) ? 1 : 0,
+                                'sort_order' => $sortOrder++,
                             ]);
-                            $updatedItemIds[] = $newItem->id;
+                            $updatedItemIds[] = $item->id;
                         }
+                    } else {
+                        // Create new item
+                        $newItem = ChecklistTemplateItem::create([
+                            'template_id' => $checklistTemplate->id,
+                            'item_text' => trim($itemData['item_text']),
+                            'guidance' => $itemData['guidance'] ?? null,
+                            'is_required' => !empty($itemData['is_required']) ? 1 : 0,
+                            'sort_order' => $sortOrder++,
+                        ]);
+                        $updatedItemIds[] = $newItem->id;
                     }
                 }
             }
@@ -257,10 +264,10 @@ class ChecklistTemplateController extends Controller
     {
         try {
             $templateName = $checklistTemplate->name;
-            
+
             // Delete all items first
             $checklistTemplate->items()->delete();
-            
+
             // Delete template
             $checklistTemplate->delete();
 

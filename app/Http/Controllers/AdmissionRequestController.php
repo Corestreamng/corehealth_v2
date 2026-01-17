@@ -443,6 +443,11 @@ class AdmissionRequestController extends Controller
         }
     }
 
+    /**
+     * Create a discharge request from doctor's encounter page.
+     * This does NOT discharge the patient - it creates a request for nursing staff
+     * to process through the discharge checklist workflow.
+     */
     public function dischargePatientApi(Request $request, $admission_req_id)
     {
         $request->validate([
@@ -458,56 +463,30 @@ class AdmissionRequestController extends Controller
                 return response()->json(['message' => 'Admission request not found'], 404);
             }
 
-            // Check for unpaid/unvalidated bed bills
-            $unpaidBills = ProductOrServiceRequest::where('user_id', $req->patient->user->id)
-                ->where('service_id', $req->service_id)
-                ->whereNull('payment_id')
-                ->whereDate('created_at', '>=', $req->bed_assign_date)
-                ->count();
-
-            if ($unpaidBills > 0) {
+            // Check if already discharged or discharge already requested
+            if ($req->discharged) {
                 DB::rollBack();
-                return response()->json([
-                    'message' => "Cannot discharge patient: {$unpaidBills} unpaid bed bill(s) found. Please process all payments before discharge."
-                ], 422);
+                return response()->json(['message' => 'Patient is already discharged'], 422);
             }
 
-            // Check for pending/rejected HMO validations
-            $invalidBills = ProductOrServiceRequest::where('user_id', $req->patient->user->id)
-                ->where('service_id', $req->service_id)
-                ->whereDate('created_at', '>=', $req->bed_assign_date)
-                ->where(function($q) {
-                    $q->where('validation_status', 'pending')
-                      ->orWhere('validation_status', 'rejected');
-                })
-                ->where('claims_amount', '>', 0)
-                ->count();
-
-            if ($invalidBills > 0) {
+            if ($req->admission_status === AdmissionRequest::STATUS_DISCHARGE_REQUESTED) {
                 DB::rollBack();
-                return response()->json([
-                    'message' => "Cannot discharge patient: {$invalidBills} bed bill(s) require HMO validation. Please validate all claims before discharge."
-                ], 422);
+                return response()->json(['message' => 'Discharge request already submitted. Awaiting nursing staff to process.'], 422);
             }
 
+            // Update admission request with discharge request info
+            // Do NOT set discharged=true or release bed - nurse will do that after checklist
             $req->update([
-                'discharged' => true,
-                'discharged_by' => Auth::id(),
-                'discharge_date' => date('Y-m-d H:i:s'),
+                'admission_status' => AdmissionRequest::STATUS_DISCHARGE_REQUESTED,
                 'discharge_reason' => $request->discharge_reason,
                 'discharge_note' => $request->discharge_note,
                 'followup_instructions' => $request->followup_instructions,
             ]);
 
-            if ($req->bed_id) {
-                Bed::where('id', $req->bed_id)->update([
-                    'occupant_id' => null,
-                    'status' => 'available'
-                ]);
-            }
-
             DB::commit();
-            return response()->json(['message' => 'Patient discharged successfully'], 200);
+            return response()->json([
+                'message' => 'Discharge request submitted successfully. Nursing staff will process the discharge checklist before releasing the bed.'
+            ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error($e->getMessage(), ['exception' => $e]);

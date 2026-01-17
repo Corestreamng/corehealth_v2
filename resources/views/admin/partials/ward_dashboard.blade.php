@@ -522,7 +522,7 @@
 
 <!-- Bed Assignment Modal -->
 <div class="modal fade" id="bedAssignmentModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-dialog modal-xl" role="document">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title"><i class="mdi mdi-bed"></i> Assign Bed to Patient</h5>
@@ -531,49 +531,109 @@
                 </button>
             </div>
             <div class="modal-body">
-                <!-- Patient Info -->
-                <div class="card-modern mb-3">
-                    <div class="card-body py-2">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong id="assign-patient-name">--</strong>
-                                <br><small class="text-muted">File: <span id="assign-patient-file">--</span></small>
+                <div class="row">
+                    <!-- Left Column: Patient & Admission Details -->
+                    <div class="col-md-5 border-end">
+                        <!-- Patient Info Card -->
+                        <div class="card-modern mb-3">
+                            <div class="card-header bg-light py-2">
+                                <strong><i class="mdi mdi-account"></i> Patient Information</strong>
                             </div>
-                            <div>
-                                <span class="badge bg-info" id="assign-admission-status">Pending</span>
+                            <div class="card-body py-2">
+                                <h5 class="mb-1" id="assign-patient-name">--</h5>
+                                <table class="table table-sm table-borderless mb-0">
+                                    <tr><td class="text-muted" width="40%">File No:</td><td id="assign-patient-file">--</td></tr>
+                                    <tr><td class="text-muted">Age/Gender:</td><td id="assign-patient-age-gender">--</td></tr>
+                                    <tr><td class="text-muted">Blood Group:</td><td id="assign-patient-blood">--</td></tr>
+                                    <tr><td class="text-muted">Phone:</td><td id="assign-patient-phone">--</td></tr>
+                                    <tr><td class="text-muted">Payment:</td><td id="assign-patient-payment">--</td></tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Admission Details Card -->
+                        <div class="card-modern mb-3">
+                            <div class="card-header bg-info text-white py-2">
+                                <strong><i class="mdi mdi-clipboard-text"></i> Admission Request Details</strong>
+                                <span class="badge bg-light text-dark float-end" id="assign-admission-status">Pending</span>
+                            </div>
+                            <div class="card-body py-2">
+                                <table class="table table-sm table-borderless mb-0">
+                                    <tr><td class="text-muted" width="40%">Reason:</td><td id="assign-admission-reason">--</td></tr>
+                                    <tr><td class="text-muted">Priority:</td><td><span class="badge" id="assign-priority-badge">--</span></td></tr>
+                                    <tr><td class="text-muted">Requested By:</td><td id="assign-requesting-doctor">--</td></tr>
+                                    <tr><td class="text-muted">Requested At:</td><td id="assign-requested-at">--</td></tr>
+                                </table>
+                                <hr class="my-2">
+                                <strong class="small">Admission Notes:</strong>
+                                <p class="small text-muted mb-0" id="assign-admission-notes" style="max-height: 80px; overflow-y: auto;">--</p>
+                            </div>
+                        </div>
+
+                        <!-- Clinical Info Card -->
+                        <div class="card-modern mb-3">
+                            <div class="card-header bg-warning text-dark py-2">
+                                <strong><i class="mdi mdi-medical-bag"></i> Clinical Information</strong>
+                            </div>
+                            <div class="card-body py-2">
+                                <!-- Diagnosis -->
+                                <strong class="small">Diagnosis:</strong>
+                                <p class="small mb-2" id="assign-diagnosis">--</p>
+
+                                <!-- Allergies -->
+                                <strong class="small text-danger"><i class="mdi mdi-alert"></i> Allergies:</strong>
+                                <div class="small mb-2" id="assign-allergies">--</div>
+
+                                <!-- Latest Vitals -->
+                                <strong class="small">Latest Vitals:</strong>
+                                <div class="row small" id="assign-vitals">
+                                    <div class="col-6"><i class="mdi mdi-thermometer"></i> Temp: <span id="vital-temp">--</span></div>
+                                    <div class="col-6"><i class="mdi mdi-heart-pulse"></i> Pulse: <span id="vital-pulse">--</span></div>
+                                    <div class="col-6"><i class="mdi mdi-gauge"></i> BP: <span id="vital-bp">--</span></div>
+                                    <div class="col-6"><i class="mdi mdi-lungs"></i> SpO2: <span id="vital-spo2">--</span></div>
+                                </div>
+
+                                <!-- Active Medications -->
+                                <strong class="small d-block mt-2">Active Medications:</strong>
+                                <ul class="small mb-0 ps-3" id="assign-medications" style="max-height: 60px; overflow-y: auto;">
+                                    <li>None</li>
+                                </ul>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Step 1: Admission Checklist -->
-                <div id="admission-checklist-step">
-                    <h6><i class="mdi mdi-checkbox-marked-outline"></i> Admission Checklist</h6>
-                    <p class="text-muted small">Complete or waive all items before assigning a bed.</p>
+                    <!-- Right Column: Checklist & Bed Selection -->
+                    <div class="col-md-7">
+                        <!-- Step 1: Admission Checklist -->
+                        <div id="admission-checklist-step">
+                            <h6><i class="mdi mdi-checkbox-marked-outline"></i> Admission Checklist</h6>
+                            <p class="text-muted small">Complete or waive all items before assigning a bed.</p>
 
-                    <div class="checklist-progress">
-                        <span><i class="mdi mdi-checkbox-multiple-marked"></i> Progress:</span>
-                        <div class="progress-bar-container">
-                            <div class="progress-bar-fill" id="checklist-progress-bar" style="width: 0%"></div>
+                            <div class="checklist-progress">
+                                <span><i class="mdi mdi-checkbox-multiple-marked"></i> Progress:</span>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-fill" id="checklist-progress-bar" style="width: 0%"></div>
+                                </div>
+                                <span class="progress-text" id="checklist-progress-text">0%</span>
+                            </div>
+
+                            <div class="checklist-container" id="admission-checklist-items" style="max-height: 350px; overflow-y: auto;">
+                                <!-- Checklist items will be loaded here -->
+                            </div>
                         </div>
-                        <span class="progress-text" id="checklist-progress-text">0%</span>
-                    </div>
 
-                    <div class="checklist-container" id="admission-checklist-items">
-                        <!-- Checklist items will be loaded here -->
-                    </div>
-                </div>
-
-                <!-- Step 2: Bed Selection -->
-                <div id="bed-selection-step" style="display: none;">
-                    <h6><i class="mdi mdi-bed-empty"></i> Select Available Bed</h6>
-                    <div class="mb-3">
-                        <select class="form-control" id="ward-filter-select">
-                            <option value="">All Wards</option>
-                        </select>
-                    </div>
-                    <div class="bed-selection-grid" id="available-beds-grid">
-                        <!-- Available beds will be loaded here -->
+                        <!-- Step 2: Bed Selection -->
+                        <div id="bed-selection-step" style="display: none;">
+                            <h6><i class="mdi mdi-bed-empty"></i> Select Available Bed</h6>
+                            <div class="mb-3">
+                                <select class="form-control" id="ward-filter-select">
+                                    <option value="">All Wards</option>
+                                </select>
+                            </div>
+                            <div class="bed-selection-grid" id="available-beds-grid" style="max-height: 350px; overflow-y: auto;">
+                                <!-- Available beds will be loaded here -->
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -592,44 +652,124 @@
 
 <!-- Discharge Modal -->
 <div class="modal fade" id="dischargeModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-dialog modal-xl" role="document">
         <div class="modal-content">
             <div class="modal-header bg-warning text-dark">
-                <h5 class="modal-title"><i class="mdi mdi-logout"></i> Process Discharge</h5>
+                <h5 class="modal-title"><i class="mdi mdi-logout"></i> Process Patient Discharge</h5>
                 <button type="button" class="close"  data-bs-dismiss="modal" data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
             </div>
             <div class="modal-body">
-                <!-- Patient Info -->
-                <div class="card-modern mb-3">
-                    <div class="card-body py-2">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong id="discharge-patient-name">--</strong>
-                                <br><small class="text-muted">File: <span id="discharge-patient-file">--</span> | Bed: <span id="discharge-bed-name">--</span></small>
+                <div class="row">
+                    <!-- Left Column: Patient & Admission Details -->
+                    <div class="col-md-5 border-end">
+                        <!-- Patient Info Card -->
+                        <div class="card-modern mb-3">
+                            <div class="card-header bg-light py-2">
+                                <strong><i class="mdi mdi-account"></i> Patient Information</strong>
                             </div>
-                            <div>
-                                <span class="badge bg-warning text-dark">Discharge Requested</span>
+                            <div class="card-body py-2">
+                                <h5 class="mb-1" id="discharge-patient-name">--</h5>
+                                <table class="table table-sm table-borderless mb-0">
+                                    <tr><td class="text-muted" width="40%">File No:</td><td id="discharge-patient-file">--</td></tr>
+                                    <tr><td class="text-muted">Age/Gender:</td><td id="discharge-patient-age-gender">--</td></tr>
+                                    <tr><td class="text-muted">Blood Group:</td><td id="discharge-patient-blood">--</td></tr>
+                                    <tr><td class="text-muted">Phone:</td><td id="discharge-patient-phone">--</td></tr>
+                                    <tr><td class="text-muted">Payment:</td><td id="discharge-patient-payment">--</td></tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Admission Summary Card -->
+                        <div class="card-modern mb-3">
+                            <div class="card-header bg-info text-white py-2">
+                                <strong><i class="mdi mdi-bed"></i> Admission Summary</strong>
+                            </div>
+                            <div class="card-body py-2">
+                                <table class="table table-sm table-borderless mb-0">
+                                    <tr><td class="text-muted" width="40%">Bed:</td><td id="discharge-bed-name">--</td></tr>
+                                    <tr><td class="text-muted">Admitted On:</td><td id="discharge-admitted-at">--</td></tr>
+                                    <tr><td class="text-muted">Length of Stay:</td><td id="discharge-length-stay">--</td></tr>
+                                    <tr><td class="text-muted">Admission Reason:</td><td id="discharge-admission-reason">--</td></tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Discharge Request Card -->
+                        <div class="card-modern mb-3">
+                            <div class="card-header bg-warning text-dark py-2">
+                                <strong><i class="mdi mdi-clipboard-arrow-right"></i> Discharge Request</strong>
+                                <span class="badge bg-dark float-end">Pending</span>
+                            </div>
+                            <div class="card-body py-2">
+                                <table class="table table-sm table-borderless mb-0">
+                                    <tr><td class="text-muted" width="40%">Reason:</td><td id="discharge-reason">--</td></tr>
+                                    <tr><td class="text-muted">Requested By:</td><td id="discharge-requesting-doctor">--</td></tr>
+                                    <tr><td class="text-muted">Requested At:</td><td id="discharge-requested-at">--</td></tr>
+                                </table>
+                                <hr class="my-2">
+                                <strong class="small">Discharge Notes:</strong>
+                                <p class="small text-muted mb-0" id="discharge-notes" style="max-height: 60px; overflow-y: auto;">--</p>
+                                <hr class="my-2">
+                                <strong class="small">Follow-up Instructions:</strong>
+                                <p class="small text-muted mb-0" id="discharge-followup" style="max-height: 60px; overflow-y: auto;">--</p>
+                            </div>
+                        </div>
+
+                        <!-- Clinical Summary Card -->
+                        <div class="card-modern mb-3">
+                            <div class="card-header bg-secondary text-white py-2">
+                                <strong><i class="mdi mdi-medical-bag"></i> Clinical Summary</strong>
+                            </div>
+                            <div class="card-body py-2">
+                                <!-- Diagnosis -->
+                                <strong class="small">Diagnosis:</strong>
+                                <p class="small mb-2" id="discharge-diagnosis">--</p>
+
+                                <!-- Allergies -->
+                                <strong class="small text-danger"><i class="mdi mdi-alert"></i> Allergies:</strong>
+                                <div class="small mb-2" id="discharge-allergies">--</div>
+
+                                <!-- Active Medications -->
+                                <strong class="small d-block">Active Medications:</strong>
+                                <ul class="small mb-0 ps-3" id="discharge-medications" style="max-height: 60px; overflow-y: auto;">
+                                    <li>None</li>
+                                </ul>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Discharge Checklist -->
-                <h6><i class="mdi mdi-checkbox-marked-outline"></i> Discharge Checklist</h6>
-                <p class="text-muted small">Complete all items before releasing the bed.</p>
+                    <!-- Right Column: Discharge Checklist -->
+                    <div class="col-md-7">
+                        <h6><i class="mdi mdi-checkbox-marked-outline"></i> Discharge Checklist</h6>
+                        <p class="text-muted small">Complete all items before releasing the bed.</p>
 
-                <div class="checklist-progress">
-                    <span><i class="mdi mdi-checkbox-multiple-marked"></i> Progress:</span>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar-fill" id="discharge-checklist-progress-bar" style="width: 0%"></div>
+                        <div class="checklist-progress">
+                            <span><i class="mdi mdi-checkbox-multiple-marked"></i> Progress:</span>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill" id="discharge-checklist-progress-bar" style="width: 0%"></div>
+                            </div>
+                            <span class="progress-text" id="discharge-checklist-progress-text">0%</span>
+                        </div>
+
+                        <div class="checklist-container" id="discharge-checklist-items" style="max-height: 400px; overflow-y: auto;">
+                            <!-- Checklist items will be loaded here -->
+                        </div>
+
+                        <!-- Final Confirmation Section -->
+                        <div class="card-modern mt-3 border-danger" id="discharge-confirm-section" style="display: none;">
+                            <div class="card-body py-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="mdi mdi-alert-circle mdi-24px text-danger me-2"></i>
+                                    <div>
+                                        <strong class="text-danger">Confirm Discharge</strong>
+                                        <p class="small text-muted mb-0">This will discharge the patient and release the bed for new admissions.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <span class="progress-text" id="discharge-checklist-progress-text">0%</span>
-                </div>
-
-                <div class="checklist-container" id="discharge-checklist-items">
-                    <!-- Checklist items will be loaded here -->
                 </div>
             </div>
             <div class="modal-footer">
@@ -692,21 +832,8 @@ window.WardDashboard = (function() {
             $('#' + queue + '-queue-panel').show();
         });
 
-        // Checklist item toggle
-        $(document).on('change', '.checklist-checkbox', function() {
-            var itemId = $(this).data('item-id');
-            var checklistType = $(this).data('checklist-type');
-            var checked = $(this).is(':checked');
-
-            toggleChecklistItem(itemId, checklistType, checked);
-        });
-
-        // Waive checklist item
-        $(document).on('click', '.waive-item-btn', function() {
-            var itemId = $(this).data('item-id');
-            var checklistType = $(this).data('checklist-type');
-            waiveChecklistItem(itemId, checklistType);
-        });
+        // Note: Checklist toggle and waive handlers are now bound globally in $(document).ready()
+        // to support modals opened from sidebar without initializing ward dashboard first
 
         // Proceed to bed selection
         $('#proceed-to-bed-selection').on('click', function() {
@@ -720,8 +847,7 @@ window.WardDashboard = (function() {
         // Confirm bed assignment
         $('#confirm-bed-assignment').on('click', confirmBedAssignment);
 
-        // Confirm discharge
-        $('#confirm-discharge').on('click', confirmDischarge);
+        // Note: Confirm discharge handler is now bound globally in $(document).ready()
 
         // Bed item click
         $(document).on('click', '.bed-item', function() {
@@ -916,8 +1042,8 @@ window.WardDashboard = (function() {
         currentAdmissionId = admissionId;
         selectedBedId = null;
 
-        $('#assign-patient-name').text(patientName);
-        $('#assign-patient-file').text(fileNo);
+        // Store admission ID in modal for external access
+        $('#bedAssignmentModal').data('admission-id', admissionId);
 
         // Reset modal state
         $('#admission-checklist-step').show();
@@ -925,10 +1051,134 @@ window.WardDashboard = (function() {
         $('#proceed-to-bed-selection').hide();
         $('#confirm-bed-assignment').hide();
 
-        // Load checklist
-        loadAdmissionChecklist(admissionId);
+        // Clear previous data
+        $('#assign-patient-name').text('Loading...');
+        $('#assign-patient-file').text('--');
+        $('#assign-patient-age-gender').text('--');
+        $('#assign-patient-blood').text('--');
+        $('#assign-patient-phone').text('--');
+        $('#assign-patient-payment').text('--');
+        $('#assign-admission-reason').text('--');
+        $('#assign-admission-notes').text('--');
+        $('#assign-requesting-doctor').text('--');
+        $('#assign-requested-at').text('--');
+        $('#assign-diagnosis').text('--');
+        $('#assign-allergies').html('--');
+        $('#assign-medications').html('<li>Loading...</li>');
 
         $('#bedAssignmentModal').modal('show');
+
+        // Load full admission details
+        loadAdmissionDetails(admissionId, 'admission');
+
+        // Load checklist
+        loadAdmissionChecklist(admissionId);
+    }
+
+    function loadAdmissionDetails(admissionId, modalType) {
+        $.get('/nursing-workbench/admission/' + admissionId + '/details', function(response) {
+            if (!response.success) return;
+
+            var data = response.admission;
+            var prefix = modalType === 'admission' ? 'assign' : 'discharge';
+
+            // Patient Info
+            $('#' + prefix + '-patient-name').text(data.patient_name || '--');
+            $('#' + prefix + '-patient-file').text(data.file_no || '--');
+            $('#' + prefix + '-patient-age-gender').text((data.age || '--') + ' / ' + (data.gender || '--'));
+            $('#' + prefix + '-patient-blood').text(data.blood_group || 'Not recorded');
+            $('#' + prefix + '-patient-phone').text(data.phone || '--');
+
+            // Payment info
+            var paymentText = data.payment_type || 'Cash';
+            if (data.hmo_name) {
+                paymentText = 'HMO: ' + data.hmo_name;
+            }
+            $('#' + prefix + '-patient-payment').text(paymentText);
+
+            if (modalType === 'admission') {
+                // Admission details
+                $('#assign-admission-reason').text(data.admission_reason || 'Not specified');
+                $('#assign-admission-notes').text(data.admission_notes || 'No notes provided');
+                $('#assign-requesting-doctor').text(data.requesting_doctor || '--');
+                $('#assign-requested-at').text(data.requested_at || '--');
+
+                // Priority badge
+                var priorityClass = data.priority === 'Emergency' ? 'bg-danger' :
+                                    (data.priority === 'Urgent' ? 'bg-warning text-dark' : 'bg-secondary');
+                $('#assign-priority-badge').removeClass().addClass('badge ' + priorityClass).text(data.priority || 'Routine');
+
+                // Status badge
+                var statusText = (data.admission_status || 'pending_checklist').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                $('#assign-admission-status').text(statusText);
+
+            } else if (modalType === 'discharge') {
+                // Discharge specific
+                $('#discharge-bed-name').text(data.bed_name ? data.ward_name + ' - ' + data.bed_name : '--');
+                $('#discharge-admitted-at').text(data.bed_assigned_at || '--');
+                $('#discharge-admission-reason').text(data.admission_reason || 'Not specified');
+                $('#discharge-reason').text(data.discharge_reason || '--');
+                $('#discharge-notes').text(data.discharge_note || 'No notes provided');
+                $('#discharge-followup').text(data.followup_instructions || 'None specified');
+                $('#discharge-requesting-doctor').text(data.requesting_doctor || '--');
+                $('#discharge-requested-at').text(data.discharge_requested_at || '--');
+
+                // Calculate length of stay
+                if (data.bed_assigned_at) {
+                    var admitDate = new Date(data.bed_assigned_at.replace(/(\w+) (\d+), (\d+) .*/, '$1 $2, $3'));
+                    var today = new Date();
+                    var diffDays = Math.ceil((today - admitDate) / (1000 * 60 * 60 * 24));
+                    $('#discharge-length-stay').text(diffDays + ' day(s)');
+                } else {
+                    $('#discharge-length-stay').text('--');
+                }
+            }
+
+            // Clinical Info - Diagnosis
+            var diagnosisHtml = '';
+            if (data.diagnosis) {
+                if (data.diagnosis.primary) diagnosisHtml += '<strong>Primary:</strong> ' + data.diagnosis.primary + '<br>';
+                if (data.diagnosis.secondary) diagnosisHtml += '<strong>Secondary:</strong> ' + data.diagnosis.secondary;
+            }
+            $('#' + prefix + '-diagnosis').html(diagnosisHtml || 'Not documented');
+
+            // Allergies
+            var allergyHtml = '';
+            if (data.allergies) {
+                if (data.allergies.drug && data.allergies.drug !== 'None documented') {
+                    allergyHtml += '<span class="badge bg-danger me-1">Drug: ' + data.allergies.drug + '</span>';
+                }
+                if (data.allergies.food && data.allergies.food !== 'None documented') {
+                    allergyHtml += '<span class="badge bg-warning text-dark me-1">Food: ' + data.allergies.food + '</span>';
+                }
+                if (data.allergies.other && data.allergies.other !== 'None documented') {
+                    allergyHtml += '<span class="badge bg-info me-1">Other: ' + data.allergies.other + '</span>';
+                }
+            }
+            $('#' + prefix + '-allergies').html(allergyHtml || '<span class="text-muted">None documented</span>');
+
+            // Vitals (admission modal only)
+            if (modalType === 'admission' && data.latest_vitals) {
+                $('#vital-temp').text(data.latest_vitals.temperature ? data.latest_vitals.temperature + '°C' : '--');
+                $('#vital-pulse').text(data.latest_vitals.pulse ? data.latest_vitals.pulse + ' bpm' : '--');
+                $('#vital-bp').text(data.latest_vitals.blood_pressure || '--');
+                $('#vital-spo2').text(data.latest_vitals.spo2 ? data.latest_vitals.spo2 + '%' : '--');
+            }
+
+            // Active Medications
+            var medsHtml = '';
+            if (data.active_medications && data.active_medications.length > 0) {
+                data.active_medications.forEach(function(med) {
+                    medsHtml += '<li>' + med.name + ' - ' + (med.dosage || '') + ' ' + (med.frequency || '') + '</li>';
+                });
+            } else {
+                medsHtml = '<li class="text-muted">None active</li>';
+            }
+            $('#' + prefix + '-medications').html(medsHtml);
+
+        }).fail(function() {
+            console.error('Failed to load admission details');
+        });
     }
 
     function loadAdmissionChecklist(admissionId) {
@@ -987,6 +1237,10 @@ window.WardDashboard = (function() {
 
         if (type === 'discharge' && progress >= 100) {
             $('#confirm-discharge').prop('disabled', false);
+            $('#discharge-confirm-section').show();
+        } else if (type === 'discharge') {
+            $('#confirm-discharge').prop('disabled', true);
+            $('#discharge-confirm-section').hide();
         }
     }
 
@@ -1081,14 +1335,38 @@ window.WardDashboard = (function() {
     function openDischarge(admissionId, patientName, fileNo, bedName) {
         currentDischargeId = admissionId;
 
-        $('#discharge-patient-name').text(patientName);
-        $('#discharge-patient-file').text(fileNo);
-        $('#discharge-bed-name').text(bedName);
+        // Store admission ID in modal for external access
+        $('#dischargeModal').data('admission-id', admissionId);
+
+        // Clear previous data
+        $('#discharge-patient-name').text('Loading...');
+        $('#discharge-patient-file').text('--');
+        $('#discharge-patient-age-gender').text('--');
+        $('#discharge-patient-blood').text('--');
+        $('#discharge-patient-phone').text('--');
+        $('#discharge-patient-payment').text('--');
+        $('#discharge-bed-name').text(bedName || '--');
+        $('#discharge-admitted-at').text('--');
+        $('#discharge-length-stay').text('--');
+        $('#discharge-admission-reason').text('--');
+        $('#discharge-reason').text('--');
+        $('#discharge-notes').text('--');
+        $('#discharge-followup').text('--');
+        $('#discharge-requesting-doctor').text('--');
+        $('#discharge-requested-at').text('--');
+        $('#discharge-diagnosis').text('--');
+        $('#discharge-allergies').html('--');
+        $('#discharge-medications').html('<li>Loading...</li>');
+        $('#discharge-confirm-section').hide();
+        $('#confirm-discharge').prop('disabled', true);
+
+        $('#dischargeModal').modal('show');
+
+        // Load full admission details
+        loadAdmissionDetails(admissionId, 'discharge');
 
         // Load discharge checklist
         loadDischargeChecklist(admissionId);
-
-        $('#dischargeModal').modal('show');
     }
 
     function loadDischargeChecklist(admissionId) {
@@ -1099,8 +1377,10 @@ window.WardDashboard = (function() {
 
             if (checklist.progress >= 100 || checklist.all_complete) {
                 $('#confirm-discharge').prop('disabled', false);
+                $('#discharge-confirm-section').show();
             } else {
                 $('#confirm-discharge').prop('disabled', true);
+                $('#discharge-confirm-section').hide();
             }
         }).fail(function() {
             $('#discharge-checklist-items').html('<div class="text-danger p-3">Failed to load checklist</div>');
@@ -1197,6 +1477,195 @@ window.WardDashboard = (function() {
 // Initialize when ward dashboard view is shown
 $(document).on('shown.bs.modal shown', '#ward-dashboard-view', function() {
     WardDashboard.init();
+});
+
+// Bind delegated event handlers immediately (for modals opened from sidebar)
+$(document).ready(function() {
+    // Checklist item toggle - works for both admission and discharge checklists
+    $(document).on('change', '.checklist-checkbox', function() {
+        var itemId = $(this).data('item-id');
+        var checklistType = $(this).data('checklist-type');
+        var checked = $(this).is(':checked');
+
+        var url = checklistType === 'admission' ?
+            '/nursing-workbench/admission-checklist/item/' + itemId + '/complete' :
+            '/nursing-workbench/discharge-checklist/item/' + itemId + '/complete';
+
+        $.post(url, { _token: CSRF_TOKEN, completed: checked }, function(response) {
+            if (response.success) {
+                // Update progress bar
+                var barId = checklistType === 'admission' ? '#checklist-progress-bar' : '#discharge-checklist-progress-bar';
+                var textId = checklistType === 'admission' ? '#checklist-progress-text' : '#discharge-checklist-progress-text';
+
+                $(barId).css('width', response.progress + '%');
+                $(textId).text(response.progress + '%');
+
+                if (checklistType === 'admission' && response.progress >= 100) {
+                    $('#proceed-to-bed-selection').show();
+                }
+
+                if (checklistType === 'discharge' && response.progress >= 100) {
+                    $('#confirm-discharge').prop('disabled', false);
+                    $('#discharge-confirm-section').show();
+                } else if (checklistType === 'discharge') {
+                    $('#confirm-discharge').prop('disabled', true);
+                    $('#discharge-confirm-section').hide();
+                }
+
+                toastr.success('Checklist updated');
+            }
+        }).fail(function() {
+            toastr.error('Failed to update checklist');
+        });
+    });
+
+    // Waive checklist item
+    $(document).on('click', '.waive-item-btn', function() {
+        var itemId = $(this).data('item-id');
+        var checklistType = $(this).data('checklist-type');
+
+        var reason = prompt('Please provide a reason for waiving this item:');
+        if (reason === null) return;
+
+        var url = checklistType === 'admission' ?
+            '/nursing-workbench/admission-checklist/item/' + itemId + '/waive' :
+            '/nursing-workbench/discharge-checklist/item/' + itemId + '/waive';
+
+        $.post(url, { _token: CSRF_TOKEN, reason: reason }, function(response) {
+            if (response.success) {
+                var barId = checklistType === 'admission' ? '#checklist-progress-bar' : '#discharge-checklist-progress-bar';
+                var textId = checklistType === 'admission' ? '#checklist-progress-text' : '#discharge-checklist-progress-text';
+
+                $(barId).css('width', response.progress + '%');
+                $(textId).text(response.progress + '%');
+
+                if (checklistType === 'admission' && response.progress >= 100) {
+                    $('#proceed-to-bed-selection').show();
+                }
+
+                if (checklistType === 'discharge' && response.progress >= 100) {
+                    $('#confirm-discharge').prop('disabled', false);
+                    $('#discharge-confirm-section').show();
+                }
+
+                toastr.success('Item waived successfully');
+
+                // Reload checklist to show waived state
+                if (checklistType === 'admission' && typeof WardDashboard !== 'undefined') {
+                    WardDashboard.loadDashboardData && WardDashboard.loadDashboardData();
+                }
+            }
+        }).fail(function() {
+            toastr.error('Failed to waive item');
+        });
+    });
+
+    // Confirm discharge button
+    $(document).on('click', '#confirm-discharge', function() {
+        var admissionId = $(this).data('admission-id') || window.WardDashboard?.currentDischargeId;
+
+        // Get admission ID from the module if available
+        if (!admissionId && typeof WardDashboard !== 'undefined') {
+            // The module stores currentDischargeId internally, so we need to expose it or use a workaround
+            // For now, we'll rely on a data attribute we'll set when opening the modal
+            admissionId = $('#dischargeModal').data('admission-id');
+        }
+
+        if (!admissionId) {
+            toastr.error('Unable to determine admission ID');
+            return;
+        }
+
+        $.post('/nursing-workbench/admission/' + admissionId + '/complete-discharge', {
+            _token: CSRF_TOKEN
+        }, function(response) {
+            if (response.success) {
+                toastr.success('Discharge completed, bed released');
+                $('#dischargeModal').modal('hide');
+                if (typeof WardDashboard !== 'undefined' && WardDashboard.loadDashboardData) {
+                    WardDashboard.loadDashboardData();
+                }
+                // Refresh sidebar queues if available
+                if (typeof loadQueueCounts === 'function') {
+                    loadQueueCounts();
+                }
+            } else {
+                toastr.error(response.message || 'Failed to complete discharge');
+            }
+        }).fail(function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Failed to complete discharge');
+        });
+    });
+
+    // Proceed to bed selection button (for admission from sidebar)
+    $(document).on('click', '#proceed-to-bed-selection', function() {
+        $('#admission-checklist-step').hide();
+        $('#bed-selection-step').show();
+        $(this).hide();
+        $('#confirm-bed-assignment').show();
+
+        // Load available beds
+        $.get('/nursing-workbench/ward-dashboard/available-beds', function(beds) {
+            var html = '';
+            if (beds.length === 0) {
+                html = '<div class="text-center text-muted p-4"><i class="mdi mdi-bed-empty mdi-48px"></i><br>No beds available</div>';
+            } else {
+                html = '<div class="bed-grid">';
+                beds.forEach(function(bed) {
+                    html += '<div class="bed-item available" data-bed-id="' + bed.id + '" data-status="available">';
+                    html += '<div class="bed-icon"><i class="mdi mdi-bed-empty"></i></div>';
+                    html += '<div class="bed-name">' + bed.name + '</div>';
+                    html += '<div class="bed-ward">' + (bed.ward_name || 'Unknown Ward') + '</div>';
+                    html += '</div>';
+                });
+                html += '</div>';
+            }
+            $('#available-beds-grid').html(html);
+        });
+    });
+
+    // Confirm bed assignment button (for admission from sidebar)
+    $(document).on('click', '#confirm-bed-assignment', function() {
+        var admissionId = $('#bedAssignmentModal').data('admission-id');
+        var bedId = $('.bed-item.selected').data('bed-id');
+
+        if (!admissionId) {
+            toastr.error('Unable to determine admission ID');
+            return;
+        }
+
+        if (!bedId) {
+            toastr.error('Please select a bed first');
+            return;
+        }
+
+        $.post('/nursing-workbench/admission/' + admissionId + '/assign-bed', {
+            _token: CSRF_TOKEN,
+            bed_id: bedId
+        }, function(response) {
+            if (response.success) {
+                toastr.success('Bed assigned successfully');
+                $('#bedAssignmentModal').modal('hide');
+                if (typeof WardDashboard !== 'undefined' && WardDashboard.loadDashboardData) {
+                    WardDashboard.loadDashboardData();
+                }
+                // Refresh sidebar queues if available
+                if (typeof loadQueueCounts === 'function') {
+                    loadQueueCounts();
+                }
+            } else {
+                toastr.error(response.message || 'Failed to assign bed');
+            }
+        }).fail(function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Failed to assign bed');
+        });
+    });
+
+    // Bed item selection in modal
+    $(document).on('click', '#available-beds-grid .bed-item', function() {
+        $('#available-beds-grid .bed-item').removeClass('selected');
+        $(this).addClass('selected');
+    });
 });
 </script>
 @endpush

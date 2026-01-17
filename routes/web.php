@@ -70,6 +70,16 @@ Route::get('/csrf-token', function () {
     return response()->json(['token' => csrf_token()]);
 });
 
+// Test route for department notifications (remove in production)
+Route::get('/test-dept-notifications', function () {
+    $service = app(\App\Services\DepartmentNotificationService::class);
+    $results = $service->sendTestMessages();
+    return response()->json([
+        'message' => 'Test messages sent',
+        'results' => $results
+    ]);
+})->middleware('auth');
+
 Route::group(['middleware' => ['auth']], function () {
     // Route::put('staff/updateAvatar/{id}', 'Admin\UserController@updateAvatar')->name('users.updateAvatar');
 
