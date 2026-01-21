@@ -2429,6 +2429,100 @@
         z-index: auto !important;
     }
 
+    /* Procedures Tab Styles */
+    #procedures-tab {
+        padding: 1rem;
+        padding-bottom: 2rem;
+        position: relative;
+    }
+
+    .procedures-table-wrapper {
+        max-width: 100%;
+        position: relative;
+    }
+
+    #procedures-tab .dataTables_wrapper {
+        max-width: 100%;
+        position: relative !important;
+    }
+
+    #procedures-tab table.dataTable {
+        width: 100% !important;
+    }
+
+    /* Procedure Card Styles */
+    .procedure-card {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-left: 4px solid var(--hospital-primary, #007bff);
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.2s;
+    }
+
+    .procedure-card:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .procedure-card.status-completed { border-left-color: #28a745; }
+    .procedure-card.status-in_progress { border-left-color: #ffc107; }
+    .procedure-card.status-scheduled { border-left-color: #17a2b8; }
+    .procedure-card.status-cancelled { border-left-color: #dc3545; opacity: 0.7; }
+
+    .procedure-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 0.75rem;
+    }
+
+    .procedure-name {
+        font-weight: 600;
+        color: #212529;
+        font-size: 1rem;
+    }
+
+    .procedure-status {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .procedure-status.status-requested { background: #e9ecef; color: #495057; }
+    .procedure-status.status-scheduled { background: #cce5ff; color: #004085; }
+    .procedure-status.status-in_progress { background: #fff3cd; color: #856404; }
+    .procedure-status.status-completed { background: #d4edda; color: #155724; }
+    .procedure-status.status-cancelled { background: #f8d7da; color: #721c24; }
+
+    .procedure-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 0.5rem;
+    }
+
+    .procedure-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .procedure-meta-item i {
+        color: var(--hospital-primary, #007bff);
+    }
+
+    .procedure-actions {
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid #e9ecef;
+    }
+
 </style>
 
 <div class="imaging-workbench-container">
@@ -2817,6 +2911,10 @@
                     <i class="mdi mdi-history"></i>
                     <span>History</span>
                 </button>
+                <button class="workspace-tab" data-tab="procedures">
+                    <i class="mdi mdi-medical-bag"></i>
+                    <span>Procedures</span>
+                </button>
             </div>
 
             <div class="workspace-tab-content active" id="pending-tab">
@@ -2919,6 +3017,18 @@
                     <table class="table table-hover" style="width: 100%" id="investigation_history_list">
                         <thead class="table-light">
                             <th><i class="mdi mdi-radioactive"></i> Imaging Requests</th>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+
+            <div class="workspace-tab-content" id="procedures-tab">
+                <h4><i class="mdi mdi-medical-bag"></i> Patient Procedures</h4>
+                <p class="text-muted mb-3">View all procedures for the selected patient</p>
+                <div class="procedures-table-wrapper">
+                    <table class="table table-hover" style="width: 100%" id="procedures_history_list">
+                        <thead class="table-light">
+                            <th><i class="mdi mdi-medical-bag"></i> Procedures</th>
                         </thead>
                     </table>
                 </div>
@@ -3738,6 +3848,9 @@ function loadPatient(patientId) {
 
             // Initialize history DataTable
             initializeHistoryDataTable(patientId);
+
+            // Initialize procedures DataTable
+            initializeProceduresDataTable(patientId);
         },
         error: function() {
             alert('Failed to load patient data');
@@ -3781,6 +3894,39 @@ function initializeHistoryDataTable(patientId) {
                 const requestId = $(this).data('request-id');
                 viewInvestigationResult(requestId);
             });
+        }
+    });
+}
+
+function initializeProceduresDataTable(patientId) {
+    if ($.fn.DataTable.isDataTable('#procedures_history_list')) {
+        $('#procedures_history_list').DataTable().destroy();
+    }
+
+    $('#procedures_history_list').DataTable({
+        processing: true,
+        serverSide: true,
+        responsive: false,
+        autoWidth: false,
+        dom: '<"top"f>rt<"bottom"lip><"clear">',
+        ajax: {
+            url: `/patient-procedures/list-by-patient/${patientId}`,
+            type: 'GET'
+        },
+        columns: [
+            {
+                data: "info",
+                name: "info",
+                orderable: false,
+                searchable: true
+            }
+        ],
+        order: [[0, 'desc']],
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+        language: {
+            emptyTable: "No procedures found for this patient",
+            processing: '<i class="fa fa-spinner fa-spin fa-2x fa-fw"></i><span class="sr-only">Loading...</span>'
         }
     });
 }
@@ -6014,14 +6160,45 @@ function showVitalTooltip(event, vitalType, value, normalRange) {
 
 // Check for drug allergies
 function checkForAllergies(medications, patientAllergies) {
-    if (!patientAllergies || patientAllergies.length === 0) {
+    if (!patientAllergies) {
+        return [];
+    }
+
+    // Normalize allergies to array format
+    let allergiesArray = [];
+
+    if (typeof patientAllergies === 'string') {
+        // Handle comma-separated string
+        allergiesArray = patientAllergies.split(',').map(a => a.trim()).filter(a => a.length > 0);
+    } else if (Array.isArray(patientAllergies)) {
+        // Handle array (could be array of strings or array of objects)
+        allergiesArray = patientAllergies.map(a => {
+            if (typeof a === 'string') return a.trim();
+            if (typeof a === 'object' && a !== null) return (a.name || a.allergy || a.allergen || '').trim();
+            return '';
+        }).filter(a => a.length > 0);
+    } else if (typeof patientAllergies === 'object' && patientAllergies !== null) {
+        // Handle single object or object with values
+        if (patientAllergies.name || patientAllergies.allergy || patientAllergies.allergen) {
+            allergiesArray = [(patientAllergies.name || patientAllergies.allergy || patientAllergies.allergen).trim()];
+        } else {
+            // Try to extract values from object
+            allergiesArray = Object.values(patientAllergies).map(a => {
+                if (typeof a === 'string') return a.trim();
+                if (typeof a === 'object' && a !== null) return (a.name || a.allergy || a.allergen || '').trim();
+                return '';
+            }).filter(a => a.length > 0);
+        }
+    }
+
+    if (allergiesArray.length === 0) {
         return [];
     }
 
     const alerts = [];
     medications.forEach(med => {
         const drugName = (med.drug_name || med.product_name || '').toLowerCase();
-        patientAllergies.forEach(allergy => {
+        allergiesArray.forEach(allergy => {
             if (drugName.includes(allergy.toLowerCase())) {
                 alerts.push({
                     medication: med.drug_name || med.product_name,

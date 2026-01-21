@@ -6655,14 +6655,45 @@ function showVitalTooltip(event, vitalType, value, normalRange) {
 
 // Check for drug allergies
 function checkForAllergies(medications, patientAllergies) {
-    if (!patientAllergies || patientAllergies.length === 0) {
+    if (!patientAllergies) {
+        return [];
+    }
+
+    // Normalize allergies to array format
+    let allergiesArray = [];
+
+    if (typeof patientAllergies === 'string') {
+        // Handle comma-separated string
+        allergiesArray = patientAllergies.split(',').map(a => a.trim()).filter(a => a.length > 0);
+    } else if (Array.isArray(patientAllergies)) {
+        // Handle array (could be array of strings or array of objects)
+        allergiesArray = patientAllergies.map(a => {
+            if (typeof a === 'string') return a.trim();
+            if (typeof a === 'object' && a !== null) return (a.name || a.allergy || a.allergen || '').trim();
+            return '';
+        }).filter(a => a.length > 0);
+    } else if (typeof patientAllergies === 'object' && patientAllergies !== null) {
+        // Handle single object or object with values
+        if (patientAllergies.name || patientAllergies.allergy || patientAllergies.allergen) {
+            allergiesArray = [(patientAllergies.name || patientAllergies.allergy || patientAllergies.allergen).trim()];
+        } else {
+            // Try to extract values from object
+            allergiesArray = Object.values(patientAllergies).map(a => {
+                if (typeof a === 'string') return a.trim();
+                if (typeof a === 'object' && a !== null) return (a.name || a.allergy || a.allergen || '').trim();
+                return '';
+            }).filter(a => a.length > 0);
+        }
+    }
+
+    if (allergiesArray.length === 0) {
         return [];
     }
 
     const alerts = [];
     medications.forEach(med => {
         const drugName = (med.drug_name || med.product_name || '').toLowerCase();
-        patientAllergies.forEach(allergy => {
+        allergiesArray.forEach(allergy => {
             if (drugName.includes(allergy.toLowerCase())) {
                 alerts.push({
                     medication: med.drug_name || med.product_name,

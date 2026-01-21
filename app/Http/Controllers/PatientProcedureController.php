@@ -1374,4 +1374,147 @@ class PatientProcedureController extends Controller
             'billing_status' => $billingStatus,
         ];
     }
+
+    /**
+     * List procedures for a specific patient (for clinical context modal)
+     * Returns card-modern formatted HTML for workbench history tabs
+     */
+    public function listByPatient($patientId)
+    {
+        $procedures = Procedure::with([
+            'service.price',
+            'procedureDefinition.procedureCategory',
+            'requestedByUser',
+            'encounter',
+            'teamMembers.user',
+            'productOrServiceRequest.payment',
+        ])
+            ->where('patient_id', $patientId)
+            ->orderBy('created_at', 'DESC')
+            ->get();
+
+        return \Yajra\DataTables\Facades\DataTables::of($procedures)
+            ->addColumn('info', function ($procedure) {
+                return $this->formatProcedureCard($procedure);
+            })
+            ->rawColumns(['info'])
+            ->make(true);
+    }
+
+    /**
+     * Format procedure as card-modern HTML for clinical context modal
+     */
+    private function formatProcedureCard($procedure)
+    {
+        $serviceName = optional($procedure->service)->service_name ?? 'Procedure';
+        $category = optional(optional($procedure->procedureDefinition)->procedureCategory)->category_name ?? '';
+        $status = $procedure->procedure_status ?? 'requested';
+        $priority = $procedure->priority ?? 'routine';
+
+        // Status badge classes
+        $statusBadges = [
+            'requested' => 'status-requested',
+            'scheduled' => 'status-scheduled',
+            'in_progress' => 'status-in_progress',
+            'completed' => 'status-completed',
+            'cancelled' => 'status-cancelled',
+        ];
+        $statusClass = $statusBadges[$status] ?? 'status-requested';
+
+        // Priority badge
+        $priorityBadges = [
+            'routine' => '<span class="badge badge-success badge-sm">Routine</span>',
+            'urgent' => '<span class="badge badge-warning badge-sm">Urgent</span>',
+            'emergency' => '<span class="badge badge-danger badge-sm">Emergency</span>',
+        ];
+        $priorityBadge = $priorityBadges[$priority] ?? '';
+
+        // Billing status
+        $billing = $procedure->productOrServiceRequest;
+        $paymentStatus = '';
+        if ($billing) {
+            $paymentStatus = $billing->payment_id
+                ? '<span class="text-success"><i class="fa fa-check-circle"></i> Paid</span>'
+                : '<span class="text-warning"><i class="fa fa-clock"></i> Unpaid</span>';
+        }
+
+        // Team members
+        $teamCount = $procedure->teamMembers->count();
+        $leadDoctor = $procedure->teamMembers->where('is_lead', true)->first();
+        $leadName = $leadDoctor ? optional($leadDoctor->user)->name : '';
+
+        // Dates
+        $requestedDate = $procedure->created_at ? $procedure->created_at->format('M d, Y H:i') : '';
+        $scheduledDate = $procedure->scheduled_date ? \Carbon\Carbon::parse($procedure->scheduled_date)->format('M d, Y') : '';
+        $scheduledTime = $procedure->scheduled_time ?? '';
+
+        // URL to procedure detail page
+        $detailUrl = route('patient-procedures.show', $procedure->id);
+
+        $html = <<<HTML
+<div class="procedure-card {$statusClass}">
+    <div class="procedure-header">
+        <div>
+            <div class="procedure-name">{$serviceName}</div>
+            <small class="text-muted">{$category}</small>
+        </div>
+        <div>
+            <span class="procedure-status {$statusClass}">{$status}</span>
+            {$priorityBadge}
+        </div>
+    </div>
+    <div class="procedure-meta">
+        <div class="procedure-meta-item">
+            <i class="fa fa-calendar"></i>
+            <span>{$requestedDate}</span>
+        </div>
+HTML;
+
+        if ($scheduledDate) {
+            $html .= <<<HTML
+        <div class="procedure-meta-item">
+            <i class="fa fa-clock"></i>
+            <span>Scheduled: {$scheduledDate} {$scheduledTime}</span>
+        </div>
+HTML;
+        }
+
+        if ($leadName) {
+            $html .= <<<HTML
+        <div class="procedure-meta-item">
+            <i class="fa fa-user-md"></i>
+            <span>{$leadName}</span>
+        </div>
+HTML;
+        }
+
+        if ($teamCount > 0) {
+            $html .= <<<HTML
+        <div class="procedure-meta-item">
+            <i class="fa fa-users"></i>
+            <span>{$teamCount} team member(s)</span>
+        </div>
+HTML;
+        }
+
+        if ($paymentStatus) {
+            $html .= <<<HTML
+        <div class="procedure-meta-item">
+            {$paymentStatus}
+        </div>
+HTML;
+        }
+
+        $html .= <<<HTML
+    </div>
+    <div class="procedure-actions">
+        <a href="{$detailUrl}" target="_blank" class="btn btn-sm btn-outline-primary">
+            <i class="fa fa-eye"></i> View Details
+        </a>
+    </div>
+</div>
+HTML;
+
+        return $html;
+    }
 }

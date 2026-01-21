@@ -12,35 +12,40 @@
                 {{-- Tabs for different clinical data --}}
                 <ul class="nav nav-tabs" id="clinical-tabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="vitals-tab-btn" data-bs-toggle="tab" data-bs-target="#vitals-tab" type="button" role="tab">
+                        <button class="nav-link active" id="vitals-tab-btn" data-bs-toggle="tab" data-bs-target="#vitals-tab" type="button" role="tab" aria-controls="vitals-tab" aria-selected="true">
                             <i class="mdi mdi-heart-pulse"></i> Vitals
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="enc-notes-tab-btn" data-bs-toggle="tab" data-bs-target="#enc-notes-tab" type="button" role="tab">
+                        <button class="nav-link" id="enc-notes-tab-btn" data-bs-toggle="tab" data-bs-target="#enc-notes-tab" type="button" role="tab" aria-controls="enc-notes-tab" aria-selected="false">
                             <i class="mdi mdi-note-text"></i> Encounter Notes
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="meds-tab-btn" data-bs-toggle="tab" data-bs-target="#meds-tab" type="button" role="tab">
+                        <button class="nav-link" id="meds-tab-btn" data-bs-toggle="tab" data-bs-target="#meds-tab" type="button" role="tab" aria-controls="meds-tab" aria-selected="false">
                             <i class="mdi mdi-pill"></i> Medications
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="allergies-tab-btn" data-bs-toggle="tab" data-bs-target="#allergies-tab" type="button" role="tab">
+                        <button class="nav-link" id="allergies-tab-btn" data-bs-toggle="tab" data-bs-target="#allergies-tab" type="button" role="tab" aria-controls="allergies-tab" aria-selected="false">
                             <i class="mdi mdi-alert-circle"></i> Allergies
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="inj-imm-tab-btn" data-bs-toggle="tab" data-bs-target="#inj-imm-tab" type="button" role="tab">
+                        <button class="nav-link" id="inj-imm-tab-btn" data-bs-toggle="tab" data-bs-target="#inj-imm-tab" type="button" role="tab" aria-controls="inj-imm-tab" aria-selected="false">
                             <i class="mdi mdi-needle"></i> Inj/Imm History
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="procedures-tab-btn" data-bs-toggle="tab" data-bs-target="#procedures-tab" type="button" role="tab" aria-controls="procedures-tab" aria-selected="false">
+                            <i class="mdi mdi-medical-bag"></i> Procedures
                         </button>
                     </li>
                 </ul>
 
                 <div class="tab-content" id="clinical-tab-content">
                     {{-- Vitals Tab --}}
-                    <div class="tab-pane fade show active" id="vitals-tab" role="tabpanel">
+                    <div class="tab-pane fade show active" id="vitals-tab" role="tabpanel" aria-labelledby="vitals-tab-btn">
                         <div class="clinical-tab-header">
                             <h6><i class="mdi mdi-heart-pulse"></i> Recent Vital Signs</h6>
                             <button class="btn btn-sm btn-outline-primary refresh-clinical-btn" data-panel="vitals">
@@ -61,7 +66,7 @@
                     </div>
 
                     {{-- Encounter Notes Tab --}}
-                    <div class="tab-pane fade" id="enc-notes-tab" role="tabpanel">
+                    <div class="tab-pane fade" id="enc-notes-tab" role="tabpanel" aria-labelledby="enc-notes-tab-btn">
                         <div class="clinical-tab-header">
                             <h6><i class="mdi mdi-note-text"></i> Encounter Notes</h6>
                             <button class="btn btn-sm btn-outline-primary refresh-clinical-btn" data-panel="enc-notes">
@@ -80,7 +85,7 @@
                     </div>
 
                     {{-- Medications Tab --}}
-                    <div class="tab-pane fade" id="meds-tab" role="tabpanel">
+                    <div class="tab-pane fade" id="meds-tab" role="tabpanel" aria-labelledby="meds-tab-btn">
                         <div class="clinical-tab-header">
                             <h6><i class="mdi mdi-pill"></i> Prescription History</h6>
                             <button class="btn btn-sm btn-outline-primary refresh-clinical-btn" data-panel="medications">
@@ -99,7 +104,7 @@
                     </div>
 
                     {{-- Allergies Tab --}}
-                    <div class="tab-pane fade" id="allergies-tab" role="tabpanel">
+                    <div class="tab-pane fade" id="allergies-tab" role="tabpanel" aria-labelledby="allergies-tab-btn">
                         <div class="clinical-tab-header">
                             <h6><i class="mdi mdi-alert-circle"></i> Known Allergies</h6>
                             <button class="btn btn-sm btn-outline-primary refresh-clinical-btn" data-panel="allergies">
@@ -112,7 +117,7 @@
                     </div>
 
                     {{-- Injection/Immunization History Tab --}}
-                    <div class="tab-pane fade" id="inj-imm-tab" role="tabpanel">
+                    <div class="tab-pane fade" id="inj-imm-tab" role="tabpanel" aria-labelledby="inj-imm-tab-btn">
                         <div class="clinical-tab-body p-3" id="inj-imm-panel-body">
                             <div id="clinical-inj-imm-container">
                                 {{-- Content loaded dynamically --}}
@@ -121,6 +126,25 @@
                                     <p class="text-muted mt-2">Loading injection & immunization history...</p>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    {{-- Procedures Tab --}}
+                    <div class="tab-pane fade" id="procedures-tab" role="tabpanel" aria-labelledby="procedures-tab-btn">
+                        <div class="clinical-tab-header">
+                            <h6><i class="mdi mdi-medical-bag"></i> Procedures History</h6>
+                            <button class="btn btn-sm btn-outline-primary refresh-clinical-btn" data-panel="procedures">
+                                <i class="mdi mdi-refresh"></i> Refresh
+                            </button>
+                        </div>
+                        <div class="clinical-tab-body" id="procedures-panel-body">
+                            <div id="clinical-procedures-container">
+                                <div class="text-center py-4">
+                                    <i class="mdi mdi-loading mdi-spin mdi-36px text-muted"></i>
+                                    <p class="text-muted mt-2">Loading procedures...</p>
+                                </div>
+                            </div>
+                            <div id="clinical-procedures-show-all" class="text-center mt-3"></div>
                         </div>
                     </div>
                 </div>
@@ -448,6 +472,91 @@
     .severity-severe {
         background: #f8d7da;
         color: #721c24;
+    }
+
+    /* Procedure Cards */
+    .procedure-card {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-left: 4px solid {{ appsettings('hos_color', '#007bff') }};
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.2s;
+    }
+
+    .procedure-card:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .procedure-card.status-completed {
+        border-left-color: #28a745;
+    }
+
+    .procedure-card.status-in_progress {
+        border-left-color: #ffc107;
+    }
+
+    .procedure-card.status-scheduled {
+        border-left-color: #17a2b8;
+    }
+
+    .procedure-card.status-cancelled {
+        border-left-color: #dc3545;
+        opacity: 0.7;
+    }
+
+    .procedure-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 0.75rem;
+    }
+
+    .procedure-name {
+        font-weight: 600;
+        color: #212529;
+        font-size: 1rem;
+    }
+
+    .procedure-status {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .procedure-status.status-requested { background: #e9ecef; color: #495057; }
+    .procedure-status.status-scheduled { background: #cce5ff; color: #004085; }
+    .procedure-status.status-in_progress { background: #fff3cd; color: #856404; }
+    .procedure-status.status-completed { background: #d4edda; color: #155724; }
+    .procedure-status.status-cancelled { background: #f8d7da; color: #721c24; }
+
+    .procedure-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 0.5rem;
+    }
+
+    .procedure-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .procedure-meta-item i {
+        color: {{ appsettings('hos_color', '#007bff') }};
+    }
+
+    .procedure-actions {
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid #e9ecef;
     }
 </style>
 
@@ -996,6 +1105,123 @@
             </div>
         `);
         $('#clinical-meds-show-all').html('');
+    });
+})();
+</script>
+
+{{-- Procedures Tab JavaScript --}}
+<script>
+(function initClinicalProcedures() {
+    if (typeof jQuery === 'undefined') {
+        setTimeout(initClinicalProcedures, 100);
+        return;
+    }
+
+    const $ = jQuery;
+    let clinicalProceduresLoaded = false;
+
+    // Load when tab is shown
+    $(document).on('shown.bs.tab', '#procedures-tab-btn', function() {
+        if (!clinicalProceduresLoaded) {
+            loadClinicalProcedures();
+        }
+    });
+
+    // Also bind click event as fallback
+    $(document).on('click', '#procedures-tab-btn', function() {
+        setTimeout(function() {
+            if (!clinicalProceduresLoaded && $('#procedures-tab').hasClass('show')) {
+                loadClinicalProcedures();
+            }
+        }, 150);
+    });
+
+    // Refresh button handler
+    $(document).on('click', '.refresh-clinical-btn[data-panel="procedures"]', function() {
+        clinicalProceduresLoaded = false;
+        loadClinicalProcedures();
+    });
+
+    function loadClinicalProcedures() {
+        let patientId = null;
+
+        if (typeof currentPatient !== 'undefined' && currentPatient) {
+            patientId = currentPatient;
+        } else if (typeof selectedPatientId !== 'undefined' && selectedPatientId) {
+            patientId = selectedPatientId;
+        } else if ($('#clinical-context-modal').data('patient-id')) {
+            patientId = $('#clinical-context-modal').data('patient-id');
+        }
+
+        if (!patientId) {
+            $('#clinical-procedures-container').html(`
+                <div class="alert alert-warning">
+                    <i class="mdi mdi-alert"></i> No patient selected. Please select a patient first.
+                </div>
+            `);
+            return;
+        }
+
+        $('#clinical-procedures-container').html(`
+            <div class="text-center py-4">
+                <i class="mdi mdi-loading mdi-spin mdi-36px text-muted"></i>
+                <p class="text-muted mt-2">Loading procedures...</p>
+            </div>
+        `);
+
+        // AJAX request to fetch procedures history
+        $.ajax({
+            url: `/patient-procedures/list-by-patient/${patientId}`,
+            method: 'GET',
+            data: { length: 20, start: 0, draw: 1 },
+            success: function(response) {
+                if (!response.data || response.data.length === 0) {
+                    $('#clinical-procedures-container').html(`
+                        <div class="text-center py-4">
+                            <i class="mdi mdi-medical-bag mdi-48px text-muted"></i>
+                            <p class="text-muted mt-2">No procedures found for this patient</p>
+                        </div>
+                    `);
+                    $('#clinical-procedures-show-all').html('');
+                    return;
+                }
+
+                let html = '';
+                response.data.forEach(function(item) {
+                    // The 'info' column contains the pre-rendered HTML card
+                    html += item.info || `<div class="alert alert-light">Procedure: ${item.id}</div>`;
+                });
+
+                $('#clinical-procedures-container').html(html);
+                clinicalProceduresLoaded = true;
+
+                // Add see more link
+                $('#clinical-procedures-show-all').html(`
+                    <a href="/patients/show/${patientId}?section=wardNotesCardBody" target="_blank" class="btn btn-outline-primary btn-sm">
+                        <i class="mdi mdi-open-in-new"></i> See All Procedures
+                    </a>
+                `);
+            },
+            error: function() {
+                $('#clinical-procedures-container').html(`
+                    <div class="alert alert-danger">
+                        <i class="mdi mdi-alert-circle"></i> Failed to load procedures.
+                    </div>
+                `);
+            }
+        });
+    }
+
+    // Reset when modal is hidden
+    $(document).on('hidden.bs.modal', '#clinical-context-modal', function() {
+        clinicalProceduresLoaded = false;
+        $('#clinical-procedures-container').html(`
+            <div class="text-center py-4">
+                <i class="mdi mdi-loading mdi-spin mdi-36px text-muted"></i>
+                <p class="text-muted mt-2">Loading procedures...</p>
+            </div>
+        `);
+        $('#clinical-procedures-show-all').html('');
     });
 })();
 </script>

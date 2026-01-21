@@ -400,9 +400,11 @@
             <div class="section-card">
                 <div class="section-card-header">
                     <h5><i class="fa fa-users"></i> Surgical Team</h5>
+                    @hasanyrole('SUPERADMIN|ADMIN|DOCTOR')
                     <button class="btn btn-sm btn-primary" onclick="openAddTeamModal()">
                         <i class="fa fa-plus"></i> Add Member
                     </button>
+                    @endhasanyrole
                 </div>
                 <div class="section-card-body" id="team-members-container">
                     @forelse($procedure->teamMembers as $member)
@@ -420,9 +422,11 @@
                                     <div class="text-muted small mt-1">{{ $member->notes }}</div>
                                 @endif
                             </div>
+                            @hasanyrole('SUPERADMIN|ADMIN|DOCTOR')
                             <button class="btn btn-sm btn-outline-danger" onclick="removeTeamMember({{ $member->id }})">
                                 <i class="fa fa-times"></i>
                             </button>
+                            @endhasanyrole
                         </div>
                     @empty
                         <div class="empty-state" id="no-team-message">
@@ -437,9 +441,11 @@
             <div class="section-card">
                 <div class="section-card-header">
                     <h5><i class="fa fa-sticky-note"></i> Procedure Notes</h5>
+                    @hasanyrole('SUPERADMIN|ADMIN|DOCTOR|NURSE')
                     <button class="btn btn-sm btn-primary" onclick="openAddNoteModal()">
                         <i class="fa fa-plus"></i> Add Note
                     </button>
+                    @endhasanyrole
                 </div>
                 <div class="section-card-body p-0">
                     <ul class="nav nav-tabs notes-tabs" role="tablist">
@@ -459,8 +465,10 @@
                                             <h6>{{ $note->title }}</h6>
                                             <div>
                                                 <span class="note-meta">{{ optional($note->createdBy)->name ?? 'Unknown' }} • {{ $note->created_at->format('d M Y H:i') }}</span>
+                                                @if(auth()->id() === $note->created_by || auth()->user()->hasAnyRole(['SUPERADMIN', 'ADMIN', 'DOCTOR']))
                                                 <button class="btn btn-sm btn-link text-primary p-0 ml-2" onclick="editNote({{ $note->id }})"><i class="fa fa-edit"></i></button>
                                                 <button class="btn btn-sm btn-link text-danger p-0 ml-1" onclick="deleteNote({{ $note->id }})"><i class="fa fa-trash"></i></button>
+                                                @endif
                                             </div>
                                         </div>
                                         <div class="note-item-body">{!! $note->content !!}</div>
@@ -481,6 +489,7 @@
             <div class="section-card">
                 <div class="section-card-header">
                     <h5><i class="fa fa-clipboard-list"></i> Procedure Orders & History</h5>
+                    @hasanyrole('SUPERADMIN|ADMIN|DOCTOR')
                     <div class="btn-group">
                         <button class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown">
                             <i class="fa fa-plus"></i> Add Item
@@ -491,6 +500,7 @@
                             <a class="dropdown-item" href="javascript:void(0)" onclick="openAddItemModal('medication')"><i class="fa fa-pills mr-2 text-success"></i> Medication</a>
                         </div>
                     </div>
+                    @endhasanyrole
                 </div>
                 <div class="section-card-body p-0">
                     <ul class="nav nav-tabs notes-tabs" role="tablist">
@@ -605,11 +615,13 @@
             <div class="section-card">
                 <div class="section-card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fa fa-flag-checkered"></i> Outcome</h5>
+                    @hasanyrole('SUPERADMIN|ADMIN|DOCTOR')
                     @if($procedure->outcome)
                         <button type="button" class="btn btn-sm btn-outline-primary" onclick="toggleOutcomeEdit()">
                             <i class="fa fa-pencil"></i> Edit
                         </button>
                     @endif
+                    @endhasanyrole
                 </div>
                 <div class="section-card-body">
                     {{-- Display View (shown when outcome exists) --}}
@@ -660,6 +672,7 @@
                     </div>
 
                     {{-- Edit Form (hidden when outcome exists, shown on edit click) --}}
+                    @hasanyrole('SUPERADMIN|ADMIN|DOCTOR')
                     <div id="outcome-form-wrapper" style="{{ $procedure->outcome ? 'display:none;' : '' }}">
                         <form id="outcome-form">
                             <div class="form-group">
@@ -687,6 +700,16 @@
                             </div>
                         </form>
                     </div>
+                    @else
+                    {{-- Show message for non-authorized users when no outcome exists --}}
+                    @if(!$procedure->outcome)
+                    <div class="text-center text-muted py-3">
+                        <i class="fa fa-flag fa-2x mb-2 d-block"></i>
+                        <p>No outcome recorded yet</p>
+                        <small class="text-muted">Only doctors can record procedure outcomes</small>
+                    </div>
+                    @endif
+                    @endhasanyrole
                 </div>
             </div>
             @endif
@@ -728,6 +751,7 @@
                     <h5><i class="fa fa-cogs"></i> Actions</h5>
                 </div>
                 <div class="section-card-body action-btn-group">
+                    @hasanyrole('SUPERADMIN|ADMIN|DOCTOR')
                     @if(!in_array($procedure->procedure_status, ['completed', 'cancelled']))
                         {{-- Forward Actions --}}
                         <button class="btn btn-success btn-block" onclick="confirmAction('complete', 'Mark as Complete', 'Are you sure you want to mark this procedure as completed?', 'This action indicates the procedure has been successfully finished.', 'success', 'check-circle')">
@@ -768,6 +792,7 @@
                             <i class="fa fa-redo"></i> Reopen Procedure
                         </button>
                     @endif
+                    @endhasanyrole
 
                     <button class="btn btn-secondary btn-block" onclick="openPrintSelectionModal()">
                         <i class="fa fa-print"></i> Print Report
