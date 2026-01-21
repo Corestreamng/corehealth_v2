@@ -12,18 +12,25 @@ class ProductOrServiceRequest extends Model implements Auditable
     use HasFactory;
     use \OwenIt\Auditing\Auditable;
 protected $fillable = [
+        'type',
         'invoice_id',
         'user_id',
+        'encounter_id',
+        'admission_request_id',
         'staff_user_id',
+        'created_by',
+        'order_date',
         'dispensed_from_store_id',
         'product_id',
         'payment_id',
         'qty',
+        'amount',
         'service_id',
         'discount',
         'payable_amount',
         'claims_amount',
         'coverage_mode',
+        'hmo_id',
         'validation_status',
         'auth_code',
         'validated_by',
@@ -98,5 +105,13 @@ protected $fillable = [
     public function dispensedFromStore()
     {
         return $this->belongsTo(Store::class, 'dispensed_from_store_id');
+    }
+
+    /**
+     * Get the procedure associated with this billing entry.
+     */
+    public function procedure()
+    {
+        return $this->hasOne(Procedure::class, 'product_or_service_request_id', 'id');
     }
 }

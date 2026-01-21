@@ -2544,7 +2544,7 @@
             </div>
             <div class="queue-view-content">
                 <!-- Date Filter Section -->
-                <div class="card mb-3" style="border: none; background: #f8f9fa;">
+                <div class="card-modern mb-3" style="border: none; background: #f8f9fa;">
                     <div class="card-body" style="padding: 1rem;">
                         <div class="row align-items-center">
                             <div class="col-md-3">
@@ -4047,6 +4047,18 @@ function createRequestCard(request, section) {
     const deliveryCheck = request.delivery_check;
     const canDeliver = deliveryCheck ? deliveryCheck.can_deliver : true;
 
+    // Bundled procedure indicator
+    const bundledInfo = request.bundled_info;
+    let bundledHtml = '';
+    if (bundledInfo && bundledInfo.is_bundled) {
+        bundledHtml = `
+            <div class="alert alert-purple py-2 px-2 mb-2 mt-2" style="font-size: 0.85rem; background: #f3e8ff; border-color: #6f42c1; color: #6f42c1;">
+                <i class="fa fa-procedures"></i> <strong>Bundled with Procedure</strong><br>
+                <small>${bundledInfo.procedure_name || 'Procedure'}</small>
+            </div>
+        `;
+    }
+
     // Delivery warning message
     let deliveryWarningHtml = '';
     if (!canDeliver && deliveryCheck) {
@@ -4092,6 +4104,7 @@ function createRequestCard(request, section) {
                     </div>
                 </div>
                 ${noteHtml}
+                ${bundledHtml}
                 ${deliveryWarningHtml}
             </div>
         </div>

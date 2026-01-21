@@ -81,4 +81,13 @@ protected $fillable = [
     {
         return $this->belongsTo(User::class, 'result_by', 'id');
     }
+
+    /**
+     * Get the procedure item if this lab is part of a procedure.
+     * Spec Reference: PROCEDURE_MODULE_DESIGN_PLAN.md Part 3.7
+     */
+    public function procedureItem()
+    {
+        return $this->hasOne(ProcedureItem::class, 'lab_service_request_id', 'id');
+    }
 }

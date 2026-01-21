@@ -22,6 +22,7 @@ use App\Models\Encounter;
 use App\Models\LabServiceRequest;
 use App\Models\MiscBill;
 use App\Models\PatientAccount;
+use App\Models\ProductOrServiceRequest;
 use App\Models\ProductRequest;
 use App\Models\ReasonForEncounter;
 use Illuminate\Support\Facades\File;
@@ -289,7 +290,23 @@ class PatientController extends Controller
         try {
             $all_patients = patient::with(['user'])->where('status', 1);
             $hmos = Hmo::with('scheme')->where('status', 1)->get()->groupBy('scheme.name');
-            return view('admin.receptionist.new_patient')->with(['all_patients' => $all_patients, 'hmos' => $hmos]);
+
+            // Get registration services for optional registration fee
+            $registrationCategoryId = appsettings('registration_category_id');
+            $registrationServices = collect();
+            if ($registrationCategoryId) {
+                $registrationServices = service::with('price')
+                    ->where('category_id', $registrationCategoryId)
+                    ->where('status', 1)
+                    ->orderBy('service_name')
+                    ->get();
+            }
+
+            return view('admin.receptionist.new_patient')->with([
+                'all_patients' => $all_patients,
+                'hmos' => $hmos,
+                'registrationServices' => $registrationServices,
+            ]);
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
             return redirect()->back()->withInput()->with('error', $e->getMessage());
@@ -571,6 +588,21 @@ class PatientController extends Controller
                 $patient_account = new PatientAccount;
                 $patient_account->patient_id = $patient->id;
                 $patient_account->save();
+
+                // Create registration fee billing entry if selected
+                if ($request->registration_service_id) {
+                    $regService = service::with('price')->find($request->registration_service_id);
+                    if ($regService && $regService->price) {
+                        ProductOrServiceRequest::create([
+                            'user_id' => $user->id,
+                            'staff_user_id' => Auth::id(),
+                            'service_id' => $regService->id,
+                            'qty' => 1,
+                            'payable_amount' => $regService->price->sale_price ?? 0,
+                        ]);
+                        Log::info("Registration fee added for patient: {$patient->id}, service: {$regService->id}");
+                    }
+                }
 
                 if (appsettings('goonline', 0) == 1) {
                     //send to corehms super admin

@@ -35,6 +35,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\serviceCategoryController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\servicePriceController;
+use App\Http\Controllers\ProcedureCategoryController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\StoreController;
@@ -238,6 +239,63 @@ Route::group(['middleware' => ['auth']], function () {
         Route::delete('encounters/{encounter}', [EncounterController::class, 'deleteEncounter'])->name('encounters.delete');
         Route::put('encounters/{encounter}/notes', [EncounterController::class, 'updateEncounterNotes'])->name('encounters.updateNotes');
 
+        // Procedure endpoints
+        Route::post('encounters/{encounter}/save-procedures', [EncounterController::class, 'saveProcedures'])->name('encounters.saveProcedures');
+        Route::get('procedureHistoryList/{patient_id}', [EncounterController::class, 'procedureHistoryList'])->name('procedureHistoryList');
+        Route::delete('encounters/{encounter}/procedures/{procedure}', [EncounterController::class, 'deleteProcedure'])->name('encounters.deleteProcedure');
+        Route::get('procedures/{procedure}', [EncounterController::class, 'getProcedureDetails'])->name('procedures.show');
+        Route::put('procedures/{procedure}', [EncounterController::class, 'updateProcedure'])->name('procedures.update');
+        Route::post('procedures/{procedure}/cancel', [EncounterController::class, 'cancelProcedure'])->name('procedures.cancel');
+        Route::get('procedures/{procedure}/print', [EncounterController::class, 'printProcedure'])->name('procedures.print');
+
+        // Procedure Team Members
+        Route::get('procedures/{procedure}/team', [EncounterController::class, 'getProcedureTeam'])->name('procedures.team.index');
+        Route::post('procedures/{procedure}/team', [EncounterController::class, 'addProcedureTeamMember'])->name('procedures.team.store');
+        Route::put('procedures/{procedure}/team/{member}', [EncounterController::class, 'updateProcedureTeamMember'])->name('procedures.team.update');
+        Route::delete('procedures/{procedure}/team/{member}', [EncounterController::class, 'deleteProcedureTeamMember'])->name('procedures.team.destroy');
+
+        // Procedure Notes
+        Route::get('procedures/{procedure}/notes', [EncounterController::class, 'getProcedureNotes'])->name('procedures.notes.index');
+        Route::post('procedures/{procedure}/notes', [EncounterController::class, 'addProcedureNote'])->name('procedures.notes.store');
+        Route::put('procedures/{procedure}/notes/{note}', [EncounterController::class, 'updateProcedureNote'])->name('procedures.notes.update');
+        Route::delete('procedures/{procedure}/notes/{note}', [EncounterController::class, 'deleteProcedureNote'])->name('procedures.notes.destroy');
+
+        // Patient Procedure Detail Page & Items Management (PatientProcedureController)
+        // Spec Reference: Part 3.4, 3.5.2, 3.6
+        Route::prefix('patient-procedures')->name('patient-procedures.')->group(function () {
+            Route::get('{procedure}', [\App\Http\Controllers\PatientProcedureController::class, 'show'])->name('show');
+            Route::put('{procedure}', [\App\Http\Controllers\PatientProcedureController::class, 'update'])->name('update');
+            Route::put('{procedure}/outcome', [\App\Http\Controllers\PatientProcedureController::class, 'updateOutcome'])->name('outcome');
+            Route::post('{procedure}/complete', [\App\Http\Controllers\PatientProcedureController::class, 'complete'])->name('complete');
+            Route::post('{procedure}/cancel', [\App\Http\Controllers\PatientProcedureController::class, 'cancel'])->name('cancel');
+            Route::get('{procedure}/print', [\App\Http\Controllers\PatientProcedureController::class, 'print'])->name('print');
+
+            // Items Management (Bundled Billing)
+            Route::get('{procedure}/items', [\App\Http\Controllers\PatientProcedureController::class, 'getItems'])->name('items.index');
+            Route::post('{procedure}/items/lab', [\App\Http\Controllers\PatientProcedureController::class, 'addLabRequest'])->name('items.lab');
+            Route::post('{procedure}/items/imaging', [\App\Http\Controllers\PatientProcedureController::class, 'addImagingRequest'])->name('items.imaging');
+            Route::post('{procedure}/items/medication', [\App\Http\Controllers\PatientProcedureController::class, 'addMedication'])->name('items.medication');
+            Route::delete('{procedure}/items/{item}', [\App\Http\Controllers\PatientProcedureController::class, 'removeItem'])->name('items.destroy');
+
+            // Team Members (via PatientProcedureController)
+            Route::get('{procedure}/team', [\App\Http\Controllers\PatientProcedureController::class, 'getTeam'])->name('team.index');
+            Route::post('{procedure}/team', [\App\Http\Controllers\PatientProcedureController::class, 'addTeamMember'])->name('team.store');
+            Route::put('{procedure}/team/{member}', [\App\Http\Controllers\PatientProcedureController::class, 'updateTeamMember'])->name('team.update');
+            Route::delete('{procedure}/team/{member}', [\App\Http\Controllers\PatientProcedureController::class, 'removeTeamMember'])->name('team.destroy');
+
+            // Notes (via PatientProcedureController)
+            Route::get('{procedure}/notes', [\App\Http\Controllers\PatientProcedureController::class, 'getNotes'])->name('notes.index');
+            Route::get('{procedure}/notes/{note}/edit', [\App\Http\Controllers\PatientProcedureController::class, 'getNote'])->name('notes.edit');
+            Route::post('{procedure}/notes', [\App\Http\Controllers\PatientProcedureController::class, 'addNote'])->name('notes.store');
+            Route::put('{procedure}/notes/{note}', [\App\Http\Controllers\PatientProcedureController::class, 'updateNote'])->name('notes.update');
+            Route::delete('{procedure}/notes/{note}', [\App\Http\Controllers\PatientProcedureController::class, 'deleteNote'])->name('notes.destroy');
+
+            // Procedure History Lists (DataTable endpoints for orders history)
+            Route::get('{procedure}/lab-history', [\App\Http\Controllers\PatientProcedureController::class, 'labHistoryList'])->name('lab-history');
+            Route::get('{procedure}/imaging-history', [\App\Http\Controllers\PatientProcedureController::class, 'imagingHistoryList'])->name('imaging-history');
+            Route::get('{procedure}/medication-history', [\App\Http\Controllers\PatientProcedureController::class, 'medicationHistoryList'])->name('medication-history');
+        });
+
         Route::get('investigationHistoryList/{patient_id}', [EncounterController::class, 'investigationHistoryList'])->name('investigationHistoryList');
         Route::get('imagingHistoryList/{patient_id}', [EncounterController::class, 'imagingHistoryList'])->name('imagingHistoryList');
         Route::get('imagingBillList/{patient_id}', [EncounterController::class, 'imagingBillList'])->name('imagingBillList');
@@ -391,6 +449,10 @@ Route::group(['middleware' => ['auth']], function () {
         Route::resource('services', ServiceController::class);
         Route::resource('beds', BedController::class);
         Route::get('bed-list', [BedController::class, 'listBeds'])->name('bed-list');
+
+        // Procedure Categories Management
+        Route::resource('procedure-categories', \App\Http\Controllers\ProcedureCategoryController::class);
+        Route::get('procedure-categories-list', [\App\Http\Controllers\ProcedureCategoryController::class, 'list'])->name('procedure-categories.list');
 
         // Ward Management
         Route::resource('wards', WardController::class);

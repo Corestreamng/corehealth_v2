@@ -3663,7 +3663,7 @@
                 </div>
 
                 <!-- Advanced Filters Panel (Collapsible) -->
-                <div class="card mb-4" id="pharmacy-reports-filter-card">
+                <div class="card-modern mb-4" id="pharmacy-reports-filter-card">
                     <div class="card-header d-flex justify-content-between align-items-center py-2" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#pharmacy-reports-filters">
                         <h6 class="mb-0"><i class="mdi mdi-filter-variant"></i> Advanced Filters</h6>
                         <i class="mdi mdi-chevron-down filter-collapse-icon"></i>
@@ -3873,7 +3873,7 @@
                         <div class="row g-4">
                             <!-- Dispensing Trend Chart -->
                             <div class="col-md-8">
-                                <div class="card h-100">
+                                <div class="card-modern h-100">
                                     <div class="card-header py-2">
                                         <h6 class="mb-0"><i class="mdi mdi-chart-line"></i> Dispensing Trends</h6>
                                     </div>
@@ -3884,7 +3884,7 @@
                             </div>
                             <!-- Revenue Breakdown -->
                             <div class="col-md-4">
-                                <div class="card h-100">
+                                <div class="card-modern h-100">
                                     <div class="card-header py-2">
                                         <h6 class="mb-0"><i class="mdi mdi-chart-pie"></i> Revenue Breakdown</h6>
                                     </div>
@@ -3895,7 +3895,7 @@
                             </div>
                             <!-- Top Products -->
                             <div class="col-md-6">
-                                <div class="card">
+                                <div class="card-modern">
                                     <div class="card-header py-2">
                                         <h6 class="mb-0"><i class="mdi mdi-star"></i> Top 10 Products</h6>
                                     </div>
@@ -3920,7 +3920,7 @@
                             </div>
                             <!-- Payment Methods -->
                             <div class="col-md-6">
-                                <div class="card">
+                                <div class="card-modern">
                                     <div class="card-header py-2">
                                         <h6 class="mb-0"><i class="mdi mdi-credit-card-multiple"></i> Payment Methods</h6>
                                     </div>
@@ -3948,7 +3948,7 @@
 
                     <!-- Dispensing Report Tab -->
                     <div class="tab-pane fade" id="pharm-dispensing-content" role="tabpanel">
-                        <div class="card">
+                        <div class="card-modern">
                             <div class="card-body">
                                 <div class="table-responsive">
                                     <table class="table table-hover table-striped" id="pharm-dispensing-table" style="width: 100%">
@@ -3974,7 +3974,7 @@
 
                     <!-- Revenue Report Tab -->
                     <div class="tab-pane fade" id="pharm-revenue-content" role="tabpanel">
-                        <div class="card">
+                        <div class="card-modern">
                             <div class="card-header py-2 d-flex justify-content-between align-items-center">
                                 <h6 class="mb-0"><i class="mdi mdi-cash-register"></i> Revenue Summary</h6>
                                 <div class="btn-group btn-group-sm" role="group">
@@ -4039,7 +4039,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="card">
+                        <div class="card-modern">
                             <div class="card-body">
                                 <div class="table-responsive">
                                     <table class="table table-hover table-striped" id="pharm-stock-table" style="width: 100%">
@@ -4065,7 +4065,7 @@
 
                     <!-- Performance Report Tab -->
                     <div class="tab-pane fade" id="pharm-performance-content" role="tabpanel">
-                        <div class="card">
+                        <div class="card-modern">
                             <div class="card-header py-2">
                                 <h6 class="mb-0"><i class="mdi mdi-account-tie"></i> Pharmacist Performance</h6>
                             </div>
@@ -4106,7 +4106,7 @@
 
                     <!-- HMO Claims Tab -->
                     <div class="tab-pane fade" id="pharm-hmo-content" role="tabpanel">
-                        <div class="card">
+                        <div class="card-modern">
                             <div class="card-header py-2">
                                 <h6 class="mb-0"><i class="mdi mdi-hospital-building"></i> HMO Claims Summary</h6>
                             </div>
@@ -5770,7 +5770,7 @@ function injectUnifiedPrescPartial(patientId, patientUserId) {
             <div class="tab-content" id="prescSubTabsContent">
                 <!-- Billing Tab -->
                 <div class="tab-pane fade show active" id="presc-billing-pane" role="tabpanel">
-                    <div class="card card-modern">
+                    <div class="card-modern card-modern">
                         <div class="card-header bg-light d-flex justify-content-between align-items-center">
                             <h6 class="mb-0"><i class="mdi mdi-cash-register"></i> Requested Prescriptions (Awaiting Billing)</h6>
                             <button type="button" class="btn btn-sm btn-outline-primary" onclick="printSelectedBillingPrescriptions()">
@@ -5797,7 +5797,7 @@ function injectUnifiedPrescPartial(patientId, patientUserId) {
                             <hr>
 
                             <!-- Add More Items Section -->
-                            <div class="card card-modern mb-3">
+                            <div class="card-modern card-modern mb-3">
                                 <div class="card-header bg-light">
                                     <h6 class="mb-0"><i class="mdi mdi-plus-circle"></i> Add More Items</h6>
                                 </div>
@@ -5848,7 +5848,7 @@ function injectUnifiedPrescPartial(patientId, patientUserId) {
 
                 <!-- Pending Tab (Awaiting Payment/Validation) -->
                 <div class="tab-pane fade" id="presc-pending-pane" role="tabpanel">
-                    <div class="card card-modern">
+                    <div class="card-modern card-modern">
                         <div class="card-header bg-light">
                             <h6 class="mb-0"><i class="mdi mdi-clock-outline"></i> Pending Items (Awaiting Payment / HMO Validation)</h6>
                         </div>
@@ -5900,7 +5900,7 @@ function injectUnifiedPrescPartial(patientId, patientUserId) {
 
                 <!-- Dispense Tab (Ready to Dispense) -->
                 <div class="tab-pane fade" id="presc-dispense-pane" role="tabpanel">
-                    <div class="card card-modern">
+                    <div class="card-modern card-modern">
                         <div class="card-header bg-light d-flex justify-content-between align-items-center">
                             <h6 class="mb-0"><i class="mdi mdi-pill"></i> Ready to Dispense</h6>
                             <button type="button" class="btn btn-outline-primary btn-sm" onclick="openDispenseCartModal()" id="btn-header-cart">
@@ -5952,7 +5952,7 @@ function injectUnifiedPrescPartial(patientId, patientUserId) {
 
                 <!-- History Tab -->
                 <div class="tab-pane fade" id="presc-history-pane" role="tabpanel">
-                    <div class="card card-modern">
+                    <div class="card-modern card-modern">
                         <div class="card-header bg-light">
                             <h6 class="mb-0"><i class="mdi mdi-history"></i> Dispensed Prescriptions (History)</h6>
                         </div>
@@ -6234,11 +6234,21 @@ function renderPrescCardPharmacy(row, type) {
     const isPaid = row.is_paid || false;
     const isValidated = row.is_validated || false;
     const pendingReason = row.pending_reason || '';
+    const isBundled = row.is_bundled || false;
+    const procedureName = row.procedure_name || '';
 
     let statusBadges = '';
     let pendingAlert = '';
     let cardClass = 'presc-card';
     let cardStyle = '';
+
+    // Bundled procedure indicator
+    let bundledBadge = '';
+    if (isBundled && procedureName) {
+        bundledBadge = `<div class="mt-1"><span class="badge" style="background: #6f42c1; color: #fff;"><i class="fa fa-procedures mr-1"></i> Bundled: ${procedureName}</span></div>`;
+    } else if (procedureName) {
+        bundledBadge = `<div class="mt-1"><span class="badge bg-secondary"><i class="fa fa-procedures mr-1"></i> From: ${procedureName}</span></div>`;
+    }
 
     // Different status display based on tab type
     if (type === 'billing') {
@@ -6364,6 +6374,7 @@ function renderPrescCardPharmacy(row, type) {
                 <div>
                     <div class="presc-card-title">${row.product_name || 'Unknown Product'}</div>
                     <small class="text-muted">[${row.product_code || ''}]</small>
+                    ${bundledBadge}
                 </div>
                 <div class="text-end">
                     <div class="presc-card-price">₦${formatMoneyPharmacy(payableAmount || totalPrice)}</div>
@@ -13278,7 +13289,7 @@ function printReports() {
                         window.print();
                     }, 500);
                 };
-            </script>
+            <\/script>
         </body>
         </html>
     `);

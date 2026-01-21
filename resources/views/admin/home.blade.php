@@ -90,7 +90,7 @@
             {{-- Multi-Role Tab Layout --}}
             <div class="row mb-4">
                 <div class="col-12">
-                    <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                    <div class="card-modern border-0 shadow-sm" style="border-radius: 12px;">
                         <div class="card-body p-0">
                             <ul class="nav nav-pills nav-fill mb-0" id="dashboardTabs" role="tablist" style="border-bottom: 2px solid #f0f0f0;">
                                 @foreach($roleTabs as $key => $tab)

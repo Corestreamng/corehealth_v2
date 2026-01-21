@@ -72,4 +72,13 @@ protected $fillable = [
     {
         return $this->belongsTo(Store::class, 'dispensed_from_store_id', 'id');
     }
+
+    /**
+     * Get the procedure item if this product is part of a procedure.
+     * Spec Reference: PROCEDURE_MODULE_DESIGN_PLAN.md Part 3.7
+     */
+    public function procedureItem()
+    {
+        return $this->hasOne(ProcedureItem::class, 'product_request_id', 'id');
+    }
 }
