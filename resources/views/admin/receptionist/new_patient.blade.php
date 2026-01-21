@@ -389,6 +389,29 @@
                         </div>
                     </div>
                 </div>
+
+                {{-- Registration Fee (Optional) --}}
+                @if(isset($registrationServices) && $registrationServices->count() > 0)
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="">Registration Fee <small class="text-muted">(Optional)</small></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="mdi mdi-cash-register"></i></span>
+                                <select name="registration_service_id" id="registration_service_id" class="form-control">
+                                    <option value="">-- No Registration Fee --</option>
+                                    @foreach($registrationServices as $regService)
+                                        <option value="{{ $regService->id }}" {{ old('registration_service_id') == $regService->id ? 'selected' : '' }}>
+                                            {{ $regService->service_name }} - ₦{{ number_format($regService->price->sale_price ?? 0, 2) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <small class="text-info"><i class="mdi mdi-information-outline"></i> If selected, a billing entry will be created for the patient.</small>
+                        </div>
+                    </div>
+                </div>
+                @endif
                 <button type="button" onclick="switch_tab(event,'family_tab')" class="btn btn-secondary mr-2"> Prev
                 </button>
                 <button type="submit" class="btn btn-primary mr-2"> Save </button>

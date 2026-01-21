@@ -395,7 +395,7 @@
     <h5 class="mb-3">Medication Chart / Treatment Sheet</h5>
 
     <!-- Shared Date Filter - accessible by both tabs -->
-    <div class="card shadow-sm mb-3">
+    <div class="card-modern shadow-sm mb-3">
         <div class="card-body py-2">
             <div class="row align-items-center">
                 <div class="col-auto">
@@ -445,7 +445,7 @@
 
     <!-- Drug Selection and Controls -->
     <div class="mb-4">
-        <div class="card shadow-sm">
+        <div class="card-modern shadow-sm">
             <div class="card-body">
                 <div class="row g-3 align-items-end">
                     <div class="col-12">
@@ -571,7 +571,7 @@
             </div>
 
             <!-- Unified Calendar Overview -->
-            <div class="card shadow-sm">
+            <div class="card-modern shadow-sm">
                 <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
                     <h6 class="mb-0 fw-bold">
                         <i class="mdi mdi-calendar-month me-2"></i>Medication Overview Calendar

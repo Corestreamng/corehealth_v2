@@ -50,6 +50,23 @@ $assets = [
     [
         'url' => 'https://fonts.googleapis.com/css2?family=Montserrat:wght@100;200;300;400;500;600;700;800;900&display=swap',
         'path' => 'public/assets/css/montserrat-font.css'
+    ],
+    // Chosen Select for searchable dropdowns
+    [
+        'url' => 'https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.min.css',
+        'path' => 'public/assets/css/chosen.min.css'
+    ],
+    [
+        'url' => 'https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.jquery.min.js',
+        'path' => 'public/assets/js/chosen.jquery.min.js'
+    ],
+    [
+        'url' => 'https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen-sprite.png',
+        'path' => 'public/assets/css/chosen-sprite.png'
+    ],
+    [
+        'url' => 'https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen-sprite@2x.png',
+        'path' => 'public/assets/css/chosen-sprite@2x.png'
     ]
 ];
 

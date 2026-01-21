@@ -127,4 +127,110 @@ class HmoHelper
             'hint' => 'This service is ready to be delivered.'
         ];
     }
+
+    /**
+     * Check if an item is part of a bundled procedure
+     * Spec Reference: PROCEDURE_MODULE_DESIGN_PLAN.md Part 3.7, Task 79
+     *
+     * @param string $itemType ('lab', 'imaging', 'product')
+     * @param int $itemId
+     * @return array|null ['is_bundled' => bool, 'procedure_id' => int|null, 'procedure_name' => string|null]
+     */
+    public static function isBundledItem($itemType, $itemId)
+    {
+        $procedureItem = null;
+
+        switch ($itemType) {
+            case 'lab':
+                $procedureItem = \App\Models\ProcedureItem::where('lab_service_request_id', $itemId)->first();
+                break;
+            case 'imaging':
+                $procedureItem = \App\Models\ProcedureItem::where('imaging_service_request_id', $itemId)->first();
+                break;
+            case 'product':
+                $procedureItem = \App\Models\ProcedureItem::where('product_request_id', $itemId)->first();
+                break;
+        }
+
+        if (!$procedureItem) {
+            return null;
+        }
+
+        $procedure = $procedureItem->procedure;
+        $procedureName = $procedure ? optional($procedure->service)->service_name : null;
+
+        return [
+            'is_bundled' => $procedureItem->is_bundled,
+            'procedure_id' => $procedureItem->procedure_id,
+            'procedure_name' => $procedureName,
+            'procedure_item' => $procedureItem,
+        ];
+    }
+
+    /**
+     * Check if a bundled item can be delivered based on procedure payment status
+     * Spec Reference: PROCEDURE_MODULE_DESIGN_PLAN.md Part 3.7, Task 80
+     *
+     * @param \App\Models\ProcedureItem $procedureItem
+     * @return array ['can_deliver' => bool, 'reason' => string, 'hint' => string]
+     */
+    public static function canDeliverBundledItem($procedureItem)
+    {
+        // If not bundled, use normal delivery check
+        if (!$procedureItem->is_bundled) {
+            // Non-bundled items have their own billing entry
+            if ($procedureItem->productOrServiceRequest) {
+                return self::canDeliverService($procedureItem->productOrServiceRequest);
+            }
+            return [
+                'can_deliver' => true,
+                'reason' => 'Ready for Delivery',
+                'hint' => 'This item is ready to be delivered.'
+            ];
+        }
+
+        // For bundled items, check the procedure's billing status
+        $procedure = $procedureItem->procedure;
+
+        if (!$procedure) {
+            return [
+                'can_deliver' => false,
+                'reason' => 'Procedure Not Found',
+                'hint' => 'The parent procedure for this bundled item could not be found.'
+            ];
+        }
+
+        $procedureRequest = $procedure->productOrServiceRequest;
+
+        if (!$procedureRequest) {
+            return [
+                'can_deliver' => false,
+                'reason' => 'No Billing Entry',
+                'hint' => 'The procedure does not have a billing entry.'
+            ];
+        }
+
+        // Check if procedure is cancelled
+        if ($procedure->procedure_status === 'cancelled') {
+            return [
+                'can_deliver' => false,
+                'reason' => 'Procedure Cancelled',
+                'hint' => 'Cannot deliver items for a cancelled procedure.'
+            ];
+        }
+
+        // Use the standard delivery check on the procedure's billing entry
+        $deliveryCheck = self::canDeliverService($procedureRequest);
+
+        if (!$deliveryCheck['can_deliver']) {
+            $procedureName = optional($procedure->service)->service_name ?? 'Procedure';
+            $deliveryCheck['hint'] = sprintf(
+                'This item is bundled with "%s". %s',
+                $procedureName,
+                $deliveryCheck['hint']
+            );
+        }
+
+        return $deliveryCheck;
+    }
 }

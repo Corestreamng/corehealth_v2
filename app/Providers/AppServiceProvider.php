@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use App\Models\Product;
 use App\Models\service;
+use App\Models\ServicePrice;
 use App\Models\Hmo;
 use App\Models\AdmissionRequest;
 use App\Models\ProductOrServiceRequest;
@@ -13,6 +14,7 @@ use App\Models\ChatParticipant;
 use App\Models\User;
 use App\Observers\ProductObserver;
 use App\Observers\ServiceObserver;
+use App\Observers\ServicePriceObserver;
 use App\Observers\HmoObserver;
 use App\Helpers\HmoHelper;
 use App\Services\DepartmentNotificationService;
@@ -46,6 +48,7 @@ class AppServiceProvider extends ServiceProvider
         // Register HMO tariff auto-generation observers
         Product::observe(ProductObserver::class);
         service::observe(ServiceObserver::class);
+        ServicePrice::observe(ServicePriceObserver::class);
         Hmo::observe(HmoObserver::class);
 
         // Process daily bed bills - runs once per day automatically

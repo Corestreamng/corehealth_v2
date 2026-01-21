@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ApplicationStatu;
+use App\Models\ServiceCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -21,7 +22,10 @@ class HospitalConfigController extends Controller
             ]);
         }
 
-        return view('admin.hospital-config.index', compact('config'));
+        // Get service categories for dropdowns
+        $serviceCategories = ServiceCategory::orderBy('category_name')->get();
+
+        return view('admin.hospital-config.index', compact('config', 'serviceCategories'));
     }
 
     public function update(Request $request)
@@ -48,11 +52,14 @@ class HospitalConfigController extends Controller
             'nursing_service_category' => 'nullable|integer|min:1',
             'misc_service_category_id' => 'nullable|integer|min:1',
             'imaging_category_id' => 'nullable|integer|min:1',
+            'registration_category_id' => 'nullable|integer|exists:service_categories,id',
+            'procedure_category_id' => 'nullable|integer|exists:service_categories,id',
 
             // Time Windows
             'consultation_cycle_duration' => 'nullable|integer|min:1',
             'note_edit_window' => 'nullable|integer|min:1',
             'result_edit_duration' => 'nullable|integer|min:1',
+            'timezone' => 'nullable|string|max:50',
 
             // Integration Settings
             'client_id' => 'nullable|string',

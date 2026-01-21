@@ -47,4 +47,21 @@ protected $fillable = [
     {
         return $this->belongsTo(price_list::class,'price_list_id','id');
     }
+
+    /**
+     * Get the procedure definition (if this service is a procedure).
+     * Only services with category_id = procedure_category_id will have this.
+     */
+    public function procedureDefinition()
+    {
+        return $this->hasOne(ProcedureDefinition::class, 'service_id', 'id');
+    }
+
+    /**
+     * Check if this service is a procedure.
+     */
+    public function isProcedure()
+    {
+        return $this->procedureDefinition()->exists();
+    }
 }

@@ -545,6 +545,14 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('services.index', ['category' => appsettings('imaging_category_id', 6)]) }}">Imaging Services</a>
                         </li>
+                        @if(appsettings('procedure_category_id'))
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('services.index', ['category' => appsettings('procedure_category_id')]) }}">Procedures</a>
+                        </li>
+                        @endif
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('procedure-categories.index') }}">Procedure Categories</a>
+                        </li>
                     </ul>
                 </div>
             </li>

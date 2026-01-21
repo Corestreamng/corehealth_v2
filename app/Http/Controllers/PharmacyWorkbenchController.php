@@ -82,7 +82,7 @@ class PharmacyWorkbenchController extends Controller
      */
     public function prescBillList($patientId)
     {
-        $items = ProductRequest::with(['product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest', 'doctor', 'biller'])
+        $items = ProductRequest::with(['product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest', 'doctor', 'biller', 'procedureItem.procedure.service'])
             ->where('status', 1)
             ->where('patient_id', $patientId)
             ->orderBy('created_at', 'DESC')
@@ -98,6 +98,18 @@ class PharmacyWorkbenchController extends Controller
                 $code = optional($item->product)->product_code ?? '';
                 $name = optional($item->product)->product_name ?? 'Unknown';
                 $str = "<span class='badge badge-success'>[{$code}] {$name}</span>";
+
+                // Show procedure association
+                $procedureItem = $item->procedureItem;
+                if ($procedureItem) {
+                    $procedureName = optional(optional($procedureItem->procedure)->service)->service_name ?? 'Procedure';
+                    if ($procedureItem->is_bundled) {
+                        $str .= "<br><span class='badge' style='background: #6f42c1; color: #fff;'><i class='fa fa-procedures mr-1'></i> Bundled: {$procedureName}</span>";
+                    } else {
+                        $str .= "<br><span class='badge badge-secondary'><i class='fa fa-procedures mr-1'></i> From: {$procedureName}</span>";
+                    }
+                }
+
                 $str .= '<hr><b>Dose/Freq:</b> ' . ($item->dose ?? 'N/A');
                 $str .= '<br><b>Qty:</b> ' . ($item->qty ?? 1);
                 return $str;
@@ -119,7 +131,7 @@ class PharmacyWorkbenchController extends Controller
      */
     public function prescDispenseList($patientId)
     {
-        $items = ProductRequest::with(['product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest.payment', 'doctor', 'biller'])
+        $items = ProductRequest::with(['product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest.payment', 'doctor', 'biller', 'procedureItem.procedure.service'])
             ->where('status', 2)
             ->where('patient_id', $patientId)
             ->orderBy('created_at', 'DESC')
@@ -131,7 +143,20 @@ class PharmacyWorkbenchController extends Controller
                 $posr = $item->productOrServiceRequest;
                 $isPaid = optional(optional($posr)->payment)->payment_status === 'paid';
                 $isValidated = optional($posr)->validation_status === 'validated';
-                $canDispense = $isPaid || $isValidated;
+
+                // Check if bundled with procedure
+                $procedureItem = $item->procedureItem;
+                $isBundled = $procedureItem && $procedureItem->is_bundled;
+
+                // Bundled items can be dispensed if procedure is paid
+                if ($isBundled) {
+                    $procedurePosr = optional(optional($procedureItem->procedure)->productOrServiceRequest);
+                    $procedurePaid = optional($procedurePosr->payment)->payment_status === 'paid';
+                    $procedureValidated = $procedurePosr->validation_status === 'validated';
+                    $canDispense = $procedurePaid || $procedureValidated;
+                } else {
+                    $canDispense = $isPaid || $isValidated;
+                }
 
                 $disabled = !$canDispense ? 'disabled' : '';
                 $tooltip = !$canDispense ? 'title="Payment or HMO validation required"' : '';
@@ -144,6 +169,16 @@ class PharmacyWorkbenchController extends Controller
                 $posr = $item->productOrServiceRequest;
 
                 $str = "<span class='badge badge-success'>[{$code}] {$name}</span>";
+
+                // Show procedure bundle indicator
+                $procedureItem = $item->procedureItem;
+                if ($procedureItem && $procedureItem->is_bundled) {
+                    $procedureName = optional(optional($procedureItem->procedure)->service)->service_name ?? 'Procedure';
+                    $str .= "<br><span class='badge badge-purple' style='background: #6f42c1; color: #fff;'><i class='fa fa-procedures mr-1'></i> Bundled: {$procedureName}</span>";
+                } elseif ($procedureItem) {
+                    $procedureName = optional(optional($procedureItem->procedure)->service)->service_name ?? 'Procedure';
+                    $str .= "<br><span class='badge badge-secondary'><i class='fa fa-procedures mr-1'></i> From: {$procedureName}</span>";
+                }
 
                 // Show HMO/payment status
                 if ($posr) {
@@ -657,8 +692,26 @@ class PharmacyWorkbenchController extends Controller
                 continue;
             }
 
-            // Check HMO delivery requirements
-            if ($productRequest->productOrServiceRequest) {
+            // Check if this is a bundled procedure item
+            $bundledCheck = HmoHelper::isBundledItem('product', $productRequest->id);
+            if ($bundledCheck && $bundledCheck['is_bundled']) {
+                // Use bundled item delivery check
+                $deliveryCheck = HmoHelper::canDeliverBundledItem($bundledCheck['procedure_item']);
+                if (!$deliveryCheck['can_deliver']) {
+                    $result['valid'] = false;
+                    $result['error'] = $deliveryCheck['reason'] . ' (Bundled with: ' . $bundledCheck['procedure_name'] . ')';
+                    $result['error_type'] = 'bundled_procedure_block';
+                    $result['bundled_info'] = [
+                        'procedure_id' => $bundledCheck['procedure_id'],
+                        'procedure_name' => $bundledCheck['procedure_name'],
+                    ];
+                    $allValid = false;
+                    $totalIssues++;
+                    $validationResults[] = $result;
+                    continue;
+                }
+            } elseif ($productRequest->productOrServiceRequest) {
+                // Check HMO delivery requirements for non-bundled items
                 $deliveryCheck = HmoHelper::canDeliverService($productRequest->productOrServiceRequest);
                 if (!$deliveryCheck['can_deliver']) {
                     $result['valid'] = false;
@@ -751,8 +804,21 @@ class PharmacyWorkbenchController extends Controller
                 continue;
             }
 
-            // Check HMO delivery requirements
-            if ($productRequest->productOrServiceRequest) {
+            // Check if this is a bundled procedure item
+            $bundledCheck = HmoHelper::isBundledItem('product', $productRequest->id);
+            if ($bundledCheck && $bundledCheck['is_bundled']) {
+                // Use bundled item delivery check
+                $deliveryCheck = HmoHelper::canDeliverBundledItem($bundledCheck['procedure_item']);
+                if (!$deliveryCheck['can_deliver']) {
+                    $validationErrors[] = [
+                        'id' => $prId,
+                        'product' => $productRequest->product->name ?? 'Unknown',
+                        'error' => $deliveryCheck['reason'] . ' (Bundled with: ' . $bundledCheck['procedure_name'] . ')'
+                    ];
+                    continue;
+                }
+            } elseif ($productRequest->productOrServiceRequest) {
+                // Check HMO delivery requirements for non-bundled items
                 $deliveryCheck = HmoHelper::canDeliverService($productRequest->productOrServiceRequest);
                 if (!$deliveryCheck['can_deliver']) {
                     $validationErrors[] = [

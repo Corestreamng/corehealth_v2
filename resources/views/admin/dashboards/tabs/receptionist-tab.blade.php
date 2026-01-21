@@ -2,7 +2,7 @@
 <div class="row g-4 mb-4">
     {{-- Quick Stats --}}
     <div class="col-xl-3 col-lg-6">
-        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <div class="card-modern border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
             <div class="card-body text-white">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
@@ -17,7 +17,7 @@
         </div>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+        <div class="card-modern border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
             <div class="card-body text-white">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
@@ -32,7 +32,7 @@
         </div>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+        <div class="card-modern border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
             <div class="card-body text-white">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
@@ -47,7 +47,7 @@
         </div>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+        <div class="card-modern border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
             <div class="card-body text-white">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
@@ -66,7 +66,7 @@
 {{-- Shortcuts --}}
 <div class="row g-4">
     <div class="col-12">
-        <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+        <div class="card-modern border-0 shadow-sm" style="border-radius: 12px;">
             <div class="card-body">
                 <h5 class="card-title mb-4">
                     <i class="mdi mdi-account-tie text-primary me-2"></i>Receptionist Shortcuts
@@ -105,7 +105,7 @@
 {{-- Charts Section --}}
 <div class="row g-4 mt-2">
     <div class="col-xl-6 col-lg-12">
-        <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+        <div class="card-modern border-0 shadow-sm" style="border-radius: 12px;">
             <div class="card-body">
                 <h5 class="card-title mb-3">
                     <i class="mdi mdi-account-multiple-plus text-primary me-2"></i>Patient Registrations This Month
@@ -117,7 +117,7 @@
         </div>
     </div>
     <div class="col-xl-6 col-lg-12">
-        <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+        <div class="card-modern border-0 shadow-sm" style="border-radius: 12px;">
             <div class="card-body">
                 <h5 class="card-title mb-3">
                     <i class="mdi mdi-calendar-check text-success me-2"></i>Appointments This Month

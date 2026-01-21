@@ -10,11 +10,14 @@ use App\Models\Sale;
 use App\Models\ApplicationStatu;
 use App\Models\Stock;
 use App\Models\serviceCategory;
+use App\Models\ProcedureDefinition;
+use App\Models\ProcedureCategory;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Yajra\DataTables\DataTables;
 use RealRashid\SweetAlert\Facades\Alert;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ServiceController extends Controller
 {
@@ -103,19 +106,23 @@ class ServiceController extends Controller
     public function liveSearchServices(Request $request)
     {
         $request->validate([
-            'term' => 'required|string',
+            'term' => 'nullable|string',
             'patient_id' => 'nullable|integer'
         ]);
 
         $categoryId = $request->input('category_id', appsettings('investigation_category_id'));
 
-        $pc = service::where('status', 1)
+        $query = service::where('status', 1)
             ->where('category_id', $categoryId)
-            ->whereHas('price')
-            ->where('service_name', 'LIKE', "%{$request->term}%")
+            ->whereHas('price');
+
+        if ($request->filled('term')) {
+            $query->where('service_name', 'LIKE', "%{$request->term}%");
+        }
+
+        $pc = $query
             ->with(['category', 'price'])
             ->orderBy('service_name', 'ASC')
-            ->limit(10)
             ->get()
             ->map(function ($service) use ($request) {
                 $basePrice = optional($service->price)->sale_price;
@@ -208,8 +215,11 @@ class ServiceController extends Controller
      */
     public function create()
     {
-        $category       = ServiceCategory::where('status', '=', 1)->pluck('category_name', 'id')->all();
-        return view('admin.service.create', compact('category'));
+        $category = ServiceCategory::where('status', '=', 1)->pluck('category_name', 'id')->all();
+        $procedureCategories = ProcedureCategory::where('status', 1)->orderBy('name')->get();
+        $procedureCategoryId = appsettings('procedure_category_id');
+
+        return view('admin.service.create', compact('category', 'procedureCategories', 'procedureCategoryId'));
     }
 
     /**
@@ -221,6 +231,8 @@ class ServiceController extends Controller
 
     public function store(Request $request)
     {
+        $procedureCategoryId = appsettings('procedure_category_id');
+        $isProcedure = $request->category_id == $procedureCategoryId;
 
         $rules = [
             'category_id'          => 'required',
@@ -228,15 +240,23 @@ class ServiceController extends Controller
             'service_code'          => 'required',
         ];
 
+        // Add procedure-specific validation rules
+        if ($isProcedure) {
+            $rules['procedure_category_id'] = 'required|exists:procedure_categories,id';
+            $rules['procedure_code'] = 'nullable|string|max:50';
+            $rules['is_surgical'] = 'nullable|boolean';
+            $rules['estimated_duration_minutes'] = 'nullable|integer|min:1';
+            $rules['procedure_description'] = 'nullable|string';
+        }
+
         try {
             $v = validator()->make($request->all(), $rules);
 
             if ($v->fails()) {
-                // Alert::error('Error Title', 'One or more information is needed.');
-                // return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
-                // return redirect()->back()->withInput()->with('toast_error', $v->messages()->all()[0])->withInput();
                 return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
             } else {
+
+                DB::beginTransaction();
 
                 $myservice                      = new Service();
                 $myservice->user_id             = Auth::user()->id;
@@ -246,16 +266,31 @@ class ServiceController extends Controller
                 $myservice->status              = 1;
 
                 if ($myservice->save()) {
+                    // If this is a procedure service, create linked procedure definition
+                    if ($isProcedure) {
+                        ProcedureDefinition::create([
+                            'service_id' => $myservice->id,
+                            'procedure_category_id' => $request->procedure_category_id,
+                            'name' => trim($request->service_name),
+                            'code' => $request->procedure_code ?? $request->service_code,
+                            'description' => $request->procedure_description,
+                            'is_surgical' => $request->has('is_surgical'),
+                            'estimated_duration_minutes' => $request->estimated_duration_minutes,
+                            'status' => 1,
+                        ]);
+                    }
+
+                    DB::commit();
                     $msg = 'The Service  ' . $request->service_name . ' was Saved Successfully.';
                     return redirect(route('services.index'))->withMessage($msg)->withMessageType('success');
                 } else {
+                    DB::rollBack();
                     $msg = 'Something is went wrong. Please try again later, Service not Saved.';
-                    //flash($msg, 'danger');
                     return redirect()->back()->withInput()->withMessage($msg)->withMessageType('danger')->withInput();
                 }
             }
         } catch (\Exception $e) {
-
+            DB::rollBack();
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
     }
@@ -285,9 +320,13 @@ class ServiceController extends Controller
     {
 
         try {
-            $product = service::whereId($id)->first();
-            $category       = ServiceCategory::where('status', '=', 1)->pluck('category_name', 'id')->all();
-            return view('admin.service.edit', compact('product', 'category'));
+            $product = service::with('procedureDefinition')->whereId($id)->first();
+            $category = ServiceCategory::where('status', '=', 1)->pluck('category_name', 'id')->all();
+            $procedureCategories = ProcedureCategory::where('status', 1)->orderBy('name')->get();
+            $procedureCategoryId = appsettings('procedure_category_id');
+            $procedure = $product->procedureDefinition;
+
+            return view('admin.service.edit', compact('product', 'category', 'procedureCategories', 'procedureCategoryId', 'procedure'));
         } catch (\Exception $e) {
 
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
@@ -304,37 +343,75 @@ class ServiceController extends Controller
     public function update(Request $request, $id)
     {
         try {
+            $procedureCategoryId = appsettings('procedure_category_id');
+            $isProcedure = $request->category_id == $procedureCategoryId;
+
             $rules = [
                 'category_id'          => 'required',
                 'service_name'          => 'required',
                 'service_code'          => 'required',
             ];
 
+            // Add procedure-specific validation rules
+            if ($isProcedure) {
+                $rules['procedure_category_id'] = 'required|exists:procedure_categories,id';
+                $rules['procedure_code'] = 'nullable|string|max:50';
+                $rules['is_surgical'] = 'nullable|boolean';
+                $rules['estimated_duration_minutes'] = 'nullable|integer|min:1';
+                $rules['procedure_description'] = 'nullable|string';
+            }
+
             $v = validator()->make($request->all(), $rules);
 
             if ($v->fails()) {
-                //  $msg = 'Please cheak Your Inputs .';
                 return redirect()->back()->withInput()->with('errors', $v->messages()->all())->withInput();
             } else {
 
+                DB::beginTransaction();
+
                 $myservice                 = service::whereId($id)->first();
+                $oldCategoryId             = $myservice->category_id;
                 $myservice->user_id        = Auth::user()->id;
                 $myservice->category_id    = $request->category_id;
                 $myservice->service_name   = $request->service_name;
                 $myservice->service_code   = $request->service_code;
-                $myservice->status            = 1;
+                $myservice->status         = 1;
 
                 if ($myservice->update()) {
+                    // Handle procedure definition
+                    if ($isProcedure) {
+                        // Create or update procedure definition
+                        ProcedureDefinition::updateOrCreate(
+                            ['service_id' => $myservice->id],
+                            [
+                                'procedure_category_id' => $request->procedure_category_id,
+                                'name' => trim($request->service_name),
+                                'code' => $request->procedure_code ?? $request->service_code,
+                                'description' => $request->procedure_description,
+                                'is_surgical' => $request->has('is_surgical'),
+                                'estimated_duration_minutes' => $request->estimated_duration_minutes,
+                                'status' => 1,
+                            ]
+                        );
+                    } else {
+                        // If category changed away from procedure, delete linked procedure definition
+                        if ($oldCategoryId == $procedureCategoryId) {
+                            ProcedureDefinition::where('service_id', $myservice->id)->delete();
+                        }
+                    }
+
+                    DB::commit();
                     $msg = 'The Service ' . $request->service_name . ' Was Updated Successfully.';
                     return redirect(route('services.index'))->withMessage($msg)->withMessageType('success');
                 } else {
+                    DB::rollBack();
                     $msg = 'Something is went wrong. Please try again later, information not save.';
 
                     return redirect()->back()->withInput()->withMessage($msg)->withMessageType('success')->withInput();
                 }
             }
         } catch (\Exception $e) {
-
+            DB::rollBack();
             return redirect()->back()->withInput()->withMessage("An error occurred " . $e->getMessage());
         }
     }

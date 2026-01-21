@@ -6,7 +6,7 @@ $app = require_once __DIR__ . '/bootstrap/app.php';
 $app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 use App\Models\Patient;
-use App\Models\LabServiceRequest;
+use App\Models\MedicationSchedule;
 use App\Services\DepartmentNotificationService;
 use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
@@ -21,42 +21,75 @@ if (!$patient) {
 
 echo "Patient: " . $patient->user->name . " (ID: " . $patient->id . ")\n\n";
 
-$latestLab = LabServiceRequest::where('patient_id', $patient->id)
-    ->orderBy('created_at', 'desc')
-    ->first();
-
-if (!$latestLab) {
-    echo "No lab requests found for this patient\n";
-    exit(1);
-}
-
-echo "Latest Lab Request:\n";
-echo "  ID: " . $latestLab->id . "\n";
-echo "  Created: " . $latestLab->created_at . "\n";
-echo "  Service: " . ($latestLab->service ? $latestLab->service->service_name : 'N/A') . "\n\n";
-
-$hourKey = Carbon::now()->format('Y-m-d-H');
-$cacheKey = "notified_lab_{$latestLab->id}_{$hourKey}";
-
-echo "Cache Check (BEFORE):\n";
-echo "  Current Hour Key: {$hourKey}\n";
-echo "  Cache Key: {$cacheKey}\n";
-echo "  Was Notified: " . (Cache::has($cacheKey) ? 'YES' : 'NO') . "\n";
-
 // Check if patient is admitted
 $isAdmitted = \App\Models\AdmissionRequest::where('patient_id', $patient->id)
     ->where('discharged', 0)
     ->exists();
+echo "Patient Admitted: " . ($isAdmitted ? 'YES' : 'NO') . "\n\n";
 
-echo "\n  Patient Admitted: " . ($isAdmitted ? 'YES' : 'NO') . "\n";
+$hourKey = Carbon::now()->format('Y-m-d-H');
+$now = Carbon::now();
+$upcomingTime = Carbon::now()->addMinutes(30);
 
-// Check cutoff time
-$cutoff = Carbon::now()->subHour();
-$isWithinHour = Carbon::parse($latestLab->created_at)->gt($cutoff);
-echo "  Cutoff Time: {$cutoff}\n";
-echo "  Lab Created Within Last Hour: " . ($isWithinHour ? 'YES' : 'NO') . "\n";
+echo "Time Window:\n";
+echo "  Now: {$now}\n";
+echo "  Upcoming (30 min): {$upcomingTime}\n";
+echo "  Hour Key: {$hourKey}\n\n";
+
+// Get medication schedules due within next 30 minutes
+$schedules = MedicationSchedule::with(['patient.user', 'productOrServiceRequest.product'])
+    ->where('patient_id', $patient->id)
+    ->whereBetween('scheduled_time', [$now, $upcomingTime])
+    ->whereNull('deleted_at')
+    ->get();
+
+echo "Medication Schedules Due (next 30 min): " . $schedules->count() . "\n\n";
+
+if ($schedules->isEmpty()) {
+    // Also show recent/past schedules for context
+    $recentSchedules = MedicationSchedule::with(['patient.user', 'productOrServiceRequest.product'])
+        ->where('patient_id', $patient->id)
+        ->whereNull('deleted_at')
+        ->orderBy('scheduled_time', 'desc')
+        ->limit(50)
+        ->get();
+
+    echo "Recent Schedules (last 50):\n";
+    foreach ($recentSchedules as $schedule) {
+        $medName = $schedule->productOrServiceRequest && $schedule->productOrServiceRequest->product
+            ? $schedule->productOrServiceRequest->product->product_name
+            : 'Unknown';
+        $cacheKey = "notified_med_schedule_{$schedule->id}_{$hourKey}";
+        $notified = Cache::has($cacheKey) ? 'YES' : 'NO';
+        echo "  ID: {$schedule->id} | Time: {$schedule->scheduled_time} | Med: {$medName} | Notified: {$notified}\n";
+    }
+} else {
+    echo "Due Schedules:\n";
+    foreach ($schedules as $schedule) {
+        $medName = $schedule->productOrServiceRequest && $schedule->productOrServiceRequest->product
+            ? $schedule->productOrServiceRequest->product->product_name
+            : 'Unknown';
+        $cacheKey = "notified_med_schedule_{$schedule->id}_{$hourKey}";
+        $notified = Cache::has($cacheKey) ? 'YES' : 'NO';
+        echo "  ID: {$schedule->id} | Time: {$schedule->scheduled_time} | Med: {$medName} | Notified: {$notified}\n";
+    }
+}
 
 echo "\n--- Running notification checks manually ---\n\n";
+
+$service = app(DepartmentNotificationService::class);
+$service->runChecks();
+
+echo "Checks completed. Re-checking cache...\n\n";
+
+// Recheck after running
+if ($schedules->isNotEmpty()) {
+    foreach ($schedules as $schedule) {
+        $cacheKey = "notified_med_schedule_{$schedule->id}_{$hourKey}";
+        $notified = Cache::has($cacheKey) ? 'YES' : 'NO';
+        echo "  ID: {$schedule->id} | Notified (AFTER): {$notified}\n";
+    }
+}
 
 $service = app(DepartmentNotificationService::class);
 $service->runChecks();

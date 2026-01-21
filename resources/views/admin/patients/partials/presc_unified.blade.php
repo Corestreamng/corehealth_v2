@@ -152,7 +152,7 @@
     <div class="tab-content" id="prescSubTabsContent">
         <!-- Billing Tab -->
         <div class="tab-pane fade show active" id="presc-billing-pane" role="tabpanel">
-            <div class="card card-modern">
+            <div class="card-modern card-modern">
                 <div class="card-header bg-light">
                     <h6 class="mb-0"><i class="mdi mdi-cash-register"></i> Requested Prescriptions (Awaiting Billing)</h6>
                 </div>
@@ -176,7 +176,7 @@
                     <hr>
 
                     <!-- Add More Items Section -->
-                    <div class="card card-modern mb-3">
+                    <div class="card-modern card-modern mb-3">
                         <div class="card-header bg-light">
                             <h6 class="mb-0"><i class="mdi mdi-plus-circle"></i> Add More Items</h6>
                         </div>
@@ -227,7 +227,7 @@
 
         <!-- Pending Tab (Awaiting Payment/Validation) -->
         <div class="tab-pane fade" id="presc-pending-pane" role="tabpanel">
-            <div class="card card-modern">
+            <div class="card-modern card-modern">
                 <div class="card-header bg-light">
                     <h6 class="mb-0"><i class="mdi mdi-clock-outline"></i> Pending Items (Awaiting Payment / HMO Validation)</h6>
                 </div>
@@ -271,7 +271,7 @@
 
         <!-- Dispense Tab (Ready to Dispense) -->
         <div class="tab-pane fade" id="presc-dispense-pane" role="tabpanel">
-            <div class="card card-modern">
+            <div class="card-modern card-modern">
                 <div class="card-header bg-light">
                     <h6 class="mb-0"><i class="mdi mdi-pill"></i> Ready to Dispense</h6>
                 </div>
@@ -309,7 +309,7 @@
 
         <!-- History Tab -->
         <div class="tab-pane fade" id="presc-history-pane" role="tabpanel">
-            <div class="card card-modern">
+            <div class="card-modern card-modern">
                 <div class="card-header bg-light">
                     <h6 class="mb-0"><i class="mdi mdi-history"></i> Prescription History</h6>
                 </div>

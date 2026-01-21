@@ -1001,7 +1001,7 @@ class EncounterController extends Controller
      */
     public function prescReadyList($patient_id)
     {
-        $items = ProductRequest::with(['product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest.payment', 'doctor', 'biller'])
+        $items = ProductRequest::with(['product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest.payment', 'doctor', 'biller', 'procedureItem.procedure.service'])
             ->where('status', 2)
             ->where('patient_id', $patient_id)
             ->where(function($q) {
@@ -1030,6 +1030,10 @@ class EncounterController extends Controller
                              ->whereIn('validation_status', ['validated', 'approved'])
                              ->whereNotNull('payment_id');
                       });
+                  })
+                  // OR bundled procedure items (no separate billing, procedure covers it)
+                  ->orWhereHas('procedureItem', function($query) {
+                      $query->where('is_bundled', true);
                   });
             })
             ->orderBy('created_at', 'DESC')
@@ -1075,6 +1079,15 @@ class EncounterController extends Controller
             ->addColumn('is_validated', function ($item) {
                 $status = optional($item->productOrServiceRequest)->validation_status;
                 return in_array($status, ['validated', 'approved']);
+            })
+            ->addColumn('is_bundled', function ($item) {
+                return $item->procedureItem && $item->procedureItem->is_bundled;
+            })
+            ->addColumn('procedure_name', function ($item) {
+                if ($item->procedureItem) {
+                    return optional(optional($item->procedureItem->procedure)->service)->service_name ?? 'Procedure';
+                }
+                return null;
             })
             ->addColumn('requested_by', function ($item) {
                 return $item->doctor_id ? userfullname($item->doctor_id) : 'N/A';
@@ -2534,5 +2547,682 @@ class EncounterController extends Controller
         });
 
         return response()->json($reasons);
+    }
+
+    /**
+     * Save procedure requests for encounter via AJAX
+     */
+    public function saveProcedures(Request $request, Encounter $encounter)
+    {
+        try {
+            $request->validate([
+                'procedures' => 'required|array|min:1',
+                'procedures.*.service_id' => 'required|integer|exists:services,id',
+                'procedures.*.priority' => 'required|in:routine,urgent,emergency',
+                'procedures.*.scheduled_date' => 'nullable|date',
+                'procedures.*.pre_notes' => 'nullable|string|max:2000',
+            ]);
+
+            $savedCount = 0;
+
+            foreach ($request->procedures as $procedureData) {
+                $service = \App\Models\service::with('price')->find($procedureData['service_id']);
+
+                if (!$service) {
+                    continue;
+                }
+
+                // Create the procedure record
+                $procedure = new \App\Models\Procedure();
+                $procedure->service_id = $service->id;
+                $procedure->encounter_id = $encounter->id;
+                $procedure->patient_id = $encounter->patient_id;
+                $procedure->requested_by = Auth::id();
+                $procedure->requested_on = now();
+                $procedure->priority = $procedureData['priority'];
+                $procedure->procedure_status = \App\Models\Procedure::STATUS_REQUESTED;
+                $procedure->pre_notes = $procedureData['pre_notes'] ?? null;
+                $procedure->pre_notes_by = $procedureData['pre_notes'] ? Auth::id() : null;
+
+                if (!empty($procedureData['scheduled_date'])) {
+                    $procedure->scheduled_date = $procedureData['scheduled_date'];
+                    $procedure->procedure_status = \App\Models\Procedure::STATUS_SCHEDULED;
+                }
+
+                // Get procedure definition if linked
+                if ($service->procedureDefinition) {
+                    $procedure->procedure_definition_id = $service->procedureDefinition->id;
+                }
+
+                $procedure->save();
+
+                // Create billing entry (ProductOrServiceRequest)
+                $basePrice = optional($service->price)->sale_price ?? 0;
+
+                // Check HMO coverage
+                $coverage = null;
+                try {
+                    $coverage = \App\Helpers\HmoHelper::applyHmoTariff($encounter->patient_id, null, $service->id);
+                } catch (\Exception $e) {
+                    $coverage = null;
+                }
+
+                // Get patient's user_id for the billing entry
+                $patient = \App\Models\patient::find($encounter->patient_id);
+
+                $billingEntry = new \App\Models\ProductOrServiceRequest();
+                $billingEntry->type = 'service';
+                $billingEntry->service_id = $service->id;
+                $billingEntry->user_id = $patient->user_id;
+                $billingEntry->staff_user_id = Auth::id();
+                $billingEntry->encounter_id = $encounter->id;
+                $billingEntry->admission_request_id = $encounter->admission_request_id;
+                $billingEntry->created_by = Auth::id();
+                $billingEntry->order_date = now();
+
+                if ($coverage && $coverage['coverage_mode'] === 'hmo') {
+                    $billingEntry->amount = $coverage['payable_amount'];
+                    $billingEntry->claims_amount = $coverage['claims_amount'];
+                    $billingEntry->coverage_mode = 'hmo';
+                    $billingEntry->hmo_id = $coverage['hmo_id'] ?? null;
+                } else {
+                    $billingEntry->amount = $basePrice;
+                    $billingEntry->claims_amount = 0;
+                    $billingEntry->coverage_mode = 'cash';
+                }
+
+                $billingEntry->save();
+
+                // Link billing to procedure
+                $procedure->product_or_service_request_id = $billingEntry->id;
+                $procedure->save();
+
+                $savedCount++;
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $savedCount . ' procedure(s) requested successfully',
+                'count' => $savedCount
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error: ' . implode(', ', $e->validator->errors()->all())
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error saving procedures: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get procedure history list for DataTable
+     */
+    public function procedureHistoryList(Request $request, $patient_id)
+    {
+        $procedures = \App\Models\Procedure::where('patient_id', $patient_id)
+            ->with(['service', 'requestedByUser', 'encounter', 'productOrServiceRequest'])
+            ->orderBy('requested_on', 'DESC')
+            ->get();
+
+        return DataTables::of($procedures)
+            ->addColumn('procedure', function ($proc) {
+                $name = optional($proc->service)->service_name ?? 'Unknown';
+                $code = optional($proc->service)->service_code ?? '';
+                return "<strong>{$name}</strong><br><small class='text-muted'>{$code}</small>";
+            })
+            ->addColumn('priority', function ($proc) {
+                $priorityClass = "priority-{$proc->priority}";
+                $label = ucfirst($proc->priority);
+                return "<span class='priority-badge {$priorityClass}'>{$label}</span>";
+            })
+            ->addColumn('status', function ($proc) {
+                $statusClass = "status-{$proc->procedure_status}";
+                $label = \App\Models\Procedure::STATUSES[$proc->procedure_status] ?? ucfirst($proc->procedure_status);
+                return "<span class='status-badge {$statusClass}'>{$label}</span>";
+            })
+            ->addColumn('date', function ($proc) {
+                $requestedDate = $proc->requested_on ? $proc->requested_on->format('d M Y H:i') : 'N/A';
+                $scheduledDate = $proc->scheduled_date ? $proc->scheduled_date->format('d M Y') : null;
+                $html = "<small>{$requestedDate}</small>";
+                if ($scheduledDate) {
+                    $html .= "<br><small class='text-info'><i class='fa fa-calendar'></i> Scheduled: {$scheduledDate}</small>";
+                }
+                return $html;
+            })
+            ->addColumn('actions', function ($proc) {
+                $detailsUrl = route('patient-procedures.show', $proc->id);
+                $openDetailsBtn = "<a href='{$detailsUrl}' target='_blank' class='btn btn-sm btn-primary' title='View Details'><i class='fa fa-external-link-alt'></i> Details</a>";
+
+                $deleteBtn = '';
+
+                // Delete only available to creator and within edit window
+                $currentUserId = auth()->id();
+                $isCreator = $proc->requested_by === $currentUserId;
+                $editWindowMinutes = appsettings('note_edit_window', 30);
+                $withinEditWindow = $proc->created_at && now()->diffInMinutes($proc->created_at) <= $editWindowMinutes;
+
+                // Only allow deletion for requested status, by creator, within edit window
+                if ($proc->procedure_status === \App\Models\Procedure::STATUS_REQUESTED && $isCreator && $withinEditWindow) {
+                    $serviceName = addslashes(optional($proc->service)->service_name ?? 'Procedure');
+                    $deleteBtn = " <button class='btn btn-sm btn-outline-danger' onclick='deleteProcedureRequest({$proc->id}, {$proc->encounter_id}, \"{$serviceName}\")' title='Delete Request'><i class='fa fa-trash'></i></button>";
+                }
+
+                return "<div class='btn-group btn-group-sm' role='group'>" . $openDetailsBtn . $deleteBtn . "</div>";
+            })
+            ->rawColumns(['procedure', 'priority', 'status', 'date', 'actions'])
+            ->make(true);
+    }
+
+    /**
+     * Get procedure details
+     */
+    public function getProcedureDetails(\App\Models\Procedure $procedure)
+    {
+        $procedure->load([
+            'service',
+            'procedureDefinition',
+            'requestedByUser',
+            'billedByUser',
+            'preNotesBy',
+            'postNotesBy',
+            'cancelledByUser',
+            'teamMembers.user',
+            'notes.createdBy',
+            'productOrServiceRequest'
+        ]);
+
+        return response()->json($procedure);
+    }
+
+    /**
+     * Delete a procedure request
+     */
+    public function deleteProcedure(Request $request, Encounter $encounter, \App\Models\Procedure $procedure)
+    {
+        try {
+            // Verify the procedure belongs to this encounter
+            if ($procedure->encounter_id !== $encounter->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Procedure does not belong to this encounter'
+                ], 403);
+            }
+
+            // Only allow deletion of requested/scheduled procedures
+            if (!in_array($procedure->procedure_status, [\App\Models\Procedure::STATUS_REQUESTED, \App\Models\Procedure::STATUS_SCHEDULED])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete a procedure that is already in progress or completed',
+                    'reason' => 'Procedure status: ' . $procedure->procedure_status
+                ], 403);
+            }
+
+            // Validate deletion reason
+            $request->validate([
+                'reason' => 'required|string|max:500'
+            ]);
+
+            // Delete associated billing entry if exists
+            if ($procedure->product_or_service_request_id) {
+                $billingEntry = \App\Models\ProductOrServiceRequest::find($procedure->product_or_service_request_id);
+                if ($billingEntry && !$billingEntry->paid) {
+                    $billingEntry->delete();
+                }
+            }
+
+            // Soft delete the procedure
+            $procedure->cancellation_reason = $request->reason;
+            $procedure->cancelled_by = Auth::id();
+            $procedure->cancelled_at = now();
+            $procedure->procedure_status = \App\Models\Procedure::STATUS_CANCELLED;
+            $procedure->save();
+            $procedure->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Procedure request deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting procedure: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update procedure details (status, scheduled date, etc.)
+     */
+    public function updateProcedure(Request $request, \App\Models\Procedure $procedure)
+    {
+        try {
+            $request->validate([
+                'procedure_status' => 'sometimes|in:' . implode(',', array_keys(\App\Models\Procedure::STATUSES)),
+                'priority' => 'sometimes|in:' . implode(',', array_keys(\App\Models\Procedure::PRIORITIES)),
+                'scheduled_date' => 'sometimes|nullable|date',
+                'scheduled_time' => 'sometimes|nullable|date_format:H:i',
+                'operating_room' => 'sometimes|nullable|string|max:100',
+                'outcome' => 'sometimes|nullable|in:' . implode(',', array_keys(\App\Models\Procedure::OUTCOMES)),
+                'outcome_notes' => 'sometimes|nullable|string|max:2000',
+                'pre_notes' => 'sometimes|nullable|string|max:2000',
+                'post_notes' => 'sometimes|nullable|string|max:2000',
+            ]);
+
+            // Update allowed fields
+            $fillable = ['procedure_status', 'priority', 'scheduled_date', 'scheduled_time',
+                         'operating_room', 'outcome', 'outcome_notes', 'pre_notes', 'post_notes'];
+
+            foreach ($fillable as $field) {
+                if ($request->has($field)) {
+                    $procedure->$field = $request->$field;
+
+                    // Track who wrote notes
+                    if ($field === 'pre_notes' && $request->$field) {
+                        $procedure->pre_notes_by = Auth::id();
+                    }
+                    if ($field === 'post_notes' && $request->$field) {
+                        $procedure->post_notes_by = Auth::id();
+                    }
+                }
+            }
+
+            // Handle status transitions
+            if ($request->has('procedure_status')) {
+                $newStatus = $request->procedure_status;
+
+                if ($newStatus === \App\Models\Procedure::STATUS_IN_PROGRESS && !$procedure->actual_start_time) {
+                    $procedure->actual_start_time = now();
+                }
+
+                if ($newStatus === \App\Models\Procedure::STATUS_COMPLETED && !$procedure->actual_end_time) {
+                    $procedure->actual_end_time = now();
+                }
+            }
+
+            $procedure->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Procedure updated successfully',
+                'procedure' => $procedure->load(['service', 'teamMembers.user', 'notes.createdBy'])
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error: ' . implode(', ', $e->validator->errors()->all())
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating procedure: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get procedure team members
+     */
+    public function getProcedureTeam(\App\Models\Procedure $procedure)
+    {
+        $teamMembers = $procedure->teamMembers()->with('user')->get();
+
+        return response()->json([
+            'success' => true,
+            'team' => $teamMembers,
+            'roles' => \App\Models\ProcedureTeamMember::ROLES
+        ]);
+    }
+
+    /**
+     * Add a team member to a procedure
+     */
+    public function addProcedureTeamMember(Request $request, \App\Models\Procedure $procedure)
+    {
+        try {
+            $request->validate([
+                'user_id' => 'required|exists:users,id',
+                'role' => 'required|in:' . implode(',', array_keys(\App\Models\ProcedureTeamMember::ROLES)),
+                'custom_role' => 'nullable|required_if:role,other|string|max:100',
+                'is_lead' => 'sometimes',
+                'notes' => 'nullable|string|max:500',
+            ]);
+
+            // Convert is_lead to boolean
+            $isLead = filter_var($request->is_lead, FILTER_VALIDATE_BOOLEAN);
+
+            // Check if user is already in the team with the same role
+            $existing = $procedure->teamMembers()
+                ->where('user_id', $request->user_id)
+                ->where('role', $request->role)
+                ->first();
+
+            if ($existing) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This team member already has this role assigned'
+                ], 422);
+            }
+
+            $teamMember = new \App\Models\ProcedureTeamMember();
+            $teamMember->procedure_id = $procedure->id;
+            $teamMember->user_id = $request->user_id;
+            $teamMember->role = $request->role;
+            $teamMember->custom_role = $request->role === 'other' ? $request->custom_role : null;
+            $teamMember->is_lead = $isLead;
+            $teamMember->notes = $request->notes;
+            $teamMember->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Team member added successfully',
+                'member' => $teamMember->load('user')
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error: ' . implode(', ', $e->validator->errors()->all())
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error adding team member: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update a procedure team member
+     */
+    public function updateProcedureTeamMember(Request $request, \App\Models\Procedure $procedure, \App\Models\ProcedureTeamMember $member)
+    {
+        try {
+            // Verify member belongs to this procedure
+            if ($member->procedure_id !== $procedure->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Team member does not belong to this procedure'
+                ], 403);
+            }
+
+            $request->validate([
+                'role' => 'sometimes|in:' . implode(',', array_keys(\App\Models\ProcedureTeamMember::ROLES)),
+                'custom_role' => 'nullable|required_if:role,other|string|max:100',
+                'is_lead' => 'sometimes|boolean',
+                'notes' => 'nullable|string|max:500',
+            ]);
+
+            if ($request->has('role')) {
+                $member->role = $request->role;
+                $member->custom_role = $request->role === 'other' ? $request->custom_role : null;
+            }
+            if ($request->has('is_lead')) {
+                $member->is_lead = $request->is_lead;
+            }
+            if ($request->has('notes')) {
+                $member->notes = $request->notes;
+            }
+
+            $member->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Team member updated successfully',
+                'member' => $member->load('user')
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating team member: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Remove a team member from a procedure
+     */
+    public function deleteProcedureTeamMember(\App\Models\Procedure $procedure, \App\Models\ProcedureTeamMember $member)
+    {
+        try {
+            // Verify member belongs to this procedure
+            if ($member->procedure_id !== $procedure->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Team member does not belong to this procedure'
+                ], 403);
+            }
+
+            $member->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Team member removed successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error removing team member: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get procedure notes
+     */
+    public function getProcedureNotes(\App\Models\Procedure $procedure)
+    {
+        $notes = $procedure->notes()->with('createdBy')->orderBy('created_at', 'DESC')->get();
+
+        return response()->json([
+            'success' => true,
+            'notes' => $notes,
+            'types' => \App\Models\ProcedureNote::NOTE_TYPES
+        ]);
+    }
+
+    /**
+     * Add a note to a procedure
+     */
+    public function addProcedureNote(Request $request, \App\Models\Procedure $procedure)
+    {
+        try {
+            $request->validate([
+                'note_type' => 'required|in:' . implode(',', array_keys(\App\Models\ProcedureNote::NOTE_TYPES)),
+                'title' => 'required|string|max:200',
+                'content' => 'required|string',
+            ]);
+
+            $note = new \App\Models\ProcedureNote();
+            $note->procedure_id = $procedure->id;
+            $note->note_type = $request->note_type;
+            $note->title = $request->title;
+            $note->content = $request->content;
+            $note->created_by = Auth::id();
+            $note->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Note added successfully',
+                'note' => $note->load('createdBy')
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error: ' . implode(', ', $e->validator->errors()->all())
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error adding note: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update a procedure note
+     */
+    public function updateProcedureNote(Request $request, \App\Models\Procedure $procedure, \App\Models\ProcedureNote $note)
+    {
+        try {
+            // Verify note belongs to this procedure
+            if ($note->procedure_id !== $procedure->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Note does not belong to this procedure'
+                ], 403);
+            }
+
+            $request->validate([
+                'note_type' => 'sometimes|in:' . implode(',', array_keys(\App\Models\ProcedureNote::NOTE_TYPES)),
+                'title' => 'sometimes|string|max:200',
+                'content' => 'sometimes|string',
+            ]);
+
+            if ($request->has('note_type')) {
+                $note->note_type = $request->note_type;
+            }
+            if ($request->has('title')) {
+                $note->title = $request->title;
+            }
+            if ($request->has('content')) {
+                $note->content = $request->content;
+            }
+
+            $note->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Note updated successfully',
+                'note' => $note->load('createdBy')
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating note: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete a procedure note
+     */
+    public function deleteProcedureNote(\App\Models\Procedure $procedure, \App\Models\ProcedureNote $note)
+    {
+        try {
+            // Verify note belongs to this procedure
+            if ($note->procedure_id !== $procedure->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Note does not belong to this procedure'
+                ], 403);
+            }
+
+            $note->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Note deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting note: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Cancel a procedure with optional refund
+     */
+    public function cancelProcedure(Request $request, \App\Models\Procedure $procedure)
+    {
+        try {
+            // Cannot cancel completed procedures
+            if ($procedure->procedure_status === \App\Models\Procedure::STATUS_COMPLETED) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot cancel a completed procedure'
+                ], 403);
+            }
+
+            // Already cancelled
+            if ($procedure->procedure_status === \App\Models\Procedure::STATUS_CANCELLED) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Procedure is already cancelled'
+                ], 403);
+            }
+
+            $request->validate([
+                'cancellation_reason' => 'required|string|max:1000',
+                'refund_eligible' => 'sometimes'
+            ]);
+
+            // Convert string boolean to actual boolean
+            $refundEligible = filter_var($request->refund_eligible, FILTER_VALIDATE_BOOLEAN);
+
+            // Update procedure status
+            $procedure->procedure_status = \App\Models\Procedure::STATUS_CANCELLED;
+            $procedure->cancellation_reason = $request->cancellation_reason;
+            $procedure->cancelled_by = Auth::id();
+            $procedure->cancelled_at = now();
+            $procedure->save();
+
+            // Handle refund if applicable
+            $refundMessage = '';
+            if ($refundEligible && $procedure->product_or_service_request_id) {
+                $billing = \App\Models\ProductOrServiceRequest::find($procedure->product_or_service_request_id);
+                if ($billing && $billing->paid) {
+                    // Create refund/credit entry
+                    $patient = $procedure->patient;
+                    if ($patient && $patient->patientAccount) {
+                        $patient->patientAccount->increment('balance', $billing->price);
+                        $refundMessage = ' A credit of ₦' . number_format($billing->price, 2) . ' has been added to the patient account.';
+                    }
+                    $billing->update(['refunded' => true, 'refund_reason' => $request->cancellation_reason]);
+                } elseif ($billing && !$billing->paid) {
+                    // Just delete unpaid billing entry
+                    $billing->delete();
+                    $refundMessage = ' Unpaid billing entry has been removed.';
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Procedure cancelled successfully.' . $refundMessage
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error: ' . implode(', ', $e->validator->errors()->all())
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error cancelling procedure: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Print procedure details
+     */
+    public function printProcedure(\App\Models\Procedure $procedure)
+    {
+        $procedure->load([
+            'patient',
+            'encounter',
+            'service',
+            'procedureDefinition.procedureCategory',
+            'teamMembers.user',
+            'notes.createdBy',
+            'requestedByUser',
+            'billedByUser'
+        ]);
+
+        return view('admin.doctors.procedures.print', compact('procedure'));
     }
 }

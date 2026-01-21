@@ -56,7 +56,8 @@ class HmoWorkbenchController extends Controller
             'service.price',
             'product.price',
             'validator',
-            'staff' // For "Requested By" info
+            'staff', // For "Requested By" info
+            'procedure.procedureDefinition' // For Procedure items
         ])
         ->whereHas('user.patient_profile', function($q) {
             $q->whereNotNull('hmo_id');
@@ -125,6 +126,26 @@ class HmoWorkbenchController extends Controller
             $query->where('coverage_mode', $request->coverage_mode);
         }
 
+        // Service Type filter - Products, Services, or Procedures
+        if ($request->filled('service_type')) {
+            switch ($request->service_type) {
+                case 'product':
+                    // Has product_id and no linked procedure
+                    $query->whereNotNull('product_id')
+                          ->whereDoesntHave('procedure');
+                    break;
+                case 'service':
+                    // Has service_id and no linked procedure
+                    $query->whereNotNull('service_id')
+                          ->whereDoesntHave('procedure');
+                    break;
+                case 'procedure':
+                    // Has a linked procedure
+                    $query->whereHas('procedure');
+                    break;
+            }
+        }
+
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
@@ -151,6 +172,9 @@ class HmoWorkbenchController extends Controller
                   })
                   ->orWhereHas('product', function($q2) use ($search) {
                       $q2->where('product_name', 'LIKE', "%{$search}%");
+                  })
+                  ->orWhereHas('procedure.procedureDefinition', function($q2) use ($search) {
+                      $q2->where('name', 'LIKE', "%{$search}%");
                   });
             });
         }
@@ -267,7 +291,13 @@ class HmoWorkbenchController extends Controller
                 $itemType = 'N/A';
                 $badgeColor = 'secondary';
 
-                if ($req->product_id && $req->product) {
+                // Check if this is a procedure billing entry first
+                $procedure = $req->procedure;
+                if ($procedure) {
+                    $itemName = $procedure->procedureDefinition->name ?? 'Unknown Procedure';
+                    $itemType = 'Procedure';
+                    $badgeColor = 'purple';
+                } elseif ($req->product_id && $req->product) {
                     $itemName = $req->product->product_name;
                     $itemType = 'Product';
                     $badgeColor = 'success';
@@ -280,6 +310,12 @@ class HmoWorkbenchController extends Controller
                 $html = "<span class=\"badge badge-$badgeColor\">$itemType</span>";
                 $html .= "<br><strong>$itemName</strong>";
                 $html .= "<br><small class=\"text-muted\">Qty: $req->qty</small>";
+
+                // Add procedure-specific info
+                if ($procedure) {
+                    $procedureUrl = route('patient-procedures.show', $procedure->id);
+                    $html .= "<br><a href=\"{$procedureUrl}\" class=\"btn btn-xs btn-outline-primary mt-1\"><i class=\"fa fa-external-link-alt\"></i> View Procedure</a>";
+                }
 
                 return $html;
             })

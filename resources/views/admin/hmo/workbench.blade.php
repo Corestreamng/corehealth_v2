@@ -446,6 +446,17 @@
                     </div>
                     <div class="col-md-2">
                         <div class="form-group">
+                            <label>Service Type</label>
+                            <select class="form-control form-control-sm" id="filter_service_type">
+                                <option value="">All Types</option>
+                                <option value="product">Products</option>
+                                <option value="service">Services</option>
+                                <option value="procedure">Procedures</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
                             <label>Date From</label>
                             <input type="date" class="form-control form-control-sm" id="filter_date_from">
                         </div>
@@ -959,6 +970,7 @@ $(function() {
                     d.preset = currentPreset;
                     d.hmo_id = $('#filter_hmo').val();
                     d.coverage_mode = $('#filter_coverage').val();
+                    d.service_type = $('#filter_service_type').val();
                     d.date_from = $('#filter_date_from').val();
                     d.date_to = $('#filter_date_to').val();
                     d.search = $('#search_input').val();

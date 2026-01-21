@@ -49,6 +49,15 @@ class User extends Authenticatable implements Auditable
     ];
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array<int, string>
+     */
+    protected $appends = [
+        'name',
+    ];
+
+    /**
      * Get the user's full name as a single property.
      *
      * @return string

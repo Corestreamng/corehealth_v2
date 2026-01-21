@@ -2,7 +2,7 @@
 <div class="row g-4 mb-4">
     {{-- Quick Stats --}}
     <div class="col-xl-3 col-lg-6">
-        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(135deg, #0575e6 0%, #021b79 100%);">
+        <div class="card-modern border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(135deg, #0575e6 0%, #021b79 100%);">
             <div class="card-body text-white">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
@@ -17,7 +17,7 @@
         </div>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(135deg, #373b44 0%, #4286f4 100%);">
+        <div class="card-modern border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(135deg, #373b44 0%, #4286f4 100%);">
             <div class="card-body text-white">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
@@ -32,7 +32,7 @@
         </div>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(135deg, #2b5876 0%, #4e4376 100%);">
+        <div class="card-modern border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(135deg, #2b5876 0%, #4e4376 100%);">
             <div class="card-body text-white">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
@@ -47,7 +47,7 @@
         </div>
     </div>
     <div class="col-xl-3 col-lg-6">
-        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(135deg, #1a2a6c 0%, #b21f1f 100%);">
+        <div class="card-modern border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(135deg, #1a2a6c 0%, #b21f1f 100%);">
             <div class="card-body text-white">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
@@ -66,7 +66,7 @@
 {{-- Shortcuts --}}
 <div class="row g-4">
     <div class="col-12">
-        <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+        <div class="card-modern border-0 shadow-sm" style="border-radius: 12px;">
             <div class="card-body">
                 <h5 class="card-title mb-4">
                     <i class="mdi mdi-flask text-info me-2"></i>Lab/Investigation Shortcuts

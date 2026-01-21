@@ -5284,6 +5284,26 @@
                                     </div>
                                 </div>
 
+                                {{-- Registration Fee (Optional) --}}
+                                @if(isset($registrationServices) && $registrationServices->count() > 0)
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label mb-1"><i class="mdi mdi-cash-register text-success"></i> Registration Fee <small class="text-muted">(Optional)</small></label>
+                                            <select class="form-control" id="pf-registration-service">
+                                                <option value="">-- No Registration Fee --</option>
+                                                @foreach($registrationServices as $regService)
+                                                    <option value="{{ $regService->id }}" data-price="{{ $regService->price->sale_price ?? 0 }}">
+                                                        {{ $regService->service_name }} - ₦{{ number_format($regService->price->sale_price ?? 0, 2) }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            <small class="form-text text-info"><i class="mdi mdi-information-outline"></i> If selected, a billing entry will be created</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                @endif
+
                                 <!-- Comprehensive Summary Card -->
                                 <div class="registration-summary mt-4" id="registration-summary">
                                     <h6><i class="mdi mdi-clipboard-check"></i> Registration Summary</h6>
@@ -5559,7 +5579,7 @@
                     </div>
 
                     <!-- Service/Product Info -->
-                    <div class="card mb-3">
+                    <div class="card-modern mb-3">
                         <div class="card-header py-2 bg-light">
                             <h6 class="mb-0"><i class="mdi mdi-information"></i> <span id="detail-info-title">Service Information</span></h6>
                         </div>
@@ -5599,7 +5619,7 @@
                     </div>
 
                     <!-- Clinical Note (if any) -->
-                    <div class="card mb-3" id="detail-note-card" style="display: none;">
+                    <div class="card-modern mb-3" id="detail-note-card" style="display: none;">
                         <div class="card-header py-2 bg-warning-light">
                             <h6 class="mb-0"><i class="mdi mdi-note-text"></i> Clinical Note</h6>
                         </div>
@@ -5609,7 +5629,7 @@
                     </div>
 
                     <!-- Timeline / Status History -->
-                    <div class="card mb-3">
+                    <div class="card-modern mb-3">
                         <div class="card-header py-2 bg-light">
                             <h6 class="mb-0"><i class="mdi mdi-timeline"></i> Status Timeline</h6>
                         </div>
@@ -5621,7 +5641,7 @@
                     </div>
 
                     <!-- Result Summary (Lab/Imaging only) -->
-                    <div class="card mb-3" id="detail-result-card" style="display: none;">
+                    <div class="card-modern mb-3" id="detail-result-card" style="display: none;">
                         <div class="card-header py-2 bg-success text-white">
                             <h6 class="mb-0"><i class="mdi mdi-file-document"></i> Result Summary</h6>
                         </div>
@@ -5636,7 +5656,7 @@
                     </div>
 
                     <!-- Payment Info (if paid) -->
-                    <div class="card mb-0" id="detail-payment-card" style="display: none;">
+                    <div class="card-modern mb-0" id="detail-payment-card" style="display: none;">
                         <div class="card-header py-2 bg-success text-white">
                             <h6 class="mb-0"><i class="mdi mdi-cash-check"></i> Payment Information</h6>
                         </div>
@@ -9433,6 +9453,12 @@ function submitPatientForm() {
     formData.append('next_of_kin_address', $('#pf-nok-address').val().trim());
     formData.append('hmo_id', $('#pf-hmo').val() || 1);
     formData.append('hmo_no', $('#pf-hmo-no').val().trim());
+
+    // Add registration service if selected
+    const registrationServiceId = $('#pf-registration-service').val();
+    if (registrationServiceId) {
+        formData.append('registration_service_id', registrationServiceId);
+    }
 
     // Add file uploads if present
     const passportFile = $('#pf-passport')[0].files[0];
