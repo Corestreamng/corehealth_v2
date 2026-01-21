@@ -294,6 +294,9 @@ Route::group(['middleware' => ['auth']], function () {
             Route::get('{procedure}/lab-history', [\App\Http\Controllers\PatientProcedureController::class, 'labHistoryList'])->name('lab-history');
             Route::get('{procedure}/imaging-history', [\App\Http\Controllers\PatientProcedureController::class, 'imagingHistoryList'])->name('imaging-history');
             Route::get('{procedure}/medication-history', [\App\Http\Controllers\PatientProcedureController::class, 'medicationHistoryList'])->name('medication-history');
+
+            // List procedures by patient (for clinical context modal and workbenches)
+            Route::get('list-by-patient/{patient}', [\App\Http\Controllers\PatientProcedureController::class, 'listByPatient'])->name('list-by-patient');
         });
 
         Route::get('investigationHistoryList/{patient_id}', [EncounterController::class, 'investigationHistoryList'])->name('investigationHistoryList');
