@@ -545,17 +545,23 @@ class BillingWorkbenchController extends Controller
                 ];
             }
 
-            // If paying from account, verify and deduct balance
+            // If paying from account, deduct balance (credit facility: can go negative)
             // Match original payment summary behavior: use ACC_WITHDRAW and store negative total
             $paymentType = $data['payment_type'];
             $paymentTotal = $total;
 
             if ($data['payment_type'] === 'ACCOUNT') {
                 $account = PatientAccount::where('patient_id', $patient->id)->first();
-                if (!$account || $account->balance < $total) {
-                    throw new \Exception('Insufficient account balance. Available: ₦' . number_format($account ? $account->balance : 0, 2));
+
+                // Create account if it doesn't exist
+                if (!$account) {
+                    $account = PatientAccount::create([
+                        'patient_id' => $patient->id,
+                        'balance' => 0,
+                    ]);
                 }
-                // Deduct from account
+
+                // Deduct from account (can go negative - credit facility)
                 $account->balance -= $total;
                 $account->save();
 

@@ -4615,13 +4615,22 @@ function updateAccountBalanceDisplays(accountData) {
 
     // Update billing tab balance
     $('#billing-balance-amount').text(formattedBalance);
-    if (balance > 0) {
-        $('#billing-account-balance').show();
-        // Show account payment option if balance is positive
-        $('#account-payment-option').show();
+
+    // Always show billing account balance section and account payment option
+    // (Credit facility: allow payments even with zero or negative balance)
+    $('#billing-account-balance').show();
+    $('#account-payment-option').show();
+
+    // Add visual indicator for negative balance
+    if (balance < 0) {
+        $('#billing-balance-amount').addClass('text-danger').removeClass('text-success');
+        $('#header-balance-amount').addClass('text-danger').removeClass('text-success');
+    } else if (balance > 0) {
+        $('#billing-balance-amount').addClass('text-success').removeClass('text-danger');
+        $('#header-balance-amount').addClass('text-success').removeClass('text-danger');
     } else {
-        $('#billing-account-balance').hide();
-        $('#account-payment-option').hide();
+        $('#billing-balance-amount').removeClass('text-success text-danger');
+        $('#header-balance-amount').removeClass('text-success text-danger');
     }
 
     // Update account tab with new modern UI
@@ -5328,18 +5337,24 @@ function processPayment() {
         return;
     }
 
-    // Validate account balance payment
+    // Validate account balance payment (Credit facility: allow negative balance with warning)
     if (paymentType === 'ACCOUNT') {
-        if (currentAccountBalance <= 0) {
-            toastr.error('Insufficient account balance');
-            return;
-        }
+        const balanceAfter = currentAccountBalance - totalPayable;
+
         if (totalPayable > currentAccountBalance) {
-            toastr.error(`Insufficient account balance. Available: ₦${currentAccountBalance.toLocaleString()}`);
-            return;
-        }
-        if (!confirm(`Deduct ₦${totalPayable.toLocaleString()} from account balance?`)) {
-            return;
+            // Show warning for credit/negative balance
+            const warningMsg = currentAccountBalance >= 0
+                ? `This payment of ₦${totalPayable.toLocaleString()} exceeds the available balance of ₦${currentAccountBalance.toLocaleString()}.\n\nBalance after payment: ₦${balanceAfter.toLocaleString()} (CREDIT/DEBIT)\n\nDo you want to proceed with credit facility?`
+                : `Current balance is already ₦${currentAccountBalance.toLocaleString()} (debit).\n\nThis payment will increase the debit to ₦${balanceAfter.toLocaleString()}.\n\nDo you want to proceed?`;
+
+            if (!confirm(warningMsg)) {
+                return;
+            }
+        } else {
+            // Normal deduction - show confirmation
+            if (!confirm(`Deduct ₦${totalPayable.toLocaleString()} from account balance?\n\nBalance after: ₦${balanceAfter.toLocaleString()}`)) {
+                return;
+            }
         }
     }
 

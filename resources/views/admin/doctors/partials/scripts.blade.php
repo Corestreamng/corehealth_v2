@@ -87,6 +87,8 @@ $('#confirmDeleteBtn').on('click', function() {
         url = `/encounters/${currentDeleteItem.encounterId}/imaging/${currentDeleteItem.id}`;
     } else if (currentDeleteItem.type === 'prescription') {
         url = `/encounters/${currentDeleteItem.encounterId}/prescriptions/${currentDeleteItem.id}`;
+    } else if (currentDeleteItem.type === 'procedure') {
+        url = `/encounters/${currentDeleteItem.encounterId}/procedures/${currentDeleteItem.id}`;
     } else if (currentDeleteItem.type === 'encounter') {
         url = `/encounters/${currentDeleteItem.id}`;
     }
@@ -119,6 +121,8 @@ $('#confirmDeleteBtn').on('click', function() {
                     $('#imaging_history_list').DataTable().ajax.reload();
                 } else if (currentDeleteItem.type === 'prescription') {
                     $('#presc_history_list').DataTable().ajax.reload();
+                } else if (currentDeleteItem.type === 'procedure') {
+                    $('#procedure_history_list').DataTable().ajax.reload();
                 } else if (currentDeleteItem.type === 'encounter') {
                     $('#encounter_history_list').DataTable().ajax.reload();
                 }

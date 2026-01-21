@@ -36,6 +36,7 @@ protected $fillable = [
         'consultation_cycle_duration',
         'note_edit_window',
         'result_edit_duration',
+        'timezone',
         'goonline',
         'requirediagnosis',
         'enable_twakto',
@@ -58,5 +59,23 @@ protected $fillable = [
         'corehms_superadmin_url',
         'corehms_superadmin_username',
         'corehms_superadmin_pass',
+        'registration_category_id',
+        'procedure_category_id',
     ];
+
+    /**
+     * Get the registration service category.
+     */
+    public function registrationCategory()
+    {
+        return $this->belongsTo(ServiceCategory::class, 'registration_category_id', 'id');
+    }
+
+    /**
+     * Get the procedure service category.
+     */
+    public function procedureCategory()
+    {
+        return $this->belongsTo(ServiceCategory::class, 'procedure_category_id', 'id');
+    }
 }

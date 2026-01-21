@@ -107,19 +107,22 @@ class ProductController extends Controller
     public function liveSearchProducts(Request $request)
     {
         $request->validate([
-            'term' => 'required|string',
+            'term' => 'nullable|string',
             'patient_id' => 'nullable|integer'
         ]);
 
-        $pc = Product::query()
-            ->where('status', 1)
-            ->where(function ($q) use ($request) {
+        $query = Product::query()->where('status', 1);
+
+        if ($request->filled('term')) {
+            $query->where(function ($q) use ($request) {
                 $q->where('product_name', 'LIKE', "%{$request->term}%")
                     ->orWhere('product_code', 'LIKE', "%{$request->term}%");
-            })
+            });
+        }
+
+        $pc = $query
             ->with(['stock', 'category', 'price'])
             ->orderBy('product_name', 'ASC')
-            ->limit(10)
             ->get()
             ->map(function ($product) use ($request) {
                 $basePrice = optional($product->price)->initial_sale_price;

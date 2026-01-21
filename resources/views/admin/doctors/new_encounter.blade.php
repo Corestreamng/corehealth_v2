@@ -148,6 +148,12 @@
             </button>
         </li>
         <li class="nav-item" role="presentation">
+            <button class="nav-link" id="procedures_tab" data-bs-toggle="tab" data-bs-target="#procedures"
+                type="button" role="tab" aria-controls="procedures" aria-selected="false">
+                <i class="fa fa-user-md me-1"></i> Procedures
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
             <button class="nav-link" id="admissions_tab" data-bs-toggle="tab" data-bs-target="#admissions"
                 type="button" role="tab" aria-controls="admissions" aria-selected="false">
                 <i class="fa fa-bed me-1"></i> Admission History
@@ -358,6 +364,11 @@
         {{-- Medications: Combined Prescription History + New Prescription --}}
         <div class="tab-pane fade" id="medications" role="tabpanel" aria-labelledby="medications_tab">
             @include('admin.doctors.partials.medications')
+        </div>
+
+        {{-- Procedures Tab --}}
+        <div class="tab-pane fade" id="procedures" role="tabpanel" aria-labelledby="procedures_tab">
+            @include('admin.doctors.partials.procedures')
         </div>
 
         {{-- Admission History --}}

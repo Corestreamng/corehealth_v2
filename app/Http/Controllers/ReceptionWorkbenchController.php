@@ -58,7 +58,18 @@ class ReceptionWorkbenchController extends Controller
         $clinics = Clinic::all();
         $hmos = Hmo::with('scheme')->orderBy('name')->get();
 
-        return view('admin.reception.workbench', compact('clinics', 'hmos'));
+        // Get registration services for optional registration fee
+        $registrationCategoryId = appsettings('registration_category_id');
+        $registrationServices = collect();
+        if ($registrationCategoryId) {
+            $registrationServices = service::with('price')
+                ->where('category_id', $registrationCategoryId)
+                ->where('status', 1)
+                ->orderBy('service_name')
+                ->get();
+        }
+
+        return view('admin.reception.workbench', compact('clinics', 'hmos', 'registrationServices'));
     }
 
     /**
@@ -1000,6 +1011,21 @@ class ReceptionWorkbenchController extends Controller
             $account->patient_id = $patient->id;
             $account->balance = 0;
             $account->save();
+
+            // Create registration fee billing entry if selected
+            if ($request->registration_service_id) {
+                $regService = service::with('price')->find($request->registration_service_id);
+                if ($regService && $regService->price) {
+                    ProductOrServiceRequest::create([
+                        'user_id' => $user->id,
+                        'staff_user_id' => Auth::id(),
+                        'service_id' => $regService->id,
+                        'qty' => 1,
+                        'payable_amount' => $regService->price->sale_price ?? 0,
+                    ]);
+                    Log::info("Registration fee added for patient via quickRegister: {$patient->id}, service: {$regService->id}");
+                }
+            }
 
             DB::commit();
 

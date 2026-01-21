@@ -139,6 +139,40 @@
                                                value="{{ old('imaging_category_id', $config->imaging_category_id ?? 6) }}"
                                                min="1" style="border-radius: 8px; padding: 0.75rem;">
                                     </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">
+                                            Registration Category
+                                            <small class="text-muted">(for registration fees)</small>
+                                        </label>
+                                        <select class="form-control" name="registration_category_id" style="border-radius: 8px; padding: 0.75rem;">
+                                            <option value="">-- Select Category --</option>
+                                            @foreach($serviceCategories as $category)
+                                                <option value="{{ $category->id }}"
+                                                    {{ old('registration_category_id', $config->registration_category_id) == $category->id ? 'selected' : '' }}>
+                                                    {{ $category->category_name }} (ID: {{ $category->id }})
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <small class="text-muted">Services in this category can be auto-billed at patient registration</small>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">
+                                            Procedure Category
+                                            <small class="text-muted">(for surgical/medical procedures)</small>
+                                        </label>
+                                        <select class="form-control" name="procedure_category_id" style="border-radius: 8px; padding: 0.75rem;">
+                                            <option value="">-- Select Category --</option>
+                                            @foreach($serviceCategories as $category)
+                                                <option value="{{ $category->id }}"
+                                                    {{ old('procedure_category_id', $config->procedure_category_id) == $category->id ? 'selected' : '' }}>
+                                                    {{ $category->category_name }} (ID: {{ $category->id }})
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <small class="text-muted">Services in this category will show procedure-specific fields (surgical type, team, notes)</small>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -193,6 +227,33 @@
                                             </div>
                                         </div>
                                         <small class="text-muted">Time to allow result editing</small>
+                                    </div>
+
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label" style="font-weight: 600; color: #495057;">System Timezone</label>
+                                        <select class="form-control" name="timezone" style="border-radius: 8px; padding: 0.75rem;">
+                                            @php
+                                                $timezones = [
+                                                    'Africa/Lagos' => 'Africa/Lagos (WAT)',
+                                                    'Africa/Accra' => 'Africa/Accra (GMT)',
+                                                    'Africa/Johannesburg' => 'Africa/Johannesburg (SAST)',
+                                                    'Africa/Nairobi' => 'Africa/Nairobi (EAT)',
+                                                    'Africa/Cairo' => 'Africa/Cairo (EET)',
+                                                    'UTC' => 'UTC',
+                                                    'Europe/London' => 'Europe/London (GMT/BST)',
+                                                    'Europe/Paris' => 'Europe/Paris (CET)',
+                                                    'America/New_York' => 'America/New_York (EST)',
+                                                    'America/Los_Angeles' => 'America/Los_Angeles (PST)',
+                                                    'Asia/Dubai' => 'Asia/Dubai (GST)',
+                                                    'Asia/Kolkata' => 'Asia/Kolkata (IST)',
+                                                ];
+                                                $currentTimezone = old('timezone', $config->timezone ?? 'Africa/Lagos');
+                                            @endphp
+                                            @foreach($timezones as $tz => $label)
+                                                <option value="{{ $tz }}" {{ $currentTimezone == $tz ? 'selected' : '' }}>{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                        <small class="text-muted">Timezone for medication schedules & notifications</small>
                                     </div>
                                 </div>
                             </div>

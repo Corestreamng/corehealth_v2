@@ -272,8 +272,22 @@ class ImagingWorkbenchController extends Controller
                     }
 
                     // Check delivery status (payment + HMO validation)
+                    // Also check if this is a bundled procedure item
                     $deliveryCheck = null;
-                    if ($request->productOrServiceRequest) {
+                    $bundledInfo = null;
+
+                    // First check if this imaging is part of a bundled procedure
+                    $bundledCheck = \App\Helpers\HmoHelper::isBundledItem('imaging', $request->id);
+                    if ($bundledCheck && $bundledCheck['is_bundled']) {
+                        // Use bundled item delivery check
+                        $deliveryCheck = \App\Helpers\HmoHelper::canDeliverBundledItem($bundledCheck['procedure_item']);
+                        $bundledInfo = [
+                            'is_bundled' => true,
+                            'procedure_id' => $bundledCheck['procedure_id'],
+                            'procedure_name' => $bundledCheck['procedure_name'],
+                        ];
+                    } elseif ($request->productOrServiceRequest) {
+                        // Standard delivery check for non-bundled items
                         $deliveryCheck = \App\Helpers\HmoHelper::canDeliverService($request->productOrServiceRequest);
                     }
 
@@ -300,6 +314,7 @@ class ImagingWorkbenchController extends Controller
                         'result_at' => $this->formatDateTime($request->result_date),
                         'updated_at' => $this->formatDateTime($request->updated_at),
                         'delivery_check' => $deliveryCheck,
+                        'bundled_info' => $bundledInfo, // Add bundled procedure info
                     ];
                 })
                 ->rawColumns(['card_data'])
