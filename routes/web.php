@@ -167,6 +167,29 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('audit-logs/{id}', [\App\Http\Controllers\AuditLogController::class, 'show'])->name('audit-logs.show');
     });
 
+    // Import/Export Module
+    Route::group(['middleware' => ['auth'], 'prefix' => 'import-export'], function () {
+        Route::get('/', [\App\Http\Controllers\ImportExportController::class, 'index'])->name('import-export.index');
+
+        // Template Downloads
+        Route::get('/template/products', [\App\Http\Controllers\ImportExportController::class, 'downloadProductTemplate'])->name('import-export.template.products');
+        Route::get('/template/services', [\App\Http\Controllers\ImportExportController::class, 'downloadServiceTemplate'])->name('import-export.template.services');
+        Route::get('/template/staff', [\App\Http\Controllers\ImportExportController::class, 'downloadStaffTemplate'])->name('import-export.template.staff');
+        Route::get('/template/patients', [\App\Http\Controllers\ImportExportController::class, 'downloadPatientTemplate'])->name('import-export.template.patients');
+
+        // Imports
+        Route::post('/import/products', [\App\Http\Controllers\ImportExportController::class, 'importProducts'])->name('import-export.import.products');
+        Route::post('/import/services', [\App\Http\Controllers\ImportExportController::class, 'importServices'])->name('import-export.import.services');
+        Route::post('/import/staff', [\App\Http\Controllers\ImportExportController::class, 'importStaff'])->name('import-export.import.staff');
+        Route::post('/import/patients', [\App\Http\Controllers\ImportExportController::class, 'importPatients'])->name('import-export.import.patients');
+
+        // Exports
+        Route::get('/export/products', [\App\Http\Controllers\ImportExportController::class, 'exportProducts'])->name('import-export.export.products');
+        Route::get('/export/services', [\App\Http\Controllers\ImportExportController::class, 'exportServices'])->name('import-export.export.services');
+        Route::get('/export/staff', [\App\Http\Controllers\ImportExportController::class, 'exportStaff'])->name('import-export.export.staff');
+        Route::get('/export/patients', [\App\Http\Controllers\ImportExportController::class, 'exportPatients'])->name('import-export.export.patients');
+    });
+
     Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
         Route::resource('patient', PatientController::class);
@@ -695,3 +718,6 @@ require __DIR__ . '/nurse_chart.php';
 
 // Reception Workbench routes
 require __DIR__ . '/reception_workbench.php';
+
+// Inventory Management routes (PO, Requisitions, Store Workbench)
+require __DIR__ . '/inventory.php';

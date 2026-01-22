@@ -331,6 +331,12 @@
                     <span class="menu-title">Audit Logs</span>
                 </a>
             </li>
+            <li class="nav-item {{ request()->routeIs('import-export.*') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('import-export.*') ? 'active' : '' }}" href="{{ route('import-export.index') }}">
+                    <i class="mdi mdi-database-import-outline menu-icon"></i>
+                    <span class="menu-title">Data Import/Export</span>
+                </a>
+            </li>
             <li class="nav-item {{ request()->routeIs('staff.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('staff.*') ? 'active' : '' }}" href="{{ route('staff.index') }}">
                     <i class="mdi mdi-account-group menu-icon"></i>
@@ -441,6 +447,39 @@
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('patient.index') }}">All Patients</a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+            <!-- Inventory Management -->
+            <li class="nav-item {{ request()->routeIs('inventory.*') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('inventory.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#inventory_management" data-bs-target="#inventory_management" aria-expanded="{{ request()->routeIs('inventory.*') ? 'true' : 'false' }}"
+                    aria-controls="inventory_management">
+                    <i class="mdi mdi-warehouse menu-icon"></i>
+                    <span class="menu-title">Inventory</span>
+                    <i class="mdi mdi-chevron-right menu-arrow"></i>
+                </a>
+                <div class="collapse {{ request()->routeIs('inventory.*') ? 'show' : '' }}" id="inventory_management">
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('inventory.store-workbench.*') ? 'active' : '' }}" href="{{ route('inventory.store-workbench.index') }}">
+                                <i class="mdi mdi-view-dashboard-outline"></i> Store Workbench
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('inventory.purchase-orders.*') ? 'active' : '' }}" href="{{ route('inventory.purchase-orders.index') }}">
+                                <i class="mdi mdi-cart-arrow-down"></i> Purchase Orders
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('inventory.requisitions.*') ? 'active' : '' }}" href="{{ route('inventory.requisitions.index') }}">
+                                <i class="mdi mdi-swap-horizontal"></i> Requisitions
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('inventory.expenses.*') ? 'active' : '' }}" href="{{ route('inventory.expenses.index') }}">
+                                <i class="mdi mdi-cash-minus"></i> Expenses
+                            </a>
                         </li>
                     </ul>
                 </div>
