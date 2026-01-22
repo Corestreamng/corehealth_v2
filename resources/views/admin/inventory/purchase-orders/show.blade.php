@@ -3,7 +3,7 @@
 @section('page_name', 'Inventory Management')
 @section('subpage_name', 'View Purchase Order')
 
-@push('styles')
+@section('content')
 <style>
     .po-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);

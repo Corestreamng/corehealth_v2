@@ -25,7 +25,7 @@
                                     <th>SN</th>
                                     <th>Store</th>
                                     <th>Location</th>
-                                    <th>Visible</th>
+                                    <th>Status</th>
                                     <th>Edit </th>
                                     <th>Products</th>
                                 </tr>

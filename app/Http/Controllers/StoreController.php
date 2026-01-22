@@ -92,13 +92,6 @@ class StoreController extends Controller
                 'location'   => 'nullable|min:3|max:150',
             ];
 
-            if ($request->visible) {
-                #  Making sure if password change was selected it's being validated
-                $rules += [
-                    'visible' => 'required',
-                ];
-            }
-
             $v = Validator::make($request->all(), $rules);
 
             if ($v->fails()) {
@@ -109,7 +102,7 @@ class StoreController extends Controller
                 $store               = new Store();
                 $store->store_name   = $request->store_name;
                 $store->location     = $request->location;
-                $store->status      = ($request->visible) ? 1 : 0;
+                $store->status       = $request->has('status') ? 1 : 0;
 
                 if ($store->save()) {
                     $msg = 'New Store  ' . $request->store_name . ' was created successfully.';
@@ -169,13 +162,6 @@ class StoreController extends Controller
                 'location'   => 'required|min:3|max:150',
             ];
 
-            if ($request->visible) {
-                #  Making sure if password change was selected it's being validated
-                $rules += [
-                    'visible' => 'required',
-                ];
-            }
-
             $v = Validator::make($request->all(), $rules);
 
             if ($v->fails()) {
@@ -186,7 +172,7 @@ class StoreController extends Controller
                 $store               = Store::findOrFail($id);
                 $store->store_name   = $request->store_name;
                 $store->location     = $request->location;
-                $store->status      = ($request->visible) ? 1 : 0;
+                $store->status       = $request->has('status') ? 1 : 0;
 
                 if ($store->update()) {
                     $msg = 'Store  ' . $request->store_name . ' was Updated successfully.';

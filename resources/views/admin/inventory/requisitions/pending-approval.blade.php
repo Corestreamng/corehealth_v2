@@ -3,7 +3,7 @@
 @section('page_name', 'Inventory Management')
 @section('subpage_name', 'Requisitions - Pending Approval')
 
-@push('styles')
+@section('content')
 <style>
     .requisition-card {
         background: #fff;
@@ -35,9 +35,6 @@
     .from-store { background: #e3f2fd; color: #1565c0; }
     .to-store { background: #e8f5e9; color: #2e7d32; }
 </style>
-@endpush
-
-@section('content')
 <div id="content-wrapper">
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-4">

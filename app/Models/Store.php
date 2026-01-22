@@ -25,6 +25,7 @@ class Store extends Model implements Auditable
 
     protected $casts = [
         'is_default' => 'boolean',
+        'status' => 'boolean',
     ];
 
     // ===== EXISTING RELATIONSHIPS =====
@@ -104,7 +105,7 @@ class Store extends Model implements Auditable
      */
     public function scopeActive($query)
     {
-        return $query->where('status', 'active');
+        return $query->where('status', true);
     }
 
     /**
@@ -176,7 +177,7 @@ class Store extends Model implements Auditable
     {
         return StoreStock::where('store_id', $this->id)
             ->where('is_active', true)
-            ->whereRaw('qty <= reorder_level')
+            ->whereRaw('current_quantity <= reorder_level')
             ->with('product')
             ->get();
     }

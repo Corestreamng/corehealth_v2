@@ -3,7 +3,7 @@
 @section('page_name', 'Inventory Management')
 @section('subpage_name', 'Stock Adjustment')
 
-@push('styles')
+@section('content')
 <style>
     .adjustment-card {
         background: #fff;
@@ -50,9 +50,6 @@
         border-color: #dc3545;
     }
 </style>
-@endpush
-
-@section('content')
 <div id="content-wrapper">
     <div class="container-fluid">
         <div class="adjustment-card">

@@ -32,15 +32,15 @@
                                 <tr>
                                     <th>SN</th>
                                     <th>Product</th>
-                                    <th>Category </th>
-                                    <th>Product Code</th>
-                                    <th>Re-Order Alert</th>
-                                    <th>Quantity</th>
+                                    <th>Category</th>
+                                    <th>Code</th>
+                                    <th>Re-Order</th>
+                                    <th>Qty</th>
                                     <th>Status</th>
-                                    <th>Stock</th>
+                                    <th>Add Batch</th>
                                     <th>Price</th>
-                                    <th>Store</th>
-                                    <th>Issue</th>
+                                    <th>Stock</th>
+                                    <th>Batches</th>
                                     <th>Edit</th>
                                 </tr>
                             </thead>

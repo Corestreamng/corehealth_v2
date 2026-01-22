@@ -96,12 +96,24 @@ class StoreWorkbenchController extends Controller
     public function stockOverview(Request $request)
     {
         $storeId = $request->get('store_id', Store::getDefaultPharmacy()?->id);
-        $store = Store::findOrFail($storeId);
+        $store = $storeId ? Store::find($storeId) : null;
+
+        // Allow viewing all stores or specific store
+        $selectedStore = $store;
 
         if ($request->ajax()) {
             $query = StoreStock::with(['product.category', 'store'])
-                ->where('store_id', $storeId)
                 ->where('is_active', true);
+
+            // Filter by store if specified
+            if ($storeId) {
+                $query->where('store_id', $storeId);
+            }
+
+            // Filter by product if specified (coming from products page)
+            if ($request->filled('product_id')) {
+                $query->where('product_id', $request->product_id);
+            }
 
             if ($request->filled('search')) {
                 $search = $request->search;
@@ -111,14 +123,19 @@ class StoreWorkbenchController extends Controller
                 });
             }
 
+            if ($request->filled('filter') && $request->filter === 'low') {
+                $query->whereRaw('current_quantity <= reorder_level');
+            }
+
             if ($request->filled('low_stock_only') && $request->low_stock_only) {
-                $query->whereRaw('qty <= reorder_level');
+                $query->whereRaw('current_quantity <= reorder_level');
             }
 
             return DataTables::of($query)
                 ->addColumn('product_name', fn($ss) => $ss->product->product_name ?? '-')
                 ->addColumn('product_code', fn($ss) => $ss->product->product_code ?? '-')
                 ->addColumn('category', fn($ss) => $ss->product->category->category_name ?? '-')
+                ->addColumn('store_name', fn($ss) => $ss->store->store_name ?? '-')
                 ->addColumn('qty_display', fn($ss) => $this->formatQuantityDisplay($ss))
                 ->addColumn('batches_count', fn($ss) => StockBatch::where('product_id', $ss->product_id)
                     ->where('store_id', $ss->store_id)
@@ -132,7 +149,89 @@ class StoreWorkbenchController extends Controller
 
         $stores = Store::active()->orderBy('store_name')->get();
 
-        return view('admin.inventory.store-workbench.stock-overview', compact('store', 'stores'));
+        // Pass filter info for display
+        $productFilter = $request->filled('product_id') ? Product::find($request->product_id) : null;
+
+        // Build products query for non-AJAX rendering
+        $productsQuery = Product::with(['category', 'storeStock']);
+
+        // Filter by specific product if requested (from products page link) - bypass storeStock requirement
+        if ($request->filled('product_id')) {
+            $productsQuery->where('id', $request->product_id);
+        } else {
+            // Only require storeStock when viewing general stock overview (not specific product)
+            $productsQuery->whereHas('storeStock', function ($q) use ($storeId) {
+                $q->where('is_active', true);
+                if ($storeId) {
+                    $q->where('store_id', $storeId);
+                }
+            });
+        }
+
+        // Search filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $productsQuery->where(function ($q) use ($search) {
+                $q->where('product_name', 'like', "%{$search}%")
+                  ->orWhere('product_code', 'like', "%{$search}%");
+            });
+        }
+
+        // Category filter
+        if ($request->filled('category_id')) {
+            $productsQuery->where('category_id', $request->category_id);
+        }
+
+        // Get products with their stock info
+        $products = $productsQuery->orderBy('product_name')->paginate(25);
+
+        // Add stock info to each product
+        foreach ($products as $product) {
+            // Get store stock for this product
+            $storeStock = $storeId
+                ? $product->storeStock->where('store_id', $storeId)->first()
+                : $product->storeStock->first();
+
+            $product->store_stock = $storeStock;
+
+            // Calculate available quantity from active batches
+            $batchQuery = StockBatch::where('product_id', $product->id)
+                ->active()
+                ->hasStock();
+
+            if ($storeId) {
+                $batchQuery->where('store_id', $storeId);
+            }
+
+            $product->available_qty = $batchQuery->sum('current_qty');
+            $product->batches_count = $batchQuery->count();
+
+            // Filter: low stock
+            if ($request->filled('filter') && $request->filter === 'low') {
+                $reorderLevel = $storeStock->reorder_level ?? 10;
+                if ($product->available_qty > $reorderLevel) {
+                    continue; // Skip products that aren't low stock
+                }
+            }
+
+            // Filter: out of stock
+            if ($request->filled('filter') && $request->filter === 'out') {
+                if ($product->available_qty > 0) {
+                    continue;
+                }
+            }
+        }
+
+        // Get categories for filter
+        $categories = \App\Models\ProductCategory::orderBy('category_name')->get();
+
+        return view('admin.inventory.store-workbench.stock-overview', compact(
+            'selectedStore',
+            'stores',
+            'productFilter',
+            'products',
+            'categories'
+        ));
     }
 
     /**
@@ -140,16 +239,25 @@ class StoreWorkbenchController extends Controller
      */
     public function productBatches(Request $request, int $productId)
     {
-        $storeId = $request->get('store_id', Store::getDefaultPharmacy()?->id);
-        $store = Store::findOrFail($storeId);
         $product = Product::findOrFail($productId);
+        $stores = Store::active()->orderBy('store_name')->get();
 
-        $batches = StockBatch::where('product_id', $productId)
-            ->where('store_id', $storeId)
+        // Get store filter if specified
+        $storeId = $request->get('store_id');
+        $selectedStore = $storeId ? Store::find($storeId) : null;
+
+        // Build query for batches
+        $batchQuery = StockBatch::where('product_id', $productId)
             ->active()
-            ->with(['creator', 'purchaseOrderItem.purchaseOrder'])
-            ->fifoOrder()
-            ->get();
+            ->with(['creator', 'store', 'supplier', 'purchaseOrderItem.purchaseOrder'])
+            ->fifoOrder();
+
+        // Filter by store if specified
+        if ($storeId) {
+            $batchQuery->where('store_id', $storeId);
+        }
+
+        $batches = $batchQuery->get();
 
         // Add expiry info to each batch
         $batches = $batches->map(function ($batch) {
@@ -157,7 +265,18 @@ class StoreWorkbenchController extends Controller
             return $batch;
         });
 
-        return view('admin.inventory.store-workbench.product-batches', compact('store', 'product', 'batches'));
+        // Calculate totals
+        $totalStock = $batches->sum('current_qty');
+        $totalBatches = $batches->count();
+
+        return view('admin.inventory.store-workbench.product-batches', compact(
+            'product',
+            'batches',
+            'stores',
+            'selectedStore',
+            'totalStock',
+            'totalBatches'
+        ));
     }
 
     /**
@@ -266,9 +385,14 @@ class StoreWorkbenchController extends Controller
     {
         $storeId = $request->get('store_id', Store::getDefaultPharmacy()?->id);
         $store = Store::findOrFail($storeId);
-        $products = Product::where('visible', true)->orderBy('product_name')->get();
+        $stores = Store::active()->orderBy('store_name')->get();
+        $products = Product::where('status', 1)->orderBy('product_name')->get();
 
-        return view('admin.inventory.store-workbench.manual-batch-form', compact('store', 'products'));
+        // Pre-select product if coming from products page
+        $selectedProductId = $request->get('product_id');
+        $selectedProduct = $selectedProductId ? Product::find($selectedProductId) : null;
+
+        return view('admin.inventory.store-workbench.manual-batch-form', compact('store', 'stores', 'products', 'selectedProduct'));
     }
 
     /**
@@ -279,10 +403,12 @@ class StoreWorkbenchController extends Controller
         $request->validate([
             'store_id' => 'required|exists:stores,id',
             'product_id' => 'required|exists:products,id',
-            'qty' => 'required|integer|min:1',
-            'cost_price' => 'required|numeric|min:0',
+            'supplier_id' => 'nullable|exists:suppliers,id',
+            'quantity' => 'required|integer|min:1',
+            'cost_price' => 'nullable|numeric|min:0',
             'expiry_date' => 'nullable|date|after:today',
             'batch_name' => 'nullable|string|max:100',
+            'batch_number' => 'required|string|max:100|unique:stock_batches,batch_number',
             'notes' => 'nullable|string|max:500',
         ]);
 
@@ -290,24 +416,46 @@ class StoreWorkbenchController extends Controller
             $batch = $this->stockService->createBatch([
                 'product_id' => $request->product_id,
                 'store_id' => $request->store_id,
-                'qty' => $request->qty,
-                'cost_price' => $request->cost_price,
+                'supplier_id' => $request->supplier_id,
+                'qty' => $request->quantity,
+                'cost_price' => $request->cost_price ?? 0,
                 'expiry_date' => $request->expiry_date,
                 'batch_name' => $request->batch_name,
+                'batch_number' => $request->batch_number,
                 'source' => StockBatch::SOURCE_MANUAL,
                 'notes' => $request->notes ?? 'Manual entry',
             ]);
 
-            return response()->json([
-                'success' => true,
-                'message' => "Batch {$batch->batch_number} created successfully",
-                'batch' => $batch,
-            ]);
+            // Handle AJAX vs regular form submission
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Batch {$batch->batch_number} created successfully",
+                    'batch' => $batch,
+                ]);
+            }
+
+            return redirect()
+                ->route('inventory.store-workbench.product-batches', ['product' => $request->product_id, 'store_id' => $request->store_id])
+                ->with('success', "Batch {$batch->batch_number} created successfully with {$request->quantity} units");
+
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to create batch: ' . $e->getMessage(),
-            ], 500);
+            \Log::error('Manual batch creation failed: ' . $e->getMessage(), [
+                'request' => $request->all(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to create batch: ' . $e->getMessage(),
+                ], 500);
+            }
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Failed to create batch: ' . $e->getMessage());
         }
     }
 
@@ -347,7 +495,7 @@ class StoreWorkbenchController extends Controller
     {
         $totalProducts = StoreStock::where('store_id', $storeId)
             ->where('is_active', true)
-            ->where('qty', '>', 0)
+            ->where('current_quantity', '>', 0)
             ->count();
 
         $totalBatches = StockBatch::where('store_id', $storeId)
@@ -362,7 +510,7 @@ class StoreWorkbenchController extends Controller
 
         $lowStockCount = StoreStock::where('store_id', $storeId)
             ->where('is_active', true)
-            ->whereRaw('qty <= reorder_level')
+            ->whereRaw('current_quantity <= reorder_level')
             ->count();
 
         $expiringCount = StockBatch::where('store_id', $storeId)
@@ -392,7 +540,7 @@ class StoreWorkbenchController extends Controller
      */
     protected function formatQuantityDisplay(StoreStock $ss): string
     {
-        $qty = $ss->qty;
+        $qty = $ss->current_quantity;
         $reorderLevel = $ss->reorder_level ?? 10;
 
         if ($qty <= 0) {
@@ -436,16 +584,28 @@ class StoreWorkbenchController extends Controller
         // View batches
         $buttons[] = sprintf(
             '<a href="%s" class="btn btn-sm btn-info" title="View Batches"><i class="fas fa-layer-group"></i></a>',
-            route('store-workbench.product-batches', ['product' => $ss->product_id, 'store_id' => $ss->store_id])
+            route('inventory.store-workbench.product-batches', ['product' => $ss->product_id, 'store_id' => $ss->store_id])
         );
 
-        // Create requisition
+        // Add batch
         $buttons[] = sprintf(
-            '<button class="btn btn-sm btn-primary btn-request-stock" data-product-id="%d" title="Request Stock"><i class="fas fa-truck"></i></button>',
-            $ss->product_id
+            '<a href="%s" class="btn btn-sm btn-success" title="Add Batch"><i class="fas fa-plus"></i></a>',
+            route('inventory.store-workbench.manual-batch-form') . '?store_id=' . $ss->store_id . '&product_id=' . $ss->product_id
         );
 
-        return '<div class="btn-group">' . implode('', $buttons) . '</div>';
+        // Edit product
+        $buttons[] = sprintf(
+            '<a href="%s" class="btn btn-sm btn-secondary" title="Edit Product"><i class="fas fa-edit"></i></a>',
+            route('products.edit', $ss->product_id)
+        );
+
+        // Edit pricing
+        $buttons[] = sprintf(
+            '<a href="%s" class="btn btn-sm btn-warning" title="Adjust Price"><i class="fas fa-tag"></i></a>',
+            route('prices.edit', $ss->product_id)
+        );
+
+        return '<div class="btn-group btn-group-sm">' . implode('', $buttons) . '</div>';
     }
 
     /**

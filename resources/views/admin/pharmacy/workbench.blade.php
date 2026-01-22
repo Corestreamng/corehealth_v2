@@ -4931,7 +4931,7 @@
 
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <div class="card bg-light">
+                        <div class="card-modern bg-light">
                             <div class="card-body">
                                 <h6 class="card-subtitle mb-2 text-muted">Original Prescription</h6>
                                 <h5 id="adapt-original-product" class="card-title">-</h5>
@@ -4943,7 +4943,7 @@
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <div class="card border-success">
+                        <div class="card-modern border-success">
                             <div class="card-body">
                                 <h6 class="card-subtitle mb-2 text-success">New Product</h6>
                                 <div class="form-group mb-2">

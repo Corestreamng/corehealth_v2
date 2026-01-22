@@ -3,7 +3,7 @@
 @section('page_name', 'Inventory Management')
 @section('subpage_name', 'Product Batches')
 
-@push('styles')
+@section('content')
 <style>
     .batch-card {
         background: #fff;
@@ -57,10 +57,13 @@
         border-radius: 8px;
         margin-bottom: 1.5rem;
     }
+    .stat-card {
+        background: #fff;
+        border-radius: 8px;
+        padding: 1rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
 </style>
-@endpush
-
-@section('content')
 <div id="content-wrapper">
     <div class="container-fluid">
         <!-- Product Header -->
@@ -68,12 +71,45 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h4 class="mb-1">{{ $product->product_name }}</h4>
-                    <p class="mb-0 opacity-75">{{ $store->store_name }} - Batch Details</p>
+                    <p class="mb-0 opacity-75">
+                        <i class="mdi mdi-barcode mr-1"></i>{{ $product->product_code }}
+                        @if($selectedStore)
+                            - {{ $selectedStore->store_name }}
+                        @else
+                            - All Stores
+                        @endif
+                    </p>
                 </div>
                 <div>
-                    <a href="{{ route('inventory.store-workbench.stock-overview', ['store_id' => $store->id]) }}" class="btn btn-light btn-sm">
-                        <i class="mdi mdi-arrow-left"></i> Back to Stock
+                    <a href="{{ route('products.index') }}" class="btn btn-light btn-sm mr-2">
+                        <i class="mdi mdi-package-variant"></i> Products
                     </a>
+                    <a href="{{ route('inventory.store-workbench.stock-overview', ['product_id' => $product->id]) }}" class="btn btn-light btn-sm">
+                        <i class="mdi mdi-arrow-left"></i> Stock Overview
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Store Filter -->
+        <div class="card-modern mb-3">
+            <div class="card-body py-2">
+                <div class="row align-items-center">
+                    <div class="col-md-3">
+                        <select id="store-filter" class="form-control form-control-sm">
+                            <option value="">All Stores</option>
+                            @foreach($stores as $store)
+                            <option value="{{ $store->id }}" {{ request('store_id') == $store->id ? 'selected' : '' }}>
+                                {{ $store->store_name }}
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ route('inventory.store-workbench.manual-batch-form', ['product_id' => $product->id]) }}" class="btn btn-success btn-sm">
+                            <i class="mdi mdi-plus"></i> Add Batch
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -82,20 +118,20 @@
         <div class="row mb-4">
             <div class="col-md-3">
                 <div class="stat-card text-center">
-                    <h3 class="mb-1">{{ $batches->count() }}</h3>
+                    <h3 class="mb-1">{{ $totalBatches }}</h3>
                     <small class="text-muted">Total Batches</small>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="stat-card text-center">
-                    <h3 class="mb-1 text-success">{{ $batches->sum('current_qty') }}</h3>
+                    <h3 class="mb-1 text-success">{{ $totalStock }}</h3>
                     <small class="text-muted">Total Stock</small>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="stat-card text-center">
                     @php
-                        $expiredCount = $batches->filter(fn($b) => $b->expiry_status === 'expired')->count();
+                        $expiredCount = $batches->filter(fn($b) => isset($b->expiry_status['status']) && $b->expiry_status['status'] === 'expired')->count();
                     @endphp
                     <h3 class="mb-1 text-danger">{{ $expiredCount }}</h3>
                     <small class="text-muted">Expired Batches</small>
@@ -116,19 +152,30 @@
         <h5 class="mb-3">Batches (FIFO Order)</h5>
 
         @forelse($batches as $batch)
-        <div class="batch-card {{ $batch->expiry_status }}">
+        @php
+            $expiryStatus = $batch->expiry_status['status'] ?? 'ok';
+            $cardClass = match($expiryStatus) {
+                'expired' => 'expired',
+                'critical', 'warning' => 'expiring-soon',
+                default => ''
+            };
+        @endphp
+        <div class="batch-card {{ $cardClass }}">
             <div class="batch-header">
                 <div>
                     <span class="batch-number">{{ $batch->batch_number }}</span>
                     @if($batch->batch_name)
                         <small class="text-muted ml-2">({{ $batch->batch_name }})</small>
                     @endif
+                    @if(!$selectedStore && $batch->store)
+                        <span class="badge badge-info ml-2">{{ $batch->store->store_name }}</span>
+                    @endif
                 </div>
                 <div>
-                    @if($batch->expiry_status === 'expired')
+                    @if($expiryStatus === 'expired')
                         <span class="batch-status bg-danger text-white">Expired</span>
-                    @elseif($batch->expiry_status === 'expiring-soon')
-                        <span class="batch-status bg-warning text-dark">Expiring Soon</span>
+                    @elseif(in_array($expiryStatus, ['critical', 'warning']))
+                        <span class="batch-status bg-warning text-dark">{{ $batch->expiry_status['label'] ?? 'Expiring Soon' }}</span>
                     @else
                         <span class="batch-status bg-success text-white">Active</span>
                     @endif
@@ -150,7 +197,7 @@
                 </div>
                 <div class="detail-item">
                     <label>Expiry Date</label>
-                    <div class="value {{ $batch->expiry_status === 'expired' ? 'text-danger' : '' }}">
+                    <div class="value {{ $expiryStatus === 'expired' ? 'text-danger' : '' }}">
                         {{ $batch->expiry_date ? $batch->expiry_date->format('M d, Y') : 'N/A' }}
                     </div>
                 </div>
@@ -168,13 +215,25 @@
                         @endif
                     </div>
                 </div>
+                <div class="detail-item">
+                    <label>Supplier</label>
+                    <div class="value">
+                        @if($batch->supplier)
+                            <a href="{{ route('suppliers.show', $batch->supplier_id) }}" class="text-primary">
+                                {{ $batch->supplier->company_name }}
+                            </a>
+                        @else
+                            <span class="text-muted">-</span>
+                        @endif
+                    </div>
+                </div>
             </div>
 
             <div class="mt-3 pt-3 border-top">
                 <a href="{{ route('inventory.store-workbench.adjustment-form', $batch->id) }}" class="btn btn-sm btn-outline-primary">
                     <i class="mdi mdi-pencil"></i> Adjust Stock
                 </a>
-                @if($batch->expiry_status === 'expired' || $batch->current_qty == 0)
+                @if($expiryStatus === 'expired' || $batch->current_qty == 0)
                 <button type="button" class="btn btn-sm btn-outline-danger" onclick="writeOffBatch({{ $batch->id }})">
                     <i class="mdi mdi-delete"></i> Write Off
                 </button>
@@ -183,7 +242,8 @@
         </div>
         @empty
         <div class="alert alert-info">
-            <i class="mdi mdi-information"></i> No batches found for this product in {{ $store->store_name }}.
+            <i class="mdi mdi-information"></i> No batches found for this product{{ $selectedStore ? ' in ' . $selectedStore->store_name : '' }}.
+            <a href="{{ route('inventory.store-workbench.manual-batch-form', ['product_id' => $product->id]) }}" class="alert-link">Add a batch now</a>
         </div>
         @endforelse
     </div>
@@ -192,12 +252,25 @@
 
 @section('scripts')
 <script>
+$(function() {
+    $('#store-filter').on('change', function() {
+        var storeId = $(this).val();
+        var url = new URL(window.location.href);
+        if (storeId) {
+            url.searchParams.set('store_id', storeId);
+        } else {
+            url.searchParams.delete('store_id');
+        }
+        window.location.href = url.toString();
+    });
+});
+
 function writeOffBatch(batchId) {
     var reason = prompt('Enter write-off reason:');
     if (reason) {
-        $.post(`/inventory/store-workbench/batch/${batchId}/write-off`, {
+        $.post(`/inventory/store-workbench/batch/${batchId}/write-off-expired`, {
             _token: '{{ csrf_token() }}',
-            reason: reason
+            notes: reason
         })
         .done(function(response) {
             toastr.success(response.message || 'Batch written off successfully');

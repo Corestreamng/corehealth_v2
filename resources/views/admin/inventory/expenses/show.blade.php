@@ -3,7 +3,7 @@
 @section('page_name', 'Inventory Management')
 @section('subpage_name', 'View Expense')
 
-@push('styles')
+@section('content')
 <style>
     .detail-card {
         background: #fff;

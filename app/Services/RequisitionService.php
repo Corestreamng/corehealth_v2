@@ -308,7 +308,8 @@ class RequisitionService
      */
     public function getPendingFulfillment(int $storeId): Collection
     {
-        return StoreRequisition::fromStore($storeId)
+        return StoreRequisition::query()
+            ->fromStore($storeId)
             ->fulfillable()
             ->with(['items.product', 'toStore', 'requester'])
             ->orderBy('approved_at', 'asc')
@@ -336,7 +337,8 @@ class RequisitionService
      */
     public function getMyRequisitions(int $storeId): Collection
     {
-        return StoreRequisition::toStore($storeId)
+        return StoreRequisition::query()
+            ->toStore($storeId)
             ->with(['items.product', 'fromStore', 'requester', 'approver', 'fulfiller'])
             ->orderBy('created_at', 'desc')
             ->get();

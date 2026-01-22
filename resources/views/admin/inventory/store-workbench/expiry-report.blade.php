@@ -3,7 +3,7 @@
 @section('page_name', 'Inventory Management')
 @section('subpage_name', 'Expiry Report')
 
-@push('styles')
+@section('content')
 <link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
 <style>
     .expiry-card {
@@ -36,9 +36,6 @@
         font-size: 0.75rem;
     }
 </style>
-@endpush
-
-@section('content')
 <div id="content-wrapper">
     <div class="container-fluid">
         <!-- Header -->

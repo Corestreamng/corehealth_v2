@@ -550,6 +550,21 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('store-list', [StoreController::class, 'listStores'])->name('store-list');
     });
 
+    // Supplier routes
+    Route::group(['middleware' => ['auth']], function () {
+        Route::resource('suppliers', \App\Http\Controllers\SupplierController::class);
+        Route::get('supplier-list', [\App\Http\Controllers\SupplierController::class, 'listSuppliers'])->name('suppliers.list');
+        Route::get('suppliers-search', [\App\Http\Controllers\SupplierController::class, 'search'])->name('suppliers.search');
+        Route::get('suppliers-export', [\App\Http\Controllers\SupplierController::class, 'export'])->name('suppliers.export');
+
+        // Supplier Reports
+        Route::prefix('suppliers/reports')->name('suppliers.reports.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\SupplierController::class, 'reports'])->name('index');
+            Route::get('/performance', [\App\Http\Controllers\SupplierController::class, 'performanceReport'])->name('performance');
+            Route::get('/batches', [\App\Http\Controllers\SupplierController::class, 'batchesReport'])->name('batches');
+        });
+    });
+
     Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions
         Route::resource('stores-stokes', StoreStockController::class);
