@@ -37,8 +37,8 @@
                         <label class="col-md-2 control-label">Is Store Active</label>
                         <div class="col-md-12 checkbox checkbox-info checkbox-circle">
                             <label>
-                                <input id="visible" type="checkbox" name="visible" {!! $store->visible ? 'checked="checked"' : '' !!}>
-                                True
+                                <input id="status" type="checkbox" name="status" {!! $store->status ? 'checked="checked"' : '' !!}>
+                                Active
                             </label>
                         </div>
                     </div>

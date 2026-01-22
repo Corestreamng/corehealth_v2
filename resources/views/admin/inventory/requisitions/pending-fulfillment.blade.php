@@ -3,7 +3,7 @@
 @section('page_name', 'Inventory Management')
 @section('subpage_name', 'Requisitions - Pending Fulfillment')
 
-@push('styles')
+@section('content')
 <style>
     .requisition-card {
         background: #fff;
@@ -34,9 +34,6 @@
         margin-bottom: 1rem;
     }
 </style>
-@endpush
-
-@section('content')
 <div id="content-wrapper">
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-4">

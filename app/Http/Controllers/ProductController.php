@@ -19,7 +19,12 @@ class ProductController extends Controller
 {
     public function listProducts()
     {
-        $pc = Product::where('status', '=', 1)->with('stock', 'category')->orderBy('product_name', 'ASC')->get();
+        $pc = Product::where('status', '=', 1)
+            ->with(['stock', 'category', 'stockBatches' => function($q) {
+                $q->active()->where('current_qty', '>', 0);
+            }])
+            ->orderBy('product_name', 'ASC')
+            ->get();
 
         return Datatables::of($pc)
             ->addIndexColumn()
@@ -39,16 +44,31 @@ class ProductController extends Controller
                 return (($pc->status == 0) ? $inactive : $active);
             })
             ->editColumn('current_quantity', function ($pc) {
-                return ($pc->stock->current_quantity);
+                // Use eager-loaded stockBatches for efficiency
+                // Sum current_qty from the pre-filtered active batches
+                $batchTotal = $pc->stockBatches->sum('current_qty');
+                $oldTotal = optional($pc->stock)->current_quantity ?? 0;
+
+                // Show the batch total if available, else fallback to legacy
+                $qty = $batchTotal > 0 ? $batchTotal : $oldTotal;
+                $reorderLevel = $pc->reorder_alert ?? 10;
+
+                // Color code the quantity
+                if ($qty <= 0) {
+                    return '<span class="badge badge-danger">' . $qty . '</span>';
+                } elseif ($qty <= $reorderLevel) {
+                    return '<span class="badge badge-warning">' . $qty . '</span>';
+                }
+                return '<span class="badge badge-success">' . $qty . '</span>';
             })
             ->addColumn('addstoke', function ($pc) {
                 if (Auth::user()->hasPermissionTo('can-manage-products') || Auth::user()->hasRole(['ADMIN', 'STORE'])) {
-                    # code...
-                    $url = route('stocks.show', $pc->id);
-                    return '<a href="' . $url . '" class="btn btn-info btn-sm"><i class="fa fa-plus"></i> Add</a>';
+                    # Link to new workbench manual batch form with product pre-selected
+                    $url = route('inventory.store-workbench.manual-batch-form') . '?product_id=' . $pc->id;
+                    return '<a href="' . $url . '" class="btn btn-info btn-sm"><i class="fa fa-plus"></i> Add Batch</a>';
                 } else {
                     # code...
-                    $label = '<button disabled class="btn btn-info btn-sm"> <i class="fa fa-plus"></i> Add</button>';
+                    $label = '<button disabled class="btn btn-info btn-sm"> <i class="fa fa-plus"></i> Add Batch</button>';
                     return $label;
                 }
             })
@@ -67,24 +87,24 @@ class ProductController extends Controller
             ->addColumn('store', function ($pc) {
 
                 if (Auth::user()->hasPermissionTo('can-manage-products') || Auth::user()->hasRole(['ADMIN', 'STORE'])) {
-                    # code...
-                    $url = route('stores-stokes.edit', $pc->id);
-                    return '<a href="' . $url . '" class="btn btn-success btn-sm"><i class="fa fa-map-pin"></i> View</a>';
+                    # Link to workbench stock overview filtered by product
+                    $url = route('inventory.store-workbench.stock-overview') . '?product_id=' . $pc->id;
+                    return '<a href="' . $url . '" class="btn btn-success btn-sm"><i class="fa fa-warehouse"></i> Stock</a>';
                 } else {
                     # code...
-                    $label = '<button disabled class="btn btn-success btn-sm"> <i class="fa fa-map-pin"></i> View</button>';
+                    $label = '<button disabled class="btn btn-success btn-sm"> <i class="fa fa-warehouse"></i> Stock</button>';
                     return $label;
                 }
             })
             ->addColumn('trans', function ($pc) {
 
                 if (Auth::user()->hasPermissionTo('can-manage-products') || Auth::user()->hasRole(['ADMIN', 'STORE'])) {
-                    # code...
-                    $url = route('products.show', $pc->id);
-                    return '<a href="' . $url . '" class="btn btn-info btn-sm"><i class="fa fa-map-pin"></i> View</a>';
+                    # Link to product batches view showing movement history
+                    $url = route('inventory.store-workbench.product-batches', $pc->id);
+                    return '<a href="' . $url . '" class="btn btn-info btn-sm"><i class="fa fa-history"></i> Batches</a>';
                 } else {
                     # code...
-                    $label = '<button disabled class="btn btn-info btn-sm"> <i class="fa fa-map-pin"></i> View</button>';
+                    $label = '<button disabled class="btn btn-info btn-sm"> <i class="fa fa-history"></i> Batches</button>';
                     return $label;
                 }
             })
@@ -100,7 +120,7 @@ class ProductController extends Controller
                     return $label;
                 }
             })
-            ->rawColumns(['product_code', 'category_id', 'visible', 'edit', 'adjust', 'addstoke', 'store', 'trans'])
+            ->rawColumns(['product_code', 'category_id', 'visible', 'current_quantity', 'edit', 'adjust', 'addstoke', 'store', 'trans'])
             ->make(true);
     }
 

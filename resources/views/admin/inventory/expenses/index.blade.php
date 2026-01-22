@@ -3,7 +3,7 @@
 @section('page_name', 'Inventory Management')
 @section('subpage_name', 'Expenses')
 
-@push('styles')
+@section('content')
 <link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
 <style>
     .stat-card {
@@ -23,9 +23,6 @@
         font-weight: 600;
     }
 </style>
-@endpush
-
-@section('content')
 <div id="content-wrapper">
     <div class="container-fluid">
         <!-- Summary Cards -->

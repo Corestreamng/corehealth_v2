@@ -3,7 +3,7 @@
 @section('page_name', 'Inventory Management')
 @section('subpage_name', 'Stock Overview')
 
-@push('styles')
+@section('content')
 <link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
 <style>
     .stock-badge {
@@ -53,18 +53,23 @@
         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
 </style>
-@endpush
-
-@section('content')
 <div id="content-wrapper">
     <div class="container-fluid">
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h3 class="mb-0">Stock Overview</h3>
-                <p class="text-muted mb-0">{{ $selectedStore->store_name ?? 'All Stores' }}</p>
+                <p class="text-muted mb-0">
+                    {{ $selectedStore->store_name ?? 'All Stores' }}
+                    @if(isset($productFilter) && $productFilter)
+                    - Filtered to: <strong>{{ $productFilter->product_name }}</strong>
+                    @endif
+                </p>
             </div>
             <div>
+                <a href="{{ route('products.index') }}" class="btn btn-outline-primary btn-sm mr-2">
+                    <i class="mdi mdi-package-variant"></i> All Products
+                </a>
                 <a href="{{ route('inventory.store-workbench.index') }}?store_id={{ $selectedStore->id ?? '' }}" class="btn btn-secondary btn-sm">
                     <i class="mdi mdi-arrow-left"></i> Back to Workbench
                 </a>
@@ -137,7 +142,7 @@
                                     <strong>{{ $product->product_name }}</strong>
                                     <br><small class="text-muted">{{ $product->product_code }}</small>
                                 </td>
-                                <td>{{ $product->category->product_category ?? 'N/A' }}</td>
+                                <td>{{ $product->category->category_name ?? 'N/A' }}</td>
                                 <td class="text-center">
                                     <strong>{{ $totalQty }}</strong>
                                 </td>

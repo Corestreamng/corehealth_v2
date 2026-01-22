@@ -163,11 +163,16 @@ class StockService
     public function createBatch(array $data): StockBatch
     {
         return DB::transaction(function () use ($data) {
+            // Generate batch_name from batch_number + timestamp
+            $batchNumber = $data['batch_number'];
+            $batchName = $data['batch_name'] ?? $batchNumber . '-' . now()->format('YmdHis');
+
             $batch = StockBatch::create([
                 'product_id' => $data['product_id'],
                 'store_id' => $data['store_id'],
-                'batch_name' => $data['batch_name'] ?? null,
-                'batch_number' => $data['batch_number'] ?? null,
+                'supplier_id' => $data['supplier_id'] ?? null,
+                'batch_name' => $batchName,
+                'batch_number' => $batchNumber,
                 'initial_qty' => $data['qty'],
                 'current_qty' => $data['qty'],
                 'sold_qty' => 0,
@@ -425,7 +430,7 @@ class StockService
     {
         return StoreStock::where('store_id', $storeId)
             ->where('is_active', true)
-            ->whereRaw('qty <= reorder_level')
+            ->whereRaw('current_quantity <= reorder_level')
             ->with('product')
             ->get();
     }

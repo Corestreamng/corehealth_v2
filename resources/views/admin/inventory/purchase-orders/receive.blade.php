@@ -3,7 +3,7 @@
 @section('page_name', 'Inventory Management')
 @section('subpage_name', 'Receive Purchase Order')
 
-@push('styles')
+@section('content')
 <style>
     .receive-header {
         background: linear-gradient(135deg, #28a745 0%, #218838 100%);
@@ -151,9 +151,11 @@
                                     <label>Batch Number <span class="text-danger">*</span></label>
                                     <input type="text"
                                            name="items[{{ $item->id }}][batch_number]"
-                                           class="form-control"
+                                           class="form-control batch-number-input"
                                            placeholder="e.g., BTH001"
-                                           value="{{ old('items.'.$item->id.'.batch_number') }}">
+                                           value="{{ old('items.'.$item->id.'.batch_number') }}"
+                                           required>
+                                    <small class="text-muted batch-name-preview">-</small>
                                 </div>
                             </div>
                             <div class="col-md-2">
@@ -324,6 +326,30 @@ $(function() {
             e.preventDefault();
             return false;
         }
+    });
+
+    // Batch name preview - updates as user types batch number
+    function updateBatchNamePreview(input) {
+        var batchNumber = $(input).val();
+        var previewEl = $(input).closest('.form-group').find('.batch-name-preview');
+        if (batchNumber) {
+            var now = new Date();
+            var timestamp = now.getFullYear().toString() +
+                ('0' + (now.getMonth() + 1)).slice(-2) +
+                ('0' + now.getDate()).slice(-2) +
+                ('0' + now.getHours()).slice(-2) +
+                ('0' + now.getMinutes()).slice(-2) +
+                ('0' + now.getSeconds()).slice(-2);
+            previewEl.html('<i class="mdi mdi-tag"></i> ' + batchNumber + '-' + timestamp);
+        } else {
+            previewEl.text('-');
+        }
+    }
+
+    $('.batch-number-input').on('input', function() {
+        updateBatchNamePreview(this);
+    }).each(function() {
+        updateBatchNamePreview(this);
     });
 });
 
