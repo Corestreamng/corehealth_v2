@@ -3462,6 +3462,20 @@
         font-size: 0.9rem;
         color: #6c757d;
         white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-adapt-product {
+        font-size: 0.7rem;
+        padding: 0.1rem 0.3rem;
+        border-radius: 3px;
+    }
+
+    .btn-adapt-product:hover {
+        background-color: #17a2b8;
+        color: white;
     }
 
     .card-details {
@@ -4898,6 +4912,101 @@
     </div>
 </div>
 
+<!-- ========== PRODUCT ADAPTATION MODAL ========== -->
+<!-- NEW: For adapting/changing prescribed products during billing -->
+<div class="modal fade" id="productAdaptationModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background: #f0ad4e; color: white;">
+                <h5 class="modal-title"><i class="mdi mdi-swap-horizontal"></i> Adapt Prescription</h5>
+                <button type="button" class="close text-white" data-bs-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="mdi mdi-alert"></i>
+                    <strong>Note:</strong> Adapting a prescription will change the product while keeping a record of the original prescription.
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">Original Prescription</h6>
+                                <h5 id="adapt-original-product" class="card-title">-</h5>
+                                <p class="card-text mb-0">
+                                    <small>Dose: <span id="adapt-original-dose">-</span></small><br>
+                                    <small>Qty: <span id="adapt-original-qty">-</span></small>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-success">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-success">New Product</h6>
+                                <div class="form-group mb-2">
+                                    <select class="form-control" id="adapt-new-product">
+                                        <option value="">Search and select product...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group mb-2">
+                                    <label class="small">New Quantity</label>
+                                    <input type="number" class="form-control form-control-sm" id="adapt-new-qty" min="1" value="1">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Reason for Adaptation</strong> <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="adapt-reason" rows="3" placeholder="Enter reason for changing the prescribed product (e.g., out of stock, patient preference, pharmacist recommendation)..." required></textarea>
+                </div>
+
+                <input type="hidden" id="adapt-product-request-id">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" id="confirm-adaptation">
+                    <i class="mdi mdi-check"></i> Confirm Adaptation
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Batch Selection in Cart Styles */
+.batch-fifo-display {
+    text-align: left;
+}
+
+.batch-fifo-display .badge {
+    font-size: 0.7rem;
+}
+
+.cart-batch-cell .batch-select {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+    min-width: 140px;
+}
+
+.cart-batch-cell .form-select option.text-warning {
+    background-color: #fff3cd;
+}
+
+.cart-batch-cell .form-select option.text-danger {
+    background-color: #f8d7da;
+}
+
+/* Adaptation Modal Select2 Style */
+#productAdaptationModal .select2-container {
+    width: 100% !important;
+}
+</style>
+
 <!-- Receipt Preview Modal -->
 <div class="modal fade" id="receiptPreviewModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
@@ -4980,14 +5089,14 @@
 
                 <!-- Cart Items Table -->
                 <div id="modal-cart-content" style="display: none;">
-                    <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                         <table class="table table-sm table-hover mb-0" id="modal-cart-table">
                             <thead class="table-light sticky-top">
                                 <tr>
-                                    <th style="width: 40%;">Medication</th>
-                                    <th style="width: 12%;" class="text-center">Qty</th>
-                                    <th style="width: 15%;" class="text-center">Stock</th>
-                                    <th style="width: 15%;" class="text-end">Amount</th>
+                                    <th style="width: 35%;">Medication</th>
+                                    <th style="width: 10%;" class="text-center">Qty</th>
+                                    <th style="width: 25%;" class="text-center">Batch Selection</th>
+                                    <th style="width: 12%;" class="text-end">Amount</th>
                                     <th style="width: 10%;">Status</th>
                                     <th style="width: 8%;" class="text-center"></th>
                                 </tr>
@@ -4996,6 +5105,17 @@
                                 <!-- Cart items rendered here -->
                             </tbody>
                         </table>
+                    </div>
+
+                    <!-- Batch Selection Mode Toggle -->
+                    <div class="px-3 py-2 bg-white border-bottom">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="use-fifo-auto" checked>
+                            <label class="form-check-label small" for="use-fifo-auto">
+                                <i class="mdi mdi-sort-clock-ascending text-info"></i>
+                                <strong>FIFO Mode:</strong> Automatically dispense from oldest batches first
+                            </label>
+                        </div>
                     </div>
 
                     <!-- Cart Summary -->
@@ -7932,9 +8052,20 @@ function createPrescriptionCard(item, section) {
                         <strong>${item.product_name || item.medication_name || 'N/A'}</strong>
                         ${paymentModeHtml}
                         ${paymentStatusHtml}
+                        ${item.adapted_from_product_id ? '<span class="badge badge-warning ml-1" title="Adapted from another product"><i class="mdi mdi-swap-horizontal"></i> Adapted</span>' : ''}
                     </div>
                     <div class="card-meta">
                         <span class="text-muted">Qty: ${item.qty || item.quantity || 'N/A'}</span>
+                        ${section === 'unbilled' ? `
+                            <button type="button" class="btn btn-xs btn-outline-info ml-2 btn-adapt-product"
+                                    data-id="${item.id}"
+                                    data-product="${item.product_name || item.medication_name || 'N/A'}"
+                                    data-dose="${item.dose || ''}"
+                                    data-qty="${item.qty || item.quantity || 1}"
+                                    title="Adapt to different product">
+                                <i class="mdi mdi-swap-horizontal"></i>
+                            </button>
+                        ` : ''}
                     </div>
                 </div>
 
@@ -8160,6 +8291,19 @@ function initializePrescriptionHandlers() {
         const section = card.data('section');
 
         updateSectionButtons(section);
+    });
+
+    // Adapt product button handler
+    $('.btn-adapt-product').off('click').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const $btn = $(this);
+        openAdaptationModal(
+            $btn.data('id'),
+            $btn.data('product'),
+            $btn.data('dose'),
+            $btn.data('qty')
+        );
     });
 
     // Action button handlers
@@ -11991,25 +12135,26 @@ function renderDispenseCart() {
     dispenseCart.forEach((item, index) => {
         totalPrice += item.price * item.qty;
 
-        let stockDisplay = '';
+        let batchDisplay = '';
         let statusBadge = '';
         let rowClass = '';
 
         if (item.stock_status === 'pending') {
-            stockDisplay = '<span class="text-muted">—</span>';
+            batchDisplay = '<span class="text-muted small">Select store first</span>';
             statusBadge = '<span class="badge bg-light text-muted badge-sm">Select store</span>';
         } else if (item.stock_status === 'loading') {
-            stockDisplay = '<span class="text-muted"><i class="mdi mdi-loading mdi-spin"></i></span>';
+            batchDisplay = '<span class="text-muted"><i class="mdi mdi-loading mdi-spin"></i> Loading...</span>';
             statusBadge = '<span class="badge bg-secondary badge-sm">...</span>';
         } else if (item.stock_status === 'sufficient') {
-            stockDisplay = `<span class="text-success"><i class="mdi mdi-check-circle"></i> ${item.stock}</span>`;
+            // Build batch selection dropdown
+            batchDisplay = buildBatchDropdown(item, index);
             statusBadge = '<span class="badge bg-success badge-sm"><i class="mdi mdi-check"></i></span>';
         } else if (item.stock_status === 'insufficient') {
-            stockDisplay = `<span class="text-danger"><i class="mdi mdi-alert-circle"></i> ${item.stock}</span>`;
+            batchDisplay = `<span class="text-danger small"><i class="mdi mdi-alert-circle"></i> Only ${item.stock || 0} available</span>`;
             statusBadge = '<span class="badge bg-danger badge-sm"><i class="mdi mdi-alert"></i></span>';
             rowClass = 'table-danger';
         } else {
-            stockDisplay = '<span class="text-warning"><i class="mdi mdi-help-circle"></i></span>';
+            batchDisplay = '<span class="text-warning small"><i class="mdi mdi-help-circle"></i> Unknown</span>';
             statusBadge = '<span class="badge bg-warning badge-sm">?</span>';
         }
 
@@ -12020,7 +12165,7 @@ function renderDispenseCart() {
                     <small class="text-muted">PR #${item.id} | Prod #${item.product_id || 'N/A'}</small>
                 </td>
                 <td class="text-center">${item.qty}</td>
-                <td class="text-center cart-stock-cell">${stockDisplay}</td>
+                <td class="text-center cart-batch-cell">${batchDisplay}</td>
                 <td class="text-end">₦${(item.price * item.qty).toLocaleString('en-NG', {minimumFractionDigits: 2})}</td>
                 <td class="text-center">${statusBadge}</td>
                 <td class="text-center">
@@ -12090,14 +12235,16 @@ function fetchCartStockLevels() {
         console.log('Checking item:', index, 'product_id:', item.product_id);
 
         if (item.product_id) {
-            fetchPharmacyProductStock(item.product_id, function(stockData) {
-                console.log('Stock data received for product', item.product_id, ':', stockData);
+            // Fetch batch info for this product
+            fetchProductBatches(item.product_id, storeId, function(batchData) {
+                console.log('Batch data received for product', item.product_id, ':', batchData);
 
-                const storeStock = stockData.stores.find(s => s.store_id == storeId);
-                const availableQty = storeStock ? storeStock.quantity : 0;
+                const totalAvailable = batchData.total_available || 0;
+                const batches = batchData.batches || [];
 
-                dispenseCart[index].stock = availableQty;
-                dispenseCart[index].stock_status = availableQty >= item.qty ? 'sufficient' : 'insufficient';
+                dispenseCart[index].stock = totalAvailable;
+                dispenseCart[index].batches = batches;
+                dispenseCart[index].stock_status = totalAvailable >= item.qty ? 'sufficient' : 'insufficient';
 
                 updateCartRowStock(index);
 
@@ -12112,6 +12259,7 @@ function fetchCartStockLevels() {
         } else {
             console.warn('Cart item missing product_id:', item);
             dispenseCart[index].stock = 0;
+            dispenseCart[index].batches = [];
             dispenseCart[index].stock_status = 'insufficient';
             updateCartRowStock(index);
             pendingChecks--;
@@ -12119,28 +12267,128 @@ function fetchCartStockLevels() {
     });
 }
 
-// Update a single cart row's stock display
+// Fetch product batches from server
+function fetchProductBatches(productId, storeId, callback) {
+    $.ajax({
+        url: '{{ route("pharmacy.product-batches") }}',
+        method: 'GET',
+        data: {
+            product_id: productId,
+            store_id: storeId
+        },
+        success: function(response) {
+            if (response.success) {
+                callback({
+                    total_available: response.total_available,
+                    batches: response.batches.map(b => ({
+                        id: b.id,
+                        batch_number: b.batch_number || b.name || `BTH-${b.id}`,
+                        current_qty: b.qty || b.current_qty,
+                        expiry_date: b.expiry_date,
+                        is_expiring_soon: b.is_expiring_soon || false,
+                        is_expired: b.is_expired || false
+                    }))
+                });
+            } else {
+                callback({ total_available: 0, batches: [] });
+            }
+        },
+        error: function() {
+            // Fallback to old stock check method
+            fetchPharmacyProductStock(productId, function(stockData) {
+                const storeStock = stockData.stores.find(s => s.store_id == storeId);
+                callback({
+                    total_available: storeStock ? storeStock.quantity : 0,
+                    batches: []
+                });
+            });
+        }
+    });
+}
+
+// Update a single cart row's stock/batch display
 function updateCartRowStock(index) {
     const item = dispenseCart[index];
     const $row = $(`#modal-cart-body tr[data-cart-index="${index}"]`);
 
     if (!$row.length) return;
 
-    let stockDisplay = '';
+    let batchDisplay = '';
     let statusBadge = '';
 
     if (item.stock_status === 'sufficient') {
-        stockDisplay = `<span class="text-success"><i class="mdi mdi-check-circle"></i> ${item.stock}</span>`;
+        batchDisplay = buildBatchDropdown(item, index);
         statusBadge = '<span class="badge bg-success badge-sm"><i class="mdi mdi-check"></i></span>';
         $row.removeClass('table-danger');
     } else if (item.stock_status === 'insufficient') {
-        stockDisplay = `<span class="text-danger"><i class="mdi mdi-alert-circle"></i> ${item.stock}</span>`;
+        batchDisplay = `<span class="text-danger small"><i class="mdi mdi-alert-circle"></i> Only ${item.stock || 0} available</span>`;
         statusBadge = '<span class="badge bg-danger badge-sm"><i class="mdi mdi-alert"></i></span>';
         $row.addClass('table-danger');
     }
 
-    $row.find('.cart-stock-cell').html(stockDisplay);
+    $row.find('.cart-batch-cell').html(batchDisplay);
     $row.find('td:eq(4)').html(statusBadge);
+}
+
+// Build batch selection dropdown for a cart item
+function buildBatchDropdown(item, index) {
+    const batches = item.batches || [];
+    const useFifo = $('#use-fifo-auto').is(':checked');
+    const selectedBatchId = item.selected_batch_id || '';
+
+    if (batches.length === 0) {
+        // No batch info, show simple stock count
+        return `<span class="text-success small"><i class="mdi mdi-check-circle"></i> ${item.stock} in stock</span>`;
+    }
+
+    if (useFifo && !selectedBatchId) {
+        // FIFO mode - show recommended batch
+        const fifoBatch = batches[0]; // First batch is oldest (FIFO)
+        return `
+            <div class="batch-fifo-display">
+                <span class="badge bg-info-subtle text-info small">
+                    <i class="mdi mdi-sort-clock-ascending"></i> FIFO
+                </span>
+                <span class="small d-block text-muted mt-1">
+                    ${fifoBatch.batch_number || 'Auto'}
+                    ${fifoBatch.expiry_date ? `<br>Exp: ${fifoBatch.expiry_date}` : ''}
+                </span>
+                <button type="button" class="btn btn-link btn-sm p-0 small" onclick="toggleBatchManualSelection(${index})">
+                    <i class="mdi mdi-pencil"></i> Change
+                </button>
+            </div>
+        `;
+    }
+
+    // Manual selection mode - show dropdown
+    let options = '<option value="">Auto (FIFO)</option>';
+    batches.forEach(batch => {
+        const isSelected = selectedBatchId == batch.id ? 'selected' : '';
+        const expiryClass = batch.is_expiring_soon ? 'text-warning' : (batch.is_expired ? 'text-danger' : '');
+        const expiryText = batch.expiry_date ? ` | Exp: ${batch.expiry_date}` : '';
+        options += `<option value="${batch.id}" ${isSelected} class="${expiryClass}">
+            ${batch.batch_number} (${batch.current_qty} avail)${expiryText}
+        </option>`;
+    });
+
+    return `
+        <select class="form-select form-select-sm batch-select" data-cart-index="${index}" onchange="onBatchSelected(this, ${index})">
+            ${options}
+        </select>
+    `;
+}
+
+// Toggle manual batch selection for an item
+function toggleBatchManualSelection(index) {
+    const item = dispenseCart[index];
+    item.manual_batch_mode = true;
+    updateCartRowStock(index);
+}
+
+// Handle batch selection change
+function onBatchSelected(selectEl, index) {
+    const batchId = $(selectEl).val();
+    dispenseCart[index].selected_batch_id = batchId || null;
 }
 
 // Update overall cart stock status
@@ -12230,18 +12478,31 @@ function dispenseFromCart() {
     }
 
     const itemIds = dispenseCart.map(i => i.id);
+
+    // Build batch selections array for items with manual selection
+    const batchSelections = [];
+    dispenseCart.forEach(item => {
+        if (item.selected_batch_id) {
+            batchSelections.push({
+                product_request_id: item.id,
+                batch_id: item.selected_batch_id
+            });
+        }
+    });
+
     const $btn = $('#btn-dispense-cart');
     const originalHtml = $btn.html();
     $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Dispensing...');
 
     $.ajax({
-        url: '{{ route("pharmacy.dispense") }}',
+        url: '{{ route("pharmacy.dispense-with-batch") }}',
         method: 'POST',
         data: {
             _token: '{{ csrf_token() }}',
             patient_id: currentPatient,
             product_request_ids: itemIds,
-            store_id: storeId
+            store_id: storeId,
+            batch_selections: batchSelections
         },
         success: function(response) {
             $btn.prop('disabled', false).html(originalHtml);
@@ -12303,6 +12564,8 @@ $(document).on('change', '#modal-store-select', function() {
         // Reset stock status and re-fetch
         dispenseCart.forEach((item, index) => {
             dispenseCart[index].stock = null;
+            dispenseCart[index].batches = [];
+            dispenseCart[index].selected_batch_id = null;
             dispenseCart[index].stock_status = 'loading';
         });
         renderDispenseCart();
@@ -12311,6 +12574,12 @@ $(document).on('change', '#modal-store-select', function() {
         // No store selected - update status
         updateCartStockStatus();
     }
+});
+
+// FIFO mode toggle handler - re-render cart when toggled
+$(document).on('change', '#use-fifo-auto', function() {
+    // Re-render to show/hide batch dropdowns
+    renderDispenseCart();
 });
 
 // ===========================================
@@ -13675,6 +13944,100 @@ $('#pharmacy-report-tabs button[data-bs-toggle="tab"]').on('shown.bs.tab', funct
 
 // ===========================================
 // END PHARMACY REPORTS MODULE
+// ===========================================
+
+// ===========================================
+// PRODUCT ADAPTATION MODULE
+// ===========================================
+
+// Open product adaptation modal
+function openAdaptationModal(productRequestId, productName, dose, qty) {
+    $('#adapt-product-request-id').val(productRequestId);
+    $('#adapt-original-product').text(productName);
+    $('#adapt-original-dose').text(dose || 'N/A');
+    $('#adapt-original-qty').text(qty || 1);
+    $('#adapt-new-product').val('').trigger('change');
+    $('#adapt-new-qty').val(qty || 1);
+    $('#adapt-reason').val('');
+
+    // Initialize Select2 for product search if not already done
+    if (!$('#adapt-new-product').hasClass('select2-hidden-accessible')) {
+        $('#adapt-new-product').select2({
+            dropdownParent: $('#productAdaptationModal'),
+            placeholder: 'Search for a product...',
+            allowClear: true,
+            minimumInputLength: 2,
+            ajax: {
+                url: '{{ route("inventory.purchase-orders.search-products") }}',
+                dataType: 'json',
+                delay: 300,
+                data: function(params) {
+                    return { q: params.term };
+                },
+                processResults: function(data) {
+                    return {
+                        results: data.map(p => ({
+                            id: p.id,
+                            text: `${p.product_name} (${p.product_code || 'N/A'})`,
+                            product: p
+                        }))
+                    };
+                }
+            }
+        });
+    }
+
+    $('#productAdaptationModal').modal('show');
+}
+
+// Confirm product adaptation
+$('#confirm-adaptation').on('click', function() {
+    const productRequestId = $('#adapt-product-request-id').val();
+    const newProductId = $('#adapt-new-product').val();
+    const newQty = $('#adapt-new-qty').val();
+    const reason = $('#adapt-reason').val().trim();
+
+    if (!newProductId) {
+        toastr.warning('Please select a new product');
+        return;
+    }
+
+    if (!reason) {
+        toastr.warning('Please enter a reason for adaptation');
+        return;
+    }
+
+    const $btn = $(this);
+    const originalHtml = $btn.html();
+    $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Processing...');
+
+    $.ajax({
+        url: `/pharmacy-workbench/prescription/${productRequestId}/adapt`,
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            new_product_id: newProductId,
+            new_qty: newQty,
+            adaptation_note: reason
+        },
+        success: function(response) {
+            $btn.prop('disabled', false).html(originalHtml);
+            toastr.success(response.message || 'Prescription adapted successfully');
+            $('#productAdaptationModal').modal('hide');
+
+            // Refresh prescription lists
+            loadPrescriptionItems(currentStatusFilter);
+            refreshAllPrescTables();
+        },
+        error: function(xhr) {
+            $btn.prop('disabled', false).html(originalHtml);
+            toastr.error(xhr.responseJSON?.message || 'Failed to adapt prescription');
+        }
+    });
+});
+
+// ===========================================
+// END PRODUCT ADAPTATION MODULE
 // ===========================================
 </script>
 

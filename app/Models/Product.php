@@ -69,4 +69,88 @@ protected $fillable = [
     public function requests(){
         return $this->hasMany(ProductOrServiceRequest::class,'product_id','id');
     }
+
+    // ===== NEW INVENTORY MANAGEMENT RELATIONSHIPS =====
+
+    /**
+     * Get all stock batches for this product
+     */
+    public function stockBatches()
+    {
+        return $this->hasMany(StockBatch::class);
+    }
+
+    /**
+     * Get active stock batches with available stock (FIFO order)
+     */
+    public function availableBatches()
+    {
+        return $this->hasMany(StockBatch::class)
+            ->active()
+            ->hasStock()
+            ->fifoOrder();
+    }
+
+    /**
+     * Get stock batches for a specific store
+     */
+    public function batchesInStore(int $storeId)
+    {
+        return $this->stockBatches()
+            ->where('store_id', $storeId)
+            ->active()
+            ->hasStock()
+            ->fifoOrder();
+    }
+
+    /**
+     * Get purchase order items for this product
+     */
+    public function purchaseOrderItems()
+    {
+        return $this->hasMany(PurchaseOrderItem::class);
+    }
+
+    /**
+     * Get requisition items for this product
+     */
+    public function requisitionItems()
+    {
+        return $this->hasMany(StoreRequisitionItem::class);
+    }
+
+    /**
+     * Get total available quantity across all stores
+     */
+    public function getTotalAvailableQtyAttribute(): int
+    {
+        return $this->stockBatches()
+            ->active()
+            ->where('current_qty', '>', 0)
+            ->sum('current_qty');
+    }
+
+    /**
+     * Get available quantity in a specific store
+     */
+    public function getAvailableQtyInStore(int $storeId): int
+    {
+        return $this->stockBatches()
+            ->where('store_id', $storeId)
+            ->active()
+            ->where('current_qty', '>', 0)
+            ->sum('current_qty');
+    }
+
+    /**
+     * Get batches expiring within given days
+     */
+    public function getExpiringBatches(int $days = 30)
+    {
+        return $this->stockBatches()
+            ->active()
+            ->hasStock()
+            ->expiringSoon($days)
+            ->get();
+    }
 }

@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-
+use App\Models\StockBatch;
 
 use OwenIt\Auditing\Contracts\Auditable;
 class ProductRequest extends Model implements Auditable
@@ -19,6 +19,7 @@ protected $fillable = [
         'dispensed_by',
         'dispense_date',
         'dispensed_from_store_id',
+        'dispensed_from_batch_id',
         'product_id',
         'encounter_id',
         'patient_id',
@@ -27,7 +28,9 @@ protected $fillable = [
         'qty',
         'status',
         'deleted_by',
-        'deletion_reason'
+        'deletion_reason',
+        'adapted_from_product_id',
+        'adaptation_note'
     ];
 
     public function productOrServiceRequest()
@@ -71,6 +74,32 @@ protected $fillable = [
     public function dispensedFromStore()
     {
         return $this->belongsTo(Store::class, 'dispensed_from_store_id', 'id');
+    }
+
+    /**
+     * Get the batch from which this item was dispensed.
+     * NEW: For batch-based inventory tracking
+     */
+    public function dispensedFromBatch()
+    {
+        return $this->belongsTo(StockBatch::class, 'dispensed_from_batch_id', 'id');
+    }
+
+    /**
+     * Get the original product if this was adapted/changed.
+     * NEW: For product adaptation tracking
+     */
+    public function adaptedFromProduct()
+    {
+        return $this->belongsTo(Product::class, 'adapted_from_product_id', 'id');
+    }
+
+    /**
+     * Check if this product request was adapted from another product.
+     */
+    public function isAdapted(): bool
+    {
+        return !is_null($this->adapted_from_product_id);
     }
 
     /**
