@@ -3,7 +3,7 @@
 @section('page_name', 'Inventory Management')
 @section('subpage_name', 'Store Requisitions')
 
-@push('styles')
+@section('content')
 <link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
 <style>
     .status-badge {
@@ -47,9 +47,6 @@
         border-bottom-color: #dee2e6;
     }
 </style>
-@endpush
-
-@section('content')
 <div id="content-wrapper">
     <div class="container-fluid">
         <!-- Summary Cards -->

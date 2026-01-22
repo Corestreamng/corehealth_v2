@@ -33,6 +33,7 @@ class StockBatch extends Model implements Auditable
     protected $fillable = [
         'product_id',
         'store_id',
+        'supplier_id',
         'batch_name',
         'batch_number',
         'initial_qty',
@@ -138,6 +139,14 @@ class StockBatch extends Model implements Auditable
     public function sourceRequisition()
     {
         return $this->belongsTo(StoreRequisition::class, 'source_requisition_id');
+    }
+
+    /**
+     * Get the supplier (if assigned)
+     */
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class);
     }
 
     /**

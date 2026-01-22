@@ -3,7 +3,7 @@
 @section('page_name', 'Inventory Management')
 @section('subpage_name', 'Create Requisition')
 
-@push('styles')
+@section('content')
 <link rel="stylesheet" href="{{ asset('assets/css/select2.min.css') }}">
 <style>
     .item-row {

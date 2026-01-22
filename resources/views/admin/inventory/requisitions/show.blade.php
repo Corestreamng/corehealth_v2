@@ -3,7 +3,7 @@
 @section('page_name', 'Inventory Management')
 @section('subpage_name', 'View Requisition')
 
-@push('styles')
+@section('content')
 <style>
     .req-header {
         background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
@@ -300,7 +300,7 @@
                         $pending = $item->quantity_requested - $item->quantity_fulfilled;
                     @endphp
                     @if($pending > 0)
-                    <div class="card mb-3">
+                    <div class="card-modern mb-3">
                         <div class="card-header bg-light">
                             <strong>{{ $item->product->product_name }}</strong>
                             <span class="float-right">Pending: {{ $pending }}</span>

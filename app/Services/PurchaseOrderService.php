@@ -229,7 +229,7 @@ class PurchaseOrderService
      * Receive items from PO
      *
      * @param PurchaseOrder $po
-     * @param array $receivedItems Array of ['item_id' => ['qty' => X, 'actual_cost' => Y, 'expiry_date' => Z, 'batch_name' => W]]
+     * @param array $receivedItems Array of ['item_id' => ['qty' => X, 'actual_cost' => Y, 'expiry_date' => Z, 'batch_number' => W]]
      * @return array Created batches
      */
     public function receiveItems(PurchaseOrder $po, array $receivedItems): array
@@ -261,7 +261,7 @@ class PurchaseOrderService
                     'qty' => $qty,
                     'cost_price' => $actualCost,
                     'expiry_date' => $receiveData['expiry_date'] ?? null,
-                    'batch_name' => $receiveData['batch_name'] ?? null,
+                    'batch_number' => $receiveData['batch_number'] ?? null,
                     'source' => StockBatch::SOURCE_PURCHASE_ORDER,
                     'purchase_order_item_id' => $item->id,
                     'reference_type' => PurchaseOrder::class,

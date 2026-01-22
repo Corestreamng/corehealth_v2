@@ -3,7 +3,7 @@
 @section('page_name', 'Inventory Management')
 @section('subpage_name', 'Edit Purchase Order')
 
-@push('styles')
+@section('content')
 <link rel="stylesheet" href="{{ asset('assets/css/select2.min.css') }}">
 <style>
     .item-row {
@@ -46,9 +46,6 @@
         margin-bottom: 1.5rem;
     }
 </style>
-@endpush
-
-@section('content')
 <div id="content-wrapper">
     <div class="container-fluid">
         <!-- Header -->

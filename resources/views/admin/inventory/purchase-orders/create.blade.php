@@ -3,7 +3,7 @@
 @section('page_name', 'Inventory Management')
 @section('subpage_name', isset($purchaseOrder) ? 'Edit Purchase Order' : 'Create Purchase Order')
 
-@push('styles')
+@section('content')
 <link rel="stylesheet" href="{{ asset('assets/css/select2.min.css') }}">
 <style>
     .item-row {
@@ -42,9 +42,6 @@
         margin-bottom: 1rem;
     }
 </style>
-@endpush
-
-@section('content')
 <div id="content-wrapper">
     <div class="container-fluid">
         <form id="po-form" method="POST"

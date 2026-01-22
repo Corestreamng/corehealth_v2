@@ -3,7 +3,7 @@
 @section('page_name', 'Inventory Management')
 @section('subpage_name', 'Stock Value Report')
 
-@push('styles')
+@section('content')
 <link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
 <style>
     .report-header {
@@ -29,9 +29,6 @@
         font-size: 0.875rem;
     }
 </style>
-@endpush
-
-@section('content')
 <div id="content-wrapper">
     <div class="container-fluid">
         <!-- Header -->

@@ -309,7 +309,7 @@ class PurchaseOrderController extends Controller
             'items.*.qty' => 'required|integer|min:0',
             'items.*.actual_cost' => 'nullable|numeric|min:0',
             'items.*.expiry_date' => 'nullable|date',
-            'items.*.batch_name' => 'nullable|string|max:100',
+            'items.*.batch_number' => 'required_if:items.*.qty,>,0|nullable|string|max:100',
         ]);
 
         try {
@@ -320,7 +320,7 @@ class PurchaseOrderController extends Controller
                     'qty' => $item['qty'],
                     'actual_cost' => $item['actual_cost'] ?? null,
                     'expiry_date' => $item['expiry_date'] ?? null,
-                    'batch_name' => $item['batch_name'] ?? null,
+                    'batch_number' => $item['batch_number'] ?? null,
                 ];
             }
 
