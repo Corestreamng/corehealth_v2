@@ -11,8 +11,11 @@ use App\Models\ProductCategory;
 use App\Models\User;
 use App\Models\Store;
 use App\Models\StoreStock;
+use App\Models\StockBatch;
 use App\Models\Hmo;
 use App\Helpers\HmoHelper;
+use App\Helpers\BatchHelper;
+use App\Services\StockService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -27,6 +30,8 @@ use PDF;
  * - Plan Section: Phase 1.1 - Backend Setup
  * - Models: ProductRequest, ProductOrServiceRequest, Product, Patient
  * - Related Controllers: ProductRequestController (dispense/bill methods)
+ * - NEW: StockService for batch-based dispensing
+ * - NEW: BatchHelper for FIFO batch selection
  */
 class PharmacyWorkbenchController extends Controller
 {
@@ -2067,5 +2072,423 @@ class PharmacyWorkbenchController extends Controller
             'account' => $breakdown->account ?? 0
         ];
     }
-}
 
+    // ===== BATCH-BASED INVENTORY METHODS =====
+
+    /**
+     * Get available batches for a product in a store
+     * Used by the dispense modal to show batch selection options
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getProductBatches(Request $request)
+    {
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'store_id' => 'required|exists:stores,id',
+        ]);
+
+        $batches = BatchHelper::getBatchSelectOptions(
+            $request->product_id,
+            $request->store_id
+        );
+
+        $totalAvailable = array_sum(array_column($batches, 'qty'));
+
+        return response()->json([
+            'success' => true,
+            'total_available' => $totalAvailable,
+            'batches' => $batches,
+        ]);
+    }
+
+    /**
+     * Get batch fulfillment suggestion for dispensing
+     * Returns optimal FIFO batch allocation for required quantity
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getBatchFulfillmentSuggestion(Request $request)
+    {
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'store_id' => 'required|exists:stores,id',
+            'qty' => 'required|integer|min:1',
+        ]);
+
+        $suggestion = BatchHelper::suggestFulfillmentStrategy(
+            $request->product_id,
+            $request->store_id,
+            $request->qty
+        );
+
+        return response()->json([
+            'success' => true,
+            'suggestion' => $suggestion,
+        ]);
+    }
+
+    /**
+     * Dispense medication with batch selection
+     * Enhanced version with FIFO batch-based stock deduction
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function dispenseMedicationWithBatch(Request $request)
+    {
+        $request->validate([
+            'product_request_ids' => 'required|array',
+            'product_request_ids.*' => 'exists:product_requests,id',
+            'store_id' => 'required|exists:stores,id',
+            'batch_selections' => 'nullable|array', // Optional: manual batch selection
+            'batch_selections.*.product_request_id' => 'exists:product_requests,id',
+            'batch_selections.*.batch_id' => 'exists:stock_batches,id',
+        ]);
+
+        $storeId = $request->store_id;
+        $store = Store::find($storeId);
+        $stockService = app(StockService::class);
+
+        // Build batch selections map
+        $manualBatchSelections = [];
+        if ($request->has('batch_selections')) {
+            foreach ($request->batch_selections as $selection) {
+                $manualBatchSelections[$selection['product_request_id']] = $selection['batch_id'];
+            }
+        }
+
+        // PHASE 1: Pre-validate ALL items
+        $itemsToDispense = [];
+        $validationErrors = [];
+
+        foreach ($request->product_request_ids as $prId) {
+            $productRequest = ProductRequest::with(['productOrServiceRequest', 'product'])->find($prId);
+
+            if (!$productRequest) {
+                $validationErrors[] = [
+                    'id' => $prId,
+                    'error' => 'Product request not found'
+                ];
+                continue;
+            }
+
+            // Validate status - must be billed (status 2)
+            if ($productRequest->status != 2) {
+                $statusLabels = [0 => 'Pending', 1 => 'Ready', 2 => 'Billed', 3 => 'Dispensed', 4 => 'Cancelled'];
+                $statusLabel = $statusLabels[$productRequest->status] ?? 'Unknown';
+                $validationErrors[] = [
+                    'id' => $prId,
+                    'product' => $productRequest->product->product_name ?? 'Unknown',
+                    'error' => "Cannot dispense - item is '{$statusLabel}' (must be 'Billed')"
+                ];
+                continue;
+            }
+
+            // Check if this is a bundled procedure item
+            $bundledCheck = HmoHelper::isBundledItem('product', $productRequest->id);
+            if ($bundledCheck && $bundledCheck['is_bundled']) {
+                $deliveryCheck = HmoHelper::canDeliverBundledItem($bundledCheck['procedure_item']);
+                if (!$deliveryCheck['can_deliver']) {
+                    $validationErrors[] = [
+                        'id' => $prId,
+                        'product' => $productRequest->product->product_name ?? 'Unknown',
+                        'error' => $deliveryCheck['reason'] . ' (Bundled with: ' . $bundledCheck['procedure_name'] . ')'
+                    ];
+                    continue;
+                }
+            } elseif ($productRequest->productOrServiceRequest) {
+                $deliveryCheck = HmoHelper::canDeliverService($productRequest->productOrServiceRequest);
+                if (!$deliveryCheck['can_deliver']) {
+                    $validationErrors[] = [
+                        'id' => $prId,
+                        'product' => $productRequest->product->product_name ?? 'Unknown',
+                        'error' => $deliveryCheck['reason']
+                    ];
+                    continue;
+                }
+            }
+
+            $qty = $productRequest->qty ?? 1;
+
+            // Check batch availability
+            $availableQty = $stockService->getAvailableStock($productRequest->product_id, $storeId);
+
+            if ($availableQty < $qty) {
+                $validationErrors[] = [
+                    'id' => $prId,
+                    'product' => $productRequest->product->product_name ?? 'Unknown',
+                    'error' => "Insufficient stock in '{$store->store_name}': need {$qty}, available {$availableQty}",
+                    'shortage' => $qty - $availableQty
+                ];
+                continue;
+            }
+
+            // Determine batch to use
+            $batchId = $manualBatchSelections[$prId] ?? null;
+
+            // Validate manual batch selection if provided
+            if ($batchId) {
+                $batch = StockBatch::find($batchId);
+                if (!$batch || $batch->product_id != $productRequest->product_id || $batch->store_id != $storeId) {
+                    $validationErrors[] = [
+                        'id' => $prId,
+                        'product' => $productRequest->product->product_name ?? 'Unknown',
+                        'error' => 'Invalid batch selection'
+                    ];
+                    continue;
+                }
+                if ($batch->current_qty < $qty) {
+                    $validationErrors[] = [
+                        'id' => $prId,
+                        'product' => $productRequest->product->product_name ?? 'Unknown',
+                        'error' => "Selected batch has insufficient stock: need {$qty}, available {$batch->current_qty}"
+                    ];
+                    continue;
+                }
+            }
+
+            $itemsToDispense[] = [
+                'productRequest' => $productRequest,
+                'qty' => $qty,
+                'batch_id' => $batchId,
+            ];
+        }
+
+        // Reject if validation errors
+        if (count($validationErrors) > 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot dispense: ' . count($validationErrors) . ' item(s) failed validation.',
+                'validation_errors' => $validationErrors,
+                'dispensed_count' => 0
+            ], 422);
+        }
+
+        // PHASE 2: Execute dispense in transaction
+        try {
+            DB::beginTransaction();
+
+            $dispensedCount = 0;
+
+            foreach ($itemsToDispense as $item) {
+                $productRequest = $item['productRequest'];
+                $qty = $item['qty'];
+                $batchId = $item['batch_id'];
+
+                // Dispense using batch system
+                if ($batchId) {
+                    // Manual batch selection
+                    $transaction = $stockService->dispenseFromBatch(
+                        $batchId,
+                        $qty,
+                        ProductRequest::class,
+                        $productRequest->id,
+                        "Dispensed for patient"
+                    );
+                    $dispensedBatchId = $batchId;
+                } else {
+                    // FIFO automatic batch selection
+                    $dispensed = $stockService->dispenseStock(
+                        $productRequest->product_id,
+                        $storeId,
+                        $qty,
+                        ProductRequest::class,
+                        $productRequest->id,
+                        "Dispensed for patient"
+                    );
+                    // Get the first batch used (for recording)
+                    $dispensedBatchId = array_key_first($dispensed);
+                }
+
+                // Update product request
+                $productRequest->update([
+                    'status' => 3,
+                    'dispensed_by' => Auth::id(),
+                    'dispense_date' => now(),
+                    'dispensed_from_store_id' => $storeId,
+                    'dispensed_from_batch_id' => $dispensedBatchId,
+                ]);
+
+                // Update ProductOrServiceRequest if exists
+                if ($productRequest->productOrServiceRequest) {
+                    $productRequest->productOrServiceRequest->update([
+                        'dispensed_from_store_id' => $storeId
+                    ]);
+                }
+
+                $dispensedCount++;
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully dispensed {$dispensedCount} medication(s) from '{$store->store_name}' using batch tracking",
+                'dispensed_count' => $dispensedCount,
+                'store_name' => $store->store_name
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Pharmacy batch dispense error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Dispense error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get expiring batches alert for pharmacy dashboard
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getExpiringBatches(Request $request)
+    {
+        $storeId = $request->get('store_id', Store::getDefaultPharmacy()?->id);
+        $days = $request->get('days', 30);
+
+        if (!$storeId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No store selected'
+            ], 400);
+        }
+
+        $expiringBatches = BatchHelper::getBatchesWithExpiryWarning($storeId, 90, $days);
+
+        return response()->json([
+            'success' => true,
+            'batches' => $expiringBatches->map(fn($b) => [
+                'batch_id' => $b['batch']->id,
+                'batch_number' => $b['batch']->batch_number,
+                'product_name' => $b['batch']->product->product_name ?? 'Unknown',
+                'current_qty' => $b['batch']->current_qty,
+                'expiry_date' => $b['batch']->expiry_date?->format('Y-m-d'),
+                'days_to_expiry' => $b['days_to_expiry'],
+                'warning_level' => $b['warning_level'],
+            ]),
+            'summary' => [
+                'expired' => $expiringBatches->where('is_expired', true)->count(),
+                'critical' => $expiringBatches->where('is_critical', true)->count(),
+                'warning' => $expiringBatches->count() - $expiringBatches->where('is_expired', true)->count() - $expiringBatches->where('is_critical', true)->count(),
+            ],
+        ]);
+    }
+
+    /**
+     * Get low stock items alert for pharmacy dashboard
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getLowStockItems(Request $request)
+    {
+        $storeId = $request->get('store_id', Store::getDefaultPharmacy()?->id);
+
+        if (!$storeId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No store selected'
+            ], 400);
+        }
+
+        $stockService = app(StockService::class);
+        $lowStockItems = $stockService->getLowStockProducts($storeId);
+
+        return response()->json([
+            'success' => true,
+            'items' => $lowStockItems->map(fn($ss) => [
+                'product_id' => $ss->product_id,
+                'product_name' => $ss->product->product_name ?? 'Unknown',
+                'product_code' => $ss->product->product_code ?? '-',
+                'current_qty' => $ss->qty,
+                'reorder_level' => $ss->reorder_level,
+                'shortage' => max(0, $ss->reorder_level - $ss->qty),
+            ]),
+            'total_count' => $lowStockItems->count(),
+        ]);
+    }
+
+    /**
+     * Adapt/change a prescription to a different product
+     * Records the original product for audit trail
+     *
+     * @param Request $request
+     * @param int $id ProductRequest ID
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function adaptPrescription(Request $request, $id)
+    {
+        $request->validate([
+            'new_product_id' => 'required|exists:products,id',
+            'new_qty' => 'required|integer|min:1',
+            'adaptation_note' => 'required|string|max:500',
+        ]);
+
+        $productRequest = ProductRequest::findOrFail($id);
+
+        // Only allow adaptation for unbilled/pending items
+        if ($productRequest->status >= 2) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot adapt prescription that has already been billed or dispensed'
+            ], 422);
+        }
+
+        $originalProductId = $productRequest->product_id;
+        $newProduct = Product::findOrFail($request->new_product_id);
+
+        // Get price for new product
+        $newPrice = $newProduct->price->current_sale_price ?? 0;
+
+        try {
+            DB::beginTransaction();
+
+            // Update product request with new product
+            $productRequest->update([
+                'adapted_from_product_id' => $originalProductId,
+                'product_id' => $request->new_product_id,
+                'qty' => $request->new_qty,
+                'adaptation_note' => $request->adaptation_note,
+            ]);
+
+            // Update the ProductOrServiceRequest if exists
+            if ($productRequest->productOrServiceRequest) {
+                $productRequest->productOrServiceRequest->update([
+                    'product_id' => $request->new_product_id,
+                    'qty' => $request->new_qty,
+                    'payable_amount' => $newPrice * $request->new_qty,
+                ]);
+            }
+
+            DB::commit();
+
+            Log::info('Prescription adapted', [
+                'product_request_id' => $id,
+                'original_product_id' => $originalProductId,
+                'new_product_id' => $request->new_product_id,
+                'adapted_by' => Auth::id(),
+                'reason' => $request->adaptation_note,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Prescription adapted successfully to ' . $newProduct->product_name,
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Prescription adaptation failed: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to adapt prescription: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+}

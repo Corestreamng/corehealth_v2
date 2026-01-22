@@ -18,9 +18,11 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\patient;
 use App\Models\Product;
 use App\Models\ProductOrServiceRequest;
+use App\Models\Store;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Services\StockService;
 
 class ProductRequestController extends Controller
 {
@@ -293,7 +295,8 @@ class ProductRequestController extends Controller
             $request->validate([
                 'selectedPrescDispenseRows' => 'array',
                 'patient_user_id' => 'required',
-                'patient_id' => 'required'
+                'patient_id' => 'required',
+                'store_id' => 'nullable|exists:stores,id'
             ]);
 
             if (isset($request->dismiss_presc_dispense) && isset($request->selectedPrescDispenseRows)) {
@@ -307,9 +310,16 @@ class ProductRequestController extends Controller
                 return redirect()->back()->with(['message' => "Product Requests Dismissed Successfully", 'message_type' => 'success']);
             } else {
                 DB::beginTransaction();
+
+                // Get default store (Pharmacy) if not specified
+                $storeId = $request->store_id ?? Store::where('is_default', true)->first()?->id
+                    ?? Store::where('store_type', 'pharmacy')->first()?->id;
+
+                $stockService = app(StockService::class);
+
                 if (isset($request->selectedPrescDispenseRows)) {
                     for ($i = 0; $i < count($request->selectedPrescDispenseRows); $i++) {
-                        $productRequest = ProductRequest::with('productOrServiceRequest')->findOrFail($request->selectedPrescDispenseRows[$i]);
+                        $productRequest = ProductRequest::with(['productOrServiceRequest', 'product'])->findOrFail($request->selectedPrescDispenseRows[$i]);
 
                         // Check payment and HMO delivery requirements
                         if ($productRequest->productOrServiceRequest) {
@@ -324,10 +334,43 @@ class ProductRequestController extends Controller
                             }
                         }
 
+                        // Get quantity from ProductOrServiceRequest or default to 1
+                        $qty = $productRequest->productOrServiceRequest?->qty ?? 1;
+
+                        // Dispense from stock using FIFO batch-based system
+                        $dispensedBatchId = null;
+                        if ($storeId && $productRequest->product_id) {
+                            try {
+                                // Check stock availability
+                                $availableStock = $stockService->getAvailableStock($productRequest->product_id, $storeId);
+
+                                if ($availableStock >= $qty) {
+                                    $dispensed = $stockService->dispenseStock(
+                                        $productRequest->product_id,
+                                        $storeId,
+                                        $qty,
+                                        ProductRequest::class,
+                                        $productRequest->id,
+                                        "Dispensed for prescription #{$productRequest->id}"
+                                    );
+                                    // Get the first batch ID used for tracking
+                                    $dispensedBatchId = array_key_first($dispensed);
+                                } else {
+                                    // Log warning but don't block dispensing (backward compatibility)
+                                    \Log::warning("Insufficient stock for product {$productRequest->product_id} in store {$storeId}. Available: {$availableStock}, Required: {$qty}");
+                                }
+                            } catch (\Exception $stockException) {
+                                // Log but don't block - maintain backward compatibility
+                                \Log::warning("Stock dispense failed for PR#{$productRequest->id}: " . $stockException->getMessage());
+                            }
+                        }
+
                         ProductRequest::where('id', $request->selectedPrescDispenseRows[$i])->update([
                             'status' => 3,
                             'dispensed_by' => Auth::id(),
                             'dispense_date' => date('Y-m-d H:i:s'),
+                            'dispensed_from_store_id' => $storeId,
+                            'dispensed_from_batch_id' => $dispensedBatchId,
                         ]);
                     }
                 }
@@ -514,6 +557,7 @@ class ProductRequestController extends Controller
 
     /**
      * AJAX version of dispense - returns JSON response
+     * Integrates with StockService for batch-based FIFO dispensing
      */
     public function dispenseAjax(Request $request)
     {
@@ -521,15 +565,23 @@ class ProductRequestController extends Controller
             $request->validate([
                 'selectedPrescDispenseRows' => 'required|array|min:1',
                 'patient_user_id' => 'required',
-                'patient_id' => 'required'
+                'patient_id' => 'required',
+                'store_id' => 'nullable|exists:stores,id'
             ]);
 
             DB::beginTransaction();
             $dispensedCount = 0;
             $errors = [];
+            $stockWarnings = [];
+
+            // Get default store (Pharmacy) if not specified
+            $storeId = $request->store_id ?? Store::where('is_default', true)->first()?->id
+                ?? Store::where('store_type', 'pharmacy')->first()?->id;
+
+            $stockService = app(StockService::class);
 
             foreach ($request->selectedPrescDispenseRows as $prId) {
-                $productRequest = ProductRequest::with('productOrServiceRequest')->find($prId);
+                $productRequest = ProductRequest::with(['productOrServiceRequest', 'product'])->find($prId);
 
                 if (!$productRequest) {
                     $errors[] = "PR#{$prId}: Not found";
@@ -550,10 +602,44 @@ class ProductRequestController extends Controller
                     }
                 }
 
+                // Get quantity from ProductOrServiceRequest or default to 1
+                $qty = $productRequest->productOrServiceRequest?->qty ?? 1;
+
+                // Dispense from stock using FIFO batch-based system
+                $dispensedBatchId = null;
+                if ($storeId && $productRequest->product_id) {
+                    try {
+                        // Check stock availability
+                        $availableStock = $stockService->getAvailableStock($productRequest->product_id, $storeId);
+
+                        if ($availableStock >= $qty) {
+                            $dispensed = $stockService->dispenseStock(
+                                $productRequest->product_id,
+                                $storeId,
+                                $qty,
+                                ProductRequest::class,
+                                $productRequest->id,
+                                "Dispensed for prescription #{$productRequest->id}"
+                            );
+                            // Get the first batch ID used for tracking
+                            $dispensedBatchId = array_key_first($dispensed);
+                        } else {
+                            // Warn but don't block (backward compatibility)
+                            $stockWarnings[] = "PR#{$prId}: Low stock (available: {$availableStock}, needed: {$qty})";
+                        }
+                    } catch (\Exception $stockException) {
+                        // Log but don't block - maintain backward compatibility
+                        $stockWarnings[] = "PR#{$prId}: Stock warning - " . $stockException->getMessage();
+                        \Log::warning("Stock dispense failed for PR#{$prId}: " . $stockException->getMessage());
+                    }
+                }
+
                 $productRequest->update([
                     'status' => 3,
                     'dispensed_by' => Auth::id(),
                     'dispense_date' => now(),
+                    'dispensed_from_store_id' => $storeId,
+                    'dispensed_from_batch_id' => $dispensedBatchId,
                 ]);
 
                 $dispensedCount++;
@@ -565,12 +651,16 @@ class ProductRequestController extends Controller
             if (count($errors) > 0) {
                 $message .= ". Errors: " . implode('; ', $errors);
             }
+            if (count($stockWarnings) > 0) {
+                $message .= ". Stock warnings: " . implode('; ', $stockWarnings);
+            }
 
             return response()->json([
                 'success' => true,
                 'message' => $message,
                 'dispensed_count' => $dispensedCount,
-                'errors' => $errors
+                'errors' => $errors,
+                'stock_warnings' => $stockWarnings
             ]);
 
         } catch (\Exception $e) {

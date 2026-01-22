@@ -34,6 +34,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Helpers\HmoHelper;
 use App\Models\Store;
 use App\Models\StoreStock;
+use App\Services\StockService;
 use Yajra\DataTables\DataTables;
 
 class NursingWorkbenchController extends Controller{
@@ -619,7 +620,7 @@ class NursingWorkbenchController extends Controller{
 
     /**
      * Administer an injection (creates billing record + injection record).
-     * Stock is deducted from selected store at administration time.
+     * Stock is deducted from selected store at administration time using batch-based FIFO.
      */
     public function administerInjection(Request $request)
     {
@@ -647,38 +648,20 @@ class NursingWorkbenchController extends Controller{
             $patient = PatientLowerCase::findOrFail($request->patient_id);
             $storeId = $request->store_id;
             $injections = [];
+            $stockService = app(StockService::class);
 
             // Process each product
             foreach ($request->products as $productData) {
                 $product = Product::with(['price', 'stock'])->findOrFail($productData['product_id']);
-
-                // Check and deduct stock from selected store
-                $storeStock = StoreStock::where('store_id', $storeId)
-                    ->where('product_id', $product->id)
-                    ->first();
-
                 $qty = 1;
-                if (!$storeStock || $storeStock->current_quantity < $qty) {
-                    // Try global stock
-                    if ($product->stock && $product->stock->current_quantity >= $qty) {
-                        $product->stock->decrement('current_quantity', $qty);
-                        $product->stock->increment('quantity_sale', $qty);
-                    } else {
-                        throw new \Exception("Insufficient stock for {$product->product_name} (need {$qty}, store has " . ($storeStock ? $storeStock->current_quantity : 0) . ")");
-                    }
-                } else {
-                    // Deduct from store stock
-                    $storeStock->decrement('current_quantity', $qty);
-                    $storeStock->increment('quantity_sale', $qty);
 
-                    // Also deduct from global stock
-                    if ($product->stock) {
-                        $product->stock->decrement('current_quantity', $qty);
-                        $product->stock->increment('quantity_sale', $qty);
-                    }
+                // Check stock availability using StockService
+                $availableStock = $stockService->getAvailableStock($product->id, $storeId);
+                if ($availableStock < $qty) {
+                    throw new \Exception("Insufficient stock for {$product->product_name} (need {$qty}, available: {$availableStock})");
                 }
 
-                // Create ProductOrServiceRequest for billing
+                // Create ProductOrServiceRequest for billing first (to get reference ID)
                 $billReq = new ProductOrServiceRequest();
                 $billReq->user_id = $patient->user_id;
                 $billReq->staff_user_id = Auth::id();
@@ -708,6 +691,16 @@ class NursingWorkbenchController extends Controller{
                 }
 
                 $billReq->save();
+
+                // Deduct stock using FIFO batch-based system
+                $dispensed = $stockService->dispenseStock(
+                    $product->id,
+                    $storeId,
+                    $qty,
+                    ProductOrServiceRequest::class,
+                    $billReq->id,
+                    "Injection administered to patient"
+                );
 
                 // Create injection administration record
                 $injection = InjectionAdministration::create([
@@ -875,7 +868,7 @@ class NursingWorkbenchController extends Controller{
 
     /**
      * Administer an immunization.
-     * Stock is deducted from selected store at administration time.
+     * Stock is deducted from selected store at administration time using batch-based FIFO.
      */
     public function administerImmunization(Request $request)
     {
@@ -903,38 +896,20 @@ class NursingWorkbenchController extends Controller{
             $patient = PatientLowerCase::findOrFail($request->patient_id);
             $storeId = $request->store_id;
             $immunizations = [];
+            $stockService = app(StockService::class);
 
             // Process each vaccine product
             foreach ($request->products as $productData) {
                 $product = Product::with(['price', 'stock'])->findOrFail($productData['product_id']);
-
-                // Check and deduct stock from selected store
-                $storeStock = StoreStock::where('store_id', $storeId)
-                    ->where('product_id', $product->id)
-                    ->first();
-
                 $qty = 1;
-                if (!$storeStock || $storeStock->current_quantity < $qty) {
-                    // Try global stock
-                    if ($product->stock && $product->stock->current_quantity >= $qty) {
-                        $product->stock->decrement('current_quantity', $qty);
-                        $product->stock->increment('quantity_sale', $qty);
-                    } else {
-                        throw new \Exception("Insufficient stock for {$product->product_name} (need {$qty}, store has " . ($storeStock ? $storeStock->current_quantity : 0) . ")");
-                    }
-                } else {
-                    // Deduct from store stock
-                    $storeStock->decrement('current_quantity', $qty);
-                    $storeStock->increment('quantity_sale', $qty);
 
-                    // Also deduct from global stock
-                    if ($product->stock) {
-                        $product->stock->decrement('current_quantity', $qty);
-                        $product->stock->increment('quantity_sale', $qty);
-                    }
+                // Check stock availability using StockService
+                $availableStock = $stockService->getAvailableStock($product->id, $storeId);
+                if ($availableStock < $qty) {
+                    throw new \Exception("Insufficient stock for {$product->product_name} (need {$qty}, available: {$availableStock})");
                 }
 
-                // Create ProductOrServiceRequest for billing
+                // Create ProductOrServiceRequest for billing first
                 $billReq = new ProductOrServiceRequest();
                 $billReq->user_id = $patient->user_id;
                 $billReq->staff_user_id = Auth::id();
@@ -964,6 +939,16 @@ class NursingWorkbenchController extends Controller{
                 }
 
                 $billReq->save();
+
+                // Deduct stock using FIFO batch-based system
+                $dispensed = $stockService->dispenseStock(
+                    $product->id,
+                    $storeId,
+                    $qty,
+                    ProductOrServiceRequest::class,
+                    $billReq->id,
+                    "Immunization administered to patient"
+                );
 
                 // Create immunization record
                 $immunization = ImmunizationRecord::create([
@@ -1205,7 +1190,7 @@ class NursingWorkbenchController extends Controller{
 
     /**
      * Add a consumable (product) bill for a patient.
-     * Stock is deducted from selected store at billing time.
+     * Stock is deducted from selected store at billing time using batch-based FIFO.
      */
     public function addConsumableBill(Request $request)
     {
@@ -1227,30 +1212,12 @@ class NursingWorkbenchController extends Controller{
             $product = Product::with(['price', 'stock'])->findOrFail($request->product_id);
             $storeId = $request->store_id;
             $qty = $request->qty;
+            $stockService = app(StockService::class);
 
-            // Check and deduct stock from selected store
-            $storeStock = StoreStock::where('store_id', $storeId)
-                ->where('product_id', $product->id)
-                ->first();
-
-            if (!$storeStock || $storeStock->current_quantity < $qty) {
-                // Try global stock
-                if ($product->stock && $product->stock->current_quantity >= $qty) {
-                    $product->stock->decrement('current_quantity', $qty);
-                    $product->stock->increment('quantity_sale', $qty);
-                } else {
-                    throw new \Exception("Insufficient stock for {$product->product_name} (need {$qty}, store has " . ($storeStock ? $storeStock->current_quantity : 0) . ")");
-                }
-            } else {
-                // Deduct from store stock
-                $storeStock->decrement('current_quantity', $qty);
-                $storeStock->increment('quantity_sale', $qty);
-
-                // Also deduct from global stock
-                if ($product->stock) {
-                    $product->stock->decrement('current_quantity', $qty);
-                    $product->stock->increment('quantity_sale', $qty);
-                }
+            // Check stock availability using StockService
+            $availableStock = $stockService->getAvailableStock($product->id, $storeId);
+            if ($availableStock < $qty) {
+                throw new \Exception("Insufficient stock for {$product->product_name} (need {$qty}, available: {$availableStock})");
             }
 
             $billReq = new ProductOrServiceRequest();
@@ -1276,6 +1243,16 @@ class NursingWorkbenchController extends Controller{
             }
 
             $billReq->save();
+
+            // Deduct stock using FIFO batch-based system
+            $dispensed = $stockService->dispenseStock(
+                $product->id,
+                $storeId,
+                $qty,
+                ProductOrServiceRequest::class,
+                $billReq->id,
+                "Consumable billed for patient"
+            );
 
             DB::commit();
 
