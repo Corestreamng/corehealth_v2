@@ -24,17 +24,26 @@ use App\Models\Specialization;
 use App\Models\Clinic;
 use App\Models\Hmo;
 use Spatie\Permission\Models\Role;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Protection;
 
 /**
  * ImportExportController
  *
- * Handles CSV import/export for:
+ * Handles XLSX import/export with dropdown validations for:
  * - Products (Stock)
  * - Services (Labs, Imaging, Nursing, etc.)
  * - Staff
  * - Patients
  *
  * Each import creates related records (User, Price, Stock) as needed.
+ * Templates include dropdown lists for valid values only.
  */
 class ImportExportController extends Controller
 {
@@ -56,14 +65,14 @@ class ImportExportController extends Controller
         ];
 
         $categories = [
-            'products' => ProductCategory::orderBy('name')->get(),
-            'services' => ServiceCategory::orderBy('name')->get(),
+            'products' => ProductCategory::orderBy('category_name')->get(),
+            'services' => ServiceCategory::orderBy('category_name')->get(),
         ];
 
-        $stores = Store::where('is_active', true)->orderBy('store_name')->get();
+        $stores = Store::where('status', 1)->orderBy('store_name')->get();
         $specializations = Specialization::orderBy('name')->get();
-        $clinics = Clinic::orderBy('clinic_name')->get();
-        $hmos = Hmo::orderBy('hmo_name')->get();
+        $clinics = Clinic::orderBy('name')->get();
+        $hmos = Hmo::orderBy('name')->get();
         $roles = Role::orderBy('name')->get();
 
         return view('admin.import-export.index', compact(
@@ -72,264 +81,481 @@ class ImportExportController extends Controller
     }
 
     // ========================================
-    // TEMPLATE DOWNLOADS
+    // TEMPLATE DOWNLOADS (XLSX with Dropdowns)
     // ========================================
 
     /**
-     * Download CSV template for products
+     * Download XLSX template for products with dropdown validations
      */
     public function downloadProductTemplate()
     {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Products');
+
+        // Headers
         $headers = [
-            'product_name',         // Required
-            'product_code',         // Required (SKU)
-            'category_name',        // Required - will lookup/create ProductCategory
-            'description',          // Optional
-            'unit',                 // Optional (e.g., "tablets", "bottles")
-            'cost_price',           // Required - for Price model
-            'sale_price',           // Required - for Price model
-            'reorder_level',        // Optional - alert threshold
-            'initial_quantity',     // Optional - for Stock/StoreStock
-            'store_name',           // Optional - if provided, creates StoreStock
-            'batch_number',         // Optional - for batch tracking
-            'expiry_date',          // Optional - format: YYYY-MM-DD
-            'is_active',            // Optional - 1 or 0
+            'A1' => 'product_name',
+            'B1' => 'product_code',
+            'C1' => 'category_name',
+            'D1' => 'description',
+            'E1' => 'unit',
+            'F1' => 'cost_price',
+            'G1' => 'sale_price',
+            'H1' => 'reorder_level',
+            'I1' => 'initial_quantity',
+            'J1' => 'store_name',
+            'K1' => 'batch_number',
+            'L1' => 'expiry_date',
+            'M1' => 'is_active',
         ];
 
+        foreach ($headers as $cell => $value) {
+            $sheet->setCellValue($cell, $value);
+        }
+
+        // Style headers
+        $this->styleHeaders($sheet, 'A1:M1');
+
+        // Get valid values for dropdowns
+        $categories = ProductCategory::orderBy('category_name')->pluck('category_name')->toArray();
+        $stores = Store::where('status', 1)->orderBy('store_name')->pluck('store_name')->toArray();
+        $units = ['tablets', 'capsules', 'bottles', 'vials', 'ampoules', 'sachets', 'tubes', 'boxes', 'packs', 'pieces'];
+        $activeOptions = ['1', '0'];
+
+        // Create a hidden sheet for dropdown values
+        $lookupSheet = $spreadsheet->createSheet();
+        $lookupSheet->setTitle('_Lookups');
+
+        // Populate lookup values
+        $row = 1;
+        foreach ($categories as $cat) {
+            $lookupSheet->setCellValue('A' . $row, $cat);
+            $row++;
+        }
+        $catLastRow = $row - 1;
+
+        $row = 1;
+        foreach ($stores as $store) {
+            $lookupSheet->setCellValue('B' . $row, $store);
+            $row++;
+        }
+        $storeLastRow = $row - 1;
+
+        $row = 1;
+        foreach ($units as $unit) {
+            $lookupSheet->setCellValue('C' . $row, $unit);
+            $row++;
+        }
+        $unitLastRow = $row - 1;
+
+        $row = 1;
+        foreach ($activeOptions as $opt) {
+            $lookupSheet->setCellValue('D' . $row, $opt);
+            $row++;
+        }
+
+        // Hide the lookup sheet
+        $lookupSheet->setSheetState(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet::SHEETSTATE_HIDDEN);
+
+        // Add dropdown validations for 100 rows
+        for ($i = 2; $i <= 101; $i++) {
+            // Category dropdown
+            if ($catLastRow > 0) {
+                $this->addDropdownValidation($sheet, "C{$i}", "'_Lookups'!\$A\$1:\$A\${$catLastRow}");
+            }
+
+            // Store dropdown
+            if ($storeLastRow > 0) {
+                $this->addDropdownValidation($sheet, "J{$i}", "'_Lookups'!\$B\$1:\$B\${$storeLastRow}");
+            }
+
+            // Unit dropdown
+            $this->addDropdownValidation($sheet, "E{$i}", "'_Lookups'!\$C\$1:\$C\${$unitLastRow}");
+
+            // Is Active dropdown
+            $this->addDropdownValidation($sheet, "M{$i}", "'_Lookups'!\$D\$1:\$D\$2");
+        }
+
+        // Add sample data
         $sampleData = [
-            [
-                'Paracetamol 500mg',
-                'PARA-500',
-                'Analgesics',
-                'Pain relief tablets',
-                'tablets',
-                '50.00',
-                '100.00',
-                '100',
-                '500',
-                'Main Pharmacy',
-                'BTH-001',
-                '2027-12-31',
-                '1',
-            ],
-            [
-                'Amoxicillin 250mg',
-                'AMOX-250',
-                'Antibiotics',
-                'Antibiotic capsules',
-                'capsules',
-                '80.00',
-                '150.00',
-                '50',
-                '200',
-                'Main Pharmacy',
-                'BTH-002',
-                '2026-06-30',
-                '1',
-            ],
+            ['Paracetamol 500mg', 'PARA-500', $categories[0] ?? 'General', 'Pain relief tablets', 'tablets', '50.00', '100.00', '100', '500', $stores[0] ?? '', 'BTH-001', '2027-12-31', '1'],
+            ['Amoxicillin 250mg', 'AMOX-250', $categories[0] ?? 'General', 'Antibiotic capsules', 'capsules', '80.00', '150.00', '50', '200', $stores[0] ?? '', 'BTH-002', '2026-06-30', '1'],
         ];
 
-        return $this->generateCsvResponse($headers, $sampleData, 'products_template.csv');
+        $rowNum = 2;
+        foreach ($sampleData as $data) {
+            $col = 'A';
+            foreach ($data as $value) {
+                $sheet->setCellValue($col . $rowNum, $value);
+                $col++;
+            }
+            $rowNum++;
+        }
+
+        // Auto-size columns
+        foreach (range('A', 'M') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // Set active sheet back to first
+        $spreadsheet->setActiveSheetIndex(0);
+
+        return $this->downloadXlsx($spreadsheet, 'products_template.xlsx');
     }
 
     /**
-     * Download CSV template for services
+     * Download XLSX template for services with dropdown validations
      */
     public function downloadServiceTemplate()
     {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Services');
+
+        // Headers
         $headers = [
-            'service_name',         // Required
-            'service_code',         // Required
-            'category_name',        // Required - will lookup/create ServiceCategory
-            'description',          // Optional
-            'price',                // Required - for ServicePrice model
-            'cost_price',           // Optional - for ServicePrice model
-            'duration_minutes',     // Optional
-            'is_active',            // Optional - 1 or 0
+            'A1' => 'service_name',
+            'B1' => 'service_code',
+            'C1' => 'category_name',
+            'D1' => 'description',
+            'E1' => 'price',
+            'F1' => 'cost_price',
+            'G1' => 'duration_minutes',
+            'H1' => 'is_active',
         ];
 
+        foreach ($headers as $cell => $value) {
+            $sheet->setCellValue($cell, $value);
+        }
+
+        // Style headers
+        $this->styleHeaders($sheet, 'A1:H1');
+
+        // Get valid values for dropdowns
+        $categories = ServiceCategory::orderBy('category_name')->pluck('category_name')->toArray();
+        $activeOptions = ['1', '0'];
+
+        // Create a hidden sheet for dropdown values
+        $lookupSheet = $spreadsheet->createSheet();
+        $lookupSheet->setTitle('_Lookups');
+
+        // Populate lookup values
+        $row = 1;
+        foreach ($categories as $cat) {
+            $lookupSheet->setCellValue('A' . $row, $cat);
+            $row++;
+        }
+        $catLastRow = max($row - 1, 1);
+
+        $lookupSheet->setCellValue('B1', '1');
+        $lookupSheet->setCellValue('B2', '0');
+
+        // Hide the lookup sheet
+        $lookupSheet->setSheetState(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet::SHEETSTATE_HIDDEN);
+
+        // Add dropdown validations for 100 rows
+        for ($i = 2; $i <= 101; $i++) {
+            // Category dropdown
+            if (count($categories) > 0) {
+                $this->addDropdownValidation($sheet, "C{$i}", "'_Lookups'!\$A\$1:\$A\${$catLastRow}");
+            }
+
+            // Is Active dropdown
+            $this->addDropdownValidation($sheet, "H{$i}", "'_Lookups'!\$B\$1:\$B\$2");
+        }
+
+        // Add sample data
         $sampleData = [
-            [
-                'Full Blood Count',
-                'LAB-FBC-001',
-                'Laboratory - Hematology',
-                'Complete blood count analysis',
-                '5000.00',
-                '2000.00',
-                '30',
-                '1',
-            ],
-            [
-                'Chest X-Ray',
-                'IMG-CXR-001',
-                'Imaging - Radiology',
-                'Standard chest x-ray examination',
-                '15000.00',
-                '5000.00',
-                '15',
-                '1',
-            ],
-            [
-                'Wound Dressing',
-                'NUR-WD-001',
-                'Nursing - Procedures',
-                'Standard wound care and dressing',
-                '3000.00',
-                '500.00',
-                '20',
-                '1',
-            ],
+            ['Full Blood Count', 'LAB-FBC-001', $categories[0] ?? 'Laboratory', 'Complete blood count analysis', '5000.00', '1000.00', '30', '1'],
+            ['Chest X-Ray', 'IMG-CXR-001', $categories[0] ?? 'Radiology', 'Standard chest x-ray', '8000.00', '2000.00', '15', '1'],
         ];
 
-        return $this->generateCsvResponse($headers, $sampleData, 'services_template.csv');
+        $rowNum = 2;
+        foreach ($sampleData as $data) {
+            $col = 'A';
+            foreach ($data as $value) {
+                $sheet->setCellValue($col . $rowNum, $value);
+                $col++;
+            }
+            $rowNum++;
+        }
+
+        // Auto-size columns
+        foreach (range('A', 'H') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // Set active sheet back to first
+        $spreadsheet->setActiveSheetIndex(0);
+
+        return $this->downloadXlsx($spreadsheet, 'services_template.xlsx');
     }
 
     /**
-     * Download CSV template for staff
+     * Download XLSX template for staff with dropdown validations
      */
     public function downloadStaffTemplate()
     {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Staff');
+
+        // Headers
         $headers = [
-            'surname',              // Required
-            'firstname',            // Required
-            'othername',            // Optional
-            'email',                // Required - unique
-            'phone_number',         // Optional
-            'gender',               // Optional - Male/Female
-            'date_of_birth',        // Optional - YYYY-MM-DD
-            'home_address',         // Optional
-            'role',                 // Required - must match existing role name
-            'specialization',       // Optional - for doctors
-            'clinic',               // Optional - clinic name
-            'consultation_fee',     // Optional - for doctors
-            'is_unit_head',         // Optional - 1 or 0
-            'is_dept_head',         // Optional - 1 or 0
+            'A1' => 'surname',
+            'B1' => 'firstname',
+            'C1' => 'othername',
+            'D1' => 'email',
+            'E1' => 'phone_number',
+            'F1' => 'gender',
+            'G1' => 'date_of_birth',
+            'H1' => 'home_address',
+            'I1' => 'role',
+            'J1' => 'specialization',
+            'K1' => 'clinic',
+            'L1' => 'consultation_fee',
+            'M1' => 'is_unit_head',
+            'N1' => 'is_dept_head',
         ];
 
+        foreach ($headers as $cell => $value) {
+            $sheet->setCellValue($cell, $value);
+        }
+
+        // Style headers
+        $this->styleHeaders($sheet, 'A1:N1');
+
+        // Get valid values for dropdowns
+        $roles = Role::whereNotIn('name', ['PATIENT'])->orderBy('name')->pluck('name')->toArray();
+        $specializations = Specialization::orderBy('name')->pluck('name')->toArray();
+        $clinics = Clinic::orderBy('name')->pluck('name')->toArray();
+        $genders = ['Male', 'Female'];
+        $boolOptions = ['1', '0'];
+
+        // Create a hidden sheet for dropdown values
+        $lookupSheet = $spreadsheet->createSheet();
+        $lookupSheet->setTitle('_Lookups');
+
+        // Populate lookup values
+        $row = 1;
+        foreach ($roles as $role) {
+            $lookupSheet->setCellValue('A' . $row, $role);
+            $row++;
+        }
+        $roleLastRow = max($row - 1, 1);
+
+        $row = 1;
+        foreach ($specializations as $spec) {
+            $lookupSheet->setCellValue('B' . $row, $spec);
+            $row++;
+        }
+        $specLastRow = max($row - 1, 1);
+
+        $row = 1;
+        foreach ($clinics as $clinic) {
+            $lookupSheet->setCellValue('C' . $row, $clinic);
+            $row++;
+        }
+        $clinicLastRow = max($row - 1, 1);
+
+        $lookupSheet->setCellValue('D1', 'Male');
+        $lookupSheet->setCellValue('D2', 'Female');
+
+        $lookupSheet->setCellValue('E1', '1');
+        $lookupSheet->setCellValue('E2', '0');
+
+        // Hide the lookup sheet
+        $lookupSheet->setSheetState(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet::SHEETSTATE_HIDDEN);
+
+        // Add dropdown validations for 100 rows
+        for ($i = 2; $i <= 101; $i++) {
+            // Gender dropdown
+            $this->addDropdownValidation($sheet, "F{$i}", "'_Lookups'!\$D\$1:\$D\$2");
+
+            // Role dropdown
+            if (count($roles) > 0) {
+                $this->addDropdownValidation($sheet, "I{$i}", "'_Lookups'!\$A\$1:\$A\${$roleLastRow}");
+            }
+
+            // Specialization dropdown
+            if (count($specializations) > 0) {
+                $this->addDropdownValidation($sheet, "J{$i}", "'_Lookups'!\$B\$1:\$B\${$specLastRow}");
+            }
+
+            // Clinic dropdown
+            if (count($clinics) > 0) {
+                $this->addDropdownValidation($sheet, "K{$i}", "'_Lookups'!\$C\$1:\$C\${$clinicLastRow}");
+            }
+
+            // Boolean dropdowns
+            $this->addDropdownValidation($sheet, "M{$i}", "'_Lookups'!\$E\$1:\$E\$2");
+            $this->addDropdownValidation($sheet, "N{$i}", "'_Lookups'!\$E\$1:\$E\$2");
+        }
+
+        // Add sample data
         $sampleData = [
-            [
-                'Adeyemi',
-                'John',
-                'Oluwaseun',
-                'john.adeyemi@hospital.com',
-                '08012345678',
-                'Male',
-                '1985-05-15',
-                '123 Hospital Road, Lagos',
-                'DOCTOR',
-                'General Practice',
-                'General Outpatient',
-                '5000.00',
-                '0',
-                '0',
-            ],
-            [
-                'Okonkwo',
-                'Grace',
-                '',
-                'grace.okonkwo@hospital.com',
-                '08098765432',
-                'Female',
-                '1990-08-22',
-                '456 Nurse Street, Lagos',
-                'NURSE',
-                '',
-                'Ward A',
-                '',
-                '0',
-                '0',
-            ],
+            ['Adekunle', 'Bola', 'Mary', 'bola.adekunle@hospital.com', '08012345678', 'Female', '1985-06-15', '123 Medical Lane, Lagos', $roles[0] ?? 'DOCTOR', $specializations[0] ?? '', $clinics[0] ?? '', '5000', '0', '0'],
+            ['Okonkwo', 'Chidi', '', 'chidi.okonkwo@hospital.com', '08023456789', 'Male', '1990-03-22', '456 Health Street, Abuja', $roles[0] ?? 'NURSE', $specializations[0] ?? '', $clinics[0] ?? '', '0', '0', '0'],
         ];
 
-        return $this->generateCsvResponse($headers, $sampleData, 'staff_template.csv');
+        $rowNum = 2;
+        foreach ($sampleData as $data) {
+            $col = 'A';
+            foreach ($data as $value) {
+                $sheet->setCellValue($col . $rowNum, $value);
+                $col++;
+            }
+            $rowNum++;
+        }
+
+        // Auto-size columns
+        foreach (range('A', 'N') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // Set active sheet back to first
+        $spreadsheet->setActiveSheetIndex(0);
+
+        return $this->downloadXlsx($spreadsheet, 'staff_template.xlsx');
     }
 
     /**
-     * Download CSV template for patients
+     * Download XLSX template for patients with dropdown validations
      */
     public function downloadPatientTemplate()
     {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Patients');
+
+        // Headers
         $headers = [
-            'surname',              // Required
-            'firstname',            // Required
-            'othername',            // Optional
-            'email',                // Optional - if provided, must be unique
-            'phone_no',             // Optional
-            'gender',               // Required - Male/Female
-            'dob',                  // Required - YYYY-MM-DD
-            'blood_group',          // Optional - A+, B+, O-, etc.
-            'genotype',             // Optional - AA, AS, SS, etc.
-            'address',              // Optional
-            'nationality',          // Optional
-            'ethnicity',            // Optional
-            'hmo_name',             // Optional - must match existing HMO
-            'hmo_no',               // Optional - HMO enrollment number
-            'next_of_kin_name',     // Optional
-            'next_of_kin_phone',    // Optional
-            'next_of_kin_address',  // Optional
-            'allergies',            // Optional - comma-separated
-            'medical_history',      // Optional
+            'A1' => 'file_no',
+            'B1' => 'surname',
+            'C1' => 'firstname',
+            'D1' => 'othername',
+            'E1' => 'email',
+            'F1' => 'phone_no',
+            'G1' => 'gender',
+            'H1' => 'dob',
+            'I1' => 'blood_group',
+            'J1' => 'genotype',
+            'K1' => 'address',
+            'L1' => 'nationality',
+            'M1' => 'ethnicity',
+            'N1' => 'hmo_name',
+            'O1' => 'hmo_no',
+            'P1' => 'next_of_kin_name',
+            'Q1' => 'next_of_kin_phone',
+            'R1' => 'next_of_kin_address',
+            'S1' => 'allergies',
+            'T1' => 'medical_history',
         ];
 
+        foreach ($headers as $cell => $value) {
+            $sheet->setCellValue($cell, $value);
+        }
+
+        // Style headers
+        $this->styleHeaders($sheet, 'A1:T1');
+
+        // Get valid values for dropdowns
+        $hmos = Hmo::orderBy('name')->pluck('name')->toArray();
+        $genders = ['Male', 'Female'];
+        $bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+        $genotypes = ['AA', 'AS', 'SS', 'AC', 'SC'];
+
+        // Create a hidden sheet for dropdown values
+        $lookupSheet = $spreadsheet->createSheet();
+        $lookupSheet->setTitle('_Lookups');
+
+        // Populate HMO lookup values
+        $row = 1;
+        foreach ($hmos as $hmo) {
+            $lookupSheet->setCellValue('A' . $row, $hmo);
+            $row++;
+        }
+        $hmoLastRow = max($row - 1, 1);
+
+        // Gender
+        $lookupSheet->setCellValue('B1', 'Male');
+        $lookupSheet->setCellValue('B2', 'Female');
+
+        // Blood Groups
+        $row = 1;
+        foreach ($bloodGroups as $bg) {
+            $lookupSheet->setCellValue('C' . $row, $bg);
+            $row++;
+        }
+        $bgLastRow = $row - 1;
+
+        // Genotypes
+        $row = 1;
+        foreach ($genotypes as $gt) {
+            $lookupSheet->setCellValue('D' . $row, $gt);
+            $row++;
+        }
+        $gtLastRow = $row - 1;
+
+        // Hide the lookup sheet
+        $lookupSheet->setSheetState(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet::SHEETSTATE_HIDDEN);
+
+        // Add dropdown validations for 100 rows
+        for ($i = 2; $i <= 101; $i++) {
+            // Gender dropdown
+            $this->addDropdownValidation($sheet, "G{$i}", "'_Lookups'!\$B\$1:\$B\$2");
+
+            // Blood group dropdown
+            $this->addDropdownValidation($sheet, "I{$i}", "'_Lookups'!\$C\$1:\$C\${$bgLastRow}");
+
+            // Genotype dropdown
+            $this->addDropdownValidation($sheet, "J{$i}", "'_Lookups'!\$D\$1:\$D\${$gtLastRow}");
+
+            // HMO dropdown
+            if (count($hmos) > 0) {
+                $this->addDropdownValidation($sheet, "N{$i}", "'_Lookups'!\$A\$1:\$A\${$hmoLastRow}");
+            }
+        }
+
+        // Add sample data
         $sampleData = [
-            [
-                'Bakare',
-                'Adebayo',
-                'Michael',
-                'adebayo.bakare@email.com',
-                '08011111111',
-                'Male',
-                '1988-03-10',
-                'O+',
-                'AA',
-                '789 Patient Avenue, Lagos',
-                'Nigerian',
-                'Yoruba',
-                'NHIS',
-                'NHIS-12345',
-                'Mrs. Bakare Funke',
-                '08022222222',
-                '789 Patient Avenue, Lagos',
-                'Penicillin,Sulfa drugs',
-                'Hypertension diagnosed 2020',
-            ],
-            [
-                'Ibrahim',
-                'Fatima',
-                '',
-                '',
-                '08033333333',
-                'Female',
-                '1995-11-25',
-                'B+',
-                'AS',
-                '321 Health Street, Abuja',
-                'Nigerian',
-                'Hausa',
-                '',
-                '',
-                'Mr. Ibrahim Ahmed',
-                '08044444444',
-                '321 Health Street, Abuja',
-                '',
-                '',
-            ],
+            ['PAT-001', 'Bakare', 'Adebayo', 'Michael', 'adebayo.bakare@email.com', '08011111111', 'Male', '1988-03-10', 'O+', 'AA', '789 Patient Avenue, Lagos', 'Nigerian', 'Yoruba', $hmos[0] ?? '', '12345', 'Mrs. Bakare Funke', '08022222222', '789 Patient Avenue, Lagos', 'Penicillin,Sulfa drugs', 'Hypertension diagnosed 2020'],
+            ['', 'Ibrahim', 'Fatima', '', '', '08033333333', 'Female', '1995-11-25', 'B+', 'AS', '321 Health Street, Abuja', 'Nigerian', 'Hausa', '', '', 'Mr. Ibrahim Ahmed', '08044444444', '321 Health Street, Abuja', '', ''],
         ];
 
-        return $this->generateCsvResponse($headers, $sampleData, 'patients_template.csv');
+        $rowNum = 2;
+        foreach ($sampleData as $data) {
+            $col = 'A';
+            foreach ($data as $value) {
+                $sheet->setCellValue($col . $rowNum, $value);
+                $col++;
+            }
+            $rowNum++;
+        }
+
+        // Auto-size columns
+        foreach (range('A', 'T') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // Set active sheet back to first
+        $spreadsheet->setActiveSheetIndex(0);
+
+        return $this->downloadXlsx($spreadsheet, 'patients_template.xlsx');
     }
 
     // ========================================
-    // IMPORTS
+    // IMPORTS (Support both CSV and XLSX)
     // ========================================
 
     /**
-     * Import products from CSV
+     * Import products from CSV or XLSX
      */
     public function importProducts(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:csv,txt|max:10240',
+            'file' => 'required|file|mimes:csv,txt,xlsx,xls|max:10240',
             'default_store_id' => 'nullable|exists:stores,id',
         ]);
 
@@ -337,10 +563,10 @@ class ImportExportController extends Controller
         $defaultStoreId = $request->default_store_id;
 
         try {
-            $data = $this->parseCsv($file);
+            $data = $this->parseFile($file);
 
             if (empty($data)) {
-                return back()->with('error', 'CSV file is empty or invalid.');
+                return back()->with('error', 'File is empty or invalid.');
             }
 
             $imported = 0;
@@ -371,7 +597,7 @@ class ImportExportController extends Controller
                     $categoryId = null;
                     if (!empty($row['category_name'])) {
                         $category = ProductCategory::firstOrCreate(
-                            ['name' => trim($row['category_name'])],
+                            ['category_name' => trim($row['category_name'])],
                             ['description' => 'Auto-created during import']
                         );
                         $categoryId = $category->id;
@@ -459,21 +685,21 @@ class ImportExportController extends Controller
     }
 
     /**
-     * Import services from CSV
+     * Import services from CSV or XLSX
      */
     public function importServices(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:csv,txt|max:10240',
+            'file' => 'required|file|mimes:csv,txt,xlsx,xls|max:10240',
         ]);
 
         $file = $request->file('file');
 
         try {
-            $data = $this->parseCsv($file);
+            $data = $this->parseFile($file);
 
             if (empty($data)) {
-                return back()->with('error', 'CSV file is empty or invalid.');
+                return back()->with('error', 'File is empty or invalid.');
             }
 
             $imported = 0;
@@ -503,7 +729,7 @@ class ImportExportController extends Controller
                     $categoryId = null;
                     if (!empty($row['category_name'])) {
                         $category = ServiceCategory::firstOrCreate(
-                            ['name' => trim($row['category_name'])],
+                            ['category_name' => trim($row['category_name'])],
                             ['description' => 'Auto-created during import']
                         );
                         $categoryId = $category->id;
@@ -550,12 +776,12 @@ class ImportExportController extends Controller
     }
 
     /**
-     * Import staff from CSV
+     * Import staff from CSV or XLSX
      */
     public function importStaff(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:csv,txt|max:10240',
+            'file' => 'required|file|mimes:csv,txt,xlsx,xls|max:10240',
             'default_password' => 'nullable|string|min:6',
         ]);
 
@@ -563,10 +789,10 @@ class ImportExportController extends Controller
         $defaultPassword = $request->default_password ?? 'password123';
 
         try {
-            $data = $this->parseCsv($file);
+            $data = $this->parseFile($file);
 
             if (empty($data)) {
-                return back()->with('error', 'CSV file is empty or invalid.');
+                return back()->with('error', 'File is empty or invalid.');
             }
 
             $imported = 0;
@@ -618,7 +844,7 @@ class ImportExportController extends Controller
                     // Get specialization if provided
                     $specializationId = null;
                     if (!empty($row['specialization'])) {
-                        $specialization = Specialization::where('name', 'like', '%' . trim($row['specialization']) . '%')->first();
+                        $specialization = Specialization::where('name', trim($row['specialization']))->first();
                         if ($specialization) {
                             $specializationId = $specialization->id;
                         }
@@ -627,7 +853,7 @@ class ImportExportController extends Controller
                     // Get clinic if provided
                     $clinicId = null;
                     if (!empty($row['clinic'])) {
-                        $clinic = Clinic::where('clinic_name', 'like', '%' . trim($row['clinic']) . '%')->first();
+                        $clinic = Clinic::where('name', trim($row['clinic']))->first();
                         if ($clinic) {
                             $clinicId = $clinic->id;
                         }
@@ -673,21 +899,21 @@ class ImportExportController extends Controller
     }
 
     /**
-     * Import patients from CSV
+     * Import patients from CSV or XLSX
      */
     public function importPatients(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:csv,txt|max:10240',
+            'file' => 'required|file|mimes:csv,txt,xlsx,xls|max:10240',
         ]);
 
         $file = $request->file('file');
 
         try {
-            $data = $this->parseCsv($file);
+            $data = $this->parseFile($file);
 
             if (empty($data)) {
-                return back()->with('error', 'CSV file is empty or invalid.');
+                return back()->with('error', 'File is empty or invalid.');
             }
 
             $imported = 0;
@@ -736,17 +962,27 @@ class ImportExportController extends Controller
                         $user->assignRole($patientRole);
                     }
 
-                    // Get HMO if provided
+                    // Get HMO if provided - exact match from dropdown
                     $hmoId = null;
                     if (!empty($row['hmo_name'])) {
-                        $hmo = Hmo::where('hmo_name', 'like', '%' . trim($row['hmo_name']) . '%')->first();
+                        $hmo = Hmo::where('name', trim($row['hmo_name']))->first();
                         if ($hmo) {
                             $hmoId = $hmo->id;
                         }
                     }
 
-                    // Generate file number
-                    $fileNo = $this->generatePatientFileNo();
+                    // Use provided file number or generate one
+                    $fileNo = trim($row['file_no'] ?? '');
+                    if (!empty($fileNo)) {
+                        // Check for duplicate file number
+                        if (patient::where('file_no', $fileNo)->exists()) {
+                            $errors[] = "Row {$rowNum}: File number '{$fileNo}' already exists";
+                            $skipped++;
+                            continue;
+                        }
+                    } else {
+                        $fileNo = $this->generatePatientFileNo();
+                    }
 
                     // Parse allergies (comma-separated to array)
                     $allergies = null;
@@ -754,12 +990,28 @@ class ImportExportController extends Controller
                         $allergies = array_map('trim', explode(',', $row['allergies']));
                     }
 
+                    // Parse HMO number - must be numeric or null
+                    $hmoNo = null;
+                    if (!empty($row['hmo_no'])) {
+                        // Extract numeric value if present, or use the value if already numeric
+                        $hmoNoValue = trim($row['hmo_no']);
+                        if (is_numeric($hmoNoValue)) {
+                            $hmoNo = (int) $hmoNoValue;
+                        } else {
+                            // Try to extract numbers from string like 'HMO-12345'
+                            preg_match('/\d+/', $hmoNoValue, $matches);
+                            if (!empty($matches[0])) {
+                                $hmoNo = (int) $matches[0];
+                            }
+                        }
+                    }
+
                     // Create patient profile
                     patient::create([
                         'user_id' => $user->id,
                         'file_no' => $fileNo,
                         'hmo_id' => $hmoId,
-                        'hmo_no' => $row['hmo_no'] ?? null,
+                        'hmo_no' => $hmoNo,
                         'gender' => $row['gender'],
                         'dob' => $row['dob'],
                         'blood_group' => $row['blood_group'] ?? null,
@@ -830,8 +1082,8 @@ class ImportExportController extends Controller
                 $product->id,
                 $product->product_name,
                 $product->product_code,
-                $product->category->name ?? '',
-                $product->price->pr_buy_price ?? 0,  // Correct field name: pr_buy_price
+                $product->category->category_name ?? '',
+                $product->price->pr_buy_price ?? 0,
                 $product->price->current_sale_price ?? 0,
                 $product->reorder_alert ?? 10,
                 $product->current_quantity ?? 0,
@@ -869,7 +1121,7 @@ class ImportExportController extends Controller
                 $service->id,
                 $service->service_name,
                 $service->service_code,
-                $service->category->name ?? '',
+                $service->category->category_name ?? '',
                 $service->price->cost_price ?? 0,
                 $service->price->sale_price ?? 0,
                 $service->status == 1 ? 1 : 0,
@@ -920,7 +1172,7 @@ class ImportExportController extends Controller
                 $staff->home_address ?? '',
                 $staff->user->roles->pluck('name')->implode(', '),
                 $staff->specialization->name ?? '',
-                $staff->clinic->clinic_name ?? '',
+                $staff->clinic->name ?? '',
                 $staff->consultation_fee ?? 0,
                 $staff->is_unit_head ? 1 : 0,
                 $staff->is_dept_head ? 1 : 0,
@@ -972,7 +1224,7 @@ class ImportExportController extends Controller
                 $patient->address ?? '',
                 $patient->nationality ?? '',
                 $patient->ethnicity ?? '',
-                $patient->hmo->hmo_name ?? '',
+                $patient->hmo->name ?? '',
                 $patient->hmo_no ?? '',
                 $patient->next_of_kin_name ?? '',
                 $patient->next_of_kin_phone ?? '',
@@ -987,6 +1239,63 @@ class ImportExportController extends Controller
     // ========================================
     // HELPER METHODS
     // ========================================
+
+    /**
+     * Parse file (CSV or XLSX) into array
+     */
+    private function parseFile($file)
+    {
+        $extension = strtolower($file->getClientOriginalExtension());
+
+        if (in_array($extension, ['xlsx', 'xls'])) {
+            return $this->parseXlsx($file);
+        }
+
+        return $this->parseCsv($file);
+    }
+
+    /**
+     * Parse XLSX file into array
+     */
+    private function parseXlsx($file)
+    {
+        $data = [];
+
+        try {
+            $spreadsheet = IOFactory::load($file->getPathname());
+            $sheet = $spreadsheet->getActiveSheet();
+            $rows = $sheet->toArray(null, true, true, true);
+
+            if (empty($rows)) {
+                return $data;
+            }
+
+            // First row is headers
+            $headers = [];
+            $firstRow = array_shift($rows);
+            foreach ($firstRow as $col => $value) {
+                if (!empty($value)) {
+                    $headers[$col] = strtolower(trim(str_replace(['"', "'"], '', $value)));
+                }
+            }
+
+            // Data rows
+            foreach ($rows as $row) {
+                $rowData = [];
+                foreach ($headers as $col => $header) {
+                    $value = $row[$col] ?? '';
+                    $rowData[$header] = is_string($value) ? trim($value) : $value;
+                }
+                if (!empty(array_filter($rowData))) {
+                    $data[] = $rowData;
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('XLSX parse error: ' . $e->getMessage());
+        }
+
+        return $data;
+    }
 
     /**
      * Parse CSV file into array
@@ -1022,6 +1331,63 @@ class ImportExportController extends Controller
         }
 
         return $data;
+    }
+
+    /**
+     * Generate XLSX download response
+     */
+    private function downloadXlsx(Spreadsheet $spreadsheet, string $filename)
+    {
+        $writer = new Xlsx($spreadsheet);
+
+        $tempFile = tempnam(sys_get_temp_dir(), 'xlsx');
+        $writer->save($tempFile);
+
+        return response()->download($tempFile, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Style header row
+     */
+    private function styleHeaders($sheet, string $range)
+    {
+        $sheet->getStyle($range)->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'color' => ['rgb' => 'FFFFFF'],
+            ],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '4472C4'],
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                ],
+            ],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+            ],
+        ]);
+    }
+
+    /**
+     * Add dropdown validation to a cell
+     */
+    private function addDropdownValidation($sheet, string $cell, string $formula)
+    {
+        $validation = $sheet->getCell($cell)->getDataValidation();
+        $validation->setType(DataValidation::TYPE_LIST);
+        $validation->setErrorStyle(DataValidation::STYLE_STOP);
+        $validation->setAllowBlank(true);
+        $validation->setShowDropDown(true);
+        $validation->setShowInputMessage(true);
+        $validation->setShowErrorMessage(true);
+        $validation->setErrorTitle('Invalid Value');
+        $validation->setError('Please select a value from the dropdown list.');
+        $validation->setFormula1($formula);
     }
 
     /**

@@ -65,9 +65,7 @@
     .timeline-item.rejected::before { background: #dc3545; }
     .timeline-item.voided::before { background: #6c757d; }
 </style>
-@endpush
 
-@section('content')
 <div id="content-wrapper">
     <div class="container-fluid">
         <!-- Header -->
@@ -81,11 +79,13 @@
                     <i class="mdi mdi-arrow-left"></i> Back to List
                 </a>
                 @if($expense->status === 'pending')
-                    @can('expenses.edit')
-                    <a href="{{ route('inventory.expenses.edit', $expense) }}" class="btn btn-warning btn-sm">
-                        <i class="mdi mdi-pencil"></i> Edit
-                    </a>
-                    @endcan
+                    @if($expense->category !== 'purchase_order')
+                        @can('expenses.edit')
+                        <a href="{{ route('inventory.expenses.edit', $expense) }}" class="btn btn-warning btn-sm">
+                            <i class="mdi mdi-pencil"></i> Edit
+                        </a>
+                        @endcan
+                    @endif
                     @can('expenses.approve')
                     <button type="button" class="btn btn-success btn-sm" onclick="approveExpense({{ $expense->id }})">
                         <i class="mdi mdi-check"></i> Approve
@@ -104,6 +104,37 @@
                 @endif
             </div>
         </div>
+
+        <!-- Void Information Alert -->
+        @if($expense->status === 'void' && $expense->voided_at)
+        <div class="alert alert-warning">
+            <h6 class="alert-heading">
+                <i class="mdi mdi-alert"></i> Expense Voided
+            </h6>
+            <p class="mb-2">
+                <strong>Voided By:</strong> {{ $expense->voidedBy->name ?? 'Unknown' }}<br>
+                <strong>Voided On:</strong> {{ $expense->voided_at->format('M d, Y H:i') }}
+            </p>
+            @if($expense->void_reason)
+            <hr>
+            <p class="mb-0">
+                <strong>Reason:</strong> {{ $expense->void_reason }}
+            </p>
+            @endif
+        </div>
+        @endif
+
+        <!-- Rejection Information Alert -->
+        @if($expense->status === 'rejected' && $expense->rejection_reason)
+        <div class="alert alert-danger">
+            <h6 class="alert-heading">
+                <i class="mdi mdi-close-circle"></i> Expense Rejected
+            </h6>
+            <p class="mb-0">
+                <strong>Reason:</strong> {{ $expense->rejection_reason }}
+            </p>
+        </div>
+        @endif
 
         <div class="row">
             <!-- Main Details -->
@@ -152,18 +183,42 @@
                             <div class="detail-label">Expense Date</div>
                             <div class="detail-value">{{ $expense->expense_date->format('F d, Y') }}</div>
                         </div>
+                        @if($expense->supplier)
                         <div class="detail-row">
-                            <div class="detail-label">Vendor/Payee</div>
-                            <div class="detail-value">{{ $expense->vendor ?? '-' }}</div>
+                            <div class="detail-label">Supplier</div>
+                            <div class="detail-value">{{ $expense->supplier->company_name }}</div>
                         </div>
+                        @endif
+                        @if($expense->store)
                         <div class="detail-row">
-                            <div class="detail-label">Invoice/Receipt #</div>
-                            <div class="detail-value">{{ $expense->invoice_number ?? '-' }}</div>
+                            <div class="detail-label">Store</div>
+                            <div class="detail-value">{{ $expense->store->store_name }}</div>
                         </div>
+                        @endif
                         <div class="detail-row">
                             <div class="detail-label">Payment Method</div>
                             <div class="detail-value">{{ ucfirst(str_replace('_', ' ', $expense->payment_method ?? '-')) }}</div>
                         </div>
+                        @if($expense->bank)
+                        <div class="detail-row">
+                            <div class="detail-label">Bank Account</div>
+                            <div class="detail-value">
+                                {{ $expense->bank->name }} - {{ $expense->bank->account_number }}
+                            </div>
+                        </div>
+                        @endif
+                        @if($expense->payment_reference)
+                        <div class="detail-row">
+                            <div class="detail-label">Payment Reference</div>
+                            <div class="detail-value">{{ $expense->payment_reference }}</div>
+                        </div>
+                        @endif
+                        @if($expense->cheque_number)
+                        <div class="detail-row">
+                            <div class="detail-label">Cheque Number</div>
+                            <div class="detail-value">{{ $expense->cheque_number }}</div>
+                        </div>
+                        @endif
                         @if($expense->notes)
                         <div class="detail-row">
                             <div class="detail-label">Notes</div>
@@ -232,14 +287,60 @@
                         </div>
                         @endif
 
-                        @if($expense->status === 'voided')
+                        @if($expense->status === 'void' && $expense->voided_at)
                         <div class="timeline-item voided">
-                            <small class="text-muted">{{ $expense->updated_at->format('M d, Y H:i') }}</small>
-                            <p class="mb-0">Voided</p>
+                            <small class="text-muted">{{ $expense->voided_at->format('M d, Y H:i') }}</small>
+                            <p class="mb-0">Voided by <strong>{{ $expense->voidedBy->name ?? 'Unknown' }}</strong></p>
                         </div>
                         @endif
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Void Expense Modal -->
+<div class="modal fade" id="voidExpenseModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">
+                    <i class="mdi mdi-alert"></i> Void Expense
+                </h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <strong>Warning!</strong> Voiding this expense will:
+                    <ul class="mb-0 mt-2">
+                        <li>Mark the expense as void</li>
+                        @if($expense->category === 'purchase_order')
+                        <li>Reverse the payment on the associated Purchase Order</li>
+                        @endif
+                        <li>Keep the record for audit purposes</li>
+                    </ul>
+                </div>
+
+                <div class="form-group">
+                    <label for="void_reason">Void Reason <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="void_reason" name="void_reason" rows="3"
+                              placeholder="Please explain why this expense is being voided..."
+                              autofocus></textarea>
+                    <small class="text-muted">This reason will be recorded in the audit trail.</small>
+                </div>
+
+                <input type="hidden" id="void_expense_id" value="{{ $expense->id }}">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="mdi mdi-close"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-warning" onclick="confirmVoid()">
+                    <i class="mdi mdi-check"></i> Void Expense
+                </button>
             </div>
         </div>
     </div>
@@ -279,20 +380,54 @@ function rejectExpense(id) {
 }
 
 function voidExpense(id) {
-    var reason = prompt('Please enter void reason:');
-    if (reason) {
-        $.post(`/inventory/expenses/${id}/void`, {
-            _token: '{{ csrf_token() }}',
-            void_reason: reason
-        })
-            .done(function(response) {
-                toastr.success(response.message || 'Expense voided');
-                setTimeout(() => location.reload(), 1000);
-            })
-            .fail(function(xhr) {
-                toastr.error(xhr.responseJSON?.message || 'Failed to void expense');
-            });
+    // Reset the modal
+    $('#void_reason').val('');
+    $('#void_expense_id').val(id);
+
+    // Show the modal
+    $('#voidExpenseModal').modal('show');
+
+    // Focus on textarea after modal is shown
+    $('#voidExpenseModal').on('shown.bs.modal', function () {
+        $('#void_reason').focus();
+    });
+}
+
+function confirmVoid() {
+    const reason = $('#void_reason').val().trim();
+    const expenseId = $('#void_expense_id').val();
+
+    if (!reason) {
+        toastr.error('Please provide a void reason');
+        return;
     }
+
+    if (reason.length < 10) {
+        toastr.error('Void reason must be at least 10 characters');
+        return;
+    }
+
+    // Disable button to prevent double submission
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="mdi mdi-loading mdi-spin"></i> Voiding...';
+
+    $.post(`/inventory/expenses/${expenseId}/void`, {
+        _token: '{{ csrf_token() }}',
+        reason: reason
+    })
+        .done(function(response) {
+            toastr.success(response.message || 'Expense voided successfully');
+            $('#voidExpenseModal').modal('hide');
+            setTimeout(() => location.reload(), 1000);
+        })
+        .fail(function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Failed to void expense');
+        })
+        .always(function() {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="mdi mdi-check"></i> Void Expense';
+        });
 }
 </script>
 @endsection

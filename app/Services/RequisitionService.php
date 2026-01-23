@@ -181,11 +181,10 @@ class RequisitionService
     }
 
     /**
-     * Fulfill requisition items
+     * Fulfill requisition items with multi-batch support
      *
      * @param StoreRequisition $requisition
-     * @param array $fulfillments Array of ['item_id' => ['qty' => X, 'batch_id' => Y]]
-     *                            batch_id is optional (uses FIFO if not specified)
+     * @param array $fulfillments Array of [item_id => ['batches' => [batch_id => qty], 'total_qty' => X]]
      * @return array Created batches at destination
      */
     public function fulfill(StoreRequisition $requisition, array $fulfillments): array
@@ -209,35 +208,94 @@ class RequisitionService
                     continue; // Skip items that aren't approved
                 }
 
-                $qty = $fulfillData['qty'] ?? 0;
-                if ($qty <= 0) continue;
+                // Check for multi-batch format vs legacy single-batch format
+                if (isset($fulfillData['batches']) && is_array($fulfillData['batches'])) {
+                    // Multi-batch fulfillment - process each selected batch
+                    $totalFulfilledForItem = 0;
+                    $sourceBatchesUsed = [];
 
-                $sourceBatchId = $fulfillData['batch_id'] ?? null;
+                    foreach ($fulfillData['batches'] as $batchId => $qty) {
+                        $qty = (int) $qty;
+                        if ($qty <= 0) continue;
 
-                // Transfer stock
-                $newBatch = $this->stockService->transferStock(
-                    $item->product_id,
-                    $requisition->from_store_id,
-                    $requisition->to_store_id,
-                    $qty,
-                    $sourceBatchId,
-                    [
-                        'requisition_id' => $requisition->id,
-                        'reference_type' => StoreRequisition::class,
-                        'reference_id' => $requisition->id,
-                        'notes' => "Fulfilled from requisition: {$requisition->requisition_number}",
-                    ]
-                );
+                        // Validate batch exists and has enough stock
+                        $sourceBatch = StockBatch::find($batchId);
+                        if (!$sourceBatch) {
+                            throw new \Exception("Batch #{$batchId} not found");
+                        }
 
-                $createdBatches[] = $newBatch;
+                        if ($sourceBatch->product_id !== $item->product_id) {
+                            throw new \Exception("Batch #{$batchId} does not match product");
+                        }
 
-                // Get the source batch that was used
-                $sourceBatch = $sourceBatchId
-                    ? StockBatch::find($sourceBatchId)
-                    : $this->stockService->getAvailableBatches($item->product_id, $requisition->from_store_id)->first();
+                        if ($sourceBatch->store_id !== $requisition->from_store_id) {
+                            throw new \Exception("Batch #{$batchId} is not in the source store");
+                        }
 
-                // Update item fulfillment
-                $item->fulfill($qty, $sourceBatch, $newBatch);
+                        if ($sourceBatch->current_qty < $qty) {
+                            throw new \Exception("Batch #{$sourceBatch->batch_number} only has {$sourceBatch->current_qty} available");
+                        }
+
+                        // Transfer stock from this specific batch
+                        $newBatch = $this->stockService->transferStock(
+                            $item->product_id,
+                            $requisition->from_store_id,
+                            $requisition->to_store_id,
+                            $qty,
+                            $batchId, // Specific source batch
+                            [
+                                'requisition_id' => $requisition->id,
+                                'reference_type' => StoreRequisition::class,
+                                'reference_id' => $requisition->id,
+                                'notes' => "Fulfilled from requisition: {$requisition->requisition_number} (Batch: {$sourceBatch->batch_number})",
+                            ]
+                        );
+
+                        $createdBatches[] = $newBatch;
+                        $totalFulfilledForItem += $qty;
+                        $sourceBatchesUsed[] = $sourceBatch->id;
+                    }
+
+                    if ($totalFulfilledForItem > 0) {
+                        // Update item with last source/destination batch info (for audit trail)
+                        // The item tracks the most recent batch but the transactions have full detail
+                        $lastSourceBatch = StockBatch::find(end($sourceBatchesUsed));
+                        $lastDestBatch = end($createdBatches);
+
+                        $item->fulfill($totalFulfilledForItem, $lastSourceBatch, $lastDestBatch);
+                    }
+                } else {
+                    // Legacy single-batch format for backward compatibility
+                    $qty = $fulfillData['qty'] ?? $fulfillData['total_qty'] ?? 0;
+                    if ($qty <= 0) continue;
+
+                    $sourceBatchId = $fulfillData['batch_id'] ?? null;
+
+                    // Transfer stock
+                    $newBatch = $this->stockService->transferStock(
+                        $item->product_id,
+                        $requisition->from_store_id,
+                        $requisition->to_store_id,
+                        $qty,
+                        $sourceBatchId,
+                        [
+                            'requisition_id' => $requisition->id,
+                            'reference_type' => StoreRequisition::class,
+                            'reference_id' => $requisition->id,
+                            'notes' => "Fulfilled from requisition: {$requisition->requisition_number}",
+                        ]
+                    );
+
+                    $createdBatches[] = $newBatch;
+
+                    // Get the source batch that was used
+                    $sourceBatch = $sourceBatchId
+                        ? StockBatch::find($sourceBatchId)
+                        : $this->stockService->getAvailableBatches($item->product_id, $requisition->from_store_id)->first();
+
+                    // Update item fulfillment
+                    $item->fulfill($qty, $sourceBatch, $newBatch);
+                }
 
                 if (!$item->isFullyFulfilled()) {
                     $allFullyFulfilled = false;

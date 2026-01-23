@@ -45,8 +45,29 @@ class StoreRequisitionController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $query = StoreRequisition::with(['fromStore', 'toStore', 'requester'])
+            $user = auth()->user();
+            $query = StoreRequisition::with(['fromStore', 'toStore', 'requester', 'items'])
                 ->orderBy('created_at', 'desc');
+
+            // Apply user-based access filter unless admin/superadmin/store role
+            if (!$user->hasAnyRole(['admin', 'super-admin', 'store', 'Store'])) {
+                // Regular users can only see requisitions they are involved with
+                $query->where(function ($q) use ($user) {
+                    $q->where('requested_by', $user->id)
+                      ->orWhere('approved_by', $user->id)
+                      ->orWhere('rejected_by', $user->id)
+                      ->orWhere('fulfilled_by', $user->id);
+                });
+            }
+
+            // Apply queue filters
+            if ($request->queue === 'pending-approval') {
+                $query->where('status', StoreRequisition::STATUS_PENDING);
+            } elseif ($request->queue === 'pending-fulfillment') {
+                $query->whereIn('status', [StoreRequisition::STATUS_APPROVED, StoreRequisition::STATUS_PARTIAL]);
+            } elseif ($request->queue === 'my-requisitions') {
+                $query->where('requested_by', $user->id);
+            }
 
             // Apply filters
             if ($request->filled('status')) {
@@ -60,26 +81,67 @@ class StoreRequisitionController extends Controller
             }
 
             return DataTables::of($query)
-                ->addColumn('from_store_name', fn($r) => $r->fromStore->store_name ?? '-')
-                ->addColumn('to_store_name', fn($r) => $r->toStore->store_name ?? '-')
-                ->addColumn('requester_name', fn($r) => $r->requester->name ?? '-')
-                ->addColumn('status_badge', fn($r) => sprintf(
-                    '<span class="badge %s">%s</span>',
-                    $r->getStatusBadgeClass(),
-                    ucfirst($r->status)
-                ))
-                ->addColumn('items_count', fn($r) => $r->items->count() . ' items')
-                ->addColumn('formatted_date', fn($r) => $r->created_at->format('d M Y H:i'))
+                ->addColumn('request_date', fn($r) => $r->created_at->format('d M Y H:i'))
+                ->addColumn('from_store', fn($r) => $r->fromStore->store_name ?? '-')
+                ->addColumn('to_store', fn($r) => $r->toStore->store_name ?? '-')
+                ->addColumn('requested_by', fn($r) => $r->requester->name ?? '-')
+                ->addColumn('status', function($r) {
+                    $badge = sprintf(
+                        '<span class="badge %s">%s</span>',
+                        $r->getStatusBadgeClass(),
+                        ucfirst(str_replace('_', ' ', $r->status))
+                    );
+                    // Add fulfillment progress for partial
+                    if ($r->status === StoreRequisition::STATUS_PARTIAL || $r->status === StoreRequisition::STATUS_APPROVED) {
+                        $totalRequested = $r->items->sum('requested_qty');
+                        $totalFulfilled = $r->items->sum('fulfilled_qty');
+                        if ($totalRequested > 0) {
+                            $pct = round(($totalFulfilled / $totalRequested) * 100);
+                            $badge .= sprintf(' <small class="text-muted">(%d%%)</small>', $pct);
+                        }
+                    }
+                    return $badge;
+                })
+                ->addColumn('items_count', function($r) {
+                    $total = $r->items->count();
+                    $fulfilled = $r->items->where('status', 'fulfilled')->count();
+                    if ($fulfilled > 0 && $fulfilled < $total) {
+                        return "{$fulfilled}/{$total} items";
+                    }
+                    return "{$total} items";
+                })
                 ->addColumn('actions', fn($r) => $this->getActionButtons($r))
-                ->rawColumns(['status_badge', 'actions'])
+                ->rawColumns(['status', 'actions'])
                 ->make(true);
         }
 
         $stores = Store::active()->orderBy('store_name')->get();
         $statuses = StoreRequisition::getStatuses();
-        $statistics = $this->requisitionService->getStatistics();
 
-        return view('admin.inventory.requisitions.index', compact('stores', 'statuses', 'statistics'));
+        // Build stats with user-based filtering
+        $user = auth()->user();
+        $baseQuery = StoreRequisition::query();
+
+        if (!$user->hasAnyRole(['admin', 'super-admin', 'store', 'Store'])) {
+            $baseQuery->where(function ($q) use ($user) {
+                $q->where('requested_by', $user->id)
+                  ->orWhere('approved_by', $user->id)
+                  ->orWhere('rejected_by', $user->id)
+                  ->orWhere('fulfilled_by', $user->id);
+            });
+        }
+
+        $stats = [
+            'total' => (clone $baseQuery)->count(),
+            'pending_approval' => (clone $baseQuery)->where('status', StoreRequisition::STATUS_PENDING)->count(),
+            'awaiting_fulfillment' => (clone $baseQuery)->whereIn('status', [StoreRequisition::STATUS_APPROVED, StoreRequisition::STATUS_PARTIAL])->count(),
+            'fulfilled_this_month' => (clone $baseQuery)->where('status', StoreRequisition::STATUS_FULFILLED)
+                ->whereMonth('fulfilled_at', now()->month)
+                ->whereYear('fulfilled_at', now()->year)
+                ->count(),
+        ];
+
+        return view('admin.inventory.requisitions.index', compact('stores', 'statuses', 'stats'));
     }
 
     /**
@@ -89,7 +151,7 @@ class StoreRequisitionController extends Controller
     {
         $stores = Store::active()->orderBy('store_name')->get();
         $products = Product::with('price')
-            ->where('visible', true)
+            ->where('status', true)
             ->orderBy('product_name')
             ->get();
 
@@ -120,7 +182,7 @@ class StoreRequisitionController extends Controller
                 'success' => true,
                 'message' => "Requisition {$requisition->requisition_number} created successfully",
                 'data' => $requisition,
-                'redirect' => route('requisitions.show', $requisition->id),
+                'redirect' => route('inventory.requisitions.show', $requisition->id),
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -231,24 +293,56 @@ class StoreRequisitionController extends Controller
 
     /**
      * Fulfill requisition items
+     *
+     * Supports multi-batch fulfillment where UI sends:
+     * items[{item_id}][requisition_item_id] = item_id
+     * items[{item_id}][product_id] = product_id
+     * items[{item_id}][batches][{batch_id}] = qty_from_this_batch
      */
     public function fulfill(Request $request, StoreRequisition $requisition)
     {
         $request->validate([
             'items' => 'required|array|min:1',
-            'items.*.item_id' => 'required|exists:store_requisition_items,id',
-            'items.*.qty' => 'required|integer|min:0',
-            'items.*.batch_id' => 'nullable|exists:stock_batches,id',
+            'items.*.requisition_item_id' => 'required|exists:store_requisition_items,id',
+            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.batches' => 'nullable|array',
+            'items.*.batches.*' => 'nullable|integer|min:0',
         ]);
 
         try {
-            // Transform items array
+            // Transform items array for service
+            // Format: [item_id => ['batches' => [batch_id => qty, ...], 'total_qty' => X]]
             $fulfillments = [];
-            foreach ($request->items as $item) {
-                $fulfillments[$item['item_id']] = [
-                    'qty' => $item['qty'],
-                    'batch_id' => $item['batch_id'] ?? null,
-                ];
+
+            foreach ($request->items as $itemKey => $itemData) {
+                $itemId = $itemData['requisition_item_id'];
+                $batches = $itemData['batches'] ?? [];
+
+                // Filter out zero quantities and convert to integers
+                $batchFulfillments = [];
+                $totalQty = 0;
+
+                foreach ($batches as $batchId => $qty) {
+                    $qty = (int) $qty;
+                    if ($qty > 0) {
+                        $batchFulfillments[$batchId] = $qty;
+                        $totalQty += $qty;
+                    }
+                }
+
+                if ($totalQty > 0) {
+                    $fulfillments[$itemId] = [
+                        'batches' => $batchFulfillments,
+                        'total_qty' => $totalQty,
+                    ];
+                }
+            }
+
+            if (empty($fulfillments)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No items to fulfill. Please enter quantities to transfer.',
+                ], 400);
             }
 
             $batches = $this->requisitionService->fulfill($requisition, $fulfillments);
@@ -258,8 +352,8 @@ class StoreRequisitionController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => sprintf(
-                    'Fulfilled %d items. Status: %s',
-                    count($batches),
+                    'Fulfilled %d item(s). Status: %s',
+                    count($fulfillments),
                     ucfirst($requisition->status)
                 ),
             ]);
@@ -333,18 +427,18 @@ class StoreRequisitionController extends Controller
 
         // View button
         $buttons[] = sprintf(
-            '<a href="%s" class="btn btn-sm btn-info" title="View"><i class="fas fa-eye"></i></a>',
-            route('requisitions.show', $requisition->id)
+            '<a href="%s" class="btn btn-sm btn-info" title="View"><i class="mdi mdi-eye"></i></a>',
+            route('inventory.requisitions.show', $requisition->id)
         );
 
         // Approve button (only for pending)
         if ($requisition->canApprove()) {
             $buttons[] = sprintf(
-                '<button class="btn btn-sm btn-success btn-approve-req" data-id="%d" title="Approve"><i class="fas fa-check"></i></button>',
+                '<button class="btn btn-sm btn-success" onclick="approveRequisition(%d)" title="Approve"><i class="mdi mdi-check"></i></button>',
                 $requisition->id
             );
             $buttons[] = sprintf(
-                '<button class="btn btn-sm btn-danger btn-reject-req" data-id="%d" title="Reject"><i class="fas fa-times"></i></button>',
+                '<button class="btn btn-sm btn-danger" onclick="rejectRequisition(%d)" title="Reject"><i class="mdi mdi-close"></i></button>',
                 $requisition->id
             );
         }
@@ -352,15 +446,15 @@ class StoreRequisitionController extends Controller
         // Fulfill button (only for approved/partial)
         if ($requisition->canFulfill()) {
             $buttons[] = sprintf(
-                '<button class="btn btn-sm btn-warning btn-fulfill-req" data-id="%d" title="Fulfill"><i class="fas fa-truck"></i></button>',
-                $requisition->id
+                '<a href="%s" class="btn btn-sm btn-warning" title="Fulfill"><i class="mdi mdi-truck-delivery"></i></a>',
+                route('inventory.requisitions.show', $requisition->id)
             );
         }
 
         // Cancel button
         if ($requisition->canCancel()) {
             $buttons[] = sprintf(
-                '<button class="btn btn-sm btn-secondary btn-cancel-req" data-id="%d" title="Cancel"><i class="fas fa-ban"></i></button>',
+                '<button class="btn btn-sm btn-secondary" onclick="cancelRequisition(%d)" title="Cancel"><i class="mdi mdi-cancel"></i></button>',
                 $requisition->id
             );
         }

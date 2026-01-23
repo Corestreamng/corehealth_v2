@@ -95,8 +95,241 @@
         height: 8px;
         border-radius: 4px;
     }
+
+    /* ============================================
+       PRINT STYLES - Professional Document Output
+       ============================================ */
+    @media print {
+        /* Hide interactive UI elements */
+        #left-sidebar,
+        .navbar,
+        .action-btn,
+        button,
+        .btn,
+        form,
+        .modal,
+        .alert,
+        .breadcrumb,
+        #footer,
+        .page-footer,
+        .dropdown-menu,
+        .pagination,
+        .no-print {
+            display: none !important;
+        }
+
+        /* Show print-only elements */
+        .print-only {
+            display: block !important;
+        }
+
+        /* Page layout */
+        body {
+            background: white !important;
+            font-size: 11pt !important;
+        }
+        #content-wrapper,
+        .container-fluid {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* Print header styling */
+        .print-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #333;
+        }
+        .company-logo {
+            margin-bottom: 10px;
+        }
+        .company-name {
+            font-size: 18pt;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .company-address {
+            font-size: 9pt;
+            color: #666;
+            margin-bottom: 3px;
+        }
+        .company-contact {
+            font-size: 9pt;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .document-title {
+            font-size: 14pt;
+            font-weight: bold;
+            margin-top: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* PO header for print */
+        .po-header {
+            background: #f8f9fa !important;
+            color: #333 !important;
+            border: 1px solid #333 !important;
+            padding: 15px !important;
+            margin-bottom: 15px !important;
+            page-break-inside: avoid;
+        }
+        .po-header h2 {
+            color: #333 !important;
+            font-size: 14pt !important;
+        }
+        .po-header .po-number {
+            font-size: 12pt !important;
+        }
+
+        /* Cards and sections */
+        .detail-card {
+            border: 1px solid #333 !important;
+            box-shadow: none !important;
+            padding: 12px !important;
+            margin-bottom: 15px !important;
+            page-break-inside: avoid;
+        }
+        .detail-card h5 {
+            border-bottom: 1px solid #333 !important;
+            font-size: 11pt !important;
+            padding-bottom: 5px !important;
+            margin-bottom: 10px !important;
+        }
+        .detail-label {
+            font-size: 9pt !important;
+        }
+        .detail-value {
+            font-size: 10pt !important;
+        }
+
+        /* Tables */
+        .table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+        }
+        table th, table td {
+            border: 1px solid #333 !important;
+            padding: 6px 8px !important;
+            font-size: 10pt !important;
+        }
+        table th {
+            background: #f0f0f0 !important;
+            font-weight: bold !important;
+        }
+        .items-table th {
+            background: #f0f0f0 !important;
+        }
+
+        /* Progress bars - convert to text */
+        .receiving-progress {
+            display: none !important;
+        }
+
+        /* Status badges */
+        .status-badge {
+            border: 1px solid #333 !important;
+            padding: 2px 8px !important;
+            border-radius: 3px !important;
+        }
+        .badge {
+            border: 1px solid #333 !important;
+            padding: 2px 6px !important;
+        }
+
+        /* Timeline */
+        .timeline::before {
+            background: #333 !important;
+        }
+        .timeline-item::before {
+            background: #666 !important;
+            border-color: white !important;
+        }
+
+        /* Layout adjustments - make full width on print */
+        .col-md-8, .col-md-4 {
+            width: 100% !important;
+            max-width: 100% !important;
+            flex: 0 0 100% !important;
+        }
+        .row {
+            display: block !important;
+            page-break-inside: avoid;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            page-break-after: avoid;
+        }
+
+        /* Force table visibility */
+        .table-responsive {
+            overflow: visible !important;
+        }
+        .items-table {
+            display: table !important;
+            width: 100% !important;
+        }
+        .items-table thead {
+            display: table-header-group !important;
+        }
+        .items-table tbody {
+            display: table-row-group !important;
+        }
+        .items-table tfoot {
+            display: table-footer-group !important;
+        }
+        .items-table tr {
+            display: table-row !important;
+        }
+        .items-table th,
+        .items-table td {
+            display: table-cell !important;
+        }
+
+        /* Payment summary styling */
+        .payment-status-badge {
+            border: 1px solid #333 !important;
+        }
+
+        /* Page settings */
+        @page {
+            size: A4;
+            margin: 15mm 10mm 20mm 10mm;
+        }
+
+        /* Print footer */
+        .print-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 8pt;
+            color: #666;
+            padding: 10px;
+            border-top: 1px solid #ddd;
+        }
+    }
 </style>
-@endpush
+
+<!-- Print Header (hidden on screen) -->
+<div class="print-only print-header" style="display: none;">
+    @if(appsettings('logo'))
+    <div class="company-logo">
+        <img src="data:image/png;base64,{{ appsettings('logo') }}" alt="Logo" style="max-height: 60px; max-width: 200px;">
+    </div>
+    @endif
+    <div class="company-name">{{ appsettings('site_name') ?: config('app.name', 'CoreHealth') }}</div>
+    <div class="company-address">{{ appsettings('contact_address') ?: 'Healthcare Management System' }}</div>
+    @if(appsettings('contact_phones'))
+    <div class="company-contact">Tel: {{ appsettings('contact_phones') }}</div>
+    @endif
+    <div class="document-title">PURCHASE ORDER</div>
+    <div style="font-size: 10pt; margin-top: 5px;">{{ $purchaseOrder->po_number }}</div>
+</div>
 
 @section('content')
 <div id="content-wrapper">
@@ -155,6 +388,14 @@
                 @endcan
             @endif
 
+            @if($purchaseOrder->canRecordPayment())
+                @hasanyrole('SUPERADMIN|ADMIN|ACCOUNTS')
+                <a href="{{ route('inventory.purchase-orders.payment', $purchaseOrder) }}" class="btn btn-success btn-sm action-btn">
+                    <i class="mdi mdi-cash-multiple"></i> Record Payment
+                </a>
+                @endhasanyrole
+            @endif
+
             @if(in_array($purchaseOrder->status, ['draft', 'submitted']))
                 @can('purchase-orders.edit')
                 <button type="button" class="btn btn-danger btn-sm action-btn" onclick="cancelPO()">
@@ -176,29 +417,29 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <div class="detail-label">Destination Store</div>
-                            <div class="detail-value">{{ $purchaseOrder->store->store_name }}</div>
+                            <div class="detail-value">{{ $purchaseOrder->targetStore->store_name }}</div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <div class="detail-label">Order Date</div>
-                            <div class="detail-value">{{ $purchaseOrder->order_date->format('M d, Y') }}</div>
+                            <div class="detail-value">{{ $purchaseOrder->created_at->format('M d, Y') }}</div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <div class="detail-label">Expected Delivery</div>
                             <div class="detail-value">
-                                {{ $purchaseOrder->expected_delivery_date ? $purchaseOrder->expected_delivery_date->format('M d, Y') : 'Not specified' }}
+                                {{ $purchaseOrder->expected_date ? \Carbon\Carbon::parse($purchaseOrder->expected_date)->format('M d, Y') : 'Not specified' }}
                             </div>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <div class="detail-label">Payment Terms</div>
-                            <div class="detail-value">{{ $purchaseOrder->payment_terms ?: 'Not specified' }}</div>
+                            <div class="detail-label">Supplier</div>
+                            <div class="detail-value">{{ $purchaseOrder->supplier->company_name }}</div>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <div class="detail-label">Supplier Contact</div>
-                            <div class="detail-value">{{ $purchaseOrder->supplier_contact ?: 'Not specified' }}</div>
+                            <div class="detail-label">Total Amount</div>
+                            <div class="detail-value">₦{{ number_format($purchaseOrder->total_amount, 2) }}</div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <div class="detail-label">Created By</div>
-                            <div class="detail-value">{{ $purchaseOrder->createdBy->name ?? 'N/A' }}</div>
+                            <div class="detail-value">{{ $purchaseOrder->creator->name ?? 'N/A' }}</div>
                         </div>
                     </div>
                     @if($purchaseOrder->notes)
@@ -233,18 +474,18 @@
                                         <strong>{{ $item->product->product_name }}</strong>
                                         <br><small class="text-muted">{{ $item->product->product_code }}</small>
                                     </td>
-                                    <td class="text-center">{{ $item->quantity_ordered }}</td>
+                                    <td class="text-center">{{ $item->ordered_qty }}</td>
                                     <td class="text-center">
-                                        <span class="{{ $item->quantity_received >= $item->quantity_ordered ? 'text-success' : '' }}">
-                                            {{ $item->quantity_received }}
+                                        <span class="{{ $item->received_qty >= $item->ordered_qty ? 'text-success font-weight-bold' : '' }}">
+                                            {{ $item->received_qty ?? 0 }}
                                         </span>
                                     </td>
-                                    <td class="text-right">₦{{ number_format($item->unit_price, 2) }}</td>
+                                    <td class="text-right">₦{{ number_format($item->unit_cost, 2) }}</td>
                                     <td class="text-right">₦{{ number_format($item->line_total, 2) }}</td>
                                     <td style="width: 100px;">
                                         @php
-                                            $progress = $item->quantity_ordered > 0
-                                                ? round(($item->quantity_received / $item->quantity_ordered) * 100)
+                                            $progress = $item->ordered_qty > 0
+                                                ? round((($item->received_qty ?? 0) / $item->ordered_qty) * 100)
                                                 : 0;
                                         @endphp
                                         <div class="progress receiving-progress">
@@ -252,6 +493,7 @@
                                                  style="width: {{ min($progress, 100) }}%"></div>
                                         </div>
                                         <small class="text-muted">{{ $progress }}%</small>
+                                        <span class="print-only" style="display: none;">{{ $progress }}%</span>
                                     </td>
                                 </tr>
                                 @endforeach
@@ -331,17 +573,20 @@
                 </div>
 
                 <!-- Receiving Summary -->
-                @if($purchaseOrder->batches->count() > 0)
+                @php
+                    $receivedItems = $purchaseOrder->items->where('received_qty', '>', 0);
+                @endphp
+                @if($receivedItems->count() > 0)
                 <div class="detail-card">
-                    <h5><i class="mdi mdi-package"></i> Received Batches</h5>
-                    @foreach($purchaseOrder->batches as $batch)
+                    <h5><i class="mdi mdi-package"></i> Received Items</h5>
+                    @foreach($receivedItems as $item)
                     <div class="border-bottom pb-2 mb-2">
-                        <strong>{{ $batch->product->product_name }}</strong>
+                        <strong>{{ $item->product->product_name }}</strong>
                         <br>
                         <small class="text-muted">
-                            Batch: {{ $batch->batch_number }}<br>
-                            Qty: {{ $batch->initial_quantity }}<br>
-                            Expiry: {{ $batch->expiry_date ? $batch->expiry_date->format('M Y') : 'N/A' }}
+                            Ordered: {{ $item->ordered_qty }}<br>
+                            Received: {{ $item->received_qty }}<br>
+                            Pending: {{ $item->ordered_qty - $item->received_qty }}
                         </small>
                     </div>
                     @endforeach
@@ -363,9 +608,74 @@
                     </p>
                 </div>
                 @endif
+
+                <!-- Payment Summary (for received POs) -->
+                @if(in_array($purchaseOrder->status, ['partial', 'received']))
+                <div class="detail-card">
+                    <h5><i class="mdi mdi-currency-ngn"></i> Payment Status</h5>
+                    <div class="row text-center mb-3">
+                        <div class="col-4">
+                            <div class="text-muted small">Total</div>
+                            <div class="font-weight-bold">₦{{ number_format($purchaseOrder->total_amount, 2) }}</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-muted small">Paid</div>
+                            <div class="font-weight-bold text-success">₦{{ number_format($purchaseOrder->amount_paid, 2) }}</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-muted small">Balance</div>
+                            <div class="font-weight-bold text-danger">₦{{ number_format($purchaseOrder->balance_due, 2) }}</div>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <span class="badge {{ $purchaseOrder->getPaymentStatusBadgeClass() }} payment-status-badge">
+                            {{ ucfirst($purchaseOrder->payment_status ?? 'unpaid') }}
+                        </span>
+                    </div>
+
+                    @if($purchaseOrder->canRecordPayment())
+                        @hasanyrole('SUPERADMIN|ADMIN|ACCOUNTS')
+                        <div class="text-center mt-3">
+                            <a href="{{ route('inventory.purchase-orders.payment', $purchaseOrder) }}" class="btn btn-success btn-sm">
+                                <i class="mdi mdi-cash-multiple"></i> Record Payment
+                            </a>
+                        </div>
+                        @endhasanyrole
+                    @endif
+                </div>
+                @endif
+
+                <!-- Payment History -->
+                @if(isset($purchaseOrder->payments) && $purchaseOrder->payments->count() > 0)
+                <div class="detail-card">
+                    <h5><i class="mdi mdi-history"></i> Payment History</h5>
+                    @foreach($purchaseOrder->payments->sortByDesc('payment_date') as $payment)
+                    <div class="border-bottom pb-2 mb-2">
+                        <div class="d-flex justify-content-between">
+                            <strong>₦{{ number_format($payment->amount, 2) }}</strong>
+                            <span class="badge badge-secondary">{{ $payment->payment_method_label }}</span>
+                        </div>
+                        <small class="text-muted">
+                            {{ $payment->payment_date->format('M d, Y') }}
+                            @if($payment->reference_number)
+                                | Ref: {{ $payment->reference_number }}
+                            @endif
+                        </small>
+                        @if($payment->notes)
+                            <br><small class="text-muted">{{ $payment->notes }}</small>
+                        @endif
+                    </div>
+                    @endforeach
+                </div>
+                @endif
             </div>
         </div>
     </div>
+</div>
+
+<!-- Print Footer (hidden on screen) -->
+<div class="print-only print-footer" style="display: none;">
+    <p style="margin: 0;">{{ appsettings('site_name') ?: config('app.name', 'CoreHealth') }} - Printed on {{ now()->format('M d, Y H:i') }}</p>
 </div>
 @endsection
 

@@ -163,8 +163,8 @@ class StockService
     public function createBatch(array $data): StockBatch
     {
         return DB::transaction(function () use ($data) {
-            // Generate batch_name from batch_number + timestamp
-            $batchNumber = $data['batch_number'];
+            // Generate batch_number if not provided
+            $batchNumber = $data['batch_number'] ?? 'BATCH-' . now()->format('YmdHis') . '-' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT);
             $batchName = $data['batch_name'] ?? $batchNumber . '-' . now()->format('YmdHis');
 
             $batch = StockBatch::create([
@@ -244,12 +244,19 @@ class StockService
                     $options['notes'] ?? "Transferred to store ID: {$toStoreId}"
                 );
 
+                // Use source batch cost_price, fallback to product's buy price if not set
                 $costPrice = $sourceBatch->cost_price;
+                if (empty($costPrice) || $costPrice <= 0) {
+                    $productPrice = \App\Models\Price::where('product_id', $productId)->first();
+                    $costPrice = $productPrice->pr_buy_price ?? 0;
+                }
                 $expiryDate = $expiryDate ?? $sourceBatch->expiry_date;
             } else {
                 // FIFO transfer
                 $batches = $this->getAvailableBatches($productId, $fromStoreId);
                 $remainingQty = $qty;
+                $totalCost = 0;
+                $totalQtyProcessed = 0;
 
                 foreach ($batches as $batch) {
                     if ($remainingQty <= 0) break;
@@ -264,16 +271,32 @@ class StockService
                         $options['notes'] ?? "Transferred to store ID: {$toStoreId}"
                     );
 
-                    // Use weighted average cost price
-                    $costPrice = ($costPrice * ($qty - $remainingQty) + $batch->cost_price * $deductQty) / ($qty - $remainingQty + $deductQty);
+                    // Accumulate total cost for weighted average (use batch cost or fallback to product price)
+                    $batchCost = $batch->cost_price;
+                    if (empty($batchCost) || $batchCost <= 0) {
+                        $productPrice = \App\Models\Price::where('product_id', $productId)->first();
+                        $batchCost = $productPrice->pr_buy_price ?? 0;
+                    }
+                    $totalCost += ($batchCost * $deductQty);
+                    $totalQtyProcessed += $deductQty;
                     $remainingQty -= $deductQty;
+
+                    // Use earliest expiry date if not set
+                    if (!$expiryDate && $batch->expiry_date) {
+                        $expiryDate = $batch->expiry_date;
+                    }
                 }
+
+                // Calculate weighted average cost price
+                $costPrice = $totalQtyProcessed > 0 ? ($totalCost / $totalQtyProcessed) : 0;
             }
 
             // Create new batch in destination store
+            $batchNumber = 'TRF-' . now()->format('YmdHis') . '-' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT);
             $newBatch = $this->createBatch([
                 'product_id' => $productId,
                 'store_id' => $toStoreId,
+                'batch_number' => $options['batch_number'] ?? $batchNumber,
                 'qty' => $qty,
                 'cost_price' => $options['cost_price'] ?? $costPrice,
                 'expiry_date' => $expiryDate,
@@ -423,34 +446,42 @@ class StockService
     /**
      * Get low stock products for a store
      *
-     * @param int $storeId
+     * @param int|null $storeId
      * @return Collection
      */
-    public function getLowStockProducts(int $storeId): Collection
+    public function getLowStockProducts(?int $storeId): Collection
     {
-        return StoreStock::where('store_id', $storeId)
-            ->where('is_active', true)
+        $query = StoreStock::where('is_active', true)
             ->whereRaw('current_quantity <= reorder_level')
-            ->with('product')
-            ->get();
+            ->with('product');
+
+        if ($storeId) {
+            $query->where('store_id', $storeId);
+        }
+
+        return $query->get();
     }
 
     /**
      * Get expiring batches for a store
      *
-     * @param int $storeId
+     * @param int|null $storeId
      * @param int $days Days until expiry
      * @return Collection
      */
-    public function getExpiringBatches(int $storeId, int $days = 30): Collection
+    public function getExpiringBatches(?int $storeId, int $days = 30): Collection
     {
-        return StockBatch::where('store_id', $storeId)
-            ->active()
+        $query = StockBatch::active()
             ->hasStock()
             ->expiringSoon($days)
             ->with('product')
-            ->orderBy('expiry_date', 'asc')
-            ->get();
+            ->orderBy('expiry_date', 'asc');
+
+        if ($storeId) {
+            $query->where('store_id', $storeId);
+        }
+
+        return $query->get();
     }
 
     /**
@@ -472,39 +503,80 @@ class StockService
     /**
      * Get stock value report for a store
      *
-     * @param int $storeId
+     * @param int|null $storeId Specific store ID or null for all stores
      * @return array
      */
-    public function getStockValueReport(int $storeId): array
+    public function getStockValueReport(?int $storeId = null): array
     {
-        $batches = StockBatch::where('store_id', $storeId)
+        $query = StockBatch::query()
             ->active()
             ->hasStock()
-            ->with('product')
-            ->get();
+            ->with(['product', 'store']);
+
+        // Filter by store if specified
+        if ($storeId !== null) {
+            $query->where('store_id', $storeId);
+        }
+
+        $batches = $query->get();
 
         $totalValue = 0;
         $productValues = [];
+        $storeValues = [];
 
         foreach ($batches as $batch) {
             $value = $batch->current_qty * $batch->cost_price;
             $totalValue += $value;
 
+            // Group by product
             $productId = $batch->product_id;
             if (!isset($productValues[$productId])) {
                 $productValues[$productId] = [
                     'product' => $batch->product,
                     'total_qty' => 0,
                     'total_value' => 0,
+                    'stores' => [],
                 ];
             }
             $productValues[$productId]['total_qty'] += $batch->current_qty;
             $productValues[$productId]['total_value'] += $value;
+
+            // Track store breakdown for this product (useful for all-stores view)
+            $storeIdKey = $batch->store_id;
+            if (!isset($productValues[$productId]['stores'][$storeIdKey])) {
+                $productValues[$productId]['stores'][$storeIdKey] = [
+                    'store' => $batch->store,
+                    'qty' => 0,
+                    'value' => 0,
+                ];
+            }
+            $productValues[$productId]['stores'][$storeIdKey]['qty'] += $batch->current_qty;
+            $productValues[$productId]['stores'][$storeIdKey]['value'] += $value;
+
+            // Group by store (for all-stores summary)
+            if (!isset($storeValues[$storeIdKey])) {
+                $storeValues[$storeIdKey] = [
+                    'store' => $batch->store,
+                    'total_qty' => 0,
+                    'total_value' => 0,
+                    'product_count' => 0,
+                ];
+            }
+            $storeValues[$storeIdKey]['total_qty'] += $batch->current_qty;
+            $storeValues[$storeIdKey]['total_value'] += $value;
+        }
+
+        // Count unique products per store
+        foreach ($productValues as $product) {
+            foreach ($product['stores'] as $storeIdKey => $storeData) {
+                $storeValues[$storeIdKey]['product_count']++;
+            }
         }
 
         return [
             'total_value' => $totalValue,
             'products' => array_values($productValues),
+            'stores' => array_values($storeValues),
         ];
     }
 }

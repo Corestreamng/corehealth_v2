@@ -314,14 +314,15 @@
     <div class="workbench-header-card">
         <div class="row align-items-center">
             <div class="col-md-8">
-                <h1><i class="mdi mdi-store mr-2"></i>{{ $store->store_name ?? 'Store Workbench' }}</h1>
+                <h1><i class="mdi mdi-store mr-2"></i>{{ $store->store_name ?? 'All Stores' }}</h1>
                 <p class="header-subtitle mb-0">
-                    <i class="mdi mdi-map-marker mr-1"></i> {{ $store->location ?? 'Manage inventory, batches, and stock movements' }}
+                    <i class="mdi mdi-map-marker mr-1"></i> {{ $store->location ?? 'Manage inventory, batches, and stock movements across all stores' }}
                 </p>
             </div>
             <div class="col-md-4 text-md-right mt-3 mt-md-0">
                 <div class="store-selector-wrapper">
                     <select id="store-selector" class="store-selector">
+                        <option value="" {{ !isset($store) ? 'selected' : '' }}>All Stores</option>
                         @foreach($stores as $s)
                         <option value="{{ $s->id }}" {{ isset($store) && $store->id == $s->id ? 'selected' : '' }}>
                             {{ $s->store_name }}
@@ -433,18 +434,40 @@
                             </div>
                         </a>
 
-                        <a href="{{ route('inventory.purchase-orders.create') }}?store_id={{ $store->id ?? '' }}" class="action-card">
-                            <div class="action-icon purple">
-                                <i class="mdi mdi-cart-plus"></i>
+                        <a href="{{ route('inventory.requisitions.index') }}?store_id={{ $store->id ?? '' }}" class="action-card">
+                            <div class="action-icon info">
+                                <i class="mdi mdi-clipboard-list-outline"></i>
                             </div>
                             <div class="action-content">
-                                <h6>New Purchase Order</h6>
-                                <p>Order stock from suppliers</p>
+                                <h6>All Requisitions</h6>
+                                <p>View and manage all requisitions</p>
                             </div>
                         </a>
 
+                        <a href="{{ route('inventory.purchase-orders.index') }}?store_id={{ $store->id ?? '' }}" class="action-card">
+                            <div class="action-icon purple">
+                                <i class="mdi mdi-cart-outline"></i>
+                            </div>
+                            <div class="action-content">
+                                <h6>Purchase Orders</h6>
+                                <p>View and manage purchase orders</p>
+                            </div>
+                        </a>
+
+                        @hasanyrole('SUPERADMIN|ADMIN|ACCOUNTS')
+                        <a href="{{ route('inventory.purchase-orders.accounts-payable') }}" class="action-card">
+                            <div class="action-icon success">
+                                <i class="mdi mdi-currency-ngn"></i>
+                            </div>
+                            <div class="action-content">
+                                <h6>Accounts Payable</h6>
+                                <p>Manage PO payments and payables</p>
+                            </div>
+                        </a>
+                        @endhasanyrole
+
                         <a href="{{ route('suppliers.index') }}" class="action-card">
-                            <div class="action-icon info">
+                            <div class="action-icon warning">
                                 <i class="mdi mdi-truck-delivery"></i>
                             </div>
                             <div class="action-content">

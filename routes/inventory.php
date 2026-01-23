@@ -29,6 +29,13 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
         Route::get('/', [PurchaseOrderController::class, 'index'])->name('index');
         Route::get('/create', [PurchaseOrderController::class, 'create'])->name('create');
         Route::post('/', [PurchaseOrderController::class, 'store'])->name('store');
+
+        // Accounts Payable (must be before {purchaseOrder} routes)
+        Route::get('/accounts-payable', [PurchaseOrderController::class, 'accountsPayable'])->name('accounts-payable');
+
+        // AJAX (must be before {purchaseOrder} routes)
+        Route::get('/ajax/search-products', [PurchaseOrderController::class, 'searchProducts'])->name('search-products');
+
         Route::get('/{purchaseOrder}', [PurchaseOrderController::class, 'show'])->name('show');
         Route::get('/{purchaseOrder}/edit', [PurchaseOrderController::class, 'edit'])->name('edit');
         Route::put('/{purchaseOrder}', [PurchaseOrderController::class, 'update'])->name('update');
@@ -42,8 +49,9 @@ Route::middleware(['auth'])->prefix('inventory')->name('inventory.')->group(func
         Route::get('/{purchaseOrder}/receive', [PurchaseOrderController::class, 'showReceiveForm'])->name('receive');
         Route::post('/{purchaseOrder}/receive', [PurchaseOrderController::class, 'receive'])->name('receive.process');
 
-        // AJAX
-        Route::get('/ajax/search-products', [PurchaseOrderController::class, 'searchProducts'])->name('search-products');
+        // Payments
+        Route::get('/{purchaseOrder}/payment', [PurchaseOrderController::class, 'showPaymentForm'])->name('payment');
+        Route::post('/{purchaseOrder}/payment', [PurchaseOrderController::class, 'recordPayment'])->name('payment.process');
     });
 
     // ===== STORE REQUISITIONS =====
