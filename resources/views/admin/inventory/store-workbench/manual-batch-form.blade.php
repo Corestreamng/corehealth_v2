@@ -21,6 +21,17 @@
 </style>
 <div id="content-wrapper">
     <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="mb-0">Add Manual Batch</h3>
+                <p class="text-muted mb-0">{{ $store->store_name ?? 'Select Store' }}</p>
+            </div>
+            @hasanyrole('SUPERADMIN|ADMIN|STORE')
+            <a href="{{ route('inventory.store-workbench.index') }}{{ request('store_id') ? '?store_id=' . request('store_id') : '' }}" class="btn btn-secondary btn-sm">
+                <i class="mdi mdi-arrow-left"></i> Back to Workbench
+            </a>
+            @endhasanyrole
+        </div>
         <div class="row justify-content-center">
             <div class="col-md-8">
                 {{-- Flash Messages --}}

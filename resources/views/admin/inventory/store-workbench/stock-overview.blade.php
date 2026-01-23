@@ -93,7 +93,7 @@
                     <select id="category-filter" class="form-control form-control-sm">
                         <option value="">All Categories</option>
                         @foreach($categories ?? [] as $category)
-                        <option value="{{ $category->id }}">{{ $category->product_category }}</option>
+                        <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>{{ $category->category_name }}</option>
                         @endforeach
                     </select>
                 </div>

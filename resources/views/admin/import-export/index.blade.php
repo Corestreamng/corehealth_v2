@@ -1,4 +1,4 @@
-@extends('admin.layout.app')
+@extends('admin.layouts.app')
 
 @section('content')
 <style>
@@ -261,7 +261,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h4 class="mb-1"><i class="mdi mdi-database-import-outline"></i> Data Import / Export</h4>
-            <p class="text-muted mb-0">Bulk import and export data using CSV files</p>
+            <p class="text-muted mb-0">Bulk import and export data using Excel (XLSX) files with dropdown validations</p>
         </div>
     </div>
 
@@ -345,10 +345,10 @@
                             <h6><i class="mdi mdi-upload"></i> Import Products</h6>
 
                             <div class="template-download">
-                                <i class="mdi mdi-file-download-outline"></i>
-                                <span>Download the template first to ensure correct format</span>
+                                <i class="mdi mdi-file-excel text-success"></i>
+                                <span>Download Excel template with dropdown lists for valid values</span>
                                 <a href="{{ route('import-export.template.products') }}" class="btn btn-template btn-sm ms-auto">
-                                    <i class="mdi mdi-download"></i> Download Template
+                                    <i class="mdi mdi-download"></i> Download XLSX Template
                                 </a>
                             </div>
 
@@ -363,14 +363,14 @@
                                             <option value="{{ $store->id }}">{{ $store->store_name }}</option>
                                         @endforeach
                                     </select>
-                                    <small class="text-muted">Stock will be added to this store if not specified in CSV</small>
+                                    <small class="text-muted">Stock will be added to this store if not specified in file</small>
                                 </div>
 
                                 <div class="file-upload-zone" onclick="document.getElementById('products-file').click()">
-                                    <input type="file" id="products-file" name="file" accept=".csv,.txt" required>
+                                    <input type="file" id="products-file" name="file" accept=".xlsx,.xls,.csv" required>
                                     <i class="mdi mdi-cloud-upload-outline"></i>
                                     <p><strong>Click to upload</strong> or drag and drop</p>
-                                    <p class="small text-muted">CSV file (max 10MB)</p>
+                                    <p class="small text-muted">Excel (.xlsx) or CSV file (max 10MB)</p>
                                 </div>
 
                                 <div class="mt-3">
@@ -392,7 +392,7 @@
                                     <select name="category_id" class="form-select">
                                         <option value="">-- All Categories --</option>
                                         @foreach($categories['products'] as $category)
-                                            <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                            <option value="{{ $category->id }}">{{ $category->category_name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -424,10 +424,10 @@
                             <h6><i class="mdi mdi-upload"></i> Import Services</h6>
 
                             <div class="template-download">
-                                <i class="mdi mdi-file-download-outline"></i>
-                                <span>Download the template with sample data</span>
+                                <i class="mdi mdi-file-excel text-success"></i>
+                                <span>Download Excel template with category dropdown</span>
                                 <a href="{{ route('import-export.template.services') }}" class="btn btn-template btn-sm ms-auto">
-                                    <i class="mdi mdi-download"></i> Download Template
+                                    <i class="mdi mdi-download"></i> Download XLSX Template
                                 </a>
                             </div>
 
@@ -435,10 +435,10 @@
                                 @csrf
 
                                 <div class="file-upload-zone" onclick="document.getElementById('services-file').click()">
-                                    <input type="file" id="services-file" name="file" accept=".csv,.txt" required>
+                                    <input type="file" id="services-file" name="file" accept=".xlsx,.xls,.csv" required>
                                     <i class="mdi mdi-cloud-upload-outline"></i>
                                     <p><strong>Click to upload</strong> or drag and drop</p>
-                                    <p class="small text-muted">CSV file (max 10MB)</p>
+                                    <p class="small text-muted">Excel (.xlsx) or CSV file (max 10MB)</p>
                                 </div>
 
                                 <div class="mt-3">
@@ -450,13 +450,8 @@
 
                             <div class="mt-3 p-3 bg-light rounded">
                                 <small class="text-muted">
-                                    <strong>Category Examples:</strong><br>
-                                    • Laboratory - Hematology<br>
-                                    • Laboratory - Chemistry<br>
-                                    • Imaging - Radiology<br>
-                                    • Imaging - Ultrasound<br>
-                                    • Nursing - Procedures<br>
-                                    • Nursing - Monitoring
+                                    <strong>Note:</strong> The Excel template includes a dropdown list for service categories.<br>
+                                    Select from existing categories or new ones will be auto-created.
                                 </small>
                             </div>
                         </div>
@@ -472,7 +467,7 @@
                                     <select name="category_id" class="form-select">
                                         <option value="">-- All Categories --</option>
                                         @foreach($categories['services'] as $category)
-                                            <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                            <option value="{{ $category->id }}">{{ $category->category_name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -494,10 +489,10 @@
                             <h6><i class="mdi mdi-upload"></i> Import Staff</h6>
 
                             <div class="template-download">
-                                <i class="mdi mdi-file-download-outline"></i>
-                                <span>Download the template with required fields</span>
+                                <i class="mdi mdi-file-excel text-success"></i>
+                                <span>Download Excel template with role, clinic & specialization dropdowns</span>
                                 <a href="{{ route('import-export.template.staff') }}" class="btn btn-template btn-sm ms-auto">
-                                    <i class="mdi mdi-download"></i> Download Template
+                                    <i class="mdi mdi-download"></i> Download XLSX Template
                                 </a>
                             </div>
 
@@ -511,10 +506,10 @@
                                 </div>
 
                                 <div class="file-upload-zone" onclick="document.getElementById('staff-file').click()">
-                                    <input type="file" id="staff-file" name="file" accept=".csv,.txt" required>
+                                    <input type="file" id="staff-file" name="file" accept=".xlsx,.xls,.csv" required>
                                     <i class="mdi mdi-cloud-upload-outline"></i>
                                     <p><strong>Click to upload</strong> or drag and drop</p>
-                                    <p class="small text-muted">CSV file (max 10MB)</p>
+                                    <p class="small text-muted">Excel (.xlsx) or CSV file (max 10MB)</p>
                                 </div>
 
                                 <div class="mt-3">
@@ -526,10 +521,11 @@
 
                             <div class="mt-3 p-3 bg-light rounded">
                                 <small class="text-muted">
-                                    <strong>Available Roles:</strong><br>
-                                    @foreach($roles as $role)
-                                        • {{ $role->name }}<br>
-                                    @endforeach
+                                    <strong>Note:</strong> The Excel template includes dropdown lists for:<br>
+                                    • Role (select from available roles)<br>
+                                    • Gender (Male/Female)<br>
+                                    • Specialization (select from list)<br>
+                                    • Clinic (select from list)
                                 </small>
                             </div>
                         </div>
@@ -567,10 +563,10 @@
                             <h6><i class="mdi mdi-upload"></i> Import Patients</h6>
 
                             <div class="template-download">
-                                <i class="mdi mdi-file-download-outline"></i>
-                                <span>Download the template with patient fields</span>
+                                <i class="mdi mdi-file-excel text-success"></i>
+                                <span>Download Excel template with HMO, gender, blood group & genotype dropdowns</span>
                                 <a href="{{ route('import-export.template.patients') }}" class="btn btn-template btn-sm ms-auto">
-                                    <i class="mdi mdi-download"></i> Download Template
+                                    <i class="mdi mdi-download"></i> Download XLSX Template
                                 </a>
                             </div>
 
@@ -578,10 +574,10 @@
                                 @csrf
 
                                 <div class="file-upload-zone" onclick="document.getElementById('patients-file').click()">
-                                    <input type="file" id="patients-file" name="file" accept=".csv,.txt" required>
+                                    <input type="file" id="patients-file" name="file" accept=".xlsx,.xls,.csv" required>
                                     <i class="mdi mdi-cloud-upload-outline"></i>
                                     <p><strong>Click to upload</strong> or drag and drop</p>
-                                    <p class="small text-muted">CSV file (max 10MB)</p>
+                                    <p class="small text-muted">Excel (.xlsx) or CSV file (max 10MB)</p>
                                 </div>
 
                                 <div class="mt-3">
@@ -594,8 +590,8 @@
                             <div class="mt-3 p-3 bg-light rounded">
                                 <small class="text-muted">
                                     <strong>Notes:</strong><br>
-                                    • File numbers will be auto-generated<br>
-                                    • HMO names must match existing HMOs<br>
+                                    • File numbers will be auto-generated if empty<br>
+                                    • Use the dropdown lists in Excel for HMO, gender, blood group, genotype<br>
                                     • Date format: YYYY-MM-DD<br>
                                     • Allergies: comma-separated values
                                 </small>
@@ -613,7 +609,7 @@
                                     <select name="hmo_id" class="form-select">
                                         <option value="">-- All Patients --</option>
                                         @foreach($hmos as $hmo)
-                                            <option value="{{ $hmo->id }}">{{ $hmo->hmo_name }}</option>
+                                            <option value="{{ $hmo->id }}">{{ $hmo->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -638,21 +634,23 @@
         <div class="section-card-body">
             <div class="row">
                 <div class="col-md-6">
-                    <h6>CSV Format Requirements</h6>
+                    <h6><i class="mdi mdi-file-excel text-success"></i> Excel Template Features</h6>
                     <ul class="small text-muted">
-                        <li>Use comma (,) as delimiter</li>
-                        <li>First row must contain column headers</li>
-                        <li>Text fields with commas should be quoted</li>
+                        <li><strong>Dropdown Lists:</strong> Select valid values from dropdowns (no typing errors!)</li>
+                        <li>Categories, Stores, Roles, HMOs are pre-populated</li>
+                        <li>Gender, Blood Group, Genotype have fixed valid options</li>
                         <li>Date format: YYYY-MM-DD (e.g., 2026-01-22)</li>
                         <li>Maximum file size: 10MB</li>
+                        <li>Also supports CSV format for backwards compatibility</li>
                     </ul>
                 </div>
                 <div class="col-md-6">
-                    <h6>Import Behavior</h6>
+                    <h6><i class="mdi mdi-cog"></i> Import Behavior</h6>
                     <ul class="small text-muted">
-                        <li>Duplicate entries (by code/email) will be skipped</li>
+                        <li>Duplicate entries (by code/email/file_no) will be skipped</li>
                         <li>Categories will be auto-created if they don't exist</li>
                         <li>Related records (Price, Stock) are created automatically</li>
+                        <li>Values must match dropdown options exactly</li>
                         <li>Errors are logged and reported, valid rows are still imported</li>
                     </ul>
                 </div>

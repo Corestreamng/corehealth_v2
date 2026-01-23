@@ -69,6 +69,11 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <h3 class="mb-0">Purchase Orders</h3>
                     <div>
+                        @hasanyrole('SUPERADMIN|ADMIN|ACCOUNTS')
+                        <a href="{{ route('inventory.purchase-orders.accounts-payable') }}" class="btn btn-outline-success btn-sm mr-2">
+                            <i class="mdi mdi-currency-ngn"></i> Accounts Payable
+                        </a>
+                        @endhasanyrole
                         @can('purchase-orders.create')
                         <a href="{{ route('inventory.purchase-orders.create') }}" class="btn btn-primary btn-sm">
                             <i class="mdi mdi-plus"></i> New Purchase Order
@@ -119,6 +124,7 @@
                                 <th>Items</th>
                                 <th>Total</th>
                                 <th>Status</th>
+                                <th>Payment</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -153,12 +159,13 @@ $(function() {
         },
         columns: [
             { data: "po_number", name: "po_number" },
-            { data: "order_date", name: "order_date" },
-            { data: "supplier_name", name: "supplier_name" },
-            { data: "store", name: "store.store_name" },
+            { data: "formatted_date", name: "created_at" },
+            { data: "supplier_name", name: "supplier.company_name" },
+            { data: "store_name", name: "targetStore.store_name" },
             { data: "items_count", name: "items_count", orderable: false },
-            { data: "total_amount", name: "total_amount" },
-            { data: "status", name: "status" },
+            { data: "formatted_total", name: "total_amount" },
+            { data: "status_badge", name: "status" },
+            { data: "payment_badge", name: "payment_status" },
             { data: "actions", name: "actions", orderable: false, searchable: false }
         ],
         order: [[1, 'desc']]

@@ -52,9 +52,20 @@
 </style>
 <div id="content-wrapper">
     <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="mb-0">Stock Adjustment</h3>
+                <p class="text-muted mb-0">{{ $batch->store->store_name ?? 'Store' }}</p>
+            </div>
+            @hasanyrole('SUPERADMIN|ADMIN|STORE')
+            <a href="{{ route('inventory.store-workbench.index') }}?store_id={{ $batch->store_id }}" class="btn btn-secondary btn-sm">
+                <i class="mdi mdi-arrow-left"></i> Back to Workbench
+            </a>
+            @endhasanyrole
+        </div>
         <div class="adjustment-card">
             <div class="card-header">
-                <h5 class="mb-0">Stock Adjustment</h5>
+                <h5 class="mb-0">Adjustment Details</h5>
             </div>
             <div class="card-body">
                 <!-- Batch Info -->

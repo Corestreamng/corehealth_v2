@@ -52,6 +52,11 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware('web')
                 ->namespace($this->namespace)
                 ->group(base_path('routes/nursing_workbench.php'));
+
+            // HR Routes (HRMS Implementation Plan - Section 7.1)
+            Route::middleware('web')
+                ->namespace($this->namespace)
+                ->group(base_path('routes/hr.php'));
         });
     }
 

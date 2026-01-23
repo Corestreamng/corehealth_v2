@@ -13,7 +13,7 @@
     }
     .status-pending { background-color: #ffc107; color: #212529; }
     .status-approved { background-color: #17a2b8; color: white; }
-    .status-partial_fulfilled { background-color: #6f42c1; color: white; }
+    .status-partial { background-color: #6f42c1; color: white; }
     .status-fulfilled { background-color: #28a745; color: white; }
     .status-rejected { background-color: #dc3545; color: white; }
     .status-cancelled { background-color: #6c757d; color: white; }
@@ -49,6 +49,26 @@
 </style>
 <div id="content-wrapper">
     <div class="container-fluid">
+        <!-- Header with Back Link -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="mb-0">Store Requisitions</h3>
+                <p class="text-muted mb-0">Manage inter-store stock transfer requests</p>
+            </div>
+            <div>
+                @can('requisitions.create')
+                <a href="{{ route('inventory.requisitions.create') }}" class="btn btn-primary btn-sm mr-2">
+                    <i class="mdi mdi-plus"></i> New Requisition
+                </a>
+                @endcan
+                @hasanyrole('SUPERADMIN|ADMIN|STORE')
+                <a href="{{ route('inventory.store-workbench.index') }}{{ request('store_id') ? '?store_id=' . request('store_id') : '' }}" class="btn btn-secondary btn-sm">
+                    <i class="mdi mdi-arrow-left"></i> Back to Workbench
+                </a>
+                @endhasanyrole
+            </div>
+        </div>
+
         <!-- Summary Cards -->
         <div class="row mb-4">
             <div class="col-md-3">
@@ -79,19 +99,6 @@
 
         <!-- Main Content -->
         <div class="card-modern">
-            <div class="card-header">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h3 class="mb-0">Store Requisitions</h3>
-                    <div>
-                        @can('requisitions.create')
-                        <a href="{{ route('inventory.requisitions.create') }}" class="btn btn-primary btn-sm">
-                            <i class="mdi mdi-plus"></i> New Requisition
-                        </a>
-                        @endcan
-                    </div>
-                </div>
-            </div>
-
             <div class="card-body">
                 <!-- Queue Tabs -->
                 <ul class="nav queue-tabs mb-3">
@@ -119,18 +126,18 @@
 
                 <!-- Filters -->
                 <div class="row mb-3">
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <select id="status-filter" class="form-control form-control-sm">
                             <option value="">All Statuses</option>
                             <option value="pending">Pending</option>
                             <option value="approved">Approved</option>
-                            <option value="partial_fulfilled">Partially Fulfilled</option>
+                            <option value="partial">Partially Fulfilled</option>
                             <option value="fulfilled">Fulfilled</option>
                             <option value="rejected">Rejected</option>
                             <option value="cancelled">Cancelled</option>
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <select id="from-store-filter" class="form-control form-control-sm">
                             <option value="">All Source Stores</option>
                             @foreach($stores as $store)
@@ -138,21 +145,12 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <select id="to-store-filter" class="form-control form-control-sm">
                             <option value="">All Destination Stores</option>
                             @foreach($stores as $store)
                             <option value="{{ $store->id }}">{{ $store->store_name }}</option>
                             @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <select id="priority-filter" class="form-control form-control-sm">
-                            <option value="">All Priorities</option>
-                            <option value="low">Low</option>
-                            <option value="normal">Normal</option>
-                            <option value="high">High</option>
-                            <option value="urgent">Urgent</option>
                         </select>
                     </div>
                 </div>
@@ -166,7 +164,6 @@
                                 <th>From Store</th>
                                 <th>To Store</th>
                                 <th>Items</th>
-                                <th>Priority</th>
                                 <th>Status</th>
                                 <th>Requested By</th>
                                 <th>Actions</th>
@@ -198,26 +195,24 @@ $(function() {
                 d.status = $('#status-filter').val();
                 d.from_store_id = $('#from-store-filter').val();
                 d.to_store_id = $('#to-store-filter').val();
-                d.priority = $('#priority-filter').val();
                 d.queue = '{{ request('queue') }}';
             }
         },
         columns: [
             { data: "requisition_number", name: "requisition_number" },
-            { data: "request_date", name: "request_date" },
+            { data: "request_date", name: "created_at" },
             { data: "from_store", name: "fromStore.store_name" },
             { data: "to_store", name: "toStore.store_name" },
             { data: "items_count", name: "items_count", orderable: false },
-            { data: "priority", name: "priority" },
             { data: "status", name: "status" },
-            { data: "requested_by", name: "requestedBy.name" },
+            { data: "requested_by", name: "requester.name" },
             { data: "actions", name: "actions", orderable: false, searchable: false }
         ],
         order: [[1, 'desc']]
     });
 
     // Filters
-    $('#status-filter, #from-store-filter, #to-store-filter, #priority-filter').on('change', function() {
+    $('#status-filter, #from-store-filter, #to-store-filter').on('change', function() {
         table.ajax.reload();
     });
 });

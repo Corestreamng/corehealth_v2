@@ -124,19 +124,43 @@ class ExpenseController extends Controller
         }
 
         // Stats for dashboard
+        $thisMonth = now()->month;
+        $thisYear = now()->year;
+        $lastMonth = now()->subMonth();
+
         $stats = [
             'total' => Expense::count(),
             'pending' => Expense::where('status', 'pending')->count(),
+            'approved' => Expense::where('status', 'approved')->count(),
+            'voided' => Expense::where('status', 'void')->count(),
             'approved_this_month' => Expense::where('status', 'approved')
-                ->whereMonth('expense_date', now()->month)
-                ->whereYear('expense_date', now()->year)
+                ->whereMonth('expense_date', $thisMonth)
+                ->whereYear('expense_date', $thisYear)
+                ->sum('amount'),
+            'approved_last_month' => Expense::where('status', 'approved')
+                ->whereMonth('expense_date', $lastMonth->month)
+                ->whereYear('expense_date', $lastMonth->year)
+                ->sum('amount'),
+            'pending_amount' => Expense::where('status', 'pending')->sum('amount'),
+            'today_expenses' => Expense::where('status', 'approved')
+                ->whereDate('expense_date', now()->toDateString())
+                ->sum('amount'),
+            'po_payments_this_month' => Expense::where('status', 'approved')
+                ->where('category', Expense::CATEGORY_PURCHASE_ORDER)
+                ->whereMonth('expense_date', $thisMonth)
+                ->whereYear('expense_date', $thisYear)
                 ->sum('amount'),
             'by_category' => Expense::where('status', 'approved')
-                ->whereMonth('expense_date', now()->month)
+                ->whereMonth('expense_date', $thisMonth)
                 ->groupBy('category')
                 ->selectRaw('category, SUM(amount) as total')
                 ->pluck('total', 'category'),
         ];
+
+        // Calculate month-over-month change percentage
+        $stats['mom_change'] = $stats['approved_last_month'] > 0
+            ? round((($stats['approved_this_month'] - $stats['approved_last_month']) / $stats['approved_last_month']) * 100, 1)
+            : 0;
 
         $categories = [
             'purchase_order' => 'Purchase Order',
@@ -155,15 +179,15 @@ class ExpenseController extends Controller
      */
     public function create()
     {
-        $categories = [
-            'supplies' => 'Supplies',
-            'utilities' => 'Utilities',
-            'salaries' => 'Salaries',
-            'maintenance' => 'Maintenance',
-            'other' => 'Other',
-        ];
+        $categories = Expense::getCategories();
+        // Remove purchase_order from categories - PO expenses are auto-generated when recording PO payments
+        unset($categories[Expense::CATEGORY_PURCHASE_ORDER]);
 
-        return view('admin.inventory.expenses.create', compact('categories'));
+        $banks = \App\Models\Bank::active()->get();
+        $suppliers = \App\Models\Supplier::orderBy('company_name')->get();
+        $stores = \App\Models\Store::orderBy('store_name')->get();
+
+        return view('admin.inventory.expenses.create', compact('categories', 'banks', 'suppliers', 'stores'));
     }
 
     /**
@@ -172,20 +196,24 @@ class ExpenseController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'title' => 'required|string|max:255',
             'description' => 'required|string|max:500',
             'amount' => 'required|numeric|min:0',
             'category' => 'required|string',
             'expense_date' => 'required|date',
-            'vendor' => 'nullable|string|max:255',
-            'invoice_number' => 'nullable|string|max:100',
             'payment_method' => 'nullable|string|max:50',
+            'payment_reference' => 'nullable|string|max:100',
+            'bank_id' => 'nullable|exists:banks,id',
+            'cheque_number' => 'nullable|string|max:100',
+            'supplier_id' => 'nullable|exists:suppliers,id',
+            'store_id' => 'nullable|exists:stores,id',
             'notes' => 'nullable|string',
         ]);
 
         $expense = new Expense();
         $expense->fill($validated);
-        $expense->status = 'pending';
-        $expense->created_by = Auth::id();
+        $expense->status = Expense::STATUS_PENDING;
+        $expense->recorded_by = Auth::id();
         $expense->save();
 
         return redirect()->route('inventory.expenses.show', $expense)
@@ -197,7 +225,15 @@ class ExpenseController extends Controller
      */
     public function show(Expense $expense)
     {
-        $expense->load(['createdBy', 'approvedBy', 'reference']);
+        $expense->load(['createdBy', 'approvedBy', 'voidedBy', 'reference', 'purchaseOrderPayment', 'bank', 'supplier', 'store']);
+
+        // Return JSON if requested via AJAX
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'expense' => $expense
+            ]);
+        }
 
         return view('admin.inventory.expenses.show', compact('expense'));
     }
@@ -207,19 +243,24 @@ class ExpenseController extends Controller
      */
     public function edit(Expense $expense)
     {
+        // PO payment expenses cannot be edited directly - must void and re-record
+        if ($expense->category === Expense::CATEGORY_PURCHASE_ORDER) {
+            return back()->with('error', 'PO payment expenses cannot be edited. Please void this expense and record a new payment.');
+        }
+
         if ($expense->status !== 'pending') {
             return back()->with('error', 'Only pending expenses can be edited');
         }
 
-        $categories = [
-            'supplies' => 'Supplies',
-            'utilities' => 'Utilities',
-            'salaries' => 'Salaries',
-            'maintenance' => 'Maintenance',
-            'other' => 'Other',
-        ];
+        $categories = Expense::getCategories();
+        // Remove purchase_order from categories for editing - PO expenses are auto-generated
+        unset($categories[Expense::CATEGORY_PURCHASE_ORDER]);
 
-        return view('admin.inventory.expenses.edit', compact('expense', 'categories'));
+        $banks = \App\Models\Bank::active()->get();
+        $suppliers = \App\Models\Supplier::orderBy('company_name')->get();
+        $stores = \App\Models\Store::orderBy('store_name')->get();
+
+        return view('admin.inventory.expenses.create', compact('expense', 'categories', 'banks', 'suppliers', 'stores'));
     }
 
     /**
@@ -227,18 +268,27 @@ class ExpenseController extends Controller
      */
     public function update(Request $request, Expense $expense)
     {
+        // PO payment expenses cannot be edited directly
+        if ($expense->category === Expense::CATEGORY_PURCHASE_ORDER) {
+            return back()->with('error', 'PO payment expenses cannot be edited. Please void this expense and record a new payment.');
+        }
+
         if ($expense->status !== 'pending') {
             return back()->with('error', 'Only pending expenses can be edited');
         }
 
         $validated = $request->validate([
+            'title' => 'required|string|max:255',
             'description' => 'required|string|max:500',
             'amount' => 'required|numeric|min:0',
             'category' => 'required|string',
             'expense_date' => 'required|date',
-            'vendor' => 'nullable|string|max:255',
-            'invoice_number' => 'nullable|string|max:100',
             'payment_method' => 'nullable|string|max:50',
+            'payment_reference' => 'nullable|string|max:100',
+            'bank_id' => 'nullable|exists:banks,id',
+            'cheque_number' => 'nullable|string|max:100',
+            'supplier_id' => 'nullable|exists:suppliers,id',
+            'store_id' => 'nullable|exists:stores,id',
             'notes' => 'nullable|string',
         ]);
 
@@ -300,6 +350,10 @@ class ExpenseController extends Controller
      */
     public function void(Request $request, Expense $expense)
     {
+        $request->validate([
+            'reason' => 'required|string|max:500',
+        ]);
+
         if ($expense->status !== 'approved') {
             return response()->json([
                 'success' => false,
@@ -307,16 +361,30 @@ class ExpenseController extends Controller
             ], 422);
         }
 
-        $expense->status = 'voided';
-        $expense->voided_at = now();
-        $expense->voided_by = Auth::id();
-        $expense->void_reason = $request->reason;
-        $expense->save();
+        try {
+            // Check if this is a PO-related expense
+            if ($expense->category === Expense::CATEGORY_PURCHASE_ORDER) {
+                $poService = new \App\Services\PurchaseOrderService(new \App\Services\StockService());
+                $expense = $poService->voidExpensePayment($expense, $request->reason, Auth::id());
+            } else {
+                // For non-PO expenses, just void them
+                $expense->status = 'void';
+                $expense->voided_at = now();
+                $expense->voided_by = Auth::id();
+                $expense->void_reason = $request->reason;
+                $expense->save();
+            }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Expense voided'
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Expense voided successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to void expense: ' . $e->getMessage()
+            ], 422);
+        }
     }
 
     /**

@@ -60,23 +60,38 @@ class StoreWorkbenchController extends Controller
      */
     public function index(Request $request)
     {
-        $storeId = $request->get('store_id', Store::getDefaultPharmacy()?->id);
-        $store = Store::findOrFail($storeId);
+        $storeId = $request->get('store_id');
+        $store = $storeId ? Store::find($storeId) : null;
         $stores = Store::active()->orderBy('store_name')->get();
 
-        // Dashboard statistics
-        $stats = $this->getStoreStats($storeId);
+        // If no store selected, show aggregated stats for all stores
+        if (!$store) {
+            // Dashboard statistics for all stores
+            $stats = $this->getAllStoresStats();
 
-        // Pending actions
-        $pendingPOs = $this->purchaseOrderService->getReadyToReceive()
-            ->where('target_store_id', $storeId);
-        $pendingRequisitions = $this->requisitionService->getPendingFulfillment($storeId);
-        $incomingRequisitions = $this->requisitionService->getMyRequisitions($storeId)
-            ->whereIn('status', ['approved', 'partial']);
+            // Pending actions across all stores
+            $pendingPOs = $this->purchaseOrderService->getReadyToReceive();
+            $pendingRequisitions = collect(); // Would need to aggregate
+            $incomingRequisitions = collect();
 
-        // Alerts
-        $expiringBatches = $this->stockService->getExpiringBatches($storeId, 30);
-        $lowStockItems = $this->stockService->getLowStockProducts($storeId);
+            // Alerts across all stores
+            $expiringBatches = $this->stockService->getExpiringBatches(null, 30);
+            $lowStockItems = $this->stockService->getLowStockProducts(null);
+        } else {
+            // Dashboard statistics for specific store
+            $stats = $this->getStoreStats($storeId);
+
+            // Pending actions
+            $pendingPOs = $this->purchaseOrderService->getReadyToReceive()
+                ->where('target_store_id', $storeId);
+            $pendingRequisitions = $this->requisitionService->getPendingFulfillment($storeId);
+            $incomingRequisitions = $this->requisitionService->getMyRequisitions($storeId)
+                ->whereIn('status', ['approved', 'partial']);
+
+            // Alerts
+            $expiringBatches = $this->stockService->getExpiringBatches($storeId, 30);
+            $lowStockItems = $this->stockService->getLowStockProducts($storeId);
+        }
 
         return view('admin.inventory.store-workbench.index', compact(
             'store',
@@ -88,6 +103,20 @@ class StoreWorkbenchController extends Controller
             'expiringBatches',
             'lowStockItems'
         ));
+    }
+
+    /**
+     * Get aggregated stats for all stores
+     */
+    protected function getAllStoresStats(): array
+    {
+        return [
+            'total_products' => StoreStock::where('is_active', true)->distinct('product_id')->count('product_id'),
+            'total_batches' => StockBatch::active()->hasStock()->count(),
+            'low_stock_count' => $this->stockService->getLowStockProducts(null)->count(),
+            'expiring_soon' => $this->stockService->getExpiringBatches(null, 30)->count(),
+            'total_value' => StockBatch::active()->hasStock()->sum(\DB::raw('current_qty * cost_price')),
+        ];
     }
 
     /**
@@ -479,11 +508,17 @@ class StoreWorkbenchController extends Controller
      */
     public function stockValueReport(Request $request)
     {
-        $storeId = $request->get('store_id', Store::getDefaultPharmacy()?->id);
-        $store = Store::findOrFail($storeId);
+        $storeId = $request->get('store_id');
         $stores = Store::active()->orderBy('store_name')->get();
 
-        $report = $this->stockService->getStockValueReport($storeId);
+        // If no store_id provided or empty, show all stores report
+        if (empty($storeId)) {
+            $store = null;
+            $report = $this->stockService->getStockValueReport(null); // All stores
+        } else {
+            $store = Store::findOrFail($storeId);
+            $report = $this->stockService->getStockValueReport($storeId);
+        }
 
         return view('admin.inventory.store-workbench.stock-value-report', compact('store', 'stores', 'report'));
     }

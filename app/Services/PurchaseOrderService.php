@@ -176,6 +176,7 @@ class PurchaseOrderService
         }
 
         $po->status = PurchaseOrder::STATUS_SUBMITTED;
+        $po->submitted_at = now();
         $po->save();
 
         return $po;
@@ -196,7 +197,10 @@ class PurchaseOrderService
 
         $po->status = PurchaseOrder::STATUS_APPROVED;
         $po->approved_by = auth()->id();
-        $po->approval_notes = $notes;
+        $po->approved_at = now();
+        if ($notes) {
+            $po->notes = $po->notes ? $po->notes . "\nApproval notes: " . $notes : "Approval notes: " . $notes;
+        }
         $po->save();
 
         return $po;
@@ -284,7 +288,6 @@ class PurchaseOrderService
 
             if ($pendingItems === 0 || $allFullyReceived) {
                 $po->status = PurchaseOrder::STATUS_RECEIVED;
-                $po->received_date = now();
             } else {
                 $po->status = PurchaseOrder::STATUS_PARTIAL;
             }
@@ -298,10 +301,9 @@ class PurchaseOrderService
             $po->total_amount = $actualTotal;
             $po->save();
 
-            // Create expense record if fully received
-            if ($po->status === PurchaseOrder::STATUS_RECEIVED) {
-                $this->createExpenseFromPO($po);
-            }
+            // Note: We no longer create expense on receipt
+            // Expense is created when payment is recorded against the PO
+            // Receipt creates an Accounts Payable (liability)
 
             return $createdBatches;
         });
@@ -389,5 +391,138 @@ class PurchaseOrderService
             'received' => (clone $query)->where('status', PurchaseOrder::STATUS_RECEIVED)->count(),
             'total_value' => (clone $query)->where('status', PurchaseOrder::STATUS_RECEIVED)->sum('total_amount'),
         ];
+    }
+
+    /**
+     * Record a payment for a purchase order
+     *
+     * This creates a payment record AND an expense record.
+     * Each payment becomes an expense entry in the system.
+     *
+     * @param PurchaseOrder $po
+     * @param array $paymentData
+     * @return \App\Models\PurchaseOrderPayment
+     * @throws \Exception
+     */
+    public function recordPayment(PurchaseOrder $po, array $paymentData): \App\Models\PurchaseOrderPayment
+    {
+        if (!$po->canRecordPayment()) {
+            throw new \Exception('Cannot record payment for this PO. It must be received and have balance due.');
+        }
+
+        $amount = (float) $paymentData['amount'];
+        if ($amount <= 0) {
+            throw new \Exception('Payment amount must be greater than 0.');
+        }
+
+        if ($amount > $po->balance_due) {
+            throw new \Exception("Payment amount ({$amount}) exceeds balance due ({$po->balance_due}).");
+        }
+
+        return DB::transaction(function () use ($po, $paymentData, $amount) {
+            // Create expense record for this payment
+            $expense = Expense::create([
+                'expense_date' => $paymentData['payment_date'],
+                'category' => Expense::CATEGORY_PURCHASE_ORDER,
+                'title' => "PO Payment - {$po->po_number}",
+                'description' => "Payment for PO #{$po->po_number} - {$po->supplier->company_name}",
+                'amount' => $amount,
+                'payment_method' => $paymentData['payment_method'],
+                'payment_reference' => $paymentData['reference_number'] ?? null,
+                'bank_id' => $paymentData['bank_id'] ?? null,
+                'cheque_number' => $paymentData['cheque_number'] ?? null,
+                'notes' => $paymentData['notes'] ?? null,
+                'supplier_id' => $po->supplier_id,
+                'store_id' => $po->target_store_id,
+                'reference_type' => PurchaseOrder::class,
+                'reference_id' => $po->id,
+                'recorded_by' => auth()->id(),
+                'status' => Expense::STATUS_APPROVED, // Auto-approve since it's a direct payment
+                'approved_by' => auth()->id(),
+                'approved_at' => now(),
+            ]);
+
+            // Create payment record
+            $payment = \App\Models\PurchaseOrderPayment::create([
+                'purchase_order_id' => $po->id,
+                'payment_date' => $paymentData['payment_date'],
+                'amount' => $amount,
+                'payment_method' => $paymentData['payment_method'],
+                'bank_id' => $paymentData['bank_id'] ?? null,
+                'reference_number' => $paymentData['reference_number'] ?? null,
+                'cheque_number' => $paymentData['cheque_number'] ?? null,
+                'expense_id' => $expense->id,
+                'notes' => $paymentData['notes'] ?? null,
+                'created_by' => auth()->id(),
+            ]);
+
+            // Update PO payment status
+            $po->updatePaymentStatus();
+
+            return $payment->load(['expense', 'bank', 'creator']);
+        });
+    }
+
+    /**
+     * Get POs pending payment
+     *
+     * @return Collection
+     */
+    public function getPendingPayment(): Collection
+    {
+        return PurchaseOrder::whereIn('status', [PurchaseOrder::STATUS_PARTIAL, PurchaseOrder::STATUS_RECEIVED])
+            ->where('payment_status', '!=', PurchaseOrder::PAYMENT_PAID)
+            ->with(['supplier', 'targetStore', 'items.product', 'payments'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    /**
+     * Void an expense and reverse the payment on the PO
+     *
+     * @param Expense $expense
+     * @param string $reason
+     * @param int $userId
+     * @return Expense
+     */
+    public function voidExpensePayment(Expense $expense, string $reason, int $userId): Expense
+    {
+        if ($expense->status !== Expense::STATUS_APPROVED) {
+            throw new \Exception('Only approved expenses can be voided');
+        }
+
+        if ($expense->category !== Expense::CATEGORY_PURCHASE_ORDER) {
+            throw new \Exception('This method only handles PO-related expenses');
+        }
+
+        return DB::transaction(function () use ($expense, $reason, $userId) {
+            // Get the associated PO payment record
+            $poPayment = $expense->purchaseOrderPayment;
+
+            if (!$poPayment) {
+                throw new \Exception('No associated PO payment found for this expense');
+            }
+
+            $po = $poPayment->purchaseOrder;
+
+            if (!$po) {
+                throw new \Exception('Associated purchase order not found');
+            }
+
+            // Void the expense
+            $expense->status = Expense::STATUS_VOID;
+            $expense->voided_at = now();
+            $expense->voided_by = $userId;
+            $expense->void_reason = $reason;
+            $expense->save();
+
+            // Soft delete the payment record (keeps audit trail)
+            $poPayment->delete();
+
+            // Recalculate PO payment status
+            $po->updatePaymentStatus();
+
+            return $expense->fresh(['voidedBy', 'purchaseOrderPayment']);
+        });
     }
 }

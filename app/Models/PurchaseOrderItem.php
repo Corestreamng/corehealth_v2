@@ -30,6 +30,7 @@ class PurchaseOrderItem extends Model implements Auditable
         'unit_cost',
         'actual_unit_cost',
         'status',
+        'received_at',
     ];
 
     protected $casts = [
@@ -37,6 +38,7 @@ class PurchaseOrderItem extends Model implements Auditable
         'received_qty' => 'integer',
         'unit_cost' => 'decimal:2',
         'actual_unit_cost' => 'decimal:2',
+        'received_at' => 'datetime',
     ];
 
     /**
@@ -127,6 +129,11 @@ class PurchaseOrderItem extends Model implements Auditable
 
         if ($actualCost !== null) {
             $this->actual_unit_cost = $actualCost;
+        }
+
+        // Track when item was first received
+        if ($this->received_at === null && $qty > 0) {
+            $this->received_at = now();
         }
 
         if ($this->isFullyReceived()) {
