@@ -34,17 +34,21 @@ class PurchaseOrder extends Model implements Auditable
         'created_by',
         'approved_by',
         'status',
+        'payment_status',
         'expected_date',
-        'received_date',
         'total_amount',
+        'amount_paid',
         'notes',
-        'approval_notes',
+        'submitted_at',
+        'approved_at',
     ];
 
     protected $casts = [
         'expected_date' => 'date',
-        'received_date' => 'date',
+        'submitted_at' => 'datetime',
+        'approved_at' => 'datetime',
         'total_amount' => 'decimal:2',
+        'amount_paid' => 'decimal:2',
     ];
 
     /**
@@ -58,6 +62,13 @@ class PurchaseOrder extends Model implements Auditable
     const STATUS_CANCELLED = 'cancelled';
 
     /**
+     * Payment status constants
+     */
+    const PAYMENT_UNPAID = 'unpaid';
+    const PAYMENT_PARTIAL = 'partial';
+    const PAYMENT_PAID = 'paid';
+
+    /**
      * Get all available statuses
      */
     public static function getStatuses(): array
@@ -69,6 +80,18 @@ class PurchaseOrder extends Model implements Auditable
             self::STATUS_PARTIAL => 'Partially Received',
             self::STATUS_RECEIVED => 'Fully Received',
             self::STATUS_CANCELLED => 'Cancelled',
+        ];
+    }
+
+    /**
+     * Get all available payment statuses
+     */
+    public static function getPaymentStatuses(): array
+    {
+        return [
+            self::PAYMENT_UNPAID => 'Unpaid',
+            self::PAYMENT_PARTIAL => 'Partially Paid',
+            self::PAYMENT_PAID => 'Paid',
         ];
     }
 
@@ -156,6 +179,14 @@ class PurchaseOrder extends Model implements Auditable
     public function expense()
     {
         return $this->morphOne(Expense::class, 'reference');
+    }
+
+    /**
+     * Get all payments for this PO
+     */
+    public function payments()
+    {
+        return $this->hasMany(PurchaseOrderPayment::class);
     }
 
     /**
@@ -280,5 +311,63 @@ class PurchaseOrder extends Model implements Auditable
             self::STATUS_CANCELLED => 'badge-danger',
             default => 'badge-secondary',
         };
+    }
+
+    /**
+     * Get payment status badge class for UI
+     */
+    public function getPaymentStatusBadgeClass(): string
+    {
+        return match($this->payment_status) {
+            self::PAYMENT_UNPAID => 'badge-danger',
+            self::PAYMENT_PARTIAL => 'badge-warning',
+            self::PAYMENT_PAID => 'badge-success',
+            default => 'badge-secondary',
+        };
+    }
+
+    /**
+     * Get balance due amount
+     */
+    public function getBalanceDueAttribute(): float
+    {
+        return max(0, (float)$this->total_amount - (float)$this->amount_paid);
+    }
+
+    /**
+     * Check if PO can accept payments
+     */
+    public function canRecordPayment(): bool
+    {
+        // Can record payment only for received/partial POs that still have balance
+        return in_array($this->status, [self::STATUS_PARTIAL, self::STATUS_RECEIVED])
+            && $this->balance_due > 0;
+    }
+
+    /**
+     * Check if PO is fully paid
+     */
+    public function isFullyPaid(): bool
+    {
+        return $this->payment_status === self::PAYMENT_PAID;
+    }
+
+    /**
+     * Update payment status based on amount paid
+     */
+    public function updatePaymentStatus(): void
+    {
+        $totalPaid = $this->payments()->sum('amount');
+        $this->amount_paid = $totalPaid;
+
+        if ($totalPaid >= $this->total_amount) {
+            $this->payment_status = self::PAYMENT_PAID;
+        } elseif ($totalPaid > 0) {
+            $this->payment_status = self::PAYMENT_PARTIAL;
+        } else {
+            $this->payment_status = self::PAYMENT_UNPAID;
+        }
+
+        $this->save();
     }
 }

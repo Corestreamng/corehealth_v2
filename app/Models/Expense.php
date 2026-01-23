@@ -44,14 +44,21 @@ class Expense extends Model implements Auditable
         'status',
         'rejection_reason',
         'approved_at',
+        'voided_by',
+        'voided_at',
+        'void_reason',
         'payment_method',
         'payment_reference',
+        'bank_id',
+        'cheque_number',
+        'notes',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
         'expense_date' => 'date',
         'approved_at' => 'datetime',
+        'voided_at' => 'datetime',
     ];
 
     /**
@@ -181,6 +188,14 @@ class Expense extends Model implements Auditable
     }
 
     /**
+     * Get the bank (if bank payment)
+     */
+    public function bank()
+    {
+        return $this->belongsTo(Bank::class);
+    }
+
+    /**
      * Get the user who recorded this expense
      */
     public function recorder()
@@ -194,6 +209,38 @@ class Expense extends Model implements Auditable
     public function approver()
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    /**
+     * Alias for recorder - for consistency with other models
+     */
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'recorded_by');
+    }
+
+    /**
+     * Alias for approver - for consistency with other models
+     */
+    public function approvedBy()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    /**
+     * Get the user who voided this expense
+     */
+    public function voidedBy()
+    {
+        return $this->belongsTo(User::class, 'voided_by');
+    }
+
+    /**
+     * Get the PO payment associated with this expense
+     */
+    public function purchaseOrderPayment()
+    {
+        return $this->hasOne(\App\Models\PurchaseOrderPayment::class, 'expense_id');
     }
 
     // ===== SCOPES =====

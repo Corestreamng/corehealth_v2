@@ -95,7 +95,7 @@
                                 <option value="">Select Supplier</option>
                                 @foreach($suppliers as $supplier)
                                 <option value="{{ $supplier->id }}" {{ old('supplier_id', $purchaseOrder->supplier_id) == $supplier->id ? 'selected' : '' }}>
-                                    {{ $supplier->supplier_name }}
+                                    {{ $supplier->company_name }}
                                 </option>
                                 @endforeach
                             </select>
@@ -203,7 +203,7 @@
                     <i class="mdi mdi-arrow-left"></i> Cancel
                 </a>
                 <div>
-                    <button type="submit" name="action" value="save" class="btn btn-primary">
+                    <button type="button" id="save-btn" class="btn btn-primary">
                         <i class="mdi mdi-content-save"></i> Save Changes
                     </button>
                 </div>
@@ -225,6 +225,7 @@ $(function() {
 
     $('#add-item-btn').on('click', addItem);
     $(document).on('change keyup', '.qty-input, .cost-input', calculateTotals);
+    $('#save-btn').on('click', submitForm);
 });
 
 function initSelect2() {
@@ -277,8 +278,12 @@ function addItem() {
     `;
 
     $('#items-container').append(template);
+    // Only initialize Select2 on the newly added select element
+    $('#items-container .item-row:last .product-select').select2({
+        placeholder: 'Select Product',
+        allowClear: true
+    });
     itemIndex++;
-    initSelect2();
 }
 
 function removeItem(btn) {
@@ -300,6 +305,100 @@ function calculateTotals() {
 
     $('#subtotal').text('₦' + subtotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
     $('#grand-total').text('₦' + subtotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+}
+
+function submitForm() {
+    var form = $('#po-form');
+    var items = [];
+    var hasErrors = false;
+
+    // Validate required fields
+    if (!$('#target_store_id').val()) {
+        alert('Please select a destination store');
+        return;
+    }
+
+    if (!$('#supplier_id').val()) {
+        alert('Please select a supplier');
+        return;
+    }
+
+    // Collect items
+    $('.item-row').each(function() {
+        var row = $(this);
+        var productId = row.find('.product-select').val();
+        var quantity = row.find('.qty-input').val();
+        var unitCost = row.find('.cost-input').val();
+
+        if (!productId || !quantity || !unitCost) {
+            hasErrors = true;
+            return false;
+        }
+
+        items.push({
+            product_id: productId,
+            ordered_qty: parseInt(quantity),
+            unit_cost: parseFloat(unitCost)
+        });
+    });
+
+    if (hasErrors) {
+        alert('Please fill in all item fields');
+        return;
+    }
+
+    if (items.length === 0) {
+        alert('Please add at least one item');
+        return;
+    }
+
+    // Prepare form data
+    var formData = {
+        supplier_id: $('#supplier_id').val(),
+        target_store_id: $('#target_store_id').val(),
+        expected_date: $('#expected_date').val(),
+        notes: $('#notes').val(),
+        items: items,
+        _token: $('input[name="_token"]').val(),
+        _method: 'PUT'
+    };
+
+    // Disable button during submission
+    var button = $('#save-btn');
+    button.prop('disabled', true);
+
+    // Submit via AJAX
+    $.ajax({
+        url: form.attr('action'),
+        method: 'POST',
+        data: JSON.stringify(formData),
+        contentType: 'application/json',
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                alert(response.message || 'Purchase order updated successfully');
+                if (response.redirect) {
+                    window.location.href = response.redirect;
+                } else {
+                    window.location.href = '{{ route("inventory.purchase-orders.show", $purchaseOrder) }}';
+                }
+            } else {
+                alert(response.message || 'Failed to update purchase order');
+                button.prop('disabled', false);
+            }
+        },
+        error: function(xhr) {
+            var message = 'Error updating purchase order';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                message = xhr.responseJSON.message;
+            } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                var errors = xhr.responseJSON.errors;
+                message = Object.values(errors).flat().join('\n');
+            }
+            alert(message);
+            button.prop('disabled', false);
+        }
+    });
 }
 </script>
 @endsection

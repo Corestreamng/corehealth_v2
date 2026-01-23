@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 22, 2026 at 01:29 AM
+-- Generation Time: Jan 23, 2026 at 01:53 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -813,7 +813,84 @@ INSERT INTO `audits` (`id`, `user_type`, `user_id`, `event`, `auditable_type`, `
 (577, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Procedure', 7, '{\"procedure_status\":\"in_progress\",\"actual_end_time\":null}', '{\"procedure_status\":\"completed\",\"actual_end_time\":\"2026-01-21 19:43:40\"}', 'http://127.0.0.1:8000/patient-procedures/7/complete', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-21 18:43:40', '2026-01-21 18:43:40'),
 (578, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Procedure', 7, '{\"procedure_status\":\"completed\"}', '{\"procedure_status\":\"in_progress\"}', 'http://127.0.0.1:8000/patient-procedures/7', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-21 18:45:22', '2026-01-21 18:45:22'),
 (579, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Procedure', 7, '{\"procedure_status\":\"in_progress\"}', '{\"procedure_status\":\"scheduled\"}', 'http://127.0.0.1:8000/patient-procedures/7', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-21 18:45:31', '2026-01-21 18:45:31'),
-(580, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Procedure', 7, '{\"procedure_status\":\"scheduled\"}', '{\"procedure_status\":\"requested\"}', 'http://127.0.0.1:8000/patient-procedures/7', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-21 18:45:40', '2026-01-21 18:45:40');
+(580, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Procedure', 7, '{\"procedure_status\":\"scheduled\"}', '{\"procedure_status\":\"requested\"}', 'http://127.0.0.1:8000/patient-procedures/7', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-21 18:45:40', '2026-01-21 18:45:40'),
+(581, 'App\\Models\\User', 1, 'created', 'App\\Models\\StockOrder', 4, '[]', '{\"invoice_id\":22,\"product_id\":\"58\",\"store_id\":\"1\",\"order_quantity\":\"77\",\"total_amount\":\"7000\",\"id\":4}', 'http://127.0.0.1:8000/stocks', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 05:49:49', '2026-01-22 05:49:49'),
+(582, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Stock', 104, '{\"initial_quantity\":76,\"order_quantity\":30,\"current_quantity\":102}', '{\"initial_quantity\":102,\"order_quantity\":\"77\",\"current_quantity\":179}', 'http://127.0.0.1:8000/stocks', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 05:49:49', '2026-01-22 05:49:49'),
+(583, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Product', 58, '{\"current_quantity\":\"104\"}', '{\"current_quantity\":179}', 'http://127.0.0.1:8000/stocks', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 05:49:49', '2026-01-22 05:49:49'),
+(584, 'App\\Models\\User', 1, 'created', 'App\\Models\\StoreStock', 5, '[]', '{\"store_id\":\"1\",\"product_id\":\"58\",\"initial_quantity\":0,\"order_quantity\":\"77\",\"current_quantity\":\"77\",\"quantity_sale\":0,\"id\":5}', 'http://127.0.0.1:8000/stocks', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 05:49:49', '2026-01-22 05:49:49'),
+(585, 'App\\Models\\User', 1, 'created', 'App\\Models\\StoreStock', 6, '[]', '{\"store_id\":\"4\",\"product_id\":\"58\",\"initial_quantity\":0,\"quantity_sale\":0,\"order_quantity\":0,\"current_quantity\":\"10\",\"id\":6}', 'http://127.0.0.1:8000/move-stock', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 06:19:34', '2026-01-22 06:19:34'),
+(586, 'App\\Models\\User', 1, 'updated', 'App\\Models\\StoreStock', 5, '{\"initial_quantity\":0,\"current_quantity\":77}', '{\"initial_quantity\":77,\"current_quantity\":67}', 'http://127.0.0.1:8000/move-stock', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 06:19:34', '2026-01-22 06:19:34'),
+(587, 'App\\Models\\User', 1, 'created', 'App\\Models\\Supplier', 1, '[]', '{\"company_name\":\"Apollos Technologies\",\"contact_person\":\"Walshak Timothy Apollos\",\"email\":\"walshak1999@gmail.com\",\"phone\":\"07050737402\",\"alt_phone\":null,\"address\":\"Elwazir Street,bosso\\r\\nVcm 105 Elwazir Estate\",\"tax_number\":null,\"bank_name\":\"zenith bank\",\"bank_account_number\":\"224559900\",\"bank_account_name\":\"App Tech\",\"payment_terms\":\"cash\",\"credit_limit\":\"0\",\"notes\":null,\"status\":true,\"created_by\":1,\"id\":1}', 'http://127.0.0.1:8000/suppliers', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 07:11:53', '2026-01-22 07:11:53'),
+(588, 'App\\Models\\User', 1, 'created', 'App\\Models\\StockBatch', 5, '[]', '{\"product_id\":\"58\",\"store_id\":\"1\",\"supplier_id\":\"1\",\"batch_name\":\"gyy-20260122083638\",\"batch_number\":\"gyy\",\"initial_qty\":\"88\",\"current_qty\":\"88\",\"sold_qty\":0,\"cost_price\":\"6000\",\"expiry_date\":\"2028-01-22 00:00:00\",\"received_date\":\"2026-01-22 08:36:38\",\"source\":\"manual\",\"purchase_order_item_id\":null,\"source_requisition_id\":null,\"created_by\":1,\"is_active\":true,\"id\":5}', 'http://127.0.0.1:8000/inventory/store-workbench/manual-batch', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 07:36:38', '2026-01-22 07:36:38'),
+(589, 'App\\Models\\User', 1, 'created', 'App\\Models\\StockBatchTransaction', 5, '[]', '{\"stock_batch_id\":5,\"type\":\"in\",\"qty\":\"88\",\"balance_after\":\"88\",\"reference_type\":null,\"reference_id\":null,\"notes\":\"Manual entry\",\"performed_by\":1,\"id\":5}', 'http://127.0.0.1:8000/inventory/store-workbench/manual-batch', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 07:36:38', '2026-01-22 07:36:38'),
+(590, 'App\\Models\\User', 1, 'updated', 'App\\Models\\StoreStock', 5, '{\"last_restocked_at\":null}', '{\"last_restocked_at\":\"2026-01-22 08:36:38\"}', 'http://127.0.0.1:8000/inventory/store-workbench/manual-batch', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 07:36:38', '2026-01-22 07:36:38'),
+(591, 'App\\Models\\User', 1, 'created', 'App\\Models\\StockBatch', 6, '[]', '{\"product_id\":\"58\",\"store_id\":\"1\",\"supplier_id\":\"1\",\"batch_name\":\"gyyu-20260122083815\",\"batch_number\":\"gyyu\",\"initial_qty\":\"88\",\"current_qty\":\"88\",\"sold_qty\":0,\"cost_price\":\"6000\",\"expiry_date\":\"2028-01-22 00:00:00\",\"received_date\":\"2026-01-22 08:38:15\",\"source\":\"manual\",\"purchase_order_item_id\":null,\"source_requisition_id\":null,\"created_by\":1,\"is_active\":true,\"id\":6}', 'http://127.0.0.1:8000/inventory/store-workbench/manual-batch', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 07:38:15', '2026-01-22 07:38:15'),
+(592, 'App\\Models\\User', 1, 'created', 'App\\Models\\StockBatchTransaction', 6, '[]', '{\"stock_batch_id\":6,\"type\":\"in\",\"qty\":\"88\",\"balance_after\":\"88\",\"reference_type\":null,\"reference_id\":null,\"notes\":\"Manual entry\",\"performed_by\":1,\"id\":6}', 'http://127.0.0.1:8000/inventory/store-workbench/manual-batch', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 07:38:15', '2026-01-22 07:38:15');
+INSERT INTO `audits` (`id`, `user_type`, `user_id`, `event`, `auditable_type`, `auditable_id`, `old_values`, `new_values`, `url`, `ip_address`, `user_agent`, `tags`, `created_at`, `updated_at`) VALUES
+(593, 'App\\Models\\User', 1, 'updated', 'App\\Models\\StoreStock', 5, '{\"last_restocked_at\":\"2026-01-22 08:36:38\"}', '{\"last_restocked_at\":\"2026-01-22 08:38:15\"}', 'http://127.0.0.1:8000/inventory/store-workbench/manual-batch', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 07:38:15', '2026-01-22 07:38:15'),
+(594, 'App\\Models\\User', 1, 'created', 'App\\Models\\StockBatch', 7, '[]', '{\"product_id\":\"59\",\"store_id\":\"2\",\"supplier_id\":\"1\",\"batch_name\":\"ukkbbb-20260122085817\",\"batch_number\":\"ukkbbb\",\"initial_qty\":\"66\",\"current_qty\":\"66\",\"sold_qty\":0,\"cost_price\":\"68888\",\"expiry_date\":\"2026-08-29 00:00:00\",\"received_date\":\"2026-01-22 08:58:17\",\"source\":\"manual\",\"purchase_order_item_id\":null,\"source_requisition_id\":null,\"created_by\":1,\"is_active\":true,\"id\":7}', 'http://127.0.0.1:8000/inventory/store-workbench/manual-batch', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 07:58:17', '2026-01-22 07:58:17'),
+(595, 'App\\Models\\User', 1, 'created', 'App\\Models\\StockBatchTransaction', 7, '[]', '{\"stock_batch_id\":7,\"type\":\"in\",\"qty\":\"66\",\"balance_after\":\"66\",\"reference_type\":null,\"reference_id\":null,\"notes\":\"Manual entry\",\"performed_by\":1,\"id\":7}', 'http://127.0.0.1:8000/inventory/store-workbench/manual-batch', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 07:58:17', '2026-01-22 07:58:17'),
+(596, 'App\\Models\\User', 1, 'created', 'App\\Models\\StoreStock', 7, '[]', '{\"product_id\":59,\"store_id\":2,\"last_restocked_at\":\"2026-01-22 08:58:17\",\"id\":7}', 'http://127.0.0.1:8000/inventory/store-workbench/manual-batch', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 07:58:17', '2026-01-22 07:58:17'),
+(597, 'App\\Models\\User', 1, 'created', 'App\\Models\\User', 4477, '[]', '{\"surname\":\"Bakare\",\"firstname\":\"Adebayo\",\"othername\":\"Michael\",\"email\":\"adebayo.bakare@email.com\",\"password\":\"$2y$10$Z48V9Sr8SICcKGZlSRLcw.HgMKNV\\/tRwi\\/jNeZe0twkywpE6grLry\",\"is_admin\":3,\"status\":1,\"id\":4477}', 'http://127.0.0.1:8000/import-export/import/patients', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 09:40:06', '2026-01-22 09:40:06'),
+(598, 'App\\Models\\User', 1, 'created', 'App\\Models\\User', 4478, '[]', '{\"surname\":\"Ibrahim\",\"firstname\":\"Fatima\",\"othername\":\"\",\"email\":\"ibrahimfatima.Q0SA@patient.local\",\"password\":\"$2y$10$UAJxPmovTXIwSq9ih5QvHOQFG80f6o\\/95QMooBE3npO3JCmjTGMe6\",\"is_admin\":3,\"status\":1,\"id\":4478}', 'http://127.0.0.1:8000/import-export/import/patients', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 09:40:06', '2026-01-22 09:40:06'),
+(599, 'App\\Models\\User', 1, 'created', 'App\\Models\\User', 4479, '[]', '{\"surname\":\"Ibrahim\",\"firstname\":\"Fatima\",\"othername\":\"\",\"email\":\"ibrahimfatima.TPW5@patient.local\",\"password\":\"$2y$10$E9F9QP9uEpUYCII.bjwLju8mUQ.0kvVbXCSRsAVoaLF56S3AW7kYm\",\"is_admin\":3,\"status\":1,\"id\":4479}', 'http://127.0.0.1:8000/import-export/import/patients', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 09:44:13', '2026-01-22 09:44:13'),
+(600, 'App\\Models\\User', 1, 'created', 'App\\Models\\patient', 4183, '[]', '{\"user_id\":4479,\"file_no\":\"2026000001\",\"hmo_id\":null,\"hmo_no\":null,\"gender\":\"Female\",\"dob\":\"1995-11-25\",\"blood_group\":\"B+\",\"genotype\":\"AS\",\"address\":\"321 Health Street, Abuja\",\"phone_no\":\"08033333333\",\"nationality\":\"Nigerian\",\"ethnicity\":\"Hausa\",\"allergies\":null,\"medical_history\":\"\",\"next_of_kin_name\":\"Mr. Ibrahim Ahmed\",\"next_of_kin_phone\":\"08044444444\",\"next_of_kin_address\":\"321 Health Street, Abuja\",\"id\":4183}', 'http://127.0.0.1:8000/import-export/import/patients', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 09:44:13', '2026-01-22 09:44:13'),
+(601, 'App\\Models\\User', 1, 'created', 'App\\Models\\StoreRequisition', 1, '[]', '{\"from_store_id\":\"1\",\"to_store_id\":\"4\",\"request_notes\":null,\"status\":\"pending\",\"requisition_number\":\"REQ2026010001\",\"requested_by\":1,\"id\":1}', 'http://127.0.0.1:8000/inventory/requisitions', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 10:45:19', '2026-01-22 10:45:19'),
+(602, 'App\\Models\\User', 1, 'created', 'App\\Models\\StoreRequisitionItem', 1, '[]', '{\"store_requisition_id\":1,\"product_id\":\"2\",\"requested_qty\":\"33\",\"status\":\"pending\",\"notes\":null,\"id\":1}', 'http://127.0.0.1:8000/inventory/requisitions', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 10:45:19', '2026-01-22 10:45:19'),
+(603, 'App\\Models\\User', 1, 'created', 'App\\Models\\StoreRequisitionItem', 2, '[]', '{\"store_requisition_id\":1,\"product_id\":\"3\",\"requested_qty\":\"1\",\"status\":\"pending\",\"notes\":null,\"id\":2}', 'http://127.0.0.1:8000/inventory/requisitions', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 10:45:19', '2026-01-22 10:45:19'),
+(604, 'App\\Models\\User', 1, 'updated', 'App\\Models\\StoreRequisitionItem', 1, '{\"approved_qty\":null,\"status\":\"pending\"}', '{\"approved_qty\":\"20\",\"status\":\"approved\"}', 'http://127.0.0.1:8000/inventory/requisitions/1/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 10:58:23', '2026-01-22 10:58:23'),
+(605, 'App\\Models\\User', 1, 'updated', 'App\\Models\\StoreRequisitionItem', 2, '{\"approved_qty\":null,\"status\":\"pending\"}', '{\"approved_qty\":\"4\",\"status\":\"approved\"}', 'http://127.0.0.1:8000/inventory/requisitions/1/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 10:58:23', '2026-01-22 10:58:23'),
+(606, 'App\\Models\\User', 1, 'updated', 'App\\Models\\StoreRequisition', 1, '{\"approved_by\":null,\"status\":\"pending\",\"approval_notes\":null,\"approved_at\":null}', '{\"approved_by\":1,\"status\":\"approved\",\"approval_notes\":\"test\",\"approved_at\":\"2026-01-22 11:58:23\"}', 'http://127.0.0.1:8000/inventory/requisitions/1/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 10:58:23', '2026-01-22 10:58:23'),
+(609, 'App\\Models\\User', 1, 'updated', 'App\\Models\\StockBatch', 1, '{\"current_qty\":158,\"sold_qty\":0}', '{\"current_qty\":138,\"sold_qty\":20}', 'http://127.0.0.1:8000/inventory/requisitions/1/fulfill', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 11:13:55', '2026-01-22 11:13:55'),
+(610, 'App\\Models\\User', 1, 'created', 'App\\Models\\StockBatchTransaction', 9, '[]', '{\"stock_batch_id\":1,\"type\":\"transfer_out\",\"qty\":20,\"balance_after\":138,\"reference_type\":\"App\\\\Models\\\\StoreRequisition\",\"reference_id\":1,\"notes\":\"Fulfilled from requisition: REQ2026010001 (Batch: LEGACY-STR-2)\",\"performed_by\":1,\"id\":9}', 'http://127.0.0.1:8000/inventory/requisitions/1/fulfill', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 11:13:55', '2026-01-22 11:13:55'),
+(611, 'App\\Models\\User', 1, 'created', 'App\\Models\\StockBatch', 8, '[]', '{\"product_id\":2,\"store_id\":4,\"supplier_id\":null,\"batch_name\":\"TRF-20260122121355-639-20260122121355\",\"batch_number\":\"TRF-20260122121355-639\",\"initial_qty\":20,\"current_qty\":20,\"sold_qty\":0,\"cost_price\":\"0.00\",\"expiry_date\":null,\"received_date\":\"2026-01-22 12:13:55\",\"source\":\"transfer_in\",\"purchase_order_item_id\":null,\"source_requisition_id\":1,\"created_by\":1,\"is_active\":true,\"id\":8}', 'http://127.0.0.1:8000/inventory/requisitions/1/fulfill', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 11:13:55', '2026-01-22 11:13:55'),
+(612, 'App\\Models\\User', 1, 'created', 'App\\Models\\StockBatchTransaction', 10, '[]', '{\"stock_batch_id\":8,\"type\":\"in\",\"qty\":20,\"balance_after\":20,\"reference_type\":\"App\\\\Models\\\\StoreRequisition\",\"reference_id\":1,\"notes\":\"Fulfilled from requisition: REQ2026010001 (Batch: LEGACY-STR-2)\",\"performed_by\":1,\"id\":10}', 'http://127.0.0.1:8000/inventory/requisitions/1/fulfill', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 11:13:55', '2026-01-22 11:13:55'),
+(613, 'App\\Models\\User', 1, 'created', 'App\\Models\\StoreStock', 8, '[]', '{\"product_id\":2,\"store_id\":4,\"last_restocked_at\":\"2026-01-22 12:13:55\",\"id\":8}', 'http://127.0.0.1:8000/inventory/requisitions/1/fulfill', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 11:13:55', '2026-01-22 11:13:55'),
+(614, 'App\\Models\\User', 1, 'updated', 'App\\Models\\StoreStock', 1, '{\"last_restocked_at\":null}', '{\"last_restocked_at\":\"2026-01-22 12:13:55\"}', 'http://127.0.0.1:8000/inventory/requisitions/1/fulfill', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 11:13:55', '2026-01-22 11:13:55'),
+(615, 'App\\Models\\User', 1, 'updated', 'App\\Models\\StoreRequisitionItem', 1, '{\"fulfilled_qty\":null,\"source_batch_id\":null,\"destination_batch_id\":null,\"status\":\"approved\"}', '{\"fulfilled_qty\":20,\"source_batch_id\":1,\"destination_batch_id\":8,\"status\":\"fulfilled\"}', 'http://127.0.0.1:8000/inventory/requisitions/1/fulfill', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 11:13:55', '2026-01-22 11:13:55'),
+(616, 'App\\Models\\User', 1, 'updated', 'App\\Models\\StockBatch', 3, '{\"current_qty\":387,\"sold_qty\":0}', '{\"current_qty\":384,\"sold_qty\":3}', 'http://127.0.0.1:8000/inventory/requisitions/1/fulfill', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 11:13:55', '2026-01-22 11:13:55'),
+(617, 'App\\Models\\User', 1, 'created', 'App\\Models\\StockBatchTransaction', 11, '[]', '{\"stock_batch_id\":3,\"type\":\"transfer_out\",\"qty\":3,\"balance_after\":384,\"reference_type\":\"App\\\\Models\\\\StoreRequisition\",\"reference_id\":1,\"notes\":\"Fulfilled from requisition: REQ2026010001 (Batch: LEGACY-STR-3)\",\"performed_by\":1,\"id\":11}', 'http://127.0.0.1:8000/inventory/requisitions/1/fulfill', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 11:13:55', '2026-01-22 11:13:55'),
+(618, 'App\\Models\\User', 1, 'created', 'App\\Models\\StockBatch', 9, '[]', '{\"product_id\":3,\"store_id\":4,\"supplier_id\":null,\"batch_name\":\"TRF-20260122121355-183-20260122121355\",\"batch_number\":\"TRF-20260122121355-183\",\"initial_qty\":3,\"current_qty\":3,\"sold_qty\":0,\"cost_price\":\"0.00\",\"expiry_date\":null,\"received_date\":\"2026-01-22 12:13:55\",\"source\":\"transfer_in\",\"purchase_order_item_id\":null,\"source_requisition_id\":1,\"created_by\":1,\"is_active\":true,\"id\":9}', 'http://127.0.0.1:8000/inventory/requisitions/1/fulfill', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 11:13:55', '2026-01-22 11:13:55'),
+(619, 'App\\Models\\User', 1, 'created', 'App\\Models\\StockBatchTransaction', 12, '[]', '{\"stock_batch_id\":9,\"type\":\"in\",\"qty\":3,\"balance_after\":3,\"reference_type\":\"App\\\\Models\\\\StoreRequisition\",\"reference_id\":1,\"notes\":\"Fulfilled from requisition: REQ2026010001 (Batch: LEGACY-STR-3)\",\"performed_by\":1,\"id\":12}', 'http://127.0.0.1:8000/inventory/requisitions/1/fulfill', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 11:13:55', '2026-01-22 11:13:55'),
+(620, 'App\\Models\\User', 1, 'created', 'App\\Models\\StoreStock', 9, '[]', '{\"product_id\":3,\"store_id\":4,\"last_restocked_at\":\"2026-01-22 12:13:55\",\"id\":9}', 'http://127.0.0.1:8000/inventory/requisitions/1/fulfill', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 11:13:55', '2026-01-22 11:13:55'),
+(621, 'App\\Models\\User', 1, 'updated', 'App\\Models\\StoreStock', 3, '{\"last_restocked_at\":null}', '{\"last_restocked_at\":\"2026-01-22 12:13:55\"}', 'http://127.0.0.1:8000/inventory/requisitions/1/fulfill', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 11:13:55', '2026-01-22 11:13:55'),
+(622, 'App\\Models\\User', 1, 'updated', 'App\\Models\\StoreRequisitionItem', 2, '{\"fulfilled_qty\":null,\"source_batch_id\":null,\"destination_batch_id\":null,\"status\":\"approved\"}', '{\"fulfilled_qty\":3,\"source_batch_id\":3,\"destination_batch_id\":9,\"status\":\"partial\"}', 'http://127.0.0.1:8000/inventory/requisitions/1/fulfill', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 11:13:55', '2026-01-22 11:13:55'),
+(623, 'App\\Models\\User', 1, 'updated', 'App\\Models\\StoreRequisition', 1, '{\"status\":\"approved\"}', '{\"status\":\"partial\"}', 'http://127.0.0.1:8000/inventory/requisitions/1/fulfill', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 11:13:55', '2026-01-22 11:13:55'),
+(624, 'App\\Models\\User', 1, 'created', 'App\\Models\\PurchaseOrder', 1, '[]', '{\"supplier_id\":\"1\",\"target_store_id\":\"5\",\"status\":\"draft\",\"expected_date\":\"2026-01-31 00:00:00\",\"notes\":null,\"po_number\":\"PO2026010001\",\"created_by\":1,\"id\":1}', 'http://127.0.0.1:8000/inventory/purchase-orders', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 16:55:35', '2026-01-22 16:55:35'),
+(625, 'App\\Models\\User', 1, 'created', 'App\\Models\\PurchaseOrderItem', 1, '[]', '{\"purchase_order_id\":1,\"product_id\":\"139\",\"ordered_qty\":88,\"unit_cost\":700,\"status\":\"pending\",\"id\":1}', 'http://127.0.0.1:8000/inventory/purchase-orders', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 16:55:35', '2026-01-22 16:55:35'),
+(626, 'App\\Models\\User', 1, 'created', 'App\\Models\\PurchaseOrderItem', 2, '[]', '{\"purchase_order_id\":1,\"product_id\":\"114\",\"ordered_qty\":99,\"unit_cost\":600,\"status\":\"pending\",\"id\":2}', 'http://127.0.0.1:8000/inventory/purchase-orders', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 16:55:35', '2026-01-22 16:55:35'),
+(627, 'App\\Models\\User', 1, 'updated', 'App\\Models\\PurchaseOrder', 1, '{\"total_amount\":null}', '{\"total_amount\":121000}', 'http://127.0.0.1:8000/inventory/purchase-orders', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 16:55:35', '2026-01-22 16:55:35'),
+(628, 'App\\Models\\User', 1, 'created', 'App\\Models\\PurchaseOrderItem', 3, '[]', '{\"purchase_order_id\":1,\"product_id\":\"139\",\"ordered_qty\":88,\"unit_cost\":707,\"status\":\"pending\",\"id\":3}', 'http://127.0.0.1:8000/inventory/purchase-orders/1', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 17:13:30', '2026-01-22 17:13:30'),
+(629, 'App\\Models\\User', 1, 'created', 'App\\Models\\PurchaseOrderItem', 4, '[]', '{\"purchase_order_id\":1,\"product_id\":\"114\",\"ordered_qty\":99,\"unit_cost\":600,\"status\":\"pending\",\"id\":4}', 'http://127.0.0.1:8000/inventory/purchase-orders/1', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 17:13:30', '2026-01-22 17:13:30'),
+(630, 'App\\Models\\User', 1, 'created', 'App\\Models\\PurchaseOrderItem', 5, '[]', '{\"purchase_order_id\":1,\"product_id\":\"147\",\"ordered_qty\":89,\"unit_cost\":770,\"status\":\"pending\",\"id\":5}', 'http://127.0.0.1:8000/inventory/purchase-orders/1', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 17:13:30', '2026-01-22 17:13:30'),
+(631, 'App\\Models\\User', 1, 'updated', 'App\\Models\\PurchaseOrder', 1, '{\"total_amount\":\"121000.00\"}', '{\"total_amount\":190146}', 'http://127.0.0.1:8000/inventory/purchase-orders/1', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 17:13:30', '2026-01-22 17:13:30'),
+(632, 'App\\Models\\User', 1, 'updated', 'App\\Models\\PurchaseOrder', 1, '{\"status\":\"draft\",\"submitted_at\":null}', '{\"status\":\"submitted\",\"submitted_at\":\"2026-01-22 18:13:54\"}', 'http://127.0.0.1:8000/inventory/purchase-orders/1/submit', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 17:13:54', '2026-01-22 17:13:54'),
+(633, 'App\\Models\\User', 1, 'updated', 'App\\Models\\PurchaseOrder', 1, '{\"approved_by\":null,\"status\":\"submitted\",\"approved_at\":null}', '{\"approved_by\":1,\"status\":\"approved\",\"approved_at\":\"2026-01-22 18:14:10\"}', 'http://127.0.0.1:8000/inventory/purchase-orders/1/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 17:14:10', '2026-01-22 17:14:10'),
+(646, 'App\\Models\\User', 1, 'created', 'App\\Models\\StockBatch', 13, '[]', '{\"product_id\":139,\"store_id\":5,\"supplier_id\":null,\"batch_name\":\"dashda-20260122185630\",\"batch_number\":\"dashda\",\"initial_qty\":\"88\",\"current_qty\":\"88\",\"sold_qty\":0,\"cost_price\":\"707\",\"expiry_date\":\"2026-05-30 00:00:00\",\"received_date\":\"2026-01-22 18:56:30\",\"source\":\"purchase_order\",\"purchase_order_item_id\":3,\"source_requisition_id\":null,\"created_by\":1,\"is_active\":true,\"id\":13}', 'http://127.0.0.1:8000/inventory/purchase-orders/1/receive', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 17:56:30', '2026-01-22 17:56:30'),
+(647, 'App\\Models\\User', 1, 'created', 'App\\Models\\StockBatchTransaction', 16, '[]', '{\"stock_batch_id\":13,\"type\":\"in\",\"qty\":\"88\",\"balance_after\":\"88\",\"reference_type\":\"App\\\\Models\\\\PurchaseOrder\",\"reference_id\":1,\"notes\":\"Received from PO: PO2026010001\",\"performed_by\":1,\"id\":16}', 'http://127.0.0.1:8000/inventory/purchase-orders/1/receive', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 17:56:30', '2026-01-22 17:56:30'),
+(648, 'App\\Models\\User', 1, 'created', 'App\\Models\\StoreStock', 13, '[]', '{\"product_id\":139,\"store_id\":5,\"last_restocked_at\":\"2026-01-22 18:56:30\",\"id\":13}', 'http://127.0.0.1:8000/inventory/purchase-orders/1/receive', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 17:56:30', '2026-01-22 17:56:30'),
+(649, 'App\\Models\\User', 1, 'updated', 'App\\Models\\PurchaseOrderItem', 3, '{\"received_qty\":0,\"actual_unit_cost\":null,\"status\":\"pending\",\"received_at\":null}', '{\"received_qty\":88,\"actual_unit_cost\":707,\"status\":\"received\",\"received_at\":\"2026-01-22 18:56:30\"}', 'http://127.0.0.1:8000/inventory/purchase-orders/1/receive', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 17:56:30', '2026-01-22 17:56:30'),
+(650, 'App\\Models\\User', 1, 'created', 'App\\Models\\StockBatch', 14, '[]', '{\"product_id\":114,\"store_id\":5,\"supplier_id\":null,\"batch_name\":\"adkja-20260122185630\",\"batch_number\":\"adkja\",\"initial_qty\":\"99\",\"current_qty\":\"99\",\"sold_qty\":0,\"cost_price\":\"600\",\"expiry_date\":\"2026-10-10 00:00:00\",\"received_date\":\"2026-01-22 18:56:30\",\"source\":\"purchase_order\",\"purchase_order_item_id\":4,\"source_requisition_id\":null,\"created_by\":1,\"is_active\":true,\"id\":14}', 'http://127.0.0.1:8000/inventory/purchase-orders/1/receive', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 17:56:30', '2026-01-22 17:56:30'),
+(651, 'App\\Models\\User', 1, 'created', 'App\\Models\\StockBatchTransaction', 17, '[]', '{\"stock_batch_id\":14,\"type\":\"in\",\"qty\":\"99\",\"balance_after\":\"99\",\"reference_type\":\"App\\\\Models\\\\PurchaseOrder\",\"reference_id\":1,\"notes\":\"Received from PO: PO2026010001\",\"performed_by\":1,\"id\":17}', 'http://127.0.0.1:8000/inventory/purchase-orders/1/receive', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 17:56:30', '2026-01-22 17:56:30'),
+(652, 'App\\Models\\User', 1, 'created', 'App\\Models\\StoreStock', 14, '[]', '{\"product_id\":114,\"store_id\":5,\"last_restocked_at\":\"2026-01-22 18:56:30\",\"id\":14}', 'http://127.0.0.1:8000/inventory/purchase-orders/1/receive', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 17:56:30', '2026-01-22 17:56:30'),
+(653, 'App\\Models\\User', 1, 'updated', 'App\\Models\\PurchaseOrderItem', 4, '{\"received_qty\":0,\"actual_unit_cost\":null,\"status\":\"pending\",\"received_at\":null}', '{\"received_qty\":99,\"actual_unit_cost\":600,\"status\":\"received\",\"received_at\":\"2026-01-22 18:56:30\"}', 'http://127.0.0.1:8000/inventory/purchase-orders/1/receive', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 17:56:30', '2026-01-22 17:56:30'),
+(654, 'App\\Models\\User', 1, 'created', 'App\\Models\\StockBatch', 15, '[]', '{\"product_id\":147,\"store_id\":5,\"supplier_id\":null,\"batch_name\":\"adka-20260122185630\",\"batch_number\":\"adka\",\"initial_qty\":\"89\",\"current_qty\":\"89\",\"sold_qty\":0,\"cost_price\":\"770\",\"expiry_date\":\"2026-06-19 00:00:00\",\"received_date\":\"2026-01-22 18:56:30\",\"source\":\"purchase_order\",\"purchase_order_item_id\":5,\"source_requisition_id\":null,\"created_by\":1,\"is_active\":true,\"id\":15}', 'http://127.0.0.1:8000/inventory/purchase-orders/1/receive', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 17:56:30', '2026-01-22 17:56:30'),
+(655, 'App\\Models\\User', 1, 'created', 'App\\Models\\StockBatchTransaction', 18, '[]', '{\"stock_batch_id\":15,\"type\":\"in\",\"qty\":\"89\",\"balance_after\":\"89\",\"reference_type\":\"App\\\\Models\\\\PurchaseOrder\",\"reference_id\":1,\"notes\":\"Received from PO: PO2026010001\",\"performed_by\":1,\"id\":18}', 'http://127.0.0.1:8000/inventory/purchase-orders/1/receive', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 17:56:30', '2026-01-22 17:56:30'),
+(656, 'App\\Models\\User', 1, 'created', 'App\\Models\\StoreStock', 15, '[]', '{\"product_id\":147,\"store_id\":5,\"last_restocked_at\":\"2026-01-22 18:56:30\",\"id\":15}', 'http://127.0.0.1:8000/inventory/purchase-orders/1/receive', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 17:56:30', '2026-01-22 17:56:30'),
+(657, 'App\\Models\\User', 1, 'updated', 'App\\Models\\PurchaseOrderItem', 5, '{\"received_qty\":0,\"actual_unit_cost\":null,\"status\":\"pending\",\"received_at\":null}', '{\"received_qty\":89,\"actual_unit_cost\":770,\"status\":\"received\",\"received_at\":\"2026-01-22 18:56:30\"}', 'http://127.0.0.1:8000/inventory/purchase-orders/1/receive', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 17:56:30', '2026-01-22 17:56:30'),
+(658, 'App\\Models\\User', 1, 'updated', 'App\\Models\\PurchaseOrder', 1, '{\"status\":\"approved\"}', '{\"status\":\"received\"}', 'http://127.0.0.1:8000/inventory/purchase-orders/1/receive', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 17:56:30', '2026-01-22 17:56:30'),
+(659, 'App\\Models\\User', 1, 'updated', 'App\\Models\\PurchaseOrder', 1, '{\"notes\":null}', '{\"notes\":\"Receiving Notes: ahjbada\"}', 'http://127.0.0.1:8000/inventory/purchase-orders/1/receive', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 17:56:30', '2026-01-22 17:56:30'),
+(660, 'App\\Models\\User', 1, 'created', 'App\\Models\\Expense', 1, '[]', '{\"expense_date\":\"2026-01-22 00:00:00\",\"category\":\"purchase_order\",\"title\":\"PO Payment - PO2026010001\",\"description\":\"Payment for PO #PO2026010001 - Apollos Technologies\",\"amount\":19014,\"payment_method\":\"bank_transfer\",\"supplier_id\":1,\"store_id\":5,\"reference_type\":\"App\\\\Models\\\\PurchaseOrder\",\"reference_id\":1,\"recorded_by\":1,\"status\":\"approved\",\"approved_by\":1,\"approved_at\":\"2026-01-22 19:08:40\",\"expense_number\":\"EXP2026010001\",\"id\":1}', 'http://127.0.0.1:8000/inventory/purchase-orders/1/payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 18:08:40', '2026-01-22 18:08:40'),
+(661, 'App\\Models\\User', 1, 'updated', 'App\\Models\\PurchaseOrder', 1, '{\"payment_status\":\"unpaid\",\"amount_paid\":\"0.00\"}', '{\"payment_status\":\"partial\",\"amount_paid\":\"19014.00\"}', 'http://127.0.0.1:8000/inventory/purchase-orders/1/payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-22 18:08:40', '2026-01-22 18:08:40'),
+(662, 'App\\Models\\User', 1, 'created', 'App\\Models\\Expense', 2, '[]', '{\"expense_date\":\"2026-01-23 00:00:00\",\"category\":\"purchase_order\",\"title\":\"PO Payment - PO2026010001\",\"description\":\"Payment for PO #PO2026010001 - Apollos Technologies\",\"amount\":171132,\"payment_method\":\"cash\",\"supplier_id\":1,\"store_id\":5,\"reference_type\":\"App\\\\Models\\\\PurchaseOrder\",\"reference_id\":1,\"recorded_by\":1,\"status\":\"approved\",\"approved_by\":1,\"approved_at\":\"2026-01-23 07:19:14\",\"expense_number\":\"EXP2026010002\",\"id\":2}', 'http://127.0.0.1:8000/inventory/purchase-orders/1/payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-23 06:19:15', '2026-01-23 06:19:15'),
+(663, 'App\\Models\\User', 1, 'updated', 'App\\Models\\PurchaseOrder', 1, '{\"payment_status\":\"partial\",\"amount_paid\":\"19014.00\"}', '{\"payment_status\":\"paid\",\"amount_paid\":\"190146.00\"}', 'http://127.0.0.1:8000/inventory/purchase-orders/1/payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-23 06:19:15', '2026-01-23 06:19:15'),
+(664, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Expense', 2, '{\"status\":\"approved\",\"voided_by\":null,\"voided_at\":null,\"void_reason\":null}', '{\"status\":\"void\",\"voided_by\":1,\"voided_at\":\"2026-01-23 08:13:41\",\"void_reason\":\"test void now to see what happens\"}', 'http://127.0.0.1:8000/inventory/expenses/2/void', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-23 07:13:42', '2026-01-23 07:13:42'),
+(665, 'App\\Models\\User', 1, 'updated', 'App\\Models\\PurchaseOrder', 1, '{\"payment_status\":\"paid\",\"amount_paid\":\"190146.00\"}', '{\"payment_status\":\"partial\",\"amount_paid\":\"19014.00\"}', 'http://127.0.0.1:8000/inventory/expenses/2/void', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-23 07:13:42', '2026-01-23 07:13:42'),
+(666, 'App\\Models\\User', 1, 'created', 'App\\Models\\Expense', 3, '[]', '{\"title\":\"tetsts\",\"description\":\"Test genenric epense\",\"amount\":\"100\",\"category\":\"salaries\",\"expense_date\":\"2026-01-23 00:00:00\",\"payment_method\":\"cash\",\"payment_reference\":\"w6e73832\",\"bank_id\":null,\"cheque_number\":null,\"supplier_id\":\"1\",\"store_id\":\"1\",\"notes\":\"gjhhd\",\"status\":\"pending\",\"recorded_by\":1,\"expense_number\":\"EXP2026010003\",\"id\":3}', 'http://127.0.0.1:8000/inventory/expenses', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-23 07:56:55', '2026-01-23 07:56:55'),
+(667, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Expense', 3, '{\"amount\":\"100.00\",\"description\":\"Test genenric epense\"}', '{\"amount\":\"10099\",\"description\":\"Test genenric epense up\"}', 'http://127.0.0.1:8000/inventory/expenses/3', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-23 07:57:26', '2026-01-23 07:57:26'),
+(668, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Expense', 3, '{\"approved_by\":null,\"status\":\"pending\",\"rejection_reason\":null,\"approved_at\":null}', '{\"approved_by\":1,\"status\":\"rejected\",\"rejection_reason\":\"ytete\",\"approved_at\":\"2026-01-23 08:57:36\"}', 'http://127.0.0.1:8000/inventory/expenses/3/reject', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-23 07:57:36', '2026-01-23 07:57:36'),
+(669, 'App\\Models\\User', 1, 'created', 'App\\Models\\Expense', 4, '[]', '{\"title\":\"dgdhsd\",\"description\":\"ttwetew\",\"amount\":\"60060\",\"category\":\"store_expense\",\"expense_date\":\"2026-01-23 00:00:00\",\"payment_method\":\"bank_transfer\",\"payment_reference\":\"hgdgd\",\"bank_id\":\"1\",\"cheque_number\":null,\"supplier_id\":\"1\",\"store_id\":\"3\",\"notes\":\"test approve\",\"status\":\"pending\",\"recorded_by\":1,\"expense_number\":\"EXP2026010004\",\"id\":4}', 'http://127.0.0.1:8000/inventory/expenses', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-23 07:58:25', '2026-01-23 07:58:25'),
+(670, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Expense', 4, '{\"approved_by\":null,\"status\":\"pending\",\"approved_at\":null}', '{\"approved_by\":1,\"status\":\"approved\",\"approved_at\":\"2026-01-23 08:58:33\"}', 'http://127.0.0.1:8000/inventory/expenses/4/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-23 07:58:33', '2026-01-23 07:58:33');
 
 -- --------------------------------------------------------
 
@@ -1351,6 +1428,35 @@ INSERT INTO `discharge_checklist_items` (`id`, `discharge_checklist_id`, `templa
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `disciplinary_queries`
+--
+
+CREATE TABLE `disciplinary_queries` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `query_number` varchar(255) NOT NULL,
+  `staff_id` bigint(20) UNSIGNED NOT NULL,
+  `subject` varchar(255) NOT NULL,
+  `description` text NOT NULL,
+  `severity` enum('minor','moderate','major','gross_misconduct') NOT NULL DEFAULT 'minor',
+  `incident_date` date DEFAULT NULL,
+  `expected_response` text DEFAULT NULL,
+  `response_deadline` date NOT NULL,
+  `status` enum('issued','response_received','under_review','closed') NOT NULL DEFAULT 'issued',
+  `staff_response` text DEFAULT NULL,
+  `response_received_at` timestamp NULL DEFAULT NULL,
+  `hr_decision` text DEFAULT NULL,
+  `outcome` enum('warning','final_warning','suspension','termination','dismissed','no_action') DEFAULT NULL,
+  `decided_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `decided_at` timestamp NULL DEFAULT NULL,
+  `issued_by` bigint(20) UNSIGNED NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `doctor_queues`
 --
 
@@ -1443,7 +1549,7 @@ INSERT INTO `encounters` (`id`, `doctor_id`, `service_request_id`, `service_id`,
 (219, 1, 74, 62, 24, NULL, NULL, NULL, NULL, '<p>tets new queue<br><br>gge</p>', '2026-01-04 09:14:01', '2026-01-04 18:24:44', NULL, NULL, NULL, NULL, 1, NULL, NULL),
 (220, 1, 74, 62, 24, NULL, NULL, 'NA', 'NA', '<p>make a note we pln to edit asajha</p>', '2026-01-04 18:24:59', '2026-01-04 18:27:49', NULL, NULL, NULL, NULL, 1, NULL, NULL),
 (221, 1, 74, 62, 24, NULL, NULL, NULL, NULL, '<p>make a note we pln to edit asajha</p>', '2026-01-04 18:27:16', '2026-01-08 09:19:18', NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(222, 1, 79, 62, 24, NULL, 'A049-Bacterial intestinal infection, unspecified (ICD10: A049)', 'null', 'null', '<p>testing pre</p>', '2026-01-06 08:50:01', '2026-01-21 23:29:19', NULL, NULL, NULL, NULL, 0, NULL, NULL);
+(222, 1, 79, 62, 24, NULL, 'A049-Bacterial intestinal infection, unspecified (ICD10: A049)', 'null', 'null', '<p>testing pre</p>', '2026-01-06 08:50:01', '2026-01-22 18:14:59', NULL, NULL, NULL, NULL, 0, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1468,12 +1574,28 @@ CREATE TABLE `expenses` (
   `status` enum('pending','approved','rejected','void') NOT NULL DEFAULT 'pending',
   `rejection_reason` text DEFAULT NULL,
   `approved_at` timestamp NULL DEFAULT NULL,
+  `voided_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `voided_at` timestamp NULL DEFAULT NULL,
+  `void_reason` text DEFAULT NULL,
   `payment_method` varchar(255) DEFAULT NULL,
+  `bank_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `cheque_number` varchar(255) DEFAULT NULL,
   `payment_reference` varchar(255) DEFAULT NULL,
+  `notes` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `expenses`
+--
+
+INSERT INTO `expenses` (`id`, `expense_number`, `category`, `reference_type`, `reference_id`, `amount`, `supplier_id`, `store_id`, `title`, `description`, `expense_date`, `recorded_by`, `approved_by`, `status`, `rejection_reason`, `approved_at`, `voided_by`, `voided_at`, `void_reason`, `payment_method`, `bank_id`, `cheque_number`, `payment_reference`, `notes`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'EXP2026010001', 'purchase_order', 'App\\Models\\PurchaseOrder', 1, 19014.00, 1, 5, 'PO Payment - PO2026010001', 'Payment for PO #PO2026010001 - Apollos Technologies', '2026-01-22', 1, 1, 'approved', NULL, '2026-01-22 18:08:40', NULL, NULL, NULL, 'bank_transfer', NULL, NULL, NULL, NULL, '2026-01-22 18:08:40', '2026-01-22 18:08:40', NULL),
+(2, 'EXP2026010002', 'purchase_order', 'App\\Models\\PurchaseOrder', 1, 171132.00, 1, 5, 'PO Payment - PO2026010001', 'Payment for PO #PO2026010001 - Apollos Technologies', '2026-01-23', 1, 1, 'void', NULL, '2026-01-23 06:19:14', 1, '2026-01-23 07:13:41', 'test void now to see what happens', 'cash', NULL, NULL, NULL, NULL, '2026-01-23 06:19:14', '2026-01-23 07:13:41', NULL),
+(3, 'EXP2026010003', 'salaries', NULL, NULL, 10099.00, 1, 1, 'tetsts', 'Test genenric epense up', '2026-01-23', 1, 1, 'rejected', 'ytete', '2026-01-23 07:57:36', NULL, NULL, NULL, 'cash', NULL, NULL, 'w6e73832', 'gjhhd', '2026-01-23 07:56:55', '2026-01-23 07:57:36', NULL),
+(4, 'EXP2026010004', 'store_expense', NULL, NULL, 60060.00, 1, 3, 'dgdhsd', 'ttwetew', '2026-01-23', 1, 1, 'approved', NULL, '2026-01-23 07:58:33', NULL, NULL, NULL, 'bank_transfer', 1, NULL, 'hgdgd', 'test approve', '2026-01-23 07:58:25', '2026-01-23 07:58:33', NULL);
 
 -- --------------------------------------------------------
 
@@ -5250,6 +5372,29 @@ INSERT INTO `hmo_tariffs` (`id`, `hmo_id`, `product_id`, `service_id`, `claims_a
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `hr_attachments`
+--
+
+CREATE TABLE `hr_attachments` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `attachable_type` varchar(255) NOT NULL,
+  `attachable_id` bigint(20) UNSIGNED NOT NULL,
+  `filename` varchar(255) NOT NULL,
+  `original_filename` varchar(255) NOT NULL,
+  `file_path` varchar(255) NOT NULL,
+  `mime_type` varchar(255) NOT NULL,
+  `file_size` bigint(20) UNSIGNED NOT NULL,
+  `document_type` varchar(255) DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `uploaded_by` bigint(20) UNSIGNED NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `imaging_service_requests`
 --
 
@@ -5622,6 +5767,82 @@ INSERT INTO `lab_workbench_audit_logs` (`id`, `lab_service_request_id`, `user_id
 (8, 65, 1, 'edit', 'Result edited', NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '2026-01-16 11:02:28', '2026-01-16 11:02:28'),
 (9, 78, 1, 'sample_collection', 'Sample collected', NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '2026-01-21 17:27:25', '2026-01-21 17:27:25'),
 (10, 78, 1, 'result_entry', 'Result entered', NULL, NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', '2026-01-21 17:28:15', '2026-01-21 17:28:15');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `leave_balances`
+--
+
+CREATE TABLE `leave_balances` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `staff_id` bigint(20) UNSIGNED NOT NULL,
+  `leave_type_id` bigint(20) UNSIGNED NOT NULL,
+  `year` int(11) NOT NULL,
+  `entitled_days` decimal(5,1) NOT NULL DEFAULT 0.0,
+  `used_days` decimal(5,1) NOT NULL DEFAULT 0.0,
+  `pending_days` decimal(5,1) NOT NULL DEFAULT 0.0,
+  `carried_forward` decimal(5,1) NOT NULL DEFAULT 0.0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `leave_requests`
+--
+
+CREATE TABLE `leave_requests` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `request_number` varchar(255) NOT NULL,
+  `staff_id` bigint(20) UNSIGNED NOT NULL,
+  `leave_type_id` bigint(20) UNSIGNED NOT NULL,
+  `start_date` date NOT NULL,
+  `end_date` date NOT NULL,
+  `total_days` int(11) NOT NULL,
+  `reason` text DEFAULT NULL,
+  `handover_notes` text DEFAULT NULL,
+  `relief_staff_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `status` enum('pending','supervisor_approved','approved','rejected','cancelled','recalled') NOT NULL DEFAULT 'pending',
+  `supervisor_approved_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `supervisor_approved_at` timestamp NULL DEFAULT NULL,
+  `supervisor_comments` text DEFAULT NULL,
+  `hr_approved_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `hr_approved_at` timestamp NULL DEFAULT NULL,
+  `hr_comments` text DEFAULT NULL,
+  `reviewed_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `reviewed_at` timestamp NULL DEFAULT NULL,
+  `review_comments` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `leave_types`
+--
+
+CREATE TABLE `leave_types` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `code` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `max_days_per_year` int(11) NOT NULL DEFAULT 0,
+  `max_consecutive_days` int(11) NOT NULL DEFAULT 0,
+  `max_requests_per_year` int(11) NOT NULL DEFAULT 0,
+  `min_days_notice` int(11) NOT NULL DEFAULT 0,
+  `requires_attachment` tinyint(1) NOT NULL DEFAULT 0,
+  `is_paid` tinyint(1) NOT NULL DEFAULT 1,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `color` varchar(255) NOT NULL DEFAULT '#3498db',
+  `applicable_employment_types` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`applicable_employment_types`)),
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -6056,7 +6277,27 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (167, '2026_01_21_100008_add_batch_fields_to_product_requests_table', 75),
 (168, '2026_01_21_100009_add_fields_to_store_stocks_table', 76),
 (169, '2026_01_21_100010_add_fields_to_stores_table', 76),
-(170, '2026_01_21_100011_create_initial_batches_from_store_stock', 77);
+(170, '2026_01_21_100011_create_initial_batches_from_store_stock', 77),
+(171, '2026_01_22_074814_add_supplier_id_to_stock_batches_table', 78),
+(172, '2026_01_22_183500_add_received_at_to_purchase_order_items_table', 79),
+(173, '2026_01_22_190000_create_purchase_order_payments_table', 80),
+(174, '2026_01_23_075125_add_void_fields_to_expenses_table', 81),
+(175, '2026_01_23_080548_add_soft_deletes_to_purchase_order_payments_table', 82),
+(176, '2026_01_23_083356_add_bank_and_payment_fields_to_expenses_table', 83),
+(177, '2026_01_23_100001_add_hr_fields_to_staff_table', 84),
+(178, '2026_01_23_100002_create_leave_types_table', 84),
+(179, '2026_01_23_100003_create_leave_requests_table', 84),
+(180, '2026_01_23_100004_create_leave_balances_table', 84),
+(181, '2026_01_23_100005_create_disciplinary_queries_table', 84),
+(182, '2026_01_23_100006_create_staff_suspensions_table', 84),
+(183, '2026_01_23_100007_create_staff_terminations_table', 84),
+(184, '2026_01_23_100008_create_pay_heads_table', 84),
+(185, '2026_01_23_100009_create_staff_salary_profiles_table', 84),
+(186, '2026_01_23_100010_create_staff_salary_profile_items_table', 84),
+(187, '2026_01_23_100011_create_payroll_batches_table', 84),
+(188, '2026_01_23_100012_create_payroll_items_table', 84),
+(189, '2026_01_23_100013_create_payroll_item_details_table', 84),
+(190, '2026_01_23_100014_create_hr_attachments_table', 85);
 
 -- --------------------------------------------------------
 
@@ -6127,6 +6368,9 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (1, 'App\\Models\\User', 4),
 (2, 'App\\Models\\User', 1),
 (3, 'App\\Models\\User', 1),
+(4, 'App\\Models\\User', 4477),
+(4, 'App\\Models\\User', 4478),
+(4, 'App\\Models\\User', 4479),
 (6, 'App\\Models\\User', 1),
 (7, 'App\\Models\\User', 1);
 
@@ -10516,7 +10760,8 @@ INSERT INTO `patients` (`id`, `user_id`, `file_no`, `insurance_scheme`, `hmo_id`
 (4179, 4473, '10118', NULL, NULL, NULL, 'Female', '1977-05-07', NULL, NULL, 1, 'WHOLSHE JOS', NULL, NULL, '', NULL, NULL, NULL, '', NULL, NULL, '', '', NULL, 1444, NULL, NULL),
 (4180, 4474, '9667', NULL, NULL, NULL, 'Male', '2022-12-10', NULL, NULL, 1, 'n0 6 nuku road jos', NULL, NULL, '', NULL, NULL, NULL, '', NULL, NULL, '', '', NULL, 1445, NULL, NULL),
 (4181, 4475, '10119', NULL, NULL, NULL, 'Female', '0000-00-00', NULL, NULL, 1, 'RANTYA LAST BUS STOP', NULL, NULL, '', NULL, NULL, NULL, '', NULL, NULL, '', '', NULL, 1446, NULL, NULL),
-(4182, 4476, '22239', NULL, 1, NULL, 'Male', '2026-01-01', NULL, NULL, 0, 'Dankankani Village, Bauchi Ring road\r\nFuraka district', NULL, 'Nigerian', NULL, NULL, '\"[]\"', NULL, NULL, '2026-01-13 20:33:09', '2026-01-13 20:33:09', NULL, NULL, NULL, NULL, NULL, NULL);
+(4182, 4476, '22239', NULL, 1, NULL, 'Male', '2026-01-01', NULL, NULL, 0, 'Dankankani Village, Bauchi Ring road\r\nFuraka district', NULL, 'Nigerian', NULL, NULL, '\"[]\"', NULL, NULL, '2026-01-13 20:33:09', '2026-01-13 20:33:09', NULL, NULL, NULL, NULL, NULL, NULL),
+(4183, 4479, '2026000001', NULL, NULL, NULL, 'Female', '1995-11-25', 'B+', 'AS', 0, '321 Health Street, Abuja', '08033333333', 'Nigerian', 'Hausa', NULL, NULL, '', 'Mr. Ibrahim Ahmed', '2026-01-22 09:44:13', '2026-01-22 09:44:13', '08044444444', '321 Health Street, Abuja', NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -10954,6 +11199,104 @@ INSERT INTO `payments` (`id`, `reference_no`, `total`, `total_discount`, `paymen
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `payroll_batches`
+--
+
+CREATE TABLE `payroll_batches` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `batch_number` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `pay_period_start` date NOT NULL,
+  `pay_period_end` date NOT NULL,
+  `payment_date` date NOT NULL,
+  `total_staff` int(11) NOT NULL DEFAULT 0,
+  `total_gross` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_additions` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_deductions` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_net` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `status` enum('draft','submitted','approved','rejected','paid') NOT NULL DEFAULT 'draft',
+  `created_by` bigint(20) UNSIGNED NOT NULL,
+  `submitted_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `submitted_at` timestamp NULL DEFAULT NULL,
+  `approved_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `approved_at` timestamp NULL DEFAULT NULL,
+  `approval_comments` text DEFAULT NULL,
+  `rejected_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `rejected_at` timestamp NULL DEFAULT NULL,
+  `rejection_reason` text DEFAULT NULL,
+  `expense_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `payroll_items`
+--
+
+CREATE TABLE `payroll_items` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `payroll_batch_id` bigint(20) UNSIGNED NOT NULL,
+  `staff_id` bigint(20) UNSIGNED NOT NULL,
+  `salary_profile_id` bigint(20) UNSIGNED NOT NULL,
+  `basic_salary` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `gross_salary` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_additions` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_deductions` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `net_salary` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `bank_name` varchar(255) DEFAULT NULL,
+  `bank_account_number` varchar(255) DEFAULT NULL,
+  `bank_account_name` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `payroll_item_details`
+--
+
+CREATE TABLE `payroll_item_details` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `payroll_item_id` bigint(20) UNSIGNED NOT NULL,
+  `pay_head_id` bigint(20) UNSIGNED NOT NULL,
+  `type` enum('addition','deduction') NOT NULL,
+  `pay_head_name` varchar(255) NOT NULL,
+  `amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `pay_heads`
+--
+
+CREATE TABLE `pay_heads` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `code` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `type` enum('addition','deduction') NOT NULL,
+  `calculation_type` enum('fixed','percentage','formula') NOT NULL DEFAULT 'fixed',
+  `calculation_base` varchar(255) DEFAULT NULL,
+  `default_value` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `is_taxable` tinyint(1) NOT NULL DEFAULT 1,
+  `is_mandatory` tinyint(1) NOT NULL DEFAULT 0,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `sort_order` int(11) NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `permissions`
 --
 
@@ -11022,7 +11365,56 @@ INSERT INTO `permissions` (`id`, `name`, `guard_name`, `created_at`, `updated_at
 (50, 'expenses.view-reports', 'web', '2026-01-21 21:39:06', '2026-01-21 21:39:06'),
 (51, 'stock.view', 'web', '2026-01-21 21:39:06', '2026-01-21 21:39:06'),
 (52, 'stock.transfer', 'web', '2026-01-21 21:39:06', '2026-01-21 21:39:06'),
-(53, 'stock.dispense-with-batch', 'web', '2026-01-21 21:39:06', '2026-01-21 21:39:06');
+(53, 'stock.dispense-with-batch', 'web', '2026-01-21 21:39:06', '2026-01-21 21:39:06'),
+(54, 'leave-type.view', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(55, 'leave-type.create', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(56, 'leave-type.edit', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(57, 'leave-type.delete', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(58, 'leave-request.view', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(59, 'leave-request.view-own', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(60, 'leave-request.create', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(61, 'leave-request.create-own', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(62, 'leave-request.edit', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(63, 'leave-request.delete', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(64, 'leave-request.supervisor-approve', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(65, 'leave-request.hr-approve', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(66, 'leave-request.approve', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(67, 'leave-request.reject', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(68, 'leave-request.recall', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(69, 'leave-balance.view', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(70, 'leave-balance.manage', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(71, 'disciplinary.view', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(72, 'disciplinary.create', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(73, 'disciplinary.edit', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(74, 'disciplinary.delete', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(75, 'disciplinary.respond', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(76, 'disciplinary.decide', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(77, 'suspension.view', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(78, 'suspension.create', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(79, 'suspension.lift', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(80, 'termination.view', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(81, 'termination.create', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(82, 'termination.edit', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(83, 'pay-head.view', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(84, 'pay-head.create', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(85, 'pay-head.edit', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(86, 'pay-head.delete', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(87, 'salary-profile.view', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(88, 'salary-profile.create', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(89, 'salary-profile.edit', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(90, 'salary-profile.delete', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(91, 'payroll-batch.view', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(92, 'payroll-batch.create', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(93, 'payroll-batch.edit', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(94, 'payroll-batch.delete', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(95, 'payroll-batch.submit', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(96, 'payroll-batch.approve', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(97, 'payroll-batch.reject', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(98, 'hr-report.view', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(99, 'hr-report.export', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(100, 'hr-workbench.access', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(101, 'ess.access', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(102, 'ess.view-payslips', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21');
 
 -- --------------------------------------------------------
 
@@ -11529,7 +11921,7 @@ INSERT INTO `products` (`id`, `user_id`, `category_id`, `product_name`, `product
 (55, 5, 1, 'BUSCOPAN 10MG', 'BUSCOPAN', '10', '0', '0', '0', '10', 1, 1, 1, 0, NULL, NULL, 100, NULL),
 (56, 5, 1, 'Aceclofenac -100mg', 'ACYCOR', '10', '0', '0', '0', '20', 1, 1, 1, 0, NULL, NULL, 102, NULL),
 (57, 5, 1, 'Aceclofenac + Paracetamol + Serratiopeptidase - 100/500/15mg', 'CEFLONAC SP', '100', '0', '0', '0', '80', 1, 1, 1, 0, NULL, NULL, 103, NULL),
-(58, 5, 1, 'Aceclofenac + Paracetamol + Chlorzoxazone - 100/500/250mg', 'ZADOL FORTE', '10', '0', '0', '0', '104', 1, 1, 1, 0, NULL, NULL, 104, NULL),
+(58, 5, 1, 'Aceclofenac + Paracetamol + Chlorzoxazone - 100/500/250mg', 'ZADOL FORTE', '10', '0', '0', '0', '179', 1, 1, 1, 0, NULL, '2026-01-22 05:49:49', 104, NULL),
 (59, 5, 1, 'Acetyl Salicylic Acid - 75mg', 'EMPIRIN', '10', '0', '0', '0', '45', 1, 1, 1, 0, NULL, NULL, 105, NULL),
 (60, 5, 1, 'Acetyl Salicylic Acid - 75mg', 'VASOPRIN', '10', '0', '0', '0', '20', 1, 1, 1, 0, NULL, NULL, 106, NULL),
 (61, 5, 1, 'Albendazole - 400mg', 'ZOLAT', '10', '0', '0', '0', '39', 1, 1, 1, 0, NULL, NULL, 107, NULL),
@@ -11806,7 +12198,8 @@ INSERT INTO `product_or_service_requests` (`id`, `type`, `invoice_id`, `payment_
 (125, NULL, NULL, NULL, NULL, 132, NULL, NULL, NULL, 1, NULL, NULL, NULL, 125, NULL, 1, 0.00, 0.00, 350.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-21 10:46:50', '2026-01-21 10:46:50'),
 (126, NULL, NULL, 81, NULL, 132, NULL, NULL, NULL, 1, NULL, NULL, 1, 3, NULL, 1, 0.00, 0.00, 2500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-21 10:52:19', '2026-01-21 17:21:47'),
 (127, 'service', NULL, NULL, NULL, 132, NULL, 222, NULL, 1, 1, '2026-01-21 18:42:22', NULL, NULL, 67, 1, 70000.00, 0.00, NULL, 0.00, 'cash', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-21 18:42:22', '2026-01-21 18:42:22'),
-(128, NULL, NULL, NULL, NULL, 69, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, 0.00, 0.00, 5000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-21 23:00:00', '2026-01-21 23:00:00');
+(128, NULL, NULL, NULL, NULL, 69, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, 0.00, 0.00, 5000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-21 23:00:00', '2026-01-21 23:00:00'),
+(129, NULL, NULL, NULL, NULL, 69, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, 0.00, 0.00, 5000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-23 06:17:36', '2026-01-23 06:17:36');
 
 -- --------------------------------------------------------
 
@@ -11920,8 +12313,10 @@ CREATE TABLE `purchase_orders` (
   `created_by` bigint(20) UNSIGNED NOT NULL,
   `approved_by` bigint(20) UNSIGNED DEFAULT NULL,
   `status` enum('draft','submitted','approved','partial','received','cancelled') NOT NULL DEFAULT 'draft',
+  `payment_status` enum('unpaid','partial','paid') NOT NULL DEFAULT 'unpaid',
   `expected_date` date DEFAULT NULL,
   `total_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `amount_paid` decimal(15,2) NOT NULL DEFAULT 0.00,
   `notes` text DEFAULT NULL,
   `submitted_at` timestamp NULL DEFAULT NULL,
   `approved_at` timestamp NULL DEFAULT NULL,
@@ -11929,6 +12324,13 @@ CREATE TABLE `purchase_orders` (
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `purchase_orders`
+--
+
+INSERT INTO `purchase_orders` (`id`, `po_number`, `supplier_id`, `target_store_id`, `created_by`, `approved_by`, `status`, `payment_status`, `expected_date`, `total_amount`, `amount_paid`, `notes`, `submitted_at`, `approved_at`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'PO2026010001', 1, 5, 1, 1, 'received', 'partial', '2026-01-31', 190146.00, 19014.00, 'Receiving Notes: ahjbada', '2026-01-22 17:13:54', '2026-01-22 17:14:10', '2026-01-22 16:55:35', '2026-01-23 07:13:42', NULL);
 
 -- --------------------------------------------------------
 
@@ -11945,9 +12347,50 @@ CREATE TABLE `purchase_order_items` (
   `unit_cost` decimal(12,2) DEFAULT NULL,
   `actual_unit_cost` decimal(12,2) DEFAULT NULL,
   `status` enum('pending','partial','received','cancelled') NOT NULL DEFAULT 'pending',
+  `received_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `purchase_order_items`
+--
+
+INSERT INTO `purchase_order_items` (`id`, `purchase_order_id`, `product_id`, `ordered_qty`, `received_qty`, `unit_cost`, `actual_unit_cost`, `status`, `received_at`, `created_at`, `updated_at`) VALUES
+(3, 1, 139, 88, 88, 707.00, 707.00, 'received', '2026-01-22 17:56:30', '2026-01-22 17:13:30', '2026-01-22 17:56:30'),
+(4, 1, 114, 99, 99, 600.00, 600.00, 'received', '2026-01-22 17:56:30', '2026-01-22 17:13:30', '2026-01-22 17:56:30'),
+(5, 1, 147, 89, 89, 770.00, 770.00, 'received', '2026-01-22 17:56:30', '2026-01-22 17:13:30', '2026-01-22 17:56:30');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `purchase_order_payments`
+--
+
+CREATE TABLE `purchase_order_payments` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `purchase_order_id` bigint(20) UNSIGNED NOT NULL,
+  `payment_date` date NOT NULL,
+  `amount` decimal(15,2) NOT NULL,
+  `payment_method` enum('cash','bank_transfer','cheque','card') NOT NULL DEFAULT 'cash',
+  `bank_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `reference_number` varchar(255) DEFAULT NULL,
+  `cheque_number` varchar(255) DEFAULT NULL,
+  `expense_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `notes` text DEFAULT NULL,
+  `created_by` bigint(20) UNSIGNED NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `purchase_order_payments`
+--
+
+INSERT INTO `purchase_order_payments` (`id`, `purchase_order_id`, `payment_date`, `amount`, `payment_method`, `bank_id`, `reference_number`, `cheque_number`, `expense_id`, `notes`, `created_by`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 1, '2026-01-22', 19014.00, 'bank_transfer', 1, '738373123', NULL, 1, 'testst', 1, '2026-01-22 18:08:40', '2026-01-22 18:08:40', NULL),
+(2, 1, '2026-01-23', 171132.00, 'cash', NULL, NULL, NULL, 2, NULL, 1, '2026-01-23 06:19:15', '2026-01-23 07:13:42', '2026-01-23 07:13:42');
 
 -- --------------------------------------------------------
 
@@ -24159,7 +24602,9 @@ INSERT INTO `roles` (`id`, `name`, `guard_name`, `created_at`, `updated_at`) VAL
 (10, 'RADIOLOGIST', 'web', '2023-03-06 16:58:45', '2023-03-06 16:58:45'),
 (11, 'STORE', 'web', '2023-03-06 16:59:06', '2023-03-06 16:59:06'),
 (12, 'SUPERADMIN', 'web', '2023-07-26 11:20:14', '2023-07-26 11:20:14'),
-(13, 'HMO Executive', 'web', '2026-01-05 23:22:31', '2026-01-05 23:22:31');
+(13, 'HMO Executive', 'web', '2026-01-05 23:22:31', '2026-01-05 23:22:31'),
+(14, 'HR MANAGER', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21'),
+(15, 'PAYROLL APPROVER', 'web', '2026-01-23 11:34:21', '2026-01-23 11:34:21');
 
 -- --------------------------------------------------------
 
@@ -24258,51 +24703,290 @@ INSERT INTO `role_has_permissions` (`permission_id`, `role_id`) VALUES
 (17, 3),
 (17, 9),
 (17, 12),
+(18, 1),
+(18, 12),
 (18, 13),
+(19, 1),
+(19, 12),
 (19, 13),
+(20, 1),
+(20, 12),
 (20, 13),
+(21, 1),
+(21, 12),
 (21, 13),
+(22, 1),
+(22, 12),
 (22, 13),
 (23, 1),
 (23, 5),
+(23, 12),
 (24, 1),
+(24, 12),
 (25, 1),
+(25, 12),
 (26, 1),
+(26, 12),
 (27, 1),
+(27, 12),
 (28, 1),
+(28, 12),
 (29, 1),
+(29, 12),
 (30, 1),
+(30, 12),
 (31, 1),
 (31, 5),
 (31, 9),
+(31, 12),
 (32, 1),
 (32, 5),
 (32, 9),
+(32, 12),
 (33, 1),
+(33, 12),
 (34, 1),
+(34, 12),
 (35, 1),
+(35, 12),
 (36, 1),
+(36, 12),
 (37, 1),
 (37, 5),
+(37, 12),
 (38, 1),
+(38, 12),
 (39, 1),
+(39, 12),
 (40, 1),
+(40, 12),
 (41, 1),
+(41, 12),
 (42, 1),
+(42, 12),
 (43, 1),
+(43, 12),
 (44, 1),
+(44, 12),
 (45, 1),
+(45, 12),
 (46, 1),
+(46, 12),
 (47, 1),
+(47, 12),
 (48, 1),
+(48, 12),
 (49, 1),
+(49, 12),
 (50, 1),
+(50, 12),
 (51, 1),
 (51, 5),
 (51, 9),
+(51, 12),
 (52, 1),
+(52, 12),
 (53, 1),
-(53, 5);
+(53, 5),
+(53, 12),
+(54, 1),
+(54, 12),
+(54, 14),
+(55, 1),
+(55, 12),
+(55, 14),
+(56, 1),
+(56, 12),
+(56, 14),
+(57, 1),
+(57, 12),
+(57, 14),
+(58, 1),
+(58, 12),
+(58, 14),
+(59, 1),
+(59, 2),
+(59, 3),
+(59, 5),
+(59, 6),
+(59, 8),
+(59, 9),
+(59, 10),
+(59, 12),
+(59, 14),
+(60, 1),
+(60, 12),
+(60, 14),
+(61, 1),
+(61, 2),
+(61, 3),
+(61, 5),
+(61, 6),
+(61, 8),
+(61, 9),
+(61, 10),
+(61, 12),
+(61, 14),
+(62, 1),
+(62, 12),
+(62, 14),
+(63, 1),
+(63, 12),
+(63, 14),
+(64, 1),
+(64, 2),
+(64, 3),
+(64, 5),
+(64, 6),
+(64, 8),
+(64, 9),
+(64, 10),
+(64, 12),
+(64, 14),
+(65, 1),
+(65, 12),
+(65, 14),
+(66, 1),
+(66, 12),
+(66, 14),
+(67, 1),
+(67, 2),
+(67, 3),
+(67, 5),
+(67, 6),
+(67, 8),
+(67, 9),
+(67, 10),
+(67, 12),
+(67, 14),
+(68, 1),
+(68, 12),
+(68, 14),
+(69, 1),
+(69, 12),
+(69, 14),
+(70, 1),
+(70, 12),
+(70, 14),
+(71, 1),
+(71, 12),
+(71, 14),
+(72, 1),
+(72, 12),
+(72, 14),
+(73, 1),
+(73, 12),
+(73, 14),
+(74, 1),
+(74, 12),
+(74, 14),
+(75, 1),
+(75, 2),
+(75, 3),
+(75, 5),
+(75, 6),
+(75, 8),
+(75, 9),
+(75, 10),
+(75, 12),
+(75, 14),
+(76, 1),
+(76, 12),
+(76, 14),
+(77, 1),
+(77, 12),
+(77, 14),
+(78, 1),
+(78, 12),
+(78, 14),
+(79, 1),
+(79, 12),
+(79, 14),
+(80, 1),
+(80, 12),
+(80, 14),
+(81, 1),
+(81, 12),
+(81, 14),
+(82, 1),
+(82, 12),
+(82, 14),
+(83, 1),
+(83, 12),
+(83, 14),
+(84, 1),
+(84, 12),
+(84, 14),
+(85, 1),
+(85, 12),
+(85, 14),
+(86, 1),
+(86, 12),
+(86, 14),
+(87, 1),
+(87, 12),
+(87, 14),
+(88, 1),
+(88, 12),
+(88, 14),
+(89, 1),
+(89, 12),
+(89, 14),
+(90, 1),
+(90, 12),
+(90, 14),
+(91, 1),
+(91, 12),
+(91, 14),
+(91, 15),
+(92, 1),
+(92, 12),
+(92, 14),
+(93, 1),
+(93, 12),
+(93, 14),
+(94, 1),
+(94, 12),
+(94, 14),
+(95, 1),
+(95, 12),
+(95, 14),
+(96, 1),
+(96, 12),
+(96, 15),
+(97, 1),
+(97, 12),
+(97, 15),
+(98, 1),
+(98, 12),
+(98, 14),
+(98, 15),
+(99, 1),
+(99, 12),
+(99, 14),
+(100, 1),
+(100, 12),
+(100, 14),
+(101, 1),
+(101, 2),
+(101, 3),
+(101, 5),
+(101, 6),
+(101, 8),
+(101, 9),
+(101, 10),
+(101, 12),
+(101, 14),
+(102, 1),
+(102, 2),
+(102, 3),
+(102, 5),
+(102, 6),
+(102, 8),
+(102, 9),
+(102, 10),
+(102, 12),
+(102, 14);
 
 -- --------------------------------------------------------
 
@@ -24669,6 +25353,7 @@ INSERT INTO `specializations` (`id`, `name`, `status`, `created_at`, `updated_at
 
 CREATE TABLE `staff` (
   `id` bigint(20) UNSIGNED NOT NULL,
+  `employee_id` varchar(255) DEFAULT NULL,
   `user_id` bigint(20) UNSIGNED NOT NULL,
   `specialization_id` bigint(20) UNSIGNED DEFAULT NULL,
   `clinic_id` bigint(20) UNSIGNED DEFAULT NULL,
@@ -24680,6 +25365,23 @@ CREATE TABLE `staff` (
   `is_unit_head` tinyint(1) NOT NULL DEFAULT 0,
   `is_dept_head` tinyint(1) NOT NULL DEFAULT 0,
   `status` int(11) NOT NULL DEFAULT 1,
+  `date_hired` date DEFAULT NULL,
+  `date_confirmed` date DEFAULT NULL,
+  `employment_type` enum('full_time','part_time','contract','intern') NOT NULL DEFAULT 'full_time',
+  `employment_status` enum('active','suspended','terminated','resigned') NOT NULL DEFAULT 'active',
+  `bank_name` varchar(255) DEFAULT NULL,
+  `bank_account_number` varchar(255) DEFAULT NULL,
+  `bank_account_name` varchar(255) DEFAULT NULL,
+  `emergency_contact_name` varchar(255) DEFAULT NULL,
+  `emergency_contact_phone` varchar(255) DEFAULT NULL,
+  `emergency_contact_relationship` varchar(255) DEFAULT NULL,
+  `tax_id` varchar(255) DEFAULT NULL,
+  `pension_id` varchar(255) DEFAULT NULL,
+  `hr_notes` text DEFAULT NULL,
+  `suspended_at` timestamp NULL DEFAULT NULL,
+  `suspended_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `suspension_reason` text DEFAULT NULL,
+  `suspension_end_date` date DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `old_user_id` int(11) DEFAULT NULL
@@ -24689,75 +25391,166 @@ CREATE TABLE `staff` (
 -- Dumping data for table `staff`
 --
 
-INSERT INTO `staff` (`id`, `user_id`, `specialization_id`, `clinic_id`, `gender`, `date_of_birth`, `home_address`, `phone_number`, `consultation_fee`, `is_unit_head`, `is_dept_head`, `status`, `created_at`, `updated_at`, `old_user_id`) VALUES
-(1, 1, NULL, NULL, 'Male', '2025-05-31 23:00:00', 'jos', '0810000000', 0.00, 1, 1, 1, NULL, '2026-01-13 07:44:11', 58),
-(2, 2, NULL, NULL, 'Others', NULL, NULL, '08160258090', 0.00, 0, 0, 1, NULL, NULL, 59),
-(3, 3, NULL, NULL, 'Others', NULL, NULL, '07035412086', 0.00, 0, 0, 1, NULL, NULL, 60),
-(4, 4, NULL, NULL, 'Others', NULL, NULL, '07034779534', 0.00, 0, 0, 1, NULL, NULL, 61),
-(5, 5, NULL, NULL, 'Others', NULL, NULL, '08069637205', 0.00, 0, 0, 1, NULL, NULL, 62),
-(6, 6, NULL, NULL, 'Others', NULL, NULL, '08163013587', 0.00, 0, 0, 1, NULL, NULL, 63),
-(7, 7, 2, 1, 'Male', '1995-12-16 23:00:00', 'Bida Bidi, Jos North LGA', '08055855367', 4.00, 0, 0, 1, NULL, NULL, 67),
-(8, 8, NULL, NULL, 'Others', NULL, NULL, '08132309188', 0.00, 0, 0, 1, NULL, NULL, 68),
-(9, 9, 2, 1, 'Male', '1995-01-20 23:00:00', '26, Church street Jos', '08168403497', 4.00, 0, 0, 1, NULL, NULL, 74),
-(10, 10, NULL, NULL, 'Others', NULL, NULL, '09136696582', 0.00, 0, 0, 1, NULL, NULL, 75),
-(11, 11, NULL, NULL, 'Others', NULL, NULL, '08064177233', 0.00, 0, 0, 1, NULL, NULL, 77),
-(12, 12, 2, 1, 'Female', '1992-06-17 23:00:00', 'Latya Guratop, Jos', '09156355633', 4.00, 0, 0, 1, NULL, NULL, 78),
-(13, 13, NULL, NULL, 'Others', NULL, NULL, '07035643507', 0.00, 0, 0, 1, NULL, NULL, 85),
-(14, 14, NULL, NULL, 'Others', NULL, NULL, '081123456789', 0.00, 0, 0, 1, NULL, NULL, 129),
-(15, 15, NULL, NULL, 'Others', NULL, NULL, '07067552211', 0.00, 0, 0, 1, NULL, NULL, 134),
-(16, 16, NULL, NULL, 'Others', NULL, NULL, '08108036463', 0.00, 0, 0, 1, NULL, NULL, 135),
-(17, 17, NULL, NULL, 'Others', NULL, NULL, '07034245252', 0.00, 0, 0, 1, NULL, NULL, 140),
-(18, 18, 11, 9, 'Male', '2022-08-28 23:00:00', 'jos', '08037010243', 5000.00, 0, 0, 1, NULL, NULL, 144),
-(19, 19, 1, 8, 'Male', '0000-00-00 00:00:00', 'Diye Bay, Zarmaganda Jos', '08037010988', 5000.00, 0, 0, 1, NULL, NULL, 159),
-(20, 20, 11, 9, 'Male', '1972-06-10 23:00:00', 'E21 Laminga estate, Lamingo, Jos\r\n\r\n&amp;nbsp;', '08034502746', 4000.00, 0, 0, 1, NULL, NULL, 185),
-(21, 21, NULL, NULL, 'Others', NULL, NULL, '08165243457', 0.00, 0, 0, 1, NULL, NULL, 187),
-(22, 22, NULL, NULL, 'Others', NULL, NULL, '08159095479', 0.00, 0, 0, 1, NULL, NULL, 188),
-(23, 23, 15, 15, 'Male', '1984-08-31 23:00:00', 'Opirikwu village, Odiapa-Ito, Obi LGA, Benue state.', '08069217904', 5000.00, 0, 0, 1, NULL, NULL, 209),
-(24, 24, 13, 2, 'Male', '2022-05-31 23:00:00', '7c hospital place jos', '08063146341', 4000.00, 0, 0, 1, NULL, NULL, 215),
-(25, 25, NULL, NULL, 'Others', NULL, NULL, '08163324099', 0.00, 0, 0, 1, NULL, NULL, 267),
-(26, 26, NULL, NULL, 'Others', NULL, NULL, '07030086464', 0.00, 0, 0, 1, NULL, NULL, 268),
-(27, 27, NULL, NULL, 'Others', NULL, NULL, '08060840232', 0.00, 0, 0, 1, NULL, NULL, 269),
-(28, 28, NULL, NULL, 'Others', NULL, NULL, '08036775475', 0.00, 0, 0, 1, NULL, NULL, 350),
-(29, 29, 16, 13, 'Male', '0000-00-00 00:00:00', 'Gura Topp Rayfield&amp;nbsp; Jos.', '08061218727', 4000.00, 0, 0, 1, NULL, NULL, 447),
-(30, 30, 1, 8, 'Female', '1983-11-25 23:00:00', 'DUALA BARRACKS DOGON DUTSE JOS', '08033803872', 4000.00, 0, 0, 1, NULL, NULL, 462),
-(31, 31, 1, 8, 'Male', '1980-04-16 23:00:00', 'Angwan Makeri Rantya, Jos', '08065360052', 4000.00, 0, 0, 1, NULL, NULL, 709),
-(32, 32, NULL, NULL, 'Others', NULL, NULL, '08107757388', 0.00, 0, 0, 1, NULL, NULL, 749),
-(33, 33, 1, 8, 'Male', '1984-11-02 23:00:00', 'Rayfield, jos', '+2348060522983', 4000.00, 0, 0, 1, NULL, NULL, 750),
-(34, 34, 1, 8, 'Male', '0000-00-00 00:00:00', 'No 14, Rayfield-Zarmaganda road, Fwavei, Rayfield, Jos', '08035994898', 4000.00, 0, 0, 1, NULL, NULL, 867),
-(35, 35, 11, 16, 'Male', '2022-09-30 23:00:00', 'Rantya, jos', '08066052254', 5000.00, 0, 0, 1, NULL, NULL, 888),
-(36, 36, 14, 14, 'Male', '1980-11-30 23:00:00', 'Behind st. Fimbar&#039;s Catholic Church Fwavei Rayfield, Jos', '08035937579', 4000.00, 0, 0, 1, NULL, NULL, 916),
-(37, 37, 7, 11, 'Male', '2022-12-29 23:00:00', 'Jos', '08060030649', 5000.00, 0, 0, 1, NULL, NULL, 917),
-(38, 38, NULL, NULL, 'Others', NULL, NULL, '08065806215', 0.00, 0, 0, 1, NULL, NULL, 927),
-(39, 39, NULL, NULL, 'Others', NULL, NULL, '08035976165', 0.00, 0, 0, 1, NULL, NULL, 934),
-(40, 40, 1, 8, 'Female', '2022-12-15 23:00:00', 'jos', 'O8166016875', 5000.00, 0, 0, 1, NULL, NULL, 1392),
-(41, 41, NULL, NULL, 'Others', NULL, NULL, '07030238110', 0.00, 0, 0, 1, NULL, NULL, 1393),
-(42, 42, NULL, NULL, 'Others', NULL, NULL, '08037010988', 0.00, 0, 0, 1, NULL, NULL, 1449),
-(43, 43, NULL, NULL, 'Others', NULL, NULL, '08037010988', 0.00, 0, 0, 1, NULL, NULL, 1450),
-(44, 44, 2, 1, 'Female', '2022-05-31 23:00:00', 'jos', '08106064115', 5000.00, 0, 0, 1, NULL, NULL, 1468),
-(45, 45, 2, 1, 'Male', '1990-04-15 23:00:00', 'jos', '08061906539', 5.00, 0, 0, 1, NULL, NULL, 1469),
-(46, 46, 0, 1, 'Female', '1993-04-26 23:00:00', 'Jos', '08167373005', 0.00, 0, 0, 1, NULL, NULL, 1484),
-(47, 47, NULL, NULL, 'Others', NULL, NULL, '08176193330', 0.00, 0, 0, 1, NULL, NULL, 1574),
-(48, 48, 2, 1, 'Male', '1994-04-16 23:00:00', 'Same as Contact Address', '08148158104', 5000.00, 0, 0, 1, NULL, NULL, 1583),
-(49, 49, NULL, NULL, 'Others', NULL, NULL, '07068620564', 0.00, 0, 0, 1, NULL, NULL, 1690),
-(50, 50, 13, 2, 'Male', '2022-11-01 23:00:00', 'Gold and Base, Jos\r\n\r\n&amp;nbsp;', '08032790813', 5000.00, 0, 0, 1, NULL, NULL, 1890),
-(51, 51, 11, 9, 'Male', '1987-11-13 23:00:00', 'Gwafan estate Haske Lamingo, Jos', '08065072651', 5000.00, 0, 0, 1, NULL, NULL, 1936),
-(52, 52, 13, 2, 'Male', '1988-12-31 23:00:00', 'Jos', '08032790813', 5000.00, 0, 0, 1, NULL, NULL, 1939),
-(53, 53, 1, 8, 'Male', '1984-03-28 23:00:00', 'Jos', '08037022775', 5000.00, 0, 0, 1, NULL, NULL, 1940),
-(54, 54, 10, 17, 'Male', '1990-07-28 23:00:00', 'Fan-milk junction, Zarmaganda, Jos', '07088111868', 5000.00, 0, 0, 1, NULL, NULL, 2030),
-(55, 55, 0, 1, 'Female', '2022-12-18 23:00:00', 'JOs', '07037447458', 0.00, 0, 0, 1, NULL, NULL, 2142),
-(56, 56, NULL, NULL, 'Others', NULL, NULL, '08165354589', 0.00, 0, 0, 1, NULL, NULL, 2220),
-(57, 57, 2, 19, 'Male', '1975-06-25 23:00:00', 'Zarazong, Jos East', '08028438717', 5000.00, 0, 0, 1, NULL, NULL, 2234),
-(58, 58, 0, 1, 'Female', '2003-07-21 23:00:00', 'JOs', '07039062948', 0.00, 0, 0, 1, NULL, NULL, 2308),
-(59, 59, NULL, NULL, 'Others', NULL, NULL, '08133002060', 0.00, 0, 0, 1, NULL, NULL, 2431),
-(60, 60, 0, 1, 'Female', '1995-11-27 23:00:00', 'JOS', '08107623025', 0.00, 0, 0, 1, NULL, NULL, 2530),
-(61, 61, 10, 18, 'Male', '2023-04-26 23:00:00', 'JOS', '08069634805', 5000.00, 0, 0, 1, NULL, NULL, 2595),
-(62, 62, NULL, NULL, 'Others', NULL, NULL, '08035003495', 0.00, 0, 0, 1, NULL, NULL, 2656),
-(63, 63, 1, 8, 'Male', '0000-00-00 00:00:00', 'Jos', '08063208363', 5000.00, 0, 0, 1, NULL, NULL, 2707),
-(64, 64, 2, 1, 'Female', '1993-02-06 23:00:00', 'State lowcost&amp;nbsp;Akwanga&amp;nbsp;Nasarawa.', '08101191500', 5000.00, 0, 0, 1, NULL, NULL, 2828),
-(65, 65, 2, 1, 'Female', '2023-06-30 23:00:00', 'Jos', '08121074489', 5000.00, 0, 0, 1, NULL, NULL, 2955),
-(66, 66, 15, 17, 'Male', '2023-08-04 23:00:00', 'jos', '08036889486', 5000.00, 0, 0, 1, NULL, NULL, 3056),
-(67, 67, 11, 9, 'Male', '2023-05-21 23:00:00', 'Jos', '08069624461', 5000.00, 0, 0, 1, NULL, NULL, 3061),
-(68, 68, NULL, NULL, 'Others', NULL, NULL, '08068137605', 0.00, 0, 0, 1, NULL, NULL, 3062);
+INSERT INTO `staff` (`id`, `employee_id`, `user_id`, `specialization_id`, `clinic_id`, `gender`, `date_of_birth`, `home_address`, `phone_number`, `consultation_fee`, `is_unit_head`, `is_dept_head`, `status`, `date_hired`, `date_confirmed`, `employment_type`, `employment_status`, `bank_name`, `bank_account_number`, `bank_account_name`, `emergency_contact_name`, `emergency_contact_phone`, `emergency_contact_relationship`, `tax_id`, `pension_id`, `hr_notes`, `suspended_at`, `suspended_by`, `suspension_reason`, `suspension_end_date`, `created_at`, `updated_at`, `old_user_id`) VALUES
+(1, NULL, 1, NULL, NULL, 'Male', '2025-05-31 23:00:00', 'jos', '0810000000', 0.00, 1, 1, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-13 07:44:11', 58),
+(2, NULL, 2, NULL, NULL, 'Others', NULL, NULL, '08160258090', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 59),
+(3, NULL, 3, NULL, NULL, 'Others', NULL, NULL, '07035412086', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 60),
+(4, NULL, 4, NULL, NULL, 'Others', NULL, NULL, '07034779534', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 61),
+(5, NULL, 5, NULL, NULL, 'Others', NULL, NULL, '08069637205', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 62),
+(6, NULL, 6, NULL, NULL, 'Others', NULL, NULL, '08163013587', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 63),
+(7, NULL, 7, 2, 1, 'Male', '1995-12-16 23:00:00', 'Bida Bidi, Jos North LGA', '08055855367', 4.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 67),
+(8, NULL, 8, NULL, NULL, 'Others', NULL, NULL, '08132309188', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 68),
+(9, NULL, 9, 2, 1, 'Male', '1995-01-20 23:00:00', '26, Church street Jos', '08168403497', 4.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 74),
+(10, NULL, 10, NULL, NULL, 'Others', NULL, NULL, '09136696582', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 75),
+(11, NULL, 11, NULL, NULL, 'Others', NULL, NULL, '08064177233', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 77),
+(12, NULL, 12, 2, 1, 'Female', '1992-06-17 23:00:00', 'Latya Guratop, Jos', '09156355633', 4.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 78),
+(13, NULL, 13, NULL, NULL, 'Others', NULL, NULL, '07035643507', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 85),
+(14, NULL, 14, NULL, NULL, 'Others', NULL, NULL, '081123456789', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 129),
+(15, NULL, 15, NULL, NULL, 'Others', NULL, NULL, '07067552211', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 134),
+(16, NULL, 16, NULL, NULL, 'Others', NULL, NULL, '08108036463', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 135),
+(17, NULL, 17, NULL, NULL, 'Others', NULL, NULL, '07034245252', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 140),
+(18, NULL, 18, 11, 9, 'Male', '2022-08-28 23:00:00', 'jos', '08037010243', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 144),
+(19, NULL, 19, 1, 8, 'Male', NULL, 'Diye Bay, Zarmaganda Jos', '08037010988', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 159),
+(20, NULL, 20, 11, 9, 'Male', '1972-06-10 23:00:00', 'E21 Laminga estate, Lamingo, Jos\r\n\r\n&amp;nbsp;', '08034502746', 4000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 185),
+(21, NULL, 21, NULL, NULL, 'Others', NULL, NULL, '08165243457', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 187),
+(22, NULL, 22, NULL, NULL, 'Others', NULL, NULL, '08159095479', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 188),
+(23, NULL, 23, 15, 15, 'Male', '1984-08-31 23:00:00', 'Opirikwu village, Odiapa-Ito, Obi LGA, Benue state.', '08069217904', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 209),
+(24, NULL, 24, 13, 2, 'Male', '2022-05-31 23:00:00', '7c hospital place jos', '08063146341', 4000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 215),
+(25, NULL, 25, NULL, NULL, 'Others', NULL, NULL, '08163324099', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 267),
+(26, NULL, 26, NULL, NULL, 'Others', NULL, NULL, '07030086464', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 268),
+(27, NULL, 27, NULL, NULL, 'Others', NULL, NULL, '08060840232', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 269),
+(28, NULL, 28, NULL, NULL, 'Others', NULL, NULL, '08036775475', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 350),
+(29, NULL, 29, 16, 13, 'Male', NULL, 'Gura Topp Rayfield&amp;nbsp; Jos.', '08061218727', 4000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 447),
+(30, NULL, 30, 1, 8, 'Female', '1983-11-25 23:00:00', 'DUALA BARRACKS DOGON DUTSE JOS', '08033803872', 4000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 462),
+(31, NULL, 31, 1, 8, 'Male', '1980-04-16 23:00:00', 'Angwan Makeri Rantya, Jos', '08065360052', 4000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 709),
+(32, NULL, 32, NULL, NULL, 'Others', NULL, NULL, '08107757388', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 749),
+(33, NULL, 33, 1, 8, 'Male', '1984-11-02 23:00:00', 'Rayfield, jos', '+2348060522983', 4000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 750),
+(34, NULL, 34, 1, 8, 'Male', NULL, 'No 14, Rayfield-Zarmaganda road, Fwavei, Rayfield, Jos', '08035994898', 4000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 867),
+(35, NULL, 35, 11, 16, 'Male', '2022-09-30 23:00:00', 'Rantya, jos', '08066052254', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 888),
+(36, NULL, 36, 14, 14, 'Male', '1980-11-30 23:00:00', 'Behind st. Fimbar&#039;s Catholic Church Fwavei Rayfield, Jos', '08035937579', 4000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 916),
+(37, NULL, 37, 7, 11, 'Male', '2022-12-29 23:00:00', 'Jos', '08060030649', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 917),
+(38, NULL, 38, NULL, NULL, 'Others', NULL, NULL, '08065806215', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 927),
+(39, NULL, 39, NULL, NULL, 'Others', NULL, NULL, '08035976165', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 934),
+(40, NULL, 40, 1, 8, 'Female', '2022-12-15 23:00:00', 'jos', 'O8166016875', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1392),
+(41, NULL, 41, NULL, NULL, 'Others', NULL, NULL, '07030238110', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1393),
+(42, NULL, 42, NULL, NULL, 'Others', NULL, NULL, '08037010988', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1449),
+(43, NULL, 43, NULL, NULL, 'Others', NULL, NULL, '08037010988', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1450),
+(44, NULL, 44, 2, 1, 'Female', '2022-05-31 23:00:00', 'jos', '08106064115', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1468),
+(45, NULL, 45, 2, 1, 'Male', '1990-04-15 23:00:00', 'jos', '08061906539', 5.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1469),
+(46, NULL, 46, 0, 1, 'Female', '1993-04-26 23:00:00', 'Jos', '08167373005', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1484),
+(47, NULL, 47, NULL, NULL, 'Others', NULL, NULL, '08176193330', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1574),
+(48, NULL, 48, 2, 1, 'Male', '1994-04-16 23:00:00', 'Same as Contact Address', '08148158104', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1583),
+(49, NULL, 49, NULL, NULL, 'Others', NULL, NULL, '07068620564', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1690),
+(50, NULL, 50, 13, 2, 'Male', '2022-11-01 23:00:00', 'Gold and Base, Jos\r\n\r\n&amp;nbsp;', '08032790813', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1890),
+(51, NULL, 51, 11, 9, 'Male', '1987-11-13 23:00:00', 'Gwafan estate Haske Lamingo, Jos', '08065072651', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1936),
+(52, NULL, 52, 13, 2, 'Male', '1988-12-31 23:00:00', 'Jos', '08032790813', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1939),
+(53, NULL, 53, 1, 8, 'Male', '1984-03-28 23:00:00', 'Jos', '08037022775', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1940),
+(54, NULL, 54, 10, 17, 'Male', '1990-07-28 23:00:00', 'Fan-milk junction, Zarmaganda, Jos', '07088111868', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2030),
+(55, NULL, 55, 0, 1, 'Female', '2022-12-18 23:00:00', 'JOs', '07037447458', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2142),
+(56, NULL, 56, NULL, NULL, 'Others', NULL, NULL, '08165354589', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2220),
+(57, NULL, 57, 2, 19, 'Male', '1975-06-25 23:00:00', 'Zarazong, Jos East', '08028438717', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2234),
+(58, NULL, 58, 0, 1, 'Female', '2003-07-21 23:00:00', 'JOs', '07039062948', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2308),
+(59, NULL, 59, NULL, NULL, 'Others', NULL, NULL, '08133002060', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2431),
+(60, NULL, 60, 0, 1, 'Female', '1995-11-27 23:00:00', 'JOS', '08107623025', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2530),
+(61, NULL, 61, 10, 18, 'Male', '2023-04-26 23:00:00', 'JOS', '08069634805', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2595),
+(62, NULL, 62, NULL, NULL, 'Others', NULL, NULL, '08035003495', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2656),
+(63, NULL, 63, 1, 8, 'Male', NULL, 'Jos', '08063208363', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2707),
+(64, NULL, 64, 2, 1, 'Female', '1993-02-06 23:00:00', 'State lowcost&amp;nbsp;Akwanga&amp;nbsp;Nasarawa.', '08101191500', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2828),
+(65, NULL, 65, 2, 1, 'Female', '2023-06-30 23:00:00', 'Jos', '08121074489', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2955),
+(66, NULL, 66, 15, 17, 'Male', '2023-08-04 23:00:00', 'jos', '08036889486', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3056),
+(67, NULL, 67, 11, 9, 'Male', '2023-05-21 23:00:00', 'Jos', '08069624461', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3061),
+(68, NULL, 68, NULL, NULL, 'Others', NULL, NULL, '08068137605', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3062);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `staff_salary_profiles`
+--
+
+CREATE TABLE `staff_salary_profiles` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `staff_id` bigint(20) UNSIGNED NOT NULL,
+  `basic_salary` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `pay_frequency` enum('monthly','bi_weekly','weekly') NOT NULL DEFAULT 'monthly',
+  `effective_from` date NOT NULL,
+  `effective_to` date DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `notes` text DEFAULT NULL,
+  `created_by` bigint(20) UNSIGNED NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `staff_salary_profile_items`
+--
+
+CREATE TABLE `staff_salary_profile_items` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `salary_profile_id` bigint(20) UNSIGNED NOT NULL,
+  `pay_head_id` bigint(20) UNSIGNED NOT NULL,
+  `calculation_type` enum('fixed','percentage','formula') NOT NULL DEFAULT 'fixed',
+  `calculation_base` varchar(255) DEFAULT NULL,
+  `value` decimal(15,4) NOT NULL DEFAULT 0.0000,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `staff_suspensions`
+--
+
+CREATE TABLE `staff_suspensions` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `suspension_number` varchar(255) NOT NULL,
+  `staff_id` bigint(20) UNSIGNED NOT NULL,
+  `disciplinary_query_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `type` enum('paid','unpaid') NOT NULL DEFAULT 'unpaid',
+  `start_date` date NOT NULL,
+  `end_date` date DEFAULT NULL,
+  `reason` text NOT NULL,
+  `suspension_message` text NOT NULL,
+  `status` enum('active','lifted','expired') NOT NULL DEFAULT 'active',
+  `lifted_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `lifted_at` timestamp NULL DEFAULT NULL,
+  `lift_reason` text DEFAULT NULL,
+  `issued_by` bigint(20) UNSIGNED NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `staff_terminations`
+--
+
+CREATE TABLE `staff_terminations` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `termination_number` varchar(255) NOT NULL,
+  `staff_id` bigint(20) UNSIGNED NOT NULL,
+  `disciplinary_query_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `type` enum('voluntary','involuntary','retirement','death','contract_end') NOT NULL DEFAULT 'voluntary',
+  `reason_category` enum('resignation','misconduct','poor_performance','redundancy','retirement','medical','death','contract_expiry','other') NOT NULL,
+  `reason_details` text NOT NULL,
+  `notice_date` date NOT NULL,
+  `effective_date` date NOT NULL,
+  `last_working_day` date NOT NULL,
+  `exit_interview_conducted` tinyint(1) NOT NULL DEFAULT 0,
+  `exit_interview_notes` text DEFAULT NULL,
+  `clearance_completed` tinyint(1) NOT NULL DEFAULT 0,
+  `final_payment_processed` tinyint(1) NOT NULL DEFAULT 0,
+  `processed_by` bigint(20) UNSIGNED NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -24885,7 +25678,7 @@ INSERT INTO `stocks` (`id`, `product_id`, `initial_quantity`, `order_quantity`, 
 (101, 0, 0, 0, 0, 0, NULL, NULL, 101),
 (102, 56, 0, 20, 20, 0, NULL, NULL, 102),
 (103, 57, 20, 70, 80, 10, NULL, NULL, 103),
-(104, 58, 76, 30, 102, 5, NULL, '2026-01-21 09:01:50', 104),
+(104, 58, 102, 77, 179, 5, NULL, '2026-01-22 05:49:49', 104),
 (105, 59, 0, 45, 43, 1, NULL, '2026-01-14 14:22:31', 105),
 (106, 60, 0, 20, 20, 0, NULL, NULL, 106),
 (107, 61, 0, 40, 39, 1, NULL, NULL, 107),
@@ -25040,6 +25833,7 @@ CREATE TABLE `stock_batches` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `product_id` bigint(20) UNSIGNED NOT NULL,
   `store_id` bigint(20) UNSIGNED NOT NULL,
+  `supplier_id` bigint(20) UNSIGNED DEFAULT NULL,
   `batch_name` varchar(255) NOT NULL,
   `batch_number` varchar(255) DEFAULT NULL,
   `initial_qty` int(11) NOT NULL,
@@ -25062,11 +25856,19 @@ CREATE TABLE `stock_batches` (
 -- Dumping data for table `stock_batches`
 --
 
-INSERT INTO `stock_batches` (`id`, `product_id`, `store_id`, `batch_name`, `batch_number`, `initial_qty`, `current_qty`, `sold_qty`, `cost_price`, `expiry_date`, `received_date`, `source`, `purchase_order_item_id`, `source_requisition_id`, `created_by`, `is_active`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 2, 1, 'Legacy Stock - Centeral', 'LEGACY-STR-2', 158, 158, 0, 0.00, NULL, '2026-01-21', 'manual', NULL, NULL, 1, 1, '2026-01-21 21:55:13', '2026-01-21 21:55:13', NULL),
-(2, 2, 2, 'Legacy Stock - Pharmacy', 'LEGACY-PHR-2', 9, 9, 0, 0.00, NULL, '2026-01-21', 'manual', NULL, NULL, 1, 1, '2026-01-21 21:55:13', '2026-01-21 21:55:13', NULL),
-(3, 3, 1, 'Legacy Stock - Centeral', 'LEGACY-STR-3', 387, 387, 0, 0.00, NULL, '2026-01-21', 'manual', NULL, NULL, 1, 1, '2026-01-21 21:55:13', '2026-01-21 21:55:13', NULL),
-(4, 4, 2, 'Legacy Stock - Pharmacy', 'LEGACY-PHR-4', 20, 20, 0, 0.00, NULL, '2026-01-21', 'manual', NULL, NULL, 1, 1, '2026-01-21 21:55:13', '2026-01-21 21:55:13', NULL);
+INSERT INTO `stock_batches` (`id`, `product_id`, `store_id`, `supplier_id`, `batch_name`, `batch_number`, `initial_qty`, `current_qty`, `sold_qty`, `cost_price`, `expiry_date`, `received_date`, `source`, `purchase_order_item_id`, `source_requisition_id`, `created_by`, `is_active`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 2, 1, NULL, 'Legacy Stock - Centeral', 'LEGACY-STR-2', 158, 138, 20, 0.00, NULL, '2026-01-21', 'manual', NULL, NULL, 1, 1, '2026-01-21 21:55:13', '2026-01-22 11:13:55', NULL),
+(2, 2, 2, NULL, 'Legacy Stock - Pharmacy', 'LEGACY-PHR-2', 9, 9, 0, 0.00, NULL, '2026-01-21', 'manual', NULL, NULL, 1, 1, '2026-01-21 21:55:13', '2026-01-21 21:55:13', NULL),
+(3, 3, 1, NULL, 'Legacy Stock - Centeral', 'LEGACY-STR-3', 387, 384, 3, 0.00, NULL, '2026-01-21', 'manual', NULL, NULL, 1, 1, '2026-01-21 21:55:13', '2026-01-22 11:13:55', NULL),
+(4, 4, 2, NULL, 'Legacy Stock - Pharmacy', 'LEGACY-PHR-4', 20, 20, 0, 0.00, NULL, '2026-01-21', 'manual', NULL, NULL, 1, 1, '2026-01-21 21:55:13', '2026-01-21 21:55:13', NULL),
+(5, 58, 1, 1, 'gyy-20260122083638', 'gyy', 88, 88, 0, 6000.00, '2028-01-22', '2026-01-22', 'manual', NULL, NULL, 1, 1, '2026-01-22 07:36:38', '2026-01-22 07:36:38', NULL),
+(6, 58, 1, 1, 'gyyu-20260122083815', 'gyyu', 88, 88, 0, 6000.00, '2028-01-22', '2026-01-22', 'manual', NULL, NULL, 1, 1, '2026-01-22 07:38:15', '2026-01-22 07:38:15', NULL),
+(7, 59, 2, 1, 'ukkbbb-20260122085817', 'ukkbbb', 66, 66, 0, 68888.00, '2026-08-29', '2026-01-22', 'manual', NULL, NULL, 1, 1, '2026-01-22 07:58:17', '2026-01-22 07:58:17', NULL),
+(8, 2, 4, NULL, 'TRF-20260122121355-639-20260122121355', 'TRF-20260122121355-639', 20, 20, 0, 0.00, NULL, '2026-01-22', 'transfer_in', NULL, 1, 1, 1, '2026-01-22 11:13:55', '2026-01-22 11:13:55', NULL),
+(9, 3, 4, NULL, 'TRF-20260122121355-183-20260122121355', 'TRF-20260122121355-183', 3, 3, 0, 0.00, NULL, '2026-01-22', 'transfer_in', NULL, 1, 1, 1, '2026-01-22 11:13:55', '2026-01-22 11:13:55', NULL),
+(13, 139, 5, NULL, 'dashda-20260122185630', 'dashda', 88, 88, 0, 707.00, '2026-05-30', '2026-01-22', 'purchase_order', 3, NULL, 1, 1, '2026-01-22 17:56:30', '2026-01-22 17:56:30', NULL),
+(14, 114, 5, NULL, 'adkja-20260122185630', 'adkja', 99, 99, 0, 600.00, '2026-10-10', '2026-01-22', 'purchase_order', 4, NULL, 1, 1, '2026-01-22 17:56:30', '2026-01-22 17:56:30', NULL),
+(15, 147, 5, NULL, 'adka-20260122185630', 'adka', 89, 89, 0, 770.00, '2026-06-19', '2026-01-22', 'purchase_order', 5, NULL, 1, 1, '2026-01-22 17:56:30', '2026-01-22 17:56:30', NULL);
 
 -- --------------------------------------------------------
 
@@ -25096,7 +25898,17 @@ INSERT INTO `stock_batch_transactions` (`id`, `stock_batch_id`, `type`, `qty`, `
 (1, 1, 'in', 158, 158, 'Migration', NULL, 'Initial batch creation from legacy store stock', 1, '2026-01-21 21:55:13', '2026-01-21 21:55:13'),
 (2, 2, 'in', 9, 9, 'Migration', NULL, 'Initial batch creation from legacy store stock', 1, '2026-01-21 21:55:13', '2026-01-21 21:55:13'),
 (3, 3, 'in', 387, 387, 'Migration', NULL, 'Initial batch creation from legacy store stock', 1, '2026-01-21 21:55:13', '2026-01-21 21:55:13'),
-(4, 4, 'in', 20, 20, 'Migration', NULL, 'Initial batch creation from legacy store stock', 1, '2026-01-21 21:55:13', '2026-01-21 21:55:13');
+(4, 4, 'in', 20, 20, 'Migration', NULL, 'Initial batch creation from legacy store stock', 1, '2026-01-21 21:55:13', '2026-01-21 21:55:13'),
+(5, 5, 'in', 88, 88, NULL, NULL, 'Manual entry', 1, '2026-01-22 07:36:38', '2026-01-22 07:36:38'),
+(6, 6, 'in', 88, 88, NULL, NULL, 'Manual entry', 1, '2026-01-22 07:38:15', '2026-01-22 07:38:15'),
+(7, 7, 'in', 66, 66, NULL, NULL, 'Manual entry', 1, '2026-01-22 07:58:17', '2026-01-22 07:58:17'),
+(9, 1, 'transfer_out', 20, 138, 'App\\Models\\StoreRequisition', 1, 'Fulfilled from requisition: REQ2026010001 (Batch: LEGACY-STR-2)', 1, '2026-01-22 11:13:55', '2026-01-22 11:13:55'),
+(10, 8, 'in', 20, 20, 'App\\Models\\StoreRequisition', 1, 'Fulfilled from requisition: REQ2026010001 (Batch: LEGACY-STR-2)', 1, '2026-01-22 11:13:55', '2026-01-22 11:13:55'),
+(11, 3, 'transfer_out', 3, 384, 'App\\Models\\StoreRequisition', 1, 'Fulfilled from requisition: REQ2026010001 (Batch: LEGACY-STR-3)', 1, '2026-01-22 11:13:55', '2026-01-22 11:13:55'),
+(12, 9, 'in', 3, 3, 'App\\Models\\StoreRequisition', 1, 'Fulfilled from requisition: REQ2026010001 (Batch: LEGACY-STR-3)', 1, '2026-01-22 11:13:55', '2026-01-22 11:13:55'),
+(16, 13, 'in', 88, 88, 'App\\Models\\PurchaseOrder', 1, 'Received from PO: PO2026010001', 1, '2026-01-22 17:56:30', '2026-01-22 17:56:30'),
+(17, 14, 'in', 99, 99, 'App\\Models\\PurchaseOrder', 1, 'Received from PO: PO2026010001', 1, '2026-01-22 17:56:30', '2026-01-22 17:56:30'),
+(18, 15, 'in', 89, 89, 'App\\Models\\PurchaseOrder', 1, 'Received from PO: PO2026010001', 1, '2026-01-22 17:56:30', '2026-01-22 17:56:30');
 
 -- --------------------------------------------------------
 
@@ -25142,7 +25954,8 @@ CREATE TABLE `stock_orders` (
 INSERT INTO `stock_orders` (`id`, `invoice_id`, `product_id`, `order_quantity`, `total_amount`, `store_id`, `stock_date`, `created_at`, `updated_at`) VALUES
 (1, 22, 2, 100, 2000.00, 1, NULL, '2023-03-09 10:46:57', '2023-03-09 10:46:57'),
 (2, 22, 3, 388, 5000.00, 1, NULL, '2023-03-09 13:53:24', '2023-03-09 13:53:24'),
-(3, 22, 4, 20, 1000.00, 2, NULL, '2023-03-09 14:02:37', '2023-03-09 14:02:37');
+(3, 22, 4, 20, 1000.00, 2, NULL, '2023-03-09 14:02:37', '2023-03-09 14:02:37'),
+(4, 22, 58, 77, 7000.00, 1, NULL, '2026-01-22 05:49:49', '2026-01-22 05:49:49');
 
 -- --------------------------------------------------------
 
@@ -25202,6 +26015,13 @@ CREATE TABLE `store_requisitions` (
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `store_requisitions`
+--
+
+INSERT INTO `store_requisitions` (`id`, `requisition_number`, `from_store_id`, `to_store_id`, `requested_by`, `approved_by`, `rejected_by`, `fulfilled_by`, `status`, `request_notes`, `approval_notes`, `rejection_reason`, `approved_at`, `rejected_at`, `fulfilled_at`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'REQ2026010001', 1, 4, 1, 1, NULL, NULL, 'partial', NULL, 'test', NULL, '2026-01-22 10:58:23', NULL, NULL, '2026-01-22 10:45:19', '2026-01-22 11:13:55', NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -25222,6 +26042,14 @@ CREATE TABLE `store_requisition_items` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `store_requisition_items`
+--
+
+INSERT INTO `store_requisition_items` (`id`, `store_requisition_id`, `product_id`, `requested_qty`, `approved_qty`, `fulfilled_qty`, `source_batch_id`, `destination_batch_id`, `status`, `notes`, `created_at`, `updated_at`) VALUES
+(1, 1, 2, 33, 20, 20, 1, 8, 'fulfilled', NULL, '2026-01-22 10:45:19', '2026-01-22 11:13:55'),
+(2, 1, 3, 1, 4, 3, 3, 9, 'partial', NULL, '2026-01-22 10:45:19', '2026-01-22 11:13:55');
 
 -- --------------------------------------------------------
 
@@ -25252,10 +26080,18 @@ CREATE TABLE `store_stocks` (
 --
 
 INSERT INTO `store_stocks` (`id`, `store_id`, `product_id`, `initial_quantity`, `quantity_sale`, `order_quantity`, `current_quantity`, `created_at`, `updated_at`, `reserved_qty`, `reorder_level`, `max_stock_level`, `is_active`, `last_restocked_at`, `last_sold_at`) VALUES
-(1, 1, 2, 170, 0, 70, 158, '2023-03-09 10:46:57', '2026-01-15 00:35:25', 0, 10, NULL, 1, NULL, NULL),
+(1, 1, 2, 170, 0, 70, 158, '2023-03-09 10:46:57', '2026-01-22 11:13:55', 0, 10, NULL, 1, '2026-01-22 11:13:55', NULL),
 (2, 2, 2, 0, 1, 0, 9, '2023-03-09 11:03:06', '2026-01-14 14:17:56', 0, 10, NULL, 1, NULL, NULL),
-(3, 1, 3, 0, 1, 388, 387, '2023-03-09 13:53:24', '2026-01-21 17:21:47', 0, 10, NULL, 1, NULL, NULL),
-(4, 2, 4, 0, 0, 20, 20, '2023-03-09 14:02:37', '2023-03-09 14:02:37', 0, 10, NULL, 1, NULL, NULL);
+(3, 1, 3, 0, 1, 388, 387, '2023-03-09 13:53:24', '2026-01-22 11:13:55', 0, 10, NULL, 1, '2026-01-22 11:13:55', NULL),
+(4, 2, 4, 0, 0, 20, 20, '2023-03-09 14:02:37', '2023-03-09 14:02:37', 0, 10, NULL, 1, NULL, NULL),
+(5, 1, 58, 77, 0, 77, 67, '2026-01-22 05:49:49', '2026-01-22 07:38:15', 0, 10, NULL, 1, '2026-01-22 07:38:15', NULL),
+(6, 4, 58, 0, 0, 0, 10, '2026-01-22 06:19:34', '2026-01-22 06:19:34', 0, 10, NULL, 1, NULL, NULL),
+(7, 2, 59, 0, 0, 0, 0, '2026-01-22 07:58:17', '2026-01-22 07:58:17', 0, 10, NULL, 1, '2026-01-22 07:58:17', NULL),
+(8, 4, 2, 0, 0, 0, 0, '2026-01-22 11:13:55', '2026-01-22 11:13:55', 0, 10, NULL, 1, '2026-01-22 11:13:55', NULL),
+(9, 4, 3, 0, 0, 0, 0, '2026-01-22 11:13:55', '2026-01-22 11:13:55', 0, 10, NULL, 1, '2026-01-22 11:13:55', NULL),
+(13, 5, 139, 0, 0, 0, 0, '2026-01-22 17:56:30', '2026-01-22 17:56:30', 0, 10, NULL, 1, '2026-01-22 17:56:30', NULL),
+(14, 5, 114, 0, 0, 0, 0, '2026-01-22 17:56:30', '2026-01-22 17:56:30', 0, 10, NULL, 1, '2026-01-22 17:56:30', NULL),
+(15, 5, 147, 0, 0, 0, 0, '2026-01-22 17:56:30', '2026-01-22 17:56:30', 0, 10, NULL, 1, '2026-01-22 17:56:30', NULL);
 
 -- --------------------------------------------------------
 
@@ -25266,8 +26102,12 @@ INSERT INTO `store_stocks` (`id`, `store_id`, `product_id`, `initial_quantity`, 
 CREATE TABLE `suppliers` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `company_name` varchar(255) NOT NULL,
+  `contact_person` varchar(255) DEFAULT NULL,
+  `email` varchar(255) DEFAULT NULL,
   `address` varchar(255) DEFAULT NULL,
   `phone` varchar(255) DEFAULT NULL,
+  `alt_phone` varchar(255) DEFAULT NULL,
+  `tax_number` varchar(255) DEFAULT NULL,
   `created_by` bigint(20) UNSIGNED NOT NULL,
   `last_payment` double(8,2) DEFAULT NULL,
   `last_payment_date` timestamp NULL DEFAULT NULL,
@@ -25282,8 +26122,22 @@ CREATE TABLE `suppliers` (
   `status` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `old_supplier_id` int(11) DEFAULT NULL
+  `old_supplier_id` int(11) DEFAULT NULL,
+  `bank_name` varchar(255) DEFAULT NULL,
+  `bank_account_number` varchar(255) DEFAULT NULL,
+  `bank_account_name` varchar(255) DEFAULT NULL,
+  `payment_terms` varchar(255) DEFAULT NULL,
+  `credit_limit` decimal(15,2) DEFAULT NULL,
+  `notes` text DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `suppliers`
+--
+
+INSERT INTO `suppliers` (`id`, `company_name`, `contact_person`, `email`, `address`, `phone`, `alt_phone`, `tax_number`, `created_by`, `last_payment`, `last_payment_date`, `last_buy_date`, `last_buy_amount`, `credit_b4`, `credit`, `deposit_b4`, `deposit`, `total_deposite`, `date_line`, `status`, `created_at`, `updated_at`, `old_supplier_id`, `bank_name`, `bank_account_number`, `bank_account_name`, `payment_terms`, `credit_limit`, `notes`, `deleted_at`) VALUES
+(1, 'Apollos Technologies', 'Walshak Timothy Apollos', 'walshak1999@gmail.com', 'Elwazir Street,bosso\r\nVcm 105 Elwazir Estate', '07050737402', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-22 08:11:53', 1, '2026-01-22 07:11:53', '2026-01-22 07:11:53', NULL, 'zenith bank', '224559900', 'App Tech', 'cash', 0.00, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -29839,7 +30693,10 @@ INSERT INTO `users` (`id`, `is_admin`, `email`, `filename`, `old_records`, `surn
 (4473, 19, 'dorcas.caleb@hms.com21444', 'avatar.png', NULL, 'IDRIS', 'MAIMUNA', '', '0', '0', NULL, '$2y$10$3H.qoGczTFPp4EgXWIX1A..i2x2rF5GUjINC39cEPZOdvUcV5meUK', 1, NULL, NULL, NULL, 2743, 1444, NULL, NULL, NULL, NULL),
 (4474, 19, 'abdulrazzaq.ismail@hms.com21445', 'avatar.png', NULL, 'MUSA', 'MANFA', 'ZURIEL', '0', '0', NULL, '$2y$10$HkHw5ne.w19g/9ETakm2/OpDBOdG4NATQ//GeNR3UAXPEvVXYrnzm', 1, NULL, NULL, NULL, 1290, 1445, NULL, NULL, NULL, NULL),
 (4475, 19, 'simi.goton@hms.com21446', 'avatar.png', NULL, 'YUSUF', 'LILIAN', '', '0', '0', NULL, '$2y$10$O0XZouG086i1N8tDwdMAmutC1Rdcj23JM5gJ3QxxArC8BkdLfr.Su', 1, NULL, NULL, NULL, 2744, 1446, NULL, NULL, NULL, NULL),
-(4476, 19, 'walshak.apollos.976@hms.com', 'patient_1768346384_4476.jpg', NULL, 'Apollos', 'Walshak', NULL, NULL, NULL, NULL, '$2y$10$tjbOPppyzHzseYkeH9bITe4rgf.hV6dXz5zfhbkuyhx6Ge0pKiJJu', 1, NULL, '2026-01-13 20:33:09', '2026-01-13 22:19:45', NULL, NULL, NULL, NULL, NULL, NULL);
+(4476, 19, 'walshak.apollos.976@hms.com', 'patient_1768346384_4476.jpg', NULL, 'Apollos', 'Walshak', NULL, NULL, NULL, NULL, '$2y$10$tjbOPppyzHzseYkeH9bITe4rgf.hV6dXz5zfhbkuyhx6Ge0pKiJJu', 1, NULL, '2026-01-13 20:33:09', '2026-01-13 22:19:45', NULL, NULL, NULL, NULL, NULL, NULL),
+(4477, 3, 'adebayo.bakare@email.com', NULL, NULL, 'Bakare', 'Adebayo', 'Michael', NULL, NULL, NULL, '$2y$10$Z48V9Sr8SICcKGZlSRLcw.HgMKNV/tRwi/jNeZe0twkywpE6grLry', 1, NULL, '2026-01-22 09:40:06', '2026-01-22 09:40:06', NULL, NULL, NULL, NULL, NULL, NULL),
+(4478, 3, 'ibrahimfatima.Q0SA@patient.local', NULL, NULL, 'Ibrahim', 'Fatima', '', NULL, NULL, NULL, '$2y$10$UAJxPmovTXIwSq9ih5QvHOQFG80f6o/95QMooBE3npO3JCmjTGMe6', 1, NULL, '2026-01-22 09:40:06', '2026-01-22 09:40:06', NULL, NULL, NULL, NULL, NULL, NULL),
+(4479, 3, 'ibrahimfatima.TPW5@patient.local', NULL, NULL, 'Ibrahim', 'Fatima', '', NULL, NULL, NULL, '$2y$10$E9F9QP9uEpUYCII.bjwLju8mUQ.0kvVbXCSRsAVoaLF56S3AW7kYm', 1, NULL, '2026-01-22 09:44:13', '2026-01-22 09:44:13', NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -30197,6 +31054,16 @@ ALTER TABLE `discharge_checklist_items`
   ADD KEY `discharge_checklist_items_completed_by_foreign` (`completed_by`);
 
 --
+-- Indexes for table `disciplinary_queries`
+--
+ALTER TABLE `disciplinary_queries`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `disciplinary_queries_query_number_unique` (`query_number`),
+  ADD KEY `disciplinary_queries_issued_by_foreign` (`issued_by`),
+  ADD KEY `disciplinary_queries_decided_by_foreign` (`decided_by`),
+  ADD KEY `disciplinary_queries_staff_id_status_index` (`staff_id`,`status`);
+
+--
 -- Indexes for table `doctor_queues`
 --
 ALTER TABLE `doctor_queues`
@@ -30230,7 +31097,9 @@ ALTER TABLE `expenses`
   ADD KEY `expenses_category_status_index` (`category`,`status`),
   ADD KEY `expenses_expense_date_status_index` (`expense_date`,`status`),
   ADD KEY `expenses_reference_type_reference_id_index` (`reference_type`,`reference_id`),
-  ADD KEY `expenses_store_id_expense_date_index` (`store_id`,`expense_date`);
+  ADD KEY `expenses_store_id_expense_date_index` (`store_id`,`expense_date`),
+  ADD KEY `expenses_voided_by_foreign` (`voided_by`),
+  ADD KEY `expenses_bank_id_foreign` (`bank_id`);
 
 --
 -- Indexes for table `failed_jobs`
@@ -30282,6 +31151,14 @@ ALTER TABLE `hmo_tariffs`
   ADD UNIQUE KEY `unique_hmo_product_service` (`hmo_id`,`product_id`,`service_id`),
   ADD KEY `hmo_tariffs_product_id_foreign` (`product_id`),
   ADD KEY `hmo_tariffs_service_id_foreign` (`service_id`);
+
+--
+-- Indexes for table `hr_attachments`
+--
+ALTER TABLE `hr_attachments`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `hr_attachments_attachable_type_attachable_id_index` (`attachable_type`,`attachable_id`),
+  ADD KEY `hr_attachments_uploaded_by_foreign` (`uploaded_by`);
 
 --
 -- Indexes for table `imaging_service_requests`
@@ -30376,6 +31253,35 @@ ALTER TABLE `lab_workbench_audit_logs`
   ADD PRIMARY KEY (`id`),
   ADD KEY `lab_workbench_audit_logs_lab_service_request_id_foreign` (`lab_service_request_id`),
   ADD KEY `lab_workbench_audit_logs_user_id_foreign` (`user_id`);
+
+--
+-- Indexes for table `leave_balances`
+--
+ALTER TABLE `leave_balances`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `leave_balances_staff_id_leave_type_id_year_unique` (`staff_id`,`leave_type_id`,`year`),
+  ADD KEY `leave_balances_leave_type_id_foreign` (`leave_type_id`);
+
+--
+-- Indexes for table `leave_requests`
+--
+ALTER TABLE `leave_requests`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `leave_requests_request_number_unique` (`request_number`),
+  ADD KEY `leave_requests_leave_type_id_foreign` (`leave_type_id`),
+  ADD KEY `leave_requests_relief_staff_id_foreign` (`relief_staff_id`),
+  ADD KEY `leave_requests_supervisor_approved_by_foreign` (`supervisor_approved_by`),
+  ADD KEY `leave_requests_hr_approved_by_foreign` (`hr_approved_by`),
+  ADD KEY `leave_requests_reviewed_by_foreign` (`reviewed_by`),
+  ADD KEY `leave_requests_staff_id_status_index` (`staff_id`,`status`),
+  ADD KEY `leave_requests_start_date_end_date_index` (`start_date`,`end_date`);
+
+--
+-- Indexes for table `leave_types`
+--
+ALTER TABLE `leave_types`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `leave_types_code_unique` (`code`);
 
 --
 -- Indexes for table `medication_administrations`
@@ -30526,6 +31432,42 @@ ALTER TABLE `payments`
   ADD KEY `payments_patient_id_foreign` (`patient_id`),
   ADD KEY `payments_user_id_foreign` (`user_id`),
   ADD KEY `payments_bank_id_foreign` (`bank_id`);
+
+--
+-- Indexes for table `payroll_batches`
+--
+ALTER TABLE `payroll_batches`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `payroll_batches_batch_number_unique` (`batch_number`),
+  ADD KEY `payroll_batches_created_by_foreign` (`created_by`),
+  ADD KEY `payroll_batches_submitted_by_foreign` (`submitted_by`),
+  ADD KEY `payroll_batches_approved_by_foreign` (`approved_by`),
+  ADD KEY `payroll_batches_rejected_by_foreign` (`rejected_by`),
+  ADD KEY `payroll_batches_expense_id_foreign` (`expense_id`);
+
+--
+-- Indexes for table `payroll_items`
+--
+ALTER TABLE `payroll_items`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `payroll_items_payroll_batch_id_staff_id_unique` (`payroll_batch_id`,`staff_id`),
+  ADD KEY `payroll_items_staff_id_foreign` (`staff_id`),
+  ADD KEY `payroll_items_salary_profile_id_foreign` (`salary_profile_id`);
+
+--
+-- Indexes for table `payroll_item_details`
+--
+ALTER TABLE `payroll_item_details`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `payroll_item_details_payroll_item_id_foreign` (`payroll_item_id`),
+  ADD KEY `payroll_item_details_pay_head_id_foreign` (`pay_head_id`);
+
+--
+-- Indexes for table `pay_heads`
+--
+ALTER TABLE `pay_heads`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `pay_heads_code_unique` (`code`);
 
 --
 -- Indexes for table `permissions`
@@ -30682,6 +31624,16 @@ ALTER TABLE `purchase_order_items`
   ADD KEY `purchase_order_items_product_id_index` (`product_id`);
 
 --
+-- Indexes for table `purchase_order_payments`
+--
+ALTER TABLE `purchase_order_payments`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `purchase_order_payments_bank_id_foreign` (`bank_id`),
+  ADD KEY `purchase_order_payments_expense_id_foreign` (`expense_id`),
+  ADD KEY `purchase_order_payments_created_by_foreign` (`created_by`),
+  ADD KEY `purchase_order_payments_purchase_order_id_payment_date_index` (`purchase_order_id`,`payment_date`);
+
+--
 -- Indexes for table `reason_for_encounters`
 --
 ALTER TABLE `reason_for_encounters`
@@ -30759,7 +31711,45 @@ ALTER TABLE `specializations`
 --
 ALTER TABLE `staff`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `staff_specialization_id_foreign` (`specialization_id`);
+  ADD KEY `staff_specialization_id_foreign` (`specialization_id`),
+  ADD KEY `staff_suspended_by_foreign` (`suspended_by`);
+
+--
+-- Indexes for table `staff_salary_profiles`
+--
+ALTER TABLE `staff_salary_profiles`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `staff_salary_profiles_created_by_foreign` (`created_by`),
+  ADD KEY `staff_salary_profiles_staff_id_is_active_index` (`staff_id`,`is_active`);
+
+--
+-- Indexes for table `staff_salary_profile_items`
+--
+ALTER TABLE `staff_salary_profile_items`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `staff_salary_profile_items_salary_profile_id_pay_head_id_unique` (`salary_profile_id`,`pay_head_id`),
+  ADD KEY `staff_salary_profile_items_pay_head_id_foreign` (`pay_head_id`);
+
+--
+-- Indexes for table `staff_suspensions`
+--
+ALTER TABLE `staff_suspensions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `staff_suspensions_suspension_number_unique` (`suspension_number`),
+  ADD KEY `staff_suspensions_disciplinary_query_id_foreign` (`disciplinary_query_id`),
+  ADD KEY `staff_suspensions_issued_by_foreign` (`issued_by`),
+  ADD KEY `staff_suspensions_lifted_by_foreign` (`lifted_by`),
+  ADD KEY `staff_suspensions_staff_id_status_index` (`staff_id`,`status`);
+
+--
+-- Indexes for table `staff_terminations`
+--
+ALTER TABLE `staff_terminations`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `staff_terminations_termination_number_unique` (`termination_number`),
+  ADD KEY `staff_terminations_staff_id_foreign` (`staff_id`),
+  ADD KEY `staff_terminations_disciplinary_query_id_foreign` (`disciplinary_query_id`),
+  ADD KEY `staff_terminations_processed_by_foreign` (`processed_by`);
 
 --
 -- Indexes for table `stocks`
@@ -30777,7 +31767,8 @@ ALTER TABLE `stock_batches`
   ADD KEY `stock_batches_fifo_idx` (`product_id`,`store_id`,`is_active`,`current_qty`),
   ADD KEY `stock_batches_store_id_current_qty_index` (`store_id`,`current_qty`),
   ADD KEY `stock_batches_expiry_date_index` (`expiry_date`),
-  ADD KEY `stock_batches_source_created_at_index` (`source`,`created_at`);
+  ADD KEY `stock_batches_source_created_at_index` (`source`,`created_at`),
+  ADD KEY `stock_batches_supplier_id_index` (`supplier_id`);
 
 --
 -- Indexes for table `stock_batch_transactions`
@@ -30939,7 +31930,7 @@ ALTER TABLE `application_status`
 -- AUTO_INCREMENT for table `audits`
 --
 ALTER TABLE `audits`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=581;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=671;
 
 --
 -- AUTO_INCREMENT for table `banks`
@@ -31020,6 +32011,12 @@ ALTER TABLE `discharge_checklist_items`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
+-- AUTO_INCREMENT for table `disciplinary_queries`
+--
+ALTER TABLE `disciplinary_queries`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `doctor_queues`
 --
 ALTER TABLE `doctor_queues`
@@ -31035,7 +32032,7 @@ ALTER TABLE `encounters`
 -- AUTO_INCREMENT for table `expenses`
 --
 ALTER TABLE `expenses`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `failed_jobs`
@@ -31072,6 +32069,12 @@ ALTER TABLE `hmo_schemes`
 --
 ALTER TABLE `hmo_tariffs`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3601;
+
+--
+-- AUTO_INCREMENT for table `hr_attachments`
+--
+ALTER TABLE `hr_attachments`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `imaging_service_requests`
@@ -31128,6 +32131,24 @@ ALTER TABLE `lab_workbench_audit_logs`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
+-- AUTO_INCREMENT for table `leave_balances`
+--
+ALTER TABLE `leave_balances`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `leave_requests`
+--
+ALTER TABLE `leave_requests`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `leave_types`
+--
+ALTER TABLE `leave_types`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `medication_administrations`
 --
 ALTER TABLE `medication_administrations`
@@ -31155,7 +32176,7 @@ ALTER TABLE `messages`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=171;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=191;
 
 --
 -- AUTO_INCREMENT for table `misc_bills`
@@ -31191,7 +32212,7 @@ ALTER TABLE `participants`
 -- AUTO_INCREMENT for table `patients`
 --
 ALTER TABLE `patients`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4183;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4184;
 
 --
 -- AUTO_INCREMENT for table `patient_accounts`
@@ -31218,10 +32239,34 @@ ALTER TABLE `payments`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=82;
 
 --
+-- AUTO_INCREMENT for table `payroll_batches`
+--
+ALTER TABLE `payroll_batches`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `payroll_items`
+--
+ALTER TABLE `payroll_items`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `payroll_item_details`
+--
+ALTER TABLE `payroll_item_details`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `pay_heads`
+--
+ALTER TABLE `pay_heads`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `permissions`
 --
 ALTER TABLE `permissions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=54;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=103;
 
 --
 -- AUTO_INCREMENT for table `personal_access_tokens`
@@ -31287,7 +32332,7 @@ ALTER TABLE `product_categories`
 -- AUTO_INCREMENT for table `product_or_service_requests`
 --
 ALTER TABLE `product_or_service_requests`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=129;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=130;
 
 --
 -- AUTO_INCREMENT for table `product_requests`
@@ -31305,13 +32350,19 @@ ALTER TABLE `promotions`
 -- AUTO_INCREMENT for table `purchase_orders`
 --
 ALTER TABLE `purchase_orders`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `purchase_order_items`
 --
 ALTER TABLE `purchase_order_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT for table `purchase_order_payments`
+--
+ALTER TABLE `purchase_order_payments`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `reason_for_encounters`
@@ -31323,7 +32374,7 @@ ALTER TABLE `reason_for_encounters`
 -- AUTO_INCREMENT for table `roles`
 --
 ALTER TABLE `roles`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `sales`
@@ -31374,6 +32425,30 @@ ALTER TABLE `staff`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=69;
 
 --
+-- AUTO_INCREMENT for table `staff_salary_profiles`
+--
+ALTER TABLE `staff_salary_profiles`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `staff_salary_profile_items`
+--
+ALTER TABLE `staff_salary_profile_items`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `staff_suspensions`
+--
+ALTER TABLE `staff_suspensions`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `staff_terminations`
+--
+ALTER TABLE `staff_terminations`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `stocks`
 --
 ALTER TABLE `stocks`
@@ -31383,13 +32458,13 @@ ALTER TABLE `stocks`
 -- AUTO_INCREMENT for table `stock_batches`
 --
 ALTER TABLE `stock_batches`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `stock_batch_transactions`
 --
 ALTER TABLE `stock_batch_transactions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT for table `stock_invoices`
@@ -31401,7 +32476,7 @@ ALTER TABLE `stock_invoices`
 -- AUTO_INCREMENT for table `stock_orders`
 --
 ALTER TABLE `stock_orders`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `stores`
@@ -31413,25 +32488,25 @@ ALTER TABLE `stores`
 -- AUTO_INCREMENT for table `store_requisitions`
 --
 ALTER TABLE `store_requisitions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `store_requisition_items`
 --
 ALTER TABLE `store_requisition_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `store_stocks`
 --
 ALTER TABLE `store_stocks`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `suppliers`
 --
 ALTER TABLE `suppliers`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `threads`
@@ -31443,7 +32518,7 @@ ALTER TABLE `threads`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4477;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4480;
 
 --
 -- AUTO_INCREMENT for table `user_categories`
@@ -31574,6 +32649,14 @@ ALTER TABLE `discharge_checklist_items`
   ADD CONSTRAINT `discharge_checklist_items_template_item_id_foreign` FOREIGN KEY (`template_item_id`) REFERENCES `checklist_template_items` (`id`) ON DELETE SET NULL;
 
 --
+-- Constraints for table `disciplinary_queries`
+--
+ALTER TABLE `disciplinary_queries`
+  ADD CONSTRAINT `disciplinary_queries_decided_by_foreign` FOREIGN KEY (`decided_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `disciplinary_queries_issued_by_foreign` FOREIGN KEY (`issued_by`) REFERENCES `users` (`id`),
+  ADD CONSTRAINT `disciplinary_queries_staff_id_foreign` FOREIGN KEY (`staff_id`) REFERENCES `staff` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `encounters`
 --
 ALTER TABLE `encounters`
@@ -31584,9 +32667,11 @@ ALTER TABLE `encounters`
 --
 ALTER TABLE `expenses`
   ADD CONSTRAINT `expenses_approved_by_foreign` FOREIGN KEY (`approved_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `expenses_bank_id_foreign` FOREIGN KEY (`bank_id`) REFERENCES `banks` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `expenses_recorded_by_foreign` FOREIGN KEY (`recorded_by`) REFERENCES `users` (`id`),
   ADD CONSTRAINT `expenses_store_id_foreign` FOREIGN KEY (`store_id`) REFERENCES `stores` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `expenses_supplier_id_foreign` FOREIGN KEY (`supplier_id`) REFERENCES `suppliers` (`id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `expenses_supplier_id_foreign` FOREIGN KEY (`supplier_id`) REFERENCES `suppliers` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `expenses_voided_by_foreign` FOREIGN KEY (`voided_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `hmos`
@@ -31618,6 +32703,12 @@ ALTER TABLE `hmo_tariffs`
   ADD CONSTRAINT `hmo_tariffs_hmo_id_foreign` FOREIGN KEY (`hmo_id`) REFERENCES `hmos` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `hmo_tariffs_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `hmo_tariffs_service_id_foreign` FOREIGN KEY (`service_id`) REFERENCES `services` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `hr_attachments`
+--
+ALTER TABLE `hr_attachments`
+  ADD CONSTRAINT `hr_attachments_uploaded_by_foreign` FOREIGN KEY (`uploaded_by`) REFERENCES `users` (`id`);
 
 --
 -- Constraints for table `imaging_service_requests`
@@ -31692,6 +32783,24 @@ ALTER TABLE `lab_workbench_audit_logs`
   ADD CONSTRAINT `lab_workbench_audit_logs_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `leave_balances`
+--
+ALTER TABLE `leave_balances`
+  ADD CONSTRAINT `leave_balances_leave_type_id_foreign` FOREIGN KEY (`leave_type_id`) REFERENCES `leave_types` (`id`),
+  ADD CONSTRAINT `leave_balances_staff_id_foreign` FOREIGN KEY (`staff_id`) REFERENCES `staff` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `leave_requests`
+--
+ALTER TABLE `leave_requests`
+  ADD CONSTRAINT `leave_requests_hr_approved_by_foreign` FOREIGN KEY (`hr_approved_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `leave_requests_leave_type_id_foreign` FOREIGN KEY (`leave_type_id`) REFERENCES `leave_types` (`id`),
+  ADD CONSTRAINT `leave_requests_relief_staff_id_foreign` FOREIGN KEY (`relief_staff_id`) REFERENCES `staff` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `leave_requests_reviewed_by_foreign` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `leave_requests_staff_id_foreign` FOREIGN KEY (`staff_id`) REFERENCES `staff` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `leave_requests_supervisor_approved_by_foreign` FOREIGN KEY (`supervisor_approved_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
 -- Constraints for table `medication_administrations`
 --
 ALTER TABLE `medication_administrations`
@@ -31749,6 +32858,31 @@ ALTER TABLE `patient_profiles`
 --
 ALTER TABLE `payments`
   ADD CONSTRAINT `payments_bank_id_foreign` FOREIGN KEY (`bank_id`) REFERENCES `banks` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `payroll_batches`
+--
+ALTER TABLE `payroll_batches`
+  ADD CONSTRAINT `payroll_batches_approved_by_foreign` FOREIGN KEY (`approved_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `payroll_batches_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`),
+  ADD CONSTRAINT `payroll_batches_expense_id_foreign` FOREIGN KEY (`expense_id`) REFERENCES `expenses` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `payroll_batches_rejected_by_foreign` FOREIGN KEY (`rejected_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `payroll_batches_submitted_by_foreign` FOREIGN KEY (`submitted_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `payroll_items`
+--
+ALTER TABLE `payroll_items`
+  ADD CONSTRAINT `payroll_items_payroll_batch_id_foreign` FOREIGN KEY (`payroll_batch_id`) REFERENCES `payroll_batches` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `payroll_items_salary_profile_id_foreign` FOREIGN KEY (`salary_profile_id`) REFERENCES `staff_salary_profiles` (`id`),
+  ADD CONSTRAINT `payroll_items_staff_id_foreign` FOREIGN KEY (`staff_id`) REFERENCES `staff` (`id`);
+
+--
+-- Constraints for table `payroll_item_details`
+--
+ALTER TABLE `payroll_item_details`
+  ADD CONSTRAINT `payroll_item_details_pay_head_id_foreign` FOREIGN KEY (`pay_head_id`) REFERENCES `pay_heads` (`id`),
+  ADD CONSTRAINT `payroll_item_details_payroll_item_id_foreign` FOREIGN KEY (`payroll_item_id`) REFERENCES `payroll_items` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `procedures`
@@ -31837,6 +32971,15 @@ ALTER TABLE `purchase_order_items`
   ADD CONSTRAINT `purchase_order_items_purchase_order_id_foreign` FOREIGN KEY (`purchase_order_id`) REFERENCES `purchase_orders` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `purchase_order_payments`
+--
+ALTER TABLE `purchase_order_payments`
+  ADD CONSTRAINT `purchase_order_payments_bank_id_foreign` FOREIGN KEY (`bank_id`) REFERENCES `banks` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `purchase_order_payments_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`),
+  ADD CONSTRAINT `purchase_order_payments_expense_id_foreign` FOREIGN KEY (`expense_id`) REFERENCES `expenses` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `purchase_order_payments_purchase_order_id_foreign` FOREIGN KEY (`purchase_order_id`) REFERENCES `purchase_orders` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `shift_actions`
 --
 ALTER TABLE `shift_actions`
@@ -31855,13 +32998,51 @@ ALTER TABLE `shift_handovers`
   ADD CONSTRAINT `shift_handovers_ward_id_foreign` FOREIGN KEY (`ward_id`) REFERENCES `wards` (`id`) ON DELETE SET NULL;
 
 --
+-- Constraints for table `staff`
+--
+ALTER TABLE `staff`
+  ADD CONSTRAINT `staff_suspended_by_foreign` FOREIGN KEY (`suspended_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `staff_salary_profiles`
+--
+ALTER TABLE `staff_salary_profiles`
+  ADD CONSTRAINT `staff_salary_profiles_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`),
+  ADD CONSTRAINT `staff_salary_profiles_staff_id_foreign` FOREIGN KEY (`staff_id`) REFERENCES `staff` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `staff_salary_profile_items`
+--
+ALTER TABLE `staff_salary_profile_items`
+  ADD CONSTRAINT `staff_salary_profile_items_pay_head_id_foreign` FOREIGN KEY (`pay_head_id`) REFERENCES `pay_heads` (`id`),
+  ADD CONSTRAINT `staff_salary_profile_items_salary_profile_id_foreign` FOREIGN KEY (`salary_profile_id`) REFERENCES `staff_salary_profiles` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `staff_suspensions`
+--
+ALTER TABLE `staff_suspensions`
+  ADD CONSTRAINT `staff_suspensions_disciplinary_query_id_foreign` FOREIGN KEY (`disciplinary_query_id`) REFERENCES `disciplinary_queries` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `staff_suspensions_issued_by_foreign` FOREIGN KEY (`issued_by`) REFERENCES `users` (`id`),
+  ADD CONSTRAINT `staff_suspensions_lifted_by_foreign` FOREIGN KEY (`lifted_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `staff_suspensions_staff_id_foreign` FOREIGN KEY (`staff_id`) REFERENCES `staff` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `staff_terminations`
+--
+ALTER TABLE `staff_terminations`
+  ADD CONSTRAINT `staff_terminations_disciplinary_query_id_foreign` FOREIGN KEY (`disciplinary_query_id`) REFERENCES `disciplinary_queries` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `staff_terminations_processed_by_foreign` FOREIGN KEY (`processed_by`) REFERENCES `users` (`id`),
+  ADD CONSTRAINT `staff_terminations_staff_id_foreign` FOREIGN KEY (`staff_id`) REFERENCES `staff` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `stock_batches`
 --
 ALTER TABLE `stock_batches`
   ADD CONSTRAINT `stock_batches_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`),
   ADD CONSTRAINT `stock_batches_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`),
   ADD CONSTRAINT `stock_batches_purchase_order_item_id_foreign` FOREIGN KEY (`purchase_order_item_id`) REFERENCES `purchase_order_items` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `stock_batches_store_id_foreign` FOREIGN KEY (`store_id`) REFERENCES `stores` (`id`);
+  ADD CONSTRAINT `stock_batches_store_id_foreign` FOREIGN KEY (`store_id`) REFERENCES `stores` (`id`),
+  ADD CONSTRAINT `stock_batches_supplier_id_foreign` FOREIGN KEY (`supplier_id`) REFERENCES `suppliers` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `stock_batch_transactions`

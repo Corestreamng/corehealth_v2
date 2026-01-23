@@ -44,6 +44,17 @@
 </style>
 <div id="content-wrapper">
     <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="mb-0">{{ isset($purchaseOrder) ? 'Edit Purchase Order' : 'Create Purchase Order' }}</h3>
+                <p class="text-muted mb-0">{{ isset($purchaseOrder) ? 'Update order details' : 'Order stock from suppliers' }}</p>
+            </div>
+            @hasanyrole('SUPERADMIN|ADMIN|STORE')
+            <a href="{{ route('inventory.store-workbench.index') }}{{ request('store_id') ? '?store_id=' . request('store_id') : '' }}" class="btn btn-secondary btn-sm">
+                <i class="mdi mdi-arrow-left"></i> Back to Workbench
+            </a>
+            @endhasanyrole
+        </div>
         <form id="po-form" method="POST"
               action="{{ isset($purchaseOrder) ? route('inventory.purchase-orders.update', $purchaseOrder) : route('inventory.purchase-orders.store') }}">
             @csrf
@@ -58,70 +69,42 @@
                     <div class="col-md-4">
                         <div class="form-group">
                             <label for="store_id">Destination Store <span class="text-danger">*</span></label>
-                            <select name="store_id" id="store_id" class="form-control @error('store_id') is-invalid @enderror" required>
+                            <select name="target_store_id" id="store_id" class="form-control @error('target_store_id') is-invalid @enderror" required>
                                 <option value="">Select Store</option>
                                 @foreach($stores as $store)
-                                <option value="{{ $store->id }}" {{ old('store_id', $purchaseOrder->store_id ?? '') == $store->id ? 'selected' : '' }}>
+                                <option value="{{ $store->id }}" {{ old('target_store_id', request('store_id', $purchaseOrder->target_store_id ?? '')) == $store->id ? 'selected' : '' }}>
                                     {{ $store->store_name }}
                                 </option>
                                 @endforeach
                             </select>
-                            @error('store_id')
+                            @error('target_store_id')
                             <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="form-group">
-                            <label for="supplier_name">Supplier Name <span class="text-danger">*</span></label>
-                            <input type="text" name="supplier_name" id="supplier_name"
-                                   class="form-control @error('supplier_name') is-invalid @enderror"
-                                   value="{{ old('supplier_name', $purchaseOrder->supplier_name ?? '') }}" required>
-                            @error('supplier_name')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="supplier_contact">Supplier Contact</label>
-                            <input type="text" name="supplier_contact" id="supplier_contact"
-                                   class="form-control"
-                                   value="{{ old('supplier_contact', $purchaseOrder->supplier_contact ?? '') }}">
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="order_date">Order Date <span class="text-danger">*</span></label>
-                            <input type="date" name="order_date" id="order_date"
-                                   class="form-control @error('order_date') is-invalid @enderror"
-                                   value="{{ old('order_date', isset($purchaseOrder) ? $purchaseOrder->order_date->format('Y-m-d') : date('Y-m-d')) }}" required>
-                            @error('order_date')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="expected_delivery_date">Expected Delivery Date</label>
-                            <input type="date" name="expected_delivery_date" id="expected_delivery_date"
-                                   class="form-control"
-                                   value="{{ old('expected_delivery_date', isset($purchaseOrder) && $purchaseOrder->expected_delivery_date ? $purchaseOrder->expected_delivery_date->format('Y-m-d') : '') }}">
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="payment_terms">Payment Terms</label>
-                            <select name="payment_terms" id="payment_terms" class="form-control">
-                                <option value="">Select Terms</option>
-                                <option value="cash" {{ old('payment_terms', $purchaseOrder->payment_terms ?? '') == 'cash' ? 'selected' : '' }}>Cash on Delivery</option>
-                                <option value="net_7" {{ old('payment_terms', $purchaseOrder->payment_terms ?? '') == 'net_7' ? 'selected' : '' }}>Net 7 Days</option>
-                                <option value="net_15" {{ old('payment_terms', $purchaseOrder->payment_terms ?? '') == 'net_15' ? 'selected' : '' }}>Net 15 Days</option>
-                                <option value="net_30" {{ old('payment_terms', $purchaseOrder->payment_terms ?? '') == 'net_30' ? 'selected' : '' }}>Net 30 Days</option>
-                                <option value="net_60" {{ old('payment_terms', $purchaseOrder->payment_terms ?? '') == 'net_60' ? 'selected' : '' }}>Net 60 Days</option>
+                            <label for="supplier_id">Supplier <span class="text-danger">*</span></label>
+                            <select name="supplier_id" id="supplier_id" class="form-control supplier-select @error('supplier_id') is-invalid @enderror" required>
+                                <option value="">Select supplier...</option>
                             </select>
+                            @error('supplier_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <small class="text-muted">
+                                <a href="{{ route('suppliers.create') }}" target="_blank">+ Add new supplier</a>
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="expected_date">Expected Delivery Date</label>
+                            <input type="date" name="expected_date" id="expected_date"
+                                   class="form-control @error('expected_date') is-invalid @enderror"
+                                   value="{{ old('expected_date', isset($purchaseOrder) && $purchaseOrder->expected_date ? $purchaseOrder->expected_date->format('Y-m-d') : '') }}">
+                            @error('expected_date')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
                     </div>
                 </div>
@@ -129,7 +112,10 @@
                     <div class="col-md-12">
                         <div class="form-group">
                             <label for="notes">Notes</label>
-                            <textarea name="notes" id="notes" rows="2" class="form-control">{{ old('notes', $purchaseOrder->notes ?? '') }}</textarea>
+                            <textarea name="notes" id="notes" rows="2" class="form-control @error('notes') is-invalid @enderror">{{ old('notes', $purchaseOrder->notes ?? '') }}</textarea>
+                            @error('notes')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
                     </div>
                 </div>
@@ -231,10 +217,10 @@
                         <i class="mdi mdi-arrow-left"></i> Back to List
                     </a>
                     <div>
-                        <button type="submit" name="action" value="save" class="btn btn-primary">
+                        <button type="button" id="save-draft-btn" class="btn btn-primary">
                             <i class="mdi mdi-content-save"></i> Save Draft
                         </button>
-                        <button type="submit" name="action" value="submit" class="btn btn-success">
+                        <button type="button" id="save-submit-btn" class="btn btn-success">
                             <i class="mdi mdi-send"></i> Save & Submit
                         </button>
                     </div>
@@ -292,6 +278,31 @@
 $(function() {
     var itemIndex = {{ isset($purchaseOrder) ? $purchaseOrder->items->count() : 0 }};
 
+    // Initialize Supplier Select2
+    var supplierSelect = $('#supplier_id').select2({
+        placeholder: 'Select supplier...',
+        allowClear: true,
+        minimumInputLength: 1,
+        ajax: {
+            url: '{{ route("suppliers.search") }}',
+            dataType: 'json',
+            delay: 250,
+            data: function(params) {
+                return { q: params.term };
+            },
+            processResults: function(data) {
+                return {
+                    results: data.map(function(item) {
+                        return {
+                            id: item.id,
+                            text: item.text
+                        };
+                    })
+                };
+            }
+        }
+    });
+
     // Initialize Select2 for existing items
     initProductSelect($('.product-select'));
     calculateTotals();
@@ -321,6 +332,13 @@ $(function() {
     // Recalculate on tax/shipping change
     $('#tax_amount, #shipping_cost').on('input', function() {
         calculateTotals();
+    });
+
+    // Handle form submission via AJAX
+    $('#save-draft-btn, #save-submit-btn').on('click', function(e) {
+        e.preventDefault();
+        var action = $(this).attr('id') === 'save-draft-btn' ? 'save' : 'submit';
+        submitForm(action);
     });
 });
 
@@ -383,6 +401,100 @@ function calculateTotals() {
 
     $('#subtotal').text('₦' + subtotal.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','));
     $('#grand-total').text('₦' + total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','));
+}
+
+function submitForm(action) {
+    var form = $('#po-form');
+    var items = [];
+    var hasErrors = false;
+
+    // Validate required fields
+    if (!$('#store_id').val()) {
+        alert('Please select a destination store');
+        return;
+    }
+
+    if (!$('#supplier_id').val()) {
+        alert('Please select a supplier');
+        return;
+    }
+
+    // Collect items
+    $('.item-row').each(function() {
+        var row = $(this);
+        var productId = row.find('.product-select').val();
+        var quantity = row.find('.qty-input').val();
+        var unitPrice = row.find('.price-input').val();
+
+        if (!productId || !quantity || !unitPrice) {
+            hasErrors = true;
+            return false;
+        }
+
+        items.push({
+            product_id: productId,
+            ordered_qty: parseInt(quantity),
+            unit_cost: parseFloat(unitPrice)
+        });
+    });
+
+    if (hasErrors) {
+        alert('Please fill in all item fields');
+        return;
+    }
+
+    if (items.length === 0) {
+        alert('Please add at least one item');
+        return;
+    }
+
+    // Prepare form data
+    var formData = {
+        supplier_id: $('#supplier_id').val(),
+        target_store_id: $('#store_id').val(),
+        expected_date: $('#expected_date').val(),
+        notes: $('#notes').val(),
+        items: items,
+        action: action,
+        _token: $('input[name="_token"]').val()
+    };
+
+    // Disable buttons during submission
+    var buttons = $('#save-draft-btn, #save-submit-btn');
+    buttons.prop('disabled', true);
+
+    // Submit via AJAX
+    $.ajax({
+        url: form.attr('action'),
+        method: form.find('input[name="_method"]').length ? 'PUT' : 'POST',
+        data: JSON.stringify(formData),
+        contentType: 'application/json',
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                alert(response.message || 'Purchase order saved successfully');
+                if (response.redirect) {
+                    window.location.href = response.redirect;
+                } else {
+                    window.location.href = '{{ route("inventory.purchase-orders.index") }}';
+                }
+            } else {
+                alert(response.message || 'Failed to save purchase order');
+                buttons.prop('disabled', false);
+            }
+        },
+        error: function(xhr) {
+            var message = 'Error saving purchase order';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                message = xhr.responseJSON.message;
+            } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                var errors = xhr.responseJSON.errors;
+                message = Object.values(errors).flat().join('\n');
+            }
+            alert(message);
+            buttons.prop('disabled', false);
+        }
+    });
 }
 </script>
 @endsection
