@@ -25,7 +25,7 @@
                         <p class="text-muted mb-0">Add a new staff member to the system</p>
                     </div>
                 </div>
-                <div class="card-body p-3">
+                <div class="card-body p-4">
                     {!! Form::open(['method' => 'POST', 'route' => 'staff.store', 'class' => 'form-horizontal', 'enctype' => 'multipart/form-data']) !!}
                     {{ csrf_field() }}
 
@@ -55,7 +55,7 @@
                                 <i class="mdi mdi-file-document-outline text-primary"></i> Documents
                             </h5>
                         </div>
-                        <div class="card-body p-3">
+                        <div class="card-body p-4">
                             <label class="form-label-modern">Old Records</label>
                             <input type="file" class="form-control form-control-modern" id="old_records" name="old_records" style="height: auto; padding: 0.5rem;">
                             <small class="text-muted mt-2 d-block">Upload historical records.</small>
@@ -72,7 +72,7 @@
                                 <i class="mdi mdi-account-details-outline text-primary"></i> Personal Information
                             </h5>
                         </div>
-                        <div class="card-body p-3">
+                        <div class="card-body p-4">
                             <div class="row g-3">
                                 <div class="col-lg-4 col-md-6">
                                     <label class="form-label-modern">Surname <span class="text-danger">*</span></label>
@@ -110,19 +110,19 @@
                                 <i class="mdi mdi-doctor text-primary"></i> Professional Details
                             </h5>
                         </div>
-                        <div class="card-body p-3">
+                        <div class="card-body p-4">
                             <div class="row g-3">
                                 <div class="col-lg-4 col-md-6">
                                     <label class="form-label-modern">Staff Category <span class="text-danger">*</span></label>
-                                    {!! Form::select('is_admin', $statuses, old('is_admin'), ['class' => 'form-control form-control-modern select2', 'placeholder' => 'Select Category', 'required' => 'true']) !!}
+                                    {!! Form::select('is_admin', $statuses, old('is_admin'), ['class' => 'form-control form-control-modern', 'placeholder' => 'Select Category', 'required' => 'true']) !!}
                                 </div>
                                 <div class="col-lg-4 col-md-6">
                                     <label class="form-label-modern">Specialization <small class="text-muted">(Doctors)</small></label>
-                                    {!! Form::select('specializations', $specializations, old('specialization'), ['class' => 'form-control form-control-modern select2', 'placeholder' => 'Select Specialization']) !!}
+                                    {!! Form::select('specializations', $specializations, old('specialization'), ['class' => 'form-control form-control-modern', 'placeholder' => 'Select Specialization']) !!}
                                 </div>
                                 <div class="col-lg-4 col-md-6">
                                     <label class="form-label-modern">Clinic <small class="text-muted">(Doctors)</small></label>
-                                    {!! Form::select('clinics', $clinics, old('clinics'), ['class' => 'form-control form-control-modern select2', 'placeholder' => 'Select Clinic']) !!}
+                                    {!! Form::select('clinics', $clinics, old('clinics'), ['class' => 'form-control form-control-modern', 'placeholder' => 'Select Clinic']) !!}
                                 </div>
                                 <div class="col-lg-4 col-md-6">
                                     <label class="form-label-modern">Consultation Fee <small class="text-muted">(Doctors)</small></label>
@@ -137,6 +137,117 @@
                         </div>
                     </div>
 
+                    <!-- HR Employment Details -->
+                    <div class="card-modern">
+                        <div class="card-header-modern">
+                            <h5 class="card-title-modern">
+                                <i class="mdi mdi-briefcase-outline text-primary"></i> Employment Details
+                            </h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="row g-3">
+                                <div class="col-lg-3 col-md-6">
+                                    <label class="form-label-modern">Employee ID</label>
+                                    <input type="text" class="form-control form-control-modern" name="employee_id" value="{{ old('employee_id') }}" placeholder="e.g. EMP001">
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <label class="form-label-modern">Date Hired</label>
+                                    <input type="date" class="form-control form-control-modern" name="date_hired" value="{{ old('date_hired') }}">
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <label class="form-label-modern">Employment Type</label>
+                                    <select class="form-control form-control-modern" name="employment_type">
+                                        <option value="">Select Type</option>
+                                        <option value="full_time" {{ old('employment_type') == 'full_time' ? 'selected' : '' }}>Full Time</option>
+                                        <option value="part_time" {{ old('employment_type') == 'part_time' ? 'selected' : '' }}>Part Time</option>
+                                        <option value="contract" {{ old('employment_type') == 'contract' ? 'selected' : '' }}>Contract</option>
+                                        <option value="intern" {{ old('employment_type') == 'intern' ? 'selected' : '' }}>Intern</option>
+                                    </select>
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <label class="form-label-modern">Employment Status</label>
+                                    <select class="form-control form-control-modern" name="employment_status">
+                                        <option value="active" selected>Active</option>
+                                        <option value="suspended" {{ old('employment_status') == 'suspended' ? 'selected' : '' }}>Suspended</option>
+                                    </select>
+                                </div>
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label-modern">Job Title</label>
+                                    <input type="text" class="form-control form-control-modern" name="job_title" value="{{ old('job_title') }}" placeholder="e.g. Senior Nurse">
+                                </div>
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label-modern">Department</label>
+                                    <select class="form-control form-control-modern" name="department_id">
+                                        <option value="">Select Department</option>
+                                        @foreach($departments as $department)
+                                            <option value="{{ $department->id }}" {{ old('department_id') == $department->id ? 'selected' : '' }}>
+                                                {{ $department->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bank & Tax Information -->
+                    <div class="card-modern">
+                        <div class="card-header-modern">
+                            <h5 class="card-title-modern">
+                                <i class="mdi mdi-bank text-primary"></i> Bank & Tax Information
+                            </h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="row g-3">
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label-modern">Bank Name</label>
+                                    <input type="text" class="form-control form-control-modern" name="bank_name" value="{{ old('bank_name') }}" placeholder="e.g. First Bank">
+                                </div>
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label-modern">Account Number</label>
+                                    <input type="text" class="form-control form-control-modern" name="bank_account_number" value="{{ old('bank_account_number') }}" placeholder="0123456789">
+                                </div>
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label-modern">Account Name</label>
+                                    <input type="text" class="form-control form-control-modern" name="bank_account_name" value="{{ old('bank_account_name') }}" placeholder="Account holder name">
+                                </div>
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label-modern">Tax ID (TIN)</label>
+                                    <input type="text" class="form-control form-control-modern" name="tax_id" value="{{ old('tax_id') }}" placeholder="Tax identification number">
+                                </div>
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label-modern">Pension ID</label>
+                                    <input type="text" class="form-control form-control-modern" name="pension_id" value="{{ old('pension_id') }}" placeholder="Pension number">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Emergency Contact -->
+                    <div class="card-modern">
+                        <div class="card-header-modern">
+                            <h5 class="card-title-modern">
+                                <i class="mdi mdi-phone-alert text-primary"></i> Emergency Contact
+                            </h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="row g-3">
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label-modern">Contact Name</label>
+                                    <input type="text" class="form-control form-control-modern" name="emergency_contact_name" value="{{ old('emergency_contact_name') }}" placeholder="Full name">
+                                </div>
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label-modern">Contact Phone</label>
+                                    <input type="text" class="form-control form-control-modern" name="emergency_contact_phone" value="{{ old('emergency_contact_phone') }}" placeholder="+234...">
+                                </div>
+                                <div class="col-lg-4 col-md-6">
+                                    <label class="form-label-modern">Relationship</label>
+                                    <input type="text" class="form-control form-control-modern" name="emergency_contact_relationship" value="{{ old('emergency_contact_relationship') }}" placeholder="e.g. Spouse, Parent">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Contact Details -->
                     <div class="card-modern">
                         <div class="card-header-modern">
@@ -144,7 +255,7 @@
                                 <i class="mdi mdi-card-account-mail-outline text-primary"></i> Contact Details
                             </h5>
                         </div>
-                        <div class="card-body p-3">
+                        <div class="card-body p-4">
                             <div class="row g-3">
                                 <div class="col-lg-4 col-md-6">
                                     <label class="form-label-modern">Email Address <span class="text-danger">*</span></label>
@@ -169,7 +280,7 @@
                                 <i class="mdi mdi-shield-lock-outline text-primary"></i> Security & Access
                             </h5>
                         </div>
-                        <div class="card-body p-3">
+                        <div class="card-body p-4">
                             <div class="row g-3">
                                 <div class="col-lg-6 col-md-6">
                                     <label class="form-label-modern">Password <span class="text-danger">*</span></label>
@@ -190,14 +301,14 @@
                                         <input type="checkbox" class="custom-control-input" id="assignRole" name="assignRole">
                                         <label class="custom-control-label font-weight-bold" for="assignRole">Assign Roles</label>
                                     </div>
-                                    {!! Form::select('roles[]', $roles, [], ['class' => 'form-control form-control-modern select2', 'multiple', 'style' => 'width: 100%;', 'data-placeholder' => 'Select roles...']) !!}
+                                    {!! Form::select('roles[]', $roles, [], ['class' => 'form-control form-control-modern select2', 'multiple', 'style' => 'width: 100%;']) !!}
                                 </div>
                                 <div class="col-lg-4 col-md-6">
                                     <div class="custom-control custom-checkbox mb-2">
                                         <input type="checkbox" class="custom-control-input" id="assignPermission" name="assignPermission">
                                         <label class="custom-control-label font-weight-bold" for="assignPermission">Assign Permissions</label>
                                     </div>
-                                    {!! Form::select('permissions[]', $permissions, [], ['class' => 'form-control form-control-modern select2', 'multiple', 'style' => 'width: 100%;', 'data-placeholder' => 'Select permissions...']) !!}
+                                    {!! Form::select('permissions[]', $permissions, [], ['class' => 'form-control form-control-modern select2', 'multiple', 'style' => 'width: 100%;']) !!}
                                 </div>
                             </div>
 
@@ -249,25 +360,14 @@
 @endsection
 
 @section('scripts')
-    {{-- <script src="{{ asset('plugins/jQuery/jquery.min.js') }}"></script> --}}
-    {{-- <script src="{{ asset('/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-    <script src="{{ asset('plugins/select2/select2.min.js') }}"></script>
-    <script src="{{ asset('plugins/ckeditor/ckeditor.js') }}"></script> --}}
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta3/js/bootstrap-select.min.js" integrity="sha512-yrOmjPdp8qH8hgLfWpSFhC/+R9Cj9USL8uJxYIveJZGAiedxyIxwNw4RsLDlcjNlIRR4kkHaDHSmNHAkxFTmgg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script> -->
-
-    <script>
-        //  CKEDITOR.replace('content');
-    </script>
-
-    <script>
-        $(document).ready(function() {
-            // $.noConflict();
-            // CKEDITOR.replace('content');
-            $(".select2").select2();
-        });
-    </script>
-
     <script type="text/javascript">
+        $(document).ready(function() {
+            $('.select2').select2({
+                placeholder: 'Select options...',
+                allowClear: true
+            });
+        });
+
         function readURL() {
             var myimg = document.getElementById("myimg");
             var input = document.getElementById("filename");

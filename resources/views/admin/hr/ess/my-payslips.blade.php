@@ -2,10 +2,6 @@
 
 @section('title', 'ESS - My Payslips')
 
-@section('styles')
-<link href="{{ asset('plugins/datatables/datatables.min.css') }}" rel="stylesheet">
-@endsection
-
 @section('content')
 <div class="container-fluid">
     <!-- Page Header -->
@@ -94,7 +90,7 @@
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table id="payslipsTable" class="table table-hover" style="width: 100%;">
+                <table class="table table-hover">
                     <thead class="bg-light">
                         <tr>
                             <th>Pay Period</th>
@@ -106,8 +102,54 @@
                             <th>Actions</th>
                         </tr>
                     </thead>
+                    <tbody>
+                        @forelse($payslips as $payslip)
+                        <tr>
+                            <td>{{ \Carbon\Carbon::parse($payslip->payrollBatch->pay_period ?? now())->format('F Y') }}</td>
+                            <td>₦{{ number_format($payslip->basic_salary, 2) }}</td>
+                            <td>₦{{ number_format($payslip->gross_salary, 2) }}</td>
+                            <td>₦{{ number_format($payslip->total_deductions, 2) }}</td>
+                            <td><strong>₦{{ number_format($payslip->net_salary, 2) }}</strong></td>
+                            <td>
+                                @php
+                                    $status = $payslip->payrollBatch->status ?? 'pending';
+                                    $badgeClass = match($status) {
+                                        'approved' => 'success',
+                                        'paid' => 'info',
+                                        default => 'warning'
+                                    };
+                                @endphp
+                                <span class="badge badge-{{ $badgeClass }}">{{ ucfirst($status) }}</span>
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-outline-primary view-payslip"
+                                        data-id="{{ $payslip->id }}"
+                                        style="border-radius: 6px;">
+                                    <i class="mdi mdi-eye"></i> View
+                                </button>
+                                <a href="{{ route('hr.ess.my-payslips.download', $payslip->id) }}"
+                                   class="btn btn-sm btn-outline-success"
+                                   style="border-radius: 6px;">
+                                    <i class="mdi mdi-download"></i> Download
+                                </a>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">
+                                <i class="mdi mdi-alert-circle-outline" style="font-size: 2rem;"></i>
+                                <p class="mb-0">No payslips found</p>
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
                 </table>
             </div>
+            @if($payslips->hasPages())
+            <div class="mt-3">
+                {{ $payslips->links() }}
+            </div>
+            @endif
         </div>
     </div>
 </div>
@@ -139,29 +181,8 @@
 @endsection
 
 @section('scripts')
-<script src="{{ asset('plugins/datatables/datatables.min.js') }}"></script>
 <script>
 $(document).ready(function() {
-    // Initialize DataTable
-    var table = $('#payslipsTable').DataTable({
-        processing: true,
-        serverSide: true,
-        ajax: '{{ route("ess.my-payslips.data") }}',
-        columns: [
-            { data: 'pay_period', name: 'payrollBatch.pay_period' },
-            { data: 'basic_salary', name: 'basic_salary' },
-            { data: 'gross_salary', name: 'gross_salary' },
-            { data: 'total_deductions', name: 'total_deductions' },
-            { data: 'net_salary', name: 'net_salary' },
-            { data: 'status', name: 'payrollBatch.status' },
-            { data: 'actions', name: 'actions', orderable: false, searchable: false }
-        ],
-        order: [[0, 'desc']],
-        language: {
-            emptyTable: "No payslips found"
-        }
-    });
-
     // View payslip
     var currentPayslipId = null;
 

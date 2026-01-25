@@ -1,167 +1,135 @@
 @extends('admin.layouts.app')
-@section('title', 'User Management')
-@section('page_name', 'User Management')
-@section('subpage_name', 'List Users')
+@section('title', 'Staff Management')
+@section('page_name', 'Staff Management')
+@section('subpage_name', 'All Staff')
+
+@section('style')
+<style>
+    .staff-table th {
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #6b7280;
+        background: #f9fafb;
+    }
+    .staff-table td {
+        vertical-align: middle !important;
+    }
+    .btn-group .btn {
+        padding: 0.35rem 0.65rem;
+    }
+    .badge {
+        font-weight: 500;
+        padding: 0.35rem 0.65rem;
+    }
+</style>
+@endsection
+
 @section('content')
     <section class="content">
         <div class="col-12">
             <div class="card-modern">
-                <div class="card-header">
-                    {{-- @if (auth()->user()->can('user-create')) --}}
-                        <a href="{{ route('staff.create') }}" id="loading-btn" data-loading-text="Loading..."
-                            class="btn btn-primary">
-                            <i class="fa fa-user"></i>
-                            New User
-                        </a>
-                    {{-- @endif --}}
-                </div>
-                <!-- /.card-header -->
-                <div class="card-body">
-                    <div class="pull-right">
+                <div class="card-header-modern d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title-modern mb-1">
+                            <i class="mdi mdi-account-group text-primary mr-2"></i>Staff Directory
+                        </h5>
+                        <small class="text-muted">Manage all staff members and their information</small>
                     </div>
-                    {{-- @if (Auth::user()->hasRole(['Super-Admin', 'Admin']) || Auth::user()->hasPermissionTo('user-list')) --}}
+                    <a href="{{ route('staff.create') }}" class="btn btn-primary" style="border-radius: 8px;">
+                        <i class="mdi mdi-plus mr-1"></i> Add New Staff
+                    </a>
+                </div>
+                <div class="card-body p-4">
                     <div class="table-responsive">
-                        <table id="ghaji" class="table table-sm  table-bordered table-striped display">
+                        <table id="staffTable" class="table table-hover staff-table" style="width: 100%;">
                             <thead>
                                 <tr>
-                                    <th>Id</th>
-                                    <th>Image</th>
-                                    <th>Surname</th>
-                                    <th>Firstname</th>
+                                    <th style="width: 40px;">#</th>
+                                    <th style="width: 50px;">Photo</th>
+                                    <th>Name</th>
+                                    <th>Department</th>
+                                    <th>Job Title</th>
                                     <th>Category</th>
+                                    <th>Phone</th>
+                                    <th>Status</th>
                                     <th>Role</th>
-                                    <!-- <th>Email</th> -->
-                                    <th>View</th>
-                                    <th>Edit</th>
-                                    <th>Delete</th>
+                                    <th style="width: 100px;">Actions</th>
                                 </tr>
                             </thead>
                         </table>
                     </div>
-                    {{-- @endif --}}
                 </div>
             </div>
         </div>
-
     </section>
-
-
-    <!-- Modal form to delete a user -->
-    <div id="deleteModal" class="modal fade" role="dialog">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title"></h4>
-                    <button type="button" class="close" dal">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <h4 class="text-center">Are you sure you want to delete the following user?</h4>
-                    <br />
-                    <form class="form-horizontal" role="form">
-                        <div class="form-group">
-                            <div class="col-md-10">
-                                <input type="hidden" class="form-control" id="id_delete">
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-danger delete" dal">
-                        <span id="" class='glyphicon glyphicon-trash'></span> Delete
-                    </button>
-                    <button type="button" class="btn btn-warning" dal">
-                        <span class='glyphicon glyphicon-remove'></span> Close
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 @endsection
 
 @section('scripts')
     <script src="{{ asset('/plugins/dataT/datatables.js') }}" defer></script>
     <script>
         $(function() {
-            // $.noConflict();
-            $('#ghaji').DataTable({
-                "dom": 'Bfrtip',
-                "iDisplayLength": 50,
+            $('#staffTable').DataTable({
+                "dom": '<"row"<"col-sm-12 col-md-6"B><"col-sm-12 col-md-6"f>>rtip',
+                "iDisplayLength": 25,
                 "lengthMenu": [
                     [10, 25, 50, 100, -1],
                     [10, 25, 50, 100, "All"]
                 ],
-                "buttons": ['pageLength', 'copy', 'excel', 'csv', 'pdf', 'print', 'colvis'],
+                "buttons": [
+                    {
+                        extend: 'pageLength',
+                        className: 'btn btn-sm btn-outline-secondary'
+                    },
+                    {
+                        extend: 'excel',
+                        className: 'btn btn-sm btn-outline-success',
+                        text: '<i class="mdi mdi-file-excel"></i> Excel',
+                        exportOptions: {
+                            columns: [0, 2, 3, 4, 5, 6, 7, 8]
+                        }
+                    },
+                    {
+                        extend: 'pdf',
+                        className: 'btn btn-sm btn-outline-danger',
+                        text: '<i class="mdi mdi-file-pdf"></i> PDF',
+                        exportOptions: {
+                            columns: [0, 2, 3, 4, 5, 6, 7, 8]
+                        }
+                    },
+                    {
+                        extend: 'print',
+                        className: 'btn btn-sm btn-outline-info',
+                        text: '<i class="mdi mdi-printer"></i> Print',
+                        exportOptions: {
+                            columns: [0, 2, 3, 4, 5, 6, 7, 8]
+                        }
+                    }
+                ],
                 "processing": true,
                 "serverSide": true,
                 "ajax": {
                     "url": "{{ route('listStaff') }}",
                     "type": "GET"
                 },
-                "columns": [{
-                        "data": "DT_RowIndex"
-                    },
-                    {
-                        "data": "filename"
-                    },
-                    {
-                        "data": "surname"
-                    },
-                    {
-                        "data": "firstname"
-                    },
-                    {
-                        "data": "is_admin"
-                    },
-                    {
-                        "data": "leadership_role"
-                    },
-                    // { "data": "email" },
-                    {
-                        "data": "view"
-                    },
-                    {
-                        "data": "edit"
-                    },
-                    {
-                        "data": "delete"
-                    }
+                "columns": [
+                    { "data": "DT_RowIndex", "orderable": false, "searchable": false },
+                    { "data": "filename", "orderable": false, "searchable": false },
+                    { "data": "full_name" },
+                    { "data": "department" },
+                    { "data": "job_title" },
+                    { "data": "is_admin" },
+                    { "data": "phone" },
+                    { "data": "employment_status" },
+                    { "data": "leadership_role", "orderable": false },
+                    { "data": "actions", "orderable": false, "searchable": false }
                 ],
-                "paging": true
-                // "lengthChange": false,
-                // "searching": true,
-                // "ordering": true,
-                // "info": true,
-                // "autoWidth": false
-            });
-        });
-
-        // Delete a User
-        $(document).on('click', '.delete-modal', function() {
-            $('.modal-title').text('Delete');
-            $('#id_delete').val($(this).data('id'));
-            id = $('#id_delete').val();
-            $('#deleteModal').modal('show');
-        });
-        $(document).on('click', '.delete', function(e) {
-            $.ajax({
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                },
-                type: 'DELETE',
-                url: 'users/' + id,
-                data: {
-                    // '_token': $('input[name=_token]').val(),
-                    'id': $("#id_delete").val(),
-                },
-                success: function(data) {
-                    swal({
-                        position: 'top-end',
-                        type: 'success',
-                        title: 'Successfully deleted your information',
-                        showConfirmButton: false,
-                        timer: 3000
-                    });
-                    window.location.reload();
+                "order": [[2, 'asc']],
+                "language": {
+                    "processing": '<div class="spinner-border spinner-border-sm text-primary" role="status"><span class="sr-only">Loading...</span></div> Loading...',
+                    "emptyTable": "No staff members found",
+                    "zeroRecords": "No matching staff found"
                 }
             });
         });

@@ -22,6 +22,7 @@ class PayHead extends Model implements Auditable
         'type',
         'calculation_type',
         'calculation_base',
+        'percentage_of',
         'default_value',
         'is_taxable',
         'is_mandatory',

@@ -67,6 +67,20 @@ $assets = [
     [
         'url' => 'https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen-sprite@2x.png',
         'path' => 'public/assets/css/chosen-sprite@2x.png'
+    ],
+    // Bootstrap Datepicker
+    [
+        'url' => 'https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.10.0/css/bootstrap-datepicker.min.css',
+        'path' => 'public/assets/css/bootstrap-datepicker.min.css'
+    ],
+    [
+        'url' => 'https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.10.0/js/bootstrap-datepicker.min.js',
+        'path' => 'public/assets/js/bootstrap-datepicker.min.js'
+    ],
+    // Select2 Bootstrap4 theme
+    [
+        'url' => 'https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@1.5.2/dist/select2-bootstrap4.min.css',
+        'path' => 'public/assets/css/select2-bootstrap4.min.css'
     ]
 ];
 

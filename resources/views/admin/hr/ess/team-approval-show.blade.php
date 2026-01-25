@@ -60,12 +60,23 @@
                                 <span class="badge" style="background-color: {{ $leaveRequest->leaveType->color ?? '#6c757d' }}20; color: {{ $leaveRequest->leaveType->color ?? '#6c757d' }}; border-radius: 6px; padding: 8px 16px; font-size: 1rem;">
                                     {{ $leaveRequest->leaveType->name ?? 'N/A' }}
                                 </span>
+                                @if($leaveRequest->leaveType->is_paid)
+                                    <span class="badge badge-success ml-1" style="border-radius: 4px;">Paid</span>
+                                @else
+                                    <span class="badge badge-secondary ml-1" style="border-radius: 4px;">Unpaid</span>
+                                @endif
                             </div>
                         </div>
                         <div class="col-md-6 mb-4">
                             <label class="text-muted small mb-1">Total Days</label>
                             <div>
-                                <h4 class="font-weight-bold mb-0">{{ $leaveRequest->total_days }} <small class="text-muted">days</small></h4>
+                                <h4 class="font-weight-bold mb-0">
+                                    {{ $leaveRequest->total_days }}
+                                    <small class="text-muted">days</small>
+                                    @if($leaveRequest->is_half_day)
+                                        <span class="badge badge-info ml-1" style="border-radius: 4px;">Half Day</span>
+                                    @endif
+                                </h4>
                             </div>
                         </div>
                         <div class="col-md-6 mb-4">
@@ -102,6 +113,16 @@
                     </div>
                     @endif
 
+                    @if($leaveRequest->contact_during_leave)
+                    <div class="mb-4">
+                        <label class="text-muted small mb-1">Contact During Leave</label>
+                        <div class="d-flex align-items-center">
+                            <i class="mdi mdi-phone text-primary mr-2"></i>
+                            <strong>{{ $leaveRequest->contact_during_leave }}</strong>
+                        </div>
+                    </div>
+                    @endif
+
                     @if($leaveRequest->reliefStaff)
                     <div class="mb-4">
                         <label class="text-muted small mb-1">Relief Staff</label>
@@ -110,7 +131,7 @@
                                 {{ strtoupper(substr($leaveRequest->reliefStaff->user->firstname ?? 'R', 0, 1)) }}
                             </div>
                             <div>
-                                <strong>{{ $leaveRequest->reliefStaff->user->fullname ?? 'N/A' }}</strong>
+                                <strong>{{ $leaveRequest->reliefStaff->user->name ?? 'N/A' }}</strong>
                                 <br>
                                 <small class="text-muted">{{ $leaveRequest->reliefStaff->specialization->name ?? '' }}</small>
                             </div>
@@ -205,8 +226,8 @@
                     <div class="avatar mx-auto mb-3" style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem; font-weight: 700;">
                         {{ strtoupper(substr($leaveRequest->staff->user->firstname ?? 'U', 0, 1)) }}{{ strtoupper(substr($leaveRequest->staff->user->lastname ?? '', 0, 1)) }}
                     </div>
-                    <h5 class="font-weight-bold mb-1">{{ $leaveRequest->staff->user->fullname ?? 'N/A' }}</h5>
-                    <p class="text-muted mb-2">{{ $leaveRequest->staff->staff_number ?? '' }}</p>
+                    <h5 class="font-weight-bold mb-1">{{ $leaveRequest->staff->user->name ?? 'N/A' }}</h5>
+                    <p class="text-muted mb-2">{{ $leaveRequest->staff->employee_id ?? '' }}</p>
                     <span class="badge badge-light" style="border-radius: 6px; padding: 5px 12px;">
                         {{ $leaveRequest->staff->specialization->name ?? 'N/A' }}
                     </span>
@@ -238,14 +259,14 @@
                             {{ $leaveRequest->leaveType->name ?? 'N/A' }}
                         </span>
                     </div>
-                    
+
                     @php
                         $balanceRemaining = $balance->balance_remaining ?? 0;
                         $entitlement = $balance->entitlement ?? 0;
                         $percentage = $entitlement > 0 ? ($balanceRemaining / $entitlement) * 100 : 0;
                         $afterApproval = $balanceRemaining - $leaveRequest->total_days;
                     @endphp
-                    
+
                     <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted">Current Balance</span>
                         <strong>{{ $balanceRemaining }} days</strong>
@@ -259,16 +280,16 @@
                         <span class="text-muted">After Approval</span>
                         <strong class="{{ $afterApproval < 0 ? 'text-danger' : 'text-success' }}">{{ $afterApproval }} days</strong>
                     </div>
-                    
+
                     @if($afterApproval < 0)
                     <div class="alert alert-danger mt-3 mb-0" style="border-radius: 8px;">
                         <i class="mdi mdi-alert-circle mr-1"></i>
                         <small>Insufficient leave balance!</small>
                     </div>
                     @endif
-                    
+
                     <div class="progress mt-3" style="height: 8px; border-radius: 4px;">
-                        <div class="progress-bar bg-{{ $percentage > 50 ? 'success' : ($percentage > 20 ? 'warning' : 'danger') }}" 
+                        <div class="progress-bar bg-{{ $percentage > 50 ? 'success' : ($percentage > 20 ? 'warning' : 'danger') }}"
                              style="width: {{ min($percentage, 100) }}%"></div>
                     </div>
                     <small class="text-muted">{{ number_format($percentage, 0) }}% of {{ $entitlement }} days remaining</small>
@@ -307,7 +328,7 @@
                                     <strong>Supervisor {{ $leaveRequest->status === 'rejected' ? 'Rejected' : 'Approved' }}</strong>
                                     @if($leaveRequest->supervisorReviewedBy)
                                     <br>
-                                    <small>by {{ $leaveRequest->supervisorReviewedBy->fullname ?? 'N/A' }}</small>
+                                    <small>by {{ $leaveRequest->supervisorReviewedBy->name ?? 'N/A' }}</small>
                                     @endif
                                     <br>
                                     <small class="text-muted">{{ \Carbon\Carbon::parse($leaveRequest->supervisor_reviewed_at)->format('M d, Y h:i A') }}</small>
@@ -325,7 +346,7 @@
                                     <strong>HR Approved</strong>
                                     @if($leaveRequest->reviewedBy)
                                     <br>
-                                    <small>by {{ $leaveRequest->reviewedBy->fullname ?? 'N/A' }}</small>
+                                    <small>by {{ $leaveRequest->reviewedBy->name ?? 'N/A' }}</small>
                                     @endif
                                     <br>
                                     <small class="text-muted">{{ \Carbon\Carbon::parse($leaveRequest->reviewed_at)->format('M d, Y h:i A') }}</small>

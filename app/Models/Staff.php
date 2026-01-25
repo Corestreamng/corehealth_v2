@@ -43,7 +43,7 @@ class Staff extends Model implements Auditable
         'employment_type',
         'employment_status',
         'job_title',
-        'department',
+        'department_id', // Changed from 'department' to foreign key
 
         // Bank information
         'bank_name',
@@ -109,6 +109,14 @@ class Staff extends Model implements Auditable
     public function clinic()
     {
         return $this->belongsTo(Clinic::class, 'clinic_id', 'id');
+    }
+
+    /**
+     * Get the department this staff belongs to
+     */
+    public function department()
+    {
+        return $this->belongsTo(Department::class, 'department_id');
     }
 
     // ====================

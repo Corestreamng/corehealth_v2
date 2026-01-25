@@ -2,6 +2,10 @@
 
 @section('title', 'Leave Requests')
 
+@section('styles')
+<link rel="stylesheet" href="{{ asset('plugins/chosen/chosen.min.css') }}">
+@endsection
+
 @section('content')
 <div class="container-fluid">
     <div class="row">
@@ -136,46 +140,115 @@
                 <input type="hidden" name="leave_request_id" id="leave_request_id">
                 <div class="modal-body" style="padding: 1.5rem;">
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-12 mb-3">
                             <label class="form-label" style="font-weight: 600; color: #495057;">Staff *</label>
-                            <select class="form-control select2" name="staff_id" id="staff_id" required style="width: 100%;">
+                            <select class="form-control chosen-select" name="staff_id" id="staff_id" required data-placeholder="Select Staff">
                                 <option value="">Select Staff</option>
                                 @foreach($staffList ?? [] as $staff)
-                                <option value="{{ $staff->id }}">{{ $staff->user->firstname ?? '' }} {{ $staff->user->surname ?? '' }} ({{ $staff->employee_id ?? 'N/A' }})</option>
+                                <option value="{{ $staff->id }}">{{ $staff->user->name ?? '' }} ({{ $staff->employee_id ?? 'N/A' }})</option>
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-12 mb-3">
                             <label class="form-label" style="font-weight: 600; color: #495057;">Leave Type *</label>
                             <select class="form-control" name="leave_type_id" id="leave_type_id" required style="border-radius: 8px;">
                                 <option value="">Select Leave Type</option>
                                 @foreach($leaveTypes ?? [] as $type)
-                                <option value="{{ $type->id }}" data-max-days="{{ $type->max_days_per_year }}" data-requires-attachment="{{ $type->requires_attachment }}">
-                                    {{ $type->name }} (Max: {{ $type->max_days_per_year }} days)
+                                <option value="{{ $type->id }}"
+                                        data-max-consecutive="{{ $type->max_consecutive_days ?? '' }}"
+                                        data-min-notice="{{ $type->min_days_notice ?? 0 }}"
+                                        data-requires-attachment="{{ $type->requires_attachment ? 1 : 0 }}"
+                                        data-allow-half-day="{{ $type->allow_half_day ? 1 : 0 }}"
+                                        data-is-paid="{{ $type->is_paid ? 1 : 0 }}"
+                                        data-max-requests="{{ $type->max_requests_per_year ?? '' }}"
+                                        data-name="{{ $type->name }}">
+                                    {{ $type->name }}
                                 </option>
                                 @endforeach
                             </select>
+                            <small class="text-muted" id="leaveTypeInfo"></small>
                         </div>
-                        <div class="col-md-6 mb-3">
+
+                    <!-- Leave Type Details Alert -->
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <div class="alert alert-info" id="leaveTypeDetails" style="display: none; border-radius: 8px;">
+                                <h6 class="font-weight-bold mb-2"><i class="mdi mdi-information-outline mr-1"></i>Leave Type Requirements</h6>
+                                <ul class="mb-0 pl-3" id="leaveTypeDetailsList"></ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Date Selection -->
+                    <div class="row">
+                        <div class="col-md-5 mb-3">
                             <label class="form-label" style="font-weight: 600; color: #495057;">Start Date *</label>
                             <input type="date" class="form-control" name="start_date" id="start_date" required
                                    style="border-radius: 8px; padding: 0.75rem;" min="{{ date('Y-m-d') }}">
+                            <small class="text-muted" id="minNoticeWarning"></small>
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-5 mb-3">
                             <label class="form-label" style="font-weight: 600; color: #495057;">End Date *</label>
                             <input type="date" class="form-control" name="end_date" id="end_date" required
                                    style="border-radius: 8px; padding: 0.75rem;" min="{{ date('Y-m-d') }}">
                         </div>
+                        <div class="col-md-2 mb-3" id="halfDaySection" style="display: none;">
+                            <label class="form-label" style="font-weight: 600; color: #495057;">Half Day?</label>
+                            <div class="custom-control custom-checkbox mt-2">
+                                <input type="checkbox" class="custom-control-input" id="is_half_day" name="is_half_day" value="1">
+                                <label class="custom-control-label" for="is_half_day">Yes</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Days Calculation Info -->
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <div class="alert" id="daysInfo" style="display: none; border-radius: 8px;">
+                                <i class="mdi mdi-calendar-check mr-2"></i>
+                                <strong>Total Days:</strong> <span id="totalDays">0</span> days
+                                <span id="daysWarning" class="ml-2"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
                         <div class="col-md-12 mb-3">
                             <label class="form-label" style="font-weight: 600; color: #495057;">Reason *</label>
                             <textarea class="form-control" name="reason" id="reason" rows="3" required
-                                      style="border-radius: 8px; padding: 0.75rem;" placeholder="Provide reason for leave request"></textarea>
+                                      style="border-radius: 8px; padding: 0.75rem;" placeholder="Please provide a detailed reason for your leave request"></textarea>
                         </div>
                         <div class="col-md-12 mb-3">
-                            <label class="form-label" style="font-weight: 600; color: #495057;">Supporting Documents</label>
-                            <input type="file" class="form-control" name="attachments[]" id="attachments" multiple
+                            <label class="form-label" style="font-weight: 600; color: #495057;">Relief Staff <small class="text-muted">(Optional)</small></label>
+                            <select name="relief_staff_id" id="relief_staff_id" class="form-control" style="border-radius: 8px;">
+                                <option value="">Select a colleague to handle duties</option>
+                                @foreach($staffList ?? [] as $staff)
+                                    <option value="{{ $staff->id }}">{{ $staff->user->name ?? '' }} ({{ $staff->employee_id ?? 'N/A' }})</option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted">Optional: Select a colleague who will cover responsibilities during absence</small>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label" style="font-weight: 600; color: #495057;">Handover Notes <small class="text-muted">(Optional)</small></label>
+                            <textarea class="form-control" name="handover_notes" id="handover_notes" rows="2"
+                                      style="border-radius: 8px; padding: 0.75rem;" placeholder="Brief notes about ongoing work or handover instructions"></textarea>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label" style="font-weight: 600; color: #495057;">Contact During Leave <small class="text-muted">(Optional)</small></label>
+                            <input type="text" class="form-control" name="contact_during_leave" id="contact_during_leave"
+                                   style="border-radius: 8px; padding: 0.75rem;" placeholder="Phone number or email where you can be reached">
+                        </div>
+
+                        <!-- Document Upload (Conditional) -->
+                        <div class="col-md-12 mb-3" id="documentSection" style="display: none;">
+                            <div class="alert alert-warning" style="border-radius: 8px;">
+                                <i class="mdi mdi-file-document-outline mr-2"></i>
+                                <strong>Document Required:</strong> This leave type requires supporting documentation.
+                            </div>
+                            <label class="form-label" style="font-weight: 600; color: #495057;">Supporting Document <span class="text-danger" id="docRequired">*</span></label>
+                            <input type="file" class="form-control" name="document" id="document"
                                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="border-radius: 8px;">
-                            <small class="text-muted">PDF, images, or Word documents. Max 5MB each.</small>
+                            <small class="text-muted">PDF, images, or Word documents. Max 5MB.</small>
                         </div>
                     </div>
 
@@ -257,15 +330,24 @@
 @endsection
 
 @section('scripts')
-<script src="{{ asset('/plugins/dataT/datatables.js') }}" defer></script>
+<script src="{{ asset('plugins/chosen/chosen.jquery.min.js') }}"></script>
+<script src="{{ asset('/plugins/dataT/datatables.js') }}"></script>
 <script>
-$(function() {
-    // Initialize Select2
-    $('.select2').select2({
-        dropdownParent: $('#leaveRequestModal'),
-        placeholder: 'Select Staff',
-        allowClear: true
-    });
+$(document).ready(function() {
+    var selectedLeaveType = null;
+
+    // Helper to format date as YYYY-MM-DD
+    function formatDate(date) {
+        var d = new Date(date);
+        var month = '' + (d.getMonth() + 1);
+        var day = '' + d.getDate();
+        var year = d.getFullYear();
+
+        if (month.length < 2) month = '0' + month;
+        if (day.length < 2) day = '0' + day;
+
+        return [year, month, day].join('-');
+    }
 
     // Initialize DataTable
     const table = $('#leaveRequestsTable').DataTable({
@@ -310,68 +392,255 @@ $(function() {
         table.ajax.reload();
     });
 
-    // Add request button
+    // Add request button - initialize Chosen when modal opens
     $('#addRequestBtn').click(function() {
         $('#leaveRequestForm')[0].reset();
         $('#leave_request_id').val('');
-        $('#staff_id').val('').trigger('change');
-        $('#balanceInfo').addClass('d-none');
-        $('#daysInfo').addClass('d-none');
+        selectedLeaveType = null;
+        $('#leaveTypeDetails').hide();
+        $('#documentSection').hide();
+        $('#halfDaySection').hide();
+        $('#daysInfo').hide();
         $('#modalTitleText').text('New Leave Request');
         $('#leaveRequestModal').modal('show');
+
+        // Initialize Chosen after modal is shown
+        setTimeout(function() {
+            if (typeof $.fn.chosen !== 'undefined') {
+                $('.chosen-select').chosen({
+                    width: '100%',
+                    no_results_text: 'No staff found matching',
+                    allow_single_deselect: true
+                });
+            }
+        }, 100);
     });
 
-    // Calculate days when dates change
-    $('#start_date, #end_date').change(function() {
-        const startDate = $('#start_date').val();
-        const endDate = $('#end_date').val();
+    // Destroy Chosen when modal closes
+    $('#leaveRequestModal').on('hidden.bs.modal', function() {
+        if (typeof $.fn.chosen !== 'undefined') {
+            $('.chosen-select').chosen('destroy');
+        }
+    });
 
-        if (startDate && endDate) {
-            const start = new Date(startDate);
-            const end = new Date(endDate);
+    // Set default min date to today
+    var today = formatDate(new Date());
+    $('#start_date').attr('min', today);
+    $('#end_date').attr('min', today);
 
-            if (end >= start) {
-                // Calculate working days (excluding weekends)
-                let days = 0;
-                let current = new Date(start);
-                while (current <= end) {
-                    const dayOfWeek = current.getDay();
-                    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-                        days++;
-                    }
-                    current.setDate(current.getDate() + 1);
-                }
+    // Update end date min/max when start date changes
+    $('#start_date').on('change', function() {
+        var startVal = $(this).val();
+        if (startVal) {
+            $('#end_date').attr('min', startVal);
+            if ($('#end_date').val() && $('#end_date').val() < startVal) {
+                $('#end_date').val(startVal);
+            }
 
-                $('#daysText').text(days);
-                $('#daysInfo').removeClass('d-none');
+            // Set max date based on max consecutive days
+            if (selectedLeaveType && selectedLeaveType.maxConsecutive) {
+                var maxDate = new Date(startVal);
+                maxDate.setDate(maxDate.getDate() + parseInt(selectedLeaveType.maxConsecutive) - 1);
+                $('#end_date').attr('max', formatDate(maxDate));
+            } else {
+                $('#end_date').removeAttr('max');
             }
         }
+        calculateLeaveDays();
     });
 
-    // Load leave balance when staff and type selected
-    $('#staff_id, #leave_type_id').change(function() {
-        const staffId = $('#staff_id').val();
-        const leaveTypeId = $('#leave_type_id').val();
+    // Leave type change handler - show requirements
+    $('#leave_type_id').on('change', function() {
+        var selected = $(this).find(':selected');
+        selectedLeaveType = {
+            id: selected.val(),
+            name: selected.data('name'),
+            maxConsecutive: selected.data('max-consecutive'),
+            minNotice: selected.data('min-notice'),
+            requiresAttachment: selected.data('requires-attachment') == 1,
+            allowHalfDay: selected.data('allow-half-day') == 1,
+            isPaid: selected.data('is-paid') == 1,
+            maxRequests: selected.data('max-requests')
+        };
 
-        if (staffId && leaveTypeId) {
-            $.get("{{ url('/hr/leave-balances') }}/" + staffId + "/" + leaveTypeId, function(data) {
-                const available = data.entitled_days - data.used_days - data.pending_days + data.carried_forward;
-                $('#balanceText').html(
-                    '<strong>Balance:</strong> ' + available + ' days available ' +
-                    '(Entitled: ' + data.entitled_days + ', Used: ' + data.used_days +
-                    ', Pending: ' + data.pending_days + ', Carried: ' + data.carried_forward + ')'
-                );
-                $('#balanceInfo').removeClass('d-none');
-            }).fail(function() {
-                $('#balanceText').html('No balance record found for this leave type');
-                $('#balanceInfo').removeClass('d-none').removeClass('alert-info').addClass('alert-warning');
-            });
+        if (selectedLeaveType.id) {
+            // Show leave type details
+            var details = [];
+
+            if (selectedLeaveType.maxConsecutive) {
+                details.push('<li><strong>Max Consecutive Days:</strong> ' + selectedLeaveType.maxConsecutive + ' days per request</li>');
+            }
+
+            if (selectedLeaveType.minNotice > 0) {
+                details.push('<li><strong>Minimum Notice:</strong> ' + selectedLeaveType.minNotice + ' days in advance</li>');
+            }
+
+            if (selectedLeaveType.allowHalfDay) {
+                details.push('<li><strong>Half Day:</strong> Half-day requests are allowed</li>');
+            }
+
+            if (selectedLeaveType.isPaid) {
+                details.push('<li class="text-success"><strong>Paid Leave</strong></li>');
+            } else {
+                details.push('<li class="text-warning"><strong>Unpaid Leave</strong></li>');
+            }
+
+            if (selectedLeaveType.requiresAttachment) {
+                details.push('<li class="text-danger"><strong>Document Required:</strong> Supporting documentation must be uploaded</li>');
+            }
+
+            $('#leaveTypeDetailsList').html(details.join(''));
+            $('#leaveTypeDetails').show();
+
+            // Show/hide document section
+            $('#documentSection').toggle(selectedLeaveType.requiresAttachment);
+            $('#document').prop('required', selectedLeaveType.requiresAttachment);
+
+            // Show/hide half day option
+            $('#halfDaySection').toggle(selectedLeaveType.allowHalfDay);
+
+            // Update date input min/max based on notice period and max consecutive
+            updateDateMinimum();
+
+        } else {
+            $('#leaveTypeDetails').hide();
+            $('#documentSection').hide();
+            $('#halfDaySection').hide();
         }
+
+        // Reset dates when leave type changes
+        $('#start_date, #end_date').val('');
+        $('#daysInfo').hide();
     });
+
+    // Update date input minimum based on notice period
+    function updateDateMinimum() {
+        var minDate = new Date();
+
+        if (selectedLeaveType && selectedLeaveType.minNotice > 0) {
+            minDate.setDate(minDate.getDate() + parseInt(selectedLeaveType.minNotice));
+
+            $('#minNoticeWarning').html(
+                '<i class="mdi mdi-alert text-warning"></i> Requires ' + selectedLeaveType.minNotice + ' days notice'
+            ).addClass('text-warning');
+        } else {
+            $('#minNoticeWarning').html('').removeClass('text-warning');
+        }
+
+        var minDateStr = formatDate(minDate);
+        $('#start_date').attr('min', minDateStr);
+        $('#end_date').attr('min', minDateStr);
+
+        // Set max date based on max consecutive days
+        if (selectedLeaveType && selectedLeaveType.maxConsecutive) {
+            var startVal = $('#start_date').val();
+            if (startVal) {
+                var maxDate = new Date(startVal);
+                maxDate.setDate(maxDate.getDate() + parseInt(selectedLeaveType.maxConsecutive) - 1);
+                $('#end_date').attr('max', formatDate(maxDate));
+            }
+        } else {
+            $('#end_date').removeAttr('max');
+        }
+    }
+
+    // Calculate days when dates change
+    $('#start_date, #end_date').on('change', function() {
+        calculateLeaveDays();
+    });
+
+    // Half day checkbox change
+    $('#is_half_day').on('change', function() {
+        calculateLeaveDays();
+    });
+
+    function calculateLeaveDays() {
+        var startDate = $('#start_date').val();
+        var endDate = $('#end_date').val();
+
+        if (startDate && endDate && selectedLeaveType) {
+            var start = new Date(startDate);
+            var end = new Date(endDate);
+            var days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+
+            // Check if half day is selected
+            var isHalfDay = $('#is_half_day').is(':checked');
+            if (isHalfDay && days === 1) {
+                days = 0.5;
+            }
+
+            if (days > 0) {
+                var warnings = [];
+                var alertClass = 'alert-info';
+
+                // Check against max consecutive days
+                if (selectedLeaveType.maxConsecutive && days > selectedLeaveType.maxConsecutive) {
+                    warnings.push('<span class=\"text-danger\"><i class=\"mdi mdi-alert-circle\"></i> Exceeds maximum of ' +
+                                selectedLeaveType.maxConsecutive + ' consecutive days</span>');
+                    alertClass = 'alert-danger';
+                }
+
+                // Check start date against notice period
+                if (selectedLeaveType.minNotice > 0) {
+                    var today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    var minStartDate = new Date(today);
+                    minStartDate.setDate(minStartDate.getDate() + parseInt(selectedLeaveType.minNotice));
+
+                    if (start < minStartDate) {
+                        warnings.push('<span class=\"text-danger\"><i class=\"mdi mdi-alert-circle\"></i> Requires ' +
+                                    selectedLeaveType.minNotice + ' days advance notice</span>');
+                        alertClass = 'alert-danger';
+                    }
+                }
+
+                $('#totalDays').text(days);
+                $('#daysWarning').html(warnings.length > 0 ? '<br>' + warnings.join('<br>') : '');
+                $('#daysInfo').removeClass('alert-info alert-warning alert-danger').addClass(alertClass).show();
+            } else if (days <= 0) {
+                $('#daysInfo').hide();
+                toastr.error('End date must be after start date');
+            }
+        }
+    }
 
     // Submit leave request
     $('#leaveRequestForm').submit(function(e) {
         e.preventDefault();
+
+        // Validate before submission
+        if (!selectedLeaveType) {
+            toastr.error('Please select a leave type');
+            return false;
+        }
+
+        var startDate = new Date($('#start_date').val());
+        var endDate = new Date($('#end_date').val());
+        var days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+
+        var isHalfDay = $('#is_half_day').is(':checked');
+        if (isHalfDay && days === 1) {
+            days = 0.5;
+        }
+
+        // Check max consecutive days
+        if (selectedLeaveType.maxConsecutive && days > selectedLeaveType.maxConsecutive) {
+            toastr.error('Cannot request more than ' + selectedLeaveType.maxConsecutive + ' consecutive days for this leave type');
+            return false;
+        }
+
+        // Check minimum notice
+        if (selectedLeaveType.minNotice > 0) {
+            var today = new Date();
+            today.setHours(0, 0, 0, 0);
+            var minStartDate = new Date(today);
+            minStartDate.setDate(minStartDate.getDate() + parseInt(selectedLeaveType.minNotice));
+
+            if (startDate < minStartDate) {
+                toastr.error('This leave type requires ' + selectedLeaveType.minNotice + ' days advance notice');
+                return false;
+            }
+        }
 
         const formData = new FormData(this);
         const id = $('#leave_request_id').val();

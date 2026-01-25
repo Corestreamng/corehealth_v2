@@ -14,11 +14,9 @@
                     </h3>
                     <p class="text-muted mb-0">Process and manage monthly payroll</p>
                 </div>
-                @can('payroll.create')
                 <button type="button" class="btn btn-primary" id="createBatchBtn" style="border-radius: 8px; padding: 0.75rem 1.5rem;">
                     <i class="mdi mdi-plus mr-1"></i> Create Payroll Batch
                 </button>
-                @endcan
             </div>
 
             <!-- Stats Cards -->

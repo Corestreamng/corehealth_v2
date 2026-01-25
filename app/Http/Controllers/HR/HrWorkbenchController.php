@@ -43,9 +43,9 @@ class HrWorkbenchController extends Controller
             'with_salary_profile' => Staff::withSalaryProfile()->count(),
         ];
 
-        // Leave requests pending approval
-        $pendingLeaveRequests = LeaveRequest::pending()
-            ->with(['staff.user', 'leaveType'])
+        // Leave requests pending HR approval (supervisor already approved)
+        $pendingLeaveRequests = LeaveRequest::where('status', LeaveRequest::STATUS_SUPERVISOR_APPROVED)
+            ->with(['staff.user', 'leaveType', 'supervisorApprovedBy'])
             ->latest()
             ->limit(10)
             ->get();
@@ -92,7 +92,35 @@ class HrWorkbenchController extends Controller
             ->whereYear('created_at', now()->year)
             ->count();
 
+        // Staff on leave today
+        $onLeaveToday = LeaveRequest::where('status', LeaveRequest::STATUS_APPROVED)
+            ->where('start_date', '<=', now()->toDateString())
+            ->where('end_date', '>=', now()->toDateString())
+            ->count();
+
+        // Terminations year to date
+        $terminationsYtd = StaffTermination::whereYear('effective_date', now()->year)
+            ->count();
+
+        // Prepare stats array for the view
+        $stats = [
+            'total_staff' => $staffStats['total'],
+            'active_staff' => $staffStats['active'],
+            'pending_leave_requests' => LeaveRequest::where('status', LeaveRequest::STATUS_SUPERVISOR_APPROVED)->count(),
+            'open_queries' => DisciplinaryQuery::whereIn('status', [
+                DisciplinaryQuery::STATUS_ISSUED,
+                DisciplinaryQuery::STATUS_RESPONSE_RECEIVED,
+                DisciplinaryQuery::STATUS_UNDER_REVIEW,
+            ])->count(),
+            'active_suspensions' => StaffSuspension::active()->count(),
+            'on_leave_today' => $onLeaveToday,
+            'pending_payroll' => PayrollBatch::submitted()->count(),
+            'terminations_ytd' => $terminationsYtd,
+            'salary_profiles' => $staffStats['with_salary_profile'],
+        ];
+
         return view('admin.hr.workbench.index', compact(
+            'stats',
             'staffStats',
             'pendingLeaveRequests',
             'openQueries',
@@ -116,7 +144,8 @@ class HrWorkbenchController extends Controller
                 'suspended' => Staff::suspended()->count(),
             ],
             'leave' => [
-                'pending' => LeaveRequest::pending()->count(),
+                'pending_supervisor' => LeaveRequest::pending()->count(),
+                'pending_hr' => LeaveRequest::where('status', LeaveRequest::STATUS_SUPERVISOR_APPROVED)->count(),
                 'approved_this_month' => LeaveRequest::approved()
                     ->whereMonth('reviewed_at', now()->month)
                     ->count(),
