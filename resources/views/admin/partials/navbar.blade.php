@@ -38,7 +38,7 @@
                     </a>
 
                     <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                        <a class="dropdown-item" href="{{ route('my-profile') }}">
+                        <a class="dropdown-item" href="{{ route('hr.ess.my-profile') }}">
                             <i class="mdi mdi-account-outline mr-2"></i> Profile
                         </a>
                         <div class="dropdown-divider" style="margin: 4px 0;"></div>

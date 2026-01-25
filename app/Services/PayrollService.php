@@ -286,14 +286,20 @@ class PayrollService
     public function getPayrollStats(?int $year = null): array
     {
         $year = $year ?? now()->year;
-
-        $batches = PayrollBatch::whereYear('pay_period_start', $year);
+        $month = now()->month;
 
         return [
-            'total_batches' => $batches->count(),
+            'draft' => PayrollBatch::draft()->count(),
+            'pending' => PayrollBatch::submitted()->count(),
+            'approved' => PayrollBatch::approved()->count(),
+            'paid' => PayrollBatch::where('status', 'paid')->count(),
+            'month_total' => PayrollBatch::whereYear('pay_period_start', $year)
+                ->whereMonth('pay_period_start', $month)
+                ->sum('total_net_amount') ?? 0,
+            'total_batches' => PayrollBatch::whereYear('pay_period_start', $year)->count(),
             'pending_approval' => PayrollBatch::submitted()->count(),
-            'total_paid' => PayrollBatch::approved()->whereYear('pay_period_start', $year)->sum('total_net'),
-            'average_per_batch' => PayrollBatch::approved()->whereYear('pay_period_start', $year)->avg('total_net') ?? 0,
+            'total_paid' => PayrollBatch::approved()->whereYear('pay_period_start', $year)->sum('total_net_amount'),
+            'average_per_batch' => PayrollBatch::approved()->whereYear('pay_period_start', $year)->avg('total_net_amount') ?? 0,
             'total_staff_processed' => PayrollBatch::approved()->whereYear('pay_period_start', $year)->sum('total_staff'),
         ];
     }

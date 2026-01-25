@@ -87,6 +87,14 @@ class User extends Authenticatable implements Auditable
         return $this->hasOne(Staff::class, 'user_id', 'id');
     }
 
+    /**
+     * Alias for staff_profile() - used by HR/ESS modules
+     */
+    public function staff()
+    {
+        return $this->staff_profile();
+    }
+
     public function patient_profile()
     {
         return $this->hasOne(patient::class, 'user_id', 'id');

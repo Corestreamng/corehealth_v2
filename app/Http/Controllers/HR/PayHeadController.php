@@ -15,19 +15,11 @@ class PayHeadController extends Controller
 {
     public function index(Request $request)
     {
-        $query = PayHead::withCount('salaryProfileItems');
-
-        if ($request->filled('type')) {
-            $query->where('type', $request->type);
-        }
-        if ($request->filled('status')) {
-            $query->where('is_active', $request->status === 'active');
-        }
-
-        $payHeads = $query->orderBy('type')->orderBy('sort_order')->paginate(20);
+        $additions = PayHead::where('type', 'addition')->orderBy('sort_order')->get();
+        $deductions = PayHead::where('type', 'deduction')->orderBy('sort_order')->get();
         $types = PayHead::getTypes();
 
-        return view('admin.hr.pay-heads.index', compact('payHeads', 'types'));
+        return view('admin.hr.pay-heads.index', compact('additions', 'deductions', 'types'));
     }
 
     public function create()
@@ -47,31 +39,41 @@ class PayHeadController extends Controller
             'description' => 'nullable|string|max:500',
             'type' => 'required|in:addition,deduction',
             'calculation_type' => 'required|in:fixed,percentage,formula',
-            'calculation_base' => 'required_if:calculation_type,percentage|nullable|in:basic_salary,gross_salary',
-            'default_value' => 'nullable|numeric|min:0',
+            'percentage_of' => 'required_if:calculation_type,percentage|nullable|in:basic,gross,basic_salary,gross_salary',
             'is_taxable' => 'boolean',
-            'is_mandatory' => 'boolean',
             'is_active' => 'boolean',
-            'sort_order' => 'nullable|integer|min:0',
         ]);
 
         if ($validator->fails()) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
             return back()->withErrors($validator)->withInput();
         }
 
-        PayHead::create([
+        $payHead = PayHead::create([
             'name' => $request->name,
             'code' => strtoupper($request->code),
             'description' => $request->description,
             'type' => $request->type,
             'calculation_type' => $request->calculation_type,
-            'calculation_base' => $request->calculation_base,
-            'default_value' => $request->default_value ?? 0,
+            'percentage_of' => $request->percentage_of,
             'is_taxable' => $request->boolean('is_taxable'),
-            'is_mandatory' => $request->boolean('is_mandatory'),
             'is_active' => $request->boolean('is_active', true),
-            'sort_order' => $request->sort_order ?? 0,
+            'sort_order' => PayHead::where('type', $request->type)->max('sort_order') + 1,
         ]);
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Pay head created successfully',
+                'data' => $payHead
+            ]);
+        }
 
         return redirect()->route('hr.pay-heads.index')
             ->with('success', 'Pay head created successfully.');
@@ -101,15 +103,19 @@ class PayHeadController extends Controller
             'description' => 'nullable|string|max:500',
             'type' => 'required|in:addition,deduction',
             'calculation_type' => 'required|in:fixed,percentage,formula',
-            'calculation_base' => 'required_if:calculation_type,percentage|nullable|in:basic_salary,gross_salary',
-            'default_value' => 'nullable|numeric|min:0',
+            'percentage_of' => 'required_if:calculation_type,percentage|nullable|in:basic,gross,basic_salary,gross_salary',
             'is_taxable' => 'boolean',
-            'is_mandatory' => 'boolean',
             'is_active' => 'boolean',
-            'sort_order' => 'nullable|integer|min:0',
         ]);
 
         if ($validator->fails()) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
             return back()->withErrors($validator)->withInput();
         }
 
@@ -119,26 +125,44 @@ class PayHeadController extends Controller
             'description' => $request->description,
             'type' => $request->type,
             'calculation_type' => $request->calculation_type,
-            'calculation_base' => $request->calculation_base,
-            'default_value' => $request->default_value ?? 0,
+            'percentage_of' => $request->percentage_of,
             'is_taxable' => $request->boolean('is_taxable'),
-            'is_mandatory' => $request->boolean('is_mandatory'),
             'is_active' => $request->boolean('is_active'),
-            'sort_order' => $request->sort_order ?? 0,
         ]);
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Pay head updated successfully',
+                'data' => $payHead
+            ]);
+        }
 
         return redirect()->route('hr.pay-heads.index')
             ->with('success', 'Pay head updated successfully.');
     }
 
-    public function destroy(PayHead $payHead)
+    public function destroy(Request $request, PayHead $payHead)
     {
         // Check if pay head is in use
-        if ($payHead->salaryProfileItems()->exists() || $payHead->payrollItemDetails()->exists()) {
+        if ($payHead->salaryProfileItems()->exists()) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete pay head that is in use. Consider deactivating it instead.'
+                ], 422);
+            }
             return back()->with('error', 'Cannot delete pay head that is in use. Consider deactivating it instead.');
         }
 
         $payHead->delete();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Pay head deleted successfully'
+            ]);
+        }
 
         return redirect()->route('hr.pay-heads.index')
             ->with('success', 'Pay head deleted successfully.');

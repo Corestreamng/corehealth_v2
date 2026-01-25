@@ -19,7 +19,7 @@ class CreateHrAttachmentsTable extends Migration
     {
         // Drop if exists (in case of partial migration)
         Schema::dropIfExists('hr_attachments');
-        
+
         Schema::create('hr_attachments', function (Blueprint $table) {
             $table->id();
             $table->morphs('attachable');                        // attachable_type, attachable_id (automatically creates index)

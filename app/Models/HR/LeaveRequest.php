@@ -26,8 +26,10 @@ class LeaveRequest extends Model implements Auditable
         'start_date',
         'end_date',
         'total_days',
+        'is_half_day',
         'reason',
         'handover_notes',
+        'contact_during_leave',
         'relief_staff_id',
         'status',
         // First level approval
@@ -47,6 +49,7 @@ class LeaveRequest extends Model implements Auditable
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
+        'is_half_day' => 'boolean',
         'supervisor_approved_at' => 'datetime',
         'hr_approved_at' => 'datetime',
         'reviewed_at' => 'datetime',
@@ -184,6 +187,7 @@ class LeaveRequest extends Model implements Auditable
     /**
      * Scope for requests the user can approve as supervisor
      * (user is unit head/dept head for the staff member)
+     * Includes own leave requests if user has supervisor rights
      */
     public function scopeCanApproveAsSupervisor($query, User $user)
     {
@@ -196,20 +200,48 @@ class LeaveRequest extends Model implements Auditable
         return $query->where('status', self::STATUS_PENDING)
             ->whereHas('staff', function ($q) use ($user, $staffProfile) {
                 $q->where(function ($sub) use ($user, $staffProfile) {
-                    // Unit Head: same department (specialization_id)
-                    if ($staffProfile->is_unit_head) {
-                        $sub->orWhere('specialization_id', $staffProfile->specialization_id);
+                    // Unit Head: same department (department_id)
+                    if ($staffProfile->is_unit_head && $staffProfile->department_id) {
+                        $sub->orWhere('department_id', $staffProfile->department_id);
                     }
-                    // Dept Head: same user category (is_admin)
+                    // Dept Head: same user category (is_admin) - broader authority across category
                     if ($staffProfile->is_dept_head) {
                         $sub->orWhereHas('user', function ($userQ) use ($user) {
                             $userQ->where('is_admin', $user->is_admin);
                         });
                     }
-                })
-                // Exclude own leave requests
-                ->where('user_id', '!=', $user->id);
+                });
+                // Note: Removed exclusion of own leave requests
+                // Supervisors can now approve first stage of their own leave if they have the rights
             });
+    }
+
+    /**
+     * Scope for ALL requests under supervisor's jurisdiction (any status)
+     * Used to show requests that went through the supervisor's desk
+     */
+    public function scopeUnderSupervisorJurisdiction($query, User $user)
+    {
+        $staffProfile = $user->staff_profile;
+
+        if (!$staffProfile) {
+            return $query->whereRaw('1 = 0'); // Return empty if no staff profile
+        }
+
+        return $query->whereHas('staff', function ($q) use ($user, $staffProfile) {
+            $q->where(function ($sub) use ($user, $staffProfile) {
+                // Unit Head: same department (department_id)
+                if ($staffProfile->is_unit_head && $staffProfile->department_id) {
+                    $sub->orWhere('department_id', $staffProfile->department_id);
+                }
+                // Dept Head: same user category (is_admin) - broader authority across category
+                if ($staffProfile->is_dept_head) {
+                    $sub->orWhereHas('user', function ($userQ) use ($user) {
+                        $userQ->where('is_admin', $user->is_admin);
+                    });
+                }
+            });
+        });
     }
 
     // ==================== STATUS CHECKS ====================
@@ -256,6 +288,7 @@ class LeaveRequest extends Model implements Auditable
 
     /**
      * Check if the user can approve this request as supervisor
+     * Allows supervisors to approve first stage of their own leave if they have the rights
      */
     public function canBeApprovedBySupervisor(User $user): bool
     {
@@ -268,20 +301,19 @@ class LeaveRequest extends Model implements Auditable
             return false;
         }
 
-        // Can't approve own request
-        if ($this->staff->user_id === $user->id) {
-            return false;
-        }
+        // Note: Removed check that prevented approving own request
+        // Supervisors can now approve first stage of their own leave
 
         $applicantStaff = $this->staff;
 
-        // Unit Head: same department (specialization_id)
+        // Unit Head: same department (department_id)
         if ($staffProfile->is_unit_head &&
-            $staffProfile->specialization_id === $applicantStaff->specialization_id) {
+            $staffProfile->department_id &&
+            $staffProfile->department_id === $applicantStaff->department_id) {
             return true;
         }
 
-        // Dept Head: same user category (is_admin)
+        // Dept Head: same user category (is_admin) - broader authority across category
         if ($staffProfile->is_dept_head &&
             $user->is_admin === $applicantStaff->user->is_admin) {
             return true;

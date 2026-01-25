@@ -26,9 +26,9 @@
                         <i class="mdi mdi-refresh mr-1"></i> Initialize Year
                     </button>
                     @endcan
-                    <button type="button" class="btn btn-success" id="exportBtn" style="border-radius: 8px;">
+                    {{-- <button type="button" class="btn btn-success" id="exportBtn" style="border-radius: 8px;">
                         <i class="mdi mdi-download mr-1"></i> Export
-                    </button>
+                    </button> --}}
                 </div>
             </div>
 
@@ -296,7 +296,7 @@ $(function() {
         });
     });
 
-    // Export
+    {{-- Export (commented out - route not defined)
     $('#exportBtn').click(function() {
         const leaveTypeId = $('#leaveTypeFilter').val();
         let url = "{{ route('hr.leave-balances.export') }}";
@@ -305,6 +305,7 @@ $(function() {
         }
         window.location.href = url;
     });
+    --}}
 });
 </script>
 @endsection

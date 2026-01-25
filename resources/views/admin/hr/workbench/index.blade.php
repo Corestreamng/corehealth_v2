@@ -259,10 +259,13 @@
         <!-- Staff on Leave Today -->
         <div class="col-md-6 mb-4">
             <div class="card border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                <div class="card-header bg-white" style="border-radius: 12px 12px 0 0;">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center" style="border-radius: 12px 12px 0 0;">
                     <h6 class="mb-0" style="font-weight: 600;">
                         <i class="mdi mdi-beach text-success mr-2"></i>Staff on Leave Today
                     </h6>
+                    <a href="{{ route('hr.leave-calendar.index') }}" class="btn btn-sm btn-outline-success" style="border-radius: 6px;">
+                        <i class="mdi mdi-calendar-month mr-1"></i>Calendar
+                    </a>
                 </div>
                 <div class="card-body p-0">
                     @if(isset($staffOnLeave) && $staffOnLeave->count())
@@ -348,6 +351,14 @@
                 </div>
                 <div class="card-body">
                     <div class="row">
+                        @can('leave-request.view')
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ route('hr.leave-calendar.index') }}" class="btn btn-outline-success btn-block py-3" style="border-radius: 8px;">
+                                <i class="mdi mdi-calendar-month d-block mb-2" style="font-size: 1.5rem;"></i>
+                                Leave Calendar
+                            </a>
+                        </div>
+                        @endcan
                         @can('leave-type.create')
                         <div class="col-md-3 mb-3">
                             <a href="{{ route('hr.leave-types.index') }}" class="btn btn-outline-primary btn-block py-3" style="border-radius: 8px;">
@@ -366,7 +377,7 @@
                         @endcan
                         @can('payroll.create')
                         <div class="col-md-3 mb-3">
-                            <a href="{{ route('hr.payroll.index') }}" class="btn btn-outline-success btn-block py-3" style="border-radius: 8px;">
+                            <a href="{{ route('hr.payroll.index') }}" class="btn btn-outline-info btn-block py-3" style="border-radius: 8px;">
                                 <i class="mdi mdi-cash-register d-block mb-2" style="font-size: 1.5rem;"></i>
                                 Create Payroll
                             </a>
@@ -374,7 +385,7 @@
                         @endcan
                         @can('salary-profile.create')
                         <div class="col-md-3 mb-3">
-                            <a href="{{ route('hr.salary-profiles.index') }}" class="btn btn-outline-info btn-block py-3" style="border-radius: 8px;">
+                            <a href="{{ route('hr.salary-profiles.index') }}" class="btn btn-outline-secondary btn-block py-3" style="border-radius: 8px;">
                                 <i class="mdi mdi-account-cash d-block mb-2" style="font-size: 1.5rem;"></i>
                                 Salary Profiles
                             </a>

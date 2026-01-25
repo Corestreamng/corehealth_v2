@@ -36,6 +36,63 @@ class LeaveBalanceController extends Controller
             $query->where('leave_type_id', $request->leave_type_id);
         }
 
+        // Handle DataTable AJAX request
+        if ($request->ajax() || $request->wantsJson()) {
+            $start = $request->input('start', 0);
+            $length = $request->input('length', 10);
+            $searchValue = $request->input('search.value');
+
+            // Search
+            if ($searchValue) {
+                $query->where(function($q) use ($searchValue) {
+                    $q->whereHas('staff.user', function($q) use ($searchValue) {
+                        $q->where('firstname', 'like', "%{$searchValue}%")
+                          ->orWhere('surname', 'like', "%{$searchValue}%");
+                    })
+                    ->orWhereHas('staff', function($q) use ($searchValue) {
+                        $q->where('employee_id', 'like', "%{$searchValue}%");
+                    })
+                    ->orWhereHas('leaveType', function($q) use ($searchValue) {
+                        $q->where('name', 'like', "%{$searchValue}%");
+                    });
+                });
+            }
+
+            $totalRecords = LeaveBalance::where('year', $year)->count();
+            $filteredRecords = $query->count();
+
+            $balances = $query->skip($start)->take($length)->get();
+
+            return response()->json([
+                'draw' => intval($request->input('draw')),
+                'recordsTotal' => $totalRecords,
+                'recordsFiltered' => $filteredRecords,
+                'data' => $balances->map(function($balance, $index) use ($start) {
+                    $available = $balance->entitled_days - $balance->used_days - $balance->pending_days + $balance->carried_forward;
+
+                    return [
+                        'DT_RowIndex' => $start + $index + 1,
+                        'staff_name' => $balance->staff->user->name ?? 'N/A',
+                        'employee_id' => $balance->staff->employee_id ?? 'N/A',
+                        'leave_type' => $balance->leaveType->name ?? 'N/A',
+                        'entitled_days' => number_format($balance->entitled_days, 1),
+                        'used_days' => number_format($balance->used_days, 1),
+                        'pending_days' => number_format($balance->pending_days, 1),
+                        'carried_forward' => number_format($balance->carried_forward, 1),
+                        'available' => $available,
+                        'action' => '<button type="button" class="btn btn-sm btn-outline-primary adjust-btn"
+                                        data-id="'.$balance->id.'"
+                                        data-staff="'.$balance->staff->user->name.'"
+                                        data-type="'.$balance->leaveType->name.'"
+                                        data-available="'.number_format($available, 1).'"
+                                        style="border-radius: 6px;">
+                                        <i class="mdi mdi-plus-minus"></i>
+                                    </button>',
+                    ];
+                })
+            ]);
+        }
+
         $balances = $query->orderBy('staff_id')
             ->orderBy('leave_type_id')
             ->paginate(50);

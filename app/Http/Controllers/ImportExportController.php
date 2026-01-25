@@ -301,7 +301,7 @@ class ImportExportController extends Controller
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Staff');
 
-        // Headers
+        // Headers - comprehensive staff fields
         $headers = [
             'A1' => 'surname',
             'B1' => 'firstname',
@@ -314,9 +314,23 @@ class ImportExportController extends Controller
             'I1' => 'role',
             'J1' => 'specialization',
             'K1' => 'clinic',
-            'L1' => 'consultation_fee',
-            'M1' => 'is_unit_head',
-            'N1' => 'is_dept_head',
+            'L1' => 'department',
+            'M1' => 'employee_id',
+            'N1' => 'job_title',
+            'O1' => 'date_hired',
+            'P1' => 'employment_type',
+            'Q1' => 'employment_status',
+            'R1' => 'consultation_fee',
+            'S1' => 'is_unit_head',
+            'T1' => 'is_dept_head',
+            'U1' => 'bank_name',
+            'V1' => 'bank_account_number',
+            'W1' => 'bank_account_name',
+            'X1' => 'emergency_contact_name',
+            'Y1' => 'emergency_contact_phone',
+            'Z1' => 'emergency_contact_relationship',
+            'AA1' => 'tax_id',
+            'AB1' => 'pension_id',
         ];
 
         foreach ($headers as $cell => $value) {
@@ -324,20 +338,32 @@ class ImportExportController extends Controller
         }
 
         // Style headers
-        $this->styleHeaders($sheet, 'A1:N1');
+        $this->styleHeaders($sheet, 'A1:AB1');
 
         // Get valid values for dropdowns
         $roles = Role::whereNotIn('name', ['PATIENT'])->orderBy('name')->pluck('name')->toArray();
         $specializations = Specialization::orderBy('name')->pluck('name')->toArray();
         $clinics = Clinic::orderBy('name')->pluck('name')->toArray();
-        $genders = ['Male', 'Female'];
+        $departments = \App\Models\Department::orderBy('name')->pluck('name')->toArray();
+        $genders = ['Male', 'Female', 'Others'];
         $boolOptions = ['1', '0'];
+        $employmentTypes = ['full_time', 'part_time', 'contract', 'intern'];
+        $employmentStatuses = ['active', 'suspended', 'terminated', 'resigned'];
+        $emergencyRelationships = ['spouse', 'parent', 'sibling', 'child', 'friend', 'other'];
+        $nigerianBanks = [
+            'Access Bank', 'Citibank', 'Ecobank Nigeria', 'Fidelity Bank',
+            'First Bank of Nigeria', 'First City Monument Bank', 'Guaranty Trust Bank',
+            'Heritage Bank', 'Keystone Bank', 'Polaris Bank', 'Providus Bank',
+            'Stanbic IBTC Bank', 'Standard Chartered Bank', 'Sterling Bank',
+            'Suntrust Bank', 'Union Bank of Nigeria', 'United Bank for Africa',
+            'Unity Bank', 'Wema Bank', 'Zenith Bank'
+        ];
 
         // Create a hidden sheet for dropdown values
         $lookupSheet = $spreadsheet->createSheet();
         $lookupSheet->setTitle('_Lookups');
 
-        // Populate lookup values
+        // Column A: Roles
         $row = 1;
         foreach ($roles as $role) {
             $lookupSheet->setCellValue('A' . $row, $role);
@@ -345,6 +371,7 @@ class ImportExportController extends Controller
         }
         $roleLastRow = max($row - 1, 1);
 
+        // Column B: Specializations
         $row = 1;
         foreach ($specializations as $spec) {
             $lookupSheet->setCellValue('B' . $row, $spec);
@@ -352,6 +379,7 @@ class ImportExportController extends Controller
         }
         $specLastRow = max($row - 1, 1);
 
+        // Column C: Clinics
         $row = 1;
         foreach ($clinics as $clinic) {
             $lookupSheet->setCellValue('C' . $row, $clinic);
@@ -359,44 +387,127 @@ class ImportExportController extends Controller
         }
         $clinicLastRow = max($row - 1, 1);
 
-        $lookupSheet->setCellValue('D1', 'Male');
-        $lookupSheet->setCellValue('D2', 'Female');
+        // Column D: Genders
+        $row = 1;
+        foreach ($genders as $gender) {
+            $lookupSheet->setCellValue('D' . $row, $gender);
+            $row++;
+        }
+        $genderLastRow = $row - 1;
 
+        // Column E: Bool options (0/1)
         $lookupSheet->setCellValue('E1', '1');
         $lookupSheet->setCellValue('E2', '0');
+
+        // Column F: Departments
+        $row = 1;
+        foreach ($departments as $dept) {
+            $lookupSheet->setCellValue('F' . $row, $dept);
+            $row++;
+        }
+        $deptLastRow = max($row - 1, 1);
+
+        // Column G: Employment Types
+        $row = 1;
+        foreach ($employmentTypes as $type) {
+            $lookupSheet->setCellValue('G' . $row, $type);
+            $row++;
+        }
+        $empTypeLastRow = $row - 1;
+
+        // Column H: Employment Statuses
+        $row = 1;
+        foreach ($employmentStatuses as $status) {
+            $lookupSheet->setCellValue('H' . $row, $status);
+            $row++;
+        }
+        $empStatusLastRow = $row - 1;
+
+        // Column I: Nigerian Banks
+        $row = 1;
+        foreach ($nigerianBanks as $bank) {
+            $lookupSheet->setCellValue('I' . $row, $bank);
+            $row++;
+        }
+        $bankLastRow = $row - 1;
+
+        // Column J: Emergency Contact Relationships
+        $row = 1;
+        foreach ($emergencyRelationships as $rel) {
+            $lookupSheet->setCellValue('J' . $row, $rel);
+            $row++;
+        }
+        $relLastRow = $row - 1;
 
         // Hide the lookup sheet
         $lookupSheet->setSheetState(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet::SHEETSTATE_HIDDEN);
 
         // Add dropdown validations for 100 rows
         for ($i = 2; $i <= 101; $i++) {
-            // Gender dropdown
-            $this->addDropdownValidation($sheet, "F{$i}", "'_Lookups'!\$D\$1:\$D\$2");
+            // F: Gender dropdown
+            $this->addDropdownValidation($sheet, "F{$i}", "'_Lookups'!\$D\$1:\$D\${$genderLastRow}");
 
-            // Role dropdown
+            // I: Role dropdown
             if (count($roles) > 0) {
                 $this->addDropdownValidation($sheet, "I{$i}", "'_Lookups'!\$A\$1:\$A\${$roleLastRow}");
             }
 
-            // Specialization dropdown
+            // J: Specialization dropdown
             if (count($specializations) > 0) {
                 $this->addDropdownValidation($sheet, "J{$i}", "'_Lookups'!\$B\$1:\$B\${$specLastRow}");
             }
 
-            // Clinic dropdown
+            // K: Clinic dropdown
             if (count($clinics) > 0) {
                 $this->addDropdownValidation($sheet, "K{$i}", "'_Lookups'!\$C\$1:\$C\${$clinicLastRow}");
             }
 
-            // Boolean dropdowns
-            $this->addDropdownValidation($sheet, "M{$i}", "'_Lookups'!\$E\$1:\$E\$2");
-            $this->addDropdownValidation($sheet, "N{$i}", "'_Lookups'!\$E\$1:\$E\$2");
+            // L: Department dropdown
+            if (count($departments) > 0) {
+                $this->addDropdownValidation($sheet, "L{$i}", "'_Lookups'!\$F\$1:\$F\${$deptLastRow}");
+            }
+
+            // P: Employment Type dropdown
+            $this->addDropdownValidation($sheet, "P{$i}", "'_Lookups'!\$G\$1:\$G\${$empTypeLastRow}");
+
+            // Q: Employment Status dropdown
+            $this->addDropdownValidation($sheet, "Q{$i}", "'_Lookups'!\$H\$1:\$H\${$empStatusLastRow}");
+
+            // S: is_unit_head Boolean dropdown
+            $this->addDropdownValidation($sheet, "S{$i}", "'_Lookups'!\$E\$1:\$E\$2");
+
+            // T: is_dept_head Boolean dropdown
+            $this->addDropdownValidation($sheet, "T{$i}", "'_Lookups'!\$E\$1:\$E\$2");
+
+            // U: Bank Name dropdown
+            $this->addDropdownValidation($sheet, "U{$i}", "'_Lookups'!\$I\$1:\$I\${$bankLastRow}");
+
+            // Z: Emergency Contact Relationship dropdown
+            $this->addDropdownValidation($sheet, "Z{$i}", "'_Lookups'!\$J\$1:\$J\${$relLastRow}");
         }
 
         // Add sample data
         $sampleData = [
-            ['Adekunle', 'Bola', 'Mary', 'bola.adekunle@hospital.com', '08012345678', 'Female', '1985-06-15', '123 Medical Lane, Lagos', $roles[0] ?? 'DOCTOR', $specializations[0] ?? '', $clinics[0] ?? '', '5000', '0', '0'],
-            ['Okonkwo', 'Chidi', '', 'chidi.okonkwo@hospital.com', '08023456789', 'Male', '1990-03-22', '456 Health Street, Abuja', $roles[0] ?? 'NURSE', $specializations[0] ?? '', $clinics[0] ?? '', '0', '0', '0'],
+            [
+                'Adekunle', 'Bola', 'Mary', 'bola.adekunle@hospital.com', '08012345678',
+                'Female', '1985-06-15', '123 Medical Lane, Lagos',
+                $roles[0] ?? 'DOCTOR', $specializations[0] ?? '', $clinics[0] ?? '', $departments[0] ?? '',
+                'EMP-001', 'Senior Doctor', '2020-01-15', 'full_time', 'active',
+                '5000', '0', '0',
+                'Zenith Bank', '1234567890', 'Bola Mary Adekunle',
+                'John Adekunle', '08098765432', 'spouse',
+                'TIN-12345678', 'PEN-87654321'
+            ],
+            [
+                'Okonkwo', 'Chidi', '', 'chidi.okonkwo@hospital.com', '08023456789',
+                'Male', '1990-03-22', '456 Health Street, Abuja',
+                $roles[0] ?? 'NURSE', $specializations[0] ?? '', $clinics[0] ?? '', $departments[0] ?? '',
+                'EMP-002', 'Staff Nurse', '2021-06-01', 'full_time', 'active',
+                '0', '0', '0',
+                'First Bank of Nigeria', '0987654321', 'Chidi Okonkwo',
+                'Ada Okonkwo', '08011223344', 'sibling',
+                '', ''
+            ],
         ];
 
         $rowNum = 2;
@@ -404,13 +515,15 @@ class ImportExportController extends Controller
             $col = 'A';
             foreach ($data as $value) {
                 $sheet->setCellValue($col . $rowNum, $value);
+                // Move to next column (handles AA, AB, etc.)
                 $col++;
             }
             $rowNum++;
         }
 
-        // Auto-size columns
-        foreach (range('A', 'N') as $col) {
+        // Auto-size columns A to AB
+        $columns = array_merge(range('A', 'Z'), ['AA', 'AB']);
+        foreach ($columns as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
@@ -805,6 +918,7 @@ class ImportExportController extends Controller
                 $rowNum = $index + 2;
 
                 try {
+                    // Required fields validation
                     if (empty($row['surname']) || empty($row['firstname']) || empty($row['email'])) {
                         $errors[] = "Row {$rowNum}: Missing required fields (surname, firstname, email)";
                         $skipped++;
@@ -814,6 +928,14 @@ class ImportExportController extends Controller
                     // Check for duplicate email
                     if (User::where('email', $row['email'])->exists()) {
                         $errors[] = "Row {$rowNum}: Email '{$row['email']}' already exists";
+                        $skipped++;
+                        continue;
+                    }
+
+                    // Validate gender (required in DB)
+                    $gender = trim($row['gender'] ?? '');
+                    if (empty($gender) || !in_array($gender, ['Male', 'Female', 'Others'])) {
+                        $errors[] = "Row {$rowNum}: Invalid or missing gender (must be Male, Female, or Others)";
                         $skipped++;
                         continue;
                     }
@@ -859,18 +981,53 @@ class ImportExportController extends Controller
                         }
                     }
 
-                    // Create staff profile
+                    // Get department if provided
+                    $departmentId = null;
+                    if (!empty($row['department'])) {
+                        $department = \App\Models\Department::where('name', trim($row['department']))->first();
+                        if ($department) {
+                            $departmentId = $department->id;
+                        }
+                    }
+
+                    // Validate employment type
+                    $employmentType = trim($row['employment_type'] ?? 'full_time');
+                    if (!in_array($employmentType, ['full_time', 'part_time', 'contract', 'intern'])) {
+                        $employmentType = 'full_time';
+                    }
+
+                    // Validate employment status
+                    $employmentStatus = trim($row['employment_status'] ?? 'active');
+                    if (!in_array($employmentStatus, ['active', 'suspended', 'terminated', 'resigned'])) {
+                        $employmentStatus = 'active';
+                    }
+
+                    // Create staff profile with all fields
                     Staff::create([
                         'user_id' => $user->id,
+                        'employee_id' => !empty($row['employee_id']) ? trim($row['employee_id']) : null,
                         'specialization_id' => $specializationId,
                         'clinic_id' => $clinicId,
-                        'gender' => $row['gender'] ?? null,
+                        'department_id' => $departmentId,
+                        'gender' => $gender,
                         'date_of_birth' => !empty($row['date_of_birth']) ? $row['date_of_birth'] : null,
                         'home_address' => $row['home_address'] ?? null,
                         'phone_number' => $row['phone_number'] ?? null,
+                        'job_title' => !empty($row['job_title']) ? trim($row['job_title']) : null,
+                        'date_hired' => !empty($row['date_hired']) ? $row['date_hired'] : null,
+                        'employment_type' => $employmentType,
+                        'employment_status' => $employmentStatus,
                         'consultation_fee' => floatval($row['consultation_fee'] ?? 0),
                         'is_unit_head' => ($row['is_unit_head'] ?? 0) == 1,
                         'is_dept_head' => ($row['is_dept_head'] ?? 0) == 1,
+                        'bank_name' => !empty($row['bank_name']) ? trim($row['bank_name']) : null,
+                        'bank_account_number' => !empty($row['bank_account_number']) ? trim($row['bank_account_number']) : null,
+                        'bank_account_name' => !empty($row['bank_account_name']) ? trim($row['bank_account_name']) : null,
+                        'emergency_contact_name' => !empty($row['emergency_contact_name']) ? trim($row['emergency_contact_name']) : null,
+                        'emergency_contact_phone' => !empty($row['emergency_contact_phone']) ? trim($row['emergency_contact_phone']) : null,
+                        'emergency_contact_relationship' => !empty($row['emergency_contact_relationship']) ? trim($row['emergency_contact_relationship']) : null,
+                        'tax_id' => !empty($row['tax_id']) ? trim($row['tax_id']) : null,
+                        'pension_id' => !empty($row['pension_id']) ? trim($row['pension_id']) : null,
                         'status' => 1,
                     ]);
 
@@ -1139,7 +1296,7 @@ class ImportExportController extends Controller
     {
         $roleFilter = $request->role;
 
-        $query = Staff::with(['user', 'user.roles', 'specialization', 'clinic']);
+        $query = Staff::with(['user', 'user.roles', 'specialization', 'clinic', 'department']);
 
         $staffMembers = $query->get();
 
@@ -1151,9 +1308,13 @@ class ImportExportController extends Controller
         }
 
         $headers = [
-            'id', 'surname', 'firstname', 'othername', 'email', 'phone_number',
+            'id', 'employee_id', 'surname', 'firstname', 'othername', 'email', 'phone_number',
             'gender', 'date_of_birth', 'home_address', 'roles', 'specialization',
-            'clinic', 'consultation_fee', 'is_unit_head', 'is_dept_head', 'created_at'
+            'clinic', 'department', 'job_title', 'date_hired', 'employment_type', 'employment_status',
+            'consultation_fee', 'is_unit_head', 'is_dept_head',
+            'bank_name', 'bank_account_number', 'bank_account_name',
+            'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relationship',
+            'tax_id', 'pension_id', 'created_at'
         ];
 
         $data = [];
@@ -1162,6 +1323,7 @@ class ImportExportController extends Controller
 
             $data[] = [
                 $staff->id,
+                $staff->employee_id ?? '',
                 $staff->user->surname,
                 $staff->user->firstname,
                 $staff->user->othername ?? '',
@@ -1173,9 +1335,22 @@ class ImportExportController extends Controller
                 $staff->user->roles->pluck('name')->implode(', '),
                 $staff->specialization->name ?? '',
                 $staff->clinic->name ?? '',
+                $staff->department->name ?? '',
+                $staff->job_title ?? '',
+                $staff->date_hired ? $staff->date_hired->format('Y-m-d') : '',
+                $staff->employment_type ?? 'full_time',
+                $staff->employment_status ?? 'active',
                 $staff->consultation_fee ?? 0,
                 $staff->is_unit_head ? 1 : 0,
                 $staff->is_dept_head ? 1 : 0,
+                $staff->bank_name ?? '',
+                $staff->bank_account_number ?? '',
+                $staff->bank_account_name ?? '',
+                $staff->emergency_contact_name ?? '',
+                $staff->emergency_contact_phone ?? '',
+                $staff->emergency_contact_relationship ?? '',
+                $staff->tax_id ?? '',
+                $staff->pension_id ?? '',
                 $staff->created_at->format('Y-m-d H:i:s'),
             ];
         }

@@ -23,10 +23,15 @@ class LeaveType extends Model implements Auditable
         'max_consecutive_days',
         'max_requests_per_year',
         'min_days_notice',
+        'max_carry_forward',
+        'min_service_months',
         'requires_attachment',
         'is_paid',
         'is_active',
+        'allow_half_day',
+        'allow_carry_forward',
         'color',
+        'gender_specific',
         'applicable_employment_types'
     ];
 
@@ -34,6 +39,8 @@ class LeaveType extends Model implements Auditable
         'requires_attachment' => 'boolean',
         'is_paid' => 'boolean',
         'is_active' => 'boolean',
+        'allow_half_day' => 'boolean',
+        'allow_carry_forward' => 'boolean',
         'applicable_employment_types' => 'array',
     ];
 

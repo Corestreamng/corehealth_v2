@@ -8,6 +8,7 @@
 use App\Http\Controllers\HR\LeaveTypeController;
 use App\Http\Controllers\HR\LeaveRequestController;
 use App\Http\Controllers\HR\LeaveBalanceController;
+use App\Http\Controllers\HR\LeaveCalendarController;
 use App\Http\Controllers\HR\DisciplinaryQueryController;
 use App\Http\Controllers\HR\StaffSuspensionController;
 use App\Http\Controllers\HR\StaffTerminationController;
@@ -103,6 +104,19 @@ Route::middleware(['auth'])->prefix('hr')->name('hr.')->group(function () {
         Route::post('/leave-balances/adjust', [LeaveBalanceController::class, 'adjust'])
             ->middleware('permission:leave-balance.manage')
             ->name('leave-balances.adjust');
+    });
+
+    // ===========================================
+    // LEAVE CALENDAR (HR Global View)
+    // ===========================================
+    Route::prefix('leave-calendar')->name('leave-calendar.')->middleware('permission:leave-request.view')->group(function () {
+        Route::get('/', [LeaveCalendarController::class, 'index'])->name('index');
+        Route::get('/events', [LeaveCalendarController::class, 'events'])->name('events');
+        Route::get('/stats', [LeaveCalendarController::class, 'stats'])->name('stats');
+        Route::get('/on-leave-today', [LeaveCalendarController::class, 'onLeaveToday'])->name('on-leave-today');
+        Route::get('/conflicts', [LeaveCalendarController::class, 'conflicts'])->name('conflicts');
+        Route::get('/department-summary', [LeaveCalendarController::class, 'departmentSummary'])->name('department-summary');
+        Route::get('/heatmap', [LeaveCalendarController::class, 'heatmap'])->name('heatmap');
     });
 
     // ===========================================
@@ -283,6 +297,10 @@ Route::middleware(['auth'])->prefix('hr')->name('hr.')->group(function () {
         Route::post('/my-leave/request', [EssController::class, 'storeLeaveRequest'])->name('my-leave.store');
         Route::post('/my-leave/{leaveRequest}/cancel', [EssController::class, 'cancelLeaveRequest'])->name('my-leave.cancel');
 
+        // My Leave Calendar (Individual)
+        Route::get('/my-calendar', [EssController::class, 'myCalendar'])->name('my-calendar');
+        Route::get('/my-calendar/events', [EssController::class, 'myCalendarEvents'])->name('my-calendar.events');
+
         // My Payslips
         Route::get('/my-payslips', [EssController::class, 'myPayslips'])
             ->middleware('permission:ess.view-payslips')
@@ -299,6 +317,7 @@ Route::middleware(['auth'])->prefix('hr')->name('hr.')->group(function () {
         // My Profile
         Route::get('/my-profile', [EssController::class, 'myProfile'])->name('my-profile');
         Route::put('/my-profile', [EssController::class, 'updateProfile'])->name('my-profile.update');
+        Route::post('/my-profile/password', [EssController::class, 'updatePassword'])->name('my-profile.password');
 
         // Team Approvals (For Unit Heads / Dept Heads)
         Route::middleware(['permission:leave-request.supervisor-approve'])->prefix('team-approvals')->name('team-approvals.')->group(function () {
@@ -306,6 +325,13 @@ Route::middleware(['auth'])->prefix('hr')->name('hr.')->group(function () {
             Route::get('/{leaveRequest}', [EssController::class, 'showTeamLeaveRequest'])->name('show');
             Route::post('/{leaveRequest}/approve', [EssController::class, 'approveTeamLeave'])->name('approve');
             Route::post('/{leaveRequest}/reject', [EssController::class, 'rejectTeamLeave'])->name('reject');
+        });
+
+        // Team Calendar (For Unit Heads / Dept Heads)
+        Route::middleware(['permission:leave-request.supervisor-approve'])->prefix('team-calendar')->name('team-calendar.')->group(function () {
+            Route::get('/', [EssController::class, 'teamCalendar'])->name('index');
+            Route::get('/events', [EssController::class, 'teamCalendarEvents'])->name('events');
+            Route::get('/on-leave', [EssController::class, 'teamOnLeave'])->name('on-leave');
         });
     });
 });

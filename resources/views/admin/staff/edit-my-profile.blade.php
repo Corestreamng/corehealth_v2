@@ -27,7 +27,7 @@
                         <i class="mdi mdi-account-edit-outline mr-2"></i> Edit Profile
                     </h3>
                 </div>
-                <div class="card-body p-3">
+                <div class="card-body p-4">
                     {!! Form::model($user, [
                         'method' => 'POST',
                         'route' => ['update-my-profile', $user->id],
@@ -58,7 +58,7 @@
                     <div class="row g-3">
                         <div class="col-lg-4 col-md-6">
                             <label class="form-label-modern">User Category <small class="text-muted">(Read Only)</small></label>
-                            <input type="text" value="{{ Auth::user()->category->name }}" disabled class="form-control form-control-modern bg-light">
+                            <input type="text" value="{{ Auth::user()->category->name ?? 'N/A' }}" disabled class="form-control form-control-modern bg-light">
                         </div>
                         <div class="col-lg-4 col-md-6">
                             <label class="form-label-modern">Surname <span class="text-danger">*</span></label>
@@ -96,17 +96,102 @@
                     <div class="row g-3">
                         <div class="col-lg-4 col-md-6">
                             <label class="form-label-modern">Specialization</label>
-                            {!! Form::select('specialization', $specializations, $user->staff_profile->specialization_id, [
+                            {!! Form::select('specialization', $specializations, $user->staff_profile->specialization_id ?? null, [
                                 'class' => 'form-control form-control-modern select2',
                                 'placeholder' => 'Select specialization',
                             ]) !!}
                         </div>
                         <div class="col-lg-4 col-md-6">
                             <label class="form-label-modern">Clinic</label>
-                            {!! Form::select('clinic', $clinics, $user->staff_profile->clinic_id, [
+                            {!! Form::select('clinic', $clinics, $user->staff_profile->clinic_id ?? null, [
                                 'class' => 'form-control form-control-modern select2',
                                 'placeholder' => 'Select clinic',
                             ]) !!}
+                        </div>
+                    </div>
+
+                    <div class="section-title mt-4">Employment Information <small class="text-muted">(Read Only)</small></div>
+
+                    <div class="row g-3">
+                        <div class="col-lg-3 col-md-6">
+                            <label class="form-label-modern">Employee ID</label>
+                            <input type="text" class="form-control form-control-modern bg-light" value="{{ $user->staff_profile->employee_id ?? 'Not Assigned' }}" disabled>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <label class="form-label-modern">Date Hired</label>
+                            <input type="text" class="form-control form-control-modern bg-light" value="{{ $user->staff_profile->date_hired ? $user->staff_profile->date_hired->format('M d, Y') : 'Not Set' }}" disabled>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <label class="form-label-modern">Job Title</label>
+                            <input type="text" class="form-control form-control-modern bg-light" value="{{ $user->staff_profile->job_title ?? 'Not Set' }}" disabled>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <label class="form-label-modern">Department</label>
+                            <input type="text" class="form-control form-control-modern bg-light" value="{{ $user->staff_profile->department->name ?? 'Not Set' }}" disabled>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <label class="form-label-modern">Employment Type</label>
+                            <input type="text" class="form-control form-control-modern bg-light" value="{{ ucfirst(str_replace('_', ' ', $user->staff_profile->employment_type ?? 'Not Set')) }}" disabled>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <label class="form-label-modern">Employment Status</label>
+                            <input type="text" class="form-control form-control-modern bg-light" value="{{ ucfirst($user->staff_profile->employment_status ?? 'Not Set') }}" disabled>
+                        </div>
+                    </div>
+
+                    <div class="section-title mt-4">Bank Information</div>
+
+                    <div class="row g-3">
+                        <div class="col-lg-4 col-md-6">
+                            <label class="form-label-modern">Bank Name</label>
+                            <input type="text" class="form-control form-control-modern" name="bank_name" value="{{ old('bank_name', $user->staff_profile->bank_name ?? '') }}" placeholder="e.g. First Bank">
+                        </div>
+                        <div class="col-lg-4 col-md-6">
+                            <label class="form-label-modern">Account Number</label>
+                            <input type="text" class="form-control form-control-modern" name="bank_account_number" value="{{ old('bank_account_number', $user->staff_profile->bank_account_number ?? '') }}" placeholder="e.g. 0123456789">
+                        </div>
+                        <div class="col-lg-4 col-md-6">
+                            <label class="form-label-modern">Account Name</label>
+                            <input type="text" class="form-control form-control-modern" name="bank_account_name" value="{{ old('bank_account_name', $user->staff_profile->bank_account_name ?? '') }}" placeholder="Account holder name">
+                        </div>
+                    </div>
+
+                    <div class="section-title mt-4">Emergency Contact</div>
+
+                    <div class="row g-3">
+                        <div class="col-lg-4 col-md-6">
+                            <label class="form-label-modern">Contact Name</label>
+                            <input type="text" class="form-control form-control-modern" name="emergency_contact_name" value="{{ old('emergency_contact_name', $user->staff_profile->emergency_contact_name ?? '') }}" placeholder="Full name">
+                        </div>
+                        <div class="col-lg-4 col-md-6">
+                            <label class="form-label-modern">Contact Phone</label>
+                            <input type="text" class="form-control form-control-modern" name="emergency_contact_phone" value="{{ old('emergency_contact_phone', $user->staff_profile->emergency_contact_phone ?? '') }}" placeholder="Phone number">
+                        </div>
+                        <div class="col-lg-4 col-md-6">
+                            <label class="form-label-modern">Relationship</label>
+                            <select class="form-control form-control-modern" name="emergency_contact_relationship">
+                                <option value="">Select relationship</option>
+                                @php
+                                    $relationships = ['Spouse', 'Parent', 'Sibling', 'Child', 'Friend', 'Other'];
+                                    $currentRel = old('emergency_contact_relationship', $user->staff_profile->emergency_contact_relationship ?? '');
+                                @endphp
+                                @foreach($relationships as $rel)
+                                    <option value="{{ $rel }}" {{ $currentRel == $rel ? 'selected' : '' }}>{{ $rel }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="section-title mt-4">Tax & Pension IDs</div>
+
+                    <div class="row g-3">
+                        <div class="col-lg-4 col-md-6">
+                            <label class="form-label-modern">Tax ID (TIN)</label>
+                            <input type="text" class="form-control form-control-modern" name="tax_id" value="{{ old('tax_id', $user->staff_profile->tax_id ?? '') }}" placeholder="Tax identification number">
+                        </div>
+                        <div class="col-lg-4 col-md-6">
+                            <label class="form-label-modern">Pension ID</label>
+                            <input type="text" class="form-control form-control-modern" name="pension_id" value="{{ old('pension_id', $user->staff_profile->pension_id ?? '') }}" placeholder="Pension identification number">
                         </div>
                     </div>
 

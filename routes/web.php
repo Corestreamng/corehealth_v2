@@ -9,6 +9,7 @@ use App\Http\Controllers\BedController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ChecklistTemplateController;
 use App\Http\Controllers\ClinicController;
+use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\Doctor\DoctorConsultationsController;
 use App\Http\Controllers\Doctor\DoctorDashboardController;
 use App\Http\Controllers\EncounterController;
@@ -103,6 +104,8 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::resource('specializations', SpecializationController::class);
     Route::resource('clinics', ClinicController::class);
+    Route::resource('departments', DepartmentController::class);
+    Route::get('departments-list', [DepartmentController::class, 'getAll'])->name('departments.list');
 
     Route::group(['middleware' => ['auth']], function () {
         // Creating and Listing Permissions

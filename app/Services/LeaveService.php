@@ -35,6 +35,11 @@ class LeaveService
                 Carbon::parse($data['end_date'])
             );
 
+            // Account for half-day requests
+            if (isset($data['is_half_day']) && $data['is_half_day'] && $totalDays == 1) {
+                $totalDays = 0.5;
+            }
+
             // Validate against balance
             $balance = $this->getOrCreateBalance($staff->id, $leaveType->id);
             if (!$balance->hasSufficientBalance($totalDays)) {
@@ -51,8 +56,10 @@ class LeaveService
                 'start_date' => $data['start_date'],
                 'end_date' => $data['end_date'],
                 'total_days' => $totalDays,
+                'is_half_day' => $data['is_half_day'] ?? false,
                 'reason' => $data['reason'] ?? null,
                 'handover_notes' => $data['handover_notes'] ?? null,
+                'contact_during_leave' => $data['contact_during_leave'] ?? null,
                 'relief_staff_id' => $data['relief_staff_id'] ?? null,
                 'status' => LeaveRequest::STATUS_PENDING,
             ]);
