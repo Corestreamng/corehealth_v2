@@ -199,6 +199,9 @@ Route::middleware(['auth'])->prefix('hr')->name('hr.')->group(function () {
         Route::put('/{termination}', [StaffTerminationController::class, 'update'])
             ->middleware('permission:termination.edit')
             ->name('update');
+        Route::post('/{termination}/complete', [StaffTerminationController::class, 'complete'])
+            ->middleware('permission:termination.edit')
+            ->name('complete');
     });
 
     // ===========================================
@@ -335,6 +338,7 @@ Route::middleware(['auth'])->prefix('hr')->name('hr.')->group(function () {
 
         // My Disciplinary
         Route::get('/my-disciplinary', [EssController::class, 'myDisciplinary'])->name('my-disciplinary');
+        Route::get('/my-disciplinary/data', [EssController::class, 'myDisciplinaryData'])->name('my-disciplinary.data');
         Route::get('/my-disciplinary/{disciplinaryQuery}', [EssController::class, 'showDisciplinaryQuery'])->name('my-disciplinary.show');
         Route::post('/my-disciplinary/{disciplinaryQuery}/respond', [EssController::class, 'respondToDisciplinaryQuery'])->name('my-disciplinary.respond');
 

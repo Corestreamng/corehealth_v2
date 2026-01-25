@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 25, 2026 at 08:16 PM
+-- Generation Time: Jan 26, 2026 at 12:05 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -1039,7 +1039,30 @@ INSERT INTO `audits` (`id`, `user_type`, `user_id`, `event`, `auditable_type`, `
 (818, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 29, '[]', '{\"payroll_item_id\":15,\"pay_head_id\":1,\"type\":\"addition\",\"pay_head_name\":\"Housing allowance\",\"amount\":70000,\"id\":29}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:45:03', '2026-01-25 17:45:03'),
 (819, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 30, '[]', '{\"payroll_item_id\":15,\"pay_head_id\":2,\"type\":\"deduction\",\"pay_head_name\":\"PAYE\",\"amount\":4800,\"id\":30}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:45:03', '2026-01-25 17:45:03'),
 (820, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollItem', 15, '{\"full_gross_salary\":0,\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0,\"full_net_salary\":0}', '{\"full_gross_salary\":130000,\"gross_salary\":130000,\"total_additions\":70000,\"total_deductions\":4800,\"net_salary\":125200,\"full_net_salary\":125200}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:45:03', '2026-01-25 17:45:03'),
-(821, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollBatch', 9, '{\"total_staff\":0,\"total_gross\":0,\"total_additions\":0,\"total_deductions\":0,\"total_net\":0}', '{\"total_staff\":2,\"total_gross\":\"234000.00\",\"total_additions\":\"74000.00\",\"total_deductions\":\"7800.00\",\"total_net\":\"226200.00\"}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:45:03', '2026-01-25 17:45:03');
+(821, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollBatch', 9, '{\"total_staff\":0,\"total_gross\":0,\"total_additions\":0,\"total_deductions\":0,\"total_net\":0}', '{\"total_staff\":2,\"total_gross\":\"234000.00\",\"total_additions\":\"74000.00\",\"total_deductions\":\"7800.00\",\"total_net\":\"226200.00\"}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:45:03', '2026-01-25 17:45:03'),
+(822, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\DisciplinaryQuery', 1, '[]', '{\"staff_id\":\"1\",\"subject\":\"test\",\"description\":\"tddgadas\\r\\n\\r\\nadkdlad\",\"severity\":\"minor\",\"incident_date\":\"2026-01-20 00:00:00\",\"expected_response\":null,\"response_deadline\":\"2026-01-28 00:00:00\",\"status\":\"issued\",\"issued_by\":1,\"query_number\":\"DQ2026000001\",\"id\":1}', 'http://127.0.0.1:8000/hr/disciplinary', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 19:33:32', '2026-01-25 19:33:32'),
+(823, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\HrAttachment', 5, '[]', '{\"attachable_type\":\"App\\\\Models\\\\HR\\\\DisciplinaryQuery\",\"attachable_id\":1,\"filename\":\"a67f5f95-1443-4275-a410-c12daef508f8.png\",\"original_filename\":\"Screenshot (10).png\",\"file_path\":\"hr\\/disciplinary\\/a67f5f95-1443-4275-a410-c12daef508f8.png\",\"mime_type\":\"image\\/png\",\"file_size\":183030,\"document_type\":\"query_response\",\"description\":null,\"uploaded_by\":1,\"id\":5}', 'http://127.0.0.1:8000/hr/disciplinary', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 19:33:35', '2026-01-25 19:33:35'),
+(824, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\DisciplinaryQuery', 2, '[]', '{\"staff_id\":\"1\",\"subject\":\"test\",\"description\":\"tddgadas\\r\\n\\r\\nadkdlad\",\"severity\":\"minor\",\"incident_date\":\"2026-01-20 00:00:00\",\"expected_response\":null,\"response_deadline\":\"2026-01-28 00:00:00\",\"status\":\"issued\",\"issued_by\":1,\"query_number\":\"DQ2026000002\",\"id\":2}', 'http://127.0.0.1:8000/hr/disciplinary', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 19:43:26', '2026-01-25 19:43:26'),
+(825, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\HrAttachment', 6, '[]', '{\"attachable_type\":\"App\\\\Models\\\\HR\\\\DisciplinaryQuery\",\"attachable_id\":2,\"filename\":\"51ae217f-78c7-429b-b668-ecbea54ab1e4.png\",\"original_filename\":\"Screenshot (10).png\",\"file_path\":\"hr\\/disciplinary\\/51ae217f-78c7-429b-b668-ecbea54ab1e4.png\",\"mime_type\":\"image\\/png\",\"file_size\":183030,\"document_type\":\"query_response\",\"description\":null,\"uploaded_by\":1,\"id\":6}', 'http://127.0.0.1:8000/hr/disciplinary', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 19:43:26', '2026-01-25 19:43:26'),
+(826, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\DisciplinaryQuery', 2, '{\"status\":\"issued\",\"staff_response\":null,\"response_received_at\":null}', '{\"status\":\"response_received\",\"staff_response\":\"test response\",\"response_received_at\":\"2026-01-25 21:17:04\"}', 'http://127.0.0.1:8000/hr/ess/my-disciplinary/2/respond', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 20:17:04', '2026-01-25 20:17:04'),
+(827, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\HrAttachment', 7, '[]', '{\"attachable_type\":\"App\\\\Models\\\\HR\\\\DisciplinaryQuery\",\"attachable_id\":2,\"filename\":\"1e42a9b7-8208-4c2f-b724-1746f0461fdd.png\",\"original_filename\":\"Screenshot (12).png\",\"file_path\":\"hr\\/disciplinary\\/1e42a9b7-8208-4c2f-b724-1746f0461fdd.png\",\"mime_type\":\"image\\/png\",\"file_size\":166493,\"document_type\":\"query_response\",\"description\":null,\"uploaded_by\":1,\"id\":7}', 'http://127.0.0.1:8000/hr/ess/my-disciplinary/2/respond', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 20:17:04', '2026-01-25 20:17:04'),
+(828, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\DisciplinaryQuery', 2, '{\"status\":\"response_received\",\"hr_decision\":null,\"outcome\":null,\"decided_by\":null,\"decided_at\":null}', '{\"status\":\"closed\",\"hr_decision\":\"test suspension\",\"outcome\":\"suspension\",\"decided_by\":1,\"decided_at\":\"2026-01-25 21:42:36\"}', 'http://127.0.0.1:8000/hr/disciplinary/2/decide', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 20:42:36', '2026-01-25 20:42:36'),
+(829, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\DisciplinaryQuery', 1, '{\"status\":\"issued\",\"staff_response\":null,\"response_received_at\":null}', '{\"status\":\"response_received\",\"staff_response\":\"response 2\",\"response_received_at\":\"2026-01-25 21:49:03\"}', 'http://127.0.0.1:8000/hr/ess/my-disciplinary/1/respond', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 20:49:03', '2026-01-25 20:49:03'),
+(830, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\DisciplinaryQuery', 1, '{\"status\":\"response_received\",\"hr_decision\":null,\"outcome\":null,\"decided_by\":null,\"decided_at\":null}', '{\"status\":\"closed\",\"hr_decision\":\"test suspension again\",\"outcome\":\"suspension\",\"decided_by\":1,\"decided_at\":\"2026-01-25 21:49:52\"}', 'http://127.0.0.1:8000/hr/disciplinary/1/decide', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 20:49:52', '2026-01-25 20:49:52'),
+(831, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\StaffSuspension', 1, '[]', '{\"staff_id\":1,\"disciplinary_query_id\":1,\"type\":\"unpaid\",\"start_date\":\"2026-01-26 21:49:52\",\"end_date\":\"2026-01-27 21:49:52\",\"reason\":\"test\",\"suspension_message\":\"test suspension again\",\"issued_by\":1,\"status\":\"active\",\"suspension_number\":\"SUS2026000001\",\"id\":1}', 'http://127.0.0.1:8000/hr/disciplinary/1/decide', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 20:49:52', '2026-01-25 20:49:52'),
+(832, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Staff', 1, '{\"employment_status\":\"active\",\"suspended_at\":null,\"suspended_by\":null,\"suspension_reason\":null,\"suspension_end_date\":null}', '{\"employment_status\":\"suspended\",\"suspended_at\":\"2026-01-25 21:49:52\",\"suspended_by\":1,\"suspension_reason\":\"test\",\"suspension_end_date\":\"2026-01-27 00:00:00\"}', 'http://127.0.0.1:8000/hr/disciplinary/1/decide', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 20:49:52', '2026-01-25 20:49:52'),
+(833, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\StaffTermination', 1, '[]', '{\"staff_id\":\"15\",\"disciplinary_query_id\":null,\"type\":\"involuntary\",\"reason_category\":\"misconduct\",\"reason_details\":\"asdhjd\",\"notice_date\":\"2026-01-25 00:00:00\",\"effective_date\":\"2026-01-26 00:00:00\",\"last_working_day\":\"2026-01-26 00:00:00\",\"exit_interview_conducted\":false,\"clearance_completed\":false,\"final_payment_processed\":false,\"processed_by\":1,\"termination_number\":\"TRM2026000001\",\"id\":1}', 'http://127.0.0.1:8000/hr/terminations', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 21:29:56', '2026-01-25 21:29:56'),
+(834, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Staff', 15, '{\"employment_status\":\"active\"}', '{\"employment_status\":\"terminated\"}', 'http://127.0.0.1:8000/hr/terminations', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 21:29:56', '2026-01-25 21:29:56'),
+(835, 'App\\Models\\User', 1, 'updated', 'App\\Models\\User', 15, '{\"status\":1}', '{\"status\":0}', 'http://127.0.0.1:8000/hr/terminations', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 21:29:56', '2026-01-25 21:29:56'),
+(836, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\StaffTermination', 1, '{\"clearance_completed\":0}', '{\"clearance_completed\":true}', 'http://127.0.0.1:8000/hr/terminations/1/complete', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 21:30:23', '2026-01-25 21:30:23'),
+(837, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\StaffTermination', 1, '{\"exit_interview_conducted\":0,\"exit_interview_notes\":null,\"final_payment_processed\":0}', '{\"exit_interview_conducted\":true,\"exit_interview_notes\":\"final notes\",\"final_payment_processed\":true}', 'http://127.0.0.1:8000/hr/terminations/1/complete', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 21:30:52', '2026-01-25 21:30:52'),
+(838, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\DisciplinaryQuery', 3, '[]', '{\"staff_id\":\"1\",\"subject\":\"sdhasd\",\"description\":\"ahbdgahda\",\"severity\":\"minor\",\"incident_date\":\"2026-01-24 00:00:00\",\"expected_response\":null,\"response_deadline\":\"2026-01-28 00:00:00\",\"status\":\"issued\",\"issued_by\":1,\"query_number\":\"DQ2026000003\",\"id\":3}', 'http://127.0.0.1:8000/hr/disciplinary', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 21:53:54', '2026-01-25 21:53:54'),
+(839, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\DisciplinaryQuery', 3, '{\"status\":\"issued\",\"staff_response\":null,\"response_received_at\":null}', '{\"status\":\"response_received\",\"staff_response\":\"aahggada\",\"response_received_at\":\"2026-01-25 22:54:17\"}', 'http://127.0.0.1:8000/hr/ess/my-disciplinary/3/respond', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 21:54:17', '2026-01-25 21:54:17'),
+(840, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\DisciplinaryQuery', 3, '{\"status\":\"response_received\",\"hr_decision\":null,\"outcome\":null,\"decided_by\":null,\"decided_at\":null}', '{\"status\":\"closed\",\"hr_decision\":\"ajdgjad\\nadada\",\"outcome\":\"suspension\",\"decided_by\":1,\"decided_at\":\"2026-01-25 22:55:28\"}', 'http://127.0.0.1:8000/hr/disciplinary/3/decide', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 21:55:28', '2026-01-25 21:55:28'),
+(841, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\StaffSuspension', 2, '[]', '{\"staff_id\":1,\"disciplinary_query_id\":3,\"type\":\"unpaid\",\"start_date\":\"2026-01-27 00:00:00\",\"end_date\":\"2026-01-28 00:00:00\",\"reason\":\"sdhasd: ajdgjad\\nadada\",\"suspension_message\":\"Your account has been suspended due to disciplinary action. Please contact HR.\",\"issued_by\":1,\"status\":\"active\",\"suspension_number\":\"SUS2026000002\",\"id\":2}', 'http://127.0.0.1:8000/hr/disciplinary/3/decide', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 21:55:28', '2026-01-25 21:55:28'),
+(842, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Staff', 1, '{\"suspended_at\":\"2026-01-25 21:49:52\",\"suspension_reason\":\"test\",\"suspension_end_date\":\"2026-01-27\"}', '{\"suspended_at\":\"2026-01-25 22:55:28\",\"suspension_reason\":\"sdhasd: ajdgjad\\nadada\",\"suspension_end_date\":\"2026-01-28 00:00:00\"}', 'http://127.0.0.1:8000/hr/disciplinary/3/decide', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 21:55:28', '2026-01-25 21:55:28'),
+(843, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\StaffSuspension', 2, '{\"status\":\"active\",\"lifted_by\":null,\"lifted_at\":null,\"lift_reason\":null}', '{\"status\":\"lifted\",\"lifted_by\":1,\"lifted_at\":\"2026-01-25 22:55:49\",\"lift_reason\":\"kskjd\"}', 'http://127.0.0.1:8000/hr/suspensions/2/lift', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 21:55:49', '2026-01-25 21:55:49'),
+(844, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\StaffSuspension', 1, '{\"status\":\"active\",\"lifted_by\":null,\"lifted_at\":null,\"lift_reason\":null}', '{\"status\":\"lifted\",\"lifted_by\":1,\"lifted_at\":\"2026-01-25 22:55:56\",\"lift_reason\":\"dnkad\"}', 'http://127.0.0.1:8000/hr/suspensions/1/lift', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 21:55:56', '2026-01-25 21:55:56');
 
 -- --------------------------------------------------------
 
@@ -1663,6 +1686,15 @@ CREATE TABLE `disciplinary_queries` (
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `disciplinary_queries`
+--
+
+INSERT INTO `disciplinary_queries` (`id`, `query_number`, `staff_id`, `subject`, `description`, `severity`, `incident_date`, `expected_response`, `response_deadline`, `status`, `staff_response`, `response_received_at`, `hr_decision`, `outcome`, `decided_by`, `decided_at`, `issued_by`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'DQ2026000001', 1, 'test', 'tddgadas\r\n\r\nadkdlad', 'minor', '2026-01-20', NULL, '2026-01-28', 'closed', 'response 2', '2026-01-25 20:49:03', 'test suspension again', 'suspension', 1, '2026-01-25 20:49:52', 1, '2026-01-25 19:33:32', '2026-01-25 20:49:52', NULL),
+(2, 'DQ2026000002', 1, 'test', 'tddgadas\r\n\r\nadkdlad', 'minor', '2026-01-20', NULL, '2026-01-28', 'closed', 'test response', '2026-01-25 20:17:04', 'test suspension', 'suspension', 1, '2026-01-25 20:42:36', 1, '2026-01-25 19:43:26', '2026-01-25 20:42:36', NULL),
+(3, 'DQ2026000003', 1, 'sdhasd', 'ahbdgahda', 'minor', '2026-01-24', NULL, '2026-01-28', 'closed', 'aahggada', '2026-01-25 21:54:17', 'ajdgjad\nadada', 'suspension', 1, '2026-01-25 21:55:28', 1, '2026-01-25 21:53:54', '2026-01-25 21:55:28', NULL);
 
 -- --------------------------------------------------------
 
@@ -5613,7 +5645,10 @@ INSERT INTO `hr_attachments` (`id`, `attachable_type`, `attachable_id`, `filenam
 (1, 'App\\Models\\HR\\LeaveRequest', 1, '92969b1b-9bcb-4cfd-82f1-d5a26d6c7bc0.png', 'Screenshot (3).png', 'hr/leave-requests/92969b1b-9bcb-4cfd-82f1-d5a26d6c7bc0.png', 'image/png', 248585, 'leave_supporting_document', 'Supporting document for leave request', 1, '2026-01-24 12:14:27', '2026-01-24 12:14:27', NULL),
 (2, 'App\\Models\\HR\\LeaveRequest', 2, '4bd46b3f-f986-4676-81ae-e605d1ad70e8.png', 'Screenshot (17).png', 'hr/leave-requests/4bd46b3f-f986-4676-81ae-e605d1ad70e8.png', 'image/png', 201741, 'leave_supporting_document', 'Supporting document for leave request', 1, '2026-01-24 12:15:18', '2026-01-24 12:15:18', NULL),
 (3, 'App\\Models\\HR\\LeaveRequest', 3, '76bb8ce8-8100-46e8-b7ac-1a8920230fc6.png', 'Screenshot (19).png', 'hr/leave-requests/76bb8ce8-8100-46e8-b7ac-1a8920230fc6.png', 'image/png', 207223, 'leave_supporting_document', 'Supporting document for leave request', 1, '2026-01-24 12:45:30', '2026-01-24 12:45:30', NULL),
-(4, 'App\\Models\\HR\\LeaveRequest', 4, '345d7bc5-3655-4a69-bbe1-d8028e71b510.png', 'Screenshot (12).png', 'hr/leave-requests/345d7bc5-3655-4a69-bbe1-d8028e71b510.png', 'image/png', 166493, 'leave_supporting_document', NULL, 1, '2026-01-24 17:08:41', '2026-01-24 17:08:41', NULL);
+(4, 'App\\Models\\HR\\LeaveRequest', 4, '345d7bc5-3655-4a69-bbe1-d8028e71b510.png', 'Screenshot (12).png', 'hr/leave-requests/345d7bc5-3655-4a69-bbe1-d8028e71b510.png', 'image/png', 166493, 'leave_supporting_document', NULL, 1, '2026-01-24 17:08:41', '2026-01-24 17:08:41', NULL),
+(5, 'App\\Models\\HR\\DisciplinaryQuery', 1, 'a67f5f95-1443-4275-a410-c12daef508f8.png', 'Screenshot (10).png', 'hr/disciplinary/a67f5f95-1443-4275-a410-c12daef508f8.png', 'image/png', 183030, 'query_response', NULL, 1, '2026-01-25 19:33:35', '2026-01-25 19:33:35', NULL),
+(6, 'App\\Models\\HR\\DisciplinaryQuery', 2, '51ae217f-78c7-429b-b668-ecbea54ab1e4.png', 'Screenshot (10).png', 'hr/disciplinary/51ae217f-78c7-429b-b668-ecbea54ab1e4.png', 'image/png', 183030, 'query_response', NULL, 1, '2026-01-25 19:43:26', '2026-01-25 19:43:26', NULL),
+(7, 'App\\Models\\HR\\DisciplinaryQuery', 2, '1e42a9b7-8208-4c2f-b724-1746f0461fdd.png', 'Screenshot (12).png', 'hr/disciplinary/1e42a9b7-8208-4c2f-b724-1746f0461fdd.png', 'image/png', 166493, 'query_response', NULL, 1, '2026-01-25 20:17:04', '2026-01-25 20:17:04', NULL);
 
 -- --------------------------------------------------------
 
@@ -25735,7 +25770,7 @@ CREATE TABLE `staff` (
 --
 
 INSERT INTO `staff` (`id`, `employee_id`, `user_id`, `specialization_id`, `clinic_id`, `gender`, `date_of_birth`, `home_address`, `phone_number`, `consultation_fee`, `is_unit_head`, `is_dept_head`, `status`, `date_hired`, `date_confirmed`, `employment_type`, `employment_status`, `job_title`, `department_id`, `bank_name`, `bank_account_number`, `bank_account_name`, `emergency_contact_name`, `emergency_contact_phone`, `emergency_contact_relationship`, `tax_id`, `pension_id`, `hr_notes`, `suspended_at`, `suspended_by`, `suspension_reason`, `suspension_end_date`, `created_at`, `updated_at`, `old_user_id`) VALUES
-(1, '9900', 1, 1, 1, 'Male', '2025-05-31 23:00:00', 'jos', '0810000008', 0.00, 1, 1, 1, '2025-06-01', NULL, 'full_time', 'active', 'Boss Admin', 14, 'zenith bank', '220445688', 'App Tech', 'Chink', '+2348188223228', 'spouse', '8837338', '872183', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-24 09:52:49', 58),
+(1, '9900', 1, 1, 1, 'Male', '2025-05-31 23:00:00', 'jos', '0810000008', 0.00, 1, 1, 1, '2025-06-01', NULL, 'full_time', 'suspended', 'Boss Admin', 14, 'zenith bank', '220445688', 'App Tech', 'Chink', '+2348188223228', 'spouse', '8837338', '872183', NULL, '2026-01-25 21:55:28', 1, 'sdhasd: ajdgjad\nadada', '2026-01-28', NULL, '2026-01-25 21:55:28', 58),
 (2, NULL, 2, NULL, NULL, 'Others', NULL, NULL, '08160258090', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 59),
 (3, NULL, 3, NULL, NULL, 'Others', NULL, NULL, '07035412086', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 60),
 (4, NULL, 4, NULL, NULL, 'Others', NULL, NULL, '07034779534', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 61),
@@ -25749,7 +25784,7 @@ INSERT INTO `staff` (`id`, `employee_id`, `user_id`, `specialization_id`, `clini
 (12, NULL, 12, 2, 1, 'Female', '1992-06-17 23:00:00', 'Latya Guratop, Jos', '09156355633', 4.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 78),
 (13, NULL, 13, NULL, NULL, 'Others', NULL, NULL, '07035643507', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 85),
 (14, NULL, 14, NULL, NULL, 'Others', NULL, NULL, '081123456789', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 129),
-(15, NULL, 15, NULL, NULL, 'Others', NULL, NULL, '07067552211', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 134),
+(15, NULL, 15, NULL, NULL, 'Others', NULL, NULL, '07067552211', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'terminated', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-25 21:29:56', 134),
 (16, NULL, 16, NULL, NULL, 'Others', NULL, NULL, '08108036463', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 135),
 (17, NULL, 17, NULL, NULL, 'Others', NULL, NULL, '07034245252', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 140),
 (18, NULL, 18, 11, 9, 'Male', '2022-08-28 23:00:00', 'jos', '08037010243', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 144),
@@ -25889,6 +25924,14 @@ CREATE TABLE `staff_suspensions` (
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `staff_suspensions`
+--
+
+INSERT INTO `staff_suspensions` (`id`, `suspension_number`, `staff_id`, `disciplinary_query_id`, `type`, `start_date`, `end_date`, `reason`, `suspension_message`, `status`, `lifted_by`, `lifted_at`, `lift_reason`, `issued_by`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'SUS2026000001', 1, 1, 'unpaid', '2026-01-26', '2026-01-27', 'test', 'test suspension again', 'lifted', 1, '2026-01-25 21:55:56', 'dnkad', 1, '2026-01-25 20:49:52', '2026-01-25 21:55:56', NULL),
+(2, 'SUS2026000002', 1, 3, 'unpaid', '2026-01-27', '2026-01-28', 'sdhasd: ajdgjad\nadada', 'Your account has been suspended due to disciplinary action. Please contact HR.', 'lifted', 1, '2026-01-25 21:55:49', 'kskjd', 1, '2026-01-25 21:55:28', '2026-01-25 21:55:49', NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -25915,6 +25958,13 @@ CREATE TABLE `staff_terminations` (
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `staff_terminations`
+--
+
+INSERT INTO `staff_terminations` (`id`, `termination_number`, `staff_id`, `disciplinary_query_id`, `type`, `reason_category`, `reason_details`, `notice_date`, `effective_date`, `last_working_day`, `exit_interview_conducted`, `exit_interview_notes`, `clearance_completed`, `final_payment_processed`, `processed_by`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'TRM2026000001', 15, NULL, 'involuntary', 'misconduct', 'asdhjd', '2026-01-25', '2026-01-26', '2026-01-26', 1, 'final notes', 1, 1, 1, '2026-01-25 21:29:56', '2026-01-25 21:30:52', NULL);
 
 -- --------------------------------------------------------
 
@@ -26576,7 +26626,7 @@ INSERT INTO `users` (`id`, `is_admin`, `email`, `filename`, `old_records`, `surn
 (12, 20, 'nmworina@yahoo.com', 'avatar.png', NULL, 'Sunwar', 'Mworina', ' ', '1', '1', NULL, '$2y$10$T3uqxwiUjEBEgCBir7j28uh92CRlk2RevJnJ.rc.paU9EgrvzRofq', 1, NULL, NULL, NULL, 78, NULL, NULL, NULL, NULL, NULL),
 (13, 21, 'justinajohn70@gmail.com', 'avatar.png', NULL, 'john', 'justina', ' ', '1', '1', NULL, '$2y$10$C5V.fUNAtG1fzIyoHUuNmecfP6ddCpfMbouSBfPwxZdoTLfR89n8i', 1, NULL, NULL, NULL, 85, NULL, NULL, NULL, NULL, NULL),
 (14, 23, 'racheal@mail.com', 'avatar.png', NULL, 'Tali', 'Racheal', ' ', '1', '0', NULL, '$2y$10$uPbAfpqmyWA21kn6vdEqv.9Fzt72MPAOvtcOrBF.x/2djdnBuHCV2', 1, NULL, NULL, NULL, 129, NULL, NULL, NULL, NULL, NULL),
-(15, 21, 'stephanieanga95@gmail.com', 'avatar.png', NULL, 'Anga', 'Stephanie', 'Fatmuna', '0', '0', NULL, '$2y$10$csV6OhekKj9isTtBKuiYEeld4CngHHkgJDcV2E40LHOvsTauqf.vi', 1, NULL, NULL, NULL, 134, NULL, NULL, NULL, NULL, NULL),
+(15, 21, 'stephanieanga95@gmail.com', 'avatar.png', NULL, 'Anga', 'Stephanie', 'Fatmuna', '0', '0', NULL, '$2y$10$csV6OhekKj9isTtBKuiYEeld4CngHHkgJDcV2E40LHOvsTauqf.vi', 0, NULL, NULL, '2026-01-25 21:29:56', 134, NULL, NULL, NULL, NULL, NULL),
 (16, 21, 'simialamba@gmail.com', 'avatar.png', NULL, 'Alamba', 'Simi', 'Yakubu', '1', '0', NULL, '$2y$10$fn0e86cuo7LxKaE3fQF0ee/rLDiFp1rqzjLSSa/E0l3J0fokyjHXi', 1, NULL, NULL, NULL, 135, NULL, NULL, NULL, NULL, NULL),
 (17, 23, 'ipmanza@yahoo.co.k', 'avatar.png', NULL, 'Paul', 'Ijai', ' ', '1', '0', NULL, '$2y$10$0wV28DME5PsBu6187i0vie784cxHM7jL542FtRX8fwmA2wQU4BWk.', 1, NULL, NULL, NULL, 140, NULL, NULL, NULL, NULL, NULL),
 (18, 20, 'ndakum2001@yahoo.com', 'avatar.png', NULL, 'Dakum', 'Nuhu', ' ', '0', '0', NULL, '$2y$10$kHYGhh6l8l04J9RTlJfvMuu/A1mLIaIJ3xYl1JXzNw0Y8q3RjkbvW', 1, NULL, NULL, NULL, 144, NULL, NULL, NULL, NULL, NULL),
@@ -32305,7 +32355,7 @@ ALTER TABLE `application_status`
 -- AUTO_INCREMENT for table `audits`
 --
 ALTER TABLE `audits`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=822;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=845;
 
 --
 -- AUTO_INCREMENT for table `banks`
@@ -32395,7 +32445,7 @@ ALTER TABLE `discharge_checklist_items`
 -- AUTO_INCREMENT for table `disciplinary_queries`
 --
 ALTER TABLE `disciplinary_queries`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `doctor_queues`
@@ -32455,7 +32505,7 @@ ALTER TABLE `hmo_tariffs`
 -- AUTO_INCREMENT for table `hr_attachments`
 --
 ALTER TABLE `hr_attachments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `imaging_service_requests`
@@ -32821,13 +32871,13 @@ ALTER TABLE `staff_salary_profile_items`
 -- AUTO_INCREMENT for table `staff_suspensions`
 --
 ALTER TABLE `staff_suspensions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `staff_terminations`
 --
 ALTER TABLE `staff_terminations`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `stocks`
