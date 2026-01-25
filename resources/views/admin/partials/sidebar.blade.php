@@ -27,8 +27,8 @@
                     <span class="menu-title">Dashboard</span>
                 </a>
             </li>
-            <li class="nav-item {{ request()->routeIs('my-profile') ? 'active' : '' }}">
-                <a class="nav-link {{ request()->routeIs('my-profile') ? 'active' : '' }}" href="{{ route('my-profile') }}" id="sidebar-global-profile">
+            <li class="nav-item {{ request()->routeIs('hr.ess.my-profile') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('hr.ess.my-profile') ? 'active' : '' }}" href="{{ route('hr.ess.my-profile') }}" id="sidebar-global-profile">
                     <i class="mdi mdi-account-circle menu-icon"></i>
                     <span class="menu-title">Profile</span>
                 </a>
@@ -46,6 +46,52 @@
                     <span class="menu-title">Requisitions</span>
                 </a>
             </li>
+
+            {{-- ========================================
+                 EMPLOYEE SELF-SERVICE (ESS) - My HR Portal
+                 Available to all staff with HR profiles
+                 ======================================== --}}
+            @auth
+            @if(Auth::user()->staff_profile)
+            @can('ess.access')
+            <li class="pt-2 pb-1">
+                <span class="nav-item-head">My HR Portal</span>
+            </li>
+            <li class="nav-item {{ request()->routeIs('hr.ess.index') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('hr.ess.index') ? 'active' : '' }}" href="{{ route('hr.ess.index') }}" id="sidebar-ess-dashboard">
+                    <i class="mdi mdi-account-circle-outline menu-icon"></i>
+                    <span class="menu-title">ESS Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item {{ request()->routeIs('hr.ess.my-leave') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('hr.ess.my-leave') ? 'active' : '' }}" href="{{ route('hr.ess.my-leave') }}" id="sidebar-ess-my-leave">
+                    <i class="mdi mdi-calendar-check menu-icon"></i>
+                    <span class="menu-title">My Leave</span>
+                </a>
+            </li>
+            @can('ess.view-payslips')
+            <li class="nav-item {{ request()->routeIs('hr.ess.my-payslips') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('hr.ess.my-payslips') ? 'active' : '' }}" href="{{ route('hr.ess.my-payslips') }}" id="sidebar-ess-my-payslips">
+                    <i class="mdi mdi-file-document-outline menu-icon"></i>
+                    <span class="menu-title">My Payslips</span>
+                </a>
+            </li>
+            @endcan
+            <li class="nav-item {{ request()->routeIs('hr.ess.my-disciplinary') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('hr.ess.my-disciplinary') ? 'active' : '' }}" href="{{ route('hr.ess.my-disciplinary') }}" id="sidebar-ess-my-disciplinary">
+                    <i class="mdi mdi-alert-circle-outline menu-icon"></i>
+                    <span class="menu-title">My Disciplinary</span>
+                </a>
+            </li>
+            <li class="nav-item {{ request()->routeIs('hr.ess.my-profile') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('hr.ess.my-profile') ? 'active' : '' }}" href="{{ route('hr.ess.my-profile') }}" id="sidebar-ess-my-profile">
+                    <i class="mdi mdi-account-edit-outline menu-icon"></i>
+                    <span class="menu-title">My Profile</span>
+                </a>
+            </li>
+            @endcan
+            @endif
+            @endauth
 
             {{-- ========================================
                  RECEPTIONIST SECTION
@@ -820,6 +866,12 @@
                     <span class="menu-title">Clinics Management</span>
                 </a>
             </li>
+            <li class="nav-item {{ request()->routeIs('departments.*') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('departments.*') ? 'active' : '' }}" href="{{ route('departments.index') }}" id="sidebar-admin-departments">
+                    <i class="mdi mdi-office-building-outline menu-icon"></i>
+                    <span class="menu-title">Departments</span>
+                </a>
+            </li>
             <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-admin-patients" data-bs-target="#sidebar-admin-patients" aria-expanded="false" aria-controls="sidebar-admin-patients" id="sidebar-admin-patients-toggle">
                     <i class="mdi mdi-crosshairs-gps menu-icon"></i>
@@ -893,22 +945,29 @@
                 <span class="nav-item-head">Human Resources</span>
             </li>
             @can('hr-workbench.access')
-            <li class="nav-item {{ request()->routeIs('hr.workbench') ? 'active' : '' }}">
-                <a class="nav-link {{ request()->routeIs('hr.workbench') ? 'active' : '' }}" href="{{ route('hr.workbench') }}" id="sidebar-hr-workbench">
+            <li class="nav-item {{ request()->routeIs('hr.workbench.*') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('hr.workbench.*') ? 'active' : '' }}" href="{{ route('hr.workbench.index') }}" id="sidebar-hr-workbench">
                     <i class="mdi mdi-view-dashboard-outline menu-icon"></i>
                     <span class="menu-title">HR Workbench</span>
                 </a>
             </li>
             @endcan
             @canany(['leave-type.view', 'leave-request.view', 'leave-balance.view'])
-            <li class="nav-item {{ request()->routeIs('hr.leave-types.*', 'hr.leave-requests.*', 'hr.leave-balances.*') ? 'active' : '' }}">
-                <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-hr-leave" data-bs-target="#sidebar-hr-leave" aria-expanded="{{ request()->routeIs('hr.leave-types.*', 'hr.leave-requests.*', 'hr.leave-balances.*') ? 'true' : 'false' }}" aria-controls="sidebar-hr-leave" id="sidebar-hr-leave-toggle">
+            <li class="nav-item {{ request()->routeIs('hr.leave-types.*', 'hr.leave-requests.*', 'hr.leave-balances.*', 'hr.leave-calendar.*') ? 'active' : '' }}">
+                <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-hr-leave" data-bs-target="#sidebar-hr-leave" aria-expanded="{{ request()->routeIs('hr.leave-types.*', 'hr.leave-requests.*', 'hr.leave-balances.*', 'hr.leave-calendar.*') ? 'true' : 'false' }}" aria-controls="sidebar-hr-leave" id="sidebar-hr-leave-toggle">
                     <i class="mdi mdi-calendar-clock menu-icon"></i>
                     <span class="menu-title">Leave Management</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
-                <div class="collapse {{ request()->routeIs('hr.leave-types.*', 'hr.leave-requests.*', 'hr.leave-balances.*') ? 'show' : '' }}" id="sidebar-hr-leave">
+                <div class="collapse {{ request()->routeIs('hr.leave-types.*', 'hr.leave-requests.*', 'hr.leave-balances.*', 'hr.leave-calendar.*') ? 'show' : '' }}" id="sidebar-hr-leave">
                     <ul class="nav flex-column sub-menu">
+                        @can('leave-request.view')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('hr.leave-calendar.*') ? 'active' : '' }}" href="{{ route('hr.leave-calendar.index') }}" id="sidebar-hr-leave-calendar">
+                                <i class="mdi mdi-calendar-month mr-1"></i> Leave Calendar
+                            </a>
+                        </li>
+                        @endcan
                         @can('leave-type.view')
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('hr.leave-types.*') ? 'active' : '' }}" href="{{ route('hr.leave-types.index') }}" id="sidebar-hr-leave-types">
@@ -1005,54 +1064,6 @@
             @endhasanyrole
 
         </div>
-
-        {{-- ========================================
-             EMPLOYEE SELF-SERVICE (ESS) - Separate Section
-             Placed before the user profile, visible to all staff
-             ======================================== --}}
-        @auth
-        @if(Auth::user()->staff_profile)
-        @can('ess.access')
-        <div class="pt-2 pb-1 px-3">
-            <span class="nav-item-head">My HR Portal</span>
-        </div>
-        <ul class="nav" style="padding-left: 0;">
-            <li class="nav-item {{ request()->routeIs('hr.ess.index') ? 'active' : '' }}">
-                <a class="nav-link {{ request()->routeIs('hr.ess.index') ? 'active' : '' }}" href="{{ route('hr.ess.index') }}" id="sidebar-ess-dashboard">
-                    <i class="mdi mdi-account-circle-outline menu-icon"></i>
-                    <span class="menu-title">ESS Dashboard</span>
-                </a>
-            </li>
-            <li class="nav-item {{ request()->routeIs('hr.ess.my-leave') ? 'active' : '' }}">
-                <a class="nav-link {{ request()->routeIs('hr.ess.my-leave') ? 'active' : '' }}" href="{{ route('hr.ess.my-leave') }}" id="sidebar-ess-my-leave">
-                    <i class="mdi mdi-calendar-check menu-icon"></i>
-                    <span class="menu-title">My Leave</span>
-                </a>
-            </li>
-            @can('ess.view-payslips')
-            <li class="nav-item {{ request()->routeIs('hr.ess.my-payslips') ? 'active' : '' }}">
-                <a class="nav-link {{ request()->routeIs('hr.ess.my-payslips') ? 'active' : '' }}" href="{{ route('hr.ess.my-payslips') }}" id="sidebar-ess-my-payslips">
-                    <i class="mdi mdi-file-document-outline menu-icon"></i>
-                    <span class="menu-title">My Payslips</span>
-                </a>
-            </li>
-            @endcan
-            <li class="nav-item {{ request()->routeIs('hr.ess.my-disciplinary') ? 'active' : '' }}">
-                <a class="nav-link {{ request()->routeIs('hr.ess.my-disciplinary') ? 'active' : '' }}" href="{{ route('hr.ess.my-disciplinary') }}" id="sidebar-ess-my-disciplinary">
-                    <i class="mdi mdi-alert-circle-outline menu-icon"></i>
-                    <span class="menu-title">My Disciplinary</span>
-                </a>
-            </li>
-            <li class="nav-item {{ request()->routeIs('hr.ess.my-profile') ? 'active' : '' }}">
-                <a class="nav-link {{ request()->routeIs('hr.ess.my-profile') ? 'active' : '' }}" href="{{ route('hr.ess.my-profile') }}" id="sidebar-ess-my-profile">
-                    <i class="mdi mdi-account-edit-outline menu-icon"></i>
-                    <span class="menu-title">My Profile</span>
-                </a>
-            </li>
-        </ul>
-        @endcan
-        @endif
-        @endauth
 
         <!-- Bottom User Profile Section -->
         <li class="nav-item nav-profile pt-3 mt-auto border-top" style="border-color: rgba(255,255,255,0.1) !important;">

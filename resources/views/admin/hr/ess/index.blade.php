@@ -17,46 +17,68 @@
         </div>
     </div>
 
-    <!-- Quick Stats Row -->
+    @php
+        // Define gradient colors for leave type cards
+        $leaveGradients = [
+            'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+            'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+            'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+            'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
+            'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+            'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+        ];
+
+        // Define icons for common leave types (fallback to calendar icon)
+        $leaveIcons = [
+            'annual' => 'mdi-beach',
+            'sick' => 'mdi-hospital-box',
+            'maternity' => 'mdi-baby-carriage',
+            'paternity' => 'mdi-human-male-child',
+            'compassionate' => 'mdi-heart',
+            'study' => 'mdi-school',
+            'casual' => 'mdi-calendar-clock',
+            'emergency' => 'mdi-alert-circle',
+            'unpaid' => 'mdi-calendar-remove',
+        ];
+    @endphp
+
+    <!-- Quick Stats Row - Dynamic Leave Types -->
     <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card border-0" style="border-radius: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        @foreach($leaveTypes as $index => $leaveType)
+        @php
+            $balance = $balances[$leaveType->id] ?? null;
+            $availableDays = $balance ? $balance->available : 0;
+            $gradient = $leaveGradients[$index % count($leaveGradients)];
+            $iconKey = strtolower(str_replace([' ', '_', '-'], '', $leaveType->code ?? $leaveType->name));
+            $icon = $leaveIcons[$iconKey] ?? 'mdi-calendar-check';
+        @endphp
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+            <div class="card border-0 h-100" style="border-radius: 12px; background: {{ $gradient }};">
                 <div class="card-body text-white py-4">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="mb-2 text-white-50">Annual Leave</h6>
-                            <h2 class="mb-0" style="font-weight: 700;">{{ $leaveBalances['annual'] ?? 0 }}</h2>
+                            <h6 class="mb-2 text-white-50" style="font-size: 0.85rem;">{{ $leaveType->name }}</h6>
+                            <h2 class="mb-0" style="font-weight: 700;">{{ number_format($availableDays, 1) }}</h2>
                         </div>
                         <div style="font-size: 2.5rem; opacity: 0.3;">
-                            <i class="mdi mdi-beach"></i>
+                            <i class="mdi {{ $icon }}"></i>
                         </div>
                     </div>
                     <small class="text-white-50">Days remaining</small>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-0" style="border-radius: 12px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+        @endforeach
+
+        <!-- Pending Requests Card -->
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+            <div class="card border-0 h-100" style="border-radius: 12px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
                 <div class="card-body text-white py-4">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="mb-2 text-white-50">Sick Leave</h6>
-                            <h2 class="mb-0" style="font-weight: 700;">{{ $leaveBalances['sick'] ?? 0 }}</h2>
-                        </div>
-                        <div style="font-size: 2.5rem; opacity: 0.3;">
-                            <i class="mdi mdi-hospital-box"></i>
-                        </div>
-                    </div>
-                    <small class="text-white-50">Days remaining</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-0" style="border-radius: 12px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                <div class="card-body text-white py-4">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="mb-2 text-white-50">Pending Requests</h6>
+                            <h6 class="mb-2 text-white-50" style="font-size: 0.85rem;">Pending Requests</h6>
                             <h2 class="mb-0" style="font-weight: 700;">{{ $pendingLeaveCount ?? 0 }}</h2>
                         </div>
                         <div style="font-size: 2.5rem; opacity: 0.3;">
@@ -67,12 +89,14 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-0" style="border-radius: 12px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+
+        <!-- Last Payslip Card -->
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+            <div class="card border-0 h-100" style="border-radius: 12px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
                 <div class="card-body text-white py-4">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="mb-2 text-white-50">Last Payslip</h6>
+                            <h6 class="mb-2 text-white-50" style="font-size: 0.85rem;">Last Payslip</h6>
                             <h6 class="mb-0" style="font-weight: 700;">
                                 @if($lastPayslip)
                                 {{ \Carbon\Carbon::parse($lastPayslip->payrollBatch->pay_period)->format('M Y') }}
@@ -106,10 +130,13 @@
                     <a href="{{ route('hr.ess.my-leave') }}" class="btn btn-outline-primary btn-block mb-3 py-3" style="border-radius: 8px;">
                         <i class="mdi mdi-calendar-plus mr-2"></i>Request Leave
                     </a>
+                    <a href="{{ route('hr.ess.my-calendar') }}" class="btn btn-outline-info btn-block mb-3 py-3" style="border-radius: 8px;">
+                        <i class="mdi mdi-calendar-month mr-2"></i>Leave Calendar
+                    </a>
                     <a href="{{ route('hr.ess.my-payslips') }}" class="btn btn-outline-success btn-block mb-3 py-3" style="border-radius: 8px;">
                         <i class="mdi mdi-file-document mr-2"></i>View Payslips
                     </a>
-                    <a href="{{ route('hr.ess.my-profile') }}" class="btn btn-outline-info btn-block py-3" style="border-radius: 8px;">
+                    <a href="{{ route('hr.ess.my-profile') }}" class="btn btn-outline-secondary btn-block py-3" style="border-radius: 8px;">
                         <i class="mdi mdi-account-edit mr-2"></i>Update Profile
                     </a>
                 </div>
@@ -124,13 +151,16 @@
                     </h6>
                 </div>
                 <div class="card-body">
-                    <a href="{{ route('hr.ess.team-approvals.index') }}" class="btn btn-danger btn-block py-3 position-relative" style="border-radius: 8px;">
+                    <a href="{{ route('hr.ess.team-approvals.index') }}" class="btn btn-danger btn-block py-3 mb-3 position-relative" style="border-radius: 8px;">
                         <i class="mdi mdi-clipboard-check-multiple mr-2"></i>Team Approvals
                         @if(isset($pendingTeamApprovalsCount) && $pendingTeamApprovalsCount > 0)
                         <span class="badge badge-light position-absolute" style="top: -8px; right: -8px; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
                             {{ $pendingTeamApprovalsCount }}
                         </span>
                         @endif
+                    </a>
+                    <a href="{{ route('hr.ess.team-calendar.index') }}" class="btn btn-outline-danger btn-block py-3" style="border-radius: 8px;">
+                        <i class="mdi mdi-calendar-group mr-2"></i>Team Calendar
                     </a>
                     <small class="text-muted d-block mt-2 text-center">
                         @if($staff->is_unit_head && $staff->is_dept_head)

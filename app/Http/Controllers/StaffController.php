@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Clinic;
+use App\Models\Department;
 use App\Models\Specialization;
 use App\Models\Staff;
 use App\Models\User;
@@ -38,28 +39,36 @@ class StaffController extends Controller
 
     public function listStaff()
     {
-        // if(Auth::user()->hasRole(['Super-Admin', 'Admin'])){
-
         $user = User::with(['category' => function ($q) {
             $q->addSelect(['id', 'name']);
-        }, 'staff_profile'])->where('status', '>', 0)->orderBy('id', 'ASC')->where('is_admin', '!=', 19)->get();
-        // dd($user);
-        // }else{
-
-        //     if (Auth::user()->hasPermissionTo('user-list')) {
-        //         # code...
-        //         $user = User::with(['statuscategory' => function ($q) {
-        //             $q->addSelect(['id', 'name']);
-        //         }])->where('visible', '=', 1)->where('id', '=', Auth::user()->id)->orderBy('id', 'ASC')->first();
-        //     }
-        // }
+        }, 'staff_profile.department'])->where('status', '>', 0)->orderBy('id', 'ASC')->where('is_admin', '!=', 19)->get();
 
         return DataTables::of($user)
             ->addIndexColumn()
             ->editColumn('is_admin', function ($user) {
-                $user_category_name = $user->category->name;
-
-                return $user_category_name;
+                return $user->category->name ?? 'N/A';
+            })
+            ->addColumn('full_name', function ($user) {
+                return $user->surname . ' ' . $user->firstname;
+            })
+            ->addColumn('department', function ($user) {
+                return $user->staff_profile?->department?->name ?? '<span class="text-muted">-</span>';
+            })
+            ->addColumn('job_title', function ($user) {
+                return $user->staff_profile?->job_title ?? '<span class="text-muted">-</span>';
+            })
+            ->addColumn('phone', function ($user) {
+                return $user->staff_profile?->phone_number ?? '<span class="text-muted">-</span>';
+            })
+            ->addColumn('employment_status', function ($user) {
+                $status = $user->staff_profile?->employment_status ?? 'active';
+                $statusClass = match($status) {
+                    'active' => 'badge-success',
+                    'suspended' => 'badge-danger',
+                    'resigned', 'terminated' => 'badge-secondary',
+                    default => 'badge-secondary'
+                };
+                return '<span class="badge ' . $statusClass . '">' . ucfirst($status) . '</span>';
             })
             ->addColumn('leadership_role', function ($user) {
                 $badges = [];
@@ -76,49 +85,23 @@ class StaffController extends Controller
             ->addColumn('filename', function ($user) {
                 return view('components.user-avatar', [
                     'user' => $user,
-                    'width' => '30px',
-                    'height' => '30px',
+                    'width' => '35px',
+                    'height' => '35px',
                     'attributes' => new ComponentAttributeBag()
                 ])->render();
             })
-            ->addColumn('view', function ($user) {
-                // if (Auth::user()->hasPermissionTo('user-show') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
-
-                $url = route('staff.show', $user->id);
-
-                return '<a href="' . $url . '" class="btn btn-success btn-sm" ><i class="fa fa-street-view"></i> View</a>';
-                // } else {
-
-                //     $label = '<span class="label label-warning">Not Allowed</span>';
-                //     return $label;
-                // }
+            ->addColumn('actions', function ($user) {
+                $viewUrl = route('staff.show', $user->id);
+                $editUrl = route('staff.edit', $user->id);
+                return '
+                    <div class="btn-group" role="group">
+                        <a href="' . $viewUrl . '" class="btn btn-outline-primary btn-sm" title="View"><i class="mdi mdi-eye"></i></a>
+                        <a href="' . $editUrl . '" class="btn btn-outline-info btn-sm" title="Edit"><i class="mdi mdi-pencil"></i></a>
+                    </div>
+                ';
             })
-            ->addColumn('edit', function ($user) {
-                // if (Auth::user()->hasPermissionTo('user-edit') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
-
-                $url = route('staff.edit', $user->id);
-
-                return '<a href="' . $url . '" class="btn btn-info btn-sm" ><i class="fa fa-pencil"></i> Edit</a>';
-                // } else {
-
-                //     $label = '<span class="label label-warning">Not Allow</span>';
-                //     return $label;
-                // }
-            })
-            ->addColumn('delete', function ($user) {
-                // if (Auth::user()->hasPermissionTo('user-delete') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
-                $id = $user->id;
-
-                return '<button type="button" class="delete-modal btn btn-danger btn-sm" data-toggle="modal" data-id="' . $id . '"><i class="fa fa-trash"></i> Delete</button>';
-                // } else {
-                //     $label = '<span class="label label-danger">Not Allow</span>';
-                //     return $label;
-                // }
-            })
-            ->rawColumns(['filename', 'leadership_role', 'view', 'edit', 'delete'])
+            ->rawColumns(['filename', 'full_name', 'department', 'job_title', 'phone', 'employment_status', 'leadership_role', 'actions'])
             ->make(true);
-
-        // }
     }
 
     public function my_profile()
@@ -131,10 +114,11 @@ class StaffController extends Controller
         $specializations = Specialization::pluck('name', 'id')->all();
         $userPermission = $user->permissions->pluck('name', 'name')->all();
         $clinics = Clinic::pluck('name', 'id')->all();
+        $departments = Department::active()->ordered()->get();
 
         // dd($userRole);
 
-        return view('admin.staff.edit-my-profile', compact('user', 'statuses', 'roles', 'permissions', 'userRole', 'userPermission', 'specializations', 'clinics'));
+        return view('admin.staff.edit-my-profile', compact('user', 'statuses', 'roles', 'permissions', 'userRole', 'userPermission', 'specializations', 'clinics', 'departments'));
     }
 
     /**
@@ -270,6 +254,20 @@ class StaffController extends Controller
                 $staff->phone_number = $request->phone_number ?? null;
                 $staff->consultation_fee = $request->consultation_fee ?? 0;
 
+                // Bank Information (user editable)
+                $staff->bank_name = $request->bank_name ?? null;
+                $staff->bank_account_number = $request->bank_account_number ?? null;
+                $staff->bank_account_name = $request->bank_account_name ?? null;
+
+                // Emergency Contact (user editable)
+                $staff->emergency_contact_name = $request->emergency_contact_name ?? null;
+                $staff->emergency_contact_phone = $request->emergency_contact_phone ?? null;
+                $staff->emergency_contact_relationship = $request->emergency_contact_relationship ?? null;
+
+                // Tax & Pension IDs (user editable)
+                $staff->tax_id = $request->tax_id ?? null;
+                $staff->pension_id = $request->pension_id ?? null;
+
                 if ($staff->update()) {
                     // Send User an email with set password link
                     $msg = 'Your profile was successfully updated.';
@@ -316,8 +314,9 @@ class StaffController extends Controller
         $specializations = Specialization::pluck('name', 'id')->all();
         $clinics = Clinic::pluck('name', 'id')->all();
         $permissions = Permission::pluck('name', 'id')->all();
+        $departments = Department::active()->ordered()->get();
 
-        return view('admin.staff.create', compact('roles', 'statuses', 'permissions', 'specializations', 'clinics'));
+        return view('admin.staff.create', compact('roles', 'statuses', 'permissions', 'specializations', 'clinics', 'departments'));
     }
 
     /**
@@ -509,6 +508,28 @@ class StaffController extends Controller
                 $staff->is_unit_head = $request->has('is_unit_head') ? true : false;
                 $staff->is_dept_head = $request->has('is_dept_head') ? true : false;
 
+                // HR Fields
+                $staff->employee_id = $request->employee_id ?? null;
+                $staff->date_hired = $request->date_hired ?? null;
+                $staff->employment_type = $request->employment_type ?? null;
+                $staff->employment_status = $request->employment_status ?? 'active';
+                $staff->job_title = $request->job_title ?? null;
+                $staff->department_id = $request->department_id ?? null;
+
+                // Bank information
+                $staff->bank_name = $request->bank_name ?? null;
+                $staff->bank_account_number = $request->bank_account_number ?? null;
+                $staff->bank_account_name = $request->bank_account_name ?? null;
+
+                // Emergency contact
+                $staff->emergency_contact_name = $request->emergency_contact_name ?? null;
+                $staff->emergency_contact_phone = $request->emergency_contact_phone ?? null;
+                $staff->emergency_contact_relationship = $request->emergency_contact_relationship ?? null;
+
+                // Tax & pension
+                $staff->tax_id = $request->tax_id ?? null;
+                $staff->pension_id = $request->pension_id ?? null;
+
                 if ($staff->save()) {
                     if (appsettings('goonline', 0) == 1) {
                         // Send to CoreHealth SuperAdmin
@@ -576,8 +597,9 @@ class StaffController extends Controller
         $specializations = Specialization::pluck('name', 'id')->all();
         $clinics = Clinic::pluck('name', 'id')->all();
         $permissions = Permission::pluck('name', 'id')->all();
+        $departments = Department::active()->ordered()->get();
 
-        return view('admin.staff.show', compact('user', 'roles', 'statuses', 'permissions', 'specializations', 'clinics'));
+        return view('admin.staff.show', compact('user', 'roles', 'statuses', 'permissions', 'specializations', 'clinics', 'departments'));
     }
 
     /**
@@ -597,10 +619,11 @@ class StaffController extends Controller
         $specializations = Specialization::pluck('name', 'id')->all();
         $userPermission = $user->permissions->pluck('name', 'name')->all();
         $clinics = Clinic::pluck('name', 'id')->all();
+        $departments = Department::active()->ordered()->get();
 
         // dd($userRole);
 
-        return view('admin.staff.edit', compact('user', 'statuses', 'roles', 'permissions', 'userRole', 'userPermission', 'specializations', 'clinics'));
+        return view('admin.staff.edit', compact('user', 'statuses', 'roles', 'permissions', 'userRole', 'userPermission', 'specializations', 'clinics', 'departments'));
     }
 
     /**
@@ -751,19 +774,45 @@ class StaffController extends Controller
                     $user->givePermissionTo($request->permissions);
                 }
                 $staff = Staff::where('user_id', $id)->first();
-                // dd($staff);
-                $staff->clinic_id = $request->clinic ?? null;
-                $staff->user_id = $user->id;
-                $staff->specialization_id = $request->specialization ?? null;
-                $staff->gender = $request->gender ?? null;
-                $staff->date_of_birth = $request->dob ?? null;
-                $staff->home_address = $request->address ?? null;
-                $staff->phone_number = $request->phone_number ?? null;
-                $staff->consultation_fee = $request->consultation_fee ?? 0;
+                if (!$staff) {
+                    $staff = new Staff();
+                    $staff->user_id = $user->id;
+                }
+
+                // Original fields
+                $staff->clinic_id = $request->clinic ?? $staff->clinic_id;
+                $staff->specialization_id = $request->specialization ?? $staff->specialization_id;
+                $staff->gender = $request->gender ?? $staff->gender;
+                $staff->date_of_birth = $request->dob ?? $staff->date_of_birth;
+                $staff->home_address = $request->address ?? $staff->home_address;
+                $staff->phone_number = $request->phone_number ?? $staff->phone_number;
+                $staff->consultation_fee = $request->consultation_fee ?? $staff->consultation_fee ?? 0;
                 $staff->is_unit_head = $request->has('is_unit_head') ? true : false;
                 $staff->is_dept_head = $request->has('is_dept_head') ? true : false;
 
-                if ($staff->update()) {
+                // HR Fields
+                $staff->employee_id = $request->employee_id ?? $staff->employee_id;
+                $staff->date_hired = $request->date_hired ?? $staff->date_hired;
+                $staff->employment_type = $request->employment_type ?? $staff->employment_type;
+                $staff->employment_status = $request->employment_status ?? $staff->employment_status;
+                $staff->job_title = $request->job_title ?? $staff->job_title;
+                $staff->department_id = $request->department_id ?? $staff->department_id;
+
+                // Bank information
+                $staff->bank_name = $request->bank_name ?? $staff->bank_name;
+                $staff->bank_account_number = $request->bank_account_number ?? $staff->bank_account_number;
+                $staff->bank_account_name = $request->bank_account_name ?? $staff->bank_account_name;
+
+                // Emergency contact
+                $staff->emergency_contact_name = $request->emergency_contact_name ?? $staff->emergency_contact_name;
+                $staff->emergency_contact_phone = $request->emergency_contact_phone ?? $staff->emergency_contact_phone;
+                $staff->emergency_contact_relationship = $request->emergency_contact_relationship ?? $staff->emergency_contact_relationship;
+
+                // Tax & pension
+                $staff->tax_id = $request->tax_id ?? $staff->tax_id;
+                $staff->pension_id = $request->pension_id ?? $staff->pension_id;
+
+                if ($staff->save()) {
                     // Send User an email with set password link
                     $msg = 'User [' . $user->firstname . ' ' . $user->surname . '] was successfully updated.';
                     Alert::success('Success ', $msg);

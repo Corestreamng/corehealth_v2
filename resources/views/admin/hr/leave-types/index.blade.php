@@ -117,6 +117,13 @@
                             <small class="text-muted">Advance notice required</small>
                         </div>
                         <div class="col-md-4 mb-3">
+                            <label class="form-label" style="font-weight: 600; color: #495057;">Max Requests/Year</label>
+                            <input type="number" class="form-control" name="max_requests_per_year" id="max_requests_per_year"
+                                   min="1" max="50"
+                                   style="border-radius: 8px; padding: 0.75rem;">
+                            <small class="text-muted">Leave blank for unlimited</small>
+                        </div>
+                        <div class="col-md-4 mb-3">
                             <label class="form-label" style="font-weight: 600; color: #495057;">Max Carry Forward</label>
                             <input type="number" class="form-control" name="max_carry_forward" id="max_carry_forward"
                                    min="0" max="365" value="5"
@@ -303,6 +310,7 @@ $(function() {
         $('#max_days_per_year').val(data.max_days_per_year);
         $('#max_consecutive_days').val(data.max_consecutive_days);
         $('#min_notice_days').val(data.min_notice_days);
+        $('#max_requests_per_year').val(data.max_requests_per_year);
         $('#max_carry_forward').val(data.max_carry_forward);
         $('#min_service_months').val(data.min_service_months);
         $('#color').val(data.color || '#3498db');
@@ -331,6 +339,7 @@ $(function() {
             max_days_per_year: $('#max_days_per_year').val(),
             max_consecutive_days: $('#max_consecutive_days').val() || null,
             min_notice_days: $('#min_notice_days').val(),
+            max_requests_per_year: $('#max_requests_per_year').val() || null,
             max_carry_forward: $('#max_carry_forward').val(),
             min_service_months: $('#min_service_months').val(),
             color: $('#color').val(),

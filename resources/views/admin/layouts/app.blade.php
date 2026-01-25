@@ -2012,6 +2012,10 @@ rgba(255, 255, 255, 0.7) !important;
 
     <!-- Chat Styles -->
     <link rel="stylesheet" href="{{ asset('css/chat-styles.css') }}">
+
+    <!-- Page-specific styles -->
+    @yield('style')
+    @stack('styles')
 </head>
 
 <body id='app'>
