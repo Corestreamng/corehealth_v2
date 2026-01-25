@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 23, 2026 at 01:53 PM
+-- Generation Time: Jan 25, 2026 at 08:16 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -890,7 +890,156 @@ INSERT INTO `audits` (`id`, `user_type`, `user_id`, `event`, `auditable_type`, `
 (667, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Expense', 3, '{\"amount\":\"100.00\",\"description\":\"Test genenric epense\"}', '{\"amount\":\"10099\",\"description\":\"Test genenric epense up\"}', 'http://127.0.0.1:8000/inventory/expenses/3', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-23 07:57:26', '2026-01-23 07:57:26'),
 (668, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Expense', 3, '{\"approved_by\":null,\"status\":\"pending\",\"rejection_reason\":null,\"approved_at\":null}', '{\"approved_by\":1,\"status\":\"rejected\",\"rejection_reason\":\"ytete\",\"approved_at\":\"2026-01-23 08:57:36\"}', 'http://127.0.0.1:8000/inventory/expenses/3/reject', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-23 07:57:36', '2026-01-23 07:57:36'),
 (669, 'App\\Models\\User', 1, 'created', 'App\\Models\\Expense', 4, '[]', '{\"title\":\"dgdhsd\",\"description\":\"ttwetew\",\"amount\":\"60060\",\"category\":\"store_expense\",\"expense_date\":\"2026-01-23 00:00:00\",\"payment_method\":\"bank_transfer\",\"payment_reference\":\"hgdgd\",\"bank_id\":\"1\",\"cheque_number\":null,\"supplier_id\":\"1\",\"store_id\":\"3\",\"notes\":\"test approve\",\"status\":\"pending\",\"recorded_by\":1,\"expense_number\":\"EXP2026010004\",\"id\":4}', 'http://127.0.0.1:8000/inventory/expenses', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-23 07:58:25', '2026-01-23 07:58:25'),
-(670, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Expense', 4, '{\"approved_by\":null,\"status\":\"pending\",\"approved_at\":null}', '{\"approved_by\":1,\"status\":\"approved\",\"approved_at\":\"2026-01-23 08:58:33\"}', 'http://127.0.0.1:8000/inventory/expenses/4/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-23 07:58:33', '2026-01-23 07:58:33');
+(670, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Expense', 4, '{\"approved_by\":null,\"status\":\"pending\",\"approved_at\":null}', '{\"approved_by\":1,\"status\":\"approved\",\"approved_at\":\"2026-01-23 08:58:33\"}', 'http://127.0.0.1:8000/inventory/expenses/4/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-23 07:58:33', '2026-01-23 07:58:33'),
+(671, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\LeaveType', 1, '[]', '{\"name\":\"Annual Leave\",\"code\":\"AL\",\"description\":\"Annual Paid Leave\",\"max_days_per_year\":\"20\",\"max_consecutive_days\":\"10\",\"max_requests_per_year\":\"3\",\"min_days_notice\":\"3\",\"max_carry_forward\":\"5\",\"min_service_months\":\"0\",\"requires_attachment\":true,\"is_paid\":true,\"is_active\":true,\"allow_half_day\":false,\"allow_carry_forward\":true,\"color\":\"#3498db\",\"gender_specific\":null,\"applicable_employment_types\":null,\"id\":1}', 'http://127.0.0.1:8000/hr/leave-types', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 06:57:07', '2026-01-24 06:57:07'),
+(672, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\LeaveType', 1, '{\"code\":\"AL\"}', '{\"code\":\"ANL\"}', 'http://127.0.0.1:8000/hr/leave-types/1', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 06:57:38', '2026-01-24 06:57:38'),
+(673, 'App\\Models\\User', 1, 'updated', 'App\\Models\\User', 1, '{\"password\":\"$2y$10$uV3jA9Xlf79Kj0Vgh2EyX.fjKZyxekSEgofucBdKHf33b5SWSQCDm\"}', '{\"password\":\"$2y$10$K9hJTKfOkvpBH2qTzrn9s.y6EJozDzFwTjbBS2W9szUREjbolqq5u\"}', 'http://127.0.0.1:8000/staff/1', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 07:45:42', '2026-01-24 07:45:42'),
+(674, 'App\\Models\\User', 1, 'updated', 'App\\Models\\User', 1, '{\"password\":\"$2y$10$K9hJTKfOkvpBH2qTzrn9s.y6EJozDzFwTjbBS2W9szUREjbolqq5u\"}', '{\"password\":\"$2y$10$yIHypGbCknyP\\/zUmJr\\/YH.ITuTxZN2HYtljHBBCSzRrq9ZGVWLs5O\"}', 'http://127.0.0.1:8000/staff/1', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 08:14:48', '2026-01-24 08:14:48'),
+(675, 'App\\Models\\User', 1, 'updated', 'App\\Models\\User', 1, '{\"password\":\"$2y$10$yIHypGbCknyP\\/zUmJr\\/YH.ITuTxZN2HYtljHBBCSzRrq9ZGVWLs5O\"}', '{\"password\":\"$2y$10$Fep4r9SRtypph8AndhaxYeUG98Y1muRJuHSDT85juH67.ozDgLrYe\"}', 'http://127.0.0.1:8000/staff/1', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 08:32:38', '2026-01-24 08:32:38'),
+(676, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Staff', 1, '{\"employee_id\":null,\"job_title\":null,\"department_id\":null,\"bank_name\":null,\"bank_account_number\":null,\"bank_account_name\":null,\"emergency_contact_name\":null,\"emergency_contact_phone\":null,\"emergency_contact_relationship\":null,\"tax_id\":null,\"pension_id\":null}', '{\"employee_id\":\"9900\",\"job_title\":\"Boss Admin\",\"department_id\":\"14\",\"bank_name\":\"zenith bank\",\"bank_account_number\":\"220445688\",\"bank_account_name\":\"App Tech\",\"emergency_contact_name\":\"Chin\",\"emergency_contact_phone\":\"+2348188223228\",\"emergency_contact_relationship\":\"Sibling\",\"tax_id\":\"8837338\",\"pension_id\":\"872183\"}', 'http://127.0.0.1:8000/staff/1', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 08:32:38', '2026-01-24 08:32:38'),
+(677, 'App\\Models\\User', 1, 'updated', 'App\\Models\\User', 1, '{\"password\":\"$2y$10$Fep4r9SRtypph8AndhaxYeUG98Y1muRJuHSDT85juH67.ozDgLrYe\"}', '{\"password\":\"$2y$10$NBSJEpw4FgACkjQa\\/kSI9.I3w425cVbAEwTVawdrWuaIz3PZlzhGK\"}', 'http://127.0.0.1:8000/staff/1', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 08:41:56', '2026-01-24 08:41:56'),
+(678, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Staff', 1, '{\"date_hired\":null}', '{\"date_hired\":\"2025-06-01 00:00:00\"}', 'http://127.0.0.1:8000/staff/1', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 08:41:56', '2026-01-24 08:41:56'),
+(679, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\LeaveBalance', 1, '[]', '{\"staff_id\":1,\"leave_type_id\":1,\"year\":2026,\"entitled_days\":20,\"used_days\":0,\"pending_days\":0,\"carried_forward\":0,\"id\":1}', 'http://127.0.0.1:8000/hr/ess', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 08:49:20', '2026-01-24 08:49:20'),
+(680, 'App\\Models\\User', 1, 'updated', 'App\\Models\\User', 1, '{\"othername\":\"001\"}', '{\"othername\":\"ing\"}', 'http://127.0.0.1:8000/hr/ess/my-profile', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 09:37:19', '2026-01-24 09:37:19'),
+(681, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Staff', 1, '{\"gender\":\"Male\"}', '{\"gender\":\"male\"}', 'http://127.0.0.1:8000/hr/ess/my-profile', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 09:37:32', '2026-01-24 09:37:32'),
+(682, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Staff', 1, '{\"gender\":\"Male\"}', '{\"gender\":\"Others\"}', 'http://127.0.0.1:8000/hr/ess/my-profile', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 09:51:19', '2026-01-24 09:51:19'),
+(683, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Staff', 1, '{\"gender\":\"Others\"}', '{\"gender\":\"Male\"}', 'http://127.0.0.1:8000/hr/ess/my-profile', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 09:51:33', '2026-01-24 09:51:33'),
+(684, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Staff', 1, '{\"phone_number\":\"0810000000\"}', '{\"phone_number\":\"0810000008\"}', 'http://127.0.0.1:8000/hr/ess/my-profile', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 09:51:51', '2026-01-24 09:51:51'),
+(685, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Staff', 1, '{\"specialization_id\":null,\"clinic_id\":null}', '{\"specialization_id\":\"1\",\"clinic_id\":\"1\"}', 'http://127.0.0.1:8000/hr/ess/my-profile', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 09:52:13', '2026-01-24 09:52:13'),
+(686, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Staff', 1, '{\"emergency_contact_name\":\"Chin\",\"emergency_contact_relationship\":\"Sibling\"}', '{\"emergency_contact_name\":\"Chink\",\"emergency_contact_relationship\":null}', 'http://127.0.0.1:8000/hr/ess/my-profile', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 09:52:31', '2026-01-24 09:52:31'),
+(687, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Staff', 1, '{\"emergency_contact_relationship\":null}', '{\"emergency_contact_relationship\":\"spouse\"}', 'http://127.0.0.1:8000/hr/ess/my-profile', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 09:52:49', '2026-01-24 09:52:49'),
+(688, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Department', 14, '{\"head_of_department_id\":null}', '{\"head_of_department_id\":\"1\"}', 'http://127.0.0.1:8000/departments/14', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 10:04:32', '2026-01-24 10:04:32'),
+(689, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\LeaveRequest', 1, '[]', '{\"staff_id\":1,\"leave_type_id\":1,\"start_date\":\"2026-01-29 00:00:00\",\"end_date\":\"2026-02-02 00:00:00\",\"total_days\":3,\"is_half_day\":false,\"reason\":\"test reason for annual leave\",\"handover_notes\":\"dgjdjhandover\",\"contact_during_leave\":\"0903393939\",\"relief_staff_id\":null,\"status\":\"pending\",\"request_number\":\"LR2026000001\",\"id\":1}', 'http://127.0.0.1:8000/hr/ess/my-leave/request', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 12:14:24', '2026-01-24 12:14:24'),
+(690, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\LeaveBalance', 1, '{\"pending_days\":\"0.0\"}', '{\"pending_days\":3}', 'http://127.0.0.1:8000/hr/ess/my-leave/request', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 12:14:25', '2026-01-24 12:14:25'),
+(691, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\HrAttachment', 1, '[]', '{\"attachable_type\":\"App\\\\Models\\\\HR\\\\LeaveRequest\",\"attachable_id\":1,\"filename\":\"92969b1b-9bcb-4cfd-82f1-d5a26d6c7bc0.png\",\"original_filename\":\"Screenshot (3).png\",\"file_path\":\"hr\\/leave-requests\\/92969b1b-9bcb-4cfd-82f1-d5a26d6c7bc0.png\",\"mime_type\":\"image\\/png\",\"file_size\":248585,\"document_type\":\"leave_supporting_document\",\"description\":\"Supporting document for leave request\",\"uploaded_by\":1,\"id\":1}', 'http://127.0.0.1:8000/hr/ess/my-leave/request', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 12:14:27', '2026-01-24 12:14:27'),
+(692, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\LeaveRequest', 1, '{\"status\":\"pending\"}', '{\"status\":\"cancelled\"}', 'http://127.0.0.1:8000/hr/ess/my-leave/1/cancel', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 12:14:38', '2026-01-24 12:14:38'),
+(693, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\LeaveBalance', 1, '{\"pending_days\":\"3.0\"}', '{\"pending_days\":0}', 'http://127.0.0.1:8000/hr/ess/my-leave/1/cancel', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 12:14:38', '2026-01-24 12:14:38'),
+(694, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\LeaveRequest', 2, '[]', '{\"staff_id\":1,\"leave_type_id\":1,\"start_date\":\"2026-01-28 00:00:00\",\"end_date\":\"2026-02-03 00:00:00\",\"total_days\":5,\"is_half_day\":false,\"reason\":\"test reson for anual leave\",\"handover_notes\":\"fkjhsdfs\",\"contact_during_leave\":\"0903393939\",\"relief_staff_id\":null,\"status\":\"pending\",\"request_number\":\"LR2026000002\",\"id\":2}', 'http://127.0.0.1:8000/hr/ess/my-leave/request', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 12:15:18', '2026-01-24 12:15:18'),
+(695, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\LeaveBalance', 1, '{\"pending_days\":\"0.0\"}', '{\"pending_days\":5}', 'http://127.0.0.1:8000/hr/ess/my-leave/request', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 12:15:18', '2026-01-24 12:15:18'),
+(696, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\HrAttachment', 2, '[]', '{\"attachable_type\":\"App\\\\Models\\\\HR\\\\LeaveRequest\",\"attachable_id\":2,\"filename\":\"4bd46b3f-f986-4676-81ae-e605d1ad70e8.png\",\"original_filename\":\"Screenshot (17).png\",\"file_path\":\"hr\\/leave-requests\\/4bd46b3f-f986-4676-81ae-e605d1ad70e8.png\",\"mime_type\":\"image\\/png\",\"file_size\":201741,\"document_type\":\"leave_supporting_document\",\"description\":\"Supporting document for leave request\",\"uploaded_by\":1,\"id\":2}', 'http://127.0.0.1:8000/hr/ess/my-leave/request', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 12:15:18', '2026-01-24 12:15:18'),
+(697, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\LeaveRequest', 2, '{\"status\":\"pending\",\"supervisor_comments\":null,\"reviewed_by\":null,\"reviewed_at\":null,\"review_comments\":null}', '{\"status\":\"rejected\",\"supervisor_comments\":\"Rejected: reetcion readon\",\"reviewed_by\":1,\"reviewed_at\":\"2026-01-24 13:28:32\",\"review_comments\":\"reetcion readon\"}', 'http://127.0.0.1:8000/hr/ess/team-approvals/2/reject', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 12:28:32', '2026-01-24 12:28:32'),
+(698, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\LeaveBalance', 1, '{\"pending_days\":\"5.0\"}', '{\"pending_days\":0}', 'http://127.0.0.1:8000/hr/ess/team-approvals/2/reject', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 12:28:32', '2026-01-24 12:28:32'),
+(699, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\LeaveRequest', 3, '[]', '{\"staff_id\":1,\"leave_type_id\":1,\"start_date\":\"2026-01-28 00:00:00\",\"end_date\":\"2026-02-03 00:00:00\",\"total_days\":5,\"is_half_day\":false,\"reason\":\"tfsgjwd  adhahdghad\",\"handover_notes\":\"adkhkad\",\"contact_during_leave\":\"dabdbad\",\"relief_staff_id\":\"13\",\"status\":\"pending\",\"request_number\":\"LR2026000003\",\"id\":3}', 'http://127.0.0.1:8000/hr/ess/my-leave/request', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 12:45:30', '2026-01-24 12:45:30'),
+(700, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\LeaveBalance', 1, '{\"pending_days\":\"0.0\"}', '{\"pending_days\":5}', 'http://127.0.0.1:8000/hr/ess/my-leave/request', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 12:45:30', '2026-01-24 12:45:30'),
+(701, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\HrAttachment', 3, '[]', '{\"attachable_type\":\"App\\\\Models\\\\HR\\\\LeaveRequest\",\"attachable_id\":3,\"filename\":\"76bb8ce8-8100-46e8-b7ac-1a8920230fc6.png\",\"original_filename\":\"Screenshot (19).png\",\"file_path\":\"hr\\/leave-requests\\/76bb8ce8-8100-46e8-b7ac-1a8920230fc6.png\",\"mime_type\":\"image\\/png\",\"file_size\":207223,\"document_type\":\"leave_supporting_document\",\"description\":\"Supporting document for leave request\",\"uploaded_by\":1,\"id\":3}', 'http://127.0.0.1:8000/hr/ess/my-leave/request', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 12:45:30', '2026-01-24 12:45:30'),
+(702, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\LeaveRequest', 3, '{\"status\":\"pending\",\"supervisor_approved_by\":null,\"supervisor_approved_at\":null,\"supervisor_comments\":null}', '{\"status\":\"supervisor_approved\",\"supervisor_approved_by\":1,\"supervisor_approved_at\":\"2026-01-24 13:48:07\",\"supervisor_comments\":\"test approve remark\"}', 'http://127.0.0.1:8000/hr/ess/team-approvals/3/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 12:48:07', '2026-01-24 12:48:07'),
+(703, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\LeaveRequest', 3, '{\"status\":\"supervisor_approved\",\"hr_comments\":null,\"reviewed_by\":null,\"reviewed_at\":null,\"review_comments\":null}', '{\"status\":\"rejected\",\"hr_comments\":\"Rejected: hell no\",\"reviewed_by\":1,\"reviewed_at\":\"2026-01-24 17:47:22\",\"review_comments\":\"hell no\"}', 'http://127.0.0.1:8000/hr/leave-requests/3/reject', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 16:47:22', '2026-01-24 16:47:22'),
+(704, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\LeaveBalance', 1, '{\"pending_days\":\"5.0\"}', '{\"pending_days\":0}', 'http://127.0.0.1:8000/hr/leave-requests/3/reject', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 16:47:22', '2026-01-24 16:47:22');
+INSERT INTO `audits` (`id`, `user_type`, `user_id`, `event`, `auditable_type`, `auditable_id`, `old_values`, `new_values`, `url`, `ip_address`, `user_agent`, `tags`, `created_at`, `updated_at`) VALUES
+(705, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\LeaveRequest', 4, '[]', '{\"staff_id\":1,\"leave_type_id\":1,\"start_date\":\"2026-01-28 00:00:00\",\"end_date\":\"2026-02-04 00:00:00\",\"total_days\":6,\"is_half_day\":false,\"reason\":\"sfkh\",\"handover_notes\":\"dnadna\",\"contact_during_leave\":\"dadjad\",\"relief_staff_id\":\"18\",\"status\":\"pending\",\"request_number\":\"LR2026000004\",\"id\":4}', 'http://127.0.0.1:8000/hr/leave-requests', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 17:08:37', '2026-01-24 17:08:37'),
+(706, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\LeaveBalance', 1, '{\"pending_days\":\"0.0\"}', '{\"pending_days\":6}', 'http://127.0.0.1:8000/hr/leave-requests', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 17:08:37', '2026-01-24 17:08:37'),
+(707, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\LeaveRequest', 4, '{\"status\":\"pending\",\"supervisor_approved_by\":null,\"supervisor_approved_at\":null,\"supervisor_comments\":null}', '{\"status\":\"supervisor_approved\",\"supervisor_approved_by\":1,\"supervisor_approved_at\":\"2026-01-24 18:08:38\",\"supervisor_comments\":\"Auto-approved (created by HR)\"}', 'http://127.0.0.1:8000/hr/leave-requests', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 17:08:38', '2026-01-24 17:08:38'),
+(708, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\HrAttachment', 4, '[]', '{\"attachable_type\":\"App\\\\Models\\\\HR\\\\LeaveRequest\",\"attachable_id\":4,\"filename\":\"345d7bc5-3655-4a69-bbe1-d8028e71b510.png\",\"original_filename\":\"Screenshot (12).png\",\"file_path\":\"hr\\/leave-requests\\/345d7bc5-3655-4a69-bbe1-d8028e71b510.png\",\"mime_type\":\"image\\/png\",\"file_size\":166493,\"document_type\":\"leave_supporting_document\",\"description\":null,\"uploaded_by\":1,\"id\":4}', 'http://127.0.0.1:8000/hr/leave-requests', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 17:08:41', '2026-01-24 17:08:41'),
+(709, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\LeaveRequest', 4, '{\"status\":\"supervisor_approved\",\"hr_approved_by\":null,\"hr_approved_at\":null,\"hr_comments\":null,\"reviewed_by\":null,\"reviewed_at\":null,\"review_comments\":null}', '{\"status\":\"approved\",\"hr_approved_by\":1,\"hr_approved_at\":\"2026-01-24 18:09:11\",\"hr_comments\":\"approved\",\"reviewed_by\":1,\"reviewed_at\":\"2026-01-24 18:09:11\",\"review_comments\":\"approved\"}', 'http://127.0.0.1:8000/hr/leave-requests/4/hr-approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 17:09:11', '2026-01-24 17:09:11'),
+(710, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\LeaveBalance', 1, '{\"pending_days\":\"6.0\"}', '{\"pending_days\":0}', 'http://127.0.0.1:8000/hr/leave-requests/4/hr-approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 17:09:11', '2026-01-24 17:09:11'),
+(711, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\LeaveBalance', 1, '{\"used_days\":\"0.0\"}', '{\"used_days\":6}', 'http://127.0.0.1:8000/hr/leave-requests/4/hr-approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-24 17:09:11', '2026-01-24 17:09:11'),
+(712, NULL, NULL, 'created', 'App\\Models\\ProductOrServiceRequest', 131, '[]', '{\"user_id\":69,\"staff_user_id\":1,\"service_id\":3,\"qty\":1,\"payable_amount\":\"5000.00\",\"claims_amount\":\"0.00\",\"coverage_mode\":\"primary\",\"validation_status\":\"pending\",\"id\":131}', 'http://127.0.0.1:8000/chat/check-unread', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 07:17:01', '2026-01-25 07:17:01'),
+(713, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayHead', 1, '[]', '{\"name\":\"Housing allowance\",\"code\":\"HALL\",\"description\":\"Housing allowance for all staff\",\"type\":\"addition\",\"calculation_type\":\"fixed\",\"calculation_base\":null,\"default_value\":0,\"is_taxable\":true,\"is_mandatory\":false,\"is_active\":true,\"sort_order\":0,\"id\":1}', 'http://127.0.0.1:8000/hr/pay-heads', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 08:26:18', '2026-01-25 08:26:18'),
+(714, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayHead', 1, '{\"code\":\"HALL\"}', '{\"code\":\"HAL\"}', 'http://127.0.0.1:8000/hr/pay-heads/1', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 08:31:45', '2026-01-25 08:31:45'),
+(715, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayHead', 2, '[]', '{\"name\":\"PAYE\",\"code\":\"PAYE\",\"description\":\"PAY as you earn\",\"type\":\"deduction\",\"calculation_type\":\"percentage\",\"is_taxable\":false,\"is_active\":true,\"sort_order\":1,\"id\":2}', 'http://127.0.0.1:8000/hr/pay-heads', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 08:35:11', '2026-01-25 08:35:11'),
+(716, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\StaffSalaryProfile', 1, '[]', '{\"staff_id\":\"1\",\"basic_salary\":\"100000\",\"pay_frequency\":\"monthly\",\"effective_from\":\"2026-01-25 00:00:00\",\"is_active\":true,\"created_by\":1,\"id\":1}', 'http://127.0.0.1:8000/hr/salary-profiles', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 08:56:29', '2026-01-25 08:56:29'),
+(717, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\StaffSalaryProfileItem', 1, '[]', '{\"salary_profile_id\":1,\"pay_head_id\":\"1\",\"calculation_type\":\"fixed\",\"calculation_base\":\"basic_salary\",\"value\":\"4000\",\"id\":1}', 'http://127.0.0.1:8000/hr/salary-profiles', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 08:56:29', '2026-01-25 08:56:29'),
+(718, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\StaffSalaryProfileItem', 2, '[]', '{\"salary_profile_id\":1,\"pay_head_id\":\"2\",\"calculation_type\":\"percentage\",\"calculation_base\":\"basic_salary\",\"value\":\"3\",\"id\":2}', 'http://127.0.0.1:8000/hr/salary-profiles', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 08:56:29', '2026-01-25 08:56:29'),
+(719, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\StaffSalaryProfile', 1, '{\"gross_salary\":null,\"total_deductions\":null,\"net_salary\":null}', '{\"gross_salary\":104000,\"total_deductions\":3000,\"net_salary\":101000}', 'http://127.0.0.1:8000/hr/salary-profiles', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 08:56:29', '2026-01-25 08:56:29'),
+(722, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\StaffSalaryProfile', 2, '[]', '{\"staff_id\":\"2\",\"basic_salary\":\"60000\",\"pay_frequency\":\"monthly\",\"effective_from\":\"2026-01-25 00:00:00\",\"is_active\":true,\"created_by\":1,\"id\":2}', 'http://127.0.0.1:8000/hr/salary-profiles', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:03:01', '2026-01-25 09:03:01'),
+(723, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\StaffSalaryProfileItem', 6, '[]', '{\"salary_profile_id\":2,\"pay_head_id\":\"1\",\"calculation_type\":\"fixed\",\"calculation_base\":\"basic_salary\",\"value\":\"70000\",\"id\":6}', 'http://127.0.0.1:8000/hr/salary-profiles', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:03:01', '2026-01-25 09:03:01'),
+(724, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\StaffSalaryProfileItem', 7, '[]', '{\"salary_profile_id\":2,\"pay_head_id\":\"2\",\"calculation_type\":\"percentage\",\"calculation_base\":\"basic_salary\",\"value\":\"8\",\"id\":7}', 'http://127.0.0.1:8000/hr/salary-profiles', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:03:01', '2026-01-25 09:03:01'),
+(725, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\StaffSalaryProfile', 2, '{\"gross_salary\":null,\"total_deductions\":null,\"net_salary\":null}', '{\"gross_salary\":130000,\"total_deductions\":4800,\"net_salary\":125200}', 'http://127.0.0.1:8000/hr/salary-profiles', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:03:01', '2026-01-25 09:03:01'),
+(726, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollBatch', 1, '[]', '{\"name\":\"jan 2206 pay batch\",\"pay_period_start\":\"2026-01-01 00:00:00\",\"pay_period_end\":\"2026-01-31 23:59:59\",\"payment_date\":\"2026-01-31 23:59:59\",\"status\":\"draft\",\"created_by\":1,\"total_staff\":0,\"total_gross\":0,\"total_additions\":0,\"total_deductions\":0,\"total_net\":0,\"batch_number\":\"PAY2026010001\",\"id\":1}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:25:05', '2026-01-25 09:25:05'),
+(727, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItem', 1, '[]', '{\"payroll_batch_id\":1,\"staff_id\":1,\"salary_profile_id\":1,\"basic_salary\":\"100000.00\",\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0,\"bank_name\":\"zenith bank\",\"bank_account_number\":\"220445688\",\"bank_account_name\":\"App Tech\",\"id\":1}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:25:05', '2026-01-25 09:25:05'),
+(728, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 1, '[]', '{\"payroll_item_id\":1,\"pay_head_id\":1,\"type\":\"addition\",\"pay_head_name\":\"Housing allowance\",\"amount\":4000,\"id\":1}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:25:05', '2026-01-25 09:25:05'),
+(729, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 2, '[]', '{\"payroll_item_id\":1,\"pay_head_id\":2,\"type\":\"deduction\",\"pay_head_name\":\"PAYE\",\"amount\":3000,\"id\":2}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:25:05', '2026-01-25 09:25:05'),
+(730, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollItem', 1, '{\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0}', '{\"gross_salary\":104000,\"total_additions\":4000,\"total_deductions\":3000,\"net_salary\":101000}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:25:05', '2026-01-25 09:25:05'),
+(731, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItem', 2, '[]', '{\"payroll_batch_id\":1,\"staff_id\":2,\"salary_profile_id\":2,\"basic_salary\":\"60000.00\",\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0,\"bank_name\":null,\"bank_account_number\":null,\"bank_account_name\":null,\"id\":2}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:25:05', '2026-01-25 09:25:05'),
+(732, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 3, '[]', '{\"payroll_item_id\":2,\"pay_head_id\":1,\"type\":\"addition\",\"pay_head_name\":\"Housing allowance\",\"amount\":70000,\"id\":3}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:25:05', '2026-01-25 09:25:05'),
+(733, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 4, '[]', '{\"payroll_item_id\":2,\"pay_head_id\":2,\"type\":\"deduction\",\"pay_head_name\":\"PAYE\",\"amount\":4800,\"id\":4}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:25:05', '2026-01-25 09:25:05'),
+(734, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollItem', 2, '{\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0}', '{\"gross_salary\":130000,\"total_additions\":70000,\"total_deductions\":4800,\"net_salary\":125200}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:25:05', '2026-01-25 09:25:05'),
+(735, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollBatch', 1, '{\"total_staff\":0,\"total_gross\":0,\"total_additions\":0,\"total_deductions\":0,\"total_net\":0}', '{\"total_staff\":2,\"total_gross\":\"234000.00\",\"total_additions\":\"74000.00\",\"total_deductions\":\"7800.00\",\"total_net\":\"226200.00\"}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:25:05', '2026-01-25 09:25:05'),
+(736, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItem', 3, '[]', '{\"payroll_batch_id\":1,\"staff_id\":1,\"salary_profile_id\":1,\"basic_salary\":\"100000.00\",\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0,\"bank_name\":\"zenith bank\",\"bank_account_number\":\"220445688\",\"bank_account_name\":\"App Tech\",\"id\":3}', 'http://127.0.0.1:8000/hr/payroll/1/generate', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:45:16', '2026-01-25 09:45:16'),
+(737, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 5, '[]', '{\"payroll_item_id\":3,\"pay_head_id\":1,\"type\":\"addition\",\"pay_head_name\":\"Housing allowance\",\"amount\":4000,\"id\":5}', 'http://127.0.0.1:8000/hr/payroll/1/generate', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:45:16', '2026-01-25 09:45:16'),
+(738, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 6, '[]', '{\"payroll_item_id\":3,\"pay_head_id\":2,\"type\":\"deduction\",\"pay_head_name\":\"PAYE\",\"amount\":3000,\"id\":6}', 'http://127.0.0.1:8000/hr/payroll/1/generate', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:45:16', '2026-01-25 09:45:16'),
+(739, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollItem', 3, '{\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0}', '{\"gross_salary\":104000,\"total_additions\":4000,\"total_deductions\":3000,\"net_salary\":101000}', 'http://127.0.0.1:8000/hr/payroll/1/generate', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:45:16', '2026-01-25 09:45:16'),
+(740, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItem', 4, '[]', '{\"payroll_batch_id\":1,\"staff_id\":2,\"salary_profile_id\":2,\"basic_salary\":\"60000.00\",\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0,\"bank_name\":null,\"bank_account_number\":null,\"bank_account_name\":null,\"id\":4}', 'http://127.0.0.1:8000/hr/payroll/1/generate', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:45:16', '2026-01-25 09:45:16'),
+(741, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 7, '[]', '{\"payroll_item_id\":4,\"pay_head_id\":1,\"type\":\"addition\",\"pay_head_name\":\"Housing allowance\",\"amount\":70000,\"id\":7}', 'http://127.0.0.1:8000/hr/payroll/1/generate', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:45:16', '2026-01-25 09:45:16'),
+(742, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 8, '[]', '{\"payroll_item_id\":4,\"pay_head_id\":2,\"type\":\"deduction\",\"pay_head_name\":\"PAYE\",\"amount\":4800,\"id\":8}', 'http://127.0.0.1:8000/hr/payroll/1/generate', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:45:16', '2026-01-25 09:45:16'),
+(743, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollItem', 4, '{\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0}', '{\"gross_salary\":130000,\"total_additions\":70000,\"total_deductions\":4800,\"net_salary\":125200}', 'http://127.0.0.1:8000/hr/payroll/1/generate', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:45:16', '2026-01-25 09:45:16'),
+(744, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollBatch', 2, '[]', '{\"name\":\"Payroll - February 2026\",\"pay_period_start\":\"2026-02-01 00:00:00\",\"pay_period_end\":\"2026-02-28 23:59:59\",\"payment_date\":\"2026-02-28 23:59:59\",\"status\":\"draft\",\"created_by\":1,\"total_staff\":0,\"total_gross\":0,\"total_additions\":0,\"total_deductions\":0,\"total_net\":0,\"batch_number\":\"PAY2026010002\",\"id\":2}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:45:45', '2026-01-25 09:45:45'),
+(745, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItem', 5, '[]', '{\"payroll_batch_id\":2,\"staff_id\":2,\"salary_profile_id\":2,\"basic_salary\":\"60000.00\",\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0,\"bank_name\":null,\"bank_account_number\":null,\"bank_account_name\":null,\"id\":5}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:45:45', '2026-01-25 09:45:45'),
+(746, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 9, '[]', '{\"payroll_item_id\":5,\"pay_head_id\":1,\"type\":\"addition\",\"pay_head_name\":\"Housing allowance\",\"amount\":70000,\"id\":9}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:45:45', '2026-01-25 09:45:45'),
+(747, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 10, '[]', '{\"payroll_item_id\":5,\"pay_head_id\":2,\"type\":\"deduction\",\"pay_head_name\":\"PAYE\",\"amount\":4800,\"id\":10}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:45:45', '2026-01-25 09:45:45'),
+(748, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollItem', 5, '{\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0}', '{\"gross_salary\":130000,\"total_additions\":70000,\"total_deductions\":4800,\"net_salary\":125200}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:45:45', '2026-01-25 09:45:45'),
+(749, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollBatch', 2, '{\"total_staff\":0,\"total_gross\":0,\"total_additions\":0,\"total_deductions\":0,\"total_net\":0}', '{\"total_staff\":1,\"total_gross\":\"130000.00\",\"total_additions\":\"70000.00\",\"total_deductions\":\"4800.00\",\"total_net\":\"125200.00\"}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:45:45', '2026-01-25 09:45:45'),
+(750, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollBatch', 1, '{\"status\":\"draft\",\"submitted_by\":null,\"submitted_at\":null}', '{\"status\":\"submitted\",\"submitted_by\":1,\"submitted_at\":\"2026-01-25 10:53:25\"}', 'http://127.0.0.1:8000/hr/payroll/1/submit', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:53:25', '2026-01-25 09:53:25'),
+(751, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollBatch', 1, '{\"status\":\"submitted\",\"rejected_by\":null,\"rejected_at\":null,\"rejection_reason\":null}', '{\"status\":\"rejected\",\"rejected_by\":1,\"rejected_at\":\"2026-01-25 10:54:04\",\"rejection_reason\":\"test reject\"}', 'http://127.0.0.1:8000/hr/payroll/1/reject', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:54:04', '2026-01-25 09:54:04'),
+(752, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollBatch', 1, '{\"status\":\"rejected\",\"submitted_by\":1,\"submitted_at\":\"2026-01-25 10:53:25\",\"rejected_by\":1,\"rejected_at\":\"2026-01-25 10:54:04\",\"rejection_reason\":\"test reject\"}', '{\"status\":\"draft\",\"submitted_by\":null,\"submitted_at\":null,\"rejected_by\":null,\"rejected_at\":null,\"rejection_reason\":null}', 'http://127.0.0.1:8000/hr/payroll/1/revert-draft', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:54:12', '2026-01-25 09:54:12'),
+(753, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollBatch', 1, '{\"status\":\"draft\",\"submitted_by\":null,\"submitted_at\":null}', '{\"status\":\"submitted\",\"submitted_by\":1,\"submitted_at\":\"2026-01-25 10:54:24\"}', 'http://127.0.0.1:8000/hr/payroll/1/submit', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:54:24', '2026-01-25 09:54:24'),
+(754, 'App\\Models\\User', 1, 'created', 'App\\Models\\Expense', 5, '[]', '{\"title\":\"Payroll - jan 2206 pay batch\",\"description\":\"Payroll batch PAY2026010001 for period Jan 01 - Jan 31, 2026. Total staff: 2.\",\"amount\":\"226200.00\",\"category\":\"salaries\",\"expense_date\":\"2026-01-31 00:00:00\",\"payment_method\":\"bank_transfer\",\"status\":\"approved\",\"approved_by\":1,\"approved_at\":\"2026-01-25 10:54:36\",\"reference_type\":\"payroll_batch\",\"reference_id\":1,\"expense_number\":\"EXP2026010005\",\"recorded_by\":1,\"id\":5}', 'http://127.0.0.1:8000/hr/payroll/1/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:54:36', '2026-01-25 09:54:36'),
+(755, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollBatch', 1, '{\"status\":\"submitted\",\"approved_by\":null,\"approved_at\":null,\"approval_comments\":null,\"expense_id\":null}', '{\"status\":\"approved\",\"approved_by\":1,\"approved_at\":\"2026-01-25 10:54:36\",\"approval_comments\":\"hjjgjgjghj\",\"expense_id\":5}', 'http://127.0.0.1:8000/hr/payroll/1/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 09:54:36', '2026-01-25 09:54:36'),
+(756, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollBatch', 3, '[]', '{\"name\":\"test prorata\",\"pay_period_start\":\"2026-03-01 00:00:00\",\"pay_period_end\":\"2026-03-31 23:59:59\",\"work_period_start\":\"2026-03-01 00:00:00\",\"work_period_end\":\"2026-03-31 00:00:00\",\"days_in_month\":31,\"days_worked\":31,\"payment_date\":\"2026-03-31 23:59:59\",\"status\":\"draft\",\"created_by\":1,\"total_staff\":0,\"total_gross\":0,\"total_additions\":0,\"total_deductions\":0,\"total_net\":0,\"batch_number\":\"PAY2026010003\",\"id\":3}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 15:10:19', '2026-01-25 15:10:19'),
+(757, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItem', 6, '[]', '{\"payroll_batch_id\":3,\"staff_id\":1,\"salary_profile_id\":1,\"days_in_month\":31,\"days_worked\":31,\"basic_salary\":\"100000.00\",\"full_gross_salary\":0,\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0,\"full_net_salary\":0,\"bank_name\":\"zenith bank\",\"bank_account_number\":\"220445688\",\"bank_account_name\":\"App Tech\",\"id\":6}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 15:10:19', '2026-01-25 15:10:19'),
+(758, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 11, '[]', '{\"payroll_item_id\":6,\"pay_head_id\":1,\"type\":\"addition\",\"pay_head_name\":\"Housing allowance\",\"amount\":4000,\"id\":11}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 15:10:19', '2026-01-25 15:10:19'),
+(759, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 12, '[]', '{\"payroll_item_id\":6,\"pay_head_id\":2,\"type\":\"deduction\",\"pay_head_name\":\"PAYE\",\"amount\":3000,\"id\":12}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 15:10:19', '2026-01-25 15:10:19'),
+(760, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollItem', 6, '{\"full_gross_salary\":0,\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0,\"full_net_salary\":0}', '{\"full_gross_salary\":104000,\"gross_salary\":104000,\"total_additions\":4000,\"total_deductions\":3000,\"net_salary\":101000,\"full_net_salary\":101000}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 15:10:19', '2026-01-25 15:10:19'),
+(761, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItem', 7, '[]', '{\"payroll_batch_id\":3,\"staff_id\":2,\"salary_profile_id\":2,\"days_in_month\":31,\"days_worked\":31,\"basic_salary\":\"60000.00\",\"full_gross_salary\":0,\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0,\"full_net_salary\":0,\"bank_name\":null,\"bank_account_number\":null,\"bank_account_name\":null,\"id\":7}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 15:10:19', '2026-01-25 15:10:19'),
+(762, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 13, '[]', '{\"payroll_item_id\":7,\"pay_head_id\":1,\"type\":\"addition\",\"pay_head_name\":\"Housing allowance\",\"amount\":70000,\"id\":13}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 15:10:19', '2026-01-25 15:10:19'),
+(763, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 14, '[]', '{\"payroll_item_id\":7,\"pay_head_id\":2,\"type\":\"deduction\",\"pay_head_name\":\"PAYE\",\"amount\":4800,\"id\":14}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 15:10:19', '2026-01-25 15:10:19'),
+(764, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollItem', 7, '{\"full_gross_salary\":0,\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0,\"full_net_salary\":0}', '{\"full_gross_salary\":130000,\"gross_salary\":130000,\"total_additions\":70000,\"total_deductions\":4800,\"net_salary\":125200,\"full_net_salary\":125200}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 15:10:19', '2026-01-25 15:10:19'),
+(765, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollBatch', 3, '{\"total_staff\":0,\"total_gross\":0,\"total_additions\":0,\"total_deductions\":0,\"total_net\":0}', '{\"total_staff\":2,\"total_gross\":\"234000.00\",\"total_additions\":\"74000.00\",\"total_deductions\":\"7800.00\",\"total_net\":\"226200.00\"}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 15:10:19', '2026-01-25 15:10:19'),
+(766, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollBatch', 3, '{\"status\":\"draft\",\"submitted_by\":null,\"submitted_at\":null}', '{\"status\":\"submitted\",\"submitted_by\":1,\"submitted_at\":\"2026-01-25 16:10:46\"}', 'http://127.0.0.1:8000/hr/payroll/3/submit', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 15:10:46', '2026-01-25 15:10:46'),
+(767, 'App\\Models\\User', 1, 'created', 'App\\Models\\Expense', 6, '[]', '{\"title\":\"Payroll - test prorata\",\"description\":\"Payroll batch PAY2026010003 for period Mar 01 - Mar 31, 2026. Total staff: 2.\",\"amount\":\"226200.00\",\"category\":\"salaries\",\"expense_date\":\"2026-03-31 00:00:00\",\"payment_method\":\"bank_transfer\",\"status\":\"approved\",\"approved_by\":1,\"approved_at\":\"2026-01-25 16:11:08\",\"reference_type\":\"payroll_batch\",\"reference_id\":3,\"expense_number\":\"EXP2026010006\",\"recorded_by\":1,\"id\":6}', 'http://127.0.0.1:8000/hr/payroll/3/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 15:11:08', '2026-01-25 15:11:08'),
+(768, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollBatch', 3, '{\"status\":\"submitted\",\"approved_by\":null,\"approved_at\":null,\"approval_comments\":null,\"expense_id\":null}', '{\"status\":\"approved\",\"approved_by\":1,\"approved_at\":\"2026-01-25 16:11:08\",\"approval_comments\":\"approve prorata\",\"expense_id\":6}', 'http://127.0.0.1:8000/hr/payroll/3/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 15:11:08', '2026-01-25 15:11:08'),
+(771, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollBatch', 3, '{\"status\":\"approved\",\"paid_by\":null,\"paid_at\":null,\"payment_comments\":null}', '{\"status\":\"paid\",\"paid_by\":1,\"paid_at\":\"2026-01-25 17:09:24\",\"payment_comments\":\"test approval of payslip\"}', 'http://127.0.0.1:8000/hr/payroll/3/mark-paid', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 16:09:24', '2026-01-25 16:09:24'),
+(772, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Expense', 6, '{\"status\":\"approved\"}', '{\"status\":\"pending\"}', 'http://127.0.0.1:8000/hr/payroll/3/mark-paid', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 16:09:24', '2026-01-25 16:09:24'),
+(773, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItem', 8, '[]', '{\"payroll_batch_id\":2,\"staff_id\":1,\"salary_profile_id\":1,\"days_in_month\":null,\"days_worked\":null,\"basic_salary\":\"100000.00\",\"full_gross_salary\":0,\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0,\"full_net_salary\":0,\"bank_name\":\"zenith bank\",\"bank_account_number\":\"220445688\",\"bank_account_name\":\"App Tech\",\"id\":8}', 'http://127.0.0.1:8000/hr/payroll/2/generate', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 16:17:05', '2026-01-25 16:17:05'),
+(774, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 15, '[]', '{\"payroll_item_id\":8,\"pay_head_id\":1,\"type\":\"addition\",\"pay_head_name\":\"Housing allowance\",\"amount\":4000,\"id\":15}', 'http://127.0.0.1:8000/hr/payroll/2/generate', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 16:17:05', '2026-01-25 16:17:05'),
+(775, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 16, '[]', '{\"payroll_item_id\":8,\"pay_head_id\":2,\"type\":\"deduction\",\"pay_head_name\":\"PAYE\",\"amount\":3000,\"id\":16}', 'http://127.0.0.1:8000/hr/payroll/2/generate', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 16:17:05', '2026-01-25 16:17:05'),
+(776, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollItem', 8, '{\"full_gross_salary\":0,\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0,\"full_net_salary\":0}', '{\"full_gross_salary\":104000,\"gross_salary\":104000,\"total_additions\":4000,\"total_deductions\":3000,\"net_salary\":101000,\"full_net_salary\":101000}', 'http://127.0.0.1:8000/hr/payroll/2/generate', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 16:17:05', '2026-01-25 16:17:05'),
+(777, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItem', 9, '[]', '{\"payroll_batch_id\":2,\"staff_id\":2,\"salary_profile_id\":2,\"days_in_month\":null,\"days_worked\":null,\"basic_salary\":\"60000.00\",\"full_gross_salary\":0,\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0,\"full_net_salary\":0,\"bank_name\":null,\"bank_account_number\":null,\"bank_account_name\":null,\"id\":9}', 'http://127.0.0.1:8000/hr/payroll/2/generate', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 16:17:05', '2026-01-25 16:17:05'),
+(778, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 17, '[]', '{\"payroll_item_id\":9,\"pay_head_id\":1,\"type\":\"addition\",\"pay_head_name\":\"Housing allowance\",\"amount\":70000,\"id\":17}', 'http://127.0.0.1:8000/hr/payroll/2/generate', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 16:17:05', '2026-01-25 16:17:05'),
+(779, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 18, '[]', '{\"payroll_item_id\":9,\"pay_head_id\":2,\"type\":\"deduction\",\"pay_head_name\":\"PAYE\",\"amount\":4800,\"id\":18}', 'http://127.0.0.1:8000/hr/payroll/2/generate', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 16:17:05', '2026-01-25 16:17:05'),
+(780, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollItem', 9, '{\"full_gross_salary\":0,\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0,\"full_net_salary\":0}', '{\"full_gross_salary\":130000,\"gross_salary\":130000,\"total_additions\":70000,\"total_deductions\":4800,\"net_salary\":125200,\"full_net_salary\":125200}', 'http://127.0.0.1:8000/hr/payroll/2/generate', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 16:17:05', '2026-01-25 16:17:05'),
+(781, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollBatch', 2, '{\"total_staff\":1,\"total_gross\":\"130000.00\",\"total_additions\":\"70000.00\",\"total_deductions\":\"4800.00\",\"total_net\":\"125200.00\"}', '{\"total_staff\":2,\"total_gross\":\"234000.00\",\"total_additions\":\"74000.00\",\"total_deductions\":\"7800.00\",\"total_net\":\"226200.00\"}', 'http://127.0.0.1:8000/hr/payroll/2/generate', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 16:17:05', '2026-01-25 16:17:05'),
+(782, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollBatch', 4, '[]', '{\"name\":\"Payroll - May 2026\",\"pay_period_start\":\"2026-05-01 00:00:00\",\"pay_period_end\":\"2026-05-31 23:59:59\",\"work_period_start\":\"2026-05-01 00:00:00\",\"work_period_end\":\"2026-05-12 00:00:00\",\"days_in_month\":31,\"days_worked\":12,\"payment_date\":\"2026-05-31 23:59:59\",\"status\":\"draft\",\"created_by\":1,\"total_staff\":0,\"total_gross\":0,\"total_additions\":0,\"total_deductions\":0,\"total_net\":0,\"batch_number\":\"PAY2026010004\",\"id\":4}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 16:50:14', '2026-01-25 16:50:14'),
+(783, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItem', 10, '[]', '{\"payroll_batch_id\":4,\"staff_id\":1,\"salary_profile_id\":1,\"days_in_month\":31,\"days_worked\":12,\"basic_salary\":\"100000.00\",\"full_gross_salary\":0,\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0,\"full_net_salary\":0,\"bank_name\":\"zenith bank\",\"bank_account_number\":\"220445688\",\"bank_account_name\":\"App Tech\",\"id\":10}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 16:50:14', '2026-01-25 16:50:14'),
+(784, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 19, '[]', '{\"payroll_item_id\":10,\"pay_head_id\":1,\"type\":\"addition\",\"pay_head_name\":\"Housing allowance\",\"amount\":4000,\"id\":19}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 16:50:14', '2026-01-25 16:50:14'),
+(785, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 20, '[]', '{\"payroll_item_id\":10,\"pay_head_id\":2,\"type\":\"deduction\",\"pay_head_name\":\"PAYE\",\"amount\":3000,\"id\":20}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 16:50:14', '2026-01-25 16:50:14'),
+(786, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollItem', 10, '{\"full_gross_salary\":0,\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0,\"full_net_salary\":0}', '{\"full_gross_salary\":104000,\"gross_salary\":40258.06,\"total_additions\":4000,\"total_deductions\":1161.29,\"net_salary\":39096.77,\"full_net_salary\":101000}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 16:50:14', '2026-01-25 16:50:14'),
+(787, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItem', 11, '[]', '{\"payroll_batch_id\":4,\"staff_id\":2,\"salary_profile_id\":2,\"days_in_month\":31,\"days_worked\":12,\"basic_salary\":\"60000.00\",\"full_gross_salary\":0,\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0,\"full_net_salary\":0,\"bank_name\":null,\"bank_account_number\":null,\"bank_account_name\":null,\"id\":11}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 16:50:14', '2026-01-25 16:50:14'),
+(788, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 21, '[]', '{\"payroll_item_id\":11,\"pay_head_id\":1,\"type\":\"addition\",\"pay_head_name\":\"Housing allowance\",\"amount\":70000,\"id\":21}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 16:50:14', '2026-01-25 16:50:14'),
+(789, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 22, '[]', '{\"payroll_item_id\":11,\"pay_head_id\":2,\"type\":\"deduction\",\"pay_head_name\":\"PAYE\",\"amount\":4800,\"id\":22}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 16:50:14', '2026-01-25 16:50:14'),
+(790, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollItem', 11, '{\"full_gross_salary\":0,\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0,\"full_net_salary\":0}', '{\"full_gross_salary\":130000,\"gross_salary\":50322.58,\"total_additions\":70000,\"total_deductions\":1858.06,\"net_salary\":48464.52,\"full_net_salary\":125200}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 16:50:14', '2026-01-25 16:50:14'),
+(791, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollBatch', 4, '{\"total_staff\":0,\"total_gross\":0,\"total_additions\":0,\"total_deductions\":0,\"total_net\":0}', '{\"total_staff\":2,\"total_gross\":\"90580.64\",\"total_additions\":\"74000.00\",\"total_deductions\":\"3019.35\",\"total_net\":\"87561.29\"}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 16:50:14', '2026-01-25 16:50:14'),
+(792, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollBatch', 4, '{\"status\":\"draft\",\"submitted_by\":null,\"submitted_at\":null}', '{\"status\":\"submitted\",\"submitted_by\":1,\"submitted_at\":\"2026-01-25 17:50:31\"}', 'http://127.0.0.1:8000/hr/payroll/4/submit', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 16:50:31', '2026-01-25 16:50:31'),
+(793, 'App\\Models\\User', 1, 'created', 'App\\Models\\Expense', 7, '[]', '{\"title\":\"Payroll - Payroll - May 2026\",\"description\":\"Payroll batch PAY2026010004 for period May 01 - May 31, 2026. Total staff: 2.\",\"amount\":\"87561.29\",\"category\":\"salaries\",\"expense_date\":\"2026-05-31 00:00:00\",\"payment_method\":\"bank_transfer\",\"status\":\"approved\",\"approved_by\":1,\"approved_at\":\"2026-01-25 17:50:49\",\"reference_type\":\"payroll_batch\",\"reference_id\":4,\"expense_number\":\"EXP2026010007\",\"recorded_by\":1,\"id\":7}', 'http://127.0.0.1:8000/hr/payroll/4/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 16:50:49', '2026-01-25 16:50:49'),
+(794, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollBatch', 4, '{\"status\":\"submitted\",\"approved_by\":null,\"approved_at\":null,\"approval_comments\":null,\"expense_id\":null}', '{\"status\":\"approved\",\"approved_by\":1,\"approved_at\":\"2026-01-25 17:50:49\",\"approval_comments\":\"dakhdkahkjd\",\"expense_id\":7}', 'http://127.0.0.1:8000/hr/payroll/4/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 16:50:49', '2026-01-25 16:50:49'),
+(795, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollBatch', 5, '[]', '{\"name\":\"June\",\"pay_period_start\":\"2026-06-01 00:00:00\",\"pay_period_end\":\"2026-06-30 23:59:59\",\"work_period_start\":\"2026-06-01 00:00:00\",\"work_period_end\":\"2026-06-17 00:00:00\",\"days_in_month\":30,\"days_worked\":17,\"payment_date\":\"2026-06-30 23:59:59\",\"status\":\"draft\",\"created_by\":1,\"total_staff\":0,\"total_gross\":0,\"total_additions\":0,\"total_deductions\":0,\"total_net\":0,\"batch_number\":\"PAY2026010005\",\"id\":5}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:07:46', '2026-01-25 17:07:46'),
+(796, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItem', 12, '[]', '{\"payroll_batch_id\":5,\"staff_id\":1,\"salary_profile_id\":1,\"days_in_month\":30,\"days_worked\":17,\"basic_salary\":\"100000.00\",\"full_gross_salary\":0,\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0,\"full_net_salary\":0,\"bank_name\":\"zenith bank\",\"bank_account_number\":\"220445688\",\"bank_account_name\":\"App Tech\",\"id\":12}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:07:46', '2026-01-25 17:07:46'),
+(797, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 23, '[]', '{\"payroll_item_id\":12,\"pay_head_id\":1,\"type\":\"addition\",\"pay_head_name\":\"Housing allowance\",\"amount\":4000,\"id\":23}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:07:46', '2026-01-25 17:07:46'),
+(798, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 24, '[]', '{\"payroll_item_id\":12,\"pay_head_id\":2,\"type\":\"deduction\",\"pay_head_name\":\"PAYE\",\"amount\":3000,\"id\":24}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:07:46', '2026-01-25 17:07:46'),
+(799, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollItem', 12, '{\"full_gross_salary\":0,\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0,\"full_net_salary\":0}', '{\"full_gross_salary\":104000,\"gross_salary\":58933.33,\"total_additions\":4000,\"total_deductions\":1700,\"net_salary\":57233.33,\"full_net_salary\":101000}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:07:46', '2026-01-25 17:07:46'),
+(800, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItem', 13, '[]', '{\"payroll_batch_id\":5,\"staff_id\":2,\"salary_profile_id\":2,\"days_in_month\":30,\"days_worked\":17,\"basic_salary\":\"60000.00\",\"full_gross_salary\":0,\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0,\"full_net_salary\":0,\"bank_name\":null,\"bank_account_number\":null,\"bank_account_name\":null,\"id\":13}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:07:46', '2026-01-25 17:07:46'),
+(801, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 25, '[]', '{\"payroll_item_id\":13,\"pay_head_id\":1,\"type\":\"addition\",\"pay_head_name\":\"Housing allowance\",\"amount\":70000,\"id\":25}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:07:46', '2026-01-25 17:07:46'),
+(802, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 26, '[]', '{\"payroll_item_id\":13,\"pay_head_id\":2,\"type\":\"deduction\",\"pay_head_name\":\"PAYE\",\"amount\":4800,\"id\":26}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:07:46', '2026-01-25 17:07:46');
+INSERT INTO `audits` (`id`, `user_type`, `user_id`, `event`, `auditable_type`, `auditable_id`, `old_values`, `new_values`, `url`, `ip_address`, `user_agent`, `tags`, `created_at`, `updated_at`) VALUES
+(803, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollItem', 13, '{\"full_gross_salary\":0,\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0,\"full_net_salary\":0}', '{\"full_gross_salary\":130000,\"gross_salary\":73666.67,\"total_additions\":70000,\"total_deductions\":2720,\"net_salary\":70946.67,\"full_net_salary\":125200}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:07:46', '2026-01-25 17:07:46'),
+(804, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollBatch', 5, '{\"total_staff\":0,\"total_gross\":0,\"total_additions\":0,\"total_deductions\":0,\"total_net\":0}', '{\"total_staff\":2,\"total_gross\":\"132600.00\",\"total_additions\":\"74000.00\",\"total_deductions\":\"4420.00\",\"total_net\":\"128180.00\"}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:07:46', '2026-01-25 17:07:46'),
+(805, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollBatch', 6, '[]', '{\"name\":\"June again\",\"pay_period_start\":\"2026-06-01 00:00:00\",\"pay_period_end\":\"2026-06-30 23:59:59\",\"work_period_start\":\"2026-06-01 00:00:00\",\"work_period_end\":\"2026-06-26 00:00:00\",\"days_in_month\":30,\"days_worked\":26,\"payment_date\":\"2026-06-30 23:59:59\",\"status\":\"draft\",\"created_by\":1,\"total_staff\":0,\"total_gross\":0,\"total_additions\":0,\"total_deductions\":0,\"total_net\":0,\"batch_number\":\"PAY2026010006\",\"id\":6}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:08:14', '2026-01-25 17:08:14'),
+(806, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollBatch', 7, '[]', '{\"name\":\"June again\",\"pay_period_start\":\"2026-06-01 00:00:00\",\"pay_period_end\":\"2026-06-30 23:59:59\",\"work_period_start\":\"2026-06-01 00:00:00\",\"work_period_end\":\"2026-06-26 00:00:00\",\"days_in_month\":30,\"days_worked\":26,\"payment_date\":\"2026-06-30 23:59:59\",\"status\":\"draft\",\"created_by\":1,\"total_staff\":0,\"total_gross\":0,\"total_additions\":0,\"total_deductions\":0,\"total_net\":0,\"batch_number\":\"PAY2026010007\",\"id\":7}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:12:32', '2026-01-25 17:12:32'),
+(807, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollBatch', 8, '[]', '{\"name\":\"Payroll - June 2026\",\"pay_period_start\":\"2026-06-01 00:00:00\",\"pay_period_end\":\"2026-06-30 23:59:59\",\"work_period_start\":\"2026-06-01 00:00:00\",\"work_period_end\":\"2026-06-21 00:00:00\",\"days_in_month\":30,\"days_worked\":21,\"payment_date\":\"2026-06-30 23:59:59\",\"status\":\"draft\",\"created_by\":1,\"total_staff\":0,\"total_gross\":0,\"total_additions\":0,\"total_deductions\":0,\"total_net\":0,\"batch_number\":\"PAY2026010008\",\"id\":8}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:33:39', '2026-01-25 17:33:39'),
+(808, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollBatch', 9, '[]', '{\"name\":\"Payroll - June 2026\",\"pay_period_start\":\"2026-06-01 00:00:00\",\"pay_period_end\":\"2026-06-30 23:59:59\",\"work_period_start\":\"2026-06-01 00:00:00\",\"work_period_end\":\"2026-06-30 00:00:00\",\"days_in_month\":30,\"days_worked\":30,\"payment_date\":\"2026-06-30 23:59:59\",\"status\":\"draft\",\"created_by\":1,\"total_staff\":0,\"total_gross\":0,\"total_additions\":0,\"total_deductions\":0,\"total_net\":0,\"batch_number\":\"PAY2026010009\",\"id\":9}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:45:03', '2026-01-25 17:45:03'),
+(809, 'App\\Models\\User', 1, 'deleted', 'App\\Models\\HR\\PayrollItem', 12, '{\"id\":12,\"payroll_batch_id\":5,\"staff_id\":1,\"salary_profile_id\":1,\"days_in_month\":30,\"days_worked\":17,\"basic_salary\":\"100000.00\",\"full_gross_salary\":\"104000.00\",\"gross_salary\":\"58933.33\",\"total_additions\":\"4000.00\",\"total_deductions\":\"1700.00\",\"net_salary\":\"57233.33\",\"full_net_salary\":\"101000.00\",\"bank_name\":\"zenith bank\",\"bank_account_number\":\"220445688\",\"bank_account_name\":\"App Tech\"}', '[]', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:45:03', '2026-01-25 17:45:03'),
+(810, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollBatch', 5, '{\"total_staff\":2,\"total_gross\":\"132600.00\",\"total_additions\":\"74000.00\",\"total_deductions\":\"4420.00\",\"total_net\":\"128180.00\"}', '{\"total_staff\":1,\"total_gross\":\"73666.67\",\"total_additions\":\"70000.00\",\"total_deductions\":\"2720.00\",\"total_net\":\"70946.67\"}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:45:03', '2026-01-25 17:45:03'),
+(811, 'App\\Models\\User', 1, 'deleted', 'App\\Models\\HR\\PayrollItem', 13, '{\"id\":13,\"payroll_batch_id\":5,\"staff_id\":2,\"salary_profile_id\":2,\"days_in_month\":30,\"days_worked\":17,\"basic_salary\":\"60000.00\",\"full_gross_salary\":\"130000.00\",\"gross_salary\":\"73666.67\",\"total_additions\":\"70000.00\",\"total_deductions\":\"2720.00\",\"net_salary\":\"70946.67\",\"full_net_salary\":\"125200.00\",\"bank_name\":null,\"bank_account_number\":null,\"bank_account_name\":null}', '[]', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:45:03', '2026-01-25 17:45:03'),
+(812, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollBatch', 5, '{\"total_staff\":1,\"total_gross\":\"73666.67\",\"total_additions\":\"70000.00\",\"total_deductions\":\"2720.00\",\"total_net\":\"70946.67\"}', '{\"total_staff\":0,\"total_gross\":0,\"total_additions\":0,\"total_deductions\":0,\"total_net\":0}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:45:03', '2026-01-25 17:45:03'),
+(813, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItem', 14, '[]', '{\"payroll_batch_id\":9,\"staff_id\":1,\"salary_profile_id\":1,\"days_in_month\":30,\"days_worked\":30,\"basic_salary\":\"100000.00\",\"full_gross_salary\":0,\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0,\"full_net_salary\":0,\"bank_name\":\"zenith bank\",\"bank_account_number\":\"220445688\",\"bank_account_name\":\"App Tech\",\"id\":14}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:45:03', '2026-01-25 17:45:03'),
+(814, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 27, '[]', '{\"payroll_item_id\":14,\"pay_head_id\":1,\"type\":\"addition\",\"pay_head_name\":\"Housing allowance\",\"amount\":4000,\"id\":27}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:45:03', '2026-01-25 17:45:03'),
+(815, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 28, '[]', '{\"payroll_item_id\":14,\"pay_head_id\":2,\"type\":\"deduction\",\"pay_head_name\":\"PAYE\",\"amount\":3000,\"id\":28}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:45:03', '2026-01-25 17:45:03'),
+(816, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollItem', 14, '{\"full_gross_salary\":0,\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0,\"full_net_salary\":0}', '{\"full_gross_salary\":104000,\"gross_salary\":104000,\"total_additions\":4000,\"total_deductions\":3000,\"net_salary\":101000,\"full_net_salary\":101000}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:45:03', '2026-01-25 17:45:03'),
+(817, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItem', 15, '[]', '{\"payroll_batch_id\":9,\"staff_id\":2,\"salary_profile_id\":2,\"days_in_month\":30,\"days_worked\":30,\"basic_salary\":\"60000.00\",\"full_gross_salary\":0,\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0,\"full_net_salary\":0,\"bank_name\":null,\"bank_account_number\":null,\"bank_account_name\":null,\"id\":15}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:45:03', '2026-01-25 17:45:03'),
+(818, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 29, '[]', '{\"payroll_item_id\":15,\"pay_head_id\":1,\"type\":\"addition\",\"pay_head_name\":\"Housing allowance\",\"amount\":70000,\"id\":29}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:45:03', '2026-01-25 17:45:03'),
+(819, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\PayrollItemDetail', 30, '[]', '{\"payroll_item_id\":15,\"pay_head_id\":2,\"type\":\"deduction\",\"pay_head_name\":\"PAYE\",\"amount\":4800,\"id\":30}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:45:03', '2026-01-25 17:45:03'),
+(820, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollItem', 15, '{\"full_gross_salary\":0,\"gross_salary\":0,\"total_additions\":0,\"total_deductions\":0,\"net_salary\":0,\"full_net_salary\":0}', '{\"full_gross_salary\":130000,\"gross_salary\":130000,\"total_additions\":70000,\"total_deductions\":4800,\"net_salary\":125200,\"full_net_salary\":125200}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:45:03', '2026-01-25 17:45:03'),
+(821, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\PayrollBatch', 9, '{\"total_staff\":0,\"total_gross\":0,\"total_additions\":0,\"total_deductions\":0,\"total_net\":0}', '{\"total_staff\":2,\"total_gross\":\"234000.00\",\"total_additions\":\"74000.00\",\"total_deductions\":\"7800.00\",\"total_net\":\"226200.00\"}', 'http://127.0.0.1:8000/hr/payroll', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 17:45:03', '2026-01-25 17:45:03');
 
 -- --------------------------------------------------------
 
@@ -1354,6 +1503,67 @@ INSERT INTO `clinics` (`id`, `name`, `status`, `created_at`, `updated_at`, `temp
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `departments`
+--
+
+CREATE TABLE `departments` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `code` varchar(255) DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `head_of_department_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `departments`
+--
+
+INSERT INTO `departments` (`id`, `name`, `code`, `description`, `head_of_department_id`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, 'Medical Department', 'MED', 'General medicine, internal medicine, and medical consultations', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(2, 'Surgical Department', 'SURG', 'Surgical services, operating theatre, and post-operative care', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(3, 'Obstetrics & Gynaecology', 'OBG', 'Maternal health, childbirth, and women\'s reproductive health', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(4, 'Paediatrics Department', 'PAED', 'Child health services and neonatal care', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(5, 'Emergency Department', 'EMG', 'Emergency and accident services, trauma care', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(6, 'Outpatient Department', 'OPD', 'Outpatient consultations and clinic services', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(7, 'Intensive Care Unit', 'ICU', 'Critical care and intensive monitoring services', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(8, 'Nursing Department', 'NURS', 'Nursing services, patient care, and ward management', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(9, 'Laboratory Department', 'LAB', 'Medical laboratory, pathology, and diagnostic testing', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(10, 'Radiology Department', 'RAD', 'Imaging services, X-ray, CT scan, MRI, and ultrasound', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(11, 'Pharmacy Department', 'PHAR', 'Pharmaceutical services, drug dispensing, and medication management', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(12, 'Health Records Department', 'HRD', 'Medical records, patient registration, and health information management', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(13, 'Reception & Front Office', 'REC', 'Patient reception, scheduling, and front desk services', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(14, 'Administration', 'ADMIN', 'Hospital administration, management, and general operations', 1, 1, '2026-01-24 08:13:35', '2026-01-24 10:04:32'),
+(15, 'Human Resources', 'HR', 'Staff management, recruitment, payroll, and employee relations', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(16, 'Finance & Accounts', 'FIN', 'Financial management, billing, accounts payable/receivable', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(17, 'Billing Department', 'BILL', 'Patient billing, invoicing, and payment processing', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(18, 'HMO & Insurance', 'HMO', 'Health insurance management, HMO relations, and claims processing', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(19, 'Store & Inventory', 'STOR', 'Inventory management, supplies, and procurement', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(20, 'Procurement Department', 'PROC', 'Purchasing, vendor management, and supply chain', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(21, 'Information Technology', 'IT', 'IT systems, software support, and technical infrastructure', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(22, 'Biomedical Engineering', 'BME', 'Medical equipment maintenance and calibration', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(23, 'Facility Management', 'FAC', 'Building maintenance, housekeeping, and facility services', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(24, 'Maintenance Department', 'MAINT', 'Equipment and infrastructure maintenance', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(25, 'Security Department', 'SEC', 'Hospital security and safety services', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(26, 'Dental Department', 'DENT', 'Dental services and oral health care', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(27, 'Ophthalmology Department', 'OPH', 'Eye care, vision services, and optical department', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(28, 'Physiotherapy Department', 'PHYS', 'Physical therapy and rehabilitation services', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(29, 'Nutrition & Dietetics', 'NUTR', 'Dietary services, nutrition counseling, and food services', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(30, 'Mental Health Department', 'MH', 'Psychiatry, psychology, and mental health services', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(31, 'Social Services', 'SOC', 'Medical social work and patient support services', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(32, 'Quality Assurance', 'QA', 'Quality control, accreditation, and compliance', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(33, 'Infection Control', 'IPC', 'Infection prevention and control unit', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(34, 'Medical Education', 'EDU', 'Training, continuing medical education, and internship programs', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(35, 'Patient Relations', 'PR', 'Patient experience, complaints handling, and customer service', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(36, 'Mortuary Services', 'MORT', 'Mortuary and funeral arrangement services', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(37, 'Ambulance Services', 'AMB', 'Emergency transport and ambulance services', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35'),
+(38, 'Blood Bank', 'BB', 'Blood collection, storage, and transfusion services', NULL, 1, '2026-01-24 08:13:35', '2026-01-24 08:13:35');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `details`
 --
 
@@ -1595,7 +1805,10 @@ INSERT INTO `expenses` (`id`, `expense_number`, `category`, `reference_type`, `r
 (1, 'EXP2026010001', 'purchase_order', 'App\\Models\\PurchaseOrder', 1, 19014.00, 1, 5, 'PO Payment - PO2026010001', 'Payment for PO #PO2026010001 - Apollos Technologies', '2026-01-22', 1, 1, 'approved', NULL, '2026-01-22 18:08:40', NULL, NULL, NULL, 'bank_transfer', NULL, NULL, NULL, NULL, '2026-01-22 18:08:40', '2026-01-22 18:08:40', NULL),
 (2, 'EXP2026010002', 'purchase_order', 'App\\Models\\PurchaseOrder', 1, 171132.00, 1, 5, 'PO Payment - PO2026010001', 'Payment for PO #PO2026010001 - Apollos Technologies', '2026-01-23', 1, 1, 'void', NULL, '2026-01-23 06:19:14', 1, '2026-01-23 07:13:41', 'test void now to see what happens', 'cash', NULL, NULL, NULL, NULL, '2026-01-23 06:19:14', '2026-01-23 07:13:41', NULL),
 (3, 'EXP2026010003', 'salaries', NULL, NULL, 10099.00, 1, 1, 'tetsts', 'Test genenric epense up', '2026-01-23', 1, 1, 'rejected', 'ytete', '2026-01-23 07:57:36', NULL, NULL, NULL, 'cash', NULL, NULL, 'w6e73832', 'gjhhd', '2026-01-23 07:56:55', '2026-01-23 07:57:36', NULL),
-(4, 'EXP2026010004', 'store_expense', NULL, NULL, 60060.00, 1, 3, 'dgdhsd', 'ttwetew', '2026-01-23', 1, 1, 'approved', NULL, '2026-01-23 07:58:33', NULL, NULL, NULL, 'bank_transfer', 1, NULL, 'hgdgd', 'test approve', '2026-01-23 07:58:25', '2026-01-23 07:58:33', NULL);
+(4, 'EXP2026010004', 'store_expense', NULL, NULL, 60060.00, 1, 3, 'dgdhsd', 'ttwetew', '2026-01-23', 1, 1, 'approved', NULL, '2026-01-23 07:58:33', NULL, NULL, NULL, 'bank_transfer', 1, NULL, 'hgdgd', 'test approve', '2026-01-23 07:58:25', '2026-01-23 07:58:33', NULL),
+(5, 'EXP2026010005', 'salaries', 'payroll_batch', 1, 226200.00, NULL, NULL, 'Payroll - jan 2206 pay batch', 'Payroll batch PAY2026010001 for period Jan 01 - Jan 31, 2026. Total staff: 2.', '2026-01-31', 1, 1, 'approved', NULL, '2026-01-25 09:54:36', NULL, NULL, NULL, 'bank_transfer', NULL, NULL, NULL, NULL, '2026-01-25 09:54:36', '2026-01-25 09:54:36', NULL),
+(6, 'EXP2026010006', 'salaries', 'payroll_batch', 3, 226200.00, NULL, NULL, 'Payroll - test prorata', 'Payroll batch PAY2026010003 for period Mar 01 - Mar 31, 2026. Total staff: 2.', '2026-03-31', 1, 1, 'pending', NULL, '2026-01-25 15:11:08', NULL, NULL, NULL, 'bank_transfer', NULL, NULL, NULL, NULL, '2026-01-25 15:11:08', '2026-01-25 16:09:24', NULL),
+(7, 'EXP2026010007', 'salaries', 'payroll_batch', 4, 87561.29, NULL, NULL, 'Payroll - Payroll - May 2026', 'Payroll batch PAY2026010004 for period May 01 - May 31, 2026. Total staff: 2.', '2026-05-31', 1, 1, 'approved', NULL, '2026-01-25 16:50:49', NULL, NULL, NULL, 'bank_transfer', NULL, NULL, NULL, NULL, '2026-01-25 16:50:49', '2026-01-25 16:50:49', NULL);
 
 -- --------------------------------------------------------
 
@@ -5392,6 +5605,16 @@ CREATE TABLE `hr_attachments` (
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `hr_attachments`
+--
+
+INSERT INTO `hr_attachments` (`id`, `attachable_type`, `attachable_id`, `filename`, `original_filename`, `file_path`, `mime_type`, `file_size`, `document_type`, `description`, `uploaded_by`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'App\\Models\\HR\\LeaveRequest', 1, '92969b1b-9bcb-4cfd-82f1-d5a26d6c7bc0.png', 'Screenshot (3).png', 'hr/leave-requests/92969b1b-9bcb-4cfd-82f1-d5a26d6c7bc0.png', 'image/png', 248585, 'leave_supporting_document', 'Supporting document for leave request', 1, '2026-01-24 12:14:27', '2026-01-24 12:14:27', NULL),
+(2, 'App\\Models\\HR\\LeaveRequest', 2, '4bd46b3f-f986-4676-81ae-e605d1ad70e8.png', 'Screenshot (17).png', 'hr/leave-requests/4bd46b3f-f986-4676-81ae-e605d1ad70e8.png', 'image/png', 201741, 'leave_supporting_document', 'Supporting document for leave request', 1, '2026-01-24 12:15:18', '2026-01-24 12:15:18', NULL),
+(3, 'App\\Models\\HR\\LeaveRequest', 3, '76bb8ce8-8100-46e8-b7ac-1a8920230fc6.png', 'Screenshot (19).png', 'hr/leave-requests/76bb8ce8-8100-46e8-b7ac-1a8920230fc6.png', 'image/png', 207223, 'leave_supporting_document', 'Supporting document for leave request', 1, '2026-01-24 12:45:30', '2026-01-24 12:45:30', NULL),
+(4, 'App\\Models\\HR\\LeaveRequest', 4, '345d7bc5-3655-4a69-bbe1-d8028e71b510.png', 'Screenshot (12).png', 'hr/leave-requests/345d7bc5-3655-4a69-bbe1-d8028e71b510.png', 'image/png', 166493, 'leave_supporting_document', NULL, 1, '2026-01-24 17:08:41', '2026-01-24 17:08:41', NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -5787,6 +6010,13 @@ CREATE TABLE `leave_balances` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `leave_balances`
+--
+
+INSERT INTO `leave_balances` (`id`, `staff_id`, `leave_type_id`, `year`, `entitled_days`, `used_days`, `pending_days`, `carried_forward`, `created_at`, `updated_at`) VALUES
+(1, 1, 1, 2026, 20.0, 6.0, 0.0, 0.0, '2026-01-24 08:49:20', '2026-01-24 17:09:11');
+
 -- --------------------------------------------------------
 
 --
@@ -5801,8 +6031,10 @@ CREATE TABLE `leave_requests` (
   `start_date` date NOT NULL,
   `end_date` date NOT NULL,
   `total_days` int(11) NOT NULL,
+  `is_half_day` tinyint(1) NOT NULL DEFAULT 0,
   `reason` text DEFAULT NULL,
   `handover_notes` text DEFAULT NULL,
+  `contact_during_leave` varchar(255) DEFAULT NULL,
   `relief_staff_id` bigint(20) UNSIGNED DEFAULT NULL,
   `status` enum('pending','supervisor_approved','approved','rejected','cancelled','recalled') NOT NULL DEFAULT 'pending',
   `supervisor_approved_by` bigint(20) UNSIGNED DEFAULT NULL,
@@ -5819,6 +6051,16 @@ CREATE TABLE `leave_requests` (
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `leave_requests`
+--
+
+INSERT INTO `leave_requests` (`id`, `request_number`, `staff_id`, `leave_type_id`, `start_date`, `end_date`, `total_days`, `is_half_day`, `reason`, `handover_notes`, `contact_during_leave`, `relief_staff_id`, `status`, `supervisor_approved_by`, `supervisor_approved_at`, `supervisor_comments`, `hr_approved_by`, `hr_approved_at`, `hr_comments`, `reviewed_by`, `reviewed_at`, `review_comments`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'LR2026000001', 1, 1, '2026-01-29', '2026-02-02', 3, 0, 'test reason for annual leave', 'dgjdjhandover', '0903393939', NULL, 'cancelled', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-24 12:14:24', '2026-01-24 12:14:38', NULL),
+(2, 'LR2026000002', 1, 1, '2026-01-28', '2026-02-03', 5, 0, 'test reson for anual leave', 'fkjhsdfs', '0903393939', NULL, 'rejected', NULL, NULL, 'Rejected: reetcion readon', NULL, NULL, NULL, 1, '2026-01-24 12:28:32', 'reetcion readon', '2026-01-24 12:15:18', '2026-01-24 12:28:32', NULL),
+(3, 'LR2026000003', 1, 1, '2026-01-28', '2026-02-03', 5, 0, 'tfsgjwd  adhahdghad', 'adkhkad', 'dabdbad', 13, 'rejected', 1, '2026-01-24 12:48:07', 'test approve remark', NULL, NULL, 'Rejected: hell no', 1, '2026-01-24 16:47:22', 'hell no', '2026-01-24 12:45:30', '2026-01-24 16:47:22', NULL),
+(4, 'LR2026000004', 1, 1, '2026-01-28', '2026-02-04', 6, 0, 'sfkh', 'dnadna', 'dadjad', 18, 'approved', 1, '2026-01-24 17:08:38', 'Auto-approved (created by HR)', 1, '2026-01-24 17:09:11', 'approved', 1, '2026-01-24 17:09:11', 'approved', '2026-01-24 17:08:37', '2026-01-24 17:09:11', NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -5834,15 +6076,27 @@ CREATE TABLE `leave_types` (
   `max_consecutive_days` int(11) NOT NULL DEFAULT 0,
   `max_requests_per_year` int(11) NOT NULL DEFAULT 0,
   `min_days_notice` int(11) NOT NULL DEFAULT 0,
+  `max_carry_forward` int(11) DEFAULT 0,
+  `min_service_months` int(11) DEFAULT 0,
   `requires_attachment` tinyint(1) NOT NULL DEFAULT 0,
   `is_paid` tinyint(1) NOT NULL DEFAULT 1,
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `allow_half_day` tinyint(1) DEFAULT 0,
+  `allow_carry_forward` tinyint(1) DEFAULT 0,
   `color` varchar(255) NOT NULL DEFAULT '#3498db',
+  `gender_specific` varchar(255) DEFAULT NULL,
   `applicable_employment_types` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`applicable_employment_types`)),
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `leave_types`
+--
+
+INSERT INTO `leave_types` (`id`, `name`, `code`, `description`, `max_days_per_year`, `max_consecutive_days`, `max_requests_per_year`, `min_days_notice`, `max_carry_forward`, `min_service_months`, `requires_attachment`, `is_paid`, `is_active`, `allow_half_day`, `allow_carry_forward`, `color`, `gender_specific`, `applicable_employment_types`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'Annual Leave', 'ANL', 'Annual Paid Leave', 20, 10, 3, 3, 5, 0, 1, 1, 1, 0, 1, '#3498db', NULL, NULL, '2026-01-24 06:57:06', '2026-01-24 06:57:38', NULL);
 
 -- --------------------------------------------------------
 
@@ -6297,7 +6551,15 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (187, '2026_01_23_100011_create_payroll_batches_table', 84),
 (188, '2026_01_23_100012_create_payroll_items_table', 84),
 (189, '2026_01_23_100013_create_payroll_item_details_table', 84),
-(190, '2026_01_23_100014_create_hr_attachments_table', 85);
+(190, '2026_01_23_100014_create_hr_attachments_table', 85),
+(191, '2026_01_24_084849_add_job_title_and_department_to_staff_table', 86),
+(192, '2026_01_24_085810_create_departments_table', 87),
+(193, '2026_01_24_090352_change_department_to_foreign_key_in_staff_table', 87),
+(194, '2026_01_24_114412_add_contact_and_half_day_to_leave_requests_table', 88),
+(195, '2026_01_25_100000_add_salary_cache_to_staff_salary_profiles', 89),
+(196, '2026_01_25_100001_add_percentage_of_to_pay_heads', 89),
+(197, '2026_01_25_100001_add_days_worked_to_payroll_tables', 90),
+(198, '2026_01_25_100002_add_paid_tracking_to_payroll_batches', 91);
 
 -- --------------------------------------------------------
 
@@ -11208,6 +11470,10 @@ CREATE TABLE `payroll_batches` (
   `name` varchar(255) NOT NULL,
   `pay_period_start` date NOT NULL,
   `pay_period_end` date NOT NULL,
+  `work_period_start` date DEFAULT NULL,
+  `work_period_end` date DEFAULT NULL,
+  `days_in_month` int(11) DEFAULT NULL,
+  `days_worked` int(11) DEFAULT NULL,
   `payment_date` date NOT NULL,
   `total_staff` int(11) NOT NULL DEFAULT 0,
   `total_gross` decimal(15,2) NOT NULL DEFAULT 0.00,
@@ -11224,11 +11490,29 @@ CREATE TABLE `payroll_batches` (
   `rejected_by` bigint(20) UNSIGNED DEFAULT NULL,
   `rejected_at` timestamp NULL DEFAULT NULL,
   `rejection_reason` text DEFAULT NULL,
+  `paid_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `paid_at` timestamp NULL DEFAULT NULL,
+  `payment_comments` text DEFAULT NULL,
   `expense_id` bigint(20) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `payroll_batches`
+--
+
+INSERT INTO `payroll_batches` (`id`, `batch_number`, `name`, `pay_period_start`, `pay_period_end`, `work_period_start`, `work_period_end`, `days_in_month`, `days_worked`, `payment_date`, `total_staff`, `total_gross`, `total_additions`, `total_deductions`, `total_net`, `status`, `created_by`, `submitted_by`, `submitted_at`, `approved_by`, `approved_at`, `approval_comments`, `rejected_by`, `rejected_at`, `rejection_reason`, `paid_by`, `paid_at`, `payment_comments`, `expense_id`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'PAY2026010001', 'jan 2206 pay batch', '2026-01-01', '2026-01-31', NULL, NULL, NULL, NULL, '2026-01-31', 2, 234000.00, 74000.00, 7800.00, 226200.00, 'approved', 1, 1, '2026-01-25 09:54:24', 1, '2026-01-25 09:54:36', 'hjjgjgjghj', NULL, NULL, NULL, NULL, NULL, NULL, 5, '2026-01-25 09:25:05', '2026-01-25 09:54:36', NULL),
+(2, 'PAY2026010002', 'Payroll - February 2026', '2026-02-01', '2026-02-28', NULL, NULL, NULL, NULL, '2026-02-28', 2, 234000.00, 74000.00, 7800.00, 226200.00, 'draft', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-25 09:45:45', '2026-01-25 16:17:05', NULL),
+(3, 'PAY2026010003', 'test prorata', '2026-03-01', '2026-03-31', '2026-03-01', '2026-03-31', 31, 31, '2026-03-31', 2, 234000.00, 74000.00, 7800.00, 226200.00, 'paid', 1, 1, '2026-01-25 15:10:46', 1, '2026-01-25 15:11:08', 'approve prorata', NULL, NULL, NULL, 1, '2026-01-25 16:09:24', 'test approval of payslip', 6, '2026-01-25 15:10:18', '2026-01-25 16:09:24', NULL),
+(4, 'PAY2026010004', 'Payroll - May 2026', '2026-05-01', '2026-05-31', '2026-05-01', '2026-05-12', 31, 12, '2026-05-31', 2, 90580.64, 74000.00, 3019.35, 87561.29, 'approved', 1, 1, '2026-01-25 16:50:31', 1, '2026-01-25 16:50:49', 'dakhdkahkjd', NULL, NULL, NULL, NULL, NULL, NULL, 7, '2026-01-25 16:50:14', '2026-01-25 16:50:49', NULL),
+(5, 'PAY2026010005', 'June', '2026-06-01', '2026-06-30', '2026-06-01', '2026-06-17', 30, 17, '2026-06-30', 0, 0.00, 0.00, 0.00, 0.00, 'draft', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-25 17:07:46', '2026-01-25 17:45:03', NULL),
+(6, 'PAY2026010006', 'June again', '2026-06-01', '2026-06-30', '2026-06-01', '2026-06-26', 30, 26, '2026-06-30', 0, 0.00, 0.00, 0.00, 0.00, 'draft', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-25 17:08:14', '2026-01-25 17:08:14', NULL),
+(7, 'PAY2026010007', 'June again', '2026-06-01', '2026-06-30', '2026-06-01', '2026-06-26', 30, 26, '2026-06-30', 0, 0.00, 0.00, 0.00, 0.00, 'draft', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-25 17:12:32', '2026-01-25 17:12:32', NULL),
+(8, 'PAY2026010008', 'Payroll - June 2026', '2026-06-01', '2026-06-30', '2026-06-01', '2026-06-21', 30, 21, '2026-06-30', 0, 0.00, 0.00, 0.00, 0.00, 'draft', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-25 17:33:39', '2026-01-25 17:33:39', NULL),
+(9, 'PAY2026010009', 'Payroll - June 2026', '2026-06-01', '2026-06-30', '2026-06-01', '2026-06-30', 30, 30, '2026-06-30', 2, 234000.00, 74000.00, 7800.00, 226200.00, 'draft', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-25 17:45:03', '2026-01-25 17:45:03', NULL);
 
 -- --------------------------------------------------------
 
@@ -11241,17 +11525,37 @@ CREATE TABLE `payroll_items` (
   `payroll_batch_id` bigint(20) UNSIGNED NOT NULL,
   `staff_id` bigint(20) UNSIGNED NOT NULL,
   `salary_profile_id` bigint(20) UNSIGNED NOT NULL,
+  `days_in_month` int(11) DEFAULT NULL,
+  `days_worked` int(11) DEFAULT NULL,
   `basic_salary` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `full_gross_salary` decimal(15,2) DEFAULT NULL,
   `gross_salary` decimal(15,2) NOT NULL DEFAULT 0.00,
   `total_additions` decimal(15,2) NOT NULL DEFAULT 0.00,
   `total_deductions` decimal(15,2) NOT NULL DEFAULT 0.00,
   `net_salary` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `full_net_salary` decimal(15,2) DEFAULT NULL,
   `bank_name` varchar(255) DEFAULT NULL,
   `bank_account_number` varchar(255) DEFAULT NULL,
   `bank_account_name` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `payroll_items`
+--
+
+INSERT INTO `payroll_items` (`id`, `payroll_batch_id`, `staff_id`, `salary_profile_id`, `days_in_month`, `days_worked`, `basic_salary`, `full_gross_salary`, `gross_salary`, `total_additions`, `total_deductions`, `net_salary`, `full_net_salary`, `bank_name`, `bank_account_number`, `bank_account_name`, `created_at`, `updated_at`) VALUES
+(3, 1, 1, 1, NULL, NULL, 100000.00, NULL, 104000.00, 4000.00, 3000.00, 101000.00, NULL, 'zenith bank', '220445688', 'App Tech', '2026-01-25 09:45:16', '2026-01-25 09:45:16'),
+(4, 1, 2, 2, NULL, NULL, 60000.00, NULL, 130000.00, 70000.00, 4800.00, 125200.00, NULL, NULL, NULL, NULL, '2026-01-25 09:45:16', '2026-01-25 09:45:16'),
+(6, 3, 1, 1, 31, 31, 100000.00, 104000.00, 104000.00, 4000.00, 3000.00, 101000.00, 101000.00, 'zenith bank', '220445688', 'App Tech', '2026-01-25 15:10:19', '2026-01-25 15:10:19'),
+(7, 3, 2, 2, 31, 31, 60000.00, 130000.00, 130000.00, 70000.00, 4800.00, 125200.00, 125200.00, NULL, NULL, NULL, '2026-01-25 15:10:19', '2026-01-25 15:10:19'),
+(8, 2, 1, 1, NULL, NULL, 100000.00, 104000.00, 104000.00, 4000.00, 3000.00, 101000.00, 101000.00, 'zenith bank', '220445688', 'App Tech', '2026-01-25 16:17:05', '2026-01-25 16:17:05'),
+(9, 2, 2, 2, NULL, NULL, 60000.00, 130000.00, 130000.00, 70000.00, 4800.00, 125200.00, 125200.00, NULL, NULL, NULL, '2026-01-25 16:17:05', '2026-01-25 16:17:05'),
+(10, 4, 1, 1, 31, 12, 100000.00, 104000.00, 40258.06, 4000.00, 1161.29, 39096.77, 101000.00, 'zenith bank', '220445688', 'App Tech', '2026-01-25 16:50:14', '2026-01-25 16:50:14'),
+(11, 4, 2, 2, 31, 12, 60000.00, 130000.00, 50322.58, 70000.00, 1858.06, 48464.52, 125200.00, NULL, NULL, NULL, '2026-01-25 16:50:14', '2026-01-25 16:50:14'),
+(14, 9, 1, 1, 30, 30, 100000.00, 104000.00, 104000.00, 4000.00, 3000.00, 101000.00, 101000.00, 'zenith bank', '220445688', 'App Tech', '2026-01-25 17:45:03', '2026-01-25 17:45:03'),
+(15, 9, 2, 2, 30, 30, 60000.00, 130000.00, 130000.00, 70000.00, 4800.00, 125200.00, 125200.00, NULL, NULL, NULL, '2026-01-25 17:45:03', '2026-01-25 17:45:03');
 
 -- --------------------------------------------------------
 
@@ -11270,6 +11574,32 @@ CREATE TABLE `payroll_item_details` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `payroll_item_details`
+--
+
+INSERT INTO `payroll_item_details` (`id`, `payroll_item_id`, `pay_head_id`, `type`, `pay_head_name`, `amount`, `created_at`, `updated_at`) VALUES
+(5, 3, 1, 'addition', 'Housing allowance', 4000.00, '2026-01-25 09:45:16', '2026-01-25 09:45:16'),
+(6, 3, 2, 'deduction', 'PAYE', 3000.00, '2026-01-25 09:45:16', '2026-01-25 09:45:16'),
+(7, 4, 1, 'addition', 'Housing allowance', 70000.00, '2026-01-25 09:45:16', '2026-01-25 09:45:16'),
+(8, 4, 2, 'deduction', 'PAYE', 4800.00, '2026-01-25 09:45:16', '2026-01-25 09:45:16'),
+(11, 6, 1, 'addition', 'Housing allowance', 4000.00, '2026-01-25 15:10:19', '2026-01-25 15:10:19'),
+(12, 6, 2, 'deduction', 'PAYE', 3000.00, '2026-01-25 15:10:19', '2026-01-25 15:10:19'),
+(13, 7, 1, 'addition', 'Housing allowance', 70000.00, '2026-01-25 15:10:19', '2026-01-25 15:10:19'),
+(14, 7, 2, 'deduction', 'PAYE', 4800.00, '2026-01-25 15:10:19', '2026-01-25 15:10:19'),
+(15, 8, 1, 'addition', 'Housing allowance', 4000.00, '2026-01-25 16:17:05', '2026-01-25 16:17:05'),
+(16, 8, 2, 'deduction', 'PAYE', 3000.00, '2026-01-25 16:17:05', '2026-01-25 16:17:05'),
+(17, 9, 1, 'addition', 'Housing allowance', 70000.00, '2026-01-25 16:17:05', '2026-01-25 16:17:05'),
+(18, 9, 2, 'deduction', 'PAYE', 4800.00, '2026-01-25 16:17:05', '2026-01-25 16:17:05'),
+(19, 10, 1, 'addition', 'Housing allowance', 4000.00, '2026-01-25 16:50:14', '2026-01-25 16:50:14'),
+(20, 10, 2, 'deduction', 'PAYE', 3000.00, '2026-01-25 16:50:14', '2026-01-25 16:50:14'),
+(21, 11, 1, 'addition', 'Housing allowance', 70000.00, '2026-01-25 16:50:14', '2026-01-25 16:50:14'),
+(22, 11, 2, 'deduction', 'PAYE', 4800.00, '2026-01-25 16:50:14', '2026-01-25 16:50:14'),
+(27, 14, 1, 'addition', 'Housing allowance', 4000.00, '2026-01-25 17:45:03', '2026-01-25 17:45:03'),
+(28, 14, 2, 'deduction', 'PAYE', 3000.00, '2026-01-25 17:45:03', '2026-01-25 17:45:03'),
+(29, 15, 1, 'addition', 'Housing allowance', 70000.00, '2026-01-25 17:45:03', '2026-01-25 17:45:03'),
+(30, 15, 2, 'deduction', 'PAYE', 4800.00, '2026-01-25 17:45:03', '2026-01-25 17:45:03');
+
 -- --------------------------------------------------------
 
 --
@@ -11283,6 +11613,7 @@ CREATE TABLE `pay_heads` (
   `description` text DEFAULT NULL,
   `type` enum('addition','deduction') NOT NULL,
   `calculation_type` enum('fixed','percentage','formula') NOT NULL DEFAULT 'fixed',
+  `percentage_of` varchar(255) DEFAULT NULL COMMENT 'basic, gross, basic_salary, gross_salary',
   `calculation_base` varchar(255) DEFAULT NULL,
   `default_value` decimal(15,2) NOT NULL DEFAULT 0.00,
   `is_taxable` tinyint(1) NOT NULL DEFAULT 1,
@@ -11293,6 +11624,14 @@ CREATE TABLE `pay_heads` (
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `pay_heads`
+--
+
+INSERT INTO `pay_heads` (`id`, `name`, `code`, `description`, `type`, `calculation_type`, `percentage_of`, `calculation_base`, `default_value`, `is_taxable`, `is_mandatory`, `is_active`, `sort_order`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'Housing allowance', 'HAL', 'Housing allowance for all staff', 'addition', 'fixed', NULL, NULL, 0.00, 1, 0, 1, 0, '2026-01-25 08:26:18', '2026-01-25 08:31:45', NULL),
+(2, 'PAYE', 'PAYE', 'PAY as you earn', 'deduction', 'percentage', NULL, NULL, 0.00, 0, 0, 1, 1, '2026-01-25 08:35:11', '2026-01-25 08:35:11', NULL);
 
 -- --------------------------------------------------------
 
@@ -12199,7 +12538,9 @@ INSERT INTO `product_or_service_requests` (`id`, `type`, `invoice_id`, `payment_
 (126, NULL, NULL, 81, NULL, 132, NULL, NULL, NULL, 1, NULL, NULL, 1, 3, NULL, 1, 0.00, 0.00, 2500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-21 10:52:19', '2026-01-21 17:21:47'),
 (127, 'service', NULL, NULL, NULL, 132, NULL, 222, NULL, 1, 1, '2026-01-21 18:42:22', NULL, NULL, 67, 1, 70000.00, 0.00, NULL, 0.00, 'cash', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-21 18:42:22', '2026-01-21 18:42:22'),
 (128, NULL, NULL, NULL, NULL, 69, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, 0.00, 0.00, 5000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-21 23:00:00', '2026-01-21 23:00:00'),
-(129, NULL, NULL, NULL, NULL, 69, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, 0.00, 0.00, 5000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-23 06:17:36', '2026-01-23 06:17:36');
+(129, NULL, NULL, NULL, NULL, 69, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, 0.00, 0.00, 5000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-23 06:17:36', '2026-01-23 06:17:36'),
+(130, NULL, NULL, NULL, NULL, 69, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, 0.00, 0.00, 5000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-24 06:20:10', '2026-01-24 06:20:10'),
+(131, NULL, NULL, NULL, NULL, 69, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, 0.00, 0.00, 5000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-25 07:17:01', '2026-01-25 07:17:01');
 
 -- --------------------------------------------------------
 
@@ -25369,6 +25710,8 @@ CREATE TABLE `staff` (
   `date_confirmed` date DEFAULT NULL,
   `employment_type` enum('full_time','part_time','contract','intern') NOT NULL DEFAULT 'full_time',
   `employment_status` enum('active','suspended','terminated','resigned') NOT NULL DEFAULT 'active',
+  `job_title` varchar(255) DEFAULT NULL,
+  `department_id` bigint(20) UNSIGNED DEFAULT NULL,
   `bank_name` varchar(255) DEFAULT NULL,
   `bank_account_number` varchar(255) DEFAULT NULL,
   `bank_account_name` varchar(255) DEFAULT NULL,
@@ -25391,75 +25734,75 @@ CREATE TABLE `staff` (
 -- Dumping data for table `staff`
 --
 
-INSERT INTO `staff` (`id`, `employee_id`, `user_id`, `specialization_id`, `clinic_id`, `gender`, `date_of_birth`, `home_address`, `phone_number`, `consultation_fee`, `is_unit_head`, `is_dept_head`, `status`, `date_hired`, `date_confirmed`, `employment_type`, `employment_status`, `bank_name`, `bank_account_number`, `bank_account_name`, `emergency_contact_name`, `emergency_contact_phone`, `emergency_contact_relationship`, `tax_id`, `pension_id`, `hr_notes`, `suspended_at`, `suspended_by`, `suspension_reason`, `suspension_end_date`, `created_at`, `updated_at`, `old_user_id`) VALUES
-(1, NULL, 1, NULL, NULL, 'Male', '2025-05-31 23:00:00', 'jos', '0810000000', 0.00, 1, 1, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-13 07:44:11', 58),
-(2, NULL, 2, NULL, NULL, 'Others', NULL, NULL, '08160258090', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 59),
-(3, NULL, 3, NULL, NULL, 'Others', NULL, NULL, '07035412086', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 60),
-(4, NULL, 4, NULL, NULL, 'Others', NULL, NULL, '07034779534', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 61),
-(5, NULL, 5, NULL, NULL, 'Others', NULL, NULL, '08069637205', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 62),
-(6, NULL, 6, NULL, NULL, 'Others', NULL, NULL, '08163013587', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 63),
-(7, NULL, 7, 2, 1, 'Male', '1995-12-16 23:00:00', 'Bida Bidi, Jos North LGA', '08055855367', 4.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 67),
-(8, NULL, 8, NULL, NULL, 'Others', NULL, NULL, '08132309188', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 68),
-(9, NULL, 9, 2, 1, 'Male', '1995-01-20 23:00:00', '26, Church street Jos', '08168403497', 4.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 74),
-(10, NULL, 10, NULL, NULL, 'Others', NULL, NULL, '09136696582', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 75),
-(11, NULL, 11, NULL, NULL, 'Others', NULL, NULL, '08064177233', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 77),
-(12, NULL, 12, 2, 1, 'Female', '1992-06-17 23:00:00', 'Latya Guratop, Jos', '09156355633', 4.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 78),
-(13, NULL, 13, NULL, NULL, 'Others', NULL, NULL, '07035643507', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 85),
-(14, NULL, 14, NULL, NULL, 'Others', NULL, NULL, '081123456789', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 129),
-(15, NULL, 15, NULL, NULL, 'Others', NULL, NULL, '07067552211', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 134),
-(16, NULL, 16, NULL, NULL, 'Others', NULL, NULL, '08108036463', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 135),
-(17, NULL, 17, NULL, NULL, 'Others', NULL, NULL, '07034245252', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 140),
-(18, NULL, 18, 11, 9, 'Male', '2022-08-28 23:00:00', 'jos', '08037010243', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 144),
-(19, NULL, 19, 1, 8, 'Male', NULL, 'Diye Bay, Zarmaganda Jos', '08037010988', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 159),
-(20, NULL, 20, 11, 9, 'Male', '1972-06-10 23:00:00', 'E21 Laminga estate, Lamingo, Jos\r\n\r\n&amp;nbsp;', '08034502746', 4000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 185),
-(21, NULL, 21, NULL, NULL, 'Others', NULL, NULL, '08165243457', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 187),
-(22, NULL, 22, NULL, NULL, 'Others', NULL, NULL, '08159095479', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 188),
-(23, NULL, 23, 15, 15, 'Male', '1984-08-31 23:00:00', 'Opirikwu village, Odiapa-Ito, Obi LGA, Benue state.', '08069217904', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 209),
-(24, NULL, 24, 13, 2, 'Male', '2022-05-31 23:00:00', '7c hospital place jos', '08063146341', 4000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 215),
-(25, NULL, 25, NULL, NULL, 'Others', NULL, NULL, '08163324099', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 267),
-(26, NULL, 26, NULL, NULL, 'Others', NULL, NULL, '07030086464', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 268),
-(27, NULL, 27, NULL, NULL, 'Others', NULL, NULL, '08060840232', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 269),
-(28, NULL, 28, NULL, NULL, 'Others', NULL, NULL, '08036775475', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 350),
-(29, NULL, 29, 16, 13, 'Male', NULL, 'Gura Topp Rayfield&amp;nbsp; Jos.', '08061218727', 4000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 447),
-(30, NULL, 30, 1, 8, 'Female', '1983-11-25 23:00:00', 'DUALA BARRACKS DOGON DUTSE JOS', '08033803872', 4000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 462),
-(31, NULL, 31, 1, 8, 'Male', '1980-04-16 23:00:00', 'Angwan Makeri Rantya, Jos', '08065360052', 4000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 709),
-(32, NULL, 32, NULL, NULL, 'Others', NULL, NULL, '08107757388', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 749),
-(33, NULL, 33, 1, 8, 'Male', '1984-11-02 23:00:00', 'Rayfield, jos', '+2348060522983', 4000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 750),
-(34, NULL, 34, 1, 8, 'Male', NULL, 'No 14, Rayfield-Zarmaganda road, Fwavei, Rayfield, Jos', '08035994898', 4000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 867),
-(35, NULL, 35, 11, 16, 'Male', '2022-09-30 23:00:00', 'Rantya, jos', '08066052254', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 888),
-(36, NULL, 36, 14, 14, 'Male', '1980-11-30 23:00:00', 'Behind st. Fimbar&#039;s Catholic Church Fwavei Rayfield, Jos', '08035937579', 4000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 916),
-(37, NULL, 37, 7, 11, 'Male', '2022-12-29 23:00:00', 'Jos', '08060030649', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 917),
-(38, NULL, 38, NULL, NULL, 'Others', NULL, NULL, '08065806215', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 927),
-(39, NULL, 39, NULL, NULL, 'Others', NULL, NULL, '08035976165', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 934),
-(40, NULL, 40, 1, 8, 'Female', '2022-12-15 23:00:00', 'jos', 'O8166016875', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1392),
-(41, NULL, 41, NULL, NULL, 'Others', NULL, NULL, '07030238110', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1393),
-(42, NULL, 42, NULL, NULL, 'Others', NULL, NULL, '08037010988', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1449),
-(43, NULL, 43, NULL, NULL, 'Others', NULL, NULL, '08037010988', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1450),
-(44, NULL, 44, 2, 1, 'Female', '2022-05-31 23:00:00', 'jos', '08106064115', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1468),
-(45, NULL, 45, 2, 1, 'Male', '1990-04-15 23:00:00', 'jos', '08061906539', 5.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1469),
-(46, NULL, 46, 0, 1, 'Female', '1993-04-26 23:00:00', 'Jos', '08167373005', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1484),
-(47, NULL, 47, NULL, NULL, 'Others', NULL, NULL, '08176193330', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1574),
-(48, NULL, 48, 2, 1, 'Male', '1994-04-16 23:00:00', 'Same as Contact Address', '08148158104', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1583),
-(49, NULL, 49, NULL, NULL, 'Others', NULL, NULL, '07068620564', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1690),
-(50, NULL, 50, 13, 2, 'Male', '2022-11-01 23:00:00', 'Gold and Base, Jos\r\n\r\n&amp;nbsp;', '08032790813', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1890),
-(51, NULL, 51, 11, 9, 'Male', '1987-11-13 23:00:00', 'Gwafan estate Haske Lamingo, Jos', '08065072651', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1936),
-(52, NULL, 52, 13, 2, 'Male', '1988-12-31 23:00:00', 'Jos', '08032790813', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1939),
-(53, NULL, 53, 1, 8, 'Male', '1984-03-28 23:00:00', 'Jos', '08037022775', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1940),
-(54, NULL, 54, 10, 17, 'Male', '1990-07-28 23:00:00', 'Fan-milk junction, Zarmaganda, Jos', '07088111868', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2030),
-(55, NULL, 55, 0, 1, 'Female', '2022-12-18 23:00:00', 'JOs', '07037447458', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2142),
-(56, NULL, 56, NULL, NULL, 'Others', NULL, NULL, '08165354589', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2220),
-(57, NULL, 57, 2, 19, 'Male', '1975-06-25 23:00:00', 'Zarazong, Jos East', '08028438717', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2234),
-(58, NULL, 58, 0, 1, 'Female', '2003-07-21 23:00:00', 'JOs', '07039062948', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2308),
-(59, NULL, 59, NULL, NULL, 'Others', NULL, NULL, '08133002060', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2431),
-(60, NULL, 60, 0, 1, 'Female', '1995-11-27 23:00:00', 'JOS', '08107623025', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2530),
-(61, NULL, 61, 10, 18, 'Male', '2023-04-26 23:00:00', 'JOS', '08069634805', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2595),
-(62, NULL, 62, NULL, NULL, 'Others', NULL, NULL, '08035003495', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2656),
-(63, NULL, 63, 1, 8, 'Male', NULL, 'Jos', '08063208363', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2707),
-(64, NULL, 64, 2, 1, 'Female', '1993-02-06 23:00:00', 'State lowcost&amp;nbsp;Akwanga&amp;nbsp;Nasarawa.', '08101191500', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2828),
-(65, NULL, 65, 2, 1, 'Female', '2023-06-30 23:00:00', 'Jos', '08121074489', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2955),
-(66, NULL, 66, 15, 17, 'Male', '2023-08-04 23:00:00', 'jos', '08036889486', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3056),
-(67, NULL, 67, 11, 9, 'Male', '2023-05-21 23:00:00', 'Jos', '08069624461', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3061),
-(68, NULL, 68, NULL, NULL, 'Others', NULL, NULL, '08068137605', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3062);
+INSERT INTO `staff` (`id`, `employee_id`, `user_id`, `specialization_id`, `clinic_id`, `gender`, `date_of_birth`, `home_address`, `phone_number`, `consultation_fee`, `is_unit_head`, `is_dept_head`, `status`, `date_hired`, `date_confirmed`, `employment_type`, `employment_status`, `job_title`, `department_id`, `bank_name`, `bank_account_number`, `bank_account_name`, `emergency_contact_name`, `emergency_contact_phone`, `emergency_contact_relationship`, `tax_id`, `pension_id`, `hr_notes`, `suspended_at`, `suspended_by`, `suspension_reason`, `suspension_end_date`, `created_at`, `updated_at`, `old_user_id`) VALUES
+(1, '9900', 1, 1, 1, 'Male', '2025-05-31 23:00:00', 'jos', '0810000008', 0.00, 1, 1, 1, '2025-06-01', NULL, 'full_time', 'active', 'Boss Admin', 14, 'zenith bank', '220445688', 'App Tech', 'Chink', '+2348188223228', 'spouse', '8837338', '872183', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-24 09:52:49', 58),
+(2, NULL, 2, NULL, NULL, 'Others', NULL, NULL, '08160258090', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 59),
+(3, NULL, 3, NULL, NULL, 'Others', NULL, NULL, '07035412086', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 60),
+(4, NULL, 4, NULL, NULL, 'Others', NULL, NULL, '07034779534', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 61),
+(5, NULL, 5, NULL, NULL, 'Others', NULL, NULL, '08069637205', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 62),
+(6, NULL, 6, NULL, NULL, 'Others', NULL, NULL, '08163013587', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 63),
+(7, NULL, 7, 2, 1, 'Male', '1995-12-16 23:00:00', 'Bida Bidi, Jos North LGA', '08055855367', 4.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 67),
+(8, NULL, 8, NULL, NULL, 'Others', NULL, NULL, '08132309188', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 68),
+(9, NULL, 9, 2, 1, 'Male', '1995-01-20 23:00:00', '26, Church street Jos', '08168403497', 4.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 74),
+(10, NULL, 10, NULL, NULL, 'Others', NULL, NULL, '09136696582', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 75),
+(11, NULL, 11, NULL, NULL, 'Others', NULL, NULL, '08064177233', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 77),
+(12, NULL, 12, 2, 1, 'Female', '1992-06-17 23:00:00', 'Latya Guratop, Jos', '09156355633', 4.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 78),
+(13, NULL, 13, NULL, NULL, 'Others', NULL, NULL, '07035643507', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 85),
+(14, NULL, 14, NULL, NULL, 'Others', NULL, NULL, '081123456789', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 129),
+(15, NULL, 15, NULL, NULL, 'Others', NULL, NULL, '07067552211', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 134),
+(16, NULL, 16, NULL, NULL, 'Others', NULL, NULL, '08108036463', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 135),
+(17, NULL, 17, NULL, NULL, 'Others', NULL, NULL, '07034245252', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 140),
+(18, NULL, 18, 11, 9, 'Male', '2022-08-28 23:00:00', 'jos', '08037010243', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 144),
+(19, NULL, 19, 1, 8, 'Male', NULL, 'Diye Bay, Zarmaganda Jos', '08037010988', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 159),
+(20, NULL, 20, 11, 9, 'Male', '1972-06-10 23:00:00', 'E21 Laminga estate, Lamingo, Jos\r\n\r\n&amp;nbsp;', '08034502746', 4000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 185),
+(21, NULL, 21, NULL, NULL, 'Others', NULL, NULL, '08165243457', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 187),
+(22, NULL, 22, NULL, NULL, 'Others', NULL, NULL, '08159095479', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 188),
+(23, NULL, 23, 15, 15, 'Male', '1984-08-31 23:00:00', 'Opirikwu village, Odiapa-Ito, Obi LGA, Benue state.', '08069217904', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 209),
+(24, NULL, 24, 13, 2, 'Male', '2022-05-31 23:00:00', '7c hospital place jos', '08063146341', 4000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 215),
+(25, NULL, 25, NULL, NULL, 'Others', NULL, NULL, '08163324099', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 267),
+(26, NULL, 26, NULL, NULL, 'Others', NULL, NULL, '07030086464', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 268),
+(27, NULL, 27, NULL, NULL, 'Others', NULL, NULL, '08060840232', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 269),
+(28, NULL, 28, NULL, NULL, 'Others', NULL, NULL, '08036775475', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 350),
+(29, NULL, 29, 16, 13, 'Male', NULL, 'Gura Topp Rayfield&amp;nbsp; Jos.', '08061218727', 4000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 447),
+(30, NULL, 30, 1, 8, 'Female', '1983-11-25 23:00:00', 'DUALA BARRACKS DOGON DUTSE JOS', '08033803872', 4000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 462),
+(31, NULL, 31, 1, 8, 'Male', '1980-04-16 23:00:00', 'Angwan Makeri Rantya, Jos', '08065360052', 4000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 709),
+(32, NULL, 32, NULL, NULL, 'Others', NULL, NULL, '08107757388', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 749),
+(33, NULL, 33, 1, 8, 'Male', '1984-11-02 23:00:00', 'Rayfield, jos', '+2348060522983', 4000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 750),
+(34, NULL, 34, 1, 8, 'Male', NULL, 'No 14, Rayfield-Zarmaganda road, Fwavei, Rayfield, Jos', '08035994898', 4000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 867),
+(35, NULL, 35, 11, 16, 'Male', '2022-09-30 23:00:00', 'Rantya, jos', '08066052254', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 888),
+(36, NULL, 36, 14, 14, 'Male', '1980-11-30 23:00:00', 'Behind st. Fimbar&#039;s Catholic Church Fwavei Rayfield, Jos', '08035937579', 4000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 916),
+(37, NULL, 37, 7, 11, 'Male', '2022-12-29 23:00:00', 'Jos', '08060030649', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 917),
+(38, NULL, 38, NULL, NULL, 'Others', NULL, NULL, '08065806215', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 927),
+(39, NULL, 39, NULL, NULL, 'Others', NULL, NULL, '08035976165', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 934),
+(40, NULL, 40, 1, 8, 'Female', '2022-12-15 23:00:00', 'jos', 'O8166016875', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1392),
+(41, NULL, 41, NULL, NULL, 'Others', NULL, NULL, '07030238110', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1393),
+(42, NULL, 42, NULL, NULL, 'Others', NULL, NULL, '08037010988', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1449),
+(43, NULL, 43, NULL, NULL, 'Others', NULL, NULL, '08037010988', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1450),
+(44, NULL, 44, 2, 1, 'Female', '2022-05-31 23:00:00', 'jos', '08106064115', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1468),
+(45, NULL, 45, 2, 1, 'Male', '1990-04-15 23:00:00', 'jos', '08061906539', 5.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1469),
+(46, NULL, 46, 0, 1, 'Female', '1993-04-26 23:00:00', 'Jos', '08167373005', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1484),
+(47, NULL, 47, NULL, NULL, 'Others', NULL, NULL, '08176193330', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1574),
+(48, NULL, 48, 2, 1, 'Male', '1994-04-16 23:00:00', 'Same as Contact Address', '08148158104', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1583),
+(49, NULL, 49, NULL, NULL, 'Others', NULL, NULL, '07068620564', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1690),
+(50, NULL, 50, 13, 2, 'Male', '2022-11-01 23:00:00', 'Gold and Base, Jos\r\n\r\n&amp;nbsp;', '08032790813', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1890),
+(51, NULL, 51, 11, 9, 'Male', '1987-11-13 23:00:00', 'Gwafan estate Haske Lamingo, Jos', '08065072651', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1936),
+(52, NULL, 52, 13, 2, 'Male', '1988-12-31 23:00:00', 'Jos', '08032790813', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1939),
+(53, NULL, 53, 1, 8, 'Male', '1984-03-28 23:00:00', 'Jos', '08037022775', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1940),
+(54, NULL, 54, 10, 17, 'Male', '1990-07-28 23:00:00', 'Fan-milk junction, Zarmaganda, Jos', '07088111868', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2030),
+(55, NULL, 55, 0, 1, 'Female', '2022-12-18 23:00:00', 'JOs', '07037447458', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2142),
+(56, NULL, 56, NULL, NULL, 'Others', NULL, NULL, '08165354589', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2220),
+(57, NULL, 57, 2, 19, 'Male', '1975-06-25 23:00:00', 'Zarazong, Jos East', '08028438717', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2234),
+(58, NULL, 58, 0, 1, 'Female', '2003-07-21 23:00:00', 'JOs', '07039062948', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2308),
+(59, NULL, 59, NULL, NULL, 'Others', NULL, NULL, '08133002060', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2431),
+(60, NULL, 60, 0, 1, 'Female', '1995-11-27 23:00:00', 'JOS', '08107623025', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2530),
+(61, NULL, 61, 10, 18, 'Male', '2023-04-26 23:00:00', 'JOS', '08069634805', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2595),
+(62, NULL, 62, NULL, NULL, 'Others', NULL, NULL, '08035003495', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2656),
+(63, NULL, 63, 1, 8, 'Male', NULL, 'Jos', '08063208363', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2707),
+(64, NULL, 64, 2, 1, 'Female', '1993-02-06 23:00:00', 'State lowcost&amp;nbsp;Akwanga&amp;nbsp;Nasarawa.', '08101191500', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2828),
+(65, NULL, 65, 2, 1, 'Female', '2023-06-30 23:00:00', 'Jos', '08121074489', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2955),
+(66, NULL, 66, 15, 17, 'Male', '2023-08-04 23:00:00', 'jos', '08036889486', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3056),
+(67, NULL, 67, 11, 9, 'Male', '2023-05-21 23:00:00', 'Jos', '08069624461', 5000.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3061),
+(68, NULL, 68, NULL, NULL, 'Others', NULL, NULL, '08068137605', 0.00, 0, 0, 1, NULL, NULL, 'full_time', 'active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3062);
 
 -- --------------------------------------------------------
 
@@ -25471,6 +25814,9 @@ CREATE TABLE `staff_salary_profiles` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `staff_id` bigint(20) UNSIGNED NOT NULL,
   `basic_salary` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `gross_salary` decimal(15,2) DEFAULT NULL,
+  `total_deductions` decimal(15,2) DEFAULT NULL,
+  `net_salary` decimal(15,2) DEFAULT NULL,
   `pay_frequency` enum('monthly','bi_weekly','weekly') NOT NULL DEFAULT 'monthly',
   `effective_from` date NOT NULL,
   `effective_to` date DEFAULT NULL,
@@ -25481,6 +25827,14 @@ CREATE TABLE `staff_salary_profiles` (
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `staff_salary_profiles`
+--
+
+INSERT INTO `staff_salary_profiles` (`id`, `staff_id`, `basic_salary`, `gross_salary`, `total_deductions`, `net_salary`, `pay_frequency`, `effective_from`, `effective_to`, `is_active`, `notes`, `created_by`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 1, 100000.00, 104000.00, 3000.00, 101000.00, 'monthly', '2026-01-25', NULL, 1, NULL, 1, '2026-01-25 08:56:29', '2026-01-25 08:56:29', NULL),
+(2, 2, 60000.00, 130000.00, 4800.00, 125200.00, 'monthly', '2026-01-25', NULL, 1, NULL, 1, '2026-01-25 09:03:01', '2026-01-25 09:03:01', NULL);
 
 -- --------------------------------------------------------
 
@@ -25498,6 +25852,16 @@ CREATE TABLE `staff_salary_profile_items` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `staff_salary_profile_items`
+--
+
+INSERT INTO `staff_salary_profile_items` (`id`, `salary_profile_id`, `pay_head_id`, `calculation_type`, `calculation_base`, `value`, `created_at`, `updated_at`) VALUES
+(1, 1, 1, 'fixed', 'basic_salary', 4000.0000, '2026-01-25 08:56:29', '2026-01-25 08:56:29'),
+(2, 1, 2, 'percentage', 'basic_salary', 3.0000, '2026-01-25 08:56:29', '2026-01-25 08:56:29'),
+(6, 2, 1, 'fixed', 'basic_salary', 70000.0000, '2026-01-25 09:03:01', '2026-01-25 09:03:01'),
+(7, 2, 2, 'percentage', 'basic_salary', 8.0000, '2026-01-25 09:03:01', '2026-01-25 09:03:01');
 
 -- --------------------------------------------------------
 
@@ -26198,7 +26562,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `is_admin`, `email`, `filename`, `old_records`, `surname`, `firstname`, `othername`, `assignRole`, `assignPermission`, `email_verified_at`, `password`, `status`, `remember_token`, `created_at`, `updated_at`, `old_user_id`, `old_dependant_id`, `next_of_kin_name`, `next_of_kin_phone`, `next_of_kin_address`, `next_of_kin`) VALUES
-(1, 21, 'sysadmin@mail.com', '1767369464-whatsapp image 2025-12-21 at 3.00.46 pm.jpeg', '1698826162-corehealth-qr.pdf', 'Admin', 'System', '001', '1', '0', NULL, '$2y$10$uV3jA9Xlf79Kj0Vgh2EyX.fjKZyxekSEgofucBdKHf33b5SWSQCDm', 1, NULL, NULL, '2026-01-13 07:44:11', 58, NULL, NULL, NULL, NULL, NULL),
+(1, 21, 'sysadmin@mail.com', '1767369464-whatsapp image 2025-12-21 at 3.00.46 pm.jpeg', '1698826162-corehealth-qr.pdf', 'Admin', 'System', 'ing', '1', '0', NULL, '$2y$10$NBSJEpw4FgACkjQa/kSI9.I3w425cVbAEwTVawdrWuaIz3PZlzhGK', 1, NULL, NULL, '2026-01-24 09:37:18', 58, NULL, NULL, NULL, NULL, NULL),
 (2, 24, 'ceciliaishaya2019@gmail.com', 'avatar.png', NULL, 'Ishaya', 'Cecilia', 'Umading', '1', '1', NULL, '$2y$10$bZRYeeNL0o8mPqOULj1cDOPKmDNolHFOkJ3dBvfRylcn4syKbYvXa', 1, NULL, NULL, NULL, 59, NULL, NULL, NULL, NULL, NULL),
 (3, 24, 'jennyson60@gmail.com', 'avatar.png', NULL, 'Bakzak', 'Jennifer', ' ', '1', '0', NULL, '$2y$10$DL5Qsen.I7iGms84itSU/eZdJqjIlA0ltE8dz2jgDrKH2953EWYTG', 1, NULL, NULL, NULL, 60, NULL, NULL, NULL, NULL, NULL),
 (4, 24, 'mentasamuel@yahoo.com', 'avatar.png', NULL, 'Menta', 'Samuel', ' ', '1', '0', NULL, '$2y$10$VkAfQrUBgqW99ZbPWwZktu8symJEtyBNLRXE2S9syaYxKoT0W5KH6', 1, NULL, NULL, NULL, 61, NULL, NULL, NULL, NULL, NULL),
@@ -31028,6 +31392,15 @@ ALTER TABLE `clinics`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `departments`
+--
+ALTER TABLE `departments`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `departments_name_unique` (`name`),
+  ADD UNIQUE KEY `departments_code_unique` (`code`),
+  ADD KEY `departments_head_of_department_id_foreign` (`head_of_department_id`);
+
+--
 -- Indexes for table `details`
 --
 ALTER TABLE `details`
@@ -31443,7 +31816,8 @@ ALTER TABLE `payroll_batches`
   ADD KEY `payroll_batches_submitted_by_foreign` (`submitted_by`),
   ADD KEY `payroll_batches_approved_by_foreign` (`approved_by`),
   ADD KEY `payroll_batches_rejected_by_foreign` (`rejected_by`),
-  ADD KEY `payroll_batches_expense_id_foreign` (`expense_id`);
+  ADD KEY `payroll_batches_expense_id_foreign` (`expense_id`),
+  ADD KEY `payroll_batches_paid_by_foreign` (`paid_by`);
 
 --
 -- Indexes for table `payroll_items`
@@ -31712,7 +32086,8 @@ ALTER TABLE `specializations`
 ALTER TABLE `staff`
   ADD PRIMARY KEY (`id`),
   ADD KEY `staff_specialization_id_foreign` (`specialization_id`),
-  ADD KEY `staff_suspended_by_foreign` (`suspended_by`);
+  ADD KEY `staff_suspended_by_foreign` (`suspended_by`),
+  ADD KEY `staff_department_id_foreign` (`department_id`);
 
 --
 -- Indexes for table `staff_salary_profiles`
@@ -31930,7 +32305,7 @@ ALTER TABLE `application_status`
 -- AUTO_INCREMENT for table `audits`
 --
 ALTER TABLE `audits`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=671;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=822;
 
 --
 -- AUTO_INCREMENT for table `banks`
@@ -31993,6 +32368,12 @@ ALTER TABLE `clinics`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
+-- AUTO_INCREMENT for table `departments`
+--
+ALTER TABLE `departments`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+
+--
 -- AUTO_INCREMENT for table `details`
 --
 ALTER TABLE `details`
@@ -32032,7 +32413,7 @@ ALTER TABLE `encounters`
 -- AUTO_INCREMENT for table `expenses`
 --
 ALTER TABLE `expenses`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `failed_jobs`
@@ -32074,7 +32455,7 @@ ALTER TABLE `hmo_tariffs`
 -- AUTO_INCREMENT for table `hr_attachments`
 --
 ALTER TABLE `hr_attachments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `imaging_service_requests`
@@ -32134,19 +32515,19 @@ ALTER TABLE `lab_workbench_audit_logs`
 -- AUTO_INCREMENT for table `leave_balances`
 --
 ALTER TABLE `leave_balances`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `leave_requests`
 --
 ALTER TABLE `leave_requests`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `leave_types`
 --
 ALTER TABLE `leave_types`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `medication_administrations`
@@ -32176,7 +32557,7 @@ ALTER TABLE `messages`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=191;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=199;
 
 --
 -- AUTO_INCREMENT for table `misc_bills`
@@ -32242,25 +32623,25 @@ ALTER TABLE `payments`
 -- AUTO_INCREMENT for table `payroll_batches`
 --
 ALTER TABLE `payroll_batches`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `payroll_items`
 --
 ALTER TABLE `payroll_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `payroll_item_details`
 --
 ALTER TABLE `payroll_item_details`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 
 --
 -- AUTO_INCREMENT for table `pay_heads`
 --
 ALTER TABLE `pay_heads`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `permissions`
@@ -32332,7 +32713,7 @@ ALTER TABLE `product_categories`
 -- AUTO_INCREMENT for table `product_or_service_requests`
 --
 ALTER TABLE `product_or_service_requests`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=130;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=132;
 
 --
 -- AUTO_INCREMENT for table `product_requests`
@@ -32428,13 +32809,13 @@ ALTER TABLE `staff`
 -- AUTO_INCREMENT for table `staff_salary_profiles`
 --
 ALTER TABLE `staff_salary_profiles`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `staff_salary_profile_items`
 --
 ALTER TABLE `staff_salary_profile_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `staff_suspensions`
@@ -32630,6 +33011,12 @@ ALTER TABLE `checklist_templates`
 --
 ALTER TABLE `checklist_template_items`
   ADD CONSTRAINT `checklist_template_items_template_id_foreign` FOREIGN KEY (`template_id`) REFERENCES `checklist_templates` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `departments`
+--
+ALTER TABLE `departments`
+  ADD CONSTRAINT `departments_head_of_department_id_foreign` FOREIGN KEY (`head_of_department_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `discharge_checklists`
@@ -32866,6 +33253,7 @@ ALTER TABLE `payroll_batches`
   ADD CONSTRAINT `payroll_batches_approved_by_foreign` FOREIGN KEY (`approved_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `payroll_batches_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`),
   ADD CONSTRAINT `payroll_batches_expense_id_foreign` FOREIGN KEY (`expense_id`) REFERENCES `expenses` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `payroll_batches_paid_by_foreign` FOREIGN KEY (`paid_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `payroll_batches_rejected_by_foreign` FOREIGN KEY (`rejected_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `payroll_batches_submitted_by_foreign` FOREIGN KEY (`submitted_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
@@ -33001,6 +33389,7 @@ ALTER TABLE `shift_handovers`
 -- Constraints for table `staff`
 --
 ALTER TABLE `staff`
+  ADD CONSTRAINT `staff_department_id_foreign` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `staff_suspended_by_foreign` FOREIGN KEY (`suspended_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --

@@ -345,6 +345,24 @@ class EssController extends Controller
     }
 
     /**
+     * Print Payslip - Opens printable payslip view
+     */
+    public function printPayslip(PayrollItem $payrollItem)
+    {
+        $staff = $this->getStaff();
+
+        if ($payrollItem->staff_id !== $staff->id) {
+            abort(403, 'You can only print your own payslips.');
+        }
+
+        $payrollItem->load(['payrollBatch', 'details.payHead']);
+        $payslip = $this->payrollService->getPayslipData($payrollItem);
+        $payrollBatch = $payrollItem->payrollBatch;
+
+        return view('admin.hr.payroll.payslip-print', compact('payslip', 'payrollBatch'));
+    }
+
+    /**
      * Download Payslip PDF
      */
     public function downloadPayslip(PayrollItem $payrollItem)

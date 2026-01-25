@@ -177,7 +177,7 @@
                 <h5 class="modal-title">
                     <i class="mdi mdi-alert"></i> Void Expense
                 </h5>
-                <button type="button" class="close" data-dismiss="modal">
+                <button type="button" class="close"  data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
             </div>
@@ -202,7 +202,7 @@
                 <input type="hidden" id="void_expense_id">
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">
                     <i class="mdi mdi-close"></i> Cancel
                 </button>
                 <button type="button" class="btn btn-warning" onclick="confirmVoid()">
