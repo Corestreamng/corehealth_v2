@@ -55,7 +55,7 @@
             $icon = $leaveIcons[$iconKey] ?? 'mdi-calendar-check';
         @endphp
         <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
-            <div class="card border-0 h-100" style="border-radius: 12px; background: {{ $gradient }};">
+            <div class="card-modern border-0 h-100" style="border-radius: 12px; background: {{ $gradient }};">
                 <div class="card-body text-white py-4">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -74,7 +74,7 @@
 
         <!-- Pending Requests Card -->
         <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
-            <div class="card border-0 h-100" style="border-radius: 12px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <div class="card-modern border-0 h-100" style="border-radius: 12px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
                 <div class="card-body text-white py-4">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -92,7 +92,7 @@
 
         <!-- Last Payslip Card -->
         <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
-            <div class="card border-0 h-100" style="border-radius: 12px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            <div class="card-modern border-0 h-100" style="border-radius: 12px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
                 <div class="card-body text-white py-4">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -120,7 +120,7 @@
     <div class="row">
         <!-- Quick Actions -->
         <div class="col-md-4 mb-4">
-            <div class="card border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-modern border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div class="card-header bg-white" style="border-radius: 12px 12px 0 0;">
                     <h6 class="mb-0" style="font-weight: 600;">
                         <i class="mdi mdi-lightning-bolt text-primary mr-2"></i>Quick Actions
@@ -144,7 +144,7 @@
 
             {{-- Team Approvals Card - For Unit Heads/Dept Heads --}}
             @if($staff->is_unit_head || $staff->is_dept_head)
-            <div class="card border-0 mt-4" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-left: 4px solid #f5576c;">
+            <div class="card-modern border-0 mt-4" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-left: 4px solid #f5576c;">
                 <div class="card-header bg-white" style="border-radius: 12px 12px 0 0;">
                     <h6 class="mb-0" style="font-weight: 600;">
                         <i class="mdi mdi-account-check text-danger mr-2"></i>Supervisor Actions
@@ -178,7 +178,7 @@
 
         <!-- Recent Leave Requests -->
         <div class="col-md-8 mb-4">
-            <div class="card border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-modern border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center" style="border-radius: 12px 12px 0 0;">
                     <h6 class="mb-0" style="font-weight: 600;">
                         <i class="mdi mdi-calendar-check text-info mr-2"></i>My Recent Leave Requests
@@ -240,7 +240,7 @@
     <div class="row">
         <!-- Leave Balances -->
         <div class="col-md-6 mb-4">
-            <div class="card border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-modern border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div class="card-header bg-white" style="border-radius: 12px 12px 0 0;">
                     <h6 class="mb-0" style="font-weight: 600;">
                         <i class="mdi mdi-chart-pie text-success mr-2"></i>My Leave Balances ({{ date('Y') }})
@@ -275,7 +275,7 @@
 
         <!-- Notifications/Alerts -->
         <div class="col-md-6 mb-4">
-            <div class="card border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-modern border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div class="card-header bg-white" style="border-radius: 12px 12px 0 0;">
                     <h6 class="mb-0" style="font-weight: 600;">
                         <i class="mdi mdi-bell text-warning mr-2"></i>Notifications

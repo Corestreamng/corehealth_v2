@@ -20,7 +20,7 @@
     <!-- Quick Stats Row -->
     <div class="row mb-4">
         <div class="col-md-3">
-            <div class="card border-0" style="border-radius: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="card-modern border-0" style="border-radius: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                 <div class="card-body text-white py-4">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -40,7 +40,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0" style="border-radius: 12px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <div class="card-modern border-0" style="border-radius: 12px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
                 <div class="card-body text-white py-4">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -58,7 +58,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0" style="border-radius: 12px; background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+            <div class="card-modern border-0" style="border-radius: 12px; background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
                 <div class="card-body text-white py-4">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -76,7 +76,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0" style="border-radius: 12px; background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);">
+            <div class="card-modern border-0" style="border-radius: 12px; background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);">
                 <div class="card-body text-white py-4">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -98,7 +98,7 @@
     <!-- Second Stats Row -->
     <div class="row mb-4">
         <div class="col-md-3">
-            <div class="card border-0" style="border-radius: 12px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+            <div class="card-modern border-0" style="border-radius: 12px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
                 <div class="card-body text-white py-4">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -113,7 +113,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0" style="border-radius: 12px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            <div class="card-modern border-0" style="border-radius: 12px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
                 <div class="card-body text-white py-4">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -131,7 +131,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0" style="border-radius: 12px; background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
+            <div class="card-modern border-0" style="border-radius: 12px; background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
                 <div class="card-body text-dark py-4">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -146,7 +146,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0" style="border-radius: 12px; background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);">
+            <div class="card-modern border-0" style="border-radius: 12px; background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);">
                 <div class="card-body text-dark py-4">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -168,7 +168,7 @@
     <div class="row">
         <!-- Pending Leave Requests -->
         <div class="col-md-6 mb-4">
-            <div class="card border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-modern border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center" style="border-radius: 12px 12px 0 0;">
                     <h6 class="mb-0" style="font-weight: 600;">
                         <i class="mdi mdi-calendar-check text-primary mr-2"></i>Pending Leave Requests
@@ -211,7 +211,7 @@
 
         <!-- Open Disciplinary Queries -->
         <div class="col-md-6 mb-4">
-            <div class="card border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-modern border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center" style="border-radius: 12px 12px 0 0;">
                     <h6 class="mb-0" style="font-weight: 600;">
                         <i class="mdi mdi-gavel text-warning mr-2"></i>Open Disciplinary Queries
@@ -258,7 +258,7 @@
     <div class="row">
         <!-- Staff on Leave Today -->
         <div class="col-md-6 mb-4">
-            <div class="card border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-modern border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center" style="border-radius: 12px 12px 0 0;">
                     <h6 class="mb-0" style="font-weight: 600;">
                         <i class="mdi mdi-beach text-success mr-2"></i>Staff on Leave Today
@@ -296,7 +296,7 @@
 
         <!-- Recent Payroll Batches -->
         <div class="col-md-6 mb-4">
-            <div class="card border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-modern border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center" style="border-radius: 12px 12px 0 0;">
                     <h6 class="mb-0" style="font-weight: 600;">
                         <i class="mdi mdi-cash-multiple text-info mr-2"></i>Recent Payroll
@@ -343,7 +343,7 @@
     <!-- Quick Actions -->
     <div class="row">
         <div class="col-md-12">
-            <div class="card border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-modern border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div class="card-header bg-white" style="border-radius: 12px 12px 0 0;">
                     <h6 class="mb-0" style="font-weight: 600;">
                         <i class="mdi mdi-lightning-bolt text-primary mr-2"></i>Quick Actions

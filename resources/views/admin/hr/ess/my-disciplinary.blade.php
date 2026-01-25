@@ -42,7 +42,7 @@
     <!-- Summary Cards -->
     <div class="row mb-4">
         <div class="col-md-3">
-            <div class="card border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-modern border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -57,7 +57,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-modern border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -72,7 +72,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-modern border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -87,7 +87,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-modern border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -104,7 +104,7 @@
     </div>
 
     <!-- Disciplinary Queries Table -->
-    <div class="card border-0 mb-4" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <div class="card-modern border-0 mb-4" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
         <div class="card-header bg-white" style="border-radius: 12px 12px 0 0;">
             <h6 class="mb-0" style="font-weight: 600;">
                 <i class="mdi mdi-format-list-bulleted text-primary mr-2"></i>Disciplinary Queries
@@ -131,7 +131,7 @@
 
     <!-- Suspensions History -->
     @if($suspensions && $suspensions->count() > 0)
-    <div class="card border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <div class="card-modern border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
         <div class="card-header bg-white" style="border-radius: 12px 12px 0 0;">
             <h6 class="mb-0" style="font-weight: 600;">
                 <i class="mdi mdi-account-lock text-danger mr-2"></i>Suspension History
@@ -189,7 +189,7 @@
                 <h5 class="modal-title">
                     <i class="mdi mdi-file-document mr-2"></i>Query Details
                 </h5>
-                <button type="button" class="close" data-dismiss="modal">
+                <button type="button" class="close"  data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
             </div>
@@ -207,7 +207,7 @@
                     </div>
                 </div>
 
-                <div class="card mb-3" style="border-radius: 8px; background: #f8f9fa;">
+                <div class="card-modern mb-3" style="border-radius: 8px; background: #f8f9fa;">
                     <div class="card-body">
                         <h6 class="text-muted mb-2">Query Description</h6>
                         <p id="view_description" class="mb-0"></p>
@@ -215,7 +215,7 @@
                 </div>
 
                 <div id="existingResponseSection" style="display: none;">
-                    <div class="card mb-3" style="border-radius: 8px; background: #e3f2fd;">
+                    <div class="card-modern mb-3" style="border-radius: 8px; background: #e3f2fd;">
                         <div class="card-body">
                             <h6 class="text-muted mb-2">Your Response</h6>
                             <p id="view_response" class="mb-0"></p>
@@ -225,7 +225,7 @@
                 </div>
 
                 <div id="decisionSection" style="display: none;">
-                    <div class="card mb-3" style="border-radius: 8px; background: #fff3e0;">
+                    <div class="card-modern mb-3" style="border-radius: 8px; background: #fff3e0;">
                         <div class="card-body">
                             <h6 class="text-muted mb-2">Management Decision</h6>
                             <p id="view_decision_notes" class="mb-0"></p>
@@ -260,7 +260,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal" style="border-radius: 8px;">Close</button>
+                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal" style="border-radius: 8px;">Close</button>
             </div>
         </div>
     </div>

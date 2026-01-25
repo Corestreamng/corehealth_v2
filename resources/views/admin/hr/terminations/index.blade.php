@@ -32,7 +32,7 @@
             <!-- Stats Cards -->
             <div class="row mb-4">
                 <div class="col-md-3">
-                    <div class="card border-0" style="border-radius: 10px; background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);">
+                    <div class="card-modern border-0" style="border-radius: 10px; background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);">
                         <div class="card-body text-dark">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
@@ -45,7 +45,7 @@
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card border-0" style="border-radius: 10px; background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);">
+                    <div class="card-modern border-0" style="border-radius: 10px; background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);">
                         <div class="card-body text-dark">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
@@ -58,7 +58,7 @@
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card border-0" style="border-radius: 10px; background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);">
+                    <div class="card-modern border-0" style="border-radius: 10px; background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);">
                         <div class="card-body text-dark">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
@@ -71,7 +71,7 @@
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card border-0" style="border-radius: 10px; background: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%);">
+                    <div class="card-modern border-0" style="border-radius: 10px; background: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%);">
                         <div class="card-body text-dark">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
