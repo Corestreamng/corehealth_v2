@@ -7,6 +7,7 @@ use App\Models\HR\DisciplinaryQuery;
 use App\Models\HR\LeaveRequest;
 use App\Models\HR\LeaveType;
 use App\Models\HR\PayrollItem;
+use App\Models\HR\StaffSuspension;
 use App\Models\Staff;
 use App\Services\LeaveService;
 use App\Services\PayrollService;
@@ -397,21 +398,188 @@ class EssController extends Controller
             ->latest()
             ->paginate(15);
 
-        return view('admin.hr.ess.my-disciplinary', compact('staff', 'queries'));
+        // Get active query (pending response)
+        $activeQuery = DisciplinaryQuery::where('staff_id', $staff->id)
+            ->where('status', DisciplinaryQuery::STATUS_ISSUED)
+            ->latest()
+            ->first();
+
+        // Calculate summary statistics
+        $totalQueries = DisciplinaryQuery::where('staff_id', $staff->id)->count();
+
+        $openQueries = DisciplinaryQuery::where('staff_id', $staff->id)
+            ->whereIn('status', [
+                DisciplinaryQuery::STATUS_ISSUED,
+                DisciplinaryQuery::STATUS_RESPONSE_RECEIVED
+            ])
+            ->count();
+
+        $warningsCount = DisciplinaryQuery::where('staff_id', $staff->id)
+            ->where('outcome', DisciplinaryQuery::OUTCOME_WARNING)
+            ->count();
+
+        // Get actual suspension records from staff_suspensions table
+        $suspensions = StaffSuspension::where('staff_id', $staff->id)
+            ->with(['issuedBy', 'liftedBy', 'disciplinaryQuery'])
+            ->latest()
+            ->get();
+
+        $suspensionsCount = $suspensions->count();
+
+        // Get active suspension (if any)
+        $activeSuspension = $suspensions->where('status', StaffSuspension::STATUS_ACTIVE)->first();
+
+        return view('admin.hr.ess.my-disciplinary', compact(
+            'staff',
+            'queries',
+            'activeQuery',
+            'totalQueries',
+            'openQueries',
+            'warningsCount',
+            'suspensionsCount',
+            'suspensions',
+            'activeSuspension'
+        ));
+    }
+
+    /**
+     * DataTable data for My Disciplinary Queries
+     */
+    public function myDisciplinaryData(Request $request)
+    {
+        $staff = $this->getStaff();
+
+        $query = DisciplinaryQuery::where('staff_id', $staff->id)
+            ->with(['issuedBy', 'decidedBy']);
+
+        // Apply status filter
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Apply severity filter
+        if ($request->filled('severity')) {
+            $query->where('severity', $request->severity);
+        }
+
+        return datatables()->eloquent($query)
+            ->addIndexColumn()
+            ->addColumn('query_date', function ($row) {
+                return $row->created_at->format('M d, Y');
+            })
+            ->addColumn('subject', function ($row) {
+                return '<strong>' . $row->query_number . '</strong><br><small class="text-muted">' . \Str::limit($row->subject, 40) . '</small>';
+            })
+            ->addColumn('severity', function ($row) {
+                $class = match($row->severity) {
+                    'gross_misconduct' => 'danger',
+                    'major' => 'warning',
+                    'moderate' => 'info',
+                    default => 'secondary'
+                };
+                return '<span class="badge badge-' . $class . '" style="border-radius: 6px;">' . ucfirst(str_replace('_', ' ', $row->severity)) . '</span>';
+            })
+            ->addColumn('status', function ($row) {
+                $class = match($row->status) {
+                    DisciplinaryQuery::STATUS_ISSUED => 'warning',
+                    DisciplinaryQuery::STATUS_RESPONSE_RECEIVED => 'info',
+                    DisciplinaryQuery::STATUS_UNDER_REVIEW => 'primary',
+                    DisciplinaryQuery::STATUS_CLOSED => 'success',
+                    default => 'secondary'
+                };
+                return '<span class="badge badge-' . $class . '" style="border-radius: 6px;">' . ucfirst(str_replace('_', ' ', $row->status)) . '</span>';
+            })
+            ->addColumn('outcome', function ($row) {
+                if (!$row->outcome) {
+                    return '<span class="text-muted">-</span>';
+                }
+                $class = match($row->outcome) {
+                    'termination', 'suspension' => 'danger',
+                    'final_warning' => 'warning',
+                    'warning' => 'info',
+                    'no_action', 'dismissed' => 'success',
+                    default => 'secondary'
+                };
+                return '<span class="badge badge-' . $class . '" style="border-radius: 6px;">' . ucfirst(str_replace('_', ' ', $row->outcome)) . '</span>';
+            })
+            ->addColumn('response_deadline', function ($row) {
+                if (!$row->response_deadline) {
+                    return '-';
+                }
+                $isPast = $row->response_deadline->isPast();
+                $class = $isPast && $row->status === DisciplinaryQuery::STATUS_ISSUED ? 'text-danger font-weight-bold' : '';
+                return '<span class="' . $class . '">' . $row->response_deadline->format('M d, Y') . '</span>';
+            })
+            ->addColumn('actions', function ($row) {
+                $buttons = '<button class="btn btn-sm btn-primary view-query" data-id="' . $row->id . '" style="border-radius: 6px;"><i class="mdi mdi-eye"></i></button>';
+                if ($row->status === DisciplinaryQuery::STATUS_ISSUED) {
+                    $buttons .= ' <button class="btn btn-sm btn-warning respond-query" data-id="' . $row->id . '" style="border-radius: 6px;"><i class="mdi mdi-reply"></i></button>';
+                }
+                return $buttons;
+            })
+            ->rawColumns(['subject', 'severity', 'status', 'outcome', 'response_deadline', 'actions'])
+            ->orderColumn('query_date', function ($query, $order) {
+                $query->orderBy('created_at', $order);
+            })
+            ->make(true);
     }
 
     /**
      * Show Disciplinary Query
      */
-    public function showDisciplinaryQuery(DisciplinaryQuery $disciplinaryQuery)
+    public function showDisciplinaryQuery(Request $request, DisciplinaryQuery $disciplinaryQuery)
     {
         $staff = $this->getStaff();
 
         if ($disciplinaryQuery->staff_id !== $staff->id) {
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'You can only view your own disciplinary queries.'], 403);
+            }
             abort(403, 'You can only view your own disciplinary queries.');
         }
 
         $disciplinaryQuery->load(['issuedBy', 'decidedBy', 'attachments']);
+
+        // Return JSON for AJAX requests
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'query' => [
+                    'id' => $disciplinaryQuery->id,
+                    'query_number' => $disciplinaryQuery->query_number,
+                    'subject' => $disciplinaryQuery->subject,
+                    'description' => $disciplinaryQuery->description,
+                    'severity' => $disciplinaryQuery->severity,
+                    'status' => $disciplinaryQuery->status,
+                    'incident_date' => $disciplinaryQuery->incident_date?->format('Y-m-d'),
+                    'incident_date_formatted' => $disciplinaryQuery->incident_date?->format('M d, Y'),
+                    'response_deadline' => $disciplinaryQuery->response_deadline?->format('Y-m-d'),
+                    'response_deadline_formatted' => $disciplinaryQuery->response_deadline?->format('M d, Y'),
+                    'staff_response' => $disciplinaryQuery->staff_response,
+                    'response_received_at' => $disciplinaryQuery->response_received_at?->format('M d, Y H:i'),
+                    'outcome' => $disciplinaryQuery->outcome,
+                    'hr_decision' => $disciplinaryQuery->hr_decision,
+                    'decided_at' => $disciplinaryQuery->decided_at?->format('M d, Y'),
+                    'created_at' => $disciplinaryQuery->created_at->format('Y-m-d'),
+                    'created_at_formatted' => $disciplinaryQuery->created_at->format('M d, Y'),
+                    'issued_by' => $disciplinaryQuery->issuedBy ? [
+                        'id' => $disciplinaryQuery->issuedBy->id,
+                        'name' => $disciplinaryQuery->issuedBy->name,
+                    ] : null,
+                    'decided_by' => $disciplinaryQuery->decidedBy ? [
+                        'id' => $disciplinaryQuery->decidedBy->id,
+                        'name' => $disciplinaryQuery->decidedBy->name,
+                    ] : null,
+                    'attachments' => $disciplinaryQuery->attachments->map(function ($att) {
+                        return [
+                            'id' => $att->id,
+                            'original_name' => $att->original_name ?? $att->filename,
+                            'file_path' => $att->file_path,
+                        ];
+                    }),
+                ],
+            ]);
+        }
 
         return view('admin.hr.ess.disciplinary-show', compact('staff', 'disciplinaryQuery'));
     }
@@ -424,13 +592,30 @@ class EssController extends Controller
         $staff = $this->getStaff();
 
         if ($disciplinaryQuery->staff_id !== $staff->id) {
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'You can only respond to your own disciplinary queries.'], 403);
+            }
             abort(403, 'You can only respond to your own disciplinary queries.');
         }
 
-        $request->validate([
+        if ($disciplinaryQuery->status !== DisciplinaryQuery::STATUS_ISSUED) {
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'You can only respond to queries that are pending response.'], 400);
+            }
+            return back()->with('error', 'You can only respond to queries that are pending response.');
+        }
+
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'response' => 'required|string|max:5000',
             'attachments.*' => 'nullable|file|max:10240|mimes:pdf,doc,docx,jpg,jpeg,png',
         ]);
+
+        if ($validator->fails()) {
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+            }
+            return back()->withErrors($validator)->withInput();
+        }
 
         try {
             $disciplinaryQuery->update([
@@ -448,9 +633,19 @@ class EssController extends Controller
                 );
             }
 
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Your response has been submitted successfully.'
+                ]);
+            }
+
             return redirect()->route('hr.ess.my-disciplinary')
                 ->with('success', 'Your response has been submitted.');
         } catch (\Exception $e) {
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            }
             return back()->with('error', $e->getMessage());
         }
     }
