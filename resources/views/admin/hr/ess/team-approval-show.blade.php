@@ -27,7 +27,7 @@
         <!-- Main Info -->
         <div class="col-lg-8">
             <!-- Request Details Card -->
-            <div class="card border-0 mb-4" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-modern border-0 mb-4" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center" style="border-radius: 12px 12px 0 0;">
                     <h6 class="mb-0" style="font-weight: 600;">
                         <i class="mdi mdi-information-outline text-primary mr-2"></i>Request Details
@@ -143,7 +143,7 @@
 
             <!-- Attachments Card -->
             @if($leaveRequest->attachments && $leaveRequest->attachments->count() > 0)
-            <div class="card border-0 mb-4" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-modern border-0 mb-4" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div class="card-header bg-white" style="border-radius: 12px 12px 0 0;">
                     <h6 class="mb-0" style="font-weight: 600;">
                         <i class="mdi mdi-paperclip text-primary mr-2"></i>Attachments
@@ -172,7 +172,7 @@
 
             <!-- Action Buttons (Only for pending requests) -->
             @if($leaveRequest->status === 'pending')
-            <div class="card border-0 mb-4" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-modern border-0 mb-4" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div class="card-header bg-white" style="border-radius: 12px 12px 0 0;">
                     <h6 class="mb-0" style="font-weight: 600;">
                         <i class="mdi mdi-gesture-tap-button text-primary mr-2"></i>Take Action
@@ -216,7 +216,7 @@
         <!-- Sidebar -->
         <div class="col-lg-4">
             <!-- Employee Info Card -->
-            <div class="card border-0 mb-4" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-modern border-0 mb-4" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div class="card-header bg-white" style="border-radius: 12px 12px 0 0;">
                     <h6 class="mb-0" style="font-weight: 600;">
                         <i class="mdi mdi-account text-primary mr-2"></i>Employee Information
@@ -247,7 +247,7 @@
             </div>
 
             <!-- Leave Balance Card -->
-            <div class="card border-0 mb-4" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-modern border-0 mb-4" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div class="card-header bg-white" style="border-radius: 12px 12px 0 0;">
                     <h6 class="mb-0" style="font-weight: 600;">
                         <i class="mdi mdi-scale-balance text-primary mr-2"></i>Leave Balance
@@ -298,7 +298,7 @@
 
             <!-- Approval History Card -->
             @if($leaveRequest->reviewed_at || $leaveRequest->supervisor_reviewed_at)
-            <div class="card border-0 mb-4" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-modern border-0 mb-4" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div class="card-header bg-white" style="border-radius: 12px 12px 0 0;">
                     <h6 class="mb-0" style="font-weight: 600;">
                         <i class="mdi mdi-history text-primary mr-2"></i>Approval History

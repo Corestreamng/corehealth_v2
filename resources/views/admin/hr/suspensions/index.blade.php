@@ -32,7 +32,7 @@
             <!-- Stats Cards -->
             <div class="row mb-4">
                 <div class="col-md-4">
-                    <div class="card border-0" style="border-radius: 10px; background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);">
+                    <div class="card-modern border-0" style="border-radius: 10px; background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);">
                         <div class="card-body text-white">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
@@ -45,7 +45,7 @@
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="card border-0" style="border-radius: 10px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                    <div class="card-modern border-0" style="border-radius: 10px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
                         <div class="card-body text-white">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
@@ -58,7 +58,7 @@
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="card border-0" style="border-radius: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="card-modern border-0" style="border-radius: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                         <div class="card-body text-white">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>

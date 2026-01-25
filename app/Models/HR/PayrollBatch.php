@@ -22,6 +22,10 @@ class PayrollBatch extends Model implements Auditable
         'name',
         'pay_period_start',
         'pay_period_end',
+        'work_period_start',
+        'work_period_end',
+        'days_in_month',
+        'days_worked',
         'payment_date',
         'total_staff',
         'total_gross',
@@ -38,12 +42,17 @@ class PayrollBatch extends Model implements Auditable
         'rejected_by',
         'rejected_at',
         'rejection_reason',
+        'paid_by',
+        'paid_at',
+        'payment_comments',
         'expense_id'
     ];
 
     protected $casts = [
         'pay_period_start' => 'date',
         'pay_period_end' => 'date',
+        'work_period_start' => 'date',
+        'work_period_end' => 'date',
         'payment_date' => 'date',
         'total_gross' => 'decimal:2',
         'total_additions' => 'decimal:2',
@@ -52,6 +61,7 @@ class PayrollBatch extends Model implements Auditable
         'submitted_at' => 'datetime',
         'approved_at' => 'datetime',
         'rejected_at' => 'datetime',
+        'paid_at' => 'datetime',
     ];
 
     const STATUS_DRAFT = 'draft';
@@ -135,6 +145,14 @@ class PayrollBatch extends Model implements Auditable
     public function rejectedBy()
     {
         return $this->belongsTo(User::class, 'rejected_by');
+    }
+
+    /**
+     * Get who marked as paid
+     */
+    public function paidBy()
+    {
+        return $this->belongsTo(User::class, 'paid_by');
     }
 
     /**
@@ -233,5 +251,21 @@ class PayrollBatch extends Model implements Auditable
     public function scopeApproved($query)
     {
         return $query->where('status', self::STATUS_APPROVED);
+    }
+
+    /**
+     * Scope for paid batches
+     */
+    public function scopePaid($query)
+    {
+        return $query->where('status', self::STATUS_PAID);
+    }
+
+    /**
+     * Scope for rejected batches
+     */
+    public function scopeRejected($query)
+    {
+        return $query->where('status', self::STATUS_REJECTED);
     }
 }

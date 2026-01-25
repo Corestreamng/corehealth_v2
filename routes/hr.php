@@ -246,6 +246,18 @@ Route::middleware(['auth'])->prefix('hr')->name('hr.')->group(function () {
         Route::get('/create', [PayrollBatchController::class, 'create'])
             ->middleware('permission:payroll-batch.create')
             ->name('create');
+
+        // Staff summary for batch creation (must be before {payrollBatch} routes)
+        Route::get('/staff-summary', [PayrollBatchController::class, 'staffSummary'])
+            ->middleware('permission:payroll-batch.create')
+            ->name('staff-summary');
+        Route::get('/staff-by-criteria', [PayrollBatchController::class, 'staffByCriteria'])
+            ->middleware('permission:payroll-batch.create')
+            ->name('staff-by-criteria');
+        Route::post('/check-duplicates', [PayrollBatchController::class, 'checkDuplicates'])
+            ->middleware('permission:payroll-batch.create')
+            ->name('check-duplicates');
+
         Route::post('/', [PayrollBatchController::class, 'store'])
             ->middleware('permission:payroll-batch.create')
             ->name('store');
@@ -272,6 +284,12 @@ Route::middleware(['auth'])->prefix('hr')->name('hr.')->group(function () {
         Route::post('/{payrollBatch}/reject', [PayrollBatchController::class, 'reject'])
             ->middleware('permission:payroll-batch.reject')
             ->name('reject');
+        Route::post('/{payrollBatch}/mark-paid', [PayrollBatchController::class, 'markPaid'])
+            ->middleware('permission:payroll-batch.approve')
+            ->name('mark-paid');
+        Route::post('/{payrollBatch}/revert-draft', [PayrollBatchController::class, 'revertToDraft'])
+            ->middleware('permission:payroll-batch.edit')
+            ->name('revert-draft');
 
         // Batch operations
         Route::post('/{payrollBatch}/generate', [PayrollBatchController::class, 'generate'])
@@ -280,6 +298,9 @@ Route::middleware(['auth'])->prefix('hr')->name('hr.')->group(function () {
         Route::get('/{payrollBatch}/payslips', [PayrollBatchController::class, 'payslips'])
             ->middleware('permission:payroll-batch.view')
             ->name('payslips');
+        Route::get('/{payrollBatch}/payslip/{payrollItem}/print', [PayrollBatchController::class, 'printPayslip'])
+            ->middleware('permission:payroll-batch.view')
+            ->name('payslip.print');
         Route::get('/{payrollBatch}/export', [PayrollBatchController::class, 'export'])
             ->middleware('permission:payroll-batch.view')
             ->name('export');
@@ -305,6 +326,9 @@ Route::middleware(['auth'])->prefix('hr')->name('hr.')->group(function () {
         Route::get('/my-payslips', [EssController::class, 'myPayslips'])
             ->middleware('permission:ess.view-payslips')
             ->name('my-payslips');
+        Route::get('/my-payslips/{payrollItem}/print', [EssController::class, 'printPayslip'])
+            ->middleware('permission:ess.view-payslips')
+            ->name('my-payslips.print');
         Route::get('/my-payslips/{payrollItem}/download', [EssController::class, 'downloadPayslip'])
             ->middleware('permission:ess.view-payslips')
             ->name('my-payslips.download');

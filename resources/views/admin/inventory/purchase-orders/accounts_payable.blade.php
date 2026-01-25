@@ -86,7 +86,7 @@
         </div>
 
         <!-- PO List -->
-        <div class="card card-custom">
+        <div class="card-modern card-custom">
             <div class="card-header">
                 <div class="row align-items-center">
                     <div class="col">

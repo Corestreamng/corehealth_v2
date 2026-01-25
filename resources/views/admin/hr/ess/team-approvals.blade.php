@@ -40,7 +40,7 @@
     <div class="row mb-4">
         <div class="col-md-3">
             <a href="{{ route('hr.ess.team-approvals.index', ['status' => 'pending']) }}" class="text-decoration-none">
-                <div class="card border-0" style="border-radius: 12px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <div class="card-modern border-0" style="border-radius: 12px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
                     <div class="card-body text-white py-3">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -58,7 +58,7 @@
         </div>
         <div class="col-md-3">
             <a href="{{ route('hr.ess.team-approvals.index', ['status' => 'supervisor_approved']) }}" class="text-decoration-none">
-                <div class="card border-0" style="border-radius: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="card-modern border-0" style="border-radius: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                     <div class="card-body text-white py-3">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -76,7 +76,7 @@
         </div>
         <div class="col-md-3">
             <a href="{{ route('hr.ess.team-approvals.index', ['status' => 'approved']) }}" class="text-decoration-none">
-                <div class="card border-0" style="border-radius: 12px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                <div class="card-modern border-0" style="border-radius: 12px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
                     <div class="card-body text-white py-3">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -94,7 +94,7 @@
         </div>
         <div class="col-md-3">
             <a href="{{ route('hr.ess.team-approvals.index', ['status' => 'rejected']) }}" class="text-decoration-none">
-                <div class="card border-0" style="border-radius: 12px; background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);">
+                <div class="card-modern border-0" style="border-radius: 12px; background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);">
                     <div class="card-body text-white py-3">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -113,7 +113,7 @@
     </div>
 
     <!-- Filters -->
-    <div class="card border-0 mb-4" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <div class="card-modern border-0 mb-4" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
         <div class="card-body py-3">
             <form action="{{ route('hr.ess.team-approvals.index') }}" method="GET" class="row align-items-end">
                 <div class="col-md-4">
@@ -150,7 +150,7 @@
     </div>
 
     <!-- Leave Requests Table -->
-    <div class="card border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <div class="card-modern border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
         <div class="card-header bg-white d-flex justify-content-between align-items-center" style="border-radius: 12px 12px 0 0;">
             <h6 class="mb-0" style="font-weight: 600;">
                 <i class="mdi mdi-format-list-bulleted text-primary mr-2"></i>Team Leave Requests
@@ -302,7 +302,7 @@
                 <h5 class="modal-title">
                     <i class="mdi mdi-check-circle mr-2"></i>Approve Leave Request
                 </h5>
-                <button type="button" class="close text-white" data-dismiss="modal">
+                <button type="button" class="close text-white"  data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
             </div>
@@ -317,7 +317,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-dismiss="modal" style="border-radius: 8px;">Cancel</button>
+                    <button type="button" class="btn btn-light"  data-bs-dismiss="modal" style="border-radius: 8px;">Cancel</button>
                     <button type="submit" class="btn btn-success" style="border-radius: 8px;">
                         <i class="mdi mdi-check mr-1"></i>Approve Request
                     </button>
@@ -335,7 +335,7 @@
                 <h5 class="modal-title">
                     <i class="mdi mdi-close-circle mr-2"></i>Reject Leave Request
                 </h5>
-                <button type="button" class="close text-white" data-dismiss="modal">
+                <button type="button" class="close text-white"  data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
             </div>
@@ -349,7 +349,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-dismiss="modal" style="border-radius: 8px;">Cancel</button>
+                    <button type="button" class="btn btn-light"  data-bs-dismiss="modal" style="border-radius: 8px;">Cancel</button>
                     <button type="submit" class="btn btn-danger" style="border-radius: 8px;">
                         <i class="mdi mdi-close mr-1"></i>Reject Request
                     </button>

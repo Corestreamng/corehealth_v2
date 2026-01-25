@@ -18,11 +18,15 @@ class PayrollItem extends Model implements Auditable
         'payroll_batch_id',
         'staff_id',
         'salary_profile_id',
+        'days_in_month',
+        'days_worked',
         'basic_salary',
+        'full_gross_salary',
         'gross_salary',
         'total_additions',
         'total_deductions',
         'net_salary',
+        'full_net_salary',
         'bank_name',
         'bank_account_number',
         'bank_account_name'
@@ -30,10 +34,12 @@ class PayrollItem extends Model implements Auditable
 
     protected $casts = [
         'basic_salary' => 'decimal:2',
+        'full_gross_salary' => 'decimal:2',
         'gross_salary' => 'decimal:2',
         'total_additions' => 'decimal:2',
         'total_deductions' => 'decimal:2',
         'net_salary' => 'decimal:2',
+        'full_net_salary' => 'decimal:2',
     ];
 
     /**

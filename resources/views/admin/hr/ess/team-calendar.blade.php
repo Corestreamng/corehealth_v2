@@ -32,7 +32,7 @@
     <!-- Stats Row -->
     <div class="row mb-4">
         <div class="col-md-3 col-6 mb-2">
-            <div class="card stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="card-modern stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                 <div class="card-body text-white py-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -45,7 +45,7 @@
             </div>
         </div>
         <div class="col-md-3 col-6 mb-2">
-            <div class="card stat-card" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);">
+            <div class="card-modern stat-card" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);">
                 <div class="card-body text-white py-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -58,7 +58,7 @@
             </div>
         </div>
         <div class="col-md-3 col-6 mb-2">
-            <div class="card stat-card" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+            <div class="card-modern stat-card" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
                 <div class="card-body text-white py-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -71,7 +71,7 @@
             </div>
         </div>
         <div class="col-md-3 col-6 mb-2">
-            <div class="card stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            <div class="card-modern stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
                 <div class="card-body text-white py-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -140,7 +140,7 @@
         <!-- Sidebar -->
         <div class="col-lg-3 col-md-12">
             <!-- Team Overview -->
-            <div class="card mb-3" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-modern mb-3" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div class="card-header bg-white" style="border-radius: 12px 12px 0 0; border-bottom: 1px solid #e9ecef;">
                     <h6 class="mb-0" style="font-weight: 600;">
                         <i class="mdi mdi-account-group mr-2" style="color: var(--primary-color);"></i>Team Overview
@@ -196,7 +196,7 @@
             </div>
 
             <!-- Filters -->
-            <div class="card mb-3" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-modern mb-3" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div class="card-header bg-white" style="border-radius: 12px 12px 0 0; border-bottom: 1px solid #e9ecef;">
                     <h6 class="mb-0" style="font-weight: 600;">
                         <i class="mdi mdi-filter-outline mr-2" style="color: var(--primary-color);"></i>Filters
@@ -266,7 +266,7 @@
                 <h5 class="modal-title text-white">
                     <i class="mdi mdi-calendar-account mr-2"></i>Leave Details
                 </h5>
-                <button type="button" class="close text-white" data-dismiss="modal">
+                <button type="button" class="close text-white"  data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
             </div>
@@ -274,7 +274,7 @@
                 <!-- Content loaded dynamically -->
             </div>
             <div class="modal-footer" id="leaveDetailFooter">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal" style="border-radius: 8px;">Close</button>
+                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal" style="border-radius: 8px;">Close</button>
             </div>
         </div>
     </div>
@@ -288,7 +288,7 @@
                 <h5 class="modal-title text-white" id="dayDetailTitle">
                     <i class="mdi mdi-calendar mr-2"></i>Leave Details
                 </h5>
-                <button type="button" class="close text-white" data-dismiss="modal">
+                <button type="button" class="close text-white"  data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
             </div>
@@ -296,7 +296,7 @@
                 <!-- Content loaded dynamically -->
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal" style="border-radius: 8px;">Close</button>
+                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal" style="border-radius: 8px;">Close</button>
             </div>
         </div>
     </div>
@@ -487,11 +487,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 <a href="{{ url('hr/ess/team-approvals') }}/${leave.leave_id}" class="btn btn-primary" style="border-radius: 8px;">
                     <i class="mdi mdi-eye mr-1"></i>View & Approve
                 </a>
-                <button type="button" class="btn btn-secondary" data-dismiss="modal" style="border-radius: 8px;">Close</button>
+                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal" style="border-radius: 8px;">Close</button>
             `);
         } else {
             $('#leaveDetailFooter').html(`
-                <button type="button" class="btn btn-secondary" data-dismiss="modal" style="border-radius: 8px;">Close</button>
+                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal" style="border-radius: 8px;">Close</button>
             `);
         }
         

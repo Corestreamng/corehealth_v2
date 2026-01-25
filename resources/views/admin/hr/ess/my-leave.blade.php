@@ -33,7 +33,7 @@
             $colorClass = $percentage > 50 ? 'success' : ($percentage > 20 ? 'warning' : 'danger');
         @endphp
         <div class="col-md-3 mb-3">
-            <div class="card border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-modern border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <h6 class="text-muted mb-0">{{ $leaveType->name }}</h6>
@@ -53,7 +53,7 @@
     </div>
 
     <!-- Leave Requests Table -->
-    <div class="card border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <div class="card-modern border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
         <div class="card-header bg-white" style="border-radius: 12px 12px 0 0;">
             <h6 class="mb-0" style="font-weight: 600;">
                 <i class="mdi mdi-format-list-bulleted text-primary mr-2"></i>My Leave Requests
@@ -134,7 +134,7 @@
                 <h5 class="modal-title">
                     <i class="mdi mdi-calendar-plus mr-2"></i>Request Leave
                 </h5>
-                <button type="button" class="close text-white" data-dismiss="modal">
+                <button type="button" class="close text-white"  data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
             </div>
@@ -273,7 +273,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal" style="border-radius: 8px;">Cancel</button>
+                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal" style="border-radius: 8px;">Cancel</button>
                     <button type="submit" class="btn btn-primary" style="border-radius: 8px;">
                         <i class="mdi mdi-send mr-1"></i>Submit Request
                     </button>
@@ -291,7 +291,7 @@
                 <h5 class="modal-title">
                     <i class="mdi mdi-eye mr-2"></i>Leave Request Details
                 </h5>
-                <button type="button" class="close text-white" data-dismiss="modal">
+                <button type="button" class="close text-white"  data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
             </div>
@@ -327,7 +327,7 @@
                 </div>
             </div>
             <div class="modal-footer" id="view_modal_footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal" style="border-radius: 8px;">Close</button>
+                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal" style="border-radius: 8px;">Close</button>
             </div>
         </div>
     </div>
