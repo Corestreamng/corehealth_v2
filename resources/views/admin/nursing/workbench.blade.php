@@ -2768,6 +2768,123 @@
         border-top: 1px solid #e9ecef;
     }
 
+    /* ========== BATCH SELECTION STYLES ========== */
+    .batch-select-dropdown {
+        min-width: 200px;
+        font-size: 0.875rem;
+    }
+
+    .batch-select-dropdown option {
+        padding: 8px;
+    }
+
+    .batch-select-dropdown option.batch-expiring-soon {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+
+    .batch-select-dropdown option.batch-expired {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    .batch-info-display {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        border: 1px solid #90caf9;
+        border-radius: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+    }
+
+    .batch-info-display .batch-number {
+        font-weight: 600;
+        color: #1565c0;
+    }
+
+    .batch-info-display .batch-expiry {
+        color: #666;
+    }
+
+    .batch-info-display .batch-qty {
+        background: white;
+        padding: 0.125rem 0.5rem;
+        border-radius: 0.25rem;
+        font-weight: 600;
+    }
+
+    .batch-fifo-badge {
+        background: linear-gradient(135deg, #4fc3f7 0%, #03a9f4 100%);
+        color: white;
+        padding: 0.125rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .batch-manual-select-btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        border: 1px dashed #6c757d;
+        background: transparent;
+        color: #6c757d;
+        border-radius: 0.25rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .batch-manual-select-btn:hover {
+        border-color: var(--hospital-primary);
+        color: var(--hospital-primary);
+        background: rgba(0, 123, 255, 0.05);
+    }
+
+    .batch-cell {
+        min-width: 180px;
+    }
+
+    .batch-loading {
+        color: #6c757d;
+        font-size: 0.8rem;
+    }
+
+    .batch-insufficient {
+        color: #dc3545;
+        font-size: 0.8rem;
+    }
+
+    /* Batch dropdown in tables */
+    #injection-selected-drugs .batch-cell select,
+    #consumable-batch-select,
+    #modal-vaccine-batch-select {
+        font-size: 0.85rem;
+        padding: 0.375rem 0.5rem;
+        border-radius: 0.375rem;
+        border: 2px solid #e9ecef;
+        background-color: #f8f9fa;
+        transition: all 0.2s;
+    }
+
+    #injection-selected-drugs .batch-cell select:focus,
+    #consumable-batch-select:focus,
+    #modal-vaccine-batch-select:focus {
+        border-color: #03a9f4;
+        box-shadow: 0 0 0 3px rgba(3, 169, 244, 0.15);
+        outline: none;
+    }
+
+    /* Batch option styling */
+    .batch-option-expiring {
+        background: #fff3cd !important;
+    }
+
+    .batch-option-expired {
+        background: #f8d7da !important;
+        text-decoration: line-through;
+    }
+
 </style>
 
 <div class="nursing-workbench-container">
@@ -4341,28 +4458,32 @@
                                             style="display: none; position: absolute; z-index: 1000; max-height: 250px; overflow-y: auto; width: calc(100% - 30px); box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></ul>
                                     </div>
 
-                                    <!-- Selected Drugs Table with Stock Column -->
+                                    <!-- Selected Drugs Table with Stock & Batch Column -->
                                     <div class="table-responsive mb-3">
                                         <table class="table table-sm table-bordered table-striped" id="injection-selected-drugs">
                                             <thead class="bg-light">
                                                 <tr>
-                                                    <th width="5%">*</th>
-                                                    <th width="25%">Drug/Product</th>
-                                                    <th width="10%">Qty</th>
-                                                    <th width="12%">Stock</th>
-                                                    <th width="13%">Price</th>
-                                                    <th width="15%">HMO Coverage</th>
-                                                    <th width="15%">Dose</th>
+                                                    <th width="4%">#</th>
+                                                    <th width="20%">Drug/Product</th>
+                                                    <th width="8%">Qty</th>
+                                                    <th width="18%">
+                                                        <i class="mdi mdi-package-variant"></i> Batch
+                                                        <span class="badge badge-info badge-sm ml-1" title="FIFO Recommended">FIFO</span>
+                                                    </th>
+                                                    <th width="10%">Stock</th>
+                                                    <th width="12%">Price</th>
+                                                    <th width="13%">HMO</th>
+                                                    <th width="10%">Dose</th>
                                                     <th width="5%">*</th>
                                                 </tr>
                                             </thead>
                                             <tbody id="injection-selected-body">
-                                                <!-- Selected drugs will be added here -->
+                                                <!-- Selected drugs will be added here with batch dropdown -->
                                             </tbody>
                                             <tfoot>
                                                 <tr class="bg-light">
-                                                    <td colspan="4" class="text-right"><strong>Total:</strong></td>
-                                                    <td id="injection-total-price"><strong>Γéª0.00</strong></td>
+                                                    <td colspan="5" class="text-right"><strong>Total:</strong></td>
+                                                    <td id="injection-total-price"><strong>₦0.00</strong></td>
                                                     <td id="injection-total-coverage">-</td>
                                                     <td colspan="2"></td>
                                                 </tr>
@@ -4692,12 +4813,20 @@
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group col-md-4">
-                                        <label for="modal-vaccine-batch"><i class="mdi mdi-barcode"></i> Batch/Lot Number</label>
-                                        <input type="text" class="form-control" id="modal-vaccine-batch" placeholder="Enter batch number">
+                                        <label for="modal-vaccine-batch-select">
+                                            <i class="mdi mdi-package-variant"></i> Select Batch
+                                            <span class="badge badge-info badge-sm ml-1" title="Auto-selects FIFO">FIFO</span>
+                                        </label>
+                                        <select class="form-control" id="modal-vaccine-batch-select">
+                                            <option value="">-- Select store first --</option>
+                                        </select>
+                                        <input type="hidden" id="modal-vaccine-batch-id">
+                                        <small class="text-muted" id="modal-vaccine-batch-help">Select product to see available batches</small>
                                     </div>
                                     <div class="form-group col-md-4">
                                         <label for="modal-vaccine-expiry"><i class="mdi mdi-calendar-alert"></i> Expiry Date</label>
-                                        <input type="date" class="form-control" id="modal-vaccine-expiry">
+                                        <input type="date" class="form-control" id="modal-vaccine-expiry" readonly>
+                                        <small class="text-muted">Auto-filled from selected batch</small>
                                     </div>
                                     <div class="form-group col-md-4">
                                         <label for="modal-vaccine-time"><i class="mdi mdi-clock"></i> Administration Time *</label>
@@ -4843,23 +4972,33 @@
                                     <form id="consumable-billing-form">
                                         <!-- Step 2: Product Search & Selection -->
                                         <div class="form-row">
-                                            <div class="form-group col-md-6">
+                                            <div class="form-group col-md-5">
                                                 <label for="consumable-search"><i class="mdi mdi-magnify"></i> Step 2: Search Consumable *</label>
                                                 <input type="text" class="form-control" id="consumable-search" placeholder="Type to search for products..." autocomplete="off">
                                                 <input type="hidden" id="consumable-id">
-                                                <ul class="list-group" id="consumable-search-results" style="display: none; position: absolute; z-index: 1000; max-height: 200px; overflow-y: auto; width: calc(50% - 30px);"></ul>
+                                                <ul class="list-group" id="consumable-search-results" style="display: none; position: absolute; z-index: 1000; max-height: 200px; overflow-y: auto; width: calc(42% - 30px);"></ul>
                                             </div>
-                                            <div class="form-group col-md-3">
-                                                <label for="consumable-quantity"><i class="mdi mdi-numeric"></i> Quantity *</label>
+                                            <div class="form-group col-md-2">
+                                                <label for="consumable-quantity"><i class="mdi mdi-numeric"></i> Qty *</label>
                                                 <input type="number" class="form-control" id="consumable-quantity" min="1" value="1" required>
                                             </div>
-                                            <div class="form-group col-md-3">
+                                            <div class="form-group col-md-2">
                                                 <label for="consumable-price"><i class="mdi mdi-currency-ngn"></i> Total</label>
-                                                <input type="text" class="form-control" id="consumable-price" readonly placeholder="Auto-calculated">
+                                                <input type="text" class="form-control" id="consumable-price" readonly placeholder="Auto">
+                                            </div>
+                                            <div class="form-group col-md-3">
+                                                <label for="consumable-batch-select">
+                                                    <i class="mdi mdi-package-variant"></i> Batch
+                                                    <span class="badge badge-info badge-sm" title="FIFO">FIFO</span>
+                                                </label>
+                                                <select class="form-control" id="consumable-batch-select">
+                                                    <option value="">-- Select product first --</option>
+                                                </select>
+                                                <input type="hidden" id="consumable-batch-id">
                                             </div>
                                         </div>
 
-                                        <!-- Selected Product Stock Info -->
+                                        <!-- Selected Product Stock Info with Batch Details -->
                                         <div id="consumable-selected-stock" class="alert alert-light mb-3" style="display: none;">
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <div>
@@ -4869,6 +5008,10 @@
                                                 <div id="consumable-stock-info" class="text-right">
                                                     <!-- Stock info will show here -->
                                                 </div>
+                                            </div>
+                                            <div id="consumable-batch-info" class="mt-2 pt-2 border-top small" style="display: none;">
+                                                <i class="mdi mdi-information-outline text-info"></i>
+                                                <span id="consumable-batch-detail">FIFO batch will be auto-selected</span>
                                             </div>
                                         </div>
 
@@ -10859,7 +11002,7 @@ function addInjectionDrug(element) {
     }
 
     const coverageInfo = mode && mode !== 'cash'
-        ? `<span class="badge bg-info">${mode.toUpperCase()}</span><br><small class="text-danger">Pay: Γéª${payable}</small><br><small class="text-success">Claim: Γéª${claims}</small>`
+        ? `<span class="badge bg-info">${mode.toUpperCase()}</span><br><small class="text-danger">₦${payable}</small>`
         : '<span class="badge bg-secondary">Cash</span>';
 
     const row = `
@@ -10872,12 +11015,19 @@ function addInjectionDrug(element) {
             </td>
             <td>
                 <input type="number" class="form-control form-control-sm injection-qty"
-                       name="injection_qty[]" value="1" min="1" style="width: 70px;">
+                       name="injection_qty[]" value="1" min="1" style="width: 60px;">
+            </td>
+            <td class="batch-cell">
+                <div class="batch-loading"><i class="mdi mdi-loading mdi-spin"></i> Loading...</div>
+                <select class="form-control form-control-sm batch-select-dropdown d-none" name="injection_batch_id[]">
+                    <option value="">Auto (FIFO)</option>
+                </select>
+                <input type="hidden" name="injection_selected_batch_id[]" value="">
             </td>
             <td class="stock-cell">
                 <span class="text-muted"><i class="mdi mdi-loading mdi-spin"></i></span>
             </td>
-            <td>Γéª${payable.toFixed(2)}</td>
+            <td>₦${payable.toFixed(2)}</td>
             <td>${coverageInfo}</td>
             <td>
                 <input type="text" class="form-control form-control-sm"
@@ -10893,7 +11043,10 @@ function addInjectionDrug(element) {
 
     $('#injection-selected-body').append(row);
     updateInjectionTotals();
-    updateInjectionStockDisplay(); // Update stock for the new row
+
+    // Fetch and populate batch dropdown for this product
+    fetchAndPopulateBatchDropdown(id, storeId, `#injection-selected-body tr[data-product-id="${id}"]`);
+
     $('#injection-drug-results').hide();
     $('#injection-drug-search').val('');
 }
@@ -10912,13 +11065,194 @@ function updateInjectionTotals() {
         const qty = parseInt($(this).find('.injection-qty').val()) || 1;
         total += price * qty;
     });
-    $('#injection-total-price').html(`<strong>Γéª${total.toFixed(2)}</strong>`);
+    $('#injection-total-price').html(`<strong>₦${total.toFixed(2)}</strong>`);
 }
+
+// ===========================================
+// BATCH SELECTION HELPER FUNCTIONS
+// ===========================================
+
+/**
+ * Fetch batches from server and populate dropdown
+ * @param {int} productId - Product ID
+ * @param {int} storeId - Store ID
+ * @param {string} rowSelector - Selector for the table row
+ */
+function fetchAndPopulateBatchDropdown(productId, storeId, rowSelector) {
+    const $row = $(rowSelector);
+    const $batchCell = $row.find('.batch-cell');
+    const $batchLoading = $batchCell.find('.batch-loading');
+    const $batchSelect = $batchCell.find('.batch-select-dropdown');
+    const $stockCell = $row.find('.stock-cell');
+
+    $.ajax({
+        url: '{{ route("nursing-workbench.product-batches") }}',
+        method: 'GET',
+        data: { product_id: productId, store_id: storeId },
+        success: function(response) {
+            $batchLoading.addClass('d-none');
+
+            if (response.success && response.batches.length > 0) {
+                // Build dropdown options
+                let options = '<option value="">Auto (FIFO)</option>';
+                response.batches.forEach((batch, index) => {
+                    const isFirst = index === 0;
+                    const expiryClass = batch.is_expired ? 'batch-option-expired' :
+                                       batch.is_expiring_soon ? 'batch-option-expiring' : '';
+                    const expiryText = batch.expiry_formatted ? ` | Exp: ${batch.expiry_formatted}` : '';
+                    const fifoLabel = isFirst ? ' ★ FIFO' : '';
+
+                    options += `<option value="${batch.id}" class="${expiryClass}"
+                                data-expiry="${batch.expiry_date || ''}"
+                                data-qty="${batch.current_qty}">
+                        ${batch.batch_number} (${batch.current_qty} avail)${expiryText}${fifoLabel}
+                    </option>`;
+                });
+
+                $batchSelect.html(options).removeClass('d-none');
+
+                // Update stock cell
+                const totalQty = response.total_available;
+                const reqQty = parseInt($row.find('.injection-qty').val()) || 1;
+                const stockClass = totalQty >= reqQty ? 'text-success' : 'text-danger';
+                const stockIcon = totalQty >= reqQty ? 'mdi-check-circle' : 'mdi-alert-circle';
+                $stockCell.html(`<span class="${stockClass}"><i class="mdi ${stockIcon}"></i> ${totalQty}</span>`);
+
+                // Store batches data for later reference
+                $row.data('batches', response.batches);
+            } else {
+                // No batches available
+                $batchSelect.html('<option value="">No batches available</option>').removeClass('d-none');
+                $stockCell.html('<span class="text-danger"><i class="mdi mdi-alert-circle"></i> 0</span>');
+            }
+        },
+        error: function() {
+            $batchLoading.addClass('d-none');
+            $batchSelect.html('<option value="">Error loading batches</option>').removeClass('d-none');
+            $stockCell.html('<span class="text-warning"><i class="mdi mdi-help-circle"></i> ?</span>');
+        }
+    });
+}
+
+/**
+ * Fetch batches for a single product and populate a standalone dropdown
+ * @param {int} productId - Product ID
+ * @param {int} storeId - Store ID
+ * @param {string} selectId - ID of the select element to populate
+ * @param {function} callback - Optional callback with batch data
+ */
+function fetchProductBatchesForSelect(productId, storeId, selectId, callback) {
+    const $select = $(selectId);
+    $select.html('<option value="">Loading batches...</option>').prop('disabled', true);
+
+    $.ajax({
+        url: '{{ route("nursing-workbench.product-batches") }}',
+        method: 'GET',
+        data: { product_id: productId, store_id: storeId },
+        success: function(response) {
+            $select.prop('disabled', false);
+
+            if (response.success && response.batches.length > 0) {
+                let options = '<option value="">Auto (FIFO) - Recommended</option>';
+
+                response.batches.forEach((batch, index) => {
+                    const isFirst = index === 0;
+                    const expiryClass = batch.is_expired ? 'batch-option-expired' :
+                                       batch.is_expiring_soon ? 'batch-option-expiring' : '';
+                    const expiryText = batch.expiry_formatted ? ` | Exp: ${batch.expiry_formatted}` : '';
+                    const fifoLabel = isFirst ? ' ★' : '';
+
+                    options += `<option value="${batch.id}" class="${expiryClass}"
+                                data-expiry="${batch.expiry_date || ''}"
+                                data-qty="${batch.current_qty}"
+                                data-batch-number="${batch.batch_number}">
+                        ${batch.batch_number} (${batch.current_qty} avail)${expiryText}${fifoLabel}
+                    </option>`;
+                });
+
+                $select.html(options);
+
+                if (callback) callback(response);
+            } else {
+                $select.html('<option value="">No batches in this store</option>');
+                if (callback) callback({ success: false, batches: [], total_available: 0 });
+            }
+        },
+        error: function() {
+            $select.prop('disabled', false);
+            $select.html('<option value="">Error loading batches</option>');
+            if (callback) callback({ success: false, error: true });
+        }
+    });
+}
+
+/**
+ * Build batch info display for FIFO mode
+ */
+function buildBatchFifoDisplay(batch) {
+    if (!batch) return '<span class="text-muted">No batch available</span>';
+
+    const expiryText = batch.expiry_formatted ? `<span class="batch-expiry">Exp: ${batch.expiry_formatted}</span>` : '';
+
+    return `
+        <div class="batch-info-display">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="batch-fifo-badge"><i class="mdi mdi-sort-clock-ascending"></i> FIFO</span>
+                    <span class="batch-number ml-2">${batch.batch_number}</span>
+                </div>
+                <span class="batch-qty">${batch.current_qty}</span>
+            </div>
+            ${expiryText ? `<div class="mt-1 small">${expiryText}</div>` : ''}
+            <button type="button" class="batch-manual-select-btn mt-1" onclick="$(this).closest('.batch-cell').find('.batch-select-dropdown').removeClass('d-none'); $(this).closest('.batch-info-display').addClass('d-none');">
+                <i class="mdi mdi-pencil"></i> Change Batch
+            </button>
+        </div>
+    `;
+}
+
+/**
+ * Handle batch select change - update expiry field if linked
+ */
+$(document).on('change', '.batch-select-dropdown, #consumable-batch-select, #modal-vaccine-batch-select', function() {
+    const $selected = $(this).find(':selected');
+    const expiryDate = $selected.data('expiry');
+    const batchNumber = $selected.data('batch-number');
+
+    // Update linked expiry field if exists
+    const $form = $(this).closest('form, .modal-body, .card-body');
+    const $expiryField = $form.find('input[type="date"][id*="expiry"]');
+    if ($expiryField.length && expiryDate) {
+        $expiryField.val(expiryDate);
+    }
+
+    // Store selected batch ID in hidden field if exists
+    const $hiddenField = $(this).siblings('input[type="hidden"]');
+    if ($hiddenField.length) {
+        $hiddenField.val($(this).val());
+    }
+});
 
 // Recalculate on qty change and clear validation
 $(document).on('change', '.injection-qty', function() {
     updateInjectionTotals();
-    updateInjectionStockDisplay();
+
+    // Re-fetch batches when quantity changes to show stock status
+    const $row = $(this).closest('tr');
+    const productId = $row.data('product-id');
+    const storeId = $('#injection-store').val();
+    const reqQty = parseInt($(this).val()) || 1;
+
+    // Update stock display based on stored batches
+    const batches = $row.data('batches');
+    if (batches) {
+        const totalQty = batches.reduce((sum, b) => sum + b.current_qty, 0);
+        const $stockCell = $row.find('.stock-cell');
+        const stockClass = totalQty >= reqQty ? 'text-success' : 'text-danger';
+        const stockIcon = totalQty >= reqQty ? 'mdi-check-circle' : 'mdi-alert-circle';
+        $stockCell.html(`<span class="${stockClass}"><i class="mdi ${stockIcon}"></i> ${totalQty}</span>`);
+    }
+
     $(this).removeClass('is-invalid');
     $(this).siblings('.validation-error').remove();
 });
@@ -11151,15 +11485,17 @@ $('#injection-form').on('submit', function(e) {
         return;
     }
 
-    // Collect selected products with names for validation feedback
+    // Collect selected products with names, batch selection for validation feedback
     const products = [];
     $('#injection-selected-body tr').each(function() {
         if ($(this).find('.injection-row-check').is(':checked')) {
+            const batchId = $(this).find('.batch-select-dropdown').val() || null;
             products.push({
                 product_id: $(this).data('product-id'),
                 product_name: $(this).find('td:eq(1) strong').text(),
                 qty: $(this).find('.injection-qty').val(),
-                dose: $(this).find('input[name="injection_dose[]"]').val()
+                dose: $(this).find('input[name="injection_dose[]"]').val(),
+                batch_id: batchId // Include selected batch ID
             });
         }
     });
@@ -11187,7 +11523,12 @@ $('#injection-form').on('submit', function(e) {
 
             const data = {
                 patient_id: currentPatient,
-                products: products.map(p => ({ product_id: p.product_id, qty: p.qty, dose: p.dose })),
+                products: products.map(p => ({
+                    product_id: p.product_id,
+                    qty: p.qty,
+                    dose: p.dose,
+                    batch_id: p.batch_id // Include selected batch ID
+                })),
                 route: $('#injection-route').val(),
                 site: $('#injection-site').val(),
                 administered_at: $('#injection-time').val(),
@@ -12051,6 +12392,30 @@ function selectModalProduct(element) {
 
     // Update stock display for selected product
     updateImmunizationStockDisplay();
+
+    // Fetch and populate batch dropdown for this vaccine
+    const storeId = $('#modal-vaccine-store').val();
+    if (storeId) {
+        fetchProductBatchesForSelect(product.id, storeId, '#modal-vaccine-batch-select', function(response) {
+            if (response.success && response.batches && response.batches.length > 0) {
+                // Show batch help text
+                $('#modal-vaccine-batch-help').html(`
+                    <span class="text-success"><i class="mdi mdi-check-circle"></i> ${response.total_available} available in ${response.batches.length} batch(es)</span>
+                `);
+
+                // Auto-select FIFO batch's expiry date
+                const fifoBatch = response.batches[0];
+                if (fifoBatch && fifoBatch.expiry_date) {
+                    $('#modal-vaccine-expiry').val(fifoBatch.expiry_date);
+                }
+            } else {
+                $('#modal-vaccine-batch-help').html('<span class="text-danger"><i class="mdi mdi-alert"></i> No batches available in this store</span>');
+            }
+        });
+    } else {
+        $('#modal-vaccine-batch-select').html('<option value="">-- Select store first --</option>');
+        $('#modal-vaccine-batch-help').text('Select store first to see batches');
+    }
 }
 
 // Remove selected product
@@ -12189,12 +12554,19 @@ $('#modal-submit-immunization').click(function() {
         // Stock OK - proceed
         $btn.html('<i class="mdi mdi-loading mdi-spin"></i> Administering...');
 
+        // Get batch info from dropdown
+        const $batchSelect = $('#modal-vaccine-batch-select');
+        const selectedBatchId = $batchSelect.val();
+        const selectedBatchOption = $batchSelect.find(':selected');
+        const batchNumber = selectedBatchOption.data('batch-number') || '';
+
         const data = {
             schedule_id: $('#modal-schedule-id').val(),
             product_id: productId,
             site: $('#modal-vaccine-site').val(),
             route: $('#modal-vaccine-route').val(),
-            batch_number: $('#modal-vaccine-batch').val(),
+            batch_id: selectedBatchId, // Send batch ID for StockService
+            batch_number: batchNumber || selectedBatchOption.text().split(' ')[0], // Fallback to text
             expiry_date: $('#modal-vaccine-expiry').val(),
             administered_at: $('#modal-vaccine-time').val(),
             manufacturer: $('#modal-vaccine-manufacturer').val(),
@@ -12543,6 +12915,23 @@ function selectConsumable(id, name, unitPrice, code) {
     $('#consumable-selected-code').text(`[${code || 'N/A'}]`);
     $('#consumable-selected-stock').show();
     updateConsumableStockDisplay();
+
+    // Fetch and populate batch dropdown for this product
+    fetchProductBatchesForSelect(id, storeId, '#consumable-batch-select', function(response) {
+        if (response.success && response.total_available > 0) {
+            $('#consumable-batch-info').show();
+            const fifoBatch = response.fifo_recommended || response.batches[0];
+            if (fifoBatch) {
+                $('#consumable-batch-detail').html(`
+                    <strong>FIFO Recommended:</strong> ${fifoBatch.batch_number}
+                    (${fifoBatch.current_qty} avail)
+                    ${fifoBatch.expiry_formatted ? `| Exp: ${fifoBatch.expiry_formatted}` : ''}
+                `);
+            }
+        } else {
+            $('#consumable-batch-info').hide();
+        }
+    });
 }
 
 // Update consumable price on quantity change
@@ -12637,8 +13026,9 @@ $('#consumable-billing-form').on('submit', function(e) {
         const data = {
             patient_id: currentPatient,
             product_id: productId,
-            quantity: quantity,
-            store_id: storeId
+            qty: quantity,
+            store_id: storeId,
+            batch_id: $('#consumable-batch-select').val() || null // Send selected batch ID
         };
 
         $.ajax({
@@ -12651,6 +13041,8 @@ $('#consumable-billing-form').on('submit', function(e) {
                 showNotification('success', response.message || 'Consumable added successfully');
                 $('#consumable-billing-form')[0].reset();
                 $('#consumable-id').val('');
+                $('#consumable-batch-select').html('<option value="">-- Select product first --</option>');
+                $('#consumable-batch-info').hide();
                 $('#consumable-store-stock-summary').html('<p class="text-muted mb-0">Select a product to see stock</p>');
                 loadPendingBills(currentPatient);
             },
@@ -13722,12 +14114,19 @@ $(document).on('click', '[data-bs-target="#administerModal"]', function() {
     }
 });
 
-// Store selection change - show stock for selected store
+// Store selection change - show stock for selected store and populate batch dropdown
 $(document).on('change', '#administer_store_id', function() {
     const storeId = $(this).val();
+    const productId = $('#administer_product_id').val();
     const $stockInfo = $('#administer-stock-info');
     const $stockQty = $('#administer-stock-qty');
     const $stockWarning = $('#administer-stock-warning');
+    const $batchSection = $('#administer-batch-section');
+    const $batchSelect = $('#administer_batch_id');
+
+    // Reset batch selection
+    $batchSelect.html('<option value="">Use FIFO (Auto - oldest batch first)</option>');
+    $batchSection.hide();
 
     if (!storeId) {
         $stockInfo.hide();
@@ -13738,7 +14137,71 @@ $(document).on('change', '#administer_store_id', function() {
     $stockInfo.show();
     $stockQty.removeClass('bg-success bg-warning bg-danger').addClass('bg-secondary').text('Loading...');
 
-    if (administerStockData && administerStockData.stores) {
+    // Fetch batches for this product/store combination
+    if (productId && storeId) {
+        $.ajax({
+            url: '/nursing-workbench/product-batches',
+            method: 'GET',
+            data: { product_id: productId, store_id: storeId },
+            success: function(response) {
+                if (response.success) {
+                    const totalAvailable = response.total_available || 0;
+                    const batches = response.batches || [];
+
+                    // Update stock display
+                    $stockQty.text(totalAvailable + ' units');
+                    if (totalAvailable <= 0) {
+                        $stockQty.removeClass('bg-secondary bg-success bg-warning').addClass('bg-danger');
+                        $stockWarning.show();
+                        $('#administer-stock-warning-text').text('No stock available in this store!');
+                    } else if (totalAvailable < 5) {
+                        $stockQty.removeClass('bg-secondary bg-success bg-danger').addClass('bg-warning');
+                        $stockWarning.hide();
+                    } else {
+                        $stockQty.removeClass('bg-secondary bg-warning bg-danger').addClass('bg-success');
+                        $stockWarning.hide();
+                    }
+
+                    // Populate batch dropdown
+                    if (batches.length > 0) {
+                        $batchSelect.html('<option value="">Use FIFO (Auto - oldest batch first)</option>');
+                        batches.forEach(function(batch) {
+                            const expiry = batch.expiry_formatted || 'No expiry';
+                            const warning = batch.is_expiring_soon ? '⚠️ ' : '';
+                            const expired = batch.is_expired ? '❌ EXPIRED - ' : '';
+                            $batchSelect.append(`<option value="${batch.id}" ${batch.is_expired ? 'disabled' : ''}>${expired}${warning}${batch.batch_number} (${batch.qty} units, Exp: ${expiry})</option>`);
+                        });
+                        $batchSection.show();
+                    }
+
+                    // Update cache
+                    administerStockData = {
+                        stores: [{ store_id: storeId, quantity: totalAvailable }],
+                        batches: batches
+                    };
+                } else {
+                    $stockQty.text('0 units').removeClass('bg-secondary bg-success bg-warning').addClass('bg-danger');
+                    $stockWarning.show();
+                    $('#administer-stock-warning-text').text('Failed to check stock');
+                }
+            },
+            error: function() {
+                // Fallback to old method
+                if (administerStockData && administerStockData.stores) {
+                    const storeStock = administerStockData.stores.find(s => s.store_id == storeId);
+                    const availableQty = storeStock ? storeStock.quantity : 0;
+                    $stockQty.text(availableQty + ' units');
+                    if (availableQty <= 0) {
+                        $stockQty.removeClass('bg-secondary bg-success bg-warning').addClass('bg-danger');
+                        $stockWarning.show();
+                    } else {
+                        $stockQty.removeClass('bg-secondary bg-warning bg-danger').addClass('bg-success');
+                        $stockWarning.hide();
+                    }
+                }
+            }
+        });
+    } else if (administerStockData && administerStockData.stores) {
         const storeStock = administerStockData.stores.find(s => s.store_id == storeId);
         const availableQty = storeStock ? storeStock.quantity : 0;
 
@@ -13757,7 +14220,6 @@ $(document).on('change', '#administer_store_id', function() {
         }
     } else {
         // Fetch stock if not already loaded
-        const productId = $('#administer_product_id').val();
         if (productId) {
             fetchProductStockByStore(productId, function(stockData) {
                 administerStockData = stockData;

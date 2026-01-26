@@ -946,6 +946,172 @@
         overflow-y: auto;
     }
 
+    /* Sticky Action Bar for Prescription Tabs */
+    .presc-sticky-action-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border-top: 2px solid var(--hospital-primary);
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+        padding: 12px 20px;
+        z-index: 1040;
+        display: none;
+        transform: translateY(100%);
+        transition: transform 0.3s ease, opacity 0.3s ease;
+        opacity: 0;
+        /* Leave space for chat icon on right (60px icon + 30px margin + padding) */
+        padding-right: 110px;
+    }
+
+    .presc-sticky-action-bar.visible {
+        display: flex !important;
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    .presc-sticky-action-bar .action-bar-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+        gap: 15px;
+    }
+
+    .presc-sticky-action-bar .selection-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .presc-sticky-action-bar .selection-count {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 600;
+        color: #212529;
+        font-size: 0.95rem;
+    }
+
+    .presc-sticky-action-bar .selection-count .count-badge {
+        background: var(--hospital-primary);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        min-width: 28px;
+        text-align: center;
+    }
+
+    .presc-sticky-action-bar .selection-total {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #198754;
+        padding: 6px 14px;
+        background: rgba(25, 135, 84, 0.1);
+        border-radius: 8px;
+        border: 1px solid rgba(25, 135, 84, 0.2);
+    }
+
+    .presc-sticky-action-bar .action-buttons {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .presc-sticky-action-bar .btn {
+        padding: 10px 20px;
+        font-weight: 600;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+
+    .presc-sticky-action-bar .btn-primary {
+        background: var(--hospital-primary);
+        border-color: var(--hospital-primary);
+        box-shadow: 0 2px 8px rgba(var(--hospital-primary-rgb), 0.3);
+    }
+
+    .presc-sticky-action-bar .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(var(--hospital-primary-rgb), 0.4);
+    }
+
+    .presc-sticky-action-bar .btn-success {
+        box-shadow: 0 2px 8px rgba(25, 135, 84, 0.3);
+    }
+
+    .presc-sticky-action-bar .btn-success:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(25, 135, 84, 0.4);
+    }
+
+    /* Mobile Responsive for Sticky Bar */
+    @media (max-width: 768px) {
+        .presc-sticky-action-bar {
+            padding: 10px 15px;
+            padding-right: 100px; /* Slightly less on mobile */
+            flex-direction: column;
+        }
+
+        .presc-sticky-action-bar .action-bar-content {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .presc-sticky-action-bar .selection-info {
+            justify-content: center;
+            width: 100%;
+        }
+
+        .presc-sticky-action-bar .action-buttons {
+            justify-content: center;
+            width: 100%;
+        }
+
+        .presc-sticky-action-bar .btn {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+
+        .presc-sticky-action-bar .selection-total {
+            font-size: 1rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .presc-sticky-action-bar {
+            padding-right: 90px;
+        }
+
+        .presc-sticky-action-bar .action-buttons {
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .presc-sticky-action-bar .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    /* Add bottom padding to prescription tab content when sticky bar is visible */
+    .presc-sticky-action-bar.visible ~ .tab-content .tab-pane.active .card-body,
+    body:has(.presc-sticky-action-bar.visible) #presc-billing-pane .card-body,
+    body:has(.presc-sticky-action-bar.visible) #presc-pending-pane .card-body,
+    body:has(.presc-sticky-action-bar.visible) #presc-dispense-pane .card-body {
+        padding-bottom: 100px !important;
+    }
+
     /* Pending Requests Display */
     .request-section {
         margin-bottom: 2rem;
@@ -2072,7 +2238,7 @@
         color: #1e293b;
     }
 
-    /* Stock Status Badges */
+    /* Stock Status Badges - Enhanced visibility */
     .stock-status-badge {
         display: inline-flex;
         align-items: center;
@@ -2085,23 +2251,41 @@
     }
 
     .stock-status-badge.in-stock {
-        background: rgba(40, 167, 69, 0.15);
-        color: #28a745;
+        background: #28a745;
+        color: #ffffff;
     }
 
     .stock-status-badge.low-stock {
-        background: rgba(255, 193, 7, 0.2);
-        color: #d39e00;
+        background: #ffc107;
+        color: #212529;
     }
 
     .stock-status-badge.critical {
-        background: rgba(253, 126, 20, 0.2);
-        color: #e85d04;
+        background: #fd7e14;
+        color: #ffffff;
     }
 
     .stock-status-badge.out-of-stock {
-        background: rgba(220, 53, 69, 0.15);
-        color: #dc3545;
+        background: #dc3545;
+        color: #ffffff;
+    }
+
+    /* Inline stock badges for tables and cards */
+    .badge-stock-ok {
+        background: #28a745 !important;
+        color: #ffffff !important;
+    }
+    .badge-stock-low {
+        background: #ffc107 !important;
+        color: #212529 !important;
+    }
+    .badge-stock-critical {
+        background: #fd7e14 !important;
+        color: #ffffff !important;
+    }
+    .badge-stock-out {
+        background: #dc3545 !important;
+        color: #ffffff !important;
     }
 
     /* Store Breakdown Mini Display */
@@ -4628,7 +4812,219 @@
     justify-content: center;
     gap: 0.5rem;
 }
+
+/* Enhanced Sticky Bar Item List */
+.sticky-items-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-width: 50%;
+    max-height: 60px;
+    overflow-y: auto;
+    padding: 4px 0;
+}
+
+.sticky-item-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.sticky-item-chip .item-name {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+    color: #212529;
+}
+
+.sticky-item-chip .item-details {
+    color: #6c757d;
+    font-size: 0.7rem;
+}
+
+.sticky-item-chip .item-price {
+    color: #198754;
+    font-weight: 600;
+}
+
+.sticky-item-chip .btn-remove-item {
+    background: none;
+    border: none;
+    padding: 0;
+    margin-left: 4px;
+    color: #dc3545;
+    cursor: pointer;
+    font-size: 0.85rem;
+    line-height: 1;
+    opacity: 0.7;
+}
+
+.sticky-item-chip .btn-remove-item:hover {
+    opacity: 1;
+}
+
+.sticky-items-overflow {
+    font-size: 0.75rem;
+    color: #6c757d;
+    padding: 4px 8px;
+    background: #f8f9fa;
+    border-radius: 12px;
+}
+
+.btn-clear-selection {
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    border-radius: 15px;
+}
+
+@media (max-width: 768px) {
+    .sticky-items-list {
+        max-width: 100%;
+        max-height: 45px;
+    }
+    .sticky-item-chip .item-name {
+        max-width: 80px;
+    }
+}
 </style>
+
+<!-- Sticky Action Bars for Prescription Tabs -->
+<!-- Billing Tab Sticky Bar -->
+<div id="billing-sticky-bar" class="presc-sticky-action-bar" data-tab="billing">
+    <div class="action-bar-content">
+        <div class="selection-info">
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <div class="selection-count">
+                    <i class="mdi mdi-checkbox-marked-circle text-primary"></i>
+                    <span class="count-badge" id="billing-selected-count">0</span>
+                    <span>selected</span>
+                </div>
+                <button type="button" class="btn btn-outline-secondary btn-clear-selection" onclick="clearSelection('billing')" title="Clear selection">
+                    <i class="mdi mdi-close"></i> Clear
+                </button>
+            </div>
+            <div class="sticky-items-list" id="billing-items-list"></div>
+        </div>
+        <div class="d-flex flex-column align-items-end gap-2">
+            <div class="selection-total" id="billing-selected-total">₦0.00</div>
+            <div class="action-buttons">
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="showDismissModal('billing')">
+                    <i class="mdi mdi-close-circle"></i>
+                    <span class="d-none d-sm-inline">Dismiss</span>
+                </button>
+                <button type="button" class="btn btn-primary" onclick="billPrescItems()" id="sticky-btn-bill-presc">
+                    <i class="mdi mdi-cash-register"></i>
+                    <span>Bill</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pending Tab Sticky Bar -->
+<div id="pending-sticky-bar" class="presc-sticky-action-bar" data-tab="pending">
+    <div class="action-bar-content">
+        <div class="selection-info">
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <div class="selection-count">
+                    <i class="mdi mdi-checkbox-marked-circle text-warning"></i>
+                    <span class="count-badge" id="pending-selected-count" style="background: #ffc107; color: #212529;">0</span>
+                    <span>selected</span>
+                </div>
+                <button type="button" class="btn btn-outline-secondary btn-clear-selection" onclick="clearSelection('pending')" title="Clear selection">
+                    <i class="mdi mdi-close"></i> Clear
+                </button>
+            </div>
+            <div class="sticky-items-list" id="pending-items-list"></div>
+        </div>
+        <div class="d-flex flex-column align-items-end gap-2">
+            <div class="selection-total text-warning" id="pending-selected-total" style="background: rgba(255, 193, 7, 0.1); border-color: rgba(255, 193, 7, 0.3); color: #856404;">
+                Awaiting settlement
+            </div>
+            <div class="action-buttons">
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="printSelectedPendingPrescriptions()">
+                    <i class="mdi mdi-printer"></i>
+                </button>
+                <button type="button" class="btn btn-danger" onclick="showDismissModal('pending')">
+                    <i class="mdi mdi-close-circle"></i>
+                    <span>Dismiss</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dispense Tab Sticky Bar -->
+<div id="dispense-sticky-bar" class="presc-sticky-action-bar" data-tab="dispense">
+    <div class="action-bar-content">
+        <div class="selection-info">
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <div class="selection-count">
+                    <i class="mdi mdi-checkbox-marked-circle text-success"></i>
+                    <span class="count-badge" id="dispense-selected-count" style="background: #198754;">0</span>
+                    <span>ready</span>
+                </div>
+                <button type="button" class="btn btn-outline-secondary btn-clear-selection" onclick="clearSelection('dispense')" title="Clear selection">
+                    <i class="mdi mdi-close"></i> Clear
+                </button>
+            </div>
+            <div class="sticky-items-list" id="dispense-items-list"></div>
+        </div>
+        <div class="d-flex flex-column align-items-end gap-2">
+            <div class="selection-total" id="dispense-selected-total">₦0.00</div>
+            <div class="action-buttons">
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="showDismissModal('dispense')">
+                    <i class="mdi mdi-close-circle"></i>
+                    <span class="d-none d-sm-inline">Dismiss</span>
+                </button>
+                <button type="button" class="btn btn-success" onclick="addSelectedToCartAndOpen()">
+                    <i class="mdi mdi-cart-plus"></i>
+                    <span>Cart</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dismiss Confirmation Modal -->
+<div class="modal fade" id="dismissConfirmModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="mdi mdi-alert-circle"></i> Confirm Dismissal</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <i class="mdi mdi-trash-can-outline text-danger" style="font-size: 3rem;"></i>
+                </div>
+                <p class="text-center mb-3">Are you sure you want to dismiss the following <strong id="dismiss-count">0</strong> item(s)?</p>
+                <div class="dismiss-items-preview p-3 bg-light rounded" id="dismiss-items-preview" style="max-height: 200px; overflow-y: auto;">
+                    <!-- Items list will be populated here -->
+                </div>
+                <div class="alert alert-warning mt-3 mb-0">
+                    <i class="mdi mdi-alert"></i> <strong>Warning:</strong> This action cannot be undone. Dismissed prescriptions will be removed from the queue.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="mdi mdi-close"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-danger" id="confirm-dismiss-btn" onclick="confirmDismiss()">
+                    <i class="mdi mdi-trash-can"></i> Yes, Dismiss Items
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- My Transactions Modal (Global Access) -->
 <div class="modal fade" id="myTransactionsModal" tabindex="-1" role="dialog">
@@ -4913,64 +5309,432 @@
 </div>
 
 <!-- ========== PRODUCT ADAPTATION MODAL ========== -->
-<!-- NEW: For adapting/changing prescribed products during billing -->
+<!-- For adapting/changing prescribed products - shows billing impact for billed items -->
 <div class="modal fade" id="productAdaptationModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-dialog modal-xl" role="document">
         <div class="modal-content">
-            <div class="modal-header" style="background: #f0ad4e; color: white;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #17a2b8, #138496); color: white;">
                 <h5 class="modal-title"><i class="mdi mdi-swap-horizontal"></i> Adapt Prescription</h5>
                 <button type="button" class="close text-white" data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
             </div>
             <div class="modal-body">
-                <div class="alert alert-warning">
-                    <i class="mdi mdi-alert"></i>
-                    <strong>Note:</strong> Adapting a prescription will change the product while keeping a record of the original prescription.
-                </div>
-
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <div class="card-modern bg-light">
-                            <div class="card-body">
-                                <h6 class="card-subtitle mb-2 text-muted">Original Prescription</h6>
-                                <h5 id="adapt-original-product" class="card-title">-</h5>
-                                <p class="card-text mb-0">
-                                    <small>Dose: <span id="adapt-original-dose">-</span></small><br>
-                                    <small>Qty: <span id="adapt-original-qty">-</span></small>
-                                </p>
-                            </div>
+                <!-- Step indicator -->
+                <div class="adapt-steps mb-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="step active" id="adapt-step-1">
+                            <span class="step-number">1</span>
+                            <span class="step-label">Select Product</span>
                         </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card-modern border-success">
-                            <div class="card-body">
-                                <h6 class="card-subtitle mb-2 text-success">New Product</h6>
-                                <div class="form-group mb-2">
-                                    <select class="form-control" id="adapt-new-product">
-                                        <option value="">Search and select product...</option>
-                                    </select>
-                                </div>
-                                <div class="form-group mb-2">
-                                    <label class="small">New Quantity</label>
-                                    <input type="number" class="form-control form-control-sm" id="adapt-new-qty" min="1" value="1">
-                                </div>
-                            </div>
+                        <div class="step-line"></div>
+                        <div class="step" id="adapt-step-2">
+                            <span class="step-number">2</span>
+                            <span class="step-label">Review Changes</span>
+                        </div>
+                        <div class="step-line"></div>
+                        <div class="step" id="adapt-step-3">
+                            <span class="step-number">3</span>
+                            <span class="step-label">Confirm</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label><strong>Reason for Adaptation</strong> <span class="text-danger">*</span></label>
-                    <textarea class="form-control" id="adapt-reason" rows="3" placeholder="Enter reason for changing the prescribed product (e.g., out of stock, patient preference, pharmacist recommendation)..." required></textarea>
+                <!-- Status-specific guidance -->
+                <div id="adapt-unbilled-notice" class="alert alert-info mb-3" style="display: none;">
+                    <i class="mdi mdi-information-outline"></i>
+                    <strong>Unbilled Item:</strong> This prescription has not been billed yet. You can freely change the product without affecting any billing records.
+                </div>
+
+                <div id="adapt-billed-notice" class="alert alert-warning mb-3" style="display: none;">
+                    <i class="mdi mdi-alert-outline"></i>
+                    <strong>Billed Item:</strong> This prescription has already been billed. Changing the product will automatically update the billing record with the new product's price.
+                </div>
+
+                <div class="row">
+                    <!-- Left Column: Original & New Product Selection -->
+                    <div class="col-md-7">
+                        <div class="row mb-3">
+                            <!-- Original Product Card -->
+                            <div class="col-12 mb-3">
+                                <div class="card border-secondary h-100">
+                                    <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
+                                        <small class="text-muted"><i class="mdi mdi-pill"></i> ORIGINAL PRESCRIPTION</small>
+                                        <span class="badge bg-secondary" id="adapt-original-status-badge">Unbilled</span>
+                                    </div>
+                                    <div class="card-body py-3">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <h5 id="adapt-original-product" class="card-title text-primary mb-1">-</h5>
+                                                <small class="text-muted" id="adapt-original-code">-</small>
+                                            </div>
+                                            <div class="text-end">
+                                                <div class="fs-5 fw-bold text-success" id="adapt-original-total">₦0.00</div>
+                                                <small class="text-muted">Total</small>
+                                            </div>
+                                        </div>
+                                        <hr class="my-2">
+                                        <div class="row small">
+                                            <div class="col-4">
+                                                <span class="text-muted">Unit Price:</span><br>
+                                                <strong id="adapt-original-price">₦0.00</strong>
+                                            </div>
+                                            <div class="col-4">
+                                                <span class="text-muted">Quantity:</span><br>
+                                                <strong id="adapt-original-qty">-</strong>
+                                            </div>
+                                            <div class="col-4">
+                                                <span class="text-muted">Dose/Freq:</span><br>
+                                                <strong id="adapt-original-dose">-</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- New Product Selection Card -->
+                            <div class="col-12">
+                                <div class="card border-success h-100">
+                                    <div class="card-header bg-success text-white py-2">
+                                        <i class="mdi mdi-arrow-right-bold"></i> SELECT NEW PRODUCT
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-group mb-3">
+                                            <label class="small text-muted mb-1">Search & Select Replacement Product</label>
+                                            <select class="form-control" id="adapt-new-product" style="width: 100%;">
+                                                <option value="">Type to search products...</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- New Product Details (shown after selection) -->
+                                        <div id="adapt-new-product-details" style="display: none;">
+                                            <div class="row mb-3">
+                                                <div class="col-6">
+                                                    <label class="small text-muted mb-1">Quantity</label>
+                                                    <div class="input-group">
+                                                        <button type="button" class="btn btn-outline-secondary" id="adapt-qty-minus">
+                                                            <i class="mdi mdi-minus"></i>
+                                                        </button>
+                                                        <input type="number" class="form-control text-center" id="adapt-new-qty" min="1" value="1">
+                                                        <button type="button" class="btn btn-outline-secondary" id="adapt-qty-plus">
+                                                            <i class="mdi mdi-plus"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="small text-muted mb-1">Unit Price</label>
+                                                    <div class="form-control-plaintext fs-5 fw-bold text-success" id="adapt-new-price">₦0.00</div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Stock Availability -->
+                                            <div class="card bg-light mb-3">
+                                                <div class="card-body py-2">
+                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                        <strong class="small"><i class="mdi mdi-warehouse"></i> Stock Availability</strong>
+                                                        <span class="badge" id="adapt-stock-badge">-</span>
+                                                    </div>
+                                                    <div id="adapt-store-stocks" class="small">
+                                                        <!-- Store stocks will be populated here -->
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- HMO Coverage Info -->
+                                            <div id="adapt-hmo-info" class="card border-info mb-0" style="display: none;">
+                                                <div class="card-body py-2">
+                                                    <div class="d-flex justify-content-between align-items-center small">
+                                                        <span><i class="mdi mdi-hospital-building text-info"></i> HMO Coverage</span>
+                                                        <span class="badge bg-info" id="adapt-coverage-badge">-</span>
+                                                    </div>
+                                                    <div class="row mt-2 small">
+                                                        <div class="col-6">
+                                                            <span class="text-muted">Patient Pays:</span>
+                                                            <strong class="text-danger ms-1" id="adapt-new-payable">₦0</strong>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <span class="text-muted">HMO Covers:</span>
+                                                            <strong class="text-success ms-1" id="adapt-new-claims">₦0</strong>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Placeholder when no product selected -->
+                                        <div id="adapt-no-product-selected" class="text-center py-4 text-muted">
+                                            <i class="mdi mdi-magnify" style="font-size: 2rem;"></i>
+                                            <p class="mb-0 mt-2">Search and select a product above</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Calculations & Summary -->
+                    <div class="col-md-5">
+                        <!-- Price Calculation Summary -->
+                        <div class="card border-primary mb-3">
+                            <div class="card-header bg-primary text-white py-2">
+                                <i class="mdi mdi-calculator"></i> <strong>Price Calculation</strong>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-sm mb-0">
+                                    <tbody>
+                                        <tr>
+                                            <td class="text-muted">Original Total:</td>
+                                            <td class="text-end fw-bold" id="adapt-calc-original">₦0.00</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">New Total:</td>
+                                            <td class="text-end fw-bold text-primary" id="adapt-calc-new">₦0.00</td>
+                                        </tr>
+                                        <tr class="border-top">
+                                            <td><strong>Difference:</strong></td>
+                                            <td class="text-end fs-5" id="adapt-calc-diff">
+                                                <span class="text-muted">₦0.00</span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <div id="adapt-calc-note" class="small text-muted mt-2 text-center" style="display: none;">
+                                    <!-- Note about price difference -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Billing Impact Preview (only for billed items) -->
+                        <div id="adapt-billing-impact" class="card border-warning mb-3" style="display: none;">
+                            <div class="card-header bg-warning text-dark py-2">
+                                <strong><i class="mdi mdi-receipt"></i> Billing Impact</strong>
+                            </div>
+                            <div class="card-body py-2">
+                                <table class="table table-sm table-bordered mb-0 small">
+                                    <thead class="bg-light">
+                                        <tr>
+                                            <th></th>
+                                            <th class="text-center">Current</th>
+                                            <th class="text-center">New</th>
+                                            <th class="text-center">Change</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Patient Pays</td>
+                                            <td class="text-center" id="adapt-impact-payable-old">₦0</td>
+                                            <td class="text-center" id="adapt-impact-payable-new">₦0</td>
+                                            <td class="text-center" id="adapt-impact-payable-diff">-</td>
+                                        </tr>
+                                        <tr>
+                                            <td>HMO Claims</td>
+                                            <td class="text-center" id="adapt-impact-claims-old">₦0</td>
+                                            <td class="text-center" id="adapt-impact-claims-new">₦0</td>
+                                            <td class="text-center" id="adapt-impact-claims-diff">-</td>
+                                        </tr>
+                                        <tr class="table-secondary">
+                                            <td><strong>Total</strong></td>
+                                            <td class="text-center" id="adapt-impact-total-old">₦0</td>
+                                            <td class="text-center" id="adapt-impact-total-new">₦0</td>
+                                            <td class="text-center" id="adapt-impact-total-diff">-</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <div id="adapt-impact-note" class="mt-2 small"></div>
+                            </div>
+                        </div>
+
+                        <!-- Current Billing Info (for billed items) -->
+                        <div id="adapt-current-billing" class="card border-secondary mb-3" style="display: none;">
+                            <div class="card-header bg-light py-2">
+                                <strong><i class="mdi mdi-information-outline"></i> Current Billing</strong>
+                            </div>
+                            <div class="card-body py-2 small">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <span class="text-muted">Patient Pays:</span><br>
+                                        <strong class="text-danger" id="adapt-current-payable">₦0.00</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <span class="text-muted">HMO Claims:</span><br>
+                                        <strong class="text-success" id="adapt-current-claims">₦0.00</strong>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <span class="text-muted">Coverage Mode:</span>
+                                    <strong id="adapt-current-coverage">-</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Reason for Adaptation -->
+                        <div class="card border-secondary">
+                            <div class="card-header bg-light py-2">
+                                <strong><i class="mdi mdi-note-text"></i> Reason for Change</strong>
+                                <span class="text-danger">*</span>
+                            </div>
+                            <div class="card-body py-2">
+                                <textarea class="form-control" id="adapt-reason" rows="3" placeholder="Why are you changing this product? (e.g., out of stock, patient preference, generic substitution)..." required></textarea>
+                                <div class="mt-2">
+                                    <small class="text-muted">Quick reasons:</small>
+                                    <div class="mt-1">
+                                        <button type="button" class="btn btn-xs btn-outline-secondary adapt-quick-reason me-1 mb-1" data-reason="Out of stock">Out of stock</button>
+                                        <button type="button" class="btn btn-xs btn-outline-secondary adapt-quick-reason me-1 mb-1" data-reason="Generic substitution">Generic substitution</button>
+                                        <button type="button" class="btn btn-xs btn-outline-secondary adapt-quick-reason me-1 mb-1" data-reason="Patient request">Patient request</button>
+                                        <button type="button" class="btn btn-xs btn-outline-secondary adapt-quick-reason me-1 mb-1" data-reason="Doctor recommendation">Doctor advised</button>
+                                        <button type="button" class="btn btn-xs btn-outline-secondary adapt-quick-reason me-1 mb-1" data-reason="Cost consideration">Cost saving</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <input type="hidden" id="adapt-product-request-id">
+                <input type="hidden" id="adapt-billing-status">
+                <input type="hidden" id="adapt-coverage-mode">
+                <input type="hidden" id="adapt-original-price-value">
+                <input type="hidden" id="adapt-original-qty-value">
+            </div>
+            <div class="modal-footer bg-light">
+                <div class="d-flex justify-content-between w-100 align-items-center">
+                    <div class="small text-muted" id="adapt-summary-text">
+                        Select a new product to see the changes
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                            <i class="mdi mdi-close"></i> Cancel
+                        </button>
+                        <button type="button" class="btn btn-info" id="confirm-adaptation" disabled>
+                            <i class="mdi mdi-check"></i> Confirm Adaptation
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== QUANTITY ADJUSTMENT MODAL ========== -->
+<!-- For adjusting quantity - shows billing impact for billed items -->
+<div class="modal fade" id="qtyAdjustmentModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #ffc107, #e0a800); color: #212529;">
+                <h5 class="modal-title"><i class="mdi mdi-counter"></i> Adjust Quantity</h5>
+                <button type="button" class="close" data-bs-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Status-specific guidance -->
+                <div id="qty-unbilled-notice" class="alert alert-info mb-3" style="display: none;">
+                    <i class="mdi mdi-information-outline"></i>
+                    <strong>Unbilled Item:</strong> This prescription has not been billed yet. You can freely adjust the quantity without affecting any billing records.
+                </div>
+
+                <div id="qty-billed-notice" class="alert alert-warning mb-3" style="display: none;">
+                    <i class="mdi mdi-alert-outline"></i>
+                    <strong>Billed Item:</strong> This prescription has already been billed. Changing the quantity will automatically update the billing amount.
+                </div>
+
+                <!-- Product Info Card -->
+                <div class="card border-primary mb-3">
+                    <div class="card-body py-2">
+                        <h6 class="card-title mb-1" id="qty-adjust-product-name">Product Name</h6>
+                        <div class="row small">
+                            <div class="col-6">
+                                <span class="text-muted">Unit Price:</span>
+                                <strong id="qty-adjust-unit-price">₦0.00</strong>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted">Current Qty:</span>
+                                <strong id="qty-adjust-current">0</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current billing info for billed items -->
+                <div id="qty-current-billing" class="card border-secondary mb-3" style="display: none;">
+                    <div class="card-header bg-light py-2">
+                        <small><strong><i class="mdi mdi-receipt"></i> Current Billing</strong></small>
+                    </div>
+                    <div class="card-body py-2">
+                        <div class="row small">
+                            <div class="col-6">
+                                <span class="text-muted">Patient Pays:</span><br>
+                                <strong class="text-danger" id="qty-current-payable">₦0.00</strong>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted">HMO Claims:</span><br>
+                                <strong class="text-success" id="qty-current-claims">₦0.00</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quantity Input -->
+                <div class="form-group mb-3">
+                    <label><strong>New Quantity</strong> <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <button class="btn btn-outline-secondary" type="button" onclick="adjustQtyDecrement()">
+                            <i class="mdi mdi-minus"></i>
+                        </button>
+                        <input type="number" class="form-control text-center" id="qty-adjust-new" min="1" value="1" style="font-size: 1.25rem; font-weight: bold;">
+                        <button class="btn btn-outline-secondary" type="button" onclick="adjustQtyIncrement()">
+                            <i class="mdi mdi-plus"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Billing Impact Preview (only for billed items) -->
+                <div id="qty-billing-impact" class="card border-warning mb-3" style="display: none;">
+                    <div class="card-header bg-warning text-dark py-2">
+                        <strong><i class="mdi mdi-calculator"></i> Billing Impact</strong>
+                    </div>
+                    <div class="card-body py-2">
+                        <table class="table table-sm mb-0">
+                            <tr>
+                                <td>Patient Payable:</td>
+                                <td class="text-end">
+                                    <span class="text-muted text-decoration-line-through" id="qty-impact-payable-old">₦0.00</span>
+                                    <i class="mdi mdi-arrow-right mx-1"></i>
+                                    <strong class="text-danger" id="qty-impact-payable-new">₦0.00</strong>
+                                    <span id="qty-impact-payable-diff" class="badge ms-1">₦0.00</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>HMO Claims:</td>
+                                <td class="text-end">
+                                    <span class="text-muted text-decoration-line-through" id="qty-impact-claims-old">₦0.00</span>
+                                    <i class="mdi mdi-arrow-right mx-1"></i>
+                                    <strong class="text-success" id="qty-impact-claims-new">₦0.00</strong>
+                                    <span id="qty-impact-claims-diff" class="badge ms-1">₦0.00</span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Reason -->
+                <div class="form-group">
+                    <label><strong><i class="mdi mdi-note-text"></i> Reason for Adjustment</strong> <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="qty-adjust-reason" rows="2" placeholder="Why are you changing the quantity? (e.g., patient request, stock availability, clinical decision)..." required></textarea>
+                    <small class="text-muted">This will be recorded for audit purposes</small>
+                </div>
+
+                <input type="hidden" id="qty-adjust-request-id">
+                <input type="hidden" id="qty-adjust-billing-status">
+                <input type="hidden" id="qty-adjust-price">
+                <input type="hidden" id="qty-adjust-coverage-mode">
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-warning" id="confirm-adaptation">
-                    <i class="mdi mdi-check"></i> Confirm Adaptation
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="mdi mdi-close"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-warning" id="confirm-qty-adjustment">
+                    <i class="mdi mdi-check"></i> Confirm Adjustment
                 </button>
             </div>
         </div>
@@ -4978,7 +5742,43 @@
 </div>
 
 <style>
-/* Batch Selection in Cart Styles */
+/* Adaptation Modal Steps */
+.adapt-steps .step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    opacity: 0.5;
+}
+.adapt-steps .step.active {
+    opacity: 1;
+}
+.adapt-steps .step-number {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+.adapt-steps .step.active .step-number {
+    background: #17a2b8;
+    color: white;
+}
+.adapt-steps .step-label {
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+.adapt-steps .step-line {
+    flex: 1;
+    height: 2px;
+    background: #dee2e6;
+    margin: 0 10px;
+    margin-bottom: 20px;
+}
+
 .batch-fifo-display {
     text-align: left;
 }
@@ -5004,6 +5804,90 @@
 /* Adaptation Modal Select2 Style */
 #productAdaptationModal .select2-container {
     width: 100% !important;
+}
+
+/* Ensure Select2 dropdown appears above modals */
+.select2-container--open {
+    z-index: 9999 !important;
+}
+
+.select2-dropdown {
+    z-index: 9999 !important;
+}
+
+/* Enhanced Adaptation Modal Styling */
+#productAdaptationModal .modal-body {
+    max-height: 75vh;
+    overflow-y: auto;
+}
+
+#productAdaptationModal .card {
+    transition: box-shadow 0.2s;
+}
+
+#productAdaptationModal .card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+#adapt-store-stocks .border-bottom:last-child {
+    border-bottom: none !important;
+}
+
+.adapt-quick-reason {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+}
+
+.adapt-quick-reason.btn-secondary {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+    color: white;
+}
+
+/* Step indicator styling */
+.adapt-steps .step {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    opacity: 0.5;
+    transition: opacity 0.3s;
+}
+
+.adapt-steps .step.active {
+    opacity: 1;
+}
+
+.adapt-steps .step-number {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.875rem;
+}
+
+.adapt-steps .step.active .step-number {
+    background: #17a2b8;
+    color: white;
+}
+
+.adapt-steps .step-line {
+    flex: 1;
+    height: 2px;
+    background: #e9ecef;
+}
+
+.adapt-steps .step-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.adapt-steps .step.active .step-label {
+    color: #17a2b8;
+    font-weight: 500;
 }
 </style>
 
@@ -5229,6 +6113,24 @@ function initializeEventListeners() {
         const targetPane = $(e.target).data('bs-target');
         console.log('Prescription subtab switched to:', targetPane);
         refreshPrescSubtab(targetPane);
+
+        // Hide all sticky bars when switching tabs
+        hideAllStickyBars();
+
+        // Show appropriate bar if there are selections in the new tab
+        if (targetPane === '#presc-billing-pane') {
+            updateStickyActionBar('billing');
+        } else if (targetPane === '#presc-pending-pane') {
+            updateStickyActionBar('pending');
+        } else if (targetPane === '#presc-dispense-pane') {
+            updateStickyActionBar('dispense');
+        }
+    });
+
+    // Clear dispense selection when cart modal closes
+    $('#dispenseCartModal').on('hidden.bs.modal', function() {
+        console.log('Dispense cart modal closed - clearing selection');
+        clearSelection('dispense');
     });
 
     // Navigation buttons
@@ -5479,12 +6381,17 @@ function displayProductSearchResults(results) {
             `;
         }
 
-        // Stock availability badge
+        // Stock availability badge with intuitive thresholds
+        // Thresholds: Out (0), Critical (1-5), Low (6-20), OK (>20)
         let stockBadge = '';
-        if (stockQty > 0) {
-            stockBadge = `<span class="badge badge-success ml-1">${stockQty} avail.</span>`;
+        if (stockQty <= 0) {
+            stockBadge = `<span class="badge badge-stock-out ml-1"><i class="mdi mdi-alert-circle"></i> Out of stock</span>`;
+        } else if (stockQty <= 5) {
+            stockBadge = `<span class="badge badge-stock-critical ml-1"><i class="mdi mdi-alert"></i> ${stockQty} only!</span>`;
+        } else if (stockQty <= 20) {
+            stockBadge = `<span class="badge badge-stock-low ml-1"><i class="mdi mdi-alert-outline"></i> ${stockQty} left</span>`;
         } else {
-            stockBadge = `<span class="badge badge-danger ml-1">Out of stock</span>`;
+            stockBadge = `<span class="badge badge-stock-ok ml-1">${stockQty} avail.</span>`;
         }
 
         const item = `
@@ -5836,6 +6743,9 @@ function loadPatient(patientId) {
     console.log('loadPatient called with ID:', patientId);
     currentPatient = patientId;
 
+    // Hide all sticky bars when loading new patient
+    hideAllStickyBars();
+
     // Show loading state
     $('#empty-state').hide();
     $('#workspace-content').addClass('active');
@@ -5861,10 +6771,9 @@ function loadPatient(patientId) {
             // Inject unified prescription partial HTML
             injectUnifiedPrescPartial(data.patient.id, data.patient.user_id);
 
-            // Initialize unified prescription management
-            if (typeof initPrescManagement === 'function') {
-                initPrescManagement(data.patient.id, data.patient.user_id);
-            }
+            // Initialize Pharmacy Workbench specific DataTables (with adaptation buttons)
+            // NOTE: Do NOT call initPrescManagement() as it uses the old renderPrescCard without action buttons
+            initializePrescriptionDataTables(data.patient.id);
 
             // Update subtab counts
             updatePendingSubtabCounts(data.counts || {});
@@ -5947,6 +6856,15 @@ function injectUnifiedPrescPartial(patientId, patientUserId) {
         }
         .presc-card-meta-item i {
             margin-right: 4px;
+        }
+        .presc-card-actions {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        .presc-card-actions .btn {
+            font-size: 0.75rem;
+            padding: 2px 8px;
         }
         #presc_billing_table td,
         #presc_dispense_table td,
@@ -6270,6 +7188,8 @@ function initializePrescriptionDataTables(patientId) {
             $('#unbilled-subtab-badge, #queue-unbilled-count, #presc-billing-count').text(info.recordsTotal);
             // Restore checked items after redraw
             restoreCheckedItemsState('#presc_billing_table', 'presc-billing-check');
+            // Attach action button handlers
+            attachPrescCardActionHandlers();
         }
     });
 
@@ -6310,6 +7230,8 @@ function initializePrescriptionDataTables(patientId) {
             $('#presc-pending-count').text(info.recordsTotal);
             // Restore checked items after redraw
             restoreCheckedItemsState('#presc_pending_table', 'presc-pending-check');
+            // Attach action button handlers
+            attachPrescCardActionHandlers();
         }
     });
 
@@ -6352,6 +7274,8 @@ function initializePrescriptionDataTables(patientId) {
             $('#billed-subtab-badge, #ready-subtab-badge, #queue-ready-count, #presc-dispense-count').text(info.recordsTotal);
             // Restore checked items after redraw
             restoreCheckedItemsState('#presc_dispense_table', 'presc-dispense-check');
+            // Attach action button handlers
+            attachPrescCardActionHandlers();
         }
     });
 
@@ -6389,6 +7313,49 @@ function formatMoneyPharmacy(amount) {
     return parseFloat(amount || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+// Attach action button handlers for prescription cards
+function attachPrescCardActionHandlers() {
+    // Adapt button handler - pass all billing context
+    $('.btn-adapt-product-card').off('click').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const $btn = $(this);
+        openAdaptationModal(
+            $btn.data('id'),
+            $btn.data('product'),
+            $btn.data('dose'),
+            $btn.data('qty'),
+            $btn.data('price'),
+            $btn.data('status'),
+            $btn.data('payable'),
+            $btn.data('claims'),
+            $btn.data('is-paid'),
+            $btn.data('is-validated'),
+            $btn.data('coverage-mode'),
+            $btn.data('product-code')
+        );
+    });
+
+    // Quantity adjustment button handler - pass all billing context
+    $('.btn-adjust-qty-card').off('click').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const $btn = $(this);
+        openQtyAdjustmentModal(
+            $btn.data('id'),
+            $btn.data('product'),
+            $btn.data('qty'),
+            $btn.data('price'),
+            $btn.data('status'),
+            $btn.data('payable'),
+            $btn.data('claims'),
+            $btn.data('is-paid'),
+            $btn.data('is-validated'),
+            $btn.data('coverage-mode')
+        );
+    });
+}
+
 // Toggle all checkboxes for billing
 function toggleAllPrescBilling(checkbox) {
     const isChecked = $(checkbox).is(':checked');
@@ -6402,6 +7369,9 @@ function toggleAllPrescBilling(checkbox) {
 function toggleAllPrescPending(checkbox) {
     const isChecked = $(checkbox).is(':checked');
     $('.presc-pending-check').prop('checked', isChecked);
+    $('.presc-pending-check').each(function() {
+        handlePrescPendingCheckPharmacy(this);
+    });
 }
 
 // Toggle all checkboxes for dispense
@@ -6419,6 +7389,208 @@ function updatePrescBillingTotalPharmacy() {
     $('#presc_billing_total_val').val(prescBillingTotal);
 }
 
+// Store for selected items data
+let selectedItemsData = {
+    billing: [],
+    pending: [],
+    dispense: []
+};
+
+// Store dismiss type for modal
+let currentDismissType = null;
+
+// Update sticky action bar visibility, counts, and item list
+function updateStickyActionBar(type) {
+    const $bar = $(`#${type}-sticky-bar`);
+    const $itemsList = $(`#${type}-items-list`);
+    let selectedCount = 0;
+    let totalAmount = 0;
+    let items = [];
+
+    if (type === 'billing') {
+        $('#presc_billing_table').find('.presc-billing-check:checked').each(function() {
+            const $row = $(this).closest('tr');
+            const $card = $row.find('.presc-card');
+            const id = $(this).data('id');
+            const price = parseFloat($(this).data('price')) || 0;
+            const name = $card.find('.presc-card-title').text().trim() || 'Unknown';
+            const qty = $card.find('.presc-card-body').text().match(/Qty:\s*(\d+)/)?.[1] || '1';
+
+            selectedCount++;
+            totalAmount += price;
+            items.push({ id, name, qty, price });
+        });
+        $('#billing-selected-count').text(selectedCount);
+        $('#billing-selected-total').text('₦' + formatMoneyPharmacy(totalAmount));
+    } else if (type === 'pending') {
+        $('#presc_pending_table').find('.presc-pending-check:checked').each(function() {
+            const $row = $(this).closest('tr');
+            const $card = $row.find('.presc-card');
+            const id = $(this).data('id');
+            const name = $card.find('.presc-card-title').text().trim() || 'Unknown';
+            const qty = $card.find('.presc-card-body').text().match(/Qty:\s*(\d+)/)?.[1] || '1';
+            const priceText = $card.find('.presc-card-price').text();
+            const price = parseFloat(priceText.replace(/[₦,]/g, '')) || 0;
+
+            selectedCount++;
+            totalAmount += price;
+            items.push({ id, name, qty, price });
+        });
+        $('#pending-selected-count').text(selectedCount);
+    } else if (type === 'dispense') {
+        $('#presc_dispense_table').find('.presc-dispense-check:checked').each(function() {
+            const $row = $(this).closest('tr');
+            const $card = $row.find('.presc-card');
+            const id = $(this).data('id');
+            const name = $card.find('.presc-card-title').text().trim() || 'Unknown';
+            const qty = $card.find('.presc-card-body').text().match(/Qty:\s*(\d+)/)?.[1] || '1';
+            const priceText = $card.find('.presc-card-price').text();
+            const price = parseFloat(priceText.replace(/[₦,]/g, '')) || 0;
+
+            selectedCount++;
+            totalAmount += price;
+            items.push({ id, name, qty, price });
+        });
+        $('#dispense-selected-count').text(selectedCount);
+        $('#dispense-selected-total').text('₦' + formatMoneyPharmacy(totalAmount));
+    }
+
+    // Store items data
+    selectedItemsData[type] = items;
+
+    // Build item chips HTML (show max 5 items)
+    let chipsHtml = '';
+    const maxDisplay = 5;
+    items.slice(0, maxDisplay).forEach(item => {
+        const shortName = item.name.length > 15 ? item.name.substring(0, 15) + '...' : item.name;
+        chipsHtml += `
+            <div class="sticky-item-chip">
+                <span class="item-name" title="${item.name}">${shortName}</span>
+                <span class="item-details">×${item.qty}</span>
+                <span class="item-price">₦${formatMoneyPharmacy(item.price)}</span>
+                <button type="button" class="btn-remove-item" onclick="removeItemFromSelection('${type}', ${item.id})" title="Remove">
+                    <i class="mdi mdi-close-circle"></i>
+                </button>
+            </div>
+        `;
+    });
+
+    if (items.length > maxDisplay) {
+        chipsHtml += `<span class="sticky-items-overflow">+${items.length - maxDisplay} more</span>`;
+    }
+
+    $itemsList.html(chipsHtml);
+
+    // Show/hide the bar based on selection
+    if (selectedCount > 0) {
+        // Hide other bars first
+        $('.presc-sticky-action-bar').removeClass('visible');
+        // Show this bar with animation
+        $bar.addClass('visible');
+    } else {
+        $bar.removeClass('visible');
+    }
+}
+
+// Remove single item from selection
+function removeItemFromSelection(type, itemId) {
+    let checkboxClass = '';
+    if (type === 'billing') checkboxClass = '.presc-billing-check';
+    else if (type === 'pending') checkboxClass = '.presc-pending-check';
+    else if (type === 'dispense') checkboxClass = '.presc-dispense-check';
+
+    const $checkbox = $(`${checkboxClass}[data-id="${itemId}"]`);
+    if ($checkbox.length) {
+        $checkbox.prop('checked', false);
+        // Trigger the handler
+        if (type === 'billing') handlePrescBillingCheckPharmacy($checkbox[0]);
+        else if (type === 'pending') handlePrescPendingCheckPharmacy($checkbox[0]);
+        else if (type === 'dispense') handlePrescDispenseCheckPharmacy($checkbox[0]);
+    }
+}
+
+// Clear all selections for a type
+function clearSelection(type) {
+    let checkboxClass = '';
+    let selectAllId = '';
+
+    if (type === 'billing') {
+        checkboxClass = '.presc-billing-check';
+        selectAllId = '#select-all-billing';
+    } else if (type === 'pending') {
+        checkboxClass = '.presc-pending-check';
+        selectAllId = '#select-all-pending';
+    } else if (type === 'dispense') {
+        checkboxClass = '.presc-dispense-check';
+        selectAllId = '#select-all-dispense';
+    }
+
+    // Uncheck all
+    $(checkboxClass).prop('checked', false);
+    $(selectAllId).prop('checked', false);
+
+    // Remove visual selection from cards
+    $(checkboxClass).closest('tr').find('.presc-card').removeClass('selected');
+
+    // Reset billing total if billing type
+    if (type === 'billing') {
+        prescBillingTotal = 0;
+        updatePrescBillingTotalPharmacy();
+    }
+
+    // Update sticky bar (will hide it)
+    updateStickyActionBar(type);
+
+    // Clear stored data
+    selectedItemsData[type] = [];
+}
+
+// Show dismiss confirmation modal
+function showDismissModal(type) {
+    currentDismissType = type;
+    const items = selectedItemsData[type];
+
+    if (!items || items.length === 0) {
+        toastr.warning('Please select at least one item to dismiss');
+        return;
+    }
+
+    // Update modal content
+    $('#dismiss-count').text(items.length);
+
+    // Build items preview
+    let previewHtml = '<ul class="list-unstyled mb-0">';
+    items.forEach(item => {
+        previewHtml += `
+            <li class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                <span><strong>${item.name}</strong> <small class="text-muted">× ${item.qty}</small></span>
+                <span class="text-success">₦${formatMoneyPharmacy(item.price)}</span>
+            </li>
+        `;
+    });
+    previewHtml += '</ul>';
+    $('#dismiss-items-preview').html(previewHtml);
+
+    // Show modal
+    $('#dismissConfirmModal').modal('show');
+}
+
+// Confirm dismiss action
+function confirmDismiss() {
+    if (!currentDismissType) return;
+
+    // Close modal
+    $('#dismissConfirmModal').modal('hide');
+
+    // Call the actual dismiss function
+    dismissPrescItemsConfirmed(currentDismissType);
+}
+
+// Hide all sticky bars (for tab switching)
+function hideAllStickyBars() {
+    $('.presc-sticky-action-bar').removeClass('visible');
+}
+
 // Checkbox handler for billing
 function handlePrescBillingCheckPharmacy(checkbox) {
     const price = parseFloat($(checkbox).data('price')) || 0;
@@ -6434,6 +7606,7 @@ function handlePrescBillingCheckPharmacy(checkbox) {
 
     if (prescBillingTotal < 0) prescBillingTotal = 0;
     updatePrescBillingTotalPharmacy();
+    updateStickyActionBar('billing');
 }
 
 // Checkbox handler for dispense
@@ -6444,6 +7617,7 @@ function handlePrescDispenseCheckPharmacy(checkbox) {
     } else {
         card.removeClass('selected');
     }
+    updateStickyActionBar('dispense');
 }
 
 // Checkbox handler for pending (no additional action needed, just for selection)
@@ -6455,6 +7629,7 @@ function handlePrescPendingCheckPharmacy(checkbox) {
     } else {
         card.removeClass('selected');
     }
+    updateStickyActionBar('pending');
 }
 
 // Render prescription card for pharmacy workbench (matching presc_unified_scripts.blade.php format)
@@ -6574,6 +7749,13 @@ function renderPrescCardPharmacy(row, type) {
     if (row.dispensed_by) {
         metaInfo += `<div><i class="mdi mdi-pill"></i> Dispensed: ${row.dispensed_by} (${row.dispensed_at || ''})</div>`;
     }
+    // Show batch info for dispensed items
+    if (type === 'history' && row.batch_number) {
+        metaInfo += `<div><i class="mdi mdi-tag-outline text-info"></i> <span class="text-info">Batch: ${row.batch_number}${row.batch_expiry ? ' (Exp: ' + row.batch_expiry + ')' : ''}</span></div>`;
+    }
+    if (type === 'history' && row.dispensed_from_store_name) {
+        metaInfo += `<div><i class="mdi mdi-store text-secondary"></i> From: ${row.dispensed_from_store_name}</div>`;
+    }
     metaInfo += '</div>';
 
     // Stock information
@@ -6582,13 +7764,33 @@ function renderPrescCardPharmacy(row, type) {
     const storeStocks = row.store_stocks || [];
 
     if (type === 'dispense' || type === 'billing') {
-        const stockClass = globalStock >= qty ? 'text-success' : 'text-danger';
-        const stockIcon = globalStock >= qty ? 'mdi-check-circle' : 'mdi-alert-circle';
+        // Stock status based on required qty and absolute thresholds
+        // Critical: not enough for order OR <= 5 total
+        // Low: less than 2x order qty OR <= 20 total
+        // OK: enough stock
+        let stockClass, stockIcon, stockBadge;
+        if (globalStock <= 0) {
+            stockClass = 'text-danger';
+            stockIcon = 'mdi-alert-circle';
+            stockBadge = '<span class="badge badge-stock-out ms-2"><i class="mdi mdi-alert-circle"></i> Out of Stock</span>';
+        } else if (globalStock < qty) {
+            stockClass = 'text-danger';
+            stockIcon = 'mdi-alert-circle';
+            stockBadge = `<span class="badge badge-stock-critical ms-2"><i class="mdi mdi-alert"></i> Insufficient (need ${qty})</span>`;
+        } else if (globalStock <= 5 || globalStock < qty * 2) {
+            stockClass = 'text-warning';
+            stockIcon = 'mdi-alert';
+            stockBadge = '<span class="badge badge-stock-low ms-2"><i class="mdi mdi-alert-outline"></i> Low Stock</span>';
+        } else {
+            stockClass = 'text-success';
+            stockIcon = 'mdi-check-circle';
+            stockBadge = '';
+        }
         stockInfo = `
             <div class="presc-card-stock small mt-2 p-2 bg-light rounded">
                 <div class="${stockClass}">
                     <i class="mdi ${stockIcon}"></i> <strong>Stock:</strong> ${globalStock} available
-                    ${globalStock < qty ? '<span class="badge bg-danger ms-2">Low Stock</span>' : ''}
+                    ${stockBadge}
                 </div>
         `;
         if (storeStocks.length > 0) {
@@ -6600,6 +7802,114 @@ function renderPrescCardPharmacy(row, type) {
         }
         stockInfo += '</div>';
     }
+
+    // Action buttons for adaptation and qty adjustment
+    // Only available in billing (unbilled) and pending (billed but not paid/validated) stages
+    let actionButtons = '';
+    const coverageMode = row.coverage_mode || 'cash';
+
+    if (type === 'billing') {
+        // Unbilled items - can always be adapted or qty adjusted (no billing impact yet)
+        actionButtons = `
+            <div class="presc-card-actions mt-2 pt-2 border-top">
+                <button type="button" class="btn btn-xs btn-outline-info btn-adapt-product-card"
+                        data-id="${row.id}"
+                        data-product="${row.product_name || 'Unknown'}"
+                        data-product-code="${row.product_code || ''}"
+                        data-dose="${row.dose || ''}"
+                        data-qty="${qty}"
+                        data-price="${price}"
+                        data-status="unbilled"
+                        data-payable="${payableAmount}"
+                        data-claims="${claimsAmount}"
+                        data-is-paid="false"
+                        data-is-validated="false"
+                        data-coverage-mode="${coverageMode}"
+                        title="Change to a different product">
+                    <i class="mdi mdi-swap-horizontal"></i> Adapt Product
+                </button>
+                <button type="button" class="btn btn-xs btn-outline-warning btn-adjust-qty-card ms-1"
+                        data-id="${row.id}"
+                        data-product="${row.product_name || 'Unknown'}"
+                        data-qty="${qty}"
+                        data-price="${price}"
+                        data-status="unbilled"
+                        data-payable="${payableAmount}"
+                        data-claims="${claimsAmount}"
+                        data-is-paid="false"
+                        data-is-validated="false"
+                        data-coverage-mode="${coverageMode}"
+                        title="Change the quantity">
+                    <i class="mdi mdi-counter"></i> Adjust Qty
+                </button>
+            </div>
+        `;
+    } else if (type === 'pending') {
+        // Pending items - billed but awaiting payment/validation
+        // Can only adapt/adjust if:
+        // 1. Payable only: payable NOT paid
+        // 2. Payable + Claims: NEITHER paid nor validated
+        // 3. Claims only: NOT validated
+
+        const hasPayable = payableAmount > 0;
+        const hasClaims = claimsAmount > 0;
+        const canModify = (
+            (hasPayable && !hasClaims && !isPaid) || // Payable only, not paid
+            (hasPayable && hasClaims && !isPaid && !isValidated) || // Both, neither settled
+            (!hasPayable && hasClaims && !isValidated) // Claims only, not validated
+        );
+
+        if (canModify) {
+            actionButtons = `
+                <div class="presc-card-actions mt-2 pt-2 border-top">
+                    <button type="button" class="btn btn-xs btn-outline-info btn-adapt-product-card"
+                            data-id="${row.id}"
+                            data-product="${row.product_name || 'Unknown'}"
+                            data-product-code="${row.product_code || ''}"
+                            data-dose="${row.dose || ''}"
+                            data-qty="${qty}"
+                            data-price="${price}"
+                            data-status="billed"
+                            data-payable="${payableAmount}"
+                            data-claims="${claimsAmount}"
+                            data-is-paid="${isPaid}"
+                            data-is-validated="${isValidated}"
+                            data-coverage-mode="${row.coverage_mode || 'none'}"
+                            title="Change to a different product (will update billing)">
+                        <i class="mdi mdi-swap-horizontal"></i> Adapt Product
+                    </button>
+                    <button type="button" class="btn btn-xs btn-outline-warning btn-adjust-qty-card ms-1"
+                            data-id="${row.id}"
+                            data-product="${row.product_name || 'Unknown'}"
+                            data-qty="${qty}"
+                            data-price="${price}"
+                            data-status="billed"
+                            data-payable="${payableAmount}"
+                            data-claims="${claimsAmount}"
+                            data-is-paid="${isPaid}"
+                            data-is-validated="${isValidated}"
+                            data-coverage-mode="${row.coverage_mode || 'none'}"
+                            title="Change the quantity (will update billing)">
+                        <i class="mdi mdi-counter"></i> Adjust Qty
+                    </button>
+                </div>
+            `;
+        } else {
+            // Some settlement has occurred - show why modification is blocked
+            let blockReason = '';
+            if (hasPayable && hasClaims) {
+                if (isPaid && !isValidated) blockReason = 'Payment received - awaiting HMO validation only';
+                else if (!isPaid && isValidated) blockReason = 'HMO validated - awaiting payment only';
+                else blockReason = 'Partially settled';
+            }
+            actionButtons = `
+                <div class="presc-card-actions mt-2 pt-2 border-top">
+                    <small class="text-muted"><i class="mdi mdi-lock"></i> ${blockReason || 'Cannot modify - partially settled'}</small>
+                </div>
+            `;
+        }
+    }
+    // NOTE: No action buttons for 'dispense' type - items are ready/settled
 
     return `
         <div class="${cardClass}" data-id="${row.id}" data-product-id="${row.product_id || ''}" style="${cardStyle}">
@@ -6622,6 +7932,7 @@ function renderPrescCardPharmacy(row, type) {
                 ${stockInfo}
             </div>
             ${metaInfo}
+            ${actionButtons}
         </div>
     `;
 }
@@ -6934,6 +8245,9 @@ function refreshAllPrescTables() {
         }
     });
 
+    // Hide sticky bars after refresh (selection is reset)
+    hideAllStickyBars();
+
     // Update sync indicator
     updateSyncIndicator();
 }
@@ -6943,7 +8257,7 @@ function refreshAllPrescTables() {
  * @param {string} paneId - The tab pane ID (e.g., '#presc-billing-pane')
  */
 function refreshPrescSubtab(paneId) {
-    if (!prescPatientId) return;
+    if (!currentPatient) return;
 
     switch(paneId) {
         case '#presc-billing-pane':
@@ -7900,6 +9214,40 @@ function renderStatusTable(items, status) {
         const itemId = $(this).data('id');
         dispenseItems([itemId]);
     });
+
+    // Attach adapt product button handler
+    $('.btn-adapt-product').on('click', function() {
+        const $btn = $(this);
+        const itemId = $btn.data('id');
+        const productName = $btn.data('product-name');
+        const dose = $btn.data('dose') || '';
+        const price = parseFloat($btn.data('price')) || 0;
+        const qty = parseInt($btn.data('qty')) || 1;
+        const status = $btn.data('status') || 'unbilled';
+        const payable = parseFloat($btn.data('payable')) || 0;
+        const claims = parseFloat($btn.data('claims')) || 0;
+        const isPaid = $btn.data('is-paid') === true || $btn.data('is-paid') === 'true';
+        const isValidated = $btn.data('is-validated') === true || $btn.data('is-validated') === 'true';
+        const coverageMode = $btn.data('coverage-mode') || 'cash';
+        const productCode = $btn.data('product-code') || '';
+        openAdaptationModal(itemId, productName, dose, qty, price, status, payable, claims, isPaid, isValidated, coverageMode, productCode);
+    });
+
+    // Attach quantity adjustment button handler
+    $('.btn-adjust-qty').on('click', function() {
+        const $btn = $(this);
+        const itemId = $btn.data('id');
+        const productName = $btn.data('product-name');
+        const price = parseFloat($btn.data('price')) || 0;
+        const qty = parseInt($btn.data('qty')) || 1;
+        const status = parseInt($btn.data('status')) || 1;
+        const payable = parseFloat($btn.data('payable')) || 0;
+        const claims = parseFloat($btn.data('claims')) || 0;
+        const isPaid = $btn.data('is-paid') === true || $btn.data('is-paid') === 'true';
+        const isValidated = $btn.data('is-validated') === true || $btn.data('is-validated') === 'true';
+        const coverageMode = $btn.data('coverage-mode') || 'cash';
+        openQtyAdjustmentModal(itemId, productName, price, qty, status, payable, claims, isPaid, isValidated, coverageMode);
+    });
 }
 
 function createFilteredTableRow(item) {
@@ -7911,6 +9259,7 @@ function createFilteredTableRow(item) {
     const claimsAmount = parseFloat(item.claims_amount || 0);
     const isPaid = item.payment_id != null;
     const isValidated = item.validation_status === 'validated' || item.validation_status === 'approved';
+    const coverageMode = item.coverage_mode || 'cash';
 
     let isReady = false;
     let blockingReason = '';
@@ -7953,6 +9302,81 @@ function createFilteredTableRow(item) {
         }
     }
 
+    // Build action buttons based on status
+    let actionButtons = '';
+
+    // Unbilled items (status 1) - always show adapt/adjust buttons
+    if (item.status == 1) {
+        actionButtons = `
+            <button class="btn btn-info btn-sm btn-adapt-product"
+                data-id="${item.id}"
+                data-product-name="${item.product_name || 'Unknown'}"
+                data-product-code="${item.product_code || ''}"
+                data-dose="${item.dose || ''}"
+                data-price="${basePrice}"
+                data-qty="${qty}"
+                data-status="unbilled"
+                data-payable="${payableAmount}"
+                data-claims="${claimsAmount}"
+                data-is-paid="${isPaid}"
+                data-is-validated="${isValidated}"
+                data-coverage-mode="${coverageMode}"
+                title="Adapt Product">
+                <i class="mdi mdi-swap-horizontal"></i>
+            </button>
+            <button class="btn btn-warning btn-sm btn-adjust-qty"
+                data-id="${item.id}"
+                data-product-name="${item.product_name || 'Unknown'}"
+                data-price="${basePrice}"
+                data-qty="${qty}"
+                data-status="unbilled"
+                data-payable="${payableAmount}"
+                data-claims="${claimsAmount}"
+                data-is-paid="${isPaid}"
+                data-is-validated="${isValidated}"
+                data-coverage-mode="${coverageMode}"
+                title="Adjust Quantity">
+                <i class="mdi mdi-plus-minus"></i>
+            </button>
+        `;
+    }
+    // Billed items (status 2) - show buttons only if NOT settled
+    else if (item.status == 2 && !isReady && canModifyBilled(payableAmount, claimsAmount, isPaid, isValidated)) {
+        actionButtons = `
+            <button class="btn btn-info btn-sm btn-adapt-product"
+                data-id="${item.id}"
+                data-product-name="${item.product_name || 'Unknown'}"
+                data-product-code="${item.product_code || ''}"
+                data-dose="${item.dose || ''}"
+                data-price="${basePrice}"
+                data-qty="${qty}"
+                data-status="billed"
+                data-payable="${payableAmount}"
+                data-claims="${claimsAmount}"
+                data-is-paid="${isPaid}"
+                data-is-validated="${isValidated}"
+                data-coverage-mode="${coverageMode}"
+                title="Adapt Product">
+                <i class="mdi mdi-swap-horizontal"></i>
+            </button>
+            <button class="btn btn-warning btn-sm btn-adjust-qty"
+                data-id="${item.id}"
+                data-product-name="${item.product_name || 'Unknown'}"
+                data-price="${basePrice}"
+                data-qty="${qty}"
+                data-status="billed"
+                data-payable="${payableAmount}"
+                data-claims="${claimsAmount}"
+                data-is-paid="${isPaid}"
+                data-is-validated="${isValidated}"
+                data-coverage-mode="${coverageMode}"
+                title="Adjust Quantity">
+                <i class="mdi mdi-plus-minus"></i>
+            </button>
+        `;
+    }
+    // Ready items (status 2 & isReady) - NO adapt/adjust buttons
+
     return `
         <tr data-item-id="${item.id}" class="${isReady ? 'table-success' : ''}">
             <td><input type="checkbox" class="prescription-item-checkbox" data-id="${item.id}" ${isReady || item.status == 1 ? '' : 'disabled'}></td>
@@ -7969,6 +9393,7 @@ function createFilteredTableRow(item) {
             </td>
             <td>
                 <div class="btn-group btn-group-sm">
+                    ${actionButtons}
                     <button class="btn btn-success btn-sm dispense-single-btn" data-id="${item.id}" title="Dispense" ${isReady ? '' : 'disabled'}>
                         <i class="mdi mdi-pill"></i>
                     </button>
@@ -7979,6 +9404,36 @@ function createFilteredTableRow(item) {
             </td>
         </tr>
     `;
+}
+
+// Helper function to check if a billed item can be modified (adapted or qty adjusted)
+// Rules:
+// 1. Payable only: NOT paid
+// 2. Claims only: NOT validated
+// 3. Both payable + claims: NEITHER paid NOR validated
+function canModifyBilled(item) {
+    const payableAmount = parseFloat(item.payable_amount || 0);
+    const claimsAmount = parseFloat(item.claims_amount || 0);
+    const isPaid = item.payment_id != null;
+    const isValidated = item.validation_status === 'validated' || item.validation_status === 'approved';
+
+    const hasPayable = payableAmount > 0;
+    const hasClaims = claimsAmount > 0;
+
+    // If payable only, must NOT be paid
+    if (hasPayable && !hasClaims) {
+        return !isPaid;
+    }
+    // If claims only, must NOT be validated
+    if (!hasPayable && hasClaims) {
+        return !isValidated;
+    }
+    // If both, NEITHER must be settled
+    if (hasPayable && hasClaims) {
+        return !isPaid && !isValidated;
+    }
+    // Default: allow
+    return true;
 }
 
 function createPrescriptionCard(item, section) {
@@ -8053,6 +9508,7 @@ function createPrescriptionCard(item, section) {
                         ${paymentModeHtml}
                         ${paymentStatusHtml}
                         ${item.adapted_from_product_id ? '<span class="badge badge-warning ml-1" title="Adapted from another product"><i class="mdi mdi-swap-horizontal"></i> Adapted</span>' : ''}
+                        ${item.qty_adjusted_from ? `<span class="badge badge-info ml-1" title="Quantity adjusted from ${item.qty_adjusted_from}"><i class="mdi mdi-counter"></i> Qty Adjusted</span>` : ''}
                     </div>
                     <div class="card-meta">
                         <span class="text-muted">Qty: ${item.qty || item.quantity || 'N/A'}</span>
@@ -8060,11 +9516,68 @@ function createPrescriptionCard(item, section) {
                             <button type="button" class="btn btn-xs btn-outline-info ml-2 btn-adapt-product"
                                     data-id="${item.id}"
                                     data-product="${item.product_name || item.medication_name || 'N/A'}"
+                                    data-product-code="${item.product_code || ''}"
                                     data-dose="${item.dose || ''}"
                                     data-qty="${item.qty || item.quantity || 1}"
-                                    title="Adapt to different product">
-                                <i class="mdi mdi-swap-horizontal"></i>
+                                    data-price="${item.base_price || item.price || 0}"
+                                    data-status="unbilled"
+                                    data-payable="0"
+                                    data-claims="0"
+                                    data-is-paid="false"
+                                    data-is-validated="false"
+                                    data-coverage-mode="${item.coverage_mode || 'cash'}"
+                                    title="Change to a different product">
+                                <i class="mdi mdi-swap-horizontal"></i> Adapt
                             </button>
+                            <button type="button" class="btn btn-xs btn-outline-warning ml-1 btn-adjust-qty"
+                                    data-id="${item.id}"
+                                    data-product="${item.product_name || item.medication_name || 'N/A'}"
+                                    data-qty="${item.qty || item.quantity || 1}"
+                                    data-price="${item.base_price || item.price || 0}"
+                                    data-status="unbilled"
+                                    data-payable="0"
+                                    data-claims="0"
+                                    data-is-paid="false"
+                                    data-is-validated="false"
+                                    data-coverage-mode="${item.coverage_mode || 'cash'}"
+                                    title="Change the quantity">
+                                <i class="mdi mdi-counter"></i> Adjust Qty
+                            </button>
+                        ` : ''}
+                        ${section === 'billed' && canModifyBilled(item) ? `
+                            <button type="button" class="btn btn-xs btn-outline-info ml-2 btn-adapt-product"
+                                    data-id="${item.id}"
+                                    data-product="${item.product_name || item.medication_name || 'N/A'}"
+                                    data-product-code="${item.product_code || ''}"
+                                    data-dose="${item.dose || ''}"
+                                    data-qty="${item.qty || item.quantity || 1}"
+                                    data-price="${item.base_price || item.price || 0}"
+                                    data-status="billed"
+                                    data-payable="${payableAmount}"
+                                    data-claims="${claimsAmount}"
+                                    data-is-paid="${isPaid}"
+                                    data-is-validated="${isValidated}"
+                                    data-coverage-mode="${item.coverage_mode || 'none'}"
+                                    title="Change to a different product (will update billing)">
+                                <i class="mdi mdi-swap-horizontal"></i> Adapt
+                            </button>
+                            <button type="button" class="btn btn-xs btn-outline-warning ml-1 btn-adjust-qty"
+                                    data-id="${item.id}"
+                                    data-product="${item.product_name || item.medication_name || 'N/A'}"
+                                    data-qty="${item.qty || item.quantity || 1}"
+                                    data-price="${item.base_price || item.price || 0}"
+                                    data-status="billed"
+                                    data-payable="${payableAmount}"
+                                    data-claims="${claimsAmount}"
+                                    data-is-paid="${isPaid}"
+                                    data-is-validated="${isValidated}"
+                                    data-coverage-mode="${item.coverage_mode || 'none'}"
+                                    title="Change the quantity (will update billing)">
+                                <i class="mdi mdi-counter"></i> Adjust Qty
+                            </button>
+                        ` : ''}
+                        ${section === 'billed' && !canModifyBilled(item) ? `
+                            <span class="text-muted ml-2" title="Cannot modify - partially settled"><i class="mdi mdi-lock-outline"></i></span>
                         ` : ''}
                     </div>
                 </div>
@@ -8298,12 +9811,39 @@ function initializePrescriptionHandlers() {
         e.preventDefault();
         e.stopPropagation();
         const $btn = $(this);
-        openAdaptationModal(
-            $btn.data('id'),
-            $btn.data('product'),
-            $btn.data('dose'),
-            $btn.data('qty')
-        );
+        const productRequestId = $btn.data('id');
+        const productName = $btn.data('product') || $btn.data('product-name') || 'Unknown';
+        const dose = $btn.data('dose') || '';
+        const qty = parseInt($btn.data('qty')) || 1;
+        const price = parseFloat($btn.data('price')) || 0;
+        const status = $btn.data('status') || 'unbilled';
+        const payable = parseFloat($btn.data('payable')) || 0;
+        const claims = parseFloat($btn.data('claims')) || 0;
+        const isPaid = $btn.data('is-paid') === true || $btn.data('is-paid') === 'true';
+        const isValidated = $btn.data('is-validated') === true || $btn.data('is-validated') === 'true';
+        const coverageMode = $btn.data('coverage-mode') || 'cash';
+        const productCode = $btn.data('product-code') || '';
+
+        openAdaptationModal(productRequestId, productName, dose, qty, price, status, payable, claims, isPaid, isValidated, coverageMode, productCode);
+    });
+
+    // Quantity adjustment button handler
+    $('.btn-adjust-qty').off('click').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const $btn = $(this);
+        const productRequestId = $btn.data('id');
+        const productName = $btn.data('product') || $btn.data('product-name') || 'Unknown';
+        const qty = parseInt($btn.data('qty')) || 1;
+        const price = parseFloat($btn.data('price')) || 0;
+        const status = $btn.data('status') || 'unbilled';
+        const payable = parseFloat($btn.data('payable')) || 0;
+        const claims = parseFloat($btn.data('claims')) || 0;
+        const isPaid = $btn.data('is-paid') === true || $btn.data('is-paid') === 'true';
+        const isValidated = $btn.data('is-validated') === true || $btn.data('is-validated') === 'true';
+        const coverageMode = $btn.data('coverage-mode') || 'cash';
+
+        openQtyAdjustmentModal(productRequestId, productName, qty, price, status, payable, claims, isPaid, isValidated, coverageMode);
     });
 
     // Action button handlers
@@ -11619,10 +13159,7 @@ function initializeReportsCharts(byStatus, monthlyTrends) {
     </div>
 </div>
 
-{{-- Include unified prescription scripts for shared component --}}
-@include('admin.patients.partials.presc_unified_scripts')
-
-{{-- Pharmacy Workbench Specific Overrides - These MUST come after unified scripts --}}
+{{-- Pharmacy Workbench Prescription Functions --}}
 <script>
 // Override billPrescItems to use correct checkbox class for pharmacy workbench
 window.billPrescItems = function() {
@@ -11716,8 +13253,19 @@ window.billPrescItems = function() {
     });
 };
 
-// Override dismissPrescItems to use correct checkbox class for pharmacy workbench
+// Override dismissPrescItems to show modal (instead of confirm())
 window.dismissPrescItems = function(type) {
+    if (!currentPatient) {
+        toastr.error('Please select a patient first');
+        return;
+    }
+
+    // Just show the modal - the actual dismiss happens in confirmDismiss()
+    showDismissModal(type);
+};
+
+// Actual dismiss function (called after modal confirmation)
+window.dismissPrescItemsConfirmed = function(type) {
     if (!currentPatient) {
         toastr.error('Please select a patient first');
         return;
@@ -11767,9 +13315,10 @@ window.dismissPrescItems = function(type) {
         return;
     }
 
-    if (!confirm('Are you sure you want to dismiss the selected items? This action cannot be undone.')) {
-        return;
-    }
+    // Show loading on button
+    const $btn = $('#confirm-dismiss-btn');
+    const originalHtml = $btn.html();
+    $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Dismissing...');
 
     $.ajax({
         url: '/product-dismiss-patient-ajax',
@@ -11782,8 +13331,11 @@ window.dismissPrescItems = function(type) {
             patient_id: currentPatient
         },
         success: function(response) {
+            $btn.prop('disabled', false).html(originalHtml);
             if (response.success) {
                 toastr.success(response.message || 'Items dismissed successfully');
+                // Clear stored data
+                selectedItemsData[type] = [];
                 // Reload DataTables
                 initializePrescriptionDataTables(currentPatient);
                 loadPrescriptionItems(currentStatusFilter);
@@ -11794,6 +13346,7 @@ window.dismissPrescItems = function(type) {
             }
         },
         error: function(xhr) {
+            $btn.prop('disabled', false).html(originalHtml);
             console.error('Dismiss failed', xhr);
             toastr.error(xhr.responseJSON?.message || 'Failed to dismiss items');
         }
@@ -12141,21 +13694,21 @@ function renderDispenseCart() {
 
         if (item.stock_status === 'pending') {
             batchDisplay = '<span class="text-muted small">Select store first</span>';
-            statusBadge = '<span class="badge bg-light text-muted badge-sm">Select store</span>';
+            statusBadge = '<span class="badge bg-light text-dark badge-sm">Select store</span>';
         } else if (item.stock_status === 'loading') {
             batchDisplay = '<span class="text-muted"><i class="mdi mdi-loading mdi-spin"></i> Loading...</span>';
-            statusBadge = '<span class="badge bg-secondary badge-sm">...</span>';
+            statusBadge = '<span class="badge bg-secondary text-white badge-sm">...</span>';
         } else if (item.stock_status === 'sufficient') {
             // Build batch selection dropdown
             batchDisplay = buildBatchDropdown(item, index);
-            statusBadge = '<span class="badge bg-success badge-sm"><i class="mdi mdi-check"></i></span>';
+            statusBadge = '<span class="badge badge-stock-ok badge-sm"><i class="mdi mdi-check"></i></span>';
         } else if (item.stock_status === 'insufficient') {
-            batchDisplay = `<span class="text-danger small"><i class="mdi mdi-alert-circle"></i> Only ${item.stock || 0} available</span>`;
-            statusBadge = '<span class="badge bg-danger badge-sm"><i class="mdi mdi-alert"></i></span>';
+            batchDisplay = `<span class="text-danger small"><i class="mdi mdi-alert-circle"></i> Only ${item.stock || 0} available (need ${item.qty})</span>`;
+            statusBadge = '<span class="badge badge-stock-out badge-sm"><i class="mdi mdi-alert"></i></span>';
             rowClass = 'table-danger';
         } else {
             batchDisplay = '<span class="text-warning small"><i class="mdi mdi-help-circle"></i> Unknown</span>';
-            statusBadge = '<span class="badge bg-warning badge-sm">?</span>';
+            statusBadge = '<span class="badge bg-warning text-dark badge-sm">?</span>';
         }
 
         html += `
@@ -12318,11 +13871,11 @@ function updateCartRowStock(index) {
 
     if (item.stock_status === 'sufficient') {
         batchDisplay = buildBatchDropdown(item, index);
-        statusBadge = '<span class="badge bg-success badge-sm"><i class="mdi mdi-check"></i></span>';
+        statusBadge = '<span class="badge badge-stock-ok badge-sm"><i class="mdi mdi-check"></i></span>';
         $row.removeClass('table-danger');
     } else if (item.stock_status === 'insufficient') {
-        batchDisplay = `<span class="text-danger small"><i class="mdi mdi-alert-circle"></i> Only ${item.stock || 0} available</span>`;
-        statusBadge = '<span class="badge bg-danger badge-sm"><i class="mdi mdi-alert"></i></span>';
+        batchDisplay = `<span class="text-danger small"><i class="mdi mdi-alert-circle"></i> Only ${item.stock || 0} available (need ${item.qty})</span>`;
+        statusBadge = '<span class="badge badge-stock-out badge-sm"><i class="mdi mdi-alert"></i></span>';
         $row.addClass('table-danger');
     }
 
@@ -12429,12 +13982,12 @@ function updateCartStockStatus() {
         $dispenseBtn.prop('disabled', true);
     } else if (hasInsufficient) {
         const insufficientCount = dispenseCart.filter(i => i.stock_status === 'insufficient').length;
-        $statusDiv.html(`<span class="badge bg-danger"><i class="mdi mdi-alert-circle"></i> ${insufficientCount} item(s) low stock</span>`);
+        $statusDiv.html(`<span class="badge badge-stock-out"><i class="mdi mdi-alert-circle"></i> ${insufficientCount} item(s) insufficient stock</span>`);
         $warning.show();
-        $('#modal-stock-warning-text').text(`${insufficientCount} item(s) have insufficient stock`);
+        $('#modal-stock-warning-text').text(`${insufficientCount} item(s) have insufficient stock to fulfill the order`);
         $dispenseBtn.prop('disabled', true);
     } else if (allSufficient) {
-        $statusDiv.html(`<span class="badge bg-success"><i class="mdi mdi-check-circle"></i> All items ready</span>`);
+        $statusDiv.html(`<span class="badge badge-stock-ok"><i class="mdi mdi-check-circle"></i> All items ready</span>`);
         $warning.hide();
         $dispenseBtn.prop('disabled', false);
     }
@@ -13950,45 +15503,339 @@ $('#pharmacy-report-tabs button[data-bs-toggle="tab"]').on('shown.bs.tab', funct
 // PRODUCT ADAPTATION MODULE
 // ===========================================
 
-// Open product adaptation modal
-function openAdaptationModal(productRequestId, productName, dose, qty) {
+// Store selected new product data
+let selectedNewProduct = null;
+
+// Open product adaptation modal with billing status awareness
+function openAdaptationModal(productRequestId, productName, dose, qty, price, status, payable, claims, isPaid, isValidated, coverageMode, productCode) {
+    // Reset modal state
+    selectedNewProduct = null;
     $('#adapt-product-request-id').val(productRequestId);
+    $('#adapt-billing-status').val(status || 'unbilled');
+    $('#adapt-coverage-mode').val(coverageMode || 'none');
+
+    // Store original values for calculations
+    const originalQty = parseInt(qty) || 1;
+    const originalPrice = parseFloat(price) || 0;
+    const originalTotal = originalPrice * originalQty;
+
+    $('#adapt-original-price-value').val(originalPrice);
+    $('#adapt-original-qty-value').val(originalQty);
+
+    // Set original product info (enhanced layout)
     $('#adapt-original-product').text(productName);
+    $('#adapt-original-code').text(productCode || '-');
     $('#adapt-original-dose').text(dose || 'N/A');
-    $('#adapt-original-qty').text(qty || 1);
+    $('#adapt-original-qty').text(originalQty);
+    $('#adapt-original-price').text('₦' + formatMoneyPharmacy(originalPrice));
+    $('#adapt-original-total').text('₦' + formatMoneyPharmacy(originalTotal));
+
+    // Set status badge
+    const statusBadge = status === 'billed' ?
+        '<span class="badge bg-success">Billed</span>' :
+        '<span class="badge bg-secondary">Unbilled</span>';
+    $('#adapt-original-status-badge').html(statusBadge);
+
+    // Set calculation summary original
+    $('#adapt-calc-original').text('₦' + formatMoneyPharmacy(originalTotal));
+    $('#adapt-calc-new').text('₦0.00');
+    $('#adapt-calc-diff').html('<span class="text-muted">₦0.00</span>');
+    $('#adapt-calc-note').hide();
+
+    // Reset new product selection
     $('#adapt-new-product').val('').trigger('change');
-    $('#adapt-new-qty').val(qty || 1);
+    $('#adapt-new-qty').val(originalQty);
     $('#adapt-reason').val('');
+    $('#adapt-new-product-details').hide();
+    $('#adapt-no-product-selected').show();
+    $('#adapt-store-stocks').empty();
+    $('#adapt-hmo-info').hide();
+    $('#confirm-adaptation').prop('disabled', true);
+    $('#adapt-summary-text').text('Select a new product to see the changes');
+
+    // Reset step indicators
+    $('.adapt-steps .step').removeClass('active');
+    $('#adapt-step-1').addClass('active');
+
+    // Show/hide relevant notices and billing info based on status
+    const isBilled = status === 'billed';
+    $('#adapt-unbilled-notice').toggle(!isBilled);
+    $('#adapt-billed-notice').toggle(isBilled);
+    $('#adapt-current-billing').toggle(isBilled);
+    $('#adapt-billing-impact').hide();
+
+    if (isBilled) {
+        $('#adapt-current-payable').text('₦' + formatMoneyPharmacy(payable || 0));
+        $('#adapt-current-claims').text('₦' + formatMoneyPharmacy(claims || 0));
+        $('#adapt-current-coverage').text((coverageMode || 'none').toUpperCase());
+    }
 
     // Initialize Select2 for product search if not already done
     if (!$('#adapt-new-product').hasClass('select2-hidden-accessible')) {
         $('#adapt-new-product').select2({
             dropdownParent: $('#productAdaptationModal'),
-            placeholder: 'Search for a product...',
+            placeholder: 'Type to search products...',
             allowClear: true,
             minimumInputLength: 2,
             ajax: {
-                url: '{{ route("inventory.purchase-orders.search-products") }}',
+                url: '/pharmacy-workbench/search-products',
                 dataType: 'json',
                 delay: 300,
                 data: function(params) {
-                    return { q: params.term };
+                    return {
+                        term: params.term,
+                        patient_id: currentPatient
+                    };
                 },
                 processResults: function(data) {
                     return {
                         results: data.map(p => ({
                             id: p.id,
-                            text: `${p.product_name} (${p.product_code || 'N/A'})`,
+                            text: `${p.product_name} (${p.product_code || 'N/A'}) - ₦${formatMoneyPharmacy(p.price || 0)} [Stock: ${p.stock_qty || 0}]`,
                             product: p
                         }))
                     };
                 }
             }
+        }).on('select2:select', function(e) {
+            selectedNewProduct = e.params.data.product;
+            updateAdaptationPreview();
+        }).on('select2:clear', function() {
+            selectedNewProduct = null;
+            $('#adapt-new-product-details').hide();
+            $('#adapt-no-product-selected').show();
+            $('#adapt-billing-impact').hide();
+            $('#adapt-hmo-info').hide();
+            $('#confirm-adaptation').prop('disabled', true);
+            $('#adapt-step-2').removeClass('active');
+            $('#adapt-step-3').removeClass('active');
+            $('#adapt-calc-new').text('₦0.00');
+            $('#adapt-calc-diff').html('<span class="text-muted">₦0.00</span>');
+            $('#adapt-calc-note').hide();
+            $('#adapt-summary-text').text('Select a new product to see the changes');
         });
     }
 
     $('#productAdaptationModal').modal('show');
 }
+
+// Update adaptation preview when new product or quantity changes
+function updateAdaptationPreview() {
+    const isBilled = $('#adapt-billing-status').val() === 'billed';
+    const newQty = parseInt($('#adapt-new-qty').val()) || 1;
+    const originalPrice = parseFloat($('#adapt-original-price-value').val()) || 0;
+    const originalQty = parseInt($('#adapt-original-qty-value').val()) || 1;
+    const originalTotal = originalPrice * originalQty;
+
+    if (!selectedNewProduct) {
+        $('#adapt-new-product-details').hide();
+        $('#adapt-no-product-selected').show();
+        $('#adapt-billing-impact').hide();
+        $('#adapt-hmo-info').hide();
+        $('#confirm-adaptation').prop('disabled', true);
+        return;
+    }
+
+    // Show new product details section
+    $('#adapt-no-product-selected').hide();
+    $('#adapt-new-product-details').show();
+
+    // Show new product price
+    const newPrice = selectedNewProduct.price || 0;
+    const newTotal = newPrice * newQty;
+    $('#adapt-new-price').text('₦' + formatMoneyPharmacy(newPrice));
+
+    // Update step indicators
+    $('#adapt-step-2').addClass('active');
+
+    // ===== STORE STOCKS DISPLAY =====
+    const storeStocks = selectedNewProduct.store_stocks || [];
+    const globalStock = selectedNewProduct.stock_qty || 0;
+    const $stockContainer = $('#adapt-store-stocks');
+    $stockContainer.empty();
+
+    // Update stock badge with intuitive thresholds
+    // Out (0), Critical (1-5), Low (6-20), OK (>20)
+    const $stockBadge = $('#adapt-stock-badge');
+    $stockBadge.removeClass('bg-success bg-warning bg-danger badge-stock-ok badge-stock-low badge-stock-critical badge-stock-out');
+
+    if (globalStock <= 0) {
+        $stockBadge.addClass('badge-stock-out').html('<i class="mdi mdi-alert-circle"></i> Out of Stock');
+    } else if (globalStock <= 5) {
+        $stockBadge.addClass('badge-stock-critical').html(`<i class="mdi mdi-alert"></i> ${globalStock} only!`);
+    } else if (globalStock <= 20) {
+        $stockBadge.addClass('badge-stock-low').html(`<i class="mdi mdi-alert-outline"></i> ${globalStock} left`);
+    } else {
+        $stockBadge.addClass('badge-stock-ok').text(globalStock + ' in stock');
+    }
+
+    // Display store stocks with intuitive thresholds
+    if (storeStocks.length > 0) {
+        storeStocks.forEach(function(store) {
+            let stockClass, stockIcon;
+            if (store.quantity <= 0) {
+                stockClass = 'text-danger';
+                stockIcon = 'mdi-alert-circle';
+            } else if (store.quantity <= 5) {
+                stockClass = 'text-danger';
+                stockIcon = 'mdi-alert';
+            } else if (store.quantity <= 20) {
+                stockClass = 'text-warning';
+                stockIcon = 'mdi-alert-outline';
+            } else {
+                stockClass = 'text-success';
+                stockIcon = 'mdi-check-circle';
+            }
+            $stockContainer.append(`
+                <div class="d-flex justify-content-between py-1 border-bottom">
+                    <span><i class="mdi mdi-store text-muted"></i> ${store.store_name}</span>
+                    <strong class="${stockClass}"><i class="mdi ${stockIcon} small"></i> ${store.quantity}</strong>
+                </div>
+            `);
+        });
+    } else {
+        $stockContainer.html('<div class="text-center text-muted py-2"><i class="mdi mdi-alert-circle-outline"></i> No stock available</div>');
+    }
+
+    // ===== PRICE CALCULATION SUMMARY =====
+    $('#adapt-calc-original').text('₦' + formatMoneyPharmacy(originalTotal));
+    $('#adapt-calc-new').text('₦' + formatMoneyPharmacy(newTotal));
+
+    const priceDiff = newTotal - originalTotal;
+    let diffHtml = '';
+    let calcNote = '';
+
+    if (priceDiff > 0) {
+        diffHtml = `<span class="text-danger fw-bold">+₦${formatMoneyPharmacy(priceDiff)}</span>`;
+        calcNote = '<i class="mdi mdi-arrow-up text-danger"></i> Patient will pay more';
+    } else if (priceDiff < 0) {
+        diffHtml = `<span class="text-success fw-bold">-₦${formatMoneyPharmacy(Math.abs(priceDiff))}</span>`;
+        calcNote = '<i class="mdi mdi-arrow-down text-success"></i> Patient saves money!';
+    } else {
+        diffHtml = '<span class="text-muted">₦0.00</span>';
+        calcNote = '<i class="mdi mdi-equal text-muted"></i> No price change';
+    }
+
+    $('#adapt-calc-diff').html(diffHtml);
+    if (calcNote) {
+        $('#adapt-calc-note').html(calcNote).show();
+    } else {
+        $('#adapt-calc-note').hide();
+    }
+
+    // ===== HMO COVERAGE INFO =====
+    const coverageMode = selectedNewProduct.coverage_mode || $('#adapt-coverage-mode').val();
+    const newPayable = selectedNewProduct.payable_amount || newTotal;
+    const newClaims = selectedNewProduct.claims_amount || 0;
+
+    if (coverageMode && coverageMode !== 'none') {
+        $('#adapt-coverage-badge').text(coverageMode.toUpperCase());
+        $('#adapt-new-payable').text('₦' + formatMoneyPharmacy(newPayable * newQty));
+        $('#adapt-new-claims').text('₦' + formatMoneyPharmacy(newClaims * newQty));
+        $('#adapt-hmo-info').show();
+    } else {
+        $('#adapt-hmo-info').hide();
+    }
+
+    // ===== BILLING IMPACT FOR BILLED ITEMS =====
+    if (isBilled) {
+        const currentPayable = parseFloat($('#adapt-current-payable').text().replace(/[₦,]/g, '')) || 0;
+        const currentClaims = parseFloat($('#adapt-current-claims').text().replace(/[₦,]/g, '')) || 0;
+        const currentTotal = currentPayable + currentClaims;
+
+        let impactPayable = newTotal;
+        let impactClaims = 0;
+
+        // Apply same coverage ratio if HMO coverage exists
+        if (coverageMode && coverageMode !== 'none' && currentTotal > 0) {
+            const payableRatio = currentPayable / currentTotal;
+            const claimsRatio = currentClaims / currentTotal;
+            impactPayable = newTotal * payableRatio;
+            impactClaims = newTotal * claimsRatio;
+        }
+
+        // Update impact table
+        $('#adapt-impact-payable-old').text('₦' + formatMoneyPharmacy(currentPayable));
+        $('#adapt-impact-payable-new').text('₦' + formatMoneyPharmacy(impactPayable));
+        updateDiffBadge('#adapt-impact-payable-diff', impactPayable - currentPayable);
+
+        $('#adapt-impact-claims-old').text('₦' + formatMoneyPharmacy(currentClaims));
+        $('#adapt-impact-claims-new').text('₦' + formatMoneyPharmacy(impactClaims));
+        updateDiffBadge('#adapt-impact-claims-diff', impactClaims - currentClaims);
+
+        $('#adapt-impact-total-old').text('₦' + formatMoneyPharmacy(currentTotal));
+        $('#adapt-impact-total-new').text('₦' + formatMoneyPharmacy(newTotal));
+        updateDiffBadge('#adapt-impact-total-diff', newTotal - currentTotal);
+
+        // Add note about billing update
+        let note = 'The billing record will be automatically updated with the new amounts.';
+        if (newTotal > currentTotal) {
+            note += ' The patient/HMO will owe an additional amount.';
+        } else if (newTotal < currentTotal) {
+            note += ' A credit/refund will be recorded.';
+        }
+        $('#adapt-impact-note').html('<i class="mdi mdi-information-outline"></i> ' + note);
+
+        $('#adapt-billing-impact').show();
+    }
+
+    // ===== UPDATE SUMMARY TEXT =====
+    const productName = selectedNewProduct.product_name || 'selected product';
+    let summaryText = `Adapting to "${productName}" × ${newQty} = ₦${formatMoneyPharmacy(newTotal)}`;
+    if (priceDiff !== 0) {
+        summaryText += ` (${priceDiff > 0 ? '+' : ''}₦${formatMoneyPharmacy(priceDiff)})`;
+    }
+    $('#adapt-summary-text').html(summaryText);
+
+    // Enable confirm button
+    $('#confirm-adaptation').prop('disabled', false);
+    $('#adapt-step-3').addClass('active');
+}
+
+// Helper to update diff badge with color
+function updateDiffBadge(selector, diff) {
+    const formatted = (diff >= 0 ? '+' : '') + '₦' + formatMoneyPharmacy(Math.abs(diff));
+    const badgeClass = diff > 0 ? 'text-danger' : (diff < 0 ? 'text-success' : 'text-muted');
+    $(selector).html(`<span class="${badgeClass}">${formatted}</span>`);
+}
+
+// Listen for qty change to update preview
+$('#adapt-new-qty').on('change input', function() {
+    updateAdaptationPreview();
+});
+
+// Quantity +/- buttons
+$('#adapt-qty-minus').on('click', function() {
+    const $input = $('#adapt-new-qty');
+    const current = parseInt($input.val()) || 1;
+    if (current > 1) {
+        $input.val(current - 1);
+        updateAdaptationPreview();
+    }
+});
+
+$('#adapt-qty-plus').on('click', function() {
+    const $input = $('#adapt-new-qty');
+    const current = parseInt($input.val()) || 1;
+    $input.val(current + 1);
+    updateAdaptationPreview();
+});
+
+// Quick reason buttons
+$(document).on('click', '.adapt-quick-reason', function() {
+    const reason = $(this).data('reason');
+    const $textarea = $('#adapt-reason');
+    const currentText = $textarea.val().trim();
+
+    if (currentText) {
+        $textarea.val(currentText + '; ' + reason);
+    } else {
+        $textarea.val(reason);
+    }
+
+    // Highlight the button
+    $(this).addClass('btn-secondary').removeClass('btn-outline-secondary');
+});
 
 // Confirm product adaptation
 $('#confirm-adaptation').on('click', function() {
@@ -14004,6 +15851,7 @@ $('#confirm-adaptation').on('click', function() {
 
     if (!reason) {
         toastr.warning('Please enter a reason for adaptation');
+        $('#adapt-reason').focus();
         return;
     }
 
@@ -14038,6 +15886,160 @@ $('#confirm-adaptation').on('click', function() {
 
 // ===========================================
 // END PRODUCT ADAPTATION MODULE
+// ===========================================
+
+// ===========================================
+// QUANTITY ADJUSTMENT MODULE
+// ===========================================
+
+// Open quantity adjustment modal with billing status awareness
+function openQtyAdjustmentModal(productRequestId, productName, currentQty, price, status, payable, claims, isPaid, isValidated, coverageMode) {
+    $('#qty-adjust-request-id').val(productRequestId);
+    $('#qty-adjust-billing-status').val(status || 'unbilled');
+    $('#qty-adjust-price').val(price || 0);
+    $('#qty-adjust-coverage-mode').val(coverageMode || 'none');
+
+    // Set product info
+    $('#qty-adjust-product-name').text(productName);
+    $('#qty-adjust-unit-price').text('₦' + formatMoneyPharmacy(price || 0));
+    $('#qty-adjust-current').text(currentQty || 1);
+    $('#qty-adjust-new').val(currentQty || 1);
+    $('#qty-adjust-reason').val('');
+
+    // Show/hide relevant notices and billing info based on status
+    const isBilled = status === 'billed';
+    $('#qty-unbilled-notice').toggle(!isBilled);
+    $('#qty-billed-notice').toggle(isBilled);
+    $('#qty-current-billing').toggle(isBilled);
+    $('#qty-billing-impact').toggle(isBilled);
+
+    if (isBilled) {
+        $('#qty-current-payable').text('₦' + formatMoneyPharmacy(payable || 0));
+        $('#qty-current-claims').text('₦' + formatMoneyPharmacy(claims || 0));
+        // Trigger initial preview
+        updateQtyAdjustmentPreview();
+    }
+
+    $('#qtyAdjustmentModal').modal('show');
+}
+
+// Increment/decrement helpers
+function adjustQtyIncrement() {
+    const $input = $('#qty-adjust-new');
+    $input.val(parseInt($input.val() || 0) + 1);
+    updateQtyAdjustmentPreview();
+}
+
+function adjustQtyDecrement() {
+    const $input = $('#qty-adjust-new');
+    const current = parseInt($input.val() || 0);
+    if (current > 1) {
+        $input.val(current - 1);
+        updateQtyAdjustmentPreview();
+    }
+}
+
+// Update quantity adjustment preview
+function updateQtyAdjustmentPreview() {
+    const isBilled = $('#qty-adjust-billing-status').val() === 'billed';
+    if (!isBilled) return;
+
+    const currentQty = parseInt($('#qty-adjust-current').text()) || 1;
+    const newQty = parseInt($('#qty-adjust-new').val()) || 1;
+    const unitPrice = parseFloat($('#qty-adjust-price').val()) || 0;
+    const coverageMode = $('#qty-adjust-coverage-mode').val();
+
+    const currentPayable = parseFloat($('#qty-current-payable').text().replace(/[₦,]/g, '')) || 0;
+    const currentClaims = parseFloat($('#qty-current-claims').text().replace(/[₦,]/g, '')) || 0;
+    const currentTotal = currentPayable + currentClaims;
+
+    // Calculate new amounts
+    const newTotal = unitPrice * newQty;
+    let newPayable = newTotal;
+    let newClaims = 0;
+
+    // Apply same coverage ratio if HMO coverage
+    if (coverageMode && coverageMode !== 'none' && currentTotal > 0) {
+        const payableRatio = currentPayable / currentTotal;
+        const claimsRatio = currentClaims / currentTotal;
+        newPayable = newTotal * payableRatio;
+        newClaims = newTotal * claimsRatio;
+    }
+
+    // Update impact display
+    $('#qty-impact-payable-old').text('₦' + formatMoneyPharmacy(currentPayable));
+    $('#qty-impact-payable-new').text('₦' + formatMoneyPharmacy(newPayable));
+    updateQtyDiffBadge('#qty-impact-payable-diff', newPayable - currentPayable);
+
+    $('#qty-impact-claims-old').text('₦' + formatMoneyPharmacy(currentClaims));
+    $('#qty-impact-claims-new').text('₦' + formatMoneyPharmacy(newClaims));
+    updateQtyDiffBadge('#qty-impact-claims-diff', newClaims - currentClaims);
+}
+
+function updateQtyDiffBadge(selector, diff) {
+    const formatted = (diff >= 0 ? '+' : '-') + '₦' + formatMoneyPharmacy(Math.abs(diff));
+    const badgeClass = diff > 0 ? 'bg-danger' : (diff < 0 ? 'bg-success' : 'bg-secondary');
+    $(selector).removeClass('bg-danger bg-success bg-secondary').addClass(badgeClass).text(formatted);
+}
+
+// Listen for qty input change
+$('#qty-adjust-new').on('change input', function() {
+    updateQtyAdjustmentPreview();
+});
+
+// Confirm quantity adjustment
+$('#confirm-qty-adjustment').on('click', function() {
+    const productRequestId = $('#qty-adjust-request-id').val();
+    const newQty = $('#qty-adjust-new').val();
+    const currentQty = $('#qty-adjust-current').text();
+    const reason = $('#qty-adjust-reason').val().trim();
+
+    if (!newQty || newQty < 1) {
+        toastr.warning('Please enter a valid quantity (minimum 1)');
+        return;
+    }
+
+    if (newQty == currentQty) {
+        toastr.warning('New quantity is the same as current quantity');
+        return;
+    }
+
+    if (!reason) {
+        toastr.warning('Please enter a reason for the quantity adjustment');
+        $('#qty-adjust-reason').focus();
+        return;
+    }
+
+    const $btn = $(this);
+    const originalHtml = $btn.html();
+    $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Processing...');
+
+    $.ajax({
+        url: `/pharmacy-workbench/prescription/${productRequestId}/adjust-quantity`,
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            new_qty: newQty,
+            adjustment_reason: reason
+        },
+        success: function(response) {
+            $btn.prop('disabled', false).html(originalHtml);
+            toastr.success(response.message || 'Quantity adjusted successfully');
+            $('#qtyAdjustmentModal').modal('hide');
+
+            // Refresh prescription lists
+            loadPrescriptionItems(currentStatusFilter);
+            refreshAllPrescTables();
+        },
+        error: function(xhr) {
+            $btn.prop('disabled', false).html(originalHtml);
+            toastr.error(xhr.responseJSON?.message || 'Failed to adjust quantity');
+        }
+    });
+});
+
+// ===========================================
+// END QUANTITY ADJUSTMENT MODULE
 // ===========================================
 </script>
 

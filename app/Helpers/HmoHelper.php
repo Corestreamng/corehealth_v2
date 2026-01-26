@@ -200,22 +200,46 @@ class HmoHelper
             ];
         }
 
-        $procedureRequest = $procedure->productOrServiceRequest;
-
-        if (!$procedureRequest) {
-            return [
-                'can_deliver' => false,
-                'reason' => 'No Billing Entry',
-                'hint' => 'The procedure does not have a billing entry.'
-            ];
-        }
-
-        // Check if procedure is cancelled
+        // Check if procedure is cancelled first
         if ($procedure->procedure_status === 'cancelled') {
             return [
                 'can_deliver' => false,
                 'reason' => 'Procedure Cancelled',
                 'hint' => 'Cannot deliver items for a cancelled procedure.'
+            ];
+        }
+
+        $procedureRequest = $procedure->productOrServiceRequest;
+
+        // Handle legacy procedures without billing entry
+        // Bundled items don't get billed separately - they're included in the procedure price
+        // For legacy entries, allow delivery if procedure is in progress or completed
+        if (!$procedureRequest) {
+            $procedureName = optional($procedure->service)->service_name ?? 'Procedure';
+
+            // Allow delivery for legacy procedures that are in progress or completed
+            $allowedStatuses = ['in_progress', 'completed'];
+            if (in_array($procedure->procedure_status, $allowedStatuses)) {
+                return [
+                    'can_deliver' => true,
+                    'reason' => 'Legacy Procedure - Ready',
+                    'hint' => sprintf(
+                        'This item is bundled with "%s" (legacy entry - no billing record). Procedure status: %s.',
+                        $procedureName,
+                        ucfirst(str_replace('_', ' ', $procedure->procedure_status))
+                    )
+                ];
+            }
+
+            // For other statuses (requested, scheduled), wait for procedure to start
+            return [
+                'can_deliver' => false,
+                'reason' => 'Procedure Not Started',
+                'hint' => sprintf(
+                    'This item is bundled with "%s". The procedure must be in progress or completed before bundled items can be delivered. Current status: %s.',
+                    $procedureName,
+                    ucfirst(str_replace('_', ' ', $procedure->procedure_status ?? 'unknown'))
+                )
             ];
         }
 

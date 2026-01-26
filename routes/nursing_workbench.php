@@ -56,6 +56,13 @@ Route::middleware(['web', 'auth'])->prefix('nursing-workbench')->name('nursing-w
     Route::post('/administer-immunization', [NursingWorkbenchController::class, 'administerImmunization'])->name('immunization.administer');
 
     // =====================================
+    // Stock Batch Selection (Store-Based FIFO)
+    // =====================================
+    Route::get('/product-batches', [NursingWorkbenchController::class, 'getProductBatches'])->name('product-batches');
+    Route::get('/batch-fulfillment', [NursingWorkbenchController::class, 'getBatchFulfillmentSuggestion'])->name('batch-fulfillment');
+    Route::get('/product-stock/{productId}/store/{storeId}', [NursingWorkbenchController::class, 'getProductStockByStore'])->name('product-stock');
+
+    // =====================================
     // Nurse Billing
     // =====================================
     Route::get('/search-services', [NursingWorkbenchController::class, 'searchServices'])->name('search-services');
