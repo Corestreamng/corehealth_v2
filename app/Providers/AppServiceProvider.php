@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use App\Models\Product;
 use App\Models\service;
 use App\Models\ServicePrice;
+use App\Models\Price;
 use App\Models\Hmo;
 use App\Models\AdmissionRequest;
 use App\Models\ProductOrServiceRequest;
@@ -15,6 +16,7 @@ use App\Models\User;
 use App\Observers\ProductObserver;
 use App\Observers\ServiceObserver;
 use App\Observers\ServicePriceObserver;
+use App\Observers\PriceObserver;
 use App\Observers\HmoObserver;
 use App\Helpers\HmoHelper;
 use App\Services\DepartmentNotificationService;
@@ -56,6 +58,7 @@ class AppServiceProvider extends ServiceProvider
         Product::observe(ProductObserver::class);
         service::observe(ServiceObserver::class);
         ServicePrice::observe(ServicePriceObserver::class);
+        Price::observe(PriceObserver::class);
         Hmo::observe(HmoObserver::class);
 
         // Process daily bed bills - runs once per day automatically
