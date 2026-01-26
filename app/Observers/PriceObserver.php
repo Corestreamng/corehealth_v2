@@ -2,39 +2,39 @@
 
 namespace App\Observers;
 
-use App\Models\ServicePrice;
+use App\Models\Price;
 use App\Models\Hmo;
 use App\Models\HmoTariff;
 use Illuminate\Support\Facades\Log;
 
-class ServicePriceObserver
+class PriceObserver
 {
     /**
-     * Handle the ServicePrice "created" event.
-     * Updates or creates HMO tariffs for this service with the new price as payable_amount.
+     * Handle the Price "created" event.
+     * Updates or creates HMO tariffs for this product with the new price as payable_amount.
      *
-     * @param  \App\Models\ServicePrice  $servicePrice
+     * @param  \App\Models\Price  $price
      * @return void
      */
-    public function created(ServicePrice $servicePrice)
+    public function created(Price $price)
     {
-        $this->updateOrCreateTariffsWithPrice($servicePrice);
+        $this->updateOrCreateTariffsWithPrice($price);
     }
 
     /**
-     * Update or create HMO tariffs for a service with the new price.
+     * Update or create HMO tariffs for a product with the new price.
      * Uses updateOrCreate to handle cases where tariffs don't exist yet (import scenarios).
      *
-     * @param  \App\Models\ServicePrice  $servicePrice
+     * @param  \App\Models\Price  $price
      * @return void
      */
-    protected function updateOrCreateTariffsWithPrice(ServicePrice $servicePrice)
+    protected function updateOrCreateTariffsWithPrice(Price $price)
     {
         try {
-            $price = $servicePrice->sale_price ?? 0;
-            $serviceId = $servicePrice->service_id;
+            $salePrice = $price->current_sale_price ?? 0;
+            $productId = $price->product_id;
 
-            if (!$serviceId) {
+            if (!$productId) {
                 return;
             }
 
@@ -49,24 +49,24 @@ class ServicePriceObserver
 
             foreach ($hmos as $hmo) {
                 $tariff = HmoTariff::where('hmo_id', $hmo->id)
-                    ->where('service_id', $serviceId)
-                    ->whereNull('product_id')
+                    ->where('product_id', $productId)
+                    ->whereNull('service_id')
                     ->first();
 
                 if ($tariff) {
                     // Only update if payable_amount is 0 (not manually configured)
                     if ($tariff->payable_amount == 0) {
-                        $tariff->update(['payable_amount' => $price]);
+                        $tariff->update(['payable_amount' => $salePrice]);
                         $updated++;
                     }
                 } else {
                     // Create new tariff entry
                     HmoTariff::create([
                         'hmo_id' => $hmo->id,
-                        'product_id' => null,
-                        'service_id' => $serviceId,
+                        'product_id' => $productId,
+                        'service_id' => null,
                         'claims_amount' => 0,
-                        'payable_amount' => $price,
+                        'payable_amount' => $salePrice,
                         'coverage_mode' => 'primary',
                     ]);
                     $created++;
@@ -74,10 +74,10 @@ class ServicePriceObserver
             }
 
             if ($created > 0 || $updated > 0) {
-                Log::info("ServicePriceObserver: Service {$serviceId} - Created {$created}, Updated {$updated} HMO tariffs with price {$price}");
+                Log::info("PriceObserver: Product {$productId} - Created {$created}, Updated {$updated} HMO tariffs with price {$salePrice}");
             }
         } catch (\Exception $e) {
-            Log::error("ServicePriceObserver: Failed to update/create tariffs for service {$servicePrice->service_id}: " . $e->getMessage());
+            Log::error("PriceObserver: Failed to update/create tariffs for product {$price->product_id}: " . $e->getMessage());
         }
     }
 }

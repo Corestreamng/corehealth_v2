@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 26, 2026 at 12:05 AM
+-- Generation Time: Jan 26, 2026 at 12:02 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -1062,7 +1062,28 @@ INSERT INTO `audits` (`id`, `user_type`, `user_id`, `event`, `auditable_type`, `
 (841, 'App\\Models\\User', 1, 'created', 'App\\Models\\HR\\StaffSuspension', 2, '[]', '{\"staff_id\":1,\"disciplinary_query_id\":3,\"type\":\"unpaid\",\"start_date\":\"2026-01-27 00:00:00\",\"end_date\":\"2026-01-28 00:00:00\",\"reason\":\"sdhasd: ajdgjad\\nadada\",\"suspension_message\":\"Your account has been suspended due to disciplinary action. Please contact HR.\",\"issued_by\":1,\"status\":\"active\",\"suspension_number\":\"SUS2026000002\",\"id\":2}', 'http://127.0.0.1:8000/hr/disciplinary/3/decide', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 21:55:28', '2026-01-25 21:55:28'),
 (842, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Staff', 1, '{\"suspended_at\":\"2026-01-25 21:49:52\",\"suspension_reason\":\"test\",\"suspension_end_date\":\"2026-01-27\"}', '{\"suspended_at\":\"2026-01-25 22:55:28\",\"suspension_reason\":\"sdhasd: ajdgjad\\nadada\",\"suspension_end_date\":\"2026-01-28 00:00:00\"}', 'http://127.0.0.1:8000/hr/disciplinary/3/decide', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 21:55:28', '2026-01-25 21:55:28'),
 (843, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\StaffSuspension', 2, '{\"status\":\"active\",\"lifted_by\":null,\"lifted_at\":null,\"lift_reason\":null}', '{\"status\":\"lifted\",\"lifted_by\":1,\"lifted_at\":\"2026-01-25 22:55:49\",\"lift_reason\":\"kskjd\"}', 'http://127.0.0.1:8000/hr/suspensions/2/lift', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 21:55:49', '2026-01-25 21:55:49'),
-(844, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\StaffSuspension', 1, '{\"status\":\"active\",\"lifted_by\":null,\"lifted_at\":null,\"lift_reason\":null}', '{\"status\":\"lifted\",\"lifted_by\":1,\"lifted_at\":\"2026-01-25 22:55:56\",\"lift_reason\":\"dnkad\"}', 'http://127.0.0.1:8000/hr/suspensions/1/lift', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 21:55:56', '2026-01-25 21:55:56');
+(844, 'App\\Models\\User', 1, 'updated', 'App\\Models\\HR\\StaffSuspension', 1, '{\"status\":\"active\",\"lifted_by\":null,\"lifted_at\":null,\"lift_reason\":null}', '{\"status\":\"lifted\",\"lifted_by\":1,\"lifted_at\":\"2026-01-25 22:55:56\",\"lift_reason\":\"dnkad\"}', 'http://127.0.0.1:8000/hr/suspensions/1/lift', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 21:55:56', '2026-01-25 21:55:56'),
+(845, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Expense', 6, '{\"bank_id\":null}', '{\"bank_id\":\"1\"}', 'http://127.0.0.1:8000/inventory/expenses/6', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 23:28:10', '2026-01-25 23:28:10'),
+(846, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Expense', 6, '{\"status\":\"pending\",\"approved_at\":\"2026-01-25 16:11:08\"}', '{\"status\":\"approved\",\"approved_at\":\"2026-01-26 00:28:18\"}', 'http://127.0.0.1:8000/inventory/expenses/6/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-25 23:28:18', '2026-01-25 23:28:18'),
+(847, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductRequest', 102, '{\"status\":1}', '{\"status\":0}', 'http://127.0.0.1:8000/product-dismiss-patient-ajax', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-26 05:20:47', '2026-01-26 05:20:47'),
+(848, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductRequest', 115, '{\"qty\":1,\"qty_adjusted_from\":null,\"qty_adjustment_reason\":null,\"qty_adjusted_at\":null,\"qty_adjusted_by\":null}', '{\"qty\":\"2\",\"qty_adjusted_from\":1,\"qty_adjustment_reason\":\"test adust\",\"qty_adjusted_at\":\"2026-01-26 07:08:15\",\"qty_adjusted_by\":1}', 'http://127.0.0.1:8000/pharmacy-workbench/prescription/115/adjust-quantity', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-26 06:08:15', '2026-01-26 06:08:15'),
+(849, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductOrServiceRequest', 123, '{\"qty\":1,\"payable_amount\":null}', '{\"qty\":\"2\",\"payable_amount\":36}', 'http://127.0.0.1:8000/pharmacy-workbench/prescription/115/adjust-quantity', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-26 06:08:15', '2026-01-26 06:08:15'),
+(850, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductRequest', 115, '{\"product_id\":139,\"adapted_from_product_id\":null,\"adaptation_note\":null,\"adapted_by\":null,\"adapted_at\":null}', '{\"product_id\":\"33\",\"adapted_from_product_id\":139,\"adaptation_note\":\"test\",\"adapted_by\":1,\"adapted_at\":\"2026-01-26 07:13:32\"}', 'http://127.0.0.1:8000/pharmacy-workbench/prescription/115/adapt', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-26 06:13:32', '2026-01-26 06:13:32'),
+(851, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductOrServiceRequest', 123, '{\"product_id\":139,\"payable_amount\":\"36.00\"}', '{\"product_id\":\"33\",\"payable_amount\":2000}', 'http://127.0.0.1:8000/pharmacy-workbench/prescription/115/adapt', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-26 06:13:32', '2026-01-26 06:13:32'),
+(852, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductRequest', 116, '{\"product_id\":125,\"qty\":1,\"adapted_from_product_id\":null,\"adaptation_note\":null,\"adapted_by\":null,\"adapted_at\":null}', '{\"product_id\":\"58\",\"qty\":\"2\",\"adapted_from_product_id\":125,\"adaptation_note\":\"Out of stock\",\"adapted_by\":1,\"adapted_at\":\"2026-01-26 08:54:52\"}', 'http://127.0.0.1:8000/pharmacy-workbench/prescription/116/adapt', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-26 07:54:53', '2026-01-26 07:54:53'),
+(853, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductOrServiceRequest', 125, '{\"product_id\":125,\"qty\":1,\"payable_amount\":\"350.00\"}', '{\"product_id\":\"58\",\"qty\":\"2\",\"payable_amount\":2000}', 'http://127.0.0.1:8000/pharmacy-workbench/prescription/116/adapt', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-26 07:54:53', '2026-01-26 07:54:53'),
+(854, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductRequest', 115, '{\"product_id\":33,\"qty\":2,\"adapted_from_product_id\":139,\"adaptation_note\":\"test\",\"adapted_at\":\"2026-01-26 07:13:32\"}', '{\"product_id\":\"58\",\"qty\":\"3\",\"adapted_from_product_id\":33,\"adaptation_note\":\"Out of stock\",\"adapted_at\":\"2026-01-26 08:58:13\"}', 'http://127.0.0.1:8000/pharmacy-workbench/prescription/115/adapt', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-26 07:58:13', '2026-01-26 07:58:13'),
+(855, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductOrServiceRequest', 123, '{\"product_id\":33,\"qty\":2,\"payable_amount\":\"2000.00\"}', '{\"product_id\":\"58\",\"qty\":\"3\",\"payable_amount\":3000}', 'http://127.0.0.1:8000/pharmacy-workbench/prescription/115/adapt', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-26 07:58:13', '2026-01-26 07:58:13'),
+(856, 'App\\Models\\User', 1, 'updated', 'App\\Models\\StockBatch', 5, '{\"current_qty\":88,\"sold_qty\":0}', '{\"current_qty\":87,\"sold_qty\":1}', 'http://127.0.0.1:8000/pharmacy-workbench/dispense-with-batch', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-26 09:52:00', '2026-01-26 09:52:00'),
+(857, 'App\\Models\\User', 1, 'created', 'App\\Models\\StockBatchTransaction', 19, '[]', '{\"stock_batch_id\":5,\"type\":\"out\",\"qty\":1,\"balance_after\":87,\"reference_type\":\"App\\\\Models\\\\ProductRequest\",\"reference_id\":109,\"notes\":\"Dispensed for patient\",\"performed_by\":1,\"id\":19}', 'http://127.0.0.1:8000/pharmacy-workbench/dispense-with-batch', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-26 09:52:00', '2026-01-26 09:52:00'),
+(858, 'App\\Models\\User', 1, 'updated', 'App\\Models\\StoreStock', 5, '{\"last_restocked_at\":\"2026-01-22 08:38:15\"}', '{\"last_restocked_at\":\"2026-01-26 10:52:00\"}', 'http://127.0.0.1:8000/pharmacy-workbench/dispense-with-batch', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-26 09:52:00', '2026-01-26 09:52:00'),
+(859, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductRequest', 109, '{\"dispensed_by\":null,\"dispense_date\":null,\"dispensed_from_store_id\":null,\"status\":2,\"dispensed_from_batch_id\":null}', '{\"dispensed_by\":1,\"dispense_date\":\"2026-01-26T10:52:00.191356Z\",\"dispensed_from_store_id\":\"1\",\"status\":3,\"dispensed_from_batch_id\":5}', 'http://127.0.0.1:8000/pharmacy-workbench/dispense-with-batch', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-26 09:52:00', '2026-01-26 09:52:00'),
+(860, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductOrServiceRequest', 120, '{\"dispensed_from_store_id\":null}', '{\"dispensed_from_store_id\":\"1\"}', 'http://127.0.0.1:8000/pharmacy-workbench/dispense-with-batch', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-26 09:52:00', '2026-01-26 09:52:00'),
+(861, 'App\\Models\\User', 1, 'updated', 'App\\Models\\StockBatch', 1, '{\"current_qty\":138,\"sold_qty\":20}', '{\"current_qty\":137,\"sold_qty\":21}', 'http://127.0.0.1:8000/pharmacy-workbench/dispense-with-batch', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-26 09:52:00', '2026-01-26 09:52:00'),
+(862, 'App\\Models\\User', 1, 'created', 'App\\Models\\StockBatchTransaction', 20, '[]', '{\"stock_batch_id\":1,\"type\":\"out\",\"qty\":1,\"balance_after\":137,\"reference_type\":\"App\\\\Models\\\\ProductRequest\",\"reference_id\":106,\"notes\":\"Dispensed for patient\",\"performed_by\":1,\"id\":20}', 'http://127.0.0.1:8000/pharmacy-workbench/dispense-with-batch', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-26 09:52:00', '2026-01-26 09:52:00'),
+(863, 'App\\Models\\User', 1, 'updated', 'App\\Models\\StoreStock', 1, '{\"last_restocked_at\":\"2026-01-22 12:13:55\"}', '{\"last_restocked_at\":\"2026-01-26 10:52:00\"}', 'http://127.0.0.1:8000/pharmacy-workbench/dispense-with-batch', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-26 09:52:00', '2026-01-26 09:52:00'),
+(864, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductRequest', 106, '{\"dispensed_by\":null,\"dispense_date\":null,\"dispensed_from_store_id\":null,\"status\":2,\"dispensed_from_batch_id\":null}', '{\"dispensed_by\":1,\"dispense_date\":\"2026-01-26T10:52:00.228359Z\",\"dispensed_from_store_id\":\"1\",\"status\":3,\"dispensed_from_batch_id\":1}', 'http://127.0.0.1:8000/pharmacy-workbench/dispense-with-batch', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-26 09:52:00', '2026-01-26 09:52:00'),
+(865, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductOrServiceRequest', 110, '{\"dispensed_from_store_id\":null}', '{\"dispensed_from_store_id\":\"1\"}', 'http://127.0.0.1:8000/pharmacy-workbench/dispense-with-batch', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', NULL, '2026-01-26 09:52:00', '2026-01-26 09:52:00');
 
 -- --------------------------------------------------------
 
@@ -1813,7 +1834,7 @@ CREATE TABLE `expenses` (
   `expense_date` date NOT NULL,
   `recorded_by` bigint(20) UNSIGNED NOT NULL,
   `approved_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `status` enum('pending','approved','rejected','void') NOT NULL DEFAULT 'pending',
+  `status` enum('pending','approved','rejected','void','paid') NOT NULL DEFAULT 'pending',
   `rejection_reason` text DEFAULT NULL,
   `approved_at` timestamp NULL DEFAULT NULL,
   `voided_by` bigint(20) UNSIGNED DEFAULT NULL,
@@ -1839,7 +1860,7 @@ INSERT INTO `expenses` (`id`, `expense_number`, `category`, `reference_type`, `r
 (3, 'EXP2026010003', 'salaries', NULL, NULL, 10099.00, 1, 1, 'tetsts', 'Test genenric epense up', '2026-01-23', 1, 1, 'rejected', 'ytete', '2026-01-23 07:57:36', NULL, NULL, NULL, 'cash', NULL, NULL, 'w6e73832', 'gjhhd', '2026-01-23 07:56:55', '2026-01-23 07:57:36', NULL),
 (4, 'EXP2026010004', 'store_expense', NULL, NULL, 60060.00, 1, 3, 'dgdhsd', 'ttwetew', '2026-01-23', 1, 1, 'approved', NULL, '2026-01-23 07:58:33', NULL, NULL, NULL, 'bank_transfer', 1, NULL, 'hgdgd', 'test approve', '2026-01-23 07:58:25', '2026-01-23 07:58:33', NULL),
 (5, 'EXP2026010005', 'salaries', 'payroll_batch', 1, 226200.00, NULL, NULL, 'Payroll - jan 2206 pay batch', 'Payroll batch PAY2026010001 for period Jan 01 - Jan 31, 2026. Total staff: 2.', '2026-01-31', 1, 1, 'approved', NULL, '2026-01-25 09:54:36', NULL, NULL, NULL, 'bank_transfer', NULL, NULL, NULL, NULL, '2026-01-25 09:54:36', '2026-01-25 09:54:36', NULL),
-(6, 'EXP2026010006', 'salaries', 'payroll_batch', 3, 226200.00, NULL, NULL, 'Payroll - test prorata', 'Payroll batch PAY2026010003 for period Mar 01 - Mar 31, 2026. Total staff: 2.', '2026-03-31', 1, 1, 'pending', NULL, '2026-01-25 15:11:08', NULL, NULL, NULL, 'bank_transfer', NULL, NULL, NULL, NULL, '2026-01-25 15:11:08', '2026-01-25 16:09:24', NULL),
+(6, 'EXP2026010006', 'salaries', 'payroll_batch', 3, 226200.00, NULL, NULL, 'Payroll - test prorata', 'Payroll batch PAY2026010003 for period Mar 01 - Mar 31, 2026. Total staff: 2.', '2026-03-31', 1, 1, 'approved', NULL, '2026-01-25 23:28:18', NULL, NULL, NULL, 'bank_transfer', 1, NULL, NULL, NULL, '2026-01-25 15:11:08', '2026-01-25 23:28:18', NULL),
 (7, 'EXP2026010007', 'salaries', 'payroll_batch', 4, 87561.29, NULL, NULL, 'Payroll - Payroll - May 2026', 'Payroll batch PAY2026010004 for period May 01 - May 31, 2026. Total staff: 2.', '2026-05-31', 1, 1, 'approved', NULL, '2026-01-25 16:50:49', NULL, NULL, NULL, 'bank_transfer', NULL, NULL, NULL, NULL, '2026-01-25 16:50:49', '2026-01-25 16:50:49', NULL);
 
 -- --------------------------------------------------------
@@ -6150,6 +6171,7 @@ CREATE TABLE `medication_administrations` (
   `comment` text DEFAULT NULL,
   `administered_by` bigint(20) UNSIGNED NOT NULL,
   `store_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `dispensed_from_batch_id` bigint(20) UNSIGNED DEFAULT NULL,
   `edited_by` bigint(20) UNSIGNED DEFAULT NULL,
   `edited_at` datetime DEFAULT NULL,
   `edit_reason` text DEFAULT NULL,
@@ -6165,22 +6187,22 @@ CREATE TABLE `medication_administrations` (
 -- Dumping data for table `medication_administrations`
 --
 
-INSERT INTO `medication_administrations` (`id`, `patient_id`, `product_or_service_request_id`, `schedule_id`, `administered_at`, `dose`, `route`, `comment`, `administered_by`, `store_id`, `edited_by`, `edited_at`, `edit_reason`, `previous_data`, `deleted_at`, `deleted_by`, `delete_reason`, `created_at`, `updated_at`) VALUES
-(1, 24, 65, 1, '2025-07-15 11:21:00', '500mg', 'Rectal', 'yoo', 1, NULL, 1, '2025-07-15 09:46:51', 'Mistake', '{\"administered_at\":\"2025-07-15 11:21:00\",\"dose\":\"500mg\",\"route\":\"Rectal\",\"comment\":\"test\"}', '2025-07-15 09:38:59', 1, 'ffh', '2025-07-15 08:22:08', '2025-07-15 09:38:59'),
-(2, 24, 65, 2, '2025-07-20 10:43:00', '500mg', 'Rectal', NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-15 09:01:39', '2025-07-15 09:01:39'),
-(3, 24, 65, 7, '2025-07-15 12:09:00', '500mg', 'IV', 'yyyy', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-15 10:09:40', '2025-07-15 10:09:40'),
-(4, 24, 65, 4, '2025-07-15 12:11:00', '500mg', 'IV', 'yyyy', 1, NULL, NULL, NULL, NULL, NULL, '2025-07-15 10:11:59', 1, 'ssss', '2025-07-15 10:11:49', '2025-07-15 10:11:59'),
-(5, 24, 65, 3, '2025-07-15 12:14:00', '500mg', 'IV', 'yyyy', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-15 10:14:41', '2025-07-15 10:14:41'),
-(6, 24, 65, 6, '2025-07-15 13:31:00', '500mg', 'Inhalation', 'yyyy', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-15 11:31:47', '2025-07-15 11:31:47'),
-(7, 24, 65, 5, '2025-07-15 23:18:00', '500mg', 'IV', 'ttttt', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-15 21:18:36', '2025-07-15 21:18:36'),
-(8, 24, 65, 8, '2025-07-15 23:20:00', '600mg', 'Oral', 'uu', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-15 21:20:06', '2025-07-15 21:20:06'),
-(9, 24, 65, 13, '2025-07-15 23:20:00', '600mg', 'Oral', 'edited', 1, NULL, 1, '2025-07-15 22:51:16', 'yyyy', '{\"administered_at\":\"2025-07-15 23:20:00\",\"dose\":\"600mg\",\"route\":\"Oral\",\"comment\":\"uup\"}', NULL, NULL, NULL, '2025-07-15 21:20:15', '2025-07-15 21:51:16'),
-(10, 24, 67, 84, '2025-07-16 00:22:00', '500mg', 'Topical', NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-15 22:22:11', '2025-07-15 22:22:11'),
-(11, 512, 69, 106, '2025-12-24 18:16:00', '600mg', 'Oral', 'patient stable', 1, NULL, NULL, NULL, NULL, NULL, '2025-12-24 16:17:11', 1, 'this was an error', '2025-12-24 16:16:46', '2025-12-24 16:17:11'),
-(12, 512, 69, 111, '2025-12-24 18:17:00', '600mg', 'Oral', 'patient stable', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-12-24 16:17:32', '2025-12-24 16:17:32'),
-(13, 1, 109, 115, '2026-01-14 21:48:00', '600mg', 'Oral', NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-14 20:48:33', '2026-01-14 20:48:33'),
-(14, 24, 110, 126, '2026-01-15 01:21:00', '600mg', 'Oral', 'hjds', 1, 1, 1, '2026-01-15 01:35:05', 'dhda', '{\"administered_at\":\"2026-01-15 01:21:00\",\"dose\":\"600mg\",\"route\":\"Oral\",\"comment\":null}', NULL, NULL, NULL, '2026-01-15 00:21:37', '2026-01-15 00:35:05'),
-(15, 24, 110, 128, '2026-01-15 01:35:00', '600mg', 'Oral', NULL, 1, 1, NULL, NULL, NULL, NULL, '2026-01-15 00:35:42', 1, 'dajdad', '2026-01-15 00:35:25', '2026-01-15 00:35:42');
+INSERT INTO `medication_administrations` (`id`, `patient_id`, `product_or_service_request_id`, `schedule_id`, `administered_at`, `dose`, `route`, `comment`, `administered_by`, `store_id`, `dispensed_from_batch_id`, `edited_by`, `edited_at`, `edit_reason`, `previous_data`, `deleted_at`, `deleted_by`, `delete_reason`, `created_at`, `updated_at`) VALUES
+(1, 24, 65, 1, '2025-07-15 11:21:00', '500mg', 'Rectal', 'yoo', 1, NULL, NULL, 1, '2025-07-15 09:46:51', 'Mistake', '{\"administered_at\":\"2025-07-15 11:21:00\",\"dose\":\"500mg\",\"route\":\"Rectal\",\"comment\":\"test\"}', '2025-07-15 09:38:59', 1, 'ffh', '2025-07-15 08:22:08', '2025-07-15 09:38:59'),
+(2, 24, 65, 2, '2025-07-20 10:43:00', '500mg', 'Rectal', NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-15 09:01:39', '2025-07-15 09:01:39'),
+(3, 24, 65, 7, '2025-07-15 12:09:00', '500mg', 'IV', 'yyyy', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-15 10:09:40', '2025-07-15 10:09:40'),
+(4, 24, 65, 4, '2025-07-15 12:11:00', '500mg', 'IV', 'yyyy', 1, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-15 10:11:59', 1, 'ssss', '2025-07-15 10:11:49', '2025-07-15 10:11:59'),
+(5, 24, 65, 3, '2025-07-15 12:14:00', '500mg', 'IV', 'yyyy', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-15 10:14:41', '2025-07-15 10:14:41'),
+(6, 24, 65, 6, '2025-07-15 13:31:00', '500mg', 'Inhalation', 'yyyy', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-15 11:31:47', '2025-07-15 11:31:47'),
+(7, 24, 65, 5, '2025-07-15 23:18:00', '500mg', 'IV', 'ttttt', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-15 21:18:36', '2025-07-15 21:18:36'),
+(8, 24, 65, 8, '2025-07-15 23:20:00', '600mg', 'Oral', 'uu', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-15 21:20:06', '2025-07-15 21:20:06'),
+(9, 24, 65, 13, '2025-07-15 23:20:00', '600mg', 'Oral', 'edited', 1, NULL, NULL, 1, '2025-07-15 22:51:16', 'yyyy', '{\"administered_at\":\"2025-07-15 23:20:00\",\"dose\":\"600mg\",\"route\":\"Oral\",\"comment\":\"uup\"}', NULL, NULL, NULL, '2025-07-15 21:20:15', '2025-07-15 21:51:16'),
+(10, 24, 67, 84, '2025-07-16 00:22:00', '500mg', 'Topical', NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-15 22:22:11', '2025-07-15 22:22:11'),
+(11, 512, 69, 106, '2025-12-24 18:16:00', '600mg', 'Oral', 'patient stable', 1, NULL, NULL, NULL, NULL, NULL, NULL, '2025-12-24 16:17:11', 1, 'this was an error', '2025-12-24 16:16:46', '2025-12-24 16:17:11'),
+(12, 512, 69, 111, '2025-12-24 18:17:00', '600mg', 'Oral', 'patient stable', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-12-24 16:17:32', '2025-12-24 16:17:32'),
+(13, 1, 109, 115, '2026-01-14 21:48:00', '600mg', 'Oral', NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-14 20:48:33', '2026-01-14 20:48:33'),
+(14, 24, 110, 126, '2026-01-15 01:21:00', '600mg', 'Oral', 'hjds', 1, 1, NULL, 1, '2026-01-15 01:35:05', 'dhda', '{\"administered_at\":\"2026-01-15 01:21:00\",\"dose\":\"600mg\",\"route\":\"Oral\",\"comment\":null}', NULL, NULL, NULL, '2026-01-15 00:21:37', '2026-01-15 00:35:05'),
+(15, 24, 110, 128, '2026-01-15 01:35:00', '600mg', 'Oral', NULL, 1, 1, NULL, NULL, NULL, NULL, NULL, '2026-01-15 00:35:42', 1, 'dajdad', '2026-01-15 00:35:25', '2026-01-15 00:35:42');
 
 -- --------------------------------------------------------
 
@@ -6594,7 +6616,10 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (195, '2026_01_25_100000_add_salary_cache_to_staff_salary_profiles', 89),
 (196, '2026_01_25_100001_add_percentage_of_to_pay_heads', 89),
 (197, '2026_01_25_100001_add_days_worked_to_payroll_tables', 90),
-(198, '2026_01_25_100002_add_paid_tracking_to_payroll_batches', 91);
+(198, '2026_01_25_100002_add_paid_tracking_to_payroll_batches', 91),
+(199, '2026_01_25_170500_add_paid_status_to_expenses_table', 92),
+(200, '2026_01_25_235929_add_batch_tracking_to_medication_administrations_table', 92),
+(201, '2026_01_26_000903_add_qty_adjustment_fields_to_product_requests_table', 93);
 
 -- --------------------------------------------------------
 
@@ -12555,7 +12580,7 @@ INSERT INTO `product_or_service_requests` (`id`, `type`, `invoice_id`, `payment_
 (104, NULL, NULL, NULL, NULL, 69, NULL, NULL, NULL, 1, NULL, NULL, 2, 58, NULL, 1, 0.00, 0.00, 1000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-14 14:00:32', '2026-01-14 14:00:32'),
 (105, NULL, NULL, NULL, NULL, 69, NULL, NULL, NULL, 1, NULL, NULL, 2, 2, NULL, 1, 0.00, 0.00, 1500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-14 14:17:56', '2026-01-14 14:17:56'),
 (109, NULL, NULL, NULL, NULL, 69, NULL, NULL, NULL, 1, NULL, NULL, NULL, 2, NULL, 1, 0.00, 0.00, 1500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-14 14:29:30', '2026-01-14 14:29:30'),
-(110, NULL, NULL, 79, NULL, 132, NULL, NULL, NULL, 1, NULL, NULL, NULL, 2, NULL, 1, 0.00, 0.00, 1500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-14 16:09:56', '2026-01-14 16:10:59'),
+(110, NULL, NULL, 79, NULL, 132, NULL, NULL, NULL, 1, NULL, NULL, 1, 2, NULL, 1, 0.00, 0.00, 1500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-14 16:09:56', '2026-01-26 09:52:00'),
 (111, NULL, NULL, NULL, NULL, 69, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, 0.00, 0.00, 5000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-14 23:00:01', '2026-01-14 23:00:01'),
 (112, NULL, NULL, NULL, NULL, 69, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, 0.00, 0.00, 5000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-16 07:49:24', '2026-01-16 07:49:24'),
 (113, NULL, NULL, NULL, NULL, 132, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 57, 1, 0.00, 0.00, 5000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-16 10:52:42', '2026-01-16 10:52:42'),
@@ -12564,18 +12589,19 @@ INSERT INTO `product_or_service_requests` (`id`, `type`, `invoice_id`, `payment_
 (116, NULL, NULL, NULL, NULL, 69, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, 0.00, 0.00, 5000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-19 00:05:05', '2026-01-19 00:05:05'),
 (117, NULL, NULL, NULL, NULL, 69, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, 0.00, 0.00, 5000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-20 06:33:58', '2026-01-20 06:33:58'),
 (119, NULL, NULL, NULL, NULL, 69, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, 0.00, 0.00, 5000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-21 04:53:59', '2026-01-21 04:53:59'),
-(120, NULL, NULL, NULL, NULL, 132, NULL, NULL, NULL, 1, NULL, NULL, NULL, 58, NULL, 1, 0.00, 0.00, 1000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-21 09:01:50', '2026-01-21 09:01:50'),
+(120, NULL, NULL, NULL, NULL, 132, NULL, NULL, NULL, 1, NULL, NULL, 1, 58, NULL, 1, 0.00, 0.00, 1000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-21 09:01:50', '2026-01-26 09:52:00'),
 (121, 'product', NULL, NULL, NULL, 132, 24, 222, NULL, 1, 1, '2026-01-21 10:07:20', NULL, 156, NULL, 1, 0.00, 0.00, NULL, 0.00, 'cash', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-21 10:07:20', '2026-01-21 10:07:20'),
 (122, NULL, NULL, NULL, NULL, 132, NULL, NULL, NULL, 1, NULL, NULL, NULL, 156, NULL, 1, 0.00, 0.00, 1800.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-21 10:08:02', '2026-01-21 10:08:02'),
-(123, 'product', NULL, NULL, NULL, 132, 24, 222, NULL, 1, 1, '2026-01-21 10:39:22', NULL, 139, NULL, 1, 0.00, 0.00, NULL, 0.00, 'cash', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-21 10:39:22', '2026-01-21 10:39:22'),
+(123, 'product', NULL, NULL, NULL, 132, 24, 222, NULL, 1, 1, '2026-01-21 10:39:22', NULL, 58, NULL, 3, 0.00, 0.00, 3000.00, 0.00, 'cash', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-21 10:39:22', '2026-01-26 07:58:13'),
 (124, 'product', NULL, NULL, NULL, 132, 24, 222, NULL, 1, 1, '2026-01-21 10:45:41', NULL, 125, NULL, 1, 350.00, 0.00, NULL, 0.00, 'cash', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-21 10:45:41', '2026-01-21 10:45:41'),
-(125, NULL, NULL, NULL, NULL, 132, NULL, NULL, NULL, 1, NULL, NULL, NULL, 125, NULL, 1, 0.00, 0.00, 350.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-21 10:46:50', '2026-01-21 10:46:50'),
+(125, NULL, NULL, NULL, NULL, 132, NULL, NULL, NULL, 1, NULL, NULL, NULL, 58, NULL, 2, 0.00, 0.00, 2000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-21 10:46:50', '2026-01-26 07:54:53'),
 (126, NULL, NULL, 81, NULL, 132, NULL, NULL, NULL, 1, NULL, NULL, 1, 3, NULL, 1, 0.00, 0.00, 2500.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-21 10:52:19', '2026-01-21 17:21:47'),
 (127, 'service', NULL, NULL, NULL, 132, NULL, 222, NULL, 1, 1, '2026-01-21 18:42:22', NULL, NULL, 67, 1, 70000.00, 0.00, NULL, 0.00, 'cash', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-21 18:42:22', '2026-01-21 18:42:22'),
 (128, NULL, NULL, NULL, NULL, 69, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, 0.00, 0.00, 5000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-21 23:00:00', '2026-01-21 23:00:00'),
 (129, NULL, NULL, NULL, NULL, 69, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, 0.00, 0.00, 5000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-23 06:17:36', '2026-01-23 06:17:36'),
 (130, NULL, NULL, NULL, NULL, 69, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, 0.00, 0.00, 5000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-24 06:20:10', '2026-01-24 06:20:10'),
-(131, NULL, NULL, NULL, NULL, 69, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, 0.00, 0.00, 5000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-25 07:17:01', '2026-01-25 07:17:01');
+(131, NULL, NULL, NULL, NULL, 69, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, 0.00, 0.00, 5000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-25 07:17:01', '2026-01-25 07:17:01'),
+(132, NULL, NULL, NULL, NULL, 69, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, 0.00, 0.00, 5000.00, 0.00, 'primary', NULL, 'pending', NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-25 23:00:11', '2026-01-25 23:00:11');
 
 -- --------------------------------------------------------
 
@@ -12611,47 +12637,51 @@ CREATE TABLE `product_requests` (
   `adaptation_note` text DEFAULT NULL,
   `is_adapted` tinyint(1) NOT NULL DEFAULT 0,
   `adapted_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `adapted_at` timestamp NULL DEFAULT NULL
+  `adapted_at` timestamp NULL DEFAULT NULL,
+  `qty_adjusted_from` int(11) DEFAULT NULL,
+  `qty_adjustment_reason` text DEFAULT NULL,
+  `qty_adjusted_at` timestamp NULL DEFAULT NULL,
+  `qty_adjusted_by` bigint(20) UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `product_requests`
 --
 
-INSERT INTO `product_requests` (`id`, `product_request_id`, `billed_by`, `dispensed_by`, `dispense_date`, `dispensed_from_store_id`, `billed_date`, `product_id`, `encounter_id`, `patient_id`, `doctor_id`, `dose`, `qty`, `status`, `created_at`, `updated_at`, `old_medical_report_id`, `deleted_at`, `deleted_by`, `deletion_reason`, `dispensed_from_batch_id`, `original_product_id`, `adapted_from_product_id`, `original_qty`, `adaptation_note`, `is_adapted`, `adapted_by`, `adapted_at`) VALUES
-(78, NULL, NULL, NULL, NULL, NULL, NULL, 34, 203, 3, 1, '7/7', 1, 1, '2023-08-31 07:27:26', '2023-08-31 07:27:26', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(79, NULL, NULL, NULL, NULL, NULL, NULL, 56, 204, 3, 1, 'tht', 1, 1, '2023-08-31 10:27:56', '2023-08-31 10:27:56', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(80, 60, 1, 1, '2023-09-30 08:52:56', NULL, '2023-09-30 08:52:13', 121, 207, 1, 1, '1bd', 1, 3, '2023-09-30 08:50:43', '2023-09-30 08:52:56', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(81, 65, 1, NULL, NULL, NULL, '2025-07-14 09:00:09', 34, NULL, 24, 1, '500mg TID 3days', 1, 2, '2025-07-14 09:00:09', '2025-07-14 09:00:09', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(82, 67, 1, NULL, NULL, NULL, '2025-07-15 22:00:13', 123, 209, 24, 1, '500mg TID 3days', 1, 2, '2025-07-15 13:59:08', '2025-07-15 22:00:13', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(83, 68, 1, NULL, NULL, NULL, '2025-07-15 22:00:13', 111, 209, 24, 1, '500mg TID 3days', 1, 2, '2025-07-15 13:59:08', '2025-07-15 22:00:13', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(84, 69, 1, NULL, NULL, NULL, '2025-12-24 16:13:29', 1, NULL, 512, 1, '500mg TID 3days', 1, 2, '2025-12-24 16:13:29', '2025-12-24 16:13:29', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(90, NULL, NULL, NULL, NULL, NULL, NULL, 81, 210, 24, 1, '500mg TID 3days', 1, 1, '2026-01-03 21:02:32', '2026-01-03 22:17:37', NULL, '2026-01-03 22:17:37', 1, 'Patient declined', NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(91, NULL, NULL, 1, '2026-01-14 09:16:03', NULL, NULL, 111, 212, 24, 1, '70mg TID 2days', 1, 3, '2026-01-04 03:58:36', '2026-01-14 09:16:03', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(92, NULL, NULL, NULL, NULL, NULL, NULL, 123, 213, 24, 1, '70mg TID 2days', 1, 2, '2026-01-04 04:11:58', '2026-01-14 01:05:48', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(93, 77, 1, NULL, NULL, NULL, '2026-01-06 05:39:28', 102, NULL, 24, 1, 'ggg', 1, 2, '2026-01-06 05:39:28', '2026-01-06 05:39:28', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(94, 80, 1, 1, '2026-01-14 14:50:39', 2, '2026-01-06 08:38:31', 111, NULL, 24, 1, 'thahga', 1, 3, '2026-01-06 08:38:31', '2026-01-14 14:50:39', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(95, 81, 1, NULL, NULL, NULL, '2026-01-06 08:43:17', 102, NULL, 24, 1, 'hasd', 1, 2, '2026-01-06 08:43:17', '2026-01-06 08:43:17', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(96, 82, 1, 1, '2026-01-14 14:22:31', 2, '2026-01-06 09:16:51', 117, NULL, 24, 1, 'hhdd', 1, 3, '2026-01-06 09:16:51', '2026-01-14 14:22:31', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(97, 83, 1, NULL, NULL, NULL, '2026-01-06 09:18:10', 102, NULL, 24, 1, 'hshs', 1, 2, '2026-01-06 09:18:10', '2026-01-06 09:18:10', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(98, 84, 1, 1, '2026-01-14 14:22:31', 2, '2026-01-06 09:57:26', 120, NULL, 24, 1, 'sgs', 1, 3, '2026-01-06 09:57:26', '2026-01-14 14:22:31', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(102, NULL, NULL, NULL, NULL, NULL, NULL, 79, NULL, 24, 1, NULL, 1, 1, '2026-01-14 01:33:39', '2026-01-14 01:33:39', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(103, NULL, NULL, 1, '2026-01-14 09:16:03', NULL, NULL, 68, NULL, 24, 1, '700 mg 3 days', 1, 3, '2026-01-14 01:37:14', '2026-01-14 09:16:03', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(104, 103, 1, 1, '2026-01-14 14:22:31', 2, '2026-01-14 12:13:30', 59, 222, 24, 1, '', 1, 3, '2026-01-14 08:41:00', '2026-01-17 11:46:47', NULL, '2026-01-17 11:46:47', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(105, NULL, NULL, NULL, NULL, NULL, NULL, 7, NULL, 24, 1, '87', 1, 1, '2026-01-14 12:17:08', '2026-01-14 12:17:08', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(106, 110, 1, NULL, NULL, NULL, '2026-01-14 16:09:56', 2, NULL, 24, 1, '64', 1, 2, '2026-01-14 16:09:24', '2026-01-14 16:09:56', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(107, NULL, NULL, NULL, NULL, NULL, NULL, 58, 222, 24, 1, '500mg TID 3days', 1, 1, '2026-01-17 11:46:47', '2026-01-17 12:52:10', NULL, '2026-01-17 12:52:10', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(108, NULL, NULL, NULL, NULL, NULL, NULL, 120, 222, 24, 1, '500mg TID 3days', 1, 1, '2026-01-17 12:52:10', '2026-01-17 12:52:10', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(109, 120, 1, NULL, NULL, NULL, '2026-01-21 09:01:50', 58, 222, 24, 1, '500mg', 1, 2, '2026-01-21 08:59:58', '2026-01-21 09:01:50', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(110, NULL, 1, NULL, NULL, NULL, '2026-01-21 09:03:08', 59, 222, 24, 1, '500mg', 1, 1, '2026-01-21 09:03:08', '2026-01-21 09:03:08', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(111, NULL, 1, NULL, NULL, NULL, '2026-01-21 09:09:09', 62, 222, 24, 1, '500mg', 1, 2, '2026-01-21 09:09:09', '2026-01-21 09:09:09', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(112, NULL, 1, NULL, NULL, NULL, '2026-01-21 10:02:08', 23, 222, 24, 1, '600mg', 1, 2, '2026-01-21 10:02:08', '2026-01-21 10:02:08', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(113, NULL, 1, NULL, NULL, NULL, '2026-01-21 10:03:25', 60, 222, 24, 1, NULL, 1, 2, '2026-01-21 10:03:25', '2026-01-21 10:03:25', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(114, 122, 1, NULL, NULL, NULL, '2026-01-21 10:08:02', 156, 222, 24, 1, '600mg', 1, 2, '2026-01-21 10:07:20', '2026-01-21 10:08:02', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(115, 123, 1, NULL, NULL, NULL, '2026-01-21 10:39:22', 139, 222, 24, 1, '20mg', 1, 1, '2026-01-21 10:39:22', '2026-01-21 10:39:22', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(116, 125, 1, NULL, NULL, NULL, '2026-01-21 10:46:50', 125, 222, 24, 1, '500mg', 1, 2, '2026-01-21 10:45:41', '2026-01-21 10:46:50', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(117, 126, 1, 1, '2026-01-21 17:21:47', 1, '2026-01-21 10:52:19', 3, 222, 24, 1, '70mg', 1, 3, '2026-01-21 10:50:49', '2026-01-21 17:21:47', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL),
-(118, NULL, NULL, NULL, NULL, NULL, NULL, 25, 222, 24, 1, '100mg', 1, 2, '2026-01-21 17:23:16', '2026-01-21 17:23:16', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL);
+INSERT INTO `product_requests` (`id`, `product_request_id`, `billed_by`, `dispensed_by`, `dispense_date`, `dispensed_from_store_id`, `billed_date`, `product_id`, `encounter_id`, `patient_id`, `doctor_id`, `dose`, `qty`, `status`, `created_at`, `updated_at`, `old_medical_report_id`, `deleted_at`, `deleted_by`, `deletion_reason`, `dispensed_from_batch_id`, `original_product_id`, `adapted_from_product_id`, `original_qty`, `adaptation_note`, `is_adapted`, `adapted_by`, `adapted_at`, `qty_adjusted_from`, `qty_adjustment_reason`, `qty_adjusted_at`, `qty_adjusted_by`) VALUES
+(78, NULL, NULL, NULL, NULL, NULL, NULL, 34, 203, 3, 1, '7/7', 1, 1, '2023-08-31 07:27:26', '2023-08-31 07:27:26', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(79, NULL, NULL, NULL, NULL, NULL, NULL, 56, 204, 3, 1, 'tht', 1, 1, '2023-08-31 10:27:56', '2023-08-31 10:27:56', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(80, 60, 1, 1, '2023-09-30 08:52:56', NULL, '2023-09-30 08:52:13', 121, 207, 1, 1, '1bd', 1, 3, '2023-09-30 08:50:43', '2023-09-30 08:52:56', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(81, 65, 1, NULL, NULL, NULL, '2025-07-14 09:00:09', 34, NULL, 24, 1, '500mg TID 3days', 1, 2, '2025-07-14 09:00:09', '2025-07-14 09:00:09', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(82, 67, 1, NULL, NULL, NULL, '2025-07-15 22:00:13', 123, 209, 24, 1, '500mg TID 3days', 1, 2, '2025-07-15 13:59:08', '2025-07-15 22:00:13', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(83, 68, 1, NULL, NULL, NULL, '2025-07-15 22:00:13', 111, 209, 24, 1, '500mg TID 3days', 1, 2, '2025-07-15 13:59:08', '2025-07-15 22:00:13', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(84, 69, 1, NULL, NULL, NULL, '2025-12-24 16:13:29', 1, NULL, 512, 1, '500mg TID 3days', 1, 2, '2025-12-24 16:13:29', '2025-12-24 16:13:29', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(90, NULL, NULL, NULL, NULL, NULL, NULL, 81, 210, 24, 1, '500mg TID 3days', 1, 1, '2026-01-03 21:02:32', '2026-01-03 22:17:37', NULL, '2026-01-03 22:17:37', 1, 'Patient declined', NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(91, NULL, NULL, 1, '2026-01-14 09:16:03', NULL, NULL, 111, 212, 24, 1, '70mg TID 2days', 1, 3, '2026-01-04 03:58:36', '2026-01-14 09:16:03', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(92, NULL, NULL, NULL, NULL, NULL, NULL, 123, 213, 24, 1, '70mg TID 2days', 1, 2, '2026-01-04 04:11:58', '2026-01-14 01:05:48', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(93, 77, 1, NULL, NULL, NULL, '2026-01-06 05:39:28', 102, NULL, 24, 1, 'ggg', 1, 2, '2026-01-06 05:39:28', '2026-01-06 05:39:28', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(94, 80, 1, 1, '2026-01-14 14:50:39', 2, '2026-01-06 08:38:31', 111, NULL, 24, 1, 'thahga', 1, 3, '2026-01-06 08:38:31', '2026-01-14 14:50:39', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(95, 81, 1, NULL, NULL, NULL, '2026-01-06 08:43:17', 102, NULL, 24, 1, 'hasd', 1, 2, '2026-01-06 08:43:17', '2026-01-06 08:43:17', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(96, 82, 1, 1, '2026-01-14 14:22:31', 2, '2026-01-06 09:16:51', 117, NULL, 24, 1, 'hhdd', 1, 3, '2026-01-06 09:16:51', '2026-01-14 14:22:31', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(97, 83, 1, NULL, NULL, NULL, '2026-01-06 09:18:10', 102, NULL, 24, 1, 'hshs', 1, 2, '2026-01-06 09:18:10', '2026-01-06 09:18:10', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(98, 84, 1, 1, '2026-01-14 14:22:31', 2, '2026-01-06 09:57:26', 120, NULL, 24, 1, 'sgs', 1, 3, '2026-01-06 09:57:26', '2026-01-14 14:22:31', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(102, NULL, NULL, NULL, NULL, NULL, NULL, 79, NULL, 24, 1, NULL, 1, 0, '2026-01-14 01:33:39', '2026-01-26 05:20:47', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(103, NULL, NULL, 1, '2026-01-14 09:16:03', NULL, NULL, 68, NULL, 24, 1, '700 mg 3 days', 1, 3, '2026-01-14 01:37:14', '2026-01-14 09:16:03', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(104, 103, 1, 1, '2026-01-14 14:22:31', 2, '2026-01-14 12:13:30', 59, 222, 24, 1, '', 1, 3, '2026-01-14 08:41:00', '2026-01-17 11:46:47', NULL, '2026-01-17 11:46:47', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(105, NULL, NULL, NULL, NULL, NULL, NULL, 7, NULL, 24, 1, '87', 1, 1, '2026-01-14 12:17:08', '2026-01-14 12:17:08', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(106, 110, 1, 1, '2026-01-26 09:52:00', 1, '2026-01-14 16:09:56', 2, NULL, 24, 1, '64', 1, 3, '2026-01-14 16:09:24', '2026-01-26 09:52:00', NULL, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(107, NULL, NULL, NULL, NULL, NULL, NULL, 58, 222, 24, 1, '500mg TID 3days', 1, 1, '2026-01-17 11:46:47', '2026-01-17 12:52:10', NULL, '2026-01-17 12:52:10', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(108, NULL, NULL, NULL, NULL, NULL, NULL, 120, 222, 24, 1, '500mg TID 3days', 1, 1, '2026-01-17 12:52:10', '2026-01-17 12:52:10', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(109, 120, 1, 1, '2026-01-26 09:52:00', 1, '2026-01-21 09:01:50', 58, 222, 24, 1, '500mg', 1, 3, '2026-01-21 08:59:58', '2026-01-26 09:52:00', NULL, NULL, NULL, NULL, 5, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(110, NULL, 1, NULL, NULL, NULL, '2026-01-21 09:03:08', 59, 222, 24, 1, '500mg', 1, 1, '2026-01-21 09:03:08', '2026-01-21 09:03:08', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(111, NULL, 1, NULL, NULL, NULL, '2026-01-21 09:09:09', 62, 222, 24, 1, '500mg', 1, 2, '2026-01-21 09:09:09', '2026-01-21 09:09:09', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(112, NULL, 1, NULL, NULL, NULL, '2026-01-21 10:02:08', 23, 222, 24, 1, '600mg', 1, 2, '2026-01-21 10:02:08', '2026-01-21 10:02:08', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(113, NULL, 1, NULL, NULL, NULL, '2026-01-21 10:03:25', 60, 222, 24, 1, NULL, 1, 2, '2026-01-21 10:03:25', '2026-01-21 10:03:25', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(114, 122, 1, NULL, NULL, NULL, '2026-01-21 10:08:02', 156, 222, 24, 1, '600mg', 1, 2, '2026-01-21 10:07:20', '2026-01-21 10:08:02', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(115, 123, 1, NULL, NULL, NULL, '2026-01-21 10:39:22', 58, 222, 24, 1, '20mg', 3, 1, '2026-01-21 10:39:22', '2026-01-26 07:58:13', NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, 'Out of stock', 0, 1, '2026-01-26 07:58:13', 1, 'test adust', '2026-01-26 06:08:15', 1),
+(116, 125, 1, NULL, NULL, NULL, '2026-01-21 10:46:50', 58, 222, 24, 1, '500mg', 2, 2, '2026-01-21 10:45:41', '2026-01-26 07:54:52', NULL, NULL, NULL, NULL, NULL, NULL, 125, NULL, 'Out of stock', 0, 1, '2026-01-26 07:54:52', NULL, NULL, NULL, NULL),
+(117, 126, 1, 1, '2026-01-21 17:21:47', 1, '2026-01-21 10:52:19', 3, 222, 24, 1, '70mg', 1, 3, '2026-01-21 10:50:49', '2026-01-21 17:21:47', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(118, NULL, NULL, NULL, NULL, NULL, NULL, 25, 222, 24, 1, '100mg', 1, 2, '2026-01-21 17:23:16', '2026-01-21 17:23:16', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -26271,11 +26301,11 @@ CREATE TABLE `stock_batches` (
 --
 
 INSERT INTO `stock_batches` (`id`, `product_id`, `store_id`, `supplier_id`, `batch_name`, `batch_number`, `initial_qty`, `current_qty`, `sold_qty`, `cost_price`, `expiry_date`, `received_date`, `source`, `purchase_order_item_id`, `source_requisition_id`, `created_by`, `is_active`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 2, 1, NULL, 'Legacy Stock - Centeral', 'LEGACY-STR-2', 158, 138, 20, 0.00, NULL, '2026-01-21', 'manual', NULL, NULL, 1, 1, '2026-01-21 21:55:13', '2026-01-22 11:13:55', NULL),
+(1, 2, 1, NULL, 'Legacy Stock - Centeral', 'LEGACY-STR-2', 158, 137, 21, 0.00, NULL, '2026-01-21', 'manual', NULL, NULL, 1, 1, '2026-01-21 21:55:13', '2026-01-26 09:52:00', NULL),
 (2, 2, 2, NULL, 'Legacy Stock - Pharmacy', 'LEGACY-PHR-2', 9, 9, 0, 0.00, NULL, '2026-01-21', 'manual', NULL, NULL, 1, 1, '2026-01-21 21:55:13', '2026-01-21 21:55:13', NULL),
 (3, 3, 1, NULL, 'Legacy Stock - Centeral', 'LEGACY-STR-3', 387, 384, 3, 0.00, NULL, '2026-01-21', 'manual', NULL, NULL, 1, 1, '2026-01-21 21:55:13', '2026-01-22 11:13:55', NULL),
 (4, 4, 2, NULL, 'Legacy Stock - Pharmacy', 'LEGACY-PHR-4', 20, 20, 0, 0.00, NULL, '2026-01-21', 'manual', NULL, NULL, 1, 1, '2026-01-21 21:55:13', '2026-01-21 21:55:13', NULL),
-(5, 58, 1, 1, 'gyy-20260122083638', 'gyy', 88, 88, 0, 6000.00, '2028-01-22', '2026-01-22', 'manual', NULL, NULL, 1, 1, '2026-01-22 07:36:38', '2026-01-22 07:36:38', NULL),
+(5, 58, 1, 1, 'gyy-20260122083638', 'gyy', 88, 87, 1, 6000.00, '2028-01-22', '2026-01-22', 'manual', NULL, NULL, 1, 1, '2026-01-22 07:36:38', '2026-01-26 09:51:59', NULL),
 (6, 58, 1, 1, 'gyyu-20260122083815', 'gyyu', 88, 88, 0, 6000.00, '2028-01-22', '2026-01-22', 'manual', NULL, NULL, 1, 1, '2026-01-22 07:38:15', '2026-01-22 07:38:15', NULL),
 (7, 59, 2, 1, 'ukkbbb-20260122085817', 'ukkbbb', 66, 66, 0, 68888.00, '2026-08-29', '2026-01-22', 'manual', NULL, NULL, 1, 1, '2026-01-22 07:58:17', '2026-01-22 07:58:17', NULL),
 (8, 2, 4, NULL, 'TRF-20260122121355-639-20260122121355', 'TRF-20260122121355-639', 20, 20, 0, 0.00, NULL, '2026-01-22', 'transfer_in', NULL, 1, 1, 1, '2026-01-22 11:13:55', '2026-01-22 11:13:55', NULL),
@@ -26322,7 +26352,9 @@ INSERT INTO `stock_batch_transactions` (`id`, `stock_batch_id`, `type`, `qty`, `
 (12, 9, 'in', 3, 3, 'App\\Models\\StoreRequisition', 1, 'Fulfilled from requisition: REQ2026010001 (Batch: LEGACY-STR-3)', 1, '2026-01-22 11:13:55', '2026-01-22 11:13:55'),
 (16, 13, 'in', 88, 88, 'App\\Models\\PurchaseOrder', 1, 'Received from PO: PO2026010001', 1, '2026-01-22 17:56:30', '2026-01-22 17:56:30'),
 (17, 14, 'in', 99, 99, 'App\\Models\\PurchaseOrder', 1, 'Received from PO: PO2026010001', 1, '2026-01-22 17:56:30', '2026-01-22 17:56:30'),
-(18, 15, 'in', 89, 89, 'App\\Models\\PurchaseOrder', 1, 'Received from PO: PO2026010001', 1, '2026-01-22 17:56:30', '2026-01-22 17:56:30');
+(18, 15, 'in', 89, 89, 'App\\Models\\PurchaseOrder', 1, 'Received from PO: PO2026010001', 1, '2026-01-22 17:56:30', '2026-01-22 17:56:30'),
+(19, 5, 'out', 1, 87, 'App\\Models\\ProductRequest', 109, 'Dispensed for patient', 1, '2026-01-26 09:52:00', '2026-01-26 09:52:00'),
+(20, 1, 'out', 1, 137, 'App\\Models\\ProductRequest', 106, 'Dispensed for patient', 1, '2026-01-26 09:52:00', '2026-01-26 09:52:00');
 
 -- --------------------------------------------------------
 
@@ -26494,11 +26526,11 @@ CREATE TABLE `store_stocks` (
 --
 
 INSERT INTO `store_stocks` (`id`, `store_id`, `product_id`, `initial_quantity`, `quantity_sale`, `order_quantity`, `current_quantity`, `created_at`, `updated_at`, `reserved_qty`, `reorder_level`, `max_stock_level`, `is_active`, `last_restocked_at`, `last_sold_at`) VALUES
-(1, 1, 2, 170, 0, 70, 158, '2023-03-09 10:46:57', '2026-01-22 11:13:55', 0, 10, NULL, 1, '2026-01-22 11:13:55', NULL),
+(1, 1, 2, 170, 0, 70, 158, '2023-03-09 10:46:57', '2026-01-26 09:52:00', 0, 10, NULL, 1, '2026-01-26 09:52:00', NULL),
 (2, 2, 2, 0, 1, 0, 9, '2023-03-09 11:03:06', '2026-01-14 14:17:56', 0, 10, NULL, 1, NULL, NULL),
 (3, 1, 3, 0, 1, 388, 387, '2023-03-09 13:53:24', '2026-01-22 11:13:55', 0, 10, NULL, 1, '2026-01-22 11:13:55', NULL),
 (4, 2, 4, 0, 0, 20, 20, '2023-03-09 14:02:37', '2023-03-09 14:02:37', 0, 10, NULL, 1, NULL, NULL),
-(5, 1, 58, 77, 0, 77, 67, '2026-01-22 05:49:49', '2026-01-22 07:38:15', 0, 10, NULL, 1, '2026-01-22 07:38:15', NULL),
+(5, 1, 58, 77, 0, 77, 67, '2026-01-22 05:49:49', '2026-01-26 09:52:00', 0, 10, NULL, 1, '2026-01-26 09:52:00', NULL),
 (6, 4, 58, 0, 0, 0, 10, '2026-01-22 06:19:34', '2026-01-22 06:19:34', 0, 10, NULL, 1, NULL, NULL),
 (7, 2, 59, 0, 0, 0, 0, '2026-01-22 07:58:17', '2026-01-22 07:58:17', 0, 10, NULL, 1, '2026-01-22 07:58:17', NULL),
 (8, 4, 2, 0, 0, 0, 0, '2026-01-22 11:13:55', '2026-01-22 11:13:55', 0, 10, NULL, 1, '2026-01-22 11:13:55', NULL),
@@ -31717,7 +31749,8 @@ ALTER TABLE `medication_administrations`
   ADD KEY `medication_administrations_administered_by_foreign` (`administered_by`),
   ADD KEY `medication_administrations_edited_by_foreign` (`edited_by`),
   ADD KEY `medication_administrations_deleted_by_foreign` (`deleted_by`),
-  ADD KEY `medication_administrations_store_id_foreign` (`store_id`);
+  ADD KEY `medication_administrations_store_id_foreign` (`store_id`),
+  ADD KEY `medication_administrations_dispensed_from_batch_id_foreign` (`dispensed_from_batch_id`);
 
 --
 -- Indexes for table `medication_histories`
@@ -32019,7 +32052,8 @@ ALTER TABLE `product_requests`
   ADD KEY `product_requests_adapted_from_product_id_foreign` (`adapted_from_product_id`),
   ADD KEY `product_requests_adapted_by_foreign` (`adapted_by`),
   ADD KEY `product_requests_dispensed_from_batch_id_index` (`dispensed_from_batch_id`),
-  ADD KEY `product_requests_is_adapted_index` (`is_adapted`);
+  ADD KEY `product_requests_is_adapted_index` (`is_adapted`),
+  ADD KEY `product_requests_qty_adjusted_by_foreign` (`qty_adjusted_by`);
 
 --
 -- Indexes for table `promotions`
@@ -32355,7 +32389,7 @@ ALTER TABLE `application_status`
 -- AUTO_INCREMENT for table `audits`
 --
 ALTER TABLE `audits`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=845;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=866;
 
 --
 -- AUTO_INCREMENT for table `banks`
@@ -32607,7 +32641,7 @@ ALTER TABLE `messages`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=199;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=202;
 
 --
 -- AUTO_INCREMENT for table `misc_bills`
@@ -32763,7 +32797,7 @@ ALTER TABLE `product_categories`
 -- AUTO_INCREMENT for table `product_or_service_requests`
 --
 ALTER TABLE `product_or_service_requests`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=132;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=133;
 
 --
 -- AUTO_INCREMENT for table `product_requests`
@@ -32895,7 +32929,7 @@ ALTER TABLE `stock_batches`
 -- AUTO_INCREMENT for table `stock_batch_transactions`
 --
 ALTER TABLE `stock_batch_transactions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT for table `stock_invoices`
@@ -33243,6 +33277,7 @@ ALTER TABLE `leave_requests`
 ALTER TABLE `medication_administrations`
   ADD CONSTRAINT `medication_administrations_administered_by_foreign` FOREIGN KEY (`administered_by`) REFERENCES `users` (`id`),
   ADD CONSTRAINT `medication_administrations_deleted_by_foreign` FOREIGN KEY (`deleted_by`) REFERENCES `users` (`id`),
+  ADD CONSTRAINT `medication_administrations_dispensed_from_batch_id_foreign` FOREIGN KEY (`dispensed_from_batch_id`) REFERENCES `stock_batches` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `medication_administrations_edited_by_foreign` FOREIGN KEY (`edited_by`) REFERENCES `users` (`id`),
   ADD CONSTRAINT `medication_administrations_patient_id_foreign` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`id`),
   ADD CONSTRAINT `medication_administrations_product_or_service_request_id_foreign` FOREIGN KEY (`product_or_service_request_id`) REFERENCES `product_or_service_requests` (`id`),
@@ -33390,7 +33425,8 @@ ALTER TABLE `product_requests`
   ADD CONSTRAINT `product_requests_deleted_by_foreign` FOREIGN KEY (`deleted_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `product_requests_dispensed_from_batch_id_foreign` FOREIGN KEY (`dispensed_from_batch_id`) REFERENCES `stock_batches` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `product_requests_dispensed_from_store_id_foreign` FOREIGN KEY (`dispensed_from_store_id`) REFERENCES `stores` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `product_requests_original_product_id_foreign` FOREIGN KEY (`original_product_id`) REFERENCES `products` (`id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `product_requests_original_product_id_foreign` FOREIGN KEY (`original_product_id`) REFERENCES `products` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `product_requests_qty_adjusted_by_foreign` FOREIGN KEY (`qty_adjusted_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `purchase_orders`
