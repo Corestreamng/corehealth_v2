@@ -9,6 +9,8 @@ use App\Models\User;
 use App\Models\Store;
 use App\Models\StoreStock;
 use App\Models\ProductStock;
+use App\Models\StockBatch;
+use App\Services\StockService;
 use Illuminate\Support\Facades\Auth;
 use App\Models\MedicationAdministration;
 use App\Models\MedicationSchedule;
@@ -394,6 +396,7 @@ class MedicationChartController extends Controller
             'route' => 'required|string',
             'comment' => 'nullable|string',
             'store_id' => 'required|exists:stores,id',
+            'batch_id' => 'nullable|exists:stock_batches,id',
             'product_id' => 'nullable|exists:products,id'
         ]);
 
@@ -404,6 +407,7 @@ class MedicationChartController extends Controller
         $data = $validator->validated();
         $scheduleId = $data['schedule_id'];
         $storeId = $data['store_id'];
+        $batchId = $data['batch_id'] ?? null;
 
         try {
             DB::beginTransaction();
@@ -436,28 +440,63 @@ class MedicationChartController extends Controller
             // Get product ID from medication or request
             $productId = $data['product_id'] ?? $medication->product_id ?? null;
 
-            // Deduct stock from selected store if product exists
-            if ($productId && $storeId) {
-                $storeStock = StoreStock::where('store_id', $storeId)
-                    ->where('product_id', $productId)
-                    ->first();
+            // Initialize batch tracking variable
+            $dispensedBatchId = null;
 
-                if ($storeStock && $storeStock->current_quantity >= 1) {
-                    // Deduct from store stock
-                    $storeStock->decrement('current_quantity', 1);
-                } else {
-                    // Try global stock as fallback
-                    $productStock = ProductStock::where('product_id', $productId)->first();
-                    if ($productStock && $productStock->current_quantity >= 1) {
-                        $productStock->decrement('current_quantity', 1);
-                        $productStock->increment('quantity_sale', 1);
-                    } else {
+            // Deduct stock using StockService (batch-based system)
+            if ($productId && $storeId) {
+                $stockService = app(StockService::class);
+                $qty = 1;
+
+                // Check stock availability first
+                $availableStock = $stockService->getAvailableStock($productId, $storeId);
+                if ($availableStock < $qty) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Insufficient stock to administer medication. Available: ' . $availableStock
+                    ], 422);
+                }
+
+                if ($batchId) {
+                    // Validate selected batch belongs to product and store
+                    $batch = StockBatch::find($batchId);
+                    if (!$batch || $batch->product_id != $productId || $batch->store_id != $storeId) {
                         DB::rollBack();
                         return response()->json([
                             'success' => false,
-                            'message' => 'Insufficient stock to administer medication'
+                            'message' => 'Invalid batch selection'
                         ], 422);
                     }
+                    if ($batch->current_qty < $qty) {
+                        DB::rollBack();
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Selected batch has insufficient stock. Available: ' . $batch->current_qty
+                        ], 422);
+                    }
+
+                    // Manual batch selection - dispense from specific batch
+                    $stockService->dispenseFromBatch(
+                        $batchId,
+                        $qty,
+                        MedicationAdministration::class,
+                        null, // Will update after admin record created
+                        'Medication chart administration'
+                    );
+                    $dispensedBatchId = $batchId;
+                } else {
+                    // FIFO automatic batch selection
+                    $dispensed = $stockService->dispenseStock(
+                        $productId,
+                        $storeId,
+                        $qty,
+                        MedicationAdministration::class,
+                        null, // Will update after admin record created
+                        'Medication chart administration (FIFO)'
+                    );
+                    // Get the first batch used (for single unit, only one batch)
+                    $dispensedBatchId = array_key_first($dispensed);
                 }
             }
 
@@ -476,6 +515,7 @@ class MedicationChartController extends Controller
             $userId = Auth::id();
             $admin->administered_by = $userId;
             $admin->store_id = $storeId;
+            $admin->dispensed_from_batch_id = $dispensedBatchId;
             $admin->save();
 
             // Reload the administration with its relationships

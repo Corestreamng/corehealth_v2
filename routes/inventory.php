@@ -127,8 +127,11 @@ Route::middleware(['auth'])->prefix('pharmacy-workbench')->group(function () {
     Route::get('/expiring-batches', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getExpiringBatches'])->name('pharmacy.expiring-batches');
     Route::get('/low-stock-items', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getLowStockItems'])->name('pharmacy.low-stock-items');
 
-    // Product Adaptation Route
+    // Product Adaptation Route (now works for pending AND billed items)
     Route::post('/prescription/{id}/adapt', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'adaptPrescription'])->name('pharmacy.adapt-prescription');
+
+    // Quantity Adjustment Route (for billed items only)
+    Route::post('/prescription/{id}/adjust-quantity', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'adjustBilledQuantity'])->name('pharmacy.adjust-quantity');
 });
 
 

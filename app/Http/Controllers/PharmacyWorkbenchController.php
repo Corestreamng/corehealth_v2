@@ -87,7 +87,7 @@ class PharmacyWorkbenchController extends Controller
      */
     public function prescBillList($patientId)
     {
-        $items = ProductRequest::with(['product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest', 'doctor', 'biller', 'procedureItem.procedure.service'])
+        $items = ProductRequest::with(['product.price', 'product.category', 'encounter', 'patient', 'productOrServiceRequest.payment', 'doctor', 'biller', 'procedureItem.procedure.service'])
             ->where('status', 1)
             ->where('patient_id', $patientId)
             ->orderBy('created_at', 'DESC')
@@ -95,38 +95,60 @@ class PharmacyWorkbenchController extends Controller
 
         return DataTables::of($items)
             ->addIndexColumn()
-            ->addColumn('select', function ($item) {
-                $price = optional(optional($item->product)->price)->current_sale_price ?? 0;
-                return "<input type='checkbox' name='selectedPrescBillRows[]' onclick='checkPrescBillRow(this)' data-price='{$price}' value='{$item->id}' class='form-control'>";
+            ->addColumn('id', function ($item) {
+                return $item->id;
             })
-            ->editColumn('dose', function ($item) {
-                $code = optional($item->product)->product_code ?? '';
-                $name = optional($item->product)->product_name ?? 'Unknown';
-                $str = "<span class='badge badge-success'>[{$code}] {$name}</span>";
-
-                // Show procedure association
+            ->addColumn('product_id', function ($item) {
+                return $item->product_id;
+            })
+            ->addColumn('product_name', function ($item) {
+                return optional($item->product)->product_name ?? 'Unknown';
+            })
+            ->addColumn('product_code', function ($item) {
+                return optional($item->product)->product_code ?? '';
+            })
+            ->addColumn('price', function ($item) {
+                return optional(optional($item->product)->price)->current_sale_price ?? 0;
+            })
+            ->addColumn('payable_amount', function ($item) {
+                return optional($item->productOrServiceRequest)->payable_amount ?? 0;
+            })
+            ->addColumn('claims_amount', function ($item) {
+                return optional($item->productOrServiceRequest)->claims_amount ?? 0;
+            })
+            ->addColumn('coverage_mode', function ($item) {
+                return optional($item->productOrServiceRequest)->coverage_mode ?? 'cash';
+            })
+            ->addColumn('is_paid', function ($item) {
+                return optional($item->productOrServiceRequest)->payment_id !== null;
+            })
+            ->addColumn('is_validated', function ($item) {
+                $status = optional($item->productOrServiceRequest)->validation_status;
+                return in_array($status, ['validated', 'approved']);
+            })
+            ->addColumn('qty', function ($item) {
+                return $item->qty ?? 1;
+            })
+            ->addColumn('dose', function ($item) {
+                return $item->dose ?? 'N/A';
+            })
+            ->addColumn('status', function ($item) {
+                return $item->status;
+            })
+            ->addColumn('requested_by', function ($item) {
+                return $item->doctor_id ? userfullname($item->doctor_id) : 'N/A';
+            })
+            ->addColumn('requested_at', function ($item) {
+                return $item->created_at ? date('M j, Y h:i A', strtotime($item->created_at)) : '';
+            })
+            ->addColumn('procedure_name', function ($item) {
                 $procedureItem = $item->procedureItem;
-                if ($procedureItem) {
-                    $procedureName = optional(optional($procedureItem->procedure)->service)->service_name ?? 'Procedure';
-                    if ($procedureItem->is_bundled) {
-                        $str .= "<br><span class='badge' style='background: #6f42c1; color: #fff;'><i class='fa fa-procedures mr-1'></i> Bundled: {$procedureName}</span>";
-                    } else {
-                        $str .= "<br><span class='badge badge-secondary'><i class='fa fa-procedures mr-1'></i> From: {$procedureName}</span>";
-                    }
-                }
-
-                $str .= '<hr><b>Dose/Freq:</b> ' . ($item->dose ?? 'N/A');
-                $str .= '<br><b>Qty:</b> ' . ($item->qty ?? 1);
-                return $str;
+                return $procedureItem ? (optional(optional($procedureItem->procedure)->service)->service_name ?? 'Procedure') : null;
             })
-            ->editColumn('created_at', function ($item) {
-                $str = '<small>';
-                $str .= '<b>Requested By:</b> ' . ($item->doctor_id ? userfullname($item->doctor_id) . ' (' . date('h:i a D M j, Y', strtotime($item->created_at)) . ')' : "<span class='badge badge-secondary'>N/A</span>") . '<br>';
-                $str .= '<b>Last Updated:</b> ' . date('h:i a D M j, Y', strtotime($item->updated_at)) . '<br>';
-                $str .= '</small>';
-                return $str;
+            ->addColumn('is_bundled', function ($item) {
+                $procedureItem = $item->procedureItem;
+                return $procedureItem ? $procedureItem->is_bundled : false;
             })
-            ->rawColumns(['select', 'dose', 'created_at'])
             ->make(true);
     }
 
@@ -229,7 +251,7 @@ class PharmacyWorkbenchController extends Controller
      */
     public function prescHistoryList($patientId)
     {
-        $items = ProductRequest::with(['product', 'encounter', 'patient', 'productOrServiceRequest.payment', 'doctor', 'biller', 'dispenser'])
+        $items = ProductRequest::with(['product', 'encounter', 'patient', 'productOrServiceRequest.payment', 'doctor', 'biller', 'dispenser', 'dispensedFromBatch', 'dispensedFromStore'])
             ->where('status', 3)
             ->where('patient_id', $patientId)
             ->orderBy('dispense_date', 'DESC')
@@ -237,6 +259,49 @@ class PharmacyWorkbenchController extends Controller
 
         return DataTables::of($items)
             ->addIndexColumn()
+            ->addColumn('product_name', function($item) {
+                return optional($item->product)->product_name ?? 'Unknown';
+            })
+            ->addColumn('product_code', function($item) {
+                return optional($item->product)->product_code ?? '';
+            })
+            ->addColumn('requested_by', function($item) {
+                return $item->doctor_id ? userfullname($item->doctor_id) : 'N/A';
+            })
+            ->addColumn('requested_at', function($item) {
+                return $item->created_at ? date('h:i a D M j, Y', strtotime($item->created_at)) : '';
+            })
+            ->addColumn('billed_by', function($item) {
+                return $item->billed_by ? userfullname($item->billed_by) : null;
+            })
+            ->addColumn('billed_at', function($item) {
+                return $item->billed_date ? date('h:i a D M j, Y', strtotime($item->billed_date)) : '';
+            })
+            ->addColumn('dispensed_by', function($item) {
+                return $item->dispensed_by ? userfullname($item->dispensed_by) : null;
+            })
+            ->addColumn('dispensed_at', function($item) {
+                return $item->dispense_date ? date('h:i a D M j, Y', strtotime($item->dispense_date)) : '';
+            })
+            ->addColumn('payable_amount', function($item) {
+                return optional($item->productOrServiceRequest)->payable_amount ?? 0;
+            })
+            ->addColumn('claims_amount', function($item) {
+                return optional($item->productOrServiceRequest)->claims_amount ?? 0;
+            })
+            ->addColumn('is_paid', function($item) {
+                return optional(optional($item->productOrServiceRequest)->payment)->status >= 1;
+            })
+            ->addColumn('batch_number', function($item) {
+                return optional($item->dispensedFromBatch)->batch_number ?? null;
+            })
+            ->addColumn('batch_expiry', function($item) {
+                $batch = $item->dispensedFromBatch;
+                return $batch && $batch->expiry_date ? date('M Y', strtotime($batch->expiry_date)) : null;
+            })
+            ->addColumn('dispensed_from_store_name', function($item) {
+                return optional($item->dispensedFromStore)->store_name ?? null;
+            })
             ->editColumn('dose', function ($item) {
                 $code = optional($item->product)->product_code ?? '';
                 $name = optional($item->product)->product_name ?? 'Unknown';
@@ -249,6 +314,19 @@ class PharmacyWorkbenchController extends Controller
                 if ($posr) {
                     $str .= '<br><small>Amount: ₦' . number_format($posr->payable_amount ?? 0, 2) . '</small>';
                 }
+
+                // Show batch info if available
+                if ($item->dispensedFromBatch) {
+                    $batch = $item->dispensedFromBatch;
+                    $expiry = $batch->expiry_date ? date('M Y', strtotime($batch->expiry_date)) : 'N/A';
+                    $str .= '<br><small class="text-info"><i class="mdi mdi-tag-outline"></i> Batch: ' . $batch->batch_number . ' (Exp: ' . $expiry . ')</small>';
+                }
+
+                // Show store if available
+                if ($item->dispensedFromStore) {
+                    $str .= '<br><small class="text-secondary"><i class="mdi mdi-store"></i> From: ' . $item->dispensedFromStore->store_name . '</small>';
+                }
+
                 return $str;
             })
             ->editColumn('created_at', function ($item) {
@@ -487,26 +565,26 @@ class PharmacyWorkbenchController extends Controller
                     $statusLabel = 'Ready to Dispense';
                 }
 
-                // Get stock information
+                // Get stock information from StockBatch (source of truth)
                 $globalStock = 0;
                 $storeStocks = [];
                 if ($pr->product) {
-                    // Global stock
-                    $stockRecord = $pr->product->stock;
-                    if ($stockRecord) {
-                        $globalStock = $stockRecord->current_quantity ?? 0;
-                    }
-
-                    // Per-store stock
-                    $storeStockRecords = StoreStock::with('store')
-                        ->where('product_id', $pr->product->id)
-                        ->where('current_quantity', '>', 0)
+                    // Get stock from StockBatch grouped by store (like searchProducts does)
+                    $storeStockData = StockBatch::where('product_id', $pr->product->id)
+                        ->where('current_qty', '>', 0)
+                        ->selectRaw('store_id, SUM(current_qty) as total_qty')
+                        ->groupBy('store_id')
+                        ->orderByDesc('total_qty')
                         ->get();
-                    foreach ($storeStockRecords as $ss) {
+
+                    foreach ($storeStockData as $batch) {
+                        $store = Store::find($batch->store_id);
+                        $qty = (int) $batch->total_qty;
+                        $globalStock += $qty;
                         $storeStocks[] = [
-                            'store_id' => $ss->store_id,
-                            'store_name' => optional($ss->store)->store_name ?? 'Unknown',
-                            'quantity' => $ss->current_quantity ?? 0
+                            'store_id' => $batch->store_id,
+                            'store_name' => $store ? $store->store_name : 'Unknown Store',
+                            'quantity' => $qty
                         ];
                     }
                 }
@@ -1116,13 +1194,34 @@ class PharmacyWorkbenchController extends Controller
                     }
                 }
 
+                // Get top 5 stores with stock for this product
+                $storeStocks = \App\Models\StockBatch::where('product_id', $product->id)
+                    ->where('current_qty', '>', 0)
+                    ->selectRaw('store_id, SUM(current_qty) as total_qty')
+                    ->groupBy('store_id')
+                    ->orderByDesc('total_qty')
+                    ->limit(5)
+                    ->get()
+                    ->map(function($batch) {
+                        $store = \App\Models\Store::find($batch->store_id);
+                        return [
+                            'store_id' => $batch->store_id,
+                            'store_name' => $store ? $store->store_name : 'Unknown Store',
+                            'quantity' => (int) $batch->total_qty
+                        ];
+                    });
+
+                // Calculate global stock from all stores
+                $globalStock = $storeStocks->sum('quantity');
+
                 return [
                     'id' => $product->id,
                     'product_name' => $product->product_name,
                     'product_code' => $product->product_code,
                     'category_name' => optional($product->category)->category_name,
                     'price' => $basePrice,
-                    'stock_qty' => $stockQty,
+                    'stock_qty' => $globalStock,
+                    'store_stocks' => $storeStocks->toArray(),
                     'payable_amount' => $payableAmount,
                     'claims_amount' => $claimsAmount,
                     'coverage_mode' => $coverageMode,
@@ -2430,18 +2529,50 @@ class PharmacyWorkbenchController extends Controller
             'adaptation_note' => 'required|string|max:500',
         ]);
 
-        $productRequest = ProductRequest::findOrFail($id);
+        $productRequest = ProductRequest::with(['productOrServiceRequest.payment'])->findOrFail($id);
 
-        // Only allow adaptation for unbilled/pending items
-        if ($productRequest->status >= 2) {
+        // Allow adaptation for pending (status < 2) and billed (status == 2) items
+        // Do NOT allow for dispensed items (status >= 3)
+        if ($productRequest->status >= 3) {
             return response()->json([
                 'success' => false,
-                'message' => 'Cannot adapt prescription that has already been billed or dispensed'
+                'message' => 'Cannot adapt prescription that has already been dispensed'
             ], 422);
         }
 
+        // For billed items, check settlement status
+        if ($productRequest->status == 2 && $productRequest->productOrServiceRequest) {
+            $posr = $productRequest->productOrServiceRequest;
+            $isPaid = $posr->payment_id !== null;
+            $isValidated = in_array($posr->validation_status, ['validated', 'approved']);
+            $hasPayable = ($posr->payable_amount ?? 0) > 0;
+            $hasClaims = ($posr->claims_amount ?? 0) > 0;
+
+            // Block if any settlement has occurred
+            if ($hasPayable && !$hasClaims && $isPaid) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot adapt prescription - payment has already been received'
+                ], 422);
+            }
+            if (!$hasPayable && $hasClaims && $isValidated) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot adapt prescription - HMO claim has already been validated'
+                ], 422);
+            }
+            if ($hasPayable && $hasClaims && ($isPaid || $isValidated)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot adapt prescription - billing has been partially or fully settled'
+                ], 422);
+            }
+        }
+
         $originalProductId = $productRequest->product_id;
+        $originalQty = $productRequest->qty;
         $newProduct = Product::findOrFail($request->new_product_id);
+        $isBilled = $productRequest->status == 2;
 
         // Get price for new product
         $newPrice = $newProduct->price->current_sale_price ?? 0;
@@ -2455,15 +2586,38 @@ class PharmacyWorkbenchController extends Controller
                 'product_id' => $request->new_product_id,
                 'qty' => $request->new_qty,
                 'adaptation_note' => $request->adaptation_note,
+                'adapted_at' => now(),
+                'adapted_by' => Auth::id(),
             ]);
 
             // Update the ProductOrServiceRequest if exists
             if ($productRequest->productOrServiceRequest) {
-                $productRequest->productOrServiceRequest->update([
+                $posr = $productRequest->productOrServiceRequest;
+                $oldPayableAmount = $posr->payable_amount;
+                $newPayableAmount = $newPrice * $request->new_qty;
+
+                $posr->update([
                     'product_id' => $request->new_product_id,
                     'qty' => $request->new_qty,
-                    'payable_amount' => $newPrice * $request->new_qty,
+                    'payable_amount' => $newPayableAmount,
                 ]);
+
+                // If already billed and payment record exists, create adjustment record
+                if ($isBilled && $posr->payment) {
+                    $priceDifference = $newPayableAmount - $oldPayableAmount;
+
+                    // Log billing adjustment for reconciliation
+                    Log::info('Billing adjustment for adapted prescription', [
+                        'product_request_id' => $id,
+                        'posr_id' => $posr->id,
+                        'payment_id' => $posr->payment->id,
+                        'old_amount' => $oldPayableAmount,
+                        'new_amount' => $newPayableAmount,
+                        'difference' => $priceDifference,
+                        'requires_refund' => $priceDifference < 0,
+                        'requires_additional_payment' => $priceDifference > 0,
+                    ]);
+                }
             }
 
             DB::commit();
@@ -2471,14 +2625,23 @@ class PharmacyWorkbenchController extends Controller
             Log::info('Prescription adapted', [
                 'product_request_id' => $id,
                 'original_product_id' => $originalProductId,
+                'original_qty' => $originalQty,
                 'new_product_id' => $request->new_product_id,
+                'new_qty' => $request->new_qty,
+                'was_billed' => $isBilled,
                 'adapted_by' => Auth::id(),
                 'reason' => $request->adaptation_note,
             ]);
 
+            $message = 'Prescription adapted successfully to ' . $newProduct->product_name;
+            if ($isBilled) {
+                $message .= '. Note: Billing record has been updated. Please verify payment adjustments if needed.';
+            }
+
             return response()->json([
                 'success' => true,
-                'message' => 'Prescription adapted successfully to ' . $newProduct->product_name,
+                'message' => $message,
+                'was_billed' => $isBilled,
             ]);
 
         } catch (\Exception $e) {
@@ -2488,6 +2651,144 @@ class PharmacyWorkbenchController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to adapt prescription: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Adjust quantity for a billed prescription item
+     *
+     * Allows pharmacists to adjust quantity at billing stage when:
+     * - Patient requests different quantity
+     * - Stock limitations require adjustment
+     * - Clinical review suggests dose change
+     *
+     * @param Request $request
+     * @param int $id ProductRequest ID
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function adjustBilledQuantity(Request $request, $id)
+    {
+        $request->validate([
+            'new_qty' => 'required|integer|min:1',
+            'adjustment_reason' => 'required|string|max:500',
+        ]);
+
+        $productRequest = ProductRequest::with(['product.price', 'productOrServiceRequest.payment'])
+            ->findOrFail($id);
+
+        // Allow adjustment for unbilled (status 1) and billed (status 2) items
+        // Do NOT allow for dispensed items (status >= 3)
+        if ($productRequest->status >= 3) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot adjust quantity for items that have already been dispensed'
+            ], 422);
+        }
+
+        // For billed items with payment, check settlement status
+        if ($productRequest->status == 2 && $productRequest->productOrServiceRequest) {
+            $posr = $productRequest->productOrServiceRequest;
+            $isPaid = $posr->payment_id !== null;
+            $isValidated = in_array($posr->validation_status, ['validated', 'approved']);
+            $hasPayable = ($posr->payable_amount ?? 0) > 0;
+            $hasClaims = ($posr->claims_amount ?? 0) > 0;
+
+            // Block if any settlement has occurred
+            // Conditions: payable only + paid, or claims only + validated, or both + any settled
+            if ($hasPayable && !$hasClaims && $isPaid) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot adjust quantity - payment has already been received'
+                ], 422);
+            }
+            if (!$hasPayable && $hasClaims && $isValidated) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot adjust quantity - HMO claim has already been validated'
+                ], 422);
+            }
+            if ($hasPayable && $hasClaims && ($isPaid || $isValidated)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot adjust quantity - billing has been partially or fully settled'
+                ], 422);
+            }
+        }
+
+        $originalQty = $productRequest->qty;
+        $newQty = $request->new_qty;
+
+        if ($originalQty == $newQty) {
+            return response()->json([
+                'success' => false,
+                'message' => 'New quantity is the same as current quantity'
+            ], 422);
+        }
+
+        $product = $productRequest->product;
+        $unitPrice = $product->price->current_sale_price ?? 0;
+
+        try {
+            DB::beginTransaction();
+
+            // Update product request quantity
+            $productRequest->update([
+                'qty' => $newQty,
+                'qty_adjusted_from' => $originalQty,
+                'qty_adjustment_reason' => $request->adjustment_reason,
+                'qty_adjusted_at' => now(),
+                'qty_adjusted_by' => Auth::id(),
+            ]);
+
+            // Update the billing record
+            if ($productRequest->productOrServiceRequest) {
+                $posr = $productRequest->productOrServiceRequest;
+                $oldPayableAmount = $posr->payable_amount;
+                $newPayableAmount = $unitPrice * $newQty;
+
+                $posr->update([
+                    'qty' => $newQty,
+                    'payable_amount' => $newPayableAmount,
+                ]);
+
+                // Log billing adjustment
+                $priceDifference = $newPayableAmount - $oldPayableAmount;
+
+                Log::info('Billing quantity adjustment', [
+                    'product_request_id' => $id,
+                    'posr_id' => $posr->id,
+                    'product_id' => $product->id,
+                    'product_name' => $product->product_name,
+                    'original_qty' => $originalQty,
+                    'new_qty' => $newQty,
+                    'unit_price' => $unitPrice,
+                    'old_amount' => $oldPayableAmount,
+                    'new_amount' => $newPayableAmount,
+                    'difference' => $priceDifference,
+                    'adjusted_by' => Auth::id(),
+                    'reason' => $request->adjustment_reason,
+                ]);
+            }
+
+            DB::commit();
+
+            $qtyChange = $newQty > $originalQty ? 'increased' : 'reduced';
+
+            return response()->json([
+                'success' => true,
+                'message' => "Quantity {$qtyChange} from {$originalQty} to {$newQty}. Billing record updated.",
+                'original_qty' => $originalQty,
+                'new_qty' => $newQty,
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Quantity adjustment failed: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to adjust quantity: ' . $e->getMessage()
             ], 500);
         }
     }

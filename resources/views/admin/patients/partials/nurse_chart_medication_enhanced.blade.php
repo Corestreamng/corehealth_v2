@@ -750,6 +750,18 @@
                             </div>
                         </div>
 
+                        <!-- Batch Selection (optional - FIFO by default) -->
+                        <div class="mb-3" id="administer-batch-section" style="display: none;">
+                            <label for="administer_batch_id" class="form-label">
+                                <i class="mdi mdi-package-variant text-info"></i> Select Batch <small class="text-muted">(optional)</small>
+                            </label>
+                            <select class="form-select" id="administer_batch_id" name="batch_id">
+                                <option value="">Use FIFO (Auto - oldest batch first)</option>
+                                <!-- Populated via AJAX when store is selected -->
+                            </select>
+                            <small class="text-muted">Leave empty for automatic FIFO selection from oldest batch</small>
+                        </div>
+
                         <div class="mb-3">
                             <label for="administered_at" class="form-label">Time of Administration</label>
                             <input type="datetime-local" class="form-control" id="administered_at"

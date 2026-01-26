@@ -830,6 +830,34 @@ class EncounterController extends Controller
             ->addColumn('billed_at', function ($item) {
                 return $item->billed_date ? date('M j, Y h:i A', strtotime($item->billed_date)) : '';
             })
+            ->addColumn('global_stock', function ($item) {
+                if (!$item->product_id) return 0;
+                // Get stock from StockBatch (source of truth)
+                return (int) \App\Models\StockBatch::where('product_id', $item->product_id)
+                    ->where('current_qty', '>', 0)
+                    ->sum('current_qty');
+            })
+            ->addColumn('store_stocks', function ($item) {
+                if (!$item->product_id) return [];
+                // Get stock grouped by store from StockBatch
+                $storeStockData = \App\Models\StockBatch::where('product_id', $item->product_id)
+                    ->where('current_qty', '>', 0)
+                    ->selectRaw('store_id, SUM(current_qty) as total_qty')
+                    ->groupBy('store_id')
+                    ->orderByDesc('total_qty')
+                    ->get();
+
+                $storeStocks = [];
+                foreach ($storeStockData as $batch) {
+                    $store = \App\Models\Store::find($batch->store_id);
+                    $storeStocks[] = [
+                        'store_id' => $batch->store_id,
+                        'store_name' => $store ? $store->store_name : 'Unknown Store',
+                        'quantity' => (int) $batch->total_qty
+                    ];
+                }
+                return $storeStocks;
+            })
             ->make(true);
     }
 
@@ -895,6 +923,34 @@ class EncounterController extends Controller
             })
             ->addColumn('billed_at', function ($item) {
                 return $item->billed_date ? date('M j, Y h:i A', strtotime($item->billed_date)) : '';
+            })
+            ->addColumn('global_stock', function ($item) {
+                if (!$item->product_id) return 0;
+                // Get stock from StockBatch (source of truth)
+                return (int) \App\Models\StockBatch::where('product_id', $item->product_id)
+                    ->where('current_qty', '>', 0)
+                    ->sum('current_qty');
+            })
+            ->addColumn('store_stocks', function ($item) {
+                if (!$item->product_id) return [];
+                // Get stock grouped by store from StockBatch
+                $storeStockData = \App\Models\StockBatch::where('product_id', $item->product_id)
+                    ->where('current_qty', '>', 0)
+                    ->selectRaw('store_id, SUM(current_qty) as total_qty')
+                    ->groupBy('store_id')
+                    ->orderByDesc('total_qty')
+                    ->get();
+
+                $storeStocks = [];
+                foreach ($storeStockData as $batch) {
+                    $store = \App\Models\Store::find($batch->store_id);
+                    $storeStocks[] = [
+                        'store_id' => $batch->store_id,
+                        'store_name' => $store ? $store->store_name : 'Unknown Store',
+                        'quantity' => (int) $batch->total_qty
+                    ];
+                }
+                return $storeStocks;
             })
             ->make(true);
     }
@@ -991,6 +1047,34 @@ class EncounterController extends Controller
             })
             ->addColumn('billed_at', function ($item) {
                 return $item->billed_date ? date('M j, Y h:i A', strtotime($item->billed_date)) : '';
+            })
+            ->addColumn('global_stock', function ($item) {
+                if (!$item->product_id) return 0;
+                // Get stock from StockBatch (source of truth)
+                return (int) \App\Models\StockBatch::where('product_id', $item->product_id)
+                    ->where('current_qty', '>', 0)
+                    ->sum('current_qty');
+            })
+            ->addColumn('store_stocks', function ($item) {
+                if (!$item->product_id) return [];
+                // Get stock grouped by store from StockBatch
+                $storeStockData = \App\Models\StockBatch::where('product_id', $item->product_id)
+                    ->where('current_qty', '>', 0)
+                    ->selectRaw('store_id, SUM(current_qty) as total_qty')
+                    ->groupBy('store_id')
+                    ->orderByDesc('total_qty')
+                    ->get();
+
+                $storeStocks = [];
+                foreach ($storeStockData as $batch) {
+                    $store = \App\Models\Store::find($batch->store_id);
+                    $storeStocks[] = [
+                        'store_id' => $batch->store_id,
+                        'store_name' => $store ? $store->store_name : 'Unknown Store',
+                        'quantity' => (int) $batch->total_qty
+                    ];
+                }
+                return $storeStocks;
             })
             ->make(true);
     }
@@ -1100,6 +1184,34 @@ class EncounterController extends Controller
             })
             ->addColumn('billed_at', function ($item) {
                 return $item->billed_date ? date('M j, Y h:i A', strtotime($item->billed_date)) : '';
+            })
+            ->addColumn('global_stock', function ($item) {
+                if (!$item->product_id) return 0;
+                // Get stock from StockBatch (source of truth)
+                return (int) \App\Models\StockBatch::where('product_id', $item->product_id)
+                    ->where('current_qty', '>', 0)
+                    ->sum('current_qty');
+            })
+            ->addColumn('store_stocks', function ($item) {
+                if (!$item->product_id) return [];
+                // Get stock grouped by store from StockBatch
+                $storeStockData = \App\Models\StockBatch::where('product_id', $item->product_id)
+                    ->where('current_qty', '>', 0)
+                    ->selectRaw('store_id, SUM(current_qty) as total_qty')
+                    ->groupBy('store_id')
+                    ->orderByDesc('total_qty')
+                    ->get();
+
+                $storeStocks = [];
+                foreach ($storeStockData as $batch) {
+                    $store = \App\Models\Store::find($batch->store_id);
+                    $storeStocks[] = [
+                        'store_id' => $batch->store_id,
+                        'store_name' => $store ? $store->store_name : 'Unknown Store',
+                        'quantity' => (int) $batch->total_qty
+                    ];
+                }
+                return $storeStocks;
             })
             ->make(true);
     }
