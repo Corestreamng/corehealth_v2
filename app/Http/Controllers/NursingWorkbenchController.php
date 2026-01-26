@@ -32,8 +32,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use App\Helpers\HmoHelper;
+use App\Helpers\BatchHelper;
 use App\Models\Store;
 use App\Models\StoreStock;
+use App\Models\StockBatch;
 use App\Services\StockService;
 use Yajra\DataTables\DataTables;
 
@@ -692,15 +694,31 @@ class NursingWorkbenchController extends Controller{
 
                 $billReq->save();
 
-                // Deduct stock using FIFO batch-based system
-                $dispensed = $stockService->dispenseStock(
-                    $product->id,
-                    $storeId,
-                    $qty,
-                    ProductOrServiceRequest::class,
-                    $billReq->id,
-                    "Injection administered to patient"
-                );
+                // Deduct stock using batch-based system
+                // If specific batch_id provided, use it; otherwise use FIFO
+                $batchId = $productData['batch_id'] ?? null;
+
+                if ($batchId) {
+                    // Dispense from specific batch selected by user
+                    $stockService->dispenseFromBatch(
+                        $batchId,
+                        $qty,
+                        ProductOrServiceRequest::class,
+                        $billReq->id,
+                        "Injection administered to patient (manual batch selection)"
+                    );
+                    $dispensed = [$batchId => $qty];
+                } else {
+                    // Use FIFO batch-based system
+                    $dispensed = $stockService->dispenseStock(
+                        $product->id,
+                        $storeId,
+                        $qty,
+                        ProductOrServiceRequest::class,
+                        $billReq->id,
+                        "Injection administered to patient (FIFO)"
+                    );
+                }
 
                 // Create injection administration record
                 $injection = InjectionAdministration::create([
@@ -940,15 +958,38 @@ class NursingWorkbenchController extends Controller{
 
                 $billReq->save();
 
-                // Deduct stock using FIFO batch-based system
-                $dispensed = $stockService->dispenseStock(
-                    $product->id,
-                    $storeId,
-                    $qty,
-                    ProductOrServiceRequest::class,
-                    $billReq->id,
-                    "Immunization administered to patient"
-                );
+                // Deduct stock using batch-based system
+                // If specific batch_id provided, use it; otherwise use FIFO
+                $batchId = $productData['batch_id'] ?? null;
+
+                if ($batchId) {
+                    // Dispense from specific batch selected by user
+                    $stockService->dispenseFromBatch(
+                        $batchId,
+                        $qty,
+                        ProductOrServiceRequest::class,
+                        $billReq->id,
+                        "Immunization administered to patient (manual batch selection)"
+                    );
+                    $dispensed = [$batchId => $qty];
+                } else {
+                    // Use FIFO batch-based system
+                    $dispensed = $stockService->dispenseStock(
+                        $product->id,
+                        $storeId,
+                        $qty,
+                        ProductOrServiceRequest::class,
+                        $billReq->id,
+                        "Immunization administered to patient (FIFO)"
+                    );
+                }
+
+                // Get batch number for the immunization record
+                $batchNumber = $productData['batch_number'] ?? null;
+                if (!$batchNumber && $batchId) {
+                    $batch = StockBatch::find($batchId);
+                    $batchNumber = $batch ? $batch->batch_number : null;
+                }
 
                 // Create immunization record
                 $immunization = ImmunizationRecord::create([
@@ -1062,6 +1103,149 @@ class NursingWorkbenchController extends Controller{
         });
 
         return response()->json($results);
+    }
+
+    // ===== BATCH-BASED INVENTORY METHODS FOR NURSING =====
+
+    /**
+     * Get available batches for a product in a specific store.
+     * Used by nursing forms to show batch selection dropdown with FIFO priority.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getProductBatches(Request $request)
+    {
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'store_id' => 'required|exists:stores,id',
+        ]);
+
+        try {
+            $batches = BatchHelper::getBatchSelectOptions(
+                $request->product_id,
+                $request->store_id
+            );
+
+            $totalAvailable = array_sum(array_column($batches, 'qty'));
+
+            // Transform to more intuitive format
+            $formattedBatches = array_map(function ($batch) {
+                return [
+                    'id' => $batch['id'],
+                    'batch_number' => $batch['name'] ?? $batch['batch_number'] ?? "BTH-{$batch['id']}",
+                    'current_qty' => $batch['qty'] ?? $batch['current_qty'],
+                    'expiry_date' => $batch['expiry_date'] ?? null,
+                    'expiry_formatted' => isset($batch['expiry_date'])
+                        ? Carbon::parse($batch['expiry_date'])->format('M d, Y')
+                        : null,
+                    'is_expiring_soon' => $batch['is_expiring_soon'] ?? false,
+                    'is_expired' => $batch['is_expired'] ?? false,
+                    'fifo_priority' => $batch['fifo_priority'] ?? 1,
+                ];
+            }, $batches);
+
+            return response()->json([
+                'success' => true,
+                'total_available' => $totalAvailable,
+                'batches' => $formattedBatches,
+                'fifo_recommended' => count($formattedBatches) > 0 ? $formattedBatches[0] : null,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching batches: ' . $e->getMessage(),
+                'total_available' => 0,
+                'batches' => [],
+            ], 500);
+        }
+    }
+
+    /**
+     * Get batch fulfillment suggestion for a required quantity.
+     * Returns optimal FIFO batch allocation showing which batches to use.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getBatchFulfillmentSuggestion(Request $request)
+    {
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'store_id' => 'required|exists:stores,id',
+            'qty' => 'required|integer|min:1',
+        ]);
+
+        try {
+            $suggestion = BatchHelper::suggestFulfillmentStrategy(
+                $request->product_id,
+                $request->store_id,
+                $request->qty
+            );
+
+            return response()->json([
+                'success' => true,
+                'suggestion' => $suggestion,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error generating suggestion: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get product stock info for a specific store.
+     * Quick check for available quantity in a store.
+     *
+     * @param int $productId
+     * @param int $storeId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getProductStockByStore($productId, $storeId)
+    {
+        try {
+            $product = Product::with('price')->findOrFail($productId);
+            $stockService = app(StockService::class);
+
+            $availableQty = $stockService->getAvailableStock($productId, $storeId);
+
+            // Get batch details for more info
+            $batches = StockBatch::where('product_id', $productId)
+                ->where('store_id', $storeId)
+                ->where('current_qty', '>', 0)
+                ->orderBy('expiry_date', 'asc')
+                ->orderBy('created_at', 'asc')
+                ->get(['id', 'batch_number', 'current_qty', 'expiry_date', 'cost_price']);
+
+            return response()->json([
+                'success' => true,
+                'product_id' => $productId,
+                'store_id' => $storeId,
+                'available_qty' => $availableQty,
+                'batch_count' => $batches->count(),
+                'batches' => $batches->map(function ($batch) {
+                    $expiryDate = $batch->expiry_date ? Carbon::parse($batch->expiry_date) : null;
+                    return [
+                        'id' => $batch->id,
+                        'batch_number' => $batch->batch_number ?? "BTH-{$batch->id}",
+                        'qty' => $batch->current_qty,
+                        'expiry_date' => $expiryDate ? $expiryDate->format('Y-m-d') : null,
+                        'expiry_formatted' => $expiryDate ? $expiryDate->format('M d, Y') : null,
+                        'is_expired' => $expiryDate && $expiryDate->isPast(),
+                        'is_expiring_soon' => $expiryDate && $expiryDate->isBetween(now(), now()->addDays(30)),
+                    ];
+                }),
+                'price' => $product->price ? $product->price->selling_price : 0,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching stock: ' . $e->getMessage(),
+                'available_qty' => 0,
+            ], 500);
+        }
     }
 
     /**
@@ -1199,6 +1383,7 @@ class NursingWorkbenchController extends Controller{
             'store_id' => 'required|exists:stores,id',
             'product_id' => 'required|exists:products,id',
             'qty' => 'required|integer|min:1',
+            'batch_id' => 'nullable|exists:stock_batches,id', // Optional batch selection
         ]);
 
         if ($validator->fails()) {
@@ -1212,6 +1397,7 @@ class NursingWorkbenchController extends Controller{
             $product = Product::with(['price', 'stock'])->findOrFail($request->product_id);
             $storeId = $request->store_id;
             $qty = $request->qty;
+            $batchId = $request->batch_id;
             $stockService = app(StockService::class);
 
             // Check stock availability using StockService
@@ -1244,15 +1430,29 @@ class NursingWorkbenchController extends Controller{
 
             $billReq->save();
 
-            // Deduct stock using FIFO batch-based system
-            $dispensed = $stockService->dispenseStock(
-                $product->id,
-                $storeId,
-                $qty,
-                ProductOrServiceRequest::class,
-                $billReq->id,
-                "Consumable billed for patient"
-            );
+            // Deduct stock using batch-based system
+            // If specific batch_id provided, use it; otherwise use FIFO
+            if ($batchId) {
+                // Dispense from specific batch selected by user
+                $stockService->dispenseFromBatch(
+                    $batchId,
+                    $qty,
+                    ProductOrServiceRequest::class,
+                    $billReq->id,
+                    "Consumable billed for patient (manual batch selection)"
+                );
+                $dispensed = [$batchId => $qty];
+            } else {
+                // Use FIFO batch-based system
+                $dispensed = $stockService->dispenseStock(
+                    $product->id,
+                    $storeId,
+                    $qty,
+                    ProductOrServiceRequest::class,
+                    $billReq->id,
+                    "Consumable billed for patient (FIFO)"
+                );
+            }
 
             DB::commit();
 
@@ -2041,6 +2241,7 @@ class NursingWorkbenchController extends Controller{
             'product_id' => 'required|exists:products,id',
             'route' => 'required|string|max:50',
             'site' => 'required|string|max:100',
+            'batch_id' => 'nullable|exists:stock_batches,id', // NEW: Batch ID from dropdown
             'batch_number' => 'nullable|string|max:100',
             'expiry_date' => 'nullable|date',
             'administered_at' => 'required|date',
@@ -2092,6 +2293,42 @@ class NursingWorkbenchController extends Controller{
 
             $billing->save();
 
+            // Deduct stock from selected batch or using FIFO
+            $storeId = $validated['store_id'] ?? null;
+            $batchId = $validated['batch_id'] ?? null;
+
+            if ($storeId) {
+                $stockService = app(StockService::class);
+                $qty = 1;
+
+                if ($batchId) {
+                    // Dispense from specific batch selected by user
+                    $stockService->dispenseFromBatch(
+                        $batchId,
+                        $qty,
+                        ProductOrServiceRequest::class,
+                        $billing->id,
+                        "Immunization administered (manual batch selection)"
+                    );
+
+                    // Get batch number from selected batch if not provided
+                    if (empty($validated['batch_number'])) {
+                        $selectedBatch = StockBatch::find($batchId);
+                        $validated['batch_number'] = $selectedBatch ? $selectedBatch->batch_number : null;
+                    }
+                } else {
+                    // Use FIFO batch-based system
+                    $stockService->dispenseStock(
+                        $product->id,
+                        $storeId,
+                        $qty,
+                        ProductOrServiceRequest::class,
+                        $billing->id,
+                        "Immunization administered (FIFO)"
+                    );
+                }
+            }
+
             // Create immunization record
             $immunizationRecord = ImmunizationRecord::create([
                 'patient_id' => $schedule->patient_id,
@@ -2108,7 +2345,7 @@ class NursingWorkbenchController extends Controller{
                 'expiry_date' => $validated['expiry_date'],
                 'manufacturer' => $validated['manufacturer'],
                 'notes' => $validated['notes'],
-                'dispensed_from_store_id' => $validated['store_id'] ?? null,
+                'dispensed_from_store_id' => $storeId,
             ]);
 
             // Update schedule entry

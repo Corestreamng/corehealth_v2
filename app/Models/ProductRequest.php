@@ -30,8 +30,35 @@ protected $fillable = [
         'deleted_by',
         'deletion_reason',
         'adapted_from_product_id',
-        'adaptation_note'
+        'adaptation_note',
+        'adapted_at',
+        'adapted_by',
+        'qty_adjusted_from',
+        'qty_adjustment_reason',
+        'qty_adjusted_at',
+        'qty_adjusted_by',
     ];
+
+    protected $casts = [
+        'adapted_at' => 'datetime',
+        'qty_adjusted_at' => 'datetime',
+    ];
+
+    /**
+     * Get the user who adapted the prescription
+     */
+    public function adapter()
+    {
+        return $this->belongsTo(User::class, 'adapted_by', 'id');
+    }
+
+    /**
+     * Get the user who adjusted the quantity
+     */
+    public function qtyAdjuster()
+    {
+        return $this->belongsTo(User::class, 'qty_adjusted_by', 'id');
+    }
 
     public function productOrServiceRequest()
     {

@@ -22,6 +22,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -45,6 +46,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        // Configure polymorphic morph map for expenses and other models
+        Relation::morphMap([
+            'payroll_batch' => \App\Models\HR\PayrollBatch::class,
+            'purchase_order' => \App\Models\PurchaseOrder::class,
+        ]);
+
         // Register HMO tariff auto-generation observers
         Product::observe(ProductObserver::class);
         service::observe(ServiceObserver::class);
