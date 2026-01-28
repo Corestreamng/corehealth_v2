@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 26, 2026 at 12:02 PM
+-- Generation Time: Jan 26, 2026 at 12:56 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -27,8 +27,8 @@ SET time_zone = "+00:00";
 -- Table structure for table `admission_checklists`
 --
 
-CREATE TABLE `admission_checklists` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `admission_checklists` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `admission_request_id` bigint(20) UNSIGNED NOT NULL,
   `template_id` bigint(20) UNSIGNED DEFAULT NULL,
   `status` enum('pending','in_progress','completed','waived') NOT NULL DEFAULT 'pending',
@@ -38,8 +38,13 @@ CREATE TABLE `admission_checklists` (
   `waiver_reason` text DEFAULT NULL,
   `waived_by` bigint(20) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `admission_checklists_admission_request_id_unique` (`admission_request_id`),
+  KEY `admission_checklists_template_id_foreign` (`template_id`),
+  KEY `admission_checklists_completed_by_foreign` (`completed_by`),
+  KEY `admission_checklists_waived_by_foreign` (`waived_by`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `admission_checklists`
@@ -57,8 +62,8 @@ INSERT INTO `admission_checklists` (`id`, `admission_request_id`, `template_id`,
 -- Table structure for table `admission_checklist_items`
 --
 
-CREATE TABLE `admission_checklist_items` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `admission_checklist_items` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `admission_checklist_id` bigint(20) UNSIGNED NOT NULL,
   `template_item_id` bigint(20) UNSIGNED DEFAULT NULL,
   `item_text` varchar(255) NOT NULL,
@@ -68,8 +73,12 @@ CREATE TABLE `admission_checklist_items` (
   `completed_by` bigint(20) UNSIGNED DEFAULT NULL,
   `comment` text DEFAULT NULL COMMENT 'Notes when completing item',
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `admission_checklist_items_admission_checklist_id_foreign` (`admission_checklist_id`),
+  KEY `admission_checklist_items_template_item_id_foreign` (`template_item_id`),
+  KEY `admission_checklist_items_completed_by_foreign` (`completed_by`)
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `admission_checklist_items`
@@ -104,8 +113,8 @@ INSERT INTO `admission_checklist_items` (`id`, `admission_checklist_id`, `templa
 -- Table structure for table `admission_requests`
 --
 
-CREATE TABLE `admission_requests` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `admission_requests` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `service_request_id` bigint(20) UNSIGNED DEFAULT NULL,
   `billed_by` bigint(20) UNSIGNED DEFAULT NULL,
   `billed_date` timestamp NULL DEFAULT NULL,
@@ -128,8 +137,18 @@ CREATE TABLE `admission_requests` (
   `status` tinyint(1) NOT NULL DEFAULT 1,
   `admission_status` enum('pending_checklist','checklist_complete','admitted','discharge_requested','discharge_checklist','discharged') NOT NULL DEFAULT 'admitted' COMMENT 'Workflow status for admission/discharge process',
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `admission_requests_service_request_id_foreign` (`service_request_id`),
+  KEY `admission_requests_billed_by_foreign` (`billed_by`),
+  KEY `admission_requests_service_id_foreign` (`service_id`),
+  KEY `admission_requests_encounter_id_foreign` (`encounter_id`),
+  KEY `admission_requests_patient_id_foreign` (`patient_id`),
+  KEY `admission_requests_bed_id_foreign` (`bed_id`),
+  KEY `admission_requests_bed_assigned_by_foreign` (`bed_assigned_by`),
+  KEY `admission_requests_discharged_by_foreign` (`discharged_by`),
+  KEY `admission_requests_doctor_id_foreign` (`doctor_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `admission_requests`
@@ -151,8 +170,8 @@ INSERT INTO `admission_requests` (`id`, `service_request_id`, `billed_by`, `bill
 -- Table structure for table `application_status`
 --
 
-CREATE TABLE `application_status` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `application_status` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `site_name` varchar(255) NOT NULL,
   `site_abbreviation` varchar(255) DEFAULT NULL,
   `header_text` varchar(255) DEFAULT NULL,
@@ -206,8 +225,11 @@ CREATE TABLE `application_status` (
   `updated_at` timestamp NULL DEFAULT NULL,
   `notification_sound` tinyint(1) NOT NULL DEFAULT 1,
   `registration_category_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `procedure_category_id` bigint(20) UNSIGNED DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `procedure_category_id` bigint(20) UNSIGNED DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `application_status_registration_category_id_foreign` (`registration_category_id`),
+  KEY `application_status_procedure_category_id_foreign` (`procedure_category_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `application_status`
@@ -222,8 +244,8 @@ INSERT INTO `application_status` (`id`, `site_name`, `site_abbreviation`, `heade
 -- Table structure for table `audits`
 --
 
-CREATE TABLE `audits` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `audits` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_type` varchar(255) DEFAULT NULL,
   `user_id` bigint(20) UNSIGNED DEFAULT NULL,
   `event` varchar(255) NOT NULL,
@@ -236,8 +258,11 @@ CREATE TABLE `audits` (
   `user_agent` varchar(1023) DEFAULT NULL,
   `tags` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `audits_auditable_type_auditable_id_index` (`auditable_type`,`auditable_id`),
+  KEY `audits_user_id_user_type_index` (`user_id`,`user_type`)
+) ENGINE=InnoDB AUTO_INCREMENT=866 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `audits`
@@ -1091,8 +1116,8 @@ INSERT INTO `audits` (`id`, `user_type`, `user_id`, `event`, `auditable_type`, `
 -- Table structure for table `banks`
 --
 
-CREATE TABLE `banks` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `banks` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `account_number` varchar(255) DEFAULT NULL,
   `account_name` varchar(255) DEFAULT NULL,
@@ -1100,8 +1125,9 @@ CREATE TABLE `banks` (
   `description` text DEFAULT NULL,
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `banks`
@@ -1116,8 +1142,8 @@ INSERT INTO `banks` (`id`, `name`, `account_number`, `account_name`, `bank_code`
 -- Table structure for table `beds`
 --
 
-CREATE TABLE `beds` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `beds` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `ward_id` bigint(20) UNSIGNED DEFAULT NULL,
   `service_id` bigint(20) UNSIGNED NOT NULL,
   `name` varchar(255) NOT NULL,
@@ -1128,8 +1154,11 @@ CREATE TABLE `beds` (
   `bed_status` enum('available','occupied','reserved','maintenance','out_of_service') NOT NULL DEFAULT 'available' COMMENT 'Detailed bed availability status',
   `occupant_id` bigint(20) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `beds_occupant_id_foreign` (`occupant_id`),
+  KEY `beds_ward_id_bed_status_index` (`ward_id`,`bed_status`)
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `beds`
@@ -1145,16 +1174,18 @@ INSERT INTO `beds` (`id`, `ward_id`, `service_id`, `name`, `ward`, `unit`, `pric
 -- Table structure for table `chat_attachments`
 --
 
-CREATE TABLE `chat_attachments` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `chat_attachments` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `message_id` bigint(20) UNSIGNED NOT NULL,
   `file_path` varchar(255) NOT NULL,
   `file_name` varchar(255) NOT NULL,
   `file_type` varchar(255) NOT NULL,
   `file_size` int(11) NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `chat_attachments_message_id_foreign` (`message_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `chat_attachments`
@@ -1180,13 +1211,14 @@ INSERT INTO `chat_attachments` (`id`, `message_id`, `file_path`, `file_name`, `f
 -- Table structure for table `chat_conversations`
 --
 
-CREATE TABLE `chat_conversations` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `chat_conversations` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `title` varchar(255) DEFAULT NULL,
   `is_group` tinyint(1) NOT NULL DEFAULT 0,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `chat_conversations`
@@ -1210,13 +1242,16 @@ INSERT INTO `chat_conversations` (`id`, `title`, `is_group`, `created_at`, `upda
 -- Table structure for table `chat_conversation_archives`
 --
 
-CREATE TABLE `chat_conversation_archives` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `chat_conversation_archives` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `conversation_id` bigint(20) UNSIGNED NOT NULL,
   `user_id` bigint(20) UNSIGNED NOT NULL,
   `archived_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `chat_conversation_archives_conversation_id_user_id_unique` (`conversation_id`,`user_id`),
+  KEY `chat_conversation_archives_user_id_foreign` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1225,8 +1260,8 @@ CREATE TABLE `chat_conversation_archives` (
 -- Table structure for table `chat_messages`
 --
 
-CREATE TABLE `chat_messages` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `chat_messages` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `conversation_id` bigint(20) UNSIGNED NOT NULL,
   `user_id` bigint(20) UNSIGNED NOT NULL,
   `body` text DEFAULT NULL,
@@ -1234,8 +1269,12 @@ CREATE TABLE `chat_messages` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL,
-  `deleted_by` bigint(20) UNSIGNED DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `deleted_by` bigint(20) UNSIGNED DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `chat_messages_conversation_id_foreign` (`conversation_id`),
+  KEY `chat_messages_user_id_foreign` (`user_id`),
+  KEY `chat_messages_deleted_by_foreign` (`deleted_by`)
+) ENGINE=InnoDB AUTO_INCREMENT=162 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `chat_messages`
@@ -1410,14 +1449,17 @@ INSERT INTO `chat_messages` (`id`, `conversation_id`, `user_id`, `body`, `type`,
 -- Table structure for table `chat_participants`
 --
 
-CREATE TABLE `chat_participants` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `chat_participants` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `conversation_id` bigint(20) UNSIGNED NOT NULL,
   `user_id` bigint(20) UNSIGNED NOT NULL,
   `last_read_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `chat_participants_conversation_id_foreign` (`conversation_id`),
+  KEY `chat_participants_user_id_foreign` (`user_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `chat_participants`
@@ -1457,8 +1499,8 @@ INSERT INTO `chat_participants` (`id`, `conversation_id`, `user_id`, `last_read_
 -- Table structure for table `checklist_templates`
 --
 
-CREATE TABLE `checklist_templates` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `checklist_templates` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL COMMENT 'Template name',
   `type` enum('admission','discharge') NOT NULL COMMENT 'Checklist type',
   `description` text DEFAULT NULL,
@@ -1466,8 +1508,10 @@ CREATE TABLE `checklist_templates` (
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `created_by` bigint(20) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `checklist_templates_created_by_foreign` (`created_by`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `checklist_templates`
@@ -1483,8 +1527,8 @@ INSERT INTO `checklist_templates` (`id`, `name`, `type`, `description`, `is_defa
 -- Table structure for table `checklist_template_items`
 --
 
-CREATE TABLE `checklist_template_items` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `checklist_template_items` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `template_id` bigint(20) UNSIGNED NOT NULL,
   `item_text` varchar(255) NOT NULL COMMENT 'Checklist item description',
   `guidance` text DEFAULT NULL COMMENT 'Help text for completing item',
@@ -1492,8 +1536,10 @@ CREATE TABLE `checklist_template_items` (
   `requires_comment` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Requires note when checked',
   `sort_order` int(11) NOT NULL DEFAULT 0,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `checklist_template_items_template_id_foreign` (`template_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `checklist_template_items`
@@ -1511,15 +1557,16 @@ INSERT INTO `checklist_template_items` (`id`, `template_id`, `item_text`, `guida
 -- Table structure for table `clinics`
 --
 
-CREATE TABLE `clinics` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `clinics` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `status` int(11) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `template` longtext DEFAULT NULL,
-  `old_clinic_id` int(11) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `old_clinic_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `clinics`
@@ -1550,16 +1597,20 @@ INSERT INTO `clinics` (`id`, `name`, `status`, `created_at`, `updated_at`, `temp
 -- Table structure for table `departments`
 --
 
-CREATE TABLE `departments` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `departments` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `code` varchar(255) DEFAULT NULL,
   `description` text DEFAULT NULL,
   `head_of_department_id` bigint(20) UNSIGNED DEFAULT NULL,
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `departments_name_unique` (`name`),
+  UNIQUE KEY `departments_code_unique` (`code`),
+  KEY `departments_head_of_department_id_foreign` (`head_of_department_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=39 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `departments`
@@ -1611,14 +1662,16 @@ INSERT INTO `departments` (`id`, `name`, `code`, `description`, `head_of_departm
 -- Table structure for table `details`
 --
 
-CREATE TABLE `details` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `details` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `service_rendered` varchar(255) NOT NULL,
   `price` int(11) NOT NULL,
   `patient_id` bigint(20) UNSIGNED NOT NULL,
   `has_paid` tinyint(1) NOT NULL DEFAULT 0,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `details_patient_id_foreign` (`patient_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -1627,8 +1680,8 @@ CREATE TABLE `details` (
 -- Table structure for table `discharge_checklists`
 --
 
-CREATE TABLE `discharge_checklists` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `discharge_checklists` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `admission_request_id` bigint(20) UNSIGNED NOT NULL,
   `template_id` bigint(20) UNSIGNED DEFAULT NULL,
   `status` enum('pending','in_progress','completed','waived') NOT NULL DEFAULT 'pending',
@@ -1638,8 +1691,13 @@ CREATE TABLE `discharge_checklists` (
   `waiver_reason` text DEFAULT NULL,
   `waived_by` bigint(20) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `discharge_checklists_admission_request_id_unique` (`admission_request_id`),
+  KEY `discharge_checklists_template_id_foreign` (`template_id`),
+  KEY `discharge_checklists_completed_by_foreign` (`completed_by`),
+  KEY `discharge_checklists_waived_by_foreign` (`waived_by`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `discharge_checklists`
@@ -1655,8 +1713,8 @@ INSERT INTO `discharge_checklists` (`id`, `admission_request_id`, `template_id`,
 -- Table structure for table `discharge_checklist_items`
 --
 
-CREATE TABLE `discharge_checklist_items` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `discharge_checklist_items` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `discharge_checklist_id` bigint(20) UNSIGNED NOT NULL,
   `template_item_id` bigint(20) UNSIGNED DEFAULT NULL,
   `item_text` varchar(255) NOT NULL,
@@ -1666,8 +1724,12 @@ CREATE TABLE `discharge_checklist_items` (
   `completed_by` bigint(20) UNSIGNED DEFAULT NULL,
   `comment` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `discharge_checklist_items_discharge_checklist_id_foreign` (`discharge_checklist_id`),
+  KEY `discharge_checklist_items_template_item_id_foreign` (`template_item_id`),
+  KEY `discharge_checklist_items_completed_by_foreign` (`completed_by`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `discharge_checklist_items`
@@ -1685,8 +1747,8 @@ INSERT INTO `discharge_checklist_items` (`id`, `discharge_checklist_id`, `templa
 -- Table structure for table `disciplinary_queries`
 --
 
-CREATE TABLE `disciplinary_queries` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `disciplinary_queries` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `query_number` varchar(255) NOT NULL,
   `staff_id` bigint(20) UNSIGNED NOT NULL,
   `subject` varchar(255) NOT NULL,
@@ -1705,8 +1767,13 @@ CREATE TABLE `disciplinary_queries` (
   `issued_by` bigint(20) UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `deleted_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `disciplinary_queries_query_number_unique` (`query_number`),
+  KEY `disciplinary_queries_issued_by_foreign` (`issued_by`),
+  KEY `disciplinary_queries_decided_by_foreign` (`decided_by`),
+  KEY `disciplinary_queries_staff_id_status_index` (`staff_id`,`status`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `disciplinary_queries`
@@ -1723,8 +1790,8 @@ INSERT INTO `disciplinary_queries` (`id`, `query_number`, `staff_id`, `subject`,
 -- Table structure for table `doctor_queues`
 --
 
-CREATE TABLE `doctor_queues` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `doctor_queues` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `patient_id` bigint(20) UNSIGNED NOT NULL,
   `clinic_id` bigint(20) UNSIGNED NOT NULL,
   `staff_id` bigint(20) UNSIGNED DEFAULT NULL,
@@ -1733,8 +1800,13 @@ CREATE TABLE `doctor_queues` (
   `status` int(11) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `vitals_taken` tinyint(1) NOT NULL DEFAULT 0
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `vitals_taken` tinyint(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  KEY `doctor_queues_patient_id_foreign` (`patient_id`),
+  KEY `doctor_queues_clinic_id_foreign` (`clinic_id`),
+  KEY `doctor_queues_staff_id_foreign` (`staff_id`),
+  KEY `doctor_queues_receptionist_id_foreign` (`receptionist_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `doctor_queues`
@@ -1766,8 +1838,8 @@ INSERT INTO `doctor_queues` (`id`, `patient_id`, `clinic_id`, `staff_id`, `recep
 -- Table structure for table `encounters`
 --
 
-CREATE TABLE `encounters` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `encounters` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `doctor_id` bigint(20) UNSIGNED NOT NULL,
   `service_request_id` bigint(20) UNSIGNED DEFAULT NULL,
   `service_id` bigint(20) UNSIGNED DEFAULT NULL,
@@ -1785,8 +1857,15 @@ CREATE TABLE `encounters` (
   `old_patient_lab_services` int(11) DEFAULT NULL,
   `completed` tinyint(1) NOT NULL DEFAULT 0,
   `deleted_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `deletion_reason` text DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `deletion_reason` text DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `encounters_doctor_id_foreign` (`doctor_id`),
+  KEY `encounters_service_request_id_foreign` (`service_request_id`),
+  KEY `encounters_service_id_foreign` (`service_id`),
+  KEY `encounters_patient_id_foreign` (`patient_id`),
+  KEY `encounters_admission_request_id_foreign` (`admission_request_id`),
+  KEY `encounters_deleted_by_foreign` (`deleted_by`)
+) ENGINE=InnoDB AUTO_INCREMENT=223 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `encounters`
@@ -1820,8 +1899,8 @@ INSERT INTO `encounters` (`id`, `doctor_id`, `service_request_id`, `service_id`,
 -- Table structure for table `expenses`
 --
 
-CREATE TABLE `expenses` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `expenses` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `expense_number` varchar(255) NOT NULL,
   `category` enum('purchase_order','store_expense','maintenance','utilities','salaries','other') NOT NULL DEFAULT 'other',
   `reference_type` varchar(255) DEFAULT NULL,
@@ -1847,8 +1926,19 @@ CREATE TABLE `expenses` (
   `notes` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `deleted_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `expenses_expense_number_unique` (`expense_number`),
+  KEY `expenses_supplier_id_foreign` (`supplier_id`),
+  KEY `expenses_recorded_by_foreign` (`recorded_by`),
+  KEY `expenses_approved_by_foreign` (`approved_by`),
+  KEY `expenses_category_status_index` (`category`,`status`),
+  KEY `expenses_expense_date_status_index` (`expense_date`,`status`),
+  KEY `expenses_reference_type_reference_id_index` (`reference_type`,`reference_id`),
+  KEY `expenses_store_id_expense_date_index` (`store_id`,`expense_date`),
+  KEY `expenses_voided_by_foreign` (`voided_by`),
+  KEY `expenses_bank_id_foreign` (`bank_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `expenses`
@@ -1869,14 +1959,16 @@ INSERT INTO `expenses` (`id`, `expense_number`, `category`, `reference_type`, `r
 -- Table structure for table `failed_jobs`
 --
 
-CREATE TABLE `failed_jobs` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `failed_jobs` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `uuid` varchar(255) NOT NULL,
   `connection` text NOT NULL,
   `queue` text NOT NULL,
   `payload` longtext NOT NULL,
   `exception` longtext NOT NULL,
-  `failed_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `failed_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `failed_jobs_uuid_unique` (`uuid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -1885,16 +1977,18 @@ CREATE TABLE `failed_jobs` (
 -- Table structure for table `hmos`
 --
 
-CREATE TABLE `hmos` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `hmos` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `hmo_scheme_id` bigint(20) UNSIGNED DEFAULT NULL,
   `name` varchar(255) NOT NULL,
   `desc` text DEFAULT NULL,
   `discount` double(8,2) NOT NULL DEFAULT 0.00,
   `status` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `hmos_hmo_scheme_id_foreign` (`hmo_scheme_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `hmos`
@@ -1924,8 +2018,8 @@ INSERT INTO `hmos` (`id`, `hmo_scheme_id`, `name`, `desc`, `discount`, `status`,
 -- Table structure for table `hmo_claims`
 --
 
-CREATE TABLE `hmo_claims` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `hmo_claims` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `hmo_id` bigint(20) UNSIGNED NOT NULL,
   `patient_id` bigint(20) UNSIGNED NOT NULL,
   `payment_id` bigint(20) UNSIGNED NOT NULL,
@@ -1937,8 +2031,14 @@ CREATE TABLE `hmo_claims` (
   `payment_reference` varchar(100) DEFAULT NULL,
   `notes` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `hmo_claims_hmo_id_foreign` (`hmo_id`),
+  KEY `hmo_claims_patient_id_foreign` (`patient_id`),
+  KEY `hmo_claims_payment_id_foreign` (`payment_id`),
+  KEY `hmo_claims_created_by_foreign` (`created_by`),
+  KEY `hmo_claims_processed_by_foreign` (`processed_by`)
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `hmo_claims`
@@ -1960,8 +2060,8 @@ INSERT INTO `hmo_claims` (`id`, `hmo_id`, `patient_id`, `payment_id`, `claims_am
 -- Table structure for table `hmo_remittances`
 --
 
-CREATE TABLE `hmo_remittances` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `hmo_remittances` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `hmo_id` bigint(20) UNSIGNED NOT NULL,
   `amount` decimal(15,2) NOT NULL,
   `reference_number` varchar(255) DEFAULT NULL,
@@ -1974,7 +2074,11 @@ CREATE TABLE `hmo_remittances` (
   `receipt_file` varchar(255) DEFAULT NULL,
   `created_by` bigint(20) UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `hmo_remittances_created_by_foreign` (`created_by`),
+  KEY `hmo_remittances_hmo_id_payment_date_index` (`hmo_id`,`payment_date`),
+  KEY `hmo_remittances_reference_number_index` (`reference_number`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1983,15 +2087,18 @@ CREATE TABLE `hmo_remittances` (
 -- Table structure for table `hmo_schemes`
 --
 
-CREATE TABLE `hmo_schemes` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `hmo_schemes` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `code` varchar(20) NOT NULL,
   `description` text DEFAULT NULL,
   `status` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `hmo_schemes_name_unique` (`name`),
+  UNIQUE KEY `hmo_schemes_code_unique` (`code`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `hmo_schemes`
@@ -2011,8 +2118,8 @@ INSERT INTO `hmo_schemes` (`id`, `name`, `code`, `description`, `status`, `creat
 -- Table structure for table `hmo_tariffs`
 --
 
-CREATE TABLE `hmo_tariffs` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `hmo_tariffs` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `hmo_id` bigint(20) UNSIGNED NOT NULL,
   `product_id` bigint(20) UNSIGNED DEFAULT NULL,
   `service_id` bigint(20) UNSIGNED DEFAULT NULL,
@@ -2020,8 +2127,12 @@ CREATE TABLE `hmo_tariffs` (
   `payable_amount` decimal(10,2) NOT NULL COMMENT 'Amount the patient must pay',
   `coverage_mode` enum('express','primary','secondary') NOT NULL DEFAULT 'primary' COMMENT 'express: auto-approved, primary: requires validation, secondary: requires validation + auth code',
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_hmo_product_service` (`hmo_id`,`product_id`,`service_id`),
+  KEY `hmo_tariffs_product_id_foreign` (`product_id`),
+  KEY `hmo_tariffs_service_id_foreign` (`service_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3601 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `hmo_tariffs`
@@ -5641,8 +5752,8 @@ INSERT INTO `hmo_tariffs` (`id`, `hmo_id`, `product_id`, `service_id`, `claims_a
 -- Table structure for table `hr_attachments`
 --
 
-CREATE TABLE `hr_attachments` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `hr_attachments` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `attachable_type` varchar(255) NOT NULL,
   `attachable_id` bigint(20) UNSIGNED NOT NULL,
   `filename` varchar(255) NOT NULL,
@@ -5655,8 +5766,11 @@ CREATE TABLE `hr_attachments` (
   `uploaded_by` bigint(20) UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `deleted_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `hr_attachments_attachable_type_attachable_id_index` (`attachable_type`,`attachable_id`),
+  KEY `hr_attachments_uploaded_by_foreign` (`uploaded_by`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `hr_attachments`
@@ -5677,8 +5791,8 @@ INSERT INTO `hr_attachments` (`id`, `attachable_type`, `attachable_id`, `filenam
 -- Table structure for table `imaging_service_requests`
 --
 
-CREATE TABLE `imaging_service_requests` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `imaging_service_requests` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `service_request_id` bigint(20) UNSIGNED DEFAULT NULL,
   `billed_by` bigint(20) UNSIGNED DEFAULT NULL,
   `billed_date` timestamp NULL DEFAULT NULL,
@@ -5697,8 +5811,17 @@ CREATE TABLE `imaging_service_requests` (
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL,
   `deleted_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `deletion_reason` text DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `deletion_reason` text DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `imaging_service_requests_service_request_id_foreign` (`service_request_id`),
+  KEY `imaging_service_requests_billed_by_foreign` (`billed_by`),
+  KEY `imaging_service_requests_service_id_foreign` (`service_id`),
+  KEY `imaging_service_requests_encounter_id_foreign` (`encounter_id`),
+  KEY `imaging_service_requests_patient_id_foreign` (`patient_id`),
+  KEY `imaging_service_requests_result_by_foreign` (`result_by`),
+  KEY `imaging_service_requests_doctor_id_foreign` (`doctor_id`),
+  KEY `imaging_service_requests_deleted_by_foreign` (`deleted_by`)
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `imaging_service_requests`
@@ -5719,8 +5842,8 @@ INSERT INTO `imaging_service_requests` (`id`, `service_request_id`, `billed_by`,
 -- Table structure for table `immunization_records`
 --
 
-CREATE TABLE `immunization_records` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `immunization_records` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `patient_id` bigint(20) UNSIGNED NOT NULL,
   `product_id` bigint(20) UNSIGNED NOT NULL,
   `product_or_service_request_id` bigint(20) UNSIGNED DEFAULT NULL,
@@ -5740,8 +5863,15 @@ CREATE TABLE `immunization_records` (
   `notes` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `deleted_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `immunization_records_product_or_service_request_id_foreign` (`product_or_service_request_id`),
+  KEY `immunization_records_administered_by_foreign` (`administered_by`),
+  KEY `immunization_records_patient_id_administered_at_index` (`patient_id`,`administered_at`),
+  KEY `immunization_records_patient_id_vaccine_name_index` (`patient_id`,`vaccine_name`),
+  KEY `immunization_records_product_id_index` (`product_id`),
+  KEY `immunization_records_dispensed_from_store_id_foreign` (`dispensed_from_store_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `immunization_records`
@@ -5757,8 +5887,8 @@ INSERT INTO `immunization_records` (`id`, `patient_id`, `product_id`, `product_o
 -- Table structure for table `injection_administrations`
 --
 
-CREATE TABLE `injection_administrations` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `injection_administrations` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `patient_id` bigint(20) UNSIGNED NOT NULL,
   `product_id` bigint(20) UNSIGNED NOT NULL,
   `product_or_service_request_id` bigint(20) UNSIGNED DEFAULT NULL,
@@ -5773,8 +5903,14 @@ CREATE TABLE `injection_administrations` (
   `expiry_date` date DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `deleted_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `injection_administrations_product_or_service_request_id_foreign` (`product_or_service_request_id`),
+  KEY `injection_administrations_administered_by_foreign` (`administered_by`),
+  KEY `injection_administrations_patient_id_administered_at_index` (`patient_id`,`administered_at`),
+  KEY `injection_administrations_product_id_index` (`product_id`),
+  KEY `injection_administrations_dispensed_from_store_id_foreign` (`dispensed_from_store_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `injection_administrations`
@@ -5792,8 +5928,8 @@ INSERT INTO `injection_administrations` (`id`, `patient_id`, `product_id`, `prod
 -- Table structure for table `intake_output_histories`
 --
 
-CREATE TABLE `intake_output_histories` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `intake_output_histories` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `period_id` bigint(20) UNSIGNED NOT NULL,
   `record_id` bigint(20) UNSIGNED DEFAULT NULL,
   `user_id` bigint(20) UNSIGNED NOT NULL,
@@ -5802,7 +5938,11 @@ CREATE TABLE `intake_output_histories` (
   `original_values` text DEFAULT NULL,
   `new_values` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `intake_output_histories_period_id_foreign` (`period_id`),
+  KEY `intake_output_histories_record_id_foreign` (`record_id`),
+  KEY `intake_output_histories_user_id_foreign` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -5811,8 +5951,8 @@ CREATE TABLE `intake_output_histories` (
 -- Table structure for table `intake_output_periods`
 --
 
-CREATE TABLE `intake_output_periods` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `intake_output_periods` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `patient_id` bigint(20) UNSIGNED NOT NULL,
   `type` enum('fluid','solid') NOT NULL,
   `started_at` datetime NOT NULL,
@@ -5820,8 +5960,12 @@ CREATE TABLE `intake_output_periods` (
   `ended_by` bigint(20) UNSIGNED DEFAULT NULL,
   `nurse_id` bigint(20) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `intake_output_periods_patient_id_foreign` (`patient_id`),
+  KEY `intake_output_periods_nurse_id_foreign` (`nurse_id`),
+  KEY `intake_output_periods_ended_by_foreign` (`ended_by`)
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `intake_output_periods`
@@ -5855,8 +5999,8 @@ INSERT INTO `intake_output_periods` (`id`, `patient_id`, `type`, `started_at`, `
 -- Table structure for table `intake_output_records`
 --
 
-CREATE TABLE `intake_output_records` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `intake_output_records` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `period_id` bigint(20) UNSIGNED NOT NULL,
   `type` enum('intake','output') NOT NULL,
   `amount` decimal(8,2) NOT NULL,
@@ -5870,8 +6014,13 @@ CREATE TABLE `intake_output_records` (
   `delete_reason` varchar(255) DEFAULT NULL,
   `nurse_id` bigint(20) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `intake_output_records_period_id_foreign` (`period_id`),
+  KEY `intake_output_records_nurse_id_foreign` (`nurse_id`),
+  KEY `intake_output_records_edited_by_foreign` (`edited_by`),
+  KEY `intake_output_records_deleted_by_foreign` (`deleted_by`)
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `intake_output_records`
@@ -5903,11 +6052,12 @@ INSERT INTO `intake_output_records` (`id`, `period_id`, `type`, `amount`, `descr
 -- Table structure for table `invoices`
 --
 
-CREATE TABLE `invoices` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `invoices` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=48 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `invoices`
@@ -5952,8 +6102,8 @@ INSERT INTO `invoices` (`id`, `created_at`, `updated_at`) VALUES
 -- Table structure for table `lab_service_requests`
 --
 
-CREATE TABLE `lab_service_requests` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `lab_service_requests` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `service_request_id` bigint(20) UNSIGNED DEFAULT NULL,
   `billed_by` bigint(20) UNSIGNED DEFAULT NULL,
   `billed_date` timestamp NULL DEFAULT NULL,
@@ -5980,8 +6130,18 @@ CREATE TABLE `lab_service_requests` (
   `deletion_reason` text DEFAULT NULL,
   `dismissed_at` timestamp NULL DEFAULT NULL,
   `dismissed_by` bigint(20) UNSIGNED DEFAULT NULL,
-  `dismiss_reason` text DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `dismiss_reason` text DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `lab_service_requests_service_request_id_foreign` (`service_request_id`),
+  KEY `lab_service_requests_billed_by_foreign` (`billed_by`),
+  KEY `lab_service_requests_service_id_foreign` (`service_id`),
+  KEY `lab_service_requests_patient_id_foreign` (`patient_id`),
+  KEY `lab_service_requests_result_by_foreign` (`result_by`),
+  KEY `lab_service_requests_sample_taken_by_foreign` (`sample_taken_by`),
+  KEY `lab_service_requests_doctor_id_foreign` (`doctor_id`),
+  KEY `lab_service_requests_deleted_by_foreign` (`deleted_by`),
+  KEY `lab_service_requests_dismissed_by_foreign` (`dismissed_by`)
+) ENGINE=InnoDB AUTO_INCREMENT=79 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `lab_service_requests`
@@ -6017,8 +6177,8 @@ INSERT INTO `lab_service_requests` (`id`, `service_request_id`, `billed_by`, `bi
 -- Table structure for table `lab_workbench_audit_logs`
 --
 
-CREATE TABLE `lab_workbench_audit_logs` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `lab_workbench_audit_logs` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `lab_service_request_id` bigint(20) UNSIGNED NOT NULL,
   `user_id` bigint(20) UNSIGNED NOT NULL,
   `action` varchar(255) NOT NULL,
@@ -6028,8 +6188,11 @@ CREATE TABLE `lab_workbench_audit_logs` (
   `ip_address` varchar(255) DEFAULT NULL,
   `user_agent` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `lab_workbench_audit_logs_lab_service_request_id_foreign` (`lab_service_request_id`),
+  KEY `lab_workbench_audit_logs_user_id_foreign` (`user_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `lab_workbench_audit_logs`
@@ -6053,8 +6216,8 @@ INSERT INTO `lab_workbench_audit_logs` (`id`, `lab_service_request_id`, `user_id
 -- Table structure for table `leave_balances`
 --
 
-CREATE TABLE `leave_balances` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `leave_balances` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `staff_id` bigint(20) UNSIGNED NOT NULL,
   `leave_type_id` bigint(20) UNSIGNED NOT NULL,
   `year` int(11) NOT NULL,
@@ -6063,8 +6226,11 @@ CREATE TABLE `leave_balances` (
   `pending_days` decimal(5,1) NOT NULL DEFAULT 0.0,
   `carried_forward` decimal(5,1) NOT NULL DEFAULT 0.0,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `leave_balances_staff_id_leave_type_id_year_unique` (`staff_id`,`leave_type_id`,`year`),
+  KEY `leave_balances_leave_type_id_foreign` (`leave_type_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `leave_balances`
@@ -6079,8 +6245,8 @@ INSERT INTO `leave_balances` (`id`, `staff_id`, `leave_type_id`, `year`, `entitl
 -- Table structure for table `leave_requests`
 --
 
-CREATE TABLE `leave_requests` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `leave_requests` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `request_number` varchar(255) NOT NULL,
   `staff_id` bigint(20) UNSIGNED NOT NULL,
   `leave_type_id` bigint(20) UNSIGNED NOT NULL,
@@ -6104,8 +6270,17 @@ CREATE TABLE `leave_requests` (
   `review_comments` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `deleted_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `leave_requests_request_number_unique` (`request_number`),
+  KEY `leave_requests_leave_type_id_foreign` (`leave_type_id`),
+  KEY `leave_requests_relief_staff_id_foreign` (`relief_staff_id`),
+  KEY `leave_requests_supervisor_approved_by_foreign` (`supervisor_approved_by`),
+  KEY `leave_requests_hr_approved_by_foreign` (`hr_approved_by`),
+  KEY `leave_requests_reviewed_by_foreign` (`reviewed_by`),
+  KEY `leave_requests_staff_id_status_index` (`staff_id`,`status`),
+  KEY `leave_requests_start_date_end_date_index` (`start_date`,`end_date`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `leave_requests`
@@ -6123,8 +6298,8 @@ INSERT INTO `leave_requests` (`id`, `request_number`, `staff_id`, `leave_type_id
 -- Table structure for table `leave_types`
 --
 
-CREATE TABLE `leave_types` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `leave_types` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `code` varchar(255) NOT NULL,
   `description` text DEFAULT NULL,
@@ -6144,8 +6319,10 @@ CREATE TABLE `leave_types` (
   `applicable_employment_types` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`applicable_employment_types`)),
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `deleted_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `leave_types_code_unique` (`code`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `leave_types`
@@ -6160,8 +6337,8 @@ INSERT INTO `leave_types` (`id`, `name`, `code`, `description`, `max_days_per_ye
 -- Table structure for table `medication_administrations`
 --
 
-CREATE TABLE `medication_administrations` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `medication_administrations` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `patient_id` bigint(20) UNSIGNED NOT NULL,
   `product_or_service_request_id` bigint(20) UNSIGNED NOT NULL,
   `schedule_id` bigint(20) UNSIGNED DEFAULT NULL,
@@ -6180,8 +6357,17 @@ CREATE TABLE `medication_administrations` (
   `deleted_by` bigint(20) UNSIGNED DEFAULT NULL,
   `delete_reason` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `medication_administrations_patient_id_foreign` (`patient_id`),
+  KEY `medication_administrations_product_or_service_request_id_foreign` (`product_or_service_request_id`),
+  KEY `medication_administrations_schedule_id_foreign` (`schedule_id`),
+  KEY `medication_administrations_administered_by_foreign` (`administered_by`),
+  KEY `medication_administrations_edited_by_foreign` (`edited_by`),
+  KEY `medication_administrations_deleted_by_foreign` (`deleted_by`),
+  KEY `medication_administrations_store_id_foreign` (`store_id`),
+  KEY `medication_administrations_dispensed_from_batch_id_foreign` (`dispensed_from_batch_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `medication_administrations`
@@ -6210,16 +6396,20 @@ INSERT INTO `medication_administrations` (`id`, `patient_id`, `product_or_servic
 -- Table structure for table `medication_histories`
 --
 
-CREATE TABLE `medication_histories` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `medication_histories` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `patient_id` bigint(20) UNSIGNED NOT NULL,
   `product_or_service_request_id` bigint(20) UNSIGNED NOT NULL,
   `action` enum('discontinue','resume') NOT NULL,
   `reason` text NOT NULL,
   `user_id` bigint(20) UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `medication_histories_patient_id_foreign` (`patient_id`),
+  KEY `medication_histories_product_or_service_request_id_foreign` (`product_or_service_request_id`),
+  KEY `medication_histories_user_id_foreign` (`user_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `medication_histories`
@@ -6246,8 +6436,8 @@ INSERT INTO `medication_histories` (`id`, `patient_id`, `product_or_service_requ
 -- Table structure for table `medication_schedules`
 --
 
-CREATE TABLE `medication_schedules` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `medication_schedules` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `patient_id` bigint(20) UNSIGNED NOT NULL,
   `product_or_service_request_id` bigint(20) UNSIGNED NOT NULL,
   `scheduled_time` datetime NOT NULL,
@@ -6256,8 +6446,12 @@ CREATE TABLE `medication_schedules` (
   `created_by` bigint(20) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `deleted_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `medication_schedules_patient_id_foreign` (`patient_id`),
+  KEY `medication_schedules_product_or_service_request_id_foreign` (`product_or_service_request_id`),
+  KEY `medication_schedules_created_by_foreign` (`created_by`)
+) ENGINE=InnoDB AUTO_INCREMENT=143 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `medication_schedules`
@@ -6407,15 +6601,16 @@ INSERT INTO `medication_schedules` (`id`, `patient_id`, `product_or_service_requ
 -- Table structure for table `messages`
 --
 
-CREATE TABLE `messages` (
-  `id` int(10) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `messages` (
+  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `thread_id` int(10) UNSIGNED NOT NULL,
   `user_id` int(10) UNSIGNED NOT NULL,
   `body` text NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `deleted_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `messages`
@@ -6435,11 +6630,12 @@ INSERT INTO `messages` (`id`, `thread_id`, `user_id`, `body`, `created_at`, `upd
 -- Table structure for table `migrations`
 --
 
-CREATE TABLE `migrations` (
-  `id` int(10) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `migrations` (
+  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `migration` varchar(255) NOT NULL,
-  `batch` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `batch` int(11) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=202 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `migrations`
@@ -6627,8 +6823,8 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 -- Table structure for table `misc_bills`
 --
 
-CREATE TABLE `misc_bills` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `misc_bills` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `service_request_id` bigint(20) UNSIGNED DEFAULT NULL,
   `created_by` bigint(20) UNSIGNED NOT NULL,
   `creation_date` timestamp NULL DEFAULT NULL,
@@ -6638,8 +6834,14 @@ CREATE TABLE `misc_bills` (
   `patient_id` bigint(20) UNSIGNED NOT NULL,
   `status` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `misc_bills_service_request_id_foreign` (`service_request_id`),
+  KEY `misc_bills_created_by_foreign` (`created_by`),
+  KEY `misc_bills_billed_by_foreign` (`billed_by`),
+  KEY `misc_bills_service_id_foreign` (`service_id`),
+  KEY `misc_bills_patient_id_foreign` (`patient_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `misc_bills`
@@ -6655,10 +6857,12 @@ INSERT INTO `misc_bills` (`id`, `service_request_id`, `created_by`, `creation_da
 -- Table structure for table `model_has_permissions`
 --
 
-CREATE TABLE `model_has_permissions` (
+CREATE TABLE IF NOT EXISTS `model_has_permissions` (
   `permission_id` bigint(20) UNSIGNED NOT NULL,
   `model_type` varchar(255) NOT NULL,
-  `model_id` bigint(20) UNSIGNED NOT NULL
+  `model_id` bigint(20) UNSIGNED NOT NULL,
+  PRIMARY KEY (`permission_id`,`model_id`,`model_type`),
+  KEY `model_has_permissions_model_id_model_type_index` (`model_id`,`model_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -6675,10 +6879,12 @@ INSERT INTO `model_has_permissions` (`permission_id`, `model_type`, `model_id`) 
 -- Table structure for table `model_has_roles`
 --
 
-CREATE TABLE `model_has_roles` (
+CREATE TABLE IF NOT EXISTS `model_has_roles` (
   `role_id` bigint(20) UNSIGNED NOT NULL,
   `model_type` varchar(255) NOT NULL,
-  `model_id` bigint(20) UNSIGNED NOT NULL
+  `model_id` bigint(20) UNSIGNED NOT NULL,
+  PRIMARY KEY (`role_id`,`model_id`,`model_type`),
+  KEY `model_has_roles_model_id_model_type_index` (`model_id`,`model_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -6702,8 +6908,8 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 -- Table structure for table `nursing_notes`
 --
 
-CREATE TABLE `nursing_notes` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `nursing_notes` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `patient_id` bigint(20) UNSIGNED NOT NULL,
   `created_by` bigint(20) UNSIGNED NOT NULL,
   `updated_by` bigint(20) UNSIGNED DEFAULT NULL,
@@ -6712,8 +6918,13 @@ CREATE TABLE `nursing_notes` (
   `completed` tinyint(1) NOT NULL DEFAULT 0,
   `status` int(11) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `nursing_notes_patient_id_foreign` (`patient_id`),
+  KEY `nursing_notes_created_by_foreign` (`created_by`),
+  KEY `nursing_notes_nursing_note_type_id_foreign` (`nursing_note_type_id`),
+  KEY `nursing_notes_updated_by_foreign` (`updated_by`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `nursing_notes`
@@ -6736,14 +6947,15 @@ INSERT INTO `nursing_notes` (`id`, `patient_id`, `created_by`, `updated_by`, `nu
 -- Table structure for table `nursing_note_types`
 --
 
-CREATE TABLE `nursing_note_types` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `nursing_note_types` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `template` longtext NOT NULL,
   `status` int(11) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `nursing_note_types`
@@ -6765,8 +6977,8 @@ INSERT INTO `nursing_note_types` (`id`, `name`, `template`, `status`, `created_a
 -- Table structure for table `nursing_shifts`
 --
 
-CREATE TABLE `nursing_shifts` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `nursing_shifts` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_id` bigint(20) UNSIGNED NOT NULL,
   `ward_id` bigint(20) UNSIGNED DEFAULT NULL,
   `shift_type` enum('morning','afternoon','night') NOT NULL DEFAULT 'morning',
@@ -6786,8 +6998,14 @@ CREATE TABLE `nursing_shifts` (
   `bills_count` int(10) UNSIGNED NOT NULL DEFAULT 0,
   `patients_seen` int(10) UNSIGNED NOT NULL DEFAULT 0,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `nursing_shifts_ward_id_foreign` (`ward_id`),
+  KEY `nursing_shifts_incoming_nurse_id_foreign` (`incoming_nurse_id`),
+  KEY `nursing_shifts_user_id_status_index` (`user_id`,`status`),
+  KEY `nursing_shifts_status_scheduled_end_at_index` (`status`,`scheduled_end_at`),
+  KEY `nursing_shifts_started_at_index` (`started_at`)
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `nursing_shifts`
@@ -6809,15 +7027,16 @@ INSERT INTO `nursing_shifts` (`id`, `user_id`, `ward_id`, `shift_type`, `started
 -- Table structure for table `participants`
 --
 
-CREATE TABLE `participants` (
-  `id` int(10) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `participants` (
+  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `thread_id` int(10) UNSIGNED NOT NULL,
   `user_id` int(10) UNSIGNED NOT NULL,
   `last_read` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `deleted_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `participants`
@@ -6837,10 +7056,11 @@ INSERT INTO `participants` (`id`, `thread_id`, `user_id`, `last_read`, `created_
 -- Table structure for table `password_resets`
 --
 
-CREATE TABLE `password_resets` (
+CREATE TABLE IF NOT EXISTS `password_resets` (
   `email` varchar(255) NOT NULL,
   `token` varchar(255) NOT NULL,
-  `created_at` timestamp NULL DEFAULT NULL
+  `created_at` timestamp NULL DEFAULT NULL,
+  KEY `password_resets_email_index` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -6849,8 +7069,8 @@ CREATE TABLE `password_resets` (
 -- Table structure for table `patients`
 --
 
-CREATE TABLE `patients` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `patients` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_id` bigint(20) UNSIGNED NOT NULL,
   `file_no` varchar(255) DEFAULT NULL,
   `insurance_scheme` bigint(20) UNSIGNED DEFAULT NULL,
@@ -6876,8 +7096,9 @@ CREATE TABLE `patients` (
   `old_patient_id` int(11) DEFAULT NULL,
   `old_user_id` int(11) DEFAULT NULL,
   `dhis_consult_enrollment_id` varchar(255) DEFAULT NULL,
-  `dhis_consult_tracker_id` varchar(255) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `dhis_consult_tracker_id` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4184 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `patients`
@@ -11091,14 +11312,16 @@ INSERT INTO `patients` (`id`, `user_id`, `file_no`, `insurance_scheme`, `hmo_id`
 -- Table structure for table `patient_accounts`
 --
 
-CREATE TABLE `patient_accounts` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `patient_accounts` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `patient_id` bigint(20) UNSIGNED NOT NULL,
   `balance` double(8,2) NOT NULL DEFAULT 0.00,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `old_patient_account_id` int(11) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `old_patient_account_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `patient_accounts_patient_id_foreign` (`patient_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=231 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `patient_accounts`
@@ -11342,8 +11565,8 @@ INSERT INTO `patient_accounts` (`id`, `patient_id`, `balance`, `created_at`, `up
 -- Table structure for table `patient_immunization_schedules`
 --
 
-CREATE TABLE `patient_immunization_schedules` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `patient_immunization_schedules` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `patient_id` bigint(20) UNSIGNED NOT NULL,
   `schedule_item_id` bigint(20) UNSIGNED NOT NULL,
   `due_date` date NOT NULL,
@@ -11354,8 +11577,15 @@ CREATE TABLE `patient_immunization_schedules` (
   `notes` text DEFAULT NULL,
   `updated_by` bigint(20) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `pat_imm_sched_unique` (`patient_id`,`schedule_item_id`),
+  KEY `patient_immunization_schedules_schedule_item_id_foreign` (`schedule_item_id`),
+  KEY `patient_immunization_schedules_immunization_record_id_foreign` (`immunization_record_id`),
+  KEY `patient_immunization_schedules_updated_by_foreign` (`updated_by`),
+  KEY `pat_imm_sched_status_idx` (`patient_id`,`status`),
+  KEY `pat_imm_sched_due_idx` (`patient_id`,`due_date`)
+) ENGINE=InnoDB AUTO_INCREMENT=45 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `patient_immunization_schedules`
@@ -11413,8 +11643,8 @@ INSERT INTO `patient_immunization_schedules` (`id`, `patient_id`, `schedule_item
 -- Table structure for table `patient_profiles`
 --
 
-CREATE TABLE `patient_profiles` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `patient_profiles` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `form_id` varchar(255) NOT NULL,
   `form_name` varchar(255) DEFAULT NULL,
   `form_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`form_data`)),
@@ -11422,7 +11652,11 @@ CREATE TABLE `patient_profiles` (
   `patient_id` bigint(20) UNSIGNED DEFAULT NULL,
   `encounter_id` bigint(20) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `patient_profiles_filled_by_foreign` (`filled_by`),
+  KEY `patient_profiles_patient_id_foreign` (`patient_id`),
+  KEY `patient_profiles_encounter_id_foreign` (`encounter_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -11431,8 +11665,8 @@ CREATE TABLE `patient_profiles` (
 -- Table structure for table `payments`
 --
 
-CREATE TABLE `payments` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `payments` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `reference_no` varchar(255) NOT NULL,
   `total` varchar(255) NOT NULL,
   `total_discount` decimal(12,2) NOT NULL DEFAULT 0.00,
@@ -11444,8 +11678,12 @@ CREATE TABLE `payments` (
   `patient_id` bigint(20) UNSIGNED DEFAULT NULL,
   `bank_id` bigint(20) UNSIGNED DEFAULT NULL,
   `hmo_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `user_id` bigint(20) UNSIGNED DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `user_id` bigint(20) UNSIGNED DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `payments_patient_id_foreign` (`patient_id`),
+  KEY `payments_user_id_foreign` (`user_id`),
+  KEY `payments_bank_id_foreign` (`bank_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=82 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `payments`
@@ -11524,8 +11762,8 @@ INSERT INTO `payments` (`id`, `reference_no`, `total`, `total_discount`, `paymen
 -- Table structure for table `payroll_batches`
 --
 
-CREATE TABLE `payroll_batches` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `payroll_batches` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `batch_number` varchar(255) NOT NULL,
   `name` varchar(255) NOT NULL,
   `pay_period_start` date NOT NULL,
@@ -11556,8 +11794,16 @@ CREATE TABLE `payroll_batches` (
   `expense_id` bigint(20) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `deleted_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `payroll_batches_batch_number_unique` (`batch_number`),
+  KEY `payroll_batches_created_by_foreign` (`created_by`),
+  KEY `payroll_batches_submitted_by_foreign` (`submitted_by`),
+  KEY `payroll_batches_approved_by_foreign` (`approved_by`),
+  KEY `payroll_batches_rejected_by_foreign` (`rejected_by`),
+  KEY `payroll_batches_expense_id_foreign` (`expense_id`),
+  KEY `payroll_batches_paid_by_foreign` (`paid_by`)
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `payroll_batches`
@@ -11580,8 +11826,8 @@ INSERT INTO `payroll_batches` (`id`, `batch_number`, `name`, `pay_period_start`,
 -- Table structure for table `payroll_items`
 --
 
-CREATE TABLE `payroll_items` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `payroll_items` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `payroll_batch_id` bigint(20) UNSIGNED NOT NULL,
   `staff_id` bigint(20) UNSIGNED NOT NULL,
   `salary_profile_id` bigint(20) UNSIGNED NOT NULL,
@@ -11598,8 +11844,12 @@ CREATE TABLE `payroll_items` (
   `bank_account_number` varchar(255) DEFAULT NULL,
   `bank_account_name` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `payroll_items_payroll_batch_id_staff_id_unique` (`payroll_batch_id`,`staff_id`),
+  KEY `payroll_items_staff_id_foreign` (`staff_id`),
+  KEY `payroll_items_salary_profile_id_foreign` (`salary_profile_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `payroll_items`
@@ -11623,16 +11873,19 @@ INSERT INTO `payroll_items` (`id`, `payroll_batch_id`, `staff_id`, `salary_profi
 -- Table structure for table `payroll_item_details`
 --
 
-CREATE TABLE `payroll_item_details` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `payroll_item_details` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `payroll_item_id` bigint(20) UNSIGNED NOT NULL,
   `pay_head_id` bigint(20) UNSIGNED NOT NULL,
   `type` enum('addition','deduction') NOT NULL,
   `pay_head_name` varchar(255) NOT NULL,
   `amount` decimal(15,2) NOT NULL DEFAULT 0.00,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `payroll_item_details_payroll_item_id_foreign` (`payroll_item_id`),
+  KEY `payroll_item_details_pay_head_id_foreign` (`pay_head_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `payroll_item_details`
@@ -11666,8 +11919,8 @@ INSERT INTO `payroll_item_details` (`id`, `payroll_item_id`, `pay_head_id`, `typ
 -- Table structure for table `pay_heads`
 --
 
-CREATE TABLE `pay_heads` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `pay_heads` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `code` varchar(255) NOT NULL,
   `description` text DEFAULT NULL,
@@ -11682,8 +11935,10 @@ CREATE TABLE `pay_heads` (
   `sort_order` int(11) NOT NULL DEFAULT 0,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `deleted_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `pay_heads_code_unique` (`code`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `pay_heads`
@@ -11699,13 +11954,15 @@ INSERT INTO `pay_heads` (`id`, `name`, `code`, `description`, `type`, `calculati
 -- Table structure for table `permissions`
 --
 
-CREATE TABLE `permissions` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `permissions` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `guard_name` varchar(255) NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `permissions_name_guard_name_unique` (`name`,`guard_name`)
+) ENGINE=InnoDB AUTO_INCREMENT=103 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `permissions`
@@ -11821,8 +12078,8 @@ INSERT INTO `permissions` (`id`, `name`, `guard_name`, `created_at`, `updated_at
 -- Table structure for table `personal_access_tokens`
 --
 
-CREATE TABLE `personal_access_tokens` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `personal_access_tokens` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `tokenable_type` varchar(255) NOT NULL,
   `tokenable_id` bigint(20) UNSIGNED NOT NULL,
   `name` varchar(255) NOT NULL,
@@ -11830,7 +12087,10 @@ CREATE TABLE `personal_access_tokens` (
   `abilities` text DEFAULT NULL,
   `last_used_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `personal_access_tokens_token_unique` (`token`),
+  KEY `personal_access_tokens_tokenable_type_tokenable_id_index` (`tokenable_type`,`tokenable_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -11839,8 +12099,8 @@ CREATE TABLE `personal_access_tokens` (
 -- Table structure for table `prices`
 --
 
-CREATE TABLE `prices` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `prices` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `product_id` bigint(20) UNSIGNED NOT NULL,
   `pr_buy_price` int(11) NOT NULL DEFAULT 0,
   `initial_sale_price` int(11) NOT NULL DEFAULT 0,
@@ -11854,8 +12114,9 @@ CREATE TABLE `prices` (
   `status` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `old_price_id` int(11) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `old_price_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=159 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `prices`
@@ -12027,8 +12288,8 @@ INSERT INTO `prices` (`id`, `product_id`, `pr_buy_price`, `initial_sale_price`, 
 -- Table structure for table `procedures`
 --
 
-CREATE TABLE `procedures` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `procedures` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `service_id` bigint(20) UNSIGNED DEFAULT NULL,
   `procedure_definition_id` bigint(20) UNSIGNED DEFAULT NULL,
   `requested_by` bigint(20) UNSIGNED DEFAULT NULL,
@@ -12059,8 +12320,23 @@ CREATE TABLE `procedures` (
   `outcome_notes` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `deleted_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `procedures_service_id_foreign` (`service_id`),
+  KEY `procedures_requested_by_foreign` (`requested_by`),
+  KEY `procedures_patient_id_foreign` (`patient_id`),
+  KEY `procedures_billed_by_foreign` (`billed_by`),
+  KEY `procedures_pre_notes_by_foreign` (`pre_notes_by`),
+  KEY `procedures_post_notes_by_foreign` (`post_notes_by`),
+  KEY `procedures_procedure_definition_id_foreign` (`procedure_definition_id`),
+  KEY `procedures_encounter_id_foreign` (`encounter_id`),
+  KEY `procedures_admission_request_id_foreign` (`admission_request_id`),
+  KEY `procedures_product_or_service_request_id_foreign` (`product_or_service_request_id`),
+  KEY `procedures_cancelled_by_foreign` (`cancelled_by`),
+  KEY `procedures_patient_id_procedure_status_index` (`patient_id`,`procedure_status`),
+  KEY `procedures_scheduled_date_procedure_status_index` (`scheduled_date`,`procedure_status`),
+  KEY `procedures_procedure_status_index` (`procedure_status`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `procedures`
@@ -12081,15 +12357,17 @@ INSERT INTO `procedures` (`id`, `service_id`, `procedure_definition_id`, `reques
 -- Table structure for table `procedure_categories`
 --
 
-CREATE TABLE `procedure_categories` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `procedure_categories` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `code` varchar(20) NOT NULL,
   `description` text DEFAULT NULL,
   `status` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `procedure_categories_code_unique` (`code`)
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `procedure_categories`
@@ -12118,8 +12396,8 @@ INSERT INTO `procedure_categories` (`id`, `name`, `code`, `description`, `status
 -- Table structure for table `procedure_definitions`
 --
 
-CREATE TABLE `procedure_definitions` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `procedure_definitions` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `service_id` bigint(20) UNSIGNED NOT NULL,
   `procedure_category_id` bigint(20) UNSIGNED NOT NULL,
   `name` varchar(255) NOT NULL,
@@ -12129,8 +12407,11 @@ CREATE TABLE `procedure_definitions` (
   `estimated_duration_minutes` int(10) UNSIGNED DEFAULT NULL,
   `status` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `procedure_definitions_service_id_unique` (`service_id`),
+  KEY `procedure_definitions_procedure_category_id_foreign` (`procedure_category_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `procedure_definitions`
@@ -12145,8 +12426,8 @@ INSERT INTO `procedure_definitions` (`id`, `service_id`, `procedure_category_id`
 -- Table structure for table `procedure_items`
 --
 
-CREATE TABLE `procedure_items` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `procedure_items` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `procedure_id` bigint(20) UNSIGNED NOT NULL,
   `lab_service_request_id` bigint(20) UNSIGNED DEFAULT NULL,
   `imaging_service_request_id` bigint(20) UNSIGNED DEFAULT NULL,
@@ -12155,8 +12436,14 @@ CREATE TABLE `procedure_items` (
   `product_or_service_request_id` bigint(20) UNSIGNED DEFAULT NULL,
   `is_bundled` tinyint(1) NOT NULL DEFAULT 0,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `procedure_items_lab_service_request_id_foreign` (`lab_service_request_id`),
+  KEY `procedure_items_imaging_service_request_id_foreign` (`imaging_service_request_id`),
+  KEY `procedure_items_product_request_id_foreign` (`product_request_id`),
+  KEY `procedure_items_product_or_service_request_id_foreign` (`product_or_service_request_id`),
+  KEY `procedure_items_procedure_id_index` (`procedure_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `procedure_items`
@@ -12181,16 +12468,19 @@ INSERT INTO `procedure_items` (`id`, `procedure_id`, `lab_service_request_id`, `
 -- Table structure for table `procedure_notes`
 --
 
-CREATE TABLE `procedure_notes` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `procedure_notes` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `procedure_id` bigint(20) UNSIGNED NOT NULL,
   `note_type` enum('pre_op','intra_op','post_op','anesthesia','nursing') NOT NULL,
   `title` varchar(255) DEFAULT NULL,
   `content` longtext NOT NULL,
   `created_by` bigint(20) UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `procedure_notes_created_by_foreign` (`created_by`),
+  KEY `procedure_notes_procedure_id_note_type_index` (`procedure_id`,`note_type`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `procedure_notes`
@@ -12208,8 +12498,8 @@ INSERT INTO `procedure_notes` (`id`, `procedure_id`, `note_type`, `title`, `cont
 -- Table structure for table `procedure_team_members`
 --
 
-CREATE TABLE `procedure_team_members` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `procedure_team_members` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `procedure_id` bigint(20) UNSIGNED NOT NULL,
   `user_id` bigint(20) UNSIGNED NOT NULL,
   `role` enum('chief_surgeon','assistant_surgeon','anesthesiologist','nurse_anesthetist','scrub_nurse','circulating_nurse','surgical_first_assistant','perfusionist','radiologist','pathologist','other') NOT NULL,
@@ -12217,8 +12507,11 @@ CREATE TABLE `procedure_team_members` (
   `is_lead` tinyint(1) NOT NULL DEFAULT 0,
   `notes` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `procedure_team_unique` (`procedure_id`,`user_id`,`role`),
+  KEY `procedure_team_members_user_id_foreign` (`user_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `procedure_team_members`
@@ -12237,8 +12530,8 @@ INSERT INTO `procedure_team_members` (`id`, `procedure_id`, `user_id`, `role`, `
 -- Table structure for table `products`
 --
 
-CREATE TABLE `products` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `products` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_id` bigint(20) UNSIGNED NOT NULL,
   `category_id` bigint(20) UNSIGNED NOT NULL,
   `product_name` varchar(255) NOT NULL,
@@ -12255,8 +12548,9 @@ CREATE TABLE `products` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `old_product_id` int(11) DEFAULT NULL,
-  `old_stock_id` int(11) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `old_stock_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=159 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `products`
@@ -12428,15 +12722,16 @@ INSERT INTO `products` (`id`, `user_id`, `category_id`, `product_name`, `product
 -- Table structure for table `product_categories`
 --
 
-CREATE TABLE `product_categories` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `product_categories` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `category_name` varchar(255) NOT NULL,
   `category_code` varchar(255) DEFAULT NULL,
   `category_description` varchar(255) DEFAULT NULL,
   `status` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `product_categories`
@@ -12452,8 +12747,8 @@ INSERT INTO `product_categories` (`id`, `category_name`, `category_code`, `categ
 -- Table structure for table `product_or_service_requests`
 --
 
-CREATE TABLE `product_or_service_requests` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `product_or_service_requests` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `type` varchar(20) DEFAULT NULL COMMENT 'product or service',
   `invoice_id` bigint(20) UNSIGNED DEFAULT NULL,
   `payment_id` bigint(20) UNSIGNED DEFAULT NULL,
@@ -12483,8 +12778,17 @@ CREATE TABLE `product_or_service_requests` (
   `submitted_to_hmo_at` timestamp NULL DEFAULT NULL,
   `hmo_submission_batch` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `product_or_service_requests_payment_id_foreign` (`payment_id`),
+  KEY `product_or_service_requests_validated_by_foreign` (`validated_by`),
+  KEY `product_or_service_requests_dispensed_from_store_id_foreign` (`dispensed_from_store_id`),
+  KEY `product_or_service_requests_patient_id_foreign` (`patient_id`),
+  KEY `product_or_service_requests_encounter_id_foreign` (`encounter_id`),
+  KEY `product_or_service_requests_admission_request_id_foreign` (`admission_request_id`),
+  KEY `product_or_service_requests_created_by_foreign` (`created_by`),
+  KEY `product_or_service_requests_hmo_id_foreign` (`hmo_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=133 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `product_or_service_requests`
@@ -12609,8 +12913,8 @@ INSERT INTO `product_or_service_requests` (`id`, `type`, `invoice_id`, `payment_
 -- Table structure for table `product_requests`
 --
 
-CREATE TABLE `product_requests` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `product_requests` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `product_request_id` bigint(20) UNSIGNED DEFAULT NULL,
   `billed_by` bigint(20) UNSIGNED DEFAULT NULL,
   `dispensed_by` bigint(20) UNSIGNED DEFAULT NULL,
@@ -12641,8 +12945,23 @@ CREATE TABLE `product_requests` (
   `qty_adjusted_from` int(11) DEFAULT NULL,
   `qty_adjustment_reason` text DEFAULT NULL,
   `qty_adjusted_at` timestamp NULL DEFAULT NULL,
-  `qty_adjusted_by` bigint(20) UNSIGNED DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `qty_adjusted_by` bigint(20) UNSIGNED DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `product_requests_product_request_id_foreign` (`product_request_id`),
+  KEY `product_requests_billed_by_foreign` (`billed_by`),
+  KEY `product_requests_product_id_foreign` (`product_id`),
+  KEY `product_requests_patient_id_foreign` (`patient_id`),
+  KEY `product_requests_doctor_id_foreign` (`doctor_id`),
+  KEY `product_requests_dispensed_by_foreign` (`dispensed_by`),
+  KEY `product_requests_deleted_by_foreign` (`deleted_by`),
+  KEY `product_requests_dispensed_from_store_id_foreign` (`dispensed_from_store_id`),
+  KEY `product_requests_original_product_id_foreign` (`original_product_id`),
+  KEY `product_requests_adapted_from_product_id_foreign` (`adapted_from_product_id`),
+  KEY `product_requests_adapted_by_foreign` (`adapted_by`),
+  KEY `product_requests_dispensed_from_batch_id_index` (`dispensed_from_batch_id`),
+  KEY `product_requests_is_adapted_index` (`is_adapted`),
+  KEY `product_requests_qty_adjusted_by_foreign` (`qty_adjusted_by`)
+) ENGINE=InnoDB AUTO_INCREMENT=119 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `product_requests`
@@ -12689,8 +13008,8 @@ INSERT INTO `product_requests` (`id`, `product_request_id`, `billed_by`, `dispen
 -- Table structure for table `promotions`
 --
 
-CREATE TABLE `promotions` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `promotions` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `product_id` bigint(20) UNSIGNED NOT NULL,
   `promotion_name` varchar(255) NOT NULL,
   `quantity_to_buy` int(11) NOT NULL DEFAULT 0,
@@ -12702,7 +13021,8 @@ CREATE TABLE `promotions` (
   `current_qt` int(11) NOT NULL DEFAULT 0,
   `give_qt` int(11) NOT NULL DEFAULT 0,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -12711,8 +13031,8 @@ CREATE TABLE `promotions` (
 -- Table structure for table `purchase_orders`
 --
 
-CREATE TABLE `purchase_orders` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `purchase_orders` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `po_number` varchar(255) NOT NULL,
   `supplier_id` bigint(20) UNSIGNED NOT NULL,
   `target_store_id` bigint(20) UNSIGNED NOT NULL,
@@ -12728,8 +13048,15 @@ CREATE TABLE `purchase_orders` (
   `approved_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `deleted_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `purchase_orders_po_number_unique` (`po_number`),
+  KEY `purchase_orders_created_by_foreign` (`created_by`),
+  KEY `purchase_orders_approved_by_foreign` (`approved_by`),
+  KEY `purchase_orders_status_created_at_index` (`status`,`created_at`),
+  KEY `purchase_orders_supplier_id_status_index` (`supplier_id`,`status`),
+  KEY `purchase_orders_target_store_id_status_index` (`target_store_id`,`status`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `purchase_orders`
@@ -12744,8 +13071,8 @@ INSERT INTO `purchase_orders` (`id`, `po_number`, `supplier_id`, `target_store_i
 -- Table structure for table `purchase_order_items`
 --
 
-CREATE TABLE `purchase_order_items` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `purchase_order_items` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `purchase_order_id` bigint(20) UNSIGNED NOT NULL,
   `product_id` bigint(20) UNSIGNED NOT NULL,
   `ordered_qty` int(11) NOT NULL,
@@ -12755,8 +13082,11 @@ CREATE TABLE `purchase_order_items` (
   `status` enum('pending','partial','received','cancelled') NOT NULL DEFAULT 'pending',
   `received_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `purchase_order_items_purchase_order_id_status_index` (`purchase_order_id`,`status`),
+  KEY `purchase_order_items_product_id_index` (`product_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `purchase_order_items`
@@ -12773,8 +13103,8 @@ INSERT INTO `purchase_order_items` (`id`, `purchase_order_id`, `product_id`, `or
 -- Table structure for table `purchase_order_payments`
 --
 
-CREATE TABLE `purchase_order_payments` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `purchase_order_payments` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `purchase_order_id` bigint(20) UNSIGNED NOT NULL,
   `payment_date` date NOT NULL,
   `amount` decimal(15,2) NOT NULL,
@@ -12787,8 +13117,13 @@ CREATE TABLE `purchase_order_payments` (
   `created_by` bigint(20) UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `deleted_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `purchase_order_payments_bank_id_foreign` (`bank_id`),
+  KEY `purchase_order_payments_expense_id_foreign` (`expense_id`),
+  KEY `purchase_order_payments_created_by_foreign` (`created_by`),
+  KEY `purchase_order_payments_purchase_order_id_payment_date_index` (`purchase_order_id`,`payment_date`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `purchase_order_payments`
@@ -12804,15 +13139,16 @@ INSERT INTO `purchase_order_payments` (`id`, `purchase_order_id`, `payment_date`
 -- Table structure for table `reason_for_encounters`
 --
 
-CREATE TABLE `reason_for_encounters` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `reason_for_encounters` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `code` varchar(255) NOT NULL,
   `name` varchar(255) DEFAULT NULL,
   `category` varchar(255) DEFAULT NULL,
   `sub_category` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=12132 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `reason_for_encounters`
@@ -24983,13 +25319,15 @@ INSERT INTO `reason_for_encounters` (`id`, `code`, `name`, `category`, `sub_cate
 -- Table structure for table `roles`
 --
 
-CREATE TABLE `roles` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `roles` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `guard_name` varchar(255) NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `roles_name_guard_name_unique` (`name`,`guard_name`)
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `roles`
@@ -25018,9 +25356,11 @@ INSERT INTO `roles` (`id`, `name`, `guard_name`, `created_at`, `updated_at`) VAL
 -- Table structure for table `role_has_permissions`
 --
 
-CREATE TABLE `role_has_permissions` (
+CREATE TABLE IF NOT EXISTS `role_has_permissions` (
   `permission_id` bigint(20) UNSIGNED NOT NULL,
-  `role_id` bigint(20) UNSIGNED NOT NULL
+  `role_id` bigint(20) UNSIGNED NOT NULL,
+  PRIMARY KEY (`permission_id`,`role_id`),
+  KEY `role_has_permissions_role_id_foreign` (`role_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -25400,8 +25740,8 @@ INSERT INTO `role_has_permissions` (`permission_id`, `role_id`) VALUES
 -- Table structure for table `sales`
 --
 
-CREATE TABLE `sales` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `sales` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `product_or_service_requests_id` bigint(20) UNSIGNED NOT NULL,
   `product_id` bigint(20) UNSIGNED DEFAULT NULL,
   `service_id` bigint(20) UNSIGNED DEFAULT NULL,
@@ -25421,7 +25761,8 @@ CREATE TABLE `sales` (
   `supply` int(11) NOT NULL,
   `supply_date` timestamp NOT NULL DEFAULT current_timestamp(),
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -25430,8 +25771,8 @@ CREATE TABLE `sales` (
 -- Table structure for table `services`
 --
 
-CREATE TABLE `services` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `services` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_id` bigint(20) UNSIGNED NOT NULL,
   `category_id` bigint(20) UNSIGNED NOT NULL,
   `service_name` varchar(255) NOT NULL,
@@ -25442,8 +25783,9 @@ CREATE TABLE `services` (
   `updated_at` timestamp NULL DEFAULT NULL,
   `template` longtext DEFAULT NULL,
   `result_template_v2` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'New structured template format for lab test parameters' CHECK (json_valid(`result_template_v2`)),
-  `old_lab_services_id` int(11) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `old_lab_services_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=68 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `services`
@@ -25530,15 +25872,16 @@ INSERT INTO `services` (`id`, `user_id`, `category_id`, `service_name`, `service
 -- Table structure for table `service_categories`
 --
 
-CREATE TABLE `service_categories` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `service_categories` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `category_name` varchar(255) NOT NULL,
   `category_code` varchar(255) DEFAULT NULL,
   `category_description` varchar(255) DEFAULT NULL,
   `status` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `service_categories`
@@ -25560,16 +25903,17 @@ INSERT INTO `service_categories` (`id`, `category_name`, `category_code`, `categ
 -- Table structure for table `service_prices`
 --
 
-CREATE TABLE `service_prices` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `service_prices` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `service_id` bigint(20) UNSIGNED NOT NULL,
   `cost_price` int(11) NOT NULL DEFAULT 0,
   `sale_price` int(11) NOT NULL DEFAULT 0,
   `max_discount` int(11) NOT NULL DEFAULT 0,
   `status` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=84 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `service_prices`
@@ -25666,8 +26010,8 @@ INSERT INTO `service_prices` (`id`, `service_id`, `cost_price`, `sale_price`, `m
 -- Table structure for table `shift_actions`
 --
 
-CREATE TABLE `shift_actions` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `shift_actions` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `shift_id` bigint(20) UNSIGNED NOT NULL,
   `user_id` bigint(20) UNSIGNED NOT NULL,
   `action_type` varchar(50) NOT NULL COMMENT 'vitals, medication, note, injection, immunization, bill, admission, discharge, other',
@@ -25680,7 +26024,13 @@ CREATE TABLE `shift_actions` (
   `auditable_id` bigint(20) UNSIGNED DEFAULT NULL,
   `metadata` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`metadata`)),
   `is_critical` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Highlight in handover',
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `shift_actions_user_id_foreign` (`user_id`),
+  KEY `shift_actions_shift_id_action_type_index` (`shift_id`,`action_type`),
+  KEY `shift_actions_shift_id_is_critical_index` (`shift_id`,`is_critical`),
+  KEY `shift_actions_patient_id_created_at_index` (`patient_id`,`created_at`),
+  KEY `shift_actions_auditable_type_auditable_id_index` (`auditable_type`,`auditable_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -25689,8 +26039,8 @@ CREATE TABLE `shift_actions` (
 -- Table structure for table `shift_handovers`
 --
 
-CREATE TABLE `shift_handovers` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `shift_handovers` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `shift_id` bigint(20) UNSIGNED NOT NULL,
   `created_by` bigint(20) UNSIGNED NOT NULL,
   `received_by` bigint(20) UNSIGNED DEFAULT NULL,
@@ -25709,8 +26059,15 @@ CREATE TABLE `shift_handovers` (
   `acknowledged_by` bigint(20) UNSIGNED DEFAULT NULL,
   `acknowledgment_notes` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `shift_handovers_shift_id_foreign` (`shift_id`),
+  KEY `shift_handovers_received_by_foreign` (`received_by`),
+  KEY `shift_handovers_acknowledged_by_foreign` (`acknowledged_by`),
+  KEY `shift_handovers_ward_id_created_at_index` (`ward_id`,`created_at`),
+  KEY `shift_handovers_created_by_created_at_index` (`created_by`,`created_at`),
+  KEY `shift_handovers_shift_ended_at_index` (`shift_ended_at`)
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `shift_handovers`
@@ -25735,13 +26092,14 @@ INSERT INTO `shift_handovers` (`id`, `shift_id`, `created_by`, `received_by`, `w
 -- Table structure for table `specializations`
 --
 
-CREATE TABLE `specializations` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `specializations` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `status` int(11) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `specializations`
@@ -25757,8 +26115,8 @@ INSERT INTO `specializations` (`id`, `name`, `status`, `created_at`, `updated_at
 -- Table structure for table `staff`
 --
 
-CREATE TABLE `staff` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `staff` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `employee_id` varchar(255) DEFAULT NULL,
   `user_id` bigint(20) UNSIGNED NOT NULL,
   `specialization_id` bigint(20) UNSIGNED DEFAULT NULL,
@@ -25792,8 +26150,12 @@ CREATE TABLE `staff` (
   `suspension_end_date` date DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `old_user_id` int(11) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `old_user_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `staff_specialization_id_foreign` (`specialization_id`),
+  KEY `staff_suspended_by_foreign` (`suspended_by`),
+  KEY `staff_department_id_foreign` (`department_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=69 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `staff`
@@ -25875,8 +26237,8 @@ INSERT INTO `staff` (`id`, `employee_id`, `user_id`, `specialization_id`, `clini
 -- Table structure for table `staff_salary_profiles`
 --
 
-CREATE TABLE `staff_salary_profiles` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `staff_salary_profiles` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `staff_id` bigint(20) UNSIGNED NOT NULL,
   `basic_salary` decimal(15,2) NOT NULL DEFAULT 0.00,
   `gross_salary` decimal(15,2) DEFAULT NULL,
@@ -25890,8 +26252,11 @@ CREATE TABLE `staff_salary_profiles` (
   `created_by` bigint(20) UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `deleted_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `staff_salary_profiles_created_by_foreign` (`created_by`),
+  KEY `staff_salary_profiles_staff_id_is_active_index` (`staff_id`,`is_active`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `staff_salary_profiles`
@@ -25907,16 +26272,19 @@ INSERT INTO `staff_salary_profiles` (`id`, `staff_id`, `basic_salary`, `gross_sa
 -- Table structure for table `staff_salary_profile_items`
 --
 
-CREATE TABLE `staff_salary_profile_items` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `staff_salary_profile_items` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `salary_profile_id` bigint(20) UNSIGNED NOT NULL,
   `pay_head_id` bigint(20) UNSIGNED NOT NULL,
   `calculation_type` enum('fixed','percentage','formula') NOT NULL DEFAULT 'fixed',
   `calculation_base` varchar(255) DEFAULT NULL,
   `value` decimal(15,4) NOT NULL DEFAULT 0.0000,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `staff_salary_profile_items_salary_profile_id_pay_head_id_unique` (`salary_profile_id`,`pay_head_id`),
+  KEY `staff_salary_profile_items_pay_head_id_foreign` (`pay_head_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `staff_salary_profile_items`
@@ -25934,8 +26302,8 @@ INSERT INTO `staff_salary_profile_items` (`id`, `salary_profile_id`, `pay_head_i
 -- Table structure for table `staff_suspensions`
 --
 
-CREATE TABLE `staff_suspensions` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `staff_suspensions` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `suspension_number` varchar(255) NOT NULL,
   `staff_id` bigint(20) UNSIGNED NOT NULL,
   `disciplinary_query_id` bigint(20) UNSIGNED DEFAULT NULL,
@@ -25951,8 +26319,14 @@ CREATE TABLE `staff_suspensions` (
   `issued_by` bigint(20) UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `deleted_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `staff_suspensions_suspension_number_unique` (`suspension_number`),
+  KEY `staff_suspensions_disciplinary_query_id_foreign` (`disciplinary_query_id`),
+  KEY `staff_suspensions_issued_by_foreign` (`issued_by`),
+  KEY `staff_suspensions_lifted_by_foreign` (`lifted_by`),
+  KEY `staff_suspensions_staff_id_status_index` (`staff_id`,`status`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `staff_suspensions`
@@ -25968,8 +26342,8 @@ INSERT INTO `staff_suspensions` (`id`, `suspension_number`, `staff_id`, `discipl
 -- Table structure for table `staff_terminations`
 --
 
-CREATE TABLE `staff_terminations` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `staff_terminations` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `termination_number` varchar(255) NOT NULL,
   `staff_id` bigint(20) UNSIGNED NOT NULL,
   `disciplinary_query_id` bigint(20) UNSIGNED DEFAULT NULL,
@@ -25986,8 +26360,13 @@ CREATE TABLE `staff_terminations` (
   `processed_by` bigint(20) UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `deleted_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `staff_terminations_termination_number_unique` (`termination_number`),
+  KEY `staff_terminations_staff_id_foreign` (`staff_id`),
+  KEY `staff_terminations_disciplinary_query_id_foreign` (`disciplinary_query_id`),
+  KEY `staff_terminations_processed_by_foreign` (`processed_by`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `staff_terminations`
@@ -26002,8 +26381,8 @@ INSERT INTO `staff_terminations` (`id`, `termination_number`, `staff_id`, `disci
 -- Table structure for table `stocks`
 --
 
-CREATE TABLE `stocks` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `stocks` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `product_id` bigint(20) UNSIGNED NOT NULL,
   `initial_quantity` int(11) NOT NULL DEFAULT 0,
   `order_quantity` int(11) NOT NULL DEFAULT 0,
@@ -26011,8 +26390,9 @@ CREATE TABLE `stocks` (
   `quantity_sale` int(11) NOT NULL DEFAULT 0,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `old_stock_id` int(11) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `old_stock_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=248 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `stocks`
@@ -26273,8 +26653,8 @@ INSERT INTO `stocks` (`id`, `product_id`, `initial_quantity`, `order_quantity`, 
 -- Table structure for table `stock_batches`
 --
 
-CREATE TABLE `stock_batches` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `stock_batches` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `product_id` bigint(20) UNSIGNED NOT NULL,
   `store_id` bigint(20) UNSIGNED NOT NULL,
   `supplier_id` bigint(20) UNSIGNED DEFAULT NULL,
@@ -26293,8 +26673,16 @@ CREATE TABLE `stock_batches` (
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `deleted_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `stock_batches_purchase_order_item_id_foreign` (`purchase_order_item_id`),
+  KEY `stock_batches_created_by_foreign` (`created_by`),
+  KEY `stock_batches_fifo_idx` (`product_id`,`store_id`,`is_active`,`current_qty`),
+  KEY `stock_batches_store_id_current_qty_index` (`store_id`,`current_qty`),
+  KEY `stock_batches_expiry_date_index` (`expiry_date`),
+  KEY `stock_batches_source_created_at_index` (`source`,`created_at`),
+  KEY `stock_batches_supplier_id_index` (`supplier_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `stock_batches`
@@ -26320,8 +26708,8 @@ INSERT INTO `stock_batches` (`id`, `product_id`, `store_id`, `supplier_id`, `bat
 -- Table structure for table `stock_batch_transactions`
 --
 
-CREATE TABLE `stock_batch_transactions` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `stock_batch_transactions` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `stock_batch_id` bigint(20) UNSIGNED NOT NULL,
   `type` enum('in','out','adjustment','transfer_out','transfer_in','return','expired','damaged') NOT NULL,
   `qty` int(11) NOT NULL,
@@ -26331,8 +26719,13 @@ CREATE TABLE `stock_batch_transactions` (
   `notes` text DEFAULT NULL,
   `performed_by` bigint(20) UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `stock_batch_transactions_stock_batch_id_created_at_index` (`stock_batch_id`,`created_at`),
+  KEY `stock_batch_transactions_reference_type_reference_id_index` (`reference_type`,`reference_id`),
+  KEY `stock_batch_transactions_type_created_at_index` (`type`,`created_at`),
+  KEY `stock_batch_transactions_performed_by_created_at_index` (`performed_by`,`created_at`)
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `stock_batch_transactions`
@@ -26362,8 +26755,8 @@ INSERT INTO `stock_batch_transactions` (`id`, `stock_batch_id`, `type`, `qty`, `
 -- Table structure for table `stock_invoices`
 --
 
-CREATE TABLE `stock_invoices` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `stock_invoices` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `invoice_no` varchar(255) NOT NULL,
   `supplier_id` bigint(20) UNSIGNED NOT NULL,
   `invoice_date` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
@@ -26372,7 +26765,9 @@ CREATE TABLE `stock_invoices` (
   `status` tinyint(1) NOT NULL DEFAULT 1,
   `created_by` bigint(20) UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `stock_invoices_invoice_no_unique` (`invoice_no`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -26381,8 +26776,8 @@ CREATE TABLE `stock_invoices` (
 -- Table structure for table `stock_orders`
 --
 
-CREATE TABLE `stock_orders` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `stock_orders` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `invoice_id` bigint(20) UNSIGNED DEFAULT NULL,
   `product_id` bigint(20) UNSIGNED NOT NULL,
   `order_quantity` int(11) NOT NULL,
@@ -26390,8 +26785,9 @@ CREATE TABLE `stock_orders` (
   `store_id` bigint(20) UNSIGNED NOT NULL,
   `stock_date` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `stock_orders`
@@ -26409,8 +26805,8 @@ INSERT INTO `stock_orders` (`id`, `invoice_id`, `product_id`, `order_quantity`, 
 -- Table structure for table `stores`
 --
 
-CREATE TABLE `stores` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `stores` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `store_name` varchar(255) NOT NULL,
   `location` varchar(255) DEFAULT NULL,
   `status` tinyint(1) NOT NULL DEFAULT 1,
@@ -26420,8 +26816,11 @@ CREATE TABLE `stores` (
   `description` text DEFAULT NULL,
   `store_type` enum('pharmacy','warehouse','theatre','ward','other') NOT NULL DEFAULT 'pharmacy',
   `is_default` tinyint(1) NOT NULL DEFAULT 0,
-  `manager_id` bigint(20) UNSIGNED DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `manager_id` bigint(20) UNSIGNED DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `stores_code_unique` (`code`),
+  KEY `stores_manager_id_foreign` (`manager_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `stores`
@@ -26440,8 +26839,8 @@ INSERT INTO `stores` (`id`, `store_name`, `location`, `status`, `created_at`, `u
 -- Table structure for table `store_requisitions`
 --
 
-CREATE TABLE `store_requisitions` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `store_requisitions` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `requisition_number` varchar(255) NOT NULL,
   `from_store_id` bigint(20) UNSIGNED NOT NULL,
   `to_store_id` bigint(20) UNSIGNED NOT NULL,
@@ -26458,8 +26857,17 @@ CREATE TABLE `store_requisitions` (
   `fulfilled_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `deleted_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `store_requisitions_requisition_number_unique` (`requisition_number`),
+  KEY `store_requisitions_approved_by_foreign` (`approved_by`),
+  KEY `store_requisitions_rejected_by_foreign` (`rejected_by`),
+  KEY `store_requisitions_fulfilled_by_foreign` (`fulfilled_by`),
+  KEY `store_requisitions_status_created_at_index` (`status`,`created_at`),
+  KEY `store_requisitions_from_store_id_status_index` (`from_store_id`,`status`),
+  KEY `store_requisitions_to_store_id_status_index` (`to_store_id`,`status`),
+  KEY `store_requisitions_requested_by_status_index` (`requested_by`,`status`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `store_requisitions`
@@ -26474,8 +26882,8 @@ INSERT INTO `store_requisitions` (`id`, `requisition_number`, `from_store_id`, `
 -- Table structure for table `store_requisition_items`
 --
 
-CREATE TABLE `store_requisition_items` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `store_requisition_items` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `store_requisition_id` bigint(20) UNSIGNED NOT NULL,
   `product_id` bigint(20) UNSIGNED NOT NULL,
   `requested_qty` int(11) NOT NULL DEFAULT 0,
@@ -26486,8 +26894,13 @@ CREATE TABLE `store_requisition_items` (
   `status` enum('pending','approved','rejected','partial','fulfilled','cancelled') NOT NULL DEFAULT 'pending',
   `notes` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `store_requisition_items_source_batch_id_foreign` (`source_batch_id`),
+  KEY `store_requisition_items_destination_batch_id_foreign` (`destination_batch_id`),
+  KEY `store_requisition_items_store_requisition_id_status_index` (`store_requisition_id`,`status`),
+  KEY `store_requisition_items_product_id_status_index` (`product_id`,`status`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `store_requisition_items`
@@ -26503,8 +26916,8 @@ INSERT INTO `store_requisition_items` (`id`, `store_requisition_id`, `product_id
 -- Table structure for table `store_stocks`
 --
 
-CREATE TABLE `store_stocks` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `store_stocks` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `store_id` bigint(20) UNSIGNED NOT NULL,
   `product_id` bigint(20) UNSIGNED NOT NULL,
   `initial_quantity` int(11) NOT NULL DEFAULT 0,
@@ -26518,8 +26931,10 @@ CREATE TABLE `store_stocks` (
   `max_stock_level` int(11) DEFAULT NULL,
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `last_restocked_at` timestamp NULL DEFAULT NULL,
-  `last_sold_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `last_sold_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `store_stocks_low_stock_idx` (`is_active`,`current_quantity`)
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `store_stocks`
@@ -26545,8 +26960,8 @@ INSERT INTO `store_stocks` (`id`, `store_id`, `product_id`, `initial_quantity`, 
 -- Table structure for table `suppliers`
 --
 
-CREATE TABLE `suppliers` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `suppliers` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `company_name` varchar(255) NOT NULL,
   `contact_person` varchar(255) DEFAULT NULL,
   `email` varchar(255) DEFAULT NULL,
@@ -26575,8 +26990,9 @@ CREATE TABLE `suppliers` (
   `payment_terms` varchar(255) DEFAULT NULL,
   `credit_limit` decimal(15,2) DEFAULT NULL,
   `notes` text DEFAULT NULL,
-  `deleted_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `suppliers`
@@ -26591,13 +27007,14 @@ INSERT INTO `suppliers` (`id`, `company_name`, `contact_person`, `email`, `addre
 -- Table structure for table `threads`
 --
 
-CREATE TABLE `threads` (
-  `id` int(10) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `threads` (
+  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `subject` varchar(255) NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `deleted_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `threads`
@@ -26614,8 +27031,8 @@ INSERT INTO `threads` (`id`, `subject`, `created_at`, `updated_at`, `deleted_at`
 -- Table structure for table `users`
 --
 
-CREATE TABLE `users` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `users` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `is_admin` int(11) NOT NULL DEFAULT 20,
   `email` varchar(255) NOT NULL,
   `filename` varchar(255) DEFAULT NULL,
@@ -26636,8 +27053,10 @@ CREATE TABLE `users` (
   `next_of_kin_name` int(11) DEFAULT NULL,
   `next_of_kin_phone` int(11) DEFAULT NULL,
   `next_of_kin_address` int(11) DEFAULT NULL,
-  `next_of_kin` int(11) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `next_of_kin` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `users_email_unique` (`email`)
+) ENGINE=InnoDB AUTO_INCREMENT=4480 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `users`
@@ -31150,13 +31569,14 @@ INSERT INTO `users` (`id`, `is_admin`, `email`, `filename`, `old_records`, `surn
 -- Table structure for table `user_categories`
 --
 
-CREATE TABLE `user_categories` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `user_categories` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `status` int(11) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `user_categories`
@@ -31177,14 +31597,18 @@ INSERT INTO `user_categories` (`id`, `name`, `status`, `created_at`, `updated_at
 -- Table structure for table `vaccine_product_mappings`
 --
 
-CREATE TABLE `vaccine_product_mappings` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `vaccine_product_mappings` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `vaccine_name` varchar(255) NOT NULL,
   `product_id` bigint(20) UNSIGNED NOT NULL,
   `is_primary` tinyint(1) NOT NULL DEFAULT 0,
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `vaccine_product_mappings_vaccine_name_product_id_unique` (`vaccine_name`,`product_id`),
+  KEY `vaccine_product_mappings_product_id_foreign` (`product_id`),
+  KEY `vaccine_product_mappings_vaccine_name_index` (`vaccine_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -31193,8 +31617,8 @@ CREATE TABLE `vaccine_product_mappings` (
 -- Table structure for table `vaccine_schedule_items`
 --
 
-CREATE TABLE `vaccine_schedule_items` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `vaccine_schedule_items` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `template_id` bigint(20) UNSIGNED NOT NULL,
   `vaccine_name` varchar(255) NOT NULL,
   `vaccine_code` varchar(255) DEFAULT NULL,
@@ -31208,8 +31632,11 @@ CREATE TABLE `vaccine_schedule_items` (
   `sort_order` int(11) NOT NULL DEFAULT 0,
   `is_required` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `vaccine_schedule_items_template_id_age_days_index` (`template_id`,`age_days`),
+  KEY `vaccine_schedule_items_template_id_vaccine_name_index` (`template_id`,`vaccine_name`)
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `vaccine_schedule_items`
@@ -31245,8 +31672,8 @@ INSERT INTO `vaccine_schedule_items` (`id`, `template_id`, `vaccine_name`, `vacc
 -- Table structure for table `vaccine_schedule_templates`
 --
 
-CREATE TABLE `vaccine_schedule_templates` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `vaccine_schedule_templates` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `description` text DEFAULT NULL,
   `is_default` tinyint(1) NOT NULL DEFAULT 0,
@@ -31255,8 +31682,10 @@ CREATE TABLE `vaccine_schedule_templates` (
   `created_by` bigint(20) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `deleted_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `vaccine_schedule_templates_created_by_foreign` (`created_by`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `vaccine_schedule_templates`
@@ -31271,8 +31700,8 @@ INSERT INTO `vaccine_schedule_templates` (`id`, `name`, `description`, `is_defau
 -- Table structure for table `vital_signs`
 --
 
-CREATE TABLE `vital_signs` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `vital_signs` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `requested_by` bigint(20) UNSIGNED DEFAULT NULL,
   `taken_by` bigint(20) UNSIGNED DEFAULT NULL,
   `patient_id` bigint(20) UNSIGNED DEFAULT NULL,
@@ -31290,8 +31719,12 @@ CREATE TABLE `vital_signs` (
   `time_taken` datetime DEFAULT NULL,
   `status` int(11) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `vital_signs_requested_by_foreign` (`requested_by`),
+  KEY `vital_signs_taken_by_foreign` (`taken_by`),
+  KEY `vital_signs_patient_id_foreign` (`patient_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `vital_signs`
@@ -31316,8 +31749,8 @@ INSERT INTO `vital_signs` (`id`, `requested_by`, `taken_by`, `patient_id`, `bloo
 -- Table structure for table `wards`
 --
 
-CREATE TABLE `wards` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `wards` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL COMMENT 'Ward display name (e.g., "Male Medical Ward")',
   `code` varchar(20) DEFAULT NULL COMMENT 'Short code (e.g., "MMW", "ICU")',
   `type` enum('general','icu','pediatric','maternity','emergency','psychiatric','isolation','recovery','private','other') NOT NULL DEFAULT 'general' COMMENT 'Ward type for categorization',
@@ -31330,8 +31763,11 @@ CREATE TABLE `wards` (
   `is_active` tinyint(1) NOT NULL DEFAULT 1 COMMENT 'Ward operational status',
   `created_by` bigint(20) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `wards_code_unique` (`code`),
+  KEY `wards_created_by_foreign` (`created_by`)
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `wards`
@@ -31346,1680 +31782,6 @@ INSERT INTO `wards` (`id`, `name`, `code`, `type`, `capacity`, `floor`, `buildin
 (6, 'Surgical Ward', 'SUR', 'recovery', 16, 'Ground Floor', 'Block C', 'NS-C1', '301', NULL, 1, NULL, '2026-01-10 22:38:26', '2026-01-10 22:38:26'),
 (7, 'Emergency Ward', 'ER', 'emergency', 10, 'Ground Floor', 'Emergency Wing', 'NS-ER', '911', NULL, 1, NULL, '2026-01-10 22:38:26', '2026-01-10 22:38:26'),
 (8, 'Private Ward', 'VIP', 'private', 10, 'All Floors', 'Block D', 'NS-D1', '401', NULL, 1, NULL, '2026-01-10 22:38:26', '2026-01-10 22:38:26');
-
---
--- Indexes for dumped tables
---
-
---
--- Indexes for table `admission_checklists`
---
-ALTER TABLE `admission_checklists`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `admission_checklists_admission_request_id_unique` (`admission_request_id`),
-  ADD KEY `admission_checklists_template_id_foreign` (`template_id`),
-  ADD KEY `admission_checklists_completed_by_foreign` (`completed_by`),
-  ADD KEY `admission_checklists_waived_by_foreign` (`waived_by`);
-
---
--- Indexes for table `admission_checklist_items`
---
-ALTER TABLE `admission_checklist_items`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `admission_checklist_items_admission_checklist_id_foreign` (`admission_checklist_id`),
-  ADD KEY `admission_checklist_items_template_item_id_foreign` (`template_item_id`),
-  ADD KEY `admission_checklist_items_completed_by_foreign` (`completed_by`);
-
---
--- Indexes for table `admission_requests`
---
-ALTER TABLE `admission_requests`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `admission_requests_service_request_id_foreign` (`service_request_id`),
-  ADD KEY `admission_requests_billed_by_foreign` (`billed_by`),
-  ADD KEY `admission_requests_service_id_foreign` (`service_id`),
-  ADD KEY `admission_requests_encounter_id_foreign` (`encounter_id`),
-  ADD KEY `admission_requests_patient_id_foreign` (`patient_id`),
-  ADD KEY `admission_requests_bed_id_foreign` (`bed_id`),
-  ADD KEY `admission_requests_bed_assigned_by_foreign` (`bed_assigned_by`),
-  ADD KEY `admission_requests_discharged_by_foreign` (`discharged_by`),
-  ADD KEY `admission_requests_doctor_id_foreign` (`doctor_id`);
-
---
--- Indexes for table `application_status`
---
-ALTER TABLE `application_status`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `application_status_registration_category_id_foreign` (`registration_category_id`),
-  ADD KEY `application_status_procedure_category_id_foreign` (`procedure_category_id`);
-
---
--- Indexes for table `audits`
---
-ALTER TABLE `audits`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `audits_auditable_type_auditable_id_index` (`auditable_type`,`auditable_id`),
-  ADD KEY `audits_user_id_user_type_index` (`user_id`,`user_type`);
-
---
--- Indexes for table `banks`
---
-ALTER TABLE `banks`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `beds`
---
-ALTER TABLE `beds`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `beds_occupant_id_foreign` (`occupant_id`),
-  ADD KEY `beds_ward_id_bed_status_index` (`ward_id`,`bed_status`);
-
---
--- Indexes for table `chat_attachments`
---
-ALTER TABLE `chat_attachments`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `chat_attachments_message_id_foreign` (`message_id`);
-
---
--- Indexes for table `chat_conversations`
---
-ALTER TABLE `chat_conversations`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `chat_conversation_archives`
---
-ALTER TABLE `chat_conversation_archives`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `chat_conversation_archives_conversation_id_user_id_unique` (`conversation_id`,`user_id`),
-  ADD KEY `chat_conversation_archives_user_id_foreign` (`user_id`);
-
---
--- Indexes for table `chat_messages`
---
-ALTER TABLE `chat_messages`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `chat_messages_conversation_id_foreign` (`conversation_id`),
-  ADD KEY `chat_messages_user_id_foreign` (`user_id`),
-  ADD KEY `chat_messages_deleted_by_foreign` (`deleted_by`);
-
---
--- Indexes for table `chat_participants`
---
-ALTER TABLE `chat_participants`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `chat_participants_conversation_id_foreign` (`conversation_id`),
-  ADD KEY `chat_participants_user_id_foreign` (`user_id`);
-
---
--- Indexes for table `checklist_templates`
---
-ALTER TABLE `checklist_templates`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `checklist_templates_created_by_foreign` (`created_by`);
-
---
--- Indexes for table `checklist_template_items`
---
-ALTER TABLE `checklist_template_items`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `checklist_template_items_template_id_foreign` (`template_id`);
-
---
--- Indexes for table `clinics`
---
-ALTER TABLE `clinics`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `departments`
---
-ALTER TABLE `departments`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `departments_name_unique` (`name`),
-  ADD UNIQUE KEY `departments_code_unique` (`code`),
-  ADD KEY `departments_head_of_department_id_foreign` (`head_of_department_id`);
-
---
--- Indexes for table `details`
---
-ALTER TABLE `details`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `details_patient_id_foreign` (`patient_id`);
-
---
--- Indexes for table `discharge_checklists`
---
-ALTER TABLE `discharge_checklists`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `discharge_checklists_admission_request_id_unique` (`admission_request_id`),
-  ADD KEY `discharge_checklists_template_id_foreign` (`template_id`),
-  ADD KEY `discharge_checklists_completed_by_foreign` (`completed_by`),
-  ADD KEY `discharge_checklists_waived_by_foreign` (`waived_by`);
-
---
--- Indexes for table `discharge_checklist_items`
---
-ALTER TABLE `discharge_checklist_items`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `discharge_checklist_items_discharge_checklist_id_foreign` (`discharge_checklist_id`),
-  ADD KEY `discharge_checklist_items_template_item_id_foreign` (`template_item_id`),
-  ADD KEY `discharge_checklist_items_completed_by_foreign` (`completed_by`);
-
---
--- Indexes for table `disciplinary_queries`
---
-ALTER TABLE `disciplinary_queries`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `disciplinary_queries_query_number_unique` (`query_number`),
-  ADD KEY `disciplinary_queries_issued_by_foreign` (`issued_by`),
-  ADD KEY `disciplinary_queries_decided_by_foreign` (`decided_by`),
-  ADD KEY `disciplinary_queries_staff_id_status_index` (`staff_id`,`status`);
-
---
--- Indexes for table `doctor_queues`
---
-ALTER TABLE `doctor_queues`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `doctor_queues_patient_id_foreign` (`patient_id`),
-  ADD KEY `doctor_queues_clinic_id_foreign` (`clinic_id`),
-  ADD KEY `doctor_queues_staff_id_foreign` (`staff_id`),
-  ADD KEY `doctor_queues_receptionist_id_foreign` (`receptionist_id`);
-
---
--- Indexes for table `encounters`
---
-ALTER TABLE `encounters`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `encounters_doctor_id_foreign` (`doctor_id`),
-  ADD KEY `encounters_service_request_id_foreign` (`service_request_id`),
-  ADD KEY `encounters_service_id_foreign` (`service_id`),
-  ADD KEY `encounters_patient_id_foreign` (`patient_id`),
-  ADD KEY `encounters_admission_request_id_foreign` (`admission_request_id`),
-  ADD KEY `encounters_deleted_by_foreign` (`deleted_by`);
-
---
--- Indexes for table `expenses`
---
-ALTER TABLE `expenses`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `expenses_expense_number_unique` (`expense_number`),
-  ADD KEY `expenses_supplier_id_foreign` (`supplier_id`),
-  ADD KEY `expenses_recorded_by_foreign` (`recorded_by`),
-  ADD KEY `expenses_approved_by_foreign` (`approved_by`),
-  ADD KEY `expenses_category_status_index` (`category`,`status`),
-  ADD KEY `expenses_expense_date_status_index` (`expense_date`,`status`),
-  ADD KEY `expenses_reference_type_reference_id_index` (`reference_type`,`reference_id`),
-  ADD KEY `expenses_store_id_expense_date_index` (`store_id`,`expense_date`),
-  ADD KEY `expenses_voided_by_foreign` (`voided_by`),
-  ADD KEY `expenses_bank_id_foreign` (`bank_id`);
-
---
--- Indexes for table `failed_jobs`
---
-ALTER TABLE `failed_jobs`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `failed_jobs_uuid_unique` (`uuid`);
-
---
--- Indexes for table `hmos`
---
-ALTER TABLE `hmos`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `hmos_hmo_scheme_id_foreign` (`hmo_scheme_id`);
-
---
--- Indexes for table `hmo_claims`
---
-ALTER TABLE `hmo_claims`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `hmo_claims_hmo_id_foreign` (`hmo_id`),
-  ADD KEY `hmo_claims_patient_id_foreign` (`patient_id`),
-  ADD KEY `hmo_claims_payment_id_foreign` (`payment_id`),
-  ADD KEY `hmo_claims_created_by_foreign` (`created_by`),
-  ADD KEY `hmo_claims_processed_by_foreign` (`processed_by`);
-
---
--- Indexes for table `hmo_remittances`
---
-ALTER TABLE `hmo_remittances`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `hmo_remittances_created_by_foreign` (`created_by`),
-  ADD KEY `hmo_remittances_hmo_id_payment_date_index` (`hmo_id`,`payment_date`),
-  ADD KEY `hmo_remittances_reference_number_index` (`reference_number`);
-
---
--- Indexes for table `hmo_schemes`
---
-ALTER TABLE `hmo_schemes`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `hmo_schemes_name_unique` (`name`),
-  ADD UNIQUE KEY `hmo_schemes_code_unique` (`code`);
-
---
--- Indexes for table `hmo_tariffs`
---
-ALTER TABLE `hmo_tariffs`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `unique_hmo_product_service` (`hmo_id`,`product_id`,`service_id`),
-  ADD KEY `hmo_tariffs_product_id_foreign` (`product_id`),
-  ADD KEY `hmo_tariffs_service_id_foreign` (`service_id`);
-
---
--- Indexes for table `hr_attachments`
---
-ALTER TABLE `hr_attachments`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `hr_attachments_attachable_type_attachable_id_index` (`attachable_type`,`attachable_id`),
-  ADD KEY `hr_attachments_uploaded_by_foreign` (`uploaded_by`);
-
---
--- Indexes for table `imaging_service_requests`
---
-ALTER TABLE `imaging_service_requests`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `imaging_service_requests_service_request_id_foreign` (`service_request_id`),
-  ADD KEY `imaging_service_requests_billed_by_foreign` (`billed_by`),
-  ADD KEY `imaging_service_requests_service_id_foreign` (`service_id`),
-  ADD KEY `imaging_service_requests_encounter_id_foreign` (`encounter_id`),
-  ADD KEY `imaging_service_requests_patient_id_foreign` (`patient_id`),
-  ADD KEY `imaging_service_requests_result_by_foreign` (`result_by`),
-  ADD KEY `imaging_service_requests_doctor_id_foreign` (`doctor_id`),
-  ADD KEY `imaging_service_requests_deleted_by_foreign` (`deleted_by`);
-
---
--- Indexes for table `immunization_records`
---
-ALTER TABLE `immunization_records`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `immunization_records_product_or_service_request_id_foreign` (`product_or_service_request_id`),
-  ADD KEY `immunization_records_administered_by_foreign` (`administered_by`),
-  ADD KEY `immunization_records_patient_id_administered_at_index` (`patient_id`,`administered_at`),
-  ADD KEY `immunization_records_patient_id_vaccine_name_index` (`patient_id`,`vaccine_name`),
-  ADD KEY `immunization_records_product_id_index` (`product_id`),
-  ADD KEY `immunization_records_dispensed_from_store_id_foreign` (`dispensed_from_store_id`);
-
---
--- Indexes for table `injection_administrations`
---
-ALTER TABLE `injection_administrations`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `injection_administrations_product_or_service_request_id_foreign` (`product_or_service_request_id`),
-  ADD KEY `injection_administrations_administered_by_foreign` (`administered_by`),
-  ADD KEY `injection_administrations_patient_id_administered_at_index` (`patient_id`,`administered_at`),
-  ADD KEY `injection_administrations_product_id_index` (`product_id`),
-  ADD KEY `injection_administrations_dispensed_from_store_id_foreign` (`dispensed_from_store_id`);
-
---
--- Indexes for table `intake_output_histories`
---
-ALTER TABLE `intake_output_histories`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `intake_output_histories_period_id_foreign` (`period_id`),
-  ADD KEY `intake_output_histories_record_id_foreign` (`record_id`),
-  ADD KEY `intake_output_histories_user_id_foreign` (`user_id`);
-
---
--- Indexes for table `intake_output_periods`
---
-ALTER TABLE `intake_output_periods`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `intake_output_periods_patient_id_foreign` (`patient_id`),
-  ADD KEY `intake_output_periods_nurse_id_foreign` (`nurse_id`),
-  ADD KEY `intake_output_periods_ended_by_foreign` (`ended_by`);
-
---
--- Indexes for table `intake_output_records`
---
-ALTER TABLE `intake_output_records`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `intake_output_records_period_id_foreign` (`period_id`),
-  ADD KEY `intake_output_records_nurse_id_foreign` (`nurse_id`),
-  ADD KEY `intake_output_records_edited_by_foreign` (`edited_by`),
-  ADD KEY `intake_output_records_deleted_by_foreign` (`deleted_by`);
-
---
--- Indexes for table `invoices`
---
-ALTER TABLE `invoices`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `lab_service_requests`
---
-ALTER TABLE `lab_service_requests`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `lab_service_requests_service_request_id_foreign` (`service_request_id`),
-  ADD KEY `lab_service_requests_billed_by_foreign` (`billed_by`),
-  ADD KEY `lab_service_requests_service_id_foreign` (`service_id`),
-  ADD KEY `lab_service_requests_patient_id_foreign` (`patient_id`),
-  ADD KEY `lab_service_requests_result_by_foreign` (`result_by`),
-  ADD KEY `lab_service_requests_sample_taken_by_foreign` (`sample_taken_by`),
-  ADD KEY `lab_service_requests_doctor_id_foreign` (`doctor_id`),
-  ADD KEY `lab_service_requests_deleted_by_foreign` (`deleted_by`),
-  ADD KEY `lab_service_requests_dismissed_by_foreign` (`dismissed_by`);
-
---
--- Indexes for table `lab_workbench_audit_logs`
---
-ALTER TABLE `lab_workbench_audit_logs`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `lab_workbench_audit_logs_lab_service_request_id_foreign` (`lab_service_request_id`),
-  ADD KEY `lab_workbench_audit_logs_user_id_foreign` (`user_id`);
-
---
--- Indexes for table `leave_balances`
---
-ALTER TABLE `leave_balances`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `leave_balances_staff_id_leave_type_id_year_unique` (`staff_id`,`leave_type_id`,`year`),
-  ADD KEY `leave_balances_leave_type_id_foreign` (`leave_type_id`);
-
---
--- Indexes for table `leave_requests`
---
-ALTER TABLE `leave_requests`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `leave_requests_request_number_unique` (`request_number`),
-  ADD KEY `leave_requests_leave_type_id_foreign` (`leave_type_id`),
-  ADD KEY `leave_requests_relief_staff_id_foreign` (`relief_staff_id`),
-  ADD KEY `leave_requests_supervisor_approved_by_foreign` (`supervisor_approved_by`),
-  ADD KEY `leave_requests_hr_approved_by_foreign` (`hr_approved_by`),
-  ADD KEY `leave_requests_reviewed_by_foreign` (`reviewed_by`),
-  ADD KEY `leave_requests_staff_id_status_index` (`staff_id`,`status`),
-  ADD KEY `leave_requests_start_date_end_date_index` (`start_date`,`end_date`);
-
---
--- Indexes for table `leave_types`
---
-ALTER TABLE `leave_types`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `leave_types_code_unique` (`code`);
-
---
--- Indexes for table `medication_administrations`
---
-ALTER TABLE `medication_administrations`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `medication_administrations_patient_id_foreign` (`patient_id`),
-  ADD KEY `medication_administrations_product_or_service_request_id_foreign` (`product_or_service_request_id`),
-  ADD KEY `medication_administrations_schedule_id_foreign` (`schedule_id`),
-  ADD KEY `medication_administrations_administered_by_foreign` (`administered_by`),
-  ADD KEY `medication_administrations_edited_by_foreign` (`edited_by`),
-  ADD KEY `medication_administrations_deleted_by_foreign` (`deleted_by`),
-  ADD KEY `medication_administrations_store_id_foreign` (`store_id`),
-  ADD KEY `medication_administrations_dispensed_from_batch_id_foreign` (`dispensed_from_batch_id`);
-
---
--- Indexes for table `medication_histories`
---
-ALTER TABLE `medication_histories`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `medication_histories_patient_id_foreign` (`patient_id`),
-  ADD KEY `medication_histories_product_or_service_request_id_foreign` (`product_or_service_request_id`),
-  ADD KEY `medication_histories_user_id_foreign` (`user_id`);
-
---
--- Indexes for table `medication_schedules`
---
-ALTER TABLE `medication_schedules`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `medication_schedules_patient_id_foreign` (`patient_id`),
-  ADD KEY `medication_schedules_product_or_service_request_id_foreign` (`product_or_service_request_id`),
-  ADD KEY `medication_schedules_created_by_foreign` (`created_by`);
-
---
--- Indexes for table `messages`
---
-ALTER TABLE `messages`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `migrations`
---
-ALTER TABLE `migrations`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `misc_bills`
---
-ALTER TABLE `misc_bills`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `misc_bills_service_request_id_foreign` (`service_request_id`),
-  ADD KEY `misc_bills_created_by_foreign` (`created_by`),
-  ADD KEY `misc_bills_billed_by_foreign` (`billed_by`),
-  ADD KEY `misc_bills_service_id_foreign` (`service_id`),
-  ADD KEY `misc_bills_patient_id_foreign` (`patient_id`);
-
---
--- Indexes for table `model_has_permissions`
---
-ALTER TABLE `model_has_permissions`
-  ADD PRIMARY KEY (`permission_id`,`model_id`,`model_type`),
-  ADD KEY `model_has_permissions_model_id_model_type_index` (`model_id`,`model_type`);
-
---
--- Indexes for table `model_has_roles`
---
-ALTER TABLE `model_has_roles`
-  ADD PRIMARY KEY (`role_id`,`model_id`,`model_type`),
-  ADD KEY `model_has_roles_model_id_model_type_index` (`model_id`,`model_type`);
-
---
--- Indexes for table `nursing_notes`
---
-ALTER TABLE `nursing_notes`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `nursing_notes_patient_id_foreign` (`patient_id`),
-  ADD KEY `nursing_notes_created_by_foreign` (`created_by`),
-  ADD KEY `nursing_notes_nursing_note_type_id_foreign` (`nursing_note_type_id`),
-  ADD KEY `nursing_notes_updated_by_foreign` (`updated_by`);
-
---
--- Indexes for table `nursing_note_types`
---
-ALTER TABLE `nursing_note_types`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `nursing_shifts`
---
-ALTER TABLE `nursing_shifts`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `nursing_shifts_ward_id_foreign` (`ward_id`),
-  ADD KEY `nursing_shifts_incoming_nurse_id_foreign` (`incoming_nurse_id`),
-  ADD KEY `nursing_shifts_user_id_status_index` (`user_id`,`status`),
-  ADD KEY `nursing_shifts_status_scheduled_end_at_index` (`status`,`scheduled_end_at`),
-  ADD KEY `nursing_shifts_started_at_index` (`started_at`);
-
---
--- Indexes for table `participants`
---
-ALTER TABLE `participants`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `password_resets`
---
-ALTER TABLE `password_resets`
-  ADD KEY `password_resets_email_index` (`email`);
-
---
--- Indexes for table `patients`
---
-ALTER TABLE `patients`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `patient_accounts`
---
-ALTER TABLE `patient_accounts`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `patient_accounts_patient_id_foreign` (`patient_id`);
-
---
--- Indexes for table `patient_immunization_schedules`
---
-ALTER TABLE `patient_immunization_schedules`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `pat_imm_sched_unique` (`patient_id`,`schedule_item_id`),
-  ADD KEY `patient_immunization_schedules_schedule_item_id_foreign` (`schedule_item_id`),
-  ADD KEY `patient_immunization_schedules_immunization_record_id_foreign` (`immunization_record_id`),
-  ADD KEY `patient_immunization_schedules_updated_by_foreign` (`updated_by`),
-  ADD KEY `pat_imm_sched_status_idx` (`patient_id`,`status`),
-  ADD KEY `pat_imm_sched_due_idx` (`patient_id`,`due_date`);
-
---
--- Indexes for table `patient_profiles`
---
-ALTER TABLE `patient_profiles`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `patient_profiles_filled_by_foreign` (`filled_by`),
-  ADD KEY `patient_profiles_patient_id_foreign` (`patient_id`),
-  ADD KEY `patient_profiles_encounter_id_foreign` (`encounter_id`);
-
---
--- Indexes for table `payments`
---
-ALTER TABLE `payments`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `payments_patient_id_foreign` (`patient_id`),
-  ADD KEY `payments_user_id_foreign` (`user_id`),
-  ADD KEY `payments_bank_id_foreign` (`bank_id`);
-
---
--- Indexes for table `payroll_batches`
---
-ALTER TABLE `payroll_batches`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `payroll_batches_batch_number_unique` (`batch_number`),
-  ADD KEY `payroll_batches_created_by_foreign` (`created_by`),
-  ADD KEY `payroll_batches_submitted_by_foreign` (`submitted_by`),
-  ADD KEY `payroll_batches_approved_by_foreign` (`approved_by`),
-  ADD KEY `payroll_batches_rejected_by_foreign` (`rejected_by`),
-  ADD KEY `payroll_batches_expense_id_foreign` (`expense_id`),
-  ADD KEY `payroll_batches_paid_by_foreign` (`paid_by`);
-
---
--- Indexes for table `payroll_items`
---
-ALTER TABLE `payroll_items`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `payroll_items_payroll_batch_id_staff_id_unique` (`payroll_batch_id`,`staff_id`),
-  ADD KEY `payroll_items_staff_id_foreign` (`staff_id`),
-  ADD KEY `payroll_items_salary_profile_id_foreign` (`salary_profile_id`);
-
---
--- Indexes for table `payroll_item_details`
---
-ALTER TABLE `payroll_item_details`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `payroll_item_details_payroll_item_id_foreign` (`payroll_item_id`),
-  ADD KEY `payroll_item_details_pay_head_id_foreign` (`pay_head_id`);
-
---
--- Indexes for table `pay_heads`
---
-ALTER TABLE `pay_heads`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `pay_heads_code_unique` (`code`);
-
---
--- Indexes for table `permissions`
---
-ALTER TABLE `permissions`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `permissions_name_guard_name_unique` (`name`,`guard_name`);
-
---
--- Indexes for table `personal_access_tokens`
---
-ALTER TABLE `personal_access_tokens`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `personal_access_tokens_token_unique` (`token`),
-  ADD KEY `personal_access_tokens_tokenable_type_tokenable_id_index` (`tokenable_type`,`tokenable_id`);
-
---
--- Indexes for table `prices`
---
-ALTER TABLE `prices`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `procedures`
---
-ALTER TABLE `procedures`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `procedures_service_id_foreign` (`service_id`),
-  ADD KEY `procedures_requested_by_foreign` (`requested_by`),
-  ADD KEY `procedures_patient_id_foreign` (`patient_id`),
-  ADD KEY `procedures_billed_by_foreign` (`billed_by`),
-  ADD KEY `procedures_pre_notes_by_foreign` (`pre_notes_by`),
-  ADD KEY `procedures_post_notes_by_foreign` (`post_notes_by`),
-  ADD KEY `procedures_procedure_definition_id_foreign` (`procedure_definition_id`),
-  ADD KEY `procedures_encounter_id_foreign` (`encounter_id`),
-  ADD KEY `procedures_admission_request_id_foreign` (`admission_request_id`),
-  ADD KEY `procedures_product_or_service_request_id_foreign` (`product_or_service_request_id`),
-  ADD KEY `procedures_cancelled_by_foreign` (`cancelled_by`),
-  ADD KEY `procedures_patient_id_procedure_status_index` (`patient_id`,`procedure_status`),
-  ADD KEY `procedures_scheduled_date_procedure_status_index` (`scheduled_date`,`procedure_status`),
-  ADD KEY `procedures_procedure_status_index` (`procedure_status`);
-
---
--- Indexes for table `procedure_categories`
---
-ALTER TABLE `procedure_categories`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `procedure_categories_code_unique` (`code`);
-
---
--- Indexes for table `procedure_definitions`
---
-ALTER TABLE `procedure_definitions`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `procedure_definitions_service_id_unique` (`service_id`),
-  ADD KEY `procedure_definitions_procedure_category_id_foreign` (`procedure_category_id`);
-
---
--- Indexes for table `procedure_items`
---
-ALTER TABLE `procedure_items`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `procedure_items_lab_service_request_id_foreign` (`lab_service_request_id`),
-  ADD KEY `procedure_items_imaging_service_request_id_foreign` (`imaging_service_request_id`),
-  ADD KEY `procedure_items_product_request_id_foreign` (`product_request_id`),
-  ADD KEY `procedure_items_product_or_service_request_id_foreign` (`product_or_service_request_id`),
-  ADD KEY `procedure_items_procedure_id_index` (`procedure_id`);
-
---
--- Indexes for table `procedure_notes`
---
-ALTER TABLE `procedure_notes`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `procedure_notes_created_by_foreign` (`created_by`),
-  ADD KEY `procedure_notes_procedure_id_note_type_index` (`procedure_id`,`note_type`);
-
---
--- Indexes for table `procedure_team_members`
---
-ALTER TABLE `procedure_team_members`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `procedure_team_unique` (`procedure_id`,`user_id`,`role`),
-  ADD KEY `procedure_team_members_user_id_foreign` (`user_id`);
-
---
--- Indexes for table `products`
---
-ALTER TABLE `products`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `product_categories`
---
-ALTER TABLE `product_categories`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `product_or_service_requests`
---
-ALTER TABLE `product_or_service_requests`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `product_or_service_requests_payment_id_foreign` (`payment_id`),
-  ADD KEY `product_or_service_requests_validated_by_foreign` (`validated_by`),
-  ADD KEY `product_or_service_requests_dispensed_from_store_id_foreign` (`dispensed_from_store_id`),
-  ADD KEY `product_or_service_requests_patient_id_foreign` (`patient_id`),
-  ADD KEY `product_or_service_requests_encounter_id_foreign` (`encounter_id`),
-  ADD KEY `product_or_service_requests_admission_request_id_foreign` (`admission_request_id`),
-  ADD KEY `product_or_service_requests_created_by_foreign` (`created_by`),
-  ADD KEY `product_or_service_requests_hmo_id_foreign` (`hmo_id`);
-
---
--- Indexes for table `product_requests`
---
-ALTER TABLE `product_requests`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `product_requests_product_request_id_foreign` (`product_request_id`),
-  ADD KEY `product_requests_billed_by_foreign` (`billed_by`),
-  ADD KEY `product_requests_product_id_foreign` (`product_id`),
-  ADD KEY `product_requests_patient_id_foreign` (`patient_id`),
-  ADD KEY `product_requests_doctor_id_foreign` (`doctor_id`),
-  ADD KEY `product_requests_dispensed_by_foreign` (`dispensed_by`),
-  ADD KEY `product_requests_deleted_by_foreign` (`deleted_by`),
-  ADD KEY `product_requests_dispensed_from_store_id_foreign` (`dispensed_from_store_id`),
-  ADD KEY `product_requests_original_product_id_foreign` (`original_product_id`),
-  ADD KEY `product_requests_adapted_from_product_id_foreign` (`adapted_from_product_id`),
-  ADD KEY `product_requests_adapted_by_foreign` (`adapted_by`),
-  ADD KEY `product_requests_dispensed_from_batch_id_index` (`dispensed_from_batch_id`),
-  ADD KEY `product_requests_is_adapted_index` (`is_adapted`),
-  ADD KEY `product_requests_qty_adjusted_by_foreign` (`qty_adjusted_by`);
-
---
--- Indexes for table `promotions`
---
-ALTER TABLE `promotions`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `purchase_orders`
---
-ALTER TABLE `purchase_orders`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `purchase_orders_po_number_unique` (`po_number`),
-  ADD KEY `purchase_orders_created_by_foreign` (`created_by`),
-  ADD KEY `purchase_orders_approved_by_foreign` (`approved_by`),
-  ADD KEY `purchase_orders_status_created_at_index` (`status`,`created_at`),
-  ADD KEY `purchase_orders_supplier_id_status_index` (`supplier_id`,`status`),
-  ADD KEY `purchase_orders_target_store_id_status_index` (`target_store_id`,`status`);
-
---
--- Indexes for table `purchase_order_items`
---
-ALTER TABLE `purchase_order_items`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `purchase_order_items_purchase_order_id_status_index` (`purchase_order_id`,`status`),
-  ADD KEY `purchase_order_items_product_id_index` (`product_id`);
-
---
--- Indexes for table `purchase_order_payments`
---
-ALTER TABLE `purchase_order_payments`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `purchase_order_payments_bank_id_foreign` (`bank_id`),
-  ADD KEY `purchase_order_payments_expense_id_foreign` (`expense_id`),
-  ADD KEY `purchase_order_payments_created_by_foreign` (`created_by`),
-  ADD KEY `purchase_order_payments_purchase_order_id_payment_date_index` (`purchase_order_id`,`payment_date`);
-
---
--- Indexes for table `reason_for_encounters`
---
-ALTER TABLE `reason_for_encounters`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `roles`
---
-ALTER TABLE `roles`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `roles_name_guard_name_unique` (`name`,`guard_name`);
-
---
--- Indexes for table `role_has_permissions`
---
-ALTER TABLE `role_has_permissions`
-  ADD PRIMARY KEY (`permission_id`,`role_id`),
-  ADD KEY `role_has_permissions_role_id_foreign` (`role_id`);
-
---
--- Indexes for table `sales`
---
-ALTER TABLE `sales`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `services`
---
-ALTER TABLE `services`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `service_categories`
---
-ALTER TABLE `service_categories`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `service_prices`
---
-ALTER TABLE `service_prices`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `shift_actions`
---
-ALTER TABLE `shift_actions`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `shift_actions_user_id_foreign` (`user_id`),
-  ADD KEY `shift_actions_shift_id_action_type_index` (`shift_id`,`action_type`),
-  ADD KEY `shift_actions_shift_id_is_critical_index` (`shift_id`,`is_critical`),
-  ADD KEY `shift_actions_patient_id_created_at_index` (`patient_id`,`created_at`),
-  ADD KEY `shift_actions_auditable_type_auditable_id_index` (`auditable_type`,`auditable_id`);
-
---
--- Indexes for table `shift_handovers`
---
-ALTER TABLE `shift_handovers`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `shift_handovers_shift_id_foreign` (`shift_id`),
-  ADD KEY `shift_handovers_received_by_foreign` (`received_by`),
-  ADD KEY `shift_handovers_acknowledged_by_foreign` (`acknowledged_by`),
-  ADD KEY `shift_handovers_ward_id_created_at_index` (`ward_id`,`created_at`),
-  ADD KEY `shift_handovers_created_by_created_at_index` (`created_by`,`created_at`),
-  ADD KEY `shift_handovers_shift_ended_at_index` (`shift_ended_at`);
-
---
--- Indexes for table `specializations`
---
-ALTER TABLE `specializations`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `staff`
---
-ALTER TABLE `staff`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `staff_specialization_id_foreign` (`specialization_id`),
-  ADD KEY `staff_suspended_by_foreign` (`suspended_by`),
-  ADD KEY `staff_department_id_foreign` (`department_id`);
-
---
--- Indexes for table `staff_salary_profiles`
---
-ALTER TABLE `staff_salary_profiles`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `staff_salary_profiles_created_by_foreign` (`created_by`),
-  ADD KEY `staff_salary_profiles_staff_id_is_active_index` (`staff_id`,`is_active`);
-
---
--- Indexes for table `staff_salary_profile_items`
---
-ALTER TABLE `staff_salary_profile_items`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `staff_salary_profile_items_salary_profile_id_pay_head_id_unique` (`salary_profile_id`,`pay_head_id`),
-  ADD KEY `staff_salary_profile_items_pay_head_id_foreign` (`pay_head_id`);
-
---
--- Indexes for table `staff_suspensions`
---
-ALTER TABLE `staff_suspensions`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `staff_suspensions_suspension_number_unique` (`suspension_number`),
-  ADD KEY `staff_suspensions_disciplinary_query_id_foreign` (`disciplinary_query_id`),
-  ADD KEY `staff_suspensions_issued_by_foreign` (`issued_by`),
-  ADD KEY `staff_suspensions_lifted_by_foreign` (`lifted_by`),
-  ADD KEY `staff_suspensions_staff_id_status_index` (`staff_id`,`status`);
-
---
--- Indexes for table `staff_terminations`
---
-ALTER TABLE `staff_terminations`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `staff_terminations_termination_number_unique` (`termination_number`),
-  ADD KEY `staff_terminations_staff_id_foreign` (`staff_id`),
-  ADD KEY `staff_terminations_disciplinary_query_id_foreign` (`disciplinary_query_id`),
-  ADD KEY `staff_terminations_processed_by_foreign` (`processed_by`);
-
---
--- Indexes for table `stocks`
---
-ALTER TABLE `stocks`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `stock_batches`
---
-ALTER TABLE `stock_batches`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `stock_batches_purchase_order_item_id_foreign` (`purchase_order_item_id`),
-  ADD KEY `stock_batches_created_by_foreign` (`created_by`),
-  ADD KEY `stock_batches_fifo_idx` (`product_id`,`store_id`,`is_active`,`current_qty`),
-  ADD KEY `stock_batches_store_id_current_qty_index` (`store_id`,`current_qty`),
-  ADD KEY `stock_batches_expiry_date_index` (`expiry_date`),
-  ADD KEY `stock_batches_source_created_at_index` (`source`,`created_at`),
-  ADD KEY `stock_batches_supplier_id_index` (`supplier_id`);
-
---
--- Indexes for table `stock_batch_transactions`
---
-ALTER TABLE `stock_batch_transactions`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `stock_batch_transactions_stock_batch_id_created_at_index` (`stock_batch_id`,`created_at`),
-  ADD KEY `stock_batch_transactions_reference_type_reference_id_index` (`reference_type`,`reference_id`),
-  ADD KEY `stock_batch_transactions_type_created_at_index` (`type`,`created_at`),
-  ADD KEY `stock_batch_transactions_performed_by_created_at_index` (`performed_by`,`created_at`);
-
---
--- Indexes for table `stock_invoices`
---
-ALTER TABLE `stock_invoices`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `stock_invoices_invoice_no_unique` (`invoice_no`);
-
---
--- Indexes for table `stock_orders`
---
-ALTER TABLE `stock_orders`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `stores`
---
-ALTER TABLE `stores`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `stores_code_unique` (`code`),
-  ADD KEY `stores_manager_id_foreign` (`manager_id`);
-
---
--- Indexes for table `store_requisitions`
---
-ALTER TABLE `store_requisitions`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `store_requisitions_requisition_number_unique` (`requisition_number`),
-  ADD KEY `store_requisitions_approved_by_foreign` (`approved_by`),
-  ADD KEY `store_requisitions_rejected_by_foreign` (`rejected_by`),
-  ADD KEY `store_requisitions_fulfilled_by_foreign` (`fulfilled_by`),
-  ADD KEY `store_requisitions_status_created_at_index` (`status`,`created_at`),
-  ADD KEY `store_requisitions_from_store_id_status_index` (`from_store_id`,`status`),
-  ADD KEY `store_requisitions_to_store_id_status_index` (`to_store_id`,`status`),
-  ADD KEY `store_requisitions_requested_by_status_index` (`requested_by`,`status`);
-
---
--- Indexes for table `store_requisition_items`
---
-ALTER TABLE `store_requisition_items`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `store_requisition_items_source_batch_id_foreign` (`source_batch_id`),
-  ADD KEY `store_requisition_items_destination_batch_id_foreign` (`destination_batch_id`),
-  ADD KEY `store_requisition_items_store_requisition_id_status_index` (`store_requisition_id`,`status`),
-  ADD KEY `store_requisition_items_product_id_status_index` (`product_id`,`status`);
-
---
--- Indexes for table `store_stocks`
---
-ALTER TABLE `store_stocks`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `store_stocks_low_stock_idx` (`is_active`,`current_quantity`);
-
---
--- Indexes for table `suppliers`
---
-ALTER TABLE `suppliers`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `threads`
---
-ALTER TABLE `threads`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `users`
---
-ALTER TABLE `users`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `users_email_unique` (`email`);
-
---
--- Indexes for table `user_categories`
---
-ALTER TABLE `user_categories`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `vaccine_product_mappings`
---
-ALTER TABLE `vaccine_product_mappings`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `vaccine_product_mappings_vaccine_name_product_id_unique` (`vaccine_name`,`product_id`),
-  ADD KEY `vaccine_product_mappings_product_id_foreign` (`product_id`),
-  ADD KEY `vaccine_product_mappings_vaccine_name_index` (`vaccine_name`);
-
---
--- Indexes for table `vaccine_schedule_items`
---
-ALTER TABLE `vaccine_schedule_items`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `vaccine_schedule_items_template_id_age_days_index` (`template_id`,`age_days`),
-  ADD KEY `vaccine_schedule_items_template_id_vaccine_name_index` (`template_id`,`vaccine_name`);
-
---
--- Indexes for table `vaccine_schedule_templates`
---
-ALTER TABLE `vaccine_schedule_templates`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `vaccine_schedule_templates_created_by_foreign` (`created_by`);
-
---
--- Indexes for table `vital_signs`
---
-ALTER TABLE `vital_signs`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `vital_signs_requested_by_foreign` (`requested_by`),
-  ADD KEY `vital_signs_taken_by_foreign` (`taken_by`),
-  ADD KEY `vital_signs_patient_id_foreign` (`patient_id`);
-
---
--- Indexes for table `wards`
---
-ALTER TABLE `wards`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `wards_code_unique` (`code`),
-  ADD KEY `wards_created_by_foreign` (`created_by`);
-
---
--- AUTO_INCREMENT for dumped tables
---
-
---
--- AUTO_INCREMENT for table `admission_checklists`
---
-ALTER TABLE `admission_checklists`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
-
---
--- AUTO_INCREMENT for table `admission_checklist_items`
---
-ALTER TABLE `admission_checklist_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
-
---
--- AUTO_INCREMENT for table `admission_requests`
---
-ALTER TABLE `admission_requests`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
-
---
--- AUTO_INCREMENT for table `application_status`
---
-ALTER TABLE `application_status`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
--- AUTO_INCREMENT for table `audits`
---
-ALTER TABLE `audits`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=866;
-
---
--- AUTO_INCREMENT for table `banks`
---
-ALTER TABLE `banks`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
--- AUTO_INCREMENT for table `beds`
---
-ALTER TABLE `beds`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
-
---
--- AUTO_INCREMENT for table `chat_attachments`
---
-ALTER TABLE `chat_attachments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
-
---
--- AUTO_INCREMENT for table `chat_conversations`
---
-ALTER TABLE `chat_conversations`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
-
---
--- AUTO_INCREMENT for table `chat_conversation_archives`
---
-ALTER TABLE `chat_conversation_archives`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `chat_messages`
---
-ALTER TABLE `chat_messages`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=162;
-
---
--- AUTO_INCREMENT for table `chat_participants`
---
-ALTER TABLE `chat_participants`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
-
---
--- AUTO_INCREMENT for table `checklist_templates`
---
-ALTER TABLE `checklist_templates`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- AUTO_INCREMENT for table `checklist_template_items`
---
-ALTER TABLE `checklist_template_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
-
---
--- AUTO_INCREMENT for table `clinics`
---
-ALTER TABLE `clinics`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
-
---
--- AUTO_INCREMENT for table `departments`
---
-ALTER TABLE `departments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
-
---
--- AUTO_INCREMENT for table `details`
---
-ALTER TABLE `details`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `discharge_checklists`
---
-ALTER TABLE `discharge_checklists`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- AUTO_INCREMENT for table `discharge_checklist_items`
---
-ALTER TABLE `discharge_checklist_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
-
---
--- AUTO_INCREMENT for table `disciplinary_queries`
---
-ALTER TABLE `disciplinary_queries`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
-
---
--- AUTO_INCREMENT for table `doctor_queues`
---
-ALTER TABLE `doctor_queues`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
-
---
--- AUTO_INCREMENT for table `encounters`
---
-ALTER TABLE `encounters`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=223;
-
---
--- AUTO_INCREMENT for table `expenses`
---
-ALTER TABLE `expenses`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
-
---
--- AUTO_INCREMENT for table `failed_jobs`
---
-ALTER TABLE `failed_jobs`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `hmos`
---
-ALTER TABLE `hmos`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
-
---
--- AUTO_INCREMENT for table `hmo_claims`
---
-ALTER TABLE `hmo_claims`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
-
---
--- AUTO_INCREMENT for table `hmo_remittances`
---
-ALTER TABLE `hmo_remittances`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `hmo_schemes`
---
-ALTER TABLE `hmo_schemes`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
-
---
--- AUTO_INCREMENT for table `hmo_tariffs`
---
-ALTER TABLE `hmo_tariffs`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3601;
-
---
--- AUTO_INCREMENT for table `hr_attachments`
---
-ALTER TABLE `hr_attachments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
-
---
--- AUTO_INCREMENT for table `imaging_service_requests`
---
-ALTER TABLE `imaging_service_requests`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
-
---
--- AUTO_INCREMENT for table `immunization_records`
---
-ALTER TABLE `immunization_records`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- AUTO_INCREMENT for table `injection_administrations`
---
-ALTER TABLE `injection_administrations`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
-
---
--- AUTO_INCREMENT for table `intake_output_histories`
---
-ALTER TABLE `intake_output_histories`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `intake_output_periods`
---
-ALTER TABLE `intake_output_periods`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
-
---
--- AUTO_INCREMENT for table `intake_output_records`
---
-ALTER TABLE `intake_output_records`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
-
---
--- AUTO_INCREMENT for table `invoices`
---
-ALTER TABLE `invoices`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
-
---
--- AUTO_INCREMENT for table `lab_service_requests`
---
-ALTER TABLE `lab_service_requests`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=79;
-
---
--- AUTO_INCREMENT for table `lab_workbench_audit_logs`
---
-ALTER TABLE `lab_workbench_audit_logs`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
-
---
--- AUTO_INCREMENT for table `leave_balances`
---
-ALTER TABLE `leave_balances`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
--- AUTO_INCREMENT for table `leave_requests`
---
-ALTER TABLE `leave_requests`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
-
---
--- AUTO_INCREMENT for table `leave_types`
---
-ALTER TABLE `leave_types`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
--- AUTO_INCREMENT for table `medication_administrations`
---
-ALTER TABLE `medication_administrations`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
-
---
--- AUTO_INCREMENT for table `medication_histories`
---
-ALTER TABLE `medication_histories`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
-
---
--- AUTO_INCREMENT for table `medication_schedules`
---
-ALTER TABLE `medication_schedules`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=143;
-
---
--- AUTO_INCREMENT for table `messages`
---
-ALTER TABLE `messages`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
-
---
--- AUTO_INCREMENT for table `migrations`
---
-ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=202;
-
---
--- AUTO_INCREMENT for table `misc_bills`
---
-ALTER TABLE `misc_bills`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- AUTO_INCREMENT for table `nursing_notes`
---
-ALTER TABLE `nursing_notes`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
-
---
--- AUTO_INCREMENT for table `nursing_note_types`
---
-ALTER TABLE `nursing_note_types`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
-
---
--- AUTO_INCREMENT for table `nursing_shifts`
---
-ALTER TABLE `nursing_shifts`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
-
---
--- AUTO_INCREMENT for table `participants`
---
-ALTER TABLE `participants`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
-
---
--- AUTO_INCREMENT for table `patients`
---
-ALTER TABLE `patients`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4184;
-
---
--- AUTO_INCREMENT for table `patient_accounts`
---
-ALTER TABLE `patient_accounts`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=231;
-
---
--- AUTO_INCREMENT for table `patient_immunization_schedules`
---
-ALTER TABLE `patient_immunization_schedules`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
-
---
--- AUTO_INCREMENT for table `patient_profiles`
---
-ALTER TABLE `patient_profiles`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `payments`
---
-ALTER TABLE `payments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=82;
-
---
--- AUTO_INCREMENT for table `payroll_batches`
---
-ALTER TABLE `payroll_batches`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
-
---
--- AUTO_INCREMENT for table `payroll_items`
---
-ALTER TABLE `payroll_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
-
---
--- AUTO_INCREMENT for table `payroll_item_details`
---
-ALTER TABLE `payroll_item_details`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
-
---
--- AUTO_INCREMENT for table `pay_heads`
---
-ALTER TABLE `pay_heads`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- AUTO_INCREMENT for table `permissions`
---
-ALTER TABLE `permissions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=103;
-
---
--- AUTO_INCREMENT for table `personal_access_tokens`
---
-ALTER TABLE `personal_access_tokens`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `prices`
---
-ALTER TABLE `prices`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=159;
-
---
--- AUTO_INCREMENT for table `procedures`
---
-ALTER TABLE `procedures`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
-
---
--- AUTO_INCREMENT for table `procedure_categories`
---
-ALTER TABLE `procedure_categories`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
-
---
--- AUTO_INCREMENT for table `procedure_definitions`
---
-ALTER TABLE `procedure_definitions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
--- AUTO_INCREMENT for table `procedure_items`
---
-ALTER TABLE `procedure_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
-
---
--- AUTO_INCREMENT for table `procedure_notes`
---
-ALTER TABLE `procedure_notes`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
-
---
--- AUTO_INCREMENT for table `procedure_team_members`
---
-ALTER TABLE `procedure_team_members`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
-
---
--- AUTO_INCREMENT for table `products`
---
-ALTER TABLE `products`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=159;
-
---
--- AUTO_INCREMENT for table `product_categories`
---
-ALTER TABLE `product_categories`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- AUTO_INCREMENT for table `product_or_service_requests`
---
-ALTER TABLE `product_or_service_requests`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=133;
-
---
--- AUTO_INCREMENT for table `product_requests`
---
-ALTER TABLE `product_requests`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=119;
-
---
--- AUTO_INCREMENT for table `promotions`
---
-ALTER TABLE `promotions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `purchase_orders`
---
-ALTER TABLE `purchase_orders`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
--- AUTO_INCREMENT for table `purchase_order_items`
---
-ALTER TABLE `purchase_order_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
-
---
--- AUTO_INCREMENT for table `purchase_order_payments`
---
-ALTER TABLE `purchase_order_payments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- AUTO_INCREMENT for table `reason_for_encounters`
---
-ALTER TABLE `reason_for_encounters`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12132;
-
---
--- AUTO_INCREMENT for table `roles`
---
-ALTER TABLE `roles`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
-
---
--- AUTO_INCREMENT for table `sales`
---
-ALTER TABLE `sales`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `services`
---
-ALTER TABLE `services`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=68;
-
---
--- AUTO_INCREMENT for table `service_categories`
---
-ALTER TABLE `service_categories`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
-
---
--- AUTO_INCREMENT for table `service_prices`
---
-ALTER TABLE `service_prices`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=84;
-
---
--- AUTO_INCREMENT for table `shift_actions`
---
-ALTER TABLE `shift_actions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `shift_handovers`
---
-ALTER TABLE `shift_handovers`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
-
---
--- AUTO_INCREMENT for table `specializations`
---
-ALTER TABLE `specializations`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- AUTO_INCREMENT for table `staff`
---
-ALTER TABLE `staff`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=69;
-
---
--- AUTO_INCREMENT for table `staff_salary_profiles`
---
-ALTER TABLE `staff_salary_profiles`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- AUTO_INCREMENT for table `staff_salary_profile_items`
---
-ALTER TABLE `staff_salary_profile_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
-
---
--- AUTO_INCREMENT for table `staff_suspensions`
---
-ALTER TABLE `staff_suspensions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- AUTO_INCREMENT for table `staff_terminations`
---
-ALTER TABLE `staff_terminations`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
--- AUTO_INCREMENT for table `stocks`
---
-ALTER TABLE `stocks`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=248;
-
---
--- AUTO_INCREMENT for table `stock_batches`
---
-ALTER TABLE `stock_batches`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
-
---
--- AUTO_INCREMENT for table `stock_batch_transactions`
---
-ALTER TABLE `stock_batch_transactions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
-
---
--- AUTO_INCREMENT for table `stock_invoices`
---
-ALTER TABLE `stock_invoices`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `stock_orders`
---
-ALTER TABLE `stock_orders`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
-
---
--- AUTO_INCREMENT for table `stores`
---
-ALTER TABLE `stores`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
-
---
--- AUTO_INCREMENT for table `store_requisitions`
---
-ALTER TABLE `store_requisitions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
--- AUTO_INCREMENT for table `store_requisition_items`
---
-ALTER TABLE `store_requisition_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- AUTO_INCREMENT for table `store_stocks`
---
-ALTER TABLE `store_stocks`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
-
---
--- AUTO_INCREMENT for table `suppliers`
---
-ALTER TABLE `suppliers`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
--- AUTO_INCREMENT for table `threads`
---
-ALTER TABLE `threads`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
-
---
--- AUTO_INCREMENT for table `users`
---
-ALTER TABLE `users`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4480;
-
---
--- AUTO_INCREMENT for table `user_categories`
---
-ALTER TABLE `user_categories`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
-
---
--- AUTO_INCREMENT for table `vaccine_product_mappings`
---
-ALTER TABLE `vaccine_product_mappings`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `vaccine_schedule_items`
---
-ALTER TABLE `vaccine_schedule_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
-
---
--- AUTO_INCREMENT for table `vaccine_schedule_templates`
---
-ALTER TABLE `vaccine_schedule_templates`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
--- AUTO_INCREMENT for table `vital_signs`
---
-ALTER TABLE `vital_signs`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
-
---
--- AUTO_INCREMENT for table `wards`
---
-ALTER TABLE `wards`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- Constraints for dumped tables
