@@ -20,7 +20,7 @@ protected $fillable = [
         'has_have',
         'has_piece',
         'howmany_to',
-        'visible',
+        'status',
         'current_quantity',
         'promotion',
     ];
