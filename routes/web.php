@@ -180,11 +180,16 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/template/staff', [\App\Http\Controllers\ImportExportController::class, 'downloadStaffTemplate'])->name('import-export.template.staff');
         Route::get('/template/patients', [\App\Http\Controllers\ImportExportController::class, 'downloadPatientTemplate'])->name('import-export.template.patients');
 
-        // Imports
+        // Synchronous Imports (legacy)
         Route::post('/import/products', [\App\Http\Controllers\ImportExportController::class, 'importProducts'])->name('import-export.import.products');
         Route::post('/import/services', [\App\Http\Controllers\ImportExportController::class, 'importServices'])->name('import-export.import.services');
         Route::post('/import/staff', [\App\Http\Controllers\ImportExportController::class, 'importStaff'])->name('import-export.import.staff');
         Route::post('/import/patients', [\App\Http\Controllers\ImportExportController::class, 'importPatients'])->name('import-export.import.patients');
+
+        // Async Imports (AJAX + Queue)
+        Route::post('/async-import/{type}', [\App\Http\Controllers\ImportExportController::class, 'uploadAndQueueImport'])->name('import-export.async.upload');
+        Route::get('/import-status/{importId}', [\App\Http\Controllers\ImportExportController::class, 'getImportStatus'])->name('import-export.async.status');
+        Route::post('/cancel-import/{importId}', [\App\Http\Controllers\ImportExportController::class, 'cancelImport'])->name('import-export.async.cancel');
 
         // Exports
         Route::get('/export/products', [\App\Http\Controllers\ImportExportController::class, 'exportProducts'])->name('import-export.export.products');

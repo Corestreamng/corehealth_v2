@@ -660,10 +660,16 @@ class ImportExportController extends Controller
 
     // ========================================
     // IMPORTS (Support both CSV and XLSX)
+    // Optimized with batch processing, upsert, and detailed reporting
     // ========================================
+
+    const BATCH_SIZE = 500;
 
     /**
      * Import products from CSV or XLSX
+     * - Batch commits every 500 records
+     * - Detects duplicates by product_code and updates instead of skipping
+     * - Returns detailed import report
      */
     public function importProducts(Request $request)
     {
@@ -674,6 +680,7 @@ class ImportExportController extends Controller
 
         $file = $request->file('file');
         $defaultStoreId = $request->default_store_id;
+        $startTime = microtime(true);
 
         try {
             $data = $this->parseFile($file);
@@ -682,116 +689,167 @@ class ImportExportController extends Controller
                 return back()->with('error', 'File is empty or invalid.');
             }
 
-            $imported = 0;
-            $errors = [];
-            $skipped = 0;
+            // Pre-fetch lookup data for performance
+            $existingProducts = Product::pluck('id', 'product_code')->toArray();
+            $categories = ProductCategory::pluck('id', 'category_name')->toArray();
+            $stores = Store::pluck('id', 'store_name')->toArray();
 
-            DB::beginTransaction();
+            $report = [
+                'created' => 0,
+                'updated' => 0,
+                'skipped' => 0,
+                'errors' => [],
+                'created_items' => [],
+                'updated_items' => [],
+            ];
 
-            foreach ($data as $index => $row) {
-                $rowNum = $index + 2; // Account for header row
+            $batches = array_chunk($data, self::BATCH_SIZE);
+            $totalBatches = count($batches);
 
+            foreach ($batches as $batchIndex => $batch) {
+                DB::beginTransaction();
                 try {
-                    // Validate required fields
-                    if (empty($row['product_name']) || empty($row['product_code'])) {
-                        $errors[] = "Row {$rowNum}: Missing product_name or product_code";
-                        $skipped++;
-                        continue;
-                    }
+                    foreach ($batch as $index => $row) {
+                        $rowNum = ($batchIndex * self::BATCH_SIZE) + $index + 2;
 
-                    // Check for duplicate product_code
-                    if (Product::where('product_code', $row['product_code'])->exists()) {
-                        $errors[] = "Row {$rowNum}: Product code '{$row['product_code']}' already exists";
-                        $skipped++;
-                        continue;
-                    }
+                        // Validate required fields
+                        if (empty($row['product_name']) || empty($row['product_code'])) {
+                            $report['errors'][] = "Row {$rowNum}: Missing product_name or product_code";
+                            $report['skipped']++;
+                            continue;
+                        }
 
-                    // Get or create category
-                    $categoryId = null;
-                    if (!empty($row['category_name'])) {
-                        $category = ProductCategory::firstOrCreate(
-                            ['category_name' => trim($row['category_name'])],
-                            ['description' => 'Auto-created during import']
-                        );
-                        $categoryId = $category->id;
-                    }
+                        $productCode = trim($row['product_code']);
+                        $productName = trim($row['product_name']);
 
-                    // Create product
-                    $product = Product::create([
-                        'user_id' => auth()->id(),
-                        'category_id' => $categoryId,
-                        'product_name' => trim($row['product_name']),
-                        'product_code' => trim($row['product_code']),
-                        'reorder_alert' => $row['reorder_level'] ?? 10,
-                        'visible' => ($row['is_active'] ?? 1) == 1,
-                        'current_quantity' => $row['initial_quantity'] ?? 0,
-                    ]);
+                        // Get or create category (cached)
+                        $categoryId = null;
+                        if (!empty($row['category_name'])) {
+                            $categoryName = trim($row['category_name']);
+                            if (!isset($categories[$categoryName])) {
+                                $category = ProductCategory::create([
+                                    'category_name' => $categoryName,
+                                    'description' => 'Auto-created during import'
+                                ]);
+                                $categories[$categoryName] = $category->id;
+                            }
+                            $categoryId = $categories[$categoryName];
+                        }
 
-                    // Create Price record
-                    // prices table uses: pr_buy_price (cost), current_sale_price (selling price)
-                    $costPrice = floatval($row['cost_price'] ?? 0);
-                    $salePrice = floatval($row['sale_price'] ?? 0);
+                        // Determine store
+                        $storeId = null;
+                        if (!empty($row['store_name']) && isset($stores[trim($row['store_name'])])) {
+                            $storeId = $stores[trim($row['store_name'])];
+                        }
+                        $storeId = $storeId ?? $defaultStoreId;
 
-                    Price::create([
-                        'product_id' => $product->id,
-                        'pr_buy_price' => $costPrice,
-                        'initial_sale_price' => $salePrice,
-                        'current_sale_price' => $salePrice,
-                        'max_discount' => 0,
-                        'status' => 1,
-                    ]);
+                        $costPrice = floatval($row['cost_price'] ?? 0);
+                        $salePrice = floatval($row['sale_price'] ?? 0);
+                        $initialQty = intval($row['initial_quantity'] ?? 0);
+                        $reorderLevel = intval($row['reorder_level'] ?? 10);
+                        $isActive = ($row['is_active'] ?? 1) == 1;
 
-                    // Create Stock record
-                    Stock::create([
-                        'product_id' => $product->id,
-                        'initial_quantity' => $row['initial_quantity'] ?? 0,
-                        'current_quantity' => $row['initial_quantity'] ?? 0,
-                        'quantity_sale' => 0,
-                        'order_quantity' => 0,
-                    ]);
+                        // Check if product exists (update) or create new
+                        if (isset($existingProducts[$productCode])) {
+                            // UPDATE existing product
+                            $productId = $existingProducts[$productCode];
 
-                    // Create StoreStock if store specified
-                    $storeId = null;
-                    if (!empty($row['store_name'])) {
-                        $store = Store::where('store_name', trim($row['store_name']))->first();
-                        if ($store) {
-                            $storeId = $store->id;
+                            Product::where('id', $productId)->update([
+                                'product_name' => $productName,
+                                'category_id' => $categoryId,
+                                'reorder_alert' => $reorderLevel,
+                                'visible' => $isActive,
+                            ]);
+
+                            // Update Price
+                            Price::updateOrCreate(
+                                ['product_id' => $productId],
+                                [
+                                    'pr_buy_price' => $costPrice,
+                                    'current_sale_price' => $salePrice,
+                                    'initial_sale_price' => $salePrice,
+                                    'max_discount' => 0,
+                                    'status' => 1,
+                                ]
+                            );
+
+                            $report['updated']++;
+                            $report['updated_items'][] = $productCode;
+                        } else {
+                            // CREATE new product
+                            $product = Product::create([
+                                'user_id' => auth()->id(),
+                                'category_id' => $categoryId,
+                                'product_name' => $productName,
+                                'product_code' => $productCode,
+                                'reorder_alert' => $reorderLevel,
+                                'visible' => $isActive,
+                                'current_quantity' => $initialQty,
+                            ]);
+
+                            // Price record (triggers observer for HMO tariffs)
+                            Price::create([
+                                'product_id' => $product->id,
+                                'pr_buy_price' => $costPrice,
+                                'initial_sale_price' => $salePrice,
+                                'current_sale_price' => $salePrice,
+                                'max_discount' => 0,
+                                'status' => 1,
+                            ]);
+
+                            // Stock record
+                            Stock::create([
+                                'product_id' => $product->id,
+                                'initial_quantity' => $initialQty,
+                                'current_quantity' => $initialQty,
+                                'quantity_sale' => 0,
+                                'order_quantity' => 0,
+                            ]);
+
+                            // StoreStock if store specified
+                            if ($storeId) {
+                                StoreStock::create([
+                                    'store_id' => $storeId,
+                                    'product_id' => $product->id,
+                                    'initial_quantity' => $initialQty,
+                                    'current_quantity' => $initialQty,
+                                    'quantity_sale' => 0,
+                                    'order_quantity' => 0,
+                                    'reorder_level' => $reorderLevel,
+                                    'is_active' => true,
+                                ]);
+                            }
+
+                            // Cache the new product
+                            $existingProducts[$productCode] = $product->id;
+
+                            $report['created']++;
+                            $report['created_items'][] = $productCode;
                         }
                     }
-                    $storeId = $storeId ?? $defaultStoreId;
 
-                    if ($storeId) {
-                        StoreStock::create([
-                            'store_id' => $storeId,
-                            'product_id' => $product->id,
-                            'initial_quantity' => $row['initial_quantity'] ?? 0,
-                            'current_quantity' => $row['initial_quantity'] ?? 0,
-                            'quantity_sale' => 0,
-                            'order_quantity' => 0,
-                            'reorder_level' => $row['reorder_level'] ?? 10,
-                            'is_active' => true,
-                        ]);
-                    }
-
-                    $imported++;
-
+                    DB::commit();
                 } catch (\Exception $e) {
-                    $errors[] = "Row {$rowNum}: " . $e->getMessage();
-                    $skipped++;
+                    DB::rollBack();
+                    $report['errors'][] = "Batch " . ($batchIndex + 1) . " failed: " . $e->getMessage();
+                    Log::error("Product import batch {$batchIndex} failed: " . $e->getMessage());
                 }
             }
 
-            DB::commit();
+            $duration = round(microtime(true) - $startTime, 2);
 
-            $message = "Successfully imported {$imported} products.";
-            if ($skipped > 0) {
-                $message .= " {$skipped} rows skipped.";
-            }
-
-            return back()->with('success', $message)->with('import_errors', $errors);
+            return back()->with('import_report', [
+                'type' => 'Products',
+                'created' => $report['created'],
+                'updated' => $report['updated'],
+                'skipped' => $report['skipped'],
+                'errors' => $report['errors'],
+                'duration' => $duration,
+                'total_rows' => count($data),
+                'batches_processed' => $totalBatches,
+            ]);
 
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error('Product import failed: ' . $e->getMessage());
             return back()->with('error', 'Import failed: ' . $e->getMessage());
         }
@@ -799,6 +857,9 @@ class ImportExportController extends Controller
 
     /**
      * Import services from CSV or XLSX
+     * - Batch commits every 50 records
+     * - Detects duplicates by service_code and updates instead of skipping
+     * - Returns detailed import report
      */
     public function importServices(Request $request)
     {
@@ -807,6 +868,7 @@ class ImportExportController extends Controller
         ]);
 
         $file = $request->file('file');
+        $startTime = microtime(true);
 
         try {
             $data = $this->parseFile($file);
@@ -815,74 +877,122 @@ class ImportExportController extends Controller
                 return back()->with('error', 'File is empty or invalid.');
             }
 
-            $imported = 0;
-            $errors = [];
-            $skipped = 0;
+            // Pre-fetch lookup data for performance
+            $existingServices = Service::pluck('id', 'service_code')->toArray();
+            $categories = ServiceCategory::pluck('id', 'category_name')->toArray();
 
-            DB::beginTransaction();
+            $report = [
+                'created' => 0,
+                'updated' => 0,
+                'skipped' => 0,
+                'errors' => [],
+                'created_items' => [],
+                'updated_items' => [],
+            ];
 
-            foreach ($data as $index => $row) {
-                $rowNum = $index + 2;
+            $batches = array_chunk($data, self::BATCH_SIZE);
+            $totalBatches = count($batches);
 
+            foreach ($batches as $batchIndex => $batch) {
+                DB::beginTransaction();
                 try {
-                    if (empty($row['service_name']) || empty($row['service_code'])) {
-                        $errors[] = "Row {$rowNum}: Missing service_name or service_code";
-                        $skipped++;
-                        continue;
+                    foreach ($batch as $index => $row) {
+                        $rowNum = ($batchIndex * self::BATCH_SIZE) + $index + 2;
+
+                        if (empty($row['service_name']) || empty($row['service_code'])) {
+                            $report['errors'][] = "Row {$rowNum}: Missing service_name or service_code";
+                            $report['skipped']++;
+                            continue;
+                        }
+
+                        $serviceCode = trim($row['service_code']);
+                        $serviceName = trim($row['service_name']);
+
+                        // Get or create category (cached)
+                        $categoryId = null;
+                        if (!empty($row['category_name'])) {
+                            $categoryName = trim($row['category_name']);
+                            if (!isset($categories[$categoryName])) {
+                                $category = ServiceCategory::create([
+                                    'category_name' => $categoryName,
+                                    'description' => 'Auto-created during import'
+                                ]);
+                                $categories[$categoryName] = $category->id;
+                            }
+                            $categoryId = $categories[$categoryName];
+                        }
+
+                        $costPrice = floatval($row['cost_price'] ?? 0);
+                        $salePrice = floatval($row['price'] ?? 0);
+                        $isActive = ($row['is_active'] ?? 1) == 1 ? 1 : 0;
+
+                        if (isset($existingServices[$serviceCode])) {
+                            // UPDATE existing service
+                            $serviceId = $existingServices[$serviceCode];
+
+                            Service::where('id', $serviceId)->update([
+                                'service_name' => $serviceName,
+                                'category_id' => $categoryId,
+                                'status' => $isActive,
+                            ]);
+
+                            // Update ServicePrice
+                            ServicePrice::updateOrCreate(
+                                ['service_id' => $serviceId],
+                                [
+                                    'cost_price' => $costPrice,
+                                    'sale_price' => $salePrice,
+                                ]
+                            );
+
+                            $report['updated']++;
+                            $report['updated_items'][] = $serviceCode;
+                        } else {
+                            // CREATE new service
+                            $service = Service::create([
+                                'user_id' => auth()->id(),
+                                'category_id' => $categoryId,
+                                'service_name' => $serviceName,
+                                'service_code' => $serviceCode,
+                                'status' => $isActive,
+                            ]);
+
+                            // ServicePrice (triggers observer for HMO tariffs)
+                            ServicePrice::create([
+                                'service_id' => $service->id,
+                                'cost_price' => $costPrice,
+                                'sale_price' => $salePrice,
+                            ]);
+
+                            $existingServices[$serviceCode] = $service->id;
+
+                            $report['created']++;
+                            $report['created_items'][] = $serviceCode;
+                        }
                     }
 
-                    // Check for duplicate
-                    if (Service::where('service_code', $row['service_code'])->exists()) {
-                        $errors[] = "Row {$rowNum}: Service code '{$row['service_code']}' already exists";
-                        $skipped++;
-                        continue;
-                    }
-
-                    // Get or create category
-                    $categoryId = null;
-                    if (!empty($row['category_name'])) {
-                        $category = ServiceCategory::firstOrCreate(
-                            ['category_name' => trim($row['category_name'])],
-                            ['description' => 'Auto-created during import']
-                        );
-                        $categoryId = $category->id;
-                    }
-
-                    // Create service
-                    $service = Service::create([
-                        'user_id' => auth()->id(),
-                        'category_id' => $categoryId,
-                        'service_name' => trim($row['service_name']),
-                        'service_code' => trim($row['service_code']),
-                        'status' => ($row['is_active'] ?? 1) == 1 ? 1 : 0,
-                    ]);
-
-                    // Create ServicePrice record
-                    ServicePrice::create([
-                        'service_id' => $service->id,
-                        'cost_price' => floatval($row['cost_price'] ?? 0),
-                        'sale_price' => floatval($row['price'] ?? 0),
-                    ]);
-
-                    $imported++;
-
+                    DB::commit();
                 } catch (\Exception $e) {
-                    $errors[] = "Row {$rowNum}: " . $e->getMessage();
-                    $skipped++;
+                    DB::rollBack();
+                    $report['errors'][] = "Batch " . ($batchIndex + 1) . " failed: " . $e->getMessage();
+                    Log::error("Service import batch {$batchIndex} failed: " . $e->getMessage());
                 }
             }
 
-            DB::commit();
+            $duration = round(microtime(true) - $startTime, 2);
 
-            $message = "Successfully imported {$imported} services.";
-            if ($skipped > 0) {
-                $message .= " {$skipped} rows skipped.";
-            }
-
-            return back()->with('success', $message)->with('import_errors', $errors);
+            return back()->with('import_report', [
+                'type' => 'Services',
+                'created' => $report['created'],
+                'updated' => $report['updated'],
+                'skipped' => $report['skipped'],
+                'errors' => $report['errors'],
+                'duration' => $duration,
+                'total_rows' => count($data),
+                'batches_processed' => $totalBatches,
+            ]);
 
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error('Service import failed: ' . $e->getMessage());
             return back()->with('error', 'Import failed: ' . $e->getMessage());
         }
@@ -890,6 +1000,9 @@ class ImportExportController extends Controller
 
     /**
      * Import staff from CSV or XLSX
+     * - Batch commits every 50 records
+     * - Detects duplicates by email and updates instead of skipping
+     * - Returns detailed import report
      */
     public function importStaff(Request $request)
     {
@@ -900,6 +1013,7 @@ class ImportExportController extends Controller
 
         $file = $request->file('file');
         $defaultPassword = $request->default_password ?? 'password123';
+        $startTime = microtime(true);
 
         try {
             $data = $this->parseFile($file);
@@ -908,148 +1022,187 @@ class ImportExportController extends Controller
                 return back()->with('error', 'File is empty or invalid.');
             }
 
-            $imported = 0;
-            $errors = [];
-            $skipped = 0;
+            // Pre-fetch lookup data for performance
+            $existingUsers = User::where('is_admin', 2)->pluck('id', 'email')->toArray();
+            $specializations = Specialization::pluck('id', 'name')->toArray();
+            $clinics = Clinic::pluck('id', 'name')->toArray();
+            $departments = \App\Models\Department::pluck('id', 'name')->toArray();
+            $roles = Role::pluck('id', 'name')->toArray();
 
-            DB::beginTransaction();
+            $report = [
+                'created' => 0,
+                'updated' => 0,
+                'skipped' => 0,
+                'errors' => [],
+                'created_items' => [],
+                'updated_items' => [],
+            ];
 
-            foreach ($data as $index => $row) {
-                $rowNum = $index + 2;
+            $batches = array_chunk($data, self::BATCH_SIZE);
+            $totalBatches = count($batches);
 
+            foreach ($batches as $batchIndex => $batch) {
+                DB::beginTransaction();
                 try {
-                    // Required fields validation
-                    if (empty($row['surname']) || empty($row['firstname']) || empty($row['email'])) {
-                        $errors[] = "Row {$rowNum}: Missing required fields (surname, firstname, email)";
-                        $skipped++;
-                        continue;
-                    }
+                    foreach ($batch as $index => $row) {
+                        $rowNum = ($batchIndex * self::BATCH_SIZE) + $index + 2;
 
-                    // Check for duplicate email
-                    if (User::where('email', $row['email'])->exists()) {
-                        $errors[] = "Row {$rowNum}: Email '{$row['email']}' already exists";
-                        $skipped++;
-                        continue;
-                    }
+                        // Required fields validation
+                        if (empty($row['surname']) || empty($row['firstname']) || empty($row['email'])) {
+                            $report['errors'][] = "Row {$rowNum}: Missing required fields (surname, firstname, email)";
+                            $report['skipped']++;
+                            continue;
+                        }
 
-                    // Validate gender (required in DB)
-                    $gender = trim($row['gender'] ?? '');
-                    if (empty($gender) || !in_array($gender, ['Male', 'Female', 'Others'])) {
-                        $errors[] = "Row {$rowNum}: Invalid or missing gender (must be Male, Female, or Others)";
-                        $skipped++;
-                        continue;
-                    }
+                        $email = strtolower(trim($row['email']));
 
-                    // Validate role
-                    $roleName = trim($row['role'] ?? 'STAFF');
-                    $role = Role::where('name', $roleName)->first();
-                    if (!$role) {
-                        $errors[] = "Row {$rowNum}: Role '{$roleName}' not found";
-                        $skipped++;
-                        continue;
-                    }
+                        // Validate gender
+                        $gender = trim($row['gender'] ?? '');
+                        if (empty($gender) || !in_array($gender, ['Male', 'Female', 'Others'])) {
+                            $report['errors'][] = "Row {$rowNum}: Invalid or missing gender (must be Male, Female, or Others)";
+                            $report['skipped']++;
+                            continue;
+                        }
 
-                    // Create user
-                    $user = User::create([
-                        'surname' => trim($row['surname']),
-                        'firstname' => trim($row['firstname']),
-                        'othername' => trim($row['othername'] ?? ''),
-                        'email' => trim($row['email']),
-                        'password' => Hash::make($defaultPassword),
-                        'is_admin' => 2, // Staff user category
-                        'status' => 1,
-                    ]);
+                        // Validate role
+                        $roleName = trim($row['role'] ?? 'STAFF');
+                        if (!isset($roles[$roleName])) {
+                            $report['errors'][] = "Row {$rowNum}: Role '{$roleName}' not found";
+                            $report['skipped']++;
+                            continue;
+                        }
 
-                    // Assign role
-                    $user->assignRole($role);
+                        // Get foreign keys from cache
+                        $specializationId = !empty($row['specialization']) && isset($specializations[trim($row['specialization'])])
+                            ? $specializations[trim($row['specialization'])] : null;
+                        $clinicId = !empty($row['clinic']) && isset($clinics[trim($row['clinic'])])
+                            ? $clinics[trim($row['clinic'])] : null;
+                        $departmentId = !empty($row['department']) && isset($departments[trim($row['department'])])
+                            ? $departments[trim($row['department'])] : null;
 
-                    // Get specialization if provided
-                    $specializationId = null;
-                    if (!empty($row['specialization'])) {
-                        $specialization = Specialization::where('name', trim($row['specialization']))->first();
-                        if ($specialization) {
-                            $specializationId = $specialization->id;
+                        // Validate employment type/status
+                        $employmentType = trim($row['employment_type'] ?? 'full_time');
+                        if (!in_array($employmentType, ['full_time', 'part_time', 'contract', 'intern'])) {
+                            $employmentType = 'full_time';
+                        }
+                        $employmentStatus = trim($row['employment_status'] ?? 'active');
+                        if (!in_array($employmentStatus, ['active', 'suspended', 'terminated', 'resigned'])) {
+                            $employmentStatus = 'active';
+                        }
+
+                        if (isset($existingUsers[$email])) {
+                            // UPDATE existing staff
+                            $userId = $existingUsers[$email];
+
+                            User::where('id', $userId)->update([
+                                'surname' => trim($row['surname']),
+                                'firstname' => trim($row['firstname']),
+                                'othername' => trim($row['othername'] ?? ''),
+                            ]);
+
+                            Staff::updateOrCreate(
+                                ['user_id' => $userId],
+                                [
+                                    'employee_id' => !empty($row['employee_id']) ? trim($row['employee_id']) : null,
+                                    'specialization_id' => $specializationId,
+                                    'clinic_id' => $clinicId,
+                                    'department_id' => $departmentId,
+                                    'gender' => $gender,
+                                    'date_of_birth' => !empty($row['date_of_birth']) ? $row['date_of_birth'] : null,
+                                    'home_address' => $row['home_address'] ?? null,
+                                    'phone_number' => $row['phone_number'] ?? null,
+                                    'job_title' => !empty($row['job_title']) ? trim($row['job_title']) : null,
+                                    'date_hired' => !empty($row['date_hired']) ? $row['date_hired'] : null,
+                                    'employment_type' => $employmentType,
+                                    'employment_status' => $employmentStatus,
+                                    'consultation_fee' => floatval($row['consultation_fee'] ?? 0),
+                                    'is_unit_head' => ($row['is_unit_head'] ?? 0) == 1,
+                                    'is_dept_head' => ($row['is_dept_head'] ?? 0) == 1,
+                                    'bank_name' => !empty($row['bank_name']) ? trim($row['bank_name']) : null,
+                                    'bank_account_number' => !empty($row['bank_account_number']) ? trim($row['bank_account_number']) : null,
+                                    'bank_account_name' => !empty($row['bank_account_name']) ? trim($row['bank_account_name']) : null,
+                                    'emergency_contact_name' => !empty($row['emergency_contact_name']) ? trim($row['emergency_contact_name']) : null,
+                                    'emergency_contact_phone' => !empty($row['emergency_contact_phone']) ? trim($row['emergency_contact_phone']) : null,
+                                    'emergency_contact_relationship' => !empty($row['emergency_contact_relationship']) ? trim($row['emergency_contact_relationship']) : null,
+                                    'tax_id' => !empty($row['tax_id']) ? trim($row['tax_id']) : null,
+                                    'pension_id' => !empty($row['pension_id']) ? trim($row['pension_id']) : null,
+                                    'status' => 1,
+                                ]
+                            );
+
+                            $report['updated']++;
+                            $report['updated_items'][] = $email;
+                        } else {
+                            // CREATE new staff
+                            $user = User::create([
+                                'surname' => trim($row['surname']),
+                                'firstname' => trim($row['firstname']),
+                                'othername' => trim($row['othername'] ?? ''),
+                                'email' => $email,
+                                'password' => Hash::make($defaultPassword),
+                                'is_admin' => 2,
+                                'status' => 1,
+                            ]);
+
+                            $user->assignRole($roleName);
+
+                            Staff::create([
+                                'user_id' => $user->id,
+                                'employee_id' => !empty($row['employee_id']) ? trim($row['employee_id']) : null,
+                                'specialization_id' => $specializationId,
+                                'clinic_id' => $clinicId,
+                                'department_id' => $departmentId,
+                                'gender' => $gender,
+                                'date_of_birth' => !empty($row['date_of_birth']) ? $row['date_of_birth'] : null,
+                                'home_address' => $row['home_address'] ?? null,
+                                'phone_number' => $row['phone_number'] ?? null,
+                                'job_title' => !empty($row['job_title']) ? trim($row['job_title']) : null,
+                                'date_hired' => !empty($row['date_hired']) ? $row['date_hired'] : null,
+                                'employment_type' => $employmentType,
+                                'employment_status' => $employmentStatus,
+                                'consultation_fee' => floatval($row['consultation_fee'] ?? 0),
+                                'is_unit_head' => ($row['is_unit_head'] ?? 0) == 1,
+                                'is_dept_head' => ($row['is_dept_head'] ?? 0) == 1,
+                                'bank_name' => !empty($row['bank_name']) ? trim($row['bank_name']) : null,
+                                'bank_account_number' => !empty($row['bank_account_number']) ? trim($row['bank_account_number']) : null,
+                                'bank_account_name' => !empty($row['bank_account_name']) ? trim($row['bank_account_name']) : null,
+                                'emergency_contact_name' => !empty($row['emergency_contact_name']) ? trim($row['emergency_contact_name']) : null,
+                                'emergency_contact_phone' => !empty($row['emergency_contact_phone']) ? trim($row['emergency_contact_phone']) : null,
+                                'emergency_contact_relationship' => !empty($row['emergency_contact_relationship']) ? trim($row['emergency_contact_relationship']) : null,
+                                'tax_id' => !empty($row['tax_id']) ? trim($row['tax_id']) : null,
+                                'pension_id' => !empty($row['pension_id']) ? trim($row['pension_id']) : null,
+                                'status' => 1,
+                            ]);
+
+                            $existingUsers[$email] = $user->id;
+
+                            $report['created']++;
+                            $report['created_items'][] = $email;
                         }
                     }
 
-                    // Get clinic if provided
-                    $clinicId = null;
-                    if (!empty($row['clinic'])) {
-                        $clinic = Clinic::where('name', trim($row['clinic']))->first();
-                        if ($clinic) {
-                            $clinicId = $clinic->id;
-                        }
-                    }
-
-                    // Get department if provided
-                    $departmentId = null;
-                    if (!empty($row['department'])) {
-                        $department = \App\Models\Department::where('name', trim($row['department']))->first();
-                        if ($department) {
-                            $departmentId = $department->id;
-                        }
-                    }
-
-                    // Validate employment type
-                    $employmentType = trim($row['employment_type'] ?? 'full_time');
-                    if (!in_array($employmentType, ['full_time', 'part_time', 'contract', 'intern'])) {
-                        $employmentType = 'full_time';
-                    }
-
-                    // Validate employment status
-                    $employmentStatus = trim($row['employment_status'] ?? 'active');
-                    if (!in_array($employmentStatus, ['active', 'suspended', 'terminated', 'resigned'])) {
-                        $employmentStatus = 'active';
-                    }
-
-                    // Create staff profile with all fields
-                    Staff::create([
-                        'user_id' => $user->id,
-                        'employee_id' => !empty($row['employee_id']) ? trim($row['employee_id']) : null,
-                        'specialization_id' => $specializationId,
-                        'clinic_id' => $clinicId,
-                        'department_id' => $departmentId,
-                        'gender' => $gender,
-                        'date_of_birth' => !empty($row['date_of_birth']) ? $row['date_of_birth'] : null,
-                        'home_address' => $row['home_address'] ?? null,
-                        'phone_number' => $row['phone_number'] ?? null,
-                        'job_title' => !empty($row['job_title']) ? trim($row['job_title']) : null,
-                        'date_hired' => !empty($row['date_hired']) ? $row['date_hired'] : null,
-                        'employment_type' => $employmentType,
-                        'employment_status' => $employmentStatus,
-                        'consultation_fee' => floatval($row['consultation_fee'] ?? 0),
-                        'is_unit_head' => ($row['is_unit_head'] ?? 0) == 1,
-                        'is_dept_head' => ($row['is_dept_head'] ?? 0) == 1,
-                        'bank_name' => !empty($row['bank_name']) ? trim($row['bank_name']) : null,
-                        'bank_account_number' => !empty($row['bank_account_number']) ? trim($row['bank_account_number']) : null,
-                        'bank_account_name' => !empty($row['bank_account_name']) ? trim($row['bank_account_name']) : null,
-                        'emergency_contact_name' => !empty($row['emergency_contact_name']) ? trim($row['emergency_contact_name']) : null,
-                        'emergency_contact_phone' => !empty($row['emergency_contact_phone']) ? trim($row['emergency_contact_phone']) : null,
-                        'emergency_contact_relationship' => !empty($row['emergency_contact_relationship']) ? trim($row['emergency_contact_relationship']) : null,
-                        'tax_id' => !empty($row['tax_id']) ? trim($row['tax_id']) : null,
-                        'pension_id' => !empty($row['pension_id']) ? trim($row['pension_id']) : null,
-                        'status' => 1,
-                    ]);
-
-                    $imported++;
-
+                    DB::commit();
                 } catch (\Exception $e) {
-                    $errors[] = "Row {$rowNum}: " . $e->getMessage();
-                    $skipped++;
+                    DB::rollBack();
+                    $report['errors'][] = "Batch " . ($batchIndex + 1) . " failed: " . $e->getMessage();
+                    Log::error("Staff import batch {$batchIndex} failed: " . $e->getMessage());
                 }
             }
 
-            DB::commit();
+            $duration = round(microtime(true) - $startTime, 2);
 
-            $message = "Successfully imported {$imported} staff members.";
-            if ($skipped > 0) {
-                $message .= " {$skipped} rows skipped.";
-            }
-
-            return back()->with('success', $message)->with('import_errors', $errors);
+            return back()->with('import_report', [
+                'type' => 'Staff',
+                'created' => $report['created'],
+                'updated' => $report['updated'],
+                'skipped' => $report['skipped'],
+                'errors' => $report['errors'],
+                'duration' => $duration,
+                'total_rows' => count($data),
+                'batches_processed' => $totalBatches,
+            ]);
 
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error('Staff import failed: ' . $e->getMessage());
             return back()->with('error', 'Import failed: ' . $e->getMessage());
         }
@@ -1057,6 +1210,11 @@ class ImportExportController extends Controller
 
     /**
      * Import patients from CSV or XLSX
+     * - Batch commits every 50 records
+     * - Detects duplicates by file_no and updates instead of skipping
+     * - Allows blank patients (only file_no required) with defaults:
+     *   surname: "Blank", firstname: file_no, dob: 2000-01-01, gender: Male
+     * - Returns detailed import report
      */
     public function importPatients(Request $request)
     {
@@ -1065,6 +1223,7 @@ class ImportExportController extends Controller
         ]);
 
         $file = $request->file('file');
+        $startTime = microtime(true);
 
         try {
             $data = $this->parseFile($file);
@@ -1073,136 +1232,197 @@ class ImportExportController extends Controller
                 return back()->with('error', 'File is empty or invalid.');
             }
 
-            $imported = 0;
-            $errors = [];
-            $skipped = 0;
+            // Pre-fetch lookup data for performance
+            $existingPatients = patient::pluck('user_id', 'file_no')->toArray();
+            $existingEmails = User::pluck('id', 'email')->toArray();
+            $hmos = Hmo::pluck('id', 'name')->toArray();
+            $patientRole = Role::where('name', 'PATIENT')->first();
 
-            DB::beginTransaction();
+            $report = [
+                'created' => 0,
+                'updated' => 0,
+                'skipped' => 0,
+                'errors' => [],
+                'created_items' => [],
+                'updated_items' => [],
+            ];
 
-            foreach ($data as $index => $row) {
-                $rowNum = $index + 2;
+            $batches = array_chunk($data, self::BATCH_SIZE);
+            $totalBatches = count($batches);
 
+            foreach ($batches as $batchIndex => $batch) {
+                DB::beginTransaction();
                 try {
-                    if (empty($row['surname']) || empty($row['firstname']) || empty($row['gender']) || empty($row['dob'])) {
-                        $errors[] = "Row {$rowNum}: Missing required fields (surname, firstname, gender, dob)";
-                        $skipped++;
-                        continue;
-                    }
+                    foreach ($batch as $index => $row) {
+                        $rowNum = ($batchIndex * self::BATCH_SIZE) + $index + 2;
 
-                    // Check for duplicate email if provided
-                    $email = trim($row['email'] ?? '');
-                    if (!empty($email) && User::where('email', $email)->exists()) {
-                        $errors[] = "Row {$rowNum}: Email '{$email}' already exists";
-                        $skipped++;
-                        continue;
-                    }
+                        // File number is the primary key for patient identification
+                        $fileNo = trim($row['file_no'] ?? '');
 
-                    // Generate unique email if not provided
-                    if (empty($email)) {
-                        $email = strtolower(Str::slug($row['surname'] . '.' . $row['firstname'])) . '.' . Str::random(4) . '@patient.local';
-                    }
-
-                    // Create user
-                    $user = User::create([
-                        'surname' => trim($row['surname']),
-                        'firstname' => trim($row['firstname']),
-                        'othername' => trim($row['othername'] ?? ''),
-                        'email' => $email,
-                        'password' => Hash::make(Str::random(12)),
-                        'is_admin' => 3, // Patient user category
-                        'status' => 1,
-                    ]);
-
-                    // Assign patient role
-                    $patientRole = Role::where('name', 'PATIENT')->first();
-                    if ($patientRole) {
-                        $user->assignRole($patientRole);
-                    }
-
-                    // Get HMO if provided - exact match from dropdown
-                    $hmoId = null;
-                    if (!empty($row['hmo_name'])) {
-                        $hmo = Hmo::where('name', trim($row['hmo_name']))->first();
-                        if ($hmo) {
-                            $hmoId = $hmo->id;
+                        // If no file_no provided, generate one
+                        if (empty($fileNo)) {
+                            // Check if we have enough data to create a patient
+                            if (empty($row['surname']) && empty($row['firstname'])) {
+                                $report['errors'][] = "Row {$rowNum}: No file_no and no name data provided";
+                                $report['skipped']++;
+                                continue;
+                            }
+                            $fileNo = $this->generatePatientFileNo();
                         }
-                    }
 
-                    // Use provided file number or generate one
-                    $fileNo = trim($row['file_no'] ?? '');
-                    if (!empty($fileNo)) {
-                        // Check for duplicate file number
-                        if (patient::where('file_no', $fileNo)->exists()) {
-                            $errors[] = "Row {$rowNum}: File number '{$fileNo}' already exists";
-                            $skipped++;
-                            continue;
+                        // Apply defaults for blank patients (only file_no provided)
+                        $surname = trim($row['surname'] ?? '');
+                        $firstname = trim($row['firstname'] ?? '');
+                        $gender = trim($row['gender'] ?? '');
+                        $dob = trim($row['dob'] ?? '');
+
+                        // If minimal data, use defaults
+                        if (empty($surname)) {
+                            $surname = 'Blank';
                         }
-                    } else {
-                        $fileNo = $this->generatePatientFileNo();
-                    }
+                        if (empty($firstname)) {
+                            $firstname = $fileNo;
+                        }
+                        if (empty($gender) || !in_array($gender, ['Male', 'Female', 'Others'])) {
+                            $gender = 'Male';
+                        }
+                        if (empty($dob)) {
+                            $dob = '2000-01-01';
+                        }
 
-                    // Parse allergies (comma-separated to array)
-                    $allergies = null;
-                    if (!empty($row['allergies'])) {
-                        $allergies = array_map('trim', explode(',', $row['allergies']));
-                    }
+                        // Get HMO if provided
+                        $hmoId = null;
+                        if (!empty($row['hmo_name']) && isset($hmos[trim($row['hmo_name'])])) {
+                            $hmoId = $hmos[trim($row['hmo_name'])];
+                        }
 
-                    // Parse HMO number - must be numeric or null
-                    $hmoNo = null;
-                    if (!empty($row['hmo_no'])) {
-                        // Extract numeric value if present, or use the value if already numeric
-                        $hmoNoValue = trim($row['hmo_no']);
-                        if (is_numeric($hmoNoValue)) {
-                            $hmoNo = (int) $hmoNoValue;
-                        } else {
-                            // Try to extract numbers from string like 'HMO-12345'
-                            preg_match('/\d+/', $hmoNoValue, $matches);
-                            if (!empty($matches[0])) {
-                                $hmoNo = (int) $matches[0];
+                        // Parse HMO number
+                        $hmoNo = null;
+                        if (!empty($row['hmo_no'])) {
+                            $hmoNoValue = trim($row['hmo_no']);
+                            if (is_numeric($hmoNoValue)) {
+                                $hmoNo = (int) $hmoNoValue;
+                            } else {
+                                preg_match('/\d+/', $hmoNoValue, $matches);
+                                if (!empty($matches[0])) {
+                                    $hmoNo = (int) $matches[0];
+                                }
                             }
                         }
+
+                        // Parse allergies
+                        $allergies = null;
+                        if (!empty($row['allergies'])) {
+                            $allergies = array_map('trim', explode(',', $row['allergies']));
+                        }
+
+                        if (isset($existingPatients[$fileNo])) {
+                            // UPDATE existing patient
+                            $userId = $existingPatients[$fileNo];
+
+                            User::where('id', $userId)->update([
+                                'surname' => $surname,
+                                'firstname' => $firstname,
+                                'othername' => trim($row['othername'] ?? ''),
+                            ]);
+
+                            patient::where('file_no', $fileNo)->update([
+                                'hmo_id' => $hmoId,
+                                'hmo_no' => $hmoNo,
+                                'gender' => $gender,
+                                'dob' => $dob,
+                                'blood_group' => $row['blood_group'] ?? null,
+                                'genotype' => $row['genotype'] ?? null,
+                                'address' => $row['address'] ?? null,
+                                'phone_no' => $row['phone_no'] ?? null,
+                                'nationality' => $row['nationality'] ?? null,
+                                'ethnicity' => $row['ethnicity'] ?? null,
+                                'allergies' => $allergies,
+                                'medical_history' => $row['medical_history'] ?? null,
+                                'next_of_kin_name' => $row['next_of_kin_name'] ?? null,
+                                'next_of_kin_phone' => $row['next_of_kin_phone'] ?? null,
+                                'next_of_kin_address' => $row['next_of_kin_address'] ?? null,
+                            ]);
+
+                            $report['updated']++;
+                            $report['updated_items'][] = $fileNo;
+                        } else {
+                            // CREATE new patient
+                            // Handle email - generate unique if not provided or exists
+                            $email = trim($row['email'] ?? '');
+                            if (empty($email) || isset($existingEmails[$email])) {
+                                $email = strtolower(Str::slug($surname . '.' . $firstname)) . '.' . Str::random(4) . '@patient.local';
+                                // Make sure generated email is unique
+                                while (isset($existingEmails[$email])) {
+                                    $email = strtolower(Str::slug($surname . '.' . $firstname)) . '.' . Str::random(4) . '@patient.local';
+                                }
+                            }
+
+                            $user = User::create([
+                                'surname' => $surname,
+                                'firstname' => $firstname,
+                                'othername' => trim($row['othername'] ?? ''),
+                                'email' => $email,
+                                'password' => Hash::make(Str::random(12)),
+                                'is_admin' => 3,
+                                'status' => 1,
+                            ]);
+
+                            if ($patientRole) {
+                                $user->assignRole($patientRole);
+                            }
+
+                            patient::create([
+                                'user_id' => $user->id,
+                                'file_no' => $fileNo,
+                                'hmo_id' => $hmoId,
+                                'hmo_no' => $hmoNo,
+                                'gender' => $gender,
+                                'dob' => $dob,
+                                'blood_group' => $row['blood_group'] ?? null,
+                                'genotype' => $row['genotype'] ?? null,
+                                'address' => $row['address'] ?? null,
+                                'phone_no' => $row['phone_no'] ?? null,
+                                'nationality' => $row['nationality'] ?? null,
+                                'ethnicity' => $row['ethnicity'] ?? null,
+                                'allergies' => $allergies,
+                                'medical_history' => $row['medical_history'] ?? null,
+                                'next_of_kin_name' => $row['next_of_kin_name'] ?? null,
+                                'next_of_kin_phone' => $row['next_of_kin_phone'] ?? null,
+                                'next_of_kin_address' => $row['next_of_kin_address'] ?? null,
+                            ]);
+
+                            // Cache new entries
+                            $existingPatients[$fileNo] = $user->id;
+                            $existingEmails[$email] = $user->id;
+
+                            $report['created']++;
+                            $report['created_items'][] = $fileNo;
+                        }
                     }
 
-                    // Create patient profile
-                    patient::create([
-                        'user_id' => $user->id,
-                        'file_no' => $fileNo,
-                        'hmo_id' => $hmoId,
-                        'hmo_no' => $hmoNo,
-                        'gender' => $row['gender'],
-                        'dob' => $row['dob'],
-                        'blood_group' => $row['blood_group'] ?? null,
-                        'genotype' => $row['genotype'] ?? null,
-                        'address' => $row['address'] ?? null,
-                        'phone_no' => $row['phone_no'] ?? null,
-                        'nationality' => $row['nationality'] ?? null,
-                        'ethnicity' => $row['ethnicity'] ?? null,
-                        'allergies' => $allergies,
-                        'medical_history' => $row['medical_history'] ?? null,
-                        'next_of_kin_name' => $row['next_of_kin_name'] ?? null,
-                        'next_of_kin_phone' => $row['next_of_kin_phone'] ?? null,
-                        'next_of_kin_address' => $row['next_of_kin_address'] ?? null,
-                    ]);
-
-                    $imported++;
-
+                    DB::commit();
                 } catch (\Exception $e) {
-                    $errors[] = "Row {$rowNum}: " . $e->getMessage();
-                    $skipped++;
+                    DB::rollBack();
+                    $report['errors'][] = "Batch " . ($batchIndex + 1) . " failed: " . $e->getMessage();
+                    Log::error("Patient import batch {$batchIndex} failed: " . $e->getMessage());
                 }
             }
 
-            DB::commit();
+            $duration = round(microtime(true) - $startTime, 2);
 
-            $message = "Successfully imported {$imported} patients.";
-            if ($skipped > 0) {
-                $message .= " {$skipped} rows skipped.";
-            }
-
-            return back()->with('success', $message)->with('import_errors', $errors);
+            return back()->with('import_report', [
+                'type' => 'Patients',
+                'created' => $report['created'],
+                'updated' => $report['updated'],
+                'skipped' => $report['skipped'],
+                'errors' => $report['errors'],
+                'duration' => $duration,
+                'total_rows' => count($data),
+                'batches_processed' => $totalBatches,
+            ]);
 
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error('Patient import failed: ' . $e->getMessage());
             return back()->with('error', 'Import failed: ' . $e->getMessage());
         }
@@ -1610,5 +1830,189 @@ class ImportExportController extends Controller
         }
 
         return $prefix . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
+    }
+
+    // ========================================
+    // ASYNC IMPORT ENDPOINTS (AJAX + Queue)
+    // ========================================
+
+    /**
+     * Upload file and queue the import job
+     *
+     * @param Request $request
+     * @param string $type (products, services, staff, patients)
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function uploadAndQueueImport(Request $request, string $type)
+    {
+        // Validate type
+        $validTypes = ['products', 'services', 'staff', 'patients'];
+        if (!in_array($type, $validTypes)) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Invalid import type: ' . $type
+            ], 400);
+        }
+
+        // Validate file
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:51200', // 50MB max for large files
+        ]);
+
+        try {
+            // Store the file temporarily (don't parse it here!)
+            $file = $request->file('file');
+            $filename = 'import_' . uniqid() . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $filePath = $file->storeAs('imports', $filename, 'local');
+
+            // Get file row count estimate (quick scan for progress tracking)
+            $extension = strtolower($file->getClientOriginalExtension());
+            $estimatedRows = $this->estimateRowCount(storage_path('app/' . $filePath), $extension);
+
+            // Get additional options based on type
+            $options = [];
+            if ($type === 'products') {
+                $options['default_store_id'] = $request->input('default_store_id');
+            } elseif ($type === 'staff') {
+                $options['default_password'] = $request->input('default_password', 'password123');
+            }
+
+            // Get duplicate handling option (update or skip)
+            $duplicateAction = $request->input('duplicate_action', 'update');
+
+            // Generate import ID and start progress tracking
+            $importId = \App\Services\ImportProgressService::generateImportId();
+            $userId = auth()->id() ?? 0;
+
+            \App\Services\ImportProgressService::startImport(
+                $importId,
+                $type,
+                $estimatedRows,
+                $userId
+            );
+
+            // Dispatch the appropriate job with FILE PATH (not parsed data)
+            switch ($type) {
+                case 'products':
+                    $defaultStoreId = $options['default_store_id'] ?? null;
+                    \App\Jobs\ImportProductsJob::dispatch($importId, $filePath, $defaultStoreId, $userId, $duplicateAction);
+                    break;
+                case 'services':
+                    \App\Jobs\ImportServicesJob::dispatch($importId, $filePath, $userId, $duplicateAction);
+                    break;
+                case 'staff':
+                    $defaultPassword = $options['default_password'] ?? 'password123';
+                    \App\Jobs\ImportStaffJob::dispatch($importId, $filePath, $defaultPassword, $userId, $duplicateAction);
+                    break;
+                case 'patients':
+                    \App\Jobs\ImportPatientsJob::dispatch($importId, $filePath, $userId, $duplicateAction);
+                    break;
+            }
+
+            return response()->json([
+                'success' => true,
+                'import_id' => $importId,
+                'total_rows' => $estimatedRows,
+                'message' => ucfirst($type) . ' import queued successfully. Processing in background...'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("Async {$type} import upload failed: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to process file: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Quick estimate of row count without fully parsing the file
+     */
+    private function estimateRowCount(string $filePath, string $extension): int
+    {
+        try {
+            if (in_array($extension, ['xlsx', 'xls'])) {
+                // For Excel, use a lightweight reader to get row count
+                $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile($filePath);
+                $reader->setReadDataOnly(true);
+
+                // Only read first sheet info
+                $spreadsheet = $reader->load($filePath);
+                $sheet = $spreadsheet->getActiveSheet();
+                $highestRow = $sheet->getHighestRow();
+                $spreadsheet->disconnectWorksheets();
+                unset($spreadsheet);
+
+                return max(0, $highestRow - 1); // Subtract header row
+            } else {
+                // For CSV, count lines quickly
+                $lineCount = 0;
+                $handle = fopen($filePath, 'r');
+                while (!feof($handle)) {
+                    fgets($handle);
+                    $lineCount++;
+                }
+                fclose($handle);
+                return max(0, $lineCount - 1); // Subtract header row
+            }
+        } catch (\Exception $e) {
+            Log::warning("Could not estimate row count: " . $e->getMessage());
+            return 0; // Unknown
+        }
+    }
+
+    /**
+     * Get import status/progress
+     *
+     * @param string $importId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getImportStatus(string $importId)
+    {
+        $progress = \App\Services\ImportProgressService::getProgress($importId);
+
+        if (!$progress) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Import not found or expired.'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'progress' => $progress
+        ]);
+    }
+
+    /**
+     * Cancel a running import
+     *
+     * @param string $importId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function cancelImport(string $importId)
+    {
+        $progress = \App\Services\ImportProgressService::getProgress($importId);
+
+        if (!$progress) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Import not found or expired.'
+            ], 404);
+        }
+
+        if ($progress['status'] === 'completed' || $progress['status'] === 'failed') {
+            return response()->json([
+                'success' => false,
+                'error' => 'Cannot cancel an import that has already finished.'
+            ], 400);
+        }
+
+        \App\Services\ImportProgressService::cancelImport($importId);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Import cancellation requested.'
+        ]);
     }
 }
