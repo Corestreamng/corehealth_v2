@@ -908,17 +908,47 @@
 
             {{-- Accountant Section --}}
             @hasanyrole('SUPERADMIN|ADMIN|ACCOUNTS')
-            <li class="nav-item {{ request()->routeIs('inventory.purchase-orders.accounts-payable', 'inventory.expenses.*', 'banks.*') ? 'active' : '' }}">
-                <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-accountant" data-bs-target="#sidebar-accountant" aria-expanded="{{ request()->routeIs('inventory.purchase-orders.accounts-payable', 'inventory.expenses.*', 'banks.*') ? 'true' : 'false' }}" aria-controls="sidebar-accountant">
+            <li class="nav-item {{ request()->routeIs('accounting.*', 'inventory.purchase-orders.accounts-payable', 'inventory.expenses.*', 'banks.*') ? 'active' : '' }}">
+                <a class="nav-link" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-accountant" data-bs-target="#sidebar-accountant" aria-expanded="{{ request()->routeIs('accounting.*', 'inventory.purchase-orders.accounts-payable', 'inventory.expenses.*', 'banks.*') ? 'true' : 'false' }}" aria-controls="sidebar-accountant">
                     <i class="mdi mdi-calculator menu-icon"></i>
                     <span class="menu-title">Accounting</span>
                     <i class="mdi mdi-chevron-right menu-arrow"></i>
                 </a>
-                <div class="collapse {{ request()->routeIs('inventory.purchase-orders.accounts-payable', 'inventory.expenses.*', 'banks.*') ? 'show' : '' }}" id="sidebar-accountant">
+                <div class="collapse {{ request()->routeIs('accounting.*', 'inventory.purchase-orders.accounts-payable', 'inventory.expenses.*', 'banks.*') ? 'show' : '' }}" id="sidebar-accountant">
                     <ul class="nav flex-column sub-menu">
                         <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('accounting.dashboard') ? 'active' : '' }}" href="{{ route('accounting.dashboard') }}">
+                                <i class="mdi mdi-view-dashboard-outline"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('accounting.journal-entries.*') ? 'active' : '' }}" href="{{ route('accounting.journal-entries.index') }}">
+                                <i class="mdi mdi-book-open-page-variant"></i> Journal Entries
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('accounting.chart-of-accounts.*') ? 'active' : '' }}" href="{{ route('accounting.chart-of-accounts.index') }}">
+                                <i class="mdi mdi-file-tree"></i> Chart of Accounts
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('accounting.reports.*') ? 'active' : '' }}" href="{{ route('accounting.reports.index') }}">
+                                <i class="mdi mdi-chart-bar"></i> Reports
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('accounting.credit-notes.*') ? 'active' : '' }}" href="{{ route('accounting.credit-notes.index') }}">
+                                <i class="mdi mdi-file-document-outline"></i> Credit Notes
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('accounting.periods') ? 'active' : '' }}" href="{{ route('accounting.periods') }}">
+                                <i class="mdi mdi-calendar-range"></i> Fiscal Periods
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('inventory.purchase-orders.accounts-payable') ? 'active' : '' }}" href="{{ route('inventory.purchase-orders.accounts-payable') }}">
-                                <i class="mdi mdi-file-document-outline"></i> Accounts Payable
+                                <i class="mdi mdi-currency-ngn"></i> Accounts Payable
                             </a>
                         </li>
                         <li class="nav-item">
