@@ -57,6 +57,11 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware('web')
                 ->namespace($this->namespace)
                 ->group(base_path('routes/hr.php'));
+
+            // Accounting Routes (Accounting System Plan - Section 8)
+            Route::middleware('web')
+                ->namespace($this->namespace)
+                ->group(base_path('routes/accounting.php'));
         });
     }
 
