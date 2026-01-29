@@ -48,7 +48,7 @@ class JournalEntryController extends Controller
     public function index(Request $request)
     {
         // Get current period
-        $currentPeriod = AccountingPeriod::where('is_closed', false)
+        $currentPeriod = AccountingPeriod::where('status', 'open')
             ->where('start_date', '<=', now())
             ->where('end_date', '>=', now())
             ->first();
@@ -74,7 +74,7 @@ class JournalEntryController extends Controller
             'total_debits' => JournalEntryLine::whereHas('journalEntry', function ($q) use ($periodStart, $periodEnd) {
                 $q->where('status', JournalEntry::STATUS_POSTED)
                     ->whereBetween('entry_date', [$periodStart, $periodEnd]);
-            })->sum('debit_amount'),
+            })->sum('debit'),
         ];
 
         $periods = AccountingPeriod::orderBy('start_date', 'desc')->get();
@@ -142,10 +142,10 @@ class JournalEntryController extends Controller
                 return '<span class="badge badge-' . $color . '">' . ucfirst($entry->entry_type) . '</span>';
             })
             ->addColumn('total_debit_formatted', function ($entry) {
-                return '₦' . number_format($entry->lines->sum('debit_amount'), 2);
+                return '₦' . number_format($entry->lines->sum('debit'), 2);
             })
             ->addColumn('total_credit_formatted', function ($entry) {
-                return '₦' . number_format($entry->lines->sum('credit_amount'), 2);
+                return '₦' . number_format($entry->lines->sum('credit'), 2);
             })
             ->addColumn('status_badge', function ($entry) {
                 $colors = [
@@ -205,7 +205,7 @@ class JournalEntryController extends Controller
     public function create()
     {
         $accounts = Account::where('is_active', true)
-            ->orderBy('account_code')
+            ->orderBy('code')
             ->get()
             ->map(function ($account) {
                 return [
@@ -257,7 +257,7 @@ class JournalEntryController extends Controller
         // Check if there's an open period for the entry date
         $period = AccountingPeriod::where('start_date', '<=', $request->entry_date)
             ->where('end_date', '>=', $request->entry_date)
-            ->where('is_closed', false)
+            ->where('status', 'open')
             ->first();
 
         if (!$period) {
@@ -282,14 +282,14 @@ class JournalEntryController extends Controller
                 default => JournalEntry::TYPE_MANUAL
             };
 
-            $entry = $this->accountingService->createJournalEntry([
+            $entry = $this->accountingService->createManualEntry([
                 'entry_date' => $request->entry_date,
                 'entry_type' => $entryType,
                 'reference' => $request->reference,
                 'description' => $request->description,
                 'memo' => $request->memo,
                 'status' => JournalEntry::STATUS_DRAFT,
-            ], $request->lines);
+            ], $request->lines, Auth::id());
 
             // If submit after save is requested
             if ($request->submit_after_save) {
@@ -337,8 +337,9 @@ class JournalEntryController extends Controller
             'reversedBy',
             'reversalEntry',
             'originalEntry',
-            'edits.requestedBy',
-            'edits.approvedBy'
+            'edits.requester',
+            'edits.approver',
+            'edits.rejecter'
         ])->findOrFail($id);
 
         return view('accounting.journal-entries.show', compact('entry'));
@@ -357,7 +358,7 @@ class JournalEntryController extends Controller
         }
 
         $accounts = Account::where('is_active', true)
-            ->orderBy('account_code')
+            ->orderBy('code')
             ->get();
 
         return view('accounting.journal-entries.edit', compact('entry', 'accounts'));
@@ -457,7 +458,7 @@ class JournalEntryController extends Controller
         }
 
         try {
-            $this->accountingService->submitForApproval($entry);
+            $this->accountingService->submitForApproval($entry, Auth::id());
             if ($request->ajax()) {
                 return response()->json(['message' => 'Entry submitted for approval.']);
             }
@@ -485,7 +486,7 @@ class JournalEntryController extends Controller
         }
 
         try {
-            $this->accountingService->approveEntry($entry);
+            $this->accountingService->approveEntry($entry, Auth::id());
             if ($request->ajax()) {
                 return response()->json(['message' => 'Entry approved successfully.']);
             }
@@ -517,7 +518,7 @@ class JournalEntryController extends Controller
         ]);
 
         try {
-            $this->accountingService->rejectEntry($entry, $request->rejection_reason);
+            $this->accountingService->rejectEntry($entry, Auth::id(), $request->rejection_reason);
             if ($request->ajax()) {
                 return response()->json(['message' => 'Entry rejected.']);
             }
@@ -545,7 +546,7 @@ class JournalEntryController extends Controller
         }
 
         try {
-            $this->accountingService->postEntry($entry);
+            $this->accountingService->postEntry($entry, Auth::id());
             if ($request->ajax()) {
                 return response()->json(['message' => 'Entry posted to ledger.']);
             }
@@ -663,7 +664,7 @@ class JournalEntryController extends Controller
      */
     public function requestEdit(Request $request, $id)
     {
-        $entry = JournalEntry::findOrFail($id);
+        $entry = JournalEntry::with('lines')->findOrFail($id);
 
         if ($entry->status !== JournalEntry::STATUS_POSTED) {
             if ($request->ajax()) {
@@ -673,16 +674,24 @@ class JournalEntryController extends Controller
         }
 
         $request->validate([
-            'reason' => 'required|string|max:500',
+            'edit_reason' => 'required|string|max:500',
             'proposed_changes' => 'required|string',
         ]);
 
+        // Capture original data snapshot
+        $originalData = [
+            'entry' => $entry->toArray(),
+            'lines' => $entry->lines->toArray(),
+        ];
+
         $edit = JournalEntryEdit::create([
             'journal_entry_id' => $entry->id,
+            'original_data' => $originalData,
+            'edited_data' => ['proposed_changes' => $request->proposed_changes],
+            'edit_reason' => $request->edit_reason,
+            'status' => 'pending',
             'requested_by' => Auth::id(),
-            'reason' => $request->reason,
-            'proposed_changes' => $request->proposed_changes,
-            'status' => JournalEntryEdit::STATUS_PENDING,
+            'requested_at' => now(),
         ]);
 
         if ($request->ajax()) {
@@ -691,5 +700,98 @@ class JournalEntryController extends Controller
 
         return redirect()->back()
             ->with('success', 'Edit request submitted for approval.');
+    }
+
+    /**
+     * Approve an edit request.
+     * When approved, the original entry is reversed and a message instructs
+     * the user to create a new correcting entry.
+     */
+    public function approveEditRequest(Request $request, $editId)
+    {
+        $editRequest = JournalEntryEdit::with('journalEntry')->findOrFail($editId);
+
+        if ($editRequest->status !== 'pending') {
+            if ($request->ajax()) {
+                return response()->json(['message' => 'This edit request has already been processed.'], 400);
+            }
+            return redirect()->back()->with('error', 'This edit request has already been processed.');
+        }
+
+        $entry = $editRequest->journalEntry;
+
+        // Check if entry is still posted (not already reversed)
+        if ($entry->status !== JournalEntry::STATUS_POSTED) {
+            if ($request->ajax()) {
+                return response()->json(['message' => 'The journal entry is no longer in posted status.'], 400);
+            }
+            return redirect()->back()->with('error', 'The journal entry is no longer in posted status.');
+        }
+
+        DB::beginTransaction();
+        try {
+            // Update the edit request status
+            $editRequest->update([
+                'status' => JournalEntryEdit::STATUS_APPROVED,
+                'approved_by' => Auth::id(),
+                'approved_at' => now(),
+            ]);
+
+            // Reverse the original entry
+            $this->accountingService->reverseEntry($entry, Auth::id(), 'Reversed for edit request: ' . $editRequest->edit_reason);
+
+            DB::commit();
+
+            $message = 'Edit request approved. The original entry has been reversed. Please create a new correcting entry.';
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'message' => $message,
+                    'redirect' => route('accounting.journal-entries.create')
+                ]);
+            }
+
+            return redirect()->route('accounting.journal-entries.create')
+                ->with('success', $message)
+                ->with('info', 'Original entry data is available for reference: Entry #' . $entry->entry_number);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            if ($request->ajax()) {
+                return response()->json(['message' => 'Failed to approve edit request: ' . $e->getMessage()], 500);
+            }
+            return redirect()->back()->with('error', 'Failed to approve edit request: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Reject an edit request.
+     */
+    public function rejectEditRequest(Request $request, $editId)
+    {
+        $editRequest = JournalEntryEdit::findOrFail($editId);
+
+        if ($editRequest->status !== 'pending') {
+            if ($request->ajax()) {
+                return response()->json(['message' => 'This edit request has already been processed.'], 400);
+            }
+            return redirect()->back()->with('error', 'This edit request has already been processed.');
+        }
+
+        $request->validate([
+            'rejection_reason' => 'required|string|max:500',
+        ]);
+
+        $editRequest->update([
+            'status' => JournalEntryEdit::STATUS_REJECTED,
+            'rejected_by' => Auth::id(),
+            'rejected_at' => now(),
+            'rejection_reason' => $request->rejection_reason,
+        ]);
+
+        if ($request->ajax()) {
+            return response()->json(['message' => 'Edit request rejected.']);
+        }
+
+        return redirect()->back()->with('success', 'Edit request rejected.');
     }
 }

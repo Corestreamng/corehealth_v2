@@ -47,8 +47,8 @@ class PaymentObserver
         $debitAccountCode = $this->getDebitAccountCode($payment);
         $creditAccountCode = $this->getCreditAccountCode($payment);
 
-        $debitAccount = Account::where('account_code', $debitAccountCode)->first();
-        $creditAccount = Account::where('account_code', $creditAccountCode)->first();
+        $debitAccount = Account::where('code', $debitAccountCode)->first();
+        $creditAccount = Account::where('code', $creditAccountCode)->first();
 
         if (!$debitAccount || !$creditAccount) {
             Log::warning('Payment journal entry skipped - accounts not configured', [
@@ -76,14 +76,12 @@ class PaymentObserver
             ]
         ];
 
-        $entry = $accountingService->createJournalEntry([
-            'entry_type' => JournalEntry::TYPE_AUTOMATED,
-            'source_type' => payment::class,
-            'source_id' => $payment->id,
-            'description' => $description,
-            'status' => JournalEntry::STATUS_POSTED, // Auto-post for automated entries
-            'memo' => "Ref: {$payment->reference_no}"
-        ], $lines);
+        $entry = $accountingService->createAndPostAutomatedEntry(
+            payment::class,
+            $payment->id,
+            $description,
+            $lines
+        );
 
         // Update payment with journal entry reference
         $payment->journal_entry_id = $entry->id;

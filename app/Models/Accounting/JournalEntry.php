@@ -30,12 +30,12 @@ class JournalEntry extends Model implements Auditable
         'entry_date',
         'accounting_period_id',
         'description',
-        'source_type',
-        'source_id',
+        'reference_type',
+        'reference_id',
+        'entry_type',
         'status',
-        'is_manual',
-        'is_reversing',
-        'reversed_entry_id',
+        'reversal_of_id',
+        'reversed_by_id',
         'created_by',
         'submitted_by',
         'submitted_at',
@@ -46,6 +46,7 @@ class JournalEntry extends Model implements Auditable
         'rejected_by',
         'rejected_at',
         'rejection_reason',
+        'edit_requires_approval',
     ];
 
     protected $casts = [
@@ -58,13 +59,23 @@ class JournalEntry extends Model implements Auditable
         'rejected_at' => 'datetime',
     ];
 
-    // Status constants
+    // Status constants (must match database enum values)
     const STATUS_DRAFT = 'draft';
-    const STATUS_PENDING = 'pending';
+    const STATUS_PENDING = 'pending_approval';
+    const STATUS_PENDING_APPROVAL = 'pending_approval';  // Alias
     const STATUS_APPROVED = 'approved';
     const STATUS_POSTED = 'posted';
-    const STATUS_REJECTED = 'rejected';
+    const STATUS_REJECTED = 'rejected';  // Note: May need migration if not in DB
     const STATUS_REVERSED = 'reversed';
+
+    // Entry type constants
+    const TYPE_AUTO = 'auto';
+    const TYPE_AUTOMATED = 'auto';  // Alias
+    const TYPE_MANUAL = 'manual';
+    const TYPE_OPENING = 'opening';
+    const TYPE_CLOSING = 'closing';
+    const TYPE_REVERSAL = 'reversal';
+    const TYPE_ADJUSTMENT = 'adjustment';  // Note: May need migration if not in DB
 
     // Source types for automated entries
     const SOURCE_PAYMENT = 'App\\Models\\Payment';
@@ -99,11 +110,43 @@ class JournalEntry extends Model implements Auditable
     }
 
     /**
-     * Get the reversed entry (if this is a reversing entry).
+     * Get the entry this reverses (if this is a reversing entry).
+     */
+    public function reversalOf(): BelongsTo
+    {
+        return $this->belongsTo(JournalEntry::class, 'reversal_of_id');
+    }
+
+    /**
+     * Alias for reversalOf (backward compatibility).
      */
     public function reversedEntry(): BelongsTo
     {
-        return $this->belongsTo(JournalEntry::class, 'reversed_entry_id');
+        return $this->belongsTo(JournalEntry::class, 'reversal_of_id');
+    }
+
+    /**
+     * Alias for reversalOf (alternate naming).
+     */
+    public function originalEntry(): BelongsTo
+    {
+        return $this->belongsTo(JournalEntry::class, 'reversal_of_id');
+    }
+
+    /**
+     * Get the entry that reversed this one.
+     */
+    public function reversedBy(): BelongsTo
+    {
+        return $this->belongsTo(JournalEntry::class, 'reversed_by_id');
+    }
+
+    /**
+     * Alias for reversedBy (alternate naming).
+     */
+    public function reversalEntry(): BelongsTo
+    {
+        return $this->belongsTo(JournalEntry::class, 'reversed_by_id');
     }
 
     /**
@@ -111,13 +154,29 @@ class JournalEntry extends Model implements Auditable
      */
     public function reversingEntries(): HasMany
     {
-        return $this->hasMany(JournalEntry::class, 'reversed_entry_id');
+        return $this->hasMany(JournalEntry::class, 'reversal_of_id');
+    }
+
+    /**
+     * Get edit requests for this entry.
+     */
+    public function edits(): HasMany
+    {
+        return $this->hasMany(JournalEntryEdit::class);
     }
 
     /**
      * Get the user who created this entry.
      */
     public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Alias for creator relationship (for compatibility).
+     */
+    public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
@@ -139,9 +198,25 @@ class JournalEntry extends Model implements Auditable
     }
 
     /**
+     * Alias for approver relationship (for compatibility).
+     */
+    public function approvedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    /**
      * Get the user who posted this entry.
      */
     public function poster(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'posted_by');
+    }
+
+    /**
+     * Alias for poster relationship (for compatibility).
+     */
+    public function postedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'posted_by');
     }
@@ -171,7 +246,7 @@ class JournalEntry extends Model implements Auditable
      */
     public function getTotalDebitAttribute(): float
     {
-        return (float) $this->lines->sum('debit_amount');
+        return (float) $this->lines->sum('debit');
     }
 
     /**
@@ -179,7 +254,7 @@ class JournalEntry extends Model implements Auditable
      */
     public function getTotalCreditAttribute(): float
     {
-        return (float) $this->lines->sum('credit_amount');
+        return (float) $this->lines->sum('credit');
     }
 
     /**

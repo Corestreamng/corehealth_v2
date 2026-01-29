@@ -4,6 +4,15 @@
 @section('page_name', 'Accounting')
 @section('subpage_name', 'View Journal Entry')
 
+@push('styles')
+<style>
+    .text-pre-wrap {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="container-fluid">
     {{-- Header --}}
@@ -24,7 +33,7 @@
                     </button>
                 </form>
             @endif
-            @if($entry->status === 'pending')
+            @if($entry->status === 'pending_approval')
                 <form action="{{ route('accounting.journal-entries.approve', $entry->id) }}" method="POST" class="d-inline">
                     @csrf
                     <button type="submit" class="btn btn-success mr-1">
@@ -103,6 +112,7 @@
                                     $statusColors = [
                                         'draft' => 'secondary',
                                         'pending' => 'warning',
+                                        'pending_approval' => 'warning',
                                         'approved' => 'info',
                                         'rejected' => 'danger',
                                         'posted' => 'success',
@@ -269,17 +279,98 @@
                     </div>
                     <div class="card-body">
                         @foreach($entry->edits as $edit)
-                            <div class="border-bottom pb-3 mb-3">
-                                <div class="d-flex justify-content-between">
-                                    <strong>{{ $edit->requestedBy->name ?? 'Unknown' }}</strong>
-                                    <span class="badge bg-{{ $edit->status === 'pending' ? 'warning' : ($edit->status === 'approved' ? 'success' : 'danger') }}">
+                            <div class="border rounded p-3 mb-3 {{ $edit->status === 'approved' ? 'border-success' : ($edit->status === 'rejected' ? 'border-danger' : 'border-warning') }}">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <strong>{{ $edit->requester->name ?? 'Unknown' }}</strong>
+                                        <span class="text-muted ml-2">{{ $edit->requested_at ? $edit->requested_at->format('M d, Y H:i') : $edit->created_at->format('M d, Y H:i') }}</span>
+                                    </div>
+                                    <span class="badge badge-{{ $edit->status === 'pending' ? 'warning' : ($edit->status === 'approved' ? 'success' : 'danger') }}">
                                         {{ ucfirst($edit->status) }}
                                     </span>
                                 </div>
-                                <p class="mb-1 text-muted">{{ $edit->created_at->format('M d, Y H:i') }}</p>
-                                <p class="mb-1"><strong>Reason:</strong> {{ $edit->reason }}</p>
-                                <p class="mb-0"><strong>Proposed Changes:</strong> {{ $edit->proposed_changes }}</p>
+
+                                <div class="mb-2">
+                                    <strong class="text-muted">Reason for Edit:</strong>
+                                    <p class="mb-0">{{ $edit->edit_reason }}</p>
+                                </div>
+
+                                @if($edit->edited_data && isset($edit->edited_data['proposed_changes']))
+                                    <div class="mb-2">
+                                        <strong class="text-muted">Proposed Changes:</strong>
+                                        <p class="mb-0 text-pre-wrap">{{ $edit->edited_data['proposed_changes'] }}</p>
+                                    </div>
+                                @endif
+
+                                @if($edit->status === 'pending')
+                                    <div class="mt-3 pt-2 border-top">
+                                        <div class="d-flex gap-2">
+                                            <form action="{{ route('accounting.journal-entries.edit-requests.approve', $edit->id) }}" method="POST" class="d-inline mr-2">
+                                                @csrf
+                                                <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Approve this edit request? This will REVERSE the original entry and you will need to create a new correcting entry.')">
+                                                    <i class="mdi mdi-check mr-1"></i> Approve & Reverse Entry
+                                                </button>
+                                            </form>
+                                            <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#rejectEditModal{{ $edit->id }}">
+                                                <i class="mdi mdi-close mr-1"></i> Reject
+                                            </button>
+                                        </div>
+                                        <small class="text-muted mt-2 d-block">
+                                            <i class="mdi mdi-information-outline mr-1"></i>
+                                            Approving will reverse the original entry. A new correcting entry must then be created manually.
+                                        </small>
+                                    </div>
+                                @endif
+
+                                @if($edit->status === 'approved' && $edit->approver)
+                                    <div class="mt-2 pt-2 border-top">
+                                        <small class="text-success">
+                                            <i class="mdi mdi-check-circle mr-1"></i>
+                                            Approved by {{ $edit->approver->name }} on {{ $edit->approved_at ? $edit->approved_at->format('M d, Y H:i') : 'N/A' }}
+                                        </small>
+                                    </div>
+                                @endif
+
+                                @if($edit->status === 'rejected')
+                                    <div class="mt-2 pt-2 border-top">
+                                        <small class="text-danger">
+                                            <i class="mdi mdi-close-circle mr-1"></i>
+                                            Rejected by {{ $edit->rejecter->name ?? 'Unknown' }} on {{ $edit->rejected_at ? $edit->rejected_at->format('M d, Y H:i') : 'N/A' }}
+                                        </small>
+                                        @if($edit->rejection_reason)
+                                            <p class="mb-0 mt-1 text-danger"><strong>Reason:</strong> {{ $edit->rejection_reason }}</p>
+                                        @endif
+                                    </div>
+                                @endif
                             </div>
+
+                            <!-- Reject Edit Request Modal -->
+                            @if($edit->status === 'pending')
+                            <div class="modal fade" id="rejectEditModal{{ $edit->id }}" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <form action="{{ route('accounting.journal-entries.edit-requests.reject', $edit->id) }}" method="POST">
+                                            @csrf
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Reject Edit Request</h5>
+                                                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Reason for Rejection <span class="text-danger">*</span></label>
+                                                    <textarea name="rejection_reason" class="form-control" rows="3" required
+                                                              placeholder="Explain why this edit request is being rejected..."></textarea>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn btn-danger">Reject Request</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            @endif
                         @endforeach
                     </div>
                 </div>
@@ -361,7 +452,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Reason for Edit Request <span class="text-danger">*</span></label>
-                        <textarea name="reason" class="form-control" rows="2" required
+                        <textarea name="edit_reason" class="form-control" rows="2" required
                                   placeholder="Why does this entry need to be edited?"></textarea>
                     </div>
                     <div class="mb-3">
