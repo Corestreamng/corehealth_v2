@@ -44,7 +44,7 @@ class ReportController extends Controller
      */
     public function index()
     {
-        $savedFilters = SavedReportFilter::where('user_id', Auth::id())
+        $savedFilters = SavedReportFilter::where('created_by', Auth::id())
             ->orWhere('is_shared', true)
             ->orderBy('name')
             ->get();
@@ -116,15 +116,16 @@ class ReportController extends Controller
                 : now();
         }
 
-        $report = $this->reportService->getProfitAndLoss($startDate, $endDate);
+        $report = $this->reportService->generateProfitAndLoss($startDate->format('Y-m-d'), $endDate->format('Y-m-d'));
         $periods = AccountingPeriod::orderBy('start_date', 'desc')->get();
+        $fiscalPeriods = $periods; // Alias for view compatibility
 
         if ($request->has('export') && $request->export === 'pdf') {
             $pdf = Pdf::loadView('accounting.reports.profit-loss-pdf', compact('report', 'startDate', 'endDate'));
             return $pdf->download("profit-loss-{$startDate->format('Y-m-d')}-to-{$endDate->format('Y-m-d')}.pdf");
         }
 
-        return view('accounting.reports.profit-loss', compact('report', 'startDate', 'endDate', 'periods'));
+        return view('accounting.reports.profit-loss', compact('report', 'startDate', 'endDate', 'periods', 'fiscalPeriods'));
     }
 
     /**
@@ -140,14 +141,15 @@ class ReportController extends Controller
             ? Carbon::parse($request->as_of_date)
             : now();
 
-        $report = $this->reportService->getBalanceSheet($asOfDate);
+        $report = $this->reportService->generateBalanceSheet($asOfDate->format('Y-m-d'));
+        $fiscalPeriods = AccountingPeriod::orderBy('start_date', 'desc')->get();
 
         if ($request->has('export') && $request->export === 'pdf') {
             $pdf = Pdf::loadView('accounting.reports.balance-sheet-pdf', compact('report', 'asOfDate'));
             return $pdf->download("balance-sheet-{$asOfDate->format('Y-m-d')}.pdf");
         }
 
-        return view('accounting.reports.balance-sheet', compact('report', 'asOfDate'));
+        return view('accounting.reports.balance-sheet', compact('report', 'asOfDate', 'fiscalPeriods'));
     }
 
     /**
@@ -167,14 +169,15 @@ class ReportController extends Controller
             ? Carbon::parse($request->end_date)
             : now();
 
-        $report = $this->reportService->getCashFlowStatement($startDate, $endDate);
+        $report = $this->reportService->generateCashFlowStatement($startDate->format('Y-m-d'), $endDate->format('Y-m-d'));
+        $fiscalPeriods = AccountingPeriod::orderBy('start_date', 'desc')->get();
 
         if ($request->has('export') && $request->export === 'pdf') {
             $pdf = Pdf::loadView('accounting.reports.cash-flow-pdf', compact('report', 'startDate', 'endDate'));
             return $pdf->download("cash-flow-{$startDate->format('Y-m-d')}-to-{$endDate->format('Y-m-d')}.pdf");
         }
 
-        return view('accounting.reports.cash-flow', compact('report', 'startDate', 'endDate'));
+        return view('accounting.reports.cash-flow', compact('report', 'startDate', 'endDate', 'fiscalPeriods'));
     }
 
     /**
@@ -196,14 +199,17 @@ class ReportController extends Controller
             : now();
 
         $accountId = $request->account_id;
-        $accounts = Account::where('is_active', true)->orderBy('account_code')->get();
+        $accounts = Account::where('is_active', true)->orderBy('code')->get();
+        $fiscalPeriods = AccountingPeriod::orderBy('start_date', 'desc')->get();
 
         $report = null;
+        $ledgerData = [];
         $selectedAccount = null;
 
         if ($accountId) {
             $selectedAccount = Account::findOrFail($accountId);
             $report = $this->reportService->getGeneralLedger($accountId, $startDate, $endDate);
+            $ledgerData = $report; // Alias for view compatibility
 
             if ($request->has('export') && $request->export === 'pdf') {
                 $pdf = Pdf::loadView('accounting.reports.general-ledger-pdf', compact('report', 'selectedAccount', 'startDate', 'endDate'));
@@ -211,7 +217,7 @@ class ReportController extends Controller
             }
         }
 
-        return view('accounting.reports.general-ledger', compact('report', 'selectedAccount', 'accounts', 'startDate', 'endDate'));
+        return view('accounting.reports.general-ledger', compact('report', 'ledgerData', 'selectedAccount', 'accounts', 'startDate', 'endDate', 'fiscalPeriods'));
     }
 
     /**
@@ -251,14 +257,15 @@ class ReportController extends Controller
             ? Carbon::parse($request->as_of_date)
             : now();
 
-        $report = $this->reportService->getAgedReceivables($asOfDate);
+        $report = $this->reportService->getAgedReceivables($asOfDate->format('Y-m-d'));
+        $fiscalPeriods = AccountingPeriod::orderBy('start_date', 'desc')->get();
 
         if ($request->has('export') && $request->export === 'pdf') {
             $pdf = Pdf::loadView('accounting.reports.aged-receivables-pdf', compact('report', 'asOfDate'));
             return $pdf->download("aged-receivables-{$asOfDate->format('Y-m-d')}.pdf");
         }
 
-        return view('accounting.reports.aged-receivables', compact('report', 'asOfDate'));
+        return view('accounting.reports.aged-receivables', compact('report', 'asOfDate', 'fiscalPeriods'));
     }
 
     /**
@@ -274,14 +281,15 @@ class ReportController extends Controller
             ? Carbon::parse($request->as_of_date)
             : now();
 
-        $report = $this->reportService->getAgedPayables($asOfDate);
+        $report = $this->reportService->getAgedPayables($asOfDate->format('Y-m-d'));
+        $fiscalPeriods = AccountingPeriod::orderBy('start_date', 'desc')->get();
 
         if ($request->has('export') && $request->export === 'pdf') {
             $pdf = Pdf::loadView('accounting.reports.aged-payables-pdf', compact('report', 'asOfDate'));
             return $pdf->download("aged-payables-{$asOfDate->format('Y-m-d')}.pdf");
         }
 
-        return view('accounting.reports.aged-payables', compact('report', 'asOfDate'));
+        return view('accounting.reports.aged-payables', compact('report', 'asOfDate', 'fiscalPeriods'));
     }
 
     /**
@@ -308,8 +316,8 @@ class ReportController extends Controller
             'total_entries' => $entries->count(),
             'posted_entries' => $entries->where('status', 'posted')->count(),
             'pending_entries' => $entries->whereIn('status', ['draft', 'pending', 'approved'])->count(),
-            'total_debits' => $entries->where('status', 'posted')->flatMap->lines->sum('debit_amount'),
-            'total_credits' => $entries->where('status', 'posted')->flatMap->lines->sum('credit_amount'),
+            'total_debits' => $entries->where('status', 'posted')->flatMap->lines->sum('debit'),
+            'total_credits' => $entries->where('status', 'posted')->flatMap->lines->sum('credit'),
             'by_type' => $entries->groupBy('entry_type')->map->count(),
             'by_user' => $entries->groupBy(function($entry) {
                 return $entry->createdBy?->name ?? 'System';
@@ -337,7 +345,7 @@ class ReportController extends Controller
         ]);
 
         $filter = SavedReportFilter::create([
-            'user_id' => Auth::id(),
+            'created_by' => Auth::id(),
             'name' => $request->name,
             'report_type' => $request->report_type,
             'filters' => $request->filters,
@@ -357,7 +365,7 @@ class ReportController extends Controller
     public function deleteFilter($id)
     {
         $filter = SavedReportFilter::where('id', $id)
-            ->where('user_id', Auth::id())
+            ->where('created_by', Auth::id())
             ->firstOrFail();
 
         $filter->delete();
@@ -375,7 +383,7 @@ class ReportController extends Controller
     {
         $filter = SavedReportFilter::where('id', $id)
             ->where(function ($q) {
-                $q->where('user_id', Auth::id())
+                $q->where('created_by', Auth::id())
                     ->orWhere('is_shared', true);
             })
             ->firstOrFail();

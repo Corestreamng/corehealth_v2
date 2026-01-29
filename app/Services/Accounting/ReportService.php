@@ -9,6 +9,7 @@ use App\Models\Accounting\AccountingPeriod;
 use App\Models\Accounting\FiscalYear;
 use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\JournalEntryLine;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -414,6 +415,129 @@ class ReportService
             ->pending()
             ->orderBy('submitted_at')
             ->get();
+    }
+
+    /**
+     * Generate Aged Receivables Report.
+     *
+     * @param string $asOfDate
+     * @return array
+     */
+    public function getAgedReceivables(string $asOfDate): array
+    {
+        // Get accounts receivable account group
+        $receivablesGroup = AccountGroup::where('name', 'like', '%Receivable%')
+            ->orWhere('name', 'like', '%receivable%')
+            ->first();
+
+        $accounts = [];
+        if ($receivablesGroup) {
+            $accounts = Account::where('account_group_id', $receivablesGroup->id)
+                ->active()
+                ->with(['journalLines' => function ($q) use ($asOfDate) {
+                    $q->whereHas('journalEntry', function ($je) use ($asOfDate) {
+                        $je->where('entry_date', '<=', $asOfDate)
+                            ->where('status', 'posted');
+                    });
+                }])
+                ->get();
+        }
+
+        $agingBuckets = [
+            'current' => 0,
+            '1_30' => 0,
+            '31_60' => 0,
+            '61_90' => 0,
+            'over_90' => 0,
+        ];
+
+        $details = [];
+        $asOf = Carbon::parse($asOfDate);
+
+        foreach ($accounts as $account) {
+            $balance = $account->getBalance(null, $asOfDate);
+            if (abs($balance) > 0.01) {
+                // Simplified aging - in a real system, this would be based on invoice dates
+                $agingBuckets['current'] += $balance;
+                $details[] = [
+                    'account' => $account,
+                    'balance' => $balance,
+                    'current' => $balance,
+                    '1_30' => 0,
+                    '31_60' => 0,
+                    '61_90' => 0,
+                    'over_90' => 0,
+                ];
+            }
+        }
+
+        return [
+            'as_of_date' => $asOfDate,
+            'totals' => $agingBuckets,
+            'total' => array_sum($agingBuckets),
+            'details' => $details,
+        ];
+    }
+
+    /**
+     * Generate Aged Payables Report.
+     *
+     * @param string $asOfDate
+     * @return array
+     */
+    public function getAgedPayables(string $asOfDate): array
+    {
+        // Get accounts payable account group
+        $payablesGroup = AccountGroup::where('name', 'like', '%Payable%')
+            ->orWhere('name', 'like', '%payable%')
+            ->first();
+
+        $accounts = [];
+        if ($payablesGroup) {
+            $accounts = Account::where('account_group_id', $payablesGroup->id)
+                ->active()
+                ->with(['journalLines' => function ($q) use ($asOfDate) {
+                    $q->whereHas('journalEntry', function ($je) use ($asOfDate) {
+                        $je->where('entry_date', '<=', $asOfDate)
+                            ->where('status', 'posted');
+                    });
+                }])
+                ->get();
+        }
+
+        $agingBuckets = [
+            'current' => 0,
+            '1_30' => 0,
+            '31_60' => 0,
+            '61_90' => 0,
+            'over_90' => 0,
+        ];
+
+        $details = [];
+
+        foreach ($accounts as $account) {
+            $balance = $account->getBalance(null, $asOfDate);
+            if (abs($balance) > 0.01) {
+                // Simplified aging - in a real system, this would be based on invoice dates
+                $agingBuckets['current'] += $balance;
+                $details[] = [
+                    'account' => $account,
+                    'balance' => $balance,
+                    'current' => $balance,
+                    '1_30' => 0,
+                    '31_60' => 0,
+                    '61_90' => 0,
+                    'over_90' => 0,
+                ];
+            }
+        }
+
+        return [
+            'as_of_date' => $asOfDate,
+            'totals' => $agingBuckets,
+            'total' => array_sum($agingBuckets),
+            'details' => $details,
+        ];
     }
 
     // =========================================

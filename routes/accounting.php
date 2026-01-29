@@ -64,6 +64,10 @@ Route::prefix('accounting')->name('accounting.')->middleware(['auth', 'verified'
         Route::post('/{id}/post', [JournalEntryController::class, 'post'])->name('post');
         Route::post('/{id}/reverse', [JournalEntryController::class, 'reverse'])->name('reverse');
         Route::post('/{id}/request-edit', [JournalEntryController::class, 'requestEdit'])->name('request-edit');
+
+        // Edit Request Management
+        Route::post('/edit-requests/{editId}/approve', [JournalEntryController::class, 'approveEditRequest'])->name('edit-requests.approve');
+        Route::post('/edit-requests/{editId}/reject', [JournalEntryController::class, 'rejectEditRequest'])->name('edit-requests.reject');
     });
 
     // Chart of Accounts

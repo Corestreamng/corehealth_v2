@@ -21,19 +21,68 @@ class JournalEntryLine extends Model implements Auditable
 
     protected $fillable = [
         'journal_entry_id',
+        'line_number',
         'account_id',
-        'account_sub_account_id',
-        'description',
-        'debit_amount',
-        'credit_amount',
-        'line_order',
+        'sub_account_id',
+        'narration',
+        'debit',
+        'credit',
+        'cash_flow_category',
     ];
 
     protected $casts = [
-        'debit_amount' => 'decimal:4',
-        'credit_amount' => 'decimal:4',
-        'line_order' => 'integer',
+        'debit' => 'decimal:4',
+        'credit' => 'decimal:4',
+        'line_number' => 'integer',
     ];
+
+    // =========================================
+    // ATTRIBUTE ALIASES (for backward compatibility)
+    // =========================================
+
+    /**
+     * Alias: debit_amount -> debit
+     */
+    public function getDebitAmountAttribute(): float
+    {
+        return (float) $this->debit;
+    }
+
+    /**
+     * Alias: credit_amount -> credit
+     */
+    public function getCreditAmountAttribute(): float
+    {
+        return (float) $this->credit;
+    }
+
+    /**
+     * Alias: description -> narration
+     */
+    public function getDescriptionAttribute(): ?string
+    {
+        return $this->narration;
+    }
+
+    /**
+     * Alias: line_order -> line_number
+     */
+    public function getLineOrderAttribute(): ?int
+    {
+        return $this->line_number;
+    }
+
+    /**
+     * Alias: account_sub_account_id -> sub_account_id
+     */
+    public function getAccountSubAccountIdAttribute(): ?int
+    {
+        return $this->sub_account_id;
+    }
+
+    // =========================================
+    // RELATIONSHIPS
+    // =========================================
 
     /**
      * Get the journal entry this line belongs to.
@@ -56,7 +105,7 @@ class JournalEntryLine extends Model implements Auditable
      */
     public function subAccount(): BelongsTo
     {
-        return $this->belongsTo(AccountSubAccount::class, 'account_sub_account_id');
+        return $this->belongsTo(AccountSubAccount::class, 'sub_account_id');
     }
 
     /**
@@ -64,7 +113,7 @@ class JournalEntryLine extends Model implements Auditable
      */
     public function isDebit(): bool
     {
-        return $this->debit_amount > 0;
+        return $this->debit > 0;
     }
 
     /**
@@ -72,7 +121,7 @@ class JournalEntryLine extends Model implements Auditable
      */
     public function isCredit(): bool
     {
-        return $this->credit_amount > 0;
+        return $this->credit > 0;
     }
 
     /**
@@ -80,7 +129,7 @@ class JournalEntryLine extends Model implements Auditable
      */
     public function getAmountAttribute(): float
     {
-        return $this->isDebit() ? (float) $this->debit_amount : (float) $this->credit_amount;
+        return $this->isDebit() ? (float) $this->debit : (float) $this->credit;
     }
 
     /**
@@ -96,8 +145,8 @@ class JournalEntryLine extends Model implements Auditable
      */
     public function isValid(): bool
     {
-        $hasDebit = $this->debit_amount > 0;
-        $hasCredit = $this->credit_amount > 0;
+        $hasDebit = $this->debit > 0;
+        $hasCredit = $this->credit > 0;
 
         // Must have exactly one of debit or credit
         return ($hasDebit xor $hasCredit);
@@ -108,7 +157,7 @@ class JournalEntryLine extends Model implements Auditable
      */
     public function scopeDebits($query)
     {
-        return $query->where('debit_amount', '>', 0);
+        return $query->where('debit', '>', 0);
     }
 
     /**
@@ -116,7 +165,7 @@ class JournalEntryLine extends Model implements Auditable
      */
     public function scopeCredits($query)
     {
-        return $query->where('credit_amount', '>', 0);
+        return $query->where('credit', '>', 0);
     }
 
     /**
@@ -132,15 +181,15 @@ class JournalEntryLine extends Model implements Auditable
      */
     public function scopeForSubAccount($query, int $subAccountId)
     {
-        return $query->where('account_sub_account_id', $subAccountId);
+        return $query->where('sub_account_id', $subAccountId);
     }
 
     /**
-     * Scope to order by line order.
+     * Scope to order by line number.
      */
     public function scopeOrdered($query)
     {
-        return $query->orderBy('line_order');
+        return $query->orderBy('line_number');
     }
 
     /**
@@ -148,7 +197,7 @@ class JournalEntryLine extends Model implements Auditable
      */
     public function getFormattedDebitAttribute(): string
     {
-        return $this->debit_amount > 0 ? number_format($this->debit_amount, 2) : '';
+        return $this->debit > 0 ? number_format($this->debit, 2) : '';
     }
 
     /**
@@ -156,7 +205,7 @@ class JournalEntryLine extends Model implements Auditable
      */
     public function getFormattedCreditAttribute(): string
     {
-        return $this->credit_amount > 0 ? number_format($this->credit_amount, 2) : '';
+        return $this->credit > 0 ? number_format($this->credit, 2) : '';
     }
 
     /**

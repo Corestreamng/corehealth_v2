@@ -204,22 +204,22 @@
                             @foreach($entry->lines as $line)
                             <tr>
                                 <td>
-                                    <code class="mr-2">{{ $line->account->account_code ?? 'N/A' }}</code>
+                                    <code class="mr-2">{{ $line->account->code ?? 'N/A' }}</code>
                                     {{ $line->account->name ?? 'Unknown Account' }}
-                                    @if($line->description)
-                                    <br><small class="text-muted">{{ $line->description }}</small>
+                                    @if($line->narration)
+                                    <br><small class="text-muted">{{ $line->narration }}</small>
                                     @endif
                                 </td>
-                                <td class="text-right">{{ $line->debit_amount > 0 ? number_format($line->debit_amount, 2) : '' }}</td>
-                                <td class="text-right">{{ $line->credit_amount > 0 ? number_format($line->credit_amount, 2) : '' }}</td>
+                                <td class="text-right">{{ $line->debit > 0 ? number_format($line->debit, 2) : '' }}</td>
+                                <td class="text-right">{{ $line->credit > 0 ? number_format($line->credit, 2) : '' }}</td>
                             </tr>
                             @endforeach
                         </tbody>
                         <tfoot class="font-weight-bold">
                             <tr>
                                 <td>Totals</td>
-                                <td class="text-right">{{ number_format($entry->lines->sum('debit_amount'), 2) }}</td>
-                                <td class="text-right">{{ number_format($entry->lines->sum('credit_amount'), 2) }}</td>
+                                <td class="text-right">{{ number_format($entry->lines->sum('debit'), 2) }}</td>
+                                <td class="text-right">{{ number_format($entry->lines->sum('credit'), 2) }}</td>
                             </tr>
                         </tfoot>
                     </table>

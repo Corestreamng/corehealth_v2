@@ -21,7 +21,7 @@ class JournalEntryEditObserver
     public function created(JournalEntryEdit $edit): void
     {
         $notificationService = App::make(AccountingNotificationService::class);
-        $notificationService->notifyEditRequested($edit);
+        $notificationService->notifyEditRequestSubmitted($edit);
     }
 
     /**
@@ -44,11 +44,11 @@ class JournalEntryEditObserver
 
         switch ($edit->status) {
             case JournalEntryEdit::STATUS_APPROVED:
-                $notificationService->notifyEditApproved($edit);
+                $notificationService->notifyEditRequestApproved($edit);
                 break;
 
             case JournalEntryEdit::STATUS_REJECTED:
-                $notificationService->notifyEditRejected($edit);
+                $notificationService->notifyEditRequestRejected($edit);
                 break;
         }
     }

@@ -115,7 +115,7 @@
                         <select id="status-filter" class="form-control form-control-sm">
                             <option value="">All Statuses</option>
                             <option value="draft">Draft</option>
-                            <option value="pending">Pending Approval</option>
+                            <option value="pending_approval">Pending Approval</option>
                             <option value="approved">Approved</option>
                             <option value="rejected">Rejected</option>
                             <option value="posted">Posted</option>
