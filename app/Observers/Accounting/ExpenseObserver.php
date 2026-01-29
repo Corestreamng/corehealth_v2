@@ -49,8 +49,8 @@ class ExpenseObserver
         $debitAccountCode = $this->getDebitAccountCode($expense);
         $creditAccountCode = $this->getCreditAccountCode($expense);
 
-        $debitAccount = Account::where('account_code', $debitAccountCode)->first();
-        $creditAccount = Account::where('account_code', $creditAccountCode)->first();
+        $debitAccount = Account::where('code', $debitAccountCode)->first();
+        $creditAccount = Account::where('code', $creditAccountCode)->first();
 
         if (!$debitAccount || !$creditAccount) {
             Log::warning('Expense journal entry skipped - accounts not configured', [
@@ -78,14 +78,12 @@ class ExpenseObserver
             ]
         ];
 
-        $entry = $accountingService->createJournalEntry([
-            'entry_type' => JournalEntry::TYPE_AUTOMATED,
-            'source_type' => Expense::class,
-            'source_id' => $expense->id,
-            'description' => $description,
-            'status' => JournalEntry::STATUS_POSTED,
-            'memo' => "Ref: {$expense->expense_number}"
-        ], $lines);
+        $entry = $accountingService->createAndPostAutomatedEntry(
+            Expense::class,
+            $expense->id,
+            $description,
+            $lines
+        );
 
         // Update expense with journal entry reference
         $expense->journal_entry_id = $entry->id;

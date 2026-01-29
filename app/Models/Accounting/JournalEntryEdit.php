@@ -23,27 +23,31 @@ class JournalEntryEdit extends Model implements Auditable
 
     protected $fillable = [
         'journal_entry_id',
-        'requested_by',
-        'request_reason',
         'original_data',
-        'proposed_data',
+        'edited_data',
+        'edit_reason',
         'status',
-        'reviewed_by',
-        'reviewed_at',
-        'review_notes',
+        'requested_by',
+        'requested_at',
+        'approved_by',
+        'approved_at',
+        'rejected_by',
+        'rejected_at',
+        'rejection_reason',
     ];
 
     protected $casts = [
         'original_data' => 'array',
-        'proposed_data' => 'array',
-        'reviewed_at' => 'datetime',
+        'edited_data' => 'array',
+        'requested_at' => 'datetime',
+        'approved_at' => 'datetime',
+        'rejected_at' => 'datetime',
     ];
 
     // Status constants
     const STATUS_PENDING = 'pending';
     const STATUS_APPROVED = 'approved';
     const STATUS_REJECTED = 'rejected';
-    const STATUS_APPLIED = 'applied';
 
     /**
      * Get the journal entry being edited.
@@ -62,11 +66,45 @@ class JournalEntryEdit extends Model implements Auditable
     }
 
     /**
-     * Get the user who reviewed the request.
+     * Get the user who approved the request.
      */
-    public function reviewer(): BelongsTo
+    public function approver(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'reviewed_by');
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    /**
+     * Get the user who rejected the request.
+     */
+    public function rejecter(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'rejected_by');
+    }
+
+    /**
+     * Get the reviewer (approver or rejecter based on status).
+     */
+    public function getReviewerAttribute()
+    {
+        if ($this->status === self::STATUS_APPROVED) {
+            return $this->approver;
+        } elseif ($this->status === self::STATUS_REJECTED) {
+            return $this->rejecter;
+        }
+        return null;
+    }
+
+    /**
+     * Get the reviewer's user ID.
+     */
+    public function getReviewedByAttribute()
+    {
+        if ($this->status === self::STATUS_APPROVED) {
+            return $this->approved_by;
+        } elseif ($this->status === self::STATUS_REJECTED) {
+            return $this->rejected_by;
+        }
+        return null;
     }
 
     /**

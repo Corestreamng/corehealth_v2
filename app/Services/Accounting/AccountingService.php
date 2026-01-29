@@ -9,6 +9,7 @@ use App\Models\Accounting\CreditNote;
 use App\Models\Accounting\FiscalYear;
 use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\JournalEntryLine;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Exception;
@@ -51,11 +52,10 @@ class AccountingService
                 'entry_date' => $entryDate,
                 'accounting_period_id' => $period->id,
                 'description' => $data['description'] ?? '',
-                'source_type' => null,
-                'source_id' => null,
+                'reference_type' => null,
+                'reference_id' => null,
+                'entry_type' => 'manual',
                 'status' => JournalEntry::STATUS_DRAFT,
-                'is_manual' => true,
-                'is_reversing' => false,
                 'created_by' => $userId,
             ]);
 
@@ -106,8 +106,8 @@ class AccountingService
             }
 
             // Check if entry already exists for this source
-            $existingEntry = JournalEntry::where('source_type', $sourceType)
-                ->where('source_id', $sourceId)
+            $existingEntry = JournalEntry::where('reference_type', $sourceType)
+                ->where('reference_id', $sourceId)
                 ->whereNotIn('status', [JournalEntry::STATUS_REVERSED])
                 ->first();
 
@@ -115,18 +115,20 @@ class AccountingService
                 throw new Exception("Journal entry already exists for this source document.");
             }
 
+            // Determine creator - use auth user, provided user, or default to user 1 (system)
+            $creatorId = $userId ?? auth()->id() ?? 1;
+
             // Create the journal entry
             $entry = JournalEntry::create([
                 'entry_number' => JournalEntry::generateEntryNumber(),
                 'entry_date' => $entryDate,
                 'accounting_period_id' => $period->id,
                 'description' => $description,
-                'source_type' => $sourceType,
-                'source_id' => $sourceId,
+                'reference_type' => $sourceType,
+                'reference_id' => $sourceId,
+                'entry_type' => 'auto',
                 'status' => JournalEntry::STATUS_DRAFT,
-                'is_manual' => false,
-                'is_reversing' => false,
-                'created_by' => $userId,
+                'created_by' => $creatorId,
             ]);
 
             // Create the lines
@@ -141,8 +143,8 @@ class AccountingService
             Log::info("Automated journal entry created", [
                 'entry_id' => $entry->id,
                 'entry_number' => $entry->entry_number,
-                'source_type' => $sourceType,
-                'source_id' => $sourceId,
+                'reference_type' => $sourceType,
+                'reference_id' => $sourceId,
             ]);
 
             return $entry;
@@ -157,7 +159,7 @@ class AccountingService
      */
     protected function createJournalLines(JournalEntry $entry, array $lines): void
     {
-        $lineOrder = 1;
+        $lineNumber = 1;
 
         foreach ($lines as $line) {
             // Validate account exists and is active
@@ -173,9 +175,9 @@ class AccountingService
                     ->firstOrFail();
             }
 
-            // Ensure only debit OR credit is set
-            $debit = floatval($line['debit_amount'] ?? 0);
-            $credit = floatval($line['credit_amount'] ?? 0);
+            // Ensure only debit OR credit is set (support both naming conventions)
+            $debit = floatval($line['debit_amount'] ?? $line['debit'] ?? 0);
+            $credit = floatval($line['credit_amount'] ?? $line['credit'] ?? 0);
 
             if ($debit > 0 && $credit > 0) {
                 throw new Exception("Line cannot have both debit and credit amounts.");
@@ -187,12 +189,12 @@ class AccountingService
 
             JournalEntryLine::create([
                 'journal_entry_id' => $entry->id,
+                'line_number' => $lineNumber++,
                 'account_id' => $line['account_id'],
-                'account_sub_account_id' => $line['sub_account_id'] ?? null,
-                'description' => $line['description'] ?? null,
-                'debit_amount' => $debit,
-                'credit_amount' => $credit,
-                'line_order' => $lineOrder++,
+                'sub_account_id' => $line['sub_account_id'] ?? null,
+                'narration' => $line['description'] ?? $line['narration'] ?? null,
+                'debit' => $debit,
+                'credit' => $credit,
             ]);
         }
     }
@@ -378,7 +380,9 @@ class AccountingService
     ): JournalEntry {
         return DB::transaction(function () use ($sourceType, $sourceId, $description, $lines, $entryDate, $userId) {
             $entry = $this->createAutomatedEntry($sourceType, $sourceId, $description, $lines, $entryDate, $userId);
-            $this->postEntry($entry, $userId ?? 0);
+            // Use auth user, provided user, or default to user 1 (system)
+            $posterId = $userId ?? auth()->id() ?? 1;
+            $this->postEntry($entry, $posterId);
             return $entry->fresh();
         });
     }
@@ -413,10 +417,10 @@ class AccountingService
             foreach ($entry->lines as $line) {
                 $reversingLines[] = [
                     'account_id' => $line->account_id,
-                    'sub_account_id' => $line->account_sub_account_id,
-                    'description' => $line->description,
-                    'debit_amount' => $line->credit_amount, // Swap
-                    'credit_amount' => $line->debit_amount, // Swap
+                    'sub_account_id' => $line->sub_account_id,
+                    'description' => $line->narration,
+                    'debit' => $line->credit, // Swap
+                    'credit' => $line->debit, // Swap
                 ];
             }
 
@@ -426,12 +430,11 @@ class AccountingService
                 'entry_date' => $reversalDate,
                 'accounting_period_id' => $period->id,
                 'description' => "Reversal of {$entry->entry_number}: {$reason}",
-                'source_type' => $entry->source_type,
-                'source_id' => $entry->source_id,
+                'reference_type' => $entry->reference_type,
+                'reference_id' => $entry->reference_id,
+                'entry_type' => 'reversal',
                 'status' => JournalEntry::STATUS_DRAFT,
-                'is_manual' => $entry->is_manual,
-                'is_reversing' => true,
-                'reversed_entry_id' => $entry->id,
+                'reversal_of_id' => $entry->id,
                 'created_by' => $userId,
             ]);
 
@@ -488,12 +491,13 @@ class AccountingService
     /**
      * Get the open accounting period for a date.
      *
-     * @param string $date
+     * @param string|Carbon $date
      * @return AccountingPeriod|null
      */
-    public function getOpenPeriodForDate(string $date): ?AccountingPeriod
+    public function getOpenPeriodForDate(string|Carbon $date): ?AccountingPeriod
     {
-        return AccountingPeriod::forDate($date)->first();
+        $carbonDate = $date instanceof Carbon ? $date : Carbon::parse($date);
+        return AccountingPeriod::forDate($carbonDate);
     }
 
     /**

@@ -48,8 +48,8 @@ class PurchaseOrderObserver
         $accountingService = App::make(AccountingService::class);
 
         // Debit Inventory, Credit Accounts Payable
-        $inventoryAccount = Account::where('account_code', '1300')->first(); // Inventory
-        $apAccount = Account::where('account_code', '2100')->first(); // Accounts Payable
+        $inventoryAccount = Account::where('code', '1300')->first(); // Inventory
+        $apAccount = Account::where('code', '2100')->first(); // Accounts Payable
 
         if (!$inventoryAccount || !$apAccount) {
             Log::warning('PO journal entry skipped - accounts not configured', [
@@ -78,14 +78,12 @@ class PurchaseOrderObserver
             ]
         ];
 
-        $entry = $accountingService->createJournalEntry([
-            'entry_type' => JournalEntry::TYPE_AUTOMATED,
-            'source_type' => PurchaseOrder::class,
-            'source_id' => $po->id,
-            'description' => $description,
-            'status' => JournalEntry::STATUS_POSTED,
-            'memo' => "PO: {$po->po_number}"
-        ], $lines);
+        $entry = $accountingService->createAndPostAutomatedEntry(
+            PurchaseOrder::class,
+            $po->id,
+            $description,
+            $lines
+        );
 
         // Update PO with journal entry reference
         $po->journal_entry_id = $entry->id;

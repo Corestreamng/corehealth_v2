@@ -46,8 +46,8 @@ class PayrollBatchObserver
     {
         $accountingService = App::make(AccountingService::class);
 
-        $salaryAccount = Account::where('account_code', '6040')->first(); // Salaries & Wages
-        $bankAccount = Account::where('account_code', '1020')->first(); // Bank Account
+        $salaryAccount = Account::where('code', '6040')->first(); // Salaries & Wages
+        $bankAccount = Account::where('code', '1020')->first(); // Bank Account
 
         if (!$salaryAccount || !$bankAccount) {
             Log::warning('Payroll journal entry skipped - accounts not configured', [
@@ -74,14 +74,12 @@ class PayrollBatchObserver
             ]
         ];
 
-        $entry = $accountingService->createJournalEntry([
-            'entry_type' => JournalEntry::TYPE_AUTOMATED,
-            'source_type' => PayrollBatch::class,
-            'source_id' => $batch->id,
-            'description' => $description,
-            'status' => JournalEntry::STATUS_POSTED,
-            'memo' => "Staff count: {$batch->total_staff}"
-        ], $lines);
+        $entry = $accountingService->createAndPostAutomatedEntry(
+            PayrollBatch::class,
+            $batch->id,
+            $description,
+            $lines
+        );
 
         // Update batch with journal entry reference
         $batch->journal_entry_id = $entry->id;

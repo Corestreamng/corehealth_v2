@@ -210,12 +210,49 @@ class AccountingNotificationService
             [
                 'Entry Number' => $editRequest->journalEntry->entry_number,
                 'Requested By' => $editRequest->requester->name ?? 'Unknown',
-                'Reason' => $this->truncate($editRequest->request_reason, 100),
+                'Reason' => $this->truncate($editRequest->edit_reason, 100),
             ],
             "Please review this edit request."
         );
 
         $this->sendToAccountingStaff($message, $editRequest->requested_by);
+    }
+
+    /**
+     * Notify when an edit request is approved.
+     */
+    public function notifyEditRequestApproved(JournalEntryEdit $editRequest): void
+    {
+        $message = $this->formatMessage(
+            '✅ Edit Request Approved',
+            [
+                'Entry Number' => $editRequest->journalEntry->entry_number,
+                'Approved By' => $editRequest->reviewer->name ?? 'Unknown',
+                'Original Requester' => $editRequest->requester->name ?? 'Unknown',
+            ],
+            "The edit request has been approved."
+        );
+
+        $this->sendToAccountingStaff($message, $editRequest->reviewed_by);
+    }
+
+    /**
+     * Notify when an edit request is rejected.
+     */
+    public function notifyEditRequestRejected(JournalEntryEdit $editRequest): void
+    {
+        $message = $this->formatMessage(
+            '❌ Edit Request Rejected',
+            [
+                'Entry Number' => $editRequest->journalEntry->entry_number,
+                'Rejected By' => $editRequest->reviewer->name ?? 'Unknown',
+                'Original Requester' => $editRequest->requester->name ?? 'Unknown',
+                'Rejection Reason' => $this->truncate($editRequest->rejection_reason, 100),
+            ],
+            "The edit request has been rejected."
+        );
+
+        $this->sendToAccountingStaff($message, $editRequest->reviewed_by);
     }
 
     /**
