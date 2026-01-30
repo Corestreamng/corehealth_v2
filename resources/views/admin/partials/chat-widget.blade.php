@@ -124,6 +124,9 @@
     </div>
 </div>
 
+<!-- Marked.js for Markdown Rendering -->
+<script src="{{ asset('assets/js/marked.min.js') }}"></script>
+
 <style>
     :root {
         --chat-primary: {{ appsettings()->hos_color ?? '#011b33' }};
@@ -210,12 +213,75 @@
 
     .message-bubble {
         max-width: 80%;
-        padding: 10px 15px;
+        padding: 8px 12px;
         border-radius: 15px;
         margin-bottom: 10px;
         font-size: 14px;
         position: relative;
         word-wrap: break-word;
+        line-height: 1.4;
+    }
+
+    /* Markdown content styles */
+    .message-bubble .markdown-content {
+        line-height: 1.4;
+    }
+    .message-bubble .markdown-content p {
+        margin: 0 0 0.5em 0;
+    }
+    .message-bubble .markdown-content p:last-child {
+        margin-bottom: 0;
+    }
+    .message-bubble .markdown-content strong {
+        font-weight: 700;
+    }
+    .message-bubble .markdown-content em {
+        font-style: italic;
+    }
+    .message-bubble .markdown-content code {
+        background: rgba(0,0,0,0.1);
+        padding: 1px 4px;
+        border-radius: 3px;
+        font-family: monospace;
+        font-size: 0.9em;
+    }
+    .message-sent .markdown-content code {
+        background: rgba(255,255,255,0.2);
+    }
+    .message-bubble .markdown-content pre {
+        background: rgba(0,0,0,0.1);
+        padding: 8px;
+        border-radius: 4px;
+        overflow-x: auto;
+        margin: 0.5em 0;
+    }
+    .message-sent .markdown-content pre {
+        background: rgba(255,255,255,0.15);
+    }
+    .message-bubble .markdown-content ul,
+    .message-bubble .markdown-content ol {
+        margin: 0.5em 0;
+        padding-left: 1.5em;
+    }
+    .message-bubble .markdown-content li {
+        margin: 0.2em 0;
+    }
+    .message-bubble .markdown-content blockquote {
+        border-left: 3px solid rgba(128,128,128,0.5);
+        margin: 0.5em 0;
+        padding-left: 10px;
+        opacity: 0.9;
+    }
+    .message-bubble .markdown-content a {
+        color: inherit;
+        text-decoration: underline;
+    }
+    .message-bubble .markdown-content h1,
+    .message-bubble .markdown-content h2,
+    .message-bubble .markdown-content h3 {
+        font-size: 1em;
+        font-weight: 700;
+        margin: 0.5em 0 0.25em 0;
     }
 
     .message-sent {
@@ -567,6 +633,22 @@
     // MESSAGE RENDERING
     // ============================================
 
+    // Helper function to render markdown
+    function renderMarkdown(text) {
+        if (!text) return '';
+        if (typeof marked !== 'undefined') {
+            // Configure marked for inline rendering (no wrapping paragraphs for single lines)
+            marked.setOptions({
+                breaks: true, // Convert \n to <br>
+                gfm: true,    // GitHub Flavored Markdown
+                sanitize: false
+            });
+            return marked.parse(text);
+        }
+        // Fallback: escape HTML and convert newlines
+        return text.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+    }
+
     function renderWidgetMessages(messages, meta) {
         const container = document.getElementById('messages-container');
 
@@ -624,9 +706,9 @@
                 content += '</div>';
             }
 
-            // Body (Caption)
+            // Body (Caption) - render as markdown
             if (msg.body) {
-                content += `<div>${msg.body}</div>`;
+                content += `<div class="markdown-content">${renderMarkdown(msg.body)}</div>`;
             }
         }
 
@@ -671,7 +753,7 @@
                 });
                 content += '</div>';
             }
-            if (msg.body) content += `<div>${msg.body}</div>`;
+            if (msg.body) content += `<div class="markdown-content">${renderMarkdown(msg.body)}</div>`;
 
             div.innerHTML = `
                 ${content}

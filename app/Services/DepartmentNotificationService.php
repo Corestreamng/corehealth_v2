@@ -24,6 +24,7 @@ class DepartmentNotificationService
     const GROUP_LAB = 'Laboratory Staff';
     const GROUP_IMAGING = 'Imaging Staff';
     const GROUP_HMO = 'HMO Executives';
+    const GROUP_ACCOUNTS = 'Accounts Staff';
 
     // Cache durations
     const CACHE_DURATION = 3600; // 1 hour for notification tracking
@@ -96,6 +97,7 @@ class DepartmentNotificationService
         $this->syncGroup(self::GROUP_LAB, ['LAB SCIENTIST']);
         $this->syncGroup(self::GROUP_IMAGING, ['RADIOLOGIST']);
         $this->syncGroup(self::GROUP_HMO, ['HMO Executive']);
+        $this->syncGroup(self::GROUP_ACCOUNTS, ['ACCOUNTS', 'BILLER']);
     }
 
     /**
@@ -595,5 +597,47 @@ class DepartmentNotificationService
     public function sendHmoNotification($title, $message)
     {
         return $this->sendToGroup(self::GROUP_HMO, $title, $message, '🏥');
+    }
+
+    // ========== ACCOUNTS NOTIFICATIONS ==========
+
+    /**
+     * Send notification to Accounts Staff group.
+     * Used by AccountingNotificationService.
+     *
+     * @param string $message The formatted message to send
+     * @param int|null $excludeUserId User ID to exclude from notification (usually the sender)
+     * @return bool
+     */
+    public function sendAccountsNotification(string $message, ?int $excludeUserId = null): bool
+    {
+        return $this->sendToGroup(self::GROUP_ACCOUNTS, 'Accounting Alert', $message, '💰');
+    }
+
+    /**
+     * Generic method to send notification to any defined group.
+     *
+     * @param string $groupConstant The group constant name (e.g., 'GROUP_ACCOUNTS')
+     * @param string $message The message body
+     * @param int|null $excludeUserId User ID to exclude (not implemented yet)
+     * @return bool
+     */
+    public function sendGroupNotification(string $groupConstant, string $message, ?int $excludeUserId = null): bool
+    {
+        $groupName = match ($groupConstant) {
+            'GROUP_NURSING' => self::GROUP_NURSING,
+            'GROUP_LAB' => self::GROUP_LAB,
+            'GROUP_IMAGING' => self::GROUP_IMAGING,
+            'GROUP_HMO' => self::GROUP_HMO,
+            'GROUP_ACCOUNTS' => self::GROUP_ACCOUNTS,
+            default => null,
+        };
+
+        if (!$groupName) {
+            Log::warning("Unknown group constant: {$groupConstant}");
+            return false;
+        }
+
+        return $this->sendToGroup($groupName, 'Notification', $message, '📢');
     }
 }

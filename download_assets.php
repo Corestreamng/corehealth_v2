@@ -81,6 +81,11 @@ $assets = [
     [
         'url' => 'https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@1.5.2/dist/select2-bootstrap4.min.css',
         'path' => 'public/assets/css/select2-bootstrap4.min.css'
+    ],
+    // Marked.js for Markdown rendering in chat
+    [
+        'url' => 'https://cdn.jsdelivr.net/npm/marked/marked.min.js',
+        'path' => 'public/assets/js/marked.min.js'
     ]
 ];
 

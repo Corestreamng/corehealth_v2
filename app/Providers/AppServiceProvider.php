@@ -13,11 +13,30 @@ use App\Models\ProductOrServiceRequest;
 use App\Models\ChatConversation;
 use App\Models\ChatParticipant;
 use App\Models\User;
+use App\Models\payment;
+use App\Models\Expense;
+use App\Models\PurchaseOrder;
+use App\Models\PurchaseOrderPayment;
+use App\Models\HmoRemittance;
+use App\Models\HR\PayrollBatch;
+use App\Models\Accounting\JournalEntry;
+use App\Models\Accounting\CreditNote;
+use App\Models\Accounting\JournalEntryEdit;
 use App\Observers\ProductObserver;
 use App\Observers\ServiceObserver;
 use App\Observers\ServicePriceObserver;
 use App\Observers\PriceObserver;
 use App\Observers\HmoObserver;
+use App\Observers\Accounting\JournalEntryObserver;
+use App\Observers\Accounting\CreditNoteObserver;
+use App\Observers\Accounting\JournalEntryEditObserver;
+use App\Observers\Accounting\PaymentObserver;
+use App\Observers\Accounting\ExpenseObserver;
+use App\Observers\Accounting\PurchaseOrderObserver;
+use App\Observers\Accounting\PayrollBatchObserver;
+use App\Observers\Accounting\ProductOrServiceRequestObserver;
+use App\Observers\Accounting\HmoRemittanceObserver;
+use App\Observers\Accounting\PurchaseOrderPaymentObserver;
 use App\Helpers\HmoHelper;
 use App\Services\DepartmentNotificationService;
 use Carbon\Carbon;
@@ -60,6 +79,20 @@ class AppServiceProvider extends ServiceProvider
         ServicePrice::observe(ServicePriceObserver::class);
         Price::observe(PriceObserver::class);
         Hmo::observe(HmoObserver::class);
+
+        // Register Accounting observers for automated journal entries and notifications
+        JournalEntry::observe(JournalEntryObserver::class);
+        CreditNote::observe(CreditNoteObserver::class);
+        JournalEntryEdit::observe(JournalEntryEditObserver::class);
+        payment::observe(PaymentObserver::class);
+        Expense::observe(ExpenseObserver::class);
+        PurchaseOrder::observe(PurchaseOrderObserver::class);
+        PayrollBatch::observe(PayrollBatchObserver::class);
+
+        // NEW: Revenue and AR observers for HMO billing
+        ProductOrServiceRequest::observe(ProductOrServiceRequestObserver::class);
+        HmoRemittance::observe(HmoRemittanceObserver::class);
+        PurchaseOrderPayment::observe(PurchaseOrderPaymentObserver::class);
 
         // Process daily bed bills - runs once per day automatically
         $this->processDailyBedBills();
