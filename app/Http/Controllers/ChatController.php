@@ -103,11 +103,26 @@ class ChatController extends Controller
             // Add participants list for UI
             $conversation->participants_list = $conversation->participants->map(function($p) {
                 $colors = ['#007bff', '#6610f2', '#6f42c1', '#e83e8c', '#dc3545', '#fd7e14', '#ffc107', '#28a745', '#20c997', '#17a2b8'];
-                $hasImage = $p->user->filename && file_exists(public_path('storage/image/user/' . $p->user->filename));
+
+                // Handle case where user might be null (deleted user)
+                if (!$p->user) {
+                    return [
+                        'id' => $p->user_id,
+                        'name' => 'Deleted User',
+                        'avatar_type' => 'initials',
+                        'avatar_src' => null,
+                        'avatar_initials' => '??',
+                        'avatar_color' => $colors[0],
+                        'category' => '',
+                        'department' => ''
+                    ];
+                }
+
+                $hasImage = !empty($p->user->filename) && file_exists(public_path('storage/image/user/' . $p->user->filename));
 
                 return [
                     'id' => $p->user->id,
-                    'name' => $p->user->firstname . ' ' . $p->user->surname,
+                    'name' => ($p->user->firstname ?? '') . ' ' . ($p->user->surname ?? ''),
                     'avatar_type' => $hasImage ? 'image' : 'initials',
                     'avatar_src' => $hasImage ? url('storage/image/user/' . $p->user->filename) : null,
                     'avatar_initials' => strtoupper(substr($p->user->firstname ?? '', 0, 1) . substr($p->user->surname ?? '', 0, 1)),

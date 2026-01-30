@@ -687,6 +687,12 @@ Route::group(['middleware' => ['auth']], function () {
 
 Auth::routes();
 
+// Global Navigation Search
+Route::middleware(['auth'])->group(function () {
+    Route::get('/search', [App\Http\Controllers\RouteSearchController::class, 'index'])->name('search.index');
+    Route::get('/search/api', [App\Http\Controllers\RouteSearchController::class, 'search'])->name('search.api');
+});
+
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 // routes/web.php
 Route::get('/api/chart/clinic-appointments', [App\Http\Controllers\HomeController::class, 'fetchClinicAppointments'])->name('api.clinic.appointments');

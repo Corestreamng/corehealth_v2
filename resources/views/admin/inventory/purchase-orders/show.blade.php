@@ -471,8 +471,8 @@
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
                                     <td>
-                                        <strong>{{ $item->product->product_name }}</strong>
-                                        <br><small class="text-muted">{{ $item->product->product_code }}</small>
+                                        <strong>{{ $item->product->product_name ?? 'Product Deleted' }}</strong>
+                                        <br><small class="text-muted">{{ $item->product->product_code ?? 'N/A' }}</small>
                                     </td>
                                     <td class="text-center">{{ $item->ordered_qty }}</td>
                                     <td class="text-center">
@@ -581,7 +581,7 @@
                     <h5><i class="mdi mdi-package"></i> Received Items</h5>
                     @foreach($receivedItems as $item)
                     <div class="border-bottom pb-2 mb-2">
-                        <strong>{{ $item->product->product_name }}</strong>
+                        <strong>{{ $item->product->product_name ?? 'Product Deleted' }}</strong>
                         <br>
                         <small class="text-muted">
                             Ordered: {{ $item->ordered_qty }}<br>
