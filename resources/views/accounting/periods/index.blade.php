@@ -4,6 +4,10 @@
 @section('subpage_name', 'Fiscal Periods')
 
 @section('content')
+@include('accounting.partials.breadcrumb', ['items' => [
+    ['label' => 'Fiscal Periods', 'url' => route('accounting.periods'), 'icon' => 'mdi-calendar-range']
+]])
+
 <div class="container-fluid">
     {{-- Header with Title and Action Button --}}
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -13,7 +17,7 @@
         </div>
         @can('periods.create')
         <div>
-            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#newFiscalYearModal">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newFiscalYearModal">
                 <i class="mdi mdi-plus mr-1"></i> New Fiscal Year
             </button>
         </div>
@@ -212,7 +216,7 @@
                 <h5>No Fiscal Years Configured</h5>
                 <p class="text-muted">Create a fiscal year to start tracking accounting periods.</p>
                 @can('periods.create')
-                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#newFiscalYearModal">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newFiscalYearModal">
                     <i class="mdi mdi-plus mr-1"></i> Create Fiscal Year
                 </button>
                 @endcan
@@ -228,7 +232,7 @@
             <form id="newFiscalYearForm">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title"><i class="mdi mdi-calendar-plus mr-2"></i>Create New Fiscal Year</h5>
-                    <button type="button" class="close text-white" data-dismiss="modal">
+                    <button type="button" class="close text-white" data-bs-dismiss="modal">
                         <span>&times;</span>
                     </button>
                 </div>
@@ -260,7 +264,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">
                         <i class="mdi mdi-check mr-1"></i>Create Fiscal Year
                     </button>

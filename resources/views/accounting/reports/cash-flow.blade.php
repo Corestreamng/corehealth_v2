@@ -5,6 +5,11 @@
 @section('subpage_name', 'Cash Flow')
 
 @section('content')
+@include('accounting.partials.breadcrumb', ['items' => [
+    ['label' => 'Reports', 'url' => route('accounting.reports.index'), 'icon' => 'mdi-file-chart'],
+    ['label' => 'Cash Flow', 'url' => '#', 'icon' => 'mdi-cash-multiple']
+]])
+
 <div class="container-fluid">
     {{-- Header --}}
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -16,11 +21,11 @@
             <a href="{{ route('accounting.reports.index') }}" class="btn btn-outline-secondary mr-2">
                 <i class="mdi mdi-arrow-left mr-1"></i> Back to Reports
             </a>
-            <a href="{{ route('accounting.reports.cash-flow', ['format' => 'pdf'] + request()->all()) }}"
-               class="btn btn-danger mr-1" target="_blank">
+            <a href="{{ route('accounting.reports.cash-flow', array_merge(request()->all(), ['export' => 'pdf'])) }}"
+               class="btn btn-danger mr-1">
                 <i class="mdi mdi-file-pdf-box mr-1"></i> Export PDF
             </a>
-            <a href="{{ route('accounting.reports.cash-flow', ['format' => 'excel'] + request()->all()) }}"
+            <a href="{{ route('accounting.reports.cash-flow', array_merge(request()->all(), ['export' => 'excel'])) }}"
                class="btn btn-success">
                 <i class="mdi mdi-file-excel mr-1"></i> Export Excel
             </a>
@@ -74,11 +79,20 @@
             </p>
         </div>
         <div class="card-body">
+            @php
+                // Data structure from ReportService:
+                // $report['operating_activities'] = [{name, amount}]
+                // $report['investing_activities'] = [{name, amount}]
+                // $report['financing_activities'] = [{name, amount}]
+                // $report['net_operating'], $report['net_investing'], $report['net_financing']
+                // $report['beginning_cash'], $report['ending_cash'], $report['net_change_in_cash']
+            @endphp
+
             <!-- Beginning Cash Balance -->
             <div class="mb-4 p-3 bg-light rounded">
                 <div class="d-flex justify-content-between">
                     <span class="fw-bold">Beginning Cash Balance</span>
-                    <span class="fw-bold">₦ {{ number_format($data['beginning_cash'] ?? 0, 2) }}</span>
+                    <span class="fw-bold">₦ {{ number_format($report['beginning_cash'] ?? 0, 2) }}</span>
                 </div>
             </div>
 
@@ -89,36 +103,23 @@
                 </h5>
                 <table class="table table-sm">
                     <tbody>
-                        <tr>
-                            <td class="ps-4">Net Income</td>
-                            <td class="text-end" style="width: 150px;">{{ number_format($data['net_income'] ?? 0, 2) }}</td>
-                        </tr>
-                        <tr>
-                            <td class="ps-4 fw-bold">Adjustments to reconcile net income:</td>
-                            <td></td>
-                        </tr>
-                        @foreach($data['operating_adjustments'] ?? [] as $item)
+                        @forelse($report['operating_activities'] ?? [] as $item)
                             <tr>
-                                <td class="ps-5">{{ $item['name'] }}</td>
-                                <td class="text-end">{{ number_format($item['amount'], 2) }}</td>
+                                <td class="ps-4">{{ $item['name'] ?? $item['description'] ?? 'Operating Activity' }}</td>
+                                <td class="text-end" style="width: 150px;">{{ number_format($item['amount'] ?? 0, 2) }}</td>
                             </tr>
-                        @endforeach
-                        <tr>
-                            <td class="ps-4 fw-bold">Changes in operating assets and liabilities:</td>
-                            <td></td>
-                        </tr>
-                        @foreach($data['operating_changes'] ?? [] as $item)
+                        @empty
                             <tr>
-                                <td class="ps-5">{{ $item['name'] }}</td>
-                                <td class="text-end">{{ number_format($item['amount'], 2) }}</td>
+                                <td class="ps-4 text-muted">No operating activities in this period</td>
+                                <td class="text-end">0.00</td>
                             </tr>
-                        @endforeach
+                        @endforelse
                     </tbody>
                     <tfoot>
                         <tr class="fw-bold bg-light">
                             <td>Net Cash from Operating Activities</td>
-                            <td class="text-end {{ ($data['operating_total'] ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">
-                                {{ number_format($data['operating_total'] ?? 0, 2) }}
+                            <td class="text-end {{ ($report['net_operating'] ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">
+                                {{ number_format($report['net_operating'] ?? 0, 2) }}
                             </td>
                         </tr>
                     </tfoot>
@@ -132,10 +133,10 @@
                 </h5>
                 <table class="table table-sm">
                     <tbody>
-                        @forelse($data['investing'] ?? [] as $item)
+                        @forelse($report['investing_activities'] ?? [] as $item)
                             <tr>
-                                <td class="ps-4">{{ $item['name'] }}</td>
-                                <td class="text-end" style="width: 150px;">{{ number_format($item['amount'], 2) }}</td>
+                                <td class="ps-4">{{ $item['name'] ?? $item['description'] ?? 'Investing Activity' }}</td>
+                                <td class="text-end" style="width: 150px;">{{ number_format($item['amount'] ?? 0, 2) }}</td>
                             </tr>
                         @empty
                             <tr>
@@ -147,8 +148,8 @@
                     <tfoot>
                         <tr class="fw-bold bg-light">
                             <td>Net Cash from Investing Activities</td>
-                            <td class="text-end {{ ($data['investing_total'] ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">
-                                {{ number_format($data['investing_total'] ?? 0, 2) }}
+                            <td class="text-end {{ ($report['net_investing'] ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">
+                                {{ number_format($report['net_investing'] ?? 0, 2) }}
                             </td>
                         </tr>
                     </tfoot>
@@ -162,10 +163,10 @@
                 </h5>
                 <table class="table table-sm">
                     <tbody>
-                        @forelse($data['financing'] ?? [] as $item)
+                        @forelse($report['financing_activities'] ?? [] as $item)
                             <tr>
-                                <td class="ps-4">{{ $item['name'] }}</td>
-                                <td class="text-end" style="width: 150px;">{{ number_format($item['amount'], 2) }}</td>
+                                <td class="ps-4">{{ $item['name'] ?? $item['description'] ?? 'Financing Activity' }}</td>
+                                <td class="text-end" style="width: 150px;">{{ number_format($item['amount'] ?? 0, 2) }}</td>
                             </tr>
                         @empty
                             <tr>
@@ -177,8 +178,8 @@
                     <tfoot>
                         <tr class="fw-bold bg-light">
                             <td>Net Cash from Financing Activities</td>
-                            <td class="text-end {{ ($data['financing_total'] ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">
-                                {{ number_format($data['financing_total'] ?? 0, 2) }}
+                            <td class="text-end {{ ($report['net_financing'] ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">
+                                {{ number_format($report['net_financing'] ?? 0, 2) }}
                             </td>
                         </tr>
                     </tfoot>
@@ -188,8 +189,8 @@
             <!-- Net Change and Ending Balance -->
             <div class="mt-4">
                 @php
-                    $netChange = ($data['operating_total'] ?? 0) + ($data['investing_total'] ?? 0) + ($data['financing_total'] ?? 0);
-                    $endingCash = ($data['beginning_cash'] ?? 0) + $netChange;
+                    $netChange = $report['net_change_in_cash'] ?? 0;
+                    $endingCash = $report['ending_cash'] ?? 0;
                 @endphp
 
                 <table class="table table-bordered">
@@ -201,7 +202,7 @@
                     </tr>
                     <tr>
                         <td>Beginning Cash Balance</td>
-                        <td class="text-end">₦ {{ number_format($data['beginning_cash'] ?? 0, 2) }}</td>
+                        <td class="text-end">₦ {{ number_format($report['beginning_cash'] ?? 0, 2) }}</td>
                     </tr>
                     <tr class="table-dark fw-bold fs-5">
                         <td><i class="fas fa-wallet me-2"></i>Ending Cash Balance</td>

@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Account Sub-Account Model
@@ -20,15 +19,21 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class AccountSubAccount extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
         'account_id',
-        'entity_type',
-        'entity_id',
         'code',
         'name',
         'is_active',
+        // Direct FK columns for polymorphic linking (only one should be set)
+        'product_id',
+        'service_id',
+        'product_category_id',
+        'service_category_id',
+        'supplier_id',
+        'patient_id',
+        'hmo_id',
     ];
 
     protected $casts = [
@@ -92,7 +97,7 @@ class AccountSubAccount extends Model
         $query = JournalEntryLine::query()
             ->with(['journalEntry', 'account'])
             ->join('journal_entries', 'journal_entry_lines.journal_entry_id', '=', 'journal_entries.id')
-            ->where('journal_entry_lines.account_sub_account_id', $this->id)
+            ->where('journal_entry_lines.sub_account_id', $this->id)
             ->where('journal_entries.status', JournalEntry::STATUS_POSTED)
             ->select('journal_entry_lines.*');
 

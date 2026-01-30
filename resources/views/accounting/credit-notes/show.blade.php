@@ -5,6 +5,11 @@
 @section('subpage_name', 'View Credit Note')
 
 @section('content')
+@include('accounting.partials.breadcrumb', ['items' => [
+    ['label' => 'Credit Notes', 'url' => route('accounting.credit-notes.index'), 'icon' => 'mdi-note-text'],
+    ['label' => 'View Credit Note', 'url' => '#', 'icon' => 'mdi-eye']
+]])
+
 <div class="container-fluid">
     {{-- Header --}}
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -24,20 +29,23 @@
                     </button>
                 </form>
             @endif
-            @if($creditNote->status == 'submitted')
+            @if($creditNote->status == 'pending_approval')
                 <form action="{{ route('accounting.credit-notes.approve', $creditNote->id) }}" method="POST" class="d-inline">
                     @csrf
                     <button type="submit" class="btn btn-success mr-1">
                         <i class="mdi mdi-check mr-1"></i> Approve
                     </button>
                 </form>
-                <button type="button" class="btn btn-danger mr-1" data-toggle="modal" data-target="#rejectModal">
-                    <i class="mdi mdi-close mr-1"></i> Reject
+                <button type="button" class="btn btn-dark mr-1" data-bs-toggle="modal" data-bs-target="#voidModal">
+                    <i class="mdi mdi-close mr-1"></i> Void
                 </button>
             @endif
             @if($creditNote->status == 'approved')
-                <button type="button" class="btn btn-primary mr-1" data-toggle="modal" data-target="#applyRefundModal">
-                    <i class="mdi mdi-cash-refund mr-1"></i> Apply Refund
+                <button type="button" class="btn btn-primary mr-1" data-bs-toggle="modal" data-bs-target="#processRefundModal">
+                    <i class="mdi mdi-cash-refund mr-1"></i> Process Refund
+                </button>
+                <button type="button" class="btn btn-dark mr-1" data-bs-toggle="modal" data-bs-target="#voidModal">
+                    <i class="mdi mdi-close mr-1"></i> Void
                 </button>
             @endif
             <a href="{{ route('accounting.credit-notes.print', $creditNote->id) }}" class="btn btn-outline-secondary mr-1" target="_blank">
@@ -73,17 +81,17 @@
                         @case('draft')
                             <span class="badge bg-secondary fs-6">Draft</span>
                             @break
-                        @case('submitted')
+                        @case('pending_approval')
                             <span class="badge bg-warning fs-6">Pending Approval</span>
                             @break
                         @case('approved')
                             <span class="badge bg-success fs-6">Approved</span>
                             @break
-                        @case('applied')
-                            <span class="badge bg-info fs-6">Applied</span>
+                        @case('processed')
+                            <span class="badge bg-info fs-6">Processed</span>
                             @break
-                        @case('rejected')
-                            <span class="badge bg-danger fs-6">Rejected</span>
+                        @case('void')
+                            <span class="badge bg-dark fs-6">Voided</span>
                             @break
                     @endswitch
                 </div>
@@ -92,10 +100,10 @@
                         <div class="col-md-6">
                             <h5 class="text-primary">Patient Information</h5>
                             @if($creditNote->patient)
-                                <p class="mb-1"><strong>{{ $creditNote->patient->fullname }}</strong></p>
-                                <p class="mb-1 text-muted">MRN: {{ $creditNote->patient->mrn }}</p>
-                                @if($creditNote->patient->phone)
-                                    <p class="mb-0 text-muted">Phone: {{ $creditNote->patient->phone }}</p>
+                                <p class="mb-1"><strong>{{ $creditNote->patient->fullname ?? $creditNote->patient->user->name ?? 'N/A' }}</strong></p>
+                                <p class="mb-1 text-muted">MRN: {{ $creditNote->patient->mrn ?? 'N/A' }}</p>
+                                @if($creditNote->patient->phone ?? $creditNote->patient->user?->phone)
+                                    <p class="mb-0 text-muted">Phone: {{ $creditNote->patient->phone ?? $creditNote->patient->user?->phone }}</p>
                                 @endif
                             @else
                                 <p class="text-muted">No patient linked</p>
@@ -104,9 +112,9 @@
                         <div class="col-md-6 text-md-end">
                             <h5 class="text-primary">Credit Note Info</h5>
                             <p class="mb-1"><strong>Number:</strong> {{ $creditNote->credit_note_number }}</p>
-                            <p class="mb-1"><strong>Date:</strong> {{ $creditNote->date->format('F d, Y') }}</p>
-                            @if($creditNote->invoice)
-                                <p class="mb-0"><strong>Original Invoice:</strong> {{ $creditNote->invoice->invoice_number }}</p>
+                            <p class="mb-1"><strong>Date:</strong> {{ $creditNote->created_at->format('F d, Y') }}</p>
+                            @if($creditNote->originalPayment)
+                                <p class="mb-0"><strong>Original Payment:</strong> {{ $creditNote->originalPayment->reference ?? 'PAY-' . $creditNote->originalPayment->id }}</p>
                             @endif
                         </div>
                     </div>
@@ -116,9 +124,6 @@
                     <div class="row mb-4">
                         <div class="col-12">
                             <h5 class="text-primary">Reason for Credit</h5>
-                            <p class="mb-1">
-                                <span class="badge bg-info">{{ ucwords(str_replace('_', ' ', $creditNote->reason_type)) }}</span>
-                            </p>
                             <p class="mb-0">{{ $creditNote->reason }}</p>
                         </div>
                     </div>
@@ -147,24 +152,24 @@
                         </div>
                     </div>
 
-                    @if($creditNote->status == 'rejected' && $creditNote->rejection_reason)
-                        <div class="alert alert-danger mt-4">
-                            <h6 class="alert-heading"><i class="fas fa-times-circle me-2"></i>Rejection Reason</h6>
-                            <p class="mb-0">{{ $creditNote->rejection_reason }}</p>
+                    @if($creditNote->status == 'void' && $creditNote->void_reason)
+                        <div class="alert alert-dark mt-4">
+                            <h6 class="alert-heading"><i class="fas fa-ban me-2"></i>Voided</h6>
+                            <p class="mb-0">{{ $creditNote->void_reason }}</p>
                             <hr>
-                            <small>Rejected by: {{ $creditNote->rejectedBy->name ?? 'Unknown' }} on {{ $creditNote->rejected_at?->format('M d, Y H:i') }}</small>
+                            <small>Voided by: {{ $creditNote->voidedBy->name ?? 'Unknown' }} on {{ $creditNote->voided_at?->format('M d, Y H:i') }}</small>
                         </div>
                     @endif
 
-                    @if($creditNote->status == 'applied')
+                    @if($creditNote->status == 'processed')
                         <div class="alert alert-success mt-4">
-                            <h6 class="alert-heading"><i class="fas fa-check-circle me-2"></i>Refund Applied</h6>
+                            <h6 class="alert-heading"><i class="fas fa-check-circle me-2"></i>Refund Processed</h6>
                             <p class="mb-1"><strong>Method:</strong> {{ ucwords(str_replace('_', ' ', $creditNote->refund_method)) }}</p>
-                            @if($creditNote->refund_reference)
-                                <p class="mb-1"><strong>Reference:</strong> {{ $creditNote->refund_reference }}</p>
+                            @if($creditNote->bank)
+                                <p class="mb-1"><strong>Bank:</strong> {{ $creditNote->bank->name }}</p>
                             @endif
                             <hr>
-                            <small>Applied by: {{ $creditNote->appliedBy->name ?? 'Unknown' }} on {{ $creditNote->applied_at?->format('M d, Y H:i') }}</small>
+                            <small>Processed by: {{ $creditNote->processedBy->name ?? 'Unknown' }} on {{ $creditNote->processed_at?->format('M d, Y H:i') }}</small>
                         </div>
                     @endif
                 </div>
@@ -258,27 +263,27 @@
                             </div>
                         @endif
 
-                        @if($creditNote->rejected_at)
+                        @if($creditNote->voided_at)
                             <div class="timeline-item">
-                                <div class="timeline-marker bg-danger"></div>
+                                <div class="timeline-marker bg-dark"></div>
                                 <div class="timeline-content">
-                                    <h6 class="mb-0">Rejected</h6>
+                                    <h6 class="mb-0">Voided</h6>
                                     <small class="text-muted">
-                                        {{ $creditNote->rejected_at->format('M d, Y H:i') }}<br>
-                                        by {{ $creditNote->rejectedBy->name ?? 'Unknown' }}
+                                        {{ $creditNote->voided_at->format('M d, Y H:i') }}<br>
+                                        by {{ $creditNote->voidedBy->name ?? 'Unknown' }}
                                     </small>
                                 </div>
                             </div>
                         @endif
 
-                        @if($creditNote->applied_at)
+                        @if($creditNote->processed_at)
                             <div class="timeline-item">
                                 <div class="timeline-marker bg-info"></div>
                                 <div class="timeline-content">
-                                    <h6 class="mb-0">Refund Applied</h6>
+                                    <h6 class="mb-0">Refund Processed</h6>
                                     <small class="text-muted">
-                                        {{ $creditNote->applied_at->format('M d, Y H:i') }}<br>
-                                        by {{ $creditNote->appliedBy->name ?? 'Unknown' }}
+                                        {{ $creditNote->processed_at->format('M d, Y H:i') }}<br>
+                                        by {{ $creditNote->processedBy->name ?? 'Unknown' }}
                                     </small>
                                 </div>
                             </div>
@@ -320,26 +325,31 @@
 </div>
 
 <!-- Reject Modal -->
-@if($creditNote->status == 'submitted')
-    <div class="modal fade" id="rejectModal" tabindex="-1">
+@if($creditNote->canVoid())
+    <!-- Void Modal -->
+    <div class="modal fade" id="voidModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <form action="{{ route('accounting.credit-notes.reject', $creditNote->id) }}" method="POST">
+                <form action="{{ route('accounting.credit-notes.void', $creditNote->id) }}" method="POST">
                     @csrf
                     <div class="modal-header">
-                        <h5 class="modal-title">Reject Credit Note</h5>
-                        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                        <h5 class="modal-title">Void Credit Note</h5>
+                        <button type="button" class="close" data-bs-dismiss="modal"><span>&times;</span></button>
                     </div>
                     <div class="modal-body">
+                        <div class="alert alert-warning">
+                            <i class="mdi mdi-alert-circle mr-1"></i>
+                            This action cannot be undone. The credit note will be permanently voided.
+                        </div>
                         <div class="mb-3">
-                            <label class="form-label">Rejection Reason <span class="text-danger">*</span></label>
-                            <textarea name="rejection_reason" class="form-control" rows="3" required
-                                      placeholder="Explain why this credit note is being rejected..."></textarea>
+                            <label class="form-label">Void Reason <span class="text-danger">*</span></label>
+                            <textarea name="void_reason" class="form-control" rows="3" required
+                                      placeholder="Explain why this credit note is being voided..."></textarea>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-danger">Reject Credit Note</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-dark">Void Credit Note</button>
                     </div>
                 </form>
             </div>
@@ -347,16 +357,16 @@
     </div>
 @endif
 
-<!-- Apply Refund Modal -->
-@if($creditNote->status == 'approved')
-    <div class="modal fade" id="applyRefundModal" tabindex="-1">
+<!-- Process Refund Modal -->
+@if($creditNote->canProcess())
+    <div class="modal fade" id="processRefundModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <form action="{{ route('accounting.credit-notes.apply', $creditNote->id) }}" method="POST">
+                <form action="{{ route('accounting.credit-notes.process', $creditNote->id) }}" method="POST">
                     @csrf
                     <div class="modal-header">
-                        <h5 class="modal-title">Apply Refund</h5>
-                        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                        <h5 class="modal-title">Process Refund</h5>
+                        <button type="button" class="close" data-bs-dismiss="modal"><span>&times;</span></button>
                     </div>
                     <div class="modal-body">
                         <div class="alert alert-info">
@@ -365,11 +375,23 @@
 
                         <div class="mb-3">
                             <label class="form-label">Refund Method <span class="text-danger">*</span></label>
-                            <select name="refund_method" class="form-control" required>
+                            <select name="refund_method" class="form-control" id="refundMethodSelect" required>
                                 <option value="">Select Method</option>
                                 <option value="cash">Cash</option>
-                                <option value="bank_transfer">Bank Transfer</option>
-                                <option value="credit_to_account">Credit to Patient Account</option>
+                                <option value="bank">Bank Transfer</option>
+                                <option value="account_credit">Credit to Patient Account</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3" id="bankSelectDiv" style="display: none;">
+                            <label class="form-label">Bank Account <span class="text-danger">*</span></label>
+                            <select name="bank_id" class="form-control" id="bankSelect">
+                                <option value="">Select Bank Account</option>
+                                @if(isset($banks))
+                                    @foreach($banks as $bank)
+                                        <option value="{{ $bank->id }}">{{ $bank->name }} - {{ $bank->account_number }}</option>
+                                    @endforeach
+                                @endif
                             </select>
                         </div>
 
@@ -386,13 +408,29 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Apply Refund</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Process Refund</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
+
+    @push('scripts')
+    <script>
+        document.getElementById('refundMethodSelect').addEventListener('change', function() {
+            var bankDiv = document.getElementById('bankSelectDiv');
+            var bankSelect = document.getElementById('bankSelect');
+            if (this.value === 'bank') {
+                bankDiv.style.display = 'block';
+                bankSelect.setAttribute('required', 'required');
+            } else {
+                bankDiv.style.display = 'none';
+                bankSelect.removeAttribute('required');
+            }
+        });
+    </script>
+    @endpush
 @endif
 @endsection
 

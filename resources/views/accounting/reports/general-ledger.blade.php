@@ -5,6 +5,11 @@
 @section('subpage_name', 'General Ledger')
 
 @section('content')
+@include('accounting.partials.breadcrumb', ['items' => [
+    ['label' => 'Reports', 'url' => route('accounting.reports.index'), 'icon' => 'mdi-file-chart'],
+    ['label' => 'General Ledger', 'url' => '#', 'icon' => 'mdi-book-multiple']
+]])
+
 <div class="container-fluid">
     {{-- Header --}}
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -16,11 +21,11 @@
             <a href="{{ route('accounting.reports.index') }}" class="btn btn-outline-secondary mr-2">
                 <i class="mdi mdi-arrow-left mr-1"></i> Back to Reports
             </a>
-            <a href="{{ route('accounting.reports.general-ledger', ['format' => 'pdf'] + request()->all()) }}"
-               class="btn btn-danger mr-1" target="_blank">
+            <a href="{{ route('accounting.reports.general-ledger', array_merge(request()->all(), ['export' => 'pdf'])) }}"
+               class="btn btn-danger mr-1">
                 <i class="mdi mdi-file-pdf-box mr-1"></i> Export PDF
             </a>
-            <a href="{{ route('accounting.reports.general-ledger', ['format' => 'excel'] + request()->all()) }}"
+            <a href="{{ route('accounting.reports.general-ledger', array_merge(request()->all(), ['export' => 'excel'])) }}"
                class="btn btn-success">
                 <i class="mdi mdi-file-excel mr-1"></i> Export Excel
             </a>
@@ -89,8 +94,8 @@
                 <div class="mb-5">
                     <div class="d-flex justify-content-between align-items-center bg-light p-3 rounded mb-3">
                         <div>
-                            <h5 class="mb-0">{{ $accountData['account']->code }} - {{ $accountData['account']->name }}</h5>
-                            <small class="text-muted">{{ $accountData['account']->accountGroup->name ?? '' }}</small>
+                            <h5 class="mb-0">{{ $accountData['account']['code'] }} - {{ $accountData['account']['name'] }}</h5>
+                            <small class="text-muted">{{ $accountData['account']['group'] ?? '' }}</small>
                         </div>
                         <div class="text-end">
                             <small class="text-muted">Opening Balance</small>
@@ -112,20 +117,16 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @php $runningBalance = $accountData['opening_balance']; @endphp
                                 @forelse($accountData['transactions'] as $transaction)
-                                    @php
-                                        $runningBalance += $transaction['debit'] - $transaction['credit'];
-                                    @endphp
                                     <tr>
                                         <td>{{ \Carbon\Carbon::parse($transaction['date'])->format('M d, Y') }}</td>
                                         <td>
-                                            <a href="{{ route('accounting.journal-entries.show', $transaction['journal_entry_id']) }}">
+                                            <a href="{{ route('accounting.journal-entries.show', $transaction['entry_id']) }}">
                                                 {{ $transaction['entry_number'] }}
                                             </a>
                                         </td>
                                         <td>{{ Str::limit($transaction['description'], 40) }}</td>
-                                        <td>{{ $transaction['reference'] ?? '-' }}</td>
+                                        <td>{{ $transaction['source_type'] ?? '-' }}</td>
                                         <td class="text-end">
                                             {{ $transaction['debit'] > 0 ? number_format($transaction['debit'], 2) : '-' }}
                                         </td>
@@ -133,7 +134,7 @@
                                             {{ $transaction['credit'] > 0 ? number_format($transaction['credit'], 2) : '-' }}
                                         </td>
                                         <td class="text-end fw-bold">
-                                            {{ number_format($runningBalance, 2) }}
+                                            {{ number_format($transaction['running_balance'], 2) }}
                                         </td>
                                     </tr>
                                 @empty

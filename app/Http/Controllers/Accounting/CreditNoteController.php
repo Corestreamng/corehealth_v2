@@ -4,16 +4,13 @@ namespace App\Http\Controllers\Accounting;
 
 use App\Http\Controllers\Controller;
 use App\Models\Accounting\CreditNote;
-use App\Models\Accounting\CreditNoteItem;
 use App\Models\Accounting\Account;
-use App\Models\Accounting\JournalEntry;
-use App\Models\patient;
-use App\Models\invoice;
+use App\Models\Bank;
+use App\Models\Patient;
 use App\Services\Accounting\AccountingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 use Yajra\DataTables\Facades\DataTables;
 
 /**
@@ -47,13 +44,13 @@ class CreditNoteController extends Controller
         // Statistics for stat cards
         $stats = [
             'total' => CreditNote::count(),
-            'pending' => CreditNote::where('status', CreditNote::STATUS_PENDING)->count(),
+            'pending' => CreditNote::where('status', CreditNote::STATUS_PENDING_APPROVAL)->count(),
             'approved' => CreditNote::where('status', CreditNote::STATUS_APPROVED)->count(),
-            'applied' => CreditNote::where('status', CreditNote::STATUS_APPLIED)->count(),
-            'rejected' => CreditNote::where('status', CreditNote::STATUS_REJECTED)->count(),
-            'total_amount' => CreditNote::sum('total_amount'),
-            'pending_amount' => CreditNote::where('status', CreditNote::STATUS_PENDING)->sum('total_amount'),
-            'applied_amount' => CreditNote::where('status', CreditNote::STATUS_APPLIED)->sum('total_amount'),
+            'processed' => CreditNote::where('status', CreditNote::STATUS_PROCESSED)->count(),
+            'voided' => CreditNote::where('status', CreditNote::STATUS_VOID)->count(),
+            'total_amount' => CreditNote::sum('amount'),
+            'pending_amount' => CreditNote::where('status', CreditNote::STATUS_PENDING_APPROVAL)->sum('amount'),
+            'processed_amount' => CreditNote::where('status', CreditNote::STATUS_PROCESSED)->sum('amount'),
         ];
 
         return view('accounting.credit-notes.index', compact('stats'));
@@ -65,7 +62,7 @@ class CreditNoteController extends Controller
      */
     public function datatable(Request $request)
     {
-        $query = CreditNote::with(['patient.user', 'invoice', 'createdBy', 'approvedBy'])
+        $query = CreditNote::with(['patient.user', 'originalPayment', 'createdBy', 'approvedBy'])
             ->select('credit_notes.*');
 
         return DataTables::eloquent($query)
@@ -77,10 +74,10 @@ class CreditNoteController extends Controller
 
                 // Date range filter
                 if ($request->filled('from_date')) {
-                    $query->where('credit_note_date', '>=', $request->from_date);
+                    $query->where('created_at', '>=', $request->from_date);
                 }
                 if ($request->filled('to_date')) {
-                    $query->where('credit_note_date', '<=', $request->to_date);
+                    $query->where('created_at', '<=', $request->to_date);
                 }
 
                 // Patient filter
@@ -116,23 +113,24 @@ class CreditNoteController extends Controller
                 }
                 return '<span class="text-muted">-</span>';
             })
-            ->addColumn('invoice_number', function ($row) {
-                return $row->invoice ? e($row->invoice->invoice_number ?? "INV-{$row->invoice->id}") : '-';
+            ->addColumn('payment_reference', function ($row) {
+                return $row->originalPayment ? e($row->originalPayment->reference ?? "PAY-{$row->originalPayment->id}") : '-';
             })
             ->addColumn('formatted_date', function ($row) {
-                return $row->credit_note_date ? Carbon::parse($row->credit_note_date)->format('M d, Y') : '-';
+                return $row->created_at ? $row->created_at->format('M d, Y') : '-';
             })
             ->addColumn('formatted_amount', function ($row) {
-                return number_format($row->total_amount, 2);
+                return number_format($row->amount, 2);
             })
             ->addColumn('status_badge', function ($row) {
                 $badges = [
-                    'pending' => '<span class="badge badge-warning">Pending</span>',
+                    'draft' => '<span class="badge badge-secondary">Draft</span>',
+                    'pending_approval' => '<span class="badge badge-warning">Pending</span>',
                     'approved' => '<span class="badge badge-success">Approved</span>',
-                    'applied' => '<span class="badge badge-info">Applied</span>',
-                    'rejected' => '<span class="badge badge-danger">Rejected</span>',
+                    'processed' => '<span class="badge badge-info">Processed</span>',
+                    'void' => '<span class="badge badge-dark">Voided</span>',
                 ];
-                return $badges[$row->status] ?? '<span class="badge badge-secondary">Unknown</span>';
+                return $badges[$row->status] ?? '<span class="badge badge-secondary">' . ucfirst($row->status) . '</span>';
             })
             ->addColumn('actions', function ($row) {
                 $html = '<div class="dropdown">';
@@ -140,14 +138,18 @@ class CreditNoteController extends Controller
                 $html .= '<div class="dropdown-menu dropdown-menu-right">';
                 $html .= '<a class="dropdown-item" href="' . route('accounting.credit-notes.show', $row->id) . '"><i class="mdi mdi-eye mr-2"></i>View</a>';
 
-                if ($row->status === 'pending') {
+                if ($row->status === CreditNote::STATUS_DRAFT) {
                     $html .= '<a class="dropdown-item" href="' . route('accounting.credit-notes.edit', $row->id) . '"><i class="mdi mdi-pencil mr-2"></i>Edit</a>';
-                    $html .= '<a class="dropdown-item text-success btn-approve" href="#" data-id="' . $row->id . '"><i class="mdi mdi-check mr-2"></i>Approve</a>';
-                    $html .= '<a class="dropdown-item text-danger btn-reject" href="#" data-id="' . $row->id . '" data-number="' . e($row->credit_note_number) . '"><i class="mdi mdi-close mr-2"></i>Reject</a>';
+                    $html .= '<a class="dropdown-item text-primary btn-submit" href="#" data-id="' . $row->id . '"><i class="mdi mdi-send mr-2"></i>Submit</a>';
                 }
 
-                if ($row->status === 'approved') {
-                    $html .= '<a class="dropdown-item text-primary btn-apply" href="#" data-id="' . $row->id . '" data-number="' . e($row->credit_note_number) . '" data-amount="' . $row->total_amount . '"><i class="mdi mdi-cash-refund mr-2"></i>Apply Refund</a>';
+                if ($row->status === CreditNote::STATUS_PENDING_APPROVAL) {
+                    $html .= '<a class="dropdown-item text-success btn-approve" href="#" data-id="' . $row->id . '"><i class="mdi mdi-check mr-2"></i>Approve</a>';
+                    $html .= '<a class="dropdown-item text-danger btn-void" href="#" data-id="' . $row->id . '" data-number="' . e($row->credit_note_number) . '"><i class="mdi mdi-close mr-2"></i>Void</a>';
+                }
+
+                if ($row->status === CreditNote::STATUS_APPROVED) {
+                    $html .= '<a class="dropdown-item text-primary btn-process" href="#" data-id="' . $row->id . '" data-number="' . e($row->credit_note_number) . '" data-amount="' . $row->amount . '"><i class="mdi mdi-cash-refund mr-2"></i>Process Refund</a>';
                 }
 
                 $html .= '</div></div>';
@@ -162,26 +164,29 @@ class CreditNoteController extends Controller
      */
     public function create(Request $request)
     {
-        $patients = patient::with('user')
+        $patients = Patient::with('user')
             ->whereHas('user')
             ->orderBy('id', 'desc')
             ->limit(100)
             ->get();
 
         $selectedPatient = null;
-        $invoices = collect();
+        $payments = collect();
 
         if ($request->filled('patient_id')) {
-            $selectedPatient = patient::with('user')->find($request->patient_id);
+            $selectedPatient = Patient::with('user')->find($request->patient_id);
             if ($selectedPatient) {
-                $invoices = invoice::where('patient_id', $selectedPatient->id)
-                    ->where('status', 'paid')
+                // Get payments that can be refunded
+                $payments = \App\Models\Payment::where('patient_id', $selectedPatient->id)
+                    ->where('status', 'completed')
                     ->orderBy('created_at', 'desc')
                     ->get();
             }
         }
 
-        return view('accounting.credit-notes.create', compact('patients', 'selectedPatient', 'invoices'));
+        $banks = \App\Models\Bank::where('is_active', true)->get();
+
+        return view('accounting.credit-notes.create', compact('patients', 'selectedPatient', 'payments', 'banks'));
     }
 
     /**
@@ -189,107 +194,50 @@ class CreditNoteController extends Controller
      */
     public function store(Request $request)
     {
-        // Support both item-based and simple amount approaches
-        $hasItems = $request->has('items') && is_array($request->items) && count($request->items) > 0;
-
-        $rules = [
+        $request->validate([
             'patient_id' => 'required|exists:patients,id',
-            'invoice_id' => 'nullable|exists:invoices,id',
-            'reason_type' => 'nullable|string|max:100',
-            'reason' => 'required|string|max:500',
-            'supporting_documents' => 'nullable|string|max:1000',
-        ];
-
-        if ($hasItems) {
-            $rules['items'] = 'required|array|min:1';
-            $rules['items.*.description'] = 'required|string|max:255';
-            $rules['items.*.amount'] = 'required|numeric|min:0.01';
-            $rules['items.*.reference_type'] = 'nullable|string|max:100';
-            $rules['items.*.reference_id'] = 'nullable|integer';
-        } else {
-            $rules['amount'] = 'required|numeric|min:0.01';
-        }
-
-        // Handle date field (supports both 'date' and 'credit_note_date')
-        if ($request->has('date')) {
-            $rules['date'] = 'required|date';
-        } else {
-            $rules['credit_note_date'] = 'required|date';
-        }
-
-        $request->validate($rules);
+            'original_payment_id' => 'required|exists:payments,id',
+            'amount' => 'required|numeric|min:0.01',
+            'reason' => 'required|string|max:1000',
+            'refund_method' => 'required|in:cash,bank,account_credit',
+            'bank_id' => 'required_if:refund_method,bank|nullable|exists:banks,id',
+        ]);
 
         try {
             DB::beginTransaction();
 
-            // Generate credit note number or use provided one
-            $creditNoteNumber = $request->credit_note_number;
-            if (!$creditNoteNumber) {
-                $lastCN = CreditNote::whereYear('created_at', now()->year)
-                    ->orderBy('id', 'desc')
-                    ->first();
-                $sequence = $lastCN ? (intval(substr($lastCN->credit_note_number, -5)) + 1) : 1;
-                $creditNoteNumber = 'CN-' . now()->format('Y') . '-' . str_pad($sequence, 5, '0', STR_PAD_LEFT);
-            }
-
-            // Calculate total amount
-            $totalAmount = $hasItems
-                ? collect($request->items)->sum('amount')
-                : $request->amount;
-
-            // Get date value
-            $creditNoteDate = $request->date ?? $request->credit_note_date;
+            // Generate credit note number
+            $lastCN = CreditNote::whereYear('created_at', now()->year)
+                ->orderBy('id', 'desc')
+                ->first();
+            $sequence = $lastCN ? (intval(substr($lastCN->credit_note_number, -4)) + 1) : 1;
+            $creditNoteNumber = 'CN' . now()->format('Ym') . '-' . str_pad($sequence, 4, '0', STR_PAD_LEFT);
 
             $creditNote = CreditNote::create([
                 'credit_note_number' => $creditNoteNumber,
                 'patient_id' => $request->patient_id,
-                'invoice_id' => $request->invoice_id,
-                'credit_note_date' => $creditNoteDate,
-                'total_amount' => $totalAmount,
-                'reason_type' => $request->reason_type,
+                'original_payment_id' => $request->original_payment_id,
+                'amount' => $request->amount,
                 'reason' => $request->reason,
-                'notes' => $request->supporting_documents ?? $request->notes,
-                'status' => $request->action === 'submit' ? CreditNote::STATUS_PENDING : CreditNote::STATUS_PENDING, // Always pending since draft isn't a typical status
+                'refund_method' => $request->refund_method,
+                'bank_id' => $request->refund_method === 'bank' ? $request->bank_id : null,
+                'status' => CreditNote::STATUS_DRAFT,
                 'created_by' => Auth::id(),
             ]);
-
-            // Create items
-            if ($hasItems) {
-                foreach ($request->items as $item) {
-                    CreditNoteItem::create([
-                        'credit_note_id' => $creditNote->id,
-                        'description' => $item['description'],
-                        'amount' => $item['amount'],
-                        'reference_type' => $item['reference_type'] ?? null,
-                        'reference_id' => $item['reference_id'] ?? null,
-                    ]);
-                }
-            } else {
-                // Create single item from simple amount
-                $reasonTypeLabel = $request->reason_type
-                    ? str_replace('_', ' ', ucfirst($request->reason_type))
-                    : 'Credit Note';
-
-                CreditNoteItem::create([
-                    'credit_note_id' => $creditNote->id,
-                    'description' => $reasonTypeLabel . ': ' . ($request->reason ?? 'Credit adjustment'),
-                    'amount' => $request->amount,
-                ]);
-            }
 
             DB::commit();
 
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => "Credit note {$creditNoteNumber} created and pending approval.",
+                    'message' => "Credit note {$creditNoteNumber} created as draft.",
                     'credit_note_id' => $creditNote->id,
                     'redirect' => route('accounting.credit-notes.show', $creditNote->id)
                 ]);
             }
 
             return redirect()->route('accounting.credit-notes.show', $creditNote->id)
-                ->with('success', "Credit note {$creditNoteNumber} created and pending approval.");
+                ->with('success', "Credit note {$creditNoteNumber} created as draft. Please submit for approval.");
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -314,15 +262,50 @@ class CreditNoteController extends Controller
     {
         $creditNote = CreditNote::with([
             'patient.user',
-            'invoice',
-            'items',
+            'originalPayment',
+            'bank',
             'createdBy',
+            'submittedBy',
             'approvedBy',
-            'appliedBy',
+            'processedBy',
+            'voidedBy',
             'journalEntry.lines.account'
         ])->findOrFail($id);
 
-        return view('accounting.credit-notes.show', compact('creditNote'));
+        // Get banks for the process refund modal
+        $banks = Bank::where('is_active', true)->orderBy('bank_name')->get();
+
+        return view('accounting.credit-notes.show', compact('creditNote', 'banks'));
+    }
+
+    /**
+     * Submit a credit note for approval.
+     */
+    public function submit(Request $request, $id)
+    {
+        $creditNote = CreditNote::findOrFail($id);
+
+        if ($creditNote->status !== CreditNote::STATUS_DRAFT) {
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Only draft credit notes can be submitted.'], 400);
+            }
+            return redirect()->back()->with('error', 'Only draft credit notes can be submitted.');
+        }
+
+        $creditNote->update([
+            'status' => CreditNote::STATUS_PENDING_APPROVAL,
+            'submitted_by' => Auth::id(),
+            'submitted_at' => now(),
+        ]);
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Credit note {$creditNote->credit_note_number} submitted for approval."
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Credit note submitted for approval.');
     }
 
     /**
@@ -332,7 +315,7 @@ class CreditNoteController extends Controller
     {
         $creditNote = CreditNote::findOrFail($id);
 
-        if ($creditNote->status !== CreditNote::STATUS_PENDING) {
+        if ($creditNote->status !== CreditNote::STATUS_PENDING_APPROVAL) {
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => 'Only pending credit notes can be approved.'], 400);
             }
@@ -356,63 +339,60 @@ class CreditNoteController extends Controller
     }
 
     /**
-     * Reject a credit note.
+     * Void a credit note.
      */
-    public function reject(Request $request, $id)
+    public function void(Request $request, $id)
     {
         $creditNote = CreditNote::findOrFail($id);
 
-        if ($creditNote->status !== CreditNote::STATUS_PENDING) {
+        if (!in_array($creditNote->status, [CreditNote::STATUS_DRAFT, CreditNote::STATUS_PENDING_APPROVAL, CreditNote::STATUS_APPROVED])) {
             if ($request->ajax()) {
-                return response()->json(['success' => false, 'message' => 'Only pending credit notes can be rejected.'], 400);
+                return response()->json(['success' => false, 'message' => 'This credit note cannot be voided.'], 400);
             }
-            return redirect()->back()->with('error', 'Only pending credit notes can be rejected.');
+            return redirect()->back()->with('error', 'This credit note cannot be voided.');
         }
 
         $request->validate([
-            'rejection_reason' => 'required|string|max:500',
+            'void_reason' => 'required|string|max:500',
         ]);
 
         $creditNote->update([
-            'status' => CreditNote::STATUS_REJECTED,
-            'rejection_reason' => $request->rejection_reason,
+            'status' => CreditNote::STATUS_VOID,
+            'voided_by' => Auth::id(),
+            'voided_at' => now(),
+            'void_reason' => $request->void_reason,
         ]);
 
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => "Credit note {$creditNote->credit_note_number} rejected."
+                'message' => "Credit note {$creditNote->credit_note_number} voided."
             ]);
         }
 
-        return redirect()->back()->with('success', 'Credit note rejected.');
+        return redirect()->back()->with('success', 'Credit note voided.');
     }
 
     /**
-     * Apply a credit note (process refund and create journal entry).
+     * Process a credit note (apply refund and create journal entry).
      */
-    public function apply(Request $request, $id)
+    public function process(Request $request, $id)
     {
         $creditNote = CreditNote::findOrFail($id);
 
         if ($creditNote->status !== CreditNote::STATUS_APPROVED) {
             if ($request->ajax()) {
-                return response()->json(['success' => false, 'message' => 'Only approved credit notes can be applied.'], 400);
+                return response()->json(['success' => false, 'message' => 'Only approved credit notes can be processed.'], 400);
             }
-            return redirect()->back()->with('error', 'Only approved credit notes can be applied.');
+            return redirect()->back()->with('error', 'Only approved credit notes can be processed.');
         }
-
-        $request->validate([
-            'refund_method' => 'required|in:cash,bank_transfer,cheque,wallet_credit',
-            'refund_reference' => 'nullable|string|max:100',
-        ]);
 
         try {
             DB::beginTransaction();
 
             // Get accounts based on refund method
-            $revenueAccount = Account::where('account_code', '4000')->first(); // Revenue
-            $refundAccount = $this->getRefundAccount($request->refund_method);
+            $revenueAccount = Account::where('code', '4000')->first(); // Revenue
+            $refundAccount = $this->getRefundAccount($creditNote->refund_method);
 
             if (!$revenueAccount || !$refundAccount) {
                 throw new \Exception('Required accounts not configured.');
@@ -424,34 +404,30 @@ class CreditNoteController extends Controller
             $lines = [
                 [
                     'account_id' => $revenueAccount->id,
-                    'debit_amount' => $creditNote->total_amount,
+                    'debit_amount' => $creditNote->amount,
                     'credit_amount' => 0,
                     'description' => 'Revenue reversal - refund'
                 ],
                 [
                     'account_id' => $refundAccount->id,
                     'debit_amount' => 0,
-                    'credit_amount' => $creditNote->total_amount,
-                    'description' => "Refund via {$request->refund_method}"
+                    'credit_amount' => $creditNote->amount,
+                    'description' => "Refund via {$creditNote->refund_method}"
                 ]
             ];
 
-            $entry = $this->accountingService->createJournalEntry([
-                'entry_type' => JournalEntry::TYPE_AUTOMATED,
-                'source_type' => CreditNote::class,
-                'source_id' => $creditNote->id,
-                'description' => "Credit Note Refund: {$creditNote->credit_note_number}",
-                'status' => JournalEntry::STATUS_POSTED,
-                'memo' => "Patient refund - {$creditNote->reason}"
-            ], $lines);
+            $entry = $this->accountingService->createAndPostAutomatedEntry(
+                CreditNote::class,
+                $creditNote->id,
+                "Credit Note Refund: {$creditNote->credit_note_number} - Patient refund - {$creditNote->reason}",
+                $lines
+            );
 
             // Update credit note
             $creditNote->update([
-                'status' => CreditNote::STATUS_APPLIED,
-                'applied_by' => Auth::id(),
-                'applied_at' => now(),
-                'refund_method' => $request->refund_method,
-                'refund_reference' => $request->refund_reference,
+                'status' => CreditNote::STATUS_PROCESSED,
+                'processed_by' => Auth::id(),
+                'processed_at' => now(),
                 'journal_entry_id' => $entry->id,
             ]);
 
@@ -460,22 +436,22 @@ class CreditNoteController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => "Credit note {$creditNote->credit_note_number} applied and refund processed.",
+                    'message' => "Credit note {$creditNote->credit_note_number} processed and refund completed.",
                     'journal_entry_id' => $entry->id
                 ]);
             }
 
             return redirect()->back()
-                ->with('success', 'Credit note applied and refund processed.');
+                ->with('success', 'Credit note processed and refund completed.');
 
         } catch (\Exception $e) {
             DB::rollBack();
 
             if ($request->ajax()) {
-                return response()->json(['success' => false, 'message' => 'Error applying credit note: ' . $e->getMessage()], 500);
+                return response()->json(['success' => false, 'message' => 'Error processing credit note: ' . $e->getMessage()], 500);
             }
 
-            return redirect()->back()->with('error', 'Error applying credit note: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Error processing credit note: ' . $e->getMessage());
         }
     }
 
@@ -486,13 +462,12 @@ class CreditNoteController extends Controller
     {
         $code = match ($method) {
             'cash' => '1010',
-            'bank_transfer' => '1020',
-            'cheque' => '1020',
-            'wallet_credit' => '2200', // Customer Credits/Deposits
+            'bank' => '1020',
+            'account_credit' => '2200', // Customer Credits/Deposits
             default => '1010'
         };
 
-        return Account::where('account_code', $code)->first();
+        return Account::where('code', $code)->first();
     }
 
     /**
@@ -511,7 +486,7 @@ class CreditNoteController extends Controller
 
         foreach ($request->ids as $id) {
             $creditNote = CreditNote::find($id);
-            if ($creditNote && $creditNote->status === CreditNote::STATUS_PENDING) {
+            if ($creditNote && $creditNote->status === CreditNote::STATUS_PENDING_APPROVAL) {
                 $creditNote->update([
                     'status' => CreditNote::STATUS_APPROVED,
                     'approved_by' => Auth::id(),
@@ -530,23 +505,23 @@ class CreditNoteController extends Controller
     }
 
     /**
-     * Get patient invoices for AJAX.
+     * Get patient payments for AJAX.
      */
-    public function getPatientInvoices($patientId)
+    public function getPatientPayments($patientId)
     {
-        $invoices = invoice::where('patient_id', $patientId)
-            ->where('status', 'paid')
+        $payments = \App\Models\Payment::where('patient_id', $patientId)
+            ->where('status', 'completed')
             ->orderBy('created_at', 'desc')
             ->get()
-            ->map(function ($inv) {
+            ->map(function ($pay) {
                 return [
-                    'id' => $inv->id,
-                    'number' => $inv->invoice_number ?? "INV-{$inv->id}",
-                    'date' => $inv->created_at->format('Y-m-d'),
-                    'amount' => $inv->total,
+                    'id' => $pay->id,
+                    'reference' => $pay->reference ?? "PAY-{$pay->id}",
+                    'date' => $pay->created_at->format('Y-m-d'),
+                    'amount' => $pay->amount,
                 ];
             });
 
-        return response()->json($invoices);
+        return response()->json($payments);
     }
 }

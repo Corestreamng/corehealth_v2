@@ -7,7 +7,7 @@ use App\Models\Accounting\Account;
 use App\Models\Accounting\AccountClass;
 use App\Models\Accounting\AccountGroup;
 use App\Models\Accounting\JournalEntry;
-use App\Models\Accounting\JournalLine;
+use App\Models\Accounting\JournalEntryLine;
 use App\Models\Accounting\FiscalYear;
 use App\Models\Accounting\FiscalPeriod;
 use Illuminate\Http\Request;
@@ -244,6 +244,7 @@ class OpeningBalanceController extends Controller
 
             $totalDebit = 0;
             $totalCredit = 0;
+            $lineNumber = 1;
 
             foreach ($request->balances as $balance) {
                 if ($balance['amount'] == 0) continue;
@@ -269,22 +270,17 @@ class OpeningBalanceController extends Controller
                     }
                 }
 
-                JournalLine::create([
+                JournalEntryLine::create([
                     'journal_entry_id' => $journalEntry->id,
+                    'line_number' => $lineNumber++,
                     'account_id' => $account->id,
-                    'debit_amount' => $debit,
-                    'credit_amount' => $credit,
-                    'description' => 'Opening balance',
+                    'debit' => $debit,
+                    'credit' => $credit,
+                    'narration' => 'Opening balance',
                 ]);
 
                 $totalDebit += $debit;
                 $totalCredit += $credit;
-
-                // Update account opening balance field
-                $account->update([
-                    'opening_balance' => $balance['amount'],
-                    'opening_balance_date' => $fiscalYear->start_date,
-                ]);
             }
 
             // Check balance
@@ -293,7 +289,7 @@ class OpeningBalanceController extends Controller
                 $difference = $totalDebit - $totalCredit;
 
                 // Find or create a suspense/adjustment account
-                $adjustmentAccount = Account::where('account_code', 'like', '3%')
+                $adjustmentAccount = Account::where('code', 'like', '3%')
                     ->where('name', 'like', '%Retained%')
                     ->first();
 
@@ -306,12 +302,13 @@ class OpeningBalanceController extends Controller
                 }
 
                 if ($adjustmentAccount) {
-                    JournalLine::create([
+                    JournalEntryLine::create([
                         'journal_entry_id' => $journalEntry->id,
+                        'line_number' => $lineNumber++,
                         'account_id' => $adjustmentAccount->id,
-                        'debit_amount' => $difference < 0 ? abs($difference) : 0,
-                        'credit_amount' => $difference > 0 ? $difference : 0,
-                        'description' => 'Opening balance adjustment',
+                        'debit' => $difference < 0 ? abs($difference) : 0,
+                        'credit' => $difference > 0 ? $difference : 0,
+                        'narration' => 'Opening balance adjustment',
                     ]);
                 }
             }

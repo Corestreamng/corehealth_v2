@@ -418,30 +418,20 @@ class ReportService
     }
 
     /**
-     * Generate Aged Receivables Report.
+     * Generate Comprehensive Aged Receivables Report.
+     *
+     * Includes:
+     * - Patient overdrafts (negative balance = owes hospital)
+     * - HMO claims validated but no remittance yet
+     * - General Ledger receivables accounts
      *
      * @param string $asOfDate
+     * @param array $filters Optional filters: hmo_id, min_amount, receivable_type
      * @return array
      */
-    public function getAgedReceivables(string $asOfDate): array
+    public function getAgedReceivables(string $asOfDate, array $filters = []): array
     {
-        // Get accounts receivable account group
-        $receivablesGroup = AccountGroup::where('name', 'like', '%Receivable%')
-            ->orWhere('name', 'like', '%receivable%')
-            ->first();
-
-        $accounts = [];
-        if ($receivablesGroup) {
-            $accounts = Account::where('account_group_id', $receivablesGroup->id)
-                ->active()
-                ->with(['journalLines' => function ($q) use ($asOfDate) {
-                    $q->whereHas('journalEntry', function ($je) use ($asOfDate) {
-                        $je->where('entry_date', '<=', $asOfDate)
-                            ->where('status', 'posted');
-                    });
-                }])
-                ->get();
-        }
+        $asOf = Carbon::parse($asOfDate);
 
         $agingBuckets = [
             'current' => 0,
@@ -451,59 +441,275 @@ class ReportService
             'over_90' => 0,
         ];
 
-        $details = [];
-        $asOf = Carbon::parse($asOfDate);
+        $categories = [];
 
-        foreach ($accounts as $account) {
-            $balance = $account->getBalance(null, $asOfDate);
-            if (abs($balance) > 0.01) {
-                // Simplified aging - in a real system, this would be based on invoice dates
-                $agingBuckets['current'] += $balance;
-                $details[] = [
-                    'account' => $account,
-                    'balance' => $balance,
-                    'current' => $balance,
-                    '1_30' => 0,
-                    '31_60' => 0,
-                    '61_90' => 0,
-                    'over_90' => 0,
-                ];
-            }
+        // ========================================
+        // 1. Patient Overdrafts (Negative Balance = Patient Owes Hospital)
+        // ========================================
+        $patientOverdrafts = $this->getPatientOverdrafts($asOf, $filters);
+        $categories['patient_overdrafts'] = $patientOverdrafts;
+
+        foreach ($patientOverdrafts['details'] as $item) {
+            $agingBuckets[$item['aging_bucket']] += abs($item['amount']);
         }
+
+        // ========================================
+        // 2. HMO Claims Validated but No Remittance
+        // ========================================
+        $hmoClaims = $this->getHmoClaimsPendingRemittance($asOf, $filters);
+        $categories['hmo_claims'] = $hmoClaims;
+
+        foreach ($hmoClaims['details'] as $item) {
+            $agingBuckets[$item['aging_bucket']] += $item['amount'];
+        }
+
+        // ========================================
+        // 3. General Ledger Accounts Receivable
+        // ========================================
+        $glReceivables = $this->getGLReceivables($asOf, $filters);
+        $categories['gl_receivables'] = $glReceivables;
+
+        foreach ($glReceivables['details'] as $item) {
+            $agingBuckets['current'] += $item['balance'];
+        }
+
+        // Calculate grand totals
+        $grandTotal = array_sum($agingBuckets);
 
         return [
             'as_of_date' => $asOfDate,
             'totals' => $agingBuckets,
-            'total' => array_sum($agingBuckets),
+            'total' => $grandTotal,
+            'categories' => $categories,
+            'summary' => [
+                'patient_overdrafts' => $patientOverdrafts['total'],
+                'hmo_claims' => $hmoClaims['total'],
+                'gl_receivables' => $glReceivables['total'],
+            ],
+            // Legacy format for backward compatibility
+            'details' => $this->flattenReceivablesDetails($categories),
+        ];
+    }
+
+    /**
+     * Get patient accounts with overdraft (negative balance = patient owes hospital)
+     */
+    protected function getPatientOverdrafts(Carbon $asOf, array $filters = []): array
+    {
+        $query = \App\Models\PatientAccount::with(['patient', 'patient.user', 'patient.hmo'])
+            ->whereHas('patient') // Ensure patient exists
+            ->where('balance', '<', 0); // Negative balance means patient owes
+
+        if (!empty($filters['min_amount'])) {
+            $query->where('balance', '<=', -abs($filters['min_amount']));
+        }
+
+        $overdrafts = $query->get();
+
+        $details = [];
+        $total = 0;
+
+        foreach ($overdrafts as $account) {
+            // Skip if patient doesn't exist
+            if (!$account->patient) {
+                continue;
+            }
+
+            $amount = abs($account->balance);
+            $total += $amount;
+
+            // Determine aging bucket based on last update or a reasonable estimate
+            $ageBucket = $this->determineAgingBucket($account->updated_at ?? $account->created_at, $asOf);
+
+            // Get patient data safely
+            $patient = $account->patient;
+            $user = $patient->user;
+            $hmo = $patient->hmo;
+
+            $details[] = [
+                'id' => $account->id,
+                'patient_id' => $account->patient_id,
+                'patient_name' => $user ? $user->name : 'Unknown Patient',
+                'patient_file_no' => $patient->file_no ?? 'N/A',
+                'patient_phone' => $patient->phone_no ?? 'N/A',
+                'hmo_name' => $hmo ? $hmo->name : 'Self-Pay',
+                'amount' => $amount,
+                'last_activity' => $account->updated_at ? $account->updated_at->format('Y-m-d') : 'N/A',
+                'aging_bucket' => $ageBucket,
+                'type' => 'patient_overdraft',
+            ];
+        }
+
+        return [
+            'label' => 'Patient Overdrafts',
+            'description' => 'Patients with negative account balance (owes hospital)',
+            'total' => $total,
+            'count' => count($details),
             'details' => $details,
         ];
     }
 
     /**
-     * Generate Aged Payables Report.
-     *
-     * @param string $asOfDate
-     * @return array
+     * Get HMO claims that have been validated but no remittance received
      */
-    public function getAgedPayables(string $asOfDate): array
+    protected function getHmoClaimsPendingRemittance(Carbon $asOf, array $filters = []): array
     {
-        // Get accounts payable account group
-        $payablesGroup = AccountGroup::where('name', 'like', '%Payable%')
-            ->orWhere('name', 'like', '%payable%')
+        // Claims from ProductOrServiceRequest with validation but no remittance
+        $query = \App\Models\ProductOrServiceRequest::with(['payment.patient.user', 'service', 'product'])
+            ->whereNotNull('validated_at')
+            ->whereNotNull('hmo_id')
+            ->whereNull('hmo_remittance_id')
+            ->where('validation_status', 'validated')
+            ->whereDate('validated_at', '<=', $asOf);
+
+        if (!empty($filters['hmo_id'])) {
+            $query->where('hmo_id', $filters['hmo_id']);
+        }
+
+        $claims = $query->get();
+
+        // Group by HMO
+        $hmoGrouped = $claims->groupBy('hmo_id');
+
+        $details = [];
+        $total = 0;
+        $hmoSummary = [];
+
+        foreach ($hmoGrouped as $hmoId => $hmoClaims) {
+            $hmo = \App\Models\Hmo::find($hmoId);
+            $hmoName = $hmo?->name ?? 'Unknown HMO';
+            $hmoTotal = 0;
+            $claimDetails = [];
+
+            foreach ($hmoClaims as $claim) {
+                $claimAmount = $claim->claims_amount ?? $claim->payable_amount ?? 0;
+                if ($claimAmount <= 0) continue;
+
+                $hmoTotal += $claimAmount;
+                $ageBucket = $this->determineAgingBucket($claim->validated_at, $asOf);
+
+                $claimDetails[] = [
+                    'claim_id' => $claim->id,
+                    'patient_name' => $claim->payment?->patient?->user?->name ?? 'Unknown',
+                    'service_name' => $claim->service?->name ?? $claim->product?->name ?? 'Item',
+                    'claim_amount' => $claimAmount,
+                    'validated_at' => $claim->validated_at?->format('Y-m-d'),
+                    'auth_code' => $claim->auth_code ?? '-',
+                    'aging_bucket' => $ageBucket,
+                ];
+            }
+
+            if ($hmoTotal > 0) {
+                $total += $hmoTotal;
+
+                // For aging bucket, use the oldest claim's bucket
+                $oldestBucket = 'current';
+                foreach ($claimDetails as $cd) {
+                    if ($this->isOlderBucket($cd['aging_bucket'], $oldestBucket)) {
+                        $oldestBucket = $cd['aging_bucket'];
+                    }
+                }
+
+                $details[] = [
+                    'hmo_id' => $hmoId,
+                    'hmo_name' => $hmoName,
+                    'amount' => $hmoTotal,
+                    'claim_count' => count($claimDetails),
+                    'claims' => $claimDetails,
+                    'aging_bucket' => $oldestBucket,
+                    'type' => 'hmo_claim',
+                ];
+
+                $hmoSummary[$hmoId] = [
+                    'name' => $hmoName,
+                    'amount' => $hmoTotal,
+                    'count' => count($claimDetails),
+                ];
+            }
+        }
+
+        return [
+            'label' => 'HMO Claims Pending Remittance',
+            'description' => 'Validated HMO claims awaiting payment',
+            'total' => $total,
+            'count' => count($details),
+            'details' => $details,
+            'by_hmo' => $hmoSummary,
+        ];
+    }
+
+    /**
+     * Get General Ledger accounts receivable
+     */
+    protected function getGLReceivables(Carbon $asOf, array $filters = []): array
+    {
+        $receivablesGroup = AccountGroup::where('name', 'like', '%Receivable%')
+            ->orWhere('name', 'like', '%receivable%')
             ->first();
 
-        $accounts = [];
-        if ($payablesGroup) {
-            $accounts = Account::where('account_group_id', $payablesGroup->id)
+        $details = [];
+        $total = 0;
+
+        if ($receivablesGroup) {
+            $accounts = Account::where('account_group_id', $receivablesGroup->id)
                 ->active()
-                ->with(['journalLines' => function ($q) use ($asOfDate) {
-                    $q->whereHas('journalEntry', function ($je) use ($asOfDate) {
-                        $je->where('entry_date', '<=', $asOfDate)
-                            ->where('status', 'posted');
-                    });
-                }])
                 ->get();
+
+            foreach ($accounts as $account) {
+                $balance = $account->getBalance(null, $asOf->format('Y-m-d'));
+                if (abs($balance) > 0.01) {
+                    $total += $balance;
+                    $details[] = [
+                        'account_id' => $account->id,
+                        'account_code' => $account->full_code ?? $account->code,
+                        'account_name' => $account->name,
+                        'balance' => $balance,
+                        'type' => 'gl_account',
+                    ];
+                }
+            }
         }
+
+        return [
+            'label' => 'GL Accounts Receivable',
+            'description' => 'General ledger receivables accounts',
+            'total' => $total,
+            'count' => count($details),
+            'details' => $details,
+        ];
+    }
+
+    /**
+     * Flatten categories for backward compatibility
+     */
+    protected function flattenReceivablesDetails(array $categories): array
+    {
+        $flat = [];
+
+        foreach ($categories as $catKey => $category) {
+            foreach ($category['details'] ?? [] as $item) {
+                $flat[] = array_merge($item, ['category' => $catKey]);
+            }
+        }
+
+        return $flat;
+    }
+
+    /**
+     * Generate Comprehensive Aged Payables Report.
+     *
+     * Includes:
+     * - Supplier POs received but not fully paid
+     * - Patient deposits (liability - hospital owes patient)
+     * - General Ledger payables accounts
+     *
+     * @param string $asOfDate
+     * @param array $filters Optional filters: supplier_id, min_amount, payable_type
+     * @return array
+     */
+    public function getAgedPayables(string $asOfDate, array $filters = []): array
+    {
+        $asOf = Carbon::parse($asOfDate);
 
         $agingBuckets = [
             'current' => 0,
@@ -513,31 +719,411 @@ class ReportService
             'over_90' => 0,
         ];
 
-        $details = [];
+        $categories = [];
 
-        foreach ($accounts as $account) {
-            $balance = $account->getBalance(null, $asOfDate);
-            if (abs($balance) > 0.01) {
-                // Simplified aging - in a real system, this would be based on invoice dates
-                $agingBuckets['current'] += $balance;
+        // ========================================
+        // 1. Supplier Purchase Orders - Received but Not Paid
+        // ========================================
+        $supplierPayables = $this->getSupplierPayables($asOf, $filters);
+        $categories['supplier_payables'] = $supplierPayables;
+
+        foreach ($supplierPayables['details'] as $item) {
+            $agingBuckets[$item['aging_bucket']] += $item['outstanding_amount'];
+        }
+
+        // ========================================
+        // 2. Patient Deposits (Positive Balance = Hospital Owes Patient)
+        // ========================================
+        $patientDeposits = $this->getPatientDeposits($asOf, $filters);
+        $categories['patient_deposits'] = $patientDeposits;
+
+        foreach ($patientDeposits['details'] as $item) {
+            $agingBuckets[$item['aging_bucket']] += $item['amount'];
+        }
+
+        // ========================================
+        // 3. Supplier Credit Balances (from credit field)
+        // ========================================
+        $supplierCredits = $this->getSupplierCredits($asOf, $filters);
+        $categories['supplier_credits'] = $supplierCredits;
+
+        foreach ($supplierCredits['details'] as $item) {
+            $agingBuckets['current'] += $item['credit_amount'];
+        }
+
+        // ========================================
+        // 4. General Ledger Accounts Payable
+        // ========================================
+        $glPayables = $this->getGLPayables($asOf, $filters);
+        $categories['gl_payables'] = $glPayables;
+
+        foreach ($glPayables['details'] as $item) {
+            $agingBuckets['current'] += $item['balance'];
+        }
+
+        // Calculate grand totals
+        $grandTotal = array_sum($agingBuckets);
+
+        // Build payment priority list (oldest/largest first)
+        $priorities = $this->buildPaymentPriorities($categories);
+
+        return [
+            'as_of_date' => $asOfDate,
+            'totals' => $agingBuckets,
+            'total' => $grandTotal,
+            'categories' => $categories,
+            'priorities' => $priorities,
+            'summary' => [
+                'supplier_payables' => $supplierPayables['total'],
+                'patient_deposits' => $patientDeposits['total'],
+                'supplier_credits' => $supplierCredits['total'],
+                'gl_payables' => $glPayables['total'],
+            ],
+            // Legacy format for backward compatibility
+            'details' => $this->flattenPayablesDetails($categories),
+        ];
+    }
+
+    /**
+     * Get supplier POs that are received but not fully paid
+     */
+    protected function getSupplierPayables(Carbon $asOf, array $filters = []): array
+    {
+        $query = \App\Models\PurchaseOrder::with(['supplier', 'items.product'])
+            ->whereIn('status', [
+                \App\Models\PurchaseOrder::STATUS_PARTIAL,
+                \App\Models\PurchaseOrder::STATUS_RECEIVED,
+                \App\Models\PurchaseOrder::STATUS_APPROVED,
+            ])
+            ->whereIn('payment_status', [
+                \App\Models\PurchaseOrder::PAYMENT_UNPAID,
+                \App\Models\PurchaseOrder::PAYMENT_PARTIAL,
+            ])
+            ->whereDate('created_at', '<=', $asOf);
+
+        if (!empty($filters['supplier_id'])) {
+            $query->where('supplier_id', $filters['supplier_id']);
+        }
+
+        $orders = $query->get();
+
+        // Group by supplier
+        $supplierGrouped = $orders->groupBy('supplier_id');
+
+        $details = [];
+        $total = 0;
+        $supplierSummary = [];
+
+        foreach ($supplierGrouped as $supplierId => $supplierOrders) {
+            $supplier = \App\Models\Supplier::find($supplierId);
+            $supplierName = $supplier?->company_name ?? 'Unknown Supplier';
+            $supplierTotal = 0;
+            $poDetails = [];
+
+            foreach ($supplierOrders as $po) {
+                $outstanding = ($po->total_amount ?? 0) - ($po->amount_paid ?? 0);
+                if ($outstanding <= 0) continue;
+
+                $supplierTotal += $outstanding;
+                $ageBucket = $this->determineAgingBucket($po->approved_at ?? $po->created_at, $asOf);
+
+                $poDetails[] = [
+                    'po_id' => $po->id,
+                    'po_number' => $po->po_number,
+                    'total_amount' => $po->total_amount,
+                    'amount_paid' => $po->amount_paid,
+                    'outstanding' => $outstanding,
+                    'status' => $po->status,
+                    'payment_status' => $po->payment_status,
+                    'po_date' => $po->created_at?->format('Y-m-d'),
+                    'expected_date' => $po->expected_date?->format('Y-m-d'),
+                    'aging_bucket' => $ageBucket,
+                ];
+            }
+
+            if ($supplierTotal > 0) {
+                $total += $supplierTotal;
+
+                // Use the oldest PO's aging bucket
+                $oldestBucket = 'current';
+                foreach ($poDetails as $pd) {
+                    if ($this->isOlderBucket($pd['aging_bucket'], $oldestBucket)) {
+                        $oldestBucket = $pd['aging_bucket'];
+                    }
+                }
+
                 $details[] = [
-                    'account' => $account,
-                    'balance' => $balance,
-                    'current' => $balance,
-                    '1_30' => 0,
-                    '31_60' => 0,
-                    '61_90' => 0,
-                    'over_90' => 0,
+                    'supplier_id' => $supplierId,
+                    'supplier_name' => $supplierName,
+                    'contact_person' => $supplier?->contact_person,
+                    'phone' => $supplier?->phone,
+                    'email' => $supplier?->email,
+                    'outstanding_amount' => $supplierTotal,
+                    'po_count' => count($poDetails),
+                    'purchase_orders' => $poDetails,
+                    'aging_bucket' => $oldestBucket,
+                    'type' => 'supplier_po',
+                ];
+
+                $supplierSummary[$supplierId] = [
+                    'name' => $supplierName,
+                    'amount' => $supplierTotal,
+                    'count' => count($poDetails),
                 ];
             }
         }
 
         return [
-            'as_of_date' => $asOfDate,
-            'totals' => $agingBuckets,
-            'total' => array_sum($agingBuckets),
+            'label' => 'Supplier Purchase Orders',
+            'description' => 'POs received but not fully paid',
+            'total' => $total,
+            'count' => count($details),
+            'details' => $details,
+            'by_supplier' => $supplierSummary,
+        ];
+    }
+
+    /**
+     * Get patient accounts with deposits (positive balance = hospital owes patient)
+     */
+    protected function getPatientDeposits(Carbon $asOf, array $filters = []): array
+    {
+        $query = \App\Models\PatientAccount::with(['patient', 'patient.user', 'patient.hmo'])
+            ->whereHas('patient') // Ensure patient exists
+            ->where('balance', '>', 0); // Positive balance means patient has credit/deposit
+
+        if (!empty($filters['min_amount'])) {
+            $query->where('balance', '>=', $filters['min_amount']);
+        }
+
+        $deposits = $query->get();
+
+        $details = [];
+        $total = 0;
+
+        foreach ($deposits as $account) {
+            // Skip if patient doesn't exist
+            if (!$account->patient) {
+                continue;
+            }
+
+            $amount = $account->balance;
+            $total += $amount;
+
+            // Determine aging bucket based on last update
+            $ageBucket = $this->determineAgingBucket($account->updated_at ?? $account->created_at, $asOf);
+
+            // Get patient data safely
+            $patient = $account->patient;
+            $user = $patient->user;
+            $hmo = $patient->hmo;
+
+            $details[] = [
+                'id' => $account->id,
+                'patient_id' => $account->patient_id,
+                'patient_name' => $user ? $user->name : 'Unknown Patient',
+                'patient_file_no' => $patient->file_no ?? 'N/A',
+                'patient_phone' => $patient->phone_no ?? 'N/A',
+                'hmo_name' => $hmo ? $hmo->name : 'Self-Pay',
+                'amount' => $amount,
+                'last_activity' => $account->updated_at ? $account->updated_at->format('Y-m-d') : 'N/A',
+                'aging_bucket' => $ageBucket,
+                'type' => 'patient_deposit',
+            ];
+        }
+
+        return [
+            'label' => 'Patient Deposits',
+            'description' => 'Unused patient deposits (hospital liability)',
+            'total' => $total,
+            'count' => count($details),
             'details' => $details,
         ];
+    }
+
+    /**
+     * Get supplier credit balances
+     */
+    protected function getSupplierCredits(Carbon $asOf, array $filters = []): array
+    {
+        $query = \App\Models\Supplier::where('credit', '>', 0);
+
+        if (!empty($filters['supplier_id'])) {
+            $query->where('id', $filters['supplier_id']);
+        }
+
+        $suppliers = $query->get();
+
+        $details = [];
+        $total = 0;
+
+        foreach ($suppliers as $supplier) {
+            $credit = $supplier->credit ?? 0;
+            if ($credit > 0) {
+                $total += $credit;
+                $details[] = [
+                    'supplier_id' => $supplier->id,
+                    'supplier_name' => $supplier->company_name,
+                    'contact_person' => $supplier->contact_person,
+                    'phone' => $supplier->phone,
+                    'email' => $supplier->email,
+                    'credit_amount' => $credit,
+                    'credit_limit' => $supplier->credit_limit ?? 0,
+                    'type' => 'supplier_credit',
+                ];
+            }
+        }
+
+        return [
+            'label' => 'Supplier Credits',
+            'description' => 'Credit balances owed to suppliers',
+            'total' => $total,
+            'count' => count($details),
+            'details' => $details,
+        ];
+    }
+
+    /**
+     * Get General Ledger accounts payable
+     */
+    protected function getGLPayables(Carbon $asOf, array $filters = []): array
+    {
+        $payablesGroup = AccountGroup::where('name', 'like', '%Payable%')
+            ->orWhere('name', 'like', '%payable%')
+            ->first();
+
+        $details = [];
+        $total = 0;
+
+        if ($payablesGroup) {
+            $accounts = Account::where('account_group_id', $payablesGroup->id)
+                ->active()
+                ->get();
+
+            foreach ($accounts as $account) {
+                $balance = $account->getBalance(null, $asOf->format('Y-m-d'));
+                if (abs($balance) > 0.01) {
+                    $total += abs($balance);
+                    $details[] = [
+                        'account_id' => $account->id,
+                        'account_code' => $account->full_code ?? $account->code,
+                        'account_name' => $account->name,
+                        'balance' => abs($balance),
+                        'type' => 'gl_account',
+                    ];
+                }
+            }
+        }
+
+        return [
+            'label' => 'GL Accounts Payable',
+            'description' => 'General ledger payables accounts',
+            'total' => $total,
+            'count' => count($details),
+            'details' => $details,
+        ];
+    }
+
+    /**
+     * Build payment priority list
+     */
+    protected function buildPaymentPriorities(array $categories): array
+    {
+        $priorities = [];
+
+        // Prioritize supplier POs by age and amount
+        if (!empty($categories['supplier_payables']['details'])) {
+            foreach ($categories['supplier_payables']['details'] as $supplier) {
+                foreach ($supplier['purchase_orders'] ?? [] as $po) {
+                    $priorities[] = [
+                        'type' => 'supplier_po',
+                        'vendor_name' => $supplier['supplier_name'],
+                        'reference' => $po['po_number'],
+                        'amount' => $po['outstanding'],
+                        'date' => $po['po_date'],
+                        'days_overdue' => $this->calculateDaysInBucket($po['aging_bucket']),
+                        'priority_score' => $this->calculatePriorityScore($po['outstanding'], $po['aging_bucket']),
+                    ];
+                }
+            }
+        }
+
+        // Sort by priority score (higher = more urgent)
+        usort($priorities, fn($a, $b) => $b['priority_score'] <=> $a['priority_score']);
+
+        return array_slice($priorities, 0, 20); // Top 20 priorities
+    }
+
+    /**
+     * Calculate priority score based on amount and age
+     */
+    protected function calculatePriorityScore(float $amount, string $ageBucket): float
+    {
+        $ageMultiplier = match($ageBucket) {
+            'over_90' => 5,
+            '61_90' => 4,
+            '31_60' => 3,
+            '1_30' => 2,
+            default => 1,
+        };
+
+        return ($amount / 1000) * $ageMultiplier;
+    }
+
+    /**
+     * Calculate approximate days based on aging bucket
+     */
+    protected function calculateDaysInBucket(string $bucket): int
+    {
+        return match($bucket) {
+            'over_90' => 90,
+            '61_90' => 75,
+            '31_60' => 45,
+            '1_30' => 15,
+            default => 0,
+        };
+    }
+
+    /**
+     * Flatten categories for backward compatibility
+     */
+    protected function flattenPayablesDetails(array $categories): array
+    {
+        $flat = [];
+
+        foreach ($categories as $catKey => $category) {
+            foreach ($category['details'] ?? [] as $item) {
+                $flat[] = array_merge($item, ['category' => $catKey]);
+            }
+        }
+
+        return $flat;
+    }
+
+    /**
+     * Determine aging bucket based on date
+     */
+    protected function determineAgingBucket($date, Carbon $asOf): string
+    {
+        if (!$date) return 'current';
+
+        $itemDate = Carbon::parse($date);
+        $daysDiff = $itemDate->diffInDays($asOf);
+
+        if ($daysDiff <= 0) return 'current';
+        if ($daysDiff <= 30) return '1_30';
+        if ($daysDiff <= 60) return '31_60';
+        if ($daysDiff <= 90) return '61_90';
+        return 'over_90';
+    }
+
+    /**
+     * Check if bucket1 is older than bucket2
+     */
+    protected function isOlderBucket(string $bucket1, string $bucket2): bool
+    {
+        $order = ['current' => 0, '1_30' => 1, '31_60' => 2, '61_90' => 3, 'over_90' => 4];
+        return ($order[$bucket1] ?? 0) > ($order[$bucket2] ?? 0);
     }
 
     // =========================================
@@ -623,9 +1209,20 @@ class ReportService
 
     /**
      * Get cash flow items by category.
+     *
+     * Updated to use line-level cash_flow_category for more accurate classification.
+     * Reference: BANK_CASH_STATEMENT_IMPLEMENTATION.md - Part 1B
      */
     protected function getCashFlowByCategory(string $category, string $fromDate, string $toDate): array
     {
+        // First, try to get from line-level classification (more accurate)
+        $lineItems = $this->getCashFlowFromLines($category, $fromDate, $toDate);
+
+        if (!empty($lineItems)) {
+            return $lineItems;
+        }
+
+        // Fallback: Use account class-level classification
         $accounts = Account::whereHas('accountGroup.accountClass', function ($q) use ($category) {
             $q->where('cash_flow_category', $category);
         })->get();
@@ -643,6 +1240,47 @@ class ReportService
                     'amount' => round($netChange, 2),
                 ];
             }
+        }
+
+        return $items;
+    }
+
+    /**
+     * Get cash flow items from journal entry lines with line-level classification.
+     *
+     * This provides more accurate cash flow reporting because:
+     * 1. Each line can have its own cash flow category
+     * 2. Categories are auto-classified based on transaction context
+     * 3. Overrides at account level are respected
+     *
+     * Reference: BANK_CASH_STATEMENT_IMPLEMENTATION.md - Part 1B
+     */
+    protected function getCashFlowFromLines(string $category, string $fromDate, string $toDate): array
+    {
+        $results = JournalEntryLine::query()
+            ->select([
+                'journal_entry_lines.category',
+                'accounts.id as account_id',
+                'accounts.name as account_name',
+                DB::raw('SUM(journal_entry_lines.debit) - SUM(journal_entry_lines.credit) as net_change')
+            ])
+            ->join('journal_entries', 'journal_entry_lines.journal_entry_id', '=', 'journal_entries.id')
+            ->join('accounts', 'journal_entry_lines.account_id', '=', 'accounts.id')
+            ->where('journal_entries.status', 'posted')
+            ->whereBetween('journal_entries.entry_date', [$fromDate, $toDate])
+            ->where('journal_entry_lines.cash_flow_category', $category)
+            ->groupBy('journal_entry_lines.category', 'accounts.id', 'accounts.name')
+            ->havingRaw('ABS(SUM(journal_entry_lines.debit) - SUM(journal_entry_lines.credit)) > 0.01')
+            ->get();
+
+        $items = [];
+        foreach ($results as $result) {
+            $items[] = [
+                'account_id' => $result->account_id,
+                'account_name' => $result->account_name,
+                'category' => $result->category,
+                'amount' => round($result->net_change, 2),
+            ];
         }
 
         return $items;

@@ -5,6 +5,11 @@
 @section('subpage_name', 'Edit Journal Entry')
 
 @section('content')
+@include('accounting.partials.breadcrumb', ['items' => [
+    ['label' => 'Journal Entries', 'url' => route('accounting.journal-entries.index'), 'icon' => 'mdi-book-open-page-variant'],
+    ['label' => 'Edit Entry #' . $journalEntry->entry_number, 'url' => '#', 'icon' => 'mdi-pencil']
+]])
+
 <div class="container-fluid">
     {{-- Header --}}
     <div class="d-flex justify-content-between align-items-center mb-4">

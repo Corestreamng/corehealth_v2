@@ -4,11 +4,15 @@
 @section('subpage_name', 'Dashboard')
 
 @section('content')
+@include('accounting.partials.breadcrumb', ['items' => [
+    ['label' => 'Dashboard', 'url' => route('accounting.dashboard'), 'icon' => 'mdi-view-dashboard']
+]])
+
 <div id="content-wrapper">
     <div class="container-fluid">
         <!-- Period Info Banner -->
         @if($currentPeriod)
-        <div class="alert alert-info d-flex justify-content-between align-items-center mb-3">
+        <div class="alert alert-info d-flex justify-content-between align-items-center mb-4">
             <div>
                 <i class="mdi mdi-calendar-clock mr-2"></i>
                 <strong>Current Period:</strong> {{ $currentPeriod->name }}
@@ -19,12 +23,210 @@
             </a>
         </div>
         @else
-        <div class="alert alert-warning mb-3">
+        <div class="alert alert-warning mb-4">
             <i class="mdi mdi-alert mr-2"></i>
             <strong>No Active Period!</strong> Please create a fiscal year and period to start recording transactions.
             <a href="{{ route('accounting.periods') }}" class="btn btn-warning btn-sm ml-2">Create Now</a>
         </div>
         @endif
+
+        <!-- Quick Actions Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card card-modern quick-actions-header">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0"><i class="mdi mdi-lightning-bolt mr-2"></i>Quick Actions</h5>
+                            <span class="badge badge-primary">Frequently Used</span>
+                        </div>
+                        <div class="row">
+                            @can('accounting.journal.create')
+                            <div class="col-lg-2 col-md-4 col-6 mb-3">
+                                <a href="{{ route('accounting.journal-entries.create') }}" class="quick-action-card bg-primary">
+                                    <div class="icon-wrapper">
+                                        <i class="mdi mdi-plus-circle"></i>
+                                    </div>
+                                    <span class="action-title">New Entry</span>
+                                    <small class="action-desc">Create journal entry</small>
+                                </a>
+                            </div>
+                            @endcan
+                            <div class="col-lg-2 col-md-4 col-6 mb-3">
+                                <a href="{{ route('accounting.journal-entries.index') }}" class="quick-action-card bg-info">
+                                    <div class="icon-wrapper">
+                                        <i class="mdi mdi-book-open-page-variant"></i>
+                                    </div>
+                                    <span class="action-title">Entries</span>
+                                    <small class="action-desc">View all entries</small>
+                                </a>
+                            </div>
+                            @can('accounting.credit-notes.create')
+                            <div class="col-lg-2 col-md-4 col-6 mb-3">
+                                <a href="{{ route('accounting.credit-notes.create') }}" class="quick-action-card bg-danger">
+                                    <div class="icon-wrapper">
+                                        <i class="mdi mdi-cash-refund"></i>
+                                    </div>
+                                    <span class="action-title">Credit Note</span>
+                                    <small class="action-desc">Issue refund</small>
+                                </a>
+                            </div>
+                            @endcan
+                            <div class="col-lg-2 col-md-4 col-6 mb-3">
+                                <a href="{{ route('accounting.reports.trial-balance') }}" class="quick-action-card bg-success">
+                                    <div class="icon-wrapper">
+                                        <i class="mdi mdi-scale-balance"></i>
+                                    </div>
+                                    <span class="action-title">Trial Balance</span>
+                                    <small class="action-desc">Account balances</small>
+                                </a>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-6 mb-3">
+                                <a href="{{ route('accounting.reports.profit-loss') }}" class="quick-action-card bg-warning">
+                                    <div class="icon-wrapper">
+                                        <i class="mdi mdi-chart-line"></i>
+                                    </div>
+                                    <span class="action-title">P&L</span>
+                                    <small class="action-desc">Income statement</small>
+                                </a>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-6 mb-3">
+                                <a href="{{ route('accounting.reports.balance-sheet') }}" class="quick-action-card bg-secondary">
+                                    <div class="icon-wrapper">
+                                        <i class="mdi mdi-file-document"></i>
+                                    </div>
+                                    <span class="action-title">Balance Sheet</span>
+                                    <small class="action-desc">Financial position</small>
+                                </a>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-6 mb-3">
+                                <a href="{{ route('accounting.reports.bank-statement') }}" class="quick-action-card bg-cyan">
+                                    <div class="icon-wrapper">
+                                        <i class="mdi mdi-bank"></i>
+                                    </div>
+                                    <span class="action-title">Bank Statement</span>
+                                    <small class="action-desc">Bank activity</small>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Cards -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h5 class="mb-3"><i class="mdi mdi-view-grid mr-2"></i>Navigate To</h5>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <a href="{{ route('accounting.chart-of-accounts.index') }}" class="nav-card nav-card-primary">
+                    <div class="nav-card-icon">
+                        <i class="mdi mdi-file-tree"></i>
+                    </div>
+                    <div class="nav-card-content">
+                        <h6>Chart of Accounts</h6>
+                        <p>Manage account structure</p>
+                    </div>
+                    <i class="mdi mdi-chevron-right nav-card-arrow"></i>
+                </a>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <a href="{{ route('accounting.reports.index') }}" class="nav-card nav-card-success">
+                    <div class="nav-card-icon">
+                        <i class="mdi mdi-chart-box"></i>
+                    </div>
+                    <div class="nav-card-content">
+                        <h6>Financial Reports</h6>
+                        <p>View all reports</p>
+                    </div>
+                    <i class="mdi mdi-chevron-right nav-card-arrow"></i>
+                </a>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <a href="{{ route('accounting.reports.general-ledger') }}" class="nav-card nav-card-info">
+                    <div class="nav-card-icon">
+                        <i class="mdi mdi-book-multiple"></i>
+                    </div>
+                    <div class="nav-card-content">
+                        <h6>General Ledger</h6>
+                        <p>Account transactions</p>
+                    </div>
+                    <i class="mdi mdi-chevron-right nav-card-arrow"></i>
+                </a>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <a href="{{ route('accounting.reports.bank-statement') }}" class="nav-card nav-card-cyan">
+                    <div class="nav-card-icon">
+                        <i class="mdi mdi-bank"></i>
+                    </div>
+                    <div class="nav-card-content">
+                        <h6>Bank Statement</h6>
+                        <p>Bank account activity</p>
+                    </div>
+                    <i class="mdi mdi-chevron-right nav-card-arrow"></i>
+                </a>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <a href="{{ route('accounting.periods') }}" class="nav-card nav-card-warning">
+                    <div class="nav-card-icon">
+                        <i class="mdi mdi-calendar-range"></i>
+                    </div>
+                    <div class="nav-card-content">
+                        <h6>Fiscal Periods</h6>
+                        <p>Manage periods</p>
+                    </div>
+                    <i class="mdi mdi-chevron-right nav-card-arrow"></i>
+                </a>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <a href="{{ route('accounting.reports.aged-receivables') }}" class="nav-card nav-card-danger">
+                    <div class="nav-card-icon">
+                        <i class="mdi mdi-clock-alert"></i>
+                    </div>
+                    <div class="nav-card-content">
+                        <h6>Aged Receivables</h6>
+                        <p>Outstanding receivables</p>
+                    </div>
+                    <i class="mdi mdi-chevron-right nav-card-arrow"></i>
+                </a>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <a href="{{ route('accounting.reports.aged-payables') }}" class="nav-card nav-card-secondary">
+                    <div class="nav-card-icon">
+                        <i class="mdi mdi-account-clock"></i>
+                    </div>
+                    <div class="nav-card-content">
+                        <h6>Aged Payables</h6>
+                        <p>Outstanding payables</p>
+                    </div>
+                    <i class="mdi mdi-chevron-right nav-card-arrow"></i>
+                </a>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <a href="{{ route('accounting.credit-notes.index') }}" class="nav-card nav-card-purple">
+                    <div class="nav-card-icon">
+                        <i class="mdi mdi-note-text"></i>
+                    </div>
+                    <div class="nav-card-content">
+                        <h6>Credit Notes</h6>
+                        <p>Manage refunds</p>
+                    </div>
+                    <i class="mdi mdi-chevron-right nav-card-arrow"></i>
+                </a>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <a href="{{ route('accounting.reports.cash-flow') }}" class="nav-card nav-card-teal">
+                    <div class="nav-card-icon">
+                        <i class="mdi mdi-cash-multiple"></i>
+                    </div>
+                    <div class="nav-card-content">
+                        <h6>Cash Flow</h6>
+                        <p>Cash movements</p>
+                    </div>
+                    <i class="mdi mdi-chevron-right nav-card-arrow"></i>
+                </a>
+            </div>
+        </div>
 
         <!-- Stats Cards Row 1 -->
         <div class="row mb-3">
@@ -106,17 +308,17 @@
                                     <tbody>
                                         @foreach(array_slice($trialBalance['accounts'] ?? [], 0, 8) as $account)
                                             <tr>
-                                                <td>{{ $account['code'] }} - {{ Str::limit($account['name'], 25) }}</td>
-                                                <td class="text-right">{{ $account['debit'] > 0 ? number_format($account['debit'], 2) : '-' }}</td>
-                                                <td class="text-right">{{ $account['credit'] > 0 ? number_format($account['credit'], 2) : '-' }}</td>
+                                                <td>{{ $account['account_code'] ?? '' }} - {{ Str::limit($account['account_name'] ?? $account['name'] ?? '', 25) }}</td>
+                                                <td class="text-right">{{ ($account['debit'] ?? 0) > 0 ? number_format($account['debit'], 2) : '-' }}</td>
+                                                <td class="text-right">{{ ($account['credit'] ?? 0) > 0 ? number_format($account['credit'], 2) : '-' }}</td>
                                             </tr>
                                         @endforeach
                                     </tbody>
                                     <tfoot class="font-weight-bold">
                                         <tr class="table-secondary">
                                             <td>Total</td>
-                                            <td class="text-right">₦{{ number_format($trialBalance['total_debits'] ?? 0, 2) }}</td>
-                                            <td class="text-right">₦{{ number_format($trialBalance['total_credits'] ?? 0, 2) }}</td>
+                                            <td class="text-right">₦{{ number_format($trialBalance['total_debit'] ?? $trialBalance['total_debits'] ?? 0, 2) }}</td>
+                                            <td class="text-right">₦{{ number_format($trialBalance['total_credit'] ?? $trialBalance['total_credits'] ?? 0, 2) }}</td>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -336,6 +538,147 @@
 
 @push('styles')
 <style>
+    .card-modern {
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Quick Actions Cards */
+    .quick-actions-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    .quick-actions-header h5 {
+        color: white;
+    }
+    .quick-action-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem 0.5rem;
+        border-radius: 12px;
+        text-decoration: none;
+        color: white;
+        transition: all 0.3s ease;
+        text-align: center;
+        height: 120px;
+        position: relative;
+        overflow: hidden;
+    }
+    .quick-action-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255,255,255,0);
+        transition: all 0.3s ease;
+    }
+    .quick-action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        color: white;
+        text-decoration: none;
+    }
+    .quick-action-card:hover::before {
+        background: rgba(255,255,255,0.1);
+    }
+    .quick-action-card .icon-wrapper {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+    }
+    .quick-action-card .action-title {
+        font-weight: 600;
+        font-size: 0.95rem;
+        display: block;
+        position: relative;
+        z-index: 1;
+    }
+    .quick-action-card .action-desc {
+        font-size: 0.75rem;
+        opacity: 0.9;
+        display: block;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Navigation Cards */
+    .nav-card {
+        display: flex;
+        align-items: center;
+        padding: 1.25rem;
+        background: white;
+        border-radius: 12px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        height: 100%;
+    }
+    .nav-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        text-decoration: none;
+    }
+    .nav-card-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+    .nav-card-content {
+        flex: 1;
+    }
+    .nav-card-content h6 {
+        margin: 0 0 0.25rem 0;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #212529;
+    }
+    .nav-card-content p {
+        margin: 0;
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    .nav-card-arrow {
+        font-size: 1.5rem;
+        opacity: 0.5;
+        transition: all 0.3s ease;
+    }
+    .nav-card:hover .nav-card-arrow {
+        opacity: 1;
+        transform: translateX(3px);
+    }
+
+    /* Color variants for nav cards */
+    .nav-card-primary .nav-card-icon { background: #e7f1ff; color: #007bff; }
+    .nav-card-primary:hover { border-color: #007bff; }
+    .nav-card-success .nav-card-icon { background: #d4edda; color: #28a745; }
+    .nav-card-success:hover { border-color: #28a745; }
+    .nav-card-info .nav-card-icon { background: #d1ecf1; color: #17a2b8; }
+    .nav-card-info:hover { border-color: #17a2b8; }
+    .nav-card-warning .nav-card-icon { background: #fff3cd; color: #ffc107; }
+    .nav-card-warning:hover { border-color: #ffc107; }
+    .nav-card-danger .nav-card-icon { background: #f8d7da; color: #dc3545; }
+    .nav-card-danger:hover { border-color: #dc3545; }
+    .nav-card-secondary .nav-card-icon { background: #e2e3e5; color: #6c757d; }
+    .nav-card-secondary:hover { border-color: #6c757d; }
+    .nav-card-purple .nav-card-icon { background: #e8dff5; color: #6f42c1; }
+    .nav-card-purple:hover { border-color: #6f42c1; }
+    .nav-card-teal .nav-card-icon { background: #d1f2eb; color: #20c997; }
+    .nav-card-teal:hover { border-color: #20c997; }
+
     .stat-card {
         background: #fff;
         border-radius: 8px;
@@ -351,14 +694,6 @@
     .stat-card .value {
         font-size: 1.5rem;
         font-weight: 600;
-    }
-    .quick-link-card {
-        transition: all 0.2s ease;
-        border-radius: 8px;
-    }
-    .quick-link-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
 </style>
 @endpush

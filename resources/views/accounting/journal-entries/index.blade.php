@@ -4,6 +4,10 @@
 @section('subpage_name', 'Journal Entries')
 
 @section('content')
+@include('accounting.partials.breadcrumb', ['items' => [
+    ['label' => 'Journal Entries', 'url' => route('accounting.journal-entries.index'), 'icon' => 'mdi-book-open-page-variant']
+]])
+
 <div id="content-wrapper">
     <div class="container-fluid">
         <!-- Summary Cards Row 1 -->
