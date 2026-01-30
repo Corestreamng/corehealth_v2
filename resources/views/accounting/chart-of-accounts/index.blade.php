@@ -4,6 +4,10 @@
 @section('subpage_name', 'Chart of Accounts')
 
 @section('content')
+@include('accounting.partials.breadcrumb', ['items' => [
+    ['label' => 'Chart of Accounts', 'url' => route('accounting.chart-of-accounts.index'), 'icon' => 'mdi-file-tree']
+]])
+
 <div class="container-fluid">
     {{-- Header with Title and Action Buttons --}}
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -78,12 +82,12 @@
     {{-- View Toggle Tabs --}}
     <ul class="nav nav-tabs mb-4" id="viewTabs" role="tablist">
         <li class="nav-item">
-            <a class="nav-link active" id="tree-tab" data-toggle="tab" href="#treeView" role="tab">
+            <a class="nav-link active" id="tree-tab" data-bs-toggle="tab" href="#treeView" role="tab">
                 <i class="mdi mdi-file-tree mr-1"></i> Tree View
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" id="table-tab" data-toggle="tab" href="#tableView" role="tab">
+            <a class="nav-link" id="table-tab" data-bs-toggle="tab" href="#tableView" role="tab">
                 <i class="mdi mdi-table mr-1"></i> Table View
             </a>
         </li>
@@ -121,7 +125,7 @@
                 @foreach($classes as $class)
                     <div class="card card-modern mb-2 account-class-card" data-class="{{ strtolower($class->name) }}">
                         <div class="card-header py-2 d-flex justify-content-between align-items-center"
-                             id="heading{{ $class->id }}" data-toggle="collapse" data-target="#collapse{{ $class->id }}"
+                             id="heading{{ $class->id }}" data-bs-toggle="collapse" data-bs-target="#collapse{{ $class->id }}"
                              style="cursor: pointer;">
                             <div>
                                 <span class="badge badge-primary mr-2">{{ $class->class_code }}</span>
@@ -140,7 +144,7 @@
                                 @forelse($class->groups as $group)
                                     <div class="card mb-3 account-group-card" data-group="{{ strtolower($group->name) }}">
                                         <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center"
-                                             data-toggle="collapse" data-target="#group{{ $group->id }}" style="cursor: pointer;">
+                                             data-bs-toggle="collapse" data-bs-target="#group{{ $group->id }}" style="cursor: pointer;">
                                             <div>
                                                 <span class="badge badge-secondary mr-2">{{ $group->group_code }}</span>
                                                 <strong>{{ $group->name }}</strong>
@@ -201,7 +205,7 @@
                                                                     <td>
                                                                         <div class="dropdown">
                                                                             <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
-                                                                                    data-toggle="dropdown">
+                                                                                    data-bs-toggle="dropdown">
                                                                                 <i class="mdi mdi-dots-vertical"></i>
                                                                             </button>
                                                                             <div class="dropdown-menu dropdown-menu-right">
@@ -385,7 +389,7 @@
         transition: transform 0.2s;
         font-size: 14px;
     }
-    [data-toggle="collapse"].collapsed .collapse-icon-sm {
+    [data-bs-toggle="collapse"].collapsed .collapse-icon-sm {
         transform: rotate(-90deg);
     }
 
@@ -415,7 +419,7 @@ $(document).ready(function() {
     // DataTable initialization (lazy - only when tab is shown)
     var accountsTable = null;
 
-    $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+    $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
         if (e.target.id === 'table-tab' && accountsTable === null) {
             accountsTable = $('#accountsTable').DataTable({
                 processing: true,

@@ -27,12 +27,11 @@ class Account extends Model implements Auditable
         'code',
         'name',
         'description',
+        'bank_id',
         'is_active',
         'is_system',
         'is_bank_account',
-        'allow_sub_accounts',
-        'opening_balance',
-        'opening_balance_date',
+        'cash_flow_category_override',
     ];
 
     protected $appends = ['account_code'];
@@ -41,9 +40,6 @@ class Account extends Model implements Auditable
         'is_active' => 'boolean',
         'is_system' => 'boolean',
         'is_bank_account' => 'boolean',
-        'allow_sub_accounts' => 'boolean',
-        'opening_balance' => 'decimal:4',
-        'opening_balance_date' => 'date',
     ];
 
     /**
@@ -52,6 +48,14 @@ class Account extends Model implements Auditable
     public function accountGroup(): BelongsTo
     {
         return $this->belongsTo(AccountGroup::class);
+    }
+
+    /**
+     * Get the bank this account is associated with.
+     */
+    public function bank(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Bank::class);
     }
 
     /**
@@ -137,7 +141,7 @@ class Account extends Model implements Auditable
         }
 
         if ($subAccountId) {
-            $query->where('journal_entry_lines.account_sub_account_id', $subAccountId);
+            $query->where('journal_entry_lines.sub_account_id', $subAccountId);
         }
 
         $totals = $query->select([

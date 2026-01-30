@@ -28,47 +28,47 @@ class CreditNote extends Model implements Auditable
     protected $fillable = [
         'credit_note_number',
         'patient_id',
-        'encounter_id',
-        'credit_note_date',
+        'original_payment_id',
+        'amount',
         'reason',
-        'notes',
-        'total_amount',
+        'refund_method',
+        'bank_id',
         'status',
         'journal_entry_id',
         'created_by',
+        'submitted_by',
+        'submitted_at',
         'approved_by',
         'approved_at',
-        'rejected_by',
-        'rejected_at',
-        'rejection_reason',
-        'refunded_by',
-        'refunded_at',
-        'refund_method',
-        'refund_reference',
+        'processed_by',
+        'processed_at',
+        'voided_by',
+        'voided_at',
+        'void_reason',
     ];
 
     protected $casts = [
-        'credit_note_date' => 'date',
-        'total_amount' => 'decimal:4',
+        'amount' => 'decimal:2',
+        'submitted_at' => 'datetime',
         'approved_at' => 'datetime',
-        'rejected_at' => 'datetime',
-        'refunded_at' => 'datetime',
+        'processed_at' => 'datetime',
+        'voided_at' => 'datetime',
     ];
 
-    // Status constants
+    // Status constants (matching database enum)
     const STATUS_DRAFT = 'draft';
-    const STATUS_PENDING = 'pending';
+    const STATUS_PENDING_APPROVAL = 'pending_approval';
+    const STATUS_PENDING = 'pending_approval'; // Alias for compatibility
     const STATUS_APPROVED = 'approved';
-    const STATUS_REJECTED = 'rejected';
-    const STATUS_REFUNDED = 'refunded';
-    const STATUS_CANCELLED = 'cancelled';
+    const STATUS_PROCESSED = 'processed';
+    const STATUS_APPLIED = 'processed'; // Alias for compatibility
+    const STATUS_VOID = 'void';
+    const STATUS_VOIDED = 'void'; // Alias for compatibility
 
-    // Refund methods
+    // Refund methods (matching database enum)
     const REFUND_CASH = 'cash';
-    const REFUND_BANK_TRANSFER = 'bank_transfer';
-    const REFUND_CARD = 'card';
-    const REFUND_WALLET = 'wallet';
-    const REFUND_CREDIT = 'credit'; // Patient credit/balance
+    const REFUND_BANK = 'bank';
+    const REFUND_ACCOUNT_CREDIT = 'account_credit';
 
     /**
      * Get the patient.
@@ -79,19 +79,19 @@ class CreditNote extends Model implements Auditable
     }
 
     /**
-     * Get the encounter.
+     * Get the original payment being refunded.
      */
-    public function encounter(): BelongsTo
+    public function originalPayment(): BelongsTo
     {
-        return $this->belongsTo(Encounter::class);
+        return $this->belongsTo(\App\Models\Payment::class, 'original_payment_id');
     }
 
     /**
-     * Get the credit note items.
+     * Get the bank for bank refunds.
      */
-    public function items(): HasMany
+    public function bank(): BelongsTo
     {
-        return $this->hasMany(CreditNoteItem::class);
+        return $this->belongsTo(\App\Models\Bank::class);
     }
 
     /**
@@ -105,33 +105,65 @@ class CreditNote extends Model implements Auditable
     /**
      * Get the user who created this credit note.
      */
-    public function creator(): BelongsTo
+    public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
     /**
+     * Alias for createdBy.
+     */
+    public function creator(): BelongsTo
+    {
+        return $this->createdBy();
+    }
+
+    /**
+     * Get the user who submitted this credit note.
+     */
+    public function submittedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'submitted_by');
+    }
+
+    /**
      * Get the user who approved this credit note.
      */
-    public function approver(): BelongsTo
+    public function approvedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
     }
 
     /**
-     * Get the user who rejected this credit note.
+     * Alias for approvedBy.
      */
-    public function rejector(): BelongsTo
+    public function approver(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'rejected_by');
+        return $this->approvedBy();
     }
 
     /**
      * Get the user who processed the refund.
      */
-    public function refunder(): BelongsTo
+    public function processedBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'refunded_by');
+        return $this->belongsTo(User::class, 'processed_by');
+    }
+
+    /**
+     * Alias for processedBy (backward compatibility).
+     */
+    public function appliedBy(): BelongsTo
+    {
+        return $this->processedBy();
+    }
+
+    /**
+     * Get the user who voided this credit note.
+     */
+    public function voidedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'voided_by');
     }
 
     // =========================================
@@ -151,7 +183,7 @@ class CreditNote extends Model implements Auditable
      */
     public function isPending(): bool
     {
-        return $this->status === self::STATUS_PENDING;
+        return $this->status === self::STATUS_PENDING_APPROVAL;
     }
 
     /**
@@ -163,27 +195,43 @@ class CreditNote extends Model implements Auditable
     }
 
     /**
-     * Check if credit note is rejected.
+     * Check if credit note has been processed (refunded).
      */
-    public function isRejected(): bool
+    public function isProcessed(): bool
     {
-        return $this->status === self::STATUS_REJECTED;
+        return $this->status === self::STATUS_PROCESSED;
     }
 
     /**
-     * Check if credit note has been refunded.
+     * Alias for isProcessed (backward compatibility).
+     */
+    public function isApplied(): bool
+    {
+        return $this->isProcessed();
+    }
+
+    /**
+     * Alias for isProcessed (backward compatibility).
      */
     public function isRefunded(): bool
     {
-        return $this->status === self::STATUS_REFUNDED;
+        return $this->isProcessed();
     }
 
     /**
-     * Check if credit note is cancelled.
+     * Check if credit note is voided.
+     */
+    public function isVoided(): bool
+    {
+        return $this->status === self::STATUS_VOID;
+    }
+
+    /**
+     * Alias for isVoided (backward compatibility).
      */
     public function isCancelled(): bool
     {
-        return $this->status === self::STATUS_CANCELLED;
+        return $this->isVoided();
     }
 
     // =========================================
@@ -195,7 +243,7 @@ class CreditNote extends Model implements Auditable
      */
     public function canEdit(): bool
     {
-        return in_array($this->status, [self::STATUS_DRAFT, self::STATUS_REJECTED]);
+        return $this->status === self::STATUS_DRAFT;
     }
 
     /**
@@ -203,15 +251,11 @@ class CreditNote extends Model implements Auditable
      */
     public function canSubmit(): bool
     {
-        if (!in_array($this->status, [self::STATUS_DRAFT, self::STATUS_REJECTED])) {
+        if ($this->status !== self::STATUS_DRAFT) {
             return false;
         }
 
-        if ($this->items()->count() === 0) {
-            return false;
-        }
-
-        if ($this->total_amount <= 0) {
+        if ($this->amount <= 0) {
             return false;
         }
 
@@ -223,31 +267,39 @@ class CreditNote extends Model implements Auditable
      */
     public function canApprove(): bool
     {
-        return $this->status === self::STATUS_PENDING;
-    }
-
-    /**
-     * Check if credit note can be rejected.
-     */
-    public function canReject(): bool
-    {
-        return $this->status === self::STATUS_PENDING;
+        return $this->status === self::STATUS_PENDING_APPROVAL;
     }
 
     /**
      * Check if refund can be processed.
      */
-    public function canProcessRefund(): bool
+    public function canProcess(): bool
     {
         return $this->status === self::STATUS_APPROVED;
     }
 
     /**
-     * Check if credit note can be cancelled.
+     * Alias for canProcess (backward compatibility).
+     */
+    public function canProcessRefund(): bool
+    {
+        return $this->canProcess();
+    }
+
+    /**
+     * Check if credit note can be voided.
+     */
+    public function canVoid(): bool
+    {
+        return in_array($this->status, [self::STATUS_DRAFT, self::STATUS_PENDING_APPROVAL, self::STATUS_APPROVED]);
+    }
+
+    /**
+     * Alias for canVoid (backward compatibility).
      */
     public function canCancel(): bool
     {
-        return in_array($this->status, [self::STATUS_DRAFT, self::STATUS_PENDING]);
+        return $this->canVoid();
     }
 
     // =========================================
@@ -257,16 +309,15 @@ class CreditNote extends Model implements Auditable
     /**
      * Submit credit note for approval.
      */
-    public function submit(): bool
+    public function submit(int $userId): bool
     {
         if (!$this->canSubmit()) {
             return false;
         }
 
-        $this->status = self::STATUS_PENDING;
-        $this->rejected_by = null;
-        $this->rejected_at = null;
-        $this->rejection_reason = null;
+        $this->status = self::STATUS_PENDING_APPROVAL;
+        $this->submitted_by = $userId;
+        $this->submitted_at = now();
 
         return $this->save();
     }
@@ -288,64 +339,55 @@ class CreditNote extends Model implements Auditable
     }
 
     /**
-     * Reject credit note.
+     * Process the credit note (mark as refunded).
      */
-    public function reject(int $userId, string $reason): bool
+    public function process(int $userId): bool
     {
-        if (!$this->canReject()) {
+        if (!$this->canProcess()) {
             return false;
         }
 
-        $this->status = self::STATUS_REJECTED;
-        $this->rejected_by = $userId;
-        $this->rejected_at = now();
-        $this->rejection_reason = $reason;
+        $this->status = self::STATUS_PROCESSED;
+        $this->processed_by = $userId;
+        $this->processed_at = now();
 
         return $this->save();
     }
 
     /**
-     * Mark as refunded.
+     * Alias for process (backward compatibility).
      */
-    public function markAsRefunded(int $userId, string $method, ?string $reference = null): bool
+    public function markAsRefunded(int $userId, ?string $method = null, ?string $reference = null): bool
     {
-        if (!$this->canProcessRefund()) {
+        if ($method) {
+            $this->refund_method = $method;
+        }
+        return $this->process($userId);
+    }
+
+    /**
+     * Void the credit note.
+     */
+    public function void(int $userId, string $reason): bool
+    {
+        if (!$this->canVoid()) {
             return false;
         }
 
-        $this->status = self::STATUS_REFUNDED;
-        $this->refunded_by = $userId;
-        $this->refunded_at = now();
-        $this->refund_method = $method;
-        $this->refund_reference = $reference;
+        $this->status = self::STATUS_VOID;
+        $this->voided_by = $userId;
+        $this->voided_at = now();
+        $this->void_reason = $reason;
 
         return $this->save();
     }
 
     /**
-     * Cancel credit note.
+     * Alias for void (backward compatibility).
      */
-    public function cancel(): bool
+    public function cancel(string $reason = 'Cancelled'): bool
     {
-        if (!$this->canCancel()) {
-            return false;
-        }
-
-        $this->status = self::STATUS_CANCELLED;
-        return $this->save();
-    }
-
-    // =========================================
-    // CALCULATIONS
-    // =========================================
-
-    /**
-     * Recalculate total from items.
-     */
-    public function recalculateTotal(): void
-    {
-        $this->total_amount = $this->items->sum('amount');
-        $this->save();
+        return $this->void(auth()->id() ?? 1, $reason);
     }
 
     // =========================================
@@ -365,7 +407,15 @@ class CreditNote extends Model implements Auditable
      */
     public function scopePending($query)
     {
-        return $query->where('status', self::STATUS_PENDING);
+        return $query->where('status', self::STATUS_PENDING_APPROVAL);
+    }
+
+    /**
+     * Scope to get processed credit notes.
+     */
+    public function scopeProcessed($query)
+    {
+        return $query->where('status', self::STATUS_PROCESSED);
     }
 
     /**
@@ -377,23 +427,15 @@ class CreditNote extends Model implements Auditable
     }
 
     /**
-     * Scope to filter by encounter.
-     */
-    public function scopeForEncounter($query, int $encounterId)
-    {
-        return $query->where('encounter_id', $encounterId);
-    }
-
-    /**
      * Scope to filter by date range.
      */
     public function scopeDateRange($query, ?string $fromDate, ?string $toDate)
     {
         if ($fromDate) {
-            $query->where('credit_note_date', '>=', $fromDate);
+            $query->where('created_at', '>=', $fromDate);
         }
         if ($toDate) {
-            $query->where('credit_note_date', '<=', $toDate);
+            $query->where('created_at', '<=', $toDate);
         }
         return $query;
     }
@@ -432,11 +474,10 @@ class CreditNote extends Model implements Auditable
     {
         return match ($this->status) {
             self::STATUS_DRAFT => 'bg-secondary',
-            self::STATUS_PENDING => 'bg-warning text-dark',
+            self::STATUS_PENDING_APPROVAL, 'pending_approval' => 'bg-warning text-dark',
             self::STATUS_APPROVED => 'bg-info',
-            self::STATUS_REJECTED => 'bg-danger',
-            self::STATUS_REFUNDED => 'bg-success',
-            self::STATUS_CANCELLED => 'bg-dark',
+            self::STATUS_PROCESSED, 'processed' => 'bg-success',
+            self::STATUS_VOID, 'void' => 'bg-dark',
             default => 'bg-secondary',
         };
     }
@@ -448,12 +489,11 @@ class CreditNote extends Model implements Auditable
     {
         return match ($this->status) {
             self::STATUS_DRAFT => 'Draft',
-            self::STATUS_PENDING => 'Pending Approval',
+            self::STATUS_PENDING_APPROVAL, 'pending_approval' => 'Pending Approval',
             self::STATUS_APPROVED => 'Approved',
-            self::STATUS_REJECTED => 'Rejected',
-            self::STATUS_REFUNDED => 'Refunded',
-            self::STATUS_CANCELLED => 'Cancelled',
-            default => ucfirst($this->status),
+            self::STATUS_PROCESSED, 'processed' => 'Processed',
+            self::STATUS_VOID, 'void' => 'Voided',
+            default => ucfirst(str_replace('_', ' ', $this->status)),
         };
     }
 
@@ -468,11 +508,25 @@ class CreditNote extends Model implements Auditable
 
         return match ($this->refund_method) {
             self::REFUND_CASH => 'Cash',
-            self::REFUND_BANK_TRANSFER => 'Bank Transfer',
-            self::REFUND_CARD => 'Card Refund',
-            self::REFUND_WALLET => 'Digital Wallet',
-            self::REFUND_CREDIT => 'Patient Credit',
+            self::REFUND_BANK, 'bank' => 'Bank Transfer',
+            self::REFUND_ACCOUNT_CREDIT, 'account_credit' => 'Account Credit',
             default => ucfirst(str_replace('_', ' ', $this->refund_method)),
         };
+    }
+
+    /**
+     * Get total amount attribute (alias for amount for backward compatibility).
+     */
+    public function getTotalAmountAttribute(): float
+    {
+        return (float) $this->amount;
+    }
+
+    /**
+     * Get processed_at attribute (alias for processed_at for views expecting applied_at).
+     */
+    public function getAppliedAtAttribute(): ?\Carbon\Carbon
+    {
+        return $this->processed_at;
     }
 }

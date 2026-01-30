@@ -4,6 +4,11 @@
 @section('subpage_name', 'Create Credit Note')
 
 @section('content')
+@include('accounting.partials.breadcrumb', ['items' => [
+    ['label' => 'Credit Notes', 'url' => route('accounting.credit-notes.index'), 'icon' => 'mdi-note-text'],
+    ['label' => 'Create Credit Note', 'url' => '#', 'icon' => 'mdi-plus-circle']
+]])
+
 <div class="container-fluid">
     {{-- Header --}}
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -50,13 +55,13 @@
                             <select name="patient_id" id="patientSelect" class="form-control" required></select>
                         </div>
 
-                        {{-- Invoice Selection --}}
-                        <div class="form-group" id="invoiceSection" style="display: none;">
-                            <label class="form-label">Original Invoice</label>
-                            <select name="invoice_id" id="invoiceSelect" class="form-control">
-                                <option value="">-- No specific invoice --</option>
+                        {{-- Payment Selection --}}
+                        <div class="form-group" id="paymentSection" style="display: none;">
+                            <label class="form-label">Original Payment <span class="text-danger">*</span></label>
+                            <select name="original_payment_id" id="paymentSelect" class="form-control" required>
+                                <option value="">-- Select payment to credit --</option>
                             </select>
-                            <small class="text-muted">Optional: Link this credit note to a specific invoice</small>
+                            <small class="text-muted">Select the payment to be refunded or credited</small>
                         </div>
 
                         <hr class="my-4">
@@ -208,40 +213,53 @@ $(document).ready(function() {
         }
     });
 
-    // On patient select, load invoices
+    // On patient select, load payments
     $('#patientSelect').on('select2:select', function(e) {
         var patient = e.params.data.patient;
         $('#patientSummary').show();
         $('#patientSummaryName').text(patient.fullname);
-        loadPatientInvoices(patient.id);
+        loadPatientPayments(patient.id);
     });
 
     $('#patientSelect').on('select2:clear', function() {
         $('#patientSummary').hide();
-        $('#invoiceSection').hide();
-        $('#invoiceSelect').html('<option value="">-- No specific invoice --</option>');
+        $('#paymentSection').hide();
+        $('#paymentSelect').html('<option value="">-- Select payment to credit --</option>');
+        $('#amount').val('').trigger('input');
     });
 
-    function loadPatientInvoices(patientId) {
-        $.get('/accounting/credit-notes/api/patient/' + patientId + '/invoices')
+    function loadPatientPayments(patientId) {
+        $.get('/accounting/credit-notes/api/patient/' + patientId + '/payments')
         .done(function(data) {
-            var $select = $('#invoiceSelect');
-            $select.html('<option value="">-- No specific invoice --</option>');
+            var $select = $('#paymentSelect');
+            $select.html('<option value="">-- Select payment to credit --</option>');
 
             if (data && data.length > 0) {
-                data.forEach(function(invoice) {
-                    $select.append('<option value="' + invoice.id + '">' +
-                        invoice.invoice_number + ' - ₦' + parseFloat(invoice.total).toLocaleString() +
-                        ' (' + invoice.date + ')</option>');
+                data.forEach(function(payment) {
+                    $select.append('<option value="' + payment.id + '" data-amount="' + payment.amount + '">' +
+                        payment.receipt_number + ' - ₦' + parseFloat(payment.amount).toLocaleString() +
+                        ' (' + payment.payment_date + ') - ' + payment.payment_method + '</option>');
                 });
+            } else {
+                $select.html('<option value="">No payments found for this patient</option>');
             }
 
-            $('#invoiceSection').show();
+            $('#paymentSection').show();
         })
         .fail(function() {
-            $('#invoiceSection').show();
+            $('#paymentSection').show();
+            toastr.error('Failed to load patient payments');
         });
     }
+
+    // Auto-fill amount on payment selection
+    $('#paymentSelect').on('change', function() {
+        var selectedOption = $(this).find('option:selected');
+        var amount = selectedOption.data('amount');
+        if (amount) {
+            $('#amount').val(amount).trigger('input');
+        }
+    });
 
     // Amount summary
     $('#amount').on('input', function() {
@@ -262,6 +280,10 @@ $(document).ready(function() {
         // Validate
         if (!$('#patientSelect').val()) {
             toastr.error('Please select a patient');
+            return;
+        }
+        if (!$('#paymentSelect').val()) {
+            toastr.error('Please select a payment to credit');
             return;
         }
         if (!$('#reasonType').val()) {
@@ -289,7 +311,7 @@ $(document).ready(function() {
                 credit_note_number: $('#creditNoteNumber').val(),
                 date: $('#creditDate').val(),
                 patient_id: $('#patientSelect').val(),
-                invoice_id: $('#invoiceSelect').val(),
+                original_payment_id: $('#paymentSelect').val(),
                 reason_type: $('#reasonType').val(),
                 amount: $('#amount').val(),
                 reason: $('#reason').val(),

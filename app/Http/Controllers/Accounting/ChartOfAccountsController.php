@@ -174,7 +174,7 @@ class ChartOfAccountsController extends Controller
     {
         $request->validate([
             'account_group_id' => 'required|exists:account_groups,id',
-            'account_code' => 'required|string|max:20|unique:accounts,account_code',
+            'account_code' => 'required|string|max:20|unique:accounts,code',
             'name' => 'required|string|max:100',
             'description' => 'nullable|string|max:500',
             'normal_balance' => 'required|in:debit,credit',
@@ -185,13 +185,10 @@ class ChartOfAccountsController extends Controller
 
         $account = Account::create([
             'account_group_id' => $request->account_group_id,
-            'account_code' => $request->account_code,
+            'code' => $request->account_code,
             'name' => $request->name,
             'description' => $request->description,
-            'normal_balance' => $request->normal_balance,
             'is_bank_account' => $request->boolean('is_bank_account'),
-            'bank_name' => $request->bank_name,
-            'bank_account_number' => $request->bank_account_number,
             'is_active' => true,
         ]);
 
@@ -207,7 +204,7 @@ class ChartOfAccountsController extends Controller
         $account = Account::with([
             'accountGroup.accountClass',
             'subAccounts',
-            'journalEntryLines' => function ($query) {
+            'journalLines' => function ($query) {
                 $query->with(['journalEntry' => function ($q) {
                     $q->where('status', 'posted');
                 }])
@@ -218,7 +215,7 @@ class ChartOfAccountsController extends Controller
 
         // Calculate running balance
         $balance = $account->getBalance();
-        $periodBalance = $account->getPeriodBalance(now()->startOfMonth(), now());
+        $periodBalance = $account->getBalance(now()->startOfMonth()->format('Y-m-d'), now()->format('Y-m-d'));
 
         return view('accounting.chart-of-accounts.show', compact('account', 'balance', 'periodBalance'));
     }
@@ -231,7 +228,7 @@ class ChartOfAccountsController extends Controller
         $account = Account::findOrFail($id);
 
         $groups = AccountGroup::with('accountClass')
-            ->orderBy('group_code')
+            ->orderBy('code')
             ->get();
 
         return view('accounting.chart-of-accounts.edit', compact('account', 'groups'));
@@ -246,25 +243,19 @@ class ChartOfAccountsController extends Controller
 
         $request->validate([
             'account_group_id' => 'required|exists:account_groups,id',
-            'account_code' => "required|string|max:20|unique:accounts,account_code,{$id}",
+            'account_code' => "required|string|max:20|unique:accounts,code,{$id}",
             'name' => 'required|string|max:100',
             'description' => 'nullable|string|max:500',
-            'normal_balance' => 'required|in:debit,credit',
             'is_bank_account' => 'boolean',
-            'bank_name' => 'nullable|required_if:is_bank_account,1|string|max:100',
-            'bank_account_number' => 'nullable|string|max:50',
             'is_active' => 'boolean',
         ]);
 
         $account->update([
             'account_group_id' => $request->account_group_id,
-            'account_code' => $request->account_code,
+            'code' => $request->account_code,
             'name' => $request->name,
             'description' => $request->description,
-            'normal_balance' => $request->normal_balance,
             'is_bank_account' => $request->boolean('is_bank_account'),
-            'bank_name' => $request->bank_name,
-            'bank_account_number' => $request->bank_account_number,
             'is_active' => $request->boolean('is_active', true),
         ]);
 
@@ -394,9 +385,12 @@ class ChartOfAccountsController extends Controller
             'entity_id' => 'nullable|integer',
         ]);
 
-        // Check unique sub_code for this account
+        // Combine parent code with sub code
+        $fullCode = $account->code . '-' . $request->sub_code;
+
+        // Check unique code
         $exists = AccountSubAccount::where('account_id', $accountId)
-            ->where('sub_code', $request->sub_code)
+            ->where('code', $fullCode)
             ->exists();
 
         if ($exists) {
@@ -404,14 +398,23 @@ class ChartOfAccountsController extends Controller
                 ->with('error', 'Sub-account code already exists for this account.');
         }
 
-        $subAccount = AccountSubAccount::create([
+        // Map entity type to specific FK column
+        $data = [
             'account_id' => $accountId,
-            'sub_code' => $request->sub_code,
+            'code' => $fullCode,
             'name' => $request->name,
-            'entity_type' => $request->entity_type,
-            'entity_id' => $request->entity_id,
             'is_active' => true,
-        ]);
+        ];
+
+        // Set appropriate entity FK based on type
+        if ($request->entity_type && $request->entity_id) {
+            $entityColumn = strtolower($request->entity_type) . '_id';
+            if (in_array($entityColumn, ['patient_id', 'supplier_id', 'product_id', 'service_id', 'hmo_id'])) {
+                $data[$entityColumn] = $request->entity_id;
+            }
+        }
+
+        $subAccount = AccountSubAccount::create($data);
 
         return redirect()->back()
             ->with('success', "Sub-account '{$subAccount->name}' created.");

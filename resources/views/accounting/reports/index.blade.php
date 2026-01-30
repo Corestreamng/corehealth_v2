@@ -4,6 +4,10 @@
 @section('subpage_name', 'Financial Reports')
 
 @section('content')
+@include('accounting.partials.breadcrumb', ['items' => [
+    ['label' => 'Reports', 'url' => route('accounting.reports.index'), 'icon' => 'mdi-file-chart']
+]])
+
 <div class="container-fluid">
     {{-- Header with Title --}}
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -30,6 +34,7 @@
                             <option value="balance-sheet">Balance Sheet</option>
                             <option value="cash-flow">Cash Flow Statement</option>
                             <option value="general-ledger">General Ledger</option>
+                            <option value="bank-statement">Bank Statement</option>
                         </select>
                     </div>
                     <div class="col-md-3 mb-3">
@@ -154,6 +159,20 @@
                                 <div>
                                     <h6 class="mb-0">General Ledger</h6>
                                     <small class="text-muted">Detailed transactions for each account</small>
+                                </div>
+                            </div>
+                            <i class="mdi mdi-chevron-right text-muted"></i>
+                        </a>
+                        @endcan
+                        @can('reports.bank-statement')
+                        <a href="{{ route('accounting.reports.bank-statement') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="report-icon bg-cyan-light mr-3">
+                                    <i class="mdi mdi-bank text-cyan"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">Bank Statement</h6>
+                                    <small class="text-muted">Bank account transactions with advanced filters</small>
                                 </div>
                             </div>
                             <i class="mdi mdi-chevron-right text-muted"></i>

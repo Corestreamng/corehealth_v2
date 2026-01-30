@@ -5,6 +5,11 @@
 @section('subpage_name', 'Profit & Loss')
 
 @section('content')
+@include('accounting.partials.breadcrumb', ['items' => [
+    ['label' => 'Reports', 'url' => route('accounting.reports.index'), 'icon' => 'mdi-file-chart'],
+    ['label' => 'Profit & Loss', 'url' => '#', 'icon' => 'mdi-chart-line']
+]])
+
 <div class="container-fluid">
     {{-- Header --}}
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -16,11 +21,11 @@
             <a href="{{ route('accounting.reports.index') }}" class="btn btn-outline-secondary mr-2">
                 <i class="mdi mdi-arrow-left mr-1"></i> Back to Reports
             </a>
-            <a href="{{ route('accounting.reports.profit-loss', ['format' => 'pdf'] + request()->all()) }}"
-               class="btn btn-danger mr-1" target="_blank">
+            <a href="{{ route('accounting.reports.profit-loss', array_merge(request()->all(), ['export' => 'pdf'])) }}"
+               class="btn btn-danger mr-1">
                 <i class="mdi mdi-file-pdf-box mr-1"></i> Export PDF
             </a>
-            <a href="{{ route('accounting.reports.profit-loss', ['format' => 'excel'] + request()->all()) }}"
+            <a href="{{ route('accounting.reports.profit-loss', array_merge(request()->all(), ['export' => 'excel'])) }}"
                class="btn btn-success">
                 <i class="mdi mdi-file-excel mr-1"></i> Export Excel
             </a>
@@ -81,65 +86,30 @@
                 </h5>
                 <table class="table table-sm">
                     <tbody>
-                        @php $totalRevenue = 0; @endphp
-                        @foreach($data['revenue'] ?? [] as $item)
+                        @foreach($report['income']['groups'] ?? [] as $group)
+                            <tr class="bg-light">
+                                <td colspan="2"><strong>{{ $group['name'] }}</strong></td>
+                            </tr>
+                            @foreach($group['accounts'] as $account)
                             <tr>
-                                <td class="ps-4">{{ $item['code'] }} - {{ $item['name'] }}</td>
+                                <td class="ps-4">{{ $account['code'] }} - {{ $account['name'] }}</td>
                                 <td class="text-end" style="width: 150px;">
-                                    {{ number_format($item['balance'], 2) }}
+                                    {{ number_format($account['balance'], 2) }}
                                 </td>
                             </tr>
-                            @php $totalRevenue += $item['balance']; @endphp
+                            @endforeach
+                            <tr class="fw-bold">
+                                <td class="ps-4">Total {{ $group['name'] }}</td>
+                                <td class="text-end">{{ number_format($group['total'], 2) }}</td>
+                            </tr>
                         @endforeach
                     </tbody>
                     <tfoot>
                         <tr class="fw-bold bg-light">
                             <td>Total Revenue</td>
-                            <td class="text-end text-success">{{ number_format($totalRevenue, 2) }}</td>
+                            <td class="text-end text-success">₦ {{ number_format($report['total_income'] ?? 0, 2) }}</td>
                         </tr>
                     </tfoot>
-                </table>
-            </div>
-
-            <!-- Cost of Services Section -->
-            <div class="mb-4">
-                <h5 class="text-warning border-bottom pb-2">
-                    <i class="fas fa-cogs me-2"></i>Cost of Services
-                </h5>
-                <table class="table table-sm">
-                    <tbody>
-                        @php $totalCOS = 0; @endphp
-                        @foreach($data['cost_of_services'] ?? [] as $item)
-                            <tr>
-                                <td class="ps-4">{{ $item['code'] }} - {{ $item['name'] }}</td>
-                                <td class="text-end" style="width: 150px;">
-                                    {{ number_format($item['balance'], 2) }}
-                                </td>
-                            </tr>
-                            @php $totalCOS += $item['balance']; @endphp
-                        @endforeach
-                    </tbody>
-                    <tfoot>
-                        <tr class="fw-bold bg-light">
-                            <td>Total Cost of Services</td>
-                            <td class="text-end text-warning">{{ number_format($totalCOS, 2) }}</td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-
-            <!-- Gross Profit -->
-            <div class="mb-4">
-                <table class="table table-bordered">
-                    <tr class="table-primary fw-bold">
-                        <td><i class="fas fa-chart-line me-2"></i>Gross Profit</td>
-                        <td class="text-end" style="width: 150px;">
-                            @php $grossProfit = $totalRevenue - $totalCOS; @endphp
-                            <span class="{{ $grossProfit >= 0 ? 'text-success' : 'text-danger' }}">
-                                {{ number_format($grossProfit, 2) }}
-                            </span>
-                        </td>
-                    </tr>
                 </table>
             </div>
 
@@ -150,68 +120,41 @@
                 </h5>
                 <table class="table table-sm">
                     <tbody>
-                        @php $totalExpenses = 0; @endphp
-                        @foreach($data['expenses'] ?? [] as $item)
+                        @foreach($report['expenses']['groups'] ?? [] as $group)
+                            <tr class="bg-light">
+                                <td colspan="2"><strong>{{ $group['name'] }}</strong></td>
+                            </tr>
+                            @foreach($group['accounts'] as $account)
                             <tr>
-                                <td class="ps-4">{{ $item['code'] }} - {{ $item['name'] }}</td>
+                                <td class="ps-4">{{ $account['code'] }} - {{ $account['name'] }}</td>
                                 <td class="text-end" style="width: 150px;">
-                                    {{ number_format($item['balance'], 2) }}
+                                    {{ number_format($account['balance'], 2) }}
                                 </td>
                             </tr>
-                            @php $totalExpenses += $item['balance']; @endphp
+                            @endforeach
+                            <tr class="fw-bold">
+                                <td class="ps-4">Total {{ $group['name'] }}</td>
+                                <td class="text-end">{{ number_format($group['total'], 2) }}</td>
+                            </tr>
                         @endforeach
                     </tbody>
                     <tfoot>
                         <tr class="fw-bold bg-light">
                             <td>Total Operating Expenses</td>
-                            <td class="text-end text-danger">{{ number_format($totalExpenses, 2) }}</td>
+                            <td class="text-end text-danger">₦ {{ number_format($report['total_expenses'] ?? 0, 2) }}</td>
                         </tr>
                     </tfoot>
                 </table>
             </div>
 
-            <!-- Other Income Section -->
-            @if(!empty($data['other_income']))
-                <div class="mb-4">
-                    <h5 class="text-info border-bottom pb-2">
-                        <i class="fas fa-plus-circle me-2"></i>Other Income
-                    </h5>
-                    <table class="table table-sm">
-                        <tbody>
-                            @php $totalOtherIncome = 0; @endphp
-                            @foreach($data['other_income'] ?? [] as $item)
-                                <tr>
-                                    <td class="ps-4">{{ $item['code'] }} - {{ $item['name'] }}</td>
-                                    <td class="text-end" style="width: 150px;">
-                                        {{ number_format($item['balance'], 2) }}
-                                    </td>
-                                </tr>
-                                @php $totalOtherIncome += $item['balance']; @endphp
-                            @endforeach
-                        </tbody>
-                        <tfoot>
-                            <tr class="fw-bold bg-light">
-                                <td>Total Other Income</td>
-                                <td class="text-end text-info">{{ number_format($totalOtherIncome, 2) }}</td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            @else
-                @php $totalOtherIncome = 0; @endphp
-            @endif
-
             <!-- Net Income -->
             <div class="mt-4">
                 <table class="table table-bordered">
-                    @php
-                        $netIncome = $grossProfit - $totalExpenses + $totalOtherIncome;
-                    @endphp
                     <tr class="table-dark fw-bold fs-5">
                         <td><i class="fas fa-money-bill-wave me-2"></i>Net Income (Loss)</td>
                         <td class="text-end" style="width: 180px;">
-                            <span class="{{ $netIncome >= 0 ? 'text-success' : 'text-danger' }}">
-                                ₦ {{ number_format($netIncome, 2) }}
+                            <span class="{{ ($report['net_income'] ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">
+                                ₦ {{ number_format($report['net_income'] ?? 0, 2) }}
                             </span>
                         </td>
                     </tr>

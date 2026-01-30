@@ -4,23 +4,38 @@ namespace App\Observers\Accounting;
 
 use App\Models\Expense;
 use App\Models\Accounting\Account;
+use App\Models\Accounting\AccountSubAccount;
 use App\Models\Accounting\JournalEntry;
 use App\Services\Accounting\AccountingService;
+use App\Services\Accounting\SubAccountService;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Expense Observer
+ * Expense Observer (UPDATED with Metadata + Sub-Account)
  *
- * Reference: Accounting System Plan §6.2 - Automated Journal Entries
+ * Reference: BANK_CASH_STATEMENT_IMPLEMENTATION.md - Part 7.3.3
  *
  * Creates journal entries when expenses are approved.
  *
  * DEBIT:  Expense Account (by category)
- * CREDIT: Cash / Bank / Accounts Payable
+ * CREDIT: Cash / Bank / Accounts Payable (with Supplier Sub-Account)
+ *
+ * METADATA CAPTURED:
+ * - supplier_id: Always if expense has supplier
+ * - category: Expense category (utilities, maintenance, etc.)
+ *
+ * SUB-ACCOUNT: Creates/uses supplier sub-account under AP (2100)
  */
 class ExpenseObserver
 {
+    protected SubAccountService $subAccountService;
+
+    public function __construct(SubAccountService $subAccountService)
+    {
+        $this->subAccountService = $subAccountService;
+    }
+
     /**
      * Handle the Expense "updated" event.
      */
@@ -31,9 +46,10 @@ class ExpenseObserver
             try {
                 $this->createExpenseJournalEntry($expense);
             } catch (\Exception $e) {
-                Log::error('Failed to create journal entry for expense', [
+                Log::error('ExpenseObserver: Failed to create journal entry', [
                     'expense_id' => $expense->id,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
                 ]);
             }
         }
@@ -53,7 +69,7 @@ class ExpenseObserver
         $creditAccount = Account::where('code', $creditAccountCode)->first();
 
         if (!$debitAccount || !$creditAccount) {
-            Log::warning('Expense journal entry skipped - accounts not configured', [
+            Log::warning('ExpenseObserver: Skipped - accounts not configured', [
                 'expense_id' => $expense->id,
                 'debit_code' => $debitAccountCode,
                 'credit_code' => $creditAccountCode
@@ -61,20 +77,36 @@ class ExpenseObserver
             return;
         }
 
+        // Get or create supplier sub-account if this is AP
+        $supplierSubAccount = null;
+        if ($expense->supplier_id && $creditAccountCode === '2100') {
+            $supplierSubAccount = $this->subAccountService->getOrCreateSupplierSubAccount($expense->supplier);
+        }
+
         $description = $this->buildDescription($expense);
+
+        // Get category string for filtering
+        $categoryString = $expense->category ?? 'general_expense';
 
         $lines = [
             [
                 'account_id' => $debitAccount->id,
                 'debit_amount' => $expense->amount,
                 'credit_amount' => 0,
-                'description' => "Expense: {$expense->category}"
+                'description' => $this->buildLineDescription($expense, 'debit'),
+                // METADATA
+                'supplier_id' => $expense->supplier_id,
+                'category' => $categoryString,
             ],
             [
                 'account_id' => $creditAccount->id,
+                'sub_account_id' => $supplierSubAccount?->id, // Supplier sub-account if AP
                 'debit_amount' => 0,
                 'credit_amount' => $expense->amount,
-                'description' => 'Payment / Liability'
+                'description' => $this->buildLineDescription($expense, 'credit'),
+                // METADATA
+                'supplier_id' => $expense->supplier_id,
+                'category' => $categoryString,
             ]
         ];
 
@@ -88,6 +120,13 @@ class ExpenseObserver
         // Update expense with journal entry reference
         $expense->journal_entry_id = $entry->id;
         $expense->saveQuietly();
+
+        Log::info('ExpenseObserver: Journal entry created', [
+            'expense_id' => $expense->id,
+            'journal_entry_id' => $entry->id,
+            'amount' => $expense->amount,
+            'supplier_id' => $expense->supplier_id,
+        ]);
     }
 
     /**
@@ -130,14 +169,59 @@ class ExpenseObserver
     protected function buildDescription(Expense $expense): string
     {
         $parts = [
-            "Expense: {$expense->title}",
-            "Ref: {$expense->expense_number}"
+            "Expense: " . ($expense->title ?? 'Untitled'),
+            "Category: " . ($expense->category ?? 'Other'),
+            "Ref: " . ($expense->expense_number ?? 'N/A'),
+            "Amount: " . number_format($expense->amount, 2)
         ];
 
         if ($expense->supplier) {
-            $parts[] = "Supplier: {$expense->supplier->name}";
+            $parts[] = "Supplier: " . ($expense->supplier->name ?? 'Unknown');
+        }
+
+        if ($expense->description) {
+            $desc = strip_tags($expense->description);
+            if (strlen($desc) > 2000) {
+                $desc = substr($desc, 0, 1997) . '...';
+            }
+            $parts[] = "Details: {$desc}";
+        }
+
+        if ($expense->payment_method) {
+            $parts[] = "Payment: {$expense->payment_method}";
+            if ($expense->payment_reference) {
+                $parts[] = "Payment Ref: {$expense->payment_reference}";
+            }
+        }
+
+        if ($expense->store) {
+            $parts[] = "Store: " . ($expense->store->name ?? 'Unknown');
         }
 
         return implode(' | ', $parts);
+    }
+
+    /**
+     * Build description for journal entry line (max 255 chars).
+     */
+    protected function buildLineDescription(Expense $expense, string $side): string
+    {
+        if ($side === 'debit') {
+            $desc = "Expense: " . ($expense->title ?? 'Untitled') . " (" . ($expense->category ?? 'Other') . ")";
+            if ($expense->supplier) {
+                $desc .= " - Supplier: " . ($expense->supplier->name ?? 'Unknown');
+            }
+        } else {
+            if ($expense->supplier_id && !$expense->payment_method) {
+                $desc = "Accounts Payable - " . ($expense->supplier->name ?? 'Supplier');
+            } else {
+                $desc = "Paid via " . ($expense->payment_method ?? 'Unknown');
+                if ($expense->payment_reference) {
+                    $desc .= " (Ref: {$expense->payment_reference})";
+                }
+            }
+        }
+
+        return strlen($desc) > 255 ? substr($desc, 0, 252) . '...' : $desc;
     }
 }

@@ -5,6 +5,11 @@
 @section('subpage_name', 'Balance Sheet')
 
 @section('content')
+@include('accounting.partials.breadcrumb', ['items' => [
+    ['label' => 'Reports', 'url' => route('accounting.reports.index'), 'icon' => 'mdi-file-chart'],
+    ['label' => 'Balance Sheet', 'url' => '#', 'icon' => 'mdi-file-document']
+]])
+
 <div class="container-fluid">
     {{-- Header --}}
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -16,11 +21,11 @@
             <a href="{{ route('accounting.reports.index') }}" class="btn btn-outline-secondary mr-2">
                 <i class="mdi mdi-arrow-left mr-1"></i> Back to Reports
             </a>
-            <a href="{{ route('accounting.reports.balance-sheet', ['format' => 'pdf'] + request()->all()) }}"
-               class="btn btn-danger mr-1" target="_blank">
+            <a href="{{ route('accounting.reports.balance-sheet', array_merge(request()->all(), ['export' => 'pdf'])) }}"
+               class="btn btn-danger mr-1">
                 <i class="mdi mdi-file-pdf-box mr-1"></i> Export PDF
             </a>
-            <a href="{{ route('accounting.reports.balance-sheet', ['format' => 'excel'] + request()->all()) }}"
+            <a href="{{ route('accounting.reports.balance-sheet', array_merge(request()->all(), ['export' => 'excel'])) }}"
                class="btn btn-success">
                 <i class="mdi mdi-file-excel mr-1"></i> Export Excel
             </a>
@@ -67,6 +72,22 @@
             <p class="text-muted mb-0">As of {{ $asOfDate->format('F d, Y') }}</p>
         </div>
         <div class="card-body">
+            @php
+                // Data structure from ReportService:
+                // $report['assets']['groups'] = [{name, accounts: [{id, code, name, balance}], total}]
+                // $report['liabilities']['groups'] = same structure
+                // $report['equity']['groups'] = same structure
+                // $report['total_assets'], $report['total_liabilities'], $report['total_equity']
+
+                $assetGroups = $report['assets']['groups'] ?? [];
+                $liabilityGroups = $report['liabilities']['groups'] ?? [];
+                $equityGroups = $report['equity']['groups'] ?? [];
+
+                $totalAssets = $report['total_assets'] ?? $report['assets']['total'] ?? 0;
+                $totalLiabilities = $report['total_liabilities'] ?? $report['liabilities']['total'] ?? 0;
+                $totalEquity = $report['total_equity'] ?? $report['equity']['total'] ?? 0;
+            @endphp
+
             <div class="row">
                 <!-- Assets Column -->
                 <div class="col-md-6 border-end">
@@ -74,91 +95,43 @@
                         <i class="fas fa-building me-2"></i>ASSETS
                     </h4>
 
-                    <!-- Current Assets -->
-                    <div class="mb-4">
-                        <h6 class="text-secondary fw-bold">Current Assets</h6>
-                        <table class="table table-sm table-borderless">
-                            <tbody>
-                                @php $totalCurrentAssets = 0; @endphp
-                                @foreach($data['current_assets'] ?? [] as $item)
-                                    <tr>
-                                        <td class="ps-3">{{ $item['name'] }}</td>
-                                        <td class="text-end" style="width: 120px;">
-                                            {{ number_format($item['balance'], 2) }}
-                                        </td>
-                                    </tr>
-                                    @php $totalCurrentAssets += $item['balance']; @endphp
-                                @endforeach
-                            </tbody>
-                            <tfoot>
-                                <tr class="border-top">
-                                    <td class="fw-bold">Total Current Assets</td>
-                                    <td class="text-end fw-bold">{{ number_format($totalCurrentAssets, 2) }}</td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-
-                    <!-- Fixed Assets -->
-                    <div class="mb-4">
-                        <h6 class="text-secondary fw-bold">Fixed Assets</h6>
-                        <table class="table table-sm table-borderless">
-                            <tbody>
-                                @php $totalFixedAssets = 0; @endphp
-                                @foreach($data['fixed_assets'] ?? [] as $item)
-                                    <tr>
-                                        <td class="ps-3">{{ $item['name'] }}</td>
-                                        <td class="text-end" style="width: 120px;">
-                                            {{ number_format($item['balance'], 2) }}
-                                        </td>
-                                    </tr>
-                                    @php $totalFixedAssets += $item['balance']; @endphp
-                                @endforeach
-                            </tbody>
-                            <tfoot>
-                                <tr class="border-top">
-                                    <td class="fw-bold">Total Fixed Assets</td>
-                                    <td class="text-end fw-bold">{{ number_format($totalFixedAssets, 2) }}</td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-
-                    <!-- Other Assets -->
-                    @if(!empty($data['other_assets']))
-                        <div class="mb-4">
-                            <h6 class="text-secondary fw-bold">Other Assets</h6>
-                            <table class="table table-sm table-borderless">
-                                <tbody>
-                                    @php $totalOtherAssets = 0; @endphp
-                                    @foreach($data['other_assets'] ?? [] as $item)
-                                        <tr>
-                                            <td class="ps-3">{{ $item['name'] }}</td>
-                                            <td class="text-end" style="width: 120px;">
-                                                {{ number_format($item['balance'], 2) }}
-                                            </td>
+                    @php $calculatedAssets = 0; @endphp
+                    @if(is_array($assetGroups) && count($assetGroups) > 0)
+                        @foreach($assetGroups as $group)
+                            <div class="mb-4">
+                                <h6 class="text-secondary fw-bold">{{ $group['name'] ?? 'Assets' }}</h6>
+                                <table class="table table-sm table-borderless">
+                                    <tbody>
+                                        @foreach($group['accounts'] ?? [] as $account)
+                                            <tr>
+                                                <td class="ps-3">{{ $account['code'] ?? '' }} - {{ $account['name'] ?? '' }}</td>
+                                                <td class="text-end" style="width: 120px;">
+                                                    {{ number_format($account['balance'] ?? 0, 2) }}
+                                                </td>
+                                            </tr>
+                                            @php $calculatedAssets += ($account['balance'] ?? 0); @endphp
+                                        @endforeach
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="border-top">
+                                            <td class="fw-bold">Total {{ $group['name'] ?? '' }}</td>
+                                            <td class="text-end fw-bold">{{ number_format($group['total'] ?? 0, 2) }}</td>
                                         </tr>
-                                        @php $totalOtherAssets += $item['balance']; @endphp
-                                    @endforeach
-                                </tbody>
-                                <tfoot>
-                                    <tr class="border-top">
-                                        <td class="fw-bold">Total Other Assets</td>
-                                        <td class="text-end fw-bold">{{ number_format($totalOtherAssets, 2) }}</td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        @endforeach
                     @else
-                        @php $totalOtherAssets = 0; @endphp
+                        <div class="mb-4">
+                            <p class="text-muted text-center">No assets recorded</p>
+                        </div>
                     @endif
 
                     <!-- Total Assets -->
                     <div class="bg-primary text-white p-3 rounded">
-                        @php $totalAssets = $totalCurrentAssets + $totalFixedAssets + $totalOtherAssets; @endphp
                         <div class="d-flex justify-content-between">
                             <h5 class="mb-0">TOTAL ASSETS</h5>
-                            <h5 class="mb-0">₦ {{ number_format($totalAssets, 2) }}</h5>
+                            <h5 class="mb-0">₦ {{ number_format($totalAssets ?: $calculatedAssets, 2) }}</h5>
                         </div>
                     </div>
                 </div>
@@ -169,104 +142,85 @@
                         <i class="fas fa-balance-scale me-2"></i>LIABILITIES & EQUITY
                     </h4>
 
-                    <!-- Current Liabilities -->
-                    <div class="mb-4">
-                        <h6 class="text-secondary fw-bold">Current Liabilities</h6>
-                        <table class="table table-sm table-borderless">
-                            <tbody>
-                                @php $totalCurrentLiabilities = 0; @endphp
-                                @foreach($data['current_liabilities'] ?? [] as $item)
-                                    <tr>
-                                        <td class="ps-3">{{ $item['name'] }}</td>
-                                        <td class="text-end" style="width: 120px;">
-                                            {{ number_format($item['balance'], 2) }}
-                                        </td>
-                                    </tr>
-                                    @php $totalCurrentLiabilities += $item['balance']; @endphp
-                                @endforeach
-                            </tbody>
-                            <tfoot>
-                                <tr class="border-top">
-                                    <td class="fw-bold">Total Current Liabilities</td>
-                                    <td class="text-end fw-bold">{{ number_format($totalCurrentLiabilities, 2) }}</td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-
-                    <!-- Long-term Liabilities -->
-                    @if(!empty($data['long_term_liabilities']))
-                        <div class="mb-4">
-                            <h6 class="text-secondary fw-bold">Long-term Liabilities</h6>
-                            <table class="table table-sm table-borderless">
-                                <tbody>
-                                    @php $totalLongTermLiabilities = 0; @endphp
-                                    @foreach($data['long_term_liabilities'] ?? [] as $item)
-                                        <tr>
-                                            <td class="ps-3">{{ $item['name'] }}</td>
-                                            <td class="text-end" style="width: 120px;">
-                                                {{ number_format($item['balance'], 2) }}
-                                            </td>
+                    <!-- Liabilities Section -->
+                    @php $calculatedLiabilities = 0; @endphp
+                    @if(is_array($liabilityGroups) && count($liabilityGroups) > 0)
+                        @foreach($liabilityGroups as $group)
+                            <div class="mb-4">
+                                <h6 class="text-secondary fw-bold">{{ $group['name'] ?? 'Liabilities' }}</h6>
+                                <table class="table table-sm table-borderless">
+                                    <tbody>
+                                        @foreach($group['accounts'] ?? [] as $account)
+                                            <tr>
+                                                <td class="ps-3">{{ $account['code'] ?? '' }} - {{ $account['name'] ?? '' }}</td>
+                                                <td class="text-end" style="width: 120px;">
+                                                    {{ number_format($account['balance'] ?? 0, 2) }}
+                                                </td>
+                                            </tr>
+                                            @php $calculatedLiabilities += ($account['balance'] ?? 0); @endphp
+                                        @endforeach
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="border-top">
+                                            <td class="fw-bold">Total {{ $group['name'] ?? '' }}</td>
+                                            <td class="text-end fw-bold">{{ number_format($group['total'] ?? 0, 2) }}</td>
                                         </tr>
-                                        @php $totalLongTermLiabilities += $item['balance']; @endphp
-                                    @endforeach
-                                </tbody>
-                                <tfoot>
-                                    <tr class="border-top">
-                                        <td class="fw-bold">Total Long-term Liabilities</td>
-                                        <td class="text-end fw-bold">{{ number_format($totalLongTermLiabilities, 2) }}</td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        @endforeach
                     @else
-                        @php $totalLongTermLiabilities = 0; @endphp
+                        <div class="mb-4">
+                            <p class="text-muted text-center">No liabilities recorded</p>
+                        </div>
                     @endif
 
-                    @php $totalLiabilities = $totalCurrentLiabilities + $totalLongTermLiabilities; @endphp
+                    @php $finalLiabilities = $totalLiabilities ?: $calculatedLiabilities; @endphp
                     <div class="bg-light p-2 rounded mb-4">
                         <div class="d-flex justify-content-between">
                             <strong>Total Liabilities</strong>
-                            <strong>{{ number_format($totalLiabilities, 2) }}</strong>
+                            <strong>₦ {{ number_format($finalLiabilities, 2) }}</strong>
                         </div>
                     </div>
 
-                    <!-- Equity -->
-                    <div class="mb-4">
-                        <h6 class="text-secondary fw-bold">Stockholders' Equity</h6>
-                        <table class="table table-sm table-borderless">
-                            <tbody>
-                                @php $totalEquity = 0; @endphp
-                                @foreach($data['equity'] ?? [] as $item)
-                                    <tr>
-                                        <td class="ps-3">{{ $item['name'] }}</td>
-                                        <td class="text-end" style="width: 120px;">
-                                            {{ number_format($item['balance'], 2) }}
-                                        </td>
-                                    </tr>
-                                    @php $totalEquity += $item['balance']; @endphp
-                                @endforeach
-                                <!-- Current Period Net Income -->
-                                <tr>
-                                    <td class="ps-3">Current Period Net Income</td>
-                                    <td class="text-end" style="width: 120px;">
-                                        {{ number_format($data['net_income'] ?? 0, 2) }}
-                                    </td>
-                                </tr>
-                                @php $totalEquity += ($data['net_income'] ?? 0); @endphp
-                            </tbody>
-                            <tfoot>
-                                <tr class="border-top">
-                                    <td class="fw-bold">Total Equity</td>
-                                    <td class="text-end fw-bold">{{ number_format($totalEquity, 2) }}</td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
+                    <!-- Equity Section -->
+                    @php $calculatedEquity = 0; @endphp
+                    @if(is_array($equityGroups) && count($equityGroups) > 0)
+                        @foreach($equityGroups as $group)
+                            <div class="mb-4">
+                                <h6 class="text-secondary fw-bold">{{ $group['name'] ?? 'Equity' }}</h6>
+                                <table class="table table-sm table-borderless">
+                                    <tbody>
+                                        @foreach($group['accounts'] ?? [] as $account)
+                                            <tr>
+                                                <td class="ps-3">{{ $account['code'] ?? '' }} - {{ $account['name'] ?? '' }}</td>
+                                                <td class="text-end" style="width: 120px;">
+                                                    {{ number_format($account['balance'] ?? 0, 2) }}
+                                                </td>
+                                            </tr>
+                                            @php $calculatedEquity += ($account['balance'] ?? 0); @endphp
+                                        @endforeach
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="border-top">
+                                            <td class="fw-bold">Total {{ $group['name'] ?? '' }}</td>
+                                            <td class="text-end fw-bold">{{ number_format($group['total'] ?? 0, 2) }}</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        @endforeach
+                    @else
+                        <div class="mb-4">
+                            <p class="text-muted text-center">No equity recorded</p>
+                        </div>
+                    @endif
+
+                    @php $finalEquity = $totalEquity ?: $calculatedEquity; @endphp
 
                     <!-- Total Liabilities & Equity -->
                     <div class="bg-primary text-white p-3 rounded">
-                        @php $totalLiabilitiesAndEquity = $totalLiabilities + $totalEquity; @endphp
+                        @php $totalLiabilitiesAndEquity = $finalLiabilities + $finalEquity; @endphp
                         <div class="d-flex justify-content-between">
                             <h5 class="mb-0">TOTAL LIABILITIES & EQUITY</h5>
                             <h5 class="mb-0">₦ {{ number_format($totalLiabilitiesAndEquity, 2) }}</h5>
@@ -277,7 +231,10 @@
 
             <!-- Balance Check -->
             <div class="mt-4">
-                @php $difference = $totalAssets - $totalLiabilitiesAndEquity; @endphp
+                @php
+                    $finalAssets = $totalAssets ?: $calculatedAssets;
+                    $difference = $finalAssets - $totalLiabilitiesAndEquity;
+                @endphp
                 @if(abs($difference) < 0.01)
                     <div class="alert alert-success text-center mb-0">
                         <i class="fas fa-check-circle me-2"></i>

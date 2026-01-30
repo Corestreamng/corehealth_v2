@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 29, 2026 at 01:26 PM
+-- Generation Time: Jan 30, 2026 at 09:57 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -59,7 +59,19 @@ INSERT INTO `accounting_periods` (`id`, `fiscal_year_id`, `period_number`, `peri
 (9, 1, 9, 'September 2026', '2026-09-01', '2026-09-30', 'open', 0, NULL, NULL, '2026-01-29 11:00:51', '2026-01-29 11:00:51', NULL),
 (10, 1, 10, 'October 2026', '2026-10-01', '2026-10-31', 'open', 0, NULL, NULL, '2026-01-29 11:00:51', '2026-01-29 11:00:51', NULL),
 (11, 1, 11, 'November 2026', '2026-11-01', '2026-11-30', 'open', 0, NULL, NULL, '2026-01-29 11:00:51', '2026-01-29 11:00:51', NULL),
-(12, 1, 12, 'December 2026', '2026-12-01', '2026-12-31', 'open', 0, NULL, NULL, '2026-01-29 11:00:51', '2026-01-29 11:00:51', NULL);
+(12, 1, 12, 'December 2026', '2026-12-01', '2026-12-31', 'open', 0, NULL, NULL, '2026-01-29 11:00:51', '2026-01-29 11:00:51', NULL),
+(13, 2, 1, 'January 2027', '2027-01-01', '2027-01-31', 'open', 0, NULL, NULL, '2026-01-30 10:57:53', '2026-01-30 10:57:53', NULL),
+(14, 2, 2, 'February 2027', '2027-02-01', '2027-02-28', 'open', 0, NULL, NULL, '2026-01-30 10:57:53', '2026-01-30 10:57:53', NULL),
+(15, 2, 3, 'March 2027', '2027-03-01', '2027-03-31', 'open', 0, NULL, NULL, '2026-01-30 10:57:53', '2026-01-30 10:57:53', NULL),
+(16, 2, 4, 'April 2027', '2027-04-01', '2027-04-30', 'open', 0, NULL, NULL, '2026-01-30 10:57:53', '2026-01-30 10:57:53', NULL),
+(17, 2, 5, 'May 2027', '2027-05-01', '2027-05-31', 'open', 0, NULL, NULL, '2026-01-30 10:57:53', '2026-01-30 10:57:53', NULL),
+(18, 2, 6, 'June 2027', '2027-06-01', '2027-06-30', 'open', 0, NULL, NULL, '2026-01-30 10:57:53', '2026-01-30 10:57:53', NULL),
+(19, 2, 7, 'July 2027', '2027-07-01', '2027-07-31', 'open', 0, NULL, NULL, '2026-01-30 10:57:53', '2026-01-30 10:57:53', NULL),
+(20, 2, 8, 'August 2027', '2027-08-01', '2027-08-31', 'open', 0, NULL, NULL, '2026-01-30 10:57:53', '2026-01-30 10:57:53', NULL),
+(21, 2, 9, 'September 2027', '2027-09-01', '2027-09-30', 'open', 0, NULL, NULL, '2026-01-30 10:57:53', '2026-01-30 10:57:53', NULL),
+(22, 2, 10, 'October 2027', '2027-10-01', '2027-10-31', 'open', 0, NULL, NULL, '2026-01-30 10:57:53', '2026-01-30 10:57:53', NULL),
+(23, 2, 11, 'November 2027', '2027-11-01', '2027-11-30', 'open', 0, NULL, NULL, '2026-01-30 10:57:53', '2026-01-30 10:57:53', NULL),
+(24, 2, 12, 'December 2027', '2027-12-01', '2027-12-31', 'open', 0, NULL, NULL, '2026-01-30 10:57:53', '2026-01-30 10:57:53', NULL);
 
 -- --------------------------------------------------------
 
@@ -161,9 +173,11 @@ INSERT INTO `accounts` (`id`, `account_group_id`, `code`, `name`, `description`,
 (71, 17, '6250', 'Advertising & Marketing', NULL, NULL, 0, 1, 0, NULL, '2026-01-29 11:00:08', '2026-01-29 11:00:08', NULL),
 (72, 17, '6260', 'Depreciation Expense', NULL, NULL, 0, 1, 0, NULL, '2026-01-29 11:00:08', '2026-01-29 11:00:08', NULL),
 (73, 17, '6090', 'Miscellaneous Expenses', NULL, NULL, 0, 1, 0, NULL, '2026-01-29 11:00:08', '2026-01-29 11:00:08', NULL),
-(74, 18, '6300', 'Interest Expense', NULL, NULL, 0, 1, 0, NULL, '2026-01-29 11:00:08', '2026-01-29 11:00:08', NULL),
+(74, 18, '6300', 'Interest Expense', 'teste edit', NULL, 0, 1, 0, NULL, '2026-01-29 11:00:08', '2026-01-30 19:15:54', NULL),
 (75, 18, '6310', 'Bank Charges', NULL, NULL, 0, 1, 0, NULL, '2026-01-29 11:00:08', '2026-01-29 11:00:08', NULL),
-(76, 18, '6320', 'Bad Debt Expense', NULL, NULL, 0, 1, 0, NULL, '2026-01-29 11:00:08', '2026-01-29 11:00:08', NULL);
+(76, 18, '6320', 'Bad Debt Expense', NULL, NULL, 0, 1, 0, NULL, '2026-01-29 11:00:08', '2026-01-29 11:00:08', NULL),
+(77, 7, '2050', 'Salaries Payable', 'Accrued salaries and wages liability for employees. Used in two-stage payroll accounting - credited when payroll is approved, debited when paid.', NULL, 1, 1, 0, NULL, '2026-01-30 17:13:09', '2026-01-30 17:13:09', NULL),
+(78, 8, '22099', 'phl loan', 'loan', NULL, 0, 1, 0, NULL, '2026-01-30 19:17:00', '2026-01-30 19:17:00', NULL);
 
 -- --------------------------------------------------------
 
@@ -252,10 +266,20 @@ CREATE TABLE `account_sub_accounts` (
   `service_category_id` bigint(20) UNSIGNED DEFAULT NULL,
   `supplier_id` bigint(20) UNSIGNED DEFAULT NULL,
   `patient_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `hmo_id` bigint(20) UNSIGNED DEFAULT NULL,
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `account_sub_accounts`
+--
+
+INSERT INTO `account_sub_accounts` (`id`, `account_id`, `code`, `name`, `product_id`, `service_id`, `product_category_id`, `service_category_id`, `supplier_id`, `patient_id`, `hmo_id`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, 29, '2100.SUP.1', 'Apollos Technologies', NULL, NULL, NULL, NULL, 1, NULL, NULL, 1, '2026-01-30 18:04:43', '2026-01-30 18:04:43'),
+(2, 29, '2100.SUP.2', 'Prosoft systems', NULL, NULL, NULL, NULL, 2, NULL, NULL, 1, '2026-01-30 18:04:43', '2026-01-30 18:04:43'),
+(3, 1, '1010-009', 'admin', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-30 19:23:36', '2026-01-30 19:23:36');
 
 -- --------------------------------------------------------
 
@@ -475,6 +499,76 @@ CREATE TABLE `audits` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `audits`
+--
+
+INSERT INTO `audits` (`id`, `user_type`, `user_id`, `event`, `auditable_type`, `auditable_id`, `old_values`, `new_values`, `url`, `ip_address`, `user_agent`, `tags`, `created_at`, `updated_at`) VALUES
+(1, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntry', 211, '[]', '{\"entry_number\":\"JE-202601-0071\",\"entry_date\":\"2026-01-29 00:00:00\",\"accounting_period_id\":1,\"description\":\"test entry\",\"reference_type\":null,\"reference_id\":null,\"entry_type\":\"manual\",\"status\":\"draft\",\"created_by\":1,\"id\":211}', 'http://127.0.0.1:8000/accounting/journal-entries', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-29 13:26:36', '2026-01-29 13:26:36'),
+(2, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 281, '[]', '{\"journal_entry_id\":211,\"line_number\":1,\"account_id\":\"1\",\"sub_account_id\":null,\"narration\":\"tline meme\",\"debit\":5000,\"credit\":0,\"id\":281}', 'http://127.0.0.1:8000/accounting/journal-entries', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-29 13:26:36', '2026-01-29 13:26:36'),
+(3, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 282, '[]', '{\"journal_entry_id\":211,\"line_number\":2,\"account_id\":\"2\",\"sub_account_id\":null,\"narration\":null,\"debit\":0,\"credit\":5000,\"id\":282}', 'http://127.0.0.1:8000/accounting/journal-entries', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-29 13:26:36', '2026-01-29 13:26:36'),
+(4, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\JournalEntry', 211, '{\"status\":\"draft\",\"submitted_by\":null,\"submitted_at\":null}', '{\"status\":\"pending_approval\",\"submitted_by\":1,\"submitted_at\":\"2026-01-29 14:29:20\"}', 'http://127.0.0.1:8000/accounting/journal-entries/211/submit', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-29 13:29:20', '2026-01-29 13:29:20'),
+(5, 'App\\Models\\User', 1, 'created', 'App\\Models\\ChatMessage', 162, '[]', '{\"conversation_id\":11,\"user_id\":1,\"body\":\"\\ud83d\\udce2 **Notification**\\n\\n**\\ud83d\\udcdd Journal Entry Submitted for Approval**\\n\\n\\u2022 **Entry Number:** JE-202601-0071\\n\\u2022 **Date:** 29 Jan 2026\\n\\u2022 **Description:** test entry\\n\\u2022 **Amount:** 5,000.00\\n\\u2022 **Submitted By:** Admin System Ing\\n\\n_Please review and approve\\/reject this entry._\\n\\n_02:29 PM, Jan 29_\",\"type\":\"text\",\"id\":162}', 'http://127.0.0.1:8000/accounting/journal-entries/211/submit', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-29 13:29:20', '2026-01-29 13:29:20'),
+(6, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\JournalEntry', 211, '{\"status\":\"pending_approval\",\"rejected_by\":null,\"rejected_at\":null,\"rejection_reason\":null}', '{\"status\":\"rejected\",\"rejected_by\":1,\"rejected_at\":\"2026-01-29 14:32:39\",\"rejection_reason\":\"test reect\"}', 'http://127.0.0.1:8000/accounting/journal-entries/211/reject', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-29 13:32:40', '2026-01-29 13:32:40'),
+(7, 'App\\Models\\User', 1, 'created', 'App\\Models\\ChatMessage', 163, '[]', '{\"conversation_id\":11,\"user_id\":1,\"body\":\"\\ud83d\\udce2 **Notification**\\n\\n**\\u274c Journal Entry Rejected**\\n\\n\\u2022 **Entry Number:** JE-202601-0071\\n\\u2022 **Description:** test entry\\n\\u2022 **Rejected By:** Admin System Ing\\n\\u2022 **Reason:** test reect\\n\\n_Please review the rejection reason and resubmit if needed._\\n\\n_02:32 PM, Jan 29_\",\"type\":\"text\",\"id\":163}', 'http://127.0.0.1:8000/accounting/journal-entries/211/reject', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-29 13:32:40', '2026-01-29 13:32:40'),
+(8, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntry', 212, '[]', '{\"entry_number\":\"JE-202601-0072\",\"entry_date\":\"2026-01-29 00:00:00\",\"accounting_period_id\":1,\"description\":\"testtt\",\"reference_type\":null,\"reference_id\":null,\"entry_type\":\"manual\",\"status\":\"draft\",\"created_by\":1,\"id\":212}', 'http://127.0.0.1:8000/accounting/journal-entries', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-29 13:35:27', '2026-01-29 13:35:27'),
+(9, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 283, '[]', '{\"journal_entry_id\":212,\"line_number\":1,\"account_id\":\"1\",\"sub_account_id\":null,\"narration\":null,\"debit\":6000,\"credit\":0,\"id\":283}', 'http://127.0.0.1:8000/accounting/journal-entries', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-29 13:35:27', '2026-01-29 13:35:27'),
+(10, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 284, '[]', '{\"journal_entry_id\":212,\"line_number\":2,\"account_id\":\"3\",\"sub_account_id\":null,\"narration\":null,\"debit\":7000,\"credit\":0,\"id\":284}', 'http://127.0.0.1:8000/accounting/journal-entries', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-29 13:35:27', '2026-01-29 13:35:27'),
+(11, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 285, '[]', '{\"journal_entry_id\":212,\"line_number\":3,\"account_id\":\"8\",\"sub_account_id\":null,\"narration\":null,\"debit\":0,\"credit\":13000,\"id\":285}', 'http://127.0.0.1:8000/accounting/journal-entries', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-29 13:35:27', '2026-01-29 13:35:27'),
+(12, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\JournalEntry', 212, '{\"status\":\"draft\",\"submitted_at\":null,\"submitted_by\":null}', '{\"status\":\"pending_approval\",\"submitted_at\":\"2026-01-29 14:35:27\",\"submitted_by\":1}', 'http://127.0.0.1:8000/accounting/journal-entries', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-29 13:35:27', '2026-01-29 13:35:27'),
+(13, 'App\\Models\\User', 1, 'created', 'App\\Models\\ChatMessage', 164, '[]', '{\"conversation_id\":11,\"user_id\":1,\"body\":\"\\ud83d\\udce2 **Notification**\\n\\n**\\ud83d\\udcdd Journal Entry Submitted for Approval**\\n\\n\\u2022 **Entry Number:** JE-202601-0072\\n\\u2022 **Date:** 29 Jan 2026\\n\\u2022 **Description:** testtt\\n\\u2022 **Amount:** 13,000.00\\n\\u2022 **Submitted By:** Admin System Ing\\n\\n_Please review and approve\\/reject this entry._\\n\\n_02:35 PM, Jan 29_\",\"type\":\"text\",\"id\":164}', 'http://127.0.0.1:8000/accounting/journal-entries', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-29 13:35:27', '2026-01-29 13:35:27'),
+(14, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\JournalEntry', 212, '{\"status\":\"pending_approval\",\"approved_by\":null,\"approved_at\":null}', '{\"status\":\"approved\",\"approved_by\":1,\"approved_at\":\"2026-01-29 14:36:28\"}', 'http://127.0.0.1:8000/accounting/journal-entries/212/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-29 13:36:28', '2026-01-29 13:36:28'),
+(15, 'App\\Models\\User', 1, 'created', 'App\\Models\\ChatMessage', 165, '[]', '{\"conversation_id\":11,\"user_id\":1,\"body\":\"\\ud83d\\udce2 **Notification**\\n\\n**\\u2705 Journal Entry Approved**\\n\\n\\u2022 **Entry Number:** JE-202601-0072\\n\\u2022 **Description:** testtt\\n\\u2022 **Approved By:** Admin System Ing\\n\\n_The entry can now be posted._\\n\\n_02:36 PM, Jan 29_\",\"type\":\"text\",\"id\":165}', 'http://127.0.0.1:8000/accounting/journal-entries/212/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-29 13:36:28', '2026-01-29 13:36:28'),
+(16, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\JournalEntry', 212, '{\"status\":\"approved\",\"posted_by\":null,\"posted_at\":null}', '{\"status\":\"posted\",\"posted_by\":1,\"posted_at\":\"2026-01-29 14:37:17\"}', 'http://127.0.0.1:8000/accounting/journal-entries/212/post', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-29 13:37:17', '2026-01-29 13:37:17'),
+(17, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryEdit', 1, '[]', '{\"journal_entry_id\":212,\"original_data\":\"{\\\"entry\\\":{\\\"id\\\":212,\\\"entry_number\\\":\\\"JE-202601-0072\\\",\\\"accounting_period_id\\\":1,\\\"entry_date\\\":\\\"2026-01-29T00:00:00.000000Z\\\",\\\"description\\\":\\\"testtt\\\",\\\"reference_type\\\":null,\\\"reference_id\\\":null,\\\"entry_type\\\":\\\"manual\\\",\\\"status\\\":\\\"posted\\\",\\\"reversal_of_id\\\":null,\\\"reversed_by_id\\\":null,\\\"created_by\\\":1,\\\"submitted_by\\\":1,\\\"submitted_at\\\":\\\"2026-01-29T14:35:27.000000Z\\\",\\\"approved_by\\\":1,\\\"approved_at\\\":\\\"2026-01-29T14:36:28.000000Z\\\",\\\"rejected_by\\\":null,\\\"rejected_at\\\":null,\\\"rejection_reason\\\":null,\\\"posted_by\\\":1,\\\"posted_at\\\":\\\"2026-01-29T14:37:17.000000Z\\\",\\\"edit_requires_approval\\\":1,\\\"created_at\\\":\\\"2026-01-29T14:35:27.000000Z\\\",\\\"updated_at\\\":\\\"2026-01-29T14:37:17.000000Z\\\",\\\"deleted_at\\\":null,\\\"lines\\\":[{\\\"id\\\":283,\\\"journal_entry_id\\\":212,\\\"line_number\\\":1,\\\"account_id\\\":1,\\\"sub_account_id\\\":null,\\\"debit\\\":\\\"6000.0000\\\",\\\"credit\\\":\\\"0.0000\\\",\\\"narration\\\":null,\\\"cash_flow_category\\\":null,\\\"created_at\\\":\\\"2026-01-29T14:35:27.000000Z\\\",\\\"updated_at\\\":\\\"2026-01-29T14:35:27.000000Z\\\"},{\\\"id\\\":284,\\\"journal_entry_id\\\":212,\\\"line_number\\\":2,\\\"account_id\\\":3,\\\"sub_account_id\\\":null,\\\"debit\\\":\\\"7000.0000\\\",\\\"credit\\\":\\\"0.0000\\\",\\\"narration\\\":null,\\\"cash_flow_category\\\":null,\\\"created_at\\\":\\\"2026-01-29T14:35:27.000000Z\\\",\\\"updated_at\\\":\\\"2026-01-29T14:35:27.000000Z\\\"},{\\\"id\\\":285,\\\"journal_entry_id\\\":212,\\\"line_number\\\":3,\\\"account_id\\\":8,\\\"sub_account_id\\\":null,\\\"debit\\\":\\\"0.0000\\\",\\\"credit\\\":\\\"13000.0000\\\",\\\"narration\\\":null,\\\"cash_flow_category\\\":null,\\\"created_at\\\":\\\"2026-01-29T14:35:27.000000Z\\\",\\\"updated_at\\\":\\\"2026-01-29T14:35:27.000000Z\\\"}]},\\\"lines\\\":[{\\\"id\\\":283,\\\"journal_entry_id\\\":212,\\\"line_number\\\":1,\\\"account_id\\\":1,\\\"sub_account_id\\\":null,\\\"debit\\\":\\\"6000.0000\\\",\\\"credit\\\":\\\"0.0000\\\",\\\"narration\\\":null,\\\"cash_flow_category\\\":null,\\\"created_at\\\":\\\"2026-01-29T14:35:27.000000Z\\\",\\\"updated_at\\\":\\\"2026-01-29T14:35:27.000000Z\\\"},{\\\"id\\\":284,\\\"journal_entry_id\\\":212,\\\"line_number\\\":2,\\\"account_id\\\":3,\\\"sub_account_id\\\":null,\\\"debit\\\":\\\"7000.0000\\\",\\\"credit\\\":\\\"0.0000\\\",\\\"narration\\\":null,\\\"cash_flow_category\\\":null,\\\"created_at\\\":\\\"2026-01-29T14:35:27.000000Z\\\",\\\"updated_at\\\":\\\"2026-01-29T14:35:27.000000Z\\\"},{\\\"id\\\":285,\\\"journal_entry_id\\\":212,\\\"line_number\\\":3,\\\"account_id\\\":8,\\\"sub_account_id\\\":null,\\\"debit\\\":\\\"0.0000\\\",\\\"credit\\\":\\\"13000.0000\\\",\\\"narration\\\":null,\\\"cash_flow_category\\\":null,\\\"created_at\\\":\\\"2026-01-29T14:35:27.000000Z\\\",\\\"updated_at\\\":\\\"2026-01-29T14:35:27.000000Z\\\"}]}\",\"edited_data\":\"{\\\"proposed_changes\\\":\\\"dbdanda\\\"}\",\"edit_reason\":\"6233\",\"status\":\"pending\",\"requested_by\":1,\"requested_at\":\"2026-01-29 14:50:53\",\"id\":1}', 'http://127.0.0.1:8000/accounting/journal-entries/212/request-edit', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-29 13:50:54', '2026-01-29 13:50:54'),
+(18, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryEdit', 2, '[]', '{\"journal_entry_id\":212,\"original_data\":\"{\\\"entry\\\":{\\\"id\\\":212,\\\"entry_number\\\":\\\"JE-202601-0072\\\",\\\"accounting_period_id\\\":1,\\\"entry_date\\\":\\\"2026-01-29T00:00:00.000000Z\\\",\\\"description\\\":\\\"testtt\\\",\\\"reference_type\\\":null,\\\"reference_id\\\":null,\\\"entry_type\\\":\\\"manual\\\",\\\"status\\\":\\\"posted\\\",\\\"reversal_of_id\\\":null,\\\"reversed_by_id\\\":null,\\\"created_by\\\":1,\\\"submitted_by\\\":1,\\\"submitted_at\\\":\\\"2026-01-29T14:35:27.000000Z\\\",\\\"approved_by\\\":1,\\\"approved_at\\\":\\\"2026-01-29T14:36:28.000000Z\\\",\\\"rejected_by\\\":null,\\\"rejected_at\\\":null,\\\"rejection_reason\\\":null,\\\"posted_by\\\":1,\\\"posted_at\\\":\\\"2026-01-29T14:37:17.000000Z\\\",\\\"edit_requires_approval\\\":1,\\\"created_at\\\":\\\"2026-01-29T14:35:27.000000Z\\\",\\\"updated_at\\\":\\\"2026-01-29T14:37:17.000000Z\\\",\\\"deleted_at\\\":null,\\\"lines\\\":[{\\\"id\\\":283,\\\"journal_entry_id\\\":212,\\\"line_number\\\":1,\\\"account_id\\\":1,\\\"sub_account_id\\\":null,\\\"debit\\\":\\\"6000.0000\\\",\\\"credit\\\":\\\"0.0000\\\",\\\"narration\\\":null,\\\"cash_flow_category\\\":null,\\\"created_at\\\":\\\"2026-01-29T14:35:27.000000Z\\\",\\\"updated_at\\\":\\\"2026-01-29T14:35:27.000000Z\\\"},{\\\"id\\\":284,\\\"journal_entry_id\\\":212,\\\"line_number\\\":2,\\\"account_id\\\":3,\\\"sub_account_id\\\":null,\\\"debit\\\":\\\"7000.0000\\\",\\\"credit\\\":\\\"0.0000\\\",\\\"narration\\\":null,\\\"cash_flow_category\\\":null,\\\"created_at\\\":\\\"2026-01-29T14:35:27.000000Z\\\",\\\"updated_at\\\":\\\"2026-01-29T14:35:27.000000Z\\\"},{\\\"id\\\":285,\\\"journal_entry_id\\\":212,\\\"line_number\\\":3,\\\"account_id\\\":8,\\\"sub_account_id\\\":null,\\\"debit\\\":\\\"0.0000\\\",\\\"credit\\\":\\\"13000.0000\\\",\\\"narration\\\":null,\\\"cash_flow_category\\\":null,\\\"created_at\\\":\\\"2026-01-29T14:35:27.000000Z\\\",\\\"updated_at\\\":\\\"2026-01-29T14:35:27.000000Z\\\"}]},\\\"lines\\\":[{\\\"id\\\":283,\\\"journal_entry_id\\\":212,\\\"line_number\\\":1,\\\"account_id\\\":1,\\\"sub_account_id\\\":null,\\\"debit\\\":\\\"6000.0000\\\",\\\"credit\\\":\\\"0.0000\\\",\\\"narration\\\":null,\\\"cash_flow_category\\\":null,\\\"created_at\\\":\\\"2026-01-29T14:35:27.000000Z\\\",\\\"updated_at\\\":\\\"2026-01-29T14:35:27.000000Z\\\"},{\\\"id\\\":284,\\\"journal_entry_id\\\":212,\\\"line_number\\\":2,\\\"account_id\\\":3,\\\"sub_account_id\\\":null,\\\"debit\\\":\\\"7000.0000\\\",\\\"credit\\\":\\\"0.0000\\\",\\\"narration\\\":null,\\\"cash_flow_category\\\":null,\\\"created_at\\\":\\\"2026-01-29T14:35:27.000000Z\\\",\\\"updated_at\\\":\\\"2026-01-29T14:35:27.000000Z\\\"},{\\\"id\\\":285,\\\"journal_entry_id\\\":212,\\\"line_number\\\":3,\\\"account_id\\\":8,\\\"sub_account_id\\\":null,\\\"debit\\\":\\\"0.0000\\\",\\\"credit\\\":\\\"13000.0000\\\",\\\"narration\\\":null,\\\"cash_flow_category\\\":null,\\\"created_at\\\":\\\"2026-01-29T14:35:27.000000Z\\\",\\\"updated_at\\\":\\\"2026-01-29T14:35:27.000000Z\\\"}]}\",\"edited_data\":\"{\\\"proposed_changes\\\":\\\"dbdanda\\\"}\",\"edit_reason\":\"6233\",\"status\":\"pending\",\"requested_by\":1,\"requested_at\":\"2026-01-29 14:54:10\",\"id\":2}', 'http://127.0.0.1:8000/accounting/journal-entries/212/request-edit', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-29 13:54:10', '2026-01-29 13:54:10'),
+(19, 'App\\Models\\User', 1, 'created', 'App\\Models\\ChatMessage', 166, '[]', '{\"conversation_id\":11,\"user_id\":1,\"body\":\"\\ud83d\\udce2 **Notification**\\n\\n**\\u270f\\ufe0f Edit Request Submitted**\\n\\n\\u2022 **Entry Number:** JE-202601-0072\\n\\u2022 **Requested By:** Admin System Ing\\n\\u2022 **Reason:** 6233\\n\\n_Please review this edit request._\\n\\n_02:54 PM, Jan 29_\",\"type\":\"text\",\"id\":166}', 'http://127.0.0.1:8000/accounting/journal-entries/212/request-edit', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-29 13:54:10', '2026-01-29 13:54:10'),
+(20, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\JournalEntryEdit', 1, '{\"status\":\"pending\",\"rejected_by\":null,\"rejected_at\":null,\"rejection_reason\":null}', '{\"status\":\"rejected\",\"rejected_by\":1,\"rejected_at\":\"2026-01-30 09:49:28\",\"rejection_reason\":\"hhjh\"}', 'http://localhost:8000/accounting/journal-entries/edit-requests/1/reject', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 08:49:28', '2026-01-30 08:49:28'),
+(21, 'App\\Models\\User', 1, 'created', 'App\\Models\\ChatMessage', 167, '[]', '{\"conversation_id\":11,\"user_id\":1,\"body\":\"\\ud83d\\udce2 **Notification**\\n\\n**\\u274c Edit Request Rejected**\\n\\n\\u2022 **Entry Number:** JE-202601-0072\\n\\u2022 **Rejected By:** Admin System Ing\\n\\u2022 **Original Requester:** Admin System Ing\\n\\u2022 **Rejection Reason:** hhjh\\n\\n_The edit request has been rejected._\\n\\n_09:49 AM, Jan 30_\",\"type\":\"text\",\"id\":167}', 'http://localhost:8000/accounting/journal-entries/edit-requests/1/reject', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 08:49:28', '2026-01-30 08:49:28'),
+(22, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\JournalEntryEdit', 2, '{\"status\":\"pending\",\"approved_by\":null,\"approved_at\":null}', '{\"status\":\"approved\",\"approved_by\":1,\"approved_at\":\"2026-01-30 09:50:58\"}', 'http://localhost:8000/accounting/journal-entries/edit-requests/2/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 08:50:58', '2026-01-30 08:50:58'),
+(23, 'App\\Models\\User', 1, 'created', 'App\\Models\\ChatMessage', 168, '[]', '{\"conversation_id\":11,\"user_id\":1,\"body\":\"\\ud83d\\udce2 **Notification**\\n\\n**\\u2705 Edit Request Approved**\\n\\n\\u2022 **Entry Number:** JE-202601-0072\\n\\u2022 **Approved By:** Admin System Ing\\n\\u2022 **Original Requester:** Admin System Ing\\n\\n_The edit request has been approved._\\n\\n_09:50 AM, Jan 30_\",\"type\":\"text\",\"id\":168}', 'http://localhost:8000/accounting/journal-entries/edit-requests/2/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 08:50:58', '2026-01-30 08:50:58'),
+(24, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntry', 213, '[]', '{\"entry_number\":\"JE-202601-0073\",\"entry_date\":\"2026-01-30 00:00:00\",\"accounting_period_id\":1,\"description\":\"Reversal of JE-202601-0072: Reversed for edit request: 6233\",\"reference_type\":null,\"reference_id\":null,\"entry_type\":\"reversal\",\"status\":\"draft\",\"reversal_of_id\":212,\"created_by\":1,\"id\":213}', 'http://localhost:8000/accounting/journal-entries/edit-requests/2/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 08:50:58', '2026-01-30 08:50:58'),
+(25, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 286, '[]', '{\"journal_entry_id\":213,\"line_number\":1,\"account_id\":1,\"sub_account_id\":null,\"narration\":null,\"debit\":0,\"credit\":6000,\"id\":286}', 'http://localhost:8000/accounting/journal-entries/edit-requests/2/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 08:50:58', '2026-01-30 08:50:58'),
+(26, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 287, '[]', '{\"journal_entry_id\":213,\"line_number\":2,\"account_id\":3,\"sub_account_id\":null,\"narration\":null,\"debit\":0,\"credit\":7000,\"id\":287}', 'http://localhost:8000/accounting/journal-entries/edit-requests/2/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 08:50:58', '2026-01-30 08:50:58'),
+(27, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 288, '[]', '{\"journal_entry_id\":213,\"line_number\":3,\"account_id\":8,\"sub_account_id\":null,\"narration\":null,\"debit\":13000,\"credit\":0,\"id\":288}', 'http://localhost:8000/accounting/journal-entries/edit-requests/2/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 08:50:58', '2026-01-30 08:50:58'),
+(28, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\JournalEntry', 213, '{\"status\":\"draft\",\"posted_by\":null,\"posted_at\":null}', '{\"status\":\"posted\",\"posted_by\":1,\"posted_at\":\"2026-01-30 09:50:58\"}', 'http://localhost:8000/accounting/journal-entries/edit-requests/2/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 08:50:58', '2026-01-30 08:50:58'),
+(29, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\JournalEntry', 212, '{\"status\":\"posted\"}', '{\"status\":\"reversed\"}', 'http://localhost:8000/accounting/journal-entries/edit-requests/2/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 08:50:58', '2026-01-30 08:50:58'),
+(30, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\FiscalYear', 2, '[]', '{\"year_name\":\"FY 2027\",\"start_date\":\"2027-01-01 00:00:00\",\"end_date\":\"2027-12-31 00:00:00\",\"status\":\"open\",\"id\":2}', 'http://localhost:8000/accounting/fiscal-years', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 10:57:53', '2026-01-30 10:57:53'),
+(31, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\AccountingPeriod', 13, '[]', '{\"fiscal_year_id\":2,\"period_name\":\"January 2027\",\"period_number\":1,\"start_date\":\"2027-01-01 00:00:00\",\"end_date\":\"2027-01-31 23:59:59\",\"status\":\"open\",\"id\":13}', 'http://localhost:8000/accounting/fiscal-years', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 10:57:53', '2026-01-30 10:57:53'),
+(32, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\AccountingPeriod', 14, '[]', '{\"fiscal_year_id\":2,\"period_name\":\"February 2027\",\"period_number\":2,\"start_date\":\"2027-02-01 00:00:00\",\"end_date\":\"2027-02-28 23:59:59\",\"status\":\"open\",\"id\":14}', 'http://localhost:8000/accounting/fiscal-years', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 10:57:53', '2026-01-30 10:57:53'),
+(33, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\AccountingPeriod', 15, '[]', '{\"fiscal_year_id\":2,\"period_name\":\"March 2027\",\"period_number\":3,\"start_date\":\"2027-03-01 00:00:00\",\"end_date\":\"2027-03-31 23:59:59\",\"status\":\"open\",\"id\":15}', 'http://localhost:8000/accounting/fiscal-years', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 10:57:53', '2026-01-30 10:57:53'),
+(34, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\AccountingPeriod', 16, '[]', '{\"fiscal_year_id\":2,\"period_name\":\"April 2027\",\"period_number\":4,\"start_date\":\"2027-04-01 00:00:00\",\"end_date\":\"2027-04-30 23:59:59\",\"status\":\"open\",\"id\":16}', 'http://localhost:8000/accounting/fiscal-years', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 10:57:53', '2026-01-30 10:57:53'),
+(35, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\AccountingPeriod', 17, '[]', '{\"fiscal_year_id\":2,\"period_name\":\"May 2027\",\"period_number\":5,\"start_date\":\"2027-05-01 00:00:00\",\"end_date\":\"2027-05-31 23:59:59\",\"status\":\"open\",\"id\":17}', 'http://localhost:8000/accounting/fiscal-years', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 10:57:53', '2026-01-30 10:57:53'),
+(36, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\AccountingPeriod', 18, '[]', '{\"fiscal_year_id\":2,\"period_name\":\"June 2027\",\"period_number\":6,\"start_date\":\"2027-06-01 00:00:00\",\"end_date\":\"2027-06-30 23:59:59\",\"status\":\"open\",\"id\":18}', 'http://localhost:8000/accounting/fiscal-years', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 10:57:53', '2026-01-30 10:57:53'),
+(37, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\AccountingPeriod', 19, '[]', '{\"fiscal_year_id\":2,\"period_name\":\"July 2027\",\"period_number\":7,\"start_date\":\"2027-07-01 00:00:00\",\"end_date\":\"2027-07-31 23:59:59\",\"status\":\"open\",\"id\":19}', 'http://localhost:8000/accounting/fiscal-years', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 10:57:53', '2026-01-30 10:57:53'),
+(38, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\AccountingPeriod', 20, '[]', '{\"fiscal_year_id\":2,\"period_name\":\"August 2027\",\"period_number\":8,\"start_date\":\"2027-08-01 00:00:00\",\"end_date\":\"2027-08-31 23:59:59\",\"status\":\"open\",\"id\":20}', 'http://localhost:8000/accounting/fiscal-years', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 10:57:53', '2026-01-30 10:57:53'),
+(39, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\AccountingPeriod', 21, '[]', '{\"fiscal_year_id\":2,\"period_name\":\"September 2027\",\"period_number\":9,\"start_date\":\"2027-09-01 00:00:00\",\"end_date\":\"2027-09-30 23:59:59\",\"status\":\"open\",\"id\":21}', 'http://localhost:8000/accounting/fiscal-years', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 10:57:53', '2026-01-30 10:57:53'),
+(40, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\AccountingPeriod', 22, '[]', '{\"fiscal_year_id\":2,\"period_name\":\"October 2027\",\"period_number\":10,\"start_date\":\"2027-10-01 00:00:00\",\"end_date\":\"2027-10-31 23:59:59\",\"status\":\"open\",\"id\":22}', 'http://localhost:8000/accounting/fiscal-years', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 10:57:53', '2026-01-30 10:57:53'),
+(41, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\AccountingPeriod', 23, '[]', '{\"fiscal_year_id\":2,\"period_name\":\"November 2027\",\"period_number\":11,\"start_date\":\"2027-11-01 00:00:00\",\"end_date\":\"2027-11-30 23:59:59\",\"status\":\"open\",\"id\":23}', 'http://localhost:8000/accounting/fiscal-years', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 10:57:53', '2026-01-30 10:57:53'),
+(42, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\AccountingPeriod', 24, '[]', '{\"fiscal_year_id\":2,\"period_name\":\"December 2027\",\"period_number\":12,\"start_date\":\"2027-12-01 00:00:00\",\"end_date\":\"2027-12-31 00:00:00\",\"status\":\"open\",\"id\":24}', 'http://localhost:8000/accounting/fiscal-years', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 10:57:53', '2026-01-30 10:57:53'),
+(43, 'App\\Models\\User', 1, 'created', 'App\\Models\\Expense', 8, '[]', '{\"expense_date\":\"2026-01-30 00:00:00\",\"category\":\"purchase_order\",\"title\":\"PO Payment - PO2026010001\",\"description\":\"Payment for PO #PO2026010001 - Apollos Technologies\",\"amount\":17113,\"payment_method\":\"bank_transfer\",\"payment_reference\":null,\"bank_id\":\"1\",\"cheque_number\":null,\"notes\":null,\"supplier_id\":1,\"store_id\":5,\"reference_type\":\"App\\\\Models\\\\PurchaseOrder\",\"reference_id\":1,\"recorded_by\":1,\"status\":\"approved\",\"approved_by\":1,\"approved_at\":\"2026-01-30 12:52:07\",\"expense_number\":\"EXP2026010008\",\"id\":8}', 'http://localhost:8000/inventory/purchase-orders/1/payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 11:52:07', '2026-01-30 11:52:07'),
+(44, 'App\\Models\\User', 1, 'updated', 'purchase_order', 1, '{\"amount_paid\":\"19014.00\"}', '{\"amount_paid\":\"36127.00\"}', 'http://localhost:8000/inventory/purchase-orders/1/payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 11:52:07', '2026-01-30 11:52:07'),
+(45, 'App\\Models\\User', 1, 'created', 'App\\Models\\Supplier', 2, '[]', '{\"company_name\":\"Prosoft systems\",\"contact_person\":\"Anne J\",\"email\":\"ann@mail.com\",\"phone\":\"0908877665\",\"alt_phone\":null,\"address\":\"Porosof office location\",\"tax_number\":null,\"bank_name\":\"Providos\",\"bank_account_number\":\"6767543266\",\"bank_account_name\":\"Prosoft\",\"payment_terms\":\"net_7\",\"credit_limit\":\"0\",\"notes\":null,\"status\":true,\"created_by\":1,\"id\":2}', 'http://localhost:8000/suppliers', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 11:55:23', '2026-01-30 11:55:23'),
+(46, 'App\\Models\\User', 1, 'created', 'purchase_order', 2, '[]', '{\"supplier_id\":\"2\",\"target_store_id\":\"1\",\"status\":\"draft\",\"expected_date\":\"2026-01-31 00:00:00\",\"notes\":null,\"po_number\":\"PO2026010002\",\"created_by\":1,\"id\":2}', 'http://localhost:8000/inventory/purchase-orders', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 11:56:18', '2026-01-30 11:56:18'),
+(47, 'App\\Models\\User', 1, 'created', 'App\\Models\\PurchaseOrderItem', 6, '[]', '{\"purchase_order_id\":2,\"product_id\":\"187\",\"ordered_qty\":7,\"unit_cost\":3000,\"status\":\"pending\",\"id\":6}', 'http://localhost:8000/inventory/purchase-orders', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 11:56:18', '2026-01-30 11:56:18'),
+(48, 'App\\Models\\User', 1, 'created', 'App\\Models\\PurchaseOrderItem', 7, '[]', '{\"purchase_order_id\":2,\"product_id\":\"611\",\"ordered_qty\":5,\"unit_cost\":8800,\"status\":\"pending\",\"id\":7}', 'http://localhost:8000/inventory/purchase-orders', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 11:56:18', '2026-01-30 11:56:18'),
+(49, 'App\\Models\\User', 1, 'updated', 'purchase_order', 2, '{\"total_amount\":null}', '{\"total_amount\":65000}', 'http://localhost:8000/inventory/purchase-orders', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 11:56:18', '2026-01-30 11:56:18'),
+(50, 'App\\Models\\User', 1, 'updated', 'purchase_order', 2, '{\"status\":\"draft\",\"submitted_at\":null}', '{\"status\":\"submitted\",\"submitted_at\":\"2026-01-30 12:56:18\"}', 'http://localhost:8000/inventory/purchase-orders', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 11:56:18', '2026-01-30 11:56:18'),
+(51, 'App\\Models\\User', 1, 'updated', 'purchase_order', 2, '{\"approved_by\":null,\"status\":\"submitted\",\"approved_at\":null}', '{\"approved_by\":1,\"status\":\"approved\",\"approved_at\":\"2026-01-30 12:56:29\"}', 'http://localhost:8000/inventory/purchase-orders/2/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 11:56:29', '2026-01-30 11:56:29'),
+(52, 'App\\Models\\User', 1, 'created', 'App\\Models\\StockBatch', 16, '[]', '{\"product_id\":187,\"store_id\":1,\"supplier_id\":null,\"batch_name\":\"728732-20260130125705\",\"batch_number\":\"728732\",\"initial_qty\":\"6\",\"current_qty\":\"6\",\"sold_qty\":0,\"cost_price\":\"3000\",\"expiry_date\":null,\"received_date\":\"2026-01-30 12:57:05\",\"source\":\"purchase_order\",\"purchase_order_item_id\":6,\"source_requisition_id\":null,\"created_by\":1,\"is_active\":true,\"id\":16}', 'http://localhost:8000/inventory/purchase-orders/2/receive', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 11:57:05', '2026-01-30 11:57:05'),
+(53, 'App\\Models\\User', 1, 'created', 'App\\Models\\StockBatchTransaction', 21, '[]', '{\"stock_batch_id\":16,\"type\":\"in\",\"qty\":\"6\",\"balance_after\":\"6\",\"reference_type\":\"App\\\\Models\\\\PurchaseOrder\",\"reference_id\":2,\"notes\":\"Received from PO: PO2026010002\",\"performed_by\":1,\"id\":21}', 'http://localhost:8000/inventory/purchase-orders/2/receive', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 11:57:05', '2026-01-30 11:57:05'),
+(54, 'App\\Models\\User', 1, 'created', 'App\\Models\\StoreStock', 671, '[]', '{\"product_id\":187,\"store_id\":1,\"last_restocked_at\":\"2026-01-30 12:57:05\",\"id\":671}', 'http://localhost:8000/inventory/purchase-orders/2/receive', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 11:57:05', '2026-01-30 11:57:05'),
+(55, 'App\\Models\\User', 1, 'updated', 'App\\Models\\PurchaseOrderItem', 6, '{\"received_qty\":0,\"actual_unit_cost\":null,\"status\":\"pending\",\"received_at\":null}', '{\"received_qty\":6,\"actual_unit_cost\":3000,\"status\":\"partial\",\"received_at\":\"2026-01-30 12:57:05\"}', 'http://localhost:8000/inventory/purchase-orders/2/receive', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 11:57:05', '2026-01-30 11:57:05'),
+(56, 'App\\Models\\User', 1, 'created', 'App\\Models\\StockBatch', 17, '[]', '{\"product_id\":611,\"store_id\":1,\"supplier_id\":null,\"batch_name\":\"diudiwd-20260130125705\",\"batch_number\":\"diudiwd\",\"initial_qty\":\"2\",\"current_qty\":\"2\",\"sold_qty\":0,\"cost_price\":\"8800\",\"expiry_date\":null,\"received_date\":\"2026-01-30 12:57:05\",\"source\":\"purchase_order\",\"purchase_order_item_id\":7,\"source_requisition_id\":null,\"created_by\":1,\"is_active\":true,\"id\":17}', 'http://localhost:8000/inventory/purchase-orders/2/receive', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 11:57:05', '2026-01-30 11:57:05'),
+(57, 'App\\Models\\User', 1, 'created', 'App\\Models\\StockBatchTransaction', 22, '[]', '{\"stock_batch_id\":17,\"type\":\"in\",\"qty\":\"2\",\"balance_after\":\"2\",\"reference_type\":\"App\\\\Models\\\\PurchaseOrder\",\"reference_id\":2,\"notes\":\"Received from PO: PO2026010002\",\"performed_by\":1,\"id\":22}', 'http://localhost:8000/inventory/purchase-orders/2/receive', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 11:57:05', '2026-01-30 11:57:05'),
+(58, 'App\\Models\\User', 1, 'created', 'App\\Models\\StoreStock', 672, '[]', '{\"product_id\":611,\"store_id\":1,\"last_restocked_at\":\"2026-01-30 12:57:05\",\"id\":672}', 'http://localhost:8000/inventory/purchase-orders/2/receive', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 11:57:05', '2026-01-30 11:57:05'),
+(59, 'App\\Models\\User', 1, 'updated', 'App\\Models\\PurchaseOrderItem', 7, '{\"received_qty\":0,\"actual_unit_cost\":null,\"status\":\"pending\",\"received_at\":null}', '{\"received_qty\":2,\"actual_unit_cost\":8800,\"status\":\"partial\",\"received_at\":\"2026-01-30 12:57:05\"}', 'http://localhost:8000/inventory/purchase-orders/2/receive', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 11:57:05', '2026-01-30 11:57:05'),
+(60, 'App\\Models\\User', 1, 'updated', 'purchase_order', 2, '{\"status\":\"approved\",\"total_amount\":\"65000.00\"}', '{\"status\":\"partial\",\"total_amount\":35600}', 'http://localhost:8000/inventory/purchase-orders/2/receive', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 11:57:05', '2026-01-30 11:57:05'),
+(61, 'App\\Models\\User', 1, 'created', 'App\\Models\\Expense', 9, '[]', '{\"expense_date\":\"2026-01-30 00:00:00\",\"category\":\"purchase_order\",\"title\":\"PO Payment - PO2026010002\",\"description\":\"Payment for PO #PO2026010002 - Prosoft systems\",\"amount\":35600,\"payment_method\":\"bank_transfer\",\"payment_reference\":null,\"bank_id\":\"1\",\"cheque_number\":null,\"notes\":null,\"supplier_id\":2,\"store_id\":1,\"reference_type\":\"App\\\\Models\\\\PurchaseOrder\",\"reference_id\":2,\"recorded_by\":1,\"status\":\"approved\",\"approved_by\":1,\"approved_at\":\"2026-01-30 13:05:07\",\"expense_number\":\"EXP2026010009\",\"id\":9}', 'http://localhost:8000/inventory/purchase-orders/2/payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 12:05:07', '2026-01-30 12:05:07'),
+(62, 'App\\Models\\User', 1, 'updated', 'purchase_order', 2, '{\"payment_status\":\"unpaid\",\"amount_paid\":\"0.00\"}', '{\"payment_status\":\"paid\",\"amount_paid\":\"35600.00\"}', 'http://localhost:8000/inventory/purchase-orders/2/payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 12:05:07', '2026-01-30 12:05:07'),
+(63, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\Account', 74, '{\"description\":null}', '{\"description\":\"teste edit\"}', 'http://localhost:8000/accounting/chart-of-accounts/74', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 19:15:54', '2026-01-30 19:15:54'),
+(64, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\Account', 78, '[]', '{\"account_group_id\":\"8\",\"code\":\"22099\",\"name\":\"phl loan\",\"description\":\"loan\",\"is_bank_account\":false,\"is_active\":true,\"id\":78}', 'http://localhost:8000/accounting/chart-of-accounts', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-01-30 19:17:00', '2026-01-30 19:17:00');
+
 -- --------------------------------------------------------
 
 --
@@ -489,6 +583,7 @@ CREATE TABLE `banks` (
   `bank_code` varchar(255) DEFAULT NULL,
   `description` text DEFAULT NULL,
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `account_id` bigint(20) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -497,8 +592,8 @@ CREATE TABLE `banks` (
 -- Dumping data for table `banks`
 --
 
-INSERT INTO `banks` (`id`, `name`, `account_number`, `account_name`, `bank_code`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'Zenith bank', '2250445688', 'Ola Hospital', '0090', NULL, 1, '2026-01-07 10:55:27', '2026-01-07 10:55:50');
+INSERT INTO `banks` (`id`, `name`, `account_number`, `account_name`, `bank_code`, `description`, `is_active`, `account_id`, `created_at`, `updated_at`) VALUES
+(1, 'Zenith bank', '2250445688', 'Ola Hospital', '0090', NULL, 1, NULL, '2026-01-07 10:55:27', '2026-01-07 10:55:50');
 
 -- --------------------------------------------------------
 
@@ -793,7 +888,14 @@ INSERT INTO `chat_messages` (`id`, `conversation_id`, `user_id`, `body`, `type`,
 (158, 8, 1, '💊 **New Medication Order**\n\nPatient: **Uwalaka Martha **\nLocation: Intensive Care Unit (ICU) - ICU 1\nMedications: Vitamin C - 100mg\nOrdered by: Dr. Admin System 001\n\n_06:23 PM, Jan 21_', 'text', '2026-01-21 17:23:17', '2026-01-21 17:23:17', NULL, NULL),
 (159, 8, 1, '💊 **New Medication Order**\n\nPatient: **Uwalaka Martha **\nLocation: Intensive Care Unit (ICU) - ICU 1\nMedications: Vitamin C - 100mg\nOrdered by: Dr. Admin System 001\n\n_07:00 PM, Jan 21_', 'text', '2026-01-21 18:00:01', '2026-01-21 18:00:01', NULL, NULL),
 (160, 8, 1, '⏰ **Medication Due Soon**\n\nPatient: **ALIAS NON-REGISTERED PATIENTS**\nLocation: special ward - bed specal 1\nMedication: Levofloxacin-500mg LEVOQUIN (600mg)\nDue at: 10:43 PM\n\n_10:13 PM, Jan 21_', 'text', '2026-01-21 21:13:00', '2026-01-21 21:13:00', NULL, NULL),
-(161, 8, 1, '⏰ **Medication Due Soon**\n\nPatient: **ALIAS NON-REGISTERED PATIENTS**\nLocation: special ward - bed specal 1\nMedication: Levofloxacin-500mg LEVOQUIN (600mg)\nDue at: 10:43 PM\n\n_10:40 PM, Jan 21_', 'text', '2026-01-21 21:40:39', '2026-01-21 21:40:39', NULL, NULL);
+(161, 8, 1, '⏰ **Medication Due Soon**\n\nPatient: **ALIAS NON-REGISTERED PATIENTS**\nLocation: special ward - bed specal 1\nMedication: Levofloxacin-500mg LEVOQUIN (600mg)\nDue at: 10:43 PM\n\n_10:40 PM, Jan 21_', 'text', '2026-01-21 21:40:39', '2026-01-21 21:40:39', NULL, NULL),
+(162, 11, 1, '📢 **Notification**\n\n**📝 Journal Entry Submitted for Approval**\n\n• **Entry Number:** JE-202601-0071\n• **Date:** 29 Jan 2026\n• **Description:** test entry\n• **Amount:** 5,000.00\n• **Submitted By:** Admin System Ing\n\n_Please review and approve/reject this entry._\n\n_02:29 PM, Jan 29_', 'text', '2026-01-29 13:29:20', '2026-01-29 13:29:20', NULL, NULL),
+(163, 11, 1, '📢 **Notification**\n\n**❌ Journal Entry Rejected**\n\n• **Entry Number:** JE-202601-0071\n• **Description:** test entry\n• **Rejected By:** Admin System Ing\n• **Reason:** test reect\n\n_Please review the rejection reason and resubmit if needed._\n\n_02:32 PM, Jan 29_', 'text', '2026-01-29 13:32:40', '2026-01-29 13:32:40', NULL, NULL),
+(164, 11, 1, '📢 **Notification**\n\n**📝 Journal Entry Submitted for Approval**\n\n• **Entry Number:** JE-202601-0072\n• **Date:** 29 Jan 2026\n• **Description:** testtt\n• **Amount:** 13,000.00\n• **Submitted By:** Admin System Ing\n\n_Please review and approve/reject this entry._\n\n_02:35 PM, Jan 29_', 'text', '2026-01-29 13:35:27', '2026-01-29 13:35:27', NULL, NULL),
+(165, 11, 1, '📢 **Notification**\n\n**✅ Journal Entry Approved**\n\n• **Entry Number:** JE-202601-0072\n• **Description:** testtt\n• **Approved By:** Admin System Ing\n\n_The entry can now be posted._\n\n_02:36 PM, Jan 29_', 'text', '2026-01-29 13:36:28', '2026-01-29 13:36:28', NULL, NULL),
+(166, 11, 1, '📢 **Notification**\n\n**✏️ Edit Request Submitted**\n\n• **Entry Number:** JE-202601-0072\n• **Requested By:** Admin System Ing\n• **Reason:** 6233\n\n_Please review this edit request._\n\n_02:54 PM, Jan 29_', 'text', '2026-01-29 13:54:10', '2026-01-29 13:54:10', NULL, NULL),
+(167, 11, 1, '📢 **Notification**\n\n**❌ Edit Request Rejected**\n\n• **Entry Number:** JE-202601-0072\n• **Rejected By:** Admin System Ing\n• **Original Requester:** Admin System Ing\n• **Rejection Reason:** hhjh\n\n_The edit request has been rejected._\n\n_09:49 AM, Jan 30_', 'text', '2026-01-30 08:49:28', '2026-01-30 08:49:28', NULL, NULL),
+(168, 11, 1, '📢 **Notification**\n\n**✅ Edit Request Approved**\n\n• **Entry Number:** JE-202601-0072\n• **Approved By:** Admin System Ing\n• **Original Requester:** Admin System Ing\n\n_The edit request has been approved._\n\n_09:50 AM, Jan 30_', 'text', '2026-01-30 08:50:58', '2026-01-30 08:50:58', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -842,7 +944,7 @@ INSERT INTO `chat_participants` (`id`, `conversation_id`, `user_id`, `last_read_
 (25, 10, 1, '2026-01-17 13:33:22', '2026-01-17 11:31:08', '2026-01-17 13:33:22'),
 (26, 10, 4, NULL, '2026-01-17 11:31:08', '2026-01-17 11:31:08'),
 (27, 11, 4, NULL, '2026-01-29 07:27:24', '2026-01-29 07:27:24'),
-(28, 11, 1, NULL, '2026-01-29 07:27:24', '2026-01-29 07:27:24');
+(28, 11, 1, '2026-01-29 14:27:01', '2026-01-29 07:27:24', '2026-01-29 14:27:01');
 
 -- --------------------------------------------------------
 
@@ -1297,13 +1399,15 @@ CREATE TABLE `expenses` (
 --
 
 INSERT INTO `expenses` (`id`, `expense_number`, `category`, `reference_type`, `reference_id`, `amount`, `supplier_id`, `store_id`, `title`, `description`, `expense_date`, `recorded_by`, `approved_by`, `status`, `rejection_reason`, `approved_at`, `voided_by`, `voided_at`, `void_reason`, `payment_method`, `bank_id`, `journal_entry_id`, `cheque_number`, `payment_reference`, `notes`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 'EXP2026010001', 'purchase_order', 'App\\Models\\PurchaseOrder', 1, 19014.00, 1, 5, 'PO Payment - PO2026010001', 'Payment for PO #PO2026010001 - Apollos Technologies', '2026-01-22', 1, 1, 'approved', NULL, '2026-01-22 18:08:40', NULL, NULL, NULL, 'bank_transfer', NULL, NULL, NULL, NULL, NULL, '2026-01-22 18:08:40', '2026-01-22 18:08:40', NULL),
+(1, 'EXP2026010001', 'purchase_order', 'App\\Models\\PurchaseOrder', 1, 19014.00, 1, 5, 'PO Payment - PO2026010001', 'Payment for PO #PO2026010001 - Apollos Technologies', '2026-01-22', 1, 1, 'approved', NULL, '2026-01-22 18:08:40', NULL, NULL, NULL, 'bank_transfer', NULL, 206, NULL, NULL, NULL, '2026-01-22 18:08:40', '2026-01-29 13:05:12', NULL),
 (2, 'EXP2026010002', 'purchase_order', 'App\\Models\\PurchaseOrder', 1, 171132.00, 1, 5, 'PO Payment - PO2026010001', 'Payment for PO #PO2026010001 - Apollos Technologies', '2026-01-23', 1, 1, 'void', NULL, '2026-01-23 06:19:14', 1, '2026-01-23 07:13:41', 'test void now to see what happens', 'cash', NULL, NULL, NULL, NULL, NULL, '2026-01-23 06:19:14', '2026-01-23 07:13:41', NULL),
 (3, 'EXP2026010003', 'salaries', NULL, NULL, 10099.00, 1, 1, 'tetsts', 'Test genenric epense up', '2026-01-23', 1, 1, 'rejected', 'ytete', '2026-01-23 07:57:36', NULL, NULL, NULL, 'cash', NULL, NULL, NULL, 'w6e73832', 'gjhhd', '2026-01-23 07:56:55', '2026-01-23 07:57:36', NULL),
-(4, 'EXP2026010004', 'store_expense', NULL, NULL, 60060.00, 1, 3, 'dgdhsd', 'ttwetew', '2026-01-23', 1, 1, 'approved', NULL, '2026-01-23 07:58:33', NULL, NULL, NULL, 'bank_transfer', 1, NULL, NULL, 'hgdgd', 'test approve', '2026-01-23 07:58:25', '2026-01-23 07:58:33', NULL),
-(5, 'EXP2026010005', 'salaries', 'payroll_batch', 1, 226200.00, NULL, NULL, 'Payroll - jan 2206 pay batch', 'Payroll batch PAY2026010001 for period Jan 01 - Jan 31, 2026. Total staff: 2.', '2026-01-31', 1, 1, 'approved', NULL, '2026-01-25 09:54:36', NULL, NULL, NULL, 'bank_transfer', NULL, NULL, NULL, NULL, NULL, '2026-01-25 09:54:36', '2026-01-25 09:54:36', NULL),
-(6, 'EXP2026010006', 'salaries', 'payroll_batch', 3, 226200.00, NULL, NULL, 'Payroll - test prorata', 'Payroll batch PAY2026010003 for period Mar 01 - Mar 31, 2026. Total staff: 2.', '2026-03-31', 1, 1, 'approved', NULL, '2026-01-25 23:28:18', NULL, NULL, NULL, 'bank_transfer', 1, NULL, NULL, NULL, NULL, '2026-01-25 15:11:08', '2026-01-25 23:28:18', NULL),
-(7, 'EXP2026010007', 'salaries', 'payroll_batch', 4, 87561.29, NULL, NULL, 'Payroll - Payroll - May 2026', 'Payroll batch PAY2026010004 for period May 01 - May 31, 2026. Total staff: 2.', '2026-05-31', 1, 1, 'approved', NULL, '2026-01-25 16:50:49', NULL, NULL, NULL, 'bank_transfer', NULL, NULL, NULL, NULL, NULL, '2026-01-25 16:50:49', '2026-01-25 16:50:49', NULL);
+(4, 'EXP2026010004', 'store_expense', NULL, NULL, 60060.00, 1, 3, 'dgdhsd', 'ttwetew', '2026-01-23', 1, 1, 'approved', NULL, '2026-01-23 07:58:33', NULL, NULL, NULL, 'bank_transfer', 1, 207, NULL, 'hgdgd', 'test approve', '2026-01-23 07:58:25', '2026-01-29 13:05:12', NULL),
+(5, 'EXP2026010005', 'salaries', 'payroll_batch', 1, 226200.00, NULL, NULL, 'Payroll - jan 2206 pay batch', 'Payroll batch PAY2026010001 for period Jan 01 - Jan 31, 2026. Total staff: 2.', '2026-01-31', 1, 1, 'approved', NULL, '2026-01-25 09:54:36', NULL, NULL, NULL, 'bank_transfer', NULL, 208, NULL, NULL, NULL, '2026-01-25 09:54:36', '2026-01-29 13:05:12', NULL),
+(6, 'EXP2026010006', 'salaries', 'payroll_batch', 3, 226200.00, NULL, NULL, 'Payroll - test prorata', 'Payroll batch PAY2026010003 for period Mar 01 - Mar 31, 2026. Total staff: 2.', '2026-03-31', 1, 1, 'approved', NULL, '2026-01-25 23:28:18', NULL, NULL, NULL, 'bank_transfer', 1, 209, NULL, NULL, NULL, '2026-01-25 15:11:08', '2026-01-29 13:05:12', NULL),
+(7, 'EXP2026010007', 'salaries', 'payroll_batch', 4, 87561.29, NULL, NULL, 'Payroll - Payroll - May 2026', 'Payroll batch PAY2026010004 for period May 01 - May 31, 2026. Total staff: 2.', '2026-05-31', 1, 1, 'approved', NULL, '2026-01-25 16:50:49', NULL, NULL, NULL, 'bank_transfer', NULL, 210, NULL, NULL, NULL, '2026-01-25 16:50:49', '2026-01-29 13:05:12', NULL),
+(8, 'EXP2026010008', 'purchase_order', 'App\\Models\\PurchaseOrder', 1, 17113.00, 1, 5, 'PO Payment - PO2026010001', 'Payment for PO #PO2026010001 - Apollos Technologies', '2026-01-30', 1, 1, 'approved', NULL, '2026-01-30 11:52:07', NULL, NULL, NULL, 'bank_transfer', 1, 214, NULL, NULL, NULL, '2026-01-30 11:52:07', '2026-01-30 18:01:22', NULL),
+(9, 'EXP2026010009', 'purchase_order', 'App\\Models\\PurchaseOrder', 2, 35600.00, 2, 1, 'PO Payment - PO2026010002', 'Payment for PO #PO2026010002 - Prosoft systems', '2026-01-30', 1, 1, 'approved', NULL, '2026-01-30 12:05:07', NULL, NULL, NULL, 'bank_transfer', 1, 215, NULL, NULL, NULL, '2026-01-30 12:05:07', '2026-01-30 18:01:22', NULL);
 
 -- --------------------------------------------------------
 
@@ -1357,7 +1461,8 @@ CREATE TABLE `fiscal_years` (
 --
 
 INSERT INTO `fiscal_years` (`id`, `year_name`, `start_date`, `end_date`, `status`, `closed_by`, `closed_at`, `retained_earnings_entry_id`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 'FY 2026', '2026-01-01', '2026-12-31', 'open', NULL, NULL, NULL, '2026-01-29 11:00:51', '2026-01-29 11:00:51', NULL);
+(1, 'FY 2026', '2026-01-01', '2026-12-31', 'open', NULL, NULL, NULL, '2026-01-29 11:00:51', '2026-01-29 11:00:51', NULL),
+(2, 'FY 2027', '2027-01-01', '2027-12-31', 'open', NULL, NULL, NULL, '2026-01-30 10:57:53', '2026-01-30 10:57:53', NULL);
 
 -- --------------------------------------------------------
 
@@ -1446,6 +1551,9 @@ CREATE TABLE `hmo_remittances` (
   `amount` decimal(15,2) NOT NULL,
   `reference_number` varchar(255) DEFAULT NULL,
   `payment_method` varchar(255) DEFAULT NULL,
+  `bank_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `account_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `journal_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
   `bank_name` varchar(255) DEFAULT NULL,
   `payment_date` date NOT NULL,
   `period_from` date DEFAULT NULL,
@@ -14641,8 +14749,8 @@ CREATE TABLE `journal_entries` (
   `description` text NOT NULL,
   `reference_type` varchar(100) DEFAULT NULL,
   `reference_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `entry_type` enum('auto','manual','opening','closing','reversal') NOT NULL,
-  `status` enum('draft','pending_approval','approved','posted','reversed') NOT NULL DEFAULT 'draft',
+  `entry_type` enum('auto','manual','opening','closing','reversal','adjustment') DEFAULT NULL,
+  `status` enum('draft','pending_approval','approved','posted','reversed','rejected') DEFAULT 'draft',
   `reversal_of_id` bigint(20) UNSIGNED DEFAULT NULL,
   `reversed_by_id` bigint(20) UNSIGNED DEFAULT NULL,
   `created_by` bigint(20) UNSIGNED NOT NULL,
@@ -14660,6 +14768,95 @@ CREATE TABLE `journal_entries` (
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `journal_entries`
+--
+
+INSERT INTO `journal_entries` (`id`, `entry_number`, `accounting_period_id`, `entry_date`, `description`, `reference_type`, `reference_id`, `entry_type`, `status`, `reversal_of_id`, `reversed_by_id`, `created_by`, `submitted_by`, `submitted_at`, `approved_by`, `approved_at`, `rejected_by`, `rejected_at`, `rejection_reason`, `posted_by`, `posted_at`, `edit_requires_approval`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(141, 'JE-202601-0001', 1, '2026-01-29', 'Payment received | Ref: 1234', 'App\\Models\\payment', 1, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(142, 'JE-202601-0002', 1, '2026-01-29', 'Payment received | Ref: 12349', 'App\\Models\\payment', 2, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(143, 'JE-202601-0003', 1, '2026-01-29', 'Payment received | Ref: 12349', 'App\\Models\\payment', 3, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(144, 'JE-202601-0004', 1, '2026-01-29', 'Payment received | Ref: 12349', 'App\\Models\\payment', 4, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(145, 'JE-202601-0005', 1, '2026-01-29', 'Payment received | Ref: 12349', 'App\\Models\\payment', 5, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(146, 'JE-202601-0006', 1, '2026-01-29', 'Payment received | Ref: 12349', 'App\\Models\\payment', 6, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(147, 'JE-202601-0007', 1, '2026-01-29', 'Payment received | Ref: 78788', 'App\\Models\\payment', 7, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(148, 'JE-202601-0008', 1, '2026-01-29', 'Payment received | Ref: 7878887', 'App\\Models\\payment', 8, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(149, 'JE-202601-0009', 1, '2026-01-29', 'Payment received | Ref: 7878887', 'App\\Models\\payment', 9, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(150, 'JE-202601-0010', 1, '2026-01-29', 'Payment received | Ref: 977575234455', 'App\\Models\\payment', 10, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(151, 'JE-202601-0011', 1, '2026-01-29', 'Payment received | Ref: 322196234531', 'App\\Models\\payment', 11, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(152, 'JE-202601-0012', 1, '2026-01-29', 'Payment received | Ref: 80909090', 'App\\Models\\payment', 12, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(153, 'JE-202601-0013', 1, '2026-01-29', 'Payment received | Ref: 889999999', 'App\\Models\\payment', 14, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(154, 'JE-202601-0014', 1, '2026-01-29', 'Payment received | Ref: 77777777777', 'App\\Models\\payment', 16, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(155, 'JE-202601-0015', 1, '2026-01-29', 'Payment received | Ref: 74411615620', 'App\\Models\\payment', 17, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(156, 'JE-202601-0016', 1, '2026-01-29', 'Payment received | Ref: 753468222333', 'App\\Models\\payment', 19, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(157, 'JE-202601-0017', 1, '2026-01-29', 'Payment received | Ref: 25283993251', 'App\\Models\\payment', 21, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(158, 'JE-202601-0018', 1, '2026-01-29', 'Payment received | Ref: 64321983057', 'App\\Models\\payment', 24, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(159, 'JE-202601-0019', 1, '2026-01-29', 'Payment received | Ref: 821128115114', 'App\\Models\\payment', 30, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(160, 'JE-202601-0020', 1, '2026-01-29', 'Payment received | Ref: 934265115818', 'App\\Models\\payment', 31, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(161, 'JE-202601-0021', 1, '2026-01-29', 'Payment received | Ref: 775819115911', 'App\\Models\\payment', 32, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(162, 'JE-202601-0022', 1, '2026-01-29', 'Payment received | Ref: 31579812552', 'App\\Models\\payment', 33, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(163, 'JE-202601-0023', 1, '2026-01-29', 'Payment received | Ref: 487162121712', 'App\\Models\\payment', 34, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(164, 'JE-202601-0024', 1, '2026-01-29', 'Payment received | Ref: 86149512357', 'App\\Models\\payment', 35, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(165, 'JE-202601-0025', 1, '2026-01-29', 'Payment received | Ref: 416754123723', 'App\\Models\\payment', 36, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(166, 'JE-202601-0026', 1, '2026-01-29', 'Payment received | Ref: 99537914514', 'App\\Models\\payment', 37, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(167, 'JE-202601-0027', 1, '2026-01-29', 'Payment received | Ref: 7233172745', 'App\\Models\\payment', 39, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(168, 'JE-202601-0028', 1, '2026-01-29', 'Payment received | Ref: 448882420', 'App\\Models\\payment', 44, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(169, 'JE-202601-0029', 1, '2026-01-29', 'Payment received | Ref: 682682522', 'App\\Models\\payment', 45, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(170, 'JE-202601-0030', 1, '2026-01-29', 'Payment received | Ref: 321282730', 'App\\Models\\payment', 46, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(171, 'JE-202601-0031', 1, '2026-01-29', 'Payment received | Ref: 487593119', 'App\\Models\\payment', 47, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(172, 'JE-202601-0032', 1, '2026-01-29', 'Payment received | Ref: 928394647', 'App\\Models\\payment', 48, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(173, 'JE-202601-0033', 1, '2026-01-29', 'Payment received | Ref: 576194745', 'App\\Models\\payment', 49, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(174, 'JE-202601-0034', 1, '2026-01-29', 'Payment received | Ref: 3499101917', 'App\\Models\\payment', 50, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(175, 'JE-202601-0035', 1, '2026-01-29', 'Payment received | Ref: 8621102337', 'App\\Models\\payment', 51, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:11', 1, '2026-01-29 13:05:11', '2026-01-29 13:05:11', NULL),
+(176, 'JE-202601-0036', 1, '2026-01-29', 'Payment received | Ref: 7197102536', 'App\\Models\\payment', 52, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(177, 'JE-202601-0037', 1, '2026-01-29', 'Payment received | Ref: 9712105159', 'App\\Models\\payment', 53, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(178, 'JE-202601-0038', 1, '2026-01-29', 'Payment received | Ref: 5675105442', 'App\\Models\\payment', 54, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(179, 'JE-202601-0039', 1, '2026-01-29', 'Payment received | Ref: 8573105816', 'App\\Models\\payment', 55, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(180, 'JE-202601-0040', 1, '2026-01-29', 'Payment received | Ref: 534311742', 'App\\Models\\payment', 56, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(181, 'JE-202601-0041', 1, '2026-01-29', 'Payment received | Ref: 2729111216', 'App\\Models\\payment', 57, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(182, 'JE-202601-0042', 1, '2026-01-29', 'Payment received | Ref: 3615111654', 'App\\Models\\payment', 58, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(183, 'JE-202601-0043', 1, '2026-01-29', 'Payment received | Ref: 6717112115', 'App\\Models\\payment', 59, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(184, 'JE-202601-0044', 1, '2026-01-29', 'Payment received | Ref: 2319112534', 'App\\Models\\payment', 60, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(185, 'JE-202601-0045', 1, '2026-01-29', 'Payment received | Ref: gha', 'App\\Models\\payment', 61, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(186, 'JE-202601-0046', 1, '2026-01-29', 'Payment received | Ref: PAY-20260106-153847', 'App\\Models\\payment', 62, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(187, 'JE-202601-0047', 1, '2026-01-29', 'Payment received | Ref: 5856144232', 'App\\Models\\payment', 63, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(188, 'JE-202601-0048', 1, '2026-01-29', 'Payment received | Ref: 5891144323', 'App\\Models\\payment', 64, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(189, 'JE-202601-0049', 1, '2026-01-29', 'Payment received | Ref: PAY-20260106-212454', 'App\\Models\\payment', 65, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(190, 'JE-202601-0050', 1, '2026-01-29', 'Payment received | Ref: PAY-20260106-215532', 'App\\Models\\payment', 66, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(191, 'JE-202601-0051', 1, '2026-01-29', 'Payment received | Ref: 216982519', 'App\\Models\\payment', 67, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(192, 'JE-202601-0052', 1, '2026-01-29', 'Payment received | Ref: 166582548', 'App\\Models\\payment', 68, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(193, 'JE-202601-0053', 1, '2026-01-29', 'Payment received | Ref: 78268442', 'App\\Models\\payment', 69, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(194, 'JE-202601-0054', 1, '2026-01-29', 'Payment received | Ref: PAY-20260107-094334', 'App\\Models\\payment', 70, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(195, 'JE-202601-0055', 1, '2026-01-29', 'Payment received | Ref: PAY-20260107-115727', 'App\\Models\\payment', 71, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(196, 'JE-202601-0056', 1, '2026-01-29', 'Payment received | Ref: 576812244', 'App\\Models\\payment', 72, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(197, 'JE-202601-0057', 1, '2026-01-29', 'Payment received | Ref: PAY-20260107-132200', 'App\\Models\\payment', 73, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(198, 'JE-202601-0058', 1, '2026-01-29', 'Payment received | Ref: PAY-20260108-154534', 'App\\Models\\payment', 74, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(199, 'JE-202601-0059', 1, '2026-01-29', 'Payment received | Ref: PAY-20260108-180410', 'App\\Models\\payment', 75, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(200, 'JE-202601-0060', 1, '2026-01-29', 'Payment received | Ref: PAY-20260108-184717', 'App\\Models\\payment', 76, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(201, 'JE-202601-0061', 1, '2026-01-29', 'Payment received | Ref: PAY-20260111-094430', 'App\\Models\\payment', 77, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(202, 'JE-202601-0062', 1, '2026-01-29', 'Payment received | Ref: PAY-20260114-141349', 'App\\Models\\payment', 78, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(203, 'JE-202601-0063', 1, '2026-01-29', 'Payment received | Ref: PAY-20260114-181031', 'App\\Models\\payment', 79, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(204, 'JE-202601-0064', 1, '2026-01-29', 'Payment received | Ref: PAY-20260114-191058', 'App\\Models\\payment', 80, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(205, 'JE-202601-0065', 1, '2026-01-29', 'Payment received | Ref: PAY-20260121-192006', 'App\\Models\\payment', 81, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(206, 'JE-202601-0066', 1, '2026-01-29', 'Expense: PO Payment - PO2026010001 | Ref: EXP2026010001 | Supplier: ', 'App\\Models\\Expense', 1, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(207, 'JE-202601-0067', 1, '2026-01-29', 'Expense: dgdhsd | Ref: EXP2026010004 | Supplier: ', 'App\\Models\\Expense', 4, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(208, 'JE-202601-0068', 1, '2026-01-29', 'Expense: Payroll - jan 2206 pay batch | Ref: EXP2026010005', 'App\\Models\\Expense', 5, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(209, 'JE-202601-0069', 1, '2026-01-29', 'Expense: Payroll - test prorata | Ref: EXP2026010006', 'App\\Models\\Expense', 6, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(210, 'JE-202601-0070', 1, '2026-01-29', 'Expense: Payroll - Payroll - May 2026 | Ref: EXP2026010007', 'App\\Models\\Expense', 7, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-29 13:05:12', 1, '2026-01-29 13:05:12', '2026-01-29 13:05:12', NULL),
+(211, 'JE-202601-0071', 1, '2026-01-29', 'test entry', NULL, NULL, 'manual', 'rejected', NULL, NULL, 1, 1, '2026-01-29 13:29:20', NULL, NULL, 1, '2026-01-29 13:32:39', 'test reect', NULL, NULL, 1, '2026-01-29 13:26:36', '2026-01-29 13:32:39', NULL),
+(212, 'JE-202601-0072', 1, '2026-01-29', 'testtt', NULL, NULL, 'manual', 'reversed', NULL, NULL, 1, 1, '2026-01-29 13:35:27', 1, '2026-01-29 13:36:28', NULL, NULL, NULL, 1, '2026-01-29 13:37:17', 1, '2026-01-29 13:35:27', '2026-01-30 08:50:58', NULL),
+(213, 'JE-202601-0073', 1, '2026-01-30', 'Reversal of JE-202601-0072: Reversed for edit request: 6233', NULL, NULL, 'reversal', 'posted', 212, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-30 08:50:58', 1, '2026-01-30 08:50:58', '2026-01-30 08:50:58', NULL),
+(214, 'JE-202601-0074', 1, '2026-01-30', 'Expense: PO Payment - PO2026010001 | Category: purchase_order | Ref: EXP2026010008 | Amount: 17,113.00 | Supplier: Unknown | Details: Payment for PO #PO2026010001 - Apollos Technologies | Payment: bank_transfer | Store: Unknown', 'App\\Models\\Expense', 8, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-30 18:01:22', 1, '2026-01-30 18:01:22', '2026-01-30 18:01:22', NULL),
+(215, 'JE-202601-0075', 1, '2026-01-30', 'Expense: PO Payment - PO2026010002 | Category: purchase_order | Ref: EXP2026010009 | Amount: 35,600.00 | Supplier: Unknown | Details: Payment for PO #PO2026010002 - Prosoft systems | Payment: bank_transfer | Store: Unknown', 'App\\Models\\Expense', 9, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-30 18:01:22', 1, '2026-01-30 18:01:22', '2026-01-30 18:01:22', NULL),
+(216, 'JE-202601-0076', 1, '2026-01-25', 'Payroll Expense Recognition: jan 2206 pay batch | Period: Jan 01 - Jan 31, 2026 | Staff: 2 | Gross: 234,000.00', 'App\\Models\\HR\\PayrollBatch', 1, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-30 18:01:22', 1, '2026-01-30 18:01:22', '2026-01-30 18:01:22', NULL),
+(217, 'JE-202601-0077', 1, '2026-01-25', 'Payroll Expense Recognition: Payroll - May 2026 | Period: May 01 - May 31, 2026 | Staff: 2 | Gross: 90,580.64', 'App\\Models\\HR\\PayrollBatch', 4, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-30 18:01:22', 1, '2026-01-30 18:01:22', '2026-01-30 18:01:22', NULL),
+(218, 'JE-202601-0078', 1, '2026-01-25', 'Payroll Payment: test prorata | Net: 226,200.00 | Staff: 2', 'App\\Models\\HR\\PayrollBatch:payment', 3, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-30 18:01:22', 1, '2026-01-30 18:01:22', '2026-01-30 18:01:22', NULL),
+(219, 'JE-202601-0079', 1, '2026-01-30', 'Purchase Order Received: PO2026010001 | Total Amount: 190,146.00 | Supplier: Unknown | Expected Date: 2026-01-31 | Notes: Receiving Notes: ahjbada', 'App\\Models\\PurchaseOrder', 1, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-30 18:04:43', 1, '2026-01-30 18:04:43', '2026-01-30 18:04:43', NULL),
+(220, 'JE-202601-0080', 1, '2026-01-30', 'Supplier Payment | PO: PO2026010001 | Supplier: Unknown | Amount: 19,014.00 | Method: bank_transfer | Ref: 738373123', 'App\\Models\\PurchaseOrderPayment', 1, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-30 18:04:43', 1, '2026-01-30 18:04:43', '2026-01-30 18:04:43', NULL),
+(221, 'JE-202601-0081', 1, '2026-01-30', 'Supplier Payment | PO: PO2026010001 | Supplier: Unknown | Amount: 17,113.00 | Method: bank_transfer', 'App\\Models\\PurchaseOrderPayment', 3, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-30 18:04:43', 1, '2026-01-30 18:04:43', '2026-01-30 18:04:43', NULL),
+(222, 'JE-202601-0082', 1, '2026-01-30', 'Supplier Payment | PO: PO2026010002 | Supplier: Unknown | Amount: 35,600.00 | Method: bank_transfer', 'App\\Models\\PurchaseOrderPayment', 4, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-30 18:04:43', 1, '2026-01-30 18:04:43', '2026-01-30 18:04:43', NULL),
+(223, 'JE-202601-0083', 1, '2026-01-30', 'Test Entry from test_service.php', NULL, NULL, 'manual', 'draft', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-01-30 18:16:28', '2026-01-30 18:16:28', '2026-01-30 18:16:28');
 
 -- --------------------------------------------------------
 
@@ -14685,6 +14882,14 @@ CREATE TABLE `journal_entry_edits` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `journal_entry_edits`
+--
+
+INSERT INTO `journal_entry_edits` (`id`, `journal_entry_id`, `original_data`, `edited_data`, `edit_reason`, `status`, `requested_by`, `requested_at`, `approved_by`, `approved_at`, `rejected_by`, `rejected_at`, `rejection_reason`, `created_at`, `updated_at`) VALUES
+(1, 212, '{\"entry\":{\"id\":212,\"entry_number\":\"JE-202601-0072\",\"accounting_period_id\":1,\"entry_date\":\"2026-01-29T00:00:00.000000Z\",\"description\":\"testtt\",\"reference_type\":null,\"reference_id\":null,\"entry_type\":\"manual\",\"status\":\"posted\",\"reversal_of_id\":null,\"reversed_by_id\":null,\"created_by\":1,\"submitted_by\":1,\"submitted_at\":\"2026-01-29T14:35:27.000000Z\",\"approved_by\":1,\"approved_at\":\"2026-01-29T14:36:28.000000Z\",\"rejected_by\":null,\"rejected_at\":null,\"rejection_reason\":null,\"posted_by\":1,\"posted_at\":\"2026-01-29T14:37:17.000000Z\",\"edit_requires_approval\":1,\"created_at\":\"2026-01-29T14:35:27.000000Z\",\"updated_at\":\"2026-01-29T14:37:17.000000Z\",\"deleted_at\":null,\"lines\":[{\"id\":283,\"journal_entry_id\":212,\"line_number\":1,\"account_id\":1,\"sub_account_id\":null,\"debit\":\"6000.0000\",\"credit\":\"0.0000\",\"narration\":null,\"cash_flow_category\":null,\"created_at\":\"2026-01-29T14:35:27.000000Z\",\"updated_at\":\"2026-01-29T14:35:27.000000Z\"},{\"id\":284,\"journal_entry_id\":212,\"line_number\":2,\"account_id\":3,\"sub_account_id\":null,\"debit\":\"7000.0000\",\"credit\":\"0.0000\",\"narration\":null,\"cash_flow_category\":null,\"created_at\":\"2026-01-29T14:35:27.000000Z\",\"updated_at\":\"2026-01-29T14:35:27.000000Z\"},{\"id\":285,\"journal_entry_id\":212,\"line_number\":3,\"account_id\":8,\"sub_account_id\":null,\"debit\":\"0.0000\",\"credit\":\"13000.0000\",\"narration\":null,\"cash_flow_category\":null,\"created_at\":\"2026-01-29T14:35:27.000000Z\",\"updated_at\":\"2026-01-29T14:35:27.000000Z\"}]},\"lines\":[{\"id\":283,\"journal_entry_id\":212,\"line_number\":1,\"account_id\":1,\"sub_account_id\":null,\"debit\":\"6000.0000\",\"credit\":\"0.0000\",\"narration\":null,\"cash_flow_category\":null,\"created_at\":\"2026-01-29T14:35:27.000000Z\",\"updated_at\":\"2026-01-29T14:35:27.000000Z\"},{\"id\":284,\"journal_entry_id\":212,\"line_number\":2,\"account_id\":3,\"sub_account_id\":null,\"debit\":\"7000.0000\",\"credit\":\"0.0000\",\"narration\":null,\"cash_flow_category\":null,\"created_at\":\"2026-01-29T14:35:27.000000Z\",\"updated_at\":\"2026-01-29T14:35:27.000000Z\"},{\"id\":285,\"journal_entry_id\":212,\"line_number\":3,\"account_id\":8,\"sub_account_id\":null,\"debit\":\"0.0000\",\"credit\":\"13000.0000\",\"narration\":null,\"cash_flow_category\":null,\"created_at\":\"2026-01-29T14:35:27.000000Z\",\"updated_at\":\"2026-01-29T14:35:27.000000Z\"}]}', '{\"proposed_changes\":\"dbdanda\"}', '6233', 'rejected', 1, '2026-01-30 09:49:28', NULL, NULL, 1, '2026-01-30 08:49:28', 'hhjh', '2026-01-29 13:50:53', '2026-01-30 08:49:28'),
+(2, 212, '{\"entry\":{\"id\":212,\"entry_number\":\"JE-202601-0072\",\"accounting_period_id\":1,\"entry_date\":\"2026-01-29T00:00:00.000000Z\",\"description\":\"testtt\",\"reference_type\":null,\"reference_id\":null,\"entry_type\":\"manual\",\"status\":\"posted\",\"reversal_of_id\":null,\"reversed_by_id\":null,\"created_by\":1,\"submitted_by\":1,\"submitted_at\":\"2026-01-29T14:35:27.000000Z\",\"approved_by\":1,\"approved_at\":\"2026-01-29T14:36:28.000000Z\",\"rejected_by\":null,\"rejected_at\":null,\"rejection_reason\":null,\"posted_by\":1,\"posted_at\":\"2026-01-29T14:37:17.000000Z\",\"edit_requires_approval\":1,\"created_at\":\"2026-01-29T14:35:27.000000Z\",\"updated_at\":\"2026-01-29T14:37:17.000000Z\",\"deleted_at\":null,\"lines\":[{\"id\":283,\"journal_entry_id\":212,\"line_number\":1,\"account_id\":1,\"sub_account_id\":null,\"debit\":\"6000.0000\",\"credit\":\"0.0000\",\"narration\":null,\"cash_flow_category\":null,\"created_at\":\"2026-01-29T14:35:27.000000Z\",\"updated_at\":\"2026-01-29T14:35:27.000000Z\"},{\"id\":284,\"journal_entry_id\":212,\"line_number\":2,\"account_id\":3,\"sub_account_id\":null,\"debit\":\"7000.0000\",\"credit\":\"0.0000\",\"narration\":null,\"cash_flow_category\":null,\"created_at\":\"2026-01-29T14:35:27.000000Z\",\"updated_at\":\"2026-01-29T14:35:27.000000Z\"},{\"id\":285,\"journal_entry_id\":212,\"line_number\":3,\"account_id\":8,\"sub_account_id\":null,\"debit\":\"0.0000\",\"credit\":\"13000.0000\",\"narration\":null,\"cash_flow_category\":null,\"created_at\":\"2026-01-29T14:35:27.000000Z\",\"updated_at\":\"2026-01-29T14:35:27.000000Z\"}]},\"lines\":[{\"id\":283,\"journal_entry_id\":212,\"line_number\":1,\"account_id\":1,\"sub_account_id\":null,\"debit\":\"6000.0000\",\"credit\":\"0.0000\",\"narration\":null,\"cash_flow_category\":null,\"created_at\":\"2026-01-29T14:35:27.000000Z\",\"updated_at\":\"2026-01-29T14:35:27.000000Z\"},{\"id\":284,\"journal_entry_id\":212,\"line_number\":2,\"account_id\":3,\"sub_account_id\":null,\"debit\":\"7000.0000\",\"credit\":\"0.0000\",\"narration\":null,\"cash_flow_category\":null,\"created_at\":\"2026-01-29T14:35:27.000000Z\",\"updated_at\":\"2026-01-29T14:35:27.000000Z\"},{\"id\":285,\"journal_entry_id\":212,\"line_number\":3,\"account_id\":8,\"sub_account_id\":null,\"debit\":\"0.0000\",\"credit\":\"13000.0000\",\"narration\":null,\"cash_flow_category\":null,\"created_at\":\"2026-01-29T14:35:27.000000Z\",\"updated_at\":\"2026-01-29T14:35:27.000000Z\"}]}', '{\"proposed_changes\":\"dbdanda\"}', '6233', 'approved', 1, '2026-01-30 09:50:58', 1, '2026-01-30 08:50:58', NULL, NULL, NULL, '2026-01-29 13:54:10', '2026-01-30 08:50:58');
+
 -- --------------------------------------------------------
 
 --
@@ -14697,6 +14902,15 @@ CREATE TABLE `journal_entry_lines` (
   `line_number` smallint(6) NOT NULL,
   `account_id` bigint(20) UNSIGNED NOT NULL,
   `sub_account_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `product_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `service_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `product_category_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `service_category_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `hmo_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `supplier_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `patient_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `department_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `category` varchar(50) DEFAULT NULL COMMENT 'lab, pharmacy, imaging, consultation, procedure, admission, payroll, expense, po_payment, hmo_remittance',
   `debit` decimal(15,2) NOT NULL DEFAULT 0.00,
   `credit` decimal(15,2) NOT NULL DEFAULT 0.00,
   `narration` varchar(255) DEFAULT NULL,
@@ -14704,6 +14918,178 @@ CREATE TABLE `journal_entry_lines` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `journal_entry_lines`
+--
+
+INSERT INTO `journal_entry_lines` (`id`, `journal_entry_id`, `line_number`, `account_id`, `sub_account_id`, `product_id`, `service_id`, `product_category_id`, `service_category_id`, `hmo_id`, `supplier_id`, `patient_id`, `department_id`, `category`, `debit`, `credit`, `narration`, `cash_flow_category`, `created_at`, `updated_at`) VALUES
+(141, 141, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 7770.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(142, 141, 2, 9, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 7770.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(143, 142, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15540.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(144, 142, 2, 9, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 15540.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(145, 143, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15540.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(146, 143, 2, 9, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 15540.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(147, 144, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15540.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(148, 144, 2, 9, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 15540.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(149, 145, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15540.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(150, 145, 2, 9, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 15540.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(151, 146, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15540.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(152, 146, 2, 9, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 15540.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(153, 147, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 7770.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(154, 147, 2, 9, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 7770.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(155, 148, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 7770.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(156, 148, 2, 9, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 7770.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(157, 149, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 7770.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(158, 149, 2, 9, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 7770.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(159, 150, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3000.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(160, 150, 2, 9, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 3000.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(161, 151, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, -200.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(162, 151, 2, 9, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, -200.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(163, 152, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 12079.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(164, 152, 2, 9, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 12079.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(165, 153, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 7890.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(166, 153, 2, 9, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 7890.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(167, 154, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, -7890.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(168, 154, 2, 9, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, -7890.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(169, 155, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, -8000.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(170, 155, 2, 9, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, -8000.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(171, 156, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 16107.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(172, 156, 2, 9, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 16107.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(173, 157, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, -4189.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(174, 157, 2, 9, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, -4189.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(175, 158, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3000.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(176, 158, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 3000.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(177, 159, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 120.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(178, 159, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 120.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(179, 160, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 4000.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(180, 160, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 4000.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(181, 161, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 7959.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(182, 161, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 7959.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(183, 162, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 4189.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(184, 162, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 4189.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(185, 163, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 4189.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(186, 163, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 4189.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(187, 164, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 4000.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(188, 164, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 4000.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(189, 165, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 4000.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(190, 165, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 4000.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(191, 166, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3000.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(192, 166, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 3000.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(193, 167, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 792.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(194, 167, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 792.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(195, 168, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2500.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(196, 168, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 2500.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(197, 169, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2500.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(198, 169, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 2500.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(199, 170, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3500.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(200, 170, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 3500.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(201, 171, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 5200.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(202, 171, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 5200.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(203, 172, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 18500.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(204, 172, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 18500.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(205, 173, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 6500.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(206, 173, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 6500.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(207, 174, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 6500.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(208, 174, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 6500.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(209, 175, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 7500.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(210, 175, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 7500.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:11', '2026-01-29 13:05:11'),
+(211, 176, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 4018.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(212, 176, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 4018.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(213, 177, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 4800.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(214, 177, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 4800.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(215, 178, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 7500.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(216, 178, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 7500.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(217, 179, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 5000.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(218, 179, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 5000.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(219, 180, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3920.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(220, 180, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 3920.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(221, 181, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 970.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(222, 181, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 970.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(223, 182, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 7000.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(224, 182, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 7000.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(225, 183, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 4000.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(226, 183, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 4000.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(227, 184, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 22777.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(228, 184, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 22777.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(229, 185, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 19.40, 0.00, 'Payment received', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(230, 185, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 19.40, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(231, 186, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 5000.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(232, 186, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 5000.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(233, 187, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3000.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(234, 187, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 3000.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(235, 188, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 50000.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(236, 188, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 50000.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(237, 189, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3840.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(238, 189, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 3840.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(239, 190, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 4000.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(240, 190, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 4000.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(241, 191, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 50000.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(242, 191, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 50000.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(243, 192, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, -3000.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(244, 192, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, -3000.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(245, 193, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, -4000.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(246, 193, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, -4000.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(247, 194, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 6000.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(248, 194, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 6000.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(249, 195, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, -4000.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(250, 195, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, -4000.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(251, 196, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 8000.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(252, 196, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 8000.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(253, 197, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 4000.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(254, 197, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 4000.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(255, 198, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 4000.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(256, 198, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 4000.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(257, 199, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 4000.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(258, 199, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 4000.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(259, 200, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 6000.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(260, 200, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 6000.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(261, 201, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1000.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(262, 201, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 1000.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(263, 202, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 550.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(264, 202, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 550.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(265, 203, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1500.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(266, 203, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 1500.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(267, 204, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15500.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(268, 204, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 15500.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(269, 205, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2500.00, 0.00, 'Payment received', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(270, 205, 2, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 2500.00, 'Revenue recognized / AR reduced', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(271, 206, 1, 53, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 19014.00, 0.00, 'Expense: purchase_order', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(272, 206, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 19014.00, 'Payment / Liability', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(273, 207, 1, 56, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 60060.00, 0.00, 'Expense: store_expense', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(274, 207, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 60060.00, 'Payment / Liability', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(275, 208, 1, 59, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 226200.00, 0.00, 'Expense: salaries', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(276, 208, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 226200.00, 'Payment / Liability', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(277, 209, 1, 59, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 226200.00, 0.00, 'Expense: salaries', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(278, 209, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 226200.00, 'Payment / Liability', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(279, 210, 1, 59, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 87561.29, 0.00, 'Expense: salaries', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(280, 210, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 87561.29, 'Payment / Liability', NULL, '2026-01-29 13:05:12', '2026-01-29 13:05:12'),
+(281, 211, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 5000.00, 0.00, 'tline meme', NULL, '2026-01-29 13:26:36', '2026-01-29 13:26:36'),
+(282, 211, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 5000.00, NULL, NULL, '2026-01-29 13:26:36', '2026-01-29 13:26:36'),
+(283, 212, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 6000.00, 0.00, NULL, NULL, '2026-01-29 13:35:27', '2026-01-29 13:35:27'),
+(284, 212, 2, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 7000.00, 0.00, NULL, NULL, '2026-01-29 13:35:27', '2026-01-29 13:35:27'),
+(285, 212, 3, 8, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 13000.00, NULL, NULL, '2026-01-29 13:35:27', '2026-01-29 13:35:27'),
+(286, 213, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 6000.00, NULL, NULL, '2026-01-30 08:50:58', '2026-01-30 08:50:58'),
+(287, 213, 2, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 7000.00, NULL, NULL, '2026-01-30 08:50:58', '2026-01-30 08:50:58'),
+(288, 213, 3, 8, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 13000.00, 0.00, NULL, NULL, '2026-01-30 08:50:58', '2026-01-30 08:50:58'),
+(289, 214, 1, 53, NULL, NULL, NULL, NULL, NULL, NULL, 1, NULL, NULL, 'purchase_order', 17113.00, 0.00, 'Expense: PO Payment - PO2026010001 (purchase_order) - Supplier: Unknown', 'operating', '2026-01-30 18:01:22', '2026-01-30 18:01:22'),
+(290, 214, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, 1, NULL, NULL, 'purchase_order', 0.00, 17113.00, 'Paid via bank_transfer', 'operating', '2026-01-30 18:01:22', '2026-01-30 18:01:22'),
+(291, 215, 1, 53, NULL, NULL, NULL, NULL, NULL, NULL, 2, NULL, NULL, 'purchase_order', 35600.00, 0.00, 'Expense: PO Payment - PO2026010002 (purchase_order) - Supplier: Unknown', 'operating', '2026-01-30 18:01:22', '2026-01-30 18:01:22'),
+(292, 215, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, 2, NULL, NULL, 'purchase_order', 0.00, 35600.00, 'Paid via bank_transfer', 'operating', '2026-01-30 18:01:22', '2026-01-30 18:01:22'),
+(293, 216, 1, 59, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'payroll_expense', 234000.00, 0.00, 'Salary expense: jan 2206 pay batch (2 staff)', 'operating', '2026-01-30 18:01:22', '2026-01-30 18:01:22'),
+(294, 216, 2, 77, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'payroll_expense', 0.00, 234000.00, 'Salary liability: Jan 01 - Jan 31, 2026', 'operating', '2026-01-30 18:01:22', '2026-01-30 18:01:22'),
+(295, 217, 1, 59, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'payroll_expense', 90580.64, 0.00, 'Salary expense: Payroll - May 2026 (2 staff)', 'operating', '2026-01-30 18:01:22', '2026-01-30 18:01:22'),
+(296, 217, 2, 77, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'payroll_expense', 0.00, 90580.64, 'Salary liability: May 01 - May 31, 2026', 'operating', '2026-01-30 18:01:22', '2026-01-30 18:01:22'),
+(297, 218, 1, 77, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'payroll_payment', 226200.00, 0.00, 'Salary liability cleared: test prorata', 'operating', '2026-01-30 18:01:22', '2026-01-30 18:01:22'),
+(298, 218, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'payroll_payment', 0.00, 226200.00, 'Net salary payment to 2 staff via bank', 'operating', '2026-01-30 18:01:22', '2026-01-30 18:01:22'),
+(299, 219, 1, 10, NULL, NULL, NULL, NULL, NULL, NULL, 1, NULL, NULL, 'purchase_order', 190146.00, 0.00, 'Inventory received: 3 item type(s) from PO PO2026010001', 'operating', '2026-01-30 18:04:43', '2026-01-30 18:04:43'),
+(300, 219, 2, 29, 1, NULL, NULL, NULL, NULL, NULL, 1, NULL, NULL, 'purchase_order', 0.00, 190146.00, 'Accounts Payable - Supplier (PO: PO2026010001)', 'operating', '2026-01-30 18:04:43', '2026-01-30 18:04:43'),
+(301, 220, 1, 29, 1, NULL, NULL, NULL, NULL, NULL, 1, NULL, NULL, 'po_payment', 19014.00, 0.00, 'AP cleared: PO PO2026010001 - Unknown Supplier', 'operating', '2026-01-30 18:04:43', '2026-01-30 18:04:43'),
+(302, 220, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, 1, NULL, NULL, 'po_payment', 0.00, 19014.00, 'Supplier payment via bank_transfer', 'operating', '2026-01-30 18:04:43', '2026-01-30 18:04:43'),
+(303, 221, 1, 29, 1, NULL, NULL, NULL, NULL, NULL, 1, NULL, NULL, 'po_payment', 17113.00, 0.00, 'AP cleared: PO PO2026010001 - Unknown Supplier', 'operating', '2026-01-30 18:04:43', '2026-01-30 18:04:43'),
+(304, 221, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, 1, NULL, NULL, 'po_payment', 0.00, 17113.00, 'Supplier payment via bank_transfer', 'operating', '2026-01-30 18:04:43', '2026-01-30 18:04:43'),
+(305, 222, 1, 29, 2, NULL, NULL, NULL, NULL, NULL, 2, NULL, NULL, 'po_payment', 35600.00, 0.00, 'AP cleared: PO PO2026010002 - Unknown Supplier', 'operating', '2026-01-30 18:04:43', '2026-01-30 18:04:43'),
+(306, 222, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, 2, NULL, NULL, 'po_payment', 0.00, 35600.00, 'Supplier payment via bank_transfer', 'operating', '2026-01-30 18:04:43', '2026-01-30 18:04:43');
 
 -- --------------------------------------------------------
 
@@ -15393,7 +15779,13 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (213, '2026_01_29_100011_create_credit_notes_table', 95),
 (214, '2026_01_29_100012_create_credit_note_items_table', 95),
 (215, '2026_01_29_100013_create_saved_report_filters_table', 95),
-(216, '2026_01_29_100014_add_journal_entry_id_to_source_tables', 95);
+(216, '2026_01_29_100014_add_journal_entry_id_to_source_tables', 95),
+(217, '2026_01_29_142800_update_journal_entries_enums', 96),
+(218, '2026_01_30_create_route_metadata_table', 97),
+(219, '2026_01_30_100000_create_route_metadata_table', 98),
+(220, '2026_01_30_152927_add_metadata_to_journal_entry_lines_table', 99),
+(221, '2026_01_30_153113_add_account_id_to_transaction_tables', 100),
+(222, '2026_01_30_184500_add_hmo_id_to_account_sub_accounts_table', 101);
 
 -- --------------------------------------------------------
 
@@ -73251,6 +73643,7 @@ CREATE TABLE `payments` (
   `invoice_id` bigint(20) UNSIGNED DEFAULT NULL,
   `patient_id` bigint(20) UNSIGNED DEFAULT NULL,
   `bank_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `account_id` bigint(20) UNSIGNED DEFAULT NULL,
   `hmo_id` bigint(20) UNSIGNED DEFAULT NULL,
   `journal_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
   `user_id` bigint(20) UNSIGNED DEFAULT NULL
@@ -73260,72 +73653,72 @@ CREATE TABLE `payments` (
 -- Dumping data for table `payments`
 --
 
-INSERT INTO `payments` (`id`, `reference_no`, `total`, `total_discount`, `payment_type`, `payment_method`, `created_at`, `updated_at`, `invoice_id`, `patient_id`, `bank_id`, `hmo_id`, `journal_entry_id`, `user_id`) VALUES
-(1, '1234', '7770', 0.00, 'POS', NULL, '2023-04-27 14:06:29', '2023-07-24 08:33:57', 18, 1, NULL, NULL, NULL, 12),
-(2, '12349', '15540', 0.00, 'POS', NULL, '2023-07-08 06:59:10', '2023-07-24 08:33:57', 18, 1, NULL, NULL, NULL, 12),
-(3, '12349', '15540', 0.00, 'POS', NULL, '2023-07-08 07:20:15', '2023-07-24 08:33:57', 18, 1, NULL, NULL, NULL, 12),
-(4, '12349', '15540', 0.00, 'POS', NULL, '2023-07-08 07:22:53', '2023-07-24 08:33:57', 18, NULL, NULL, NULL, NULL, NULL),
-(5, '12349', '15540', 0.00, 'POS', NULL, '2023-07-08 07:25:18', '2023-07-24 08:33:57', 18, NULL, NULL, NULL, NULL, NULL),
-(6, '12349', '15540', 0.00, 'POS', NULL, '2023-07-08 07:25:50', '2023-07-24 08:33:57', 18, NULL, NULL, NULL, NULL, NULL),
-(7, '78788', '7770', 0.00, 'POS', NULL, '2023-07-08 07:32:34', '2023-07-24 08:33:57', 18, NULL, NULL, NULL, NULL, NULL),
-(8, '7878887', '7770', 0.00, 'POS', NULL, '2023-07-08 07:38:35', '2023-07-24 08:33:57', 18, NULL, NULL, NULL, NULL, NULL),
-(9, '7878887', '7770', 0.00, 'POS', NULL, '2023-07-08 07:47:58', '2023-07-24 08:33:57', 18, NULL, NULL, NULL, NULL, NULL),
-(10, '977575234455', '3000', 0.00, 'ACC_DEPOSIT', NULL, '2023-07-14 22:44:55', '2023-07-24 08:33:57', 18, 1, NULL, NULL, NULL, 12),
-(11, '322196234531', '-200', 0.00, 'ACC_DEPOSIT', NULL, '2023-07-14 22:45:31', '2023-07-24 08:33:57', 18, 1, NULL, NULL, NULL, 12),
-(12, '80909090', '12079', 0.00, 'ACC_WITHDRAW', NULL, '2023-07-15 01:17:51', '2023-07-24 08:33:57', 18, 1, NULL, NULL, NULL, 12),
-(14, '889999999', '7890', 0.00, 'CLAIMS', NULL, '2023-07-15 01:41:25', '2023-07-24 08:33:57', 18, 1, NULL, NULL, NULL, 12),
-(16, '77777777777', '-7890', 0.00, 'ACC_WITHDRAW', NULL, '2023-07-15 01:55:34', '2023-07-24 08:33:57', 18, 1, NULL, NULL, NULL, 12),
-(17, '74411615620', '-8000', 0.00, 'ACC_DEPOSIT', NULL, '2023-07-17 14:06:20', '2023-07-24 08:33:57', 18, 1, NULL, NULL, NULL, 12),
-(19, '753468222333', '16107', 0.00, 'POS', NULL, '2023-07-23 21:23:45', '2023-07-24 08:33:57', 18, 1, NULL, NULL, NULL, 12),
-(21, '25283993251', '-4189', 0.00, 'ACC_WITHDRAW', NULL, '2023-07-24 08:33:48', '2023-07-24 08:33:57', 18, 1, NULL, NULL, NULL, 12),
-(24, '64321983057', '3000', 0.00, 'ACC_DEPOSIT', NULL, '2023-08-03 07:30:57', '2023-08-03 07:30:57', NULL, 1, NULL, NULL, NULL, 12),
-(30, '821128115114', '120', 0.00, 'POS', NULL, '2023-08-20 10:51:27', '2023-08-20 10:51:27', NULL, 1, NULL, NULL, NULL, 12),
-(31, '934265115818', '4000', 0.00, 'POS', NULL, '2023-08-20 10:58:28', '2023-08-20 10:58:28', NULL, 1, NULL, NULL, NULL, 12),
-(32, '775819115911', '7959', 0.00, 'POS', NULL, '2023-08-20 10:59:24', '2023-08-20 10:59:24', NULL, 1, NULL, NULL, NULL, 12),
-(33, '31579812552', '4189', 0.00, 'POS', NULL, '2023-08-20 11:06:01', '2023-08-20 11:06:01', NULL, 1, NULL, NULL, NULL, 12),
-(34, '487162121712', '4189', 0.00, 'POS', NULL, '2023-08-20 11:17:27', '2023-08-20 11:17:27', NULL, 1, NULL, NULL, NULL, 12),
-(35, '86149512357', '4000', 0.00, 'POS', NULL, '2023-08-20 11:35:17', '2023-08-20 11:35:17', NULL, 4, NULL, NULL, NULL, 12),
-(36, '416754123723', '4000', 0.00, 'POS', NULL, '2023-08-20 11:37:55', '2023-08-20 11:37:55', NULL, 1, NULL, NULL, NULL, 12),
-(37, '99537914514', '3000', 0.00, 'ACC_DEPOSIT', NULL, '2023-08-21 13:51:04', '2023-08-21 13:51:04', NULL, 3041, NULL, NULL, NULL, 12),
-(39, '7233172745', '792.00', 8.00, 'CLAIMS', NULL, '2025-12-24 16:28:22', '2025-12-24 16:28:22', NULL, 512, NULL, 3, NULL, 1),
-(44, '448882420', '2500.00', 0.00, 'POS', NULL, '2026-01-06 07:24:30', '2026-01-06 07:24:30', NULL, 24, NULL, NULL, NULL, 1),
-(45, '682682522', '2500.00', 0.00, 'POS', NULL, '2026-01-06 07:25:27', '2026-01-06 07:25:27', NULL, 24, NULL, NULL, NULL, 1),
-(46, '321282730', '3500.00', 0.00, 'POS', NULL, '2026-01-06 07:27:37', '2026-01-06 07:27:37', NULL, 24, NULL, NULL, NULL, 1),
-(47, '487593119', '5200.00', 0.00, 'POS', NULL, '2026-01-06 08:31:29', '2026-01-06 08:31:29', NULL, 24, NULL, NULL, NULL, 1),
-(48, '928394647', '18500.00', 0.00, 'POS', NULL, '2026-01-06 08:47:04', '2026-01-06 08:47:04', NULL, 24, NULL, NULL, NULL, 1),
-(49, '576194745', '6500.00', 0.00, 'POS', NULL, '2026-01-06 08:47:50', '2026-01-06 08:47:50', NULL, 24, NULL, NULL, NULL, 1),
-(50, '3499101917', '6500.00', 0.00, 'POS', NULL, '2026-01-06 09:19:27', '2026-01-06 09:19:27', NULL, 24, NULL, NULL, NULL, 1),
-(51, '8621102337', '7500.00', 0.00, 'POS', NULL, '2026-01-06 09:23:44', '2026-01-06 09:23:44', NULL, 24, NULL, NULL, NULL, 1),
-(52, '7197102536', '4018.00', 0.00, 'POS', NULL, '2026-01-06 09:25:43', '2026-01-06 09:25:43', NULL, 1, NULL, NULL, NULL, 1),
-(53, '9712105159', '4800', 0.00, 'POS', NULL, '2026-01-06 09:53:07', '2026-01-06 09:53:07', NULL, 24, NULL, NULL, NULL, 1),
-(54, '5675105442', '7500', 0.00, 'POS', NULL, '2026-01-06 09:55:16', '2026-01-06 09:55:16', NULL, 24, NULL, NULL, NULL, 1),
-(55, '8573105816', '5000', 0.00, 'POS', NULL, '2026-01-06 09:59:00', '2026-01-06 09:59:00', NULL, 24, NULL, NULL, NULL, 1),
-(56, '534311742', '3920', 80.00, 'POS', NULL, '2026-01-06 10:08:22', '2026-01-06 10:08:22', NULL, 24, NULL, NULL, NULL, 1),
-(57, '2729111216', '970', 30.00, 'POS', NULL, '2026-01-06 10:12:57', '2026-01-06 10:12:57', NULL, 2, NULL, NULL, NULL, 1),
-(58, '3615111654', '7000', 0.00, 'POS', NULL, '2026-01-06 10:17:17', '2026-01-06 10:17:17', NULL, 1469, NULL, NULL, NULL, 1),
-(59, '6717112115', '4000', 0.00, 'POS', NULL, '2026-01-06 10:21:48', '2026-01-06 10:21:48', NULL, 24, NULL, NULL, NULL, 1),
-(60, '2319112534', '22777', 0.00, 'POS', NULL, '2026-01-06 10:25:56', '2026-01-06 10:25:56', NULL, 1469, NULL, NULL, NULL, 1),
-(61, 'gha', '19.4', 0.60, 'Transfer', NULL, '2026-01-06 11:51:44', '2026-01-06 11:51:44', NULL, 24, NULL, NULL, NULL, 1),
-(62, 'PAY-20260106-153847', '5000', 0.00, 'Cash', NULL, '2026-01-06 13:39:20', '2026-01-06 13:39:20', NULL, 1, NULL, NULL, NULL, 1),
-(63, '5856144232', '3000', 0.00, 'ACC_DEPOSIT', NULL, '2026-01-06 13:42:32', '2026-01-06 13:42:32', NULL, 1469, NULL, NULL, NULL, 1),
-(64, '5891144323', '50000', 0.00, 'ACC_DEPOSIT', NULL, '2026-01-06 13:43:23', '2026-01-06 13:43:23', NULL, 1469, NULL, NULL, NULL, 1),
-(65, 'PAY-20260106-212454', '3840', 160.00, 'Account', NULL, '2026-01-06 19:26:35', '2026-01-06 19:26:35', NULL, 1469, NULL, NULL, NULL, 1),
-(66, 'PAY-20260106-215532', '4000', 0.00, 'Account', NULL, '2026-01-06 19:57:24', '2026-01-06 19:57:24', NULL, 1469, NULL, NULL, NULL, 1),
-(67, '216982519', '50000', 0.00, 'ACC_DEPOSIT', NULL, '2026-01-07 07:25:19', '2026-01-07 07:25:19', NULL, 1, NULL, NULL, NULL, 1),
-(68, '166582548', '-3000', 0.00, 'ACC_WITHDRAW', NULL, '2026-01-07 07:25:48', '2026-01-07 07:25:48', NULL, 1, NULL, NULL, NULL, 1),
-(69, '78268442', '-4000', 0.00, 'ACC_ADJUSTMENT', NULL, '2026-01-07 07:44:02', '2026-01-07 07:44:02', NULL, 1, NULL, NULL, NULL, 1),
-(70, 'PAY-20260107-094334', '6000', 0.00, 'ACCOUNT', NULL, '2026-01-07 07:54:54', '2026-01-07 07:54:54', NULL, 1, NULL, NULL, NULL, 1),
-(71, 'PAY-20260107-115727', '-4000', 0.00, 'ACC_WITHDRAW', NULL, '2026-01-07 10:04:14', '2026-01-07 10:04:14', NULL, 1, NULL, NULL, NULL, 1),
-(72, '576812244', '8000', 0.00, 'ACC_DEPOSIT', 'POS', '2026-01-07 11:02:44', '2026-01-07 11:02:44', NULL, 1, 1, NULL, NULL, 1),
-(73, 'PAY-20260107-132200', '4000', 0.00, 'POS', 'POS', '2026-01-07 11:38:29', '2026-01-07 11:38:29', NULL, 2, 1, NULL, NULL, 1),
-(74, 'PAY-20260108-154534', '4000', 0.00, 'CASH', 'CASH', '2026-01-08 13:45:55', '2026-01-08 13:45:55', NULL, 24, NULL, NULL, NULL, 1),
-(75, 'PAY-20260108-180410', '4000', 0.00, 'CASH', 'CASH', '2026-01-08 16:04:35', '2026-01-08 16:04:35', NULL, 24, NULL, NULL, NULL, 1),
-(76, 'PAY-20260108-184717', '6000', 0.00, 'CASH', 'CASH', '2026-01-08 16:47:47', '2026-01-08 16:47:47', NULL, 24, NULL, NULL, NULL, 1),
-(77, 'PAY-20260111-094430', '1000', 0.00, 'CASH', 'CASH', '2026-01-11 07:45:27', '2026-01-11 07:45:27', NULL, 24, NULL, NULL, NULL, 1),
-(78, 'PAY-20260114-141349', '550', 0.00, 'CASH', 'CASH', '2026-01-14 12:14:19', '2026-01-14 12:14:19', NULL, 24, NULL, NULL, NULL, 1),
-(79, 'PAY-20260114-181031', '1500', 0.00, 'CASH', 'CASH', '2026-01-14 16:10:59', '2026-01-14 16:10:59', NULL, 24, NULL, NULL, NULL, 1),
-(80, 'PAY-20260114-191058', '15500', 0.00, 'CASH', 'CASH', '2026-01-14 17:11:43', '2026-01-14 17:11:43', NULL, 24, NULL, NULL, NULL, 1),
-(81, 'PAY-20260121-192006', '2500', 0.00, 'CASH', 'CASH', '2026-01-21 17:20:54', '2026-01-21 17:20:54', NULL, 24, NULL, NULL, NULL, 1);
+INSERT INTO `payments` (`id`, `reference_no`, `total`, `total_discount`, `payment_type`, `payment_method`, `created_at`, `updated_at`, `invoice_id`, `patient_id`, `bank_id`, `account_id`, `hmo_id`, `journal_entry_id`, `user_id`) VALUES
+(1, '1234', '7770', 0.00, 'POS', NULL, '2023-04-27 14:06:29', '2026-01-29 13:05:11', 18, 1, NULL, NULL, NULL, 141, 12),
+(2, '12349', '15540', 0.00, 'POS', NULL, '2023-07-08 06:59:10', '2026-01-29 13:05:11', 18, 1, NULL, NULL, NULL, 142, 12),
+(3, '12349', '15540', 0.00, 'POS', NULL, '2023-07-08 07:20:15', '2026-01-29 13:05:11', 18, 1, NULL, NULL, NULL, 143, 12),
+(4, '12349', '15540', 0.00, 'POS', NULL, '2023-07-08 07:22:53', '2026-01-29 13:05:11', 18, NULL, NULL, NULL, NULL, 144, NULL),
+(5, '12349', '15540', 0.00, 'POS', NULL, '2023-07-08 07:25:18', '2026-01-29 13:05:11', 18, NULL, NULL, NULL, NULL, 145, NULL),
+(6, '12349', '15540', 0.00, 'POS', NULL, '2023-07-08 07:25:50', '2026-01-29 13:05:11', 18, NULL, NULL, NULL, NULL, 146, NULL),
+(7, '78788', '7770', 0.00, 'POS', NULL, '2023-07-08 07:32:34', '2026-01-29 13:05:11', 18, NULL, NULL, NULL, NULL, 147, NULL),
+(8, '7878887', '7770', 0.00, 'POS', NULL, '2023-07-08 07:38:35', '2026-01-29 13:05:11', 18, NULL, NULL, NULL, NULL, 148, NULL),
+(9, '7878887', '7770', 0.00, 'POS', NULL, '2023-07-08 07:47:58', '2026-01-29 13:05:11', 18, NULL, NULL, NULL, NULL, 149, NULL),
+(10, '977575234455', '3000', 0.00, 'ACC_DEPOSIT', NULL, '2023-07-14 22:44:55', '2026-01-29 13:05:11', 18, 1, NULL, NULL, NULL, 150, 12),
+(11, '322196234531', '-200', 0.00, 'ACC_DEPOSIT', NULL, '2023-07-14 22:45:31', '2026-01-29 13:05:11', 18, 1, NULL, NULL, NULL, 151, 12),
+(12, '80909090', '12079', 0.00, 'ACC_WITHDRAW', NULL, '2023-07-15 01:17:51', '2026-01-29 13:05:11', 18, 1, NULL, NULL, NULL, 152, 12),
+(14, '889999999', '7890', 0.00, 'CLAIMS', NULL, '2023-07-15 01:41:25', '2026-01-29 13:05:11', 18, 1, NULL, NULL, NULL, 153, 12),
+(16, '77777777777', '-7890', 0.00, 'ACC_WITHDRAW', NULL, '2023-07-15 01:55:34', '2026-01-29 13:05:11', 18, 1, NULL, NULL, NULL, 154, 12),
+(17, '74411615620', '-8000', 0.00, 'ACC_DEPOSIT', NULL, '2023-07-17 14:06:20', '2026-01-29 13:05:11', 18, 1, NULL, NULL, NULL, 155, 12),
+(19, '753468222333', '16107', 0.00, 'POS', NULL, '2023-07-23 21:23:45', '2026-01-29 13:05:11', 18, 1, NULL, NULL, NULL, 156, 12),
+(21, '25283993251', '-4189', 0.00, 'ACC_WITHDRAW', NULL, '2023-07-24 08:33:48', '2026-01-29 13:05:11', 18, 1, NULL, NULL, NULL, 157, 12),
+(24, '64321983057', '3000', 0.00, 'ACC_DEPOSIT', NULL, '2023-08-03 07:30:57', '2026-01-29 13:05:11', NULL, 1, NULL, NULL, NULL, 158, 12),
+(30, '821128115114', '120', 0.00, 'POS', NULL, '2023-08-20 10:51:27', '2026-01-29 13:05:11', NULL, 1, NULL, NULL, NULL, 159, 12),
+(31, '934265115818', '4000', 0.00, 'POS', NULL, '2023-08-20 10:58:28', '2026-01-29 13:05:11', NULL, 1, NULL, NULL, NULL, 160, 12),
+(32, '775819115911', '7959', 0.00, 'POS', NULL, '2023-08-20 10:59:24', '2026-01-29 13:05:11', NULL, 1, NULL, NULL, NULL, 161, 12),
+(33, '31579812552', '4189', 0.00, 'POS', NULL, '2023-08-20 11:06:01', '2026-01-29 13:05:11', NULL, 1, NULL, NULL, NULL, 162, 12),
+(34, '487162121712', '4189', 0.00, 'POS', NULL, '2023-08-20 11:17:27', '2026-01-29 13:05:11', NULL, 1, NULL, NULL, NULL, 163, 12),
+(35, '86149512357', '4000', 0.00, 'POS', NULL, '2023-08-20 11:35:17', '2026-01-29 13:05:11', NULL, 4, NULL, NULL, NULL, 164, 12),
+(36, '416754123723', '4000', 0.00, 'POS', NULL, '2023-08-20 11:37:55', '2026-01-29 13:05:11', NULL, 1, NULL, NULL, NULL, 165, 12),
+(37, '99537914514', '3000', 0.00, 'ACC_DEPOSIT', NULL, '2023-08-21 13:51:04', '2026-01-29 13:05:11', NULL, 3041, NULL, NULL, NULL, 166, 12),
+(39, '7233172745', '792.00', 8.00, 'CLAIMS', NULL, '2025-12-24 16:28:22', '2026-01-29 13:05:11', NULL, 512, NULL, NULL, 3, 167, 1),
+(44, '448882420', '2500.00', 0.00, 'POS', NULL, '2026-01-06 07:24:30', '2026-01-29 13:05:11', NULL, 24, NULL, NULL, NULL, 168, 1),
+(45, '682682522', '2500.00', 0.00, 'POS', NULL, '2026-01-06 07:25:27', '2026-01-29 13:05:11', NULL, 24, NULL, NULL, NULL, 169, 1),
+(46, '321282730', '3500.00', 0.00, 'POS', NULL, '2026-01-06 07:27:37', '2026-01-29 13:05:11', NULL, 24, NULL, NULL, NULL, 170, 1),
+(47, '487593119', '5200.00', 0.00, 'POS', NULL, '2026-01-06 08:31:29', '2026-01-29 13:05:11', NULL, 24, NULL, NULL, NULL, 171, 1),
+(48, '928394647', '18500.00', 0.00, 'POS', NULL, '2026-01-06 08:47:04', '2026-01-29 13:05:11', NULL, 24, NULL, NULL, NULL, 172, 1),
+(49, '576194745', '6500.00', 0.00, 'POS', NULL, '2026-01-06 08:47:50', '2026-01-29 13:05:11', NULL, 24, NULL, NULL, NULL, 173, 1),
+(50, '3499101917', '6500.00', 0.00, 'POS', NULL, '2026-01-06 09:19:27', '2026-01-29 13:05:11', NULL, 24, NULL, NULL, NULL, 174, 1),
+(51, '8621102337', '7500.00', 0.00, 'POS', NULL, '2026-01-06 09:23:44', '2026-01-29 13:05:12', NULL, 24, NULL, NULL, NULL, 175, 1),
+(52, '7197102536', '4018.00', 0.00, 'POS', NULL, '2026-01-06 09:25:43', '2026-01-29 13:05:12', NULL, 1, NULL, NULL, NULL, 176, 1),
+(53, '9712105159', '4800', 0.00, 'POS', NULL, '2026-01-06 09:53:07', '2026-01-29 13:05:12', NULL, 24, NULL, NULL, NULL, 177, 1),
+(54, '5675105442', '7500', 0.00, 'POS', NULL, '2026-01-06 09:55:16', '2026-01-29 13:05:12', NULL, 24, NULL, NULL, NULL, 178, 1),
+(55, '8573105816', '5000', 0.00, 'POS', NULL, '2026-01-06 09:59:00', '2026-01-29 13:05:12', NULL, 24, NULL, NULL, NULL, 179, 1),
+(56, '534311742', '3920', 80.00, 'POS', NULL, '2026-01-06 10:08:22', '2026-01-29 13:05:12', NULL, 24, NULL, NULL, NULL, 180, 1),
+(57, '2729111216', '970', 30.00, 'POS', NULL, '2026-01-06 10:12:57', '2026-01-29 13:05:12', NULL, 2, NULL, NULL, NULL, 181, 1),
+(58, '3615111654', '7000', 0.00, 'POS', NULL, '2026-01-06 10:17:17', '2026-01-29 13:05:12', NULL, 1469, NULL, NULL, NULL, 182, 1),
+(59, '6717112115', '4000', 0.00, 'POS', NULL, '2026-01-06 10:21:48', '2026-01-29 13:05:12', NULL, 24, NULL, NULL, NULL, 183, 1),
+(60, '2319112534', '22777', 0.00, 'POS', NULL, '2026-01-06 10:25:56', '2026-01-29 13:05:12', NULL, 1469, NULL, NULL, NULL, 184, 1),
+(61, 'gha', '19.4', 0.60, 'Transfer', NULL, '2026-01-06 11:51:44', '2026-01-29 13:05:12', NULL, 24, NULL, NULL, NULL, 185, 1),
+(62, 'PAY-20260106-153847', '5000', 0.00, 'Cash', NULL, '2026-01-06 13:39:20', '2026-01-29 13:05:12', NULL, 1, NULL, NULL, NULL, 186, 1),
+(63, '5856144232', '3000', 0.00, 'ACC_DEPOSIT', NULL, '2026-01-06 13:42:32', '2026-01-29 13:05:12', NULL, 1469, NULL, NULL, NULL, 187, 1),
+(64, '5891144323', '50000', 0.00, 'ACC_DEPOSIT', NULL, '2026-01-06 13:43:23', '2026-01-29 13:05:12', NULL, 1469, NULL, NULL, NULL, 188, 1),
+(65, 'PAY-20260106-212454', '3840', 160.00, 'Account', NULL, '2026-01-06 19:26:35', '2026-01-29 13:05:12', NULL, 1469, NULL, NULL, NULL, 189, 1),
+(66, 'PAY-20260106-215532', '4000', 0.00, 'Account', NULL, '2026-01-06 19:57:24', '2026-01-29 13:05:12', NULL, 1469, NULL, NULL, NULL, 190, 1),
+(67, '216982519', '50000', 0.00, 'ACC_DEPOSIT', NULL, '2026-01-07 07:25:19', '2026-01-29 13:05:12', NULL, 1, NULL, NULL, NULL, 191, 1),
+(68, '166582548', '-3000', 0.00, 'ACC_WITHDRAW', NULL, '2026-01-07 07:25:48', '2026-01-29 13:05:12', NULL, 1, NULL, NULL, NULL, 192, 1),
+(69, '78268442', '-4000', 0.00, 'ACC_ADJUSTMENT', NULL, '2026-01-07 07:44:02', '2026-01-29 13:05:12', NULL, 1, NULL, NULL, NULL, 193, 1),
+(70, 'PAY-20260107-094334', '6000', 0.00, 'ACCOUNT', NULL, '2026-01-07 07:54:54', '2026-01-29 13:05:12', NULL, 1, NULL, NULL, NULL, 194, 1),
+(71, 'PAY-20260107-115727', '-4000', 0.00, 'ACC_WITHDRAW', NULL, '2026-01-07 10:04:14', '2026-01-29 13:05:12', NULL, 1, NULL, NULL, NULL, 195, 1),
+(72, '576812244', '8000', 0.00, 'ACC_DEPOSIT', 'POS', '2026-01-07 11:02:44', '2026-01-29 13:05:12', NULL, 1, 1, NULL, NULL, 196, 1),
+(73, 'PAY-20260107-132200', '4000', 0.00, 'POS', 'POS', '2026-01-07 11:38:29', '2026-01-29 13:05:12', NULL, 2, 1, NULL, NULL, 197, 1),
+(74, 'PAY-20260108-154534', '4000', 0.00, 'CASH', 'CASH', '2026-01-08 13:45:55', '2026-01-29 13:05:12', NULL, 24, NULL, NULL, NULL, 198, 1),
+(75, 'PAY-20260108-180410', '4000', 0.00, 'CASH', 'CASH', '2026-01-08 16:04:35', '2026-01-29 13:05:12', NULL, 24, NULL, NULL, NULL, 199, 1),
+(76, 'PAY-20260108-184717', '6000', 0.00, 'CASH', 'CASH', '2026-01-08 16:47:47', '2026-01-29 13:05:12', NULL, 24, NULL, NULL, NULL, 200, 1),
+(77, 'PAY-20260111-094430', '1000', 0.00, 'CASH', 'CASH', '2026-01-11 07:45:27', '2026-01-29 13:05:12', NULL, 24, NULL, NULL, NULL, 201, 1),
+(78, 'PAY-20260114-141349', '550', 0.00, 'CASH', 'CASH', '2026-01-14 12:14:19', '2026-01-29 13:05:12', NULL, 24, NULL, NULL, NULL, 202, 1),
+(79, 'PAY-20260114-181031', '1500', 0.00, 'CASH', 'CASH', '2026-01-14 16:10:59', '2026-01-29 13:05:12', NULL, 24, NULL, NULL, NULL, 203, 1),
+(80, 'PAY-20260114-191058', '15500', 0.00, 'CASH', 'CASH', '2026-01-14 17:11:43', '2026-01-29 13:05:12', NULL, 24, NULL, NULL, NULL, 204, 1),
+(81, 'PAY-20260121-192006', '2500', 0.00, 'CASH', 'CASH', '2026-01-21 17:20:54', '2026-01-29 13:05:12', NULL, 24, NULL, NULL, NULL, 205, 1);
 
 -- --------------------------------------------------------
 
@@ -73349,6 +73742,9 @@ CREATE TABLE `payroll_batches` (
   `total_additions` decimal(15,2) NOT NULL DEFAULT 0.00,
   `total_deductions` decimal(15,2) NOT NULL DEFAULT 0.00,
   `total_net` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `payment_method` varchar(255) NOT NULL DEFAULT 'bank_transfer',
+  `bank_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `account_id` bigint(20) UNSIGNED DEFAULT NULL,
   `status` enum('draft','submitted','approved','rejected','paid') NOT NULL DEFAULT 'draft',
   `created_by` bigint(20) UNSIGNED NOT NULL,
   `submitted_by` bigint(20) UNSIGNED DEFAULT NULL,
@@ -73373,16 +73769,16 @@ CREATE TABLE `payroll_batches` (
 -- Dumping data for table `payroll_batches`
 --
 
-INSERT INTO `payroll_batches` (`id`, `batch_number`, `name`, `pay_period_start`, `pay_period_end`, `work_period_start`, `work_period_end`, `days_in_month`, `days_worked`, `payment_date`, `total_staff`, `total_gross`, `total_additions`, `total_deductions`, `total_net`, `status`, `created_by`, `submitted_by`, `submitted_at`, `approved_by`, `approved_at`, `approval_comments`, `rejected_by`, `rejected_at`, `rejection_reason`, `paid_by`, `paid_at`, `payment_comments`, `expense_id`, `journal_entry_id`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 'PAY2026010001', 'jan 2206 pay batch', '2026-01-01', '2026-01-31', NULL, NULL, NULL, NULL, '2026-01-31', 2, 234000.00, 74000.00, 7800.00, 226200.00, 'approved', 1, 1, '2026-01-25 09:54:24', 1, '2026-01-25 09:54:36', 'hjjgjgjghj', NULL, NULL, NULL, NULL, NULL, NULL, 5, NULL, '2026-01-25 09:25:05', '2026-01-25 09:54:36', NULL),
-(2, 'PAY2026010002', 'Payroll - February 2026', '2026-02-01', '2026-02-28', NULL, NULL, NULL, NULL, '2026-02-28', 2, 234000.00, 74000.00, 7800.00, 226200.00, 'draft', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-25 09:45:45', '2026-01-25 16:17:05', NULL),
-(3, 'PAY2026010003', 'test prorata', '2026-03-01', '2026-03-31', '2026-03-01', '2026-03-31', 31, 31, '2026-03-31', 2, 234000.00, 74000.00, 7800.00, 226200.00, 'paid', 1, 1, '2026-01-25 15:10:46', 1, '2026-01-25 15:11:08', 'approve prorata', NULL, NULL, NULL, 1, '2026-01-25 16:09:24', 'test approval of payslip', 6, NULL, '2026-01-25 15:10:18', '2026-01-25 16:09:24', NULL),
-(4, 'PAY2026010004', 'Payroll - May 2026', '2026-05-01', '2026-05-31', '2026-05-01', '2026-05-12', 31, 12, '2026-05-31', 2, 90580.64, 74000.00, 3019.35, 87561.29, 'approved', 1, 1, '2026-01-25 16:50:31', 1, '2026-01-25 16:50:49', 'dakhdkahkjd', NULL, NULL, NULL, NULL, NULL, NULL, 7, NULL, '2026-01-25 16:50:14', '2026-01-25 16:50:49', NULL),
-(5, 'PAY2026010005', 'June', '2026-06-01', '2026-06-30', '2026-06-01', '2026-06-17', 30, 17, '2026-06-30', 0, 0.00, 0.00, 0.00, 0.00, 'draft', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-25 17:07:46', '2026-01-25 17:45:03', NULL),
-(6, 'PAY2026010006', 'June again', '2026-06-01', '2026-06-30', '2026-06-01', '2026-06-26', 30, 26, '2026-06-30', 0, 0.00, 0.00, 0.00, 0.00, 'draft', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-25 17:08:14', '2026-01-25 17:08:14', NULL),
-(7, 'PAY2026010007', 'June again', '2026-06-01', '2026-06-30', '2026-06-01', '2026-06-26', 30, 26, '2026-06-30', 0, 0.00, 0.00, 0.00, 0.00, 'draft', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-25 17:12:32', '2026-01-25 17:12:32', NULL),
-(8, 'PAY2026010008', 'Payroll - June 2026', '2026-06-01', '2026-06-30', '2026-06-01', '2026-06-21', 30, 21, '2026-06-30', 0, 0.00, 0.00, 0.00, 0.00, 'draft', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-25 17:33:39', '2026-01-25 17:33:39', NULL),
-(9, 'PAY2026010009', 'Payroll - June 2026', '2026-06-01', '2026-06-30', '2026-06-01', '2026-06-30', 30, 30, '2026-06-30', 2, 234000.00, 74000.00, 7800.00, 226200.00, 'draft', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-25 17:45:03', '2026-01-25 17:45:03', NULL);
+INSERT INTO `payroll_batches` (`id`, `batch_number`, `name`, `pay_period_start`, `pay_period_end`, `work_period_start`, `work_period_end`, `days_in_month`, `days_worked`, `payment_date`, `total_staff`, `total_gross`, `total_additions`, `total_deductions`, `total_net`, `payment_method`, `bank_id`, `account_id`, `status`, `created_by`, `submitted_by`, `submitted_at`, `approved_by`, `approved_at`, `approval_comments`, `rejected_by`, `rejected_at`, `rejection_reason`, `paid_by`, `paid_at`, `payment_comments`, `expense_id`, `journal_entry_id`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'PAY2026010001', 'jan 2206 pay batch', '2026-01-01', '2026-01-31', NULL, NULL, NULL, NULL, '2026-01-31', 2, 234000.00, 74000.00, 7800.00, 226200.00, 'bank_transfer', NULL, NULL, 'approved', 1, 1, '2026-01-25 09:54:24', 1, '2026-01-25 09:54:36', 'hjjgjgjghj', NULL, NULL, NULL, NULL, NULL, NULL, 5, NULL, '2026-01-25 09:25:05', '2026-01-25 09:54:36', NULL),
+(2, 'PAY2026010002', 'Payroll - February 2026', '2026-02-01', '2026-02-28', NULL, NULL, NULL, NULL, '2026-02-28', 2, 234000.00, 74000.00, 7800.00, 226200.00, 'bank_transfer', NULL, NULL, 'draft', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-25 09:45:45', '2026-01-25 16:17:05', NULL),
+(3, 'PAY2026010003', 'test prorata', '2026-03-01', '2026-03-31', '2026-03-01', '2026-03-31', 31, 31, '2026-03-31', 2, 234000.00, 74000.00, 7800.00, 226200.00, 'bank_transfer', NULL, NULL, 'paid', 1, 1, '2026-01-25 15:10:46', 1, '2026-01-25 15:11:08', 'approve prorata', NULL, NULL, NULL, 1, '2026-01-25 16:09:24', 'test approval of payslip', 6, 218, '2026-01-25 15:10:18', '2026-01-30 18:01:22', NULL),
+(4, 'PAY2026010004', 'Payroll - May 2026', '2026-05-01', '2026-05-31', '2026-05-01', '2026-05-12', 31, 12, '2026-05-31', 2, 90580.64, 74000.00, 3019.35, 87561.29, 'bank_transfer', NULL, NULL, 'approved', 1, 1, '2026-01-25 16:50:31', 1, '2026-01-25 16:50:49', 'dakhdkahkjd', NULL, NULL, NULL, NULL, NULL, NULL, 7, NULL, '2026-01-25 16:50:14', '2026-01-25 16:50:49', NULL),
+(5, 'PAY2026010005', 'June', '2026-06-01', '2026-06-30', '2026-06-01', '2026-06-17', 30, 17, '2026-06-30', 0, 0.00, 0.00, 0.00, 0.00, 'bank_transfer', NULL, NULL, 'draft', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-25 17:07:46', '2026-01-25 17:45:03', NULL),
+(6, 'PAY2026010006', 'June again', '2026-06-01', '2026-06-30', '2026-06-01', '2026-06-26', 30, 26, '2026-06-30', 0, 0.00, 0.00, 0.00, 0.00, 'bank_transfer', NULL, NULL, 'draft', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-25 17:08:14', '2026-01-25 17:08:14', NULL),
+(7, 'PAY2026010007', 'June again', '2026-06-01', '2026-06-30', '2026-06-01', '2026-06-26', 30, 26, '2026-06-30', 0, 0.00, 0.00, 0.00, 0.00, 'bank_transfer', NULL, NULL, 'draft', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-25 17:12:32', '2026-01-25 17:12:32', NULL),
+(8, 'PAY2026010008', 'Payroll - June 2026', '2026-06-01', '2026-06-30', '2026-06-01', '2026-06-21', 30, 21, '2026-06-30', 0, 0.00, 0.00, 0.00, 0.00, 'bank_transfer', NULL, NULL, 'draft', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-25 17:33:39', '2026-01-25 17:33:39', NULL),
+(9, 'PAY2026010009', 'Payroll - June 2026', '2026-06-01', '2026-06-30', '2026-06-01', '2026-06-30', 30, 30, '2026-06-30', 2, 234000.00, 74000.00, 7800.00, 226200.00, 'bank_transfer', NULL, NULL, 'draft', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-25 17:45:03', '2026-01-25 17:45:03', NULL);
 
 -- --------------------------------------------------------
 
@@ -75600,7 +75996,8 @@ CREATE TABLE `purchase_orders` (
 --
 
 INSERT INTO `purchase_orders` (`id`, `po_number`, `supplier_id`, `target_store_id`, `created_by`, `approved_by`, `status`, `payment_status`, `expected_date`, `total_amount`, `amount_paid`, `notes`, `submitted_at`, `approved_at`, `journal_entry_id`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 'PO2026010001', 1, 5, 1, 1, 'received', 'partial', '2026-01-31', 190146.00, 19014.00, 'Receiving Notes: ahjbada', '2026-01-22 17:13:54', '2026-01-22 17:14:10', NULL, '2026-01-22 16:55:35', '2026-01-23 07:13:42', NULL);
+(1, 'PO2026010001', 1, 5, 1, 1, 'received', 'partial', '2026-01-31', 190146.00, 36127.00, 'Receiving Notes: ahjbada', '2026-01-22 17:13:54', '2026-01-22 17:14:10', 219, '2026-01-22 16:55:35', '2026-01-30 18:04:43', NULL),
+(2, 'PO2026010002', 2, 1, 1, 1, 'partial', 'paid', '2026-01-31', 35600.00, 35600.00, NULL, '2026-01-30 11:56:18', '2026-01-30 11:56:29', NULL, '2026-01-30 11:56:18', '2026-01-30 12:05:07', NULL);
 
 -- --------------------------------------------------------
 
@@ -75629,7 +76026,9 @@ CREATE TABLE `purchase_order_items` (
 INSERT INTO `purchase_order_items` (`id`, `purchase_order_id`, `product_id`, `ordered_qty`, `received_qty`, `unit_cost`, `actual_unit_cost`, `status`, `received_at`, `created_at`, `updated_at`) VALUES
 (3, 1, 139, 88, 88, 707.00, 707.00, 'received', '2026-01-22 17:56:30', '2026-01-22 17:13:30', '2026-01-22 17:56:30'),
 (4, 1, 114, 99, 99, 600.00, 600.00, 'received', '2026-01-22 17:56:30', '2026-01-22 17:13:30', '2026-01-22 17:56:30'),
-(5, 1, 147, 89, 89, 770.00, 770.00, 'received', '2026-01-22 17:56:30', '2026-01-22 17:13:30', '2026-01-22 17:56:30');
+(5, 1, 147, 89, 89, 770.00, 770.00, 'received', '2026-01-22 17:56:30', '2026-01-22 17:13:30', '2026-01-22 17:56:30'),
+(6, 2, 187, 7, 6, 3000.00, 3000.00, 'partial', '2026-01-30 11:57:05', '2026-01-30 11:56:18', '2026-01-30 11:57:05'),
+(7, 2, 611, 5, 2, 8800.00, 8800.00, 'partial', '2026-01-30 11:57:05', '2026-01-30 11:56:18', '2026-01-30 11:57:05');
 
 -- --------------------------------------------------------
 
@@ -75644,6 +76043,7 @@ CREATE TABLE `purchase_order_payments` (
   `amount` decimal(15,2) NOT NULL,
   `payment_method` enum('cash','bank_transfer','cheque','card') NOT NULL DEFAULT 'cash',
   `bank_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `account_id` bigint(20) UNSIGNED DEFAULT NULL,
   `reference_number` varchar(255) DEFAULT NULL,
   `cheque_number` varchar(255) DEFAULT NULL,
   `expense_id` bigint(20) UNSIGNED DEFAULT NULL,
@@ -75659,9 +76059,11 @@ CREATE TABLE `purchase_order_payments` (
 -- Dumping data for table `purchase_order_payments`
 --
 
-INSERT INTO `purchase_order_payments` (`id`, `purchase_order_id`, `payment_date`, `amount`, `payment_method`, `bank_id`, `reference_number`, `cheque_number`, `expense_id`, `journal_entry_id`, `notes`, `created_by`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 1, '2026-01-22', 19014.00, 'bank_transfer', 1, '738373123', NULL, 1, NULL, 'testst', 1, '2026-01-22 18:08:40', '2026-01-22 18:08:40', NULL),
-(2, 1, '2026-01-23', 171132.00, 'cash', NULL, NULL, NULL, 2, NULL, NULL, 1, '2026-01-23 06:19:15', '2026-01-23 07:13:42', '2026-01-23 07:13:42');
+INSERT INTO `purchase_order_payments` (`id`, `purchase_order_id`, `payment_date`, `amount`, `payment_method`, `bank_id`, `account_id`, `reference_number`, `cheque_number`, `expense_id`, `journal_entry_id`, `notes`, `created_by`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 1, '2026-01-22', 19014.00, 'bank_transfer', 1, NULL, '738373123', NULL, 1, 220, 'testst', 1, '2026-01-22 18:08:40', '2026-01-30 18:04:43', NULL),
+(2, 1, '2026-01-23', 171132.00, 'cash', NULL, NULL, NULL, NULL, 2, NULL, NULL, 1, '2026-01-23 06:19:15', '2026-01-23 07:13:42', '2026-01-23 07:13:42'),
+(3, 1, '2026-01-30', 17113.00, 'bank_transfer', 1, NULL, NULL, NULL, 8, 221, NULL, 1, '2026-01-30 11:52:07', '2026-01-30 18:04:43', NULL),
+(4, 2, '2026-01-30', 35600.00, 'bank_transfer', 1, NULL, NULL, NULL, 9, 222, NULL, 1, '2026-01-30 12:05:07', '2026-01-30 18:04:43', NULL);
 
 -- --------------------------------------------------------
 
@@ -88465,6 +88867,97 @@ INSERT INTO `role_has_permissions` (`permission_id`, `role_id`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `route_metadata`
+--
+
+CREATE TABLE `route_metadata` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `route_name` varchar(100) DEFAULT NULL,
+  `url` varchar(255) NOT NULL,
+  `title` varchar(100) NOT NULL,
+  `description` text DEFAULT NULL,
+  `section` varchar(100) DEFAULT NULL,
+  `parent_section` varchar(100) DEFAULT NULL,
+  `icon` varchar(50) DEFAULT NULL,
+  `keywords` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`keywords`)),
+  `roles` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`roles`)),
+  `permissions` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`permissions`)),
+  `hierarchy_path` varchar(500) DEFAULT NULL,
+  `sort_order` int(11) NOT NULL DEFAULT 0,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `route_metadata`
+--
+
+INSERT INTO `route_metadata` (`id`, `route_name`, `url`, `title`, `description`, `section`, `parent_section`, `icon`, `keywords`, `roles`, `permissions`, `hierarchy_path`, `sort_order`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, 'home', '/home', 'Dashboard', 'Main dashboard showing overview statistics, quick actions, and system notifications. Your central hub for accessing all modules.', 'Global', NULL, 'mdi-view-dashboard-outline', '[\"dashboard\",\"home\",\"overview\",\"statistics\",\"main\",\"start\"]', '[]', '[]', 'Dashboard', 1, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(2, 'hr.ess.my-profile', '/hr/ess/my-profile', 'My Profile', 'View and manage your personal profile information, contact details, and account settings.', 'Global', NULL, 'mdi-account-circle', '[\"profile\",\"my profile\",\"personal\",\"account\",\"settings\",\"user\"]', '[]', '[]', 'My Profile', 2, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(3, 'chat.index', '/chat', 'Messenger', 'Internal messaging system for communicating with colleagues. Send and receive messages, create group chats.', 'Global', NULL, 'mdi-message-text-outline', '[\"messenger\",\"chat\",\"messages\",\"communication\",\"inbox\",\"conversation\"]', '[]', '[]', 'Messenger', 3, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(4, 'inventory.requisitions.index', '/inventory/requisitions', 'Requisitions', 'Request items from the store. View your requisition history and track request status.', 'Global', NULL, 'mdi-swap-horizontal', '[\"requisitions\",\"request\",\"items\",\"store\",\"supplies\",\"order\"]', '[]', '[]', 'Requisitions', 4, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(5, 'hr.ess.index', '/hr/ess', 'ESS Dashboard', 'Employee Self-Service dashboard. Access your HR information, leave requests, payslips, and more.', 'My HR Portal', NULL, 'mdi-account-circle-outline', '[\"ess\",\"employee\",\"self service\",\"hr portal\",\"my hr\"]', '[]', '[\"ess.access\"]', 'My HR Portal > ESS Dashboard', 10, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(6, 'hr.ess.my-leave', '/hr/ess/my-leave', 'My Leave', 'View your leave balance, request new leave, and track leave request status.', 'My HR Portal', NULL, 'mdi-calendar-check', '[\"leave\",\"vacation\",\"time off\",\"annual leave\",\"sick leave\",\"absence\"]', '[]', '[\"ess.access\"]', 'My HR Portal > My Leave', 11, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(7, 'hr.ess.my-payslips', '/hr/ess/my-payslips', 'My Payslips', 'View and download your monthly payslips. Access salary history and payment details.', 'My HR Portal', NULL, 'mdi-file-document-outline', '[\"payslip\",\"salary\",\"pay\",\"wages\",\"earnings\",\"payment\",\"slip\"]', '[]', '[\"ess.view-payslips\"]', 'My HR Portal > My Payslips', 12, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(8, 'hr.ess.my-disciplinary', '/hr/ess/my-disciplinary', 'My Disciplinary', 'View disciplinary records and queries issued to you.', 'My HR Portal', NULL, 'mdi-alert-circle-outline', '[\"disciplinary\",\"query\",\"warning\",\"misconduct\"]', '[]', '[\"ess.access\"]', 'My HR Portal > My Disciplinary', 13, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(9, 'reception.workbench', '/reception/workbench', 'Health Records Workbench', 'Central workbench for health records management. Register patients, manage encounters, queue management, and appointments.', 'Health Records', NULL, 'mdi-desktop-mac-dashboard', '[\"reception\",\"workbench\",\"health records\",\"front desk\",\"registration\",\"queue\"]', '[\"SUPERADMIN\",\"ADMIN\",\"RECEPTIONIST\"]', '[]', 'Health Records > Workbench', 20, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(10, 'patient.create', '/patient/create', 'New Patient Registration', 'Register a new patient. Capture demographics, contact information, next of kin, and insurance details.', 'Health Records', 'Patients', 'mdi-account-plus', '[\"patient\",\"registration\",\"new patient\",\"register\",\"create\",\"admission\"]', '[\"SUPERADMIN\",\"ADMIN\",\"RECEPTIONIST\",\"BILLER\"]', '[]', 'Health Records > Patients > New Registration', 21, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(11, 'patient.index', '/patient', 'All Patients', 'View and search all registered patients. Access patient records, history, and manage patient information.', 'Health Records', 'Patients', 'mdi-account-multiple-outline', '[\"patients\",\"all patients\",\"patient list\",\"search patient\",\"find patient\"]', '[\"SUPERADMIN\",\"ADMIN\",\"RECEPTIONIST\",\"BILLER\",\"NURSE\",\"DOCTOR\",\"PHARMACIST\",\"LAB SCIENTIST\"]', '[]', 'Health Records > Patients > All Patients', 22, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(12, 'billing.workbench', '/billing/workbench', 'Billing Workbench', 'Central billing workbench. Process payments, generate invoices, manage patient accounts, and handle refunds.', 'Billing', NULL, 'mdi-cash-register', '[\"billing\",\"workbench\",\"payments\",\"cashier\",\"invoice\",\"receipt\",\"pay\"]', '[\"SUPERADMIN\",\"ADMIN\",\"ACCOUNTS\",\"BILLER\",\"RECEPTIONIST\"]', '[]', 'Billing > Workbench', 30, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(13, 'product-or-service-request.index', '/product-or-service-request', 'All Payment Requests', 'View all pending and completed payment requests. Products and services awaiting payment.', 'Billing', 'Accounts', 'mdi-cash-multiple', '[\"payment\",\"requests\",\"pending\",\"bills\",\"charges\",\"services\"]', '[\"SUPERADMIN\",\"ADMIN\",\"ACCOUNTS\",\"BILLER\",\"RECEPTIONIST\"]', '[]', 'Billing > Accounts > All Payment Requests', 31, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(14, 'my-transactions', '/my-transactions', 'My Transactions', 'View all transactions processed by you. Payment history and daily transaction summary.', 'Billing', 'Accounts', 'mdi-history', '[\"transactions\",\"my transactions\",\"history\",\"payments made\",\"cashier log\"]', '[\"SUPERADMIN\",\"ADMIN\",\"ACCOUNTS\",\"BILLER\",\"RECEPTIONIST\"]', '[]', 'Billing > Accounts > My Transactions', 32, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(15, 'allPrevEncounters', '/all-previous-encounters', 'All Previous Consultations', 'View historical patient consultations and encounters across all departments.', 'Billing', 'Consultations', 'mdi-stethoscope', '[\"consultations\",\"encounters\",\"history\",\"previous\",\"visits\"]', '[\"SUPERADMIN\",\"ADMIN\",\"ACCOUNTS\",\"BILLER\",\"RECEPTIONIST\"]', '[]', 'Health Records > Consultations > All Previous', 33, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(16, 'pharmacy.workbench', '/pharmacy/workbench', 'Pharmacy Workbench', 'Central pharmacy workbench. Dispense medications, view prescriptions, manage drug inventory.', 'Pharmacy', NULL, 'mdi-pill', '[\"pharmacy\",\"workbench\",\"dispense\",\"drugs\",\"medications\",\"prescriptions\"]', '[\"SUPERADMIN\",\"ADMIN\",\"PHARMACIST\"]', '[]', 'Pharmacy > Workbench', 40, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(17, 'product-category.index', '/product-category', 'Product Categories', 'Manage product categories for pharmacy and store items. Organize drugs and supplies.', 'Pharmacy', 'Product Management', 'mdi-folder-outline', '[\"categories\",\"product categories\",\"drug categories\",\"organize\"]', '[\"SUPERADMIN\",\"ADMIN\",\"PHARMACIST\",\"STORE\"]', '[]', 'Pharmacy > Product Management > Categories', 41, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(18, 'stores.index', '/stores', 'Stores', 'Manage store locations. Create and configure pharmacy and inventory stores.', 'Pharmacy', 'Product Management', 'mdi-store', '[\"stores\",\"locations\",\"pharmacy store\",\"warehouse\",\"depot\"]', '[\"SUPERADMIN\",\"ADMIN\",\"PHARMACIST\",\"STORE\"]', '[]', 'Pharmacy > Product Management > Stores', 42, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(19, 'products.index', '/products', 'Products', 'Manage products and medications. Add, edit, and view drug information, pricing, and stock levels.', 'Pharmacy', 'Product Management', 'mdi-package-variant', '[\"products\",\"drugs\",\"medications\",\"items\",\"inventory\",\"stock\"]', '[\"SUPERADMIN\",\"ADMIN\",\"PHARMACIST\",\"STORE\"]', '[]', 'Pharmacy > Product Management > Products', 43, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(20, 'inventory.store-workbench.index', '/inventory/store-workbench', 'Store Workbench', 'Central store management workbench. Handle requisitions, stock management, and inventory operations.', 'Store / Inventory', NULL, 'mdi-store', '[\"store\",\"workbench\",\"inventory\",\"stock\",\"warehouse\"]', '[\"SUPERADMIN\",\"ADMIN\",\"STORE\"]', '[]', 'Store / Inventory > Workbench', 50, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(21, 'services-category.index', '/services-category', 'Service Categories', 'Manage service categories for lab tests, procedures, and other clinical services.', 'Store / Inventory', 'Services Management', 'mdi-folder-cog', '[\"service categories\",\"test categories\",\"procedure types\"]', '[\"SUPERADMIN\",\"ADMIN\",\"STORE\"]', '[]', 'Store / Inventory > Services Management > Categories', 51, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(22, 'services.index', '/services', 'Medical Lab Services', 'Manage laboratory test services. Configure test names, prices, and parameters.', 'Store / Inventory', 'Services Management', 'mdi-test-tube', '[\"lab services\",\"tests\",\"investigations\",\"medical lab\"]', '[\"SUPERADMIN\",\"ADMIN\",\"STORE\"]', '[]', 'Store / Inventory > Services Management > Med Lab Services', 52, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(23, 'procedure-categories.index', '/procedure-categories', 'Procedure Categories', 'Manage medical procedure categories. Organize surgical and clinical procedures.', 'Store / Inventory', 'Services Management', 'mdi-medical-bag', '[\"procedure categories\",\"surgery types\",\"clinical procedures\"]', '[\"SUPERADMIN\",\"ADMIN\",\"STORE\"]', '[]', 'Store / Inventory > Services Management > Procedure Categories', 53, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(24, 'inventory.purchase-orders.index', '/inventory/purchase-orders', 'Purchase Orders', 'Create and manage purchase orders. Order supplies from suppliers and track deliveries.', 'Store / Inventory', 'Inventory Operations', 'mdi-cart-arrow-down', '[\"purchase orders\",\"PO\",\"ordering\",\"suppliers\",\"procurement\"]', '[\"SUPERADMIN\",\"ADMIN\",\"STORE\",\"ACCOUNTS\"]', '[]', 'Store / Inventory > Inventory Operations > Purchase Orders', 54, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(25, 'inventory.expenses.index', '/inventory/expenses', 'Expenses', 'Record and manage store expenses. Track operational costs and supplier payments.', 'Store / Inventory', 'Inventory Operations', 'mdi-cash-minus', '[\"expenses\",\"costs\",\"payments\",\"expenditure\",\"spending\"]', '[\"SUPERADMIN\",\"ADMIN\",\"STORE\",\"ACCOUNTS\"]', '[]', 'Store / Inventory > Inventory Operations > Expenses', 55, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(26, 'nursing-workbench.index', '/nursing-workbench', 'Nursing Workbench', 'Central nursing workbench. Record vitals, manage patient care, medication administration, and nursing notes.', 'Nursing', NULL, 'mdi-heart-pulse', '[\"nursing\",\"workbench\",\"vitals\",\"patient care\",\"ward\",\"nurses\"]', '[\"SUPERADMIN\",\"ADMIN\",\"NURSE\"]', '[]', 'Nursing > Workbench', 60, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(27, 'admission-requests.index', '/admission-requests', 'Bed Requests', 'Manage patient admission and bed allocation requests. View pending admissions.', 'Nursing', 'Admissions', 'mdi-bed', '[\"bed requests\",\"admissions\",\"inpatient\",\"ward\",\"allocation\"]', '[\"SUPERADMIN\",\"ADMIN\",\"NURSE\",\"RECEPTIONIST\"]', '[]', 'Nursing > Admissions > Bed Requests', 61, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(28, 'beds.index', '/beds', 'Manage Beds', 'Manage hospital beds and wards. View bed occupancy and configure bed assignments.', 'Nursing', 'Admissions', 'mdi-bed-empty', '[\"beds\",\"wards\",\"occupancy\",\"bed management\",\"rooms\"]', '[\"SUPERADMIN\",\"ADMIN\",\"NURSE\",\"RECEPTIONIST\"]', '[]', 'Nursing > Admissions > Manage Beds', 62, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(29, 'lab.workbench', '/lab/workbench', 'Lab Workbench', 'Central laboratory workbench. Process lab requests, enter results, and manage test workflows.', 'Medical Laboratory', NULL, 'mdi-flask-outline', '[\"lab\",\"laboratory\",\"workbench\",\"tests\",\"results\",\"samples\"]', '[\"SUPERADMIN\",\"ADMIN\",\"LAB SCIENTIST\"]', '[]', 'Medical Laboratory > Workbench', 70, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(30, 'imaging.workbench', '/imaging/workbench', 'Imaging Workbench', 'Central imaging workbench. Process radiology requests, upload images, and enter reports.', 'Imaging / Radiology', NULL, 'mdi-radioactive', '[\"imaging\",\"radiology\",\"workbench\",\"xray\",\"scan\",\"ultrasound\",\"CT\"]', '[\"SUPERADMIN\",\"ADMIN\",\"RADIOLOGIST\"]', '[]', 'Imaging / Radiology > Workbench', 80, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(31, 'doctor.workbench.index', '/doctor/workbench', 'Doctor Workbench', 'Central doctor workbench. View patient queue, conduct consultations, prescribe medications, and order tests.', 'Doctor', NULL, 'mdi-stethoscope', '[\"doctor\",\"workbench\",\"consultation\",\"prescribe\",\"diagnosis\",\"treatment\"]', '[\"SUPERADMIN\",\"ADMIN\",\"DOCTOR\"]', '[]', 'Doctor > Workbench', 90, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(32, 'hmo.workbench', '/hmo/workbench', 'HMO Workbench', 'HMO and insurance management workbench. Process claims, verify coverage, and manage HMO accounts.', 'HMO / Insurance', NULL, 'mdi-shield-check', '[\"hmo\",\"insurance\",\"claims\",\"coverage\",\"verification\",\"NHIS\"]', '[\"SUPERADMIN\",\"ADMIN\",\"HMO OFFICER\"]', '[]', 'HMO / Insurance > Workbench', 100, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(33, 'hmos.index', '/hmos', 'HMO List', 'Manage HMO providers. Add, edit, and configure insurance companies and their plans.', 'HMO / Insurance', NULL, 'mdi-hospital-building', '[\"hmo list\",\"insurance providers\",\"health plans\"]', '[\"SUPERADMIN\",\"ADMIN\",\"HMO OFFICER\"]', '[]', 'HMO / Insurance > HMO List', 101, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(34, 'accounting.dashboard', '/accounting', 'Accounting Dashboard', 'Financial overview dashboard. View revenue, expenses, and key financial metrics.', 'Accounting', NULL, 'mdi-calculator', '[\"accounting\",\"dashboard\",\"finance\",\"financial\",\"revenue\",\"overview\"]', '[\"SUPERADMIN\",\"ADMIN\",\"ACCOUNTS\"]', '[]', 'Accounting > Dashboard', 110, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(35, 'accounting.journal-entries.index', '/accounting/journal-entries', 'Journal Entries', 'View and create journal entries. Record financial transactions and adjustments.', 'Accounting', NULL, 'mdi-book-open-page-variant', '[\"journal\",\"entries\",\"transactions\",\"ledger\",\"debit\",\"credit\"]', '[\"SUPERADMIN\",\"ADMIN\",\"ACCOUNTS\"]', '[]', 'Accounting > Journal Entries', 111, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(36, 'accounting.chart-of-accounts.index', '/accounting/chart-of-accounts', 'Chart of Accounts', 'Manage chart of accounts. Configure asset, liability, equity, revenue, and expense accounts.', 'Accounting', NULL, 'mdi-file-tree', '[\"chart of accounts\",\"COA\",\"accounts\",\"ledger accounts\",\"GL\"]', '[\"SUPERADMIN\",\"ADMIN\",\"ACCOUNTS\"]', '[]', 'Accounting > Chart of Accounts', 112, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(37, 'accounting.reports.index', '/accounting/reports', 'Accounting Reports', 'Generate financial reports. Trial balance, income statement, balance sheet, and more.', 'Accounting', NULL, 'mdi-chart-bar', '[\"reports\",\"financial reports\",\"trial balance\",\"income statement\",\"balance sheet\"]', '[\"SUPERADMIN\",\"ADMIN\",\"ACCOUNTS\"]', '[]', 'Accounting > Reports', 113, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(38, 'accounting.credit-notes.index', '/accounting/credit-notes', 'Credit Notes', 'Manage credit notes and refunds. Process patient refunds and adjustments.', 'Accounting', NULL, 'mdi-file-document-outline', '[\"credit notes\",\"refunds\",\"adjustments\",\"reversals\"]', '[\"SUPERADMIN\",\"ADMIN\",\"ACCOUNTS\"]', '[]', 'Accounting > Credit Notes', 114, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(39, 'accounting.periods', '/accounting/periods', 'Fiscal Periods', 'Manage accounting periods and fiscal years. Open, close, and configure financial periods.', 'Accounting', NULL, 'mdi-calendar-range', '[\"fiscal\",\"periods\",\"fiscal year\",\"accounting period\",\"year end\"]', '[\"SUPERADMIN\",\"ADMIN\",\"ACCOUNTS\"]', '[]', 'Accounting > Fiscal Periods', 115, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(40, 'inventory.purchase-orders.accounts-payable', '/inventory/purchase-orders/accounts-payable', 'Accounts Payable', 'View and manage accounts payable. Track supplier invoices and outstanding payments.', 'Accounting', NULL, 'mdi-currency-ngn', '[\"accounts payable\",\"AP\",\"supplier payments\",\"outstanding\",\"creditors\"]', '[\"SUPERADMIN\",\"ADMIN\",\"ACCOUNTS\"]', '[]', 'Accounting > Accounts Payable', 116, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(41, 'banks.index', '/banks', 'Banks', 'Manage bank accounts. Configure payment accounts and bank details.', 'Accounting', NULL, 'mdi-bank', '[\"banks\",\"bank accounts\",\"payment methods\",\"financial institutions\"]', '[\"SUPERADMIN\",\"ADMIN\",\"ACCOUNTS\"]', '[]', 'Accounting > Banks', 117, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(42, 'hr.workbench.index', '/hr/workbench', 'HR Workbench', 'Central HR management workbench. Manage staff, payroll, leave, and disciplinary matters.', 'Human Resources', NULL, 'mdi-account-group', '[\"hr\",\"human resources\",\"workbench\",\"staff\",\"employees\",\"personnel\"]', '[\"SUPERADMIN\",\"ADMIN\",\"HR MANAGER\"]', '[\"hr-workbench.access\"]', 'Human Resources > Workbench', 120, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(43, 'hr.leave-calendar.index', '/hr/leave-calendar', 'Leave Calendar', 'Visual calendar showing all staff leave. Plan coverage and view absence patterns.', 'Human Resources', 'Leave Management', 'mdi-calendar-month', '[\"leave calendar\",\"absence calendar\",\"staff leave\",\"vacation planner\"]', '[\"SUPERADMIN\",\"ADMIN\",\"HR MANAGER\"]', '[\"leave-request.view\"]', 'Human Resources > Leave Management > Calendar', 121, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(44, 'hr.leave-types.index', '/hr/leave-types', 'Leave Types', 'Configure leave types. Annual leave, sick leave, maternity, and custom leave categories.', 'Human Resources', 'Leave Management', 'mdi-format-list-bulleted-type', '[\"leave types\",\"annual leave\",\"sick leave\",\"maternity\",\"leave categories\"]', '[\"SUPERADMIN\",\"ADMIN\",\"HR MANAGER\"]', '[\"leave-type.view\"]', 'Human Resources > Leave Management > Types', 122, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(45, 'hr.leave-requests.index', '/hr/leave-requests', 'Leave Requests', 'View and process staff leave requests. Approve, reject, and manage leave applications.', 'Human Resources', 'Leave Management', 'mdi-calendar-check', '[\"leave requests\",\"leave applications\",\"approve leave\",\"time off requests\"]', '[\"SUPERADMIN\",\"ADMIN\",\"HR MANAGER\"]', '[\"leave-request.view\"]', 'Human Resources > Leave Management > Requests', 123, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(46, 'hr.leave-balances.index', '/hr/leave-balances', 'Leave Balances', 'View and adjust staff leave balances. Track remaining leave days for all employees.', 'Human Resources', 'Leave Management', 'mdi-scale-balance', '[\"leave balances\",\"remaining leave\",\"leave days\",\"entitlement\"]', '[\"SUPERADMIN\",\"ADMIN\",\"HR MANAGER\"]', '[\"leave-balance.view\"]', 'Human Resources > Leave Management > Balances', 124, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(47, 'hr.disciplinary.index', '/hr/disciplinary', 'Disciplinary Queries', 'Manage staff disciplinary issues. Issue queries, warnings, and track disciplinary actions.', 'Human Resources', 'Disciplinary', 'mdi-alert-circle', '[\"disciplinary\",\"queries\",\"warnings\",\"misconduct\",\"staff issues\"]', '[\"SUPERADMIN\",\"ADMIN\",\"HR MANAGER\"]', '[\"disciplinary.view\"]', 'Human Resources > Disciplinary > Queries', 125, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(48, 'hr.suspensions.index', '/hr/suspensions', 'Suspensions', 'Manage staff suspensions. Record and track employee suspension periods.', 'Human Resources', 'Disciplinary', 'mdi-account-off', '[\"suspensions\",\"suspended staff\",\"disciplinary suspension\"]', '[\"SUPERADMIN\",\"ADMIN\",\"HR MANAGER\"]', '[\"suspension.view\"]', 'Human Resources > Disciplinary > Suspensions', 126, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(49, 'hr.terminations.index', '/hr/terminations', 'Terminations', 'Manage employment terminations. Process resignations, dismissals, and retirements.', 'Human Resources', 'Disciplinary', 'mdi-account-remove', '[\"terminations\",\"resignations\",\"dismissals\",\"exit\",\"off-boarding\"]', '[\"SUPERADMIN\",\"ADMIN\",\"HR MANAGER\"]', '[\"termination.view\"]', 'Human Resources > Disciplinary > Terminations', 127, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(50, 'hr.pay-heads.index', '/hr/pay-heads', 'Pay Heads', 'Configure payroll pay heads. Earnings, deductions, allowances, and other salary components.', 'Human Resources', 'Payroll', 'mdi-cash', '[\"pay heads\",\"salary components\",\"earnings\",\"deductions\",\"allowances\"]', '[\"SUPERADMIN\",\"ADMIN\",\"HR MANAGER\"]', '[\"pay-head.view\"]', 'Human Resources > Payroll > Pay Heads', 128, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(51, 'hr.salary-profiles.index', '/hr/salary-profiles', 'Salary Profiles', 'Manage staff salary profiles. Configure individual salary structures and components.', 'Human Resources', 'Payroll', 'mdi-account-cash', '[\"salary profiles\",\"salary structure\",\"remuneration\",\"compensation\"]', '[\"SUPERADMIN\",\"ADMIN\",\"HR MANAGER\"]', '[\"salary-profile.view\"]', 'Human Resources > Payroll > Salary Profiles', 129, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(52, 'hr.payroll.index', '/hr/payroll', 'Payroll Batches', 'Process monthly payroll. Generate payslips, approve payments, and manage salary disbursement.', 'Human Resources', 'Payroll', 'mdi-cash-multiple', '[\"payroll\",\"salary processing\",\"payslips\",\"monthly pay\",\"wages\"]', '[\"SUPERADMIN\",\"ADMIN\",\"HR MANAGER\"]', '[\"payroll-batch.view\"]', 'Human Resources > Payroll > Batches', 130, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(53, 'users.index', '/users', 'User Management', 'Manage system users. Create accounts, assign roles, and configure access permissions.', 'Administration', NULL, 'mdi-account-cog', '[\"users\",\"user management\",\"accounts\",\"access\",\"login\",\"credentials\"]', '[\"SUPERADMIN\",\"ADMIN\"]', '[]', 'Administration > User Management', 140, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(54, 'staff.index', '/staff', 'Staff Management', 'Manage hospital staff records. Employee information, departments, and designations.', 'Administration', NULL, 'mdi-account-group', '[\"staff\",\"employees\",\"personnel\",\"workforce\",\"team members\"]', '[\"SUPERADMIN\",\"ADMIN\",\"HR MANAGER\"]', '[]', 'Administration > Staff Management', 141, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(55, 'roles.index', '/roles', 'Roles & Permissions', 'Configure user roles and permissions. Define access levels and security policies.', 'Administration', NULL, 'mdi-shield-account', '[\"roles\",\"permissions\",\"access control\",\"security\",\"privileges\"]', '[\"SUPERADMIN\",\"ADMIN\"]', '[]', 'Administration > Roles & Permissions', 142, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(56, 'departments.index', '/departments', 'Departments', 'Manage hospital departments. Configure organizational structure and department settings.', 'Administration', NULL, 'mdi-domain', '[\"departments\",\"units\",\"sections\",\"organizational structure\"]', '[\"SUPERADMIN\",\"ADMIN\"]', '[]', 'Administration > Departments', 143, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(57, 'clinics.index', '/clinics', 'Clinics', 'Manage hospital clinics and consultation rooms. Configure clinic schedules and assignments.', 'Administration', NULL, 'mdi-hospital-marker', '[\"clinics\",\"consultation rooms\",\"outpatient\",\"clinic management\"]', '[\"SUPERADMIN\",\"ADMIN\"]', '[]', 'Administration > Clinics', 144, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(58, 'wards.index', '/wards', 'Wards', 'Manage hospital wards. Configure inpatient units, bed capacity, and ward settings.', 'Administration', NULL, 'mdi-bed-outline', '[\"wards\",\"inpatient\",\"units\",\"bed management\",\"ward configuration\"]', '[\"SUPERADMIN\",\"ADMIN\"]', '[]', 'Administration > Wards', 145, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(59, 'suppliers.index', '/suppliers', 'Suppliers', 'Manage suppliers and vendors. Configure supplier information and payment terms.', 'Administration', NULL, 'mdi-truck-delivery', '[\"suppliers\",\"vendors\",\"distributors\",\"procurement\"]', '[\"SUPERADMIN\",\"ADMIN\",\"STORE\"]', '[]', 'Administration > Suppliers', 146, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52'),
+(60, 'application-settings', '/application-settings', 'Application Settings', 'Configure system-wide application settings. Hospital information, branding, and preferences.', 'Administration', NULL, 'mdi-cog', '[\"settings\",\"configuration\",\"preferences\",\"system settings\",\"hospital settings\"]', '[\"SUPERADMIN\",\"ADMIN\"]', '[]', 'Administration > Application Settings', 147, 1, '2026-01-30 11:42:52', '2026-01-30 11:42:52');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `sales`
 --
 
@@ -90185,7 +90678,9 @@ INSERT INTO `stock_batches` (`id`, `product_id`, `store_id`, `supplier_id`, `bat
 (9, 3, 4, NULL, 'TRF-20260122121355-183-20260122121355', 'TRF-20260122121355-183', 3, 3, 0, 0.00, NULL, '2026-01-22', 'transfer_in', NULL, 1, 1, 1, '2026-01-22 11:13:55', '2026-01-22 11:13:55', NULL),
 (13, 139, 5, NULL, 'dashda-20260122185630', 'dashda', 88, 88, 0, 707.00, '2026-05-30', '2026-01-22', 'purchase_order', 3, NULL, 1, 1, '2026-01-22 17:56:30', '2026-01-22 17:56:30', NULL),
 (14, 114, 5, NULL, 'adkja-20260122185630', 'adkja', 99, 99, 0, 600.00, '2026-10-10', '2026-01-22', 'purchase_order', 4, NULL, 1, 1, '2026-01-22 17:56:30', '2026-01-22 17:56:30', NULL),
-(15, 147, 5, NULL, 'adka-20260122185630', 'adka', 89, 89, 0, 770.00, '2026-06-19', '2026-01-22', 'purchase_order', 5, NULL, 1, 1, '2026-01-22 17:56:30', '2026-01-22 17:56:30', NULL);
+(15, 147, 5, NULL, 'adka-20260122185630', 'adka', 89, 89, 0, 770.00, '2026-06-19', '2026-01-22', 'purchase_order', 5, NULL, 1, 1, '2026-01-22 17:56:30', '2026-01-22 17:56:30', NULL),
+(16, 187, 1, NULL, '728732-20260130125705', '728732', 6, 6, 0, 3000.00, NULL, '2026-01-30', 'purchase_order', 6, NULL, 1, 1, '2026-01-30 11:57:05', '2026-01-30 11:57:05', NULL),
+(17, 611, 1, NULL, 'diudiwd-20260130125705', 'diudiwd', 2, 2, 0, 8800.00, NULL, '2026-01-30', 'purchase_order', 7, NULL, 1, 1, '2026-01-30 11:57:05', '2026-01-30 11:57:05', NULL);
 
 -- --------------------------------------------------------
 
@@ -90227,7 +90722,9 @@ INSERT INTO `stock_batch_transactions` (`id`, `stock_batch_id`, `type`, `qty`, `
 (17, 14, 'in', 99, 99, 'App\\Models\\PurchaseOrder', 1, 'Received from PO: PO2026010001', 1, '2026-01-22 17:56:30', '2026-01-22 17:56:30'),
 (18, 15, 'in', 89, 89, 'App\\Models\\PurchaseOrder', 1, 'Received from PO: PO2026010001', 1, '2026-01-22 17:56:30', '2026-01-22 17:56:30'),
 (19, 5, 'out', 1, 87, 'App\\Models\\ProductRequest', 109, 'Dispensed for patient', 1, '2026-01-26 09:52:00', '2026-01-26 09:52:00'),
-(20, 1, 'out', 1, 137, 'App\\Models\\ProductRequest', 106, 'Dispensed for patient', 1, '2026-01-26 09:52:00', '2026-01-26 09:52:00');
+(20, 1, 'out', 1, 137, 'App\\Models\\ProductRequest', 106, 'Dispensed for patient', 1, '2026-01-26 09:52:00', '2026-01-26 09:52:00'),
+(21, 16, 'in', 6, 6, 'App\\Models\\PurchaseOrder', 2, 'Received from PO: PO2026010002', 1, '2026-01-30 11:57:05', '2026-01-30 11:57:05'),
+(22, 17, 'in', 2, 2, 'App\\Models\\PurchaseOrder', 2, 'Received from PO: PO2026010002', 1, '2026-01-30 11:57:05', '2026-01-30 11:57:05');
 
 -- --------------------------------------------------------
 
@@ -91066,7 +91563,9 @@ INSERT INTO `store_stocks` (`id`, `store_id`, `product_id`, `initial_quantity`, 
 (667, 1, 812, 4, 0, 0, 4, '2026-01-28 09:38:38', '2026-01-28 09:38:38', 0, 5, NULL, 1, NULL, NULL),
 (668, 1, 813, 1, 0, 0, 1, '2026-01-28 09:38:39', '2026-01-28 09:38:39', 0, 5, NULL, 1, NULL, NULL),
 (669, 1, 814, 4, 0, 0, 4, '2026-01-28 09:38:39', '2026-01-28 09:38:39', 0, 5, NULL, 1, NULL, NULL),
-(670, 1, 815, 10, 0, 0, 10, '2026-01-28 09:38:39', '2026-01-28 09:38:39', 0, 5, NULL, 1, NULL, NULL);
+(670, 1, 815, 10, 0, 0, 10, '2026-01-28 09:38:39', '2026-01-28 09:38:39', 0, 5, NULL, 1, NULL, NULL),
+(671, 1, 187, 0, 0, 0, 0, '2026-01-30 11:57:05', '2026-01-30 11:57:05', 0, 10, NULL, 1, '2026-01-30 11:57:05', NULL),
+(672, 1, 611, 0, 0, 0, 0, '2026-01-30 11:57:05', '2026-01-30 11:57:05', 0, 10, NULL, 1, '2026-01-30 11:57:05', NULL);
 
 -- --------------------------------------------------------
 
@@ -91112,7 +91611,8 @@ CREATE TABLE `suppliers` (
 --
 
 INSERT INTO `suppliers` (`id`, `company_name`, `contact_person`, `email`, `address`, `phone`, `alt_phone`, `tax_number`, `created_by`, `last_payment`, `last_payment_date`, `last_buy_date`, `last_buy_amount`, `credit_b4`, `credit`, `deposit_b4`, `deposit`, `total_deposite`, `date_line`, `status`, `created_at`, `updated_at`, `old_supplier_id`, `bank_name`, `bank_account_number`, `bank_account_name`, `payment_terms`, `credit_limit`, `notes`, `deleted_at`) VALUES
-(1, 'Apollos Technologies', 'Walshak Timothy Apollos', 'walshak1999@gmail.com', 'Elwazir Street,bosso\r\nVcm 105 Elwazir Estate', '07050737402', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-22 08:11:53', 1, '2026-01-22 07:11:53', '2026-01-22 07:11:53', NULL, 'zenith bank', '224559900', 'App Tech', 'cash', 0.00, NULL, NULL);
+(1, 'Apollos Technologies', 'Walshak Timothy Apollos', 'walshak1999@gmail.com', 'Elwazir Street,bosso\r\nVcm 105 Elwazir Estate', '07050737402', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-22 08:11:53', 1, '2026-01-22 07:11:53', '2026-01-22 07:11:53', NULL, 'zenith bank', '224559900', 'App Tech', 'cash', 0.00, NULL, NULL),
+(2, 'Prosoft systems', 'Anne J', 'ann@mail.com', 'Porosof office location', '0908877665', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-01-30 12:55:23', 1, '2026-01-30 11:55:23', '2026-01-30 11:55:23', NULL, 'Providos', '6767543266', 'Prosoft', 'net_7', 0.00, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -91433,7 +91933,8 @@ ALTER TABLE `account_sub_accounts`
   ADD KEY `account_sub_accounts_service_category_id_index` (`service_category_id`),
   ADD KEY `account_sub_accounts_supplier_id_index` (`supplier_id`),
   ADD KEY `account_sub_accounts_patient_id_index` (`patient_id`),
-  ADD KEY `account_sub_accounts_is_active_index` (`is_active`);
+  ADD KEY `account_sub_accounts_is_active_index` (`is_active`),
+  ADD KEY `account_sub_accounts_hmo_id_index` (`hmo_id`);
 
 --
 -- Indexes for table `admission_checklists`
@@ -91489,7 +91990,8 @@ ALTER TABLE `audits`
 -- Indexes for table `banks`
 --
 ALTER TABLE `banks`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `banks_account_id_foreign` (`account_id`);
 
 --
 -- Indexes for table `beds`
@@ -91708,7 +92210,10 @@ ALTER TABLE `hmo_remittances`
   ADD PRIMARY KEY (`id`),
   ADD KEY `hmo_remittances_created_by_foreign` (`created_by`),
   ADD KEY `hmo_remittances_hmo_id_payment_date_index` (`hmo_id`,`payment_date`),
-  ADD KEY `hmo_remittances_reference_number_index` (`reference_number`);
+  ADD KEY `hmo_remittances_reference_number_index` (`reference_number`),
+  ADD KEY `hmo_remittances_bank_id_foreign` (`bank_id`),
+  ADD KEY `hmo_remittances_account_id_foreign` (`account_id`),
+  ADD KEY `hmo_remittances_journal_entry_id_foreign` (`journal_entry_id`);
 
 --
 -- Indexes for table `hmo_schemes`
@@ -91850,7 +92355,16 @@ ALTER TABLE `journal_entry_lines`
   ADD PRIMARY KEY (`id`),
   ADD KEY `journal_entry_lines_account_id_index` (`account_id`),
   ADD KEY `journal_entry_lines_sub_account_id_index` (`sub_account_id`),
-  ADD KEY `journal_entry_lines_journal_entry_id_line_number_index` (`journal_entry_id`,`line_number`);
+  ADD KEY `journal_entry_lines_journal_entry_id_line_number_index` (`journal_entry_id`,`line_number`),
+  ADD KEY `jel_product_idx` (`product_id`),
+  ADD KEY `jel_service_idx` (`service_id`),
+  ADD KEY `jel_prod_cat_idx` (`product_category_id`),
+  ADD KEY `jel_svc_cat_idx` (`service_category_id`),
+  ADD KEY `jel_hmo_idx` (`hmo_id`),
+  ADD KEY `jel_supplier_idx` (`supplier_id`),
+  ADD KEY `jel_patient_idx` (`patient_id`),
+  ADD KEY `jel_dept_idx` (`department_id`),
+  ADD KEY `jel_category_idx` (`category`);
 
 --
 -- Indexes for table `lab_service_requests`
@@ -92054,7 +92568,8 @@ ALTER TABLE `payments`
   ADD KEY `payments_patient_id_foreign` (`patient_id`),
   ADD KEY `payments_user_id_foreign` (`user_id`),
   ADD KEY `payments_bank_id_foreign` (`bank_id`),
-  ADD KEY `payments_journal_entry_id_foreign` (`journal_entry_id`);
+  ADD KEY `payments_journal_entry_id_foreign` (`journal_entry_id`),
+  ADD KEY `payments_account_id_foreign` (`account_id`);
 
 --
 -- Indexes for table `payroll_batches`
@@ -92068,7 +92583,9 @@ ALTER TABLE `payroll_batches`
   ADD KEY `payroll_batches_rejected_by_foreign` (`rejected_by`),
   ADD KEY `payroll_batches_expense_id_foreign` (`expense_id`),
   ADD KEY `payroll_batches_paid_by_foreign` (`paid_by`),
-  ADD KEY `payroll_batches_journal_entry_id_foreign` (`journal_entry_id`);
+  ADD KEY `payroll_batches_journal_entry_id_foreign` (`journal_entry_id`),
+  ADD KEY `payroll_batches_bank_id_foreign` (`bank_id`),
+  ADD KEY `payroll_batches_account_id_foreign` (`account_id`);
 
 --
 -- Indexes for table `payroll_items`
@@ -92259,7 +92776,8 @@ ALTER TABLE `purchase_order_payments`
   ADD KEY `purchase_order_payments_expense_id_foreign` (`expense_id`),
   ADD KEY `purchase_order_payments_created_by_foreign` (`created_by`),
   ADD KEY `purchase_order_payments_purchase_order_id_payment_date_index` (`purchase_order_id`,`payment_date`),
-  ADD KEY `purchase_order_payments_journal_entry_id_foreign` (`journal_entry_id`);
+  ADD KEY `purchase_order_payments_journal_entry_id_foreign` (`journal_entry_id`),
+  ADD KEY `purchase_order_payments_account_id_foreign` (`account_id`);
 
 --
 -- Indexes for table `reason_for_encounters`
@@ -92280,6 +92798,17 @@ ALTER TABLE `roles`
 ALTER TABLE `role_has_permissions`
   ADD PRIMARY KEY (`permission_id`,`role_id`),
   ADD KEY `role_has_permissions_role_id_foreign` (`role_id`);
+
+--
+-- Indexes for table `route_metadata`
+--
+ALTER TABLE `route_metadata`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `route_metadata_route_name_unique` (`route_name`),
+  ADD KEY `route_metadata_title_index` (`title`),
+  ADD KEY `route_metadata_section_index` (`section`),
+  ADD KEY `route_metadata_hierarchy_path_index` (`hierarchy_path`);
+ALTER TABLE `route_metadata` ADD FULLTEXT KEY `route_metadata_title_description_hierarchy_path_fulltext` (`title`,`description`,`hierarchy_path`);
 
 --
 -- Indexes for table `sales`
@@ -92544,13 +93073,13 @@ ALTER TABLE `wards`
 -- AUTO_INCREMENT for table `accounting_periods`
 --
 ALTER TABLE `accounting_periods`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT for table `accounts`
 --
 ALTER TABLE `accounts`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=77;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=79;
 
 --
 -- AUTO_INCREMENT for table `account_classes`
@@ -92568,7 +93097,7 @@ ALTER TABLE `account_groups`
 -- AUTO_INCREMENT for table `account_sub_accounts`
 --
 ALTER TABLE `account_sub_accounts`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `admission_checklists`
@@ -92598,7 +93127,7 @@ ALTER TABLE `application_status`
 -- AUTO_INCREMENT for table `audits`
 --
 ALTER TABLE `audits`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=65;
 
 --
 -- AUTO_INCREMENT for table `banks`
@@ -92634,7 +93163,7 @@ ALTER TABLE `chat_conversation_archives`
 -- AUTO_INCREMENT for table `chat_messages`
 --
 ALTER TABLE `chat_messages`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=162;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=169;
 
 --
 -- AUTO_INCREMENT for table `chat_participants`
@@ -92718,7 +93247,7 @@ ALTER TABLE `encounters`
 -- AUTO_INCREMENT for table `expenses`
 --
 ALTER TABLE `expenses`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `failed_jobs`
@@ -92730,7 +93259,7 @@ ALTER TABLE `failed_jobs`
 -- AUTO_INCREMENT for table `fiscal_years`
 --
 ALTER TABLE `fiscal_years`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `hmos`
@@ -92820,19 +93349,19 @@ ALTER TABLE `jobs`
 -- AUTO_INCREMENT for table `journal_entries`
 --
 ALTER TABLE `journal_entries`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=224;
 
 --
 -- AUTO_INCREMENT for table `journal_entry_edits`
 --
 ALTER TABLE `journal_entry_edits`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `journal_entry_lines`
 --
 ALTER TABLE `journal_entry_lines`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=309;
 
 --
 -- AUTO_INCREMENT for table `lab_service_requests`
@@ -92892,7 +93421,7 @@ ALTER TABLE `messages`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=217;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=223;
 
 --
 -- AUTO_INCREMENT for table `misc_bills`
@@ -93066,19 +93595,19 @@ ALTER TABLE `promotions`
 -- AUTO_INCREMENT for table `purchase_orders`
 --
 ALTER TABLE `purchase_orders`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `purchase_order_items`
 --
 ALTER TABLE `purchase_order_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `purchase_order_payments`
 --
 ALTER TABLE `purchase_order_payments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `reason_for_encounters`
@@ -93091,6 +93620,12 @@ ALTER TABLE `reason_for_encounters`
 --
 ALTER TABLE `roles`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+
+--
+-- AUTO_INCREMENT for table `route_metadata`
+--
+ALTER TABLE `route_metadata`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=61;
 
 --
 -- AUTO_INCREMENT for table `sales`
@@ -93180,13 +93715,13 @@ ALTER TABLE `stocks`
 -- AUTO_INCREMENT for table `stock_batches`
 --
 ALTER TABLE `stock_batches`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT for table `stock_batch_transactions`
 --
 ALTER TABLE `stock_batch_transactions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT for table `stock_invoices`
@@ -93222,13 +93757,13 @@ ALTER TABLE `store_requisition_items`
 -- AUTO_INCREMENT for table `store_stocks`
 --
 ALTER TABLE `store_stocks`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=671;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=673;
 
 --
 -- AUTO_INCREMENT for table `suppliers`
 --
 ALTER TABLE `suppliers`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `threads`
@@ -93307,6 +93842,7 @@ ALTER TABLE `account_groups`
 --
 ALTER TABLE `account_sub_accounts`
   ADD CONSTRAINT `account_sub_accounts_account_id_foreign` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `account_sub_accounts_hmo_id_foreign` FOREIGN KEY (`hmo_id`) REFERENCES `hmos` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `account_sub_accounts_patient_id_foreign` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `account_sub_accounts_product_category_id_foreign` FOREIGN KEY (`product_category_id`) REFERENCES `product_categories` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `account_sub_accounts_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE SET NULL,
@@ -93337,6 +93873,12 @@ ALTER TABLE `admission_checklist_items`
 ALTER TABLE `application_status`
   ADD CONSTRAINT `application_status_procedure_category_id_foreign` FOREIGN KEY (`procedure_category_id`) REFERENCES `service_categories` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `application_status_registration_category_id_foreign` FOREIGN KEY (`registration_category_id`) REFERENCES `service_categories` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `banks`
+--
+ALTER TABLE `banks`
+  ADD CONSTRAINT `banks_account_id_foreign` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `beds`
@@ -93482,8 +94024,11 @@ ALTER TABLE `hmo_claims`
 -- Constraints for table `hmo_remittances`
 --
 ALTER TABLE `hmo_remittances`
+  ADD CONSTRAINT `hmo_remittances_account_id_foreign` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `hmo_remittances_bank_id_foreign` FOREIGN KEY (`bank_id`) REFERENCES `banks` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `hmo_remittances_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `hmo_remittances_hmo_id_foreign` FOREIGN KEY (`hmo_id`) REFERENCES `hmos` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `hmo_remittances_hmo_id_foreign` FOREIGN KEY (`hmo_id`) REFERENCES `hmos` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `hmo_remittances_journal_entry_id_foreign` FOREIGN KEY (`journal_entry_id`) REFERENCES `journal_entries` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `hmo_tariffs`
@@ -93584,8 +94129,16 @@ ALTER TABLE `journal_entry_edits`
 --
 ALTER TABLE `journal_entry_lines`
   ADD CONSTRAINT `journal_entry_lines_account_id_foreign` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`),
+  ADD CONSTRAINT `journal_entry_lines_department_id_foreign` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `journal_entry_lines_hmo_id_foreign` FOREIGN KEY (`hmo_id`) REFERENCES `hmos` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `journal_entry_lines_journal_entry_id_foreign` FOREIGN KEY (`journal_entry_id`) REFERENCES `journal_entries` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `journal_entry_lines_sub_account_id_foreign` FOREIGN KEY (`sub_account_id`) REFERENCES `account_sub_accounts` (`id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `journal_entry_lines_patient_id_foreign` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `journal_entry_lines_product_category_id_foreign` FOREIGN KEY (`product_category_id`) REFERENCES `product_categories` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `journal_entry_lines_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `journal_entry_lines_service_category_id_foreign` FOREIGN KEY (`service_category_id`) REFERENCES `service_categories` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `journal_entry_lines_service_id_foreign` FOREIGN KEY (`service_id`) REFERENCES `services` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `journal_entry_lines_sub_account_id_foreign` FOREIGN KEY (`sub_account_id`) REFERENCES `account_sub_accounts` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `journal_entry_lines_supplier_id_foreign` FOREIGN KEY (`supplier_id`) REFERENCES `suppliers` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `lab_service_requests`
@@ -93677,6 +94230,7 @@ ALTER TABLE `patient_profiles`
 -- Constraints for table `payments`
 --
 ALTER TABLE `payments`
+  ADD CONSTRAINT `payments_account_id_foreign` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `payments_bank_id_foreign` FOREIGN KEY (`bank_id`) REFERENCES `banks` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `payments_journal_entry_id_foreign` FOREIGN KEY (`journal_entry_id`) REFERENCES `journal_entries` (`id`) ON DELETE SET NULL;
 
@@ -93684,7 +94238,9 @@ ALTER TABLE `payments`
 -- Constraints for table `payroll_batches`
 --
 ALTER TABLE `payroll_batches`
+  ADD CONSTRAINT `payroll_batches_account_id_foreign` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `payroll_batches_approved_by_foreign` FOREIGN KEY (`approved_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `payroll_batches_bank_id_foreign` FOREIGN KEY (`bank_id`) REFERENCES `banks` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `payroll_batches_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`),
   ADD CONSTRAINT `payroll_batches_expense_id_foreign` FOREIGN KEY (`expense_id`) REFERENCES `expenses` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `payroll_batches_journal_entry_id_foreign` FOREIGN KEY (`journal_entry_id`) REFERENCES `journal_entries` (`id`) ON DELETE SET NULL,
@@ -93799,6 +94355,7 @@ ALTER TABLE `purchase_order_items`
 -- Constraints for table `purchase_order_payments`
 --
 ALTER TABLE `purchase_order_payments`
+  ADD CONSTRAINT `purchase_order_payments_account_id_foreign` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `purchase_order_payments_bank_id_foreign` FOREIGN KEY (`bank_id`) REFERENCES `banks` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `purchase_order_payments_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`),
   ADD CONSTRAINT `purchase_order_payments_expense_id_foreign` FOREIGN KEY (`expense_id`) REFERENCES `expenses` (`id`) ON DELETE SET NULL,

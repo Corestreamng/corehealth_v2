@@ -43,6 +43,15 @@ class AccountingPeriod extends Model implements Auditable
         'is_adjustment_period' => 'boolean',
     ];
 
+    // Accessors
+    /**
+     * Get the name attribute (alias for period_name).
+     */
+    public function getNameAttribute()
+    {
+        return $this->period_name;
+    }
+
     // Status constants
     const STATUS_OPEN = 'open';
     const STATUS_CLOSING = 'closing';

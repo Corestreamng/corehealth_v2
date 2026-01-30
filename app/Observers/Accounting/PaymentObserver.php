@@ -2,7 +2,8 @@
 
 namespace App\Observers\Accounting;
 
-use App\Models\payment;
+use App\Models\Payment;
+use App\Models\ProductOrServiceRequest;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\JournalEntry;
 use App\Services\Accounting\AccountingService;
@@ -10,28 +11,38 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Payment Observer
+ * Payment Observer (UPDATED with Metadata)
  *
- * Reference: Accounting System Plan §6.2 - Automated Journal Entries
+ * Reference: BANK_CASH_STATEMENT_IMPLEMENTATION.md - Part 7.3.2
  *
  * Creates journal entries when payments are received (cash/bank receipts).
  *
  * DEBIT:  Cash / Bank (Asset)
  * CREDIT: Accounts Receivable (Asset) or Revenue (Income)
+ *
+ * METADATA CAPTURED:
+ * - product_id: If payment linked to product (pharmacy)
+ * - service_id: If payment linked to service (consultation, lab, etc.)
+ * - product_category_id: Product's category
+ * - service_category_id: Service's category
+ * - hmo_id: If HMO patient payment
+ * - patient_id: Always populated
+ * - category: Payment type (consultation, pharmacy, lab, etc.)
  */
 class PaymentObserver
 {
     /**
      * Handle the Payment "created" event.
      */
-    public function created(payment $payment): void
+    public function created(Payment $payment): void
     {
         try {
             $this->createPaymentJournalEntry($payment);
         } catch (\Exception $e) {
-            Log::error('Failed to create journal entry for payment', [
+            Log::error('PaymentObserver: Failed to create journal entry', [
                 'payment_id' => $payment->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
         }
     }
@@ -39,7 +50,7 @@ class PaymentObserver
     /**
      * Create journal entry for payment receipt.
      */
-    protected function createPaymentJournalEntry(payment $payment): void
+    protected function createPaymentJournalEntry(Payment $payment): void
     {
         $accountingService = App::make(AccountingService::class);
 
@@ -51,13 +62,16 @@ class PaymentObserver
         $creditAccount = Account::where('code', $creditAccountCode)->first();
 
         if (!$debitAccount || !$creditAccount) {
-            Log::warning('Payment journal entry skipped - accounts not configured', [
+            Log::warning('PaymentObserver: Skipped - accounts not configured', [
                 'payment_id' => $payment->id,
                 'debit_code' => $debitAccountCode,
                 'credit_code' => $creditAccountCode
             ]);
             return;
         }
+
+        // Extract metadata from payment context
+        $metadata = $this->extractPaymentMetadata($payment);
 
         $description = $this->buildDescription($payment);
 
@@ -66,18 +80,34 @@ class PaymentObserver
                 'account_id' => $debitAccount->id,
                 'debit_amount' => $payment->total,
                 'credit_amount' => 0,
-                'description' => 'Payment received'
+                'description' => $this->buildLineDescription($payment, 'debit'),
+                // METADATA
+                'product_id' => $metadata['product_id'],
+                'service_id' => $metadata['service_id'],
+                'product_category_id' => $metadata['product_category_id'],
+                'service_category_id' => $metadata['service_category_id'],
+                'hmo_id' => $metadata['hmo_id'],
+                'patient_id' => $payment->patient_id,
+                'category' => $payment->payment_type ?? 'general',
             ],
             [
                 'account_id' => $creditAccount->id,
                 'debit_amount' => 0,
                 'credit_amount' => $payment->total,
-                'description' => 'Revenue recognized / AR reduced'
+                'description' => $this->buildLineDescription($payment, 'credit'),
+                // METADATA
+                'product_id' => $metadata['product_id'],
+                'service_id' => $metadata['service_id'],
+                'product_category_id' => $metadata['product_category_id'],
+                'service_category_id' => $metadata['service_category_id'],
+                'hmo_id' => $metadata['hmo_id'],
+                'patient_id' => $payment->patient_id,
+                'category' => $payment->payment_type ?? 'general',
             ]
         ];
 
         $entry = $accountingService->createAndPostAutomatedEntry(
-            payment::class,
+            Payment::class,
             $payment->id,
             $description,
             $lines
@@ -86,15 +116,68 @@ class PaymentObserver
         // Update payment with journal entry reference
         $payment->journal_entry_id = $entry->id;
         $payment->saveQuietly();
+
+        Log::info('PaymentObserver: Journal entry created', [
+            'payment_id' => $payment->id,
+            'journal_entry_id' => $entry->id,
+            'amount' => $payment->total,
+        ]);
+    }
+
+    /**
+     * Extract metadata from payment context
+     */
+    protected function extractPaymentMetadata(Payment $payment): array
+    {
+        $metadata = [
+            'product_id' => null,
+            'service_id' => null,
+            'product_category_id' => null,
+            'service_category_id' => null,
+            'hmo_id' => null,
+        ];
+
+        // If linked to encounter, get patient's HMO
+        if ($payment->encounter_id) {
+            $encounter = $payment->encounter;
+            if ($encounter && $encounter->patient && $encounter->patient->hmo_id) {
+                $metadata['hmo_id'] = $encounter->patient->hmo_id;
+            }
+        }
+
+        // If linked to product_or_service_requests (many payments are)
+        if ($payment->product_or_service_request_id) {
+            $psr = ProductOrServiceRequest::find($payment->product_or_service_request_id);
+            if ($psr) {
+                $metadata['product_id'] = $psr->product_id;
+                $metadata['service_id'] = $psr->service_id;
+                $metadata['product_category_id'] = $psr->product?->product_category_id ?? $psr->product?->category_id;
+                $metadata['service_category_id'] = $psr->service?->service_category_id ?? $psr->service?->category_id;
+                if ($psr->hmo_id) {
+                    $metadata['hmo_id'] = $psr->hmo_id;
+                }
+            }
+        }
+
+        // Try to get from related items if direct link not available
+        if (!$metadata['product_id'] && !$metadata['service_id']) {
+            $items = $payment->product_or_service_request()->first();
+            if ($items) {
+                $metadata['product_id'] = $items->product_id;
+                $metadata['service_id'] = $items->service_id;
+                $metadata['product_category_id'] = $items->product?->product_category_id ?? $items->product?->category_id;
+                $metadata['service_category_id'] = $items->service?->service_category_id ?? $items->service?->category_id;
+            }
+        }
+
+        return $metadata;
     }
 
     /**
      * Get debit account code based on payment method.
      */
-    protected function getDebitAccountCode(payment $payment): string
+    protected function getDebitAccountCode(Payment $payment): string
     {
-        // Map payment methods to account codes
-        // These codes should match your chart of accounts
         return match ($payment->payment_method) {
             'cash' => '1010', // Cash in Hand
             'bank_transfer', 'bank', 'transfer' => '1020', // Bank Account
@@ -107,10 +190,9 @@ class PaymentObserver
     /**
      * Get credit account code based on payment type.
      */
-    protected function getCreditAccountCode(payment $payment): string
+    protected function getCreditAccountCode(Payment $payment): string
     {
         // If this is an invoice payment, credit Accounts Receivable
-        // Otherwise credit the appropriate revenue account
         if ($payment->invoice_id) {
             return '1200'; // Accounts Receivable
         }
@@ -129,18 +211,67 @@ class PaymentObserver
     /**
      * Build description for journal entry.
      */
-    protected function buildDescription(payment $payment): string
+    protected function buildDescription(Payment $payment): string
     {
-        $parts = ['Payment received'];
+        $parts = [];
+
+        // Main payment info
+        $parts[] = "Payment Received: " . ($payment->payment_method ?? 'Unknown');
+        $parts[] = "Amount: " . number_format($payment->total, 2);
 
         if ($payment->reference_no) {
             $parts[] = "Ref: {$payment->reference_no}";
         }
 
         if ($payment->patient_id && $payment->patient) {
-            $parts[] = "Patient: {$payment->patient->fullname}";
+            $parts[] = "Patient: " . ($payment->patient->fullname ?? $payment->patient->full_name ?? 'Unknown') . " (ID: {$payment->patient_id})";
+        }
+
+        // Add items/services paid for
+        $items = $payment->product_or_service_request()->with(['product', 'service'])->get();
+        if ($items->isNotEmpty()) {
+            $itemsList = [];
+            foreach ($items as $item) {
+                if ($item->product) {
+                    $itemsList[] = ($item->product->name ?? 'Product') . " (Qty: " . ($item->qty ?? 1) . ", Amt: " . number_format($item->payable_amount ?? 0, 2) . ")";
+                } elseif ($item->service) {
+                    $itemsList[] = ($item->service->service_name ?? $item->service->name ?? 'Service') . " (Amt: " . number_format($item->payable_amount ?? 0, 2) . ")";
+                }
+            }
+
+            if (!empty($itemsList)) {
+                $itemsText = implode('; ', $itemsList);
+                if (strlen($itemsText) > 5000) {
+                    $itemsText = substr($itemsText, 0, 4997) . '...';
+                }
+                $parts[] = "Items: " . $itemsText;
+            }
+        }
+
+        if ($payment->invoice_id) {
+            $parts[] = "Invoice ID: {$payment->invoice_id}";
         }
 
         return implode(' | ', $parts);
+    }
+
+    /**
+     * Build description for journal entry line (max 255 chars).
+     */
+    protected function buildLineDescription(Payment $payment, string $side): string
+    {
+        if ($side === 'debit') {
+            $desc = "Payment via " . ($payment->payment_method ?? 'Unknown');
+            if ($payment->bank) {
+                $desc .= " - " . ($payment->bank->bank_name ?? $payment->bank->name ?? 'Bank');
+            }
+        } else {
+            $desc = $payment->invoice_id ? 'Reduce Accounts Receivable' : 'Revenue recognized';
+            if ($payment->patient) {
+                $desc .= " - " . ($payment->patient->fullname ?? $payment->patient->full_name ?? 'Patient');
+            }
+        }
+
+        return strlen($desc) > 255 ? substr($desc, 0, 252) . '...' : $desc;
     }
 }

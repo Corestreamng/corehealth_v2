@@ -4,6 +4,10 @@
 @section('subpage_name', 'Credit Notes')
 
 @section('content')
+@include('accounting.partials.breadcrumb', ['items' => [
+    ['label' => 'Credit Notes', 'url' => route('accounting.credit-notes.index'), 'icon' => 'mdi-note-text']
+]])
+
 <div class="container-fluid">
     {{-- Header with Title and Action Button --}}
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -74,9 +78,9 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="text-muted mb-2">Applied/Refunded</h6>
-                            <h3 class="mb-0 text-info">{{ number_format($stats['applied']) }}</h3>
-                            <small class="text-muted">₦{{ number_format($stats['applied_amount'], 2) }}</small>
+                            <h6 class="text-muted mb-2">Processed/Refunded</h6>
+                            <h3 class="mb-0 text-info">{{ number_format($stats['processed']) }}</h3>
+                            <small class="text-muted">₦{{ number_format($stats['processed_amount'], 2) }}</small>
                         </div>
                         <div class="stat-icon bg-info-light">
                             <i class="mdi mdi-cash-refund text-info"></i>
@@ -101,10 +105,11 @@
                     <label class="form-label">Status</label>
                     <select id="filterStatus" class="form-control">
                         <option value="">All Statuses</option>
-                        <option value="pending">Pending Approval</option>
+                        <option value="draft">Draft</option>
+                        <option value="pending_approval">Pending Approval</option>
                         <option value="approved">Approved</option>
-                        <option value="applied">Applied</option>
-                        <option value="rejected">Rejected</option>
+                        <option value="processed">Processed</option>
+                        <option value="void">Voided</option>
                     </select>
                 </div>
                 <div class="col-md-3 mb-3">
@@ -191,7 +196,7 @@
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title"><i class="mdi mdi-close-circle mr-2"></i>Reject Credit Note</h5>
-                <button type="button" class="close text-white" data-dismiss="modal">
+                <button type="button" class="close text-white" data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
             </div>
@@ -206,7 +211,7 @@
                     <input type="hidden" id="rejectCreditNoteId" name="id">
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-danger">
                         <i class="mdi mdi-close mr-1"></i>Reject
                     </button>
@@ -222,7 +227,7 @@
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title"><i class="mdi mdi-cash-refund mr-2"></i>Apply Refund</h5>
-                <button type="button" class="close text-white" data-dismiss="modal">
+                <button type="button" class="close text-white" data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
             </div>
@@ -250,7 +255,7 @@
                     <input type="hidden" id="applyCreditNoteId" name="id">
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">
                         <i class="mdi mdi-cash-refund mr-1"></i>Process Refund
                     </button>
@@ -341,7 +346,7 @@ $(document).ready(function() {
         placeholder: 'Search patient...',
         allowClear: true,
         ajax: {
-            url: '{{ route("admin.patient.search") }}',
+            url: '/api/patients/search',
             dataType: 'json',
             delay: 250,
             data: function(params) {
@@ -350,7 +355,7 @@ $(document).ready(function() {
             processResults: function(data) {
                 return {
                     results: data.map(function(item) {
-                        return { id: item.id, text: item.name + ' (' + item.mrn + ')' };
+                        return { id: item.id, text: item.fullname + ' (' + item.mrn + ')' };
                     })
                 };
             }

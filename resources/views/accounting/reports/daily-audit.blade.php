@@ -4,6 +4,11 @@
 @section('subpage_name', 'Daily Audit Trail')
 
 @section('content')
+@include('accounting.partials.breadcrumb', ['items' => [
+    ['label' => 'Reports', 'url' => route('accounting.reports.index'), 'icon' => 'mdi-file-chart'],
+    ['label' => 'Daily Audit', 'url' => '#', 'icon' => 'mdi-calendar-check']
+]])
+
 <div class="container-fluid">
     {{-- Header with Title --}}
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -15,8 +20,11 @@
             <a href="{{ route('accounting.reports.index') }}" class="btn btn-outline-secondary mr-2">
                 <i class="mdi mdi-arrow-left mr-1"></i> Back to Reports
             </a>
-            <a href="{{ route('accounting.reports.daily-audit', ['export' => 'pdf', 'date' => $date->format('Y-m-d')]) }}" class="btn btn-danger">
+            <a href="{{ route('accounting.reports.daily-audit', ['export' => 'pdf', 'date' => $date->format('Y-m-d')]) }}" class="btn btn-danger mr-1">
                 <i class="mdi mdi-file-pdf-box mr-1"></i> Export PDF
+            </a>
+            <a href="{{ route('accounting.reports.daily-audit', ['export' => 'excel', 'date' => $date->format('Y-m-d')]) }}" class="btn btn-success">
+                <i class="mdi mdi-file-excel mr-1"></i> Export Excel
             </a>
         </div>
     </div>
