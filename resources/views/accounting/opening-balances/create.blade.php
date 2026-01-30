@@ -4,6 +4,11 @@
 @section('subpage_name', 'Bulk Opening Balance Entry')
 
 @section('content')
+@include('accounting.partials.breadcrumb', ['items' => [
+    ['label' => 'Opening Balances', 'url' => route('accounting.opening-balances.index'), 'icon' => 'mdi-bank-transfer'],
+    ['label' => 'Set Balances', 'url' => '#', 'icon' => 'mdi-pencil']
+]])
+
 <div class="container-fluid">
     {{-- Header with Title --}}
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -197,7 +202,7 @@
                 <h5 class="modal-title">
                     <i class="mdi mdi-file-document-outline mr-2"></i>Opening Balance Journal Entry Preview
                 </h5>
-                <button type="button" class="close" data-dismiss="modal">
+                <button type="button" class="close" data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
             </div>
@@ -223,7 +228,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>

@@ -5,6 +5,11 @@
 @section('subpage_name', 'Trial Balance')
 
 @section('content')
+@include('accounting.partials.breadcrumb', ['items' => [
+    ['label' => 'Reports', 'url' => route('accounting.reports.index'), 'icon' => 'mdi-file-chart'],
+    ['label' => 'Trial Balance', 'url' => '#', 'icon' => 'mdi-scale-balance']
+]])
+
 <div class="container-fluid">
     {{-- Header --}}
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -17,8 +22,12 @@
                 <i class="mdi mdi-arrow-left mr-1"></i> Back to Reports
             </a>
             <a href="{{ route('accounting.reports.trial-balance', array_merge(request()->all(), ['export' => 'pdf'])) }}"
-               class="btn btn-danger">
+               class="btn btn-danger mr-1">
                 <i class="mdi mdi-file-pdf-box mr-1"></i> Export PDF
+            </a>
+            <a href="{{ route('accounting.reports.trial-balance', array_merge(request()->all(), ['export' => 'excel'])) }}"
+               class="btn btn-success">
+                <i class="mdi mdi-file-excel mr-1"></i> Export Excel
             </a>
         </div>
     </div>
@@ -64,6 +73,11 @@
             </h6>
         </div>
         <div class="card-body">
+            @php
+                // Data structure from ReportService:
+                // $report['accounts'] = [{account_id, account_code, account_name, class_name, group_name, debit, credit}]
+                // $report['total_debit'], $report['total_credit'], $report['is_balanced']
+            @endphp
             @if(isset($report['accounts']) && count($report['accounts']) > 0)
                 <div class="table-responsive">
                     <table class="table table-hover">
@@ -78,26 +92,26 @@
                         <tbody>
                             @php $currentClass = null; @endphp
                             @foreach($report['accounts'] as $account)
-                                @if($account['class_name'] !== $currentClass)
-                                    @php $currentClass = $account['class_name']; @endphp
+                                @if(($account['class_name'] ?? '') !== $currentClass)
+                                    @php $currentClass = $account['class_name'] ?? ''; @endphp
                                     <tr class="table-secondary">
                                         <td colspan="4"><strong>{{ $currentClass }}</strong></td>
                                     </tr>
                                 @endif
                                 <tr>
-                                    <td><code>{{ $account['code'] }}</code></td>
+                                    <td><code>{{ $account['account_code'] ?? $account['code'] ?? '' }}</code></td>
                                     <td>
-                                        <a href="{{ route('accounting.chart-of-accounts.show', $account['id']) }}">
-                                            {{ $account['name'] }}
+                                        <a href="{{ route('accounting.chart-of-accounts.show', $account['account_id'] ?? $account['id'] ?? 0) }}">
+                                            {{ $account['account_name'] ?? $account['name'] ?? '' }}
                                         </a>
                                     </td>
                                     <td class="text-end">
-                                        @if($account['debit'] > 0)
+                                        @if(($account['debit'] ?? 0) > 0)
                                             ₦{{ number_format($account['debit'], 2) }}
                                         @endif
                                     </td>
                                     <td class="text-end">
-                                        @if($account['credit'] > 0)
+                                        @if(($account['credit'] ?? 0) > 0)
                                             ₦{{ number_format($account['credit'], 2) }}
                                         @endif
                                     </td>
@@ -107,8 +121,8 @@
                         <tfoot class="table-dark">
                             <tr>
                                 <td colspan="2"><strong>TOTAL</strong></td>
-                                <td class="text-end"><strong>₦{{ number_format($report['total_debits'], 2) }}</strong></td>
-                                <td class="text-end"><strong>₦{{ number_format($report['total_credits'], 2) }}</strong></td>
+                                <td class="text-end"><strong>₦{{ number_format($report['total_debit'] ?? $report['total_debits'] ?? 0, 2) }}</strong></td>
+                                <td class="text-end"><strong>₦{{ number_format($report['total_credit'] ?? $report['total_credits'] ?? 0, 2) }}</strong></td>
                             </tr>
                         </tfoot>
                     </table>
@@ -116,7 +130,11 @@
 
                 <!-- Balance Check -->
                 <div class="mt-4">
-                    @if(abs($report['total_debits'] - $report['total_credits']) < 0.01)
+                    @php
+                        $totalDebit = $report['total_debit'] ?? $report['total_debits'] ?? 0;
+                        $totalCredit = $report['total_credit'] ?? $report['total_credits'] ?? 0;
+                    @endphp
+                    @if(abs($totalDebit - $totalCredit) < 0.01)
                         <div class="alert alert-success">
                             <i class="fas fa-check-circle me-2"></i>
                             <strong>Balanced!</strong> Total debits equal total credits.
@@ -125,7 +143,7 @@
                         <div class="alert alert-danger">
                             <i class="fas fa-exclamation-triangle me-2"></i>
                             <strong>Out of Balance!</strong>
-                            Difference: ₦{{ number_format(abs($report['total_debits'] - $report['total_credits']), 2) }}
+                            Difference: ₦{{ number_format(abs($totalDebit - $totalCredit), 2) }}
                         </div>
                     @endif
                 </div>

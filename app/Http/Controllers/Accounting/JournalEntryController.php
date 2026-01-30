@@ -408,14 +408,20 @@ class JournalEntryController extends Controller
             // Delete old lines
             $entry->lines()->delete();
 
-            // Create new lines
+            // Create new lines using AccountingService for proper column mapping
+            $accountingService = app(AccountingService::class);
+            $lineNumber = 1;
             foreach ($request->lines as $line) {
-                if ($line['debit_amount'] > 0 || $line['credit_amount'] > 0) {
-                    $entry->lines()->create([
+                $debit = floatval($line['debit_amount'] ?? 0);
+                $credit = floatval($line['credit_amount'] ?? 0);
+                if ($debit > 0 || $credit > 0) {
+                    JournalEntryLine::create([
+                        'journal_entry_id' => $entry->id,
+                        'line_number' => $lineNumber++,
                         'account_id' => $line['account_id'],
-                        'debit_amount' => $line['debit_amount'] ?: 0,
-                        'credit_amount' => $line['credit_amount'] ?: 0,
-                        'description' => $line['description'] ?? null,
+                        'debit' => $debit,
+                        'credit' => $credit,
+                        'narration' => $line['description'] ?? null,
                     ]);
                 }
             }

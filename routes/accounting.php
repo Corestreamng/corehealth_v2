@@ -106,6 +106,7 @@ Route::prefix('accounting')->name('accounting.')->middleware(['auth', 'verified'
         Route::get('/cash-flow', [ReportController::class, 'cashFlow'])->name('cash-flow');
         Route::get('/general-ledger', [ReportController::class, 'generalLedger'])->name('general-ledger');
         Route::get('/account-activity', [ReportController::class, 'accountActivity'])->name('account-activity');
+        Route::get('/bank-statement', [ReportController::class, 'bankStatement'])->name('bank-statement');
         Route::get('/aged-receivables', [ReportController::class, 'agedReceivables'])->name('aged-receivables');
         Route::get('/aged-payables', [ReportController::class, 'agedPayables'])->name('aged-payables');
         Route::get('/daily-audit', [ReportController::class, 'dailyAudit'])->name('daily-audit');
@@ -130,12 +131,13 @@ Route::prefix('accounting')->name('accounting.')->middleware(['auth', 'verified'
         Route::get('/{id}', [CreditNoteController::class, 'show'])->name('show');
         Route::get('/{id}/edit', [CreditNoteController::class, 'edit'])->name('edit');
         Route::put('/{id}', [CreditNoteController::class, 'update'])->name('update');
+        Route::post('/{id}/submit', [CreditNoteController::class, 'submit'])->name('submit');
         Route::post('/{id}/approve', [CreditNoteController::class, 'approve'])->name('approve');
-        Route::post('/{id}/reject', [CreditNoteController::class, 'reject'])->name('reject');
-        Route::post('/{id}/apply', [CreditNoteController::class, 'apply'])->name('apply');
+        Route::post('/{id}/void', [CreditNoteController::class, 'void'])->name('void');
+        Route::post('/{id}/process', [CreditNoteController::class, 'process'])->name('process');
 
         // AJAX
-        Route::get('/api/patient/{patientId}/invoices', [CreditNoteController::class, 'getPatientInvoices'])->name('api.patient-invoices');
+        Route::get('/api/patient/{patientId}/payments', [CreditNoteController::class, 'getPatientPayments'])->name('api.patient-payments');
     });
 
 });
