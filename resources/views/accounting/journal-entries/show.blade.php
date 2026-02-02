@@ -101,7 +101,7 @@
     <div class="row">
         <!-- Entry Details -->
         <div class="col-lg-4 mb-4">
-            <div class="card shadow">
+            <div modern shadow">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">Entry Details</h6>
                 </div>
@@ -163,7 +163,7 @@
             </div>
 
             <!-- Workflow Info -->
-            <div class="card shadow mt-4">
+            <div modern shadow mt-4">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">Workflow</h6>
                 </div>
@@ -208,7 +208,7 @@
             </div>
 
             @if($entry->reversalEntry || $entry->originalEntry)
-                <div class="card shadow mt-4">
+                <div modern shadow mt-4">
                     <div class="card-header py-3">
                         <h6 class="m-0 font-weight-bold text-primary">Related Entries</h6>
                     </div>
@@ -236,7 +236,7 @@
 
         <!-- Entry Lines -->
         <div class="col-lg-8 mb-4">
-            <div class="card shadow">
+            <div modern shadow">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">Entry Lines</h6>
                 </div>
@@ -291,7 +291,7 @@
 
             <!-- Edit Requests -->
             @if($entry->edits && $entry->edits->count() > 0)
-                <div class="card shadow mt-4">
+                <div modern shadow mt-4">
                     <div class="card-header py-3 d-flex justify-content-between align-items-center">
                         <h6 class="m-0 font-weight-bold text-primary">
                             <i class="mdi mdi-file-document-edit mr-2"></i>Edit Requests
@@ -361,7 +361,7 @@
 
                                             <div class="row">
                                                 <div class="col-md-6 mb-2">
-                                                    <div class="card border-success h-100">
+                                                    <div modern border-success h-100">
                                                         <div class="card-body p-3">
                                                             <h6 class="text-success"><i class="mdi mdi-check-circle mr-1"></i> Approve Request</h6>
                                                             <p class="small text-muted mb-2">
@@ -379,7 +379,7 @@
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6 mb-2">
-                                                    <div class="card border-danger h-100">
+                                                    <div modern border-danger h-100">
                                                         <div class="card-body p-3">
                                                             <h6 class="text-danger"><i class="mdi mdi-close-circle mr-1"></i> Reject Request</h6>
                                                             <p class="small text-muted mb-2">
@@ -548,7 +548,7 @@
                         </ul>
                     </div>
 
-                    <div class="card mb-3">
+                    <div modern mb-3">
                         <div class="card-header bg-light py-2">
                             <strong>Entry Being Reversed</strong>
                         </div>
@@ -622,7 +622,7 @@
                         </ol>
                     </div>
 
-                    <div class="card mb-3">
+                    <div modern mb-3">
                         <div class="card-header bg-light py-2">
                             <strong>Current Entry Summary</strong>
                         </div>

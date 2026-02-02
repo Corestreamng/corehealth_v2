@@ -216,7 +216,7 @@
     </div>
 
     <!-- Assets Table -->
-    <div class="card">
+    <div class="card-modern">
         <div class="card-body">
             <table id="assets-table" class="table table-striped table-bordered w-100">
                 <thead>
@@ -239,7 +239,7 @@
     <!-- Category Breakdown -->
     <div class="row mt-4">
         <div class="col-md-6">
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-header">
                     <h6 class="mb-0"><i class="mdi mdi-chart-pie mr-2"></i>Assets by Category</h6>
                 </div>
@@ -259,7 +259,7 @@
             </div>
         </div>
         <div class="col-md-6">
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-header">
                     <h6 class="mb-0"><i class="mdi mdi-counter mr-2"></i>Status Summary</h6>
                 </div>
@@ -295,7 +295,7 @@
         <div class="modal-content">
             <div class="modal-header bg-warning text-dark">
                 <h5 class="modal-title"><i class="mdi mdi-chart-bell-curve mr-2"></i>Run Monthly Depreciation</h5>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
             </div>
             <form id="depreciation-form">
                 <div class="modal-body">
@@ -323,7 +323,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-warning">Run Depreciation</button>
                 </div>
             </form>
@@ -337,7 +337,7 @@
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title"><i class="mdi mdi-delete mr-2"></i>Dispose Asset</h5>
-                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                <button type="button" class="close text-white"  data-bs-dismiss="modal">&times;</button>
             </div>
             <form id="dispose-form">
                 <input type="hidden" id="dispose-asset-id">
@@ -403,7 +403,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-danger">Dispose Asset</button>
                 </div>
             </form>

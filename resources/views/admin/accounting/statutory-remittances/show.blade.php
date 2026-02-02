@@ -29,7 +29,7 @@
     <div class="row">
         <div class="col-lg-8">
             <!-- Main Details Card -->
-            <div class="card mb-4">
+            <div class="card-modern mb-4">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="mdi mdi-file-document mr-2"></i>Remittance Details</h5>
                     <span class="badge badge-{{ $remittance->status_badge }} badge-lg px-3 py-2">
@@ -113,7 +113,7 @@
             </div>
 
             <!-- Payee Details -->
-            <div class="card mb-4">
+            <div class="card-modern mb-4">
                 <div class="card-header bg-white">
                     <h5 class="mb-0"><i class="mdi mdi-office-building mr-2"></i>Payee Information</h5>
                 </div>
@@ -145,7 +145,7 @@
 
             <!-- Payment Details (if paid) -->
             @if($remittance->status === 'paid')
-            <div class="card mb-4">
+            <div class="card-modern mb-4">
                 <div class="card-header bg-success text-white">
                     <h5 class="mb-0"><i class="mdi mdi-cash-check mr-2"></i>Payment Details</h5>
                 </div>
@@ -184,7 +184,7 @@
 
             <!-- Notes -->
             @if($remittance->notes)
-            <div class="card mb-4">
+            <div class="card-modern mb-4">
                 <div class="card-header bg-white">
                     <h5 class="mb-0"><i class="mdi mdi-note-text mr-2"></i>Notes</h5>
                 </div>
@@ -196,7 +196,7 @@
 
             <!-- Void Info -->
             @if($remittance->status === 'voided')
-            <div class="card mb-4 border-danger">
+            <div class="card-modern mb-4 border-danger">
                 <div class="card-header bg-danger text-white">
                     <h5 class="mb-0"><i class="mdi mdi-cancel mr-2"></i>Void Information</h5>
                 </div>
@@ -222,7 +222,7 @@
 
         <div class="col-lg-4">
             <!-- Actions Card -->
-            <div class="card mb-4">
+            <div class="card-modern mb-4">
                 <div class="card-header bg-white">
                     <h6 class="mb-0"><i class="mdi mdi-cog mr-2"></i>Actions</h6>
                 </div>
@@ -260,7 +260,7 @@
             </div>
 
             <!-- Audit Trail -->
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-header bg-white">
                     <h6 class="mb-0"><i class="mdi mdi-history mr-2"></i>Audit Trail</h6>
                 </div>
@@ -306,7 +306,7 @@
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title"><i class="mdi mdi-cash-check mr-2"></i>Record Payment</h5>
-                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                <button type="button" class="close text-white"  data-bs-dismiss="modal">&times;</button>
             </div>
             <form action="{{ route('accounting.statutory-remittances.pay', $remittance) }}" method="POST">
                 @csrf
@@ -342,7 +342,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">
                         <i class="mdi mdi-check mr-1"></i> Confirm Payment
                     </button>
@@ -360,7 +360,7 @@
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title"><i class="mdi mdi-cancel mr-2"></i>Void Remittance</h5>
-                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                <button type="button" class="close text-white"  data-bs-dismiss="modal">&times;</button>
             </div>
             <form action="{{ route('accounting.statutory-remittances.void', $remittance) }}" method="POST">
                 @csrf
@@ -375,7 +375,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-danger">
                         <i class="mdi mdi-cancel mr-1"></i> Void Remittance
                     </button>

@@ -13,7 +13,7 @@
 <div id="content-wrapper">
     <div class="container-fluid">
         <!-- Report Header -->
-        <div class="card card-modern mb-4">
+        <div class="card-modern mb-4">
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="mdi mdi-file-chart mr-2"></i>IFRS 16 Lease Disclosure Report</h5>
                 <div>
@@ -36,7 +36,7 @@
         <!-- Balance Sheet Impact -->
         <div class="row mb-4">
             <div class="col-lg-6">
-                <div class="card card-modern h-100">
+                <div class="card-modern h-100">
                     <div class="card-header bg-info text-white">
                         <h6 class="mb-0"><i class="mdi mdi-office-building mr-2"></i>Right-of-Use Assets</h6>
                     </div>
@@ -59,7 +59,7 @@
                 </div>
             </div>
             <div class="col-lg-6">
-                <div class="card card-modern h-100">
+                <div class="card-modern h-100">
                     <div class="card-header bg-warning">
                         <h6 class="mb-0"><i class="mdi mdi-scale-balance mr-2"></i>Lease Liabilities</h6>
                     </div>
@@ -84,7 +84,7 @@
         </div>
 
         <!-- Maturity Analysis -->
-        <div class="card card-modern mb-4">
+        <div class="card-modern mb-4">
             <div class="card-header">
                 <h6 class="mb-0"><i class="mdi mdi-calendar-range mr-2"></i>Maturity Analysis of Lease Liabilities</h6>
             </div>
@@ -119,7 +119,7 @@
                         </table>
                     </div>
                     <div class="col-md-4">
-                        <div class="card bg-light">
+                        <div class="card-modern bg-light">
                             <div class="card-body">
                                 <h6 class="text-muted">Current/Non-Current Split</h6>
                                 <hr>
@@ -139,7 +139,7 @@
         </div>
 
         <!-- By Lease Type -->
-        <div class="card card-modern mb-4">
+        <div class="card-modern mb-4">
             <div class="card-header">
                 <h6 class="mb-0"><i class="mdi mdi-chart-pie mr-2"></i>Analysis by Lease Type</h6>
             </div>
@@ -192,7 +192,7 @@
         </div>
 
         <!-- Active Leases Detail -->
-        <div class="card card-modern mb-4">
+        <div class="card-modern mb-4">
             <div class="card-header">
                 <h6 class="mb-0"><i class="mdi mdi-format-list-bulleted mr-2"></i>Active Leases Detail</h6>
             </div>
@@ -247,7 +247,7 @@
         </div>
 
         <!-- Accounting Policies Note -->
-        <div class="card card-modern">
+        <div class="card-modern card-modern">
             <div class="card-header">
                 <h6 class="mb-0"><i class="mdi mdi-book-open mr-2"></i>Accounting Policy Note</h6>
             </div>

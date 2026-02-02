@@ -18,7 +18,7 @@
                 <!-- Main Form -->
                 <div class="col-lg-8">
                     <!-- Step 1: Lease Details -->
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-header bg-primary text-white">
                             <h5 class="mb-0"><i class="mdi mdi-numeric-1-circle mr-2"></i>Lease Details</h5>
                         </div>
@@ -99,7 +99,7 @@
                     </div>
 
                     <!-- Step 2: Payment Terms -->
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-header bg-info text-white">
                             <h5 class="mb-0"><i class="mdi mdi-numeric-2-circle mr-2"></i>Payment Terms</h5>
                         </div>
@@ -191,7 +191,7 @@
                     </div>
 
                     <!-- Step 3: Options -->
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-header bg-warning">
                             <h5 class="mb-0"><i class="mdi mdi-numeric-3-circle mr-2"></i>Lease Options</h5>
                         </div>
@@ -289,7 +289,7 @@
                     </div>
 
                     <!-- Accounting Mapping -->
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-header bg-secondary text-white">
                             <h5 class="mb-0"><i class="mdi mdi-numeric-4-circle mr-2"></i>Accounting Mapping</h5>
                         </div>
@@ -350,7 +350,7 @@
                     </div>
 
                     <!-- Notes -->
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-body">
                             <div class="form-group mb-0">
                                 <label for="notes">Additional Notes</label>
@@ -363,7 +363,7 @@
 
                 <!-- Sidebar Calculator -->
                 <div class="col-lg-4">
-                    <div class="card card-modern sticky-top" style="top: 80px;">
+                    <div class="card-modern sticky-top" style="top: 80px;">
                         <div class="card-header bg-dark text-white">
                             <h5 class="mb-0"><i class="mdi mdi-calculator mr-2"></i>IFRS 16 Calculator</h5>
                         </div>

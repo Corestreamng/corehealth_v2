@@ -23,7 +23,7 @@
                 </div>
 
                 <!-- Current Lease Summary -->
-                <div class="card card-modern mb-4">
+                <div class="card-modern mb-4">
                     <div class="card-header bg-secondary text-white">
                         <h5 class="mb-0"><i class="mdi mdi-file-document mr-2"></i>Current Lease Terms</h5>
                     </div>
@@ -61,7 +61,7 @@
                 <form action="{{ route('accounting.leases.modification.store', $lease->id) }}" method="POST" id="modification-form">
                     @csrf
 
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-header bg-warning">
                             <h5 class="mb-0"><i class="mdi mdi-file-edit mr-2"></i>Modification Details</h5>
                         </div>
@@ -98,7 +98,7 @@
                     </div>
 
                     <!-- Term Modification -->
-                    <div class="card card-modern mb-4" id="term-modification-card">
+                    <div class="card-modern mb-4" id="term-modification-card">
                         <div class="card-header">
                             <h5 class="mb-0"><i class="mdi mdi-calendar-range mr-2"></i>New Term Details</h5>
                         </div>
@@ -125,7 +125,7 @@
                     </div>
 
                     <!-- Payment Modification -->
-                    <div class="card card-modern mb-4" id="payment-modification-card">
+                    <div class="card-modern mb-4" id="payment-modification-card">
                         <div class="card-header">
                             <h5 class="mb-0"><i class="mdi mdi-cash mr-2"></i>New Payment Terms</h5>
                         </div>
@@ -151,7 +151,7 @@
                     </div>
 
                     <!-- Impact Preview -->
-                    <div class="card card-modern mb-4" id="impact-preview">
+                    <div class="card-modern mb-4" id="impact-preview">
                         <div class="card-header bg-info text-white">
                             <h5 class="mb-0"><i class="mdi mdi-calculator mr-2"></i>Estimated Impact</h5>
                         </div>
@@ -182,7 +182,7 @@
                     </div>
 
                     <!-- Notes -->
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-body">
                             <div class="form-group mb-0">
                                 <label for="notes">Additional Notes</label>

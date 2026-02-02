@@ -26,7 +26,7 @@
     <!-- Stats Cards -->
     <div class="row mb-4">
         <div class="col-md-4 col-sm-6 mb-3">
-            <div class="card border-left border-warning" style="border-left-width: 4px !important;">
+            <div class="card-modern border-left border-warning" style="border-left-width: 4px !important;">
                 <div class="card-body py-3">
                     <h6 class="text-muted mb-1"><i class="mdi mdi-clock-outline mr-1"></i> Pending Remittance</h6>
                     <h4 class="mb-0 text-warning">₦{{ number_format($stats['total_pending'] ?? 0, 2) }}</h4>
@@ -35,7 +35,7 @@
             </div>
         </div>
         <div class="col-md-4 col-sm-6 mb-3">
-            <div class="card border-left border-success" style="border-left-width: 4px !important;">
+            <div class="card-modern border-left border-success" style="border-left-width: 4px !important;">
                 <div class="card-body py-3">
                     <h6 class="text-muted mb-1"><i class="mdi mdi-check-circle mr-1"></i> Paid This Month</h6>
                     <h4 class="mb-0 text-success">₦{{ number_format($stats['total_paid_this_month'] ?? 0, 2) }}</h4>
@@ -44,7 +44,7 @@
             </div>
         </div>
         <div class="col-md-4 col-sm-6 mb-3">
-            <div class="card border-left border-danger" style="border-left-width: 4px !important;">
+            <div class="card-modern border-left border-danger" style="border-left-width: 4px !important;">
                 <div class="card-body py-3">
                     <h6 class="text-muted mb-1"><i class="mdi mdi-alert-circle mr-1"></i> Overdue</h6>
                     <h4 class="mb-0 text-danger">{{ $stats['overdue_count'] ?? 0 }}</h4>
@@ -55,7 +55,7 @@
     </div>
 
     <!-- Filters -->
-    <div class="card mb-4">
+    <div class="card-modern mb-4">
         <div class="card-body py-3">
             <form method="GET" action="{{ route('accounting.statutory-remittances.index') }}" class="row g-3 align-items-end">
                 <div class="col-md-3">
@@ -98,7 +98,7 @@
     </div>
 
     <!-- Remittances Table -->
-    <div class="card">
+    <div class="card-modern">
         <div class="card-header bg-white d-flex justify-content-between align-items-center">
             <h5 class="mb-0"><i class="mdi mdi-format-list-bulleted mr-2"></i>Remittances</h5>
             <span class="badge badge-secondary">{{ $remittances->total() }} total</span>

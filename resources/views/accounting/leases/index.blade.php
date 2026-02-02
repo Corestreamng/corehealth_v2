@@ -14,7 +14,7 @@
         <!-- Stats Row -->
         <div class="row mb-4">
             <div class="col-md-3 col-sm-6 mb-3">
-                <div class="card card-modern h-100">
+                <div class="card-modern h-100">
                     <div class="card-body d-flex align-items-center">
                         <div class="icon-box bg-primary rounded-circle p-3 mr-3">
                             <i class="mdi mdi-file-document-multiple text-white mdi-24px"></i>
@@ -27,7 +27,7 @@
                 </div>
             </div>
             <div class="col-md-3 col-sm-6 mb-3">
-                <div class="card card-modern h-100">
+                <div class="card-modern h-100">
                     <div class="card-body d-flex align-items-center">
                         <div class="icon-box bg-info rounded-circle p-3 mr-3">
                             <i class="mdi mdi-office-building text-white mdi-24px"></i>
@@ -40,7 +40,7 @@
                 </div>
             </div>
             <div class="col-md-3 col-sm-6 mb-3">
-                <div class="card card-modern h-100">
+                <div class="card-modern h-100">
                     <div class="card-body d-flex align-items-center">
                         <div class="icon-box bg-warning rounded-circle p-3 mr-3">
                             <i class="mdi mdi-scale-balance text-white mdi-24px"></i>
@@ -53,7 +53,7 @@
                 </div>
             </div>
             <div class="col-md-3 col-sm-6 mb-3">
-                <div class="card card-modern h-100">
+                <div class="card-modern h-100">
                     <div class="card-body d-flex align-items-center">
                         <div class="icon-box bg-secondary rounded-circle p-3 mr-3">
                             <i class="mdi mdi-chart-line-variant text-white mdi-24px"></i>
@@ -70,7 +70,7 @@
         <!-- Secondary Stats Row -->
         <div class="row mb-4">
             <div class="col-md-4 col-sm-6 mb-3">
-                <div class="card card-modern h-100 border-left-primary">
+                <div class="card-modern h-100 border-left-primary">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -83,7 +83,7 @@
                 </div>
             </div>
             <div class="col-md-4 col-sm-6 mb-3">
-                <div class="card card-modern h-100 border-left-danger">
+                <div class="card-modern h-100 border-left-danger">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -96,7 +96,7 @@
                 </div>
             </div>
             <div class="col-md-4 col-sm-6 mb-3">
-                <div class="card card-modern h-100 border-left-warning">
+                <div class="card-modern h-100 border-left-warning">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -111,7 +111,7 @@
         </div>
 
         <!-- Leases Table -->
-        <div class="card card-modern">
+        <div class="card-modern card-modern">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="mdi mdi-file-document-edit mr-2"></i>Lease Agreements</h5>
                 <div>
@@ -204,7 +204,7 @@
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="mdi mdi-play-circle mr-2"></i>Run ROU Depreciation</h5>
-                    <button type="button" class="close" data-dismiss="modal">
+                    <button type="button" class="close"  data-bs-dismiss="modal">
                         <span>&times;</span>
                     </button>
                 </div>
@@ -219,7 +219,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">
                         <i class="mdi mdi-play"></i> Run Depreciation
                     </button>

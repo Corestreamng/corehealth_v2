@@ -253,7 +253,7 @@
                     <!-- Left Column: Info & Timeline -->
                     <div class="col-lg-5">
                         <!-- Employee Summary Card -->
-                        <div class="card mb-3" style="border-radius: 10px; border: 1px solid #e9ecef;">
+                        <div class="card-modern mb-3" style="border-radius: 10px; border: 1px solid #e9ecef;">
                             <div class="card-header bg-light" style="border-radius: 10px 10px 0 0; padding: 0.75rem 1rem;">
                                 <h6 class="mb-0" style="font-weight: 600;">
                                     <i class="mdi mdi-account mr-1"></i> Employee Information
@@ -269,7 +269,7 @@
                         </div>
 
                         <!-- Exit Process Timeline -->
-                        <div class="card" style="border-radius: 10px; border: 1px solid #e9ecef;">
+                        <div class="card-modern" style="border-radius: 10px; border: 1px solid #e9ecef;">
                             <div class="card-header bg-light" style="border-radius: 10px 10px 0 0; padding: 0.75rem 1rem;">
                                 <h6 class="mb-0" style="font-weight: 600;">
                                     <i class="mdi mdi-timeline-text-outline mr-1"></i> Exit Process Timeline
@@ -286,7 +286,7 @@
                     <!-- Right Column: Details -->
                     <div class="col-lg-7">
                         <!-- Termination Type Card -->
-                        <div id="terminationTypeCard" class="card mb-3" style="border-radius: 10px; border: 1px solid #e9ecef;">
+                        <div id="terminationTypeCard" class="card-modern mb-3" style="border-radius: 10px; border: 1px solid #e9ecef;">
                             <div class="card-header" id="terminationTypeHeader" style="border-radius: 10px 10px 0 0; padding: 0.75rem 1rem;">
                                 <h6 class="mb-0" style="font-weight: 600;">
                                     <i class="mdi mdi-file-document-outline mr-1"></i> Termination Details
@@ -303,7 +303,7 @@
                         </div>
 
                         <!-- Exit Interview Card -->
-                        <div id="exitInterviewCard" class="card mb-3" style="border-radius: 10px; border: 1px solid #e9ecef; display: none;">
+                        <div id="exitInterviewCard" class="card-modern mb-3" style="border-radius: 10px; border: 1px solid #e9ecef; display: none;">
                             <div class="card-header bg-info text-white" style="border-radius: 10px 10px 0 0; padding: 0.75rem 1rem;">
                                 <h6 class="mb-0" style="font-weight: 600;">
                                     <i class="mdi mdi-comment-text-outline mr-1"></i> Exit Interview Notes
@@ -315,7 +315,7 @@
                         </div>
 
                         <!-- Severance Card -->
-                        <div id="severanceCard" class="card mb-3" style="border-radius: 10px; border: 1px solid #e9ecef; display: none;">
+                        <div id="severanceCard" class="card-modern mb-3" style="border-radius: 10px; border: 1px solid #e9ecef; display: none;">
                             <div class="card-header bg-success text-white" style="border-radius: 10px 10px 0 0; padding: 0.75rem 1rem;">
                                 <h6 class="mb-0" style="font-weight: 600;">
                                     <i class="mdi mdi-cash mr-1"></i> Settlement Information
@@ -336,7 +336,7 @@
                         </div>
 
                         <!-- Related Query Card -->
-                        <div id="relatedQueryCard" class="card" style="border-radius: 10px; border: 1px solid #e9ecef; display: none;">
+                        <div id="relatedQueryCard" class="card-modern" style="border-radius: 10px; border: 1px solid #e9ecef; display: none;">
                             <div class="card-header bg-warning text-dark" style="border-radius: 10px 10px 0 0; padding: 0.75rem 1rem;">
                                 <h6 class="mb-0" style="font-weight: 600;">
                                     <i class="mdi mdi-link mr-1"></i> Related Disciplinary Query

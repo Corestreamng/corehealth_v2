@@ -99,7 +99,7 @@
                         </button>
                     </div>
                 </div>
-                
+
                 <!-- Weekday Headers -->
                 <div class="calendar-weekday-header">
                     <div class="weekday-name">Sun</div>
@@ -110,13 +110,13 @@
                     <div class="weekday-name">Fri</div>
                     <div class="weekday-name">Sat</div>
                 </div>
-                
+
                 <!-- Calendar Grid -->
                 <div class="leave-calendar-grid" id="calendarGrid">
                     <!-- Days will be rendered by JavaScript -->
                 </div>
             </div>
-            
+
             <!-- Legend -->
             <div class="legend-container mt-3">
                 <strong class="mr-3" style="font-size: 0.8rem;">Leave Types:</strong>
@@ -156,7 +156,7 @@
             </div>
 
             <!-- Leave Balances -->
-            <div class="card" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-modern" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div class="card-header bg-white" style="border-radius: 12px 12px 0 0; border-bottom: 1px solid #e9ecef;">
                     <h6 class="mb-0" style="font-weight: 600;">
                         <i class="mdi mdi-chart-donut mr-2" style="color: var(--primary-color);"></i>Leave Balances
@@ -207,13 +207,13 @@
                         <!-- Progress Bar (shows remaining/available as green portion) -->
                         <div class="mb-1">
                             <div class="progress" style="height: 8px; border-radius: 4px; background-color: #e9ecef;">
-                                <div class="progress-bar bg-success" role="progressbar" 
+                                <div class="progress-bar bg-success" role="progressbar"
                                      style="width: {{ min($remainingPercentage, 100) }}%; border-radius: 4px;"
                                      aria-valuenow="{{ $available }}" aria-valuemin="0" aria-valuemax="{{ $entitled }}">
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Percentage -->
                         <div class="text-center small text-muted">
                             <strong>{{ number_format($remainingPercentage, 0) }}% remaining</strong>
@@ -263,35 +263,35 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentYear = {{ now()->year }};
     let currentMonth = {{ now()->month - 1 }}; // 0-indexed
     let leaveData = [];
-    
+
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
-    
+
     function formatDate(date) {
         return date.toISOString().split('T')[0];
     }
-    
+
     function renderCalendar() {
         const grid = document.getElementById('calendarGrid');
         const titleEl = document.getElementById('calendarTitle');
-        
+
         const months = ['January', 'February', 'March', 'April', 'May', 'June',
                        'July', 'August', 'September', 'October', 'November', 'December'];
         titleEl.textContent = `${months[currentMonth]} ${currentYear}`;
-        
+
         // Get first and last day of month
         const firstDay = new Date(currentYear, currentMonth, 1);
         const lastDay = new Date(currentYear, currentMonth + 1, 0);
         const startDayOfWeek = firstDay.getDay();
         const daysInMonth = lastDay.getDate();
-        
+
         let html = '';
-        
+
         // Empty cells before first day
         for (let i = 0; i < startDayOfWeek; i++) {
             html += '<div class="calendar-day-cell empty-day"></div>';
         }
-        
+
         // Days of month
         for (let day = 1; day <= daysInMonth; day++) {
             const date = new Date(currentYear, currentMonth, day);
@@ -300,15 +300,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const isPast = date < new Date(today.getFullYear(), today.getMonth(), today.getDate());
             const isWeekend = date.getDay() === 0 || date.getDay() === 6;
             const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-            
+
             let cellClass = 'calendar-day-cell';
             if (isToday) cellClass += ' today';
             if (isPast && !isToday) cellClass += ' past-date';
             if (isWeekend) cellClass += ' weekend';
-            
+
             // Get leaves for this day
             const dayLeaves = getLeavesForDate(dateStr);
-            
+
             html += `
                 <div class="${cellClass}" data-date="${dateStr}">
                     <div class="day-header">
@@ -321,23 +321,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
         }
-        
+
         // Empty cells after last day
         const remainingCells = (7 - ((startDayOfWeek + daysInMonth) % 7)) % 7;
         for (let i = 0; i < remainingCells; i++) {
             html += '<div class="calendar-day-cell empty-day"></div>';
         }
-        
+
         grid.innerHTML = html;
     }
-    
+
     function renderLeaveItem(leave) {
         const color = leave.leave_type_color || '#667eea';
         const statusClass = `status-${leave.status}`;
         const bgColor = color + '20';
-        
+
         return `
-            <div class="leave-item ${statusClass}" 
+            <div class="leave-item ${statusClass}"
                  onclick="showLeaveDetail(${leave.leave_id})"
                  title="My Leave - ${leave.leave_type}"
                  style="background-color: ${bgColor}; border-left-color: ${color}; color: ${color};">
@@ -346,7 +346,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
     }
-    
+
     function getLeavesForDate(dateStr) {
         return leaveData.filter(leave => {
             const start = new Date(leave.start_date);
@@ -355,11 +355,11 @@ document.addEventListener('DOMContentLoaded', function() {
             return check >= start && check <= end;
         });
     }
-    
+
     function loadLeaveData() {
         const startDate = new Date(currentYear, currentMonth, 1);
         const endDate = new Date(currentYear, currentMonth + 1, 0);
-        
+
         $.ajax({
             url: '{{ route("hr.ess.my-calendar.events") }}',
             data: {
@@ -388,20 +388,20 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
+
     window.showLeaveDetail = function(leaveId) {
         const leave = leaveData.find(l => l.leave_id === leaveId);
         if (!leave) return;
-        
+
         const statusColors = {
             'pending': 'warning',
             'supervisor_approved': 'info',
             'approved': 'success'
         };
-        
+
         $('#modalHeader').removeClass('bg-warning bg-info bg-success bg-primary')
                         .addClass('bg-' + (statusColors[leave.status] || 'primary'));
-        
+
         const html = `
             <div class="text-center mb-3">
                 <span class="badge badge-${statusColors[leave.status] || 'secondary'} badge-lg" style="font-size: 1rem; padding: 8px 16px;">
@@ -424,11 +424,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 ${leave.reason ? '<tr><td class="text-muted">Reason</td><td>' + leave.reason + '</td></tr>' : ''}
             </table>
         `;
-        
+
         $('#leaveDetailContent').html(html);
         $('#leaveDetailModal').modal('show');
     };
-    
+
     // Navigation
     document.getElementById('prevMonthBtn').addEventListener('click', function() {
         currentMonth--;
@@ -438,7 +438,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         loadLeaveData();
     });
-    
+
     document.getElementById('nextMonthBtn').addEventListener('click', function() {
         currentMonth++;
         if (currentMonth > 11) {
@@ -447,18 +447,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         loadLeaveData();
     });
-    
+
     document.getElementById('todayBtn').addEventListener('click', function() {
         currentYear = today.getFullYear();
         currentMonth = today.getMonth();
         loadLeaveData();
     });
-    
+
     // Refresh
     $('#refreshBtn').click(function() {
         loadLeaveData();
     });
-    
+
     // Click on day cell to show leave status for that day
     $(document).on('click', '.calendar-day-cell:not(.empty-day)', function(e) {
         if ($(e.target).hasClass('leave-item') || $(e.target).closest('.leave-item').length) {
@@ -469,17 +469,17 @@ document.addEventListener('DOMContentLoaded', function() {
             showLeaveStatusForDate(date);
         }
     });
-    
+
     function showLeaveStatusForDate(dateStr) {
         const dayLeaves = getLeavesForDate(dateStr);
         const date = new Date(dateStr);
-        const formattedDate = date.toLocaleDateString('en-US', { 
+        const formattedDate = date.toLocaleDateString('en-US', {
             weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
         });
-        
+
         $('#onLeaveDateLabel').text(formattedDate).data('date', dateStr);
         $('#onLeaveCount').text(dayLeaves.length);
-        
+
         if (dayLeaves.length === 0) {
             $('#onLeaveList').html(`
                 <div class="text-center py-4 text-muted">
@@ -496,7 +496,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     'approved': 'success'
                 };
                 const leaveColor = leave.leave_type_color || '#667eea';
-                
+
                 html += `
                     <div class="list-group-item" style="cursor: pointer;" onclick="showLeaveDetail(${leave.leave_id});">
                         <div class="d-flex justify-content-between align-items-start">
@@ -515,7 +515,7 @@ document.addEventListener('DOMContentLoaded', function() {
             $('#onLeaveList').html(html);
         }
     }
-    
+
     // Initial load
     loadLeaveData();
 });

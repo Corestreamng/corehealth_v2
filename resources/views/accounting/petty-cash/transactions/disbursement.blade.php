@@ -15,7 +15,7 @@
         <div class="row justify-content-center">
             <div class="col-lg-8">
                 <!-- Fund Info Card -->
-                <div class="card card-modern mb-4">
+                <div class="card-modern mb-4">
                     <div class="card-body py-3">
                         <div class="row align-items-center">
                             <div class="col-md-4">
@@ -34,7 +34,7 @@
                     </div>
                 </div>
 
-                <div class="card card-modern">
+                <div class="card-modern card-modern">
                     <div class="card-header bg-white">
                         <h5 class="mb-0"><i class="mdi mdi-cash-minus mr-2 text-danger"></i>New Disbursement</h5>
                     </div>

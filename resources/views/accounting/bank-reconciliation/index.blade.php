@@ -192,7 +192,7 @@
     </div>
 
     <!-- Reconciliations Table -->
-    <div class="card">
+    <div class="card-modern">
         <div class="card-header">
             <h5 class="mb-0"><i class="mdi mdi-table mr-2"></i>Reconciliation Records</h5>
         </div>
@@ -225,14 +225,14 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="mdi mdi-check-circle text-success mr-2"></i>Approve Reconciliation</h5>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body">
                 <p>Are you sure you want to approve this reconciliation?</p>
                 <p class="text-muted">Please ensure all items have been properly matched and verified.</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-success" id="confirm-approve">Approve</button>
             </div>
         </div>

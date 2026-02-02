@@ -36,7 +36,7 @@
         <input type="hidden" name="fiscal_year_id" value="{{ $selectedYear }}">
 
         {{-- Fiscal Year Selection --}}
-        <div class="card card-modern mb-4">
+        <div class="card-modern mb-4">
             <div class="card-header">
                 <h5 class="mb-0"><i class="mdi mdi-calendar mr-2"></i>Fiscal Year</h5>
             </div>
@@ -74,7 +74,7 @@
 
         {{-- Account Balances Entry --}}
         @foreach($accounts as $className => $classAccounts)
-        <div class="card card-modern mb-4 account-class-card" data-class-name="{{ $className }}">
+        <div class="card-modern mb-4 account-class-card" data-class-name="{{ $className }}">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
                     <i class="mdi mdi-folder-outline mr-2"></i>{{ $className }}
@@ -145,7 +145,7 @@
         @endforeach
 
         {{-- Summary Card --}}
-        <div class="card card-modern mb-4" id="summaryCard">
+        <div class="card-modern mb-4" id="summaryCard">
             <div class="card-header">
                 <h5 class="mb-0"><i class="mdi mdi-sigma mr-2"></i>Summary</h5>
             </div>
@@ -174,7 +174,7 @@
         </div>
 
         {{-- Submit Buttons --}}
-        <div class="card card-modern">
+        <div class="card-modern card-modern">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <button type="button" class="btn btn-outline-secondary" onclick="window.history.back()">

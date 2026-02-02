@@ -224,7 +224,7 @@
                     <!-- Left Column: Query Info & Timeline -->
                     <div class="col-lg-5">
                         <!-- Query Summary Card -->
-                        <div class="card mb-3" style="border-radius: 10px; border: 1px solid #e9ecef;">
+                        <div class="card-modern mb-3" style="border-radius: 10px; border: 1px solid #e9ecef;">
                             <div class="card-header bg-light" style="border-radius: 10px 10px 0 0; padding: 0.75rem 1rem;">
                                 <h6 class="mb-0" style="font-weight: 600;">
                                     <i class="mdi mdi-information-outline mr-1"></i> Query Information
@@ -240,7 +240,7 @@
                         </div>
 
                         <!-- Workflow Timeline -->
-                        <div class="card" style="border-radius: 10px; border: 1px solid #e9ecef;">
+                        <div class="card-modern" style="border-radius: 10px; border: 1px solid #e9ecef;">
                             <div class="card-header bg-light" style="border-radius: 10px 10px 0 0; padding: 0.75rem 1rem;">
                                 <h6 class="mb-0" style="font-weight: 600;">
                                     <i class="mdi mdi-timeline-text-outline mr-1"></i> Query Timeline
@@ -257,7 +257,7 @@
                     <!-- Right Column: Details -->
                     <div class="col-lg-7">
                         <!-- Subject & Description -->
-                        <div class="card mb-3" style="border-radius: 10px; border: 1px solid #e9ecef;">
+                        <div class="card-modern mb-3" style="border-radius: 10px; border: 1px solid #e9ecef;">
                             <div class="card-header bg-light" style="border-radius: 10px 10px 0 0; padding: 0.75rem 1rem;">
                                 <h6 class="mb-0" style="font-weight: 600;">
                                     <i class="mdi mdi-file-document-outline mr-1"></i> Query Details
@@ -270,7 +270,7 @@
                         </div>
 
                         <!-- Staff Response (if any) -->
-                        <div id="responseCard" class="card mb-3" style="border-radius: 10px; border: 1px solid #e9ecef; display: none;">
+                        <div id="responseCard" class="card-modern mb-3" style="border-radius: 10px; border: 1px solid #e9ecef; display: none;">
                             <div class="card-header bg-info text-white" style="border-radius: 10px 10px 0 0; padding: 0.75rem 1rem;">
                                 <h6 class="mb-0" style="font-weight: 600;">
                                     <i class="mdi mdi-comment-text-outline mr-1"></i> Staff Response
@@ -283,7 +283,7 @@
                         </div>
 
                         <!-- Decision (if any) -->
-                        <div id="decisionCard" class="card mb-3" style="border-radius: 10px; border: 1px solid #e9ecef; display: none;">
+                        <div id="decisionCard" class="card-modern mb-3" style="border-radius: 10px; border: 1px solid #e9ecef; display: none;">
                             <div class="card-header" id="decisionCardHeader" style="border-radius: 10px 10px 0 0; padding: 0.75rem 1rem;">
                                 <h6 class="mb-0" style="font-weight: 600;">
                                     <i class="mdi mdi-scale-balance mr-1"></i> Decision & Outcome
@@ -300,7 +300,7 @@
                         </div>
 
                         <!-- Attachments (if any) -->
-                        <div id="attachmentsCard" class="card" style="border-radius: 10px; border: 1px solid #e9ecef; display: none;">
+                        <div id="attachmentsCard" class="card-modern" style="border-radius: 10px; border: 1px solid #e9ecef; display: none;">
                             <div class="card-header bg-light" style="border-radius: 10px 10px 0 0; padding: 0.75rem 1rem;">
                                 <h6 class="mb-0" style="font-weight: 600;">
                                     <i class="mdi mdi-paperclip mr-1"></i> Attachments

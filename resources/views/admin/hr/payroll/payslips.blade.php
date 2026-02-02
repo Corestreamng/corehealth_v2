@@ -13,7 +13,7 @@
                         <i class="mdi mdi-file-document-multiple mr-2"></i>Payslips
                     </h3>
                     <p class="text-muted mb-0">
-                        Batch: {{ $payrollBatch->batch_number }} | 
+                        Batch: {{ $payrollBatch->batch_number }} |
                         Period: {{ $payrollBatch->pay_period_start->format('M d') }} - {{ $payrollBatch->pay_period_end->format('M d, Y') }}
                         @if($payrollBatch->days_worked && $payrollBatch->days_in_month && $payrollBatch->days_worked < $payrollBatch->days_in_month)
                         <span class="badge badge-warning ml-2">
@@ -89,9 +89,9 @@
                             <small class="text-muted d-block">Payslip #{{ $payslip['payslip_number'] }}</small>
                             <span class="badge badge-success">{{ $payslip['pay_period'] }}</span>
                         </div>
-                        <a href="{{ route('hr.payroll.payslip.print', [$payrollBatch->id, $payslip['item_id']]) }}" 
-                           target="_blank" 
-                           class="btn btn-sm btn-outline-primary no-print" 
+                        <a href="{{ route('hr.payroll.payslip.print', [$payrollBatch->id, $payslip['item_id']]) }}"
+                           target="_blank"
+                           class="btn btn-sm btn-outline-primary no-print"
                            title="Print this payslip">
                             <i class="mdi mdi-printer"></i>
                         </a>
@@ -198,7 +198,7 @@
             @endforeach
 
             @if($payslips->isEmpty())
-            <div class="card" style="border-radius: 12px; border: none;">
+            <div class="card-modern" style="border-radius: 12px; border: none;">
                 <div class="card-body text-center py-5">
                     <i class="mdi mdi-file-document-outline text-muted" style="font-size: 4rem;"></i>
                     <h5 class="text-muted mt-3">No Payslips Available</h5>
@@ -215,7 +215,7 @@
     .btn, .sidebar, .navbar, .page-header, nav, .no-print {
         display: none !important;
     }
-    
+
     .payslip-card {
         page-break-inside: avoid;
         break-inside: avoid;
@@ -223,11 +223,11 @@
         box-shadow: none !important;
         border: 1px solid #ddd !important;
     }
-    
+
     .container-fluid {
         padding: 0 !important;
     }
-    
+
     .card {
         box-shadow: none !important;
     }

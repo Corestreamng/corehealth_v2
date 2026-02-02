@@ -35,7 +35,7 @@
     </div>
 
     {{-- Advanced Filters --}}
-    <div class="card shadow mb-4">
+    <div class="card-modern shadow mb-4">
         <div class="card-header">
             <div class="d-flex justify-content-between align-items-center">
                 <h6 class="m-0 font-weight-bold text-primary">
@@ -210,7 +210,7 @@
 
     <div class="row mb-4">
         <div class="col-md-3">
-            <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-modern border-left-primary shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
@@ -229,7 +229,7 @@
         </div>
 
         <div class="col-md-3">
-            <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-modern border-left-success shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
@@ -248,7 +248,7 @@
         </div>
 
         <div class="col-md-3">
-            <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-modern border-left-danger shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
@@ -267,7 +267,7 @@
         </div>
 
         <div class="col-md-3">
-            <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-modern border-left-info shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
@@ -287,7 +287,7 @@
     </div>
 
     {{-- Bank Statement Table --}}
-    <div class="card shadow">
+    <div class="card-modern shadow">
         <div class="card-header py-3 bg-white">
             <div class="text-center">
                 <h4 class="mb-1">{{ config('app.name', 'CoreHealth') }}</h4>
@@ -390,7 +390,7 @@
         </div>
     </div>
     @else
-    <div class="card shadow">
+    <div class="card-modern shadow">
         <div class="card-body text-center py-5">
             <i class="mdi mdi-bank mdi-48px text-muted mb-3"></i>
             <h5>Select Bank Account</h5>
