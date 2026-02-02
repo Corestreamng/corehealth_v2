@@ -11,6 +11,7 @@ use App\Models\serviceCategory;
 use App\Models\ProductCategory;
 use App\Models\service;
 use App\Models\Product;
+use App\Models\Bank;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -28,7 +29,8 @@ class HmoReportsController extends Controller
         $hmos = Hmo::orderBy('name')->get();
         $serviceCategories = ServiceCategory::orderBy('category_name')->get();
         $productCategories = ProductCategory::orderBy('category_name')->get();
-        return view('admin.hmo.reports', compact('hmos', 'serviceCategories', 'productCategories'));
+        $banks = Bank::where('is_active', true)->orderBy('name')->get();
+        return view('admin.hmo.reports', compact('hmos', 'serviceCategories', 'productCategories', 'banks'));
     }
 
     /**
@@ -417,6 +419,7 @@ class HmoReportsController extends Controller
     {
         $request->validate([
             'hmo_id' => 'required|exists:hmos,id',
+            'bank_id' => 'required|exists:banks,id',
             'amount' => 'required|numeric|min:0.01',
             'payment_date' => 'required|date',
             'reference_number' => 'nullable|string|max:100',
@@ -432,6 +435,7 @@ class HmoReportsController extends Controller
 
             $remittance = HmoRemittance::create([
                 'hmo_id' => $request->hmo_id,
+                'bank_id' => $request->bank_id,
                 'amount' => $request->amount,
                 'payment_date' => $request->payment_date,
                 'reference_number' => $request->reference_number,
@@ -473,7 +477,7 @@ class HmoReportsController extends Controller
      */
     public function showRemittance($id)
     {
-        $remittance = HmoRemittance::with(['hmo', 'creator', 'claims.user.patient_profile', 'claims.product', 'claims.service'])
+        $remittance = HmoRemittance::with(['hmo', 'bank', 'creator', 'claims.user.patient_profile', 'claims.product', 'claims.service'])
             ->findOrFail($id);
 
         return response()->json([
@@ -481,6 +485,8 @@ class HmoReportsController extends Controller
                 'id' => $remittance->id,
                 'hmo_id' => $remittance->hmo_id,
                 'hmo_name' => $remittance->hmo->name ?? 'N/A',
+                'bank_id' => $remittance->bank_id,
+                'bank_account' => $remittance->bank ? ($remittance->bank->name . ' - ' . $remittance->bank->account_number) : 'N/A',
                 'amount' => number_format($remittance->amount, 2),
                 'reference_number' => $remittance->reference_number,
                 'payment_method' => $remittance->payment_method,
@@ -510,6 +516,7 @@ class HmoReportsController extends Controller
     public function updateRemittance(Request $request, $id)
     {
         $request->validate([
+            'bank_id' => 'required|exists:banks,id',
             'amount' => 'required|numeric|min:0.01',
             'payment_date' => 'required|date',
             'reference_number' => 'nullable|string|max:100',
@@ -523,6 +530,7 @@ class HmoReportsController extends Controller
         $remittance = HmoRemittance::findOrFail($id);
 
         $remittance->update([
+            'bank_id' => $request->bank_id,
             'amount' => $request->amount,
             'payment_date' => $request->payment_date,
             'reference_number' => $request->reference_number,

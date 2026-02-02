@@ -15,6 +15,7 @@ class HmoRemittance extends Model implements Auditable
 
     protected $fillable = [
         'hmo_id',
+        'bank_id',
         'amount',
         'reference_number',
         'payment_method',
@@ -42,6 +43,14 @@ class HmoRemittance extends Model implements Auditable
     public function hmo()
     {
         return $this->belongsTo(Hmo::class, 'hmo_id');
+    }
+
+    /**
+     * Get the bank where payment was received.
+     */
+    public function bank()
+    {
+        return $this->belongsTo(Bank::class, 'bank_id');
     }
 
     /**

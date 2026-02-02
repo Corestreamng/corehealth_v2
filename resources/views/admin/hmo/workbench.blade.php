@@ -9,6 +9,130 @@
         --hospital-primary: {{ appsettings('hos_color', '#007bff') }};
     }
 
+    /* Modern Card Styling */
+    .stat-card-modern {
+        border-radius: 12px;
+        border: none;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-card-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+
+    .stat-card-modern .card-body {
+        padding: 1.25rem;
+    }
+
+    .stat-card-modern h6 {
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+        opacity: 0.8;
+    }
+
+    .stat-card-modern h2 {
+        font-weight: 700;
+        margin-bottom: 0;
+    }
+
+    .stat-card-modern .stat-icon {
+        font-size: 3rem;
+        opacity: 0.3;
+    }
+
+    /* Queue Card Styling */
+    .queue-card-modern {
+        border-radius: 10px;
+        border: none;
+        transition: transform 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+    }
+
+    .queue-card-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    }
+
+    .queue-card-modern .card-body {
+        padding: 1rem;
+    }
+
+    .queue-card-modern h6 {
+        font-size: 0.75rem;
+        margin-bottom: 0.25rem;
+        opacity: 0.9;
+    }
+
+    .queue-card-modern h3 {
+        font-weight: 700;
+        margin-bottom: 0;
+    }
+
+    .queue-card-modern .queue-icon {
+        font-size: 2rem;
+        opacity: 0.4;
+    }
+
+    /* Filter Card Modern */
+    .filter-card-modern {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .filter-card-modern .card-header {
+        border-radius: 12px 12px 0 0;
+        background: linear-gradient(135deg, var(--hospital-primary) 0%, #5a67d8 100%);
+        padding: 0.75rem 1.25rem;
+    }
+
+    /* Tabs Modern */
+    .workbench-tabs-modern .nav-link {
+        border-radius: 8px 8px 0 0;
+        font-weight: 500;
+        padding: 0.75rem 1.25rem;
+        transition: all 0.2s;
+    }
+
+    .workbench-tabs-modern .nav-link.active {
+        background: var(--hospital-primary);
+        color: white;
+        border-color: var(--hospital-primary);
+    }
+
+    /* Page Header */
+    .workbench-header {
+        margin-bottom: 1.5rem;
+    }
+
+    .workbench-title {
+        font-weight: 700;
+        color: var(--hospital-primary);
+        margin-bottom: 0.25rem;
+    }
+
+    .workbench-subtitle {
+        color: #6c757d;
+        margin-bottom: 0;
+    }
+
+    .workbench-date {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    /* Action Link Style */
+    .stat-action-link {
+        font-size: 0.8rem;
+        margin-top: 0.5rem;
+        display: inline-block;
+    }
+
+    .stat-action-link:hover {
+        opacity: 1;
+    }
+
     /* Clinical Context Modal Styling */
     #clinical-context-modal .modal-dialog {
         max-width: 90vw;
@@ -266,138 +390,161 @@
 
 <section class="content">
     <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="d-flex justify-content-between align-items-center workbench-header">
+            <div>
+                <h3 class="workbench-title">
+                    <i class="mdi mdi-shield-check mr-2"></i>HMO Executive Workbench
+                </h3>
+                <p class="workbench-subtitle">Claims Validation & Management Dashboard</p>
+            </div>
+            <div class="workbench-date">
+                <i class="mdi mdi-calendar mr-1"></i>{{ date('l, F j, Y') }}
+            </div>
+        </div>
+
         <!-- Financial Summary Cards Row -->
-        <div class="row mb-3">
+        <div class="row mb-4">
             <div class="col-md-3">
-                <div class="card-modern text-white" style="background-color: #007bff;">
+                <div class="stat-card-modern text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="mb-0">Pending Claims Value</h6>
-                                <h4 class="mb-0" id="pending_claims_total">₦0</h4>
+                                <h6 class="text-white-50">Pending Claims Value</h6>
+                                <h2 id="pending_claims_total">₦0</h2>
                             </div>
-                            <i class="mdi mdi-cash-multiple" style="font-size: 2.5rem; opacity: 0.8;"></i>
+                            <i class="mdi mdi-cash-multiple stat-icon"></i>
                         </div>
+                        <a href="javascript:void(0)" class="text-white-50 stat-action-link preset-card" data-preset="">
+                            <i class="mdi mdi-arrow-right mr-1"></i>View Pending
+                        </a>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card-modern text-white" style="background-color: #28a745;">
+                <div class="stat-card-modern text-white" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="mb-0">Approved Today Value</h6>
-                                <h4 class="mb-0" id="approved_today_total">₦0</h4>
+                                <h6 class="text-white-50">Approved Today Value</h6>
+                                <h2 id="approved_today_total">₦0</h2>
                             </div>
-                            <i class="mdi mdi-cash-check" style="font-size: 2.5rem; opacity: 0.8;"></i>
+                            <i class="mdi mdi-cash-check stat-icon"></i>
                         </div>
+                        <a href="javascript:void(0)" class="text-white-50 stat-action-link preset-card" data-preset="today_approved">
+                            <i class="mdi mdi-arrow-right mr-1"></i>View Approved
+                        </a>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card-modern text-white" style="background-color: #dc3545;">
+                <div class="stat-card-modern text-white" style="background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="mb-0">Rejected Today Value</h6>
-                                <h4 class="mb-0" id="rejected_today_total">₦0</h4>
+                                <h6 class="text-white-50">Rejected Today Value</h6>
+                                <h2 id="rejected_today_total">₦0</h2>
                             </div>
-                            <i class="mdi mdi-cash-remove" style="font-size: 2.5rem; opacity: 0.8;"></i>
+                            <i class="mdi mdi-cash-remove stat-icon"></i>
                         </div>
+                        <a href="javascript:void(0)" class="text-white-50 stat-action-link preset-card" data-preset="today_rejected">
+                            <i class="mdi mdi-arrow-right mr-1"></i>View Rejected
+                        </a>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card-modern text-white" style="background-color: #17a2b8;">
+                <div class="stat-card-modern text-white" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="mb-0">Monthly Claims Total</h6>
-                                <h4 class="mb-0" id="monthly_claims_total">₦0</h4>
+                                <h6 class="text-white-50">Monthly Claims Total</h6>
+                                <h2 id="monthly_claims_total">₦0</h2>
                             </div>
-                            <i class="mdi mdi-calendar-month" style="font-size: 2.5rem; opacity: 0.8;"></i>
+                            <i class="mdi mdi-calendar-month stat-icon"></i>
                         </div>
+                        <small class="text-white-50">{{ date('F Y') }}</small>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Queue Stats Cards -->
-        <div class="row mb-3">
+        <div class="row mb-4">
             <div class="col-md-2">
-                <div class="card-modern bg-warning text-white cursor-pointer preset-card" data-preset="">
-                    <div class="card-body py-2">
+                <div class="queue-card-modern text-white preset-card" data-preset="" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="mb-0 small">Pending Validation</h6>
-                                <h3 class="mb-0" id="pending_count">0</h3>
+                                <h6 class="text-white-50">Pending Validation</h6>
+                                <h3 id="pending_count">0</h3>
                             </div>
-                            <i class="mdi mdi-clock-alert" style="font-size: 2rem;"></i>
+                            <i class="mdi mdi-clock-alert queue-icon"></i>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="col-md-2">
-                <div class="card-modern bg-success text-white cursor-pointer preset-card" data-preset="">
-                    <div class="card-body py-2">
+                <div class="queue-card-modern text-white preset-card" data-preset="" style="background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%);">
+                    <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="mb-0 small">Express (Auto)</h6>
-                                <h3 class="mb-0" id="express_count">0</h3>
+                                <h6 class="text-white-50">Express (Auto)</h6>
+                                <h3 id="express_count">0</h3>
                             </div>
-                            <i class="mdi mdi-flash" style="font-size: 2rem;"></i>
+                            <i class="mdi mdi-flash queue-icon"></i>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="col-md-2">
-                <div class="card-modern bg-info text-white cursor-pointer preset-card" data-preset="today_approved">
-                    <div class="card-body py-2">
+                <div class="queue-card-modern text-white preset-card" data-preset="today_approved" style="background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);">
+                    <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="mb-0 small">Approved Today</h6>
-                                <h3 class="mb-0" id="approved_today_count">0</h3>
+                                <h6 class="text-white-50">Approved Today</h6>
+                                <h3 id="approved_today_count">0</h3>
                             </div>
-                            <i class="mdi mdi-thumb-up" style="font-size: 2rem;"></i>
+                            <i class="mdi mdi-thumb-up queue-icon"></i>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="col-md-2">
-                <div class="card-modern bg-danger text-white cursor-pointer preset-card" data-preset="today_rejected">
-                    <div class="card-body py-2">
+                <div class="queue-card-modern text-white preset-card" data-preset="today_rejected" style="background: linear-gradient(135deg, #f45c43 0%, #eb3349 100%);">
+                    <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="mb-0 small">Rejected Today</h6>
-                                <h3 class="mb-0" id="rejected_today_count">0</h3>
+                                <h6 class="text-white-50">Rejected Today</h6>
+                                <h3 id="rejected_today_count">0</h3>
                             </div>
-                            <i class="mdi mdi-thumb-down" style="font-size: 2rem;"></i>
+                            <i class="mdi mdi-thumb-down queue-icon"></i>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="col-md-2">
-                <div class="card-modern bg-dark text-white cursor-pointer preset-card" data-preset="overdue">
-                    <div class="card-body py-2">
+                <div class="queue-card-modern text-white preset-card" data-preset="overdue" style="background: linear-gradient(135deg, #434343 0%, #000000 100%);">
+                    <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="mb-0 small">Overdue (>4h)</h6>
-                                <h3 class="mb-0" id="overdue_count">0</h3>
+                                <h6 class="text-white-50">Overdue (>4h)</h6>
+                                <h3 id="overdue_count">0</h3>
                             </div>
-                            <i class="mdi mdi-alert-circle" style="font-size: 2rem;"></i>
+                            <i class="mdi mdi-alert-circle queue-icon"></i>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="col-md-2">
-                <div class="card-modern bg-secondary text-white cursor-pointer preset-card" data-preset="high_value">
-                    <div class="card-body py-2">
+                <div class="queue-card-modern text-white preset-card" data-preset="high_value" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);">
+                    <div class="card-body text-dark">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="mb-0 small">High Value (>50k)</h6>
-                                <h3 class="mb-0">🎯</h3>
+                                <h6 class="text-muted">High Value (>50k)</h6>
+                                <h3>🎯</h3>
                             </div>
-                            <i class="mdi mdi-currency-ngn" style="font-size: 2rem;"></i>
+                            <i class="mdi mdi-currency-ngn queue-icon" style="opacity: 0.2;"></i>
                         </div>
                     </div>
                 </div>
@@ -405,27 +552,27 @@
         </div>
 
         <!-- Filters Card -->
-        <div class="card-modern">
-            <div class="card-header bg-primary text-white">
-                <h3 class="card-title"><i class="fa fa-filter"></i> Filters & Search</h3>
-                <div class="card-tools">
-                    <a href="{{ route('hmo.export-claims') }}" class="btn btn-sm btn-light" id="exportBtn">
-                        <i class="fa fa-download"></i> Export Claims
-                    </a>
-                </div>
+        <div class="filter-card-modern mb-4">
+            <div class="card-header text-white d-flex justify-content-between align-items-center">
+                <h6 class="mb-0" style="font-weight: 600;">
+                    <i class="mdi mdi-filter-variant mr-2"></i>Filters & Search
+                </h6>
+                <a href="{{ route('hmo.export-claims') }}" class="btn btn-sm btn-light" id="exportBtn" style="border-radius: 6px;">
+                    <i class="mdi mdi-download mr-1"></i>Export Claims
+                </a>
             </div>
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-3">
-                        <div class="form-group">
-                            <label>Search</label>
-                            <input type="text" class="form-control form-control-sm" id="search_input" placeholder="Patient name, file no, HMO no, request ID...">
+                        <div class="form-group mb-2">
+                            <label class="small font-weight-bold text-muted">Search</label>
+                            <input type="text" class="form-control form-control-sm" id="search_input" placeholder="Patient name, file no, HMO no, request ID..." style="border-radius: 6px;">
                         </div>
                     </div>
                     <div class="col-md-2">
-                        <div class="form-group">
-                            <label>HMO</label>
-                            <select class="form-control form-control-sm" id="filter_hmo">
+                        <div class="form-group mb-2">
+                            <label class="small font-weight-bold text-muted">HMO</label>
+                            <select class="form-control form-control-sm" id="filter_hmo" style="border-radius: 6px;">
                                 <option value="">All HMOs</option>
                                 @foreach($hmos as $hmo)
                                     <option value="{{ $hmo->id }}">{{ $hmo->name }}</option>
@@ -434,9 +581,9 @@
                         </div>
                     </div>
                     <div class="col-md-2">
-                        <div class="form-group">
-                            <label>Coverage Mode</label>
-                            <select class="form-control form-control-sm" id="filter_coverage">
+                        <div class="form-group mb-2">
+                            <label class="small font-weight-bold text-muted">Coverage Mode</label>
+                            <select class="form-control form-control-sm" id="filter_coverage" style="border-radius: 6px;">
                                 <option value="">All Modes</option>
                                 <option value="express">Express</option>
                                 <option value="primary">Primary</option>
@@ -445,9 +592,9 @@
                         </div>
                     </div>
                     <div class="col-md-2">
-                        <div class="form-group">
-                            <label>Service Type</label>
-                            <select class="form-control form-control-sm" id="filter_service_type">
+                        <div class="form-group mb-2">
+                            <label class="small font-weight-bold text-muted">Service Type</label>
+                            <select class="form-control form-control-sm" id="filter_service_type" style="border-radius: 6px;">
                                 <option value="">All Types</option>
                                 <option value="product">Products</option>
                                 <option value="service">Services</option>
@@ -456,27 +603,22 @@
                         </div>
                     </div>
                     <div class="col-md-2">
-                        <div class="form-group">
-                            <label>Date From</label>
-                            <input type="date" class="form-control form-control-sm" id="filter_date_from">
-                        </div>
-                    </div>
-                        <div class="form-group">
-                            <label>Date From</label>
-                            <input type="date" class="form-control form-control-sm" id="filter_date_from">
+                        <div class="form-group mb-2">
+                            <label class="small font-weight-bold text-muted">Date From</label>
+                            <input type="date" class="form-control form-control-sm" id="filter_date_from" style="border-radius: 6px;">
                         </div>
                     </div>
                     <div class="col-md-2">
-                        <div class="form-group">
-                            <label>Date To</label>
-                            <input type="date" class="form-control form-control-sm" id="filter_date_to">
+                        <div class="form-group mb-2">
+                            <label class="small font-weight-bold text-muted">Date To</label>
+                            <input type="date" class="form-control form-control-sm" id="filter_date_to" style="border-radius: 6px;">
                         </div>
                     </div>
                     <div class="col-md-1">
-                        <div class="form-group">
-                            <label>&nbsp;</label>
-                            <button type="button" class="btn btn-primary btn-block btn-sm" id="applyFilters">
-                                <i class="fa fa-search"></i> Filter
+                        <div class="form-group mb-2">
+                            <label class="small">&nbsp;</label>
+                            <button type="button" class="btn btn-primary btn-block btn-sm" id="applyFilters" style="border-radius: 6px; background: var(--hospital-primary); border-color: var(--hospital-primary);">
+                                <i class="mdi mdi-magnify"></i> Filter
                             </button>
                         </div>
                     </div>
@@ -485,21 +627,21 @@
         </div>
 
         <!-- Batch Actions Bar -->
-        <div class="card-modern" id="batchActionsBar" style="display:none;">
-            <div class="card-body py-2 bg-light">
+        <div class="card-modern border-0 mb-3" id="batchActionsBar" style="display:none; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-body py-2" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 10px;">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <span class="mr-3"><strong><span id="selectedCount">0</span></strong> items selected</span>
-                        <button type="button" class="btn btn-sm btn-success" id="batchApproveBtn">
-                            <i class="fa fa-check"></i> Batch Approve
+                        <span class="mr-3 font-weight-bold"><span id="selectedCount" class="badge badge-primary" style="border-radius: 6px; font-size: 0.9rem;">0</span> items selected</span>
+                        <button type="button" class="btn btn-sm btn-success" id="batchApproveBtn" style="border-radius: 6px;">
+                            <i class="mdi mdi-check-all mr-1"></i>Batch Approve
                         </button>
-                        <button type="button" class="btn btn-sm btn-danger ml-2" id="batchRejectBtn">
-                            <i class="fa fa-times"></i> Batch Reject
+                        <button type="button" class="btn btn-sm btn-danger ml-2" id="batchRejectBtn" style="border-radius: 6px;">
+                            <i class="mdi mdi-close-circle-multiple mr-1"></i>Batch Reject
                         </button>
                     </div>
                     <div>
-                        <button type="button" class="btn btn-sm btn-secondary" id="clearSelectionBtn">
-                            <i class="fa fa-times-circle"></i> Clear Selection
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="clearSelectionBtn" style="border-radius: 6px;">
+                            <i class="mdi mdi-close mr-1"></i>Clear Selection
                         </button>
                     </div>
                 </div>
@@ -507,37 +649,37 @@
         </div>
 
         <!-- Tabs and DataTable -->
-        <div class="card-modern">
-            <div class="card-header">
-                <ul class="nav nav-tabs card-header-tabs" id="workbenchTabs" role="tablist">
+        <div class="card-modern border-0" style="border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-header bg-white" style="border-radius: 12px 12px 0 0; border-bottom: 1px solid #e9ecef;">
+                <ul class="nav nav-tabs card-header-tabs workbench-tabs-modern" id="workbenchTabs" role="tablist">
                     <li class="nav-item">
                         <a class="nav-link active" id="pending-tab" data-toggle="tab" href="#pending" role="tab">
-                            <i class="mdi mdi-clock-alert"></i> Pending <span class="badge badge-warning" id="pending_badge">0</span>
+                            <i class="mdi mdi-clock-alert mr-1"></i>Pending <span class="badge badge-warning ml-1" id="pending_badge" style="border-radius: 6px;">0</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" id="express-tab" data-toggle="tab" href="#express" role="tab">
-                            <i class="mdi mdi-flash"></i> Express <span class="badge badge-success" id="express_badge">0</span>
+                            <i class="mdi mdi-flash mr-1"></i>Express <span class="badge badge-success ml-1" id="express_badge" style="border-radius: 6px;">0</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" id="approved-tab" data-toggle="tab" href="#approved" role="tab">
-                            <i class="mdi mdi-check"></i> Approved
+                            <i class="mdi mdi-check-circle mr-1"></i>Approved <span class="badge badge-info ml-1" id="approved_badge" style="border-radius: 6px;">0</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" id="rejected-tab" data-toggle="tab" href="#rejected" role="tab">
-                            <i class="mdi mdi-close"></i> Rejected
+                            <i class="mdi mdi-close-circle mr-1"></i>Rejected <span class="badge badge-danger ml-1" id="rejected_badge" style="border-radius: 6px;">0</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" id="claims-tab" data-toggle="tab" href="#claims" role="tab">
-                            <i class="mdi mdi-cash"></i> Claims
+                            <i class="mdi mdi-cash mr-1"></i>Claims <span class="badge badge-primary ml-1" id="claims_badge" style="border-radius: 6px;">0</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" id="all-tab" data-toggle="tab" href="#all" role="tab">
-                            <i class="mdi mdi-view-list"></i> All
+                            <i class="mdi mdi-view-list mr-1"></i>All <span class="badge badge-secondary ml-1" id="all_badge" style="border-radius: 6px;">0</span>
                         </a>
                     </li>
                 </ul>
@@ -571,9 +713,9 @@
 <!-- View Details Modal -->
 <div class="modal fade" id="detailsModal" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-info text-white">
-                <h5 class="modal-title">Request Details</h5>
+        <div class="modal-content" style="border-radius: 12px; border: none;">
+            <div class="modal-header text-white" style="border-radius: 12px 12px 0 0; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <h5 class="modal-title"><i class="mdi mdi-file-document-outline mr-2"></i>Request Details</h5>
                 <button type="button" class="close text-white"  data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
@@ -581,7 +723,7 @@
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-6">
-                        <h6 class="text-primary">Patient Information</h6>
+                        <h6 class="text-primary font-weight-bold mb-3"><i class="mdi mdi-account mr-1"></i>Patient Information</h6>
                         <table class="table table-sm table-borderless">
                             <tr><th width="40%">Name:</th><td id="detail_patient_name"></td></tr>
                             <tr><th>File No:</th><td id="detail_file_no"></td></tr>
@@ -590,7 +732,7 @@
                         </table>
                     </div>
                     <div class="col-md-6">
-                        <h6 class="text-primary">Request Information</h6>
+                        <h6 class="text-primary font-weight-bold mb-3"><i class="mdi mdi-clipboard-list mr-1"></i>Request Information</h6>
                         <table class="table table-sm table-borderless">
                             <tr><th width="40%">Request ID:</th><td id="detail_request_id"></td></tr>
                             <tr><th>Date:</th><td id="detail_created_at"></td></tr>
@@ -603,9 +745,9 @@
                 <hr>
                 <div class="row">
                     <div class="col-md-12">
-                        <h6 class="text-primary">Pricing & Coverage</h6>
-                        <table class="table table-sm table-bordered">
-                            <tr>
+                        <h6 class="text-primary font-weight-bold mb-3"><i class="mdi mdi-cash mr-1"></i>Pricing & Coverage</h6>
+                        <table class="table table-sm table-bordered" style="border-radius: 8px;">
+                            <tr class="bg-light">
                                 <th>Original Price</th>
                                 <th>HMO Covers (Claims)</th>
                                 <th>Patient Pays</th>
@@ -623,7 +765,7 @@
                 <hr>
                 <div class="row">
                     <div class="col-md-12">
-                        <h6 class="text-primary">Validation Information</h6>
+                        <h6 class="text-primary font-weight-bold mb-3"><i class="mdi mdi-check-decagram mr-1"></i>Validation Information</h6>
                         <table class="table table-sm table-borderless">
                             <tr><th width="20%">Status:</th><td><span id="detail_validation_status"></span></td></tr>
                             <tr><th>Auth Code:</th><td id="detail_auth_code">-</td></tr>
@@ -634,8 +776,8 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Close</button>
+            <div class="modal-footer" style="border-radius: 0 0 12px 12px;">
+                <button type="button" class="btn btn-secondary" style="border-radius: 6px;" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -644,9 +786,9 @@
 <!-- Approve Modal -->
 <div class="modal fade" id="approveModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title">Approve Request</h5>
+        <div class="modal-content" style="border-radius: 12px; border: none;">
+            <div class="modal-header text-white" style="border-radius: 12px 12px 0 0; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                <h5 class="modal-title"><i class="mdi mdi-check-circle mr-2"></i>Approve Request</h5>
                 <button type="button" class="close text-white"  data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
@@ -656,25 +798,26 @@
                 <input type="hidden" id="approve_request_id">
                 <input type="hidden" id="approve_coverage_mode">
                 <div class="modal-body">
-                    <div class="alert alert-info">
+                    <div class="alert alert-success" style="border-radius: 8px; border-left: 4px solid #28a745;">
+                        <i class="mdi mdi-information mr-1"></i>
                         <strong>Confirm Approval:</strong> You are about to approve this HMO request.
                     </div>
                     <div class="form-group" id="auth_code_div" style="display:none;">
-                        <label>Authorization Code <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="auth_code" name="auth_code" placeholder="Enter HMO auth code">
+                        <label class="font-weight-bold">Authorization Code <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="auth_code" name="auth_code" placeholder="Enter HMO auth code" style="border-radius: 6px;">
                         <small class="form-text text-danger" id="error_auth_code"></small>
                         <small class="form-text text-muted">Required for secondary coverage</small>
                     </div>
                     <div class="form-group">
-                        <label>Validation Notes</label>
-                        <textarea class="form-control" id="approve_notes" name="validation_notes" rows="3" placeholder="Optional notes..."></textarea>
+                        <label class="font-weight-bold">Validation Notes</label>
+                        <textarea class="form-control" id="approve_notes" name="validation_notes" rows="3" placeholder="Optional notes..." style="border-radius: 6px;"></textarea>
                         <small class="form-text text-danger" id="error_validation_notes"></small>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success">
-                        <i class="fa fa-check"></i> Approve
+                <div class="modal-footer" style="border-radius: 0 0 12px 12px;">
+                    <button type="button" class="btn btn-secondary" style="border-radius: 6px;" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success" style="border-radius: 6px;">
+                        <i class="mdi mdi-check mr-1"></i>Approve
                     </button>
                 </div>
             </form>
@@ -685,9 +828,9 @@
 <!-- Reject Modal -->
 <div class="modal fade" id="rejectModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">Reject Request</h5>
+        <div class="modal-content" style="border-radius: 12px; border: none;">
+            <div class="modal-header text-white" style="border-radius: 12px 12px 0 0; background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);">
+                <h5 class="modal-title"><i class="mdi mdi-close-circle mr-2"></i>Reject Request</h5>
                 <button type="button" class="close text-white"  data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
@@ -696,12 +839,13 @@
                 @csrf
                 <input type="hidden" id="reject_request_id">
                 <div class="modal-body">
-                    <div class="alert alert-warning">
+                    <div class="alert alert-warning" style="border-radius: 8px; border-left: 4px solid #ffc107;">
+                        <i class="mdi mdi-alert mr-1"></i>
                         <strong>Confirm Rejection:</strong> You are about to reject this HMO request.
                     </div>
                     <div class="form-group">
-                        <label>Rejection Reason <span class="text-danger">*</span></label>
-                        <select class="form-control" id="rejection_reason" name="rejection_reason" required>
+                        <label class="font-weight-bold">Rejection Reason <span class="text-danger">*</span></label>
+                        <select class="form-control" id="rejection_reason" name="rejection_reason" required style="border-radius: 6px;">
                             <option value="">-- Select Reason --</option>
                             @foreach($rejectionReasons as $key => $reason)
                                 <option value="{{ $key }}">{{ $reason }}</option>
@@ -710,15 +854,15 @@
                         <small class="form-text text-danger" id="error_rejection_reason"></small>
                     </div>
                     <div class="form-group">
-                        <label>Additional Notes</label>
-                        <textarea class="form-control" id="reject_notes" name="validation_notes" rows="3" placeholder="Optional additional notes..."></textarea>
+                        <label class="font-weight-bold">Additional Notes</label>
+                        <textarea class="form-control" id="reject_notes" name="validation_notes" rows="3" placeholder="Optional additional notes..." style="border-radius: 6px;"></textarea>
                         <small class="form-text text-danger" id="error_reject_notes"></small>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger">
-                        <i class="fa fa-times"></i> Reject
+                <div class="modal-footer" style="border-radius: 0 0 12px 12px;">
+                    <button type="button" class="btn btn-secondary" style="border-radius: 6px;" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger" style="border-radius: 6px;">
+                        <i class="mdi mdi-close mr-1"></i>Reject
                     </button>
                 </div>
             </form>
@@ -729,9 +873,9 @@
 <!-- Reverse Approval Modal -->
 <div class="modal fade" id="reverseModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-warning text-dark">
-                <h5 class="modal-title">Reverse Approval</h5>
+        <div class="modal-content" style="border-radius: 12px; border: none;">
+            <div class="modal-header text-dark" style="border-radius: 12px 12px 0 0; background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);">
+                <h5 class="modal-title"><i class="mdi mdi-undo mr-2"></i>Reverse Approval</h5>
                 <button type="button" class="close"  data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
@@ -740,19 +884,20 @@
                 @csrf
                 <input type="hidden" id="reverse_request_id">
                 <div class="modal-body">
-                    <div class="alert alert-warning">
+                    <div class="alert alert-warning" style="border-radius: 8px; border-left: 4px solid #ffc107;">
+                        <i class="mdi mdi-alert-circle mr-1"></i>
                         <strong>⚠️ Warning:</strong> You are about to reverse this approval and set the request back to pending.
                     </div>
                     <div class="form-group">
-                        <label>Reason for Reversal <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="reverse_reason" name="reason" rows="3" placeholder="Please provide reason for reversing this approval..." required></textarea>
+                        <label class="font-weight-bold">Reason for Reversal <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="reverse_reason" name="reason" rows="3" placeholder="Please provide reason for reversing this approval..." required style="border-radius: 6px;"></textarea>
                         <small class="form-text text-danger" id="error_reverse_reason"></small>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-warning">
-                        <i class="fa fa-undo"></i> Reverse to Pending
+                <div class="modal-footer" style="border-radius: 0 0 12px 12px;">
+                    <button type="button" class="btn btn-secondary" style="border-radius: 6px;" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning" style="border-radius: 6px;">
+                        <i class="mdi mdi-undo mr-1"></i>Reverse to Pending
                     </button>
                 </div>
             </form>
@@ -763,9 +908,9 @@
 <!-- Re-approve Modal -->
 <div class="modal fade" id="reapproveModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title">Re-approve Request</h5>
+        <div class="modal-content" style="border-radius: 12px; border: none;">
+            <div class="modal-header text-white" style="border-radius: 12px 12px 0 0; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                <h5 class="modal-title"><i class="mdi mdi-check-decagram mr-2"></i>Re-approve Request</h5>
                 <button type="button" class="close text-white"  data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
@@ -775,24 +920,25 @@
                 <input type="hidden" id="reapprove_request_id">
                 <input type="hidden" id="reapprove_coverage_mode">
                 <div class="modal-body">
-                    <div class="alert alert-info">
+                    <div class="alert alert-success" style="border-radius: 8px; border-left: 4px solid #28a745;">
+                        <i class="mdi mdi-information mr-1"></i>
                         <strong>Re-approve:</strong> You are about to re-approve a previously rejected request.
                     </div>
                     <div class="form-group" id="reapprove_auth_code_div" style="display:none;">
-                        <label>Authorization Code <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="reapprove_auth_code" name="auth_code" placeholder="Enter HMO auth code">
+                        <label class="font-weight-bold">Authorization Code <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="reapprove_auth_code" name="auth_code" placeholder="Enter HMO auth code" style="border-radius: 6px;">
                         <small class="form-text text-danger" id="error_reapprove_auth_code"></small>
                         <small class="form-text text-muted">Required for secondary coverage</small>
                     </div>
                     <div class="form-group">
-                        <label>Validation Notes</label>
-                        <textarea class="form-control" id="reapprove_notes" name="validation_notes" rows="3" placeholder="Optional notes for re-approval..."></textarea>
+                        <label class="font-weight-bold">Validation Notes</label>
+                        <textarea class="form-control" id="reapprove_notes" name="validation_notes" rows="3" placeholder="Optional notes for re-approval..." style="border-radius: 6px;"></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success">
-                        <i class="fa fa-check"></i> Re-approve
+                <div class="modal-footer" style="border-radius: 0 0 12px 12px;">
+                    <button type="button" class="btn btn-secondary" style="border-radius: 6px;" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success" style="border-radius: 6px;">
+                        <i class="mdi mdi-check mr-1"></i>Re-approve
                     </button>
                 </div>
             </form>
@@ -803,9 +949,9 @@
 <!-- Batch Approve Modal -->
 <div class="modal fade" id="batchApproveModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title">Batch Approve Requests</h5>
+        <div class="modal-content" style="border-radius: 12px; border: none;">
+            <div class="modal-header text-white" style="border-radius: 12px 12px 0 0; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                <h5 class="modal-title"><i class="mdi mdi-check-all mr-2"></i>Batch Approve Requests</h5>
                 <button type="button" class="close text-white"  data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
@@ -813,19 +959,20 @@
             <form id="batchApproveForm">
                 @csrf
                 <div class="modal-body">
-                    <div class="alert alert-info">
+                    <div class="alert alert-success" style="border-radius: 8px; border-left: 4px solid #28a745;">
+                        <i class="mdi mdi-information mr-1"></i>
                         <strong>Batch Approve:</strong> You are about to approve <strong><span id="batchApproveCount">0</span></strong> requests.
-                        <br><small class="text-warning">Note: Secondary coverage requests will be skipped (require individual auth codes).</small>
+                        <br><small class="text-warning"><i class="mdi mdi-alert mr-1"></i>Secondary coverage requests will be skipped (require individual auth codes).</small>
                     </div>
                     <div class="form-group">
-                        <label>Validation Notes (applied to all)</label>
-                        <textarea class="form-control" name="validation_notes" rows="3" placeholder="Optional notes..."></textarea>
+                        <label class="font-weight-bold">Validation Notes (applied to all)</label>
+                        <textarea class="form-control" name="validation_notes" rows="3" placeholder="Optional notes..." style="border-radius: 6px;"></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success">
-                        <i class="fa fa-check"></i> Approve All
+                <div class="modal-footer" style="border-radius: 0 0 12px 12px;">
+                    <button type="button" class="btn btn-secondary" style="border-radius: 6px;" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success" style="border-radius: 6px;">
+                        <i class="mdi mdi-check-all mr-1"></i>Approve All
                     </button>
                 </div>
             </form>
@@ -836,9 +983,9 @@
 <!-- Batch Reject Modal -->
 <div class="modal fade" id="batchRejectModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">Batch Reject Requests</h5>
+        <div class="modal-content" style="border-radius: 12px; border: none;">
+            <div class="modal-header text-white" style="border-radius: 12px 12px 0 0; background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);">
+                <h5 class="modal-title"><i class="mdi mdi-close-circle-multiple mr-2"></i>Batch Reject Requests</h5>
                 <button type="button" class="close text-white"  data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
@@ -846,12 +993,13 @@
             <form id="batchRejectForm">
                 @csrf
                 <div class="modal-body">
-                    <div class="alert alert-warning">
+                    <div class="alert alert-warning" style="border-radius: 8px; border-left: 4px solid #ffc107;">
+                        <i class="mdi mdi-alert mr-1"></i>
                         <strong>Batch Reject:</strong> You are about to reject <strong><span id="batchRejectCount">0</span></strong> requests.
                     </div>
                     <div class="form-group">
-                        <label>Rejection Reason <span class="text-danger">*</span></label>
-                        <select class="form-control" name="rejection_reason" required>
+                        <label class="font-weight-bold">Rejection Reason <span class="text-danger">*</span></label>
+                        <select class="form-control" name="rejection_reason" required style="border-radius: 6px;">
                             <option value="">-- Select Reason --</option>
                             @foreach($rejectionReasons as $key => $reason)
                                 <option value="{{ $key }}">{{ $reason }}</option>
@@ -859,14 +1007,14 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Additional Notes</label>
-                        <textarea class="form-control" name="validation_notes" rows="3" placeholder="Optional additional notes..."></textarea>
+                        <label class="font-weight-bold">Additional Notes</label>
+                        <textarea class="form-control" name="validation_notes" rows="3" placeholder="Optional additional notes..." style="border-radius: 6px;"></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger">
-                        <i class="fa fa-times"></i> Reject All
+                <div class="modal-footer" style="border-radius: 0 0 12px 12px;">
+                    <button type="button" class="btn btn-secondary" style="border-radius: 6px;" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger" style="border-radius: 6px;">
+                        <i class="mdi mdi-close mr-1"></i>Reject All
                     </button>
                 </div>
             </form>
@@ -877,43 +1025,43 @@
 <!-- Patient History Modal -->
 <div class="modal fade" id="patientHistoryModal" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-xl" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-secondary text-white">
-                <h5 class="modal-title"><i class="fa fa-history"></i> Patient HMO History</h5>
+        <div class="modal-content" style="border-radius: 12px; border: none;">
+            <div class="modal-header text-white" style="border-radius: 12px 12px 0 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h5 class="modal-title"><i class="mdi mdi-history mr-2"></i>Patient HMO History</h5>
                 <button type="button" class="close text-white"  data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
             </div>
             <div class="modal-body">
-                <div class="row mb-3">
+                <div class="row mb-4">
                     <div class="col-md-4">
-                        <div class="card-modern bg-info text-white">
-                            <div class="card-body text-center">
-                                <h5 class="mb-0">Total HMO Claims</h5>
-                                <h3 class="mb-0" id="history_total_claims">₦0</h3>
+                        <div class="stat-card-modern text-white" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                            <div class="card-body text-center py-3">
+                                <h6 class="text-white-50 mb-1">Total HMO Claims</h6>
+                                <h3 class="mb-0" id="history_total_claims" style="font-weight: 700;">₦0</h3>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="card-modern bg-primary text-white">
-                            <div class="card-body text-center">
-                                <h5 class="mb-0">This Month Claims</h5>
-                                <h3 class="mb-0" id="history_month_claims">₦0</h3>
+                        <div class="stat-card-modern text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <div class="card-body text-center py-3">
+                                <h6 class="text-white-50 mb-1">This Month Claims</h6>
+                                <h3 class="mb-0" id="history_month_claims" style="font-weight: 700;">₦0</h3>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="card-modern bg-success text-white">
-                            <div class="card-body text-center">
-                                <h5 class="mb-0">Total HMO Visits</h5>
-                                <h3 class="mb-0" id="history_total_visits">0</h3>
+                        <div class="stat-card-modern text-white" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                            <div class="card-body text-center py-3">
+                                <h6 class="text-white-50 mb-1">Total HMO Visits</h6>
+                                <h3 class="mb-0" id="history_total_visits" style="font-weight: 700;">0</h3>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-sm table-bordered" id="historyTable">
-                        <thead class="thead-dark">
+                    <table class="table table-sm table-bordered" id="historyTable" style="border-radius: 8px;">
+                        <thead class="bg-light">
                             <tr>
                                 <th>Date</th>
                                 <th>Type</th>
@@ -926,13 +1074,13 @@
                             </tr>
                         </thead>
                         <tbody id="historyTableBody">
-                            <tr><td colspan="8" class="text-center">Loading...</td></tr>
+                            <tr><td colspan="8" class="text-center text-muted py-4"><i class="mdi mdi-loading mdi-spin mr-2"></i>Loading...</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Close</button>
+            <div class="modal-footer" style="border-radius: 0 0 12px 12px;">
+                <button type="button" class="btn btn-secondary" style="border-radius: 6px;" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -996,11 +1144,22 @@ $(function() {
     // Load queue counts
     function loadQueueCounts() {
         $.get("{{ route('hmo.queue-counts') }}", function(data) {
-            $('#pending_count, #pending_badge').text(data.pending);
-            $('#express_count, #express_badge').text(data.express);
-            $('#approved_today_count').text(data.approved_today);
-            $('#rejected_today_count').text(data.rejected_today);
-            $('#overdue_count').text(data.overdue);
+            // Update stat cards
+            $('#pending_count').text(data.pending || 0);
+            $('#express_count').text(data.express || 0);
+            $('#approved_today_count').text(data.approved_today || 0);
+            $('#rejected_today_count').text(data.rejected_today || 0);
+            $('#overdue_count').text(data.overdue || 0);
+
+            // Update tab badges
+            $('#pending_badge').text(data.pending || 0);
+            $('#express_badge').text(data.express || 0);
+            $('#approved_badge').text(data.approved || 0);
+            $('#rejected_badge').text(data.rejected || 0);
+            $('#claims_badge').text(data.claims || 0);
+            $('#all_badge').text(data.all || 0);
+        }).fail(function(xhr) {
+            console.error('Failed to load queue counts:', xhr);
         });
     }
 

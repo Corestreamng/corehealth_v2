@@ -13,6 +13,36 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        // \App\Models\User::factory(10)->create();
+        $this->call([
+            // Core Setup
+            DepartmentSeeder::class,
+            WardSeeder::class,
+            StoreSeeder::class,
+
+            // Permissions & Roles
+            HrPermissionsSeeder::class,
+            AccountingPermissionSeeder::class,
+            InventoryPermissionsSeeder::class,
+            HmoExecutiveRoleSeeder::class,
+
+            // Accounting
+            ChartOfAccountsSeeder::class,
+            SalariesPayableAccountSeeder::class,
+
+            // HMO
+            HmoSchemeSeeder::class,
+            PrivateHmoSeeder::class,
+
+            // Services & Products
+            ServiceCategorySeeder::class,
+            ProcedureCategorySeeder::class,
+            ProcedureServiceCategorySeeder::class,
+            ProductCategorySeeder::class,
+            ProductSeeder::class,
+            ServiceSeeder::class,
+
+            // Other
+            VaccineScheduleSeeder::class,
+        ]);
     }
 }

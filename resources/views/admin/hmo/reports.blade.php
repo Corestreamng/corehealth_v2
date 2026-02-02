@@ -9,29 +9,106 @@
         --hospital-primary: {{ $hosColor }};
     }
 
-    /* Report Cards */
-    .report-card {
-        cursor: pointer;
-        transition: all 0.3s ease;
-        border: 2px solid transparent;
+    /* Modern Card Styling */
+    .stat-card-modern {
+        border-radius: 12px;
+        border: none;
+        transition: transform 0.2s, box-shadow 0.2s;
     }
-    .report-card:hover {
-        border-color: var(--hospital-primary);
-        transform: translateY(-3px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+
+    .stat-card-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
     }
-    .report-card.active {
-        border-color: var(--hospital-primary);
-        background-color: rgba(0, 102, 204, 0.05);
+
+    .stat-card-modern .card-body {
+        padding: 1.25rem;
     }
-    .report-card .icon-wrapper {
+
+    .stat-card-modern .stat-icon {
+        font-size: 3rem;
+        opacity: 0.3;
+    }
+
+    /* Report Cards - Modern */
+    .report-card-modern {
+        border-radius: 12px !important;
+        border: 2px solid #e9ecef !important;
+        cursor: pointer !important;
+        transition: all 0.3s ease !important;
+        background: white !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;
+        user-select: none;
+        display: block;
+    }
+
+    .report-card-modern:hover {
+        border-color: var(--hospital-primary) !important;
+        transform: translateY(-4px) !important;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.15) !important;
+        background: #f8f9ff !important;
+    }
+
+    .report-card-modern:active {
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+    }
+
+    .report-card-modern.active {
+        border-color: #667eea !important;
+        border-width: 3px !important;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.12) 100%) !important;
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3) !important;
+    }
+
+    .report-card-modern.active .icon-wrapper {
+        transform: scale(1.1);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .report-card-modern.active h6 {
+        color: #667eea !important;
+        font-weight: 700 !important;
+    }
+
+    .report-card-modern .card-body {
+        background: transparent !important;
+    }
+
+    .report-card-modern .icon-wrapper {
         width: 60px;
         height: 60px;
-        border-radius: 50%;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 24px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .report-card-modern h6 {
+        transition: color 0.2s ease, font-weight 0.2s ease;
+    }
+
+    /* Page Header */
+    .reports-header {
+        margin-bottom: 1.5rem;
+    }
+
+    .reports-title {
+        font-weight: 700;
+        color: var(--hospital-primary);
+        margin-bottom: 0.25rem;
+    }
+
+    .reports-subtitle {
+        color: #6c757d;
+        margin-bottom: 0;
+    }
+
+    .reports-date {
+        color: #6c757d;
+        font-size: 0.9rem;
     }
 
     /* Tab styling */
@@ -45,14 +122,17 @@
     .aging-cell-danger { background-color: #f8d7da !important; }
     .aging-cell-critical { background-color: #dc3545 !important; color: white; }
 
-    /* Summary cards */
-    .summary-card {
-        border-left: 4px solid var(--hospital-primary);
+    /* Summary cards - Modern */
+    .summary-card-modern {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
-    .summary-card.success { border-left-color: #28a745; }
-    .summary-card.warning { border-left-color: #ffc107; }
-    .summary-card.danger { border-left-color: #dc3545; }
-    .summary-card.info { border-left-color: #17a2b8; }
+
+    .summary-card-modern.success { border-left: 4px solid #28a745; }
+    .summary-card-modern.warning { border-left: 4px solid #ffc107; }
+    .summary-card-modern.danger { border-left: 4px solid #dc3545; }
+    .summary-card-modern.info { border-left: 4px solid #17a2b8; }
 
     /* Print preview */
     .print-preview {
@@ -61,95 +141,160 @@
         padding: 20px;
         max-height: 600px;
         overflow-y: auto;
+        border-radius: 8px;
     }
 
-    /* Filters */
-    .filter-section {
-        background: #f8f9fa;
-        border-radius: 8px;
-        padding: 15px;
+    /* Filters - Modern */
+    .filter-section-modern {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px;
+        padding: 20px;
         margin-bottom: 20px;
+        border: none;
+    }
+
+    .filter-section-modern label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .filter-section-modern .form-control {
+        border-radius: 6px;
     }
 
     /* DataTable customization */
     .dataTables_wrapper .dataTables_filter input {
         border: 1px solid #ddd;
-        border-radius: 4px;
+        border-radius: 6px;
         padding: 5px 10px;
     }
 
-    /* Remittance form */
+    /* Remittance form - Modern */
     .remittance-summary {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        border-radius: 10px;
+        border-radius: 12px;
         padding: 20px;
+    }
+
+    /* Card Modern */
+    .card-section-modern {
+        background: white;
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        margin-bottom: 1.5rem;
+    }
+
+    .card-section-modern .card-header {
+        border-radius: 12px 12px 0 0;
+        background: white;
+        border-bottom: 1px solid #e9ecef;
+        padding: 1rem 1.25rem;
+    }
+
+    .card-section-modern .card-header h5 {
+        font-weight: 600;
+        margin-bottom: 0;
+    }
+
+    .card-section-modern .card-body {
+        padding: 1.25rem;
+    }
+
+    /* Summary Card Modern - Gradient Style */
+    .summary-card-modern {
+        border-radius: 12px;
+        padding: 1.25rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .summary-card-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+
+    .summary-card-modern .summary-icon {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 3rem;
+        opacity: 0.3;
+        color: white;
     }
 </style>
 @endsection
 
 @section('content')
-<section class="content-header">
-    <div class="container-fluid">
-        <div class="row mb-2">
-            <div class="col-sm-6">
-                <h1><i class="mdi mdi-file-chart"></i> HMO Reports & Claims</h1>
-            </div>
-            <div class="col-sm-6">
-                <ol class="breadcrumb float-sm-right">
-                    <li class="breadcrumb-item"><a href="{{ route('home') }}">Dashboard</a></li>
-                    <li class="breadcrumb-item"><a href="{{ route('hmo.workbench') }}">HMO Workbench</a></li>
-                    <li class="breadcrumb-item active">Reports</li>
-                </ol>
-            </div>
-        </div>
-    </div>
-</section>
-
 <section class="content">
     <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="d-flex justify-content-between align-items-center reports-header">
+            <div>
+                <h3 class="reports-title">
+                    <i class="mdi mdi-file-chart mr-2"></i>HMO Reports & Claims
+                </h3>
+                <p class="reports-subtitle">Analytics, Claims Submission & Remittance Management</p>
+            </div>
+            <div class="d-flex align-items-center">
+                <a href="{{ route('hmo.workbench') }}" class="btn btn-outline-primary mr-3" style="border-radius: 6px;">
+                    <i class="mdi mdi-arrow-left mr-1"></i>Back to Workbench
+                </a>
+                <span class="reports-date">
+                    <i class="mdi mdi-calendar mr-1"></i>{{ date('l, F j, Y') }}
+                </span>
+            </div>
+        </div>
+
         <!-- Report Type Selection - Row 1 -->
         <div class="row mb-3">
             <div class="col-md-3">
-                <div class="card-modern report-card active" data-report="claims">
-                    <div class="card-body text-center py-3">
-                        <div class="icon-wrapper bg-primary text-white mx-auto mb-2">
+                <div class="report-card-modern active" data-report="claims">
+                    <div class="card-body text-center py-4">
+                        <div class="icon-wrapper text-white mx-auto mb-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                             <i class="mdi mdi-file-document-outline"></i>
                         </div>
-                        <h6 class="mb-0">Claims Report</h6>
+                        <h6 class="mb-1 font-weight-bold">Claims Report</h6>
                         <small class="text-muted">Submission-ready claims</small>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card-modern report-card" data-report="outstanding">
-                    <div class="card-body text-center py-3">
-                        <div class="icon-wrapper bg-danger text-white mx-auto mb-2">
+                <div class="report-card-modern" data-report="outstanding">
+                    <div class="card-body text-center py-4">
+                        <div class="icon-wrapper text-white mx-auto mb-3" style="background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);">
                             <i class="mdi mdi-cash-multiple"></i>
                         </div>
-                        <h6 class="mb-0">Outstanding Claims</h6>
+                        <h6 class="mb-1 font-weight-bold">Outstanding Claims</h6>
                         <small class="text-muted">What HMOs owe</small>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card-modern report-card" data-report="remittances">
-                    <div class="card-body text-center py-3">
-                        <div class="icon-wrapper bg-success text-white mx-auto mb-2">
+                <div class="report-card-modern" data-report="remittances">
+                    <div class="card-body text-center py-4">
+                        <div class="icon-wrapper text-white mx-auto mb-3" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
                             <i class="mdi mdi-bank-transfer-in"></i>
                         </div>
-                        <h6 class="mb-0">HMO Remittances</h6>
+                        <h6 class="mb-1 font-weight-bold">HMO Remittances</h6>
                         <small class="text-muted">Payments received</small>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card-modern report-card" data-report="monthly">
-                    <div class="card-body text-center py-3">
-                        <div class="icon-wrapper bg-info text-white mx-auto mb-2">
+                <div class="report-card-modern" data-report="monthly">
+                    <div class="card-body text-center py-4">
+                        <div class="icon-wrapper text-white mx-auto mb-3" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
                             <i class="mdi mdi-chart-bar"></i>
                         </div>
-                        <h6 class="mb-0">Monthly Summary</h6>
+                        <h6 class="mb-1 font-weight-bold">Monthly Summary</h6>
                         <small class="text-muted">Analytics & trends</small>
                     </div>
                 </div>
@@ -159,34 +304,34 @@
         <!-- Report Type Selection - Row 2 -->
         <div class="row mb-4">
             <div class="col-md-3">
-                <div class="card-modern report-card" data-report="patient">
-                    <div class="card-body text-center py-3">
-                        <div class="icon-wrapper bg-purple text-white mx-auto mb-2" style="background: #6f42c1;">
+                <div class="report-card-modern" data-report="patient">
+                    <div class="card-body text-center py-4">
+                        <div class="icon-wrapper text-white mx-auto mb-3" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
                             <i class="mdi mdi-account-card-details"></i>
                         </div>
-                        <h6 class="mb-0">Patient History</h6>
+                        <h6 class="mb-1 font-weight-bold">Patient History</h6>
                         <small class="text-muted">Per-patient claims</small>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card-modern report-card" data-report="utilization">
-                    <div class="card-body text-center py-3">
-                        <div class="icon-wrapper bg-teal text-white mx-auto mb-2" style="background: #20c997;">
+                <div class="report-card-modern" data-report="utilization">
+                    <div class="card-body text-center py-4">
+                        <div class="icon-wrapper text-white mx-auto mb-3" style="background: linear-gradient(135deg, #a8edea 0%, #20c997 100%);">
                             <i class="mdi mdi-chart-pie"></i>
                         </div>
-                        <h6 class="mb-0">Service Utilization</h6>
+                        <h6 class="mb-1 font-weight-bold">Service Utilization</h6>
                         <small class="text-muted">Top services & analytics</small>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card-modern report-card" data-report="authcodes">
-                    <div class="card-body text-center py-3">
-                        <div class="icon-wrapper bg-orange text-white mx-auto mb-2" style="background: #fd7e14;">
+                <div class="report-card-modern" data-report="authcodes">
+                    <div class="card-body text-center py-4">
+                        <div class="icon-wrapper text-white mx-auto mb-3" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);">
                             <i class="mdi mdi-key-variant"></i>
                         </div>
-                        <h6 class="mb-0">Auth Code Tracker</h6>
+                        <h6 class="mb-1 font-weight-bold">Auth Code Tracker</h6>
                         <small class="text-muted">Authorization codes</small>
                     </div>
                 </div>
@@ -200,17 +345,17 @@
         <div id="reportContent">
             <!-- Claims Report Section -->
             <div id="claimsReportSection" class="report-section">
-                <div class="card-modern">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0"><i class="mdi mdi-file-document-outline"></i> Claims Submission Report</h5>
+                <div class="card-section-modern">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="mdi mdi-file-document-outline text-primary mr-2"></i>Claims Submission Report</h5>
                     </div>
                     <div class="card-body">
                         <!-- Filters Row 1 -->
-                        <div class="filter-section">
-                            <div class="row mb-2">
+                        <div class="filter-section-modern">
+                            <div class="row mb-3">
                                 <div class="col-md-2">
                                     <label>HMO Provider</label>
-                                    <select class="form-control form-control-sm" id="filter_hmo">
+                                    <select class="form-control form-control-sm" id="filter_hmo" style="border-radius: 6px;">
                                         <option value="">All HMOs</option>
                                         @foreach($hmos as $hmo)
                                             <option value="{{ $hmo->id }}">{{ $hmo->name }}</option>
@@ -219,7 +364,7 @@
                                 </div>
                                 <div class="col-md-2">
                                     <label>Status</label>
-                                    <select class="form-control form-control-sm" id="filter_status">
+                                    <select class="form-control form-control-sm" id="filter_status" style="border-radius: 6px;">
                                         <option value="">All Status</option>
                                         <option value="approved">Approved</option>
                                         <option value="pending">Pending</option>
@@ -228,15 +373,15 @@
                                 </div>
                                 <div class="col-md-2">
                                     <label>From Date</label>
-                                    <input type="date" class="form-control form-control-sm" id="filter_date_from" value="{{ date('Y-m-01') }}">
+                                    <input type="date" class="form-control form-control-sm" id="filter_date_from" value="{{ date('Y-m-01') }}" style="border-radius: 6px;">
                                 </div>
                                 <div class="col-md-2">
                                     <label>To Date</label>
-                                    <input type="date" class="form-control form-control-sm" id="filter_date_to" value="{{ date('Y-m-d') }}">
+                                    <input type="date" class="form-control form-control-sm" id="filter_date_to" value="{{ date('Y-m-d') }}" style="border-radius: 6px;">
                                 </div>
                                 <div class="col-md-2">
                                     <label>Submission</label>
-                                    <select class="form-control form-control-sm" id="filter_submission">
+                                    <select class="form-control form-control-sm" id="filter_submission" style="border-radius: 6px;">
                                         <option value="">All</option>
                                         <option value="submitted">Submitted</option>
                                         <option value="not_submitted">Not Submitted</option>
@@ -244,7 +389,7 @@
                                 </div>
                                 <div class="col-md-2">
                                     <label>Payment</label>
-                                    <select class="form-control form-control-sm" id="filter_payment">
+                                    <select class="form-control form-control-sm" id="filter_payment" style="border-radius: 6px;">
                                         <option value="">All</option>
                                         <option value="paid">Paid</option>
                                         <option value="unpaid">Unpaid</option>
@@ -255,7 +400,7 @@
                             <div class="row">
                                 <div class="col-md-2">
                                     <label>Service Category</label>
-                                    <select class="form-control form-control-sm" id="filter_service_category">
+                                    <select class="form-control form-control-sm" id="filter_service_category" style="border-radius: 6px;">
                                         <option value="">All Categories</option>
                                         @foreach($serviceCategories as $cat)
                                             <option value="{{ $cat->id }}">{{ $cat->category_name }}</option>
@@ -264,7 +409,7 @@
                                 </div>
                                 <div class="col-md-2">
                                     <label>Product Category</label>
-                                    <select class="form-control form-control-sm" id="filter_product_category">
+                                    <select class="form-control form-control-sm" id="filter_product_category" style="border-radius: 6px;">
                                         <option value="">All Categories</option>
                                         @foreach($productCategories as $cat)
                                             <option value="{{ $cat->id }}">{{ $cat->category_name }}</option>
@@ -273,7 +418,7 @@
                                 </div>
                                 <div class="col-md-2">
                                     <label>Type</label>
-                                    <select class="form-control form-control-sm" id="filter_type">
+                                    <select class="form-control form-control-sm" id="filter_type" style="border-radius: 6px;">
                                         <option value="">All Types</option>
                                         <option value="service">Services Only</option>
                                         <option value="product">Products Only</option>
@@ -282,11 +427,11 @@
                                 <div class="col-md-6 text-right">
                                     <label>&nbsp;</label>
                                     <div>
-                                        <button class="btn btn-primary btn-sm" id="applyFilters">
-                                            <i class="fa fa-filter"></i> Apply Filters
+                                        <button class="btn btn-primary btn-sm" id="applyFilters" style="border-radius: 6px;">
+                                            <i class="mdi mdi-filter mr-1"></i>Apply Filters
                                         </button>
-                                        <button class="btn btn-secondary btn-sm" id="clearFilters">
-                                            <i class="fa fa-times"></i> Clear
+                                        <button class="btn btn-secondary btn-sm" id="clearFilters" style="border-radius: 6px;">
+                                            <i class="mdi mdi-close mr-1"></i>Clear
                                         </button>
                                     </div>
                                 </div>
@@ -297,17 +442,17 @@
                         <div class="row mb-3">
                             <div class="col-md-8">
                                 <div class="btn-group">
-                                    <button class="btn btn-success btn-sm" id="printReportBtn">
-                                        <i class="fa fa-print"></i> Print
+                                    <button class="btn btn-success btn-sm" id="printReportBtn" style="border-radius: 6px 0 0 6px;">
+                                        <i class="mdi mdi-printer mr-1"></i>Print
                                     </button>
                                     <button class="btn btn-info btn-sm" id="exportExcelBtn">
-                                        <i class="fa fa-file-excel"></i> Excel
+                                        <i class="mdi mdi-microsoft-excel mr-1"></i>Excel
                                     </button>
                                     <button class="btn btn-danger btn-sm" id="exportPdfBtn">
-                                        <i class="fa fa-file-pdf"></i> PDF
+                                        <i class="mdi mdi-file-pdf-box mr-1"></i>PDF
                                     </button>
-                                    <button class="btn btn-warning btn-sm" id="markSubmittedBtn" disabled>
-                                        <i class="fa fa-check"></i> Mark Submitted
+                                    <button class="btn btn-warning btn-sm" id="markSubmittedBtn" disabled style="border-radius: 0 6px 6px 0;">
+                                        <i class="mdi mdi-check mr-1"></i>Mark Submitted
                                     </button>
                                 </div>
                             </div>
@@ -345,43 +490,47 @@
 
             <!-- Outstanding Claims Section -->
             <div id="outstandingReportSection" class="report-section" style="display:none;">
-                <div class="card-modern">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0"><i class="mdi mdi-cash-multiple"></i> Outstanding Claims by HMO</h5>
+                <div class="card-section-modern">
+                    <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 12px 12px 0 0;">
+                        <h5 class="card-title mb-0"><i class="mdi mdi-cash-multiple mr-2"></i>Outstanding Claims by HMO</h5>
                     </div>
                     <div class="card-body">
                         <!-- Summary Cards -->
                         <div class="row mb-4" id="outstandingSummary">
                             <div class="col-md-3">
-                                <div class="card-modern summary-card info">
-                                    <div class="card-body py-3">
-                                        <h6 class="text-muted mb-1">Total Claims</h6>
-                                        <h4 class="mb-0" id="summaryTotalClaims">₦0.00</h4>
+                                <div class="summary-card-modern" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                                    <div class="summary-icon">
+                                        <i class="mdi mdi-file-document-multiple-outline"></i>
                                     </div>
+                                    <h6 class="text-white-50 mb-1">Total Claims</h6>
+                                    <h4 class="mb-0 text-white font-weight-bold" id="summaryTotalClaims">₦0.00</h4>
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <div class="card-modern summary-card success">
-                                    <div class="card-body py-3">
-                                        <h6 class="text-muted mb-1">Total Paid</h6>
-                                        <h4 class="mb-0 text-success" id="summaryTotalPaid">₦0.00</h4>
+                                <div class="summary-card-modern" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                                    <div class="summary-icon">
+                                        <i class="mdi mdi-check-circle-outline"></i>
                                     </div>
+                                    <h6 class="text-white-50 mb-1">Total Paid</h6>
+                                    <h4 class="mb-0 text-white font-weight-bold" id="summaryTotalPaid">₦0.00</h4>
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <div class="card-modern summary-card danger">
-                                    <div class="card-body py-3">
-                                        <h6 class="text-muted mb-1">Outstanding</h6>
-                                        <h4 class="mb-0 text-danger" id="summaryOutstanding">₦0.00</h4>
+                                <div class="summary-card-modern" style="background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);">
+                                    <div class="summary-icon">
+                                        <i class="mdi mdi-alert-circle-outline"></i>
                                     </div>
+                                    <h6 class="text-white-50 mb-1">Outstanding</h6>
+                                    <h4 class="mb-0 text-white font-weight-bold" id="summaryOutstanding">₦0.00</h4>
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <div class="card-modern summary-card warning">
-                                    <div class="card-body py-3">
-                                        <h6 class="text-muted mb-1">Over 90 Days</h6>
-                                        <h4 class="mb-0 text-warning" id="summaryOverdue">₦0.00</h4>
+                                <div class="summary-card-modern" style="background: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);">
+                                    <div class="summary-icon">
+                                        <i class="mdi mdi-clock-alert-outline"></i>
                                     </div>
+                                    <h6 class="text-white-50 mb-1">Over 90 Days</h6>
+                                    <h4 class="mb-0 text-white font-weight-bold" id="summaryOverdue">₦0.00</h4>
                                 </div>
                             </div>
                         </div>
@@ -389,7 +538,7 @@
                         <!-- Aging Table -->
                         <div class="table-responsive">
                             <table class="table table-bordered" id="outstandingTable">
-                                <thead class="thead-dark">
+                                <thead style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
                                     <tr>
                                         <th>HMO Provider</th>
                                         <th>Total Claims</th>
@@ -409,8 +558,8 @@
                         </div>
 
                         <div class="text-right mt-3">
-                            <button class="btn btn-success" id="printOutstandingBtn">
-                                <i class="fa fa-print"></i> Print Outstanding Report
+                            <button class="btn btn-success" id="printOutstandingBtn" style="border-radius: 6px;">
+                                <i class="mdi mdi-printer mr-1"></i> Print Outstanding Report
                             </button>
                         </div>
                     </div>
@@ -421,18 +570,18 @@
             <div id="remittancesSection" class="report-section" style="display:none;">
                 <div class="row">
                     <div class="col-md-8">
-                        <div class="card-modern">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <h5 class="card-title mb-0"><i class="mdi mdi-bank-transfer-in"></i> HMO Remittances</h5>
-                                <button class="btn btn-primary btn-sm" id="addRemittanceBtn">
-                                    <i class="fa fa-plus"></i> Record Remittance
+                        <div class="card-section-modern">
+                            <div class="card-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; border-radius: 12px 12px 0 0;">
+                                <h5 class="card-title mb-0"><i class="mdi mdi-bank-transfer-in mr-2"></i>HMO Remittances</h5>
+                                <button class="btn btn-light btn-sm" id="addRemittanceBtn" style="border-radius: 6px;">
+                                    <i class="mdi mdi-plus mr-1"></i>Record Remittance
                                 </button>
                             </div>
                             <div class="card-body">
                                 <!-- Filters -->
                                 <div class="row mb-3">
                                     <div class="col-md-4">
-                                        <select class="form-control form-control-sm" id="remittance_filter_hmo">
+                                        <select class="form-control form-control-sm" id="remittance_filter_hmo" style="border-radius: 6px;">
                                             <option value="">All HMOs</option>
                                             @foreach($hmos as $hmo)
                                                 <option value="{{ $hmo->id }}">{{ $hmo->name }}</option>
@@ -440,13 +589,13 @@
                                         </select>
                                     </div>
                                     <div class="col-md-3">
-                                        <input type="date" class="form-control form-control-sm" id="remittance_filter_from" placeholder="From" value="{{ date('Y-m-01') }}">
+                                        <input type="date" class="form-control form-control-sm" id="remittance_filter_from" placeholder="From" value="{{ date('Y-m-01') }}" style="border-radius: 6px;">
                                     </div>
                                     <div class="col-md-3">
-                                        <input type="date" class="form-control form-control-sm" id="remittance_filter_to" placeholder="To" value="{{ date('Y-m-d') }}">
+                                        <input type="date" class="form-control form-control-sm" id="remittance_filter_to" placeholder="To" value="{{ date('Y-m-d') }}" style="border-radius: 6px;">
                                     </div>
                                     <div class="col-md-2">
-                                        <button class="btn btn-primary btn-sm btn-block" id="filterRemittances">Filter</button>
+                                        <button class="btn btn-primary btn-sm btn-block" id="filterRemittances" style="border-radius: 6px;">Filter</button>
                                     </div>
                                 </div>
 
@@ -471,9 +620,9 @@
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="card-modern">
-                            <div class="card-header bg-primary text-white">
-                                <h5 class="card-title mb-0"><i class="fa fa-calculator"></i> Quick Summary</h5>
+                        <div class="card-section-modern">
+                            <div class="card-header text-white" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 12px 12px 0 0;">
+                                <h5 class="card-title mb-0"><i class="mdi mdi-calculator mr-2"></i>Quick Summary</h5>
                             </div>
                             <div class="card-body">
                                 <div id="remittanceSummary">
@@ -490,16 +639,16 @@
 
             <!-- Monthly Summary Section -->
             <div id="monthlySummarySection" class="report-section" style="display:none;">
-                <div class="card-modern">
-                    <div class="card-header">
+                <div class="card-section-modern">
+                    <div class="card-header" style="background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); color: white; border-radius: 12px 12px 0 0;">
                         <div class="row align-items-center">
                             <div class="col-md-6">
-                                <h5 class="card-title mb-0"><i class="mdi mdi-chart-bar"></i> Monthly Summary</h5>
+                                <h5 class="card-title mb-0"><i class="mdi mdi-chart-bar mr-2"></i>Monthly Summary</h5>
                             </div>
                             <div class="col-md-6">
                                 <div class="row">
                                     <div class="col-md-5">
-                                        <select class="form-control form-control-sm" id="monthlyMonth">
+                                        <select class="form-control form-control-sm" id="monthlyMonth" style="border-radius: 6px;">
                                             @for($m = 1; $m <= 12; $m++)
                                                 <option value="{{ $m }}" {{ $m == date('n') ? 'selected' : '' }}>
                                                     {{ date('F', mktime(0, 0, 0, $m, 1)) }}
@@ -508,14 +657,14 @@
                                         </select>
                                     </div>
                                     <div class="col-md-4">
-                                        <select class="form-control form-control-sm" id="monthlyYear">
+                                        <select class="form-control form-control-sm" id="monthlyYear" style="border-radius: 6px;">
                                             @for($y = date('Y'); $y >= date('Y') - 5; $y--)
                                                 <option value="{{ $y }}">{{ $y }}</option>
                                             @endfor
                                         </select>
                                     </div>
                                     <div class="col-md-3">
-                                        <button class="btn btn-primary btn-sm btn-block" id="loadMonthlySummary">Load</button>
+                                        <button class="btn btn-light btn-sm btn-block" id="loadMonthlySummary" style="border-radius: 6px;">Load</button>
                                     </div>
                                 </div>
                             </div>
@@ -534,21 +683,21 @@
 
             <!-- Patient History Section -->
             <div id="patientHistorySection" class="report-section" style="display:none;">
-                <div class="card-modern">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0"><i class="mdi mdi-account-card-details"></i> Patient Claims History</h5>
+                <div class="card-section-modern">
+                    <div class="card-header" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; border-radius: 12px 12px 0 0;">
+                        <h5 class="card-title mb-0"><i class="mdi mdi-account-card-details mr-2"></i>Patient Claims History</h5>
                     </div>
                     <div class="card-body">
                         <!-- Patient Search -->
                         <div class="row mb-4">
                             <div class="col-md-6">
-                                <label>Search Patient</label>
-                                <select class="form-control" id="patientSearchSelect" style="width: 100%;">
+                                <label class="font-weight-bold">Search Patient</label>
+                                <select class="form-control" id="patientSearchSelect" style="width: 100%; border-radius: 6px;">
                                     <option value="">Type patient name, file no, or HMO no...</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <div id="selectedPatientInfo" class="alert alert-info" style="display:none;">
+                                <div id="selectedPatientInfo" class="alert alert-info" style="display:none; border-radius: 6px;">
                                     <strong>Selected:</strong> <span id="patientInfoText"></span>
                                 </div>
                             </div>
@@ -567,23 +716,23 @@
 
             <!-- Service Utilization Section -->
             <div id="utilizationSection" class="report-section" style="display:none;">
-                <div class="card-modern">
-                    <div class="card-header">
+                <div class="card-section-modern">
+                    <div class="card-header" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border-radius: 12px 12px 0 0;">
                         <div class="row align-items-center">
                             <div class="col-md-6">
-                                <h5 class="card-title mb-0"><i class="mdi mdi-chart-pie"></i> Service Utilization Report</h5>
+                                <h5 class="card-title mb-0"><i class="mdi mdi-chart-pie mr-2"></i>Service Utilization Report</h5>
                             </div>
                             <div class="col-md-6">
                                 <div class="row">
                                     <div class="col-md-4">
-                                        <input type="date" class="form-control form-control-sm" id="util_date_from" value="{{ date('Y-m-01') }}">
+                                        <input type="date" class="form-control form-control-sm" id="util_date_from" value="{{ date('Y-m-01') }}" style="border-radius: 6px;">
                                     </div>
                                     <div class="col-md-4">
-                                        <input type="date" class="form-control form-control-sm" id="util_date_to" value="{{ date('Y-m-d') }}">
+                                        <input type="date" class="form-control form-control-sm" id="util_date_to" value="{{ date('Y-m-d') }}" style="border-radius: 6px;">
                                     </div>
                                     <div class="col-md-4">
-                                        <button class="btn btn-primary btn-sm btn-block" id="loadUtilization">
-                                            <i class="fa fa-chart-bar"></i> Load
+                                        <button class="btn btn-light btn-sm btn-block" id="loadUtilization" style="border-radius: 6px;">
+                                            <i class="mdi mdi-chart-bar mr-1"></i>Load
                                         </button>
                                     </div>
                                 </div>
@@ -603,9 +752,9 @@
 
             <!-- Auth Code Tracker Section -->
             <div id="authCodesSection" class="report-section" style="display:none;">
-                <div class="card-modern">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0"><i class="mdi mdi-key-variant"></i> Authorization Code Tracker</h5>
+                <div class="card-section-modern">
+                    <div class="card-header" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; border-radius: 12px 12px 0 0;">
+                        <h5 class="card-title mb-0"><i class="mdi mdi-key-variant mr-2"></i>Authorization Code Tracker</h5>
                     </div>
                     <div class="card-body">
                         <!-- Filters -->
@@ -714,9 +863,9 @@
 <!-- Add/Edit Remittance Modal -->
 <div class="modal fade" id="remittanceModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title"><i class="fa fa-money-bill"></i> <span id="remittanceModalTitle">Record HMO Remittance</span></h5>
+        <div class="modal-content" style="border-radius: 12px; border: none;">
+            <div class="modal-header text-white" style="border-radius: 12px 12px 0 0; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                <h5 class="modal-title"><i class="mdi mdi-cash-plus mr-2"></i><span id="remittanceModalTitle">Record HMO Remittance</span></h5>
                 <button type="button" class="close text-white" data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
@@ -727,8 +876,8 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>HMO Provider <span class="text-danger">*</span></label>
-                                <select class="form-control" id="remittance_hmo_id" name="hmo_id" required>
+                                <label class="font-weight-bold">HMO Provider <span class="text-danger">*</span></label>
+                                <select class="form-control" id="remittance_hmo_id" name="hmo_id" required style="border-radius: 6px;">
                                     <option value="">Select HMO</option>
                                     @foreach($hmos as $hmo)
                                         <option value="{{ $hmo->id }}">{{ $hmo->name }}</option>
@@ -738,28 +887,28 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>Amount (₦) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="remittance_amount" name="amount" step="0.01" min="0" required>
+                                <label class="font-weight-bold">Amount (₦) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="remittance_amount" name="amount" step="0.01" min="0" required style="border-radius: 6px;">
                             </div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>Payment Date <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="remittance_payment_date" name="payment_date" value="{{ date('Y-m-d') }}" required>
+                                <label class="font-weight-bold">Payment Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="remittance_payment_date" name="payment_date" value="{{ date('Y-m-d') }}" required style="border-radius: 6px;">
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>Reference Number</label>
-                                <input type="text" class="form-control" id="remittance_reference" name="reference_number">
+                                <label class="font-weight-bold">Reference Number</label>
+                                <input type="text" class="form-control" id="remittance_reference" name="reference_number" style="border-radius: 6px;">
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>Payment Method</label>
-                                <select class="form-control" id="remittance_method" name="payment_method">
+                                <label class="font-weight-bold">Payment Method</label>
+                                <select class="form-control" id="remittance_method" name="payment_method" style="border-radius: 6px;">
                                     <option value="">Select Method</option>
                                     <option value="bank_transfer">Bank Transfer</option>
                                     <option value="cheque">Cheque</option>
@@ -769,34 +918,48 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="form-group">
-                                <label>Bank Name</label>
-                                <input type="text" class="form-control" id="remittance_bank" name="bank_name">
+                                <label class="font-weight-bold">Receiving Bank Account <span class="text-danger">*</span></label>
+                                <select class="form-control" id="remittance_bank_id" name="bank_id" required style="border-radius: 6px;">
+                                    <option value="">Select Bank Account</option>
+                                    @foreach($banks ?? [] as $bank)
+                                        <option value="{{ $bank->id }}">{{ $bank->name }} - {{ $bank->account_number }}</option>
+                                    @endforeach
+                                </select>
+                                <small class="text-muted">Bank account where payment was received</small>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="form-group">
-                                <label>Period From</label>
-                                <input type="date" class="form-control" id="remittance_period_from" name="period_from" value="{{ date('Y-m-01') }}">
+                                <label class="font-weight-bold">HMO's Bank Name</label>
+                                <input type="text" class="form-control" id="remittance_bank" name="bank_name" placeholder="Bank where HMO paid from" style="border-radius: 6px;">
                             </div>
                         </div>
-                        <div class="col-md-4">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
                             <div class="form-group">
-                                <label>Period To</label>
-                                <input type="date" class="form-control" id="remittance_period_to" name="period_to" value="{{ date('Y-m-d') }}">
+                                <label class="font-weight-bold">Period From</label>
+                                <input type="date" class="form-control" id="remittance_period_from" name="period_from" value="{{ date('Y-m-01') }}" style="border-radius: 6px;">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="font-weight-bold">Period To</label>
+                                <input type="date" class="form-control" id="remittance_period_to" name="period_to" value="{{ date('Y-m-d') }}" style="border-radius: 6px;">
                             </div>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Notes</label>
-                        <textarea class="form-control" id="remittance_notes" name="notes" rows="2"></textarea>
+                        <label class="font-weight-bold">Notes</label>
+                        <textarea class="form-control" id="remittance_notes" name="notes" rows="2" style="border-radius: 6px;"></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fa fa-save"></i> Save Remittance
+                <div class="modal-footer" style="border-radius: 0 0 12px 12px;">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 6px;">Cancel</button>
+                    <button type="submit" class="btn btn-success" style="border-radius: 6px;">
+                        <i class="mdi mdi-content-save mr-1"></i>Save Remittance
                     </button>
                 </div>
             </form>
@@ -807,9 +970,9 @@
 <!-- View Remittance Details Modal -->
 <div class="modal fade" id="viewRemittanceModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-info text-white">
-                <h5 class="modal-title"><i class="fa fa-eye"></i> Remittance Details</h5>
+        <div class="modal-content" style="border-radius: 12px; border: none;">
+            <div class="modal-header text-white" style="border-radius: 12px 12px 0 0; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <h5 class="modal-title"><i class="mdi mdi-eye mr-2"></i>Remittance Details</h5>
                 <button type="button" class="close text-white" data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
@@ -819,10 +982,10 @@
                     <i class="mdi mdi-loading mdi-spin mdi-36px"></i>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="printRemittanceBtn">
-                    <i class="fa fa-print"></i> Print
+            <div class="modal-footer" style="border-radius: 0 0 12px 12px;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 6px;">Close</button>
+                <button type="button" class="btn btn-primary" id="printRemittanceBtn" style="border-radius: 6px;">
+                    <i class="mdi mdi-printer mr-1"></i>Print
                 </button>
             </div>
         </div>
@@ -832,9 +995,9 @@
 <!-- Print Preview Modal -->
 <div class="modal fade" id="printPreviewModal" tabindex="-1">
     <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fa fa-print"></i> Print Preview</h5>
+        <div class="modal-content" style="border-radius: 12px; border: none;">
+            <div class="modal-header" style="border-radius: 12px 12px 0 0;">
+                <h5 class="modal-title"><i class="mdi mdi-printer mr-2"></i>Print Preview</h5>
                 <button type="button" class="close" data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
@@ -844,10 +1007,10 @@
                     <!-- Content will be loaded here -->
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="doPrintBtn">
-                    <i class="fa fa-print"></i> Print
+            <div class="modal-footer" style="border-radius: 0 0 12px 12px;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 6px;">Close</button>
+                <button type="button" class="btn btn-primary" id="doPrintBtn" style="border-radius: 6px;">
+                    <i class="mdi mdi-printer mr-1"></i>Print
                 </button>
             </div>
         </div>
@@ -1098,13 +1261,21 @@ $(function() {
         return parseFloat(num || 0).toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     }
 
-    // Report card click handler
-    $('.report-card').on('click', function() {
-        let reportType = $(this).data('report');
+    // Report card click handler - using event delegation
+    $(document).on('click', '.report-card-modern', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
 
-        $('.report-card').removeClass('active');
-        $(this).addClass('active');
+        let $card = $(this);
+        let reportType = $card.data('report');
 
+        console.log('Card clicked:', reportType);
+
+        // Remove active from all and add to clicked
+        $('.report-card-modern').removeClass('active');
+        $card.addClass('active');
+
+        // Hide all sections then show the selected one
         $('.report-section').hide();
 
         switch(reportType) {
@@ -1339,6 +1510,7 @@ $(function() {
         $('#remittanceModalTitle').text('Record HMO Remittance');
         $('#remittanceForm')[0].reset();
         $('#remittance_id').val('');
+        $('#remittance_bank_id').val('');
         $('#remittanceModal').modal('show');
     });
 
@@ -1355,6 +1527,7 @@ $(function() {
             data: {
                 _token: '{{ csrf_token() }}',
                 hmo_id: $('#remittance_hmo_id').val(),
+                bank_id: $('#remittance_bank_id').val(),
                 amount: $('#remittance_amount').val(),
                 payment_date: $('#remittance_payment_date').val(),
                 reference_number: $('#remittance_reference').val(),
@@ -1398,7 +1571,8 @@ $(function() {
                     <div class="col-md-6">
                         <table class="table table-sm">
                             <tr><th>Method:</th><td>${rem.payment_method || '-'}</td></tr>
-                            <tr><th>Bank:</th><td>${rem.bank_name || '-'}</td></tr>
+                            <tr><th>Receiving Account:</th><td>${rem.bank_account || '-'}</td></tr>
+                            <tr><th>HMO's Bank:</th><td>${rem.bank_name || '-'}</td></tr>
                             <tr><th>Period:</th><td>${rem.period_from || '-'} to ${rem.period_to || '-'}</td></tr>
                             <tr><th>Recorded By:</th><td>${rem.created_by}</td></tr>
                         </table>
@@ -1432,6 +1606,7 @@ $(function() {
             $('#remittanceModalTitle').text('Edit Remittance');
             $('#remittance_id').val(rem.id);
             $('#remittance_hmo_id').val(rem.hmo_id);
+            $('#remittance_bank_id').val(rem.bank_id);
             $('#remittance_amount').val(parseFloat(rem.amount.replace(/,/g, '')));
             $('#remittance_payment_date').val(rem.payment_date);
             $('#remittance_reference').val(rem.reference_number);
@@ -1547,7 +1722,7 @@ $(function() {
         let hmoId = $(this).data('hmo-id');
         $('#filter_hmo').val(hmoId);
         $('#filter_status').val('approved');
-        $('.report-card[data-report="claims"]').click();
+        $('.report-card-modern[data-report="claims"]').click();
         setTimeout(() => claimsTable.ajax.reload(), 100);
     });
 
