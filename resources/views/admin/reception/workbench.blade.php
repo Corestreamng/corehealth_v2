@@ -3735,6 +3735,249 @@
         }
     }
 
+    /* Photo Capture Styles */
+    .photo-capture-container {
+        border: 2px dashed #dee2e6;
+        border-radius: 12px;
+        background: #f8f9fa;
+        overflow: hidden;
+    }
+
+    .photo-capture-tabs {
+        display: flex;
+        border-bottom: 1px solid #dee2e6;
+        background: #fff;
+    }
+
+    .photo-capture-tab {
+        flex: 1;
+        padding: 10px 15px;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        font-weight: 500;
+        color: #6c757d;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .photo-capture-tab:hover {
+        background: #f0f4f8;
+        color: #0d6efd;
+    }
+
+    .photo-capture-tab.active {
+        background: linear-gradient(135deg, #0d6efd 0%, #0099ff 100%);
+        color: #fff;
+    }
+
+    .photo-capture-tab i {
+        font-size: 1.1rem;
+    }
+
+    .photo-capture-content {
+        padding: 15px;
+        min-height: 180px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .photo-capture-panel {
+        display: none;
+        width: 100%;
+        text-align: center;
+    }
+
+    .photo-capture-panel.active {
+        display: block;
+    }
+
+    /* Upload Panel */
+    .upload-dropzone {
+        border: 2px dashed #0d6efd;
+        border-radius: 8px;
+        padding: 25px 15px;
+        background: rgba(13, 110, 253, 0.03);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .upload-dropzone:hover, .upload-dropzone.dragover {
+        background: rgba(13, 110, 253, 0.08);
+        border-color: #0099ff;
+    }
+
+    .upload-dropzone i {
+        font-size: 2.5rem;
+        color: #0d6efd;
+        margin-bottom: 10px;
+    }
+
+    .upload-dropzone p {
+        margin: 0;
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .upload-dropzone .browse-link {
+        color: #0d6efd;
+        font-weight: 600;
+        text-decoration: underline;
+        cursor: pointer;
+    }
+
+    /* Webcam Panel */
+    .webcam-container {
+        position: relative;
+        width: 100%;
+        max-width: 280px;
+        margin: 0 auto;
+    }
+
+    .webcam-video-wrapper {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 4/3;
+        background: #1a1a2e;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    #pf-webcam-video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform: scaleX(-1);
+    }
+
+    .webcam-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 120px;
+        height: 150px;
+        border: 3px dashed rgba(255, 255, 255, 0.5);
+        border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+        pointer-events: none;
+    }
+
+    .webcam-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #6c757d;
+    }
+
+    .webcam-placeholder i {
+        font-size: 3rem;
+        opacity: 0.5;
+        margin-bottom: 10px;
+    }
+
+    .webcam-controls {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 12px;
+    }
+
+    .webcam-btn {
+        padding: 8px 20px;
+        border-radius: 20px;
+        font-weight: 500;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s ease;
+    }
+
+    .webcam-btn-start {
+        background: linear-gradient(135deg, #28a745 0%, #1e7b34 100%);
+        border: none;
+        color: #fff;
+    }
+
+    .webcam-btn-start:hover {
+        background: linear-gradient(135deg, #218838 0%, #196d2e 100%);
+        color: #fff;
+    }
+
+    .webcam-btn-capture {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        border: none;
+        color: #fff;
+        padding: 12px 30px;
+        border-radius: 30px;
+        font-size: 1rem;
+    }
+
+    .webcam-btn-capture:hover {
+        background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+        color: #fff;
+        transform: scale(1.05);
+    }
+
+    .webcam-btn-stop {
+        background: #6c757d;
+        border: none;
+        color: #fff;
+    }
+
+    .webcam-btn-stop:hover {
+        background: #5a6268;
+        color: #fff;
+    }
+
+    /* Photo Preview */
+    .photo-preview-wrapper {
+        display: none;
+        padding: 15px;
+        text-align: center;
+    }
+
+    .photo-preview-wrapper.show {
+        display: block;
+    }
+
+    .photo-preview-image {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 3px solid #28a745;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+    }
+
+    .photo-preview-info {
+        margin-top: 10px;
+    }
+
+    .photo-preview-info .badge {
+        font-size: 0.75rem;
+        padding: 5px 12px;
+    }
+
+    .photo-preview-actions {
+        margin-top: 10px;
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    /* Canvas for capture (hidden) */
+    #pf-photo-canvas {
+        display: none;
+    }
+
 </style>
 
 <div class="reception-workbench-container">
@@ -5042,35 +5285,83 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group mb-3">
-                                            <label class="form-label mb-1"><i class="mdi mdi-camera text-primary"></i> Passport Photo</label>
-                                            <input type="file" class="form-control" id="pf-passport" accept="image/*">
-                                            <small class="form-text text-muted">Upload patient photo (JPG, PNG)</small>
-                                            <!-- Existing passport preview -->
-                                            <div class="passport-preview-container mt-2" style="display: none;">
-                                                <div class="d-flex align-items-center gap-2 p-2 border rounded bg-light">
-                                                    <img src="" alt="Current Photo" id="passport-preview-img" style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 2px solid #007bff;">
-                                                    <div class="flex-grow-1">
-                                                        <small class="text-success d-block"><i class="mdi mdi-check-circle"></i> Current Photo</small>
-                                                        <small class="text-muted">Select new file to replace</small>
-                                                    </div>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger" id="pf-clear-passport" title="Remove photo">
-                                                        <i class="mdi mdi-close"></i>
+                                            <label class="form-label mb-2"><i class="mdi mdi-camera text-primary"></i> Passport Photo</label>
+
+                                            <!-- Photo Capture Container -->
+                                            <div class="photo-capture-container">
+                                                <!-- Tabs -->
+                                                <div class="photo-capture-tabs">
+                                                    <button type="button" class="photo-capture-tab active" data-panel="upload">
+                                                        <i class="mdi mdi-cloud-upload"></i>
+                                                        <span>Upload</span>
+                                                    </button>
+                                                    <button type="button" class="photo-capture-tab" data-panel="webcam">
+                                                        <i class="mdi mdi-camera"></i>
+                                                        <span>Webcam</span>
                                                     </button>
                                                 </div>
-                                            </div>
-                                            <!-- New file preview -->
-                                            <div class="passport-new-preview mt-2" id="pf-passport-new-preview" style="display: none;">
-                                                <div class="d-flex align-items-center gap-2 p-2 border rounded bg-success-subtle">
-                                                    <img src="" alt="New Photo" id="passport-new-img" style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 2px solid #28a745;">
-                                                    <div class="flex-grow-1">
-                                                        <small class="text-success d-block"><i class="mdi mdi-upload"></i> New Photo Selected</small>
-                                                        <small class="text-muted" id="passport-new-name"></small>
+
+                                                <!-- Upload Panel -->
+                                                <div class="photo-capture-content">
+                                                    <div class="photo-capture-panel active" id="panel-upload">
+                                                        <div class="upload-dropzone" id="photo-dropzone">
+                                                            <i class="mdi mdi-cloud-upload-outline"></i>
+                                                            <p>Drag & drop photo here</p>
+                                                            <p>or <span class="browse-link">browse files</span></p>
+                                                            <small class="text-muted">JPG, PNG (max 5MB)</small>
+                                                        </div>
+                                                        <input type="file" class="d-none" id="pf-passport" accept="image/*">
                                                     </div>
-                                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="pf-cancel-passport" title="Cancel">
-                                                        <i class="mdi mdi-undo"></i>
-                                                    </button>
+
+                                                    <!-- Webcam Panel -->
+                                                    <div class="photo-capture-panel" id="panel-webcam">
+                                                        <div class="webcam-container">
+                                                            <div class="webcam-video-wrapper">
+                                                                <video id="pf-webcam-video" autoplay playsinline></video>
+                                                                <div class="webcam-overlay"></div>
+                                                                <div class="webcam-placeholder" id="webcam-placeholder">
+                                                                    <i class="mdi mdi-camera-off"></i>
+                                                                    <small>Camera not started</small>
+                                                                </div>
+                                                            </div>
+                                                            <div class="webcam-controls">
+                                                                <button type="button" class="btn webcam-btn webcam-btn-start" id="btn-start-webcam">
+                                                                    <i class="mdi mdi-video"></i> Start Camera
+                                                                </button>
+                                                                <button type="button" class="btn webcam-btn webcam-btn-capture d-none" id="btn-capture-photo">
+                                                                    <i class="mdi mdi-camera-iris"></i> Capture
+                                                                </button>
+                                                                <button type="button" class="btn webcam-btn webcam-btn-stop d-none" id="btn-stop-webcam">
+                                                                    <i class="mdi mdi-stop"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                        <canvas id="pf-photo-canvas"></canvas>
+                                                    </div>
+
+                                                    <!-- Photo Preview (shown after selection/capture) -->
+                                                    <div class="photo-preview-wrapper" id="photo-preview-wrapper">
+                                                        <img src="" alt="Photo Preview" class="photo-preview-image" id="photo-preview-img">
+                                                        <div class="photo-preview-info">
+                                                            <span class="badge bg-success" id="photo-source-badge">
+                                                                <i class="mdi mdi-check-circle"></i> Photo Ready
+                                                            </span>
+                                                            <small class="d-block text-muted mt-1" id="photo-filename"></small>
+                                                        </div>
+                                                        <div class="photo-preview-actions">
+                                                            <button type="button" class="btn btn-sm btn-outline-primary" id="btn-change-photo">
+                                                                <i class="mdi mdi-refresh"></i> Change
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-outline-danger" id="btn-remove-photo">
+                                                                <i class="mdi mdi-delete"></i> Remove
+                                                            </button>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
+
+                                            <!-- Hidden field for webcam captured data -->
+                                            <input type="hidden" id="pf-passport-data" name="passport_data">
                                         </div>
                                     </div>
                                     <div class="col-md-6">
@@ -8910,10 +9201,22 @@ function resetPatientForm() {
     // Clear file uploads
     $('#pf-passport').val('').removeData('existing');
     $('#pf-old-records').val('').removeData('existing');
+    $('#pf-passport-data').val(''); // Clear webcam capture data
+
+    // Reset photo capture UI
+    $('#photo-preview-wrapper').removeClass('show');
+    $('#photo-preview-img').attr('src', '');
+    $('.photo-capture-tab').removeClass('active').first().addClass('active');
+    $('.photo-capture-panel').removeClass('active');
+    $('#panel-upload').addClass('active');
+
+    // Legacy passport preview elements (keep for compatibility)
     $('.passport-preview-container').hide();
     $('#passport-preview-img').attr('src', '');
     $('#pf-passport-new-preview').hide();
     $('#passport-new-img').attr('src', '');
+
+    // Old records
     $('.old-records-preview-container').hide();
     $('#old-records-preview-img').attr('src', '').hide();
     $('#old-records-preview-icon').hide();
@@ -9064,15 +9367,21 @@ function populatePatientForm(data) {
         }, 100);
     }
 
-    // Handle existing passport photo
+    // Handle existing passport photo - use new photo capture UI
     if (data.passport_url) {
-        $('.passport-preview-container').show();
-        $('#passport-preview-img').attr('src', data.passport_url);
-        // Store existing filename for reference
+        // Show in the new photo preview UI
+        $('#photo-preview-img').attr('src', data.passport_url);
+        $('#photo-source-badge').html('<i class="mdi mdi-check-circle"></i> Current Photo');
+        $('#photo-filename').text(data.filename || 'Patient photo');
+        $('#photo-preview-wrapper').addClass('show');
+        $('.photo-capture-panel').removeClass('active');
+        // Store existing reference
         $('#pf-passport').data('existing', data.filename);
     } else {
-        $('.passport-preview-container').hide();
-        $('#passport-preview-img').attr('src', '');
+        $('#photo-preview-wrapper').removeClass('show');
+        $('.photo-capture-tab').removeClass('active').first().addClass('active');
+        $('.photo-capture-panel').removeClass('active');
+        $('#panel-upload').addClass('active');
     }
 
     // Handle existing old records
@@ -9462,8 +9771,14 @@ function submitPatientForm() {
 
     // Add file uploads if present
     const passportFile = $('#pf-passport')[0].files[0];
+    const passportDataUrl = $('#pf-passport-data').val();
+
     if (passportFile) {
+        // User uploaded a file
         formData.append('filename', passportFile);
+    } else if (passportDataUrl) {
+        // User captured from webcam - send as base64
+        formData.append('passport_data', passportDataUrl);
     }
 
     const oldRecordsFile = $('#pf-old-records')[0].files[0];
@@ -9560,43 +9875,186 @@ $(document).ready(function() {
         }
     });
 
-    // Passport file preview - when new file selected
-    $('#pf-passport').on('change', function() {
+    // ============================================
+    // PHOTO CAPTURE FUNCTIONALITY (Upload & Webcam)
+    // ============================================
+    let webcamStream = null;
+    let capturedPhotoBlob = null;
+
+    // Photo capture tab switching
+    $('.photo-capture-tab').on('click', function() {
+        const panel = $(this).data('panel');
+
+        // Update tabs
+        $('.photo-capture-tab').removeClass('active');
+        $(this).addClass('active');
+
+        // Update panels
+        $('.photo-capture-panel').removeClass('active');
+        $(`#panel-${panel}`).addClass('active');
+
+        // Stop webcam when switching away from webcam tab
+        if (panel !== 'webcam' && webcamStream) {
+            stopWebcam();
+        }
+    });
+
+    // Upload dropzone functionality
+    const dropzone = $('#photo-dropzone');
+    const fileInput = $('#pf-passport');
+
+    // Click to browse
+    dropzone.on('click', function() {
+        fileInput.click();
+    });
+
+    // Drag and drop
+    dropzone.on('dragover dragenter', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $(this).addClass('dragover');
+    });
+
+    dropzone.on('dragleave dragend drop', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $(this).removeClass('dragover');
+    });
+
+    dropzone.on('drop', function(e) {
+        const files = e.originalEvent.dataTransfer.files;
+        if (files.length > 0 && files[0].type.startsWith('image/')) {
+            fileInput[0].files = files;
+            fileInput.trigger('change');
+        }
+    });
+
+    // File input change handler
+    fileInput.on('change', function() {
         const file = this.files[0];
         if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                toastr.error('File size must be less than 5MB');
+                this.value = '';
+                return;
+            }
+
             const reader = new FileReader();
             reader.onload = function(e) {
-                $('#passport-new-img').attr('src', e.target.result);
-                $('#passport-new-name').text(file.name);
-                $('#pf-passport-new-preview').show();
-                // Hide existing preview if showing
-                $('.passport-preview-container').hide();
+                showPhotoPreview(e.target.result, 'Uploaded', file.name);
+                capturedPhotoBlob = null; // Clear any webcam capture
             };
             reader.readAsDataURL(file);
-        } else {
-            $('#pf-passport-new-preview').hide();
-            // Show existing preview back if there was one
-            if ($('#pf-passport').data('existing')) {
-                $('.passport-preview-container').show();
+        }
+    });
+
+    // Webcam functions
+    function startWebcam() {
+        navigator.mediaDevices.getUserMedia({
+            video: {
+                width: { ideal: 640 },
+                height: { ideal: 480 },
+                facingMode: 'user'
             }
-        }
-    });
+        })
+        .then(function(stream) {
+            webcamStream = stream;
+            const video = document.getElementById('pf-webcam-video');
+            video.srcObject = stream;
 
-    // Cancel new passport selection - revert to existing
-    $('#pf-cancel-passport').on('click', function() {
+            $('#webcam-placeholder').hide();
+            $('#btn-start-webcam').addClass('d-none');
+            $('#btn-capture-photo, #btn-stop-webcam').removeClass('d-none');
+        })
+        .catch(function(err) {
+            console.error('Webcam error:', err);
+            toastr.error('Could not access camera. Please check permissions.');
+        });
+    }
+
+    function stopWebcam() {
+        if (webcamStream) {
+            webcamStream.getTracks().forEach(track => track.stop());
+            webcamStream = null;
+        }
+
+        const video = document.getElementById('pf-webcam-video');
+        video.srcObject = null;
+
+        $('#webcam-placeholder').show();
+        $('#btn-start-webcam').removeClass('d-none');
+        $('#btn-capture-photo, #btn-stop-webcam').addClass('d-none');
+    }
+
+    function capturePhoto() {
+        const video = document.getElementById('pf-webcam-video');
+        const canvas = document.getElementById('pf-photo-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Set canvas size to video size
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        // Draw mirrored image
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(video, 0, 0);
+
+        // Convert to blob
+        canvas.toBlob(function(blob) {
+            capturedPhotoBlob = blob;
+            const url = URL.createObjectURL(blob);
+            showPhotoPreview(url, 'Captured', 'webcam-photo.jpg');
+
+            // Store base64 data for form submission
+            const reader = new FileReader();
+            reader.onloadend = function() {
+                $('#pf-passport-data').val(reader.result);
+            };
+            reader.readAsDataURL(blob);
+
+            // Stop webcam after capture
+            stopWebcam();
+        }, 'image/jpeg', 0.85);
+    }
+
+    function showPhotoPreview(src, source, filename) {
+        // Hide capture panels and show preview
+        $('.photo-capture-panel').removeClass('active');
+        $('#photo-preview-wrapper').addClass('show');
+
+        $('#photo-preview-img').attr('src', src);
+        $('#photo-source-badge').html(`<i class="mdi mdi-check-circle"></i> ${source}`);
+        $('#photo-filename').text(filename);
+    }
+
+    function resetPhotoCapture() {
+        // Reset everything
+        capturedPhotoBlob = null;
         $('#pf-passport').val('');
-        $('#pf-passport-new-preview').hide();
-        // Show existing preview back if there was one
-        if ($('#pf-passport').data('existing')) {
-            $('.passport-preview-container').show();
-        }
-    });
+        $('#pf-passport-data').val('');
+        $('#photo-preview-wrapper').removeClass('show');
 
-    // Clear existing passport (mark for removal)
-    $('#pf-clear-passport').on('click', function() {
-        $('#pf-passport').val('').removeData('existing');
-        $('.passport-preview-container').hide();
-        $('#pf-passport-new-preview').hide();
+        // Show first panel (upload)
+        $('.photo-capture-tab').removeClass('active').first().addClass('active');
+        $('.photo-capture-panel').removeClass('active');
+        $('#panel-upload').addClass('active');
+
+        stopWebcam();
+    }
+
+    // Webcam button handlers
+    $('#btn-start-webcam').on('click', startWebcam);
+    $('#btn-stop-webcam').on('click', stopWebcam);
+    $('#btn-capture-photo').on('click', capturePhoto);
+
+    // Photo preview actions
+    $('#btn-change-photo').on('click', resetPhotoCapture);
+    $('#btn-remove-photo').on('click', resetPhotoCapture);
+
+    // Stop webcam when modal closes
+    $('#patientFormModal').on('hidden.bs.modal', function() {
+        stopWebcam();
     });
 
     // Old records file preview - when new file selected

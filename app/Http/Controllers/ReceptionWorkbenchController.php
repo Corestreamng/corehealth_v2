@@ -993,6 +993,38 @@ class ReceptionWorkbenchController extends Controller
 
                 $user->filename = $filename;
                 $user->save();
+            } elseif ($request->passport_data) {
+                // Handle webcam captured photo (base64 data)
+                $imageData = $request->passport_data;
+
+                // Remove data URL prefix if present
+                if (strpos($imageData, 'data:image') === 0) {
+                    $imageData = preg_replace('/^data:image\/\w+;base64,/', '', $imageData);
+                }
+
+                $decodedImage = base64_decode($imageData);
+                $filename = 'patient_' . time() . '_' . $user->id . '.jpg';
+
+                // Save main image
+                $path = storage_path('/app/public/image/user/');
+                if (!file_exists($path)) {
+                    mkdir($path, 0755, true);
+                }
+                Image::make($decodedImage)
+                    ->resize(215, 215)
+                    ->save($path . $filename);
+
+                // Save thumbnail
+                $thumbnail_path = storage_path('/app/public/image/user/thumbnail/');
+                if (!file_exists($thumbnail_path)) {
+                    mkdir($thumbnail_path, 0755, true);
+                }
+                Image::make($decodedImage)
+                    ->resize(106, 106)
+                    ->save($thumbnail_path . $filename);
+
+                $user->filename = $filename;
+                $user->save();
             }
 
             // Handle old records upload
@@ -1178,6 +1210,43 @@ class ReceptionWorkbenchController extends Controller
                     mkdir($thumbnail_path, 0755, true);
                 }
                 Image::make($file)
+                    ->resize(106, 106)
+                    ->save($thumbnail_path . $filename);
+
+                $user->filename = $filename;
+                $user->save();
+            } elseif ($request->passport_data) {
+                // Handle webcam captured photo (base64 data)
+                // Delete old file if exists
+                if ($user->filename && $user->filename !== 'avatar.png' && Storage::exists('public/image/user/' . $user->filename)) {
+                    Storage::delete('public/image/user/' . $user->filename);
+                }
+
+                $imageData = $request->passport_data;
+
+                // Remove data URL prefix if present
+                if (strpos($imageData, 'data:image') === 0) {
+                    $imageData = preg_replace('/^data:image\/\w+;base64,/', '', $imageData);
+                }
+
+                $decodedImage = base64_decode($imageData);
+                $filename = 'patient_' . time() . '_' . $user->id . '.jpg';
+
+                // Save main image
+                $path = storage_path('/app/public/image/user/');
+                if (!file_exists($path)) {
+                    mkdir($path, 0755, true);
+                }
+                Image::make($decodedImage)
+                    ->resize(215, 215)
+                    ->save($path . $filename);
+
+                // Save thumbnail
+                $thumbnail_path = storage_path('/app/public/image/user/thumbnail/');
+                if (!file_exists($thumbnail_path)) {
+                    mkdir($thumbnail_path, 0755, true);
+                }
+                Image::make($decodedImage)
                     ->resize(106, 106)
                     ->save($thumbnail_path . $filename);
 
