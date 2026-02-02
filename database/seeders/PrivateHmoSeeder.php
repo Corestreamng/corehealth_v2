@@ -18,10 +18,7 @@ class PrivateHmoSeeder extends Seeder
         // Get SELF scheme
         $selfScheme = HmoScheme::where('code', 'SELF')->first();
 
-        // Delete existing HMO with id 1 if it exists
-        Hmo::where('id', 1)->delete();
-
-        // Create or update Private HMO with id 1
+        // Create or update Private HMO with id 1 (using updateOrCreate for idempotent seeding)
         Hmo::updateOrCreate(
             ['id' => 1],
             [

@@ -12394,7 +12394,7 @@ function selectModalProduct(element) {
     updateImmunizationStockDisplay();
 
     // Fetch and populate batch dropdown for this vaccine
-    const storeId = $('#modal-vaccine-store').val();
+    // storeId already declared above
     if (storeId) {
         fetchProductBatchesForSelect(product.id, storeId, '#modal-vaccine-batch-select', function(response) {
             if (response.success && response.batches && response.batches.length > 0) {

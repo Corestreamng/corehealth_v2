@@ -180,7 +180,7 @@
                 </div>
             </li>
             -->
-            <li class="nav-item {{ request()->routeIs('product-or-service-request.*', 'my-transactions', 'billing.workbench') ? 'active' : '' }}">
+            <!-- <li class="nav-item {{ request()->routeIs('product-or-service-request.*', 'my-transactions', 'billing.workbench') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('product-or-service-request.*', 'my-transactions', 'billing.workbench') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-receptionist-accounts" data-bs-target="#sidebar-receptionist-accounts" aria-expanded="{{ request()->routeIs('product-or-service-request.*', 'my-transactions', 'billing.workbench') ? 'true' : 'false' }}" aria-controls="sidebar-receptionist-accounts" id="sidebar-receptionist-accounts-toggle">
                     <i class="mdi mdi-cash-multiple menu-icon"></i>
                     <span class="menu-title">Accounts</span>
@@ -201,7 +201,7 @@
                         </li>
                     </ul>
                 </div>
-            </li>
+            </li> -->
             <li class="nav-item {{ request()->routeIs('allPrevEncounters') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('allPrevEncounters') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-receptionist-consultations" data-bs-target="#sidebar-receptionist-consultations" aria-expanded="{{ request()->routeIs('allPrevEncounters') ? 'true' : 'false' }}" aria-controls="sidebar-receptionist-consultations" id="sidebar-receptionist-consultations-toggle">
                     <i class="mdi mdi-stethoscope menu-icon"></i>
