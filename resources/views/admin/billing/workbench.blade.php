@@ -4587,6 +4587,14 @@ function switchWorkspaceTab(tab) {
     }
 }
 
+function loadUserPreferences() {
+    const clinicalVisible = localStorage.getItem('clinicalPanelVisible') === 'true';
+    if (clinicalVisible) {
+        $('#right-panel').addClass('active');
+        $('#toggle-clinical-btn').html('📊 Clinical Context ×');
+    }
+}
+
 // ========== ACCOUNT BALANCE FUNCTIONS ==========
 
 let currentAccountBalance = 0;

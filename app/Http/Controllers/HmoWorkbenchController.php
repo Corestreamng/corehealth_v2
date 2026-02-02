@@ -1032,38 +1032,50 @@ class HmoWorkbenchController extends Controller
      */
     public function getQueueCounts()
     {
+        // Base query for HMO patients
+        $baseQuery = function() {
+            return ProductOrServiceRequest::whereHas('user.patient_profile', function($q) {
+                $q->whereNotNull('hmo_id');
+            });
+        };
+
         $counts = [
-            'pending' => ProductOrServiceRequest::whereHas('user.patient_profile', function($q) {
-                    $q->whereNotNull('hmo_id');
-                })
+            'pending' => $baseQuery()
                 ->where('validation_status', 'pending')
                 ->whereIn('coverage_mode', ['primary', 'secondary'])
                 ->where('claims_amount', '>', 0) // Skip 0 claims - no validation needed
                 ->count(),
 
-            'express' => ProductOrServiceRequest::whereHas('user.patient_profile', function($q) {
-                    $q->whereNotNull('hmo_id');
-                })
+            'express' => $baseQuery()
                 ->where('coverage_mode', 'express')
                 ->count(),
 
-            'approved_today' => ProductOrServiceRequest::whereHas('user.patient_profile', function($q) {
-                    $q->whereNotNull('hmo_id');
-                })
+            'approved' => $baseQuery()
+                ->where('validation_status', 'approved')
+                ->count(),
+
+            'rejected' => $baseQuery()
+                ->where('validation_status', 'rejected')
+                ->count(),
+
+            'claims' => $baseQuery()
+                ->whereIn('validation_status', ['approved', 'pending'])
+                ->where('claims_amount', '>', 0)
+                ->count(),
+
+            'all' => $baseQuery()->count(),
+
+            'approved_today' => $baseQuery()
                 ->where('validation_status', 'approved')
                 ->whereDate('validated_at', today())
                 ->count(),
 
-            'rejected_today' => ProductOrServiceRequest::whereHas('user.patient_profile', function($q) {
-                    $q->whereNotNull('hmo_id');
-                })
+            'rejected_today' => $baseQuery()
                 ->where('validation_status', 'rejected')
                 ->whereDate('validated_at', today())
                 ->count(),
 
-            'overdue' => ProductOrServiceRequest::whereHas('user.patient_profile', function($q) {
-                    $q->whereNotNull('hmo_id');
-                })
+            'overdue' => $baseQuery()
                 ->where('validation_status', 'pending')
                 ->whereIn('coverage_mode', ['primary', 'secondary'])
                 ->where('created_at', '<', Carbon::now()->subHours(4))
