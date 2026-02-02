@@ -45,7 +45,12 @@ class PayrollBatch extends Model implements Auditable
         'paid_by',
         'paid_at',
         'payment_comments',
-        'expense_id'
+        'expense_id',
+        // Payment tracking - which bank/cash was used
+        'payment_method',  // 'cash', 'bank_transfer'
+        'bank_id',         // FK to banks table
+        'account_id',      // FK to accounts table (GL account)
+        'journal_entry_id', // FK to journal_entries table
     ];
 
     protected $casts = [
@@ -153,6 +158,30 @@ class PayrollBatch extends Model implements Auditable
     public function paidBy()
     {
         return $this->belongsTo(User::class, 'paid_by');
+    }
+
+    /**
+     * Get the bank used for payment
+     */
+    public function bank()
+    {
+        return $this->belongsTo(\App\Models\Bank::class, 'bank_id');
+    }
+
+    /**
+     * Get the GL account used for payment
+     */
+    public function account()
+    {
+        return $this->belongsTo(\App\Models\Accounting\Account::class, 'account_id');
+    }
+
+    /**
+     * Get the linked journal entry
+     */
+    public function journalEntry()
+    {
+        return $this->belongsTo(\App\Models\Accounting\JournalEntry::class, 'journal_entry_id');
     }
 
     /**

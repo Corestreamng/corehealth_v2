@@ -877,4 +877,458 @@ class ExcelExportService
 
         return $this->download('bank-statement-' . $accountCode . '-' . $startDate->format('Y-m-d') . '-to-' . $endDate->format('Y-m-d'));
     }
+
+    /**
+     * Export Leases to Excel.
+     */
+    public function leases($leases, ?string $filterStatus = null): StreamedResponse
+    {
+        $subtitle = $filterStatus ? 'Status: ' . ucfirst($filterStatus) : 'All Leases';
+        $this->initSpreadsheet('Lease Management Report', $subtitle . ' | Generated: ' . now()->format('F d, Y'));
+
+        $this->addHeaderRow([
+            'Lease Number', 'Type', 'Leased Item', 'Lessor', 'Department',
+            'Monthly Payment', 'ROU Asset', 'Lease Liability',
+            'Commencement', 'End Date', 'Status'
+        ]);
+
+        $totalMonthly = 0;
+        $totalROU = 0;
+        $totalLiability = 0;
+
+        foreach ($leases as $lease) {
+            $this->addDataRow([
+                $lease->lease_number ?? '',
+                ucfirst($lease->lease_type ?? ''),
+                $lease->leased_item ?? '',
+                $lease->lessor_name ?? '',
+                $lease->department_name ?? 'N/A',
+                number_format($lease->monthly_payment ?? 0, 2),
+                number_format($lease->current_rou_asset_value ?? 0, 2),
+                number_format($lease->current_lease_liability ?? 0, 2),
+                $lease->commencement_date ? Carbon::parse($lease->commencement_date)->format('M d, Y') : '',
+                $lease->end_date ? Carbon::parse($lease->end_date)->format('M d, Y') : '',
+                ucfirst($lease->status ?? ''),
+            ]);
+
+            $totalMonthly += $lease->monthly_payment ?? 0;
+            $totalROU += $lease->current_rou_asset_value ?? 0;
+            $totalLiability += $lease->current_lease_liability ?? 0;
+        }
+
+        $this->addDataRow([
+            '', '', '', '', 'TOTALS:',
+            number_format($totalMonthly, 2),
+            number_format($totalROU, 2),
+            number_format($totalLiability, 2),
+            '', '', ''
+        ], 1, true);
+
+        $this->autoSizeColumns(1, 11);
+
+        return $this->download('leases-' . now()->format('Y-m-d'));
+    }
+
+    /**
+     * Export Cost Centers to Excel.
+     */
+    public function costCenters($costCenters, array $stats = []): StreamedResponse
+    {
+        $this->initSpreadsheet('Cost Centers Report', 'Generated: ' . now()->format('F d, Y'));
+
+        // Summary section
+        if (!empty($stats)) {
+            $this->activeSheet->setCellValue('A' . $this->currentRow, 'SUMMARY');
+            $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(12);
+            $this->currentRow++;
+
+            $this->addDataRow(['Total Cost Centers', $stats['total'] ?? count($costCenters)]);
+            $this->addDataRow(['Active', $stats['active'] ?? 0]);
+            $this->addDataRow(['Total Budget', number_format($stats['total_budget'] ?? 0, 2)]);
+            $this->currentRow++;
+        }
+
+        $this->addHeaderRow([
+            'Code', 'Name', 'Type', 'Department', 'Manager',
+            'Budget Amount', 'Status', 'Description'
+        ]);
+
+        foreach ($costCenters as $center) {
+            $this->addDataRow([
+                $center->code ?? '',
+                $center->name ?? '',
+                ucfirst($center->type ?? ''),
+                $center->department->name ?? ($center->department_name ?? 'N/A'),
+                $center->manager->name ?? ($center->manager_name ?? 'N/A'),
+                number_format($center->budget_amount ?? 0, 2),
+                ($center->is_active ?? true) ? 'Active' : 'Inactive',
+                $center->description ?? '',
+            ]);
+        }
+
+        $this->autoSizeColumns(1, 8);
+
+        return $this->download('cost-centers-' . now()->format('Y-m-d'));
+    }
+
+    /**
+     * Export KPIs to Excel.
+     */
+    public function kpis($kpiData): StreamedResponse
+    {
+        $this->initSpreadsheet('Financial KPI Report', 'Generated: ' . now()->format('F d, Y H:i'));
+
+        foreach ($kpiData as $category => $kpis) {
+            $this->activeSheet->setCellValue('A' . $this->currentRow, strtoupper($category));
+            $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(12);
+            $this->currentRow++;
+
+            $this->addHeaderRow(['KPI Code', 'Name', 'Current Value', 'Target', 'Status', 'Last Calculated']);
+
+            foreach ($kpis as $item) {
+                $kpi = $item['kpi'];
+                $latest = $item['latest'] ?? null;
+                $status = $item['status'] ?? 'N/A';
+
+                $this->addDataRow([
+                    $kpi->kpi_code ?? '',
+                    $kpi->kpi_name ?? '',
+                    $latest ? number_format($latest->value, 2) . ' ' . ($kpi->unit ?? '') : 'Not calculated',
+                    ($kpi->target_value ?? '-') . ' ' . ($kpi->unit ?? ''),
+                    ucfirst($status),
+                    $latest ? Carbon::parse($latest->calculation_date)->format('M d, Y H:i') : 'Never',
+                ]);
+            }
+
+            $this->currentRow++;
+        }
+
+        $this->autoSizeColumns(1, 6);
+
+        return $this->download('kpi-report-' . now()->format('Y-m-d'));
+    }
+
+    /**
+     * Export Liabilities to Excel.
+     */
+    public function liabilities($liabilities, array $stats = []): StreamedResponse
+    {
+        $this->initSpreadsheet('Liabilities Register', 'Generated: ' . now()->format('F d, Y'));
+
+        $this->addHeaderRow([
+            'Reference', 'Type', 'Creditor', 'Description',
+            'Original Amount', 'Interest Rate', 'Outstanding Balance',
+            'Start Date', 'Maturity Date', 'Status'
+        ]);
+
+        $totalOriginal = 0;
+        $totalOutstanding = 0;
+
+        foreach ($liabilities as $liability) {
+            $this->addDataRow([
+                $liability->reference_number ?? '',
+                ucfirst(str_replace('_', ' ', $liability->liability_type ?? '')),
+                $liability->creditor_name ?? '',
+                $liability->description ?? '',
+                number_format($liability->original_amount ?? 0, 2),
+                ($liability->interest_rate ?? 0) . '%',
+                number_format($liability->outstanding_balance ?? 0, 2),
+                $liability->start_date ? Carbon::parse($liability->start_date)->format('M d, Y') : '',
+                $liability->maturity_date ? Carbon::parse($liability->maturity_date)->format('M d, Y') : '',
+                ucfirst($liability->status ?? ''),
+            ]);
+
+            $totalOriginal += $liability->original_amount ?? 0;
+            $totalOutstanding += $liability->outstanding_balance ?? 0;
+        }
+
+        $this->addDataRow([
+            '', '', '', 'TOTALS:',
+            number_format($totalOriginal, 2), '',
+            number_format($totalOutstanding, 2),
+            '', '', ''
+        ], 1, true);
+
+        $this->autoSizeColumns(1, 10);
+
+        return $this->download('liabilities-' . now()->format('Y-m-d'));
+    }
+
+    /**
+     * Export Fixed Assets to Excel.
+     */
+    public function fixedAssets($assets, array $stats = []): StreamedResponse
+    {
+        $this->initSpreadsheet('Fixed Assets Register', 'Generated: ' . now()->format('F d, Y'));
+
+        $this->addHeaderRow([
+            'Asset Number', 'Name', 'Category', 'Location',
+            'Acquisition Date', 'Original Cost', 'Accumulated Depreciation',
+            'Net Book Value', 'Useful Life', 'Status'
+        ]);
+
+        $totalCost = 0;
+        $totalDepreciation = 0;
+        $totalNBV = 0;
+
+        foreach ($assets as $asset) {
+            $nbv = ($asset->acquisition_cost ?? 0) - ($asset->accumulated_depreciation ?? 0);
+            $this->addDataRow([
+                $asset->asset_number ?? '',
+                $asset->name ?? '',
+                $asset->category_name ?? ($asset->category->name ?? 'N/A'),
+                $asset->location ?? '',
+                $asset->acquisition_date ? Carbon::parse($asset->acquisition_date)->format('M d, Y') : '',
+                number_format($asset->acquisition_cost ?? 0, 2),
+                number_format($asset->accumulated_depreciation ?? 0, 2),
+                number_format($nbv, 2),
+                ($asset->useful_life_years ?? 0) . ' years',
+                ucfirst($asset->status ?? ''),
+            ]);
+
+            $totalCost += $asset->acquisition_cost ?? 0;
+            $totalDepreciation += $asset->accumulated_depreciation ?? 0;
+            $totalNBV += $nbv;
+        }
+
+        $this->addDataRow([
+            '', '', '', 'TOTALS:', '',
+            number_format($totalCost, 2),
+            number_format($totalDepreciation, 2),
+            number_format($totalNBV, 2),
+            '', ''
+        ], 1, true);
+
+        $this->autoSizeColumns(1, 10);
+
+        return $this->download('fixed-assets-' . now()->format('Y-m-d'));
+    }
+
+    /**
+     * Export Budgets to Excel.
+     */
+    public function budgets($budgets, ?int $fiscalYear = null): StreamedResponse
+    {
+        $subtitle = $fiscalYear ? 'Fiscal Year: ' . $fiscalYear : 'All Budgets';
+        $this->initSpreadsheet('Budget Report', $subtitle);
+
+        $this->addHeaderRow([
+            'Budget Name', 'Fiscal Year', 'Department', 'Category',
+            'Budgeted Amount', 'Actual Spent', 'Variance', 'Utilization %', 'Status'
+        ]);
+
+        $totalBudgeted = 0;
+        $totalActual = 0;
+
+        foreach ($budgets as $budget) {
+            $variance = ($budget->budget_amount ?? 0) - ($budget->actual_amount ?? 0);
+            $utilization = ($budget->budget_amount ?? 0) > 0
+                ? (($budget->actual_amount ?? 0) / $budget->budget_amount) * 100
+                : 0;
+
+            $this->addDataRow([
+                $budget->name ?? '',
+                $budget->fiscal_year ?? ($budget->fiscalYear->year ?? ''),
+                $budget->department_name ?? ($budget->department->name ?? 'N/A'),
+                $budget->category ?? '',
+                number_format($budget->budget_amount ?? 0, 2),
+                number_format($budget->actual_amount ?? 0, 2),
+                number_format($variance, 2),
+                number_format($utilization, 1) . '%',
+                ucfirst($budget->status ?? ''),
+            ]);
+
+            $totalBudgeted += $budget->budget_amount ?? 0;
+            $totalActual += $budget->actual_amount ?? 0;
+        }
+
+        $totalVariance = $totalBudgeted - $totalActual;
+        $totalUtilization = $totalBudgeted > 0 ? ($totalActual / $totalBudgeted) * 100 : 0;
+
+        $this->addDataRow([
+            '', '', '', 'TOTALS:',
+            number_format($totalBudgeted, 2),
+            number_format($totalActual, 2),
+            number_format($totalVariance, 2),
+            number_format($totalUtilization, 1) . '%',
+            ''
+        ], 1, true);
+
+        $this->autoSizeColumns(1, 9);
+
+        return $this->download('budgets-' . ($fiscalYear ?? now()->year));
+    }
+
+    /**
+     * Export Capex to Excel.
+     */
+    public function capex($capexList, ?int $fiscalYear = null): StreamedResponse
+    {
+        $subtitle = $fiscalYear ? 'Fiscal Year: ' . $fiscalYear : 'All Capital Expenditures';
+        $this->initSpreadsheet('Capital Expenditure Report', $subtitle);
+
+        $this->addHeaderRow([
+            'Reference', 'Title', 'Category', 'Department',
+            'Requested Amount', 'Approved Amount', 'Spent',
+            'Priority', 'Status', 'Requested By'
+        ]);
+
+        $totalRequested = 0;
+        $totalApproved = 0;
+        $totalSpent = 0;
+
+        foreach ($capexList as $capex) {
+            $this->addDataRow([
+                $capex->reference_number ?? '',
+                $capex->title ?? '',
+                $capex->category ?? '',
+                $capex->department_name ?? ($capex->department->name ?? 'N/A'),
+                number_format($capex->requested_amount ?? 0, 2),
+                number_format($capex->approved_amount ?? 0, 2),
+                number_format($capex->amount_spent ?? 0, 2),
+                ucfirst($capex->priority ?? ''),
+                ucfirst(str_replace('_', ' ', $capex->status ?? '')),
+                $capex->requestedBy->name ?? ($capex->requested_by_name ?? 'N/A'),
+            ]);
+
+            $totalRequested += $capex->requested_amount ?? 0;
+            $totalApproved += $capex->approved_amount ?? 0;
+            $totalSpent += $capex->amount_spent ?? 0;
+        }
+
+        $this->addDataRow([
+            '', '', '', 'TOTALS:',
+            number_format($totalRequested, 2),
+            number_format($totalApproved, 2),
+            number_format($totalSpent, 2),
+            '', '', ''
+        ], 1, true);
+
+        $this->autoSizeColumns(1, 10);
+
+        return $this->download('capex-' . ($fiscalYear ?? now()->year));
+    }
+
+    /**
+     * Export Patient Deposits to Excel.
+     */
+    public function patientDeposits($deposits, array $stats = []): StreamedResponse
+    {
+        $this->initSpreadsheet('Patient Deposits Report', 'Generated: ' . now()->format('F d, Y'));
+
+        // Summary section
+        if (!empty($stats)) {
+            $this->activeSheet->setCellValue('A' . $this->currentRow, 'SUMMARY');
+            $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(12);
+            $this->currentRow++;
+
+            $this->addDataRow(['Total Deposits', number_format($stats['total_deposits'] ?? 0, 2)]);
+            $this->addDataRow(['Applied Amount', number_format($stats['total_applied'] ?? 0, 2)]);
+            $this->addDataRow(['Available Balance', number_format($stats['available_balance'] ?? 0, 2)]);
+            $this->currentRow++;
+        }
+
+        $this->addHeaderRow([
+            'Deposit Number', 'Patient Name', 'File No', 'Deposit Type',
+            'Amount', 'Applied', 'Balance', 'Payment Method', 'Date', 'Status'
+        ]);
+
+        foreach ($deposits as $deposit) {
+            $this->addDataRow([
+                $deposit->deposit_number ?? '',
+                $deposit->patient_name ?? ($deposit->patient->name ?? ''),
+                $deposit->file_no ?? ($deposit->patient->file_no ?? ''),
+                ucfirst(str_replace('_', ' ', $deposit->deposit_type ?? '')),
+                number_format($deposit->amount ?? 0, 2),
+                number_format($deposit->applied_amount ?? 0, 2),
+                number_format(($deposit->amount ?? 0) - ($deposit->applied_amount ?? 0), 2),
+                ucfirst($deposit->payment_method ?? ''),
+                $deposit->deposit_date ? Carbon::parse($deposit->deposit_date)->format('M d, Y') : '',
+                ucfirst($deposit->status ?? ''),
+            ]);
+        }
+
+        $this->autoSizeColumns(1, 10);
+
+        return $this->download('patient-deposits-' . now()->format('Y-m-d'));
+    }
+
+    /**
+     * Export Cost Center Report to Excel
+     */
+    public function exportCostCenterReport(
+        $costCenter,
+        string $fromDate,
+        string $toDate,
+        $expensesByAccount,
+        $transactions,
+        array $summary
+    ): StreamedResponse {
+        $reportTitle = 'Cost Center Report: ' . $costCenter->code . ' - ' . $costCenter->name;
+        $subtitle = 'Period: ' . Carbon::parse($fromDate)->format('M d, Y') . ' to ' . Carbon::parse($toDate)->format('M d, Y');
+
+        $this->initSpreadsheet($reportTitle, $subtitle);
+
+        // Summary Section
+        $this->currentRow += 2;
+        $this->addSectionHeader('Summary');
+
+        $this->activeSheet->setCellValue('A' . $this->currentRow, 'Total Revenue:');
+        $this->activeSheet->setCellValue('B' . $this->currentRow, '₦' . number_format($summary['total_revenue'], 2));
+        $this->styleCell('A' . $this->currentRow, true);
+        $this->styleCell('B' . $this->currentRow, false, 'text', '28a745');
+        $this->currentRow++;
+
+        $this->activeSheet->setCellValue('A' . $this->currentRow, 'Total Expenses:');
+        $this->activeSheet->setCellValue('B' . $this->currentRow, '₦' . number_format($summary['total_expenses'], 2));
+        $this->styleCell('A' . $this->currentRow, true);
+        $this->styleCell('B' . $this->currentRow, false, 'text', 'dc3545');
+        $this->currentRow++;
+
+        $netAmount = $summary['total_revenue'] - $summary['total_expenses'];
+        $this->activeSheet->setCellValue('A' . $this->currentRow, $netAmount >= 0 ? 'Net Surplus:' : 'Net Deficit:');
+        $this->activeSheet->setCellValue('B' . $this->currentRow, '₦' . number_format(abs($netAmount), 2));
+        $this->styleCell('A' . $this->currentRow, true);
+        $this->styleCell('B' . $this->currentRow, false, 'text', $netAmount >= 0 ? '28a745' : 'dc3545');
+        $this->currentRow++;
+
+        $this->activeSheet->setCellValue('A' . $this->currentRow, 'Total Transactions:');
+        $this->activeSheet->setCellValue('B' . $this->currentRow, $summary['transaction_count']);
+        $this->styleCell('A' . $this->currentRow, true);
+        $this->currentRow++;
+
+        // Breakdown by Account
+        $this->currentRow += 2;
+        $this->addSectionHeader('Breakdown by Account');
+        $this->addTableHeader(['Code', 'Account Name', 'Debit', 'Credit']);
+
+        foreach ($expensesByAccount as $item) {
+            $this->addDataRow([
+                $item->account_code,
+                $item->account_name,
+                $item->total_debit > 0 ? number_format($item->total_debit, 2) : '-',
+                $item->total_credit > 0 ? number_format($item->total_credit, 2) : '-',
+            ]);
+        }
+
+        // Transaction Details
+        $this->currentRow += 2;
+        $this->addSectionHeader('Transaction Details');
+        $this->addTableHeader(['Date', 'JE #', 'Account', 'Description', 'Debit', 'Credit']);
+
+        foreach ($transactions as $txn) {
+            $this->addDataRow([
+                Carbon::parse($txn->journalEntry->entry_date)->format('M d, Y'),
+                $txn->journalEntry->entry_number,
+                $txn->account->code ?? 'N/A',
+                $txn->description ?? $txn->journalEntry->description ?? '',
+                $txn->debit > 0 ? number_format($txn->debit, 2) : '-',
+                $txn->credit > 0 ? number_format($txn->credit, 2) : '-',
+            ]);
+        }
+
+        $this->autoSizeColumns(1, 6);
+
+        return $this->download('cost-center-report-' . $costCenter->code . '-' . now()->format('Y-m-d'));
+    }
 }

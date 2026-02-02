@@ -14,6 +14,15 @@
  * - PurchaseOrderPaymentObserver (created)
  * - HmoRemittanceObserver (created)
  * - ProductOrServiceRequestObserver (updated - when HMO validation approved)
+ * - BankObserver (created - for GL account creation)
+ * - PatientDepositObserver (created - for deposit JE)
+ * - PettyCashObserver (updated - when disbursed)
+ * - TransferObserver (updated - when cleared)
+ * - DepreciationObserver (created - for depreciation JE)
+ * - FixedAssetDisposalObserver (updated - when completed)
+ *
+ * Note: CreditNoteObserver, JournalEntryObserver, JournalEntryEditObserver only
+ *       send notifications (no journal entries), so not included here.
  *
  * Usage: php trigger_observers_v2.php
  */
@@ -31,7 +40,13 @@ use App\Models\PurchaseOrderPayment;
 use App\Models\HmoRemittance;
 use App\Models\ProductOrServiceRequest;
 use App\Models\HR\PayrollBatch;
+use App\Models\Bank;
+use App\Models\InterAccountTransfer;
 use App\Models\Accounting\JournalEntry;
+use App\Models\Accounting\PatientDeposit;
+use App\Models\Accounting\PettyCashTransaction;
+use App\Models\Accounting\FixedAssetDepreciation;
+use App\Models\Accounting\FixedAssetDisposal;
 use App\Observers\Accounting\PaymentObserver;
 use App\Observers\Accounting\ExpenseObserver;
 use App\Observers\Accounting\PayrollBatchObserver;
@@ -39,6 +54,12 @@ use App\Observers\Accounting\PurchaseOrderObserver;
 use App\Observers\Accounting\PurchaseOrderPaymentObserver;
 use App\Observers\Accounting\HmoRemittanceObserver;
 use App\Observers\Accounting\ProductOrServiceRequestObserver;
+use App\Observers\Accounting\BankObserver;
+use App\Observers\Accounting\PatientDepositObserver;
+use App\Observers\Accounting\PettyCashObserver;
+use App\Observers\Accounting\TransferObserver;
+use App\Observers\Accounting\DepreciationObserver;
+use App\Observers\Accounting\FixedAssetDisposalObserver;
 use App\Services\Accounting\SubAccountService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -409,6 +430,259 @@ try {
     echo "\n";
 } catch (\Exception $e) {
     echo "   Error processing HMO claims: {$e->getMessage()}\n";
+}
+
+// =====================================
+// 9. Process Banks without GL Accounts
+// =====================================
+echo "\n9. Processing Banks without GL Accounts...\n";
+
+try {
+    $banksWithoutAccounts = Bank::whereNull('account_id')->get();
+    $stats['banks'] = ['found' => $banksWithoutAccounts->count(), 'processed' => 0, 'success' => 0, 'skipped' => 0, 'errors' => 0];
+    echo "   Found {$banksWithoutAccounts->count()} banks without GL accounts\n";
+
+    $bankObserver = new BankObserver();
+
+    foreach ($banksWithoutAccounts as $bank) {
+        $stats['banks']['processed']++;
+        echo "   Processing: {$bank->name}... ";
+
+        try {
+            $bankObserver->created($bank);
+
+            // Reload to check if account was created
+            $bank->refresh();
+            if ($bank->account_id) {
+                $stats['banks']['success']++;
+                echo "✓ Created account ID: {$bank->account_id}\n";
+            } else {
+                $stats['banks']['errors']++;
+                echo "✗ Failed to create account\n";
+            }
+        } catch (\Exception $e) {
+            $stats['banks']['errors']++;
+            echo "✗ Error: {$e->getMessage()}\n";
+        }
+    }
+} catch (\Exception $e) {
+    echo "   Error processing banks: {$e->getMessage()}\n";
+}
+
+// =====================================
+// 10. Process Patient Deposits
+// =====================================
+echo "\n10. Processing Patient Deposits...\n";
+
+try {
+    $deposits = PatientDeposit::whereNull('journal_entry_id')->get();
+    $stats['patient_deposits'] = ['found' => $deposits->count(), 'processed' => 0, 'success' => 0, 'skipped' => 0, 'errors' => 0];
+    echo "   Found {$deposits->count()} patient deposits without JE\n";
+
+    $observer = new PatientDepositObserver();
+
+    foreach ($deposits as $deposit) {
+        $stats['patient_deposits']['processed']++;
+
+        // Check if JE exists
+        $existingEntry = JournalEntry::where('reference_type', 'patient_deposit')
+            ->where('reference_id', $deposit->id)
+            ->exists();
+
+        if ($existingEntry) {
+            $stats['patient_deposits']['skipped']++;
+            echo "s";
+            continue;
+        }
+
+        try {
+            $observer->created($deposit);
+            $stats['patient_deposits']['success']++;
+            echo ".";
+        } catch (\Exception $e) {
+            $stats['patient_deposits']['errors']++;
+            echo "E";
+            Log::error("Observer trigger failed for PatientDeposit #{$deposit->id}: " . $e->getMessage());
+        }
+    }
+    echo "\n";
+} catch (\Exception $e) {
+    echo "   Error processing patient deposits: {$e->getMessage()}\n";
+}
+
+// =====================================
+// 11. Process Petty Cash Transactions (Disbursed)
+// =====================================
+echo "\n11. Processing Petty Cash Transactions...\n";
+
+try {
+    $transactions = PettyCashTransaction::where('status', PettyCashTransaction::STATUS_DISBURSED)->get();
+    $stats['petty_cash'] = ['found' => $transactions->count(), 'processed' => 0, 'success' => 0, 'skipped' => 0, 'errors' => 0];
+    echo "   Found {$transactions->count()} disbursed petty cash transactions\n";
+
+    $observer = new PettyCashObserver();
+
+    foreach ($transactions as $transaction) {
+        $stats['petty_cash']['processed']++;
+
+        // Check if JE exists (using voucher_number in reference_number)
+        $existingEntry = JournalEntry::where('reference_type', 'petty_cash')
+            ->where('reference_id', $transaction->id)
+            ->exists();
+
+        if ($existingEntry) {
+            $stats['petty_cash']['skipped']++;
+            echo "s";
+            continue;
+        }
+
+        try {
+            // Directly call the createJournalEntry method
+            $reflectionMethod = new \ReflectionMethod($observer, 'createJournalEntry');
+            $reflectionMethod->setAccessible(true);
+            $reflectionMethod->invoke($observer, $transaction);
+            $stats['petty_cash']['success']++;
+            echo ".";
+        } catch (\Exception $e) {
+            $stats['petty_cash']['errors']++;
+            echo "E";
+            Log::error("Observer trigger failed for PettyCashTransaction #{$transaction->id}: " . $e->getMessage());
+        }
+    }
+    echo "\n";
+} catch (\Exception $e) {
+    echo "   Error processing petty cash transactions: {$e->getMessage()}\n";
+}
+
+// =====================================
+// 12. Process Inter-Account Transfers (Cleared)
+// =====================================
+echo "\n12. Processing Inter-Account Transfers...\n";
+
+try {
+    $transfers = InterAccountTransfer::where('status', InterAccountTransfer::STATUS_CLEARED)->get();
+    $stats['transfers'] = ['found' => $transfers->count(), 'processed' => 0, 'success' => 0, 'skipped' => 0, 'errors' => 0];
+    echo "   Found {$transfers->count()} cleared transfers\n";
+
+    $observer = new TransferObserver();
+
+    foreach ($transfers as $transfer) {
+        $stats['transfers']['processed']++;
+
+        // Check if JE exists
+        $existingEntry = JournalEntry::where('reference_type', 'inter_account_transfer')
+            ->where('reference_id', $transfer->id)
+            ->exists();
+
+        if ($existingEntry) {
+            $stats['transfers']['skipped']++;
+            echo "s";
+            continue;
+        }
+
+        try {
+            // Directly call the createTransferJournalEntry method
+            $reflectionMethod = new \ReflectionMethod($observer, 'createTransferJournalEntry');
+            $reflectionMethod->setAccessible(true);
+            $reflectionMethod->invoke($observer, $transfer);
+            $stats['transfers']['success']++;
+            echo ".";
+        } catch (\Exception $e) {
+            $stats['transfers']['errors']++;
+            echo "E";
+            Log::error("Observer trigger failed for InterAccountTransfer #{$transfer->id}: " . $e->getMessage());
+        }
+    }
+    echo "\n";
+} catch (\Exception $e) {
+    echo "   Error processing transfers: {$e->getMessage()}\n";
+}
+
+// =====================================
+// 13. Process Fixed Asset Depreciation
+// =====================================
+echo "\n13. Processing Fixed Asset Depreciation...\n";
+
+try {
+    $depreciations = FixedAssetDepreciation::whereNull('journal_entry_id')->get();
+    $stats['depreciation'] = ['found' => $depreciations->count(), 'processed' => 0, 'success' => 0, 'skipped' => 0, 'errors' => 0];
+    echo "   Found {$depreciations->count()} depreciation entries without JE\n";
+
+    $observer = new DepreciationObserver();
+
+    foreach ($depreciations as $depreciation) {
+        $stats['depreciation']['processed']++;
+
+        // Check if JE exists
+        $existingEntry = JournalEntry::where('reference_type', 'fixed_asset_depreciation')
+            ->where('reference_id', $depreciation->id)
+            ->exists();
+
+        if ($existingEntry) {
+            $stats['depreciation']['skipped']++;
+            echo "s";
+            continue;
+        }
+
+        try {
+            $observer->created($depreciation);
+            $stats['depreciation']['success']++;
+            echo ".";
+        } catch (\Exception $e) {
+            $stats['depreciation']['errors']++;
+            echo "E";
+            Log::error("Observer trigger failed for FixedAssetDepreciation #{$depreciation->id}: " . $e->getMessage());
+        }
+    }
+    echo "\n";
+} catch (\Exception $e) {
+    echo "   Error processing depreciation: {$e->getMessage()}\n";
+}
+
+// =====================================
+// 14. Process Fixed Asset Disposals (Completed)
+// =====================================
+echo "\n14. Processing Fixed Asset Disposals...\n";
+
+try {
+    $disposals = FixedAssetDisposal::where('status', FixedAssetDisposal::STATUS_COMPLETED)
+        ->whereNull('journal_entry_id')
+        ->get();
+    $stats['disposals'] = ['found' => $disposals->count(), 'processed' => 0, 'success' => 0, 'skipped' => 0, 'errors' => 0];
+    echo "   Found {$disposals->count()} completed disposals without JE\n";
+
+    $observer = new FixedAssetDisposalObserver();
+
+    foreach ($disposals as $disposal) {
+        $stats['disposals']['processed']++;
+
+        // Check if JE exists
+        $existingEntry = JournalEntry::where('reference_type', 'fixed_asset_disposal')
+            ->where('reference_id', $disposal->id)
+            ->exists();
+
+        if ($existingEntry) {
+            $stats['disposals']['skipped']++;
+            echo "s";
+            continue;
+        }
+
+        try {
+            // Directly call the createDisposalJournalEntry method
+            $reflectionMethod = new \ReflectionMethod($observer, 'createDisposalJournalEntry');
+            $reflectionMethod->setAccessible(true);
+            $reflectionMethod->invoke($observer, $disposal);
+            $stats['disposals']['success']++;
+            echo ".";
+        } catch (\Exception $e) {
+            $stats['disposals']['errors']++;
+            echo "E";
+            Log::error("Observer trigger failed for FixedAssetDisposal #{$disposal->id}: " . $e->getMessage());
+        }
+    }
+    echo "\n";
+} catch (\Exception $e) {
+    echo "   Error processing disposals: {$e->getMessage()}\n";
 }
 
 // =====================================
