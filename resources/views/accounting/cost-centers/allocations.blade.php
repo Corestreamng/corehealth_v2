@@ -107,7 +107,7 @@
     <div class="row">
         <!-- New Allocation Form -->
         <div class="col-lg-5">
-            <div class="card card-modern">
+            <div class="card-modern card-modern">
                 <div class="card-header bg-white">
                     <h5 class="mb-0">
                         <i class="mdi mdi-plus-circle text-primary me-2"></i>
@@ -211,7 +211,7 @@
             </div>
 
             <!-- Run Automatic Allocation -->
-            <div class="card card-modern mt-3">
+            <div class="card-modern mt-3">
                 <div class="card-header bg-white">
                     <h5 class="mb-0">
                         <i class="mdi mdi-cog-sync text-warning me-2"></i>
@@ -252,7 +252,7 @@
 
         <!-- Recent Allocations -->
         <div class="col-lg-7">
-            <div class="card card-modern">
+            <div class="card-modern card-modern">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
                         <i class="mdi mdi-history text-info me-2"></i>
@@ -316,7 +316,7 @@
             </div>
 
             <!-- Allocation Basis Guide -->
-            <div class="card card-modern mt-3">
+            <div class="card-modern mt-3">
                 <div class="card-header bg-white">
                     <h5 class="mb-0">
                         <i class="mdi mdi-information-outline text-info me-2"></i>

@@ -14,7 +14,7 @@
 <div class="container-fluid">
         <div class="row justify-content-center">
             <div class="col-lg-8">
-                <div class="card card-modern">
+                <div class="card-modern card-modern">
                     <div class="card-header bg-white">
                         <h5 class="mb-0"><i class="mdi mdi-plus-circle mr-2"></i>Create New Petty Cash Fund</h5>
                     </div>

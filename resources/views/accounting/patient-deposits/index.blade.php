@@ -255,7 +255,7 @@
     </div>
 
     <!-- Deposits Table -->
-    <div class="card">
+    <div class="card-modern">
         <div class="card-body">
             <table id="deposits-table" class="table table-striped table-bordered" style="width:100%">
                 <thead>
@@ -283,7 +283,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="mdi mdi-credit-card mr-2"></i>Apply Deposit to Bill</h5>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
             </div>
             <form id="apply-form">
                 <div class="modal-body">
@@ -299,7 +299,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">Apply Deposit</button>
                 </div>
             </form>
@@ -313,7 +313,7 @@
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title"><i class="mdi mdi-cash-refund mr-2"></i>Process Refund</h5>
-                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                <button type="button" class="close text-white"  data-bs-dismiss="modal">&times;</button>
             </div>
             <form id="refund-form">
                 <div class="modal-body">
@@ -333,7 +333,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-danger">Process Refund</button>
                 </div>
             </form>

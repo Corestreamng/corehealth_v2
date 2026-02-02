@@ -445,7 +445,7 @@
             <form id="expenseForm">
                 <div class="modal-header">
                     <h5 class="modal-title">Record Expense</h5>
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
@@ -471,7 +471,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">
                         <i class="mdi mdi-content-save mr-1"></i> Save Expense
                     </button>
@@ -488,7 +488,7 @@
             <form id="approveForm">
                 <div class="modal-header">
                     <h5 class="modal-title">Approve Capex Request</h5>
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
@@ -508,7 +508,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-success">
                         <i class="mdi mdi-check mr-1"></i> Approve
                     </button>

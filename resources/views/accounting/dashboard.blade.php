@@ -33,7 +33,7 @@
         <!-- Quick Actions Section -->
         <div class="row mb-4">
             <div class="col-12">
-                <div class="card card-modern quick-actions-header">
+                <div class="card-modern quick-actions-header">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="mb-0"><i class="mdi mdi-lightning-bolt mr-2"></i>Quick Actions</h5>

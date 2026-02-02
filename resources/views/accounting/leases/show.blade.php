@@ -16,7 +16,7 @@
             <!-- Main Content -->
             <div class="col-lg-8">
                 <!-- Lease Header -->
-                <div class="card card-modern mb-4">
+                <div class="card-modern mb-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">
                             <i class="mdi mdi-file-document-edit mr-2"></i>{{ $lease->lease_number }}
@@ -63,7 +63,7 @@
                 <!-- Lessor & Location Info -->
                 <div class="row mb-4">
                     <div class="col-md-6">
-                        <div class="card card-modern h-100">
+                        <div class="card-modern h-100">
                             <div class="card-header">
                                 <h6 class="mb-0"><i class="mdi mdi-account-tie mr-2"></i>Lessor Information</h6>
                             </div>
@@ -82,7 +82,7 @@
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <div class="card card-modern h-100">
+                        <div class="card-modern h-100">
                             <div class="card-header">
                                 <h6 class="mb-0"><i class="mdi mdi-map-marker mr-2"></i>Asset Location</h6>
                             </div>
@@ -103,7 +103,7 @@
                 </div>
 
                 <!-- Lease Terms -->
-                <div class="card card-modern mb-4">
+                <div class="card-modern mb-4">
                     <div class="card-header">
                         <h6 class="mb-0"><i class="mdi mdi-calendar-range mr-2"></i>Lease Terms</h6>
                     </div>
@@ -145,7 +145,7 @@
                 </div>
 
                 <!-- IFRS 16 Values -->
-                <div class="card card-modern mb-4">
+                <div class="card-modern mb-4">
                     <div class="card-header bg-primary text-white">
                         <h6 class="mb-0"><i class="mdi mdi-scale-balance mr-2"></i>IFRS 16 Values</h6>
                     </div>
@@ -204,7 +204,7 @@
 
                 <!-- Lease Options -->
                 @if($lease->has_purchase_option || $lease->has_termination_option || $lease->residual_value_guarantee > 0)
-                <div class="card card-modern mb-4">
+                <div class="card-modern mb-4">
                     <div class="card-header">
                         <h6 class="mb-0"><i class="mdi mdi-cog mr-2"></i>Lease Options</h6>
                     </div>
@@ -244,7 +244,7 @@
                 @endif
 
                 <!-- Payment Schedule -->
-                <div class="card card-modern mb-4">
+                <div class="card-modern mb-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h6 class="mb-0"><i class="mdi mdi-calendar-check mr-2"></i>Payment Schedule</h6>
                         <a href="{{ route('accounting.leases.schedule', $lease->id) }}" class="btn btn-outline-info btn-sm">
@@ -308,7 +308,7 @@
 
                 <!-- Modifications History -->
                 @if($modifications->count() > 0)
-                <div class="card card-modern mb-4">
+                <div class="card-modern mb-4">
                     <div class="card-header">
                         <h6 class="mb-0"><i class="mdi mdi-history mr-2"></i>Modification History</h6>
                     </div>
@@ -345,7 +345,7 @@
             <!-- Sidebar -->
             <div class="col-lg-4">
                 <!-- Payment Summary -->
-                <div class="card card-modern mb-4">
+                <div class="card-modern mb-4">
                     <div class="card-header bg-success text-white">
                         <h6 class="mb-0"><i class="mdi mdi-cash-multiple mr-2"></i>Payment Summary</h6>
                     </div>
@@ -392,7 +392,7 @@
                 </div>
 
                 <!-- Accounting Info -->
-                <div class="card card-modern mb-4">
+                <div class="card-modern mb-4">
                     <div class="card-header">
                         <h6 class="mb-0"><i class="mdi mdi-book-open mr-2"></i>Accounting Mapping</h6>
                     </div>
@@ -419,7 +419,7 @@
                 </div>
 
                 <!-- Quick Actions -->
-                <div class="card card-modern mb-4">
+                <div class="card-modern mb-4">
                     <div class="card-header">
                         <h6 class="mb-0"><i class="mdi mdi-lightning-bolt mr-2"></i>Quick Actions</h6>
                     </div>
@@ -442,7 +442,7 @@
                 </div>
 
                 <!-- Audit Info -->
-                <div class="card card-modern">
+                <div class="card-modern card-modern">
                     <div class="card-body">
                         <small class="text-muted">
                             Created by {{ $lease->created_by_name ?? 'Unknown' }}<br>
@@ -464,7 +464,7 @@
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="mdi mdi-alert-circle text-danger mr-2"></i>Terminate Lease</h5>
-                    <button type="button" class="close" data-dismiss="modal">
+                    <button type="button" class="close"  data-bs-dismiss="modal">
                         <span>&times;</span>
                     </button>
                 </div>
@@ -484,7 +484,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-danger">
                         <i class="mdi mdi-close-circle"></i> Terminate Lease
                     </button>

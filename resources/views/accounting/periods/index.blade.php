@@ -35,7 +35,7 @@
             $openPeriods = $fiscalYears->flatMap->periods->where('is_closed', false)->count();
         @endphp
         <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card card-modern h-100">
+            <div class="card-modern h-100">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -50,7 +50,7 @@
             </div>
         </div>
         <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card card-modern h-100">
+            <div class="card-modern h-100">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -65,7 +65,7 @@
             </div>
         </div>
         <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card card-modern h-100">
+            <div class="card-modern h-100">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -80,7 +80,7 @@
             </div>
         </div>
         <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card card-modern h-100">
+            <div class="card-modern h-100">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -98,7 +98,7 @@
 
     {{-- Fiscal Years List --}}
     @forelse($fiscalYears as $year)
-        <div class="card card-modern mb-4">
+        <div class="card-modern mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <div>
                     <h5 class="mb-1">
@@ -210,7 +210,7 @@
             </div>
         </div>
     @empty
-        <div class="card card-modern">
+        <div class="card-modern card-modern">
             <div class="card-body text-center py-5">
                 <i class="mdi mdi-calendar-remove mdi-48px text-muted mb-3"></i>
                 <h5>No Fiscal Years Configured</h5>

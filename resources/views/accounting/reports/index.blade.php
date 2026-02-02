@@ -18,7 +18,7 @@
     </div>
 
     {{-- Quick Report Generator Card --}}
-    <div class="card card-modern mb-4">
+    <div class="card-modern mb-4">
         <div class="card-header">
             <h5 class="mb-0"><i class="mdi mdi-chart-bar mr-2"></i>Quick Report Generator</h5>
         </div>
@@ -71,7 +71,7 @@
     <div class="row">
         {{-- Core Financial Statements --}}
         <div class="col-lg-6 mb-4">
-            <div class="card card-modern h-100">
+            <div class="card-modern h-100">
                 <div class="card-header">
                     <h5 class="mb-0">
                         <i class="mdi mdi-file-document-outline mr-2"></i>Core Financial Statements
@@ -142,7 +142,7 @@
 
         {{-- Detailed Reports --}}
         <div class="col-lg-6 mb-4">
-            <div class="card card-modern h-100">
+            <div class="card-modern h-100">
                 <div class="card-header">
                     <h5 class="mb-0">
                         <i class="mdi mdi-book-open-outline mr-2"></i>Detailed Reports
@@ -238,7 +238,7 @@
 
     {{-- Saved Filters --}}
     @if($savedFilters->count() > 0)
-    <div class="card card-modern">
+    <div class="card-modern card-modern">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0"><i class="mdi mdi-bookmark-outline mr-2"></i>Saved Report Filters</h5>
         </div>

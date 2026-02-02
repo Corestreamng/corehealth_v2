@@ -13,7 +13,7 @@
 <div id="content-wrapper">
     <div class="container-fluid">
         <!-- Header -->
-        <div class="card card-modern mb-4">
+        <div class="card-modern mb-4">
             <div class="card-body">
                 <div class="row align-items-center">
                     <div class="col-md-6">
@@ -32,7 +32,7 @@
         <!-- Stats -->
         <div class="row mb-4">
             <div class="col-md-4 mb-3">
-                <div class="card card-modern h-100 border-left-danger">
+                <div class="card-modern h-100 border-left-danger">
                     <div class="card-body d-flex align-items-center">
                         <div class="icon-box bg-danger rounded-circle p-3 mr-3">
                             <i class="mdi mdi-alert-circle text-white mdi-24px"></i>
@@ -45,7 +45,7 @@
                 </div>
             </div>
             <div class="col-md-4 mb-3">
-                <div class="card card-modern h-100 border-left-warning">
+                <div class="card-modern h-100 border-left-warning">
                     <div class="card-body d-flex align-items-center">
                         <div class="icon-box bg-warning rounded-circle p-3 mr-3">
                             <i class="mdi mdi-alert text-white mdi-24px"></i>
@@ -58,7 +58,7 @@
                 </div>
             </div>
             <div class="col-md-4 mb-3">
-                <div class="card card-modern h-100 border-left-success">
+                <div class="card-modern h-100 border-left-success">
                     <div class="card-body d-flex align-items-center">
                         <div class="icon-box bg-success rounded-circle p-3 mr-3">
                             <i class="mdi mdi-check-circle text-white mdi-24px"></i>
@@ -73,7 +73,7 @@
         </div>
 
         <!-- Filters -->
-        <div class="card card-modern mb-4">
+        <div class="card-modern mb-4">
             <div class="card-body py-3">
                 <div class="row">
                     <div class="col-md-3 mb-2">
@@ -101,7 +101,7 @@
         </div>
 
         <!-- Alerts List -->
-        <div class="card card-modern">
+        <div class="card-modern card-modern">
             <div class="card-body">
                 @forelse($alerts as $alert)
                 <div class="alert alert-{{ $alert->severity === 'critical' ? 'danger' : 'warning' }}

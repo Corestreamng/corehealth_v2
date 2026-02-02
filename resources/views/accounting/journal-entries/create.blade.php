@@ -29,7 +29,7 @@
         <div class="row">
             {{-- Entry Details --}}
             <div class="col-lg-4 mb-4">
-                <div class="card card-modern">
+                <div modern card-modern">
                     <div class="card-header">
                         <h5 class="mb-0"><i class="mdi mdi-file-document-edit-outline mr-2"></i>Entry Details</h5>
                     </div>
@@ -71,7 +71,7 @@
                 </div>
 
                 {{-- Totals Card --}}
-                <div class="card card-modern mt-4">
+                <div modern card-modern mt-4">
                     <div class="card-header">
                         <h5 class="mb-0"><i class="mdi mdi-sigma mr-2"></i>Totals</h5>
                     </div>
@@ -96,7 +96,7 @@
 
             {{-- Entry Lines --}}
             <div class="col-lg-8 mb-4">
-                <div class="card card-modern">
+                <div modern card-modern">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0"><i class="mdi mdi-format-list-bulleted mr-2"></i>Entry Lines</h5>
                         <button type="button" class="btn btn-sm btn-success" id="addLineBtn">
@@ -124,7 +124,7 @@
                 </div>
 
                 {{-- Action Buttons --}}
-                <div class="card card-modern mt-4">
+                <div modern card-modern mt-4">
                     <div class="card-body">
                         <div class="d-flex justify-content-between">
                             <button type="button" class="btn btn-outline-secondary" onclick="window.history.back()">

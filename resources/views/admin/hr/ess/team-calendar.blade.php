@@ -102,7 +102,7 @@
                         </button>
                     </div>
                 </div>
-                
+
                 <!-- Weekday Headers -->
                 <div class="calendar-weekday-header">
                     <div class="weekday-name">Sun</div>
@@ -113,13 +113,13 @@
                     <div class="weekday-name">Fri</div>
                     <div class="weekday-name">Sat</div>
                 </div>
-                
+
                 <!-- Calendar Grid -->
                 <div class="leave-calendar-grid" id="calendarGrid">
                     <!-- Days will be rendered by JavaScript -->
                 </div>
             </div>
-            
+
             <!-- Legend -->
             <div class="legend-container mt-3">
                 <strong class="mr-3" style="font-size: 0.8rem;">Leave Types:</strong>
@@ -168,7 +168,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Team Members List -->
                     <div class="mt-2">
                         <small class="font-weight-bold text-muted">TEAM MEMBERS</small>
@@ -237,7 +237,7 @@
             </div>
 
             <!-- On Leave Today -->
-            <div class="card" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-modern" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center" style="border-radius: 12px 12px 0 0; border-bottom: 1px solid #e9ecef;">
                     <h6 class="mb-0" style="font-weight: 600;">
                         <i class="mdi mdi-account-clock mr-2" style="color: var(--primary-color);"></i>
@@ -310,35 +310,35 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentYear = {{ now()->year }};
     let currentMonth = {{ now()->month - 1 }}; // 0-indexed
     let leaveData = [];
-    
+
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
-    
+
     function formatDate(date) {
         return date.toISOString().split('T')[0];
     }
-    
+
     function renderCalendar() {
         const grid = document.getElementById('calendarGrid');
         const titleEl = document.getElementById('calendarTitle');
-        
+
         const months = ['January', 'February', 'March', 'April', 'May', 'June',
                        'July', 'August', 'September', 'October', 'November', 'December'];
         titleEl.textContent = `${months[currentMonth]} ${currentYear}`;
-        
+
         // Get first and last day of month
         const firstDay = new Date(currentYear, currentMonth, 1);
         const lastDay = new Date(currentYear, currentMonth + 1, 0);
         const startDayOfWeek = firstDay.getDay();
         const daysInMonth = lastDay.getDate();
-        
+
         let html = '';
-        
+
         // Empty cells before first day
         for (let i = 0; i < startDayOfWeek; i++) {
             html += '<div class="calendar-day-cell empty-day"></div>';
         }
-        
+
         // Days of month
         for (let day = 1; day <= daysInMonth; day++) {
             const date = new Date(currentYear, currentMonth, day);
@@ -347,18 +347,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const isPast = date < new Date(today.getFullYear(), today.getMonth(), today.getDate());
             const isWeekend = date.getDay() === 0 || date.getDay() === 6;
             const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-            
+
             let cellClass = 'calendar-day-cell';
             if (isToday) cellClass += ' today';
             if (isPast && !isToday) cellClass += ' past-date';
             if (isWeekend) cellClass += ' weekend';
-            
+
             // Get leaves for this day
             const dayLeaves = getLeavesForDate(dateStr);
             const maxDisplay = 4;
             const displayLeaves = dayLeaves.slice(0, maxDisplay);
             const moreCount = dayLeaves.length - maxDisplay;
-            
+
             html += `
                 <div class="${cellClass}" data-date="${dateStr}">
                     <div class="day-header">
@@ -372,23 +372,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
         }
-        
+
         // Empty cells after last day
         const remainingCells = (7 - ((startDayOfWeek + daysInMonth) % 7)) % 7;
         for (let i = 0; i < remainingCells; i++) {
             html += '<div class="calendar-day-cell empty-day"></div>';
         }
-        
+
         grid.innerHTML = html;
     }
-    
+
     function renderLeaveItem(leave) {
         const color = leave.leave_type_color || '#667eea';
         const statusClass = `status-${leave.status}`;
         const bgColor = color + '20';
-        
+
         return `
-            <div class="leave-item ${statusClass}" 
+            <div class="leave-item ${statusClass}"
                  onclick="showLeaveDetail(${leave.leave_id})"
                  title="${leave.staff_name} - ${leave.leave_type}"
                  style="background-color: ${bgColor}; border-left-color: ${color}; color: ${color};">
@@ -397,7 +397,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
     }
-    
+
     function getLeavesForDate(dateStr) {
         return leaveData.filter(leave => {
             const start = new Date(leave.start_date);
@@ -406,11 +406,11 @@ document.addEventListener('DOMContentLoaded', function() {
             return check >= start && check <= end;
         });
     }
-    
+
     function loadLeaveData() {
         const startDate = new Date(currentYear, currentMonth, 1);
         const endDate = new Date(currentYear, currentMonth + 1, 0);
-        
+
         $.ajax({
             url: '{{ route("hr.ess.team-calendar.events") }}',
             data: {
@@ -447,20 +447,20 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
+
     window.showLeaveDetail = function(leaveId) {
         const leave = leaveData.find(l => l.leave_id === leaveId);
         if (!leave) return;
-        
+
         const statusColors = {
             'pending': 'warning',
             'supervisor_approved': 'info',
             'approved': 'success'
         };
-        
+
         $('#modalHeader').removeClass('bg-warning bg-info bg-success bg-primary')
                         .addClass('bg-' + (statusColors[leave.status] || 'primary'));
-        
+
         const html = `
             <div class="row">
                 <div class="col-6">
@@ -478,9 +478,9 @@ document.addEventListener('DOMContentLoaded', function() {
             <p class="mb-2"><strong>Status:</strong> <span class="badge badge-${statusColors[leave.status] || 'secondary'}">${leave.status_label}</span></p>
             ${leave.reason ? '<p class="mb-0"><strong>Reason:</strong><br>' + leave.reason + '</p>' : ''}
         `;
-        
+
         $('#leaveDetailContent').html(html);
-        
+
         // Show/hide action buttons based on can_approve
         if (leave.can_approve) {
             $('#leaveDetailFooter').html(`
@@ -494,19 +494,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal" style="border-radius: 8px;">Close</button>
             `);
         }
-        
+
         $('#leaveDetailModal').modal('show');
     };
-    
+
     window.showDayDetail = function(dateStr) {
         const dayLeaves = getLeavesForDate(dateStr);
         const date = new Date(dateStr);
-        const formattedDate = date.toLocaleDateString('en-US', { 
-            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+        const formattedDate = date.toLocaleDateString('en-US', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
         });
-        
+
         $('#dayDetailTitle').html(`<i class="mdi mdi-calendar mr-2"></i>${formattedDate}`);
-        
+
         if (dayLeaves.length === 0) {
             $('#dayDetailContent').html('<div class="text-center text-muted py-4">No team members on leave</div>');
         } else {
@@ -518,7 +518,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     'approved': 'success'
                 };
                 const leaveColor = leave.leave_type_color || '#667eea';
-                
+
                 html += `
                     <div class="list-group-item" style="cursor: pointer;" onclick="$('#dayDetailModal').modal('hide'); showLeaveDetail(${leave.leave_id});">
                         <div class="d-flex justify-content-between align-items-start">
@@ -540,21 +540,21 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '</div>';
             $('#dayDetailContent').html(html);
         }
-        
+
         $('#dayDetailModal').modal('show');
     };
-    
+
     function loadOnLeaveForDate(date) {
         $('#onLeaveDateLabel').text('Loading...').data('date', date);
-        
+
         $.get('{{ route("hr.ess.team-calendar.on-leave") }}', { date: date }, function(data) {
             var dateFormatted = new Date(data.date).toLocaleDateString('en-US', {
                 weekday: 'short', month: 'short', day: 'numeric'
             });
-            
+
             $('#onLeaveDateLabel').text('On Leave - ' + dateFormatted);
             $('#onLeaveCount').text(data.count);
-            
+
             if (data.staff.length === 0) {
                 $('#onLeaveList').html(`
                     <div class="text-center py-4 text-muted">
@@ -582,7 +582,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
+
     // Navigation
     document.getElementById('prevMonthBtn').addEventListener('click', function() {
         currentMonth--;
@@ -592,7 +592,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         loadLeaveData();
     });
-    
+
     document.getElementById('nextMonthBtn').addEventListener('click', function() {
         currentMonth++;
         if (currentMonth > 11) {
@@ -601,28 +601,28 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         loadLeaveData();
     });
-    
+
     document.getElementById('todayBtn').addEventListener('click', function() {
         currentYear = today.getFullYear();
         currentMonth = today.getMonth();
         loadLeaveData();
         loadOnLeaveForDate(todayStr);
     });
-    
+
     // Filters
     $('#filterStaff, #filterLeaveType, #filterStatus').change(function() {
         loadLeaveData();
     });
-    
+
     // Refresh
     $('#refreshBtn').click(function() {
         loadLeaveData();
         loadOnLeaveForDate($('#onLeaveDateLabel').data('date') || todayStr);
     });
-    
+
     // Click on day cell to show on-leave list
     $(document).on('click', '.calendar-day-cell:not(.empty-day)', function(e) {
-        if ($(e.target).hasClass('leave-item') || $(e.target).closest('.leave-item').length || 
+        if ($(e.target).hasClass('leave-item') || $(e.target).closest('.leave-item').length ||
             $(e.target).hasClass('more-leaves')) {
             return;
         }
@@ -631,7 +631,7 @@ document.addEventListener('DOMContentLoaded', function() {
             loadOnLeaveForDate(date);
         }
     });
-    
+
     // Initial load
     loadLeaveData();
     loadOnLeaveForDate(todayStr);

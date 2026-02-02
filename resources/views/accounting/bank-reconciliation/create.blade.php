@@ -21,7 +21,7 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-lg-8">
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-header bg-white">
                     <h5 class="mb-0"><i class="mdi mdi-bank-check mr-2"></i>Start New Bank Reconciliation</h5>
                 </div>

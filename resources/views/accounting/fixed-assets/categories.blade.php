@@ -162,7 +162,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="mdi mdi-folder-plus mr-2"></i>Add Asset Category</h5>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
             </div>
             <form action="{{ route('accounting.fixed-assets.categories.store') }}" method="POST">
                 @csrf
@@ -287,7 +287,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">Create Category</button>
                 </div>
             </form>

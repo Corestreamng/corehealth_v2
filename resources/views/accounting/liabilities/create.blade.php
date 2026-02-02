@@ -18,7 +18,7 @@
                     @csrf
 
                     <!-- Basic Information -->
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-header">
                             <h5 class="mb-0"><i class="mdi mdi-information mr-2"></i>Liability Details</h5>
                         </div>
@@ -73,7 +73,7 @@
                     </div>
 
                     <!-- Financial Terms -->
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-header">
                             <h5 class="mb-0"><i class="mdi mdi-cash-multiple mr-2"></i>Financial Terms</h5>
                         </div>
@@ -167,7 +167,7 @@
                     </div>
 
                     <!-- Accounting -->
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-header">
                             <h5 class="mb-0"><i class="mdi mdi-book-open mr-2"></i>Accounting Mapping</h5>
                         </div>
@@ -206,7 +206,7 @@
                     </div>
 
                     <!-- Collateral & Notes -->
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-header">
                             <h5 class="mb-0"><i class="mdi mdi-shield-check mr-2"></i>Collateral & Notes</h5>
                         </div>
@@ -259,7 +259,7 @@
 
             <!-- Sidebar Summary -->
             <div class="col-lg-4">
-                <div class="card card-modern sticky-top" style="top: 20px;">
+                <div class="card-modern sticky-top" style="top: 20px;">
                     <div class="card-header bg-primary text-white">
                         <h5 class="mb-0"><i class="mdi mdi-calculator mr-2"></i>Payment Summary</h5>
                     </div>

@@ -42,7 +42,7 @@
             <!-- Main Form -->
             <div class="col-lg-8">
                 <!-- Header Card -->
-                <div class="card shadow mb-4">
+                <div modern shadow mb-4">
                     <div class="card-header py-3">
                         <h6 class="m-0 font-weight-bold text-primary">Entry Details</h6>
                     </div>
@@ -97,7 +97,7 @@
                 </div>
 
                 <!-- Lines Card -->
-                <div class="card shadow mb-4">
+                <div modern shadow mb-4">
                     <div class="card-header py-3 d-flex justify-content-between align-items-center">
                         <h6 class="m-0 font-weight-bold text-primary">Journal Lines</h6>
                         <button type="button" class="btn btn-sm btn-primary" id="addLine">
@@ -175,7 +175,7 @@
                 </div>
 
                 <!-- Notes Card -->
-                <div class="card shadow mb-4">
+                <div modern shadow mb-4">
                     <div class="card-header py-3">
                         <h6 class="m-0 font-weight-bold text-primary">Additional Notes</h6>
                     </div>
@@ -189,7 +189,7 @@
             <!-- Sidebar -->
             <div class="col-lg-4">
                 <!-- Summary Card -->
-                <div class="card shadow mb-4">
+                <div modern shadow mb-4">
                     <div class="card-header py-3">
                         <h6 class="m-0 font-weight-bold text-primary">Entry Summary</h6>
                     </div>
@@ -225,7 +225,7 @@
                 </div>
 
                 <!-- Current Status -->
-                <div class="card shadow mb-4">
+                <div modern shadow mb-4">
                     <div class="card-header py-3">
                         <h6 class="m-0 font-weight-bold text-info">Current Status</h6>
                     </div>
@@ -253,7 +253,7 @@
                 </div>
 
                 <!-- Help Card -->
-                <div class="card shadow">
+                <div modern shadow">
                     <div class="card-header py-3">
                         <h6 class="m-0 font-weight-bold text-warning">Editing Guidelines</h6>
                     </div>

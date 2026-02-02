@@ -26,7 +26,7 @@
 
     <div class="row">
         <div class="col-lg-8">
-            <div class="card shadow">
+            <div modern shadow">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">Account Information</h6>
                 </div>
@@ -117,7 +117,7 @@
         </div>
 
         <div class="col-lg-4">
-            <div class="card shadow mb-4">
+            <div modern shadow mb-4">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">Account Details</h6>
                 </div>
@@ -139,7 +139,7 @@
                 </div>
             </div>
 
-            <div class="card shadow">
+            <div modern shadow">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">Guidelines</h6>
                 </div>

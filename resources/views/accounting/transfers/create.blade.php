@@ -165,7 +165,7 @@
                 <div class="row">
                     <!-- Left Column - Bank Selection -->
                     <div class="col-lg-6">
-                        <div class="card">
+                        <div class="card-modern">
                             <div class="card-header bg-primary text-white">
                                 <h3 class="card-title"><i class="mdi mdi-bank mr-2"></i>Transfer Details</h3>
                             </div>
@@ -259,7 +259,7 @@
 
                     <!-- Right Column - Method & Fees -->
                     <div class="col-lg-6">
-                        <div class="card">
+                        <div class="card-modern">
                             <div class="card-header bg-info text-white">
                                 <h3 class="card-title"><i class="mdi mdi-cogs mr-2"></i>Transfer Method</h3>
                             </div>
@@ -338,7 +338,7 @@
                             </div>
                         </div>
 
-                        <div class="card">
+                        <div class="card-modern">
                             <div class="card-header bg-warning">
                                 <h3 class="card-title"><i class="mdi mdi-currency-usd mr-2"></i>Transfer Fees & Timing</h3>
                             </div>
@@ -423,7 +423,7 @@
                 <!-- Form Actions -->
                 <div class="row">
                     <div class="col-12">
-                        <div class="card">
+                        <div class="card-modern">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div class="text-muted">

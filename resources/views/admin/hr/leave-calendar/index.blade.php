@@ -10,7 +10,7 @@
         overflow: hidden;
         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
-    
+
     .calendar-header {
         display: flex;
         justify-content: space-between;
@@ -19,13 +19,13 @@
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
     }
-    
+
     .calendar-title {
         font-size: 1.3rem;
         font-weight: 600;
         margin: 0;
     }
-    
+
     .calendar-nav-btn {
         background: rgba(255,255,255,0.2);
         border: none;
@@ -35,17 +35,17 @@
         cursor: pointer;
         transition: all 0.2s;
     }
-    
+
     .calendar-nav-btn:hover {
         background: rgba(255,255,255,0.3);
     }
-    
+
     .calendar-weekday-header {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
         background-color: #4a5568;
     }
-    
+
     .weekday-name {
         padding: 12px 8px;
         text-align: center;
@@ -55,7 +55,7 @@
         letter-spacing: 0.5px;
         color: white;
     }
-    
+
     .leave-calendar-grid {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
@@ -63,7 +63,7 @@
         background-color: #dee2e6;
         border: 1px solid #dee2e6;
     }
-    
+
     .calendar-day-cell {
         background-color: white;
         min-height: 120px;
@@ -72,26 +72,26 @@
         flex-direction: column;
         position: relative;
     }
-    
+
     .calendar-day-cell.empty-day {
         background-color: #f8f9fa;
         min-height: 60px;
     }
-    
+
     .calendar-day-cell.today {
         background-color: #e3f2fd;
         border: 2px solid #2196F3;
     }
-    
+
     .calendar-day-cell.weekend {
         background-color: #fffde7;
     }
-    
+
     .calendar-day-cell.past-date {
         opacity: 0.7;
         background-color: #fafafa;
     }
-    
+
     .day-header {
         display: flex;
         justify-content: space-between;
@@ -100,20 +100,20 @@
         padding-bottom: 6px;
         border-bottom: 1px solid #eee;
     }
-    
+
     .day-name {
         font-size: 0.65rem;
         color: #888;
         text-transform: uppercase;
         font-weight: 500;
     }
-    
+
     .day-number {
         font-weight: 700;
         font-size: 1rem;
         color: #333;
     }
-    
+
     .today .day-number {
         background: #2196F3;
         color: white;
@@ -124,7 +124,7 @@
         align-items: center;
         justify-content: center;
     }
-    
+
     .leave-items-container {
         flex: 1;
         display: flex;
@@ -133,7 +133,7 @@
         overflow-y: auto;
         max-height: 150px;
     }
-    
+
     .leave-item {
         font-size: 0.7rem;
         padding: 4px 6px;
@@ -147,31 +147,31 @@
         white-space: nowrap;
         overflow: hidden;
     }
-    
+
     .leave-item:hover {
         transform: translateX(2px);
         box-shadow: 0 2px 6px rgba(0,0,0,0.15);
     }
-    
+
     .leave-item .staff-name {
         flex: 1;
         overflow: hidden;
         text-overflow: ellipsis;
         font-weight: 500;
     }
-    
+
     .leave-item .leave-type-badge {
         font-size: 0.6rem;
         padding: 1px 4px;
         border-radius: 3px;
         background: rgba(255,255,255,0.8);
     }
-    
+
     /* Status Modifiers */
     .leave-item.status-pending { opacity: 0.85; border-style: dashed; }
     .leave-item.status-supervisor_approved { border-left-width: 4px; }
     .leave-item.status-approved { }
-    
+
     /* Stats Cards */
     .stat-card {
         border-radius: 12px;
@@ -181,7 +181,7 @@
     .stat-card:hover {
         transform: translateY(-2px);
     }
-    
+
     /* Legend */
     .legend-container {
         display: flex;
@@ -191,13 +191,13 @@
         background: #f8f9fa;
         border-radius: 8px;
     }
-    
+
     .legend-item {
         display: flex;
         align-items: center;
         font-size: 0.75rem;
     }
-    
+
     .legend-color {
         width: 16px;
         height: 16px;
@@ -205,13 +205,13 @@
         margin-right: 6px;
         border-left: 3px solid;
     }
-    
+
     /* On Leave List */
     .on-leave-list {
         max-height: 300px;
         overflow-y: auto;
     }
-    
+
     /* More indicator */
     .more-leaves {
         font-size: 0.65rem;
@@ -222,11 +222,11 @@
         border-radius: 3px;
         cursor: pointer;
     }
-    
+
     .more-leaves:hover {
         background: #e0e0e0;
     }
-    
+
     /* Responsive */
     @media (max-width: 992px) {
         .calendar-day-cell {
@@ -241,7 +241,7 @@
             font-size: 0.85rem;
         }
     }
-    
+
     @media (max-width: 576px) {
         .calendar-day-cell {
             min-height: 70px;
@@ -360,7 +360,7 @@
                         </button>
                     </div>
                 </div>
-                
+
                 <!-- Weekday Headers -->
                 <div class="calendar-weekday-header">
                     <div class="weekday-name">Sun</div>
@@ -371,13 +371,13 @@
                     <div class="weekday-name">Fri</div>
                     <div class="weekday-name">Sat</div>
                 </div>
-                
+
                 <!-- Calendar Grid -->
                 <div class="leave-calendar-grid" id="calendarGrid">
                     <!-- Days will be rendered by JavaScript -->
                 </div>
             </div>
-            
+
             <!-- Legend -->
             <div class="legend-container mt-3">
                 <strong class="mr-3" style="font-size: 0.8rem;">Leave Types:</strong>
@@ -445,7 +445,7 @@
             </div>
 
             <!-- On Leave Panel -->
-            <div class="card" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-modern" style="border-radius: 12px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center" style="border-radius: 12px 12px 0 0; border-bottom: 1px solid #e9ecef;">
                     <h6 class="mb-0" style="font-weight: 600;">
                         <i class="mdi mdi-account-clock mr-2" style="color: var(--primary-color);"></i>
@@ -575,35 +575,35 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentYear = {{ now()->year }};
     let currentMonth = {{ now()->month - 1 }}; // 0-indexed
     let leaveData = [];
-    
+
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
-    
+
     function formatDate(date) {
         return date.toISOString().split('T')[0];
     }
-    
+
     function renderCalendar() {
         const grid = document.getElementById('calendarGrid');
         const titleEl = document.getElementById('calendarTitle');
-        
+
         const months = ['January', 'February', 'March', 'April', 'May', 'June',
                        'July', 'August', 'September', 'October', 'November', 'December'];
         titleEl.textContent = `${months[currentMonth]} ${currentYear}`;
-        
+
         // Get first and last day of month
         const firstDay = new Date(currentYear, currentMonth, 1);
         const lastDay = new Date(currentYear, currentMonth + 1, 0);
         const startDayOfWeek = firstDay.getDay();
         const daysInMonth = lastDay.getDate();
-        
+
         let html = '';
-        
+
         // Empty cells before first day
         for (let i = 0; i < startDayOfWeek; i++) {
             html += '<div class="calendar-day-cell empty-day"></div>';
         }
-        
+
         // Days of month
         for (let day = 1; day <= daysInMonth; day++) {
             const date = new Date(currentYear, currentMonth, day);
@@ -612,18 +612,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const isPast = date < new Date(today.getFullYear(), today.getMonth(), today.getDate());
             const isWeekend = date.getDay() === 0 || date.getDay() === 6;
             const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-            
+
             let cellClass = 'calendar-day-cell';
             if (isToday) cellClass += ' today';
             if (isPast && !isToday) cellClass += ' past-date';
             if (isWeekend) cellClass += ' weekend';
-            
+
             // Get leaves for this day
             const dayLeaves = getLeavesForDate(dateStr);
             const maxDisplay = 4;
             const displayLeaves = dayLeaves.slice(0, maxDisplay);
             const moreCount = dayLeaves.length - maxDisplay;
-            
+
             html += `
                 <div class="${cellClass}" data-date="${dateStr}">
                     <div class="day-header">
@@ -637,25 +637,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
         }
-        
+
         // Empty cells after last day
         const remainingCells = (7 - ((startDayOfWeek + daysInMonth) % 7)) % 7;
         for (let i = 0; i < remainingCells; i++) {
             html += '<div class="calendar-day-cell empty-day"></div>';
         }
-        
+
         grid.innerHTML = html;
     }
-    
+
     function renderLeaveItem(leave) {
         const color = leave.leave_type_color || '#667eea';
         const statusClass = `status-${leave.status}`;
-        
+
         // Generate lighter background from the color
         const bgColor = color + '20'; // 20 = 12.5% opacity in hex
-        
+
         return `
-            <div class="leave-item ${statusClass}" 
+            <div class="leave-item ${statusClass}"
                  onclick="showLeaveDetail(${leave.leave_id})"
                  title="${leave.staff_name} - ${leave.leave_type}"
                  style="background-color: ${bgColor}; border-left-color: ${color}; color: ${color};">
@@ -664,7 +664,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
     }
-    
+
     function getLeavesForDate(dateStr) {
         return leaveData.filter(leave => {
             const start = new Date(leave.start_date);
@@ -673,11 +673,11 @@ document.addEventListener('DOMContentLoaded', function() {
             return check >= start && check <= end;
         });
     }
-    
+
     function loadLeaveData() {
         const startDate = new Date(currentYear, currentMonth, 1);
         const endDate = new Date(currentYear, currentMonth + 1, 0);
-        
+
         $.ajax({
             url: '{{ route("hr.leave-calendar.events") }}',
             data: {
@@ -716,21 +716,21 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
+
     // Expose showLeaveDetail to global scope
     window.showLeaveDetail = function(leaveId) {
         const leave = leaveData.find(l => l.leave_id === leaveId);
         if (!leave) return;
-        
+
         const statusColors = {
             'pending': 'warning',
             'supervisor_approved': 'info',
             'approved': 'success'
         };
-        
+
         $('#modalHeader').removeClass('bg-warning bg-info bg-success bg-primary')
                         .addClass('bg-' + (statusColors[leave.status] || 'primary'));
-        
+
         const html = `
             <div class="row">
                 <div class="col-6">
@@ -749,22 +749,22 @@ document.addEventListener('DOMContentLoaded', function() {
             ${leave.reason ? '<p class="mb-2"><strong>Reason:</strong><br>' + leave.reason + '</p>' : ''}
             ${leave.relief_staff ? '<p class="mb-0"><strong>Relief Staff:</strong> ' + leave.relief_staff + '</p>' : ''}
         `;
-        
+
         $('#leaveDetailContent').html(html);
         $('#viewRequestBtn').attr('href', '{{ url("hr/leave-requests") }}/' + leave.leave_id);
         $('#leaveDetailModal').modal('show');
     };
-    
+
     // Expose showDayDetail to global scope
     window.showDayDetail = function(dateStr) {
         const dayLeaves = getLeavesForDate(dateStr);
         const date = new Date(dateStr);
-        const formattedDate = date.toLocaleDateString('en-US', { 
-            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+        const formattedDate = date.toLocaleDateString('en-US', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
         });
-        
+
         $('#dayDetailTitle').html(`<i class="mdi mdi-calendar mr-2"></i>${formattedDate}`);
-        
+
         if (dayLeaves.length === 0) {
             $('#dayDetailContent').html('<div class="text-center text-muted py-4">No leaves on this day</div>');
         } else {
@@ -776,7 +776,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     'approved': 'success'
                 };
                 const leaveColor = leave.leave_type_color || '#667eea';
-                
+
                 html += `
                     <div class="list-group-item" style="cursor: pointer;" onclick="$('#dayDetailModal').modal('hide'); showLeaveDetail(${leave.leave_id});">
                         <div class="d-flex justify-content-between align-items-start">
@@ -798,10 +798,10 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '</div>';
             $('#dayDetailContent').html(html);
         }
-        
+
         $('#dayDetailModal').modal('show');
     };
-    
+
     // Navigation
     document.getElementById('prevMonthBtn').addEventListener('click', function() {
         currentMonth--;
@@ -811,7 +811,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         loadLeaveData();
     });
-    
+
     document.getElementById('nextMonthBtn').addEventListener('click', function() {
         currentMonth++;
         if (currentMonth > 11) {
@@ -820,46 +820,46 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         loadLeaveData();
     });
-    
+
     document.getElementById('todayBtn').addEventListener('click', function() {
         currentYear = today.getFullYear();
         currentMonth = today.getMonth();
         loadLeaveData();
         loadOnLeaveForDate(todayStr);
     });
-    
+
     // Filters
     $('#filterLeaveType, #filterDepartment, #filterCategory, #filterStatus').change(function() {
         loadLeaveData();
     });
-    
+
     // Refresh
     $('#refreshBtn').click(function() {
         loadLeaveData();
         loadOnLeaveForDate($('#onLeaveDateLabel').data('date') || todayStr);
         loadStats();
     });
-    
+
     // Conflicts
     $('#conflictsBtn').click(function() {
         $('#conflictsModal').modal('show');
     });
-    
+
     $('#checkConflictsBtn').click(function() {
         checkConflicts();
     });
-    
+
     function loadOnLeaveForDate(date) {
         $('#onLeaveDateLabel').text('Loading...').data('date', date);
-        
+
         $.get('{{ route("hr.leave-calendar.on-leave-today") }}', { date: date }, function(data) {
             var dateFormatted = new Date(data.date).toLocaleDateString('en-US', {
                 weekday: 'short', month: 'short', day: 'numeric'
             });
-            
+
             $('#onLeaveDateLabel').text('On Leave - ' + dateFormatted);
             $('#onLeaveCount').text(data.count);
-            
+
             if (data.staff.length === 0) {
                 $('#onLeaveList').html(`
                     <div class="text-center py-4 text-muted">
@@ -888,7 +888,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
+
     function loadStats() {
         $.get('{{ route("hr.leave-calendar.stats") }}', function(data) {
             $('#statOnLeave').text(data.on_leave_today);
@@ -898,10 +898,10 @@ document.addEventListener('DOMContentLoaded', function() {
             $('#statUpcoming').text(data.upcoming_leaves);
         });
     }
-    
+
     function checkConflicts() {
         $('#conflictsContent').html('<div class="text-center py-4"><i class="mdi mdi-loading mdi-spin" style="font-size: 2rem;"></i></div>');
-        
+
         $.get('{{ route("hr.leave-calendar.conflicts") }}', {
             department_id: $('#conflictDepartment').val(),
             threshold: $('#conflictThreshold').val()
@@ -930,10 +930,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
+
     // Click on day cell to show on-leave list
     $(document).on('click', '.calendar-day-cell:not(.empty-day)', function(e) {
-        if ($(e.target).hasClass('leave-item') || $(e.target).closest('.leave-item').length || 
+        if ($(e.target).hasClass('leave-item') || $(e.target).closest('.leave-item').length ||
             $(e.target).hasClass('more-leaves')) {
             return; // Don't trigger if clicking on a leave item
         }
@@ -942,7 +942,7 @@ document.addEventListener('DOMContentLoaded', function() {
             loadOnLeaveForDate(date);
         }
     });
-    
+
     // Initial load
     loadLeaveData();
     loadOnLeaveForDate(todayStr);

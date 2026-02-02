@@ -16,7 +16,7 @@
     <div class="row">
         <!-- Main Form -->
         <div class="col-lg-8">
-            <div class="card card-modern">
+            <div class="card-modern card-modern">
                 <div class="card-header bg-white">
                     <h5 class="mb-0"><i class="mdi mdi-pencil mr-2"></i>Edit Petty Cash Fund</h5>
                 </div>
@@ -197,7 +197,7 @@
         <!-- Sidebar -->
         <div class="col-lg-4">
             <!-- Fund Summary -->
-            <div class="card card-modern mb-4">
+            <div class="card-modern mb-4">
                 <div class="card-header bg-white">
                     <h5 class="mb-0"><i class="mdi mdi-information mr-2"></i>Fund Summary</h5>
                 </div>
@@ -248,7 +248,7 @@
             @endif
 
             <!-- Quick Links -->
-            <div class="card card-modern">
+            <div class="card-modern card-modern">
                 <div class="card-header bg-white">
                     <h5 class="mb-0"><i class="mdi mdi-link mr-2"></i>Quick Links</h5>
                 </div>

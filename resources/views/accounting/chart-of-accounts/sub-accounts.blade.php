@@ -29,7 +29,7 @@
     </div>
 
     {{-- Sub-Accounts List --}}
-    <div class="card shadow">
+    <div class="card-modern shadow">
         <div class="card-header py-3">
             <h6 class="m-0 font-weight-bold text-primary">Sub-Accounts</h6>
         </div>
@@ -102,7 +102,7 @@
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title">Create Sub-Account</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <button type="button" class="close"  data-bs-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
@@ -150,7 +150,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">Create Sub-Account</button>
                 </div>
             </form>

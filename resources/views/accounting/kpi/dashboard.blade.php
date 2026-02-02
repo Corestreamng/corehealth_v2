@@ -14,7 +14,7 @@
         <!-- Header Stats -->
         <div class="row mb-4">
             <div class="col-md-3 col-sm-6 mb-3">
-                <div class="card card-modern h-100 border-left-primary">
+                <div class="card-modern h-100 border-left-primary">
                     <div class="card-body d-flex align-items-center">
                         <div class="icon-box bg-primary rounded-circle p-3 mr-3">
                             <i class="mdi mdi-gauge text-white mdi-24px"></i>
@@ -27,7 +27,7 @@
                 </div>
             </div>
             <div class="col-md-3 col-sm-6 mb-3">
-                <div class="card card-modern h-100 border-left-success">
+                <div class="card-modern h-100 border-left-success">
                     <div class="card-body d-flex align-items-center">
                         <div class="icon-box bg-success rounded-circle p-3 mr-3">
                             <i class="mdi mdi-check-circle text-white mdi-24px"></i>
@@ -40,7 +40,7 @@
                 </div>
             </div>
             <div class="col-md-3 col-sm-6 mb-3">
-                <div class="card card-modern h-100 border-left-warning">
+                <div class="card-modern h-100 border-left-warning">
                     <div class="card-body d-flex align-items-center">
                         <div class="icon-box bg-warning rounded-circle p-3 mr-3">
                             <i class="mdi mdi-alert text-white mdi-24px"></i>
@@ -53,7 +53,7 @@
                 </div>
             </div>
             <div class="col-md-3 col-sm-6 mb-3">
-                <div class="card card-modern h-100 border-left-danger">
+                <div class="card-modern h-100 border-left-danger">
                     <div class="card-body d-flex align-items-center">
                         <div class="icon-box bg-danger rounded-circle p-3 mr-3">
                             <i class="mdi mdi-alert-circle text-white mdi-24px"></i>
@@ -68,7 +68,7 @@
         </div>
 
         <!-- Actions Bar -->
-        <div class="card card-modern mb-4">
+        <div class="card-modern mb-4">
             <div class="card-body py-3">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -102,7 +102,7 @@
 
         <!-- KPIs by Category -->
         @foreach($groupedKpis as $category => $kpis)
-        <div class="card card-modern mb-4">
+        <div class="card-modern mb-4">
             <div class="card-header">
                 <h5 class="mb-0">
                     @php
@@ -136,7 +136,7 @@
                         $statusColor = $statusColors[$status] ?? 'secondary';
                     @endphp
                     <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
-                        <div class="card h-100 border-{{ $statusColor }}">
+                        <div class="card-modern h-100 border-{{ $statusColor }}">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <small class="text-muted">{{ $kpi->kpi_code }}</small>
@@ -223,7 +223,7 @@
         @endforeach
 
         @if($groupedKpis->isEmpty())
-        <div class="card card-modern">
+        <div class="card-modern card-modern">
             <div class="card-body text-center py-5">
                 <i class="mdi mdi-chart-box-outline mdi-48px text-muted"></i>
                 <h5 class="mt-3">No KPIs Configured</h5>
@@ -245,7 +245,7 @@
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="mdi mdi-calculator mr-2"></i>Calculate All KPIs</h5>
-                    <button type="button" class="close" data-dismiss="modal">
+                    <button type="button" class="close"  data-bs-dismiss="modal">
                         <span>&times;</span>
                     </button>
                 </div>
@@ -261,7 +261,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-success">
                         <i class="mdi mdi-calculator"></i> Calculate
                     </button>

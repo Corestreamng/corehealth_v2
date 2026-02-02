@@ -537,7 +537,7 @@
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title"><i class="mdi mdi-delete mr-2"></i>Dispose Asset</h5>
-                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                <button type="button" class="close text-white"  data-bs-dismiss="modal">&times;</button>
             </div>
             <form id="dispose-form">
                 <div class="modal-body">
@@ -581,7 +581,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-danger">Dispose Asset</button>
                 </div>
             </form>

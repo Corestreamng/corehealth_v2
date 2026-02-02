@@ -123,7 +123,7 @@
             </div>
 
             <!-- Method Legend -->
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-header">
                     <h3 class="card-title">Transfer Methods</h3>
                 </div>
@@ -216,7 +216,7 @@
             </div>
 
             <!-- Transfers DataTable -->
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-header">
                     <h3 class="card-title">Transfer Records</h3>
                 </div>
@@ -247,14 +247,14 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="mdi mdi-check-circle text-success mr-2"></i>Approve Transfer</h5>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body">
                 <p>Are you sure you want to approve this transfer?</p>
                 <p class="text-muted">This will create the journal entry and initiate the transfer process.</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-success" id="confirm-approve">Approve Transfer</button>
             </div>
         </div>
@@ -267,7 +267,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="mdi mdi-close-circle text-danger mr-2"></i>Reject Transfer</h5>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -276,7 +276,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-danger" id="confirm-reject">Reject Transfer</button>
             </div>
         </div>
@@ -289,7 +289,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="mdi mdi-bank-check text-success mr-2"></i>Confirm Clearance</h5>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -302,7 +302,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-success" id="confirm-clearance">Confirm Clearance</button>
             </div>
         </div>
@@ -315,14 +315,14 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="mdi mdi-cancel text-dark mr-2"></i>Cancel Transfer</h5>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body">
                 <p>Are you sure you want to cancel this transfer?</p>
                 <p class="text-danger">This action cannot be undone.</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">No, Keep It</button>
+                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">No, Keep It</button>
                 <button type="button" class="btn btn-dark" id="confirm-cancel">Yes, Cancel Transfer</button>
             </div>
         </div>

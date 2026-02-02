@@ -176,7 +176,7 @@
                     <hr>
 
                     <!-- Add More Items Section -->
-                    <div class="card-modern card-modern mb-3">
+                    <div class="card-modern mb-3">
                         <div class="card-header bg-light">
                             <h6 class="mb-0"><i class="mdi mdi-plus-circle"></i> Add More Items</h6>
                         </div>

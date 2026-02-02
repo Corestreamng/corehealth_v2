@@ -156,7 +156,7 @@
         <!-- Left Column - Transfer Details -->
         <div class="col-lg-8">
             <!-- Transfer Flow -->
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-header">
                     <h5 class="mb-0"><i class="mdi mdi-swap-horizontal mr-2"></i>Transfer Flow</h5>
                 </div>
@@ -192,7 +192,7 @@
             </div>
 
             <!-- Transfer Details -->
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-header">
                     <h5 class="mb-0"><i class="mdi mdi-information-outline mr-2"></i>Transfer Details</h5>
                 </div>
@@ -254,7 +254,7 @@
 
             <!-- Fee Information -->
             @if($transfer->transfer_fee > 0)
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-header">
                     <h5 class="mb-0"><i class="mdi mdi-cash mr-2"></i>Fee Information</h5>
                 </div>
@@ -285,7 +285,7 @@
 
             <!-- Journal Entry -->
             @if($transfer->journalEntry)
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="mdi mdi-book-open-page-variant mr-2"></i>Journal Entry</h5>
                     <a href="{{ route('accounting.journal-entries.show', $transfer->journalEntry) }}" class="btn btn-sm btn-outline-primary">
@@ -334,7 +334,7 @@
         <!-- Right Column - Status & Actions -->
         <div class="col-lg-4">
             <!-- Actions Card -->
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-header">
                     <h5 class="mb-0"><i class="mdi mdi-cog mr-2"></i>Actions</h5>
                 </div>
@@ -372,7 +372,7 @@
             </div>
 
             <!-- Status Timeline -->
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-header">
                     <h5 class="mb-0"><i class="mdi mdi-timeline mr-2"></i>Status Timeline</h5>
                 </div>
@@ -431,7 +431,7 @@
             </div>
 
             <!-- Additional Info -->
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-header">
                     <h5 class="mb-0"><i class="mdi mdi-information mr-2"></i>Additional Info</h5>
                 </div>
@@ -462,7 +462,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="mdi mdi-close-circle text-danger mr-2"></i>Reject Transfer</h5>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -471,7 +471,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-danger" id="confirm-reject">Reject Transfer</button>
             </div>
         </div>
@@ -484,7 +484,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="mdi mdi-bank-check text-success mr-2"></i>Confirm Clearance</h5>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -497,7 +497,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-success" id="confirm-clearance">Confirm Clearance</button>
             </div>
         </div>
@@ -510,7 +510,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="mdi mdi-alert text-warning mr-2"></i>Mark as Failed</h5>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -519,7 +519,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-warning" id="confirm-fail">Mark as Failed</button>
             </div>
         </div>

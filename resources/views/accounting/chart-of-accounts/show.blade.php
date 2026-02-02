@@ -30,7 +30,7 @@
     <div class="row">
         {{-- Account Information --}}
         <div class="col-lg-4">
-            <div class="card shadow mb-4">
+            <div modern shadow mb-4">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">Account Information</h6>
                 </div>
@@ -79,7 +79,7 @@
             </div>
 
             {{-- Balance Summary --}}
-            <div class="card shadow mb-4">
+            <div modern shadow mb-4">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">Balance Summary</h6>
                 </div>
@@ -106,7 +106,7 @@
 
             {{-- Sub Accounts --}}
             @if($account->subAccounts->count() > 0)
-            <div class="card shadow mb-4">
+            <div modern shadow mb-4">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">Sub Accounts</h6>
                 </div>
@@ -127,7 +127,7 @@
 
         {{-- Recent Transactions --}}
         <div class="col-lg-8">
-            <div class="card shadow">
+            <div modern shadow">
                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
                     <h6 class="m-0 font-weight-bold text-primary">Recent Transactions</h6>
                     <div>

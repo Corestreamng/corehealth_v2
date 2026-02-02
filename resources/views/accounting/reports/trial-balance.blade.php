@@ -33,7 +33,7 @@
     </div>
 
     <!-- Filters -->
-    <div class="card shadow mb-4">
+    <div class="card-modern shadow mb-4">
         <div class="card-body">
             <form method="GET" action="{{ route('accounting.reports.trial-balance') }}">
                 <div class="row align-items-end">
@@ -63,7 +63,7 @@
     </div>
 
     <!-- Report -->
-    <div class="card shadow">
+    <div class="card-modern shadow">
         <div class="card-header py-3">
             <h6 class="m-0 font-weight-bold text-primary">
                 Trial Balance as of {{ $asOfDate->format('F d, Y') }}

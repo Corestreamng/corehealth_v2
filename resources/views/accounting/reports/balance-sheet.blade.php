@@ -33,7 +33,7 @@
     </div>
 
     <!-- Filters -->
-    <div class="card shadow mb-4">
+    <div class="card-modern shadow mb-4">
         <div class="card-body">
             <form method="GET" action="{{ route('accounting.reports.balance-sheet') }}" class="row g-3">
                 <div class="col-md-4">
@@ -65,7 +65,7 @@
     </div>
 
     <!-- Report -->
-    <div class="card shadow">
+    <div class="card-modern shadow">
         <div class="card-header py-3 text-center bg-white">
             <h4 class="mb-1">{{ config('app.name', 'CoreHealth') }}</h4>
             <h5 class="mb-1">Balance Sheet</h5>

@@ -14,7 +14,7 @@
 <div id="content-wrapper">
     <div class="container-fluid">
         <!-- Liability Summary -->
-        <div class="card card-modern mb-4">
+        <div class="card-modern mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
                     <i class="mdi mdi-credit-card-clock mr-2"></i>{{ $liability->liability_number }} - {{ $liability->creditor_name }}
@@ -51,7 +51,7 @@
         </div>
 
         <!-- Amortization Table -->
-        <div class="card card-modern">
+        <div class="card-modern card-modern">
             <div class="card-header">
                 <h5 class="mb-0"><i class="mdi mdi-table mr-2"></i>Full Amortization Schedule</h5>
             </div>
@@ -136,7 +136,7 @@
                 <!-- Summary Cards -->
                 <div class="row mt-4">
                     <div class="col-md-3">
-                        <div class="card bg-primary text-white">
+                        <div class="card-modern bg-primary text-white">
                             <div class="card-body text-center">
                                 <h6>Total Payments</h6>
                                 <h4 class="mb-0">{{ $schedule->count() }}</h4>
@@ -144,7 +144,7 @@
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card bg-success text-white">
+                        <div class="card-modern bg-success text-white">
                             <div class="card-body text-center">
                                 <h6>Payments Made</h6>
                                 <h4 class="mb-0">{{ $schedule->whereNotNull('paid_date')->count() }}</h4>
@@ -152,7 +152,7 @@
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card bg-warning text-dark">
+                        <div class="card-modern bg-warning text-dark">
                             <div class="card-body text-center">
                                 <h6>Total Interest</h6>
                                 <h4 class="mb-0">₦{{ number_format($totalInterest, 2) }}</h4>
@@ -160,7 +160,7 @@
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card bg-info text-white">
+                        <div class="card-modern bg-info text-white">
                             <div class="card-body text-center">
                                 <h6>Total Repayment</h6>
                                 <h4 class="mb-0">₦{{ number_format($totalPayment, 2) }}</h4>

@@ -27,7 +27,7 @@
                     @method('PUT')
 
                     <!-- Lease Summary -->
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-header">
                             <h5 class="mb-0">
                                 <i class="mdi mdi-file-document-edit mr-2"></i>{{ $lease->lease_number }} - {{ $lease->leased_item }}
@@ -56,7 +56,7 @@
                     </div>
 
                     <!-- Editable Fields -->
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-header">
                             <h5 class="mb-0"><i class="mdi mdi-account-edit mr-2"></i>Lessor Information</h5>
                         </div>
@@ -82,7 +82,7 @@
                         </div>
                     </div>
 
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-header">
                             <h5 class="mb-0"><i class="mdi mdi-map-marker mr-2"></i>Asset Location</h5>
                         </div>
@@ -113,7 +113,7 @@
                         </div>
                     </div>
 
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-header">
                             <h5 class="mb-0"><i class="mdi mdi-note-text mr-2"></i>Notes</h5>
                         </div>

@@ -74,7 +74,7 @@
     <div class="row">
         <!-- Main Details -->
         <div class="col-lg-8">
-            <div class="card shadow mb-4">
+            <div modern shadow mb-4">
                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
                     <h6 class="m-0 font-weight-bold text-primary">Credit Note Details</h6>
                     @switch($creditNote->status)
@@ -177,7 +177,7 @@
 
             <!-- Journal Entry -->
             @if($creditNote->journalEntry)
-                <div class="card shadow mb-4">
+                <div modern shadow mb-4">
                     <div class="card-header py-3">
                         <h6 class="m-0 font-weight-bold text-primary">Related Journal Entry</h6>
                     </div>
@@ -219,7 +219,7 @@
         <!-- Sidebar -->
         <div class="col-lg-4">
             <!-- Workflow Timeline -->
-            <div class="card shadow mb-4">
+            <div modern shadow mb-4">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">Workflow History</h6>
                 </div>
@@ -293,7 +293,7 @@
             </div>
 
             <!-- Quick Info -->
-            <div class="card shadow">
+            <div modern shadow">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">Quick Info</h6>
                 </div>

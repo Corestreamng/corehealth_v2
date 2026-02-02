@@ -27,7 +27,7 @@
     {{-- Stat Cards --}}
     <div class="row mb-4">
         <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card card-modern h-100">
+            <div class="card-modern h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="stat-icon bg-primary-light mr-3">
@@ -42,7 +42,7 @@
             </div>
         </div>
         <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card card-modern h-100">
+            <div class="card-modern h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="stat-icon bg-success-light mr-3">
@@ -57,7 +57,7 @@
             </div>
         </div>
         <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card card-modern h-100">
+            <div class="card-modern h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="stat-icon {{ $stats['balance_difference'] > 0.01 ? 'bg-danger-light' : 'bg-info-light' }} mr-3">
@@ -74,7 +74,7 @@
             </div>
         </div>
         <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card card-modern h-100">
+            <div class="card-modern h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="stat-icon bg-warning-light mr-3">
@@ -91,7 +91,7 @@
     </div>
 
     {{-- Filters Card --}}
-    <div class="card card-modern mb-4">
+    <div class="card-modern mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0"><i class="mdi mdi-filter-outline mr-2"></i>Filters</h5>
             <button type="button" class="btn btn-sm btn-outline-secondary" id="resetFilters">
@@ -138,7 +138,7 @@
     </div>
 
     {{-- Main Table Card --}}
-    <div class="card card-modern">
+    <div class="card-modern card-modern">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0"><i class="mdi mdi-table mr-2"></i>Account Opening Balances</h5>
             @if($fiscalYear)

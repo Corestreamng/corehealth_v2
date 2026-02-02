@@ -13,7 +13,7 @@
 
 <div class="container-fluid">
     <!-- Header -->
-    <div class="card card-modern mb-4">
+    <div class="card-modern mb-4">
         <div class="card-body">
             <div class="row align-items-center">
                 <div class="col-md-6">
@@ -36,7 +36,7 @@
     </div>
 
     <!-- Filters -->
-    <div class="card card-modern mb-4">
+    <div class="card-modern mb-4">
         <div class="card-body py-3">
             <div class="row">
                 <div class="col-md-3 mb-2">
@@ -73,7 +73,7 @@
     </div>
 
     <!-- Transactions Table -->
-    <div class="card card-modern">
+    <div class="card-modern card-modern">
         <div class="card-body">
             <table class="table table-bordered table-hover" id="transactionsTable">
                 <thead class="thead-light">

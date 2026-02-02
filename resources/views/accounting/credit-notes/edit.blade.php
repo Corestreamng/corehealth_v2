@@ -38,7 +38,7 @@
         <div class="row">
             {{-- Main Form --}}
             <div class="col-lg-8">
-                <div class="card card-modern mb-4">
+                <div class="card-modern mb-4">
                     <div class="card-header">
                         <h5 class="mb-0"><i class="mdi mdi-file-document-edit-outline mr-2"></i>Credit Note Details</h5>
                     </div>
@@ -136,7 +136,7 @@
             {{-- Side Panel --}}
             <div class="col-lg-4">
                 {{-- Status Card --}}
-                <div class="card card-modern mb-4">
+                <div class="card-modern mb-4">
                     <div class="card-header">
                         <h5 class="mb-0"><i class="mdi mdi-information mr-2"></i>Status</h5>
                     </div>
@@ -168,7 +168,7 @@
                 </div>
 
                 {{-- Summary Card --}}
-                <div class="card card-modern mb-4">
+                <div class="card-modern mb-4">
                     <div class="card-header">
                         <h5 class="mb-0"><i class="mdi mdi-cash-refund mr-2"></i>Summary</h5>
                     </div>
