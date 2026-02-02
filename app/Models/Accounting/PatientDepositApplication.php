@@ -36,6 +36,7 @@ class PatientDepositApplication extends Model
         'payment_id',
         'bill_id',
         'journal_entry_id',
+        'application_number',
         'application_type',
         'amount',
         'application_date',
@@ -52,6 +53,30 @@ class PatientDepositApplication extends Model
         'amount' => 'decimal:2',
         'reversed_at' => 'datetime',
     ];
+
+    // ==========================================
+    // NUMBER GENERATION
+    // ==========================================
+
+    /**
+     * Generate unique application number.
+     */
+    public static function generateNumber(): string
+    {
+        $prefix = 'DPA';
+        $date = now()->format('ymd');
+        $lastApplication = static::whereDate('created_at', today())
+            ->orderByDesc('id')
+            ->first();
+
+        if ($lastApplication && preg_match('/(\d{4})$/', $lastApplication->application_number, $matches)) {
+            $sequence = (int) $matches[1] + 1;
+        } else {
+            $sequence = 1;
+        }
+
+        return $prefix . $date . str_pad($sequence, 4, '0', STR_PAD_LEFT);
+    }
 
     // ==========================================
     // RELATIONSHIPS

@@ -20,6 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\View;
 use Yajra\DataTables\Facades\DataTables;
 use Carbon\Carbon;
 
@@ -250,7 +251,7 @@ class PatientDepositController extends Controller
             PatientDeposit::METHOD_CHEQUE => 'Cheque',
         ];
 
-        $banks = Bank::orderBy('bank_name')->get();
+        $banks = Bank::orderBy('name')->get();
 
         return view('accounting.patient-deposits.create', compact(
             'patient',
@@ -323,22 +324,30 @@ class PatientDepositController extends Controller
                 ['balance' => 0]
             );
 
+            $previousBalance = $patientAccount->balance;
             $patientAccount->balance += $validated['amount'];
             $patientAccount->save();
-
-            // Also create Payment record for legacy tracking (optional - JE already created by observer)
-            // We skip this to avoid duplicate JEs since PatientDepositObserver already creates one
-            // Payment::create([
-            //     'patient_id' => $validated['patient_id'],
-            //     'user_id' => Auth::id(),
-            //     'total' => $validated['amount'],
-            //     'reference_no' => $depositNumber,
-            //     'payment_type' => 'ACC_DEPOSIT',
-            //     'payment_method' => $validated['payment_method'],
-            //     'bank_id' => $validated['bank_id'],
-            // ]);
+            $newBalance = $patientAccount->balance;
 
             DB::commit();
+
+            // Generate receipts
+            $receipts = $this->generateDepositReceipts($deposit, $previousBalance, $newBalance);
+
+            // Check if AJAX request
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Deposit {$depositNumber} created successfully. Amount: ₦" . number_format($validated['amount'], 2),
+                    'deposit_id' => $deposit->id,
+                    'deposit_number' => $depositNumber,
+                    'amount' => $validated['amount'],
+                    'previous_balance' => $previousBalance,
+                    'new_balance' => $newBalance,
+                    'receipt_a4' => $receipts['a4'],
+                    'receipt_thermal' => $receipts['thermal'],
+                ]);
+            }
 
             return redirect()
                 ->route('accounting.patient-deposits.show', $deposit)
@@ -351,11 +360,102 @@ class PatientDepositController extends Controller
                 'data' => $validated,
             ]);
 
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['message' => 'Failed to create deposit: ' . $e->getMessage()], 500);
+            }
+
             return redirect()
                 ->back()
                 ->withInput()
                 ->with('error', 'Failed to create deposit: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Generate deposit receipts (A4 and Thermal).
+     */
+    protected function generateDepositReceipts(PatientDeposit $deposit, float $previousBalance, float $newBalance): array
+    {
+        $site = appsettings();
+        $patient = $deposit->patient;
+        $patientName = userfullname($patient->user_id);
+        $patientFileNo = $patient->file_no ?? 'N/A';
+        $receivedBy = userfullname($deposit->received_by);
+
+        // Amount in words
+        $amountParts = explode('.', number_format((float) $deposit->amount, 2, '.', ''));
+        $nairaWords = convert_number_to_words((int) $amountParts[0]);
+        $koboWords = ((int) $amountParts[1]) > 0 ? ' and ' . convert_number_to_words((int) $amountParts[1]) . ' Kobo' : '';
+        $amountInWords = ucwords($nairaWords . ' Naira' . $koboWords) . ' Only';
+
+        // Deposit type label
+        $depositTypes = [
+            PatientDeposit::TYPE_ADMISSION => 'Admission Deposit',
+            PatientDeposit::TYPE_PROCEDURE => 'Procedure Deposit',
+            PatientDeposit::TYPE_SURGERY => 'Surgery Deposit',
+            PatientDeposit::TYPE_INVESTIGATION => 'Investigation Deposit',
+            PatientDeposit::TYPE_GENERAL => 'General Advance',
+            PatientDeposit::TYPE_OTHER => 'Other Deposit',
+        ];
+        $depositType = $depositTypes[$deposit->deposit_type] ?? $deposit->deposit_type;
+
+        // Payment method label
+        $paymentMethods = [
+            PatientDeposit::METHOD_CASH => 'Cash',
+            PatientDeposit::METHOD_POS => 'POS/Card',
+            PatientDeposit::METHOD_TRANSFER => 'Bank Transfer',
+            PatientDeposit::METHOD_CHEQUE => 'Cheque',
+        ];
+        $paymentMethod = $paymentMethods[$deposit->payment_method] ?? $deposit->payment_method;
+
+        // Bank name
+        $bank = $deposit->bank?->name ?? null;
+
+        $viewData = [
+            'site' => $site,
+            'depositNumber' => $deposit->deposit_number,
+            'patientName' => $patientName,
+            'patientFileNo' => $patientFileNo,
+            'date' => $deposit->deposit_date->format('Y-m-d H:i'),
+            'amount' => $deposit->amount,
+            'amountInWords' => $amountInWords,
+            'depositType' => $depositType,
+            'paymentMethod' => $paymentMethod,
+            'bank' => $bank,
+            'paymentReference' => $deposit->payment_reference,
+            'receivedBy' => $receivedBy,
+            'previousBalance' => $previousBalance,
+            'newBalance' => $newBalance,
+            'notes' => $deposit->notes,
+        ];
+
+        return [
+            'a4' => View::make('admin.Accounts.deposit_receipt_a4', $viewData)->render(),
+            'thermal' => View::make('admin.Accounts.deposit_receipt_thermal', $viewData)->render(),
+        ];
+    }
+
+    /**
+     * Print deposit receipt (AJAX).
+     */
+    public function printReceipt(PatientDeposit $patientDeposit)
+    {
+        $patientDeposit->load(['patient', 'bank']);
+
+        // Get current balance for display
+        $patientAccount = PatientAccount::where('patient_id', $patientDeposit->patient_id)->first();
+        $currentBalance = $patientAccount ? $patientAccount->balance : 0;
+
+        // Calculate previous balance (current - deposit amount, unless already applied)
+        $previousBalance = $currentBalance - $patientDeposit->amount + $patientDeposit->utilized_amount + $patientDeposit->refunded_amount;
+        $newBalance = $currentBalance;
+
+        $receipts = $this->generateDepositReceipts($patientDeposit, $previousBalance, $newBalance);
+
+        return response()->json([
+            'receipt_a4' => $receipts['a4'],
+            'receipt_thermal' => $receipts['thermal'],
+        ]);
     }
 
     /**
@@ -585,24 +685,34 @@ class PatientDepositController extends Controller
     {
         $term = $request->input('q', '');
 
-        $patients = Patient::with(['user', 'hmo'])
+        if (strlen($term) < 2) {
+            return response()->json([]);
+        }
+
+        $patients = Patient::with(['user', 'hmo', 'account'])
             ->whereHas('user', function ($q) use ($term) {
-                $q->where('name', 'like', "%{$term}%");
+                $q->where('surname', 'like', "%{$term}%")
+                  ->orWhere('firstname', 'like', "%{$term}%")
+                  ->orWhere('othername', 'like', "%{$term}%");
             })
             ->orWhere('file_no', 'like', "%{$term}%")
             ->orWhere('phone_no', 'like', "%{$term}%")
             ->limit(20)
-            ->get();
+            ->get()
+            ->map(function($p) {
+                return [
+                    'id' => $p->id,
+                    'text' => userfullname($p->user_id) . " ({$p->file_no})" . ($p->hmo ? " - {$p->hmo->name}" : ''),
+                    'name' => userfullname($p->user_id),
+                    'file_no' => $p->file_no ?? 'N/A',
+                    'phone' => $p->phone_no ?? 'N/A',
+                    'hmo' => $p->hmo?->name ?? 'Private',
+                    'balance' => $p->account->balance ?? 0,
+                ];
+            });
 
         return response()->json([
-            'results' => $patients->map(fn($p) => [
-                'id' => $p->id,
-                'text' => ($p->user?->name ?? 'Unknown') . " ({$p->file_no})" . ($p->hmo ? " - {$p->hmo->name}" : ''),
-                'name' => $p->user?->name,
-                'file_no' => $p->file_no,
-                'phone' => $p->phone_no,
-                'hmo' => $p->hmo?->name,
-            ]),
+            'results' => $patients,
         ]);
     }
 

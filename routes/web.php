@@ -364,6 +364,8 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/billing-workbench/create-account', [\App\Http\Controllers\BillingWorkbenchController::class, 'createPatientAccount'])->name('billing.create-account');
         Route::post('/billing-workbench/make-deposit', [\App\Http\Controllers\BillingWorkbenchController::class, 'makeAccountDeposit'])->name('billing.make-deposit');
         Route::post('/billing-workbench/account-transaction', [\App\Http\Controllers\BillingWorkbenchController::class, 'processAccountTransaction'])->name('billing.account-transaction');
+        Route::post('/billing-workbench/patient/{id}/generate-statement', [\App\Http\Controllers\BillingWorkbenchController::class, 'generateStatement'])->name('billing.generate-statement');
+        Route::get('/billing-workbench/print-deposit-receipt/{id}', [\App\Http\Controllers\BillingWorkbenchController::class, 'printDepositReceipt'])->name('billing.print-deposit-receipt');
 
         // Pharmacy Workbench Routes
         Route::get('/pharmacy-workbench', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'index'])->name('pharmacy.workbench');
