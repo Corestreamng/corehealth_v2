@@ -27,7 +27,8 @@ class PayHead extends Model implements Auditable
         'is_taxable',
         'is_mandatory',
         'is_active',
-        'sort_order'
+        'sort_order',
+        'liability_account_id',
     ];
 
     protected $casts = [
@@ -61,6 +62,14 @@ class PayHead extends Model implements Auditable
     public function payrollItemDetails()
     {
         return $this->hasMany(PayrollItemDetail::class);
+    }
+
+    /**
+     * Get the linked liability account (for deductions)
+     */
+    public function liabilityAccount()
+    {
+        return $this->belongsTo(\App\Models\Accounting\Account::class, 'liability_account_id');
     }
 
     /**

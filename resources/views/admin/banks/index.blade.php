@@ -87,6 +87,18 @@
                                    style="border-radius: 8px; padding: 0.75rem;" placeholder="Company Name Ltd">
                         </div>
                         <div class="col-md-12 mb-3">
+                            <label class="form-label" style="font-weight: 600; color: #495057;">GL Account</label>
+                            <select class="form-control" name="account_id" id="account_id" style="border-radius: 8px; padding: 0.75rem;">
+                                <option value="">-- Select GL Account --</option>
+                                @foreach(\App\Models\Accounting\Account::whereHas('accountGroup.accountClass', function($q) {
+                                    $q->where('name', 'LIKE', '%Cash%')->orWhere('name', 'LIKE', '%Bank%');
+                                })->orderBy('name')->get() as $account)
+                                    <option value="{{ $account->id }}">{{ $account->code }} - {{ $account->name }}</option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted">Link this bank to a GL account for reconciliation</small>
+                        </div>
+                        <div class="col-md-12 mb-3">
                             <label class="form-label" style="font-weight: 600; color: #495057;">Description</label>
                             <textarea class="form-control" name="description" id="description" rows="2"
                                       style="border-radius: 8px; padding: 0.75rem;" placeholder="Optional notes about this bank account"></textarea>
@@ -189,6 +201,7 @@ $(function() {
         $('#account_name').val(btn.data('account_name'));
         $('#bank_code').val(btn.data('bank_code'));
         $('#description').val(btn.data('description'));
+        $('#account_id').val(btn.data('account_id'));
         $('#is_active').prop('checked', btn.data('is_active') == 1);
         $('#modalTitleText').text('Edit Bank');
         $('#bankModal').modal('show');

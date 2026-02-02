@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\HR;
 
 use App\Http\Controllers\Controller;
+use App\Models\Accounting\Account;
+use App\Models\Accounting\AccountClass;
 use App\Models\HR\PayHead;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -16,10 +18,21 @@ class PayHeadController extends Controller
     public function index(Request $request)
     {
         $additions = PayHead::where('type', 'addition')->orderBy('sort_order')->get();
-        $deductions = PayHead::where('type', 'deduction')->orderBy('sort_order')->get();
+        $deductions = PayHead::with('liabilityAccount:id,code,name')
+            ->where('type', 'deduction')
+            ->orderBy('sort_order')
+            ->get();
         $types = PayHead::getTypes();
 
-        return view('admin.hr.pay-heads.index', compact('additions', 'deductions', 'types'));
+        // Fetch liability accounts for the dropdown (only active accounts from Liability class)
+        $liabilityAccounts = Account::whereHas('accountGroup.accountClass', function ($query) {
+            $query->where('code', AccountClass::CODE_LIABILITY);
+        })
+            ->where('is_active', true)
+            ->orderBy('code')
+            ->get(['id', 'code', 'name']);
+
+        return view('admin.hr.pay-heads.index', compact('additions', 'deductions', 'types', 'liabilityAccounts'));
     }
 
     public function create()
@@ -40,6 +53,7 @@ class PayHeadController extends Controller
             'type' => 'required|in:addition,deduction',
             'calculation_type' => 'required|in:fixed,percentage,formula',
             'percentage_of' => 'required_if:calculation_type,percentage|nullable|in:basic,gross,basic_salary,gross_salary',
+            'liability_account_id' => 'nullable|exists:accounts,id',
             'is_taxable' => 'boolean',
             'is_active' => 'boolean',
         ]);
@@ -62,6 +76,8 @@ class PayHeadController extends Controller
             'type' => $request->type,
             'calculation_type' => $request->calculation_type,
             'percentage_of' => $request->percentage_of,
+            // Only deductions should have liability accounts
+            'liability_account_id' => $request->type === 'deduction' ? $request->liability_account_id : null,
             'is_taxable' => $request->boolean('is_taxable'),
             'is_active' => $request->boolean('is_active', true),
             'sort_order' => PayHead::where('type', $request->type)->max('sort_order') + 1,
@@ -104,6 +120,7 @@ class PayHeadController extends Controller
             'type' => 'required|in:addition,deduction',
             'calculation_type' => 'required|in:fixed,percentage,formula',
             'percentage_of' => 'required_if:calculation_type,percentage|nullable|in:basic,gross,basic_salary,gross_salary',
+            'liability_account_id' => 'nullable|exists:accounts,id',
             'is_taxable' => 'boolean',
             'is_active' => 'boolean',
         ]);
@@ -126,6 +143,8 @@ class PayHeadController extends Controller
             'type' => $request->type,
             'calculation_type' => $request->calculation_type,
             'percentage_of' => $request->percentage_of,
+            // Only deductions should have liability accounts
+            'liability_account_id' => $request->type === 'deduction' ? $request->liability_account_id : null,
             'is_taxable' => $request->boolean('is_taxable'),
             'is_active' => $request->boolean('is_active'),
         ]);

@@ -119,6 +119,7 @@
                                             <th style="font-weight: 600; color: #495057;">Name</th>
                                             <th style="font-weight: 600; color: #495057;">Code</th>
                                             <th style="font-weight: 600; color: #495057;">Calculation</th>
+                                            <th style="font-weight: 600; color: #495057;">GL Account</th>
                                             <th style="font-weight: 600; color: #495057;">Status</th>
                                             <th style="font-weight: 600; color: #495057;">Actions</th>
                                         </tr>
@@ -138,6 +139,18 @@
                                                 @endif
                                             </td>
                                             <td>
+                                                @if($head->liabilityAccount)
+                                                <small class="text-success">
+                                                    <i class="mdi mdi-check-circle mr-1"></i>
+                                                    {{ $head->liabilityAccount->code }} - {{ Str::limit($head->liabilityAccount->name, 20) }}
+                                                </small>
+                                                @else
+                                                <small class="text-muted">
+                                                    <i class="mdi mdi-alert-circle-outline mr-1"></i>Not linked
+                                                </small>
+                                                @endif
+                                            </td>
+                                            <td>
                                                 @if($head->is_active)
                                                 <span class="badge badge-success">Active</span>
                                                 @else
@@ -153,6 +166,7 @@
                                                         data-type="{{ $head->type }}"
                                                         data-calculation-type="{{ $head->calculation_type }}"
                                                         data-percentage-of="{{ $head->percentage_of }}"
+                                                        data-liability-account-id="{{ $head->liability_account_id }}"
                                                         data-is-taxable="{{ $head->is_taxable }}"
                                                         data-is-active="{{ $head->is_active }}"
                                                         data-description="{{ $head->description }}"
@@ -172,7 +186,7 @@
                                         </tr>
                                         @empty
                                         <tr>
-                                            <td colspan="5" class="text-center text-muted py-4">No deduction pay heads configured</td>
+                                            <td colspan="6" class="text-center text-muted py-4">No deduction pay heads configured</td>
                                         </tr>
                                         @endforelse
                                     </tbody>
@@ -235,6 +249,23 @@
                             <option value="basic">Basic Salary</option>
                             <option value="gross">Gross Salary</option>
                         </select>
+                    </div>
+                    <div class="form-group" id="liabilityAccountGroup" style="display: none;">
+                        <label class="form-label" style="font-weight: 600; color: #495057;">
+                            <i class="mdi mdi-bank-transfer mr-1 text-primary"></i>
+                            GL Liability Account
+                        </label>
+                        <select class="form-control" name="liability_account_id" id="liability_account_id" style="border-radius: 8px;">
+                            <option value="">-- Select Liability Account --</option>
+                            @foreach($liabilityAccounts ?? [] as $account)
+                            <option value="{{ $account->id }}">{{ $account->code }} - {{ $account->name }}</option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted">
+                            <i class="mdi mdi-information-outline mr-1"></i>
+                            Link this deduction to a GL account for accurate payroll journal entries.
+                            When payroll is processed, deductions with linked accounts will be credited to their respective liability accounts.
+                        </small>
                     </div>
                     <div class="form-group">
                         <label class="form-label" style="font-weight: 600; color: #495057;">Description</label>
@@ -303,6 +334,16 @@
 @section('scripts')
 <script>
 $(function() {
+    // Function to toggle liability account field based on type
+    function toggleLiabilityAccountField() {
+        if ($('#type').val() === 'deduction') {
+            $('#liabilityAccountGroup').show();
+        } else {
+            $('#liabilityAccountGroup').hide();
+            $('#liability_account_id').val(''); // Clear selection for additions
+        }
+    }
+
     // Calculation type change
     $('#calculation_type').change(function() {
         if ($(this).val() === 'percentage') {
@@ -312,11 +353,17 @@ $(function() {
         }
     });
 
+    // Type change - toggle liability account field
+    $('#type').change(function() {
+        toggleLiabilityAccountField();
+    });
+
     // Add button click
     $('#addPayHeadBtn').click(function() {
         $('#payHeadForm')[0].reset();
         $('#pay_head_id').val('');
         $('#percentageOfGroup').hide();
+        $('#liabilityAccountGroup').hide();
         $('#is_active').prop('checked', true);
         $('#modalTitleText').text('Add Pay Head');
         $('#payHeadModal').modal('show');
@@ -331,10 +378,12 @@ $(function() {
         $('#type').val(data.type);
         $('#calculation_type').val(data.calculationType).trigger('change');
         $('#percentage_of').val(data.percentageOf);
+        $('#liability_account_id').val(data.liabilityAccountId || '');
         $('#description').val(data.description);
         $('#is_taxable').prop('checked', data.isTaxable == 1);
         $('#is_active').prop('checked', data.isActive == 1);
         $('#modalTitleText').text('Edit Pay Head');
+        toggleLiabilityAccountField();
         $('#payHeadModal').modal('show');
     });
 
@@ -352,6 +401,7 @@ $(function() {
             type: $('#type').val(),
             calculation_type: $('#calculation_type').val(),
             percentage_of: $('#percentage_of').val(),
+            liability_account_id: $('#type').val() === 'deduction' ? $('#liability_account_id').val() : null,
             description: $('#description').val(),
             is_taxable: $('#is_taxable').is(':checked') ? 1 : 0,
             is_active: $('#is_active').is(':checked') ? 1 : 0

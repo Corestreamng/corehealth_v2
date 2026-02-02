@@ -78,10 +78,10 @@ class PurchaseOrderPaymentObserver
             ]);
             return;
         }
-        
+
         // Get or create Supplier sub-account for AP tracking
         $supplierSubAccount = $this->subAccountService->getOrCreateSupplierSubAccount($po->supplier);
-        
+
         $description = $this->buildDescription($payment, $po);
 
         // Build lines WITH METADATA

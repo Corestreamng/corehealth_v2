@@ -11,14 +11,37 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Payment Observer (UPDATED with Metadata)
+ * Payment Observer (UPDATED with Patient Account Support)
  *
  * Reference: BANK_CASH_STATEMENT_IMPLEMENTATION.md - Part 7.3.2
+ * Reference: ACCOUNTING_SYSTEM_ENHANCEMENT_PLAN.md - Section 6.9
  *
  * Creates journal entries when payments are received (cash/bank receipts).
  *
- * DEBIT:  Cash / Bank (Asset)
- * CREDIT: Accounts Receivable (Asset) or Revenue (Income)
+ * STANDARD PAYMENTS:
+ *   DEBIT:  Cash / Bank (Asset)
+ *   CREDIT: Accounts Receivable (Asset) or Revenue (Income)
+ *
+ * PATIENT ACCOUNT TRANSACTIONS:
+ *   ACC_DEPOSIT (positive): Patient deposits into account
+ *     DEBIT:  Cash/Bank (1010/1020)
+ *     CREDIT: Patient Deposits Liability (2350)
+ *
+ *   ACC_WITHDRAW (negative): Payment from account OR refund withdrawal
+ *     When paying for services (linked to product_or_service_request):
+ *       DEBIT:  Patient Deposits Liability (2350)
+ *       CREDIT: Revenue (4xxx)
+ *     When manual refund/withdrawal:
+ *       DEBIT:  Patient Deposits Liability (2350)
+ *       CREDIT: Cash/Bank (1010/1020)
+ *
+ *   ACC_ADJUSTMENT: Balance corrections
+ *     Positive: DEBIT Cash Overage, CREDIT Patient Deposits Liability
+ *     Negative: DEBIT Patient Deposits Liability, CREDIT Cash Shortage
+ *
+ * This ties PatientAccount balance to the GL and ensures:
+ * - Positive PatientAccount balance appears in Aged Payables (hospital liability)
+ * - Negative PatientAccount balance appears in Aged Receivables (patient owes)
  *
  * METADATA CAPTURED:
  * - product_id: If payment linked to product (pharmacy)
@@ -31,20 +54,318 @@ use Illuminate\Support\Facades\Log;
  */
 class PaymentObserver
 {
+    // Account codes
+    private const CASH_ACCOUNT = '1010';
+    private const BANK_ACCOUNT = '1020';
+    private const PATIENT_DEPOSITS_LIABILITY = '2350';
+    private const CASH_OVERAGE = '4900';  // Miscellaneous income
+    private const CASH_SHORTAGE = '5900'; // Miscellaneous expense
+
     /**
      * Handle the Payment "created" event.
      */
     public function created(Payment $payment): void
     {
         try {
-            $this->createPaymentJournalEntry($payment);
+            // Route to appropriate handler based on payment type
+            if (in_array($payment->payment_type, ['ACC_DEPOSIT', 'ACC_WITHDRAW', 'ACC_ADJUSTMENT'])) {
+                $this->createPatientAccountJournalEntry($payment);
+            } else {
+                $this->createPaymentJournalEntry($payment);
+            }
         } catch (\Exception $e) {
             Log::error('PaymentObserver: Failed to create journal entry', [
                 'payment_id' => $payment->id,
+                'payment_type' => $payment->payment_type,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
         }
+    }
+
+    /**
+     * Create journal entry for patient account transactions (ACC_DEPOSIT, ACC_WITHDRAW, ACC_ADJUSTMENT).
+     * This integrates the PatientAccount system with the GL.
+     */
+    protected function createPatientAccountJournalEntry(Payment $payment): void
+    {
+        $accountingService = App::make(AccountingService::class);
+
+        // Get patient deposits liability account
+        $liabilityAccount = Account::where('account_code', self::PATIENT_DEPOSITS_LIABILITY)->first();
+        if (!$liabilityAccount) {
+            Log::warning('PaymentObserver: Patient Deposits Liability account (2350) not found', [
+                'payment_id' => $payment->id,
+            ]);
+            return;
+        }
+
+        $amount = abs($payment->total);
+        $patientName = $payment->patient?->full_name ?? $payment->patient?->fullname ?? 'Unknown';
+        $lines = [];
+        $description = '';
+
+        switch ($payment->payment_type) {
+            case 'ACC_DEPOSIT':
+                // Patient deposits money into their account
+                // DEBIT: Cash/Bank, CREDIT: Patient Deposits Liability
+                $cashAccount = $this->getCashBankAccount($payment);
+                if (!$cashAccount) return;
+
+                $description = "Patient account deposit - {$patientName} | Ref: {$payment->reference_no}";
+                $lines = [
+                    [
+                        'account_id' => $cashAccount->id,
+                        'debit_amount' => $amount,
+                        'credit_amount' => 0,
+                        'description' => "Deposit received from patient: {$patientName}",
+                        'patient_id' => $payment->patient_id,
+                        'category' => 'patient_deposit',
+                    ],
+                    [
+                        'account_id' => $liabilityAccount->id,
+                        'debit_amount' => 0,
+                        'credit_amount' => $amount,
+                        'description' => "Patient deposit liability: {$patientName}",
+                        'patient_id' => $payment->patient_id,
+                        'category' => 'patient_deposit',
+                    ],
+                ];
+                break;
+
+            case 'ACC_WITHDRAW':
+                // Withdrawal from patient account (negative total in payment record)
+                // Check if this is a payment for services or a manual withdrawal/refund
+                $hasServiceItems = $payment->product_or_service_request()->exists();
+
+                if ($hasServiceItems) {
+                    // Payment from account for services
+                    // DEBIT: Patient Deposits Liability, CREDIT: Revenue
+                    $metadata = $this->extractPaymentMetadata($payment);
+                    $revenueAccountCode = $this->getRevenueAccountCode($payment);
+                    $revenueAccount = Account::where('account_code', $revenueAccountCode)->first();
+
+                    if (!$revenueAccount) {
+                        $revenueAccount = Account::where('account_code', '4000')->first(); // Default revenue
+                    }
+
+                    if (!$revenueAccount) {
+                        Log::warning('PaymentObserver: Revenue account not found for ACC_WITHDRAW', [
+                            'payment_id' => $payment->id,
+                        ]);
+                        return;
+                    }
+
+                    $description = "Account payment for services - {$patientName} | Ref: {$payment->reference_no}";
+                    $lines = [
+                        [
+                            'account_id' => $liabilityAccount->id,
+                            'debit_amount' => $amount,
+                            'credit_amount' => 0,
+                            'description' => "Reduce patient deposit: {$patientName}",
+                            'patient_id' => $payment->patient_id,
+                            'category' => 'account_payment',
+                        ],
+                        [
+                            'account_id' => $revenueAccount->id,
+                            'debit_amount' => 0,
+                            'credit_amount' => $amount,
+                            'description' => "Revenue from patient account",
+                            'patient_id' => $payment->patient_id,
+                            'product_id' => $metadata['product_id'],
+                            'service_id' => $metadata['service_id'],
+                            'product_category_id' => $metadata['product_category_id'],
+                            'service_category_id' => $metadata['service_category_id'],
+                            'hmo_id' => $metadata['hmo_id'],
+                            'category' => 'account_payment',
+                        ],
+                    ];
+                } else {
+                    // Manual withdrawal/refund - cash out to patient
+                    // DEBIT: Patient Deposits Liability, CREDIT: Cash/Bank
+                    $cashAccount = $this->getCashBankAccount($payment);
+                    if (!$cashAccount) return;
+
+                    $description = "Patient account withdrawal - {$patientName} | Ref: {$payment->reference_no}";
+                    $lines = [
+                        [
+                            'account_id' => $liabilityAccount->id,
+                            'debit_amount' => $amount,
+                            'credit_amount' => 0,
+                            'description' => "Reduce patient deposit: {$patientName}",
+                            'patient_id' => $payment->patient_id,
+                            'category' => 'patient_withdrawal',
+                        ],
+                        [
+                            'account_id' => $cashAccount->id,
+                            'debit_amount' => 0,
+                            'credit_amount' => $amount,
+                            'description' => "Refund/withdrawal to patient: {$patientName}",
+                            'patient_id' => $payment->patient_id,
+                            'category' => 'patient_withdrawal',
+                        ],
+                    ];
+                }
+                break;
+
+            case 'ACC_ADJUSTMENT':
+                // Balance adjustments (can be positive or negative)
+                $isPositive = $payment->total > 0;
+
+                if ($isPositive) {
+                    // Positive adjustment - increase patient balance (found money, correction)
+                    // DEBIT: Cash Overage/Suspense, CREDIT: Patient Deposits Liability
+                    $overageAccount = Account::where('account_code', self::CASH_OVERAGE)->first()
+                        ?? Account::where('account_code', '4000')->first();
+
+                    if (!$overageAccount) return;
+
+                    $description = "Patient account adjustment (+) - {$patientName} | Ref: {$payment->reference_no}";
+                    $lines = [
+                        [
+                            'account_id' => $overageAccount->id,
+                            'debit_amount' => $amount,
+                            'credit_amount' => 0,
+                            'description' => "Adjustment to patient account: {$patientName}",
+                            'patient_id' => $payment->patient_id,
+                            'category' => 'account_adjustment',
+                        ],
+                        [
+                            'account_id' => $liabilityAccount->id,
+                            'debit_amount' => 0,
+                            'credit_amount' => $amount,
+                            'description' => "Increase patient deposit: {$patientName}",
+                            'patient_id' => $payment->patient_id,
+                            'category' => 'account_adjustment',
+                        ],
+                    ];
+                } else {
+                    // Negative adjustment - decrease patient balance (write-off, correction)
+                    // DEBIT: Patient Deposits Liability, CREDIT: Cash Shortage/Suspense
+                    $shortageAccount = Account::where('account_code', self::CASH_SHORTAGE)->first()
+                        ?? Account::where('account_code', '5000')->first();
+
+                    if (!$shortageAccount) return;
+
+                    $description = "Patient account adjustment (-) - {$patientName} | Ref: {$payment->reference_no}";
+                    $lines = [
+                        [
+                            'account_id' => $liabilityAccount->id,
+                            'debit_amount' => $amount,
+                            'credit_amount' => 0,
+                            'description' => "Reduce patient deposit: {$patientName}",
+                            'patient_id' => $payment->patient_id,
+                            'category' => 'account_adjustment',
+                        ],
+                        [
+                            'account_id' => $shortageAccount->id,
+                            'debit_amount' => 0,
+                            'credit_amount' => $amount,
+                            'description' => "Write-off/adjustment: {$patientName}",
+                            'patient_id' => $payment->patient_id,
+                            'category' => 'account_adjustment',
+                        ],
+                    ];
+                }
+                break;
+
+            default:
+                return;
+        }
+
+        if (empty($lines)) return;
+
+        $entry = $accountingService->createAndPostAutomatedEntry(
+            Payment::class,
+            $payment->id,
+            $description,
+            $lines
+        );
+
+        // Update payment with journal entry reference
+        $payment->journal_entry_id = $entry->id;
+        $payment->saveQuietly();
+
+        Log::info('PaymentObserver: Patient account JE created', [
+            'payment_id' => $payment->id,
+            'payment_type' => $payment->payment_type,
+            'journal_entry_id' => $entry->id,
+            'amount' => $payment->total,
+        ]);
+    }
+
+    /**
+     * Get Cash or Bank account based on payment method.
+     * Uses specific bank's GL account if bank_id is set.
+     */
+    protected function getCashBankAccount(Payment $payment): ?Account
+    {
+        // If payment has a specific account_id set, use it directly
+        if ($payment->account_id) {
+            $account = Account::find($payment->account_id);
+            if ($account) return $account;
+        }
+
+        // If bank_id is set, use that bank's GL account
+        if ($payment->bank_id) {
+            $bank = $payment->bank;
+            if ($bank && $bank->account_id) {
+                $account = Account::find($bank->account_id);
+                if ($account) {
+                    Log::info('PaymentObserver: Using bank-specific GL account', [
+                        'payment_id' => $payment->id,
+                        'bank_id' => $bank->id,
+                        'bank_name' => $bank->name,
+                        'account_id' => $account->id,
+                        'account_code' => $account->code,
+                    ]);
+                    return $account;
+                }
+            }
+        }
+
+        // Fallback to generic cash/bank account codes
+        $code = match (strtolower($payment->payment_method ?? 'cash')) {
+            'cash' => self::CASH_ACCOUNT,
+            'pos', 'transfer', 'bank', 'bank_transfer', 'card' => self::BANK_ACCOUNT,
+            default => self::CASH_ACCOUNT,
+        };
+
+        $account = Account::where('code', $code)->first();
+
+        if (!$account) {
+            Log::warning('PaymentObserver: Cash/Bank account not found', [
+                'payment_id' => $payment->id,
+                'code' => $code,
+            ]);
+        }
+
+        return $account;
+    }
+
+    /**
+     * Get revenue account code based on linked services/products.
+     */
+    protected function getRevenueAccountCode(Payment $payment): string
+    {
+        // Check linked items to determine revenue type
+        $item = $payment->product_or_service_request()->with(['service', 'product'])->first();
+
+        if ($item) {
+            if ($item->service) {
+                $categoryName = strtolower($item->service->category?->category_name ?? '');
+                if (str_contains($categoryName, 'consult')) return '4010';
+                if (str_contains($categoryName, 'lab')) return '4030';
+                if (str_contains($categoryName, 'imag') || str_contains($categoryName, 'radio')) return '4040';
+                if (str_contains($categoryName, 'procedure')) return '4050';
+                if (str_contains($categoryName, 'admission') || str_contains($categoryName, 'ward')) return '4060';
+            }
+            if ($item->product) {
+                return '4020'; // Pharmacy revenue
+            }
+        }
+
+        return '4000'; // General revenue
     }
 
     /**
@@ -174,15 +495,32 @@ class PaymentObserver
     }
 
     /**
-     * Get debit account code based on payment method.
+     * Get debit account based on payment method.
+     * Uses specific bank's GL account if bank_id is set.
      */
     protected function getDebitAccountCode(Payment $payment): string
     {
-        return match ($payment->payment_method) {
+        // For cheques, always use Cheques Receivable
+        if (in_array(strtolower($payment->payment_method ?? ''), ['cheque', 'check'])) {
+            return '1025'; // Cheques Receivable
+        }
+
+        // If bank_id is set, use that bank's GL account
+        if ($payment->bank_id) {
+            $bank = $payment->bank;
+            if ($bank && $bank->account_id) {
+                $account = Account::find($bank->account_id);
+                if ($account) {
+                    return $account->code;
+                }
+            }
+        }
+
+        // Fallback to generic account codes
+        return match (strtolower($payment->payment_method ?? 'cash')) {
             'cash' => '1010', // Cash in Hand
             'bank_transfer', 'bank', 'transfer' => '1020', // Bank Account
             'card', 'pos' => '1020', // Bank Account (card payments settle to bank)
-            'cheque', 'check' => '1025', // Cheques Receivable
             default => '1010' // Default to Cash
         };
     }

@@ -54,6 +54,32 @@ class PurchaseOrderObserver
                 ]);
             }
         }
+
+        // Create journal entry when PO is partially received
+        if ($po->isDirty('status') && $po->status === PurchaseOrder::STATUS_PARTIAL) {
+            try {
+                $this->createPartialReceivedJournalEntry($po);
+            } catch (\Exception $e) {
+                Log::error('PurchaseOrderObserver: Failed to create partial JE', [
+                    'po_id' => $po->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+            }
+        }
+
+        // Reverse journal entry when PO is cancelled (if it had JE)
+        if ($po->isDirty('status') && $po->status === PurchaseOrder::STATUS_CANCELLED) {
+            try {
+                $this->reversePOJournalEntry($po);
+            } catch (\Exception $e) {
+                Log::error('PurchaseOrderObserver: Failed to reverse journal entry', [
+                    'po_id' => $po->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+            }
+        }
     }
 
     /**
@@ -192,5 +218,137 @@ class PurchaseOrderObserver
 
         // Truncate to 255 chars
         return strlen($desc) > 255 ? substr($desc, 0, 252) . '...' : $desc;
+    }
+
+    /**
+     * Create journal entry for partial PO goods received.
+     * Only records the incremental amount since last JE.
+     */
+    protected function createPartialReceivedJournalEntry(PurchaseOrder $po): void
+    {
+        $accountingService = App::make(AccountingService::class);
+
+        // Calculate amount received this time (sum of received_qty * actual_unit_cost)
+        $receivedAmount = $po->items->sum(function ($item) {
+            return $item->received_qty * ($item->actual_unit_cost ?? $item->unit_cost);
+        });
+
+        // Get previous JE amount for this PO (if any partial entries exist)
+        $previouslyRecorded = JournalEntry::where('reference_type', PurchaseOrder::class)
+            ->where('reference_id', $po->id)
+            ->whereNotIn('status', [JournalEntry::STATUS_REVERSED])
+            ->get()
+            ->sum(function ($je) {
+                return $je->lines()->where('debit_amount', '>', 0)->sum('debit_amount');
+            });
+
+        $incrementalAmount = $receivedAmount - $previouslyRecorded;
+
+        if ($incrementalAmount <= 0) {
+            Log::info('PurchaseOrderObserver: No incremental amount to record', [
+                'po_id' => $po->id,
+                'received_amount' => $receivedAmount,
+                'previously_recorded' => $previouslyRecorded,
+            ]);
+            return;
+        }
+
+        $inventoryAccount = Account::where('code', '1300')->first();
+        $apAccount = Account::where('code', '2100')->first();
+
+        if (!$inventoryAccount || !$apAccount) {
+            Log::warning('PurchaseOrderObserver: Partial JE skipped - accounts not configured');
+            return;
+        }
+
+        $supplierSubAccount = null;
+        if ($po->supplier_id && $po->supplier) {
+            $supplierSubAccount = $this->subAccountService->getOrCreateSupplierSubAccount($po->supplier);
+        }
+
+        $lines = [
+            [
+                'account_id' => $inventoryAccount->id,
+                'debit_amount' => $incrementalAmount,
+                'credit_amount' => 0,
+                'description' => "Partial inventory received: PO " . ($po->po_number ?? 'N/A'),
+                'supplier_id' => $po->supplier_id,
+                'category' => 'purchase_order_partial',
+            ],
+            [
+                'account_id' => $apAccount->id,
+                'sub_account_id' => $supplierSubAccount?->id,
+                'debit_amount' => 0,
+                'credit_amount' => $incrementalAmount,
+                'description' => "Partial AP: " . ($po->supplier->name ?? 'Supplier') . " (PO: " . ($po->po_number ?? 'N/A') . ")",
+                'supplier_id' => $po->supplier_id,
+                'category' => 'purchase_order_partial',
+            ]
+        ];
+
+        $entry = $accountingService->createAndPostAutomatedEntry(
+            PurchaseOrder::class,
+            $po->id,
+            "Partial PO Received: {$po->po_number} | Incremental: " . number_format($incrementalAmount, 2),
+            $lines
+        );
+
+        $po->journal_entry_id = $entry->id;
+        $po->saveQuietly();
+
+        Log::info('PurchaseOrderObserver: Partial JE created', [
+            'po_id' => $po->id,
+            'journal_entry_id' => $entry->id,
+            'incremental_amount' => $incrementalAmount,
+        ]);
+    }
+
+    /**
+     * Reverse journal entry when PO is cancelled.
+     */
+    protected function reversePOJournalEntry(PurchaseOrder $po): void
+    {
+        // Find all JEs for this PO that haven't been reversed
+        $journalEntries = JournalEntry::where('reference_type', PurchaseOrder::class)
+            ->where('reference_id', $po->id)
+            ->whereNotIn('status', [JournalEntry::STATUS_REVERSED])
+            ->get();
+
+        if ($journalEntries->isEmpty()) {
+            Log::info('PurchaseOrderObserver: No journal entries to reverse', [
+                'po_id' => $po->id,
+            ]);
+            return;
+        }
+
+        $accountingService = App::make(AccountingService::class);
+
+        foreach ($journalEntries as $journalEntry) {
+            if (!$journalEntry->canReverse()) {
+                Log::warning('PurchaseOrderObserver: JE cannot be reversed', [
+                    'po_id' => $po->id,
+                    'journal_entry_id' => $journalEntry->id,
+                    'je_status' => $journalEntry->status,
+                ]);
+                continue;
+            }
+
+            $reason = "PO Cancelled: " . ($po->po_number ?? 'N/A');
+            if ($po->cancellation_reason) {
+                $reason .= " - Reason: " . $po->cancellation_reason;
+            }
+
+            $reversalEntry = $accountingService->reverseEntry(
+                $journalEntry,
+                auth()->id() ?? 1,
+                $reason
+            );
+
+            Log::info('PurchaseOrderObserver: JE reversed for cancelled PO', [
+                'po_id' => $po->id,
+                'original_je_id' => $journalEntry->id,
+                'reversal_je_id' => $reversalEntry->id,
+            ]);
+        }
     }
 }

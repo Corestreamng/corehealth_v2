@@ -8,6 +8,7 @@ use App\Models\service;
 use App\Models\ServicePrice;
 use App\Models\Price;
 use App\Models\Hmo;
+use App\Models\Bank;
 use App\Models\AdmissionRequest;
 use App\Models\ProductOrServiceRequest;
 use App\Models\ChatConversation;
@@ -18,10 +19,16 @@ use App\Models\Expense;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderPayment;
 use App\Models\HmoRemittance;
+use App\Models\InterAccountTransfer;
 use App\Models\HR\PayrollBatch;
 use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\CreditNote;
 use App\Models\Accounting\JournalEntryEdit;
+use App\Models\Accounting\PettyCashTransaction;
+use App\Models\Accounting\PatientDeposit;
+use App\Models\Accounting\FixedAssetDepreciation;
+use App\Models\Accounting\FixedAssetDisposal;
+use App\Models\Accounting\StatutoryRemittance;
 use App\Observers\ProductObserver;
 use App\Observers\ServiceObserver;
 use App\Observers\ServicePriceObserver;
@@ -37,6 +44,13 @@ use App\Observers\Accounting\PayrollBatchObserver;
 use App\Observers\Accounting\ProductOrServiceRequestObserver;
 use App\Observers\Accounting\HmoRemittanceObserver;
 use App\Observers\Accounting\PurchaseOrderPaymentObserver;
+use App\Observers\Accounting\PettyCashObserver;
+use App\Observers\Accounting\TransferObserver;
+use App\Observers\Accounting\PatientDepositObserver;
+use App\Observers\Accounting\DepreciationObserver;
+use App\Observers\Accounting\FixedAssetDisposalObserver;
+use App\Observers\Accounting\BankObserver;
+use App\Observers\Accounting\StatutoryRemittanceObserver;
 use App\Helpers\HmoHelper;
 use App\Services\DepartmentNotificationService;
 use Carbon\Carbon;
@@ -93,6 +107,23 @@ class AppServiceProvider extends ServiceProvider
         ProductOrServiceRequest::observe(ProductOrServiceRequestObserver::class);
         HmoRemittance::observe(HmoRemittanceObserver::class);
         PurchaseOrderPayment::observe(PurchaseOrderPaymentObserver::class);
+
+        // NEW: Petty Cash and Inter-Account Transfer observers
+        PettyCashTransaction::observe(PettyCashObserver::class);
+        InterAccountTransfer::observe(TransferObserver::class);
+
+        // NEW: Patient Deposit observer
+        PatientDeposit::observe(PatientDepositObserver::class);
+
+        // NEW: Fixed Asset observers
+        FixedAssetDepreciation::observe(DepreciationObserver::class);
+        FixedAssetDisposal::observe(FixedAssetDisposalObserver::class);
+
+        // NEW: Bank observer - auto-creates GL accounts for banks
+        Bank::observe(BankObserver::class);
+
+        // NEW: Statutory Remittance observer - creates JE when payroll deductions are remitted
+        StatutoryRemittance::observe(StatutoryRemittanceObserver::class);
 
         // Process daily bed bills - runs once per day automatically
         $this->processDailyBedBills();

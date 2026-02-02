@@ -622,7 +622,7 @@
 }
 </style>
 
-<!-- Submit/Approve/Reject Modal -->
+<!-- Submit/Approve/Reject/Mark Paid Modal -->
 <div class="modal fade" id="actionModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content" style="border-radius: 12px; border: none;">
@@ -638,6 +638,42 @@
                 <input type="hidden" id="actionType">
                 <div class="modal-body" style="padding: 1.5rem;">
                     <p id="actionDescription"></p>
+
+                    <!-- Payment Source Section (shown only for mark-paid) -->
+                    <div id="paymentSourceSection" style="display: none;">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body py-3">
+                                <h6 class="mb-3"><i class="mdi mdi-cash-multiple mr-2"></i>Payment Source <span class="text-danger">*</span></h6>
+
+                                <div class="form-group mb-3">
+                                    <label style="font-weight: 600; color: #495057;">Payment Method</label>
+                                    <select name="payment_method" id="actionPaymentMethod" class="form-control" style="border-radius: 8px;">
+                                        <option value="">-- Select Source --</option>
+                                        <option value="cash">Cash (from Cash in Hand)</option>
+                                        <option value="bank_transfer" selected>Bank Transfer</option>
+                                    </select>
+                                    <small class="form-text text-muted">
+                                        Select where the salary payments will be disbursed from.
+                                    </small>
+                                </div>
+
+                                <div class="form-group mb-0" id="actionBankSelectionGroup">
+                                    <label style="font-weight: 600; color: #495057;">Select Bank <span class="text-danger">*</span></label>
+                                    <select name="bank_id" id="actionBankId" class="form-control" style="border-radius: 8px;">
+                                        <option value="">-- Select Bank --</option>
+                                        @foreach(\App\Models\Bank::whereNotNull('account_id')->orderBy('name')->get() as $bank)
+                                            <option value="{{ $bank->id }}">{{ $bank->name }} ({{ $bank->account_number }})</option>
+                                        @endforeach
+                                    </select>
+                                    <small class="form-text text-muted">
+                                        <i class="mdi mdi-information-outline"></i>
+                                        The selected bank's GL account will be credited.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="form-group">
                         <label class="form-label" style="font-weight: 600; color: #495057;">Comments</label>
                         <textarea class="form-control" name="comments" id="actionComments" rows="3"
@@ -1779,6 +1815,7 @@ $(function() {
         $('#actionDescription').text('Submit this payroll batch for approval?');
         $('#actionSubmitBtn').removeClass('btn-success btn-danger').addClass('btn-primary').html('<i class="mdi mdi-send mr-1"></i> Submit');
         $('#actionComments').val('');
+        $('#paymentSourceSection').hide();
         $('#viewBatchModal').modal('hide');
         $('#actionModal').modal('show');
     });
@@ -1793,6 +1830,7 @@ $(function() {
         $('#actionDescription').html('<strong class="text-warning">Warning:</strong> Approving will create an Expense entry for the total payroll amount.');
         $('#actionSubmitBtn').removeClass('btn-primary btn-danger').addClass('btn-success').html('<i class="mdi mdi-check mr-1"></i> Approve');
         $('#actionComments').val('');
+        $('#paymentSourceSection').hide();
         $('#viewBatchModal').modal('hide');
         $('#actionModal').modal('show');
     });
@@ -1807,6 +1845,7 @@ $(function() {
         $('#actionDescription').text('Reject this payroll batch? Please provide a reason.');
         $('#actionSubmitBtn').removeClass('btn-primary btn-success').addClass('btn-danger').html('<i class="mdi mdi-close mr-1"></i> Reject');
         $('#actionComments').val('');
+        $('#paymentSourceSection').hide();
         $('#viewBatchModal').modal('hide');
         $('#actionModal').modal('show');
     });
@@ -1821,8 +1860,24 @@ $(function() {
         $('#actionDescription').html('<p>Mark this payroll batch as paid?</p><div class="alert alert-info mb-0" style="font-size: 0.9rem;"><i class="mdi mdi-information-outline mr-1"></i><strong>Note:</strong> The linked expense will be set to <em>Pending</em> status. The Accountant will need to approve it in the Expenses module to complete the payment cycle.</div>');
         $('#actionSubmitBtn').removeClass('btn-primary btn-danger').addClass('btn-success').html('<i class="mdi mdi-cash-check mr-1"></i> Mark as Paid');
         $('#actionComments').val('');
+        // Show payment source section for mark-paid action
+        $('#paymentSourceSection').show();
+        $('#actionPaymentMethod').val('bank_transfer').trigger('change');
+        $('#actionBankId').val('');
         $('#viewBatchModal').modal('hide');
         $('#actionModal').modal('show');
+    });
+
+    // Toggle bank selection based on payment method
+    $('#actionPaymentMethod').on('change', function() {
+        var method = $(this).val();
+        if (method === 'bank_transfer') {
+            $('#actionBankSelectionGroup').slideDown();
+            $('#actionBankId').prop('required', true);
+        } else {
+            $('#actionBankSelectionGroup').slideUp();
+            $('#actionBankId').prop('required', false).val('');
+        }
     });
 
     // Delete batch (from view modal)
@@ -1892,13 +1947,37 @@ $(function() {
             return;
         }
 
+        // Build request data
+        let requestData = {
+            _token: '{{ csrf_token() }}',
+            comments: $('#actionComments').val()
+        };
+
+        // Add payment source data for mark-paid action
+        if (action === 'mark-paid') {
+            const paymentMethod = $('#paymentMethodSelect').val();
+            if (!paymentMethod) {
+                toastr.error('Please select a payment source');
+                $('#actionSubmitBtn').prop('disabled', false).html(originalBtnText);
+                return;
+            }
+            requestData.payment_method = paymentMethod;
+
+            if (paymentMethod === 'bank_transfer') {
+                const bankId = $('#bankIdSelect').val();
+                if (!bankId) {
+                    toastr.error('Please select a bank account');
+                    $('#actionSubmitBtn').prop('disabled', false).html(originalBtnText);
+                    return;
+                }
+                requestData.bank_id = bankId;
+            }
+        }
+
         $.ajax({
             url: actionUrl,
             method: 'POST',
-            data: {
-                _token: '{{ csrf_token() }}',
-                comments: $('#actionComments').val()
-            },
+            data: requestData,
             success: function(response) {
                 $('#actionModal').modal('hide');
                 table.ajax.reload();
