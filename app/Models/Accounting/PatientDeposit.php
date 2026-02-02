@@ -55,6 +55,7 @@ class PatientDeposit extends Model
         'utilized_amount',
         'refunded_amount',
         'journal_entry_id',
+        'source_payment_id', // Links to Payment record when created via BillingWorkbench
         'deposit_type',
         'payment_method',
         'bank_id',
@@ -119,6 +120,14 @@ class PatientDeposit extends Model
     public function refunder()
     {
         return $this->belongsTo(User::class, 'refunded_by');
+    }
+
+    /**
+     * Source payment record (when created via BillingWorkbench legacy flow).
+     */
+    public function sourcePayment()
+    {
+        return $this->belongsTo(\App\Models\Payment::class, 'source_payment_id');
     }
 
     public function applications()

@@ -111,6 +111,13 @@ class PatientDepositObserver
             // Link JE to deposit
             $deposit->updateQuietly(['journal_entry_id' => $journalEntry->id]);
 
+            // If this deposit came from BillingWorkbench (has source_payment_id),
+            // also link the JE to the source payment for complete traceability
+            if ($deposit->source_payment_id) {
+                \App\Models\Payment::where('id', $deposit->source_payment_id)
+                    ->update(['journal_entry_id' => $journalEntry->id]);
+            }
+
             DB::commit();
 
             Log::info('PatientDepositObserver: JE created for deposit', [

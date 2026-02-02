@@ -13,7 +13,8 @@ class payment extends Model implements Auditable
     use \OwenIt\Auditing\Auditable;
     protected $fillable = [
         'reference_no', 'total', 'payment_type', 'payment_method', 'bank_id',
-        'invoice_id', 'patient_id', 'user_id', 'hmo_id', 'total_discount'
+        'invoice_id', 'patient_id', 'user_id', 'hmo_id', 'total_discount',
+        'journal_entry_id', // For linking to accounting journal entries
     ];
 
 
