@@ -9,6 +9,8 @@ use App\Models\payment;
 use App\Models\PatientAccount;
 use App\Models\HmoClaim;
 use App\Models\Hmo;
+use App\Models\Accounting\PatientDeposit;
+use App\Models\Accounting\PatientDepositApplication;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -231,50 +233,99 @@ class BillingWorkbenchController extends Controller
 
     /**
      * Get patient's receipts (paid items grouped by payment)
+     * Includes both payments and deposits from accounting module
      */
     public function getPatientReceipts($patientId, Request $request)
     {
         $patient = Patient::findOrFail($patientId);
+        $receipts = collect();
 
-        $query = payment::where('patient_id', $patientId);
+        // Get filter values
+        $fromDate = $request->from_date;
+        $toDate = $request->to_date;
+        $paymentTypeFilter = $request->payment_type;
 
-        // Apply date filters
-        if ($request->has('from_date') && $request->from_date) {
-            $query->whereDate('created_at', '>=', $request->from_date);
+        // 1. Get payments from payment table
+        $paymentQuery = payment::where('patient_id', $patientId);
+
+        if ($fromDate) {
+            $paymentQuery->whereDate('created_at', '>=', $fromDate);
         }
-        if ($request->has('to_date') && $request->to_date) {
-            $query->whereDate('created_at', '<=', $request->to_date);
+        if ($toDate) {
+            $paymentQuery->whereDate('created_at', '<=', $toDate);
+        }
+        if ($paymentTypeFilter && !in_array($paymentTypeFilter, ['DEPOSIT', 'ACC_DEPOSIT'])) {
+            $paymentQuery->where('payment_type', $paymentTypeFilter);
         }
 
-        // Apply payment type filter
-        if ($request->has('payment_type') && $request->payment_type) {
-            $query->where('payment_type', $request->payment_type);
+        // Skip deposits if filtering for deposits only
+        if (!$paymentTypeFilter || !in_array($paymentTypeFilter, ['DEPOSIT', 'ACC_DEPOSIT'])) {
+            $payments = $paymentQuery->orderBy('created_at', 'desc')->get();
+
+            foreach ($payments as $payment) {
+                $items = ProductOrServiceRequest::with(['service', 'product'])
+                    ->where('payment_id', $payment->id)
+                    ->get();
+
+                $receipts->push([
+                    'id' => 'pay_' . $payment->id,
+                    'source' => 'payment',
+                    'payment_id' => $payment->id,
+                    'reference_no' => $payment->reference_no,
+                    'payment_type' => $payment->payment_type,
+                    'payment_type_label' => $this->getPaymentTypeLabel($payment->payment_type),
+                    'total' => $payment->total,
+                    'total_discount' => $payment->total_discount ?? 0,
+                    'created_at' => $payment->created_at->format('Y-m-d H:i'),
+                    'datetime' => $payment->created_at,
+                    'created_by' => userfullname($payment->user_id),
+                    'item_count' => $items->count(),
+                ]);
+            }
         }
 
-        $payments = $query->orderBy('created_at', 'desc')->get();
+        // 2. Get deposits from patient_deposits table (Accounting module)
+        if (!$paymentTypeFilter || in_array($paymentTypeFilter, ['DEPOSIT', 'ACC_DEPOSIT', ''])) {
+            $depositQuery = PatientDeposit::where('patient_id', $patientId);
 
-        $receipts = $payments->map(function ($payment) use ($patient) {
-            $items = ProductOrServiceRequest::with(['service', 'product'])
-                ->where('payment_id', $payment->id)
-                ->get();
+            if ($fromDate) {
+                $depositQuery->whereDate('deposit_date', '>=', $fromDate);
+            }
+            if ($toDate) {
+                $depositQuery->whereDate('deposit_date', '<=', $toDate);
+            }
 
-            return [
-                'payment_id' => $payment->id,
-                'reference_no' => $payment->reference_no,
-                'payment_type' => $payment->payment_type,
-                'total' => $payment->total,
-                'total_discount' => $payment->total_discount ?? 0,
-                'created_at' => $payment->created_at->format('Y-m-d H:i'),
-                'created_by' => userfullname($payment->user_id),
-                'item_count' => $items->count(),
-            ];
-        });
+            $deposits = $depositQuery->orderBy('deposit_date', 'desc')->get();
+
+            foreach ($deposits as $deposit) {
+                $receipts->push([
+                    'id' => 'dep_' . $deposit->id,
+                    'source' => 'deposit',
+                    'payment_id' => null,
+                    'deposit_id' => $deposit->id,
+                    'reference_no' => $deposit->deposit_number,
+                    'payment_type' => 'ACC_DEPOSIT',
+                    'payment_type_label' => $this->getDepositTypeLabel($deposit->deposit_type),
+                    'total' => $deposit->amount,
+                    'total_discount' => 0,
+                    'created_at' => $deposit->deposit_date->format('Y-m-d H:i'),
+                    'datetime' => $deposit->deposit_date,
+                    'created_by' => userfullname($deposit->received_by),
+                    'item_count' => 0,
+                    'deposit_type' => $deposit->deposit_type,
+                    'payment_method' => $deposit->payment_method,
+                ]);
+            }
+        }
+
+        // Sort by datetime descending
+        $receipts = $receipts->sortByDesc('datetime')->values();
 
         // Calculate stats
         $stats = [
             'count' => $receipts->count(),
-            'total' => $payments->sum('total'),
-            'discounts' => $payments->sum('total_discount') ?? 0,
+            'total' => $receipts->sum('total'),
+            'discounts' => $receipts->sum('total_discount'),
         ];
 
         return response()->json([
@@ -286,6 +337,26 @@ class BillingWorkbenchController extends Controller
             'receipts' => $receipts,
             'stats' => $stats,
         ]);
+    }
+
+    /**
+     * Get friendly label for payment type
+     */
+    private function getPaymentTypeLabel($paymentType)
+    {
+        $labels = [
+            'CASH' => 'Cash Payment',
+            'POS' => 'POS/Card Payment',
+            'TRANSFER' => 'Bank Transfer',
+            'MOBILE' => 'Mobile Payment',
+            'ACCOUNT' => 'Account Payment',
+            'CHEQUE' => 'Cheque Payment',
+            'TELLER' => 'Teller Payment',
+            'ACC_DEPOSIT' => 'Account Deposit',
+            'ACC_WITHDRAW' => 'Account Withdrawal',
+            'ACC_ADJUSTMENT' => 'Account Adjustment',
+        ];
+        return $labels[$paymentType] ?? ucfirst(strtolower($paymentType));
     }
 
     /**
@@ -333,84 +404,114 @@ class BillingWorkbenchController extends Controller
 
     /**
      * Get patient's account-specific transactions (deposits, withdrawals, adjustments)
+     * Now fetches from BOTH payment table AND patient_deposits table for unified view
      */
     public function getAccountTransactions($patientId, Request $request)
     {
         $patient = Patient::findOrFail($patientId);
         $account = PatientAccount::where('patient_id', $patientId)->first();
 
-        // Get account-related transactions (deposits, withdrawals/payments, adjustments)
-        // Note: ACC_WITHDRAW is used for both manual withdrawals AND payments from account balance
-        $query = payment::where('patient_id', $patientId)
-            ->whereIn('payment_type', ['ACC_DEPOSIT', 'ACC_WITHDRAW', 'ACC_ADJUSTMENT']);
-
         // Apply date filters - default to current month if not provided
         $fromDate = $request->from_date ?: now()->startOfMonth()->format('Y-m-d');
         $toDate = $request->to_date ?: now()->format('Y-m-d');
+        $txTypeFilter = $request->tx_type ?: null;
 
-        $query->whereDate('created_at', '>=', $fromDate);
-        $query->whereDate('created_at', '<=', $toDate);
+        $transactionsFormatted = collect();
 
-        // Apply transaction type filter
-        if ($request->has('tx_type') && $request->tx_type) {
-            $query->where('payment_type', $request->tx_type);
+        // 1. Get deposits from patient_deposits table (Accounts module deposits)
+        if (!$txTypeFilter || $txTypeFilter === 'ACC_DEPOSIT') {
+            $deposits = PatientDeposit::where('patient_id', $patientId)
+                ->whereDate('deposit_date', '>=', $fromDate)
+                ->whereDate('deposit_date', '<=', $toDate)
+                ->orderBy('deposit_date', 'desc')
+                ->get();
+
+            foreach ($deposits as $dep) {
+                $transactionsFormatted->push([
+                    'id' => 'dep_' . $dep->id,
+                    'source' => 'patient_deposit',
+                    'reference_no' => $dep->deposit_number,
+                    'payment_type' => 'ACC_DEPOSIT',
+                    'tx_type' => 'Deposit',
+                    'tx_icon' => 'mdi-arrow-down-bold-circle',
+                    'tx_color' => 'success',
+                    'amount' => $dep->amount,
+                    'description' => $this->getDepositTypeLabel($dep->deposit_type) . ($dep->notes ? ' - ' . $dep->notes : ''),
+                    'running_balance' => 0, // Will calculate later
+                    'created_at' => $dep->deposit_date->format('M d, Y'),
+                    'created_time' => $dep->created_at->format('h:i A'),
+                    'cashier' => userfullname($dep->received_by),
+                    'datetime' => $dep->deposit_date,
+                ]);
+            }
         }
 
-        $transactions = $query->orderBy('created_at', 'desc')->get();
+        // 2. Get withdrawals and adjustments from payment table
+        // Skip ACC_DEPOSIT from payment table if the deposit has source_payment_id (to avoid duplicates)
+        $paymentQuery = payment::where('patient_id', $patientId)
+            ->whereIn('payment_type', ['ACC_WITHDRAW', 'ACC_ADJUSTMENT'])
+            ->whereDate('created_at', '>=', $fromDate)
+            ->whereDate('created_at', '<=', $toDate);
 
-        // Calculate running balance
-        $runningBalance = $account ? $account->balance : 0;
-        $transactionsFormatted = [];
-
-        // We need to calculate running balance from earliest to latest, then reverse
-        $reversedTransactions = $transactions->reverse()->values();
-        $balanceHistory = [];
-        $currentBalance = 0;
-
-        foreach ($reversedTransactions as $tx) {
-            $currentBalance += $tx->total;
-            $balanceHistory[$tx->id] = $currentBalance;
+        if ($txTypeFilter && $txTypeFilter !== 'ACC_DEPOSIT') {
+            $paymentQuery->where('payment_type', $txTypeFilter);
         }
 
-        foreach ($transactions as $tx) {
+        $payments = $paymentQuery->orderBy('created_at', 'desc')->get();
+
+        foreach ($payments as $tx) {
             $txType = 'Adjustment';
             $txIcon = 'mdi-swap-horizontal';
             $txColor = 'info';
 
-            if ($tx->payment_type === 'ACC_DEPOSIT') {
-                $txType = 'Deposit';
-                $txIcon = 'mdi-arrow-down-bold-circle';
-                $txColor = 'success';
-            } elseif ($tx->payment_type === 'ACC_WITHDRAW') {
-                // ACC_WITHDRAW is used for both manual withdrawals and account payments
-                // Negative total = account payment, check if there's an associated payment item
+            if ($tx->payment_type === 'ACC_WITHDRAW') {
                 $txType = 'Withdrawal';
                 $txIcon = 'mdi-arrow-up-bold-circle';
                 $txColor = 'danger';
             }
 
-            $transactionsFormatted[] = [
-                'id' => $tx->id,
+            $transactionsFormatted->push([
+                'id' => 'pay_' . $tx->id,
+                'source' => 'payment',
                 'reference_no' => $tx->reference_no,
                 'payment_type' => $tx->payment_type,
                 'tx_type' => $txType,
                 'tx_icon' => $txIcon,
                 'tx_color' => $txColor,
-                'amount' => $tx->total, // Already stored as negative for withdrawals/payments
+                'amount' => $tx->total,
                 'description' => $tx->notes ?? '',
-                'running_balance' => $balanceHistory[$tx->id] ?? 0,
+                'running_balance' => 0,
                 'created_at' => $tx->created_at->format('M d, Y'),
                 'created_time' => $tx->created_at->format('h:i A'),
                 'cashier' => userfullname($tx->user_id),
-            ];
+                'datetime' => $tx->created_at,
+            ]);
         }
 
-        // Calculate summary stats
-        $totalDeposits = payment::where('patient_id', $patientId)
-            ->where('payment_type', 'ACC_DEPOSIT')
-            ->sum('total');
+        // Sort all transactions by datetime descending
+        $transactionsFormatted = $transactionsFormatted->sortByDesc('datetime')->values();
 
-        // Withdrawals (stored as negative values, so abs to get positive)
+        // Calculate running balance (from oldest to newest, then we keep desc order for display)
+        $sortedAsc = $transactionsFormatted->sortBy('datetime')->values();
+        $runningBalance = 0;
+        $balanceMap = [];
+
+        foreach ($sortedAsc as $tx) {
+            $runningBalance += $tx['amount'];
+            $balanceMap[$tx['id']] = $runningBalance;
+        }
+
+        // Apply running balance to formatted transactions
+        $transactionsFormatted = $transactionsFormatted->map(function ($tx) use ($balanceMap) {
+            $tx['running_balance'] = $balanceMap[$tx['id']] ?? 0;
+            unset($tx['datetime']); // Remove datetime from response
+            return $tx;
+        })->values()->toArray();
+
+        // Calculate summary stats from patient_deposits and payments
+        $totalDeposits = PatientDeposit::where('patient_id', $patientId)->sum('amount');
+
+        // Withdrawals from payments (stored as negative values)
         $totalWithdrawals = abs(payment::where('patient_id', $patientId)
             ->where('payment_type', 'ACC_WITHDRAW')
             ->sum('total'));
@@ -421,7 +522,7 @@ class BillingWorkbenchController extends Controller
                 'total_deposits' => $totalDeposits,
                 'total_withdrawals' => $totalWithdrawals,
                 'current_balance' => $account ? $account->balance : 0,
-                'transaction_count' => $transactions->count(),
+                'transaction_count' => count($transactionsFormatted),
             ]
         ]);
     }
@@ -550,7 +651,11 @@ class BillingWorkbenchController extends Controller
             $paymentType = $data['payment_type'];
             $paymentTotal = $total;
 
-            if ($data['payment_type'] === 'ACCOUNT') {
+            // Track if we're paying from account for deposit application creation later
+            $payingFromAccount = ($data['payment_type'] === 'ACCOUNT');
+            $depositsToApply = collect(); // Will hold deposits with amounts to apply
+
+            if ($payingFromAccount) {
                 $account = PatientAccount::where('patient_id', $patient->id)->first();
 
                 // Create account if it doesn't exist
@@ -561,9 +666,41 @@ class BillingWorkbenchController extends Controller
                     ]);
                 }
 
-                // Deduct from account (can go negative - credit facility)
+                // Deduct from account (can go negative - credit facility / overdraw)
                 $account->balance -= $total;
                 $account->save();
+
+                // FIFO: Get all active deposits ordered by date (oldest first)
+                // We'll apply the payment against deposits until the amount is covered
+                $activeDeposits = PatientDeposit::where('patient_id', $patient->id)
+                    ->where('status', 'active')
+                    ->orderBy('deposit_date', 'asc') // FIFO - oldest first
+                    ->orderBy('id', 'asc')
+                    ->get();
+
+                $remainingToApply = $total;
+
+                foreach ($activeDeposits as $deposit) {
+                    if ($remainingToApply <= 0) break;
+
+                    // Calculate available balance for this deposit
+                    $availableBalance = $deposit->balance; // Uses the accessor
+
+                    if ($availableBalance <= 0) continue;
+
+                    // Determine how much to apply from this deposit
+                    $applyAmount = min($availableBalance, $remainingToApply);
+
+                    $depositsToApply->push([
+                        'deposit' => $deposit,
+                        'amount' => $applyAmount,
+                    ]);
+
+                    $remainingToApply -= $applyAmount;
+                }
+
+                // Note: If $remainingToApply > 0 after loop, it means we're using credit/overdraw
+                // This is allowed - the patient account has gone negative (credit facility)
 
                 // Use ACC_WITHDRAW payment type and negative total (matches original system)
                 $paymentType = 'ACC_WITHDRAW';
@@ -587,6 +724,39 @@ class BillingWorkbenchController extends Controller
                 ->where('user_id', $patient->user_id)
                 ->whereNull('invoice_id')
                 ->update(['payment_id' => $payment->id]);
+
+            // Create deposit application entries if paying from account (FIFO)
+            // Only create applications for the portion covered by actual deposits
+            // Overdraw amounts don't get application entries (they're credit facility usage)
+            if ($payingFromAccount && $depositsToApply->isNotEmpty()) {
+                foreach ($depositsToApply as $depositData) {
+                    $deposit = $depositData['deposit'];
+                    $applyAmount = $depositData['amount'];
+
+                    // Create the application record
+                    PatientDepositApplication::create([
+                        'deposit_id' => $deposit->id,
+                        'payment_id' => $payment->id,
+                        'application_number' => PatientDepositApplication::generateNumber(),
+                        'application_type' => PatientDepositApplication::TYPE_BILL_PAYMENT,
+                        'amount' => $applyAmount,
+                        'application_date' => now(),
+                        'applied_by' => Auth::id(),
+                        'status' => PatientDepositApplication::STATUS_APPLIED,
+                        'notes' => 'Payment from deposit balance via Billing Workbench',
+                    ]);
+
+                    // Update the deposit's utilized amount
+                    $deposit->utilized_amount += $applyAmount;
+
+                    // Check if deposit is fully utilized
+                    if ($deposit->balance <= 0) {
+                        $deposit->status = PatientDeposit::STATUS_FULLY_APPLIED;
+                    }
+
+                    $deposit->save();
+                }
+            }
 
             // Create HMO claim if applicable
             if ($patient->hmo_id && $claimsTotal > 0) {
@@ -970,6 +1140,7 @@ class BillingWorkbenchController extends Controller
             }
 
             $newBalance = $account->balance + $balanceChange;
+            $previousBalance = $account->balance;
             $account->update(['balance' => $newBalance]);
 
             // Create payment record for tracking
@@ -985,6 +1156,31 @@ class BillingWorkbenchController extends Controller
                 'bank_id' => $request->bank_id,
             ]);
 
+            // UNIFIED SYSTEM: Also create PatientDeposit record for deposits
+            // This ensures deposits are tracked in both legacy (PatientAccount) and modern (PatientDeposit) systems
+            // The PatientDepositObserver will create the journal entry, so PaymentObserver will skip
+            $deposit = null;
+            if ($paymentType === 'ACC_DEPOSIT') {
+                $depositNumber = PatientDeposit::generateNumber();
+                $deposit = PatientDeposit::create([
+                    'patient_id' => $request->patient_id,
+                    'deposit_number' => $depositNumber,
+                    'deposit_date' => now(),
+                    'amount' => $amount, // Always positive for deposits
+                    'utilized_amount' => 0,
+                    'refunded_amount' => 0,
+                    'source_payment_id' => $payment->id, // Link to prevent duplicate JE
+                    'deposit_type' => $request->deposit_type ?? PatientDeposit::TYPE_GENERAL,
+                    'payment_method' => strtolower($request->payment_method ?? 'cash'),
+                    'bank_id' => $request->bank_id,
+                    'payment_reference' => $request->payment_reference,
+                    'receipt_number' => $refNo,
+                    'received_by' => Auth::id(),
+                    'status' => PatientDeposit::STATUS_ACTIVE,
+                    'notes' => $notes,
+                ]);
+            }
+
             DB::commit();
 
             $typeLabels = [
@@ -993,15 +1189,379 @@ class BillingWorkbenchController extends Controller
                 'adjust' => 'Adjustment',
             ];
 
-            return response()->json([
+            // Generate receipts for deposits
+            $response = [
                 'message' => $typeLabels[$request->transaction_type] . ' saved successfully',
                 'new_balance' => $newBalance,
                 'payment_id' => $payment->id,
-            ]);
+            ];
+
+            if ($deposit) {
+                $receipts = $this->generateDepositReceipts($deposit, $previousBalance, $newBalance);
+                $response['deposit_id'] = $deposit->id;
+                $response['deposit_number'] = $deposit->deposit_number;
+                $response['receipt_a4'] = $receipts['a4'];
+                $response['receipt_thermal'] = $receipts['thermal'];
+            }
+
+            return response()->json($response);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to process account transaction', ['error' => $e->getMessage(), 'type' => $request->transaction_type]);
             return response()->json(['message' => 'Failed to save transaction'], 500);
         }
+    }
+
+    /**
+     * Print deposit receipt by deposit ID (for reprinting from receipts list).
+     */
+    public function printDepositReceipt($depositId)
+    {
+        $deposit = PatientDeposit::with(['patient', 'bank'])->findOrFail($depositId);
+
+        // Calculate what the balance was before and after this deposit
+        $account = PatientAccount::where('patient_id', $deposit->patient_id)->first();
+        $currentBalance = $account ? $account->balance : 0;
+
+        // Get the total of all deposits after this one to calculate the balance at time of deposit
+        $laterDeposits = PatientDeposit::where('patient_id', $deposit->patient_id)
+            ->where('deposit_date', '>', $deposit->deposit_date)
+            ->sum('amount');
+
+        $newBalance = $currentBalance + $laterDeposits;
+        $previousBalance = $newBalance - $deposit->amount;
+
+        $receipts = $this->generateDepositReceipts($deposit, $previousBalance, $newBalance);
+
+        return response()->json([
+            'receipt_a4' => $receipts['a4'],
+            'receipt_thermal' => $receipts['thermal'],
+        ]);
+    }
+
+    /**
+     * Generate deposit receipts (A4 and Thermal).
+     */
+    protected function generateDepositReceipts(PatientDeposit $deposit, float $previousBalance, float $newBalance): array
+    {
+        $site = appsettings();
+        $patient = $deposit->patient;
+        $patientName = userfullname($patient->user_id);
+        $patientFileNo = $patient->file_no ?? 'N/A';
+        $receivedBy = userfullname($deposit->received_by);
+
+        // Amount in words
+        $amountParts = explode('.', number_format((float) $deposit->amount, 2, '.', ''));
+        $nairaWords = convert_number_to_words((int) $amountParts[0]);
+        $koboWords = ((int) $amountParts[1]) > 0 ? ' and ' . convert_number_to_words((int) $amountParts[1]) . ' Kobo' : '';
+        $amountInWords = ucwords($nairaWords . ' Naira' . $koboWords) . ' Only';
+
+        // Deposit type label
+        $depositTypes = [
+            PatientDeposit::TYPE_ADMISSION => 'Admission Deposit',
+            PatientDeposit::TYPE_PROCEDURE => 'Procedure Deposit',
+            PatientDeposit::TYPE_SURGERY => 'Surgery Deposit',
+            PatientDeposit::TYPE_INVESTIGATION => 'Investigation Deposit',
+            PatientDeposit::TYPE_GENERAL => 'General Advance',
+            PatientDeposit::TYPE_OTHER => 'Other Deposit',
+        ];
+        $depositType = $depositTypes[$deposit->deposit_type] ?? $deposit->deposit_type;
+
+        // Payment method label
+        $paymentMethods = [
+            PatientDeposit::METHOD_CASH => 'Cash',
+            PatientDeposit::METHOD_POS => 'POS/Card',
+            PatientDeposit::METHOD_TRANSFER => 'Bank Transfer',
+            PatientDeposit::METHOD_CHEQUE => 'Cheque',
+            'cash' => 'Cash',
+            'pos' => 'POS/Card',
+            'transfer' => 'Bank Transfer',
+            'cheque' => 'Cheque',
+        ];
+        $paymentMethod = $paymentMethods[$deposit->payment_method] ?? $deposit->payment_method;
+
+        // Bank name
+        $bank = $deposit->bank?->name ?? null;
+
+        $viewData = [
+            'site' => $site,
+            'depositNumber' => $deposit->deposit_number,
+            'patientName' => $patientName,
+            'patientFileNo' => $patientFileNo,
+            'date' => $deposit->deposit_date->format('Y-m-d H:i'),
+            'amount' => $deposit->amount,
+            'amountInWords' => $amountInWords,
+            'depositType' => $depositType,
+            'paymentMethod' => $paymentMethod,
+            'bank' => $bank,
+            'paymentReference' => $deposit->payment_reference,
+            'receivedBy' => $receivedBy,
+            'previousBalance' => $previousBalance,
+            'newBalance' => $newBalance,
+            'notes' => $deposit->notes,
+        ];
+
+        return [
+            'a4' => View::make('admin.Accounts.deposit_receipt_a4', $viewData)->render(),
+            'thermal' => View::make('admin.Accounts.deposit_receipt_thermal', $viewData)->render(),
+        ];
+    }
+
+    /**
+     * Generate comprehensive account statement (AJAX).
+     */
+    public function generateStatement(Request $request, $patientId)
+    {
+        $request->validate([
+            'date_from' => 'required|date',
+            'date_to' => 'required|date|after_or_equal:date_from',
+            'include_deposits' => 'nullable',
+            'include_payments' => 'nullable',
+            'include_withdrawals' => 'nullable',
+            'include_services' => 'nullable',
+        ]);
+
+        // Convert string booleans to actual booleans
+        $includeDeposits = filter_var($request->include_deposits, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
+        $includePayments = filter_var($request->include_payments, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
+        $includeWithdrawals = filter_var($request->include_withdrawals, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
+        $includeServices = filter_var($request->include_services, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
+
+        $patient = Patient::with(['hmo', 'user'])->findOrFail($patientId);
+        $account = PatientAccount::where('patient_id', $patientId)->first();
+
+        $dateFrom = Carbon::parse($request->date_from)->startOfDay();
+        $dateTo = Carbon::parse($request->date_to)->endOfDay();
+
+        // Get all transactions for the statement
+        $transactions = collect();
+
+        // Include deposits (ACC_DEPOSIT from payments OR from patient_deposits)
+        if ($includeDeposits) {
+            $deposits = PatientDeposit::where('patient_id', $patientId)
+                ->whereBetween('deposit_date', [$dateFrom, $dateTo])
+                ->orderBy('deposit_date')
+                ->get();
+
+            foreach ($deposits as $dep) {
+                $transactions->push([
+                    'date' => $dep->deposit_date->format('M d, Y'),
+                    'short_date' => $dep->deposit_date->format('m/d'),
+                    'time' => $dep->deposit_date->format('h:i A'),
+                    'datetime' => $dep->deposit_date,
+                    'reference' => $dep->deposit_number,
+                    'type' => 'deposit',
+                    'type_class' => 'deposit',
+                    'type_label' => 'Deposit',
+                    'short_type' => 'DEP',
+                    'description' => $this->getDepositTypeLabel($dep->deposit_type) . ' - ' . ucfirst($dep->payment_method),
+                    'items' => $dep->notes,
+                    'debit' => 0,
+                    'credit' => $dep->amount,
+                    'running_balance' => 0, // Will calculate later
+                ]);
+            }
+        }
+
+        // Include direct payments (CASH, POS, TRANSFER - not from account)
+        if ($includePayments) {
+            $directPayments = payment::where('patient_id', $patientId)
+                ->whereNotIn('payment_type', ['ACC_DEPOSIT', 'ACC_WITHDRAW', 'ACC_ADJUSTMENT'])
+                ->whereBetween('created_at', [$dateFrom, $dateTo])
+                ->with(['product_or_service_request.service', 'product_or_service_request.product'])
+                ->orderBy('created_at')
+                ->get();
+
+            foreach ($directPayments as $pmt) {
+                $items = $pmt->product_or_service_request->map(function ($item) {
+                    if ($item->service_id) {
+                        return $item->service?->service_name ?? 'Service';
+                    }
+                    return $item->product?->product_name ?? 'Product';
+                })->implode(', ');
+
+                $transactions->push([
+                    'date' => $pmt->created_at->format('M d, Y'),
+                    'short_date' => $pmt->created_at->format('m/d'),
+                    'time' => $pmt->created_at->format('h:i A'),
+                    'datetime' => $pmt->created_at,
+                    'reference' => $pmt->reference_no,
+                    'type' => 'payment',
+                    'type_class' => 'payment',
+                    'type_label' => 'Payment (' . ($pmt->payment_method ?? 'Cash') . ')',
+                    'short_type' => 'PAY',
+                    'description' => 'Direct payment for services',
+                    'items' => $items ?: null,
+                    'debit' => abs($pmt->total),
+                    'credit' => 0,
+                    'running_balance' => 0,
+                ]);
+            }
+        }
+
+        // Include account withdrawals/payments from balance
+        if ($includeWithdrawals) {
+            $withdrawals = payment::where('patient_id', $patientId)
+                ->whereIn('payment_type', ['ACC_WITHDRAW', 'ACC_ADJUSTMENT'])
+                ->whereBetween('created_at', [$dateFrom, $dateTo])
+                ->orderBy('created_at')
+                ->get();
+
+            foreach ($withdrawals as $wd) {
+                $isAdjustment = $wd->payment_type === 'ACC_ADJUSTMENT';
+                $isCredit = $wd->total > 0;
+
+                $transactions->push([
+                    'date' => $wd->created_at->format('M d, Y'),
+                    'short_date' => $wd->created_at->format('m/d'),
+                    'time' => $wd->created_at->format('h:i A'),
+                    'datetime' => $wd->created_at,
+                    'reference' => $wd->reference_no,
+                    'type' => $isAdjustment ? 'adjustment' : 'withdrawal',
+                    'type_class' => $isAdjustment ? 'adjustment' : 'withdrawal',
+                    'type_label' => $isAdjustment ? 'Adjustment' : 'Withdrawal',
+                    'short_type' => $isAdjustment ? 'ADJ' : 'WDR',
+                    'description' => $isAdjustment
+                        ? ($isCredit ? 'Credit adjustment' : 'Debit adjustment')
+                        : 'Account withdrawal/refund',
+                    'items' => null,
+                    'debit' => $isCredit ? 0 : abs($wd->total),
+                    'credit' => $isCredit ? $wd->total : 0,
+                    'running_balance' => 0,
+                ]);
+            }
+        }
+
+        // Include services paid from deposit (via deposit applications)
+        if ($includeServices) {
+            $applications = \App\Models\Accounting\PatientDepositApplication::whereHas('deposit', function ($q) use ($patientId) {
+                $q->where('patient_id', $patientId);
+            })
+                ->whereBetween('application_date', [$dateFrom, $dateTo])
+                ->where('status', 'applied')
+                ->with(['deposit', 'payment.product_or_service_request.service', 'payment.product_or_service_request.product'])
+                ->orderBy('application_date')
+                ->get();
+
+            foreach ($applications as $app) {
+                $items = '';
+                if ($app->payment) {
+                    $items = $app->payment->product_or_service_request->map(function ($item) {
+                        if ($item->service_id) {
+                            return $item->service?->service_name ?? 'Service';
+                        }
+                        return $item->product?->product_name ?? 'Product';
+                    })->implode(', ');
+                }
+
+                $transactions->push([
+                    'date' => $app->application_date->format('M d, Y'),
+                    'short_date' => $app->application_date->format('m/d'),
+                    'time' => $app->created_at->format('h:i A'),
+                    'datetime' => $app->application_date,
+                    'reference' => $app->deposit->deposit_number ?? 'N/A',
+                    'type' => 'service',
+                    'type_class' => 'service',
+                    'type_label' => 'Deposit Applied',
+                    'short_type' => 'SVC',
+                    'description' => 'Payment from deposit balance',
+                    'items' => $items ?: $app->notes,
+                    'debit' => $app->amount,
+                    'credit' => 0,
+                    'running_balance' => 0,
+                ]);
+            }
+        }
+
+        // Sort by datetime
+        $transactions = $transactions->sortBy('datetime')->values();
+
+        // Calculate running balance
+        // First, calculate opening balance (balance before the period)
+        $depositsBeforePeriod = PatientDeposit::where('patient_id', $patientId)
+            ->where('deposit_date', '<', $dateFrom)
+            ->sum('amount');
+
+        $withdrawalsBeforePeriod = abs(payment::where('patient_id', $patientId)
+            ->where('payment_type', 'ACC_WITHDRAW')
+            ->where('created_at', '<', $dateFrom)
+            ->sum('total'));
+
+        $adjustmentsBeforePeriod = payment::where('patient_id', $patientId)
+            ->where('payment_type', 'ACC_ADJUSTMENT')
+            ->where('created_at', '<', $dateFrom)
+            ->sum('total');
+
+        $applicationsBeforePeriod = \App\Models\Accounting\PatientDepositApplication::whereHas('deposit', function ($q) use ($patientId) {
+            $q->where('patient_id', $patientId);
+        })
+            ->where('application_date', '<', $dateFrom)
+            ->where('status', 'applied')
+            ->sum('amount');
+
+        $openingBalance = $depositsBeforePeriod - $withdrawalsBeforePeriod + $adjustmentsBeforePeriod - $applicationsBeforePeriod;
+
+        // Calculate running balance for each transaction
+        $runningBalance = $openingBalance;
+        $transactions = $transactions->map(function ($tx) use (&$runningBalance) {
+            $runningBalance += $tx['credit'] - $tx['debit'];
+            $tx['running_balance'] = $runningBalance;
+            return $tx;
+        });
+
+        // Calculate summary
+        $periodCredits = $transactions->sum('credit');
+        $periodDebits = $transactions->sum('debit');
+        $closingBalance = $account ? $account->balance : ($openingBalance + $periodCredits - $periodDebits);
+
+        $summary = [
+            'opening_balance' => $openingBalance,
+            'total_deposits' => $transactions->where('type', 'deposit')->sum('credit'),
+            'total_payments' => $transactions->where('type', 'payment')->sum('debit') + $transactions->where('type', 'service')->sum('debit'),
+            'total_withdrawals' => $transactions->whereIn('type', ['withdrawal', 'adjustment'])->sum('debit'),
+            'period_credits' => $periodCredits,
+            'period_debits' => $periodDebits,
+            'closing_balance' => $closingBalance,
+        ];
+
+        // Prepare view data
+        $site = appsettings();
+        $viewData = [
+            'site' => $site,
+            'patientName' => userfullname($patient->user_id),
+            'patientFileNo' => $patient->file_no ?? 'N/A',
+            'patientHmo' => $patient->hmo?->name ?? 'Private / Self-Pay',
+            'patientPhone' => $patient->phone_no ?? 'N/A',
+            'dateFrom' => $dateFrom->format('M d, Y'),
+            'dateTo' => $dateTo->format('M d, Y'),
+            'transactions' => $transactions->toArray(),
+            'summary' => $summary,
+            'showOpeningBalance' => $openingBalance != 0,
+            'preparedBy' => userfullname(Auth::id()),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'statement_a4' => View::make('admin.Accounts.account_statement_a4', $viewData)->render(),
+            'statement_thermal' => View::make('admin.Accounts.account_statement_thermal', $viewData)->render(),
+            'summary' => $summary,
+            'transaction_count' => $transactions->count(),
+        ]);
+    }
+
+    /**
+     * Get deposit type label.
+     */
+    protected function getDepositTypeLabel(string $type): string
+    {
+        return match ($type) {
+            'admission' => 'Admission Deposit',
+            'procedure' => 'Procedure Deposit',
+            'surgery' => 'Surgery Deposit',
+            'investigation' => 'Investigation Deposit',
+            'general' => 'General Advance',
+            'other' => 'Other Deposit',
+            default => ucfirst($type),
+        };
     }
 }

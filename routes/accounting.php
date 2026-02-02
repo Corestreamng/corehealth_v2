@@ -248,6 +248,7 @@ Route::prefix('accounting')->name('accounting.')->middleware(['auth', 'verified'
         Route::get('/search-patients', [PatientDepositController::class, 'searchPatients'])->name('search-patients');
         Route::get('/patient/{patient}/summary', [PatientDepositController::class, 'getPatientSummary'])->name('patient-summary');
         Route::get('/{patientDeposit}', [PatientDepositController::class, 'show'])->name('show');
+        Route::get('/{patientDeposit}/print-receipt', [PatientDepositController::class, 'printReceipt'])->name('print-receipt');
         Route::post('/{patientDeposit}/apply', [PatientDepositController::class, 'apply'])->name('apply');
         Route::post('/{patientDeposit}/refund', [PatientDepositController::class, 'refund'])->name('refund');
         Route::get('/export', [PatientDepositController::class, 'export'])->name('export');

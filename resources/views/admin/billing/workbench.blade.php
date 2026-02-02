@@ -3274,11 +3274,12 @@
                             <label>Payment Type</label>
                             <select class="form-control" id="receipts-payment-type">
                                 <option value="">All Types</option>
-                                <option value="Cash">Cash</option>
-                                <option value="Card">Card</option>
-                                <option value="Transfer">Bank Transfer</option>
-                                <option value="Mobile">Mobile Money</option>
-                                <option value="Account">Account Balance</option>
+                                <option value="CASH">Cash</option>
+                                <option value="POS">POS/Card</option>
+                                <option value="TRANSFER">Bank Transfer</option>
+                                <option value="MOBILE">Mobile Money</option>
+                                <option value="ACCOUNT">Account Balance</option>
+                                <option value="ACC_DEPOSIT">Account Deposit</option>
                             </select>
                         </div>
                         <div class="col-md-3">
@@ -3358,8 +3359,8 @@
                                 </button>
                             </div>
                             <div class="action-btn-group mt-2">
-                                <button class="btn btn-outline-light btn-sm" id="print-statement-btn" title="Print Statement">
-                                    <i class="mdi mdi-printer"></i>
+                                <button class="btn btn-warning btn-sm" id="print-statement-btn" title="Print Account Statement">
+                                    <i class="mdi mdi-file-document-outline"></i> Print Statement
                                 </button>
                                 <button class="btn btn-outline-light btn-sm" id="refresh-account-data" title="Refresh">
                                     <i class="mdi mdi-refresh"></i>
@@ -3682,7 +3683,221 @@
     justify-content: center;
     gap: 0.5rem;
 }
+
+/* Statement Modal Styles */
+.statement-modal-tabs {
+    display: flex;
+    border-bottom: 2px solid #e9ecef;
+    background: #f8f9fa;
+}
+.statement-modal-tab {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    background: transparent;
+    color: #6c757d;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.statement-modal-tab:hover {
+    background: #e9ecef;
+    color: #495057;
+}
+.statement-modal-tab.active {
+    background: #fff;
+    color: #007bff;
+    border-bottom: 3px solid #007bff;
+    margin-bottom: -2px;
+}
+.statement-modal-content {
+    padding: 15px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+.statement-modal-pane {
+    display: none;
+}
+.statement-modal-pane.active {
+    display: block;
+}
+.statement-config-section {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+.statement-config-section h6 {
+    margin-bottom: 15px;
+    color: #495057;
+    font-weight: 600;
+}
+.statement-type-checkbox {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    margin: 5px 0;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+.statement-type-checkbox:hover {
+    background: #e9ecef;
+}
+.statement-type-checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin-right: 10px;
+}
+.statement-type-checkbox label {
+    margin: 0;
+    cursor: pointer;
+    font-weight: 500;
+}
+.statement-type-checkbox .type-icon {
+    margin-left: auto;
+    font-size: 18px;
+}
+.statement-type-checkbox.deposits .type-icon { color: #28a745; }
+.statement-type-checkbox.payments .type-icon { color: #dc3545; }
+.statement-type-checkbox.withdrawals .type-icon { color: #fd7e14; }
+.statement-type-checkbox.services .type-icon { color: #6610f2; }
+.statement-summary-preview {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+    margin-bottom: 15px;
+}
+.statement-summary-preview h5 {
+    margin-bottom: 10px;
+}
+.statement-summary-preview .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+.statement-date-presets {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+.statement-date-presets button {
+    font-size: 11px;
+    padding: 4px 10px;
+}
 </style>
+
+<!-- Account Statement Modal -->
+<div class="modal fade" id="accountStatementModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title"><i class="mdi mdi-file-document-outline"></i> Account Statement</h5>
+                <button type="button" class="close"  data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-0">
+                <!-- Config Panel -->
+                <div id="statement-config-panel" style="display: block;">
+                    <div class="p-3">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <!-- Date Range -->
+                                <div class="statement-config-section">
+                                    <h6><i class="mdi mdi-calendar-range"></i> Date Range</h6>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <label class="small text-muted">From</label>
+                                            <input type="date" id="statement-date-from" class="form-control form-control-sm">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="small text-muted">To</label>
+                                            <input type="date" id="statement-date-to" class="form-control form-control-sm">
+                                        </div>
+                                    </div>
+                                    <div class="statement-date-presets">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" data-preset="7days">Last 7 Days</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" data-preset="30days">Last 30 Days</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" data-preset="thisMonth">This Month</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" data-preset="lastMonth">Last Month</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" data-preset="thisYear">This Year</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" data-preset="all">All Time</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <!-- Transaction Types -->
+                                <div class="statement-config-section">
+                                    <h6><i class="mdi mdi-filter-outline"></i> Include Transaction Types</h6>
+                                    <div class="statement-type-checkbox deposits">
+                                        <input type="checkbox" id="include-deposits" checked>
+                                        <label for="include-deposits">Deposits</label>
+                                        <i class="mdi mdi-arrow-down-bold-circle type-icon"></i>
+                                    </div>
+                                    <div class="statement-type-checkbox payments">
+                                        <input type="checkbox" id="include-payments" checked>
+                                        <label for="include-payments">Direct Payments</label>
+                                        <i class="mdi mdi-credit-card type-icon"></i>
+                                    </div>
+                                    <div class="statement-type-checkbox withdrawals">
+                                        <input type="checkbox" id="include-withdrawals" checked>
+                                        <label for="include-withdrawals">Withdrawals & Adjustments</label>
+                                        <i class="mdi mdi-arrow-up-bold-circle type-icon"></i>
+                                    </div>
+                                    <div class="statement-type-checkbox services">
+                                        <input type="checkbox" id="include-services" checked>
+                                        <label for="include-services">Deposit Applications</label>
+                                        <i class="mdi mdi-application type-icon"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center mt-3">
+                            <button type="button" class="btn btn-warning btn-lg px-5" id="generate-statement-btn">
+                                <i class="mdi mdi-file-document"></i> Generate Statement
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statement Preview Panel -->
+                <div id="statement-preview-panel" style="display: none;">
+                    <div class="statement-modal-tabs">
+                        <button class="statement-modal-tab active" data-format="a4">
+                            <i class="mdi mdi-file-document"></i> A4 Statement
+                        </button>
+                        <button class="statement-modal-tab" data-format="thermal">
+                            <i class="mdi mdi-receipt"></i> Thermal Statement
+                        </button>
+                        <button class="statement-modal-tab" data-format="config">
+                            <i class="mdi mdi-cog"></i> Options
+                        </button>
+                    </div>
+                    <div class="statement-modal-content">
+                        <div class="statement-modal-pane active" id="statement-pane-a4"></div>
+                        <div class="statement-modal-pane" id="statement-pane-thermal"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" id="statement-modal-footer" style="display: none;">
+                <button type="button" class="btn btn-outline-secondary" id="statement-back-btn">
+                    <i class="mdi mdi-arrow-left"></i> Back to Options
+                </button>
+                <button type="button" class="btn btn-primary" id="statement-print-a4">
+                    <i class="mdi mdi-printer"></i> Print A4
+                </button>
+                <button type="button" class="btn btn-info" id="statement-print-thermal">
+                    <i class="mdi mdi-printer"></i> Print Thermal
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fa fa-times"></i> Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Receipt Preview Modal -->
 <div class="modal fade" id="receiptPreviewModal" tabindex="-1" role="dialog" aria-hidden="true">
@@ -3887,6 +4102,14 @@ function initializeEventListeners() {
         const paymentId = $(this).data('id');
         if (paymentId) {
             reprintReceipt([paymentId]);
+        }
+    });
+
+    // Print individual deposit receipt
+    $(document).on('click', '.reprint-deposit-receipt', function() {
+        const depositId = $(this).data('deposit-id');
+        if (depositId) {
+            printDepositReceiptFromList(depositId);
         }
     });
 
@@ -4995,6 +5218,21 @@ function processAccountTransaction() {
             if ($('#receipts-tab').hasClass('active')) {
                 loadPatientReceipts();
             }
+
+            // Show deposit receipt if available
+            if (type === 'deposit' && response.receipt_a4 && response.receipt_thermal) {
+                $('#modal-receipt-a4').html(response.receipt_a4);
+                $('#modal-receipt-thermal').html(response.receipt_thermal);
+
+                // Reset tabs to A4
+                $('.receipt-modal-tab').removeClass('active');
+                $('.receipt-modal-tab[data-format="a4"]').addClass('active');
+                $('#modal-receipt-a4').show();
+                $('#modal-receipt-thermal').hide();
+
+                // Show modal
+                $('#receiptPreviewModal').modal('show');
+            }
         },
         error: function(xhr) {
             toastr.error(xhr.responseJSON?.message || 'Failed to save transaction');
@@ -5082,30 +5320,49 @@ function renderReceipts(receipts) {
 
     receipts.forEach(receipt => {
         // Handle different possible field names from backend
-        const paymentId = receipt.payment_id || receipt.id;
+        const isDeposit = receipt.source === 'deposit';
+        const recordId = receipt.id || (isDeposit ? receipt.deposit_id : receipt.payment_id);
         const referenceNo = receipt.reference_no || receipt.reference_number || 'N/A';
         const dateValue = receipt.created_at || receipt.date || receipt.payment_date;
         const itemCount = receipt.item_count || receipt.items_count || 0;
         const total = parseFloat(receipt.total || 0);
         const discount = parseFloat(receipt.total_discount || receipt.discount || 0);
-        const paymentType = receipt.payment_type || 'N/A';
+        const paymentType = receipt.payment_type_label || receipt.payment_type || 'N/A';
         const cashier = receipt.created_by || receipt.cashier || 'N/A';
 
+        // Badge color based on type
+        let typeBadge = '';
+        if (isDeposit) {
+            typeBadge = `<span class="badge badge-success">${paymentType}</span>`;
+        } else {
+            typeBadge = `<span class="badge badge-primary">${paymentType}</span>`;
+        }
+
+        // Reprint button with proper data attributes
+        const reprintBtn = isDeposit
+            ? `<button class="btn btn-sm btn-success reprint-deposit-receipt" data-deposit-id="${receipt.deposit_id}">
+                   <i class="mdi mdi-printer"></i> Print
+               </button>`
+            : `<button class="btn btn-sm btn-primary reprint-receipt" data-id="${receipt.payment_id}">
+                   <i class="mdi mdi-printer"></i> Reprint
+               </button>`;
+
+        // For deposits, show items as "Deposit" indicator
+        const itemsDisplay = isDeposit
+            ? `<span class="text-success"><i class="mdi mdi-arrow-down"></i> Deposit</span>`
+            : `${itemCount} item(s)`;
+
         const row = `
-            <tr>
-                <td><input type="checkbox" class="receipt-checkbox" data-id="${paymentId}"></td>
+            <tr class="${isDeposit ? 'table-success-light' : ''}">
+                <td><input type="checkbox" class="receipt-checkbox" data-id="${recordId}" data-source="${receipt.source || 'payment'}"></td>
                 <td>${referenceNo}</td>
                 <td>${dateValue}</td>
-                <td>${itemCount} item(s)</td>
+                <td>${itemsDisplay}</td>
                 <td>₦${total.toLocaleString()}</td>
                 <td>₦${discount.toLocaleString()}</td>
-                <td>${paymentType}</td>
+                <td>${typeBadge}</td>
                 <td>${cashier}</td>
-                <td>
-                    <button class="btn btn-sm btn-primary reprint-receipt" data-id="${paymentId}">
-                        <i class="mdi mdi-printer"></i> Reprint
-                    </button>
-                </td>
+                <td>${reprintBtn}</td>
             </tr>
         `;
         tbody.append(row);
@@ -5482,6 +5739,40 @@ function loadPatientReceipts() {
     });
 }
 
+function printDepositReceiptFromList(depositId) {
+    if (!depositId) {
+        toastr.warning('Invalid deposit ID');
+        return;
+    }
+
+    toastr.info('Generating deposit receipt...');
+
+    $.ajax({
+        url: `/billing-workbench/print-deposit-receipt/${depositId}`,
+        method: 'GET',
+        success: function(response) {
+            if (response.receipt_a4 && response.receipt_thermal) {
+                $('#modal-receipt-a4').html(response.receipt_a4);
+                $('#modal-receipt-thermal').html(response.receipt_thermal);
+
+                // Reset tabs to A4
+                $('.receipt-modal-tab').removeClass('active');
+                $('.receipt-modal-tab[data-format="a4"]').addClass('active');
+                $('#modal-receipt-a4').show();
+                $('#modal-receipt-thermal').hide();
+
+                // Show modal
+                $('#receiptPreviewModal').modal('show');
+            } else {
+                toastr.error('Failed to generate deposit receipt');
+            }
+        },
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Failed to generate deposit receipt');
+        }
+    });
+}
+
 function updatePrintSelectedButton() {
     const selected = $('.receipt-checkbox:checked').length;
     $('#print-selected-receipts').prop('disabled', selected === 0);
@@ -5578,6 +5869,216 @@ function printReceiptContent(elementId) {
     setTimeout(() => {
         printWindow.print();
     }, 250);
+}
+
+// ==========================================
+// ACCOUNT STATEMENT FUNCTIONALITY
+// ==========================================
+
+// Store generated statement content
+let generatedStatementA4 = null;
+let generatedStatementThermal = null;
+
+// Print Statement Button Click
+$(document).on('click', '#print-statement-btn', function() {
+    if (!currentPatient) {
+        toastr.warning('Please select a patient first');
+        return;
+    }
+
+    // Reset the modal to config view
+    resetStatementModal();
+
+    // Set default dates (last 30 days)
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+
+    $('#statement-date-to').val(today.toISOString().split('T')[0]);
+    $('#statement-date-from').val(thirtyDaysAgo.toISOString().split('T')[0]);
+
+    // Show modal
+    $('#accountStatementModal').modal('show');
+});
+
+// Reset modal to initial state
+function resetStatementModal() {
+    $('#statement-config-panel').show();
+    $('#statement-preview-panel').hide();
+    $('#statement-modal-footer').hide();
+    generatedStatementA4 = null;
+    generatedStatementThermal = null;
+
+    // Reset checkboxes to checked
+    $('#include-deposits').prop('checked', true);
+    $('#include-payments').prop('checked', true);
+    $('#include-withdrawals').prop('checked', true);
+    $('#include-services').prop('checked', true);
+}
+
+// Date preset buttons
+$(document).on('click', '.statement-date-presets button', function() {
+    const preset = $(this).data('preset');
+    const today = new Date();
+    let fromDate = new Date();
+
+    switch(preset) {
+        case '7days':
+            fromDate.setDate(today.getDate() - 7);
+            break;
+        case '30days':
+            fromDate.setDate(today.getDate() - 30);
+            break;
+        case 'thisMonth':
+            fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
+            break;
+        case 'lastMonth':
+            fromDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+            today.setDate(0); // Last day of previous month
+            break;
+        case 'thisYear':
+            fromDate = new Date(today.getFullYear(), 0, 1);
+            break;
+        case 'all':
+            fromDate = new Date(2000, 0, 1);
+            break;
+    }
+
+    $('#statement-date-from').val(fromDate.toISOString().split('T')[0]);
+    $('#statement-date-to').val(preset === 'lastMonth'
+        ? new Date(today.getFullYear(), today.getMonth(), 0).toISOString().split('T')[0]
+        : new Date().toISOString().split('T')[0]);
+
+    // Highlight active preset
+    $('.statement-date-presets button').removeClass('btn-secondary').addClass('btn-outline-secondary');
+    $(this).removeClass('btn-outline-secondary').addClass('btn-secondary');
+});
+
+// Generate Statement Button
+$(document).on('click', '#generate-statement-btn', function() {
+    if (!currentPatient) {
+        toastr.warning('Please select a patient first');
+        return;
+    }
+
+    const dateFrom = $('#statement-date-from').val();
+    const dateTo = $('#statement-date-to').val();
+
+    if (!dateFrom || !dateTo) {
+        toastr.warning('Please select a date range');
+        return;
+    }
+
+    const $btn = $(this);
+    $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Generating...');
+
+    $.ajax({
+        url: `/billing-workbench/patient/${currentPatient}/generate-statement`,
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            date_from: dateFrom,
+            date_to: dateTo,
+            include_deposits: $('#include-deposits').is(':checked'),
+            include_payments: $('#include-payments').is(':checked'),
+            include_withdrawals: $('#include-withdrawals').is(':checked'),
+            include_services: $('#include-services').is(':checked')
+        },
+        success: function(response) {
+            if (response.success) {
+                // Store generated content
+                generatedStatementA4 = response.statement_a4;
+                generatedStatementThermal = response.statement_thermal;
+
+                // Update preview panes
+                $('#statement-pane-a4').html(response.statement_a4);
+                $('#statement-pane-thermal').html(response.statement_thermal);
+
+                // Switch to preview panel
+                $('#statement-config-panel').hide();
+                $('#statement-preview-panel').show();
+                $('#statement-modal-footer').show();
+
+                // Reset tabs to A4
+                $('.statement-modal-tab').removeClass('active');
+                $('.statement-modal-tab[data-format="a4"]').addClass('active');
+                $('#statement-pane-a4').addClass('active').show();
+                $('#statement-pane-thermal').removeClass('active').hide();
+
+                toastr.success(`Statement generated with ${response.transaction_count} transactions`);
+            } else {
+                toastr.error(response.message || 'Failed to generate statement');
+            }
+        },
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Failed to generate statement');
+        },
+        complete: function() {
+            $btn.prop('disabled', false).html('<i class="mdi mdi-file-document"></i> Generate Statement');
+        }
+    });
+});
+
+// Statement Modal Tab Switching
+$(document).on('click', '.statement-modal-tab', function() {
+    const format = $(this).data('format');
+
+    // Handle config tab
+    if (format === 'config') {
+        $('#statement-config-panel').show();
+        $('#statement-preview-panel').hide();
+        $('#statement-modal-footer').hide();
+        return;
+    }
+
+    $('.statement-modal-tab').removeClass('active');
+    $(this).addClass('active');
+
+    $('.statement-modal-pane').removeClass('active').hide();
+    $(`#statement-pane-${format}`).addClass('active').show();
+});
+
+// Back to Options Button
+$(document).on('click', '#statement-back-btn', function() {
+    $('#statement-config-panel').show();
+    $('#statement-preview-panel').hide();
+    $('#statement-modal-footer').hide();
+});
+
+// Statement Print Buttons
+$(document).on('click', '#statement-print-a4', function() {
+    printStatementContent('statement-pane-a4');
+});
+
+$(document).on('click', '#statement-print-thermal', function() {
+    printStatementContent('statement-pane-thermal');
+});
+
+function printStatementContent(elementId) {
+    const content = $(`#${elementId}`).html();
+    const printWindow = window.open('', '', 'height=700,width=900');
+    printWindow.document.write('<html><head><title>Account Statement</title>');
+    printWindow.document.write('<style>');
+    printWindow.document.write('body { font-family: Arial, sans-serif; padding: 15px; margin: 0; font-size: 12px; }');
+    printWindow.document.write('table { width: 100%; border-collapse: collapse; }');
+    printWindow.document.write('th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #ddd; }');
+    printWindow.document.write('th { background: #f5f5f5; font-weight: bold; }');
+    printWindow.document.write('.text-center { text-align: center; }');
+    printWindow.document.write('.text-right { text-align: right; }');
+    printWindow.document.write('.font-weight-bold { font-weight: bold; }');
+    printWindow.document.write('.summary-card { display: inline-block; padding: 10px; margin: 5px; border: 1px solid #ddd; border-radius: 5px; }');
+    printWindow.document.write('.type-badge { padding: 2px 6px; border-radius: 3px; font-size: 10px; }');
+    printWindow.document.write('.credit { color: #28a745; }');
+    printWindow.document.write('.debit { color: #dc3545; }');
+    printWindow.document.write('@media print { body { padding: 5px; } @page { margin: 0.5cm; } }');
+    printWindow.document.write('</style>');
+    printWindow.document.write('</head><body>');
+    printWindow.document.write(content);
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+        printWindow.print();
+    }, 300);
 }
 
 // Account Tab
@@ -7559,6 +8060,31 @@ function initializeReportsCharts(byStatus, monthlyTrends) {
         }
     });
 }
+
+// ==========================================
+// MODAL CLEANUP - Fix backdrop/body scroll issues
+// ==========================================
+$(document).on('hidden.bs.modal', '.modal', function () {
+    // Remove any lingering backdrops
+    $('.modal-backdrop').remove();
+
+    // Remove modal-open class if no modals are visible
+    if ($('.modal:visible').length === 0) {
+        $('body').removeClass('modal-open');
+        $('body').css({
+            'overflow': '',
+            'padding-right': ''
+        });
+    }
+});
+
+// Ensure body scroll is restored when modal closes
+$('#receiptPreviewModal, #accountStatementModal').on('hidden.bs.modal', function () {
+    $('body').removeClass('modal-open');
+    $('body').css('overflow', '');
+    $('body').css('padding-right', '');
+    $('.modal-backdrop').remove();
+});
 
 </script>
 @endsection

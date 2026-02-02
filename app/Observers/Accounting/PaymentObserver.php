@@ -69,6 +69,17 @@ class PaymentObserver
         try {
             // Route to appropriate handler based on payment type
             if (in_array($payment->payment_type, ['ACC_DEPOSIT', 'ACC_WITHDRAW', 'ACC_ADJUSTMENT'])) {
+                // UNIFIED SYSTEM CHECK: Skip JE if a PatientDeposit was created for this payment
+                // The PatientDepositObserver will create the JE instead
+                if ($payment->payment_type === 'ACC_DEPOSIT') {
+                    $linkedDeposit = \App\Models\Accounting\PatientDeposit::where('source_payment_id', $payment->id)->exists();
+                    if ($linkedDeposit) {
+                        Log::info('PaymentObserver: Skipping JE for ACC_DEPOSIT - PatientDeposit exists', [
+                            'payment_id' => $payment->id,
+                        ]);
+                        return;
+                    }
+                }
                 $this->createPatientAccountJournalEntry($payment);
             } else {
                 $this->createPaymentJournalEntry($payment);
