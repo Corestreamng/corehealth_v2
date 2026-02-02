@@ -228,6 +228,169 @@
             </div>
         </div>
 
+        <!-- Advanced Modules Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h5 class="mb-3"><i class="mdi mdi-briefcase-account mr-2"></i>Advanced Modules</h5>
+            </div>
+            <!-- Bank Reconciliation -->
+            <div class="col-lg-3 col-md-6 mb-3">
+                <a href="{{ route('accounting.bank-reconciliation.index') }}" class="nav-card nav-card-info">
+                    <div class="nav-card-icon">
+                        <i class="mdi mdi-bank-check"></i>
+                    </div>
+                    <div class="nav-card-content">
+                        <h6>Bank Reconciliation</h6>
+                        <p>Match bank statements</p>
+                    </div>
+                    <i class="mdi mdi-chevron-right nav-card-arrow"></i>
+                </a>
+            </div>
+            <!-- Patient Deposits -->
+            <div class="col-lg-3 col-md-6 mb-3">
+                <a href="{{ route('accounting.patient-deposits.index') }}" class="nav-card nav-card-success">
+                    <div class="nav-card-icon">
+                        <i class="mdi mdi-account-cash"></i>
+                    </div>
+                    <div class="nav-card-content">
+                        <h6>Patient Deposits</h6>
+                        <p>Manage prepayments</p>
+                    </div>
+                    <i class="mdi mdi-chevron-right nav-card-arrow"></i>
+                </a>
+            </div>
+            <!-- Fixed Assets -->
+            <div class="col-lg-3 col-md-6 mb-3">
+                <a href="{{ route('accounting.fixed-assets.index') }}" class="nav-card nav-card-primary">
+                    <div class="nav-card-icon">
+                        <i class="mdi mdi-desktop-classic"></i>
+                    </div>
+                    <div class="nav-card-content">
+                        <h6>Fixed Assets</h6>
+                        <p>Asset management & depreciation</p>
+                    </div>
+                    <i class="mdi mdi-chevron-right nav-card-arrow"></i>
+                </a>
+            </div>
+            <!-- Cost Centers -->
+            <div class="col-lg-3 col-md-6 mb-3">
+                <a href="{{ route('accounting.cost-centers.index') }}" class="nav-card nav-card-warning">
+                    <div class="nav-card-icon">
+                        <i class="mdi mdi-domain"></i>
+                    </div>
+                    <div class="nav-card-content">
+                        <h6>Cost Centers</h6>
+                        <p>Departmental tracking</p>
+                    </div>
+                    <i class="mdi mdi-chevron-right nav-card-arrow"></i>
+                </a>
+            </div>
+            <!-- Budgets -->
+            <div class="col-lg-3 col-md-6 mb-3">
+                <a href="{{ route('accounting.budgets.index') }}" class="nav-card nav-card-cyan">
+                    <div class="nav-card-icon">
+                        <i class="mdi mdi-calculator-variant"></i>
+                    </div>
+                    <div class="nav-card-content">
+                        <h6>Budgets</h6>
+                        <p>Budget planning & variance</p>
+                    </div>
+                    <i class="mdi mdi-chevron-right nav-card-arrow"></i>
+                </a>
+            </div>
+            <!-- Cash Flow Forecast -->
+            <div class="col-lg-3 col-md-6 mb-3">
+                <a href="{{ route('accounting.cash-flow-forecast.index') }}" class="nav-card nav-card-purple">
+                    <div class="nav-card-icon">
+                        <i class="mdi mdi-chart-timeline-variant"></i>
+                    </div>
+                    <div class="nav-card-content">
+                        <h6>Cash Flow Forecast</h6>
+                        <p>Liquidity projections</p>
+                    </div>
+                    <i class="mdi mdi-chevron-right nav-card-arrow"></i>
+                </a>
+            </div>
+            <!-- Capital Expenditure -->
+            <div class="col-lg-3 col-md-6 mb-3">
+                <a href="{{ route('accounting.capex.index') }}" class="nav-card nav-card-danger">
+                    <div class="nav-card-icon">
+                        <i class="mdi mdi-factory"></i>
+                    </div>
+                    <div class="nav-card-content">
+                        <h6>Capital Expenditure</h6>
+                        <p>Capex management</p>
+                    </div>
+                    <i class="mdi mdi-chevron-right nav-card-arrow"></i>
+                </a>
+            </div>
+            <!-- Liabilities -->
+            <div class="col-lg-3 col-md-6 mb-3">
+                <a href="{{ route('accounting.liabilities.index') }}" class="nav-card nav-card-secondary">
+                    <div class="nav-card-icon">
+                        <i class="mdi mdi-file-document-outline"></i>
+                    </div>
+                    <div class="nav-card-content">
+                        <h6>Liabilities</h6>
+                        <p>Loans & debt management</p>
+                    </div>
+                    <i class="mdi mdi-chevron-right nav-card-arrow"></i>
+                </a>
+            </div>
+            <!-- Leases (IFRS 16) -->
+            <div class="col-lg-3 col-md-6 mb-3">
+                <a href="{{ route('accounting.leases.index') }}" class="nav-card nav-card-teal">
+                    <div class="nav-card-icon">
+                        <i class="mdi mdi-home-city"></i>
+                    </div>
+                    <div class="nav-card-content">
+                        <h6>Leases (IFRS 16)</h6>
+                        <p>ROU assets & lease liabilities</p>
+                    </div>
+                    <i class="mdi mdi-chevron-right nav-card-arrow"></i>
+                </a>
+            </div>
+            <!-- Petty Cash -->
+            <div class="col-lg-3 col-md-6 mb-3">
+                <a href="{{ route('accounting.petty-cash.index') }}" class="nav-card nav-card-warning">
+                    <div class="nav-card-icon">
+                        <i class="mdi mdi-cash-register"></i>
+                    </div>
+                    <div class="nav-card-content">
+                        <h6>Petty Cash</h6>
+                        <p>Manage petty cash funds</p>
+                    </div>
+                    <i class="mdi mdi-chevron-right nav-card-arrow"></i>
+                </a>
+            </div>
+            <!-- Fund Transfers -->
+            <div class="col-lg-3 col-md-6 mb-3">
+                <a href="{{ route('accounting.transfers.index') }}" class="nav-card nav-card-info">
+                    <div class="nav-card-icon">
+                        <i class="mdi mdi-bank-transfer"></i>
+                    </div>
+                    <div class="nav-card-content">
+                        <h6>Fund Transfers</h6>
+                        <p>Inter-account transfers</p>
+                    </div>
+                    <i class="mdi mdi-chevron-right nav-card-arrow"></i>
+                </a>
+            </div>
+            <!-- Financial KPIs -->
+            <div class="col-lg-3 col-md-6 mb-3">
+                <a href="{{ route('accounting.kpi.dashboard') }}" class="nav-card nav-card-success">
+                    <div class="nav-card-icon">
+                        <i class="mdi mdi-gauge"></i>
+                    </div>
+                    <div class="nav-card-content">
+                        <h6>Financial KPIs</h6>
+                        <p>Key performance indicators</p>
+                    </div>
+                    <i class="mdi mdi-chevron-right nav-card-arrow"></i>
+                </a>
+            </div>
+        </div>
+
         <!-- Stats Cards Row 1 -->
         <div class="row mb-3">
             <div class="col-md-3 col-sm-6">

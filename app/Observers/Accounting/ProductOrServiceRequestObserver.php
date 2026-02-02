@@ -5,6 +5,7 @@ namespace App\Observers\Accounting;
 use App\Models\ProductOrServiceRequest;
 use App\Models\Accounting\Account;
 use App\Models\Accounting\AccountSubAccount;
+use App\Models\Accounting\JournalEntry;
 use App\Services\Accounting\AccountingService;
 use App\Services\Accounting\SubAccountService;
 use Illuminate\Support\Facades\App;
@@ -22,6 +23,9 @@ use Illuminate\Support\Facades\Log;
  * On Validation Approved (HMO patient only):
  * DEBIT:  Accounts Receivable - HMO (1110) + HMO Sub-Account
  * CREDIT: Revenue by service type (4xxx)
+ *
+ * On Validation Rejected (reverses any previous approved entry):
+ * Calls AccountingService::reverseEntry() to create a reversal JE
  *
  * METADATA CAPTURED:
  * - product_id, service_id (the item/service rendered)
@@ -49,7 +53,7 @@ class ProductOrServiceRequestObserver
             return;
         }
 
-        // Only when validation_status changes to approved
+        // When validation_status changes to approved - create revenue entry
         if ($request->isDirty('validation_status') && $request->validation_status === 'approved') {
             try {
                 $this->createHmoRevenueEntry($request);
@@ -60,6 +64,72 @@ class ProductOrServiceRequestObserver
                     'trace' => $e->getTraceAsString()
                 ]);
             }
+        }
+
+        // When validation_status changes to rejected - reverse any existing entry
+        if ($request->isDirty('validation_status') && $request->validation_status === 'rejected') {
+            try {
+                $this->reverseHmoRevenueEntry($request);
+            } catch (\Exception $e) {
+                Log::error('ProductOrServiceRequestObserver: Failed to reverse HMO revenue journal entry', [
+                    'request_id' => $request->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Reverse any existing HMO revenue journal entry when claim is rejected.
+     *
+     * This handles the case where an HMO approves a claim, then later rejects it.
+     * The reversal entry ensures the GL is corrected:
+     * - AR-HMO is credited back (reducing receivable)
+     * - Revenue is debited back (reducing recognized revenue)
+     */
+    protected function reverseHmoRevenueEntry(ProductOrServiceRequest $request): void
+    {
+        // Find existing journal entries for this request
+        $journalEntries = JournalEntry::where('source_type', ProductOrServiceRequest::class)
+            ->where('source_id', $request->id)
+            ->whereIn('status', [JournalEntry::STATUS_POSTED, JournalEntry::STATUS_APPROVED])
+            ->get();
+
+        if ($journalEntries->isEmpty()) {
+            Log::info('ProductOrServiceRequestObserver: No journal entries to reverse for rejected claim', [
+                'request_id' => $request->id
+            ]);
+            return;
+        }
+
+        $accountingService = App::make(AccountingService::class);
+
+        foreach ($journalEntries as $journalEntry) {
+            // Skip if already reversed
+            if (!$journalEntry->canReverse()) {
+                Log::info('ProductOrServiceRequestObserver: Journal entry cannot be reversed', [
+                    'request_id' => $request->id,
+                    'journal_entry_id' => $journalEntry->id,
+                    'status' => $journalEntry->status
+                ]);
+                continue;
+            }
+
+            // Reverse the entry
+            $reversalEntry = $accountingService->reverseEntry(
+                $journalEntry,
+                auth()->id() ?? 1,
+                "HMO Claim Rejected - Reversal | Request #{$request->id} | HMO: {$request->hmo?->name}"
+            );
+
+            Log::info('ProductOrServiceRequestObserver: Journal entry reversed for rejected HMO claim', [
+                'request_id' => $request->id,
+                'original_je_id' => $journalEntry->id,
+                'reversal_je_id' => $reversalEntry->id,
+                'amount' => $request->claims_amount,
+                'hmo_id' => $request->hmo_id
+            ]);
         }
     }
 

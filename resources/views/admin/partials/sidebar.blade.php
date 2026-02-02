@@ -961,6 +961,67 @@
                                 <i class="mdi mdi-bank"></i> Banks
                             </a>
                         </li>
+                        {{-- NEW ACCOUNTING MODULES --}}
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('accounting.petty-cash.*') ? 'active' : '' }}" href="{{ route('accounting.petty-cash.index') }}">
+                                <i class="mdi mdi-cash-register"></i> Petty Cash
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('accounting.transfers.*') ? 'active' : '' }}" href="{{ route('accounting.transfers.index') }}">
+                                <i class="mdi mdi-bank-transfer"></i> Bank Transfers
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('accounting.bank-reconciliation.*') ? 'active' : '' }}" href="{{ route('accounting.bank-reconciliation.index') }}">
+                                <i class="mdi mdi-bank-check"></i> Bank Reconciliation
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('accounting.patient-deposits.*') ? 'active' : '' }}" href="{{ route('accounting.patient-deposits.index') }}">
+                                <i class="mdi mdi-account-cash"></i> Patient Deposits
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('accounting.fixed-assets.*') ? 'active' : '' }}" href="{{ route('accounting.fixed-assets.index') }}">
+                                <i class="mdi mdi-package-variant-closed"></i> Fixed Assets
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('accounting.liabilities.*') ? 'active' : '' }}" href="{{ route('accounting.liabilities.index') }}">
+                                <i class="mdi mdi-credit-card-clock"></i> Liabilities
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('accounting.leases.*') ? 'active' : '' }}" href="{{ route('accounting.leases.index') }}">
+                                <i class="mdi mdi-file-document-edit"></i> Leases (IFRS 16)
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('accounting.cost-centers.*') ? 'active' : '' }}" href="{{ route('accounting.cost-centers.index') }}">
+                                <i class="mdi mdi-sitemap"></i> Cost Centers
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('accounting.capex.*') ? 'active' : '' }}" href="{{ route('accounting.capex.index') }}">
+                                <i class="mdi mdi-office-building"></i> CAPEX Projects
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('accounting.budgets.*') ? 'active' : '' }}" href="{{ route('accounting.budgets.index') }}">
+                                <i class="mdi mdi-calculator-variant"></i> Budgets
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('accounting.cash-flow-forecast.*') ? 'active' : '' }}" href="{{ route('accounting.cash-flow-forecast.index') }}">
+                                <i class="mdi mdi-chart-timeline-variant"></i> Cash Flow Forecast
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('accounting.kpi.*') ? 'active' : '' }}" href="{{ route('accounting.kpi.dashboard') }}">
+                                <i class="mdi mdi-gauge"></i> Financial KPIs
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </li>

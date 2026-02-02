@@ -966,8 +966,24 @@ class PayrollBatchController extends Controller
             return back()->with('error', 'Only approved batches can be marked as paid.');
         }
 
+        // Validate payment source
+        $validated = $request->validate([
+            'comments' => 'nullable|string|max:500',
+            'payment_method' => 'required|in:cash,bank_transfer',
+            'bank_id' => 'required_if:payment_method,bank_transfer|nullable|exists:banks,id',
+        ], [
+            'payment_method.required' => 'Please select the payment source (Cash or Bank).',
+            'bank_id.required_if' => 'Please select a bank for bank transfer payments.',
+        ]);
+
         try {
-            $this->payrollService->markBatchAsPaid($payrollBatch, auth()->user(), $request->comments);
+            $this->payrollService->markBatchAsPaid(
+                $payrollBatch,
+                auth()->user(),
+                $validated['comments'] ?? null,
+                $validated['payment_method'],
+                $validated['bank_id'] ?? null
+            );
 
             if ($request->ajax()) {
                 return response()->json([

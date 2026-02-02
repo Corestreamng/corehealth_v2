@@ -345,6 +345,7 @@ $(document).ready(function() {
     $('#filterPatient').select2({
         placeholder: 'Search patient...',
         allowClear: true,
+        width: '100%',
         ajax: {
             url: '/api/patients/search',
             dataType: 'json',

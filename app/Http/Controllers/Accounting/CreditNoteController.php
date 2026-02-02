@@ -273,9 +273,83 @@ class CreditNoteController extends Controller
         ])->findOrFail($id);
 
         // Get banks for the process refund modal
-        $banks = Bank::where('is_active', true)->orderBy('bank_name')->get();
+        $banks = Bank::where('is_active', true)->orderBy('name')->get();
 
         return view('accounting.credit-notes.show', compact('creditNote', 'banks'));
+    }
+
+    /**
+     * Show edit form for a credit note.
+     * Only draft or rejected credit notes can be edited.
+     */
+    public function edit($id)
+    {
+        $creditNote = CreditNote::with(['patient.user', 'originalPayment'])
+            ->findOrFail($id);
+
+        // Only allow editing of draft status
+        if (!in_array($creditNote->status, [CreditNote::STATUS_DRAFT, CreditNote::STATUS_REJECTED])) {
+            return redirect()
+                ->route('accounting.credit-notes.show', $id)
+                ->with('error', 'Only draft or rejected credit notes can be edited.');
+        }
+
+        return view('accounting.credit-notes.edit', compact('creditNote'));
+    }
+
+    /**
+     * Update a credit note.
+     */
+    public function update(Request $request, $id)
+    {
+        $creditNote = CreditNote::findOrFail($id);
+
+        // Only allow updating of draft status
+        if (!in_array($creditNote->status, [CreditNote::STATUS_DRAFT, CreditNote::STATUS_REJECTED])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only draft or rejected credit notes can be updated.'
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'credit_note_number' => 'required|string|max:50|unique:credit_notes,credit_note_number,' . $id,
+            'date' => 'required|date',
+            'reason_type' => 'required|string|max:50',
+            'reason' => 'required|string|max:1000',
+            'amount' => 'required|numeric|min:0.01',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $creditNote->update([
+                'credit_note_number' => $validated['credit_note_number'],
+                'date' => $validated['date'],
+                'reason_type' => $validated['reason_type'],
+                'reason' => $validated['reason'],
+                'amount' => $validated['amount'],
+            ]);
+
+            // If was rejected, reset to draft
+            if ($creditNote->status === CreditNote::STATUS_REJECTED) {
+                $creditNote->update(['status' => CreditNote::STATUS_DRAFT]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Credit note updated successfully.',
+                'redirect' => route('accounting.credit-notes.show', $creditNote->id)
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update credit note: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

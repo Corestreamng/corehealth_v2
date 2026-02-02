@@ -43,6 +43,7 @@ class BankController extends Controller
                         data-account_name="' . e($bank->account_name) . '"
                         data-bank_code="' . e($bank->bank_code) . '"
                         data-description="' . e($bank->description) . '"
+                        data-account_id="' . ($bank->account_id ?? '') . '"
                         data-is_active="' . ($bank->is_active ? '1' : '0') . '" title="Edit">
                         <i class="mdi mdi-pencil"></i>
                     </button>
@@ -66,6 +67,7 @@ class BankController extends Controller
             'account_name' => 'nullable|string|max:255',
             'bank_code' => 'nullable|string|max:50',
             'description' => 'nullable|string',
+            'account_id' => 'nullable|exists:accounts,id',
         ]);
 
         $validated['is_active'] = $request->has('is_active');
@@ -90,6 +92,7 @@ class BankController extends Controller
             'account_name' => 'nullable|string|max:255',
             'bank_code' => 'nullable|string|max:50',
             'description' => 'nullable|string',
+            'account_id' => 'nullable|exists:accounts,id',
         ]);
 
         $validated['is_active'] = $request->has('is_active');

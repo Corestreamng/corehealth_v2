@@ -41,12 +41,25 @@ class ExpenseObserver
      */
     public function updated(Expense $expense): void
     {
-        // Only create journal entry when expense is approved
+        // Create journal entry when expense is approved
         if ($expense->isDirty('status') && $expense->status === Expense::STATUS_APPROVED) {
             try {
                 $this->createExpenseJournalEntry($expense);
             } catch (\Exception $e) {
                 Log::error('ExpenseObserver: Failed to create journal entry', [
+                    'expense_id' => $expense->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+            }
+        }
+
+        // Reverse journal entry when expense is voided
+        if ($expense->isDirty('status') && $expense->status === Expense::STATUS_VOID) {
+            try {
+                $this->reverseExpenseJournalEntry($expense);
+            } catch (\Exception $e) {
+                Log::error('ExpenseObserver: Failed to reverse journal entry', [
                     'expense_id' => $expense->id,
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString()
@@ -147,6 +160,7 @@ class ExpenseObserver
 
     /**
      * Get credit account code based on payment method.
+     * Uses specific bank's GL account if bank_id is set.
      */
     protected function getCreditAccountCode(Expense $expense): string
     {
@@ -155,7 +169,25 @@ class ExpenseObserver
             return '2100'; // Accounts Payable
         }
 
-        return match ($expense->payment_method) {
+        // If bank_id is set, use that bank's GL account
+        if ($expense->bank_id) {
+            $bank = $expense->bank;
+            if ($bank && $bank->account_id) {
+                $account = Account::find($bank->account_id);
+                if ($account) {
+                    Log::info('ExpenseObserver: Using bank-specific GL account', [
+                        'expense_id' => $expense->id,
+                        'bank_id' => $bank->id,
+                        'bank_name' => $bank->name,
+                        'account_code' => $account->code,
+                    ]);
+                    return $account->code;
+                }
+            }
+        }
+
+        // Fallback to generic account codes
+        return match (strtolower($expense->payment_method ?? 'cash')) {
             'cash' => '1010', // Cash in Hand
             'bank_transfer', 'bank', 'transfer' => '1020', // Bank Account
             'cheque', 'check' => '1020', // Bank Account
@@ -223,5 +255,57 @@ class ExpenseObserver
         }
 
         return strlen($desc) > 255 ? substr($desc, 0, 252) . '...' : $desc;
+    }
+
+    /**
+     * Reverse journal entry when expense is voided.
+     */
+    protected function reverseExpenseJournalEntry(Expense $expense): void
+    {
+        if (!$expense->journal_entry_id) {
+            Log::info('ExpenseObserver: No journal entry to reverse', [
+                'expense_id' => $expense->id,
+            ]);
+            return;
+        }
+
+        $journalEntry = JournalEntry::find($expense->journal_entry_id);
+
+        if (!$journalEntry) {
+            Log::warning('ExpenseObserver: Journal entry not found for reversal', [
+                'expense_id' => $expense->id,
+                'journal_entry_id' => $expense->journal_entry_id,
+            ]);
+            return;
+        }
+
+        if (!$journalEntry->canReverse()) {
+            Log::warning('ExpenseObserver: Journal entry cannot be reversed', [
+                'expense_id' => $expense->id,
+                'journal_entry_id' => $expense->journal_entry_id,
+                'je_status' => $journalEntry->status,
+            ]);
+            return;
+        }
+
+        $accountingService = App::make(AccountingService::class);
+
+        $reason = "Voided expense: " . ($expense->expense_number ?? 'N/A');
+        if ($expense->void_reason) {
+            $reason .= " - Reason: " . $expense->void_reason;
+        }
+
+        $reversalEntry = $accountingService->reverseEntry(
+            $journalEntry,
+            $expense->voided_by ?? auth()->id() ?? 1,
+            $reason
+        );
+
+        Log::info('ExpenseObserver: Journal entry reversed', [
+            'expense_id' => $expense->id,
+            'original_je_id' => $expense->journal_entry_id,
+            'reversal_je_id' => $reversalEntry->id,
+            'void_reason' => $expense->void_reason,
+        ]);
     }
 }

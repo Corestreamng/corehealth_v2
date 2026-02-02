@@ -52,6 +52,7 @@ class Expense extends Model implements Auditable
         'bank_id',
         'cheque_number',
         'notes',
+        'journal_entry_id',
     ];
 
     protected $casts = [
@@ -193,6 +194,14 @@ class Expense extends Model implements Auditable
     public function bank()
     {
         return $this->belongsTo(Bank::class);
+    }
+
+    /**
+     * Get the linked journal entry
+     */
+    public function journalEntry()
+    {
+        return $this->belongsTo(\App\Models\Accounting\JournalEntry::class);
     }
 
     /**

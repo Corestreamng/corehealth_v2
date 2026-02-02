@@ -191,6 +191,7 @@ $(document).ready(function() {
         placeholder: 'Search patient by name or MRN...',
         allowClear: true,
         minimumInputLength: 2,
+        width: '100%',
         ajax: {
             url: '/api/patients/search',
             dataType: 'json',

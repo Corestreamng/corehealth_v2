@@ -365,24 +365,37 @@ class PayrollService
     /**
      * Mark batch as paid - final step in payroll workflow
      * Creates expense with 'pending' status for accountant approval in Expenses module
+     *
+     * @param PayrollBatch $batch The batch to mark as paid
+     * @param User $payer Who is marking it paid
+     * @param string|null $comments Optional payment comments
+     * @param string|null $paymentMethod 'cash' or 'bank_transfer'
+     * @param int|null $bankId Bank ID if payment_method is 'bank_transfer'
      */
-    public function markBatchAsPaid(PayrollBatch $batch, User $payer, ?string $comments = null): PayrollBatch
-    {
+    public function markBatchAsPaid(
+        PayrollBatch $batch,
+        User $payer,
+        ?string $comments = null,
+        ?string $paymentMethod = 'bank_transfer',
+        ?int $bankId = null
+    ): PayrollBatch {
         if ($batch->status !== PayrollBatch::STATUS_APPROVED) {
             throw new \Exception('Cannot mark this batch as paid. It must be in approved status.');
         }
 
-        return DB::transaction(function () use ($batch, $payer, $comments) {
+        return DB::transaction(function () use ($batch, $payer, $comments, $paymentMethod, $bankId) {
             // Create expense record now (at payment time)
-            $expense = $this->createPayrollExpense($batch, $payer);
+            $expense = $this->createPayrollExpense($batch, $payer, $paymentMethod, $bankId);
 
-            // Update batch status
+            // Update batch status with payment tracking
             $batch->update([
                 'status' => PayrollBatch::STATUS_PAID,
                 'paid_by' => $payer->id,
                 'paid_at' => now(),
                 'payment_comments' => $comments,
                 'expense_id' => $expense->id,
+                'payment_method' => $paymentMethod,
+                'bank_id' => $paymentMethod === 'bank_transfer' ? $bankId : null,
             ]);
 
             return $batch->fresh();
@@ -393,15 +406,20 @@ class PayrollService
      * Create expense record for paid payroll
      * Status is 'pending' so accountant can approve in Expenses module
      */
-    protected function createPayrollExpense(PayrollBatch $batch, User $payer): Expense
-    {
+    protected function createPayrollExpense(
+        PayrollBatch $batch,
+        User $payer,
+        ?string $paymentMethod = 'bank_transfer',
+        ?int $bankId = null
+    ): Expense {
         return Expense::create([
             'title' => "Payroll - {$batch->name}",
             'description' => "Payroll batch {$batch->batch_number} for period {$batch->pay_period_start->format('M d')} - {$batch->pay_period_end->format('M d, Y')}. Total staff: {$batch->total_staff}.",
             'amount' => $batch->total_net,
             'category' => 'salaries',
             'expense_date' => $batch->payment_date ?? now(),
-            'payment_method' => 'bank_transfer',
+            'payment_method' => $paymentMethod ?? 'bank_transfer',
+            'bank_id' => $paymentMethod === 'bank_transfer' ? $bankId : null,
             'status' => 'pending', // Pending for accountant approval
             'payee_type' => 'payroll_batch',
             'payee_name' => "Payroll Batch #{$batch->batch_number}",
