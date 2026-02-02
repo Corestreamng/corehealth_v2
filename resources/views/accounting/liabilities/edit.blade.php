@@ -26,7 +26,7 @@
                     @method('PUT')
 
                     <!-- Creditor Information -->
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-header">
                             <h5 class="mb-0"><i class="mdi mdi-account-tie mr-2"></i>Creditor Information</h5>
                         </div>
@@ -62,7 +62,7 @@
                     </div>
 
                     <!-- Interest Rate -->
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-header">
                             <h5 class="mb-0"><i class="mdi mdi-percent mr-2"></i>Interest Rate</h5>
                         </div>
@@ -85,7 +85,7 @@
                     </div>
 
                     <!-- Collateral -->
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-header">
                             <h5 class="mb-0"><i class="mdi mdi-shield-check mr-2"></i>Collateral</h5>
                         </div>
@@ -120,7 +120,7 @@
                     </div>
 
                     <!-- Notes -->
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-header">
                             <h5 class="mb-0"><i class="mdi mdi-note-text mr-2"></i>Notes</h5>
                         </div>

@@ -213,7 +213,7 @@
                         </label>
                         <div class="row">
                             <div class="col-md-4">
-                                <div class="card selection-mode-card active" data-mode="all" style="cursor: pointer; border-radius: 8px; border: 2px solid var(--primary-color);">
+                                <div class="card-modern selection-mode-card active" data-mode="all" style="cursor: pointer; border-radius: 8px; border: 2px solid var(--primary-color);">
                                     <div class="card-body py-3 text-center">
                                         <i class="mdi mdi-account-group text-primary" style="font-size: 2rem;"></i>
                                         <h6 class="mb-1 mt-2">All Staff</h6>
@@ -222,7 +222,7 @@
                                 </div>
                             </div>
                             <div class="col-md-4">
-                                <div class="card selection-mode-card" data-mode="department" style="cursor: pointer; border-radius: 8px; border: 2px solid #dee2e6;">
+                                <div class="card-modern selection-mode-card" data-mode="department" style="cursor: pointer; border-radius: 8px; border: 2px solid #dee2e6;">
                                     <div class="card-body py-3 text-center">
                                         <i class="mdi mdi-office-building text-info" style="font-size: 2rem;"></i>
                                         <h6 class="mb-1 mt-2">By Department</h6>
@@ -231,7 +231,7 @@
                                 </div>
                             </div>
                             <div class="col-md-4">
-                                <div class="card selection-mode-card" data-mode="custom" style="cursor: pointer; border-radius: 8px; border: 2px solid #dee2e6;">
+                                <div class="card-modern selection-mode-card" data-mode="custom" style="cursor: pointer; border-radius: 8px; border: 2px solid #dee2e6;">
                                     <div class="card-body py-3 text-center">
                                         <i class="mdi mdi-account-search text-warning" style="font-size: 2rem;"></i>
                                         <h6 class="mb-1 mt-2">Custom Selection</h6>
@@ -399,7 +399,7 @@
                     <!-- Left Column: Batch Info & Timeline -->
                     <div class="col-lg-5">
                         <!-- Batch Summary Card -->
-                        <div class="card mb-3" style="border-radius: 10px; border: 1px solid #e9ecef;">
+                        <div class="card-modern mb-3" style="border-radius: 10px; border: 1px solid #e9ecef;">
                             <div class="card-header bg-light" style="border-radius: 10px 10px 0 0; padding: 0.75rem 1rem;">
                                 <h6 class="mb-0" style="font-weight: 600;">
                                     <i class="mdi mdi-information-outline mr-1"></i> Batch Information
@@ -415,7 +415,7 @@
                         </div>
 
                         <!-- Financials Card -->
-                        <div class="card mb-3" style="border-radius: 10px; border: 1px solid #e9ecef;">
+                        <div class="card-modern mb-3" style="border-radius: 10px; border: 1px solid #e9ecef;">
                             <div class="card-header bg-light" style="border-radius: 10px 10px 0 0; padding: 0.75rem 1rem;">
                                 <h6 class="mb-0" style="font-weight: 600;">
                                     <i class="mdi mdi-currency-ngn mr-1"></i> Financial Summary
@@ -441,7 +441,7 @@
                         </div>
 
                         <!-- Workflow Timeline -->
-                        <div class="card" style="border-radius: 10px; border: 1px solid #e9ecef;">
+                        <div class="card-modern" style="border-radius: 10px; border: 1px solid #e9ecef;">
                             <div class="card-header bg-light" style="border-radius: 10px 10px 0 0; padding: 0.75rem 1rem;">
                                 <h6 class="mb-0" style="font-weight: 600;">
                                     <i class="mdi mdi-timeline-text-outline mr-1"></i> Workflow Timeline
@@ -457,7 +457,7 @@
 
                     <!-- Right Column: Payroll Items -->
                     <div class="col-lg-7">
-                        <div class="card" style="border-radius: 10px; border: 1px solid #e9ecef;">
+                        <div class="card-modern" style="border-radius: 10px; border: 1px solid #e9ecef;">
                             <div class="card-header bg-light d-flex justify-content-between align-items-center" style="border-radius: 10px 10px 0 0; padding: 0.75rem 1rem;">
                                 <h6 class="mb-0" style="font-weight: 600;">
                                     <i class="mdi mdi-account-group mr-1"></i> Payroll Items
@@ -490,7 +490,7 @@
                         </div>
 
                         <!-- Expense Link (if applicable) -->
-                        <div id="expenseInfoCard" class="card mt-3" style="border-radius: 10px; border: 1px solid #e9ecef; display: none;">
+                        <div id="expenseInfoCard" class="card-modern mt-3" style="border-radius: 10px; border: 1px solid #e9ecef; display: none;">
                             <div class="card-body py-2 px-3">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
@@ -641,7 +641,7 @@
 
                     <!-- Payment Source Section (shown only for mark-paid) -->
                     <div id="paymentSourceSection" style="display: none;">
-                        <div class="card bg-light mb-3">
+                        <div class="card-modern bg-light mb-3">
                             <div class="card-body py-3">
                                 <h6 class="mb-3"><i class="mdi mdi-cash-multiple mr-2"></i>Payment Source <span class="text-danger">*</span></h6>
 

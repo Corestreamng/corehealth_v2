@@ -27,7 +27,7 @@
     {{-- Stat Cards Row --}}
     <div class="row mb-4">
         <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card card-modern h-100">
+            <div class="card-modern h-100">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -42,7 +42,7 @@
             </div>
         </div>
         <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card card-modern h-100">
+            <div class="card-modern h-100">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -58,7 +58,7 @@
             </div>
         </div>
         <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card card-modern h-100">
+            <div class="card-modern h-100">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -74,7 +74,7 @@
             </div>
         </div>
         <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card card-modern h-100">
+            <div class="card-modern h-100">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -92,7 +92,7 @@
     </div>
 
     {{-- Filters Card --}}
-    <div class="card card-modern mb-4">
+    <div class="card-modern mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0"><i class="mdi mdi-filter-variant mr-2"></i>Filters</h5>
             <button type="button" class="btn btn-sm btn-outline-secondary" id="btnClearFilters">
@@ -138,7 +138,7 @@
     </div>
 
     {{-- Bulk Actions Bar (hidden by default) --}}
-    <div class="card card-modern mb-4" id="bulkActionsBar" style="display: none;">
+    <div class="card-modern mb-4" id="bulkActionsBar" style="display: none;">
         <div class="card-body py-2">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
@@ -156,7 +156,7 @@
     </div>
 
     {{-- Credit Notes DataTable --}}
-    <div class="card card-modern">
+    <div class="card-modern card-modern">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0"><i class="mdi mdi-file-document-outline mr-2"></i>Credit Notes List</h5>
             <div>

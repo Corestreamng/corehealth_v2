@@ -23,7 +23,7 @@
 
     <div class="row">
         <div class="col-lg-8">
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-header bg-white">
                     <h5 class="mb-0"><i class="mdi mdi-form-textbox mr-2"></i>Remittance Details</h5>
                 </div>
@@ -190,7 +190,7 @@
 
         <div class="col-lg-4">
             <!-- Help Card -->
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-header bg-info text-white">
                     <h6 class="mb-0"><i class="mdi mdi-information mr-2"></i>Help</h6>
                 </div>
@@ -228,7 +228,7 @@
 
             @if(isset($remittance))
             <!-- Status Card -->
-            <div class="card mt-3">
+            <div class="card-modern mt-3">
                 <div class="card-header bg-white">
                     <h6 class="mb-0"><i class="mdi mdi-information-outline mr-2"></i>Status Information</h6>
                 </div>

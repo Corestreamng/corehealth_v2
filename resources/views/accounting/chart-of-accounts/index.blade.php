@@ -30,7 +30,7 @@
     {{-- Stat Cards Row --}}
     <div class="row mb-4">
         <div class="col-md-2 col-sm-4 mb-3">
-            <div class="card card-modern h-100">
+            <div modern card-modern h-100">
                 <div class="card-body text-center">
                     <h3 class="mb-1 text-primary">{{ number_format($stats['total_accounts']) }}</h3>
                     <small class="text-muted">Total Accounts</small>
@@ -38,7 +38,7 @@
             </div>
         </div>
         <div class="col-md-2 col-sm-4 mb-3">
-            <div class="card card-modern h-100">
+            <div modern card-modern h-100">
                 <div class="card-body text-center">
                     <h3 class="mb-1 text-success">{{ number_format($stats['active_accounts']) }}</h3>
                     <small class="text-muted">Active</small>
@@ -46,7 +46,7 @@
             </div>
         </div>
         <div class="col-md-2 col-sm-4 mb-3">
-            <div class="card card-modern h-100">
+            <div modern card-modern h-100">
                 <div class="card-body text-center">
                     <h3 class="mb-1 text-secondary">{{ number_format($stats['inactive_accounts']) }}</h3>
                     <small class="text-muted">Inactive</small>
@@ -54,7 +54,7 @@
             </div>
         </div>
         <div class="col-md-2 col-sm-4 mb-3">
-            <div class="card card-modern h-100">
+            <div modern card-modern h-100">
                 <div class="card-body text-center">
                     <h3 class="mb-1 text-info">{{ number_format($stats['bank_accounts']) }}</h3>
                     <small class="text-muted">Bank Accounts</small>
@@ -62,7 +62,7 @@
             </div>
         </div>
         <div class="col-md-2 col-sm-4 mb-3">
-            <div class="card card-modern h-100">
+            <div modern card-modern h-100">
                 <div class="card-body text-center">
                     <h3 class="mb-1 text-warning">{{ number_format($stats['total_classes']) }}</h3>
                     <small class="text-muted">Classes</small>
@@ -70,7 +70,7 @@
             </div>
         </div>
         <div class="col-md-2 col-sm-4 mb-3">
-            <div class="card card-modern h-100">
+            <div modern card-modern h-100">
                 <div class="card-body text-center">
                     <h3 class="mb-1 text-dark">{{ number_format($stats['total_groups']) }}</h3>
                     <small class="text-muted">Groups</small>
@@ -97,7 +97,7 @@
         {{-- Tree View Tab --}}
         <div class="tab-pane fade show active" id="treeView" role="tabpanel">
             {{-- Search Box for Tree View --}}
-            <div class="card card-modern mb-4">
+            <div modern card-modern mb-4">
                 <div class="card-body py-2">
                     <div class="row align-items-center">
                         <div class="col-md-6">
@@ -123,7 +123,7 @@
             {{-- Account Classes Accordion --}}
             <div class="accordion" id="chartAccordion">
                 @foreach($classes as $class)
-                    <div class="card card-modern mb-2 account-class-card" data-class="{{ strtolower($class->name) }}">
+                    <div modern card-modern mb-2 account-class-card" data-class="{{ strtolower($class->name) }}">
                         <div class="card-header py-2 d-flex justify-content-between align-items-center"
                              id="heading{{ $class->id }}" data-bs-toggle="collapse" data-bs-target="#collapse{{ $class->id }}"
                              style="cursor: pointer;">
@@ -142,7 +142,7 @@
                                 @endif
 
                                 @forelse($class->groups as $group)
-                                    <div class="card mb-3 account-group-card" data-group="{{ strtolower($group->name) }}">
+                                    <div modern mb-3 account-group-card" data-group="{{ strtolower($group->name) }}">
                                         <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center"
                                              data-bs-toggle="collapse" data-bs-target="#group{{ $group->id }}" style="cursor: pointer;">
                                             <div>
@@ -265,7 +265,7 @@
             </div>
 
             @if($classes->isEmpty())
-                <div class="card card-modern">
+                <div modern card-modern">
                     <div class="card-body text-center py-5">
                         <i class="mdi mdi-file-tree mdi-48px text-muted mb-3"></i>
                         <h5>No Chart of Accounts Set Up</h5>
@@ -283,7 +283,7 @@
         {{-- Table View Tab --}}
         <div class="tab-pane fade" id="tableView" role="tabpanel">
             {{-- Filters for Table View --}}
-            <div class="card card-modern mb-4">
+            <div modern card-modern mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="mdi mdi-filter-variant mr-2"></i>Filters</h5>
                     <button type="button" class="btn btn-sm btn-outline-secondary" id="btnClearTableFilters">
@@ -335,7 +335,7 @@
             </div>
 
             {{-- DataTable --}}
-            <div class="card card-modern">
+            <div modern card-modern">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="mdi mdi-format-list-bulleted mr-2"></i>All Accounts</h5>
                     <button type="button" class="btn btn-sm btn-outline-primary" id="btnExportAccounts">

@@ -15,7 +15,7 @@
         <div class="row justify-content-center">
             <div class="col-lg-8">
                 <!-- Fund Info Card -->
-                <div class="card card-modern mb-4">
+                <div class="card-modern mb-4">
                     <div class="card-body py-3">
                         <div class="row align-items-center">
                             <div class="col-md-4">
@@ -45,7 +45,7 @@
                     </div>
                 </div>
 
-                <div class="card card-modern">
+                <div class="card-modern card-modern">
                     <div class="card-header bg-white">
                         <h5 class="mb-0"><i class="mdi mdi-cash-plus mr-2 text-success"></i>Replenish Fund</h5>
                     </div>
@@ -77,7 +77,7 @@
                             </div>
 
                             <!-- Payment Source Selection -->
-                            <div class="card bg-light mb-4">
+                            <div class="card-modern bg-light mb-4">
                                 <div class="card-body">
                                     <h6 class="mb-3"><i class="mdi mdi-cash-multiple mr-2"></i>Replenishment Source <span class="text-danger">*</span></h6>
 
@@ -131,7 +131,7 @@
                             </div>
 
                             <!-- Summary -->
-                            <div class="card bg-light mb-4">
+                            <div class="card-modern bg-light mb-4">
                                 <div class="card-body">
                                     <h6 class="mb-3"><i class="mdi mdi-calculator mr-2"></i>Summary</h6>
                                     <div class="row">

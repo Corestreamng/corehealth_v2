@@ -16,7 +16,7 @@
         <div class="row justify-content-center">
             <div class="col-lg-8">
                 <!-- Liability Summary -->
-                <div class="card card-modern mb-4">
+                <div class="card-modern mb-4">
                     <div class="card-header bg-info text-white">
                         <h5 class="mb-0">
                             <i class="mdi mdi-information mr-2"></i>{{ $liability->liability_number }} - {{ $liability->creditor_name }}
@@ -55,7 +55,7 @@
                 @endif
 
                 <!-- Payment Form -->
-                <div class="card card-modern">
+                <div class="card-modern card-modern">
                     <div class="card-header">
                         <h5 class="mb-0"><i class="mdi mdi-cash-plus mr-2"></i>Record Payment</h5>
                     </div>
@@ -154,7 +154,7 @@
                             </div>
 
                             <!-- Preview -->
-                            <div class="card bg-light mb-3">
+                            <div class="card-modern bg-light mb-3">
                                 <div class="card-body">
                                     <h6 class="mb-3"><i class="mdi mdi-eye mr-1"></i> Payment Preview</h6>
                                     <div class="row">

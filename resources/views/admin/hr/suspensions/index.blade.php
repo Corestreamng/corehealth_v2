@@ -264,7 +264,7 @@
                     <!-- Left Column: Info & Timeline -->
                     <div class="col-lg-5">
                         <!-- Employee Summary Card -->
-                        <div class="card mb-3" style="border-radius: 10px; border: 1px solid #e9ecef;">
+                        <div class="card-modern mb-3" style="border-radius: 10px; border: 1px solid #e9ecef;">
                             <div class="card-header bg-light" style="border-radius: 10px 10px 0 0; padding: 0.75rem 1rem;">
                                 <h6 class="mb-0" style="font-weight: 600;">
                                     <i class="mdi mdi-account mr-1"></i> Employee Information
@@ -280,7 +280,7 @@
                         </div>
 
                         <!-- Suspension Timeline -->
-                        <div class="card" style="border-radius: 10px; border: 1px solid #e9ecef;">
+                        <div class="card-modern" style="border-radius: 10px; border: 1px solid #e9ecef;">
                             <div class="card-header bg-light" style="border-radius: 10px 10px 0 0; padding: 0.75rem 1rem;">
                                 <h6 class="mb-0" style="font-weight: 600;">
                                     <i class="mdi mdi-timeline-text-outline mr-1"></i> Suspension Timeline
@@ -297,7 +297,7 @@
                     <!-- Right Column: Details -->
                     <div class="col-lg-7">
                         <!-- Suspension Type Card -->
-                        <div id="suspensionTypeCard" class="card mb-3" style="border-radius: 10px; border: 1px solid #e9ecef;">
+                        <div id="suspensionTypeCard" class="card-modern mb-3" style="border-radius: 10px; border: 1px solid #e9ecef;">
                             <div class="card-header" id="suspensionTypeHeader" style="border-radius: 10px 10px 0 0; padding: 0.75rem 1rem; background-color: #dc3545; color: white;">
                                 <h6 class="mb-0" style="font-weight: 600;">
                                     <i class="mdi mdi-file-document-outline mr-1"></i> Suspension Details
@@ -329,7 +329,7 @@
                         </div>
 
                         <!-- Login Message Card -->
-                        <div id="loginMessageCard" class="card mb-3" style="border-radius: 10px; border: 1px solid #ffc107; display: none;">
+                        <div id="loginMessageCard" class="card-modern mb-3" style="border-radius: 10px; border: 1px solid #ffc107; display: none;">
                             <div class="card-header bg-warning text-dark" style="border-radius: 10px 10px 0 0; padding: 0.75rem 1rem;">
                                 <h6 class="mb-0" style="font-weight: 600;">
                                     <i class="mdi mdi-message-alert mr-1"></i> Login Block Message
@@ -342,7 +342,7 @@
                         </div>
 
                         <!-- Lifted Card -->
-                        <div id="liftedCard" class="card mb-3" style="border-radius: 10px; border: 1px solid #28a745; display: none;">
+                        <div id="liftedCard" class="card-modern mb-3" style="border-radius: 10px; border: 1px solid #28a745; display: none;">
                             <div class="card-header bg-success text-white" style="border-radius: 10px 10px 0 0; padding: 0.75rem 1rem;">
                                 <h6 class="mb-0" style="font-weight: 600;">
                                     <i class="mdi mdi-lock-open mr-1"></i> Suspension Lifted
@@ -354,7 +354,7 @@
                         </div>
 
                         <!-- Related Query Card -->
-                        <div id="relatedQueryCard" class="card" style="border-radius: 10px; border: 1px solid #e9ecef; display: none;">
+                        <div id="relatedQueryCard" class="card-modern" style="border-radius: 10px; border: 1px solid #e9ecef; display: none;">
                             <div class="card-header bg-light" style="border-radius: 10px 10px 0 0; padding: 0.75rem 1rem;">
                                 <h6 class="mb-0" style="font-weight: 600;">
                                     <i class="mdi mdi-link mr-1"></i> Related Disciplinary Query

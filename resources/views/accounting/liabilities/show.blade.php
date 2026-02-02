@@ -15,7 +15,7 @@
         <div class="row">
             <div class="col-lg-8">
                 <!-- Main Info Card -->
-                <div class="card card-modern mb-4">
+                <div class="card-modern mb-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <div>
                             <h5 class="mb-0">
@@ -160,7 +160,7 @@
                 </div>
 
                 <!-- Payment Schedule -->
-                <div class="card card-modern">
+                <div class="card-modern card-modern">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0"><i class="mdi mdi-calendar-text mr-2"></i>Payment Schedule</h5>
                         <a href="{{ route('accounting.liabilities.schedule', $liability->id) }}" class="btn btn-outline-primary btn-sm">
@@ -228,7 +228,7 @@
             <!-- Sidebar -->
             <div class="col-lg-4">
                 <!-- Summary Card -->
-                <div class="card card-modern mb-4">
+                <div class="card-modern mb-4">
                     <div class="card-header bg-primary text-white">
                         <h5 class="mb-0"><i class="mdi mdi-chart-donut mr-2"></i>Payment Summary</h5>
                     </div>
@@ -276,7 +276,7 @@
                 </div>
 
                 <!-- Accounting Info -->
-                <div class="card card-modern mb-4">
+                <div class="card-modern mb-4">
                     <div class="card-header">
                         <h5 class="mb-0"><i class="mdi mdi-book-open mr-2"></i>Accounting</h5>
                     </div>
@@ -290,7 +290,7 @@
                 </div>
 
                 <!-- Quick Actions -->
-                <div class="card card-modern">
+                <div class="card-modern card-modern">
                     <div class="card-header">
                         <h5 class="mb-0"><i class="mdi mdi-lightning-bolt mr-2"></i>Quick Actions</h5>
                     </div>

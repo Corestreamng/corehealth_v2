@@ -16,7 +16,7 @@
             <!-- Main Content -->
             <div class="col-lg-8">
                 <!-- Header -->
-                <div class="card card-modern mb-4">
+                <div class="card-modern mb-4">
                     <div class="card-body">
                         <div class="row align-items-center">
                             <div class="col-md-8">
@@ -64,7 +64,7 @@
                 </div>
 
                 <!-- Trend Chart -->
-                <div class="card card-modern mb-4">
+                <div class="card-modern mb-4">
                     <div class="card-header">
                         <h5 class="mb-0"><i class="mdi mdi-chart-line mr-2"></i>Historical Trend</h5>
                     </div>
@@ -83,7 +83,7 @@
                 </div>
 
                 <!-- History Table -->
-                <div class="card card-modern">
+                <div class="card-modern card-modern">
                     <div class="card-header">
                         <h5 class="mb-0"><i class="mdi mdi-history mr-2"></i>Value History</h5>
                     </div>
@@ -162,7 +162,7 @@
             <!-- Sidebar -->
             <div class="col-lg-4">
                 <!-- KPI Details -->
-                <div class="card card-modern mb-4">
+                <div class="card-modern mb-4">
                     <div class="card-header">
                         <h5 class="mb-0"><i class="mdi mdi-information mr-2"></i>KPI Details</h5>
                     </div>
@@ -234,7 +234,7 @@
                 </div>
 
                 <!-- Thresholds -->
-                <div class="card card-modern mb-4">
+                <div class="card-modern mb-4">
                     <div class="card-header">
                         <h5 class="mb-0"><i class="mdi mdi-alert-circle mr-2"></i>Thresholds</h5>
                     </div>
@@ -266,7 +266,7 @@
 
                 <!-- Statistics -->
                 @if($statistics)
-                <div class="card card-modern mb-4">
+                <div class="card-modern mb-4">
                     <div class="card-header">
                         <h5 class="mb-0"><i class="mdi mdi-chart-box mr-2"></i>Statistics</h5>
                     </div>
@@ -294,7 +294,7 @@
                 @endif
 
                 <!-- Actions -->
-                <div class="card card-modern">
+                <div class="card-modern card-modern">
                     <div class="card-body">
                         <button type="button" class="btn btn-success btn-block mb-2" id="calculateBtn">
                             <i class="mdi mdi-calculator"></i> Calculate Now

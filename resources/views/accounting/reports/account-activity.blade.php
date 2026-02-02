@@ -41,7 +41,7 @@
     </div>
 
     <!-- Filters -->
-    <div class="card shadow mb-4">
+    <div class="card-modern shadow mb-4">
         <div class="card-body">
             <form method="GET" action="{{ route('accounting.reports.account-activity') }}" class="row g-3">
                 <div class="col-md-4">
@@ -80,7 +80,7 @@
     </div>
 
     <!-- Report -->
-    <div class="card shadow">
+    <div class="card-modern shadow">
         <div class="card-header py-3 text-center bg-white">
             <h4 class="mb-1">{{ config('app.name', 'CoreHealth') }}</h4>
             <h5 class="mb-1">Account Activity Report</h5>
@@ -175,7 +175,7 @@
                     <!-- Summary Stats -->
                     <div class="row mt-4">
                         <div class="col-md-3">
-                            <div class="card border-primary">
+                            <div class="card-modern border-primary">
                                 <div class="card-body text-center">
                                     <small class="text-muted d-block">Opening Balance</small>
                                     <h5 class="mb-0">₦{{ number_format($activity['opening_balance'] ?? 0, 2) }}</h5>
@@ -183,7 +183,7 @@
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="card border-success">
+                            <div class="card-modern border-success">
                                 <div class="card-body text-center">
                                     <small class="text-muted d-block">Total Debits</small>
                                     <h5 class="mb-0 text-success">₦{{ number_format($activity['total_debit'] ?? 0, 2) }}</h5>
@@ -191,7 +191,7 @@
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="card border-danger">
+                            <div class="card-modern border-danger">
                                 <div class="card-body text-center">
                                     <small class="text-muted d-block">Total Credits</small>
                                     <h5 class="mb-0 text-danger">₦{{ number_format($activity['total_credit'] ?? 0, 2) }}</h5>
@@ -199,7 +199,7 @@
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="card border-dark">
+                            <div class="card-modern border-dark">
                                 <div class="card-body text-center">
                                     <small class="text-muted d-block">Closing Balance</small>
                                     <h5 class="mb-0">₦{{ number_format($activity['closing_balance'] ?? 0, 2) }}</h5>

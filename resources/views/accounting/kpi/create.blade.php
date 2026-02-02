@@ -19,7 +19,7 @@
                 <!-- Main Form -->
                 <div class="col-lg-8">
                     <!-- Basic Information -->
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-header">
                             <h5 class="mb-0"><i class="mdi mdi-information mr-2"></i>Basic Information</h5>
                         </div>
@@ -98,7 +98,7 @@
                     </div>
 
                     <!-- Formula Configuration -->
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-header">
                             <h5 class="mb-0"><i class="mdi mdi-function mr-2"></i>Formula Configuration</h5>
                         </div>
@@ -153,7 +153,7 @@
                     </div>
 
                     <!-- Threshold Configuration -->
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-header">
                             <h5 class="mb-0"><i class="mdi mdi-alert-circle mr-2"></i>Threshold Configuration</h5>
                         </div>
@@ -217,7 +217,7 @@
                 <!-- Sidebar -->
                 <div class="col-lg-4">
                     <!-- Display Settings -->
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-header">
                             <h5 class="mb-0"><i class="mdi mdi-palette mr-2"></i>Display Settings</h5>
                         </div>
@@ -256,7 +256,7 @@
                     </div>
 
                     <!-- Common KPIs Reference -->
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-header">
                             <h5 class="mb-0"><i class="mdi mdi-lightbulb mr-2"></i>Quick Templates</h5>
                         </div>
@@ -307,7 +307,7 @@
                     </div>
 
                     <!-- Actions -->
-                    <div class="card card-modern">
+                    <div class="card-modern card-modern">
                         <div class="card-body">
                             <button type="submit" class="btn btn-success btn-block mb-2">
                                 <i class="mdi mdi-check"></i> Create KPI

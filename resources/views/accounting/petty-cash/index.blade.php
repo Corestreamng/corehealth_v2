@@ -133,7 +133,7 @@
         </div>
 
         <!-- Recent Transactions -->
-        <div class="card card-modern">
+        <div class="card-modern card-modern">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="mdi mdi-history mr-2"></i>Recent Transactions</h5>
                 <div class="btn-group">
@@ -214,7 +214,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Reject Transaction</h5>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
             </div>
             <form id="rejectForm">
                 <div class="modal-body">
@@ -225,7 +225,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-danger">Reject Transaction</button>
                 </div>
             </form>

@@ -118,7 +118,7 @@
     @if($stats['budget_data']['total_budget'] > 0)
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-body">
                     <h6 class="mb-3">Budget Utilization</h6>
                     @php
@@ -209,7 +209,7 @@
                 </div>
             </div>
 
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-body">
                     <table id="cost-centers-table" class="table table-striped table-bordered w-100">
                         <thead>
@@ -231,7 +231,7 @@
         <!-- Sidebar -->
         <div class="col-lg-4">
             <!-- Top Centers by Expense -->
-            <div class="card mb-4">
+            <div class="card-modern mb-4">
                 <div class="card-header">
                     <h6 class="mb-0"><i class="mdi mdi-trending-up mr-2"></i>Top Centers by YTD Expense</h6>
                 </div>
@@ -253,7 +253,7 @@
             </div>
 
             <!-- By Type -->
-            <div class="card">
+            <div class="card-modern">
                 <div class="card-header">
                     <h6 class="mb-0"><i class="mdi mdi-chart-pie mr-2"></i>Centers by Type</h6>
                 </div>

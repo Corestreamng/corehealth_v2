@@ -5357,7 +5357,7 @@
                         <div class="row mb-3">
                             <!-- Original Product Card -->
                             <div class="col-12 mb-3">
-                                <div class="card border-secondary h-100">
+                                <div class="card-modern border-secondary h-100">
                                     <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
                                         <small class="text-muted"><i class="mdi mdi-pill"></i> ORIGINAL PRESCRIPTION</small>
                                         <span class="badge bg-secondary" id="adapt-original-status-badge">Unbilled</span>
@@ -5394,7 +5394,7 @@
 
                             <!-- New Product Selection Card -->
                             <div class="col-12">
-                                <div class="card border-success h-100">
+                                <div class="card-modern border-success h-100">
                                     <div class="card-header bg-success text-white py-2">
                                         <i class="mdi mdi-arrow-right-bold"></i> SELECT NEW PRODUCT
                                     </div>
@@ -5428,7 +5428,7 @@
                                             </div>
 
                                             <!-- Stock Availability -->
-                                            <div class="card bg-light mb-3">
+                                            <div class="card-modern bg-light mb-3">
                                                 <div class="card-body py-2">
                                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                                         <strong class="small"><i class="mdi mdi-warehouse"></i> Stock Availability</strong>
@@ -5441,7 +5441,7 @@
                                             </div>
 
                                             <!-- HMO Coverage Info -->
-                                            <div id="adapt-hmo-info" class="card border-info mb-0" style="display: none;">
+                                            <div id="adapt-hmo-info" class="card-modern border-info mb-0" style="display: none;">
                                                 <div class="card-body py-2">
                                                     <div class="d-flex justify-content-between align-items-center small">
                                                         <span><i class="mdi mdi-hospital-building text-info"></i> HMO Coverage</span>
@@ -5475,7 +5475,7 @@
                     <!-- Right Column: Calculations & Summary -->
                     <div class="col-md-5">
                         <!-- Price Calculation Summary -->
-                        <div class="card border-primary mb-3">
+                        <div class="card-modern border-primary mb-3">
                             <div class="card-header bg-primary text-white py-2">
                                 <i class="mdi mdi-calculator"></i> <strong>Price Calculation</strong>
                             </div>
@@ -5505,7 +5505,7 @@
                         </div>
 
                         <!-- Billing Impact Preview (only for billed items) -->
-                        <div id="adapt-billing-impact" class="card border-warning mb-3" style="display: none;">
+                        <div id="adapt-billing-impact" class="card-modern border-warning mb-3" style="display: none;">
                             <div class="card-header bg-warning text-dark py-2">
                                 <strong><i class="mdi mdi-receipt"></i> Billing Impact</strong>
                             </div>
@@ -5545,7 +5545,7 @@
                         </div>
 
                         <!-- Current Billing Info (for billed items) -->
-                        <div id="adapt-current-billing" class="card border-secondary mb-3" style="display: none;">
+                        <div id="adapt-current-billing" class="card-modern border-secondary mb-3" style="display: none;">
                             <div class="card-header bg-light py-2">
                                 <strong><i class="mdi mdi-information-outline"></i> Current Billing</strong>
                             </div>
@@ -5568,7 +5568,7 @@
                         </div>
 
                         <!-- Reason for Adaptation -->
-                        <div class="card border-secondary">
+                        <div class="card-modern border-secondary">
                             <div class="card-header bg-light py-2">
                                 <strong><i class="mdi mdi-note-text"></i> Reason for Change</strong>
                                 <span class="text-danger">*</span>
@@ -5639,7 +5639,7 @@
                 </div>
 
                 <!-- Product Info Card -->
-                <div class="card border-primary mb-3">
+                <div class="card-modern border-primary mb-3">
                     <div class="card-body py-2">
                         <h6 class="card-title mb-1" id="qty-adjust-product-name">Product Name</h6>
                         <div class="row small">
@@ -5656,7 +5656,7 @@
                 </div>
 
                 <!-- Current billing info for billed items -->
-                <div id="qty-current-billing" class="card border-secondary mb-3" style="display: none;">
+                <div id="qty-current-billing" class="card-modern border-secondary mb-3" style="display: none;">
                     <div class="card-header bg-light py-2">
                         <small><strong><i class="mdi mdi-receipt"></i> Current Billing</strong></small>
                     </div>
@@ -5689,7 +5689,7 @@
                 </div>
 
                 <!-- Billing Impact Preview (only for billed items) -->
-                <div id="qty-billing-impact" class="card border-warning mb-3" style="display: none;">
+                <div id="qty-billing-impact" class="card-modern border-warning mb-3" style="display: none;">
                     <div class="card-header bg-warning text-dark py-2">
                         <strong><i class="mdi mdi-calculator"></i> Billing Impact</strong>
                     </div>
@@ -6948,7 +6948,7 @@ function injectUnifiedPrescPartial(patientId, patientUserId) {
                             <hr>
 
                             <!-- Add More Items Section -->
-                            <div class="card-modern card-modern mb-3">
+                            <div class="card-modern mb-3">
                                 <div class="card-header bg-light">
                                     <h6 class="mb-0"><i class="mdi mdi-plus-circle"></i> Add More Items</h6>
                                 </div>

@@ -95,7 +95,7 @@
         <div class="row">
             <!-- Fund Details -->
             <div class="col-lg-4">
-                <div class="card card-modern mb-4">
+                <div class="card-modern mb-4">
                     <div class="card-header bg-white">
                         <h6 class="mb-0"><i class="mdi mdi-information mr-2"></i>Fund Details</h6>
                     </div>
@@ -141,7 +141,7 @@
                 </div>
 
                 <!-- Utilization Chart -->
-                <div class="card card-modern mb-4">
+                <div class="card-modern mb-4">
                     <div class="card-header bg-white">
                         <h6 class="mb-0"><i class="mdi mdi-chart-pie mr-2"></i>Fund Utilization</h6>
                     </div>
@@ -167,7 +167,7 @@
                 </div>
 
                 <!-- Export Actions -->
-                <div class="card card-modern">
+                <div class="card-modern card-modern">
                     <div class="card-header bg-white">
                         <h6 class="mb-0"><i class="mdi mdi-download mr-2"></i>Export</h6>
                     </div>
@@ -184,7 +184,7 @@
 
             <!-- Transactions -->
             <div class="col-lg-8">
-                <div class="card card-modern">
+                <div class="card-modern card-modern">
                     <div class="card-header bg-white d-flex justify-content-between align-items-center">
                         <h6 class="mb-0"><i class="mdi mdi-history mr-2"></i>Recent Transactions</h6>
                         <a href="{{ route('accounting.petty-cash.transactions.index', $fund) }}" class="btn btn-sm btn-outline-primary">
@@ -268,7 +268,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Reject Transaction</h5>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
             </div>
             <form id="rejectForm">
                 <div class="modal-body">
@@ -279,7 +279,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-danger">Reject</button>
                 </div>
             </form>

@@ -74,7 +74,7 @@
     </div>
 
     {{-- Filters Card --}}
-    <div class="card card-modern filter-card mb-4">
+    <div class="card-modern filter-card mb-4">
         <div class="card-body py-3">
             <form method="GET" action="{{ route('accounting.reports.aged-receivables') }}" id="filterForm">
                 <div class="row align-items-end">
@@ -129,7 +129,7 @@
     {{-- Grand Total & Aging Summary --}}
     <div class="row mb-4">
         <div class="col-xl-2 col-md-4 mb-3">
-            <div class="card card-modern h-100 border-left-primary">
+            <div class="card-modern h-100 border-left-primary">
                 <div class="card-body py-3 text-center">
                     <div class="stat-label">Total Receivables</div>
                     <div class="stat-value text-primary">₦{{ number_format($report['total'] ?? 0, 2) }}</div>
@@ -137,7 +137,7 @@
             </div>
         </div>
         <div class="col-xl-2 col-md-4 mb-3">
-            <div class="card card-modern h-100 border-left-success">
+            <div class="card-modern h-100 border-left-success">
                 <div class="card-body py-3 text-center">
                     <div class="stat-label">Current</div>
                     <div class="stat-value text-success">₦{{ number_format($totals['current'] ?? 0, 2) }}</div>
@@ -145,7 +145,7 @@
             </div>
         </div>
         <div class="col-xl-2 col-md-4 mb-3">
-            <div class="card card-modern h-100 border-left-info">
+            <div class="card-modern h-100 border-left-info">
                 <div class="card-body py-3 text-center">
                     <div class="stat-label">1-30 Days</div>
                     <div class="stat-value text-info">₦{{ number_format($totals['1_30'] ?? 0, 2) }}</div>
@@ -153,7 +153,7 @@
             </div>
         </div>
         <div class="col-xl-2 col-md-4 mb-3">
-            <div class="card card-modern h-100 border-left-warning">
+            <div class="card-modern h-100 border-left-warning">
                 <div class="card-body py-3 text-center">
                     <div class="stat-label">31-60 Days</div>
                     <div class="stat-value text-warning">₦{{ number_format($totals['31_60'] ?? 0, 2) }}</div>
@@ -161,7 +161,7 @@
             </div>
         </div>
         <div class="col-xl-2 col-md-4 mb-3">
-            <div class="card card-modern h-100 border-left-danger">
+            <div class="card-modern h-100 border-left-danger">
                 <div class="card-body py-3 text-center">
                     <div class="stat-label">61-90 Days</div>
                     <div class="stat-value text-danger">₦{{ number_format($totals['61_90'] ?? 0, 2) }}</div>
@@ -169,7 +169,7 @@
             </div>
         </div>
         <div class="col-xl-2 col-md-4 mb-3">
-            <div class="card card-modern h-100 border-left-dark">
+            <div class="card-modern h-100 border-left-dark">
                 <div class="card-body py-3 text-center">
                     <div class="stat-label">Over 90 Days</div>
                     <div class="stat-value text-dark">₦{{ number_format($totals['over_90'] ?? 0, 2) }}</div>
@@ -222,7 +222,7 @@
     </div>
 
     {{-- Tabbed Content --}}
-    <div class="card card-modern">
+    <div class="card-modern card-modern">
         <div class="card-header p-0 border-0">
             <ul class="nav nav-tabs" id="receivablesTabs" role="tablist">
                 <li class="nav-item">

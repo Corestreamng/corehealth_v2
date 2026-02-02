@@ -13,7 +13,7 @@
 <div id="content-wrapper">
     <div class="container-fluid">
         <!-- Header -->
-        <div class="card card-modern mb-4">
+        <div class="card-modern mb-4">
             <div class="card-body">
                 <div class="row align-items-center">
                     <div class="col-md-6">
@@ -35,7 +35,7 @@
                 <!-- KPI Selection -->
                 <div class="col-lg-8">
                     @foreach($kpisByCategory as $category => $kpis)
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-header">
                             <h5 class="mb-0">
                                 @php
@@ -107,7 +107,7 @@
                     @endforeach
 
                     @if($kpisByCategory->isEmpty())
-                    <div class="card card-modern">
+                    <div class="card-modern card-modern">
                         <div class="card-body text-center py-5">
                             <i class="mdi mdi-chart-box-outline mdi-48px text-muted"></i>
                             <h5 class="mt-3">No KPIs Defined</h5>
@@ -123,7 +123,7 @@
                 <!-- Sidebar -->
                 <div class="col-lg-4">
                     <!-- Quick Actions -->
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-header">
                             <h5 class="mb-0"><i class="mdi mdi-lightning-bolt mr-2"></i>Quick Actions</h5>
                         </div>
@@ -141,7 +141,7 @@
                     </div>
 
                     <!-- Summary -->
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-header">
                             <h5 class="mb-0"><i class="mdi mdi-information mr-2"></i>Summary</h5>
                         </div>
@@ -164,7 +164,7 @@
                     </div>
 
                     <!-- Save Button -->
-                    <div class="card card-modern">
+                    <div class="card-modern card-modern">
                         <div class="card-body">
                             <button type="submit" class="btn btn-success btn-block mb-2">
                                 <i class="mdi mdi-check"></i> Save Configuration

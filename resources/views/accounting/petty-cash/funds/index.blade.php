@@ -51,7 +51,7 @@
         </div>
 
         <!-- Funds Table -->
-        <div class="card card-modern">
+        <div class="card-modern card-modern">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="mdi mdi-format-list-bulleted mr-2"></i>All Funds</h5>
             </div>

@@ -16,7 +16,7 @@
         <div class="row justify-content-center">
             <div class="col-lg-8">
                 <!-- Lease Summary Header -->
-                <div class="card card-modern mb-4">
+                <div class="card-modern mb-4">
                     <div class="card-body bg-primary text-white">
                         <div class="row align-items-center">
                             <div class="col-md-8">
@@ -55,7 +55,7 @@
                     @csrf
                     <input type="hidden" name="schedule_id" value="{{ $nextPayment->id }}">
 
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-header">
                             <h5 class="mb-0"><i class="mdi mdi-cash-multiple mr-2"></i>Payment Details</h5>
                         </div>
@@ -157,7 +157,7 @@
                     </div>
 
                     <!-- Balance Preview -->
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-header">
                             <h5 class="mb-0"><i class="mdi mdi-eye mr-2"></i>Balance Preview</h5>
                         </div>
