@@ -82,7 +82,8 @@
         <!-- Table -->
         <div class="card-modern card-modern">
             <div class="card-body">
-                <table class="table table-bordered table-hover" id="kpisTable">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover" id="kpisTable">
                     <thead class="thead-light">
                         <tr>
                             <th width="100">Code</th>
@@ -98,6 +99,7 @@
                     </thead>
                     <tbody></tbody>
                 </table>
+                </div>
             </div>
         </div>
     </div>

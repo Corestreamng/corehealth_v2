@@ -183,7 +183,8 @@
             <!-- DataTable -->
             <div class="table-card">
                 <h6 class="font-weight-bold mb-3"><i class="mdi mdi-format-list-bulleted mr-2"></i>All Forecasts</h6>
-                <table id="forecastsTable" class="table table-hover" style="width:100%">
+                <div class="table-responsive">
+                    <table id="forecastsTable" class="table table-hover" style="width:100%">
                     <thead class="thead-light">
                         <tr>
                             <th>ID</th>
@@ -198,6 +199,7 @@
                     </thead>
                     <tbody></tbody>
                 </table>
+                </div>
             </div>
         </div>
 

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 02, 2026 at 06:29 PM
+-- Generation Time: Feb 03, 2026 at 11:40 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -150,7 +150,7 @@ INSERT INTO `accounts` (`id`, `account_group_id`, `code`, `name`, `description`,
 (48, 12, '4100', 'Retail Sales', NULL, NULL, 0, 1, 0, NULL, '2026-01-29 11:00:08', '2026-01-29 11:00:08', NULL),
 (49, 13, '4200', 'Interest Income', NULL, NULL, 0, 1, 0, NULL, '2026-01-29 11:00:08', '2026-01-29 11:00:08', NULL),
 (50, 13, '4210', 'Other Income', NULL, NULL, 0, 1, 0, NULL, '2026-01-29 11:00:08', '2026-01-29 11:00:08', NULL),
-(51, 13, '4220', 'Discount Received', NULL, NULL, 0, 1, 0, NULL, '2026-01-29 11:00:08', '2026-01-29 11:00:08', NULL),
+(51, 13, '4220', 'Gain on Disposal of Assets', 'Gains realized from disposal of fixed assets above book value', NULL, 0, 1, 0, NULL, '2026-01-29 11:00:08', '2026-02-03 08:50:31', NULL),
 (52, 14, '5000', 'Cost of Goods Sold', NULL, NULL, 0, 1, 0, NULL, '2026-01-29 11:00:08', '2026-01-29 11:00:08', NULL),
 (53, 14, '5010', 'Cost of Pharmacy Sales', NULL, NULL, 0, 1, 0, NULL, '2026-01-29 11:00:08', '2026-01-29 11:00:08', NULL),
 (54, 14, '5020', 'Cost of Medical Supplies Used', NULL, NULL, 0, 1, 0, NULL, '2026-01-29 11:00:08', '2026-01-29 11:00:08', NULL),
@@ -178,7 +178,8 @@ INSERT INTO `accounts` (`id`, `account_group_id`, `code`, `name`, `description`,
 (76, 18, '6320', 'Bad Debt Expense', NULL, NULL, 0, 1, 0, NULL, '2026-01-29 11:00:08', '2026-01-29 11:00:08', NULL),
 (77, 7, '2050', 'Salaries Payable', 'Accrued salaries and wages liability for employees. Used in two-stage payroll accounting - credited when payroll is approved, debited when paid.', NULL, 1, 1, 0, NULL, '2026-01-30 17:13:09', '2026-01-30 17:13:09', NULL),
 (78, 8, '22099', 'phl loan', 'loan', NULL, 0, 1, 0, NULL, '2026-01-30 19:17:00', '2026-01-30 19:17:00', NULL),
-(79, 1, '1031', 'Bank - Zenith bank', 'GL Account for Zenith bank (2250445688)', 1, 0, 1, 1, NULL, '2026-01-31 23:24:41', '2026-01-31 23:24:41', NULL);
+(79, 1, '1031', 'Bank - Zenith bank', 'GL Account for Zenith bank (2250445688)', 1, 0, 1, 1, NULL, '2026-01-31 23:24:41', '2026-01-31 23:24:41', NULL),
+(80, 17, '6900', 'Loss on Disposal of Assets', 'Losses realized from disposal of fixed assets below book value', NULL, 0, 1, 0, NULL, '2026-02-03 08:50:31', '2026-02-03 08:50:31', NULL);
 
 -- --------------------------------------------------------
 
@@ -600,7 +601,42 @@ INSERT INTO `audits` (`id`, `user_type`, `user_id`, `event`, `auditable_type`, `
 (95, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductOrServiceRequest', 1, '{\"discount\":\"0.00\"}', '{\"discount\":\"0\"}', 'http://localhost:8000/billing-workbench/process-payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-02 16:10:26', '2026-02-02 16:10:26'),
 (96, 'App\\Models\\User', 1, 'updated', 'App\\Models\\ProductOrServiceRequest', 2, '{\"qty\":1,\"discount\":\"0.00\"}', '{\"qty\":\"3\",\"discount\":\"0\"}', 'http://localhost:8000/billing-workbench/process-payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-02 16:10:26', '2026-02-02 16:10:26'),
 (97, 'App\\Models\\User', 1, 'updated', 'App\\Models\\PatientAccount', 1, '{\"balance\":11000}', '{\"balance\":1705}', 'http://localhost:8000/billing-workbench/process-payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-02 16:10:26', '2026-02-02 16:10:26'),
-(98, 'App\\Models\\User', 1, 'created', 'App\\Models\\payment', 3, '[]', '{\"payment_type\":\"ACC_WITHDRAW\",\"payment_method\":\"ACCOUNT\",\"bank_id\":null,\"total\":-9295,\"total_discount\":0,\"reference_no\":\"PAY-20260202-180555\",\"user_id\":1,\"patient_id\":1,\"id\":3}', 'http://localhost:8000/billing-workbench/process-payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-02 16:10:26', '2026-02-02 16:10:26');
+(98, 'App\\Models\\User', 1, 'created', 'App\\Models\\payment', 3, '[]', '{\"payment_type\":\"ACC_WITHDRAW\",\"payment_method\":\"ACCOUNT\",\"bank_id\":null,\"total\":-9295,\"total_discount\":0,\"reference_no\":\"PAY-20260202-180555\",\"user_id\":1,\"patient_id\":1,\"id\":3}', 'http://localhost:8000/billing-workbench/process-payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-02 16:10:26', '2026-02-02 16:10:26'),
+(99, NULL, NULL, 'created', 'App\\Models\\ChatMessage', 2, '[]', '{\"conversation_id\":9,\"user_id\":1,\"body\":\"\\ud83e\\uddea **New Lab Request**\\n\\nPatient: **Apollos Walshak ** [ADMITTED]\\nLocation: special ward - bed specal 1\\nTests: 24hr urine Calcium\\nOrdered by: Dr. Unknown\\n\\n_06:05 PM, Feb 2_\",\"type\":\"text\",\"id\":2}', 'http://localhost:8000/chat/check-unread', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-02 17:05:08', '2026-02-02 17:05:08'),
+(100, NULL, NULL, 'created', 'App\\Models\\ProductOrServiceRequest', 3, '[]', '{\"user_id\":64684,\"staff_user_id\":1,\"service_id\":3,\"qty\":1,\"id\":3}', 'http://localhost:8000/chat/check-unread', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 05:43:19', '2026-02-03 05:43:19'),
+(101, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntry', 36, '[]', '{\"entry_number\":\"JE-202602-0023\",\"entry_date\":\"2026-02-03 08:47:05\",\"accounting_period_id\":1,\"description\":\"REVERSAL: Voiding fixed asset BLD-2026-00012 - dulicate\",\"reference_type\":\"App\\\\Models\\\\Accounting\\\\FixedAsset\",\"reference_id\":17,\"entry_type\":\"reversal\",\"status\":\"posted\",\"reversal_of_id\":20,\"created_by\":1,\"posted_by\":1,\"posted_at\":\"2026-02-03 08:47:05\",\"id\":36}', 'http://localhost:8000/accounting/fixed-assets/17/void', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 07:47:05', '2026-02-03 07:47:05'),
+(102, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 65, '[]', '{\"journal_entry_id\":36,\"line_number\":1,\"account_id\":17,\"debit\":\"0.0000\",\"credit\":\"25000.0000\",\"narration\":\"Reversal: Acquisition: TEST VOID - Office Desk 20260203075113\",\"id\":65}', 'http://localhost:8000/accounting/fixed-assets/17/void', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 07:47:05', '2026-02-03 07:47:05'),
+(103, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 66, '[]', '{\"journal_entry_id\":36,\"line_number\":2,\"account_id\":2,\"debit\":\"25000.0000\",\"credit\":\"0.0000\",\"narration\":\"Reversal: Payment for: TEST VOID - Office Desk 20260203075113\",\"id\":66}', 'http://localhost:8000/accounting/fixed-assets/17/void', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 07:47:05', '2026-02-03 07:47:05'),
+(104, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\JournalEntry', 20, '{\"status\":\"posted\",\"reversed_by_id\":null}', '{\"status\":\"reversed\",\"reversed_by_id\":36}', 'http://localhost:8000/accounting/fixed-assets/17/void', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 07:47:05', '2026-02-03 07:47:05'),
+(105, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntry', 49, '[]', '{\"entry_number\":\"JE-202602-0030\",\"accounting_period_id\":1,\"entry_date\":\"2026-02-03 00:00:00\",\"reference_type\":\"fixed_asset_disposal\",\"reference_id\":5,\"description\":\"Disposal of fixed asset: Test Laptop Computer (BLD-2026-00002) - Donated\",\"status\":\"posted\",\"posted_at\":\"2026-02-03 10:03:25\",\"created_by\":1,\"id\":49}', 'http://localhost:8000/accounting/fixed-assets/4/dispose', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:03:25', '2026-02-03 09:03:25'),
+(106, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 84, '[]', '{\"journal_entry_id\":49,\"line_number\":1,\"account_id\":1,\"debit\":\"88000.00\",\"credit\":0,\"narration\":\"Proceeds from disposal via Cash: Test Laptop Computer\",\"id\":84}', 'http://localhost:8000/accounting/fixed-assets/4/dispose', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:03:25', '2026-02-03 09:03:25'),
+(107, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 85, '[]', '{\"journal_entry_id\":49,\"line_number\":2,\"account_id\":19,\"debit\":\"0.00\",\"credit\":0,\"narration\":\"Remove accumulated depreciation: Test Laptop Computer\",\"id\":85}', 'http://localhost:8000/accounting/fixed-assets/4/dispose', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:03:25', '2026-02-03 09:03:25'),
+(108, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 86, '[]', '{\"journal_entry_id\":49,\"line_number\":3,\"account_id\":17,\"debit\":0,\"credit\":\"150000.00\",\"narration\":\"Remove fixed asset: Test Laptop Computer\",\"id\":86}', 'http://localhost:8000/accounting/fixed-assets/4/dispose', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:03:25', '2026-02-03 09:03:25'),
+(109, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 87, '[]', '{\"journal_entry_id\":49,\"line_number\":4,\"account_id\":80,\"debit\":62000,\"credit\":0,\"narration\":\"Loss on disposal: Test Laptop Computer\",\"id\":87}', 'http://localhost:8000/accounting/fixed-assets/4/dispose', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:03:25', '2026-02-03 09:03:25'),
+(110, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntry', 50, '[]', '{\"entry_number\":\"JE-202602-0031\",\"accounting_period_id\":1,\"entry_date\":\"2026-02-03 00:00:00\",\"reference_type\":\"fixed_asset_depreciation\",\"reference_id\":12,\"description\":\"Monthly depreciation: Test Laptop Computer (BLD-2026-00003) - Y1M2\",\"status\":\"posted\",\"posted_at\":\"2026-02-03 10:20:55\",\"created_by\":1,\"id\":50}', 'http://localhost:8000/accounting/fixed-assets/depreciation/run', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:20:55', '2026-02-03 09:20:55'),
+(111, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 88, '[]', '{\"journal_entry_id\":50,\"line_number\":1,\"account_id\":72,\"debit\":\"296.88\",\"credit\":0,\"narration\":\"Depreciation expense: Test Laptop Computer\",\"id\":88}', 'http://localhost:8000/accounting/fixed-assets/depreciation/run', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:20:55', '2026-02-03 09:20:55'),
+(112, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 89, '[]', '{\"journal_entry_id\":50,\"line_number\":2,\"account_id\":19,\"debit\":0,\"credit\":\"296.88\",\"narration\":\"Accumulated depreciation: Test Laptop Computer\",\"id\":89}', 'http://localhost:8000/accounting/fixed-assets/depreciation/run', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:20:55', '2026-02-03 09:20:55'),
+(113, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntry', 51, '[]', '{\"entry_number\":\"JE-202602-0032\",\"accounting_period_id\":1,\"entry_date\":\"2026-02-03 00:00:00\",\"reference_type\":\"fixed_asset_depreciation\",\"reference_id\":13,\"description\":\"Monthly depreciation: Test Laptop Computer (BLD-2026-00004) - Y1M2\",\"status\":\"posted\",\"posted_at\":\"2026-02-03 10:20:56\",\"created_by\":1,\"id\":51}', 'http://localhost:8000/accounting/fixed-assets/depreciation/run', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(114, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 90, '[]', '{\"journal_entry_id\":51,\"line_number\":1,\"account_id\":72,\"debit\":\"296.88\",\"credit\":0,\"narration\":\"Depreciation expense: Test Laptop Computer\",\"id\":90}', 'http://localhost:8000/accounting/fixed-assets/depreciation/run', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(115, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 91, '[]', '{\"journal_entry_id\":51,\"line_number\":2,\"account_id\":19,\"debit\":0,\"credit\":\"296.88\",\"narration\":\"Accumulated depreciation: Test Laptop Computer\",\"id\":91}', 'http://localhost:8000/accounting/fixed-assets/depreciation/run', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(116, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntry', 52, '[]', '{\"entry_number\":\"JE-202602-0033\",\"accounting_period_id\":1,\"entry_date\":\"2026-02-03 00:00:00\",\"reference_type\":\"fixed_asset_depreciation\",\"reference_id\":14,\"description\":\"Monthly depreciation: Test Laptop Computer (BLD-2026-00005) - Y1M2\",\"status\":\"posted\",\"posted_at\":\"2026-02-03 10:20:56\",\"created_by\":1,\"id\":52}', 'http://localhost:8000/accounting/fixed-assets/depreciation/run', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(117, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 92, '[]', '{\"journal_entry_id\":52,\"line_number\":1,\"account_id\":72,\"debit\":\"296.88\",\"credit\":0,\"narration\":\"Depreciation expense: Test Laptop Computer\",\"id\":92}', 'http://localhost:8000/accounting/fixed-assets/depreciation/run', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(118, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 93, '[]', '{\"journal_entry_id\":52,\"line_number\":2,\"account_id\":19,\"debit\":0,\"credit\":\"296.88\",\"narration\":\"Accumulated depreciation: Test Laptop Computer\",\"id\":93}', 'http://localhost:8000/accounting/fixed-assets/depreciation/run', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(119, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntry', 53, '[]', '{\"entry_number\":\"JE-202602-0034\",\"accounting_period_id\":1,\"entry_date\":\"2026-02-03 00:00:00\",\"reference_type\":\"fixed_asset_depreciation\",\"reference_id\":15,\"description\":\"Monthly depreciation: Test Laptop Computer (BLD-2026-00006) - Y1M2\",\"status\":\"posted\",\"posted_at\":\"2026-02-03 10:20:56\",\"created_by\":1,\"id\":53}', 'http://localhost:8000/accounting/fixed-assets/depreciation/run', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(120, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 94, '[]', '{\"journal_entry_id\":53,\"line_number\":1,\"account_id\":72,\"debit\":\"296.88\",\"credit\":0,\"narration\":\"Depreciation expense: Test Laptop Computer\",\"id\":94}', 'http://localhost:8000/accounting/fixed-assets/depreciation/run', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(121, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 95, '[]', '{\"journal_entry_id\":53,\"line_number\":2,\"account_id\":19,\"debit\":0,\"credit\":\"296.88\",\"narration\":\"Accumulated depreciation: Test Laptop Computer\",\"id\":95}', 'http://localhost:8000/accounting/fixed-assets/depreciation/run', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(122, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntry', 54, '[]', '{\"entry_number\":\"JE-202602-0035\",\"accounting_period_id\":1,\"entry_date\":\"2026-02-03 00:00:00\",\"reference_type\":\"fixed_asset_depreciation\",\"reference_id\":16,\"description\":\"Monthly depreciation: Test Laptop Computer (BLD-2026-00007) - Y1M2\",\"status\":\"posted\",\"posted_at\":\"2026-02-03 10:20:56\",\"created_by\":1,\"id\":54}', 'http://localhost:8000/accounting/fixed-assets/depreciation/run', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(123, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 96, '[]', '{\"journal_entry_id\":54,\"line_number\":1,\"account_id\":72,\"debit\":\"296.88\",\"credit\":0,\"narration\":\"Depreciation expense: Test Laptop Computer\",\"id\":96}', 'http://localhost:8000/accounting/fixed-assets/depreciation/run', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(124, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 97, '[]', '{\"journal_entry_id\":54,\"line_number\":2,\"account_id\":19,\"debit\":0,\"credit\":\"296.88\",\"narration\":\"Accumulated depreciation: Test Laptop Computer\",\"id\":97}', 'http://localhost:8000/accounting/fixed-assets/depreciation/run', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(125, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntry', 55, '[]', '{\"entry_number\":\"JE-202602-0036\",\"accounting_period_id\":1,\"entry_date\":\"2026-02-03 00:00:00\",\"reference_type\":\"fixed_asset_depreciation\",\"reference_id\":17,\"description\":\"Monthly depreciation: TEST VOID - Office Desk 20260203074844 (BLD-2026-00008) - Y1M2\",\"status\":\"posted\",\"posted_at\":\"2026-02-03 10:20:56\",\"created_by\":1,\"id\":55}', 'http://localhost:8000/accounting/fixed-assets/depreciation/run', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(126, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 98, '[]', '{\"journal_entry_id\":55,\"line_number\":1,\"account_id\":72,\"debit\":\"375.00\",\"credit\":0,\"narration\":\"Depreciation expense: TEST VOID - Office Desk 20260203074844\",\"id\":98}', 'http://localhost:8000/accounting/fixed-assets/depreciation/run', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(127, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 99, '[]', '{\"journal_entry_id\":55,\"line_number\":2,\"account_id\":19,\"debit\":0,\"credit\":\"375.00\",\"narration\":\"Accumulated depreciation: TEST VOID - Office Desk 20260203074844\",\"id\":99}', 'http://localhost:8000/accounting/fixed-assets/depreciation/run', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(128, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntry', 56, '[]', '{\"entry_number\":\"JE-202602-0037\",\"accounting_period_id\":1,\"entry_date\":\"2026-02-03 00:00:00\",\"reference_type\":\"fixed_asset_depreciation\",\"reference_id\":18,\"description\":\"Monthly depreciation: TEST VOID - Office Desk 20260203074929 (BLD-2026-00009) - Y1M2\",\"status\":\"posted\",\"posted_at\":\"2026-02-03 10:20:56\",\"created_by\":1,\"id\":56}', 'http://localhost:8000/accounting/fixed-assets/depreciation/run', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(129, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 100, '[]', '{\"journal_entry_id\":56,\"line_number\":1,\"account_id\":72,\"debit\":\"375.00\",\"credit\":0,\"narration\":\"Depreciation expense: TEST VOID - Office Desk 20260203074929\",\"id\":100}', 'http://localhost:8000/accounting/fixed-assets/depreciation/run', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(130, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 101, '[]', '{\"journal_entry_id\":56,\"line_number\":2,\"account_id\":19,\"debit\":0,\"credit\":\"375.00\",\"narration\":\"Accumulated depreciation: TEST VOID - Office Desk 20260203074929\",\"id\":101}', 'http://localhost:8000/accounting/fixed-assets/depreciation/run', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(131, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntry', 57, '[]', '{\"entry_number\":\"JE-202602-0038\",\"accounting_period_id\":1,\"entry_date\":\"2026-02-03 00:00:00\",\"reference_type\":\"fixed_asset_depreciation\",\"reference_id\":19,\"description\":\"Monthly depreciation: TEST VOID - Office Desk 20260203074954 (BLD-2026-00010) - Y1M2\",\"status\":\"posted\",\"posted_at\":\"2026-02-03 10:20:56\",\"created_by\":1,\"id\":57}', 'http://localhost:8000/accounting/fixed-assets/depreciation/run', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(132, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 102, '[]', '{\"journal_entry_id\":57,\"line_number\":1,\"account_id\":72,\"debit\":\"375.00\",\"credit\":0,\"narration\":\"Depreciation expense: TEST VOID - Office Desk 20260203074954\",\"id\":102}', 'http://localhost:8000/accounting/fixed-assets/depreciation/run', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(133, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 103, '[]', '{\"journal_entry_id\":57,\"line_number\":2,\"account_id\":19,\"debit\":0,\"credit\":\"375.00\",\"narration\":\"Accumulated depreciation: TEST VOID - Office Desk 20260203074954\",\"id\":103}', 'http://localhost:8000/accounting/fixed-assets/depreciation/run', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56');
 
 -- --------------------------------------------------------
 
@@ -1120,7 +1156,8 @@ CREATE TABLE `chat_messages` (
 --
 
 INSERT INTO `chat_messages` (`id`, `conversation_id`, `user_id`, `body`, `type`, `created_at`, `updated_at`, `deleted_at`, `deleted_by`) VALUES
-(1, 9, 1, '🧪 **New Lab Request**\n\nPatient: **Apollos Walshak ** [ADMITTED]\nLocation: special ward - bed specal 1\nTests: 24hr urine Calcium\nOrdered by: Dr. Unknown\n\n_05:05 PM, Feb 2_', 'text', '2026-02-02 16:05:40', '2026-02-02 16:05:40', NULL, NULL);
+(1, 9, 1, '🧪 **New Lab Request**\n\nPatient: **Apollos Walshak ** [ADMITTED]\nLocation: special ward - bed specal 1\nTests: 24hr urine Calcium\nOrdered by: Dr. Unknown\n\n_05:05 PM, Feb 2_', 'text', '2026-02-02 16:05:40', '2026-02-02 16:05:40', NULL, NULL),
+(2, 9, 1, '🧪 **New Lab Request**\n\nPatient: **Apollos Walshak ** [ADMITTED]\nLocation: special ward - bed specal 1\nTests: 24hr urine Calcium\nOrdered by: Dr. Unknown\n\n_06:05 PM, Feb 2_', 'text', '2026-02-02 17:05:08', '2026-02-02 17:05:08', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1889,12 +1926,37 @@ CREATE TABLE `fixed_assets` (
   `insurance_expiry_date` date DEFAULT NULL,
   `supplier_id` bigint(20) UNSIGNED DEFAULT NULL,
   `invoice_number` varchar(255) DEFAULT NULL,
-  `status` enum('active','fully_depreciated','disposed','impaired','under_maintenance','idle') NOT NULL DEFAULT 'active',
+  `status` enum('active','fully_depreciated','disposed','impaired','under_maintenance','idle','voided') DEFAULT 'active',
   `notes` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `fixed_assets`
+--
+
+INSERT INTO `fixed_assets` (`id`, `asset_number`, `name`, `description`, `category_id`, `account_id`, `journal_entry_id`, `source_type`, `source_id`, `acquisition_cost`, `additional_costs`, `total_cost`, `salvage_value`, `depreciable_amount`, `accumulated_depreciation`, `book_value`, `depreciation_method`, `useful_life_years`, `useful_life_months`, `monthly_depreciation`, `acquisition_date`, `in_service_date`, `last_depreciation_date`, `disposal_date`, `serial_number`, `model_number`, `manufacturer`, `location`, `department_id`, `custodian_user_id`, `warranty_expiry_date`, `warranty_provider`, `insurance_policy_number`, `insurance_expiry_date`, `supplier_id`, `invoice_number`, `status`, `notes`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(3, 'BLD-2026-00001', 'Test Laptop Computer', 'Dell Latitude 5520 - Test Asset for Depreciation', 1, 17, 37, 'manual', NULL, 150000.00, 0.00, 150000.00, 7500.00, 142500.00, 0.00, 150000.00, 'straight_line', 40, 480, 296.88, '2025-12-03', '2025-12-03', NULL, '2026-02-03', 'TEST-1770103242', NULL, NULL, 'IT Department', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'INV-TEST-001', 'disposed', NULL, '2026-02-03 06:20:42', '2026-02-03 08:25:38', NULL),
+(4, 'BLD-2026-00002', 'Test Laptop Computer', 'Dell Latitude 5520 - Test Asset for Depreciation', 1, 17, 38, 'manual', NULL, 150000.00, 0.00, 150000.00, 7500.00, 142500.00, 0.00, 150000.00, 'straight_line', 40, 480, 296.88, '2025-12-03', '2025-12-03', NULL, '2026-02-03', 'TEST-1770103383', NULL, NULL, 'IT Department', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'INV-TEST-001', 'disposed', NULL, '2026-02-03 06:23:03', '2026-02-03 09:03:25', NULL),
+(5, 'BLD-2026-00003', 'Test Laptop Computer', 'Dell Latitude 5520 - Test Asset for Depreciation', 1, 17, 39, 'manual', NULL, 150000.00, 0.00, 150000.00, 7500.00, 142500.00, 296.88, 149703.12, 'straight_line', 40, 480, 296.88, '2025-12-03', '2025-12-03', '2026-02-03', NULL, 'TEST-1770103452', NULL, NULL, 'IT Department', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'INV-TEST-001', 'active', NULL, '2026-02-03 06:24:12', '2026-02-03 09:20:56', NULL),
+(6, 'BLD-2026-00004', 'Test Laptop Computer', 'Dell Latitude 5520 - Test Asset for Depreciation', 1, 17, 40, 'manual', NULL, 150000.00, 0.00, 150000.00, 7500.00, 142500.00, 296.88, 149703.12, 'straight_line', 40, 480, 296.88, '2025-12-03', '2025-12-03', '2026-02-03', NULL, 'TEST-1770103561', NULL, NULL, 'IT Department', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'INV-TEST-001', 'active', NULL, '2026-02-03 06:26:01', '2026-02-03 09:20:56', NULL),
+(7, 'BLD-2026-00005', 'Test Laptop Computer', 'Dell Latitude 5520 - Test Asset for Depreciation', 1, 17, 41, 'manual', NULL, 150000.00, 0.00, 150000.00, 7500.00, 142500.00, 296.88, 149703.12, 'straight_line', 40, 480, 296.88, '2025-12-03', '2025-12-03', '2026-02-03', NULL, 'TEST-1770103569', NULL, NULL, 'IT Department', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'INV-TEST-001', 'active', NULL, '2026-02-03 06:26:09', '2026-02-03 09:20:56', NULL),
+(8, 'BLD-2026-00006', 'Test Laptop Computer', 'Dell Latitude 5520 - Test Asset for Depreciation', 1, 17, 5, 'manual', NULL, 150000.00, 0.00, 150000.00, 7500.00, 142500.00, 296.88, 149703.12, 'straight_line', 40, 480, 296.88, '2025-12-03', '2025-12-03', '2026-02-03', NULL, 'TEST-1770103630', NULL, NULL, 'IT Department', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'INV-TEST-001', 'active', NULL, '2026-02-03 06:27:10', '2026-02-03 09:20:56', NULL),
+(9, 'BLD-2026-00007', 'Test Laptop Computer', 'Dell Latitude 5520 - Test Asset for Depreciation', 1, 17, 12, 'manual', NULL, 150000.00, 0.00, 150000.00, 7500.00, 142500.00, 296.88, 149703.12, 'straight_line', 40, 480, 296.88, '2025-12-03', '2025-12-03', '2026-02-03', NULL, 'TEST-1770103708', NULL, NULL, 'IT Department', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'INV-TEST-001', 'active', NULL, '2026-02-03 06:28:28', '2026-02-03 09:20:56', NULL),
+(13, 'BLD-2026-00008', 'TEST VOID - Office Desk 20260203074844', 'Test asset for void functionality', 1, 17, 16, 'manual', NULL, 25000.00, 0.00, 25000.00, 2500.00, 22500.00, 375.00, 24625.00, 'straight_line', 5, 60, 375.00, '2026-02-03', '2026-02-03', '2026-02-03', NULL, 'TEST-VOID-1770104924', NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'active', NULL, '2026-02-03 06:48:44', '2026-02-03 09:20:56', NULL),
+(14, 'BLD-2026-00009', 'TEST VOID - Office Desk 20260203074929', 'Test asset for void functionality', 1, 17, 17, 'manual', NULL, 25000.00, 0.00, 25000.00, 2500.00, 22500.00, 375.00, 24625.00, 'straight_line', 5, 60, 375.00, '2026-02-03', '2026-02-03', '2026-02-03', NULL, 'TEST-VOID-1770104969', NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'active', NULL, '2026-02-03 06:49:29', '2026-02-03 09:20:56', NULL),
+(15, 'BLD-2026-00010', 'TEST VOID - Office Desk 20260203074954', 'Test asset for void functionality', 1, 17, 18, 'manual', NULL, 25000.00, 0.00, 25000.00, 2500.00, 22500.00, 375.00, 24625.00, 'straight_line', 5, 60, 375.00, '2026-02-03', '2026-02-03', '2026-02-03', NULL, 'TEST-VOID-1770104994', NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'active', NULL, '2026-02-03 06:49:54', '2026-02-03 09:20:56', NULL),
+(16, 'BLD-2026-00011', 'TEST VOID - Office Desk 20260203075041', 'Test asset for void functionality', 1, 17, 19, 'manual', NULL, 25000.00, 0.00, 25000.00, 2500.00, 22500.00, 0.00, 25000.00, 'straight_line', 5, 60, 375.00, '2026-02-03', '2026-02-03', NULL, NULL, 'TEST-VOID-1770105041', NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'disposed', NULL, '2026-02-03 06:50:41', '2026-02-03 07:53:58', NULL),
+(17, 'BLD-2026-00012', 'TEST VOID - Office Desk 20260203075113', 'Test asset for void functionality', 1, 17, 20, 'manual', NULL, 25000.00, 0.00, 25000.00, 2500.00, 22500.00, 0.00, 25000.00, 'straight_line', 5, 60, 375.00, '2026-02-03', '2026-02-03', NULL, NULL, 'TEST-VOID-1770105073', NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'voided', 'VOIDED: 2026-02-03 08:47:05 - dulicate', '2026-02-03 06:51:13', '2026-02-03 07:47:05', NULL),
+(18, 'BLD-2026-00013', 'TEST VOID - Office Desk 20260203075329', 'Test asset for void functionality', 1, 17, 22, 'manual', NULL, 25000.00, 0.00, 25000.00, 2500.00, 22500.00, 0.00, 25000.00, 'straight_line', 5, 60, 375.00, '2026-02-03', '2026-02-03', NULL, NULL, 'TEST-VOID-1770105209', NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'voided', 'VOIDED: 2026-02-03 07:53:29 - Test void operation - verifying functionality', '2026-02-03 06:53:29', '2026-02-03 06:53:29', NULL),
+(19, 'BLD-2026-00014', 'TEST VOID - Office Desk 20260203075403', 'Test asset for void functionality', 1, 17, 24, 'manual', NULL, 25000.00, 0.00, 25000.00, 2500.00, 22500.00, 0.00, 25000.00, 'straight_line', 5, 60, 375.00, '2026-02-03', '2026-02-03', NULL, NULL, 'TEST-VOID-1770105243', NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'voided', 'VOIDED: 2026-02-03 07:54:03 - Test void operation - verifying functionality', '2026-02-03 06:54:03', '2026-02-03 06:54:03', NULL),
+(20, 'BLD-2026-00015', 'TEST OBSERVER - Active Asset 20260203075750', 'Test active asset', 1, 17, 26, 'manual', NULL, 10000.00, 0.00, 10000.00, 1000.00, 9000.00, 0.00, 10000.00, 'straight_line', 5, 60, 150.00, '2026-02-03', '2026-02-03', NULL, NULL, 'TEST-OBS-ACTIVE-1770105470', NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'voided', 'VOIDED: 2026-02-03 07:57:50 - Test voiding for observer check', '2026-02-03 06:57:50', '2026-02-03 06:57:50', NULL),
+(21, 'BLD-2026-00016', 'TEST OBSERVER - Active Asset 20260203075824', 'Test active asset', 1, 17, 28, 'manual', NULL, 10000.00, 0.00, 10000.00, 1000.00, 9000.00, 0.00, 10000.00, 'straight_line', 5, 60, 150.00, '2026-02-03', '2026-02-03', NULL, NULL, 'TEST-OBS-ACTIVE-1770105504', NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'voided', 'VOIDED: 2026-02-03 07:58:24 - Test voiding for observer check', '2026-02-03 06:58:24', '2026-02-03 06:58:24', NULL),
+(22, 'BLD-2026-00017', 'TEST OBSERVER - Pre-Voided Asset 20260203075824', NULL, 1, 17, NULL, NULL, NULL, 5000.00, 0.00, 5000.00, 500.00, 4500.00, 0.00, 5000.00, 'straight_line', 5, 60, 75.00, '2026-02-03', '2026-02-03', NULL, NULL, NULL, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'voided', NULL, '2026-02-03 06:58:24', '2026-02-03 06:58:24', NULL),
+(23, 'BLD-2026-00018', 'TEST IAS16 - Mistakenly Registered Asset', 'Asset registered in error, never used', 1, 17, 30, 'manual', NULL, 15000.00, 0.00, 15000.00, 1500.00, 13500.00, 0.00, 15000.00, 'straight_line', 5, 60, 225.00, '2026-02-03', '2026-02-03', NULL, NULL, 'TEST-IAS16-A-1770105727', NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'voided', 'VOIDED: 2026-02-03 08:02:07 - Registered in error - duplicate entry', '2026-02-03 07:02:07', '2026-02-03 07:02:07', NULL),
+(24, 'BLD-2026-00019', 'TEST IAS16 - Asset with Depreciation', 'Asset in use with depreciation', 1, 17, 32, 'manual', NULL, 20000.00, 0.00, 20000.00, 2000.00, 18000.00, 900.00, 19100.00, 'straight_line', 5, 60, 300.00, '2025-11-03', '2025-11-03', '2026-01-03', NULL, 'TEST-IAS16-B-1770105727', NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'active', NULL, '2026-02-03 07:02:07', '2026-02-03 07:02:07', NULL);
 
 -- --------------------------------------------------------
 
@@ -1920,6 +1982,20 @@ CREATE TABLE `fixed_asset_categories` (
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `fixed_asset_categories`
+--
+
+INSERT INTO `fixed_asset_categories` (`id`, `code`, `name`, `asset_account_id`, `depreciation_account_id`, `expense_account_id`, `default_useful_life_years`, `default_depreciation_method`, `default_salvage_percentage`, `is_depreciable`, `description`, `is_active`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'BLDG', 'Buildings & Structures', 17, 19, 72, 40, 'straight_line', 10.00, 1, 'Buildings, warehouses, and permanent structures', 1, '2026-02-03 06:06:07', '2026-02-03 06:06:07', NULL),
+(2, 'COMP', 'Computer Equipment', 15, 19, 72, 3, 'straight_line', 5.00, 1, 'Computers, laptops, servers, and IT hardware', 1, '2026-02-03 06:06:07', '2026-02-03 06:11:11', NULL),
+(3, 'FURN', 'Furniture & Fixtures', 14, 19, 72, 10, 'straight_line', 10.00, 1, 'Office furniture, desks, chairs, and fixtures', 1, '2026-02-03 06:06:07', '2026-02-03 06:06:07', NULL),
+(4, 'MED', 'Medical Equipment', 13, 19, 72, 7, 'straight_line', 10.00, 1, 'Medical devices, diagnostic equipment, and healthcare tools', 1, '2026-02-03 06:06:07', '2026-02-03 06:06:07', NULL),
+(5, 'VEH', 'Vehicles', 16, 19, 72, 5, 'declining_balance', 15.00, 1, 'Cars, vans, ambulances, and other vehicles', 1, '2026-02-03 06:06:07', '2026-02-03 06:06:07', NULL),
+(6, 'OFFEQ', 'Office Equipment', 13, 19, 72, 5, 'straight_line', 5.00, 1, 'Printers, copiers, phones, and office machines', 1, '2026-02-03 06:06:07', '2026-02-03 06:06:07', NULL),
+(7, 'LAND', 'Land', 17, 19, 72, 0, 'straight_line', 0.00, 0, 'Land and property (non-depreciable)', 1, '2026-02-03 06:06:07', '2026-02-03 06:06:07', NULL),
+(8, 'LEASEHOLD', 'Leasehold Improvements', 17, 19, 72, 10, 'straight_line', 0.00, 1, 'Improvements made to rented/leased properties', 1, '2026-02-03 06:06:07', '2026-02-03 06:06:07', NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -1944,6 +2020,23 @@ CREATE TABLE `fixed_asset_depreciations` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `fixed_asset_depreciations`
+--
+
+INSERT INTO `fixed_asset_depreciations` (`id`, `fixed_asset_id`, `journal_entry_id`, `fiscal_year_id`, `depreciation_date`, `year_number`, `month_number`, `opening_book_value`, `depreciation_amount`, `closing_book_value`, `accumulated_depreciation_to_date`, `calculation_method`, `notes`, `processed_by`, `created_at`, `updated_at`) VALUES
+(9, 24, 33, NULL, '2025-11-03', 1, 1, 20000.00, 300.00, 19700.00, 300.00, 'scheduled', NULL, 1, '2026-02-03 07:02:07', '2026-02-03 07:02:07'),
+(10, 24, 34, NULL, '2025-12-03', 1, 2, 19700.00, 300.00, 19400.00, 600.00, 'scheduled', NULL, 1, '2026-02-03 07:02:07', '2026-02-03 07:02:07'),
+(11, 24, 35, NULL, '2026-01-03', 1, 3, 19400.00, 300.00, 19100.00, 900.00, 'scheduled', NULL, 1, '2026-02-03 07:02:07', '2026-02-03 07:02:07'),
+(12, 5, 50, NULL, '2026-02-03', 1, 2, 150000.00, 296.88, 149703.12, 296.88, 'scheduled', NULL, 1, '2026-02-03 09:20:55', '2026-02-03 09:20:55'),
+(13, 6, 51, NULL, '2026-02-03', 1, 2, 150000.00, 296.88, 149703.12, 296.88, 'scheduled', NULL, 1, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(14, 7, 52, NULL, '2026-02-03', 1, 2, 150000.00, 296.88, 149703.12, 296.88, 'scheduled', NULL, 1, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(15, 8, 53, NULL, '2026-02-03', 1, 2, 150000.00, 296.88, 149703.12, 296.88, 'scheduled', NULL, 1, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(16, 9, 54, NULL, '2026-02-03', 1, 2, 150000.00, 296.88, 149703.12, 296.88, 'scheduled', NULL, 1, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(17, 13, 55, NULL, '2026-02-03', 1, 2, 25000.00, 375.00, 24625.00, 375.00, 'scheduled', NULL, 1, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(18, 14, 56, NULL, '2026-02-03', 1, 2, 25000.00, 375.00, 24625.00, 375.00, 'scheduled', NULL, 1, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(19, 15, 57, NULL, '2026-02-03', 1, 2, 25000.00, 375.00, 24625.00, 375.00, 'scheduled', NULL, 1, '2026-02-03 09:20:56', '2026-02-03 09:20:56');
 
 -- --------------------------------------------------------
 
@@ -1973,6 +2066,17 @@ CREATE TABLE `fixed_asset_disposals` (
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `fixed_asset_disposals`
+--
+
+INSERT INTO `fixed_asset_disposals` (`id`, `fixed_asset_id`, `journal_entry_id`, `disposal_date`, `disposal_type`, `disposal_proceeds`, `book_value_at_disposal`, `gain_loss_on_disposal`, `disposal_costs`, `buyer_name`, `invoice_number`, `reason`, `approved_by`, `approved_at`, `status`, `payment_method`, `bank_id`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 3, NULL, '2026-02-03', 'scrapped', 0.00, 150000.00, -150000.00, 0.00, NULL, NULL, 'slaod', NULL, NULL, 'pending', NULL, NULL, '2026-02-03 07:32:14', '2026-02-03 07:32:14', NULL),
+(2, 3, NULL, '2026-02-03', 'sale', 52.00, 150000.00, -149948.00, 0.00, 'app', NULL, 'teta', NULL, NULL, 'pending', 'bank_transfer', 1, '2026-02-03 07:33:24', '2026-02-03 07:33:24', NULL),
+(3, 16, NULL, '2026-02-03', 'scrapped', 4000.00, 25000.00, -21000.00, 0.00, NULL, NULL, 'test', NULL, NULL, 'completed', 'bank_transfer', 1, '2026-02-03 07:53:58', '2026-02-03 07:53:58', NULL),
+(4, 3, 48, '2026-02-03', 'scrapped', 4000.00, 150000.00, -146000.00, 0.00, NULL, NULL, '63722', NULL, NULL, 'completed', 'bank_transfer', 1, '2026-02-03 08:14:05', '2026-02-03 08:59:38', NULL),
+(5, 4, 49, '2026-02-03', 'donated', 88000.00, 150000.00, -62000.00, 0.00, NULL, NULL, 'test cash disposal', NULL, NULL, 'completed', 'cash', NULL, '2026-02-03 09:03:25', '2026-02-03 09:03:25', NULL);
 
 -- --------------------------------------------------------
 
@@ -2458,7 +2562,44 @@ CREATE TABLE `journal_entries` (
 --
 
 INSERT INTO `journal_entries` (`id`, `entry_number`, `accounting_period_id`, `entry_date`, `description`, `reference_type`, `reference_id`, `entry_type`, `status`, `reversal_of_id`, `reversed_by_id`, `created_by`, `submitted_by`, `submitted_at`, `approved_by`, `approved_at`, `rejected_by`, `rejected_at`, `rejection_reason`, `posted_by`, `posted_at`, `edit_requires_approval`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 'JE-202602-0001', 2, '2026-02-02', 'HMO Remittance Received | HMO: CBN | Amount: 7,000.00 | Period: 2025-07-29 to 2026-02-02', 'App\\Models\\HmoRemittance', 1, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-02-02 11:23:18', 1, '2026-02-02 11:23:18', '2026-02-02 11:23:18', NULL);
+(1, 'JE-202602-0001', 2, '2026-02-02', 'HMO Remittance Received | HMO: CBN | Amount: 7,000.00 | Period: 2025-07-29 to 2026-02-02', 'App\\Models\\HmoRemittance', 1, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-02-02 11:23:18', 1, '2026-02-02 11:23:18', '2026-02-02 11:23:18', NULL),
+(5, 'JE-202602-0002', 1, '2025-12-03', 'Acquisition of fixed asset: Test Laptop Computer (BLD-2026-00006)', 'fixed_asset_acquisition', 8, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 06:27:10', 1, '2026-02-03 06:27:10', '2026-02-03 06:27:10', NULL),
+(12, 'JE-202602-0003', 1, '2025-12-03', 'Acquisition of fixed asset: Test Laptop Computer (BLD-2026-00007)', 'fixed_asset_acquisition', 9, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 06:28:28', 1, '2026-02-03 06:28:28', '2026-02-03 06:28:28', NULL),
+(16, 'JE-202602-0004', 1, '2026-02-03', 'Acquisition of fixed asset: TEST VOID - Office Desk 20260203074844 (BLD-2026-00008)', 'fixed_asset_acquisition', 13, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 06:48:44', 1, '2026-02-03 06:48:44', '2026-02-03 06:48:44', NULL),
+(17, 'JE-202602-0005', 1, '2026-02-03', 'Acquisition of fixed asset: TEST VOID - Office Desk 20260203074929 (BLD-2026-00009)', 'fixed_asset_acquisition', 14, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 06:49:29', 1, '2026-02-03 06:49:29', '2026-02-03 06:49:29', NULL),
+(18, 'JE-202602-0006', 1, '2026-02-03', 'Acquisition of fixed asset: TEST VOID - Office Desk 20260203074954 (BLD-2026-00010)', 'fixed_asset_acquisition', 15, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 06:49:54', 1, '2026-02-03 06:49:54', '2026-02-03 06:49:54', NULL),
+(19, 'JE-202602-0007', 1, '2026-02-03', 'Acquisition of fixed asset: TEST VOID - Office Desk 20260203075041 (BLD-2026-00011)', 'fixed_asset_acquisition', 16, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 06:50:41', 1, '2026-02-03 06:50:41', '2026-02-03 06:50:41', NULL),
+(20, 'JE-202602-0008', 1, '2026-02-03', 'Acquisition of fixed asset: TEST VOID - Office Desk 20260203075113 (BLD-2026-00012)', 'fixed_asset_acquisition', 17, NULL, 'reversed', NULL, 36, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 06:51:13', 1, '2026-02-03 06:51:13', '2026-02-03 07:47:05', NULL),
+(22, 'JE-202602-0009', 1, '2026-02-03', 'Acquisition of fixed asset: TEST VOID - Office Desk 20260203075329 (BLD-2026-00013)', 'fixed_asset_acquisition', 18, NULL, 'reversed', NULL, 23, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 06:53:29', 1, '2026-02-03 06:53:29', '2026-02-03 06:53:29', NULL),
+(23, 'JE-202602-0010', 1, '2026-02-03', 'REVERSAL: Voiding fixed asset BLD-2026-00013 - Test void operation - verifying functionality', 'App\\Models\\Accounting\\FixedAsset', 18, 'reversal', 'posted', 22, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-02-03 06:53:29', 1, '2026-02-03 06:53:29', '2026-02-03 06:53:29', NULL),
+(24, 'JE-202602-0011', 1, '2026-02-03', 'Acquisition of fixed asset: TEST VOID - Office Desk 20260203075403 (BLD-2026-00014)', 'fixed_asset_acquisition', 19, NULL, 'reversed', NULL, 25, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 06:54:03', 1, '2026-02-03 06:54:03', '2026-02-03 06:54:03', NULL),
+(25, 'JE-202602-0012', 1, '2026-02-03', 'REVERSAL: Voiding fixed asset BLD-2026-00014 - Test void operation - verifying functionality', 'App\\Models\\Accounting\\FixedAsset', 19, 'reversal', 'posted', 24, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-02-03 06:54:03', 1, '2026-02-03 06:54:03', '2026-02-03 06:54:03', NULL),
+(26, 'JE-202602-0013', 1, '2026-02-03', 'Acquisition of fixed asset: TEST OBSERVER - Active Asset 20260203075750 (BLD-2026-00015)', 'fixed_asset_acquisition', 20, NULL, 'reversed', NULL, 27, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 06:57:50', 1, '2026-02-03 06:57:50', '2026-02-03 06:57:50', NULL),
+(27, 'JE-202602-0014', 1, '2026-02-03', 'REVERSAL: Voiding fixed asset BLD-2026-00015 - Test voiding for observer check', 'App\\Models\\Accounting\\FixedAsset', 20, 'reversal', 'posted', 26, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-02-03 06:57:50', 1, '2026-02-03 06:57:50', '2026-02-03 06:57:50', NULL),
+(28, 'JE-202602-0015', 1, '2026-02-03', 'Acquisition of fixed asset: TEST OBSERVER - Active Asset 20260203075824 (BLD-2026-00016)', 'fixed_asset_acquisition', 21, NULL, 'reversed', NULL, 29, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 06:58:24', 1, '2026-02-03 06:58:24', '2026-02-03 06:58:24', NULL),
+(29, 'JE-202602-0016', 1, '2026-02-03', 'REVERSAL: Voiding fixed asset BLD-2026-00016 - Test voiding for observer check', 'App\\Models\\Accounting\\FixedAsset', 21, 'reversal', 'posted', 28, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-02-03 06:58:24', 1, '2026-02-03 06:58:24', '2026-02-03 06:58:24', NULL),
+(30, 'JE-202602-0017', 1, '2026-02-03', 'Acquisition of fixed asset: TEST IAS16 - Mistakenly Registered Asset (BLD-2026-00018)', 'fixed_asset_acquisition', 23, NULL, 'reversed', NULL, 31, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 07:02:07', 1, '2026-02-03 07:02:07', '2026-02-03 07:02:07', NULL),
+(31, 'JE-202602-0018', 1, '2026-02-03', 'REVERSAL: Voiding fixed asset BLD-2026-00018 - Registered in error - duplicate entry', 'App\\Models\\Accounting\\FixedAsset', 23, 'reversal', 'posted', 30, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-02-03 07:02:07', 1, '2026-02-03 07:02:07', '2026-02-03 07:02:07', NULL),
+(32, 'JE-202602-0019', 1, '2025-11-03', 'Acquisition of fixed asset: TEST IAS16 - Asset with Depreciation (BLD-2026-00019)', 'fixed_asset_acquisition', 24, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 07:02:07', 1, '2026-02-03 07:02:07', '2026-02-03 07:02:07', NULL),
+(33, 'JE-202602-0020', 1, '2025-11-03', 'Monthly depreciation: TEST IAS16 - Asset with Depreciation (BLD-2026-00019) - Y1M1', 'fixed_asset_depreciation', 9, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 07:02:07', 1, '2026-02-03 07:02:07', '2026-02-03 07:02:07', NULL),
+(34, 'JE-202602-0021', 1, '2025-12-03', 'Monthly depreciation: TEST IAS16 - Asset with Depreciation (BLD-2026-00019) - Y1M2', 'fixed_asset_depreciation', 10, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 07:02:07', 1, '2026-02-03 07:02:07', '2026-02-03 07:02:07', NULL),
+(35, 'JE-202602-0022', 1, '2026-01-03', 'Monthly depreciation: TEST IAS16 - Asset with Depreciation (BLD-2026-00019) - Y1M3', 'fixed_asset_depreciation', 11, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 07:02:07', 1, '2026-02-03 07:02:07', '2026-02-03 07:02:07', NULL),
+(36, 'JE-202602-0023', 1, '2026-02-03', 'REVERSAL: Voiding fixed asset BLD-2026-00012 - dulicate', 'App\\Models\\Accounting\\FixedAsset', 17, 'reversal', 'posted', 20, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-02-03 07:47:05', 1, '2026-02-03 07:47:05', '2026-02-03 07:47:05', NULL),
+(37, 'JE-202602-0024', 1, '2025-12-03', 'Acquisition of fixed asset: Test Laptop Computer (BLD-2026-00001)', 'fixed_asset_acquisition', 3, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 08:19:10', 1, '2026-02-03 08:19:10', '2026-02-03 08:19:10', NULL),
+(38, 'JE-202602-0025', 1, '2025-12-03', 'Acquisition of fixed asset: Test Laptop Computer (BLD-2026-00002)', 'fixed_asset_acquisition', 4, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 08:19:10', 1, '2026-02-03 08:19:10', '2026-02-03 08:19:10', NULL),
+(39, 'JE-202602-0026', 1, '2025-12-03', 'Acquisition of fixed asset: Test Laptop Computer (BLD-2026-00003)', 'fixed_asset_acquisition', 5, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 08:19:10', 1, '2026-02-03 08:19:10', '2026-02-03 08:19:10', NULL),
+(40, 'JE-202602-0027', 1, '2025-12-03', 'Acquisition of fixed asset: Test Laptop Computer (BLD-2026-00004)', 'fixed_asset_acquisition', 6, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 08:19:10', 1, '2026-02-03 08:19:10', '2026-02-03 08:19:10', NULL),
+(41, 'JE-202602-0028', 1, '2025-12-03', 'Acquisition of fixed asset: Test Laptop Computer (BLD-2026-00005)', 'fixed_asset_acquisition', 7, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 08:19:10', 1, '2026-02-03 08:19:10', '2026-02-03 08:19:10', NULL),
+(48, 'JE-202602-0029', 1, '2026-02-03', 'Disposal of fixed asset: Test Laptop Computer (BLD-2026-00001) - Scrapped', 'fixed_asset_disposal', 4, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 08:59:38', 1, '2026-02-03 08:59:38', '2026-02-03 08:59:38', NULL),
+(49, 'JE-202602-0030', 1, '2026-02-03', 'Disposal of fixed asset: Test Laptop Computer (BLD-2026-00002) - Donated', 'fixed_asset_disposal', 5, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 09:03:25', 1, '2026-02-03 09:03:25', '2026-02-03 09:03:25', NULL),
+(50, 'JE-202602-0031', 1, '2026-02-03', 'Monthly depreciation: Test Laptop Computer (BLD-2026-00003) - Y1M2', 'fixed_asset_depreciation', 12, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 09:20:55', 1, '2026-02-03 09:20:55', '2026-02-03 09:20:55', NULL),
+(51, 'JE-202602-0032', 1, '2026-02-03', 'Monthly depreciation: Test Laptop Computer (BLD-2026-00004) - Y1M2', 'fixed_asset_depreciation', 13, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 09:20:56', 1, '2026-02-03 09:20:56', '2026-02-03 09:20:56', NULL),
+(52, 'JE-202602-0033', 1, '2026-02-03', 'Monthly depreciation: Test Laptop Computer (BLD-2026-00005) - Y1M2', 'fixed_asset_depreciation', 14, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 09:20:56', 1, '2026-02-03 09:20:56', '2026-02-03 09:20:56', NULL),
+(53, 'JE-202602-0034', 1, '2026-02-03', 'Monthly depreciation: Test Laptop Computer (BLD-2026-00006) - Y1M2', 'fixed_asset_depreciation', 15, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 09:20:56', 1, '2026-02-03 09:20:56', '2026-02-03 09:20:56', NULL),
+(54, 'JE-202602-0035', 1, '2026-02-03', 'Monthly depreciation: Test Laptop Computer (BLD-2026-00007) - Y1M2', 'fixed_asset_depreciation', 16, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 09:20:56', 1, '2026-02-03 09:20:56', '2026-02-03 09:20:56', NULL),
+(55, 'JE-202602-0036', 1, '2026-02-03', 'Monthly depreciation: TEST VOID - Office Desk 20260203074844 (BLD-2026-00008) - Y1M2', 'fixed_asset_depreciation', 17, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 09:20:56', 1, '2026-02-03 09:20:56', '2026-02-03 09:20:56', NULL),
+(56, 'JE-202602-0037', 1, '2026-02-03', 'Monthly depreciation: TEST VOID - Office Desk 20260203074929 (BLD-2026-00009) - Y1M2', 'fixed_asset_depreciation', 18, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 09:20:56', 1, '2026-02-03 09:20:56', '2026-02-03 09:20:56', NULL),
+(57, 'JE-202602-0038', 1, '2026-02-03', 'Monthly depreciation: TEST VOID - Office Desk 20260203074954 (BLD-2026-00010) - Y1M2', 'fixed_asset_depreciation', 19, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 09:20:56', 1, '2026-02-03 09:20:56', '2026-02-03 09:20:56', NULL);
 
 -- --------------------------------------------------------
 
@@ -2520,7 +2661,85 @@ CREATE TABLE `journal_entry_lines` (
 
 INSERT INTO `journal_entry_lines` (`id`, `journal_entry_id`, `line_number`, `account_id`, `cost_center_id`, `sub_account_id`, `product_id`, `service_id`, `product_category_id`, `service_category_id`, `hmo_id`, `supplier_id`, `patient_id`, `department_id`, `category`, `debit`, `credit`, `narration`, `cash_flow_category`, `created_at`, `updated_at`) VALUES
 (1, 1, 1, 79, NULL, NULL, NULL, NULL, NULL, NULL, 11, NULL, NULL, NULL, 'hmo_remittance', 7000.00, 0.00, 'HMO Remittance received: CBN', 'operating', '2026-02-02 11:23:18', '2026-02-02 11:23:18'),
-(2, 1, 2, 6, NULL, 4, NULL, NULL, NULL, NULL, 11, NULL, NULL, NULL, 'hmo_remittance', 0.00, 7000.00, 'Claims settled - Period: 2025-07-29 to 2026-02-02', 'operating', '2026-02-02 11:23:18', '2026-02-02 11:23:18');
+(2, 1, 2, 6, NULL, 4, NULL, NULL, NULL, NULL, 11, NULL, NULL, NULL, 'hmo_remittance', 0.00, 7000.00, 'Claims settled - Period: 2025-07-29 to 2026-02-02', 'operating', '2026-02-02 11:23:18', '2026-02-02 11:23:18'),
+(3, 5, 1, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 0.00, NULL, NULL, '2026-02-03 06:27:10', '2026-02-03 06:27:10'),
+(4, 5, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 0.00, NULL, NULL, '2026-02-03 06:27:10', '2026-02-03 06:27:10'),
+(17, 12, 1, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 150000.00, 0.00, 'Acquisition: Test Laptop Computer', NULL, '2026-02-03 06:28:28', '2026-02-03 06:28:28'),
+(18, 12, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 150000.00, 'Payment for: Test Laptop Computer', NULL, '2026-02-03 06:28:28', '2026-02-03 06:28:28'),
+(25, 16, 1, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 25000.00, 0.00, 'Acquisition: TEST VOID - Office Desk 20260203074844', NULL, '2026-02-03 06:48:44', '2026-02-03 06:48:44'),
+(26, 16, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 25000.00, 'Payment for: TEST VOID - Office Desk 20260203074844', NULL, '2026-02-03 06:48:44', '2026-02-03 06:48:44'),
+(27, 17, 1, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 25000.00, 0.00, 'Acquisition: TEST VOID - Office Desk 20260203074929', NULL, '2026-02-03 06:49:29', '2026-02-03 06:49:29'),
+(28, 17, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 25000.00, 'Payment for: TEST VOID - Office Desk 20260203074929', NULL, '2026-02-03 06:49:29', '2026-02-03 06:49:29'),
+(29, 18, 1, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 25000.00, 0.00, 'Acquisition: TEST VOID - Office Desk 20260203074954', NULL, '2026-02-03 06:49:54', '2026-02-03 06:49:54'),
+(30, 18, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 25000.00, 'Payment for: TEST VOID - Office Desk 20260203074954', NULL, '2026-02-03 06:49:54', '2026-02-03 06:49:54'),
+(31, 19, 1, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 25000.00, 0.00, 'Acquisition: TEST VOID - Office Desk 20260203075041', NULL, '2026-02-03 06:50:41', '2026-02-03 06:50:41'),
+(32, 19, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 25000.00, 'Payment for: TEST VOID - Office Desk 20260203075041', NULL, '2026-02-03 06:50:41', '2026-02-03 06:50:41'),
+(33, 20, 1, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 25000.00, 0.00, 'Acquisition: TEST VOID - Office Desk 20260203075113', NULL, '2026-02-03 06:51:13', '2026-02-03 06:51:13'),
+(34, 20, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 25000.00, 'Payment for: TEST VOID - Office Desk 20260203075113', NULL, '2026-02-03 06:51:13', '2026-02-03 06:51:13'),
+(37, 22, 1, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 25000.00, 0.00, 'Acquisition: TEST VOID - Office Desk 20260203075329', NULL, '2026-02-03 06:53:29', '2026-02-03 06:53:29'),
+(38, 22, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 25000.00, 'Payment for: TEST VOID - Office Desk 20260203075329', NULL, '2026-02-03 06:53:29', '2026-02-03 06:53:29'),
+(39, 23, 1, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 25000.00, 'Reversal: Acquisition: TEST VOID - Office Desk 20260203075329', NULL, '2026-02-03 06:53:29', '2026-02-03 06:53:29'),
+(40, 23, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 25000.00, 0.00, 'Reversal: Payment for: TEST VOID - Office Desk 20260203075329', NULL, '2026-02-03 06:53:29', '2026-02-03 06:53:29'),
+(41, 24, 1, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 25000.00, 0.00, 'Acquisition: TEST VOID - Office Desk 20260203075403', NULL, '2026-02-03 06:54:03', '2026-02-03 06:54:03'),
+(42, 24, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 25000.00, 'Payment for: TEST VOID - Office Desk 20260203075403', NULL, '2026-02-03 06:54:03', '2026-02-03 06:54:03'),
+(43, 25, 1, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 25000.00, 'Reversal: Acquisition: TEST VOID - Office Desk 20260203075403', NULL, '2026-02-03 06:54:03', '2026-02-03 06:54:03'),
+(44, 25, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 25000.00, 0.00, 'Reversal: Payment for: TEST VOID - Office Desk 20260203075403', NULL, '2026-02-03 06:54:03', '2026-02-03 06:54:03'),
+(45, 26, 1, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 10000.00, 0.00, 'Acquisition: TEST OBSERVER - Active Asset 20260203075750', NULL, '2026-02-03 06:57:50', '2026-02-03 06:57:50'),
+(46, 26, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 10000.00, 'Payment for: TEST OBSERVER - Active Asset 20260203075750', NULL, '2026-02-03 06:57:50', '2026-02-03 06:57:50'),
+(47, 27, 1, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 10000.00, 'Reversal: Acquisition: TEST OBSERVER - Active Asset 20260203075750', NULL, '2026-02-03 06:57:50', '2026-02-03 06:57:50'),
+(48, 27, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 10000.00, 0.00, 'Reversal: Payment for: TEST OBSERVER - Active Asset 20260203075750', NULL, '2026-02-03 06:57:50', '2026-02-03 06:57:50'),
+(49, 28, 1, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 10000.00, 0.00, 'Acquisition: TEST OBSERVER - Active Asset 20260203075824', NULL, '2026-02-03 06:58:24', '2026-02-03 06:58:24'),
+(50, 28, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 10000.00, 'Payment for: TEST OBSERVER - Active Asset 20260203075824', NULL, '2026-02-03 06:58:24', '2026-02-03 06:58:24'),
+(51, 29, 1, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 10000.00, 'Reversal: Acquisition: TEST OBSERVER - Active Asset 20260203075824', NULL, '2026-02-03 06:58:24', '2026-02-03 06:58:24'),
+(52, 29, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 10000.00, 0.00, 'Reversal: Payment for: TEST OBSERVER - Active Asset 20260203075824', NULL, '2026-02-03 06:58:24', '2026-02-03 06:58:24'),
+(53, 30, 1, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15000.00, 0.00, 'Acquisition: TEST IAS16 - Mistakenly Registered Asset', NULL, '2026-02-03 07:02:07', '2026-02-03 07:02:07'),
+(54, 30, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 15000.00, 'Payment for: TEST IAS16 - Mistakenly Registered Asset', NULL, '2026-02-03 07:02:07', '2026-02-03 07:02:07'),
+(55, 31, 1, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 15000.00, 'Reversal: Acquisition: TEST IAS16 - Mistakenly Registered Asset', NULL, '2026-02-03 07:02:07', '2026-02-03 07:02:07'),
+(56, 31, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 15000.00, 0.00, 'Reversal: Payment for: TEST IAS16 - Mistakenly Registered Asset', NULL, '2026-02-03 07:02:07', '2026-02-03 07:02:07'),
+(57, 32, 1, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 20000.00, 0.00, 'Acquisition: TEST IAS16 - Asset with Depreciation', NULL, '2026-02-03 07:02:07', '2026-02-03 07:02:07'),
+(58, 32, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 20000.00, 'Payment for: TEST IAS16 - Asset with Depreciation', NULL, '2026-02-03 07:02:07', '2026-02-03 07:02:07'),
+(59, 33, 1, 72, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 300.00, 0.00, 'Depreciation expense: TEST IAS16 - Asset with Depreciation', NULL, '2026-02-03 07:02:07', '2026-02-03 07:02:07'),
+(60, 33, 2, 19, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 300.00, 'Accumulated depreciation: TEST IAS16 - Asset with Depreciation', NULL, '2026-02-03 07:02:07', '2026-02-03 07:02:07'),
+(61, 34, 1, 72, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 300.00, 0.00, 'Depreciation expense: TEST IAS16 - Asset with Depreciation', NULL, '2026-02-03 07:02:07', '2026-02-03 07:02:07'),
+(62, 34, 2, 19, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 300.00, 'Accumulated depreciation: TEST IAS16 - Asset with Depreciation', NULL, '2026-02-03 07:02:07', '2026-02-03 07:02:07'),
+(63, 35, 1, 72, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 300.00, 0.00, 'Depreciation expense: TEST IAS16 - Asset with Depreciation', NULL, '2026-02-03 07:02:07', '2026-02-03 07:02:07'),
+(64, 35, 2, 19, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 300.00, 'Accumulated depreciation: TEST IAS16 - Asset with Depreciation', NULL, '2026-02-03 07:02:07', '2026-02-03 07:02:07'),
+(65, 36, 1, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 25000.00, 'Reversal: Acquisition: TEST VOID - Office Desk 20260203075113', NULL, '2026-02-03 07:47:05', '2026-02-03 07:47:05'),
+(66, 36, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 25000.00, 0.00, 'Reversal: Payment for: TEST VOID - Office Desk 20260203075113', NULL, '2026-02-03 07:47:05', '2026-02-03 07:47:05'),
+(67, 37, 1, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 150000.00, 0.00, 'Acquisition: Test Laptop Computer', NULL, '2026-02-03 08:19:10', '2026-02-03 08:19:10'),
+(68, 37, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 150000.00, 'Payment for: Test Laptop Computer', NULL, '2026-02-03 08:19:10', '2026-02-03 08:19:10'),
+(69, 38, 1, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 150000.00, 0.00, 'Acquisition: Test Laptop Computer', NULL, '2026-02-03 08:19:10', '2026-02-03 08:19:10'),
+(70, 38, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 150000.00, 'Payment for: Test Laptop Computer', NULL, '2026-02-03 08:19:10', '2026-02-03 08:19:10'),
+(71, 39, 1, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 150000.00, 0.00, 'Acquisition: Test Laptop Computer', NULL, '2026-02-03 08:19:10', '2026-02-03 08:19:10'),
+(72, 39, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 150000.00, 'Payment for: Test Laptop Computer', NULL, '2026-02-03 08:19:10', '2026-02-03 08:19:10'),
+(73, 40, 1, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 150000.00, 0.00, 'Acquisition: Test Laptop Computer', NULL, '2026-02-03 08:19:10', '2026-02-03 08:19:10'),
+(74, 40, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 150000.00, 'Payment for: Test Laptop Computer', NULL, '2026-02-03 08:19:10', '2026-02-03 08:19:10'),
+(75, 41, 1, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 150000.00, 0.00, 'Acquisition: Test Laptop Computer', NULL, '2026-02-03 08:19:10', '2026-02-03 08:19:10'),
+(76, 41, 2, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 150000.00, 'Payment for: Test Laptop Computer', NULL, '2026-02-03 08:19:10', '2026-02-03 08:19:10'),
+(80, 48, 1, 79, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 4000.00, 0.00, 'Proceeds from disposal via Zenith bank: Test Laptop Computer', NULL, '2026-02-03 08:59:38', '2026-02-03 08:59:38'),
+(81, 48, 2, 19, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 0.00, 'Remove accumulated depreciation: Test Laptop Computer', NULL, '2026-02-03 08:59:38', '2026-02-03 08:59:38'),
+(82, 48, 3, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 150000.00, 'Remove fixed asset: Test Laptop Computer', NULL, '2026-02-03 08:59:38', '2026-02-03 08:59:38'),
+(83, 48, 4, 80, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 146000.00, 0.00, 'Loss on disposal: Test Laptop Computer', NULL, '2026-02-03 08:59:38', '2026-02-03 08:59:38'),
+(84, 49, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 88000.00, 0.00, 'Proceeds from disposal via Cash: Test Laptop Computer', NULL, '2026-02-03 09:03:25', '2026-02-03 09:03:25'),
+(85, 49, 2, 19, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 0.00, 'Remove accumulated depreciation: Test Laptop Computer', NULL, '2026-02-03 09:03:25', '2026-02-03 09:03:25'),
+(86, 49, 3, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 150000.00, 'Remove fixed asset: Test Laptop Computer', NULL, '2026-02-03 09:03:25', '2026-02-03 09:03:25'),
+(87, 49, 4, 80, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 62000.00, 0.00, 'Loss on disposal: Test Laptop Computer', NULL, '2026-02-03 09:03:25', '2026-02-03 09:03:25'),
+(88, 50, 1, 72, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 296.88, 0.00, 'Depreciation expense: Test Laptop Computer', NULL, '2026-02-03 09:20:55', '2026-02-03 09:20:55'),
+(89, 50, 2, 19, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 296.88, 'Accumulated depreciation: Test Laptop Computer', NULL, '2026-02-03 09:20:55', '2026-02-03 09:20:55'),
+(90, 51, 1, 72, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 296.88, 0.00, 'Depreciation expense: Test Laptop Computer', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(91, 51, 2, 19, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 296.88, 'Accumulated depreciation: Test Laptop Computer', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(92, 52, 1, 72, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 296.88, 0.00, 'Depreciation expense: Test Laptop Computer', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(93, 52, 2, 19, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 296.88, 'Accumulated depreciation: Test Laptop Computer', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(94, 53, 1, 72, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 296.88, 0.00, 'Depreciation expense: Test Laptop Computer', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(95, 53, 2, 19, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 296.88, 'Accumulated depreciation: Test Laptop Computer', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(96, 54, 1, 72, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 296.88, 0.00, 'Depreciation expense: Test Laptop Computer', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(97, 54, 2, 19, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 296.88, 'Accumulated depreciation: Test Laptop Computer', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(98, 55, 1, 72, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 375.00, 0.00, 'Depreciation expense: TEST VOID - Office Desk 20260203074844', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(99, 55, 2, 19, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 375.00, 'Accumulated depreciation: TEST VOID - Office Desk 20260203074844', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(100, 56, 1, 72, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 375.00, 0.00, 'Depreciation expense: TEST VOID - Office Desk 20260203074929', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(101, 56, 2, 19, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 375.00, 'Accumulated depreciation: TEST VOID - Office Desk 20260203074929', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(102, 57, 1, 72, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 375.00, 0.00, 'Depreciation expense: TEST VOID - Office Desk 20260203074954', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(103, 57, 2, 19, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 375.00, 'Accumulated depreciation: TEST VOID - Office Desk 20260203074954', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56');
 
 -- --------------------------------------------------------
 
@@ -3169,7 +3388,8 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (237, '2026_02_01_140002_create_statutory_remittances_table', 108),
 (238, '2026_02_02_100000_add_status_to_patient_deposit_applications', 109),
 (239, '2026_02_02_100001_add_soft_deletes_to_patient_deposit_applications', 110),
-(240, '2026_02_02_120000_add_source_payment_id_to_patient_deposits', 111);
+(240, '2026_02_02_120000_add_source_payment_id_to_patient_deposits', 111),
+(241, '2026_02_03_075200_add_voided_status_to_fixed_assets', 112);
 
 -- --------------------------------------------------------
 
@@ -62906,7 +63126,8 @@ CREATE TABLE `product_or_service_requests` (
 
 INSERT INTO `product_or_service_requests` (`id`, `type`, `invoice_id`, `payment_id`, `hmo_remittance_id`, `user_id`, `patient_id`, `encounter_id`, `admission_request_id`, `staff_user_id`, `created_by`, `order_date`, `dispensed_from_store_id`, `product_id`, `service_id`, `qty`, `amount`, `discount`, `payable_amount`, `claims_amount`, `coverage_mode`, `hmo_id`, `validation_status`, `auth_code`, `validated_by`, `validated_at`, `validation_notes`, `submitted_to_hmo_at`, `hmo_submission_batch`, `created_at`, `updated_at`) VALUES
 (1, NULL, NULL, 3, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 39, 1, 0.00, 0.00, 7000.00, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-02 16:05:40', '2026-02-02 16:10:26'),
-(2, NULL, NULL, 3, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, 649, NULL, 3, 0.00, 0.00, 765.00, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-02 16:05:40', '2026-02-02 16:10:26');
+(2, NULL, NULL, 3, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, 649, NULL, 3, 0.00, 0.00, 765.00, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-02 16:05:40', '2026-02-02 16:10:26'),
+(3, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, 0.00, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 05:43:18', '2026-02-03 05:43:18');
 
 -- --------------------------------------------------------
 
@@ -80532,7 +80753,7 @@ ALTER TABLE `accounting_periods`
 -- AUTO_INCREMENT for table `accounts`
 --
 ALTER TABLE `accounts`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=80;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=81;
 
 --
 -- AUTO_INCREMENT for table `account_classes`
@@ -80580,7 +80801,7 @@ ALTER TABLE `application_status`
 -- AUTO_INCREMENT for table `audits`
 --
 ALTER TABLE `audits`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=99;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=134;
 
 --
 -- AUTO_INCREMENT for table `banks`
@@ -80688,7 +80909,7 @@ ALTER TABLE `chat_conversation_archives`
 -- AUTO_INCREMENT for table `chat_messages`
 --
 ALTER TABLE `chat_messages`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `chat_participants`
@@ -80850,25 +81071,25 @@ ALTER TABLE `fiscal_years`
 -- AUTO_INCREMENT for table `fixed_assets`
 --
 ALTER TABLE `fixed_assets`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT for table `fixed_asset_categories`
 --
 ALTER TABLE `fixed_asset_categories`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `fixed_asset_depreciations`
 --
 ALTER TABLE `fixed_asset_depreciations`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `fixed_asset_disposals`
 --
 ALTER TABLE `fixed_asset_disposals`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `fixed_asset_transfers`
@@ -80970,7 +81191,7 @@ ALTER TABLE `jobs`
 -- AUTO_INCREMENT for table `journal_entries`
 --
 ALTER TABLE `journal_entries`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
 
 --
 -- AUTO_INCREMENT for table `journal_entry_edits`
@@ -80982,7 +81203,7 @@ ALTER TABLE `journal_entry_edits`
 -- AUTO_INCREMENT for table `journal_entry_lines`
 --
 ALTER TABLE `journal_entry_lines`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=104;
 
 --
 -- AUTO_INCREMENT for table `lab_service_requests`
@@ -81072,7 +81293,7 @@ ALTER TABLE `messages`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=241;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=242;
 
 --
 -- AUTO_INCREMENT for table `misc_bills`
@@ -81258,7 +81479,7 @@ ALTER TABLE `product_categories`
 -- AUTO_INCREMENT for table `product_or_service_requests`
 --
 ALTER TABLE `product_or_service_requests`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `product_requests`
