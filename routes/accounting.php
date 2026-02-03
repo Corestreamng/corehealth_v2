@@ -260,13 +260,24 @@ Route::prefix('accounting')->name('accounting.')->middleware(['auth', 'verified'
         Route::get('/datatable', [CashFlowForecastController::class, 'datatable'])->name('datatable');
         Route::get('/create', [CashFlowForecastController::class, 'create'])->name('create');
         Route::post('/', [CashFlowForecastController::class, 'store'])->name('store');
-        Route::get('/{forecast}', [CashFlowForecastController::class, 'show'])->name('show');
+
+        // Patterns routes - must be before {forecast} wildcard
+        Route::get('/patterns', [CashFlowForecastController::class, 'patterns'])->name('patterns.index');
+        Route::post('/patterns', [CashFlowForecastController::class, 'storePattern'])->name('patterns.store');
+        Route::put('/patterns/{pattern}', [CashFlowForecastController::class, 'updatePattern'])->name('patterns.update');
+        Route::delete('/patterns/{pattern}', [CashFlowForecastController::class, 'deletePattern'])->name('patterns.destroy');
+        Route::post('/patterns/{pattern}/toggle', [CashFlowForecastController::class, 'togglePattern'])->name('patterns.toggle');
+
+        // Period routes - must be before {forecast} wildcard
         Route::get('/periods/{period}/edit', [CashFlowForecastController::class, 'editPeriod'])->name('periods.edit');
         Route::put('/periods/{period}', [CashFlowForecastController::class, 'updatePeriod'])->name('periods.update');
         Route::post('/periods/{period}/items', [CashFlowForecastController::class, 'addItem'])->name('periods.items.store');
         Route::put('/periods/{period}/actuals', [CashFlowForecastController::class, 'updateActuals'])->name('periods.actuals');
-        Route::get('/patterns', [CashFlowForecastController::class, 'patterns'])->name('patterns.index');
-        Route::post('/patterns', [CashFlowForecastController::class, 'storePattern'])->name('patterns.store');
+
+        // Forecast-specific routes with {forecast} wildcard
+        Route::get('/{forecast}', [CashFlowForecastController::class, 'show'])->name('show');
+        Route::post('/{forecast}/activate', [CashFlowForecastController::class, 'activate'])->name('activate');
+        Route::post('/{forecast}/apply-patterns', [CashFlowForecastController::class, 'applyPatterns'])->name('apply-patterns');
         Route::get('/{forecast}/export/pdf', [CashFlowForecastController::class, 'exportPdf'])->name('export.pdf');
         Route::get('/{forecast}/export/excel', [CashFlowForecastController::class, 'exportExcel'])->name('export.excel');
     });
