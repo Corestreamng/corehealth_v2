@@ -1546,4 +1546,280 @@ class ExcelExportService
 
         return $this->download('asset-' . $asset->asset_number . '-' . now()->format('Y-m-d'));
     }
+
+    /**
+     * Export Cash Flow Forecast to Excel.
+     */
+    public function cashFlowForecast($forecast, $currentCash): StreamedResponse
+    {
+        $subtitle = $forecast->forecast_start_date && $forecast->forecast_end_date
+            ? $forecast->forecast_start_date->format('F d, Y') . ' to ' . $forecast->forecast_end_date->format('F d, Y')
+            : null;
+
+        $this->initSpreadsheet('Cash Flow Forecast: ' . $forecast->forecast_name, $subtitle);
+
+        // Forecast Summary Section
+        $this->activeSheet->setCellValue('A' . $this->currentRow, 'FORECAST DETAILS');
+        $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(12);
+        $this->currentRow++;
+
+        $detailsStartRow = $this->currentRow;
+        $this->activeSheet->setCellValue('A' . $this->currentRow, 'Forecast Name:');
+        $this->activeSheet->setCellValue('B' . $this->currentRow, $forecast->forecast_name);
+        $this->currentRow++;
+
+        $this->activeSheet->setCellValue('A' . $this->currentRow, 'Forecast Type:');
+        $this->activeSheet->setCellValue('B' . $this->currentRow, ucwords(str_replace('_', ' ', $forecast->forecast_type)));
+        $this->currentRow++;
+
+        $this->activeSheet->setCellValue('A' . $this->currentRow, 'Frequency:');
+        $this->activeSheet->setCellValue('B' . $this->currentRow, ucfirst($forecast->frequency));
+        $this->currentRow++;
+
+        $this->activeSheet->setCellValue('A' . $this->currentRow, 'Status:');
+        $this->activeSheet->setCellValue('B' . $this->currentRow, ucfirst($forecast->status));
+        $this->currentRow++;
+
+        $this->activeSheet->setCellValue('A' . $this->currentRow, 'Opening Balance:');
+        $this->activeSheet->setCellValue('B' . $this->currentRow, '₦' . number_format($currentCash, 2));
+        $this->currentRow++;
+
+        if ($forecast->approved_by) {
+            $this->activeSheet->setCellValue('A' . $this->currentRow, 'Approved By:');
+            $this->activeSheet->setCellValue('B' . $this->currentRow,
+                optional($forecast->approver)->name . ' on ' . optional($forecast->approved_at)->format('M d, Y'));
+            $this->currentRow++;
+        }
+
+        // Style the details section
+        $detailsEndRow = $this->currentRow - 1;
+        $this->activeSheet->getStyle('A' . $detailsStartRow . ':A' . $detailsEndRow)->getFont()->setBold(true);
+        $this->activeSheet->getStyle('A' . $detailsStartRow . ':B' . $detailsEndRow)->applyFromArray([
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'DDDDDD']]],
+        ]);
+
+        $this->currentRow++;
+
+        // Period Summary Table
+        $this->activeSheet->setCellValue('A' . $this->currentRow, 'PERIOD SUMMARY');
+        $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(12);
+        $this->currentRow++;
+
+        $this->addHeaderRow([
+            'Period',
+            'Start Date',
+            'End Date',
+            'Opening Balance',
+            'Forecasted Inflows',
+            'Forecasted Outflows',
+            'Net Cash Flow',
+            'Closing Balance',
+            'Actual Closing',
+            'Variance'
+        ]);
+
+        $runningBalance = $currentCash;
+        foreach ($forecast->periods()->orderBy('period_start_date')->get() as $period) {
+            $netFlow = $period->forecasted_inflows - $period->forecasted_outflows;
+            $periodClosing = $runningBalance + $netFlow;
+
+            $this->addDataRow([
+                $period->period_name,
+                optional($period->period_start_date)->format('M d, Y'),
+                optional($period->period_end_date)->format('M d, Y'),
+                '₦' . number_format($runningBalance, 2),
+                '₦' . number_format($period->forecasted_inflows, 2),
+                '₦' . number_format($period->forecasted_outflows, 2),
+                '₦' . number_format($netFlow, 2),
+                '₦' . number_format($periodClosing, 2),
+                $period->actual_closing_balance !== null ? '₦' . number_format($period->actual_closing_balance, 2) : '-',
+                $period->actual_closing_balance !== null ? '₦' . number_format($period->variance, 2) : '-',
+            ]);
+
+            $runningBalance = $periodClosing;
+        }
+
+        $this->autoSizeColumns(1, 10);
+        $this->currentRow += 2;
+
+        // Detailed Period Breakdown
+        $this->activeSheet->setCellValue('A' . $this->currentRow, 'PERIOD-BY-PERIOD BREAKDOWN');
+        $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(12);
+        $this->currentRow++;
+
+        foreach ($forecast->periods()->orderBy('period_start_date')->get() as $period) {
+            // Period header
+            $this->activeSheet->setCellValue('A' . $this->currentRow,
+                $period->period_name . ' (' . optional($period->period_start_date)->format('M d, Y') . ' - ' .
+                optional($period->period_end_date)->format('M d, Y') . ')');
+            $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(11);
+            $this->currentRow++;
+
+            $items = $period->items()->orderBy('cash_flow_category')->orderBy('item_description')->get();
+            $inflows = $items->whereIn('cash_flow_category', ['operating_inflow', 'investing_inflow', 'financing_inflow']);
+            $outflows = $items->whereIn('cash_flow_category', ['operating_outflow', 'investing_outflow', 'financing_outflow']);
+
+            if ($items->isEmpty()) {
+                $this->activeSheet->setCellValue('A' . $this->currentRow, 'No line items defined for this period');
+                $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setItalic(true)->getColor()->setRGB('999999');
+                $this->currentRow += 2;
+                continue;
+            }
+
+            // Inflows
+            if ($inflows->isNotEmpty()) {
+                $this->activeSheet->setCellValue('A' . $this->currentRow, 'CASH INFLOWS');
+                $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->getColor()->setRGB('28a745');
+                $this->currentRow++;
+
+                $this->addHeaderRow(['Category', 'Description', 'Source', 'Amount']);
+
+                $currentCategory = null;
+                $categoryTotal = 0;
+                $grandTotal = 0;
+
+                foreach ($inflows as $item) {
+                    if ($currentCategory !== $item->cash_flow_category) {
+                        if ($currentCategory !== null) {
+                            $this->addDataRow([
+                                '',
+                                ucwords(str_replace('_', ' ', $currentCategory)) . ' Subtotal',
+                                '',
+                                '₦' . number_format($categoryTotal, 2),
+                            ], 1, true);
+                            $categoryTotal = 0;
+                        }
+                        $currentCategory = $item->cash_flow_category;
+                    }
+
+                    $this->addDataRow([
+                        ucwords(str_replace('_', ' ', $item->cash_flow_category)),
+                        $item->item_description,
+                        ucwords(str_replace('_', ' ', $item->source_type)),
+                        '₦' . number_format($item->forecasted_amount, 2),
+                    ]);
+
+                    $categoryTotal += $item->forecasted_amount;
+                    $grandTotal += $item->forecasted_amount;
+                }
+
+                // Last category subtotal
+                $this->addDataRow([
+                    '',
+                    ucwords(str_replace('_', ' ', $currentCategory)) . ' Subtotal',
+                    '',
+                    '₦' . number_format($categoryTotal, 2),
+                ], 1, true);
+
+                // Grand total
+                $this->addDataRow([
+                    '',
+                    'Total Inflows',
+                    '',
+                    '₦' . number_format($grandTotal, 2),
+                ], 1, true);
+
+                $this->currentRow++;
+            }
+
+            // Outflows
+            if ($outflows->isNotEmpty()) {
+                $this->activeSheet->setCellValue('A' . $this->currentRow, 'CASH OUTFLOWS');
+                $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->getColor()->setRGB('dc3545');
+                $this->currentRow++;
+
+                $this->addHeaderRow(['Category', 'Description', 'Source', 'Amount']);
+
+                $currentCategory = null;
+                $categoryTotal = 0;
+                $grandTotal = 0;
+
+                foreach ($outflows as $item) {
+                    if ($currentCategory !== $item->cash_flow_category) {
+                        if ($currentCategory !== null) {
+                            $this->addDataRow([
+                                '',
+                                ucwords(str_replace('_', ' ', $currentCategory)) . ' Subtotal',
+                                '',
+                                '₦' . number_format($categoryTotal, 2),
+                            ], 1, true);
+                            $categoryTotal = 0;
+                        }
+                        $currentCategory = $item->cash_flow_category;
+                    }
+
+                    $this->addDataRow([
+                        ucwords(str_replace('_', ' ', $item->cash_flow_category)),
+                        $item->item_description,
+                        ucwords(str_replace('_', ' ', $item->source_type)),
+                        '₦' . number_format($item->forecasted_amount, 2),
+                    ]);
+
+                    $categoryTotal += $item->forecasted_amount;
+                    $grandTotal += $item->forecasted_amount;
+                }
+
+                // Last category subtotal
+                $this->addDataRow([
+                    '',
+                    ucwords(str_replace('_', ' ', $currentCategory)) . ' Subtotal',
+                    '',
+                    '₦' . number_format($categoryTotal, 2),
+                ], 1, true);
+
+                // Grand total
+                $this->addDataRow([
+                    '',
+                    'Total Outflows',
+                    '',
+                    '₦' . number_format($grandTotal, 2),
+                ], 1, true);
+
+                $this->currentRow++;
+            }
+
+            // Period Summary
+            $this->activeSheet->setCellValue('A' . $this->currentRow, 'Period Summary');
+            $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(10);
+            $this->currentRow++;
+
+            $summaryStartRow = $this->currentRow;
+            $this->addDataRow([
+                'Total Inflows:',
+                '₦' . number_format($period->forecasted_inflows, 2)
+            ]);
+            $this->addDataRow([
+                'Total Outflows:',
+                '₦' . number_format($period->forecasted_outflows, 2)
+            ]);
+            $this->addDataRow([
+                'Net Cash Flow:',
+                '₦' . number_format($period->forecasted_inflows - $period->forecasted_outflows, 2)
+            ], 1, true);
+
+            if ($period->actual_closing_balance !== null) {
+                $this->addDataRow([
+                    'Actual Closing Balance:',
+                    '₦' . number_format($period->actual_closing_balance, 2)
+                ]);
+                $this->addDataRow([
+                    'Variance:',
+                    '₦' . number_format($period->variance, 2)
+                ]);
+            }
+
+            $summaryEndRow = $this->currentRow - 1;
+            $this->activeSheet->getStyle('A' . $summaryStartRow . ':A' . $summaryEndRow)->getFont()->setBold(true);
+            $this->activeSheet->getStyle('A' . $summaryStartRow . ':B' . $summaryEndRow)->applyFromArray([
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'DDDDDD']]],
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F5F5F5']],
+            ]);
+
+            $this->currentRow += 2;
+        }
+
+        $this->autoSizeColumns(1, 4);
+
+        return $this->download('cash-flow-forecast-' . $forecast->id . '-' . now()->format('Y-m-d'));
+    }
 }
