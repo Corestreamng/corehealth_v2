@@ -30,6 +30,12 @@ class Budget extends Model implements Auditable
         'created_by',
         'approved_by',
         'approved_at',
+        'unapproved_by',
+        'unapproved_at',
+        'unapproval_reason',
+        'locked_by',
+        'locked_at',
+        'rejection_reason',
         'notes',
     ];
 
@@ -85,11 +91,27 @@ class Budget extends Model implements Auditable
     }
 
     /**
+     * Alias for creator() - backward compatibility.
+     */
+    public function createdBy(): BelongsTo
+    {
+        return $this->creator();
+    }
+
+    /**
      * Get the user who approved this budget.
      */
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    /**
+     * Alias for approver() - backward compatibility.
+     */
+    public function approvedBy(): BelongsTo
+    {
+        return $this->approver();
     }
 
     /**
@@ -109,9 +131,17 @@ class Budget extends Model implements Auditable
     }
 
     /**
-     * Check if budget is approved.
+     * Check if budget is approved (including locked).
      */
     public function isApproved(): bool
+    {
+        return in_array($this->status, [self::STATUS_APPROVED, self::STATUS_LOCKED]);
+    }
+
+    /**
+     * Check if budget is strictly approved (not locked).
+     */
+    public function isApprovedOnly(): bool
     {
         return $this->status === self::STATUS_APPROVED;
     }
@@ -122,6 +152,22 @@ class Budget extends Model implements Auditable
     public function isLocked(): bool
     {
         return $this->status === self::STATUS_LOCKED;
+    }
+
+    /**
+     * Check if budget can be edited.
+     */
+    public function canBeEdited(): bool
+    {
+        return $this->status === self::STATUS_DRAFT;
+    }
+
+    /**
+     * Check if budget can be modified (not locked).
+     */
+    public function canBeModified(): bool
+    {
+        return !$this->isLocked();
     }
 
     /**

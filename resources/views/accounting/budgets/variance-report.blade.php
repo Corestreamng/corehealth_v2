@@ -88,9 +88,19 @@
                 <button class="btn btn-light btn-sm" onclick="window.print()">
                     <i class="mdi mdi-printer"></i> Print
                 </button>
-                <button class="btn btn-light btn-sm" id="btnExport">
-                    <i class="mdi mdi-download"></i> Export
-                </button>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-light btn-sm dropdown-toggle" data-toggle="dropdown">
+                        <i class="mdi mdi-download"></i> Export
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <a class="dropdown-item" href="#" onclick="exportReport('excel'); return false;">
+                            <i class="mdi mdi-file-excel text-success"></i> Export to Excel
+                        </a>
+                        <a class="dropdown-item" href="#" onclick="exportReport('pdf'); return false;">
+                            <i class="mdi mdi-file-pdf text-danger"></i> Export to PDF
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -104,7 +114,7 @@
                     <option value="">All Years</option>
                     @foreach($fiscalYears as $fy)
                         <option value="{{ $fy->id }}" {{ $fiscalYearId == $fy->id ? 'selected' : '' }}>
-                            {{ $fy->year }}
+                            {{ $fy->year_name }}
                         </option>
                     @endforeach
                 </select>
@@ -259,12 +269,25 @@
 
 @push('scripts')
 <script>
-$(document).ready(function() {
-    $('#btnExport').on('click', function() {
-        var params = new URLSearchParams(window.location.search);
-        params.set('export', 'csv');
-        window.location.href = '{{ route('accounting.budgets.variance-report') }}?' + params.toString();
-    });
-});
+function exportReport(format) {
+    const currentParams = new URLSearchParams(window.location.search);
+    const exportUrl = '{{ route("accounting.budgets.variance-report.export") }}';
+    const params = new URLSearchParams();
+
+    // Add current filter parameters
+    if (currentParams.get('fiscal_year_id')) {
+        params.append('fiscal_year_id', currentParams.get('fiscal_year_id'));
+    }
+    if (currentParams.get('department_id')) {
+        params.append('department_id', currentParams.get('department_id'));
+    }
+
+    // Add format
+    params.append('format', format);
+
+    // Redirect to export
+    window.location.href = exportUrl + '?' + params.toString();
+}
 </script>
 @endpush
+

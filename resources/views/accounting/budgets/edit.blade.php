@@ -6,7 +6,7 @@
 
 @extends('admin.layouts.app')
 
-@section('title', 'Edit Budget: ' . $budget->name)
+@section('title', 'Edit Budget: ' . $budget->budget_name)
 @section('page_name', 'Accounting')
 @section('subpage_name', 'Edit Budget')
 
@@ -14,7 +14,7 @@
 @include('accounting.partials.breadcrumb', [
     'items' => [
         ['label' => 'Budgets', 'url' => route('accounting.budgets.index'), 'icon' => 'mdi-calculator'],
-        ['label' => $budget->name, 'url' => route('accounting.budgets.show', $budget->id), 'icon' => 'mdi-eye'],
+        ['label' => $budget->budget_name, 'url' => route('accounting.budgets.show', $budget->id), 'icon' => 'mdi-eye'],
         ['label' => 'Edit', 'url' => '#', 'icon' => 'mdi-pencil']
     ]
 ])
@@ -51,9 +51,24 @@
 </style>
 
 <div class="container-fluid">
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="mdi mdi-alert-circle mr-2"></i>{{ session('error') }}
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
+    @endif
+
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="mdi mdi-check-circle mr-2"></i>{{ session('success') }}
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
+    @endif
+
     @if($errors->any())
         <div class="alert alert-danger alert-dismissible fade show">
-            <ul class="mb-0">
+            <strong>Please fix the following errors:</strong>
+            <ul class="mb-0 mt-2">
                 @foreach($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
@@ -75,9 +90,9 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Budget Name <span class="text-danger">*</span></label>
-                                <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
-                                       value="{{ old('name', $budget->name) }}" required>
-                                @error('name')
+                                <input type="text" name="budget_name" class="form-control @error('budget_name') is-invalid @enderror"
+                                       value="{{ old('budget_name', $budget->budget_name) }}" required>
+                                @error('budget_name')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -88,7 +103,7 @@
                                 <select name="fiscal_year_id" class="form-control" required>
                                     @foreach($fiscalYears as $fy)
                                         <option value="{{ $fy->id }}" {{ old('fiscal_year_id', $budget->fiscal_year_id) == $fy->id ? 'selected' : '' }}>
-                                            {{ $fy->year }}
+                                            {{ $fy->year_name }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -137,10 +152,14 @@
                                             <label>Expense Account <span class="text-danger">*</span></label>
                                             <select name="items[{{ $index }}][account_id]" class="form-control account-select" required>
                                                 <option value="">Select Account</option>
-                                                @foreach($expenseAccounts as $account)
-                                                    <option value="{{ $account->id }}" {{ $item->account_id == $account->id ? 'selected' : '' }}>
-                                                        {{ $account->code }} - {{ $account->name }}
-                                                    </option>
+                                                @foreach($expenseAccounts as $groupName => $accounts)
+                                                    <optgroup label="{{ $groupName }}">
+                                                        @foreach($accounts as $account)
+                                                            <option value="{{ $account->id }}" {{ $item->account_id == $account->id ? 'selected' : '' }}>
+                                                                {{ $account->code }} - {{ $account->name }}
+                                                            </option>
+                                                        @endforeach
+                                                    </optgroup>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -220,13 +239,21 @@
 $(document).ready(function() {
     var lineIndex = {{ $budget->items->count() }};
 
-    function initSelect2() {
-        $('.account-select').select2({
-            placeholder: 'Select Account',
-            allowClear: true,
-            width: '100%'
+    // Initialize Select2 on elements that haven't been initialized
+    function initSelect2(container) {
+        var $selects = container ? $(container).find('.account-select') : $('.account-select');
+        $selects.each(function() {
+            if (!$(this).hasClass('select2-hidden-accessible')) {
+                $(this).select2({
+                    placeholder: 'Select Account',
+                    allowClear: true,
+                    width: '100%'
+                });
+            }
         });
     }
+
+    // Initialize existing selects on page load
     initSelect2();
 
     // Add line item
@@ -239,8 +266,12 @@ $(document).ready(function() {
                             <label>Expense Account <span class="text-danger">*</span></label>
                             <select name="items[${lineIndex}][account_id]" class="form-control account-select" required>
                                 <option value="">Select Account</option>
-                                @foreach($expenseAccounts as $account)
-                                    <option value="{{ $account->id }}">{{ $account->code }} - {{ $account->name }}</option>
+                                @foreach($expenseAccounts as $groupName => $accounts)
+                                    <optgroup label="{{ $groupName }}">
+                                        @foreach($accounts as $account)
+                                            <option value="{{ $account->id }}">{{ $account->code }} - {{ $account->name }}</option>
+                                        @endforeach
+                                    </optgroup>
                                 @endforeach
                             </select>
                         </div>
@@ -272,8 +303,9 @@ $(document).ready(function() {
             </div>
         `;
 
-        $('#lineItemsContainer').append(html);
-        initSelect2();
+        var $newRow = $(html);
+        $('#lineItemsContainer').append($newRow);
+        initSelect2($newRow);
         lineIndex++;
         updateTotals();
         updateRemoveButtons();
