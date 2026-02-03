@@ -6,7 +6,7 @@
 
 @extends('admin.layouts.app')
 
-@section('title', 'Budget: ' . $budget->name)
+@section('title', 'Budget: ' . $budget->budget_name)
 @section('page_name', 'Accounting')
 @section('subpage_name', 'Budget Details')
 
@@ -14,7 +14,7 @@
 @include('accounting.partials.breadcrumb', [
     'items' => [
         ['label' => 'Budgets', 'url' => route('accounting.budgets.index'), 'icon' => 'mdi-calculator'],
-        ['label' => $budget->name, 'url' => '#', 'icon' => 'mdi-eye']
+        ['label' => $budget->budget_name, 'url' => '#', 'icon' => 'mdi-eye']
     ]
 ])
 
@@ -83,20 +83,19 @@
     <div class="budget-header">
         <div class="row align-items-center">
             <div class="col-md-8">
-                <h3>{{ $budget->name }}</h3>
+                <h3>{{ $budget->budget_name }}</h3>
                 <div class="mt-2">
                     <span class="badge badge-light mr-2">{{ $budget->fiscalYear->year ?? 'N/A' }}</span>
                     @php
                         $statusColors = [
                             'draft' => 'secondary',
-                            'pending' => 'warning',
+                            'pending_approval' => 'warning',
                             'approved' => 'success',
-                            'rejected' => 'danger',
-                            'closed' => 'dark'
+                            'locked' => 'dark'
                         ];
                     @endphp
                     <span class="badge badge-{{ $statusColors[$budget->status] ?? 'secondary' }}">
-                        {{ ucfirst($budget->status) }}
+                        {{ ucfirst(str_replace('_', ' ', $budget->status)) }}
                     </span>
                     @if($budget->department)
                         <span class="badge badge-light ml-1">{{ $budget->department->name }}</span>
@@ -226,7 +225,7 @@
                 </div>
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">Status:</span>
-                    <span class="badge badge-{{ $statusColors[$budget->status] ?? 'secondary' }}">{{ ucfirst($budget->status) }}</span>
+                    <span class="badge badge-{{ $statusColors[$budget->status] ?? 'secondary' }}">{{ ucfirst(str_replace('_', ' ', $budget->status)) }}</span>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">Created By:</span>
@@ -263,7 +262,7 @@
                         <i class="mdi mdi-send mr-1"></i> Submit for Approval
                     </button>
                 @endif
-                @if($budget->status == 'pending' && auth()->user()->hasRole(['SUPERADMIN', 'ADMIN']))
+                @if($budget->status == 'pending_approval' && auth()->user()->hasRole(['SUPERADMIN', 'ADMIN']))
                     <button class="btn btn-success btn-block btn-sm mb-2" id="approveBudget">
                         <i class="mdi mdi-check mr-1"></i> Approve
                     </button>
@@ -271,8 +270,22 @@
                         <i class="mdi mdi-close mr-1"></i> Reject
                     </button>
                 @endif
+                @if($budget->isApprovedOnly() && auth()->user()->hasRole('SUPERADMIN'))
+                    <button class="btn btn-warning btn-block btn-sm mb-2" id="unapproveBudget">
+                        <i class="mdi mdi-undo mr-1"></i> Unapprove
+                    </button>
+                    <button class="btn btn-dark btn-block btn-sm mb-2" id="lockBudget">
+                        <i class="mdi mdi-lock mr-1"></i> Lock Budget
+                    </button>
+                @endif
+                @if($budget->isLocked())
+                    <div class="alert alert-dark text-center mb-2">
+                        <i class="mdi mdi-lock"></i> <strong>Budget Locked</strong><br>
+                        <small>This budget is permanently locked and cannot be modified.</small>
+                    </div>
+                @endif
                 <a href="{{ route('accounting.budgets.export', $budget->id) }}" class="btn btn-outline-info btn-block btn-sm mb-2">
-                    <i class="mdi mdi-download mr-1"></i> Export CSV
+                    <i class="mdi mdi-download mr-1"></i> Export Excel
                 </a>
                 <a href="{{ route('accounting.budgets.index') }}" class="btn btn-outline-secondary btn-block btn-sm">
                     <i class="mdi mdi-arrow-left mr-1"></i> Back to List
@@ -391,6 +404,55 @@ $(document).ready(function() {
                 },
                 error: function() {
                     toastr.error('Failed to reject budget');
+                }
+            });
+        }
+    });
+
+    // Unapprove budget
+    $('#unapproveBudget').on('click', function() {
+        var reason = prompt('⚠️ IMPORTANT: Please provide a detailed reason for unapproving this budget (minimum 10 characters):');
+        if (reason && reason.length >= 10) {
+            if (confirm('Are you sure you want to unapprove this budget? This action will be logged in the audit trail.')) {
+                $.ajax({
+                    url: '{{ route('accounting.budgets.unapprove', $budget->id) }}',
+                    type: 'POST',
+                    data: { _token: '{{ csrf_token() }}', reason: reason },
+                    success: function(response) {
+                        if (response.success) {
+                            toastr.success(response.message);
+                            location.reload();
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    },
+                    error: function() {
+                        toastr.error('Failed to unapprove budget');
+                    }
+                });
+            }
+        } else if (reason !== null) {
+            toastr.error('Reason must be at least 10 characters long');
+        }
+    });
+
+    // Lock budget
+    $('#lockBudget').on('click', function() {
+        if (confirm('⚠️ WARNING: Locking this budget will prevent all future changes, including unapproval. Are you sure?')) {
+            $.ajax({
+                url: '{{ route('accounting.budgets.lock', $budget->id) }}',
+                type: 'POST',
+                data: { _token: '{{ csrf_token() }}' },
+                success: function(response) {
+                    if (response.success) {
+                        toastr.success(response.message);
+                        location.reload();
+                    } else {
+                        toastr.error(response.message);
+                    }
+                },
+                error: function() {
+                    toastr.error('Failed to lock budget');
                 }
             });
         }

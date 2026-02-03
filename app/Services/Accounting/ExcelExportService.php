@@ -1121,25 +1121,25 @@ class ExcelExportService
         $totalActual = 0;
 
         foreach ($budgets as $budget) {
-            $variance = ($budget->budget_amount ?? 0) - ($budget->actual_amount ?? 0);
-            $utilization = ($budget->budget_amount ?? 0) > 0
-                ? (($budget->actual_amount ?? 0) / $budget->budget_amount) * 100
+            $variance = ($budget->total_budgeted ?? 0) - ($budget->total_actual ?? 0);
+            $utilization = ($budget->total_budgeted ?? 0) > 0
+                ? (($budget->total_actual ?? 0) / $budget->total_budgeted) * 100
                 : 0;
 
             $this->addDataRow([
-                $budget->name ?? '',
-                $budget->fiscal_year ?? ($budget->fiscalYear->year ?? ''),
-                $budget->department_name ?? ($budget->department->name ?? 'N/A'),
-                $budget->category ?? '',
-                number_format($budget->budget_amount ?? 0, 2),
-                number_format($budget->actual_amount ?? 0, 2),
+                $budget->budget_name ?? '',
+                $budget->fiscalYear->year_name ?? '',
+                $budget->department->name ?? 'Organization-wide',
+                $budget->budget_type ?? 'operating',
+                number_format($budget->total_budgeted ?? 0, 2),
+                number_format($budget->total_actual ?? 0, 2),
                 number_format($variance, 2),
                 number_format($utilization, 1) . '%',
                 ucfirst($budget->status ?? ''),
             ]);
 
-            $totalBudgeted += $budget->budget_amount ?? 0;
-            $totalActual += $budget->actual_amount ?? 0;
+            $totalBudgeted += $budget->total_budgeted ?? 0;
+            $totalActual += $budget->total_actual ?? 0;
         }
 
         $totalVariance = $totalBudgeted - $totalActual;
@@ -1157,6 +1157,108 @@ class ExcelExportService
         $this->autoSizeColumns(1, 9);
 
         return $this->download('budgets-' . ($fiscalYear ?? now()->year));
+    }
+
+    /**
+     * Export Budget Variance Report to Excel.
+     */
+    public function varianceReport(array $reportData, array $summary, $fiscalYear = null, $department = null): StreamedResponse
+    {
+        $subtitle = '';
+        if ($fiscalYear) {
+            $subtitle = 'Fiscal Year: ' . ($fiscalYear->year_name ?? $fiscalYear);
+        }
+        if ($department) {
+            $subtitle .= ($subtitle ? ' | ' : '') . 'Department: ' . ($department->name ?? $department);
+        }
+        if (!$subtitle) {
+            $subtitle = 'All Approved & Locked Budgets';
+        }
+
+        $this->initSpreadsheet('Budget Variance Report', $subtitle);
+
+        // Add summary section
+        $this->activeSheet->setCellValue('A' . $this->currentRow, 'SUMMARY');
+        $this->activeSheet->getStyle('A' . $this->currentRow)->applyFromArray([
+            'font' => ['bold' => true, 'size' => 12],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E8E8E8']],
+        ]);
+        $this->currentRow++;
+
+        $this->addDataRow([
+            'Total Budgeted:',
+            number_format($summary['total_budgeted'] ?? 0, 2)
+        ]);
+        $this->addDataRow([
+            'Total Actual:',
+            number_format($summary['total_actual'] ?? 0, 2)
+        ]);
+        $this->addDataRow([
+            'Total Variance:',
+            number_format($summary['total_variance'] ?? 0, 2)
+        ]);
+        $this->addDataRow([
+            'Variance %:',
+            number_format($summary['variance_percent'] ?? 0, 1) . '%'
+        ]);
+
+        $this->currentRow += 2;
+
+        // Budget details
+        foreach ($reportData as $budget) {
+            // Budget header
+            $this->activeSheet->setCellValue('A' . $this->currentRow,
+                $budget['budget_name'] . ' - ' . $budget['department'] . ' (' . $budget['fiscal_year'] . ')');
+            $this->activeSheet->mergeCells('A' . $this->currentRow . ':G' . $this->currentRow);
+            $this->activeSheet->getStyle('A' . $this->currentRow)->applyFromArray([
+                'font' => ['bold' => true, 'size' => 11],
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'D9E1F2']],
+            ]);
+            $this->currentRow++;
+
+            // Line items header
+            $this->addHeaderRow([
+                'Account Code', 'Account Name', 'Budgeted', 'Actual',
+                'Variance', 'Variance %', 'Utilization %'
+            ]);
+
+            // Line items
+            foreach ($budget['items'] as $item) {
+                $utilization = $item['budgeted'] > 0
+                    ? ($item['actual'] / $item['budgeted']) * 100
+                    : 0;
+
+                $this->addDataRow([
+                    $item['account_code'],
+                    $item['account_name'],
+                    number_format($item['budgeted'], 2),
+                    number_format($item['actual'], 2),
+                    number_format($item['variance'], 2),
+                    number_format($item['variance_percent'], 1) . '%',
+                    number_format($utilization, 1) . '%',
+                ]);
+            }
+
+            // Budget total
+            $utilization = $budget['total_budgeted'] > 0
+                ? ($budget['total_actual'] / $budget['total_budgeted']) * 100
+                : 0;
+
+            $this->addDataRow([
+                '', 'BUDGET TOTAL:',
+                number_format($budget['total_budgeted'], 2),
+                number_format($budget['total_actual'], 2),
+                number_format($budget['total_variance'], 2),
+                number_format($budget['variance_percent'], 1) . '%',
+                number_format($utilization, 1) . '%',
+            ], 1, true);
+
+            $this->currentRow += 2;
+        }
+
+        $this->autoSizeColumns(1, 7);
+
+        return $this->download('variance-report-' . now()->format('Y-m-d'));
     }
 
     /**

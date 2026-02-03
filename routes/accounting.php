@@ -385,12 +385,15 @@ Route::prefix('accounting')->name('accounting.')->middleware(['auth', 'verified'
         Route::get('/create', [BudgetController::class, 'create'])->name('create');
         Route::post('/', [BudgetController::class, 'store'])->name('store');
         Route::get('/variance-report', [BudgetController::class, 'varianceReport'])->name('variance-report');
+        Route::get('/variance-report/export', [BudgetController::class, 'varianceReportExport'])->name('variance-report.export');
         Route::get('/{budget}', [BudgetController::class, 'show'])->name('show');
         Route::get('/{budget}/edit', [BudgetController::class, 'edit'])->name('edit');
         Route::put('/{budget}', [BudgetController::class, 'update'])->name('update');
         Route::post('/{budget}/submit', [BudgetController::class, 'submit'])->name('submit');
         Route::post('/{budget}/approve', [BudgetController::class, 'approve'])->name('approve');
         Route::post('/{budget}/reject', [BudgetController::class, 'reject'])->name('reject');
+        Route::post('/{budget}/unapprove', [BudgetController::class, 'unapprove'])->name('unapprove')->middleware('role:SUPERADMIN');
+        Route::post('/{budget}/lock', [BudgetController::class, 'lock'])->name('lock')->middleware('role:SUPERADMIN');
         Route::get('/{budget}/export', [BudgetController::class, 'export'])->name('export');
     });
 
