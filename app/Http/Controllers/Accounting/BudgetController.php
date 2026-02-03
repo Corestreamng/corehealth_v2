@@ -5,10 +5,10 @@ namespace App\Http\Controllers\Accounting;
 use App\Http\Controllers\Controller;
 use App\Models\Accounting\Budget;
 use App\Models\Accounting\BudgetLine;
-use App\Models\ChartOfAccount;
+use App\Models\Accounting\Account;
 use App\Models\Department;
 use App\Models\Accounting\FiscalYear;
-use App\Models\JournalEntryLine;
+use App\Models\Accounting\JournalEntryLine;
 use App\Services\Accounting\ExcelExportService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -36,7 +36,7 @@ class BudgetController extends Controller
     public function index()
     {
         $stats = $this->getDashboardStats();
-        $fiscalYears = FiscalYear::orderBy('year', 'desc')->get();
+        $fiscalYears = FiscalYear::orderBy('start_date', 'desc')->get();
         $departments = Department::where('is_active', true)->orderBy('name')->get();
 
         return view('accounting.budgets.index', compact('stats', 'fiscalYears', 'departments'));
@@ -53,18 +53,18 @@ class BudgetController extends Controller
         // Get current fiscal year (or use FiscalYear::current())
         $fiscalYear = FiscalYear::current();
 
-        // Total budget for current year
+        // Total budget for current year (approved and locked)
         $totalBudget = Budget::when($fiscalYear, function($q) use ($fiscalYear) {
             $q->where('fiscal_year_id', $fiscalYear->id);
-        })->where('status', 'approved')->sum('total_amount');
+        })->whereIn('status', ['approved', 'locked'])->sum('total_budgeted');
 
         // YTD actual expenses (from JE lines)
         $ytdActual = JournalEntryLine::whereHas('journalEntry', function($q) use ($currentYear) {
             $q->where('status', 'posted')
               ->whereYear('entry_date', $currentYear);
         })
-        ->whereHas('account', function($q) {
-            $q->where('account_type', 'expense');
+        ->whereHas('account.accountGroup.accountClass', function($q) {
+            $q->where('name', 'Expenses');
         })
         ->sum('debit');
 
@@ -77,8 +77,8 @@ class BudgetController extends Controller
               ->whereYear('entry_date', $currentYear)
               ->whereMonth('entry_date', $currentMonth);
         })
-        ->whereHas('account', function($q) {
-            $q->where('account_type', 'expense');
+        ->whereHas('account.accountGroup.accountClass', function($q) {
+            $q->where('name', 'Expenses');
         })
         ->sum('debit');
 
@@ -89,37 +89,47 @@ class BudgetController extends Controller
         $expectedYtd = ($monthlyBudget * $currentMonth);
         $variance = $expectedYtd - $ytdActual;
 
-        // Budget count
-        $budgetCount = Budget::whereHas('fiscalYear', function($q) use ($currentYear) {
-            $q->where('year', $currentYear);
-        })->count();
+        // Budget count - use budget.year directly
+        $budgetCount = Budget::where('year', $currentYear)->count();
 
-        $approvedCount = Budget::whereHas('fiscalYear', function($q) use ($currentYear) {
-            $q->where('year', $currentYear);
-        })->where('status', 'approved')->count();
+        $approvedCount = Budget::where('year', $currentYear)
+            ->whereIn('status', ['approved', 'locked'])
+            ->count();
 
-        $pendingCount = Budget::whereHas('fiscalYear', function($q) use ($currentYear) {
-            $q->where('year', $currentYear);
-        })->where('status', 'pending')->count();
+        $pendingCount = Budget::where('year', $currentYear)
+            ->where('status', 'pending_approval')
+            ->count();
 
-        // Top spending departments
+        // Top spending departments (group organization-wide budgets separately)
         $topDepartments = Budget::with('department')
-            ->whereHas('fiscalYear', function($q) use ($currentYear) {
-                $q->where('year', $currentYear);
-            })
-            ->where('status', 'approved')
-            ->orderByDesc('total_amount')
-            ->limit(5)
+            ->where('year', $currentYear)
+            ->whereIn('status', ['approved', 'locked'])
+            ->orderByDesc('total_budgeted')
+            ->limit(10) // Get more to ensure we have 5 after filtering
             ->get()
             ->map(function($budget) use ($currentYear) {
                 $actual = $this->getDepartmentActual($budget->department_id, $currentYear);
                 return [
-                    'department' => $budget->department->name ?? 'Unknown',
-                    'budget' => $budget->total_amount,
+                    'department_id' => $budget->department_id,
+                    'department' => $budget->department_id ? ($budget->department->name ?? 'Unknown') : 'Organization-wide',
+                    'budget' => $budget->total_budgeted,
                     'actual' => $actual,
-                    'utilization' => $budget->total_amount > 0 ? ($actual / $budget->total_amount) * 100 : 0
+                    'utilization' => $budget->total_budgeted > 0 ? ($actual / $budget->total_budgeted) * 100 : 0
                 ];
-            });
+            })
+            ->groupBy('department')
+            ->map(function($group) {
+                // Sum budgets for same department
+                return [
+                    'department' => $group->first()['department'],
+                    'budget' => $group->sum('budget'),
+                    'actual' => $group->sum('actual'),
+                    'utilization' => $group->sum('budget') > 0 ? ($group->sum('actual') / $group->sum('budget')) * 100 : 0
+                ];
+            })
+            ->sortByDesc('budget')
+            ->take(5)
+            ->values();
 
         return [
             'total_budget' => $totalBudget,
@@ -169,7 +179,7 @@ class BudgetController extends Controller
         if ($request->search['value']) {
             $search = $request->search['value'];
             $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
+                $q->where('budget_name', 'like', "%{$search}%")
                   ->orWhereHas('department', function($dq) use ($search) {
                       $dq->where('name', 'like', "%{$search}%");
                   });
@@ -182,7 +192,7 @@ class BudgetController extends Controller
         // Ordering
         $orderColumn = $request->order[0]['column'] ?? 0;
         $orderDir = $request->order[0]['dir'] ?? 'desc';
-        $columns = ['id', 'name', 'department_id', 'total_amount', 'status', 'created_at'];
+        $columns = ['id', 'budget_name', 'department_id', 'total_budgeted', 'status', 'created_at'];
 
         if (isset($columns[$orderColumn])) {
             $query->orderBy($columns[$orderColumn], $orderDir);
@@ -196,19 +206,18 @@ class BudgetController extends Controller
         $data = $budgets->map(function($budget) {
             $statusColors = [
                 'draft' => 'secondary',
-                'pending' => 'warning',
+                'pending_approval' => 'warning',
                 'approved' => 'success',
-                'rejected' => 'danger',
-                'closed' => 'dark'
+                'locked' => 'dark'
             ];
 
             return [
                 'id' => $budget->id,
-                'name' => $budget->name,
-                'fiscal_year' => $budget->fiscalYear->year ?? 'N/A',
+                'name' => $budget->budget_name,
+                'fiscal_year' => $budget->fiscalYear->year_name ?? 'N/A',
                 'department' => $budget->department->name ?? 'Organization-wide',
-                'total_amount' => number_format($budget->total_amount, 2),
-                'status' => '<span class="badge badge-' . ($statusColors[$budget->status] ?? 'secondary') . '">' . ucfirst($budget->status) . '</span>',
+                'total_amount' => '₦' . number_format($budget->total_budgeted, 2),
+                'status' => '<span class="badge badge-' . ($statusColors[$budget->status] ?? 'secondary') . '">' . ucfirst(str_replace('_', ' ', $budget->status)) . '</span>',
                 'created_by' => $budget->createdBy->name ?? 'System',
                 'created_at' => $budget->created_at->format('M d, Y'),
                 'actions' => $this->getActionButtons($budget)
@@ -236,9 +245,18 @@ class BudgetController extends Controller
             $buttons .= '<button class="btn btn-success submit-budget" data-id="' . $budget->id . '" title="Submit"><i class="mdi mdi-send"></i></button>';
         }
 
-        if ($budget->status == 'pending' && auth()->user()->hasRole(['SUPERADMIN', 'ADMIN'])) {
+        if ($budget->status == 'pending_approval' && auth()->user()->hasRole(['SUPERADMIN', 'ADMIN'])) {
             $buttons .= '<button class="btn btn-success approve-budget" data-id="' . $budget->id . '" title="Approve"><i class="mdi mdi-check"></i></button>';
             $buttons .= '<button class="btn btn-danger reject-budget" data-id="' . $budget->id . '" title="Reject"><i class="mdi mdi-close"></i></button>';
+        }
+
+        if ($budget->isApprovedOnly() && auth()->user()->hasRole('SUPERADMIN')) {
+            $buttons .= '<button class="btn btn-warning unapprove-budget" data-id="' . $budget->id . '" title="Unapprove"><i class="mdi mdi-undo"></i></button>';
+            $buttons .= '<button class="btn btn-dark lock-budget" data-id="' . $budget->id . '" title="Lock"><i class="mdi mdi-lock"></i></button>';
+        }
+
+        if ($budget->isLocked()) {
+            $buttons .= '<span class="badge badge-dark ml-1"><i class="mdi mdi-lock"></i> Locked</span>';
         }
 
         $buttons .= '</div>';
@@ -250,12 +268,16 @@ class BudgetController extends Controller
      */
     public function create()
     {
-        $fiscalYears = FiscalYear::orderBy('year', 'desc')->get();
+        $fiscalYears = FiscalYear::orderBy('start_date', 'desc')->get();
         $departments = Department::where('is_active', true)->orderBy('name')->get();
-        $expenseAccounts = ChartOfAccount::where('account_type', 'expense')
+        $expenseAccounts = Account::with('accountGroup')
+                                         ->whereHas('accountGroup.accountClass', function($q) {
+                                            $q->where('name', 'Expenses');
+                                         })
                                          ->where('is_active', true)
                                          ->orderBy('code')
-                                         ->get();
+                                         ->get()
+                                         ->groupBy(fn($account) => $account->accountGroup->name ?? 'Other');
 
         return view('accounting.budgets.create', compact('fiscalYears', 'departments', 'expenseAccounts'));
     }
@@ -266,12 +288,12 @@ class BudgetController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'budget_name' => 'required|string|max:255',
             'fiscal_year_id' => 'required|exists:fiscal_years,id',
             'department_id' => 'nullable|exists:departments,id',
             'description' => 'nullable|string',
             'items' => 'required|array|min:1',
-            'items.*.account_id' => 'required|exists:chart_of_accounts,id',
+            'items.*.account_id' => 'required|exists:accounts,id',
             'items.*.amount' => 'required|numeric|min:0',
             'items.*.notes' => 'nullable|string'
         ]);
@@ -281,12 +303,17 @@ class BudgetController extends Controller
             // Calculate total
             $totalAmount = collect($request->items)->sum('amount');
 
+            // Get fiscal year to extract year
+            $fiscalYear = FiscalYear::findOrFail($request->fiscal_year_id);
+            $year = $fiscalYear->start_date->year;
+
             $budget = Budget::create([
-                'name' => $request->name,
+                'budget_name' => $request->budget_name,
                 'fiscal_year_id' => $request->fiscal_year_id,
+                'year' => $year,
                 'department_id' => $request->department_id,
-                'description' => $request->description,
-                'total_amount' => $totalAmount,
+                'notes' => $request->description,
+                'total_budgeted' => $totalAmount,
                 'status' => 'draft',
                 'created_by' => Auth::id()
             ]);
@@ -302,11 +329,16 @@ class BudgetController extends Controller
             }
 
             DB::commit();
-            return redirect()->route('accounting.budgets.show', $budget->id)
+            return redirect()->route('accounting.budgets.index')
                            ->with('success', 'Budget created successfully');
 
         } catch (\Exception $e) {
             DB::rollback();
+            \Log::error('Budget creation failed: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'data' => $request->all(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return back()->withInput()->with('error', 'Failed to create budget: ' . $e->getMessage());
         }
     }
@@ -322,7 +354,7 @@ class BudgetController extends Controller
         $itemsWithActuals = $budget->items->map(function($item) use ($budget) {
             $actual = JournalEntryLine::whereHas('journalEntry', function($q) use ($budget) {
                 $q->where('status', 'posted')
-                  ->whereYear('entry_date', $budget->fiscalYear->year ?? date('Y'));
+                  ->whereYear('entry_date', $budget->year);
             })
             ->where('account_id', $item->account_id)
             ->sum('debit');
@@ -345,8 +377,9 @@ class BudgetController extends Controller
      */
     protected function getMonthlyBreakdown($budget)
     {
-        $year = $budget->fiscalYear->year ?? date('Y');
-        $monthlyBudget = $budget->total_amount / 12;
+        // Use the year field from budget table
+        $year = $budget->year ?? date('Y');
+        $monthlyBudget = $budget->total_budgeted / 12;
 
         $months = [];
         for ($m = 1; $m <= 12; $m++) {
@@ -379,12 +412,16 @@ class BudgetController extends Controller
         }
 
         $budget->load('items.account');
-        $fiscalYears = FiscalYear::orderBy('year', 'desc')->get();
+        $fiscalYears = FiscalYear::orderBy('start_date', 'desc')->get();
         $departments = Department::where('is_active', true)->orderBy('name')->get();
-        $expenseAccounts = ChartOfAccount::where('account_type', 'expense')
+        $expenseAccounts = Account::with('accountGroup')
+                                         ->whereHas('accountGroup.accountClass', function($q) {
+                                            $q->where('name', 'Expenses');
+                                         })
                                          ->where('is_active', true)
                                          ->orderBy('code')
-                                         ->get();
+                                         ->get()
+                                         ->groupBy(fn($account) => $account->accountGroup->name ?? 'Other');
 
         return view('accounting.budgets.edit', compact('budget', 'fiscalYears', 'departments', 'expenseAccounts'));
     }
@@ -399,12 +436,12 @@ class BudgetController extends Controller
         }
 
         $request->validate([
-            'name' => 'required|string|max:255',
+            'budget_name' => 'required|string|max:255',
             'fiscal_year_id' => 'required|exists:fiscal_years,id',
             'department_id' => 'nullable|exists:departments,id',
             'description' => 'nullable|string',
             'items' => 'required|array|min:1',
-            'items.*.account_id' => 'required|exists:chart_of_accounts,id',
+            'items.*.account_id' => 'required|exists:accounts,id',
             'items.*.amount' => 'required|numeric|min:0',
             'items.*.notes' => 'nullable|string'
         ]);
@@ -413,12 +450,17 @@ class BudgetController extends Controller
         try {
             $totalAmount = collect($request->items)->sum('amount');
 
+            // Get fiscal year to extract year if changed
+            $fiscalYear = FiscalYear::findOrFail($request->fiscal_year_id);
+            $year = $fiscalYear->start_date->year;
+
             $budget->update([
-                'name' => $request->name,
+                'budget_name' => $request->budget_name,
                 'fiscal_year_id' => $request->fiscal_year_id,
+                'year' => $year,
                 'department_id' => $request->department_id,
-                'description' => $request->description,
-                'total_amount' => $totalAmount
+                'notes' => $request->description,
+                'total_budgeted' => $totalAmount
             ]);
 
             // Delete existing items and recreate
@@ -452,7 +494,7 @@ class BudgetController extends Controller
             return response()->json(['success' => false, 'message' => 'Only draft budgets can be submitted']);
         }
 
-        $budget->update(['status' => 'pending']);
+        $budget->update(['status' => 'pending_approval']);
 
         return response()->json(['success' => true, 'message' => 'Budget submitted for approval']);
     }
@@ -462,8 +504,12 @@ class BudgetController extends Controller
      */
     public function approve(Request $request, Budget $budget)
     {
-        if ($budget->status != 'pending') {
+        if ($budget->status != 'pending_approval') {
             return response()->json(['success' => false, 'message' => 'Only pending budgets can be approved']);
+        }
+
+        if ($budget->isLocked()) {
+            return response()->json(['success' => false, 'message' => 'Locked budgets cannot be modified']);
         }
 
         $budget->update([
@@ -480,7 +526,7 @@ class BudgetController extends Controller
      */
     public function reject(Request $request, Budget $budget)
     {
-        if ($budget->status != 'pending') {
+        if ($budget->status != 'pending_approval') {
             return response()->json(['success' => false, 'message' => 'Only pending budgets can be rejected']);
         }
 
@@ -489,11 +535,68 @@ class BudgetController extends Controller
         ]);
 
         $budget->update([
-            'status' => 'rejected',
+            'status' => 'draft',
             'rejection_reason' => $request->reason
         ]);
 
-        return response()->json(['success' => true, 'message' => 'Budget rejected']);
+        return response()->json(['success' => true, 'message' => 'Budget rejected and returned to draft']);
+    }
+
+    /**
+     * Unapprove budget (SUPERADMIN only)
+     */
+    public function unapprove(Request $request, Budget $budget)
+    {
+        // Check if user is SUPERADMIN
+        if (!auth()->user()->hasRole('SUPERADMIN')) {
+            return response()->json(['success' => false, 'message' => 'Only SUPERADMIN can unapprove budgets']);
+        }
+
+        if ($budget->status == 'locked') {
+            return response()->json(['success' => false, 'message' => 'Locked budgets cannot be unapproved. Period has closed.']);
+        }
+
+        if ($budget->status != 'approved') {
+            return response()->json(['success' => false, 'message' => 'Only approved budgets can be unapproved']);
+        }
+
+        $request->validate([
+            'reason' => 'required|string|min:10'
+        ]);
+
+        $budget->update([
+            'status' => 'draft',
+            'unapproval_reason' => $request->reason,
+            'unapproved_by' => Auth::id(),
+            'unapproved_at' => now(),
+            'approved_by' => null,
+            'approved_at' => null
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'Budget unapproved and returned to draft']);
+    }
+
+    /**
+     * Lock budget (prevents further changes)
+     */
+    public function lock(Request $request, Budget $budget)
+    {
+        // Check if user is SUPERADMIN
+        if (!auth()->user()->hasRole('SUPERADMIN')) {
+            return response()->json(['success' => false, 'message' => 'Only SUPERADMIN can lock budgets']);
+        }
+
+        if (!$budget->isApprovedOnly()) {
+            return response()->json(['success' => false, 'message' => 'Only approved budgets can be locked']);
+        }
+
+        $budget->update([
+            'status' => 'locked',
+            'locked_by' => Auth::id(),
+            'locked_at' => now()
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'Budget locked successfully']);
     }
 
     /**
@@ -505,7 +608,7 @@ class BudgetController extends Controller
         $departmentId = $request->department_id;
 
         $query = Budget::with(['fiscalYear', 'department', 'items.account'])
-                       ->where('status', 'approved');
+                       ->whereIn('status', ['approved', 'locked']);
 
         if ($fiscalYearId) {
             $query->where('fiscal_year_id', $fiscalYearId);
@@ -529,7 +632,7 @@ class BudgetController extends Controller
             $items = $budget->items->map(function($item) use ($budget, &$totalActual) {
                 $actual = JournalEntryLine::whereHas('journalEntry', function($q) use ($budget) {
                     $q->where('status', 'posted')
-                      ->whereYear('entry_date', $budget->fiscalYear->year ?? date('Y'));
+                      ->whereYear('entry_date', $budget->year);
                 })
                 ->where('account_id', $item->account_id)
                 ->sum('debit');
@@ -549,21 +652,117 @@ class BudgetController extends Controller
             });
 
             return [
-                'budget_name' => $budget->name,
-                'department' => $budget->department->name ?? 'Organization',
-                'total_budgeted' => $budget->total_amount,
+                'budget_name' => $budget->budget_name,
+                'department' => $budget->department->name ?? 'Organization-wide',
+                'total_budgeted' => $budget->total_budgeted,
                 'total_actual' => $totalActual,
-                'total_variance' => $budget->total_amount - $totalActual,
+                'total_variance' => $budget->total_budgeted - $totalActual,
                 'items' => $items
             ];
         });
 
-        $fiscalYears = FiscalYear::orderBy('year', 'desc')->get();
+        $fiscalYears = FiscalYear::orderBy('start_date', 'desc')->get();
         $departments = Department::where('is_active', true)->orderBy('name')->get();
 
         return view('accounting.budgets.variance-report', compact(
             'reportData', 'fiscalYears', 'departments', 'fiscalYearId', 'departmentId'
         ));
+    }
+
+    /**
+     * Export variance report
+     */
+    public function varianceReportExport(Request $request)
+    {
+        $fiscalYearId = $request->fiscal_year_id;
+        $departmentId = $request->department_id;
+        $format = $request->format ?? 'excel';
+
+        $query = Budget::with(['fiscalYear', 'department', 'items.account'])
+                       ->whereIn('status', ['approved', 'locked']);
+
+        if ($fiscalYearId) {
+            $query->where('fiscal_year_id', $fiscalYearId);
+            $fiscalYear = FiscalYear::find($fiscalYearId);
+        } else {
+            // Default to current fiscal year
+            $fiscalYear = FiscalYear::current();
+            if ($fiscalYear) {
+                $query->where('fiscal_year_id', $fiscalYear->id);
+            }
+        }
+
+        if ($departmentId) {
+            $query->where('department_id', $departmentId);
+            $department = Department::find($departmentId);
+        } else {
+            $department = null;
+        }
+
+        $budgets = $query->get();
+
+        // Calculate actuals and variances
+        $reportData = $budgets->map(function($budget) {
+            $totalActual = 0;
+            $items = $budget->items->map(function($item) use ($budget, &$totalActual) {
+                $actual = JournalEntryLine::whereHas('journalEntry', function($q) use ($budget) {
+                    $q->where('status', 'posted')
+                      ->whereYear('entry_date', $budget->year);
+                })
+                ->where('account_id', $item->account_id)
+                ->sum('debit');
+
+                $totalActual += $actual;
+
+                return [
+                    'account_code' => $item->account->code ?? '',
+                    'account_name' => $item->account->name ?? '',
+                    'budgeted' => $item->budgeted_amount,
+                    'actual' => $actual,
+                    'variance' => $item->budgeted_amount - $actual,
+                    'variance_percent' => $item->budgeted_amount > 0
+                        ? (($item->budgeted_amount - $actual) / $item->budgeted_amount) * 100
+                        : 0
+                ];
+            });
+
+            return [
+                'budget_name' => $budget->budget_name,
+                'department' => $budget->department->name ?? 'Organization-wide',
+                'fiscal_year' => $budget->fiscalYear->year_name ?? '',
+                'total_budgeted' => $budget->total_budgeted,
+                'total_actual' => $totalActual,
+                'total_variance' => $budget->total_budgeted - $totalActual,
+                'variance_percent' => $budget->total_budgeted > 0
+                    ? (($budget->total_budgeted - $totalActual) / $budget->total_budgeted) * 100
+                    : 0,
+                'items' => $items
+            ];
+        });
+
+        // Calculate summary statistics
+        $totalBudgeted = $reportData->sum('total_budgeted');
+        $totalActual = $reportData->sum('total_actual');
+        $totalVariance = $totalBudgeted - $totalActual;
+        $avgVariancePercent = $totalBudgeted > 0 ? ($totalVariance / $totalBudgeted) * 100 : 0;
+
+        $summary = [
+            'total_budgeted' => $totalBudgeted,
+            'total_actual' => $totalActual,
+            'total_variance' => $totalVariance,
+            'variance_percent' => $avgVariancePercent
+        ];
+
+        if ($format === 'pdf') {
+            $pdf = Pdf::loadView('accounting.budgets.variance-report-pdf', compact(
+                'reportData', 'summary', 'fiscalYear', 'department'
+            ));
+            return $pdf->download('variance-report-' . now()->format('Y-m-d') . '.pdf');
+        }
+
+        // Default to Excel
+        $excelService = app(ExcelExportService::class);
+        return $excelService->varianceReport($reportData->toArray(), $summary, $fiscalYear, $department ?? null);
     }
 
     /**
@@ -574,8 +773,26 @@ class BudgetController extends Controller
         // If exporting a single budget
         if ($budget) {
             $budget->load(['fiscalYear', 'department', 'items.account']);
+
+            // Calculate actual spending for this budget
+            $actualSpending = 0;
+            foreach ($budget->items as $item) {
+                $actual = JournalEntryLine::whereHas('journalEntry', function($q) use ($budget) {
+                    $q->where('status', 'posted')
+                      ->whereYear('entry_date', $budget->year);
+                })
+                ->where('account_id', $item->account_id)
+                ->sum('debit');
+
+                $actualSpending += $actual;
+            }
+
+            // Set the total_actual for export
+            $budget->total_actual = $actualSpending;
+            $budget->total_variance = $budget->total_budgeted - $actualSpending;
+
             $budgets = collect([$budget]);
-            $fiscalYear = $budget->fiscalYear->year ?? date('Y');
+            $fiscalYear = $budget->year;
         } else {
             // Export all budgets with filters
             $query = Budget::with(['fiscalYear', 'department', 'items.account']);
@@ -588,6 +805,25 @@ class BudgetController extends Controller
             }
 
             $budgets = $query->orderBy('created_at', 'desc')->get();
+
+            // Calculate actuals for each budget
+            foreach ($budgets as $budget) {
+                $actualSpending = 0;
+                foreach ($budget->items as $item) {
+                    $actual = JournalEntryLine::whereHas('journalEntry', function($q) use ($budget) {
+                        $q->where('status', 'posted')
+                          ->whereYear('entry_date', $budget->year);
+                    })
+                    ->where('account_id', $item->account_id)
+                    ->sum('debit');
+
+                    $actualSpending += $actual;
+                }
+
+                $budget->total_actual = $actualSpending;
+                $budget->total_variance = $budget->total_budgeted - $actualSpending;
+            }
+
             $fiscalYear = $request->fiscal_year ?? date('Y');
         }
 

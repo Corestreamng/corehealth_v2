@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 03, 2026 at 11:40 AM
+-- Generation Time: Feb 03, 2026 at 02:45 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -636,7 +636,27 @@ INSERT INTO `audits` (`id`, `user_type`, `user_id`, `event`, `auditable_type`, `
 (130, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 101, '[]', '{\"journal_entry_id\":56,\"line_number\":2,\"account_id\":19,\"debit\":0,\"credit\":\"375.00\",\"narration\":\"Accumulated depreciation: TEST VOID - Office Desk 20260203074929\",\"id\":101}', 'http://localhost:8000/accounting/fixed-assets/depreciation/run', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
 (131, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntry', 57, '[]', '{\"entry_number\":\"JE-202602-0038\",\"accounting_period_id\":1,\"entry_date\":\"2026-02-03 00:00:00\",\"reference_type\":\"fixed_asset_depreciation\",\"reference_id\":19,\"description\":\"Monthly depreciation: TEST VOID - Office Desk 20260203074954 (BLD-2026-00010) - Y1M2\",\"status\":\"posted\",\"posted_at\":\"2026-02-03 10:20:56\",\"created_by\":1,\"id\":57}', 'http://localhost:8000/accounting/fixed-assets/depreciation/run', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
 (132, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 102, '[]', '{\"journal_entry_id\":57,\"line_number\":1,\"account_id\":72,\"debit\":\"375.00\",\"credit\":0,\"narration\":\"Depreciation expense: TEST VOID - Office Desk 20260203074954\",\"id\":102}', 'http://localhost:8000/accounting/fixed-assets/depreciation/run', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
-(133, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 103, '[]', '{\"journal_entry_id\":57,\"line_number\":2,\"account_id\":19,\"debit\":0,\"credit\":\"375.00\",\"narration\":\"Accumulated depreciation: TEST VOID - Office Desk 20260203074954\",\"id\":103}', 'http://localhost:8000/accounting/fixed-assets/depreciation/run', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56');
+(133, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 103, '[]', '{\"journal_entry_id\":57,\"line_number\":2,\"account_id\":19,\"debit\":0,\"credit\":\"375.00\",\"narration\":\"Accumulated depreciation: TEST VOID - Office Desk 20260203074954\",\"id\":103}', 'http://localhost:8000/accounting/fixed-assets/depreciation/run', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(134, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\Budget', 1, '[]', '{\"budget_name\":\"2026 Misc budget\",\"fiscal_year_id\":\"1\",\"year\":2026,\"department_id\":null,\"notes\":\"test\",\"total_budgeted\":670000,\"status\":\"draft\",\"created_by\":1,\"id\":1}', 'http://localhost:8000/accounting/budgets', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 11:19:59', '2026-02-03 11:19:59'),
+(135, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\BudgetLine', 1, '[]', '{\"budget_id\":1,\"account_id\":\"59\",\"budgeted_amount\":\"600000\",\"id\":1}', 'http://localhost:8000/accounting/budgets', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 11:20:00', '2026-02-03 11:20:00'),
+(136, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\BudgetLine', 2, '[]', '{\"budget_id\":1,\"account_id\":\"66\",\"budgeted_amount\":\"70000\",\"id\":2}', 'http://localhost:8000/accounting/budgets', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 11:20:00', '2026-02-03 11:20:00'),
+(137, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\Budget', 1, '{\"notes\":\"test\"}', '{\"notes\":\"test up\"}', 'http://localhost:8000/accounting/budgets/1', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 11:33:27', '2026-02-03 11:33:27'),
+(138, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\BudgetLine', 3, '[]', '{\"budget_id\":1,\"account_id\":\"59\",\"budgeted_amount\":\"600000.00\",\"id\":3}', 'http://localhost:8000/accounting/budgets/1', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 11:33:27', '2026-02-03 11:33:27'),
+(139, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\BudgetLine', 4, '[]', '{\"budget_id\":1,\"account_id\":\"66\",\"budgeted_amount\":\"70000.00\",\"id\":4}', 'http://localhost:8000/accounting/budgets/1', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 11:33:27', '2026-02-03 11:33:27'),
+(140, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\Budget', 1, '{\"total_budgeted\":\"670000.00\",\"notes\":\"test up\"}', '{\"total_budgeted\":730000,\"notes\":null}', 'http://localhost:8000/accounting/budgets/1', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 11:43:51', '2026-02-03 11:43:51'),
+(141, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\BudgetLine', 5, '[]', '{\"budget_id\":1,\"account_id\":\"59\",\"budgeted_amount\":\"600000.00\",\"id\":5}', 'http://localhost:8000/accounting/budgets/1', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 11:43:51', '2026-02-03 11:43:51'),
+(142, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\BudgetLine', 6, '[]', '{\"budget_id\":1,\"account_id\":\"66\",\"budgeted_amount\":\"70000.00\",\"id\":6}', 'http://localhost:8000/accounting/budgets/1', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 11:43:51', '2026-02-03 11:43:51'),
+(143, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\BudgetLine', 7, '[]', '{\"budget_id\":1,\"account_id\":\"72\",\"budgeted_amount\":\"60000\",\"id\":7}', 'http://localhost:8000/accounting/budgets/1', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 11:43:51', '2026-02-03 11:43:51'),
+(144, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\Budget', 1, '{\"status\":\"draft\"}', '{\"status\":\"pending_approval\"}', 'http://localhost:8000/accounting/budgets/1/submit', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 11:47:56', '2026-02-03 11:47:56'),
+(145, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\Budget', 1, '{\"status\":\"pending_approval\"}', '{\"status\":\"draft\"}', 'http://localhost:8000/accounting/budgets/1/reject', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 11:55:24', '2026-02-03 11:55:24'),
+(146, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\Budget', 1, '{\"status\":\"draft\"}', '{\"status\":\"pending_approval\"}', 'http://localhost:8000/accounting/budgets/1/submit', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 11:55:32', '2026-02-03 11:55:32'),
+(147, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\Budget', 1, '{\"status\":\"pending_approval\",\"approved_by\":null,\"approved_at\":null}', '{\"status\":\"approved\",\"approved_by\":1,\"approved_at\":\"2026-02-03 12:55:40\"}', 'http://localhost:8000/accounting/budgets/1/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 11:55:40', '2026-02-03 11:55:40'),
+(148, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\Budget', 1, '{\"status\":\"approved\",\"approved_by\":1,\"approved_at\":\"2026-02-03 12:55:40\",\"unapproved_by\":null,\"unapproved_at\":null,\"unapproval_reason\":null}', '{\"status\":\"draft\",\"approved_by\":null,\"approved_at\":null,\"unapproved_by\":1,\"unapproved_at\":\"2026-02-03T13:13:13.052398Z\",\"unapproval_reason\":\"gad  adad a dada dad\"}', 'http://localhost:8000/accounting/budgets/1/unapprove', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 12:13:13', '2026-02-03 12:13:13'),
+(149, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\Budget', 1, '{\"status\":\"draft\"}', '{\"status\":\"pending_approval\"}', 'http://localhost:8000/accounting/budgets/1/submit', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 12:13:22', '2026-02-03 12:13:22'),
+(150, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\Budget', 1, '{\"status\":\"pending_approval\",\"rejection_reason\":null}', '{\"status\":\"draft\",\"rejection_reason\":\"aghahgadad ad ad\"}', 'http://localhost:8000/accounting/budgets/1/reject', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 12:13:33', '2026-02-03 12:13:33'),
+(151, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\Budget', 1, '{\"status\":\"draft\"}', '{\"status\":\"pending_approval\"}', 'http://localhost:8000/accounting/budgets/1/submit', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 12:13:43', '2026-02-03 12:13:43'),
+(152, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\Budget', 1, '{\"status\":\"pending_approval\",\"approved_by\":null,\"approved_at\":null}', '{\"status\":\"approved\",\"approved_by\":1,\"approved_at\":\"2026-02-03 13:13:53\"}', 'http://localhost:8000/accounting/budgets/1/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 12:13:53', '2026-02-03 12:13:53'),
+(153, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\Budget', 1, '{\"status\":\"approved\",\"locked_by\":null,\"locked_at\":null}', '{\"status\":\"locked\",\"locked_by\":1,\"locked_at\":\"2026-02-03T13:14:53.075282Z\"}', 'http://localhost:8000/accounting/budgets/1/lock', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 12:14:53', '2026-02-03 12:14:53');
 
 -- --------------------------------------------------------
 
@@ -850,11 +870,24 @@ CREATE TABLE `budgets` (
   `created_by` bigint(20) UNSIGNED NOT NULL,
   `approved_by` bigint(20) UNSIGNED DEFAULT NULL,
   `approved_at` timestamp NULL DEFAULT NULL,
+  `unapproved_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `unapproved_at` timestamp NULL DEFAULT NULL,
+  `unapproval_reason` text DEFAULT NULL,
+  `locked_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `locked_at` timestamp NULL DEFAULT NULL,
+  `rejection_reason` text DEFAULT NULL,
   `notes` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `budgets`
+--
+
+INSERT INTO `budgets` (`id`, `budget_name`, `fiscal_year_id`, `year`, `department_id`, `cost_center_id`, `budget_type`, `total_budgeted`, `total_actual`, `total_variance`, `status`, `created_by`, `approved_by`, `approved_at`, `unapproved_by`, `unapproved_at`, `unapproval_reason`, `locked_by`, `locked_at`, `rejection_reason`, `notes`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, '2026 Misc budget', 1, 2026, NULL, NULL, 'operating', 730000.00, 0.00, 0.00, 'locked', 1, 1, '2026-02-03 12:13:53', 1, '2026-02-03 12:13:13', 'gad  adad a dada dad', 1, '2026-02-03 12:14:53', 'aghahgadad ad ad', NULL, '2026-02-03 11:19:59', '2026-02-03 12:14:53', NULL);
 
 -- --------------------------------------------------------
 
@@ -879,6 +912,15 @@ CREATE TABLE `budget_lines` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `budget_lines`
+--
+
+INSERT INTO `budget_lines` (`id`, `budget_id`, `account_id`, `period_type`, `period_number`, `budgeted_amount`, `actual_amount`, `variance`, `variance_percentage`, `forecast_amount`, `prior_year_actual`, `assumptions`, `is_locked`, `created_at`, `updated_at`) VALUES
+(5, 1, 59, 'monthly', NULL, 600000.00, 0.00, 0.00, 0.00, NULL, NULL, NULL, 0, '2026-02-03 11:43:51', '2026-02-03 11:43:51'),
+(6, 1, 66, 'monthly', NULL, 70000.00, 0.00, 0.00, 0.00, NULL, NULL, NULL, 0, '2026-02-03 11:43:51', '2026-02-03 11:43:51'),
+(7, 1, 72, 'monthly', NULL, 60000.00, 0.00, 0.00, 0.00, NULL, NULL, NULL, 0, '2026-02-03 11:43:51', '2026-02-03 11:43:51');
 
 -- --------------------------------------------------------
 
@@ -3389,7 +3431,8 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (238, '2026_02_02_100000_add_status_to_patient_deposit_applications', 109),
 (239, '2026_02_02_100001_add_soft_deletes_to_patient_deposit_applications', 110),
 (240, '2026_02_02_120000_add_source_payment_id_to_patient_deposits', 111),
-(241, '2026_02_03_075200_add_voided_status_to_fixed_assets', 112);
+(241, '2026_02_03_075200_add_voided_status_to_fixed_assets', 112),
+(242, '2026_02_03_131212_add_unapprove_and_lock_fields_to_budgets_table', 113);
 
 -- --------------------------------------------------------
 
@@ -60696,6 +60739,7 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (4, 'App\\Models\\User', 64683),
 (6, 'App\\Models\\User', 1),
 (7, 'App\\Models\\User', 1),
+(12, 'App\\Models\\User', 1),
 (16, 'App\\Models\\User', 1);
 
 -- --------------------------------------------------------
@@ -79280,7 +79324,9 @@ ALTER TABLE `budgets`
   ADD KEY `budgets_cost_center_id_foreign` (`cost_center_id`),
   ADD KEY `budgets_created_by_foreign` (`created_by`),
   ADD KEY `budgets_approved_by_foreign` (`approved_by`),
-  ADD KEY `budgets_year_department_id_budget_type_index` (`year`,`department_id`,`budget_type`);
+  ADD KEY `budgets_year_department_id_budget_type_index` (`year`,`department_id`,`budget_type`),
+  ADD KEY `budgets_unapproved_by_foreign` (`unapproved_by`),
+  ADD KEY `budgets_locked_by_foreign` (`locked_by`);
 
 --
 -- Indexes for table `budget_lines`
@@ -80801,7 +80847,7 @@ ALTER TABLE `application_status`
 -- AUTO_INCREMENT for table `audits`
 --
 ALTER TABLE `audits`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=134;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=154;
 
 --
 -- AUTO_INCREMENT for table `banks`
@@ -80837,13 +80883,13 @@ ALTER TABLE `beds`
 -- AUTO_INCREMENT for table `budgets`
 --
 ALTER TABLE `budgets`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `budget_lines`
 --
 ALTER TABLE `budget_lines`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `budget_revisions`
@@ -81293,7 +81339,7 @@ ALTER TABLE `messages`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=242;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=243;
 
 --
 -- AUTO_INCREMENT for table `misc_bills`
@@ -81831,7 +81877,9 @@ ALTER TABLE `budgets`
   ADD CONSTRAINT `budgets_cost_center_id_foreign` FOREIGN KEY (`cost_center_id`) REFERENCES `cost_centers` (`id`),
   ADD CONSTRAINT `budgets_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`),
   ADD CONSTRAINT `budgets_department_id_foreign` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`),
-  ADD CONSTRAINT `budgets_fiscal_year_id_foreign` FOREIGN KEY (`fiscal_year_id`) REFERENCES `fiscal_years` (`id`);
+  ADD CONSTRAINT `budgets_fiscal_year_id_foreign` FOREIGN KEY (`fiscal_year_id`) REFERENCES `fiscal_years` (`id`),
+  ADD CONSTRAINT `budgets_locked_by_foreign` FOREIGN KEY (`locked_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `budgets_unapproved_by_foreign` FOREIGN KEY (`unapproved_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `budget_lines`

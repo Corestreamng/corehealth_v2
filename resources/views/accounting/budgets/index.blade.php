@@ -163,8 +163,8 @@
                         <select name="fiscal_year_id" id="fiscal_year_id" class="form-control">
                             <option value="">All Years</option>
                             @foreach($fiscalYears as $fy)
-                                <option value="{{ $fy->id }}" {{ $fy->year == date('Y') ? 'selected' : '' }}>
-                                    {{ $fy->year }}
+                                <option value="{{ $fy->id }}" {{ $fy->is_active ? 'selected' : '' }}>
+                                    {{ $fy->year_name }}
                                 </option>
                             @endforeach
                         </select>
@@ -183,9 +183,9 @@
                         <select name="status" id="status" class="form-control">
                             <option value="">All Status</option>
                             <option value="draft">Draft</option>
-                            <option value="pending">Pending</option>
+                            <option value="pending_approval">Pending Approval</option>
                             <option value="approved">Approved</option>
-                            <option value="rejected">Rejected</option>
+                            <option value="locked">Locked</option>
                         </select>
                     </div>
                     <div class="col-md-3">
@@ -291,6 +291,7 @@
 @endsection
 
 @push('scripts')
+<script src="{{ asset('/plugins/dataT/datatables.min.js') }}"></script>
 <script>
 $(document).ready(function() {
     var table = $('#budgetsTable').DataTable({
@@ -391,6 +392,57 @@ $(document).ready(function() {
                 },
                 error: function() {
                     toastr.error('Failed to reject budget');
+                }
+            });
+        }
+    });
+
+    // Unapprove budget
+    $(document).on('click', '.unapprove-budget', function() {
+        var id = $(this).data('id');
+        var reason = prompt('⚠️ IMPORTANT: Please provide a detailed reason for unapproving this budget (minimum 10 characters):');
+        if (reason && reason.length >= 10) {
+            if (confirm('Are you sure you want to unapprove this budget? This action will be logged in the audit trail.')) {
+                $.ajax({
+                    url: '/accounting/budgets/' + id + '/unapprove',
+                    type: 'POST',
+                    data: { _token: '{{ csrf_token() }}', reason: reason },
+                    success: function(response) {
+                        if (response.success) {
+                            toastr.success(response.message);
+                            table.ajax.reload();
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    },
+                    error: function() {
+                        toastr.error('Failed to unapprove budget');
+                    }
+                });
+            }
+        } else if (reason !== null) {
+            toastr.error('Reason must be at least 10 characters long');
+        }
+    });
+
+    // Lock budget
+    $(document).on('click', '.lock-budget', function() {
+        var id = $(this).data('id');
+        if (confirm('⚠️ WARNING: Locking this budget will prevent all future changes, including unapproval. Are you sure?')) {
+            $.ajax({
+                url: '/accounting/budgets/' + id + '/lock',
+                type: 'POST',
+                data: { _token: '{{ csrf_token() }}' },
+                success: function(response) {
+                    if (response.success) {
+                        toastr.success(response.message);
+                        table.ajax.reload();
+                    } else {
+                        toastr.error(response.message);
+                    }
+                },
+                error: function() {
+                    toastr.error('Failed to lock budget');
                 }
             });
         }
