@@ -6,6 +6,7 @@ use App\Models\Accounting\FixedAssetDepreciation;
 use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\JournalEntryLine;
 use App\Models\Accounting\Account;
+use App\Models\Accounting\AccountingPeriod;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -38,6 +39,18 @@ class DepreciationObserver
             DB::beginTransaction();
 
             $asset = $depreciation->fixedAsset;
+
+            // Safety check: Don't create depreciation JE for voided or disposed assets
+            if (in_array($asset->status, ['voided', 'disposed'])) {
+                Log::warning('DepreciationObserver: Skipping JE for voided/disposed asset', [
+                    'asset_id' => $asset->id,
+                    'asset_status' => $asset->status,
+                    'depreciation_id' => $depreciation->id,
+                ]);
+                DB::rollBack();
+                return;
+            }
+
             $category = $asset->category;
 
             if (!$category) {
@@ -62,6 +75,8 @@ class DepreciationObserver
 
             // Create journal entry
             $journalEntry = JournalEntry::create([
+                'entry_number' => JournalEntry::generateEntryNumber(),
+                'accounting_period_id' => AccountingPeriod::current()?->id,
                 'entry_date' => $depreciation->depreciation_date,
                 'reference_number' => "DEP-{$asset->asset_number}-{$depreciation->year_number}-{$depreciation->month_number}",
                 'reference_type' => 'fixed_asset_depreciation',
@@ -75,10 +90,11 @@ class DepreciationObserver
             // DEBIT: Depreciation Expense
             JournalEntryLine::create([
                 'journal_entry_id' => $journalEntry->id,
+                'line_number' => 1,
                 'account_id' => $expenseAccount->id,
-                'debit_amount' => $depreciation->depreciation_amount,
-                'credit_amount' => 0,
-                'description' => "Depreciation expense: {$asset->name}",
+                'debit' => $depreciation->depreciation_amount,
+                'credit' => 0,
+                'narration' => "Depreciation expense: {$asset->name}",
                 'metadata' => [
                     'fixed_asset_id' => $asset->id,
                     'asset_number' => $asset->asset_number,
@@ -92,10 +108,11 @@ class DepreciationObserver
             // CREDIT: Accumulated Depreciation
             JournalEntryLine::create([
                 'journal_entry_id' => $journalEntry->id,
+                'line_number' => 2,
                 'account_id' => $accumDepAccount->id,
-                'debit_amount' => 0,
-                'credit_amount' => $depreciation->depreciation_amount,
-                'description' => "Accumulated depreciation: {$asset->name}",
+                'debit' => 0,
+                'credit' => $depreciation->depreciation_amount,
+                'narration' => "Accumulated depreciation: {$asset->name}",
                 'metadata' => [
                     'fixed_asset_id' => $asset->id,
                     'asset_number' => $asset->asset_number,

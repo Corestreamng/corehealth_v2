@@ -9,6 +9,7 @@ use App\Models\Accounting\FixedAssetDisposal;
 use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\JournalEntryLine;
 use App\Models\Accounting\Account;
+use App\Models\Accounting\AccountingPeriod;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use Illuminate\Support\Facades\DB;
@@ -95,8 +96,7 @@ class FixedAssetService
                 'notes' => $data['notes'] ?? null,
             ]);
 
-            // Create acquisition journal entry
-            $this->createAcquisitionJournalEntry($asset);
+            // Observer will create acquisition journal entry automatically
 
             DB::commit();
 
@@ -144,69 +144,18 @@ class FixedAssetService
             'supplier_id' => $po->supplier_id,
             'invoice_number' => $po->invoice_number ?? $po->po_number,
         ]);
-    }
 
-    /**
-     * Create acquisition journal entry.
-     * DEBIT: Fixed Asset Account
-     * CREDIT: Cash/Bank or AP
-     */
-    private function createAcquisitionJournalEntry(FixedAsset $asset): JournalEntry
-    {
-        $category = $asset->category;
-
-        // DEBIT: Fixed Asset Account
-        // CREDIT: Cash/Bank (for now - could be AP if from PO)
-        $creditAccount = Account::where('account_code', '1020')->first(); // Bank
-
-        $journalEntry = JournalEntry::create([
-            'entry_date' => $asset->acquisition_date,
-            'reference_number' => "ACQ-{$asset->asset_number}",
-            'reference_type' => 'fixed_asset_acquisition',
-            'reference_id' => $asset->id,
-            'description' => "Acquisition of fixed asset: {$asset->name} ({$asset->asset_number})",
-            'status' => JournalEntry::STATUS_POSTED,
-            'posted_at' => now(),
-            'created_by' => auth()->id(),
-        ]);
-
-        // DEBIT: Fixed Asset
-        JournalEntryLine::create([
-            'journal_entry_id' => $journalEntry->id,
-            'account_id' => $category->asset_account_id,
-            'debit_amount' => $asset->total_cost,
-            'credit_amount' => 0,
-            'description' => "Fixed asset: {$asset->name}",
-            'metadata' => [
-                'fixed_asset_id' => $asset->id,
-                'asset_number' => $asset->asset_number,
-                'category_id' => $category->id,
-            ],
-        ]);
-
-        // CREDIT: Cash/Bank
-        JournalEntryLine::create([
-            'journal_entry_id' => $journalEntry->id,
-            'account_id' => $creditAccount->id,
-            'debit_amount' => 0,
-            'credit_amount' => $asset->total_cost,
-            'description' => "Payment for fixed asset: {$asset->asset_number}",
-            'metadata' => [
-                'fixed_asset_id' => $asset->id,
-            ],
-        ]);
-
-        // Link JE to asset
-        $asset->updateQuietly(['journal_entry_id' => $journalEntry->id]);
-
-        return $journalEntry;
+        // Observer will create acquisition journal entry automatically
     }
 
     /**
      * Run monthly depreciation for all active assets.
      */
-    public function runMonthlyDepreciation(?int $processedBy = null): array
-    {
+    public function runMonthlyDepreciation(
+        ?\DateTime $depreciationDate = null,
+        ?int $categoryId = null,
+        ?int $processedBy = null
+    ): array {
         $results = [
             'processed' => 0,
             'skipped' => 0,
@@ -215,13 +164,25 @@ class FixedAssetService
             'details' => [],
         ];
 
-        $assets = FixedAsset::depreciable()
-            ->with('category')
-            ->get();
+        // Build query
+        $query = FixedAsset::depreciable()->with('category');
+
+        // Filter by category if specified
+        if ($categoryId) {
+            $query->where('category_id', $categoryId);
+        }
+
+        $assets = $query->get();
 
         foreach ($assets as $asset) {
-            if (!$asset->needsDepreciation()) {
+            if (!$asset->needsDepreciation($depreciationDate)) {
                 $results['skipped']++;
+                $results['details'][] = [
+                    'asset_id' => $asset->id,
+                    'asset_number' => $asset->asset_number,
+                    'status' => 'skipped',
+                    'reason' => 'Already depreciated or not eligible',
+                ];
                 continue;
             }
 
@@ -230,23 +191,42 @@ class FixedAssetService
 
                 if ($depreciationAmount <= 0) {
                     $results['skipped']++;
+                    $results['details'][] = [
+                        'asset_id' => $asset->id,
+                        'asset_number' => $asset->asset_number,
+                        'status' => 'skipped',
+                        'reason' => 'Zero depreciation amount',
+                    ];
                     continue;
                 }
 
-                // Record depreciation (observer creates JE)
-                $depreciation = $asset->recordDepreciation($depreciationAmount, $processedBy);
+                // Record depreciation with optional date (observer creates JE)
+                $depreciation = $asset->recordDepreciation(
+                    $depreciationAmount,
+                    $processedBy,
+                    $depreciationDate
+                );
 
                 $results['processed']++;
                 $results['total_depreciation'] += $depreciationAmount;
                 $results['details'][] = [
                     'asset_id' => $asset->id,
                     'asset_number' => $asset->asset_number,
+                    'status' => 'processed',
                     'amount' => $depreciationAmount,
                     'new_book_value' => $asset->book_value,
+                    'depreciation_id' => $depreciation->id,
+                    'journal_entry_id' => $depreciation->journal_entry_id,
                 ];
 
             } catch (\Exception $e) {
                 $results['errors']++;
+                $results['details'][] = [
+                    'asset_id' => $asset->id,
+                    'asset_number' => $asset->asset_number,
+                    'status' => 'error',
+                    'error' => $e->getMessage(),
+                ];
                 Log::error('FixedAssetService: Depreciation error', [
                     'asset_id' => $asset->id,
                     'error' => $e->getMessage(),
@@ -290,12 +270,16 @@ class FixedAssetService
                 'reason' => $disposalData['reason'] ?? null,
                 'payment_method' => $disposalData['payment_method'] ?? null,
                 'bank_id' => $disposalData['bank_id'] ?? null,
-                'status' => FixedAssetDisposal::STATUS_PENDING,
+                'status' => FixedAssetDisposal::STATUS_COMPLETED, // Auto-complete the disposal
             ]);
+
+            // Update asset status to disposed
+            $asset->status = FixedAsset::STATUS_DISPOSED;
+            $asset->save();
 
             DB::commit();
 
-            Log::info('FixedAssetService: Disposal created', [
+            Log::info('FixedAssetService: Disposal created and asset disposed', [
                 'asset_id' => $asset->id,
                 'disposal_id' => $disposal->id,
                 'gain_loss' => $gainLoss,
@@ -436,5 +420,82 @@ class FixedAssetService
             ->with('category')
             ->orderBy('warranty_expiry_date')
             ->get();
+    }
+
+    /**
+     * Void a fixed asset by reversing its acquisition journal entry.
+     * Can only void assets with no depreciation.
+     */
+    public function voidAsset(FixedAsset $asset, string $reason, int $voidedBy): bool
+    {
+        if (!$asset->canBeVoided()) {
+            throw new \Exception('Asset cannot be voided. It may have depreciation or be in an invalid status.');
+        }
+
+        DB::beginTransaction();
+        try {
+            // Reverse the acquisition journal entry if it exists
+            if ($asset->journalEntry) {
+                $originalJE = $asset->journalEntry;
+
+                // Create reversal entry
+                $reversalJE = JournalEntry::create([
+                    'entry_number' => JournalEntry::generateEntryNumber(),
+                    'entry_date' => now(),
+                    'accounting_period_id' => AccountingPeriod::current()->id,
+                    'description' => "REVERSAL: Voiding fixed asset {$asset->asset_number} - {$reason}",
+                    'reference_type' => FixedAsset::class,
+                    'reference_id' => $asset->id,
+                    'entry_type' => JournalEntry::TYPE_REVERSAL,
+                    'status' => JournalEntry::STATUS_POSTED,
+                    'reversal_of_id' => $originalJE->id,
+                    'created_by' => $voidedBy,
+                    'posted_by' => $voidedBy,
+                    'posted_at' => now(),
+                ]);
+
+                // Create reversed lines (swap debit/credit)
+                foreach ($originalJE->lines as $line) {
+                    JournalEntryLine::create([
+                        'journal_entry_id' => $reversalJE->id,
+                        'line_number' => $line->line_number,
+                        'account_id' => $line->account_id,
+                        'debit' => $line->credit,  // Swap: original credit becomes debit
+                        'credit' => $line->debit,  // Swap: original debit becomes credit
+                        'narration' => "Reversal: " . $line->narration,
+                    ]);
+                }
+
+                // Mark original entry as reversed
+                $originalJE->status = JournalEntry::STATUS_REVERSED;
+                $originalJE->reversed_by_id = $reversalJE->id;
+                $originalJE->save();
+            }
+
+            // Update asset status
+            $asset->status = FixedAsset::STATUS_VOIDED;
+            $asset->notes = ($asset->notes ? $asset->notes . "\n\n" : '') .
+                           "VOIDED: " . now()->format('Y-m-d H:i:s') . " - {$reason}";
+            $asset->save();
+
+            DB::commit();
+
+            Log::info('FixedAssetService: Asset voided', [
+                'asset_id' => $asset->id,
+                'asset_number' => $asset->asset_number,
+                'voided_by' => $voidedBy,
+                'reason' => $reason,
+            ]);
+
+            return true;
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('FixedAssetService: Failed to void asset', [
+                'asset_id' => $asset->id,
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
+        }
     }
 }

@@ -211,7 +211,8 @@
 
             <div class="card-modern">
                 <div class="card-body">
-                    <table id="cost-centers-table" class="table table-striped table-bordered w-100">
+                    <div class="table-responsive">
+                        <table id="cost-centers-table" class="table table-striped table-bordered w-100">
                         <thead>
                             <tr>
                                 <th>Code</th>
@@ -224,6 +225,7 @@
                             </tr>
                         </thead>
                     </table>
+                    </div>
                 </div>
             </div>
         </div>

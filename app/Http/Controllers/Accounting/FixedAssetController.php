@@ -63,12 +63,32 @@ class FixedAssetController extends Controller
             FixedAsset::STATUS_IMPAIRED => 'Impaired',
             FixedAsset::STATUS_UNDER_MAINTENANCE => 'Under Maintenance',
             FixedAsset::STATUS_IDLE => 'Idle',
+            FixedAsset::STATUS_VOIDED => 'Voided',
         ];
 
         $departments = Department::orderBy('name')->get();
 
         // Banks for disposal payment source selection
         $banks = Bank::with('account')->orderBy('name')->get();
+
+        // Handle export requests
+        if ($request->has('export')) {
+            $assets = FixedAsset::with(['category', 'department', 'custodian'])
+                ->whereNotIn('status', [FixedAsset::STATUS_VOIDED])
+                ->orderBy('asset_number')
+                ->get();
+
+            if ($request->export === 'pdf') {
+                $pdf = Pdf::loadView('accounting.fixed-assets.pdf.register', compact('assets', 'stats'))
+                    ->setPaper('a4', 'landscape');
+                return $pdf->download('fixed-assets-register-' . now()->format('Y-m-d') . '.pdf');
+            }
+
+            if ($request->export === 'excel') {
+                $excelService = app(ExcelExportService::class);
+                return $excelService->fixedAssetsRegister($assets, $stats);
+            }
+        }
 
         return view('accounting.fixed-assets.index', compact('stats', 'categories', 'statusOptions', 'departments', 'banks'));
     }
@@ -81,27 +101,28 @@ class FixedAssetController extends Controller
         $thisMonth = now()->startOfMonth()->toDateString();
         $thisYear = now()->startOfYear()->toDateString();
 
-        // Active assets
-        $totalAssets = FixedAsset::where('status', '!=', FixedAsset::STATUS_DISPOSED)->count();
-        $totalCost = FixedAsset::where('status', '!=', FixedAsset::STATUS_DISPOSED)->sum('total_cost');
-        $totalBookValue = FixedAsset::where('status', '!=', FixedAsset::STATUS_DISPOSED)->sum('book_value');
-        $totalAccumDepreciation = FixedAsset::where('status', '!=', FixedAsset::STATUS_DISPOSED)->sum('accumulated_depreciation');
+        // Active assets (exclude disposed and voided)
+        $totalAssets = FixedAsset::whereNotIn('status', [FixedAsset::STATUS_DISPOSED, FixedAsset::STATUS_VOIDED])->count();
+        $totalCost = FixedAsset::whereNotIn('status', [FixedAsset::STATUS_DISPOSED, FixedAsset::STATUS_VOIDED])->sum('total_cost');
+        $totalBookValue = FixedAsset::whereNotIn('status', [FixedAsset::STATUS_DISPOSED, FixedAsset::STATUS_VOIDED])->sum('book_value');
+        $totalAccumDepreciation = FixedAsset::whereNotIn('status', [FixedAsset::STATUS_DISPOSED, FixedAsset::STATUS_VOIDED])->sum('accumulated_depreciation');
 
         // By status
         $activeCount = FixedAsset::where('status', FixedAsset::STATUS_ACTIVE)->count();
         $fullyDepreciatedCount = FixedAsset::where('status', FixedAsset::STATUS_FULLY_DEPRECIATED)->count();
         $disposedCount = FixedAsset::where('status', FixedAsset::STATUS_DISPOSED)->count();
+        $voidedCount = FixedAsset::where('status', FixedAsset::STATUS_VOIDED)->count();
 
         // Depreciation
         $monthlyDepreciationDue = FixedAsset::where('status', FixedAsset::STATUS_ACTIVE)
             ->whereNotNull('monthly_depreciation')
             ->sum('monthly_depreciation');
 
-        $ytdDepreciation = FixedAssetDepreciation::whereDate('depreciation_date', '>=', $thisYear)->sum('amount');
-        $mtdDepreciation = FixedAssetDepreciation::whereDate('depreciation_date', '>=', $thisMonth)->sum('amount');
+        $ytdDepreciation = FixedAssetDepreciation::whereDate('depreciation_date', '>=', $thisYear)->sum('depreciation_amount');
+        $mtdDepreciation = FixedAssetDepreciation::whereDate('depreciation_date', '>=', $thisMonth)->sum('depreciation_amount');
 
         // Assets by category
-        $byCategory = FixedAsset::where('status', '!=', FixedAsset::STATUS_DISPOSED)
+        $byCategory = FixedAsset::whereNotIn('status', [FixedAsset::STATUS_DISPOSED, FixedAsset::STATUS_VOIDED])
             ->select('category_id', DB::raw('COUNT(*) as count'), DB::raw('SUM(book_value) as value'))
             ->groupBy('category_id')
             ->with('category')
@@ -110,7 +131,7 @@ class FixedAssetController extends Controller
         // Disposals this year
         $ytdDisposals = FixedAssetDisposal::whereDate('disposal_date', '>=', $thisYear)->count();
         $ytdDisposalGainLoss = FixedAssetDisposal::whereDate('disposal_date', '>=', $thisYear)
-            ->sum(DB::raw('gain_loss_amount'));
+            ->sum('gain_loss_on_disposal');
 
         // Assets needing attention
         $warrantyExpiringSoon = FixedAsset::where('status', FixedAsset::STATUS_ACTIVE)
@@ -131,6 +152,7 @@ class FixedAssetController extends Controller
             'active_count' => $activeCount,
             'fully_depreciated_count' => $fullyDepreciatedCount,
             'disposed_count' => $disposedCount,
+            'voided_count' => $voidedCount,
             'monthly_depreciation_due' => $monthlyDepreciationDue,
             'ytd_depreciation' => $ytdDepreciation,
             'mtd_depreciation' => $mtdDepreciation,
@@ -196,6 +218,7 @@ class FixedAssetController extends Controller
                     'impaired' => 'warning',
                     'under_maintenance' => 'primary',
                     'idle' => 'dark',
+                    'voided' => 'danger',
                 ];
                 return '<span class="badge badge-' . ($colors[$a->status] ?? 'secondary') . '">'
                     . ucfirst(str_replace('_', ' ', $a->status)) . '</span>';
@@ -204,6 +227,13 @@ class FixedAssetController extends Controller
                 $actions = '<div class="btn-group btn-group-sm">';
                 $actions .= '<a href="' . route('accounting.fixed-assets.show', $a) . '" class="btn btn-info" title="View"><i class="mdi mdi-eye"></i></a>';
                 $actions .= '<a href="' . route('accounting.fixed-assets.edit', $a) . '" class="btn btn-warning" title="Edit"><i class="mdi mdi-pencil"></i></a>';
+
+                // Void button - only for assets that can be voided
+                if ($a->canBeVoided()) {
+                    $actions .= '<button type="button" class="btn btn-secondary btn-void" data-id="' . $a->id . '" data-name="' . e($a->name) . '" title="Void Asset"><i class="mdi mdi-close-circle"></i></button>';
+                }
+
+                // Dispose button - only for active assets
                 if ($a->status === FixedAsset::STATUS_ACTIVE) {
                     $actions .= '<button type="button" class="btn btn-danger btn-dispose" data-id="' . $a->id . '" data-name="' . e($a->name) . '" title="Dispose"><i class="mdi mdi-delete"></i></button>';
                 }
@@ -221,10 +251,11 @@ class FixedAssetController extends Controller
     {
         $categories = FixedAssetCategory::active()->orderBy('name')->get();
         $departments = Department::orderBy('name')->get();
-        $suppliers = Supplier::orderBy('name')->get();
+        $suppliers = Supplier::orderBy('company_name')->get();
         $custodians = User::where('status', 'active')
-            ->orderBy('name')
-            ->get(['id', 'name', 'email']);
+            ->orderBy('surname')
+            ->orderBy('firstname')
+            ->get(['id', 'surname', 'firstname', 'othername', 'email']);
 
         $depreciationMethods = [
             FixedAsset::METHOD_STRAIGHT_LINE => 'Straight Line',
@@ -321,11 +352,12 @@ class FixedAssetController extends Controller
             'supplier',
             'journalEntry.lines.account',
             'depreciations' => fn($q) => $q->latest()->limit(12),
-            'disposals.journalEntry',
+            'disposals.journalEntry.lines.account',
+            'disposals.bank',
         ]);
 
         // Calculate depreciation schedule
-        $depreciationSchedule = $this->assetService->calculateDepreciationSchedule($fixedAsset);
+        $depreciationSchedule = $this->assetService->getDepreciationSchedule($fixedAsset);
 
         // Get depreciation history
         $depreciationHistory = FixedAssetDepreciation::where('fixed_asset_id', $fixedAsset->id)
@@ -333,6 +365,19 @@ class FixedAssetController extends Controller
             ->orderBy('depreciation_date', 'desc')
             ->limit(24)
             ->get();
+
+        // Handle export requests
+        if (request()->has('export')) {
+            if (request()->export === 'pdf') {
+                $pdf = Pdf::loadView('accounting.fixed-assets.pdf.detail', compact('fixedAsset', 'depreciationSchedule', 'depreciationHistory'));
+                return $pdf->download("asset-{$fixedAsset->asset_number}-" . now()->format('Y-m-d') . '.pdf');
+            }
+
+            if (request()->export === 'excel') {
+                $excelService = app(ExcelExportService::class);
+                return $excelService->fixedAssetDetail($fixedAsset, $depreciationSchedule, $depreciationHistory);
+            }
+        }
 
         return view('accounting.fixed-assets.show', compact('fixedAsset', 'depreciationSchedule', 'depreciationHistory'));
     }
@@ -344,10 +389,11 @@ class FixedAssetController extends Controller
     {
         $categories = FixedAssetCategory::active()->orderBy('name')->get();
         $departments = Department::orderBy('name')->get();
-        $suppliers = Supplier::orderBy('name')->get();
+        $suppliers = Supplier::orderBy('company_name')->get();
         $custodians = User::where('status', 'active')
-            ->orderBy('name')
-            ->get(['id', 'name', 'email']);
+            ->orderBy('surname')
+            ->orderBy('firstname')
+            ->get(['id', 'surname', 'firstname', 'othername', 'email']);
 
         $depreciationMethods = [
             FixedAsset::METHOD_STRAIGHT_LINE => 'Straight Line',
@@ -418,12 +464,13 @@ class FixedAssetController extends Controller
         try {
             $result = $this->assetService->runMonthlyDepreciation(
                 $depreciationDate,
-                $validated['category_id'] ?? null
+                $validated['category_id'] ?? null,
+                auth()->id()
             );
 
             return response()->json([
                 'success' => true,
-                'message' => "Depreciation completed. Processed {$result['count']} assets. Total: ₦" . number_format($result['total'], 2),
+                'message' => "Depreciation completed. Processed {$result['processed']} assets. Total: ₦" . number_format($result['total_depreciation'], 2),
                 'data' => $result,
             ]);
 
@@ -443,7 +490,7 @@ class FixedAssetController extends Controller
     {
         $validated = $request->validate([
             'disposal_date' => 'required|date',
-            'disposal_type' => 'required|in:sale,scrapped,donation,transfer,write_off',
+            'disposal_type' => 'required|in:sale,scrapped,donated,trade_in,theft_loss,insurance_claim',
             'disposal_amount' => 'nullable|numeric|min:0',
             'disposal_reason' => 'required|string|max:500',
             'buyer_info' => 'nullable|string|max:255',
@@ -594,6 +641,62 @@ class FixedAssetController extends Controller
         return redirect()
             ->back()
             ->with('success', "Category '{$category->name}' created successfully.");
+    }
+
+    /**
+     * Void a fixed asset.
+     */
+    public function void(Request $request, FixedAsset $fixedAsset)
+    {
+        $validated = $request->validate([
+            'reason' => 'required|string|max:500',
+        ]);
+
+        try {
+            if (!$fixedAsset->canBeVoided()) {
+                // Provide specific reason why void is not allowed (IAS 16 compliance)
+                $reason = 'This asset cannot be voided. ';
+
+                if ($fixedAsset->accumulated_depreciation > 0) {
+                    $reason .= 'The asset has depreciation recorded (₦' . number_format($fixedAsset->accumulated_depreciation, 2) . '). ' .
+                              'Per IAS 16, assets with depreciation must be disposed, not voided, to preserve historical expense records. ' .
+                              'Please use the Dispose function instead.';
+                } elseif (in_array($fixedAsset->status, [FixedAsset::STATUS_VOIDED, FixedAsset::STATUS_DISPOSED])) {
+                    $reason .= 'The asset is already ' . $fixedAsset->status . '.';
+                } elseif ($fixedAsset->journalEntry && !$fixedAsset->journalEntry->canReverse()) {
+                    $reason .= 'The acquisition journal entry cannot be reversed (may be in a closed period or already reversed).';
+                } else {
+                    $reason .= 'The asset is in an invalid status for voiding.';
+                }
+
+                return response()->json([
+                    'success' => false,
+                    'message' => $reason,
+                ], 422);
+            }
+
+            $this->assetService->voidAsset(
+                $fixedAsset,
+                $validated['reason'],
+                auth()->id()
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => "Asset {$fixedAsset->asset_number} has been voided successfully. The acquisition journal entry has been reversed.",
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to void asset', [
+                'asset_id' => $fixedAsset->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to void asset: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**

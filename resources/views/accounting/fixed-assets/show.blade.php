@@ -148,7 +148,7 @@
     <!-- Header -->
     <div class="asset-header">
         <div class="row align-items-center">
-            <div class="col-md-8">
+            <div class="col-md-6">
                 <div class="number">{{ $fixedAsset->asset_number }}</div>
                 <div class="name">{{ $fixedAsset->name }}</div>
                 <div class="opacity-75 mt-2">
@@ -159,20 +159,31 @@
                     @endif
                 </div>
             </div>
-            <div class="col-md-4 text-md-right">
-                @php
-                    $statusColors = [
-                        'active' => 'bg-success',
-                        'fully_depreciated' => 'bg-info',
-                        'disposed' => 'bg-secondary',
-                        'impaired' => 'bg-warning text-dark',
-                        'under_maintenance' => 'bg-primary',
-                        'idle' => 'bg-dark',
-                    ];
-                @endphp
-                <span class="status-badge {{ $statusColors[$fixedAsset->status] ?? 'bg-secondary' }}">
-                    {{ ucfirst(str_replace('_', ' ', $fixedAsset->status)) }}
-                </span>
+            <div class="col-md-6 text-md-right">
+                <div class="mb-2">
+                    @php
+                        $statusColors = [
+                            'active' => 'bg-success',
+                            'fully_depreciated' => 'bg-info',
+                            'disposed' => 'bg-secondary',
+                            'impaired' => 'bg-warning text-dark',
+                            'under_maintenance' => 'bg-primary',
+                            'idle' => 'bg-dark',
+                            'voided' => 'bg-danger',
+                        ];
+                    @endphp
+                    <span class="status-badge {{ $statusColors[$fixedAsset->status] ?? 'bg-secondary' }}">
+                        {{ ucfirst(str_replace('_', ' ', $fixedAsset->status)) }}
+                    </span>
+                </div>
+                <div class="btn-group btn-group-sm">
+                    <a href="{{ route('accounting.fixed-assets.show', array_merge(['fixedAsset' => $fixedAsset->id], ['export' => 'pdf'])) }}" class="btn btn-danger">
+                        <i class="mdi mdi-file-pdf-box mr-1"></i> PDF
+                    </a>
+                    <a href="{{ route('accounting.fixed-assets.show', array_merge(['fixedAsset' => $fixedAsset->id], ['export' => 'excel'])) }}" class="btn btn-success">
+                        <i class="mdi mdi-file-excel mr-1"></i> Excel
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -373,6 +384,218 @@
                             </div>
                         @endforeach
                     </div>
+                </div>
+            @endif
+
+            <!-- Disposal Information -->
+            @if($fixedAsset->status === 'disposed' && $fixedAsset->disposals->count() > 0)
+                @php
+                    // Get the completed disposal (the one that actually disposed the asset)
+                    $disposal = $fixedAsset->disposals->where('status', 'completed')->first()
+                                ?? $fixedAsset->disposals->first();
+                @endphp
+                <div class="info-card border-danger">
+                    <h6 class="text-danger"><i class="mdi mdi-delete-forever mr-2"></i>Disposal Information</h6>
+
+                    <div class="alert alert-danger mb-3">
+                        <i class="mdi mdi-alert-circle mr-1"></i> This asset has been disposed and is no longer active.
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-row">
+                                <span class="label"><strong>Disposal Type</strong></span>
+                                <span class="value">
+                                    <span class="badge badge-secondary">{{ ucfirst($disposal->disposal_type) }}</span>
+                                </span>
+                            </div>
+                            <div class="info-row">
+                                <span class="label">Disposal Date</span>
+                                <span class="value">{{ \Carbon\Carbon::parse($disposal->disposal_date)->format('M d, Y') }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="label">Status</span>
+                                <span class="value">
+                                    <span class="badge badge-success">{{ ucfirst($disposal->status) }}</span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-row">
+                                <span class="label">Book Value at Disposal</span>
+                                <span class="value font-weight-bold">₦{{ number_format($disposal->book_value_at_disposal, 2) }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="label">Disposal Proceeds</span>
+                                <span class="value font-weight-bold">₦{{ number_format($disposal->disposal_proceeds, 2) }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="label">Gain/(Loss) on Disposal</span>
+                                <span class="value font-weight-bold {{ $disposal->gain_loss_on_disposal >= 0 ? 'text-success' : 'text-danger' }}">
+                                    ₦{{ number_format($disposal->gain_loss_on_disposal, 2) }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if($disposal->buyer_name || $disposal->reason)
+                        <hr>
+                        <div class="row">
+                            @if($disposal->buyer_name)
+                                <div class="col-md-6">
+                                    <div class="info-row">
+                                        <span class="label">Buyer/Recipient</span>
+                                        <span class="value">{{ $disposal->buyer_name }}</span>
+                                    </div>
+                                </div>
+                            @endif
+                            @if($disposal->reason)
+                                <div class="col-md-6">
+                                    <div class="info-row">
+                                        <span class="label">Reason</span>
+                                        <span class="value">{{ $disposal->reason }}</span>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    @endif
+
+                    @if($disposal->payment_method && $disposal->disposal_proceeds > 0)
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="info-row">
+                                    <span class="label">Payment Method</span>
+                                    <span class="value">{{ ucfirst($disposal->payment_method) }}</span>
+                                </div>
+                            </div>
+                            @if($disposal->bank_id)
+                                <div class="col-md-6">
+                                    <div class="info-row">
+                                        <span class="label">Bank Account</span>
+                                        <span class="value">
+                                            @if($disposal->bank)
+                                                {{ $disposal->bank->bank_name }}
+                                            @else
+                                                Bank ID: {{ $disposal->bank_id }}
+                                            @endif
+                                        </span>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    @endif
+
+                    @if($disposal->journalEntry)
+                        <hr>
+                        <h6 class="mt-3 mb-2"><i class="mdi mdi-book-open-variant mr-1"></i>Disposal Journal Entry</h6>
+                        <div class="je-preview">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span><strong>Entry #:</strong>
+                                    <a href="{{ route('accounting.journal-entries.show', $disposal->journalEntry->id) }}">
+                                        {{ $disposal->journalEntry->entry_number }}
+                                    </a>
+                                </span>
+                                <span><strong>Date:</strong> {{ $disposal->journalEntry->entry_date->format('M d, Y') }}</span>
+                            </div>
+                            <hr>
+                            @foreach($disposal->journalEntry->lines as $line)
+                                <div class="je-line">
+                                    <div>
+                                        <span class="badge badge-{{ $line->debit > 0 ? 'primary' : 'success' }}">
+                                            {{ $line->debit > 0 ? 'DR' : 'CR' }}
+                                        </span>
+                                        {{ $line->account->display_name ?? $line->account->account_name }}
+                                    </div>
+                                    <div class="font-weight-bold">
+                                        ₦{{ number_format($line->debit ?: $line->credit, 2) }}
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="alert alert-warning mt-3 mb-0">
+                            <i class="mdi mdi-clock-alert mr-1"></i> Journal entry for disposal is pending.
+                        </div>
+                    @endif
+                </div>
+            @endif
+
+            <!-- Voided Information -->
+            @if($fixedAsset->status === 'voided')
+                <div class="info-card border-warning">
+                    <h6 class="text-warning"><i class="mdi mdi-cancel mr-2"></i>Voided Asset Information</h6>
+
+                    <div class="alert alert-warning mb-3">
+                        <i class="mdi mdi-alert-circle-outline mr-1"></i> This asset has been voided and all related entries have been reversed.
+                    </div>
+
+                    @if($fixedAsset->journalEntry)
+                        <div class="info-row">
+                            <span class="label">Original Entry</span>
+                            <span class="value">
+                                <a href="{{ route('accounting.journal-entries.show', $fixedAsset->journalEntry->id) }}">
+                                    {{ $fixedAsset->journalEntry->entry_number }}
+                                </a>
+                            </span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Entry Date</span>
+                            <span class="value">{{ $fixedAsset->journalEntry->entry_date->format('M d, Y') }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Entry Status</span>
+                            <span class="value">
+                                <span class="badge badge-{{ in_array($fixedAsset->journalEntry->status, ['voided', 'reversed']) ? 'warning' : 'secondary' }}">
+                                    {{ ucfirst($fixedAsset->journalEntry->status) }}
+                                </span>
+                            </span>
+                        </div>
+
+                        @if($fixedAsset->journalEntry->reversal_of_id)
+                            <hr>
+                            <h6 class="mt-3 mb-2"><i class="mdi mdi-swap-horizontal mr-1"></i>Reversal Information</h6>
+                            <div class="info-row">
+                                <span class="label">This Entry Reverses</span>
+                                <span class="value">
+                                    <a href="{{ route('accounting.journal-entries.show', $fixedAsset->journalEntry->reversal_of_id) }}">
+                                        View Original Entry
+                                    </a>
+                                </span>
+                            </div>
+                        @endif
+
+                        @if($fixedAsset->journalEntry->reversed_by_id)
+                            <div class="info-row">
+                                <span class="label">Reversed By Entry</span>
+                                <span class="value">
+                                    <a href="{{ route('accounting.journal-entries.show', $fixedAsset->journalEntry->reversed_by_id) }}">
+                                        View Reversal Entry
+                                    </a>
+                                </span>
+                            </div>
+                        @endif
+
+                        @if($fixedAsset->journalEntry->rejection_reason)
+                            <hr>
+                            <div class="p-3 bg-light rounded">
+                                <strong class="text-warning"><i class="mdi mdi-information mr-1"></i>Reason:</strong>
+                                <div class="mt-2">{{ $fixedAsset->journalEntry->rejection_reason }}</div>
+                            </div>
+                        @endif
+                    @else
+                        <div class="alert alert-info mb-0">
+                            <i class="mdi mdi-information mr-1"></i> No journal entry associated with this asset.
+                        </div>
+                    @endif
+
+                    @if($fixedAsset->notes)
+                        <hr>
+                        <div class="p-3 bg-light rounded">
+                            <strong><i class="mdi mdi-note-text mr-1"></i>Notes:</strong>
+                            <div class="mt-2">{{ $fixedAsset->notes }}</div>
+                        </div>
+                    @endif
                 </div>
             @endif
 
@@ -589,14 +812,49 @@
     </div>
 </div>
 @endif
+
+<!-- Disposal Modal -->
+@php
+    $banks = \App\Models\Bank::with('account')->orderBy('name')->get();
+@endphp
+@include('accounting.fixed-assets.partials.disposal-modal')
 @endsection
 
 @push('scripts')
 <script>
 $(document).ready(function() {
     @if($fixedAsset->status === 'active')
+    // Open disposal modal with asset data
+    $('[data-target="#disposeModal"]').on('click', function() {
+        window.setDisposalAssetData({
+            id: {{ $fixedAsset->id }},
+            name: "{{ $fixedAsset->name }}",
+            asset_number: "{{ $fixedAsset->asset_number }}",
+            total_cost: {{ $fixedAsset->total_cost }},
+            accumulated_depreciation: {{ $fixedAsset->accumulated_depreciation }},
+            book_value: {{ $fixedAsset->book_value }},
+            category: "{{ $fixedAsset->category?->name ?? '' }}"
+        });
+    });
+
+    // Handle disposal form submission
     $('#dispose-form').on('submit', function(e) {
         e.preventDefault();
+        var disposalAmount = parseFloat($('#dispose-amount').val()) || 0;
+        var paymentMethod = $('#dispose-payment-method').val();
+        var bankId = $('#dispose-bank-id').val();
+
+        // Validate payment source if there are proceeds
+        if (disposalAmount > 0) {
+            if (!paymentMethod) {
+                toastr.error('Please select a payment source for the disposal proceeds');
+                return;
+            }
+            if (paymentMethod === 'bank_transfer' && !bankId) {
+                toastr.error('Please select a bank account');
+                return;
+            }
+        }
 
         $.ajax({
             url: '{{ route('accounting.fixed-assets.dispose', $fixedAsset) }}',
@@ -605,11 +863,14 @@ $(document).ready(function() {
                 _token: '{{ csrf_token() }}',
                 disposal_date: $('#dispose-date').val(),
                 disposal_type: $('#dispose-type').val(),
-                disposal_amount: $('#dispose-amount').val() || 0,
+                disposal_amount: disposalAmount,
                 disposal_reason: $('#dispose-reason').val(),
-                buyer_info: $('#dispose-buyer').val()
+                buyer_info: $('#dispose-buyer').val(),
+                payment_method: paymentMethod || null,
+                bank_id: bankId || null
             },
             success: function(res) {
+                $('#disposeModal').modal('hide');
                 toastr.success(res.message);
                 setTimeout(function() {
                     location.reload();

@@ -46,12 +46,16 @@
 }
 .account-badge {
     background: #e9ecef;
-    padding: 4px 8px;
+    padding: 6px 10px;
     border-radius: 4px;
-    font-size: 0.8rem;
-    margin-right: 5px;
-    display: inline-block;
+    font-size: 0.75rem;
+    display: block;
     margin-top: 5px;
+    border-left: 3px solid #667eea;
+}
+.account-badge strong {
+    color: #495057;
+    margin-right: 5px;
 }
 </style>
 
@@ -124,18 +128,16 @@
                     </div>
 
                     <div class="mt-3">
-                        <span class="account-badge">
-                            <i class="mdi mdi-folder-outline mr-1"></i>
-                            Asset: {{ $category->assetAccount?->account_code ?? 'N/A' }}
-                        </span>
-                        <span class="account-badge">
-                            <i class="mdi mdi-trending-down mr-1"></i>
-                            Accum: {{ $category->depreciationAccount?->account_code ?? 'N/A' }}
-                        </span>
-                        <span class="account-badge">
-                            <i class="mdi mdi-cash-minus mr-1"></i>
-                            Exp: {{ $category->expenseAccount?->account_code ?? 'N/A' }}
-                        </span>
+                        <div class="small text-muted mb-2"><i class="mdi mdi-book-open mr-1"></i>GL Account Mapping:</div>
+                        <div class="account-badge">
+                            <strong>Asset:</strong> {{ $category->assetAccount?->code ?? 'N/A' }} - {{ $category->assetAccount?->name ?? 'Not Set' }}
+                        </div>
+                        <div class="account-badge">
+                            <strong>Accum Depr:</strong> {{ $category->depreciationAccount?->code ?? 'N/A' }} - {{ $category->depreciationAccount?->name ?? 'Not Set' }}
+                        </div>
+                        <div class="account-badge">
+                            <strong>Expense:</strong> {{ $category->expenseAccount?->code ?? 'N/A' }} - {{ $category->expenseAccount?->name ?? 'Not Set' }}
+                        </div>
                     </div>
 
                     <div class="mt-3 d-flex justify-content-between">
@@ -193,6 +195,7 @@
 
                     <hr>
                     <h6>GL Accounts</h6>
+                    <p class="small text-muted mb-3">These accounts will be used for all journal entries related to assets in this category.</p>
 
                     <div class="row">
                         <div class="col-md-4">
@@ -201,13 +204,16 @@
                                 <select name="asset_account_id" class="form-control select2-modal" required>
                                     <option value="">Select Account</option>
                                     @php
-                                        $accounts = \App\Models\Accounting\Account::where('is_active', true)
-                                            ->where('account_type', 'Asset')
-                                            ->orderBy('account_code')
+                                        // Get Asset accounts via AccountClass
+                                        $assetAccounts = \App\Models\Accounting\Account::where('is_active', true)
+                                            ->whereHas('accountGroup.accountClass', function($q) {
+                                                $q->where('name', 'Assets');
+                                            })
+                                            ->orderBy('code')
                                             ->get();
                                     @endphp
-                                    @foreach($accounts as $acc)
-                                        <option value="{{ $acc->id }}">{{ $acc->account_code }} - {{ $acc->account_name }}</option>
+                                    @foreach($assetAccounts as $acc)
+                                        <option value="{{ $acc->id }}">{{ $acc->code }} - {{ $acc->name }}</option>
                                     @endforeach
                                 </select>
                                 <small class="text-muted">Asset value account</small>
@@ -218,8 +224,8 @@
                                 <label>Accum. Depreciation Account <span class="text-danger">*</span></label>
                                 <select name="depreciation_account_id" class="form-control select2-modal" required>
                                     <option value="">Select Account</option>
-                                    @foreach($accounts as $acc)
-                                        <option value="{{ $acc->id }}">{{ $acc->account_code }} - {{ $acc->account_name }}</option>
+                                    @foreach($assetAccounts as $acc)
+                                        <option value="{{ $acc->id }}">{{ $acc->code }} - {{ $acc->name }}</option>
                                     @endforeach
                                 </select>
                                 <small class="text-muted">Contra-asset account</small>
@@ -231,16 +237,65 @@
                                 <select name="expense_account_id" class="form-control select2-modal" required>
                                     <option value="">Select Account</option>
                                     @php
+                                        // Get Expense accounts via AccountClass
                                         $expenseAccounts = \App\Models\Accounting\Account::where('is_active', true)
-                                            ->where('account_type', 'Expense')
-                                            ->orderBy('account_code')
+                                            ->whereHas('accountGroup.accountClass', function($q) {
+                                                $q->where('name', 'Expenses');
+                                            })
+                                            ->orderBy('code')
                                             ->get();
                                     @endphp
                                     @foreach($expenseAccounts as $acc)
-                                        <option value="{{ $acc->id }}">{{ $acc->account_code }} - {{ $acc->account_name }}</option>
+                                        <option value="{{ $acc->id }}">{{ $acc->code }} - {{ $acc->name }}</option>
                                     @endforeach
                                 </select>
                                 <small class="text-muted">Depreciation expense</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Journal Entry Examples -->
+                    <div class="alert alert-light border mt-4">
+                        <h6 class="mb-3"><i class="mdi mdi-book-open mr-2"></i>Journal Entry Examples</h6>
+                        <p class="small text-muted mb-3">The selected accounts will be used to automatically create the following journal entries:</p>
+
+                        <div class="mb-4">
+                            <div class="font-weight-bold mb-2">1. On Asset Acquisition:</div>
+                            <div class="pl-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <div>
+                                        <span class="badge badge-primary badge-sm px-2">DEBIT</span>
+                                        <span class="ml-2">Asset Account</span>
+                                    </div>
+                                    <span class="text-primary">Asset Cost</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <span class="badge badge-success badge-sm px-2">CREDIT</span>
+                                        <span class="ml-2">Bank/Cash Account</span>
+                                    </div>
+                                    <span class="text-success">Asset Cost</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="font-weight-bold mb-2">2. On Monthly Depreciation:</div>
+                            <div class="pl-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <div>
+                                        <span class="badge badge-primary badge-sm px-2">DEBIT</span>
+                                        <span class="ml-2">Expense Account</span>
+                                    </div>
+                                    <span class="text-primary">Monthly Depreciation</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <span class="badge badge-success badge-sm px-2">CREDIT</span>
+                                        <span class="ml-2">Accumulated Depreciation Account</span>
+                                    </div>
+                                    <span class="text-success">Monthly Depreciation</span>
+                                </div>
                             </div>
                         </div>
                     </div>

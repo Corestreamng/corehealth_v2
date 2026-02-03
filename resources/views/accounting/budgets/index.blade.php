@@ -218,7 +218,8 @@
 
             <!-- DataTable -->
             <div class="table-card">
-                <table id="budgetsTable" class="table table-hover" style="width:100%">
+                <div class="table-responsive">
+                    <table id="budgetsTable" class="table table-hover" style="width:100%">
                     <thead class="thead-light">
                         <tr>
                             <th>ID</th>
@@ -233,6 +234,7 @@
                     </thead>
                     <tbody></tbody>
                 </table>
+                </div>
             </div>
         </div>
 
