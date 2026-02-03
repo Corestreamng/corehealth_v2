@@ -266,7 +266,13 @@
 </div>
 @endsection
 
+@push('plugin_css')
+<link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
+@endpush
+
 @push('scripts')
+<!-- DataTables JS -->
+<script src="{{ asset('/plugins/dataT/datatables.min.js') }}"></script>
 <script>
 $(document).ready(function() {
     var table = $('#forecastsTable').DataTable({

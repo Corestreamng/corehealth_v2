@@ -88,6 +88,20 @@
         </div>
     @endif
 
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show">
+            {{ session('error') }}
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
+    @endif
+
+    @php
+        $inflowCategories = ['operating_inflow', 'investing_inflow', 'financing_inflow'];
+        $outflowCategories = ['operating_outflow', 'investing_outflow', 'financing_outflow'];
+        $inflowPatterns = $patterns->filter(fn($p) => in_array($p->cash_flow_category, $inflowCategories));
+        $outflowPatterns = $patterns->filter(fn($p) => in_array($p->cash_flow_category, $outflowCategories));
+    @endphp
+
     <!-- Stats Row -->
     <div class="row">
         <div class="col-md-3">
@@ -98,22 +112,29 @@
         </div>
         <div class="col-md-3">
             <div class="stat-box" style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);">
-                <div class="count text-success">{{ $patterns->where('type', 'inflow')->count() }}</div>
+                <div class="count text-success">{{ $inflowPatterns->count() }}</div>
                 <div class="label">Inflow Patterns</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="stat-box" style="background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);">
-                <div class="count text-danger">{{ $patterns->where('type', 'outflow')->count() }}</div>
+                <div class="count text-danger">{{ $outflowPatterns->count() }}</div>
                 <div class="label">Outflow Patterns</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="stat-box" style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);">
                 @php
-                    $monthlyRecurring = $patterns->where('is_active', true)->sum(function($p) {
-                        $multiplier = $p->frequency == 'weekly' ? 4 : ($p->frequency == 'daily' ? 30 : 1);
-                        return $p->type == 'inflow' ? ($p->amount * $multiplier) : -($p->amount * $multiplier);
+                    $monthlyRecurring = $patterns->where('is_active', true)->sum(function($p) use ($inflowCategories) {
+                        $multiplier = match($p->frequency) {
+                            'weekly' => 4,
+                            'bi_weekly' => 2,
+                            'quarterly' => 1/3,
+                            'annually' => 1/12,
+                            default => 1
+                        };
+                        $isInflow = in_array($p->cash_flow_category, $inflowCategories);
+                        return $isInflow ? ($p->expected_amount * $multiplier) : -($p->expected_amount * $multiplier);
                     });
                 @endphp
                 <div class="count {{ $monthlyRecurring >= 0 ? 'text-success' : 'text-danger' }}">
@@ -154,41 +175,48 @@
 
                 <div id="patternsList">
                     @forelse($patterns as $pattern)
-                        <div class="pattern-card {{ $pattern->type }} {{ $pattern->is_active ? '' : 'inactive' }}"
-                             data-type="{{ $pattern->type }}">
+                        @php
+                            $isInflow = in_array($pattern->cash_flow_category, $inflowCategories);
+                            $typeClass = $isInflow ? 'inflow' : 'outflow';
+                            $monthly = match($pattern->frequency) {
+                                'weekly' => $pattern->expected_amount * 4,
+                                'bi_weekly' => $pattern->expected_amount * 2,
+                                'quarterly' => $pattern->expected_amount / 3,
+                                'annually' => $pattern->expected_amount / 12,
+                                default => $pattern->expected_amount
+                            };
+                        @endphp
+                        <div class="pattern-card {{ $typeClass }} {{ $pattern->is_active ? '' : 'inactive' }}"
+                             data-type="{{ $typeClass }}">
                             <div class="pattern-header">
                                 <div>
                                     <h6>
-                                        {{ $pattern->name }}
+                                        {{ $pattern->pattern_name }}
                                         @if(!$pattern->is_active)
                                             <span class="badge badge-secondary badge-sm ml-1">Inactive</span>
                                         @endif
                                     </h6>
                                     <div class="pattern-meta">
-                                        <span class="category-badge badge badge-{{ $pattern->type == 'inflow' ? 'success' : 'danger' }}">
-                                            {{ ucfirst($pattern->type) }}
+                                        <span class="category-badge badge badge-{{ $isInflow ? 'success' : 'danger' }}">
+                                            {{ ucwords(str_replace('_', ' ', $pattern->cash_flow_category)) }}
                                         </span>
                                         <span class="frequency-badge ml-1">
-                                            <i class="mdi mdi-repeat"></i> {{ ucfirst($pattern->frequency) }}
+                                            <i class="mdi mdi-repeat"></i> {{ ucwords(str_replace('_', ' ', $pattern->frequency)) }}
                                         </span>
-                                        @if($pattern->category)
-                                            <span class="frequency-badge ml-1">{{ ucfirst($pattern->category) }}</span>
+                                        @if($pattern->day_of_period)
+                                            <span class="frequency-badge ml-1">Day {{ $pattern->day_of_period }}</span>
                                         @endif
                                     </div>
                                 </div>
                                 <div class="text-right">
-                                    <div class="pattern-amount {{ $pattern->type == 'inflow' ? 'text-success' : 'text-danger' }}">
-                                        {{ $pattern->type == 'inflow' ? '+' : '-' }}₦{{ number_format($pattern->amount, 2) }}
+                                    <div class="pattern-amount {{ $isInflow ? 'text-success' : 'text-danger' }}">
+                                        {{ $isInflow ? '+' : '-' }}₦{{ number_format($pattern->expected_amount, 2) }}
                                     </div>
-                                    @php
-                                        $monthly = $pattern->frequency == 'weekly' ? $pattern->amount * 4 :
-                                                   ($pattern->frequency == 'daily' ? $pattern->amount * 30 : $pattern->amount);
-                                    @endphp
                                     <small class="text-muted">≈ ₦{{ number_format($monthly, 0) }}/mo</small>
                                 </div>
                             </div>
-                            @if($pattern->description)
-                                <div class="pattern-meta mb-2">{{ $pattern->description }}</div>
+                            @if($pattern->notes)
+                                <div class="pattern-meta mb-2">{{ $pattern->notes }}</div>
                             @endif
                             <div class="d-flex justify-content-between align-items-center">
                                 <small class="text-muted">
@@ -197,13 +225,14 @@
                                 <div>
                                     <button class="btn btn-outline-primary btn-sm edit-pattern"
                                             data-id="{{ $pattern->id }}"
-                                            data-name="{{ $pattern->name }}"
-                                            data-type="{{ $pattern->type }}"
+                                            data-pattern_name="{{ $pattern->pattern_name }}"
+                                            data-cash_flow_category="{{ $pattern->cash_flow_category }}"
                                             data-frequency="{{ $pattern->frequency }}"
-                                            data-category="{{ $pattern->category }}"
-                                            data-amount="{{ $pattern->amount }}"
-                                            data-description="{{ $pattern->description }}"
-                                            data-active="{{ $pattern->is_active ? 1 : 0 }}">
+                                            data-day_of_period="{{ $pattern->day_of_period }}"
+                                            data-expected_amount="{{ $pattern->expected_amount }}"
+                                            data-variance_percentage="{{ $pattern->variance_percentage }}"
+                                            data-notes="{{ $pattern->notes }}"
+                                            data-is_active="{{ $pattern->is_active ? 1 : 0 }}">
                                         <i class="mdi mdi-pencil"></i>
                                     </button>
                                     @if($pattern->is_active)
@@ -240,37 +269,37 @@
                 <div class="row">
                     <div class="col-6">
                         <button class="btn btn-outline-success btn-block btn-sm mb-2 quick-add"
-                                data-type="inflow" data-category="sales" data-name="Daily Sales">
-                            <i class="mdi mdi-cash-register"></i> Daily Sales
+                                data-category="operating_inflow" data-name="Cash Sales">
+                            <i class="mdi mdi-cash-register"></i> Cash Sales
                         </button>
                     </div>
                     <div class="col-6">
                         <button class="btn btn-outline-success btn-block btn-sm mb-2 quick-add"
-                                data-type="inflow" data-category="receivables" data-name="Monthly Collections">
+                                data-category="operating_inflow" data-name="Collections">
                             <i class="mdi mdi-account-cash"></i> Collections
                         </button>
                     </div>
                     <div class="col-6">
                         <button class="btn btn-outline-danger btn-block btn-sm mb-2 quick-add"
-                                data-type="outflow" data-category="payroll" data-name="Monthly Payroll">
+                                data-category="operating_outflow" data-name="Payroll">
                             <i class="mdi mdi-account-group"></i> Payroll
                         </button>
                     </div>
                     <div class="col-6">
                         <button class="btn btn-outline-danger btn-block btn-sm mb-2 quick-add"
-                                data-type="outflow" data-category="operating" data-name="Rent">
+                                data-category="operating_outflow" data-name="Rent">
                             <i class="mdi mdi-home"></i> Rent
                         </button>
                     </div>
                     <div class="col-6">
                         <button class="btn btn-outline-danger btn-block btn-sm quick-add"
-                                data-type="outflow" data-category="operating" data-name="Utilities">
+                                data-category="operating_outflow" data-name="Utilities">
                             <i class="mdi mdi-flash"></i> Utilities
                         </button>
                     </div>
                     <div class="col-6">
                         <button class="btn btn-outline-danger btn-block btn-sm quick-add"
-                                data-type="outflow" data-category="debt" data-name="Loan Payment">
+                                data-category="financing_outflow" data-name="Loan Payment">
                             <i class="mdi mdi-bank"></i> Loan Payment
                         </button>
                     </div>
@@ -281,16 +310,14 @@
             <div class="info-card">
                 <h6><i class="mdi mdi-chart-pie mr-2"></i>By Category</h6>
                 @php
-                    $byCategory = $patterns->where('is_active', true)->groupBy('category');
+                    $byCategory = $patterns->where('is_active', true)->groupBy('cash_flow_category');
                 @endphp
                 @forelse($byCategory as $category => $catPatterns)
                     <div class="d-flex justify-content-between mb-2">
-                        <span>{{ ucfirst($category ?: 'Other') }}</span>
-                        <div>
-                            <span class="text-success">+₦{{ number_format($catPatterns->where('type', 'inflow')->sum('amount'), 0) }}</span>
-                            <span class="mx-1">/</span>
-                            <span class="text-danger">-₦{{ number_format($catPatterns->where('type', 'outflow')->sum('amount'), 0) }}</span>
-                        </div>
+                        <span>{{ ucwords(str_replace('_', ' ', $category)) }}</span>
+                        <span class="{{ str_contains($category, 'inflow') ? 'text-success' : 'text-danger' }}">
+                            {{ str_contains($category, 'inflow') ? '+' : '-' }}₦{{ number_format($catPatterns->sum('expected_amount'), 0) }}
+                        </span>
                     </div>
                 @empty
                     <div class="text-center text-muted py-3">
@@ -307,7 +334,7 @@
                     <ul class="pl-3 mt-2 mb-0">
                         <li>Create patterns for regular income like sales collections</li>
                         <li>Set up outflow patterns for rent, payroll, utilities</li>
-                        <li>Choose frequency: daily, weekly, or monthly</li>
+                        <li>Choose frequency: weekly, bi-weekly, monthly, quarterly, annually</li>
                         <li>Deactivate patterns temporarily without deleting</li>
                     </ul>
                 </small>
@@ -323,25 +350,35 @@
             <form id="patternForm" method="POST" action="{{ route('accounting.cash-flow-forecast.patterns.store') }}">
                 @csrf
                 <input type="hidden" id="patternId" name="id">
+                <input type="hidden" id="methodField" name="_method" value="POST">
                 <div class="modal-header">
                     <h5 class="modal-title">
                         <span id="modalTitle">Add New Pattern</span>
                     </h5>
-                    <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
                         <label>Pattern Name <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" name="name" id="patternName" required>
+                        <input type="text" class="form-control" name="pattern_name" id="patternName" required
+                               placeholder="e.g., Monthly Rent, Weekly Payroll">
                     </div>
 
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>Type <span class="text-danger">*</span></label>
-                                <select class="form-control" name="type" id="patternType" required>
-                                    <option value="inflow">Inflow (Cash In)</option>
-                                    <option value="outflow">Outflow (Cash Out)</option>
+                                <label>Category <span class="text-danger">*</span></label>
+                                <select class="form-control" name="cash_flow_category" id="patternCategory" required>
+                                    <optgroup label="Inflows (Cash In)">
+                                        <option value="operating_inflow">Operating Inflow</option>
+                                        <option value="investing_inflow">Investing Inflow</option>
+                                        <option value="financing_inflow">Financing Inflow</option>
+                                    </optgroup>
+                                    <optgroup label="Outflows (Cash Out)">
+                                        <option value="operating_outflow">Operating Outflow</option>
+                                        <option value="investing_outflow">Investing Outflow</option>
+                                        <option value="financing_outflow">Financing Outflow</option>
+                                    </optgroup>
                                 </select>
                             </div>
                         </div>
@@ -349,50 +386,56 @@
                             <div class="form-group">
                                 <label>Frequency <span class="text-danger">*</span></label>
                                 <select class="form-control" name="frequency" id="patternFrequency" required>
-                                    <option value="daily">Daily</option>
                                     <option value="weekly">Weekly</option>
-                                    <option value="monthly">Monthly</option>
+                                    <option value="bi_weekly">Bi-Weekly</option>
+                                    <option value="monthly" selected>Monthly</option>
+                                    <option value="quarterly">Quarterly</option>
+                                    <option value="annually">Annually</option>
                                 </select>
                             </div>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>Category</label>
-                        <select class="form-control" name="category" id="patternCategory">
-                            <optgroup label="Inflow Categories" id="inflowCategories">
-                                <option value="sales">Sales</option>
-                                <option value="receivables">Receivables</option>
-                                <option value="investment">Investment</option>
-                                <option value="financing">Financing</option>
-                            </optgroup>
-                            <optgroup label="Outflow Categories" id="outflowCategories">
-                                <option value="operating">Operating</option>
-                                <option value="payroll">Payroll</option>
-                                <option value="payables">Payables</option>
-                                <option value="capex">Capital Expense</option>
-                                <option value="taxes">Taxes</option>
-                                <option value="debt">Debt Service</option>
-                            </optgroup>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Amount <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text">₦</span>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Expected Amount <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">₦</span>
+                                    </div>
+                                    <input type="number" class="form-control" name="expected_amount" id="patternAmount"
+                                           step="0.01" min="0" required>
+                                </div>
+                                <small class="text-muted">Amount per occurrence</small>
                             </div>
-                            <input type="number" class="form-control" name="amount" id="patternAmount"
-                                   step="0.01" min="0" required>
                         </div>
-                        <small class="text-muted">Amount per occurrence (per day/week/month)</small>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Day of Period</label>
+                                <input type="number" class="form-control" name="day_of_period" id="patternDayOfPeriod"
+                                       min="1" max="31" placeholder="e.g., 1 for 1st">
+                                <small class="text-muted">Day of month/week when this occurs</small>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-group">
-                        <label>Description</label>
-                        <textarea class="form-control" name="description" id="patternDescription" rows="2"></textarea>
+                        <label>Variance Percentage</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" name="variance_percentage" id="patternVariance"
+                                   step="0.01" min="0" max="100" value="10">
+                            <div class="input-group-append">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                        <small class="text-muted">Expected variance from the amount</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea class="form-control" name="notes" id="patternNotes" rows="2"
+                                  placeholder="Additional details about this pattern"></textarea>
                     </div>
 
                     <div class="form-group mb-0">
@@ -404,7 +447,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">
                         <i class="mdi mdi-content-save mr-1"></i> Save Pattern
                     </button>
@@ -434,29 +477,13 @@ $(document).ready(function() {
         }
     });
 
-    // Update category options based on type
-    $('#patternType').on('change', function() {
-        var type = $(this).val();
-        if (type === 'inflow') {
-            $('#inflowCategories').show();
-            $('#outflowCategories').hide();
-            $('#patternCategory').val('sales');
-        } else {
-            $('#inflowCategories').hide();
-            $('#outflowCategories').show();
-            $('#patternCategory').val('operating');
-        }
-    });
-
     // Quick add
     $('.quick-add').on('click', function() {
-        var type = $(this).data('type');
         var category = $(this).data('category');
         var name = $(this).data('name');
 
         resetPatternForm();
         $('#patternName').val(name);
-        $('#patternType').val(type).trigger('change');
         $('#patternCategory').val(category);
         $('#patternFrequency').val('monthly');
 
@@ -466,26 +493,20 @@ $(document).ready(function() {
     // Edit pattern
     $('.edit-pattern').on('click', function() {
         var id = $(this).data('id');
-        var name = $(this).data('name');
-        var type = $(this).data('type');
-        var frequency = $(this).data('frequency');
-        var category = $(this).data('category');
-        var amount = $(this).data('amount');
-        var description = $(this).data('description');
-        var active = $(this).data('active');
 
         $('#modalTitle').text('Edit Pattern');
         $('#patternId').val(id);
-        $('#patternName').val(name);
-        $('#patternType').val(type).trigger('change');
-        $('#patternFrequency').val(frequency);
-        $('#patternCategory').val(category);
-        $('#patternAmount').val(amount);
-        $('#patternDescription').val(description);
-        $('#patternActive').prop('checked', active == 1);
+        $('#methodField').val('PUT');
+        $('#patternName').val($(this).data('pattern_name'));
+        $('#patternCategory').val($(this).data('cash_flow_category'));
+        $('#patternFrequency').val($(this).data('frequency'));
+        $('#patternDayOfPeriod').val($(this).data('day_of_period'));
+        $('#patternAmount').val($(this).data('expected_amount'));
+        $('#patternVariance').val($(this).data('variance_percentage') || 10);
+        $('#patternNotes').val($(this).data('notes'));
+        $('#patternActive').prop('checked', $(this).data('is_active') == 1);
 
         $('#patternForm').attr('action', '{{ url("accounting/cash-flow-forecast/patterns") }}/' + id);
-        $('#patternForm').append('<input type="hidden" name="_method" value="PUT">');
 
         $('#patternModal').modal('show');
     });
@@ -499,9 +520,11 @@ $(document).ready(function() {
         $('#modalTitle').text('Add New Pattern');
         $('#patternForm')[0].reset();
         $('#patternId').val('');
+        $('#methodField').val('POST');
         $('#patternForm').attr('action', '{{ route("accounting.cash-flow-forecast.patterns.store") }}');
-        $('#patternForm input[name="_method"]').remove();
-        $('#patternType').val('inflow').trigger('change');
+        $('#patternCategory').val('operating_inflow');
+        $('#patternFrequency').val('monthly');
+        $('#patternVariance').val('10');
         $('#patternActive').prop('checked', true);
     }
 
@@ -522,8 +545,9 @@ $(document).ready(function() {
                     toastr.error(response.message);
                 }
             },
-            error: function() {
-                toastr.error('Failed to update pattern');
+            error: function(xhr) {
+                var msg = xhr.responseJSON?.message || 'Failed to update pattern';
+                toastr.error(msg);
             }
         });
     });
@@ -545,8 +569,9 @@ $(document).ready(function() {
                         toastr.error(response.message);
                     }
                 },
-                error: function() {
-                    toastr.error('Failed to delete pattern');
+                error: function(xhr) {
+                    var msg = xhr.responseJSON?.message || 'Failed to delete pattern';
+                    toastr.error(msg);
                 }
             });
         }

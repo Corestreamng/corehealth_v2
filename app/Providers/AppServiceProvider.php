@@ -30,6 +30,7 @@ use App\Models\Accounting\FixedAsset;
 use App\Models\Accounting\FixedAssetDepreciation;
 use App\Models\Accounting\FixedAssetDisposal;
 use App\Models\Accounting\StatutoryRemittance;
+use App\Models\Accounting\CashFlowForecastPeriod;
 use App\Observers\ProductObserver;
 use App\Observers\ServiceObserver;
 use App\Observers\ServicePriceObserver;
@@ -53,6 +54,7 @@ use App\Observers\Accounting\DepreciationObserver;
 use App\Observers\Accounting\FixedAssetDisposalObserver;
 use App\Observers\Accounting\BankObserver;
 use App\Observers\Accounting\StatutoryRemittanceObserver;
+use App\Observers\Accounting\CashFlowForecastPeriodObserver;
 use App\Helpers\HmoHelper;
 use App\Services\DepartmentNotificationService;
 use Carbon\Carbon;
@@ -127,6 +129,9 @@ class AppServiceProvider extends ServiceProvider
 
         // NEW: Statutory Remittance observer - creates JE when payroll deductions are remitted
         StatutoryRemittance::observe(StatutoryRemittanceObserver::class);
+
+        // NEW: Cash Flow Forecast Period observer - auto-applies recurring patterns to new periods
+        CashFlowForecastPeriod::observe(CashFlowForecastPeriodObserver::class);
 
         // Process daily bed bills - runs once per day automatically
         $this->processDailyBedBills();

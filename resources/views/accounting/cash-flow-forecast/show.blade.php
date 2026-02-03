@@ -101,8 +101,21 @@
                 </div>
             </div>
             <div class="col-md-4 text-md-right mt-3 mt-md-0">
+                <div class="btn-group mr-2">
+                    <a href="{{ route('accounting.cash-flow-forecast.export.pdf', $forecast->id) }}"
+                       class="btn btn-danger btn-sm" title="Export to PDF">
+                        <i class="mdi mdi-file-pdf"></i> PDF
+                    </a>
+                    <a href="{{ route('accounting.cash-flow-forecast.export.excel', $forecast->id) }}"
+                       class="btn btn-success btn-sm" title="Export to Excel">
+                        <i class="mdi mdi-file-excel"></i> Excel
+                    </a>
+                </div>
                 @if($forecast->status == 'draft')
-                    <button class="btn btn-success btn-sm" id="activateForecast">
+                    <button class="btn btn-info btn-sm mr-1" id="applyPatternsBtn" title="Apply recurring patterns to all periods">
+                        <i class="mdi mdi-repeat"></i> Apply Patterns
+                    </button>
+                    <button class="btn btn-primary btn-sm" id="activateForecast">
                         <i class="mdi mdi-check"></i> Activate
                     </button>
                 @endif
@@ -157,21 +170,29 @@
             <!-- Periods -->
             <div class="info-card">
                 <h6><i class="mdi mdi-calendar-month mr-2"></i>Forecast Periods ({{ $periodsWithBalance->count() }})</h6>
+                <p class="text-muted small mb-3">
+                    <i class="mdi mdi-information-outline"></i>
+                    Click any period to expand details. Current period is expanded by default.
+                    Green values show positive cash flow, red shows negative. Use <strong>Edit Forecast</strong> to update projections or <strong>Update Actuals</strong> to record what actually happened.
+                </p>
 
                 @foreach($periodsWithBalance as $period)
                     @php
-                        $isPast = \Carbon\Carbon::parse($period->period_end)->lt(now());
+                        $isPast = optional($period->period_end_date)->lt(now());
+                        $isCurrent = optional($period->period_start_date)->lte(now()) && optional($period->period_end_date)->gte(now());
                         $hasVariance = $period->variance !== null;
                     @endphp
-                    <div class="period-row {{ $loop->first ? 'expanded' : '' }}">
+                    <div class="period-row {{ $isCurrent ? 'expanded' : '' }}">
                         <div class="period-header" data-toggle="period">
                             <div class="row align-items-center">
                                 <div class="col-md-2">
                                     <strong>
-                                        {{ \Carbon\Carbon::parse($period->period_start)->format('M d') }} -
-                                        {{ \Carbon\Carbon::parse($period->period_end)->format('M d') }}
+                                        {{ optional($period->period_start_date)->format('M d') }} -
+                                        {{ optional($period->period_end_date)->format('M d') }}
                                     </strong>
-                                    @if($isPast)
+                                    @if($isCurrent)
+                                        <span class="badge badge-primary badge-sm ml-1">Current</span>
+                                    @elseif($isPast)
                                         <span class="badge badge-secondary badge-sm ml-1">Past</span>
                                     @endif
                                 </div>
@@ -208,9 +229,18 @@
                             </div>
                         </div>
                         <div class="period-body">
+                            <div class="alert alert-info alert-sm mb-3" style="padding: 8px 12px; font-size: 0.85rem;">
+                                <i class="mdi mdi-lightbulb-outline"></i>
+                                <strong>Tip:</strong> Forecasted amounts come from the line items you added. Variance = Actual - Forecasted closing balance.
+                                @if(!$hasVariance && $isPast)
+                                    This period has passed - click <strong>Update Actuals</strong> to record what actually happened.
+                                @elseif($isCurrent)
+                                    This is the current period - you can still adjust forecasts or start recording actuals.
+                                @endif
+                            </div>
                             <div class="row">
                                 <div class="col-md-6">
-                                    <h6 class="text-muted mb-2">Forecasted</h6>
+                                    <h6 class="text-muted mb-2"><i class="mdi mdi-chart-line mr-1"></i>Forecasted</h6>
                                     <div class="d-flex justify-content-between mb-1">
                                         <span>Inflows:</span>
                                         <strong class="text-success">₦{{ number_format($period->forecasted_inflows, 2) }}</strong>
@@ -225,26 +255,54 @@
                                             ₦{{ number_format($period->net_cash_flow, 2) }}
                                         </strong>
                                     </div>
+                                    @if($period->items->count() > 0)
+                                        <div class="mt-3">
+                                            <small class="text-muted d-block mb-1"><strong>{{ $period->items->count() }} Line Items:</strong></small>
+                                            @foreach($period->items->take(3) as $item)
+                                                <small class="d-block text-truncate">
+                                                    • {{ $item->item_description }}
+                                                    <span class="{{ str_contains($item->cash_flow_category, 'inflow') ? 'text-success' : 'text-danger' }}">
+                                                        ₦{{ number_format($item->forecasted_amount, 0) }}
+                                                    </span>
+                                                </small>
+                                            @endforeach
+                                            @if($period->items->count() > 3)
+                                                <small class="text-muted">...and {{ $period->items->count() - 3 }} more</small>
+                                            @endif
+                                        </div>
+                                    @endif
                                 </div>
                                 <div class="col-md-6">
-                                    <h6 class="text-muted mb-2">Actual (if recorded)</h6>
-                                    <div class="d-flex justify-content-between mb-1">
-                                        <span>Inflows:</span>
-                                        <strong class="text-success">₦{{ number_format($period->actual_inflows, 2) }}</strong>
-                                    </div>
-                                    <div class="d-flex justify-content-between mb-1">
-                                        <span>Outflows:</span>
-                                        <strong class="text-danger">₦{{ number_format($period->actual_outflows, 2) }}</strong>
-                                    </div>
-                                    <div class="d-flex justify-content-between">
-                                        <span>Net:</span>
-                                        @php
-                                            $actualNet = $period->actual_inflows - $period->actual_outflows;
-                                        @endphp
-                                        <strong class="{{ $actualNet >= 0 ? 'text-success' : 'text-danger' }}">
-                                            ₦{{ number_format($actualNet, 2) }}
+                                    <h6 class="text-muted mb-2"><i class="mdi mdi-check-circle mr-1"></i>Actual (if recorded)</h6>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Actual Closing Balance:</span>
+                                        <strong class="{{ ($period->actual_closing_balance ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">
+                                            ₦{{ number_format($period->actual_closing_balance ?? 0, 2) }}
                                         </strong>
                                     </div>
+                                    @if($period->variance !== null)
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Variance:</span>
+                                            <strong class="{{ $period->variance >= 0 ? 'text-success' : 'text-danger' }}" title="Actual minus Forecasted closing">
+                                                {{ $period->variance >= 0 ? '+' : '' }}₦{{ number_format($period->variance, 2) }}
+                                                @if($period->variance > 0)
+                                                    <small class="text-muted">(Better than forecast)</small>
+                                                @elseif($period->variance < 0)
+                                                    <small class="text-muted">(Below forecast)</small>
+                                                @endif
+                                            </strong>
+                                        </div>
+                                    @else
+                                        <div class="text-muted small">
+                                            <i class="mdi mdi-information-outline"></i> No actuals recorded yet
+                                        </div>
+                                    @endif
+                                    @if($period->variance_explanation)
+                                        <div class="mt-2 p-2" style="background: #f8f9fa; border-radius: 4px;">
+                                            <small class="text-muted d-block"><strong>Variance Explanation:</strong></small>
+                                            <small>{{ $period->variance_explanation }}</small>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                             <hr>
@@ -253,7 +311,7 @@
                                     <i class="mdi mdi-pencil mr-1"></i> Edit Forecast
                                 </a>
                                 <button class="btn btn-outline-info btn-sm update-actuals" data-id="{{ $period->id }}"
-                                        data-inflows="{{ $period->actual_inflows }}" data-outflows="{{ $period->actual_outflows }}">
+                                        data-closing="{{ $period->actual_closing_balance }}" data-explanation="{{ $period->variance_explanation }}">
                                     <i class="mdi mdi-refresh mr-1"></i> Update Actuals
                                 </button>
                             </div>
@@ -310,9 +368,23 @@
             <div class="info-card">
                 <h6><i class="mdi mdi-cog mr-2"></i>Actions</h6>
                 @if($forecast->status == 'draft')
+                    <div class="alert alert-warning" style="padding: 8px 12px; font-size: 0.85rem; margin-bottom: 10px;">
+                        <i class="mdi mdi-alert-circle-outline"></i>
+                        <strong>Draft Mode:</strong> This forecast is in draft. Click <strong>Activate</strong> to make it your primary active forecast for tracking.
+                    </div>
                     <button class="btn btn-success btn-block btn-sm mb-2" id="activateForecastBtn">
                         <i class="mdi mdi-check mr-1"></i> Activate Forecast
                     </button>
+                @elseif($forecast->status == 'active')
+                    <div class="alert alert-success" style="padding: 8px 12px; font-size: 0.85rem; margin-bottom: 10px;">
+                        <i class="mdi mdi-check-circle"></i>
+                        <strong>Active Forecast:</strong> This is your primary forecast. Record actuals to track variance.
+                    </div>
+                @elseif($forecast->status == 'archived')
+                    <div class="alert alert-secondary" style="padding: 8px 12px; font-size: 0.85rem; margin-bottom: 10px;">
+                        <i class="mdi mdi-archive"></i>
+                        <strong>Archived:</strong> This forecast was replaced by a newer active forecast.
+                    </div>
                 @endif
                 <a href="{{ route('accounting.cash-flow-forecast.export.pdf', $forecast->id) }}" class="btn btn-outline-info btn-block btn-sm mb-2">
                     <i class="mdi mdi-file-pdf mr-1"></i> Export PDF
@@ -340,22 +412,18 @@
                 <div class="modal-body">
                     <input type="hidden" id="actualsPeriodId">
                     <div class="form-group">
-                        <label>Actual Inflows</label>
+                        <label>Actual Closing Balance <span class="text-danger">*</span></label>
                         <div class="input-group">
                             <div class="input-group-prepend">
                                 <span class="input-group-text">₦</span>
                             </div>
-                            <input type="number" id="actualInflows" class="form-control" step="0.01" min="0">
+                            <input type="number" id="actualClosingBalance" class="form-control" step="0.01" required>
                         </div>
+                        <small class="form-text text-muted">Enter the actual cash balance at the end of this period</small>
                     </div>
                     <div class="form-group">
-                        <label>Actual Outflows</label>
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text">₦</span>
-                            </div>
-                            <input type="number" id="actualOutflows" class="form-control" step="0.01" min="0">
-                        </div>
+                        <label>Variance Explanation</label>
+                        <textarea id="varianceExplanation" class="form-control" rows="3" placeholder="Explain any significant variance from forecast..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -449,9 +517,9 @@ $(document).ready(function() {
 
     // Activate forecast
     $('#activateForecast, #activateForecastBtn').on('click', function() {
-        if (confirm('Activate this forecast? This will deactivate any currently active forecast.')) {
+        if (confirm('Activate this forecast?\n\nThis will:\n• Make this the primary active forecast\n• Archive any other active forecasts\n• Enable variance tracking against actuals\n\nOnly one forecast can be active at a time.')) {
             $.ajax({
-                url: '{{ route('accounting.cash-flow-forecast.show', $forecast->id) }}/activate',
+                url: '{{ route("accounting.cash-flow-forecast.activate", $forecast->id) }}',
                 type: 'POST',
                 data: { _token: '{{ csrf_token() }}' },
                 success: function(response) {
@@ -462,22 +530,59 @@ $(document).ready(function() {
                         toastr.error(response.message);
                     }
                 },
-                error: function() {
-                    toastr.error('Failed to activate forecast');
+                error: function(xhr) {
+                    toastr.error(xhr.responseJSON?.message || 'Failed to activate forecast');
                 }
             });
         }
     });
 
+    // Apply patterns to forecast
+    $('#applyPatternsBtn').on('click', function() {
+        var overwrite = confirm('Apply recurring patterns to all periods?\n\nThis will add items from active patterns to each applicable period.\n\nClick OK to apply (skip duplicates)\nOr Cancel to abort.');
+
+        if (!overwrite && overwrite !== false) return; // User cancelled
+
+        var doOverwrite = false;
+        if (overwrite) {
+            doOverwrite = confirm('Do you want to OVERWRITE existing pattern items?\n\nClick OK to overwrite (replace existing)\nClick Cancel to add without overwriting');
+        }
+
+        var btn = $(this);
+        btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Applying...');
+
+        $.ajax({
+            url: '{{ route("accounting.cash-flow-forecast.apply-patterns", $forecast->id) }}',
+            type: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                overwrite: doOverwrite
+            },
+            success: function(response) {
+                if (response.success) {
+                    toastr.success(response.message);
+                    location.reload();
+                } else {
+                    toastr.error(response.message);
+                    btn.prop('disabled', false).html('<i class="mdi mdi-repeat"></i> Apply Patterns');
+                }
+            },
+            error: function(xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Failed to apply patterns');
+                btn.prop('disabled', false).html('<i class="mdi mdi-repeat"></i> Apply Patterns');
+            }
+        });
+    });
+
     // Update actuals modal
     $('.update-actuals').on('click', function() {
         var id = $(this).data('id');
-        var inflows = $(this).data('inflows');
-        var outflows = $(this).data('outflows');
+        var closing = $(this).data('closing');
+        var explanation = $(this).data('explanation');
 
         $('#actualsPeriodId').val(id);
-        $('#actualInflows').val(inflows);
-        $('#actualOutflows').val(outflows);
+        $('#actualClosingBalance').val(closing || '');
+        $('#varianceExplanation').val(explanation || '');
 
         $('#actualsModal').modal('show');
     });
@@ -492,8 +597,8 @@ $(document).ready(function() {
             type: 'PUT',
             data: {
                 _token: '{{ csrf_token() }}',
-                actual_inflows: $('#actualInflows').val(),
-                actual_outflows: $('#actualOutflows').val()
+                actual_closing_balance: $('#actualClosingBalance').val(),
+                variance_explanation: $('#varianceExplanation').val()
             },
             success: function(response) {
                 if (response.success) {
@@ -504,8 +609,15 @@ $(document).ready(function() {
                     toastr.error(response.message);
                 }
             },
-            error: function() {
-                toastr.error('Failed to update actuals');
+            error: function(xhr) {
+                var errors = xhr.responseJSON?.errors;
+                if (errors) {
+                    Object.values(errors).flat().forEach(function(error) {
+                        toastr.error(error);
+                    });
+                } else {
+                    toastr.error('Failed to update actuals');
+                }
             }
         });
     });

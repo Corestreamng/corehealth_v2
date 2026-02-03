@@ -14,7 +14,7 @@
 @include('accounting.partials.breadcrumb', [
     'items' => [
         ['label' => 'Cash Flow Forecast', 'url' => route('accounting.cash-flow-forecast.index'), 'icon' => 'mdi-chart-timeline-variant'],
-        ['label' => $period->forecast->name, 'url' => route('accounting.cash-flow-forecast.show', $period->forecast_id), 'icon' => 'mdi-eye'],
+        ['label' => $period->forecast->forecast_name, 'url' => route('accounting.cash-flow-forecast.show', $period->forecast_id), 'icon' => 'mdi-eye'],
         ['label' => 'Edit Period', 'url' => '#', 'icon' => 'mdi-pencil']
     ]
 ])
@@ -66,6 +66,23 @@
 }
 </style>
 
+@php
+    $inflowCategories = [
+        'operating_inflow' => 'Operating Inflow',
+        'investing_inflow' => 'Investing Inflow',
+        'financing_inflow' => 'Financing Inflow',
+    ];
+
+    $outflowCategories = [
+        'operating_outflow' => 'Operating Outflow',
+        'investing_outflow' => 'Investing Outflow',
+        'financing_outflow' => 'Financing Outflow',
+    ];
+
+    $inflowItems = $period->items->filter(fn($item) => $item->isInflow());
+    $outflowItems = $period->items->filter(fn($item) => $item->isOutflow());
+@endphp
+
 <div class="container-fluid">
     @if($errors->any())
         <div class="alert alert-danger alert-dismissible fade show">
@@ -78,24 +95,34 @@
         </div>
     @endif
 
+    <div class="alert alert-info alert-dismissible fade show">
+        <i class="mdi mdi-lightbulb-outline"></i>
+        <strong>Period Planning:</strong> Add all expected cash inflows (revenue, collections) and outflows (expenses, payments) for this period.
+        The system automatically calculates net cash flow and closing balance. Use categories to organize items (Operating = day-to-day, Investing = assets, Financing = loans/equity).
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+
     <!-- Period Info Header -->
     <div class="period-info">
         <div class="row align-items-center">
             <div class="col-md-8">
-                <h4 class="mb-1">{{ $period->forecast->name }}</h4>
+                <h4 class="mb-1">{{ $period->forecast->forecast_name }}</h4>
                 <div>
                     <span class="badge badge-light">
-                        {{ \Carbon\Carbon::parse($period->period_start)->format('M d, Y') }} -
-                        {{ \Carbon\Carbon::parse($period->period_end)->format('M d, Y') }}
+                        {{ optional($period->period_start_date)->format('M d, Y') }} -
+                        {{ optional($period->period_end_date)->format('M d, Y') }}
                     </span>
                     <span class="badge badge-{{ $period->forecast->status == 'active' ? 'success' : 'secondary' }} ml-1">
-                        {{ ucfirst($period->forecast->frequency) }}
+                        {{ ucfirst($period->forecast->forecast_type) }}
                     </span>
                 </div>
             </div>
             <div class="col-md-4 text-md-right mt-3 mt-md-0">
                 <a href="{{ route('accounting.cash-flow-forecast.show', $period->forecast_id) }}" class="btn btn-light btn-sm">
                     <i class="mdi mdi-arrow-left mr-1"></i> Back to Forecast
+                </a>
+                <a href="{{ route('accounting.cash-flow-forecast.show', [$period->forecast_id, 'tab' => 'details']) }}" class="btn btn-warning btn-sm ml-2">
+                    <i class="mdi mdi-pencil mr-1"></i> Edit Forecast Details
                 </a>
             </div>
         </div>
@@ -115,24 +142,26 @@
                             <i class="mdi mdi-plus"></i> Add Inflow
                         </button>
                     </div>
+                    <p class="text-muted small mb-3">
+                        <i class="mdi mdi-information-outline"></i>
+                        Add all expected cash <strong>receipts</strong> (e.g., patient revenue, HMO payments, collections).
+                        <span class="text-success">Examples: Cash sales ₦500,000 | HMO receivables ₦300,000 | Investment income ₦50,000</span>
+                    </p>
 
                     <div id="inflowItems">
-                        @foreach($period->items->where('type', 'inflow') as $item)
+                        @foreach($inflowItems as $index => $item)
                             <div class="item-row inflow">
                                 <div class="row">
                                     <div class="col-md-5">
-                                        <input type="hidden" name="items[{{ $loop->index }}][id]" value="{{ $item->id }}">
-                                        <input type="hidden" name="items[{{ $loop->index }}][type]" value="inflow">
-                                        <input type="text" class="form-control" name="items[{{ $loop->index }}][description]"
-                                               value="{{ $item->description }}" placeholder="Description" required>
+                                        <input type="hidden" name="items[{{ $index }}][id]" value="{{ $item->id }}">
+                                        <input type="text" class="form-control" name="items[{{ $index }}][item_description]"
+                                               value="{{ $item->item_description }}" placeholder="Description" required>
                                     </div>
                                     <div class="col-md-3">
-                                        <select class="form-control" name="items[{{ $loop->index }}][category]">
-                                            <option value="sales" {{ $item->category == 'sales' ? 'selected' : '' }}>Sales</option>
-                                            <option value="receivables" {{ $item->category == 'receivables' ? 'selected' : '' }}>Receivables</option>
-                                            <option value="investment" {{ $item->category == 'investment' ? 'selected' : '' }}>Investment</option>
-                                            <option value="financing" {{ $item->category == 'financing' ? 'selected' : '' }}>Financing</option>
-                                            <option value="other" {{ $item->category == 'other' ? 'selected' : '' }}>Other</option>
+                                        <select class="form-control" name="items[{{ $index }}][cash_flow_category]">
+                                            @foreach($inflowCategories as $value => $label)
+                                                <option value="{{ $value }}" {{ $item->cash_flow_category === $value ? 'selected' : '' }}>{{ $label }}</option>
+                                            @endforeach
                                         </select>
                                     </div>
                                     <div class="col-md-3">
@@ -140,8 +169,8 @@
                                             <div class="input-group-prepend">
                                                 <span class="input-group-text">₦</span>
                                             </div>
-                                            <input type="number" class="form-control item-amount" name="items[{{ $loop->index }}][amount]"
-                                                   value="{{ $item->amount }}" step="0.01" min="0" data-type="inflow" required>
+                                            <input type="number" class="form-control item-amount" name="items[{{ $index }}][forecasted_amount]"
+                                                   value="{{ $item->forecasted_amount }}" step="0.01" min="0" data-type="inflow" required>
                                         </div>
                                     </div>
                                     <div class="col-md-1">
@@ -170,26 +199,27 @@
                             <i class="mdi mdi-plus"></i> Add Outflow
                         </button>
                     </div>
+                    <p class="text-muted small mb-3">
+                        <i class="mdi mdi-information-outline"></i>
+                        Add all expected cash <strong>payments</strong> (e.g., salaries, suppliers, rent).
+                        <span class="text-danger">Examples: Staff salaries ₦400,000 | Drug suppliers ₦250,000 | Utilities ₦80,000 | Loan payment ₦100,000</span>
+                    </p>
 
                     <div id="outflowItems">
-                        @foreach($period->items->where('type', 'outflow') as $item)
+                        @foreach($outflowItems as $outflowIndex => $item)
                             <div class="item-row outflow">
                                 <div class="row">
                                     <div class="col-md-5">
-                                        <input type="hidden" name="items[{{ $period->items->where('type', 'inflow')->count() + $loop->index }}][id]" value="{{ $item->id }}">
-                                        <input type="hidden" name="items[{{ $period->items->where('type', 'inflow')->count() + $loop->index }}][type]" value="outflow">
-                                        <input type="text" class="form-control" name="items[{{ $period->items->where('type', 'inflow')->count() + $loop->index }}][description]"
-                                               value="{{ $item->description }}" placeholder="Description" required>
+                                        @php $index = $inflowItems->count() + $outflowIndex; @endphp
+                                        <input type="hidden" name="items[{{ $index }}][id]" value="{{ $item->id }}">
+                                        <input type="text" class="form-control" name="items[{{ $index }}][item_description]"
+                                               value="{{ $item->item_description }}" placeholder="Description" required>
                                     </div>
                                     <div class="col-md-3">
-                                        <select class="form-control" name="items[{{ $period->items->where('type', 'inflow')->count() + $loop->index }}][category]">
-                                            <option value="operating" {{ $item->category == 'operating' ? 'selected' : '' }}>Operating</option>
-                                            <option value="payroll" {{ $item->category == 'payroll' ? 'selected' : '' }}>Payroll</option>
-                                            <option value="payables" {{ $item->category == 'payables' ? 'selected' : '' }}>Payables</option>
-                                            <option value="capex" {{ $item->category == 'capex' ? 'selected' : '' }}>Capital Expense</option>
-                                            <option value="taxes" {{ $item->category == 'taxes' ? 'selected' : '' }}>Taxes</option>
-                                            <option value="debt" {{ $item->category == 'debt' ? 'selected' : '' }}>Debt Service</option>
-                                            <option value="other" {{ $item->category == 'other' ? 'selected' : '' }}>Other</option>
+                                        <select class="form-control" name="items[{{ $index }}][cash_flow_category]">
+                                            @foreach($outflowCategories as $value => $label)
+                                                <option value="{{ $value }}" {{ $item->cash_flow_category === $value ? 'selected' : '' }}>{{ $label }}</option>
+                                            @endforeach
                                         </select>
                                     </div>
                                     <div class="col-md-3">
@@ -197,8 +227,8 @@
                                             <div class="input-group-prepend">
                                                 <span class="input-group-text">₦</span>
                                             </div>
-                                            <input type="number" class="form-control item-amount" name="items[{{ $period->items->where('type', 'inflow')->count() + $loop->index }}][amount]"
-                                                   value="{{ $item->amount }}" step="0.01" min="0" data-type="outflow" required>
+                                            <input type="number" class="form-control item-amount" name="items[{{ $index }}][forecasted_amount]"
+                                                   value="{{ $item->forecasted_amount }}" step="0.01" min="0" data-type="outflow" required>
                                         </div>
                                     </div>
                                     <div class="col-md-1">
@@ -249,31 +279,6 @@
                     </div>
                 </div>
 
-                <!-- Actuals -->
-                <div class="form-card">
-                    <h6><i class="mdi mdi-checkbox-marked-circle-outline mr-2"></i>Record Actuals</h6>
-                    <div class="form-group">
-                        <label>Actual Inflows</label>
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text">₦</span>
-                            </div>
-                            <input type="number" class="form-control" name="actual_inflows"
-                                   value="{{ $period->actual_inflows ?? 0 }}" step="0.01" min="0">
-                        </div>
-                    </div>
-                    <div class="form-group mb-0">
-                        <label>Actual Outflows</label>
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text">₦</span>
-                            </div>
-                            <input type="number" class="form-control" name="actual_outflows"
-                                   value="{{ $period->actual_outflows ?? 0 }}" step="0.01" min="0">
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Actions -->
                 <div class="form-card">
                     <h6><i class="mdi mdi-cog mr-2"></i>Actions</h6>
@@ -287,14 +292,20 @@
 
                 <!-- Help -->
                 <div class="form-card bg-light">
-                    <h6><i class="mdi mdi-help-circle mr-2"></i>Help</h6>
+                    <h6><i class="mdi mdi-help-circle mr-2"></i>Quick Guide</h6>
                     <small class="text-muted">
-                        <strong>Tips:</strong>
+                        <strong>Category Guide:</strong>
+                        <ul class="pl-3 mb-2">
+                            <li><strong>Operating:</strong> Day-to-day business (revenue, salaries, supplies)</li>
+                            <li><strong>Investing:</strong> Asset purchases/sales (equipment, property)</li>
+                            <li><strong>Financing:</strong> Loans, equity, dividends</li>
+                        </ul>
+                        <strong>Best Practices:</strong>
                         <ul class="pl-3 mb-0">
-                            <li>Add all expected cash inflows and outflows for this period</li>
-                            <li>Use categories to organize items</li>
-                            <li>Record actuals once the period has passed to track variance</li>
-                            <li>The closing balance automatically calculates from opening + net flow</li>
+                            <li>Be specific in descriptions (e.g., "January Staff Salaries" not just "Salaries")</li>
+                            <li>Group similar items when appropriate</li>
+                            <li>Review actuals vs forecast regularly to improve accuracy</li>
+                            <li>Net flow = Inflows - Outflows; Closing = Opening + Net flow</li>
                         </ul>
                     </small>
                 </div>
@@ -308,16 +319,13 @@
     <div class="item-row inflow">
         <div class="row">
             <div class="col-md-5">
-                <input type="hidden" name="items[INDEX][type]" value="inflow">
-                <input type="text" class="form-control" name="items[INDEX][description]" placeholder="Description" required>
+                <input type="text" class="form-control" name="items[INDEX][item_description]" placeholder="Description" required>
             </div>
             <div class="col-md-3">
-                <select class="form-control" name="items[INDEX][category]">
-                    <option value="sales">Sales</option>
-                    <option value="receivables">Receivables</option>
-                    <option value="investment">Investment</option>
-                    <option value="financing">Financing</option>
-                    <option value="other">Other</option>
+                <select class="form-control" name="items[INDEX][cash_flow_category]">
+                    @foreach($inflowCategories as $value => $label)
+                        <option value="{{ $value }}">{{ $label }}</option>
+                    @endforeach
                 </select>
             </div>
             <div class="col-md-3">
@@ -325,7 +333,7 @@
                     <div class="input-group-prepend">
                         <span class="input-group-text">₦</span>
                     </div>
-                    <input type="number" class="form-control item-amount" name="items[INDEX][amount]"
+                    <input type="number" class="form-control item-amount" name="items[INDEX][forecasted_amount]"
                            step="0.01" min="0" data-type="inflow" required>
                 </div>
             </div>
@@ -343,18 +351,13 @@
     <div class="item-row outflow">
         <div class="row">
             <div class="col-md-5">
-                <input type="hidden" name="items[INDEX][type]" value="outflow">
-                <input type="text" class="form-control" name="items[INDEX][description]" placeholder="Description" required>
+                <input type="text" class="form-control" name="items[INDEX][item_description]" placeholder="Description" required>
             </div>
             <div class="col-md-3">
-                <select class="form-control" name="items[INDEX][category]">
-                    <option value="operating">Operating</option>
-                    <option value="payroll">Payroll</option>
-                    <option value="payables">Payables</option>
-                    <option value="capex">Capital Expense</option>
-                    <option value="taxes">Taxes</option>
-                    <option value="debt">Debt Service</option>
-                    <option value="other">Other</option>
+                <select class="form-control" name="items[INDEX][cash_flow_category]">
+                    @foreach($outflowCategories as $value => $label)
+                        <option value="{{ $value }}">{{ $label }}</option>
+                    @endforeach
                 </select>
             </div>
             <div class="col-md-3">
@@ -362,7 +365,7 @@
                     <div class="input-group-prepend">
                         <span class="input-group-text">₦</span>
                     </div>
-                    <input type="number" class="form-control item-amount" name="items[INDEX][amount]"
+                    <input type="number" class="form-control item-amount" name="items[INDEX][forecasted_amount]"
                            step="0.01" min="0" data-type="outflow" required>
                 </div>
             </div>

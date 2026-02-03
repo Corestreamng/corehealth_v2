@@ -5,6 +5,7 @@
 --}}
 
 @extends('admin.layouts.app')
+@php use Illuminate\Support\Str; @endphp
 
 @section('title', 'Create Cash Flow Forecast')
 @section('page_name', 'Accounting')
@@ -79,30 +80,50 @@
                 <!-- Basic Information -->
                 <div class="form-section">
                     <h6><i class="mdi mdi-information-outline mr-2"></i>Forecast Information</h6>
+                    <div class="alert alert-info" style="padding: 10px 15px; font-size: 0.9rem;">
+                        <i class="mdi mdi-lightbulb-outline"></i>
+                        <strong>Getting Started:</strong> Name your forecast descriptively (e.g., "Q1 2026 13-Week Forecast").
+                        Choose dates and frequency - the system will automatically create periods. After creation, you'll add line items for each period.
+                    </div>
                     <div class="form-group">
                         <label>Forecast Name <span class="text-danger">*</span></label>
-                        <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
-                               value="{{ old('name') }}" required placeholder="e.g., Q1 2024 Cash Flow Forecast">
-                        @error('name')
+                        <input type="text" name="forecast_name" class="form-control @error('forecast_name') is-invalid @enderror"
+                               value="{{ old('forecast_name') }}" required placeholder="e.g., Q1 2026 Cash Flow Forecast">
+                        <small class="form-text text-muted">Choose a clear name that indicates time period and purpose</small>
+                        @error('forecast_name')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
                     <div class="form-group">
-                        <label>Description</label>
-                        <textarea name="description" class="form-control" rows="2"
-                                  placeholder="Optional description or notes about this forecast">{{ old('description') }}</textarea>
+                        <label>Scenario</label>
+                        <select name="scenario" class="form-control">
+                            <option value="base" {{ old('scenario', 'base') == 'base' ? 'selected' : '' }}>Base case (Most likely outcome)</option>
+                            <option value="optimistic" {{ old('scenario') == 'optimistic' ? 'selected' : '' }}>Optimistic (Best case)</option>
+                            <option value="pessimistic" {{ old('scenario') == 'pessimistic' ? 'selected' : '' }}>Pessimistic (Worst case)</option>
+                        </select>
+                        <small class="form-text text-muted">Create multiple forecasts with different scenarios to plan for various outcomes</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea name="notes" class="form-control" rows="2"
+                                  placeholder="Optional notes about this forecast">{{ old('notes') }}</textarea>
                     </div>
                 </div>
 
                 <!-- Forecast Period -->
                 <div class="form-section">
                     <h6><i class="mdi mdi-calendar mr-2"></i>Forecast Period</h6>
+                    <p class="text-muted small mb-3">
+                        <i class="mdi mdi-information-outline"></i>
+                        Select the date range for your forecast. The system will divide this into periods based on your chosen frequency below.
+                    </p>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Start Date <span class="text-danger">*</span></label>
                                 <input type="date" name="start_date" class="form-control @error('start_date') is-invalid @enderror"
                                        value="{{ old('start_date', date('Y-m-01')) }}" required>
+                                <small class="form-text text-muted">First day of forecast period</small>
                                 @error('start_date')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -113,6 +134,7 @@
                                 <label>End Date <span class="text-danger">*</span></label>
                                 <input type="date" name="end_date" class="form-control @error('end_date') is-invalid @enderror"
                                        value="{{ old('end_date', date('Y-m-t', strtotime('+3 months'))) }}" required>
+                                <small class="form-text text-muted">Last day of forecast period</small>
                                 @error('end_date')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -123,32 +145,45 @@
 
                 <!-- Frequency -->
                 <div class="form-section">
-                    <h6><i class="mdi mdi-repeat mr-2"></i>Forecast Frequency</h6>
+                    <h6><i class="mdi mdi-repeat mr-2"></i>Forecast Type</h6>
+                    <p class="text-muted small mb-3">
+                        <i class="mdi mdi-lightbulb-outline"></i>
+                        <strong>Weekly</strong> gives detailed short-term visibility (13 weeks recommended).
+                        <strong>Monthly</strong> is ideal for quarterly/annual planning.
+                        <strong>Quarterly/Annual</strong> for long-term strategic forecasts.
+                    </p>
                     <div class="row">
-                        <div class="col-md-4">
-                            <div class="frequency-card {{ old('frequency') == 'daily' ? 'selected' : '' }}" data-frequency="daily">
-                                <div class="icon"><i class="mdi mdi-calendar-today"></i></div>
-                                <div class="font-weight-bold">Daily</div>
-                                <small class="text-muted">Day-by-day tracking</small>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="frequency-card {{ old('frequency') == 'weekly' || !old('frequency') ? 'selected' : '' }}" data-frequency="weekly">
+                        <div class="col-md-3">
+                            <div class="frequency-card {{ old('forecast_type', 'weekly') == 'weekly' ? 'selected' : '' }}" data-frequency="weekly">
                                 <div class="icon"><i class="mdi mdi-calendar-week"></i></div>
                                 <div class="font-weight-bold">Weekly</div>
-                                <small class="text-muted">Week-by-week tracking</small>
+                                <small class="text-muted">13-week rolling</small>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <div class="frequency-card {{ old('frequency') == 'monthly' ? 'selected' : '' }}" data-frequency="monthly">
+                        <div class="col-md-3">
+                            <div class="frequency-card {{ old('forecast_type') == 'monthly' ? 'selected' : '' }}" data-frequency="monthly">
                                 <div class="icon"><i class="mdi mdi-calendar-month"></i></div>
                                 <div class="font-weight-bold">Monthly</div>
-                                <small class="text-muted">Month-by-month tracking</small>
+                                <small class="text-muted">Month-by-month</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="frequency-card {{ old('forecast_type') == 'quarterly' ? 'selected' : '' }}" data-frequency="quarterly">
+                                <div class="icon"><i class="mdi mdi-calendar-range"></i></div>
+                                <div class="font-weight-bold">Quarterly</div>
+                                <small class="text-muted">3-month periods</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="frequency-card {{ old('forecast_type') == 'annual' ? 'selected' : '' }}" data-frequency="annual">
+                                <div class="icon"><i class="mdi mdi-calendar"></i></div>
+                                <div class="font-weight-bold">Annual</div>
+                                <small class="text-muted">Full year</small>
                             </div>
                         </div>
                     </div>
-                    <input type="hidden" name="frequency" id="frequency" value="{{ old('frequency', 'weekly') }}" required>
-                    @error('frequency')
+                    <input type="hidden" name="forecast_type" id="forecast_type" value="{{ old('forecast_type', 'weekly') }}" required>
+                    @error('forecast_type')
                         <div class="text-danger mt-2">{{ $message }}</div>
                     @enderror
                 </div>
@@ -166,21 +201,39 @@
                     </a>
                 </div>
 
+                <!-- Help -->
+                <div class="form-section bg-light">
+                    <h6><i class="mdi mdi-help-circle mr-2"></i>How It Works</h6>
+                    <ol class="pl-3 mb-0 small">
+                        <li class="mb-2"><strong>Create:</strong> Set up your forecast with dates and frequency</li>
+                        <li class="mb-2"><strong>Plan:</strong> Add line items for each period (inflows like revenue, outflows like expenses)</li>
+                        <li class="mb-2"><strong>Track:</strong> As periods pass, record actual results</li>
+                        <li class="mb-2"><strong>Analyze:</strong> Compare actual vs forecast to improve accuracy</li>
+                    </ol>
+                    <div class="alert alert-info mt-3 mb-0" style="padding: 8px 12px; font-size: 0.85rem;">
+                        <i class="mdi mdi-lightbulb-outline"></i>
+                        <strong>Tip:</strong> Start with a 13-week (weekly) forecast for immediate cash visibility.
+                    </div>
+                </div>
+
                 <!-- Patterns -->
                 @if($patterns->count() > 0)
                 <div class="form-section">
-                    <h6><i class="mdi mdi-repeat mr-2"></i>Available Patterns</h6>
-                    <p class="text-muted small mb-3">These recurring patterns can be applied after creating the forecast.</p>
+                    <h6><i class="mdi mdi-repeat mr-2"></i>Available Patterns ({{ $patterns->count() }})</h6>
+                    <p class="text-muted small mb-3">
+                        <i class="mdi mdi-information-outline"></i>
+                        These recurring patterns can be applied to periods after creating the forecast to speed up data entry.
+                    </p>
                     @foreach($patterns as $pattern)
                         <div class="pattern-item">
                             <div>
-                                <strong>{{ $pattern->name }}</strong><br>
+                                <strong>{{ $pattern->pattern_name }}</strong><br>
                                 <small class="text-muted">
-                                    {{ ucfirst($pattern->type) }} - ₦{{ number_format($pattern->amount, 0) }} / {{ ucfirst($pattern->frequency) }}
+                                    {{ str_replace('_', ' ', ucfirst($pattern->cash_flow_category)) }} - ₦{{ number_format($pattern->expected_amount, 0) }} / {{ str_replace('_', ' ', ucfirst($pattern->frequency)) }}
                                 </small>
                             </div>
-                            <span class="badge badge-{{ $pattern->type == 'inflow' ? 'success' : 'danger' }}">
-                                {{ ucfirst($pattern->type) }}
+                            <span class="badge badge-{{ Str::contains($pattern->cash_flow_category, 'inflow') ? 'success' : 'danger' }}">
+                                {{ Str::contains($pattern->cash_flow_category, 'inflow') ? 'Inflow' : 'Outflow' }}
                             </span>
                         </div>
                     @endforeach
@@ -209,11 +262,11 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Frequency selection
+    // Forecast type selection
     $('.frequency-card').on('click', function() {
         $('.frequency-card').removeClass('selected');
         $(this).addClass('selected');
-        $('#frequency').val($(this).data('frequency'));
+        $('#forecast_type').val($(this).data('frequency'));
     });
 });
 </script>
