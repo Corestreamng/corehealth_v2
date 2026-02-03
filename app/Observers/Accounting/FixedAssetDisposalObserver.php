@@ -7,6 +7,7 @@ use App\Models\Accounting\FixedAsset;
 use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\JournalEntryLine;
 use App\Models\Accounting\Account;
+use App\Models\Accounting\AccountingPeriod;
 use App\Models\Bank;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -38,8 +39,21 @@ class FixedAssetDisposalObserver
     // Account codes
     private const CASH_ACCOUNT = '1010';
     private const BANK_ACCOUNT = '1020';
-    private const GAIN_ON_DISPOSAL = '4200';   // Other Income
-    private const LOSS_ON_DISPOSAL = '6900';   // Other Expenses
+    private const GAIN_ON_DISPOSAL = '4220';   // Gain on Disposal of Assets (Other Income)
+    private const LOSS_ON_DISPOSAL = '6900';   // Loss on Disposal of Assets (Administrative Expenses)
+
+    /**
+     * Handle the FixedAssetDisposal "created" event.
+     * Creates JE if disposal is created with 'completed' status.
+     */
+    public function created(FixedAssetDisposal $disposal): void
+    {
+        if ($disposal->status === FixedAssetDisposal::STATUS_COMPLETED &&
+            !$disposal->journal_entry_id) {
+
+            $this->createDisposalJournalEntry($disposal);
+        }
+    }
 
     /**
      * Handle the FixedAssetDisposal "updated" event.
@@ -95,27 +109,31 @@ class FixedAssetDisposalObserver
 
             // Create journal entry
             $journalEntry = JournalEntry::create([
+                'entry_number' => JournalEntry::generateEntryNumber(),
+                'accounting_period_id' => AccountingPeriod::current()?->id,
                 'entry_date' => $disposal->disposal_date,
                 'reference_number' => "DISP-{$asset->asset_number}",
                 'reference_type' => 'fixed_asset_disposal',
                 'reference_id' => $disposal->id,
-                'description' => "Disposal of fixed asset: {$asset->name} ({$asset->asset_number}) - {$disposal->disposal_type_label}",
+                'description' => "Disposal of fixed asset: {$asset->name} ({$asset->asset_number}) - " . ucfirst($disposal->disposal_type),
                 'status' => JournalEntry::STATUS_POSTED,
                 'posted_at' => now(),
-                'created_by' => $disposal->approved_by ?? auth()->id(),
+                'created_by' => $disposal->approved_by ?? auth()->id() ?? 1,
             ]);
 
             $totalDebits = 0;
             $totalCredits = 0;
+            $lineNumber = 1;
 
             // DEBIT: Cash/Bank (if there are proceeds)
             if ($disposal->disposal_proceeds > 0) {
                 JournalEntryLine::create([
                     'journal_entry_id' => $journalEntry->id,
+                    'line_number' => $lineNumber++,
                     'account_id' => $proceedsAccount->id,
-                    'debit_amount' => $disposal->disposal_proceeds,
-                    'credit_amount' => 0,
-                    'description' => "Proceeds from disposal via {$proceedsLabel}: {$asset->name}",
+                    'debit' => $disposal->disposal_proceeds,
+                    'credit' => 0,
+                    'narration' => "Proceeds from disposal via {$proceedsLabel}: {$asset->name}",
                     'metadata' => [
                         'fixed_asset_id' => $asset->id,
                         'disposal_type' => $disposal->disposal_type,
@@ -130,10 +148,11 @@ class FixedAssetDisposalObserver
             // DEBIT: Accumulated Depreciation (remove from contra account)
             JournalEntryLine::create([
                 'journal_entry_id' => $journalEntry->id,
+                'line_number' => $lineNumber++,
                 'account_id' => $accumDepAccount->id,
-                'debit_amount' => $asset->accumulated_depreciation,
-                'credit_amount' => 0,
-                'description' => "Remove accumulated depreciation: {$asset->name}",
+                'debit' => $asset->accumulated_depreciation,
+                'credit' => 0,
+                'narration' => "Remove accumulated depreciation: {$asset->name}",
                 'metadata' => [
                     'fixed_asset_id' => $asset->id,
                 ],
@@ -143,10 +162,11 @@ class FixedAssetDisposalObserver
             // CREDIT: Fixed Asset (remove asset at original cost)
             JournalEntryLine::create([
                 'journal_entry_id' => $journalEntry->id,
+                'line_number' => $lineNumber++,
                 'account_id' => $assetAccount->id,
-                'debit_amount' => 0,
-                'credit_amount' => $asset->total_cost,
-                'description' => "Remove fixed asset: {$asset->name}",
+                'debit' => 0,
+                'credit' => $asset->total_cost,
+                'narration' => "Remove fixed asset: {$asset->name}",
                 'metadata' => [
                     'fixed_asset_id' => $asset->id,
                     'original_cost' => $asset->total_cost,
@@ -161,10 +181,11 @@ class FixedAssetDisposalObserver
                 // CREDIT: Gain on Disposal
                 JournalEntryLine::create([
                     'journal_entry_id' => $journalEntry->id,
+                    'line_number' => $lineNumber++,
                     'account_id' => $gainAccount->id,
-                    'debit_amount' => 0,
-                    'credit_amount' => $gainLoss,
-                    'description' => "Gain on disposal: {$asset->name}",
+                    'debit' => 0,
+                    'credit' => $gainLoss,
+                    'narration' => "Gain on disposal: {$asset->name}",
                     'metadata' => [
                         'fixed_asset_id' => $asset->id,
                     ],
@@ -175,10 +196,11 @@ class FixedAssetDisposalObserver
                 $loss = abs($gainLoss);
                 JournalEntryLine::create([
                     'journal_entry_id' => $journalEntry->id,
+                    'line_number' => $lineNumber++,
                     'account_id' => $lossAccount->id,
-                    'debit_amount' => $loss,
-                    'credit_amount' => 0,
-                    'description' => "Loss on disposal: {$asset->name}",
+                    'debit' => $loss,
+                    'credit' => 0,
+                    'narration' => "Loss on disposal: {$asset->name}",
                     'metadata' => [
                         'fixed_asset_id' => $asset->id,
                     ],

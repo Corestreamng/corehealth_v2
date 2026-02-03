@@ -293,7 +293,9 @@ Route::prefix('accounting')->name('accounting.')->middleware(['auth', 'verified'
         Route::get('/{fixedAsset}/edit', [FixedAssetController::class, 'edit'])->name('edit');
         Route::put('/{fixedAsset}', [FixedAssetController::class, 'update'])->name('update');
         Route::get('/{fixedAsset}/json', [FixedAssetController::class, 'getAsset'])->name('json');
+        Route::get('/{fixedAsset}/get-asset', [FixedAssetController::class, 'getAsset'])->name('get-asset');
         Route::get('/{fixedAsset}/depreciation-history', [FixedAssetController::class, 'getDepreciationHistory'])->name('depreciation-history');
+        Route::post('/{fixedAsset}/void', [FixedAssetController::class, 'void'])->name('void');
         Route::post('/{fixedAsset}/dispose', [FixedAssetController::class, 'dispose'])->name('dispose');
     });
 

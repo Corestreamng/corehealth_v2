@@ -8,7 +8,7 @@ use App\Models\CashFlowForecastPeriod;
 use App\Models\CashFlowForecastItem;
 use App\Models\CashFlowPattern;
 use App\Models\ChartOfAccount;
-use App\Models\FiscalYear;
+use App\Models\Accounting\FiscalYear;
 use App\Models\JournalEntry;
 use App\Models\JournalEntryLine;
 use Illuminate\Http\Request;

@@ -1331,4 +1331,117 @@ class ExcelExportService
 
         return $this->download('cost-center-report-' . $costCenter->code . '-' . now()->format('Y-m-d'));
     }
+
+    /**
+     * Export Fixed Assets Register to Excel.
+     */
+    public function fixedAssetsRegister($assets, array $stats): StreamedResponse
+    {
+        $this->initSpreadsheet('Fixed Assets Register', 'As of ' . now()->format('F d, Y'));
+
+        // Summary section
+        $this->activeSheet->setCellValue('A' . $this->currentRow, 'Summary');
+        $this->activeSheet->mergeCells('A' . $this->currentRow . ':I' . $this->currentRow);
+        $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true);
+        $this->currentRow++;
+
+        $this->addDataRow(['Total Assets:', $stats['total_assets'], 'Total Cost:', '₦' . number_format($stats['total_cost'], 2), 'Book Value:', '₦' . number_format($stats['total_book_value'], 2), 'Accum. Depr.:', '₦' . number_format($stats['total_accum_depreciation'], 2)]);
+        $this->currentRow++;
+
+        // Assets table
+        $this->addHeaderRow(['Asset #', 'Name', 'Category', 'Department', 'Acquisition Date', 'Total Cost', 'Book Value', 'Accum. Depreciation', 'Status']);
+
+        foreach ($assets as $asset) {
+            $this->addDataRow([
+                $asset->asset_number,
+                $asset->name,
+                $asset->category?->name ?? '-',
+                $asset->department?->name ?? '-',
+                $asset->acquisition_date?->format('M d, Y') ?? '-',
+                number_format($asset->total_cost, 2),
+                number_format($asset->book_value, 2),
+                number_format($asset->accumulated_depreciation, 2),
+                ucfirst(str_replace('_', ' ', $asset->status)),
+            ]);
+        }
+
+        // Totals row
+        $this->currentRow++;
+        $totalRow = $this->currentRow;
+        $this->activeSheet->setCellValue('A' . $totalRow, 'TOTALS:');
+        $this->activeSheet->setCellValue('F' . $totalRow, number_format($assets->sum('total_cost'), 2));
+        $this->activeSheet->setCellValue('G' . $totalRow, number_format($assets->sum('book_value'), 2));
+        $this->activeSheet->setCellValue('H' . $totalRow, number_format($assets->sum('accumulated_depreciation'), 2));
+        $this->activeSheet->getStyle('A' . $totalRow . ':I' . $totalRow)->getFont()->setBold(true);
+        $this->activeSheet->getStyle('A' . $totalRow . ':I' . $totalRow)->getFill()
+            ->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFE9ECEF');
+
+        $this->autoSizeColumns(1, 9);
+
+        return $this->download('fixed-assets-register-' . now()->format('Y-m-d'));
+    }
+
+    /**
+     * Export Fixed Asset Detail to Excel.
+     */
+    public function fixedAssetDetail($asset, array $depreciationSchedule, $depreciationHistory): StreamedResponse
+    {
+        $this->initSpreadsheet('Fixed Asset Details', $asset->asset_number . ' - ' . $asset->name);
+
+        // Asset information section header
+        $this->activeSheet->setCellValue('A' . $this->currentRow, 'Asset Information');
+        $this->activeSheet->mergeCells('A' . $this->currentRow . ':B' . $this->currentRow);
+        $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true);
+        $this->currentRow++;
+
+        $infoRows = [
+            ['Asset Number:', $asset->asset_number],
+            ['Name:', $asset->name],
+            ['Category:', $asset->category?->name ?? '-'],
+            ['Department:', $asset->department?->name ?? '-'],
+            ['Status:', ucfirst(str_replace('_', ' ', $asset->status))],
+            ['', ''],
+            ['Cost Information', ''],
+            ['Acquisition Cost:', '₦' . number_format($asset->acquisition_cost, 2)],
+            ['Additional Costs:', '₦' . number_format($asset->additional_costs, 2)],
+            ['Total Cost:', '₦' . number_format($asset->total_cost, 2)],
+            ['Salvage Value:', '₦' . number_format($asset->salvage_value, 2)],
+            ['Depreciable Amount:', '₦' . number_format($asset->depreciable_amount, 2)],
+            ['Accumulated Depreciation:', '₦' . number_format($asset->accumulated_depreciation, 2)],
+            ['Book Value:', '₦' . number_format($asset->book_value, 2)],
+            ['', ''],
+            ['Depreciation Settings', ''],
+            ['Method:', ucfirst(str_replace('_', ' ', $asset->depreciation_method))],
+            ['Useful Life:', $asset->useful_life_years . ' years (' . $asset->useful_life_months . ' months)'],
+            ['Monthly Depreciation:', '₦' . number_format($asset->monthly_depreciation, 2)],
+        ];
+
+        foreach ($infoRows as $row) {
+            $this->addDataRow($row);
+        }
+
+        // Depreciation history
+        if ($depreciationHistory->count() > 0) {
+            $this->currentRow += 2;
+            $this->activeSheet->setCellValue('A' . $this->currentRow, 'Depreciation History');
+            $this->activeSheet->mergeCells('A' . $this->currentRow . ':D' . $this->currentRow);
+            $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true);
+            $this->currentRow++;
+
+            $this->addHeaderRow(['Date', 'Amount', 'Book Value After', 'Journal Entry']);
+
+            foreach ($depreciationHistory as $dep) {
+                $this->addDataRow([
+                    $dep->depreciation_date->format('M d, Y'),
+                    number_format($dep->amount, 2),
+                    number_format($dep->book_value_after, 2),
+                    $dep->journalEntry?->entry_number ?? '-',
+                ]);
+            }
+        }
+
+        $this->autoSizeColumns(1, 4);
+
+        return $this->download('asset-' . $asset->asset_number . '-' . now()->format('Y-m-d'));
+    }
 }

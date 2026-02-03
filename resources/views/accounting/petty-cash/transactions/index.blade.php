@@ -75,7 +75,8 @@
     <!-- Transactions Table -->
     <div class="card-modern card-modern">
         <div class="card-body">
-            <table class="table table-bordered table-hover" id="transactionsTable">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" id="transactionsTable">
                 <thead class="thead-light">
                     <tr>
                         <th width="100">Date</th>
@@ -90,6 +91,7 @@
                 </thead>
                 <tbody></tbody>
             </table>
+            </div>
         </div>
     </div>
 

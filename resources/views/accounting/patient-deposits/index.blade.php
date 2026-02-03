@@ -257,7 +257,8 @@
     <!-- Deposits Table -->
     <div class="card-modern">
         <div class="card-body">
-            <table id="deposits-table" class="table table-striped table-bordered" style="width:100%">
+            <div class="table-responsive">
+                <table id="deposits-table" class="table table-striped table-bordered" style="width:100%">
                 <thead>
                     <tr>
                         <th>Deposit #</th>
@@ -273,6 +274,7 @@
                     </tr>
                 </thead>
             </table>
+            </div>
         </div>
     </div>
 </div>

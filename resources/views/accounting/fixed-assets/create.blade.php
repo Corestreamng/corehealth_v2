@@ -108,7 +108,9 @@
                                      data-life="{{ $category->default_useful_life_years }}"
                                      data-method="{{ $category->default_depreciation_method }}"
                                      data-salvage="{{ $category->default_salvage_percentage }}"
-                                     data-depreciable="{{ $category->is_depreciable ? 1 : 0 }}">
+                                     data-depreciable="{{ $category->is_depreciable ? 1 : 0 }}"
+                                     data-asset-account="{{ $category->assetAccount?->name }}"
+                                     data-asset-account-code="{{ $category->assetAccount?->code }}">
                                     <div class="icon">
                                         @php
                                             $icons = [
@@ -182,7 +184,7 @@
                                     <option value="">Select Supplier</option>
                                     @foreach($suppliers as $supplier)
                                         <option value="{{ $supplier->id }}" {{ old('supplier_id') == $supplier->id ? 'selected' : '' }}>
-                                            {{ $supplier->name }}
+                                            {{ $supplier->company_name }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -347,7 +349,7 @@
                                     <option value="">Select Custodian</option>
                                     @foreach($custodians as $user)
                                         <option value="{{ $user->id }}" {{ old('custodian_user_id') == $user->id ? 'selected' : '' }}>
-                                            {{ $user->name }} ({{ $user->email }})
+                                            {{ ucwords($user->surname . ' ' . $user->firstname . ($user->othername ? ' ' . $user->othername : '')) }} ({{ $user->email }})
                                         </option>
                                     @endforeach
                                 </select>
@@ -416,24 +418,35 @@
 
                 <!-- JE Preview -->
                 <div class="form-section">
-                    <h6><i class="mdi mdi-book-open mr-2"></i>Journal Entry Preview</h6>
-                    <div class="je-preview">
-                        <div class="mb-2">
-                            <span class="badge badge-primary">DR</span>
-                            Fixed Asset Account
-                            <span class="float-right" id="je-debit-display">₦0.00</span>
+                    <h6><i class="mdi mdi-book-open mr-2"></i>Acquisition Journal Entry</h6>
+                    <div class="alert alert-light border mb-3">
+                        <div class="text-muted small mb-2">Auto-posted on save</div>
+                        <div class="mb-2 d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="badge badge-primary px-2 py-1">DEBIT</span>
+                                <span id="je-asset-account-name" class="ml-2 font-weight-bold">Fixed Asset Account</span>
+                                <br><small class="text-muted ml-5" id="je-asset-account-code"></small>
+                            </div>
+                            <span class="font-weight-bold text-primary" id="je-debit-display">₦0.00</span>
                         </div>
-                        <div>
-                            <span class="badge badge-success">CR</span>
-                            Bank Account
-                            <span class="float-right" id="je-credit-display">₦0.00</span>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="badge badge-success px-2 py-1">CREDIT</span>
+                                <span id="je-bank-account-name" class="ml-2 font-weight-bold">Bank/Cash Account</span>
+                                <br><small class="text-muted ml-5" id="je-bank-account-code"></small>
+                            </div>
+                            <span class="font-weight-bold text-success" id="je-credit-display">₦0.00</span>
                         </div>
-                        <hr>
-                        <small class="text-muted">
-                            <i class="mdi mdi-information-outline mr-1"></i>
-                            Journal entry will be posted automatically upon save.
-                        </small>
+                        <hr class="my-2">
+                        <div class="d-flex justify-content-between small">
+                            <span class="text-muted">Total</span>
+                            <span class="font-weight-bold" id="je-total-display">₦0.00</span>
+                        </div>
                     </div>
+                    <small class="text-muted">
+                        <i class="mdi mdi-information-outline mr-1"></i>
+                        This journal entry will be automatically posted when you save the asset.
+                    </small>
                 </div>
 
                 <!-- Depreciation Preview -->
@@ -503,14 +516,32 @@ $(document).ready(function() {
         var life = $(this).data('life');
         var method = $(this).data('method');
         var salvage = $(this).data('salvage');
+        var assetAccount = $(this).data('asset-account');
+        var assetAccountCode = $(this).data('asset-account-code');
 
         $('#category_id').val(categoryId);
         $('#useful_life_years').val(life);
         $('#depreciation_method').val(method);
 
+        // Update JE preview with actual account names
+        if (assetAccount) {
+            $('#je-asset-account-name').text(assetAccount);
+            $('#je-asset-account-code').text(assetAccountCode);
+        }
+
         // Auto-calculate salvage if percentage provided
         if (salvage > 0) {
             updateCostCalculations();
+        }
+    });
+
+    // Bank account selection - update JE preview
+    $('#bank_account_id').on('change', function() {
+        var selectedOption = $(this).find('option:selected');
+        var accountName = selectedOption.text();
+        if (accountName && accountName !== 'Select Payment Account') {
+            $('#je-bank-account-name').text(accountName.split(' - ')[1] || 'Bank Account');
+            $('#je-bank-account-code').text(accountName.split(' - ')[0] || '');
         }
     });
 
@@ -543,6 +574,7 @@ $(document).ready(function() {
         // JE Preview
         $('#je-debit-display').text(formatCurrency(totalCost));
         $('#je-credit-display').text(formatCurrency(totalCost));
+        $('#je-total-display').text(formatCurrency(totalCost));
 
         // Depreciation Preview
         $('#dp-total-cost').text(formatCurrency(totalCost));

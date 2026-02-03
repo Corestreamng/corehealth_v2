@@ -107,6 +107,22 @@ class FixedAssetDepreciation extends Model
     // ==========================================
 
     /**
+     * Accessor for 'amount' - alias for depreciation_amount
+     */
+    public function getAmountAttribute(): float
+    {
+        return (float) $this->depreciation_amount;
+    }
+
+    /**
+     * Accessor for 'book_value_after' - alias for closing_book_value
+     */
+    public function getBookValueAfterAttribute(): float
+    {
+        return (float) $this->closing_book_value;
+    }
+
+    /**
      * Get method label.
      */
     public function getMethodLabelAttribute(): string

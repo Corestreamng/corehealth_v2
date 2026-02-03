@@ -19,7 +19,9 @@
  * - PettyCashObserver (updated - when disbursed)
  * - TransferObserver (updated - when cleared)
  * - DepreciationObserver (created - for depreciation JE)
- * - FixedAssetDisposalObserver (updated - when completed)
+ * - FixedAssetObserver (created - for acquisition JE)
+ * - FixedAssetDisposalObserver (created/updated - when completed)
+ * - StatutoryRemittanceObserver (created - for remittance JE)
  *
  * Note: CreditNoteObserver, JournalEntryObserver, JournalEntryEditObserver only
  *       send notifications (no journal entries), so not included here.
@@ -47,6 +49,8 @@ use App\Models\Accounting\PatientDeposit;
 use App\Models\Accounting\PettyCashTransaction;
 use App\Models\Accounting\FixedAssetDepreciation;
 use App\Models\Accounting\FixedAssetDisposal;
+use App\Models\Accounting\FixedAsset;
+use App\Models\Accounting\StatutoryRemittance;
 use App\Observers\Accounting\PaymentObserver;
 use App\Observers\Accounting\ExpenseObserver;
 use App\Observers\Accounting\PayrollBatchObserver;
@@ -59,7 +63,9 @@ use App\Observers\Accounting\PatientDepositObserver;
 use App\Observers\Accounting\PettyCashObserver;
 use App\Observers\Accounting\TransferObserver;
 use App\Observers\Accounting\DepreciationObserver;
+use App\Observers\Accounting\FixedAssetObserver;
 use App\Observers\Accounting\FixedAssetDisposalObserver;
+use App\Observers\Accounting\StatutoryRemittanceObserver;
 use App\Services\Accounting\SubAccountService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -97,6 +103,8 @@ $stats = [
     'po_payments' => ['found' => 0, 'processed' => 0, 'success' => 0, 'skipped' => 0, 'errors' => 0],
     'hmo_remittances' => ['found' => 0, 'processed' => 0, 'success' => 0, 'skipped' => 0, 'errors' => 0],
     'hmo_claims' => ['found' => 0, 'processed' => 0, 'success' => 0, 'skipped' => 0, 'errors' => 0],
+    'fixed_assets' => ['found' => 0, 'processed' => 0, 'success' => 0, 'skipped' => 0, 'errors' => 0],
+    'statutory_remittances' => ['found' => 0, 'processed' => 0, 'success' => 0, 'skipped' => 0, 'errors' => 0],
 ];
 
 // Get SubAccountService for observers that need it
@@ -640,9 +648,48 @@ try {
 }
 
 // =====================================
-// 14. Process Fixed Asset Disposals (Completed)
+// 14. Process Fixed Assets (Created)
 // =====================================
-echo "\n14. Processing Fixed Asset Disposals...\n";
+echo "\n14. Processing Fixed Assets...\n";
+
+try {
+    $assets = \App\Models\Accounting\FixedAsset::whereNull('journal_entry_id')
+        ->whereNotIn('status', ['voided'])
+        ->get();
+    $stats['fixed_assets']['found'] = $assets->count();
+    echo "   Found {$assets->count()} assets without JE\n";
+
+    $observer = new FixedAssetObserver();
+
+    foreach ($assets as $asset) {
+        $stats['fixed_assets']['processed']++;
+
+        // Skip if already has JE
+        if ($asset->journal_entry_id) {
+            $stats['fixed_assets']['skipped']++;
+            echo "s";
+            continue;
+        }
+
+        try {
+            $observer->created($asset);
+            $stats['fixed_assets']['success']++;
+            echo ".";
+        } catch (\Exception $e) {
+            $stats['fixed_assets']['errors']++;
+            echo "E";
+            Log::error("Observer trigger failed for FixedAsset #{$asset->id}: " . $e->getMessage());
+        }
+    }
+    echo "\n";
+} catch (\Exception $e) {
+    echo "   Error processing fixed assets: {$e->getMessage()}\n";
+}
+
+// =====================================
+// 15. Process Fixed Asset Disposals (Completed)
+// =====================================
+echo "\n15. Processing Fixed Asset Disposals...\n";
 
 try {
     $disposals = FixedAssetDisposal::where('status', FixedAssetDisposal::STATUS_COMPLETED)
@@ -668,10 +715,8 @@ try {
         }
 
         try {
-            // Directly call the createDisposalJournalEntry method
-            $reflectionMethod = new \ReflectionMethod($observer, 'createDisposalJournalEntry');
-            $reflectionMethod->setAccessible(true);
-            $reflectionMethod->invoke($observer, $disposal);
+            // Call created() method which now handles it
+            $observer->created($disposal);
             $stats['disposals']['success']++;
             echo ".";
         } catch (\Exception $e) {
@@ -683,6 +728,45 @@ try {
     echo "\n";
 } catch (\Exception $e) {
     echo "   Error processing disposals: {$e->getMessage()}\n";
+}
+
+// =====================================
+// 16. Process Statutory Remittances
+// =====================================
+echo "\n16. Processing Statutory Remittances...\n";
+
+try {
+    $remittances = \App\Models\Accounting\StatutoryRemittance::whereNotIn('status', ['draft', 'cancelled', 'voided'])
+        ->whereNull('journal_entry_id')
+        ->get();
+    $stats['statutory_remittances']['found'] = $remittances->count();
+    echo "   Found {$remittances->count()} remittances without JE\n";
+
+    $observer = new StatutoryRemittanceObserver();
+
+    foreach ($remittances as $remittance) {
+        $stats['statutory_remittances']['processed']++;
+
+        // Skip if already has JE
+        if ($remittance->journal_entry_id) {
+            $stats['statutory_remittances']['skipped']++;
+            echo "s";
+            continue;
+        }
+
+        try {
+            $observer->created($remittance);
+            $stats['statutory_remittances']['success']++;
+            echo ".";
+        } catch (\Exception $e) {
+            $stats['statutory_remittances']['errors']++;
+            echo "E";
+            Log::error("Observer trigger failed for StatutoryRemittance #{$remittance->id}: " . $e->getMessage());
+        }
+    }
+    echo "\n";
+} catch (\Exception $e) {
+    echo "   Error processing statutory remittances: {$e->getMessage()}\n";
 }
 
 // =====================================

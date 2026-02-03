@@ -150,10 +150,10 @@
                     </button>
                 </div>
                 <div class="btn-group">
-                    <a href="{{ route('accounting.fixed-assets.export', array_merge(request()->query(), ['format' => 'pdf'])) }}" class="btn btn-danger">
-                        <i class="mdi mdi-file-pdf mr-1"></i> PDF
+                    <a href="{{ route('accounting.fixed-assets.index', array_merge(request()->all(), ['export' => 'pdf'])) }}" class="btn btn-danger">
+                        <i class="mdi mdi-file-pdf-box mr-1"></i> PDF
                     </a>
-                    <a href="{{ route('accounting.fixed-assets.export', array_merge(request()->query(), ['format' => 'excel'])) }}" class="btn btn-success">
+                    <a href="{{ route('accounting.fixed-assets.index', array_merge(request()->all(), ['export' => 'excel'])) }}" class="btn btn-success">
                         <i class="mdi mdi-file-excel mr-1"></i> Excel
                     </a>
                 </div>
@@ -218,21 +218,23 @@
     <!-- Assets Table -->
     <div class="card-modern">
         <div class="card-body">
-            <table id="assets-table" class="table table-striped table-bordered w-100">
-                <thead>
-                    <tr>
-                        <th>Asset Number</th>
-                        <th>Name</th>
-                        <th>Category</th>
-                        <th>Department</th>
-                        <th>Total Cost</th>
-                        <th>Book Value</th>
-                        <th>Depreciation</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-            </table>
+            <div class="table-responsive">
+                <table id="assets-table" class="table table-striped table-bordered w-100">
+                    <thead>
+                        <tr>
+                            <th>Asset Number</th>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Department</th>
+                            <th>Total Cost</th>
+                            <th>Book Value</th>
+                            <th>Depreciation</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -291,7 +293,7 @@
 
 <!-- Depreciation Modal -->
 <div class="modal fade" id="depreciationModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-warning text-dark">
                 <h5 class="modal-title"><i class="mdi mdi-chart-bell-curve mr-2"></i>Run Monthly Depreciation</h5>
@@ -303,28 +305,65 @@
                         <i class="mdi mdi-information-outline mr-2"></i>
                         This will calculate and record depreciation for all active assets for the selected period.
                     </div>
-                    <div class="form-group">
-                        <label>Depreciation Date <span class="text-danger">*</span></label>
-                        <input type="date" id="depreciation-date" class="form-control"
-                               value="{{ now()->format('Y-m-d') }}" required>
-                        <small class="text-muted">Typically the last day of the month</small>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Depreciation Date <span class="text-danger">*</span></label>
+                                <input type="date" id="depreciation-date" class="form-control"
+                                       value="{{ now()->format('Y-m-d') }}" required>
+                                <small class="text-muted">Typically the last day of the month</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Category (Optional)</label>
+                                <select id="depreciation-category" class="form-control">
+                                    <option value="">All Categories</option>
+                                    @foreach($categories as $cat)
+                                        @if($cat->is_depreciable)
+                                            <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                                        @endif
+                                    @endforeach
+                                </select>
+                                <small class="text-muted">Leave blank to depreciate all categories</small>
+                            </div>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Category (Optional)</label>
-                        <select id="depreciation-category" class="form-control">
-                            <option value="">All Categories</option>
-                            @foreach($categories as $cat)
-                                @if($cat->is_depreciable)
-                                    <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-                                @endif
-                            @endforeach
-                        </select>
-                        <small class="text-muted">Leave blank to depreciate all categories</small>
+
+                    <div class="alert alert-light border mt-3">
+                        <h6 class="mb-3"><i class="mdi mdi-book-open mr-2"></i>Journal Entry Preview</h6>
+                        <p class="small text-muted mb-3">For each depreciable asset, the following journal entry will be created:</p>
+
+                        <div class="mb-2 d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="badge badge-primary px-2 py-1">DEBIT</span>
+                                <span class="ml-2 font-weight-bold">Depreciation Expense</span>
+                                <br><small class="text-muted ml-5">From category's expense account</small>
+                            </div>
+                            <span class="text-primary font-weight-bold">Monthly Amount</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="badge badge-success px-2 py-1">CREDIT</span>
+                                <span class="ml-2 font-weight-bold">Accumulated Depreciation</span>
+                                <br><small class="text-muted ml-5">From category's depreciation account</small>
+                            </div>
+                            <span class="text-success font-weight-bold">Monthly Amount</span>
+                        </div>
+
+                        <hr class="my-2">
+                        <small class="text-muted">
+                            <i class="mdi mdi-lightbulb-outline mr-1"></i>
+                            Each asset's monthly depreciation will be calculated based on its depreciation method and useful life.
+                        </small>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-warning">Run Depreciation</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="mdi mdi-play mr-1"></i> Run Depreciation
+                    </button>
                 </div>
             </form>
         </div>
@@ -332,79 +371,65 @@
 </div>
 
 <!-- Disposal Modal -->
-<div class="modal fade" id="disposeModal" tabindex="-1">
-    <div class="modal-dialog">
+@include('accounting.fixed-assets.partials.disposal-modal')
+
+<!-- Void Asset Modal -->
+<div class="modal fade" id="voidModal" tabindex="-1" role="dialog" aria-labelledby="voidModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
         <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title"><i class="mdi mdi-delete mr-2"></i>Dispose Asset</h5>
-                <button type="button" class="close text-white"  data-bs-dismiss="modal">&times;</button>
-            </div>
-            <form id="dispose-form">
-                <input type="hidden" id="dispose-asset-id">
+            <form id="void-form">
+                @csrf
+                <div class="modal-header bg-warning text-white">
+                    <h5 class="modal-title" id="voidModalLabel">
+                        <i class="mdi mdi-close-circle mr-2"></i>Void Asset
+                    </h5>
+                    <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
                 <div class="modal-body">
+                    <input type="hidden" id="void-asset-id">
+
                     <div class="alert alert-warning">
-                        <i class="mdi mdi-alert-circle mr-2"></i>
-                        Disposing <strong id="dispose-asset-name"></strong>. This action cannot be undone.
-                    </div>
-                    <div class="form-group">
-                        <label>Disposal Date <span class="text-danger">*</span></label>
-                        <input type="date" id="dispose-date" class="form-control"
-                               value="{{ now()->format('Y-m-d') }}" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Disposal Type <span class="text-danger">*</span></label>
-                        <select id="dispose-type" class="form-control" required>
-                            <option value="">Select Type</option>
-                            <option value="sale">Sale</option>
-                            <option value="scrapped">Scrapped</option>
-                            <option value="donation">Donation</option>
-                            <option value="transfer">Transfer to Another Entity</option>
-                            <option value="write_off">Write Off</option>
-                        </select>
-                    </div>
-                    <div class="form-group" id="disposal-amount-row">
-                        <label>Disposal Amount</label>
-                        <input type="number" id="dispose-amount" class="form-control"
-                               step="0.01" min="0" placeholder="0.00">
-                        <small class="text-muted">Amount received (if any)</small>
+                        <i class="mdi mdi-alert mr-2"></i>
+                        <strong>Warning:</strong> This will reverse the acquisition journal entry and mark the asset as VOIDED.
+                        This action cannot be undone.
                     </div>
 
-                    <!-- Payment Source Section (shown when there's proceeds) -->
-                    <div id="payment-source-section" style="display: none;">
-                        <hr>
-                        <h6 class="text-muted mb-3"><i class="mdi mdi-bank-transfer mr-1"></i>Payment Source</h6>
-                        <div class="form-group">
-                            <label>Received Via <span class="text-danger">*</span></label>
-                            <select id="dispose-payment-method" class="form-control">
-                                <option value="">Select Payment Source</option>
-                                <option value="cash">Cash</option>
-                                <option value="bank_transfer">Bank Transfer</option>
-                            </select>
-                            <small class="text-muted">Where did the disposal proceeds come into?</small>
-                        </div>
-                        <div class="form-group" id="dispose-bank-row" style="display: none;">
-                            <label>Bank Account <span class="text-danger">*</span></label>
-                            <select id="dispose-bank-id" class="form-control">
-                                <option value="">Select Bank Account</option>
-                                @foreach($banks as $bank)
-                                    <option value="{{ $bank->id }}">{{ $bank->name }} - {{ $bank->account_number }}</option>
-                                @endforeach
-                            </select>
+                    <div class="alert alert-info">
+                        <i class="mdi mdi-information-outline mr-2"></i>
+                        <strong>IAS 16 Note:</strong> Voiding is only for registration errors (duplicate entries, wrong data).
+                        Assets with depreciation must be <strong>disposed</strong>, not voided, to preserve historical records.
+                    </div>
+
+                    <h6 class="mb-2">Asset to Void:</h6>
+                    <p class="font-weight-bold" id="void-asset-name"></p>
+
+                    <div class="card bg-light mt-3">
+                        <div class="card-body p-2">
+                            <h6 class="text-muted mb-2"><i class="mdi mdi-information mr-1"></i>What happens when you void?</h6>
+                            <ul class="small mb-0">
+                                <li>The original acquisition journal entry will be reversed</li>
+                                <li>A new reversal journal entry will be created</li>
+                                <li>Asset status will change to VOIDED</li>
+                                <li>The asset will no longer appear in active reports</li>
+                                <li><strong>Note:</strong> Only assets without depreciation can be voided</li>
+                            </ul>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>Reason <span class="text-danger">*</span></label>
-                        <textarea id="dispose-reason" class="form-control" rows="2" required></textarea>
-                    </div>
-                    <div class="form-group" id="buyer-info-row" style="display: none;">
-                        <label>Buyer Information</label>
-                        <input type="text" id="dispose-buyer" class="form-control" placeholder="Buyer name/details">
+                    <div class="form-group mt-3">
+                        <label>Reason for Voiding <span class="text-danger">*</span></label>
+                        <textarea id="void-reason" class="form-control" rows="3" required
+                                  placeholder="e.g., Duplicate entry, wrong asset registered, data entry error"></textarea>
+                        <small class="text-muted">This will be recorded in the audit log</small>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger">Dispose Asset</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="mdi mdi-close-circle mr-1"></i>Void Asset
+                    </button>
                 </div>
             </form>
         </div>
@@ -413,6 +438,8 @@
 @endsection
 
 @push('scripts')
+<!-- DataTables JS -->
+<script src="{{ asset('/plugins/dataT/datatables.min.js') }}"></script>
 <script>
 $(document).ready(function() {
     // Initialize DataTable
@@ -538,23 +565,72 @@ $(document).ready(function() {
         }
     });
 
-    // Reset disposal form when modal opens
+    // Reset disposal form when modal opens - Fetch asset details
     $(document).on('click', '.btn-dispose', function() {
         var id = $(this).data('id');
+
+        // Fetch asset details via AJAX
+        $.ajax({
+            url: '{{ url('accounting/fixed-assets') }}/' + id + '/get-asset',
+            type: 'GET',
+            success: function(res) {
+                if (res.success && res.data) {
+                    window.setDisposalAssetData({
+                        id: res.data.id,
+                        name: res.data.name,
+                        asset_number: res.data.asset_number,
+                        total_cost: res.data.total_cost,
+                        accumulated_depreciation: res.data.accumulated_depreciation,
+                        book_value: res.data.book_value,
+                        category: res.data.category
+                    });
+                    $('#disposeModal').modal('show');
+                }
+            },
+            error: function() {
+                toastr.error('Failed to load asset details');
+            }
+        });
+    });
+
+    // Void asset handler
+    $(document).on('click', '.btn-void', function() {
+        var id = $(this).data('id');
         var name = $(this).data('name');
-        $('#dispose-asset-id').val(id);
-        $('#dispose-asset-name').text(name);
-        // Reset form fields
-        $('#dispose-amount').val('');
-        $('#dispose-reason').val('');
-        $('#dispose-buyer').val('');
-        $('#dispose-type').val('');
-        $('#dispose-payment-method').val('');
-        $('#dispose-bank-id').val('');
-        $('#payment-source-section').hide();
-        $('#dispose-bank-row').hide();
-        $('#buyer-info-row').hide();
-        $('#disposeModal').modal('show');
+        $('#void-asset-id').val(id);
+        $('#void-asset-name').text(name);
+        $('#void-reason').val(''); // Reset reason field
+        $('#voidModal').modal('show');
+    });
+
+    // Void form submission
+    $('#void-form').on('submit', function(e) {
+        e.preventDefault();
+        var id = $('#void-asset-id').val();
+        var reason = $('#void-reason').val().trim();
+
+        if (!reason) {
+            toastr.error('Please provide a reason for voiding this asset');
+            return;
+        }
+
+        $.ajax({
+            url: '{{ url('accounting/fixed-assets') }}/' + id + '/void',
+            type: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                reason: reason
+            },
+            success: function(res) {
+                $('#voidModal').modal('hide');
+                toastr.success(res.message);
+                table.draw();
+            },
+            error: function(xhr) {
+                var message = xhr.responseJSON?.message || 'Failed to void asset';
+                toastr.error(message);
+            }
+        });
     });
 
     // Dispose form

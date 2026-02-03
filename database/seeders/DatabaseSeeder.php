@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
             // Accounting
             ChartOfAccountsSeeder::class,
             SalariesPayableAccountSeeder::class,
+            FixedAssetCategorySeeder::class,
 
             // HMO
             HmoSchemeSeeder::class,

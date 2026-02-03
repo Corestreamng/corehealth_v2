@@ -26,6 +26,7 @@ use App\Models\Accounting\CreditNote;
 use App\Models\Accounting\JournalEntryEdit;
 use App\Models\Accounting\PettyCashTransaction;
 use App\Models\Accounting\PatientDeposit;
+use App\Models\Accounting\FixedAsset;
 use App\Models\Accounting\FixedAssetDepreciation;
 use App\Models\Accounting\FixedAssetDisposal;
 use App\Models\Accounting\StatutoryRemittance;
@@ -47,6 +48,7 @@ use App\Observers\Accounting\PurchaseOrderPaymentObserver;
 use App\Observers\Accounting\PettyCashObserver;
 use App\Observers\Accounting\TransferObserver;
 use App\Observers\Accounting\PatientDepositObserver;
+use App\Observers\Accounting\FixedAssetObserver;
 use App\Observers\Accounting\DepreciationObserver;
 use App\Observers\Accounting\FixedAssetDisposalObserver;
 use App\Observers\Accounting\BankObserver;
@@ -116,6 +118,7 @@ class AppServiceProvider extends ServiceProvider
         PatientDeposit::observe(PatientDepositObserver::class);
 
         // NEW: Fixed Asset observers
+        FixedAsset::observe(FixedAssetObserver::class);
         FixedAssetDepreciation::observe(DepreciationObserver::class);
         FixedAssetDisposal::observe(FixedAssetDisposalObserver::class);
 

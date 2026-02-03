@@ -40,6 +40,7 @@ class FixedAsset extends Model
     public const STATUS_IMPAIRED = 'impaired';
     public const STATUS_UNDER_MAINTENANCE = 'under_maintenance';
     public const STATUS_IDLE = 'idle';
+    public const STATUS_VOIDED = 'voided';
 
     protected $fillable = [
         'asset_number',
@@ -256,7 +257,7 @@ class FixedAsset extends Model
     /**
      * Check if asset needs depreciation this month.
      */
-    public function needsDepreciation(): bool
+    public function needsDepreciation(?\DateTime $forDate = null): bool
     {
         if ($this->status !== self::STATUS_ACTIVE) {
             return false;
@@ -266,12 +267,24 @@ class FixedAsset extends Model
             return false;
         }
 
-        if (!$this->last_depreciation_date) {
-            return $this->in_service_date && $this->in_service_date->lte(now());
+        $checkDate = $forDate ? Carbon::parse($forDate) : now();
+
+        // Check if depreciation already exists for this month
+        $existingDepreciation = $this->depreciations()
+            ->whereYear('depreciation_date', $checkDate->year)
+            ->whereMonth('depreciation_date', $checkDate->month)
+            ->exists();
+
+        if ($existingDepreciation) {
+            return false;
         }
 
-        // Check if already depreciated this month
-        return $this->last_depreciation_date->format('Y-m') < now()->format('Y-m');
+        if (!$this->last_depreciation_date) {
+            return $this->in_service_date && $this->in_service_date->lte($checkDate);
+        }
+
+        // Check if already depreciated for this month
+        return $this->last_depreciation_date->format('Y-m') < $checkDate->format('Y-m');
     }
 
     // ==========================================
@@ -281,13 +294,34 @@ class FixedAsset extends Model
     /**
      * Record depreciation for this asset.
      */
-    public function recordDepreciation(float $amount, ?int $processedBy = null): FixedAssetDepreciation
-    {
+    public function recordDepreciation(
+        float $amount,
+        ?int $processedBy = null,
+        ?\DateTime $depreciationDate = null
+    ): FixedAssetDepreciation {
+        $date = $depreciationDate ? Carbon::parse($depreciationDate) : now();
+
+        // Check for existing depreciation in this period (double-check for safety)
+        $existing = $this->depreciations()
+            ->whereYear('depreciation_date', $date->year)
+            ->whereMonth('depreciation_date', $date->month)
+            ->first();
+
+        if ($existing) {
+            Log::warning('FixedAsset: Depreciation already exists for this period', [
+                'asset_id' => $this->id,
+                'year' => $date->year,
+                'month' => $date->month,
+                'existing_id' => $existing->id,
+            ]);
+            return $existing;
+        }
+
         $depreciation = FixedAssetDepreciation::create([
             'fixed_asset_id' => $this->id,
-            'depreciation_date' => now()->toDateString(),
+            'depreciation_date' => $date->toDateString(),
             'year_number' => $this->getDepreciationYearNumber(),
-            'month_number' => now()->month,
+            'month_number' => $date->month,
             'opening_book_value' => $this->book_value,
             'depreciation_amount' => $amount,
             'closing_book_value' => $this->book_value - $amount,
@@ -299,7 +333,7 @@ class FixedAsset extends Model
         // Update asset
         $this->accumulated_depreciation += $amount;
         $this->book_value = $this->total_cost - $this->accumulated_depreciation;
-        $this->last_depreciation_date = now();
+        $this->last_depreciation_date = $date;
 
         // Check if fully depreciated
         if ($this->book_value <= $this->salvage_value) {
@@ -386,6 +420,7 @@ class FixedAsset extends Model
         return match ($this->status) {
             self::STATUS_ACTIVE => 'Active',
             self::STATUS_FULLY_DEPRECIATED => 'Fully Depreciated',
+            self::STATUS_VOIDED => 'Voided',
             self::STATUS_DISPOSED => 'Disposed',
             self::STATUS_IMPAIRED => 'Impaired',
             self::STATUS_UNDER_MAINTENANCE => 'Under Maintenance',
@@ -406,8 +441,41 @@ class FixedAsset extends Model
             self::STATUS_IMPAIRED => 'warning',
             self::STATUS_UNDER_MAINTENANCE => 'primary',
             self::STATUS_IDLE => 'dark',
+            self::STATUS_VOIDED => 'danger',
             default => 'secondary',
         };
+    }
+
+    /**
+     * Check if asset can be voided.
+     * Only active assets with no depreciation can be voided.
+     */
+    public function canBeVoided(): bool
+    {
+        // Cannot void if already voided or disposed
+        if (in_array($this->status, [self::STATUS_VOIDED, self::STATUS_DISPOSED])) {
+            return false;
+        }
+
+        // Cannot void if has depreciation
+        if ($this->accumulated_depreciation > 0) {
+            return false;
+        }
+
+        // Can void if journal entry can be reversed
+        if ($this->journalEntry && !$this->journalEntry->canReverse()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if asset is voided.
+     */
+    public function isVoided(): bool
+    {
+        return $this->status === self::STATUS_VOIDED;
     }
 
     // ==========================================

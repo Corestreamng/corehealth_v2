@@ -221,7 +221,8 @@
                     <h3 class="card-title">Transfer Records</h3>
                 </div>
                 <div class="card-body">
-                    <table id="transfers-table" class="table table-bordered table-striped table-hover">
+                    <div class="table-responsive">
+                        <table id="transfers-table" class="table table-bordered table-striped table-hover">
                         <thead class="thead-dark">
                             <tr>
                                 <th>Transfer #</th>
@@ -237,6 +238,7 @@
                         </thead>
                         <tbody></tbody>
                     </table>
+                    </div>
                 </div>
             </div>
 </div>

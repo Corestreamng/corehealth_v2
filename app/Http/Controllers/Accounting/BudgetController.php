@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Accounting;
 
 use App\Http\Controllers\Controller;
-use App\Models\Budget;
-use App\Models\BudgetItem;
+use App\Models\Accounting\Budget;
+use App\Models\Accounting\BudgetLine;
 use App\Models\ChartOfAccount;
 use App\Models\Department;
-use App\Models\FiscalYear;
+use App\Models\Accounting\FiscalYear;
 use App\Models\JournalEntryLine;
 use App\Services\Accounting\ExcelExportService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -50,12 +50,12 @@ class BudgetController extends Controller
         $currentYear = date('Y');
         $currentMonth = date('n');
 
-        // Get current fiscal year
-        $fiscalYear = FiscalYear::where('year', $currentYear)->first();
+        // Get current fiscal year (or use FiscalYear::current())
+        $fiscalYear = FiscalYear::current();
 
         // Total budget for current year
-        $totalBudget = Budget::whereHas('fiscalYear', function($q) use ($currentYear) {
-            $q->where('year', $currentYear);
+        $totalBudget = Budget::when($fiscalYear, function($q) use ($fiscalYear) {
+            $q->where('fiscal_year_id', $fiscalYear->id);
         })->where('status', 'approved')->sum('total_amount');
 
         // YTD actual expenses (from JE lines)
@@ -293,7 +293,7 @@ class BudgetController extends Controller
 
             // Create line items
             foreach ($request->items as $item) {
-                BudgetItem::create([
+                BudgetLine::create([
                     'budget_id' => $budget->id,
                     'account_id' => $item['account_id'],
                     'budgeted_amount' => $item['amount'],
@@ -425,7 +425,7 @@ class BudgetController extends Controller
             $budget->items()->delete();
 
             foreach ($request->items as $item) {
-                BudgetItem::create([
+                BudgetLine::create([
                     'budget_id' => $budget->id,
                     'account_id' => $item['account_id'],
                     'budgeted_amount' => $item['amount'],
@@ -510,8 +510,8 @@ class BudgetController extends Controller
         if ($fiscalYearId) {
             $query->where('fiscal_year_id', $fiscalYearId);
         } else {
-            // Default to current year
-            $currentFY = FiscalYear::where('year', date('Y'))->first();
+            // Default to current fiscal year
+            $currentFY = FiscalYear::current();
             if ($currentFY) {
                 $query->where('fiscal_year_id', $currentFY->id);
             }

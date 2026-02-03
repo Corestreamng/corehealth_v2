@@ -197,7 +197,8 @@
             <h5 class="mb-0"><i class="mdi mdi-table mr-2"></i>Reconciliation Records</h5>
         </div>
         <div class="card-body">
-            <table id="reconciliations-table" class="table table-bordered table-striped table-hover">
+            <div class="table-responsive">
+                <table id="reconciliations-table" class="table table-bordered table-striped table-hover">
                 <thead class="thead-dark">
                     <tr>
                         <th>Recon #</th>
@@ -215,6 +216,7 @@
                 </thead>
                 <tbody></tbody>
             </table>
+            </div>
         </div>
     </div>
 </div>

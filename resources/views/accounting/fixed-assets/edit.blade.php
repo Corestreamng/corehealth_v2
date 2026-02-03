@@ -212,7 +212,7 @@
                                     <option value="">Select Custodian</option>
                                     @foreach($custodians as $user)
                                         <option value="{{ $user->id }}" {{ old('custodian_user_id', $fixedAsset->custodian_user_id) == $user->id ? 'selected' : '' }}>
-                                            {{ $user->name }} ({{ $user->email }})
+                                            {{ ucwords($user->surname . ' ' . $user->firstname . ($user->othername ? ' ' . $user->othername : '')) }} ({{ $user->email }})
                                         </option>
                                     @endforeach
                                 </select>
@@ -310,6 +310,33 @@
                         <span>{{ $fixedAsset->last_depreciation_date?->format('M d, Y') ?? 'Never' }}</span>
                     </div>
                 </div>
+
+                <!-- Acquisition Journal Entry -->
+                @if($fixedAsset->journalEntry)
+                <div class="form-section">
+                    <h6><i class="mdi mdi-book-open mr-2"></i>Acquisition Journal Entry</h6>
+                    <div class="alert alert-light border">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <span class="badge badge-secondary">{{ $fixedAsset->journalEntry->entry_number }}</span>
+                                <small class="text-muted ml-2">{{ $fixedAsset->journalEntry->entry_date->format('M d, Y') }}</small>
+                            </div>
+                            <a href="{{ route('accounting.journal-entries.show', $fixedAsset->journalEntry) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="mdi mdi-eye"></i> View Full Entry
+                            </a>
+                        </div>
+                        @foreach($fixedAsset->journalEntry->lines as $line)
+                        <div class="d-flex justify-content-between align-items-center py-2 border-top">
+                            <div>
+                                <span class="badge badge-{{ $line->debit > 0 ? 'primary' : 'success' }} px-2">{{ $line->debit > 0 ? 'DEBIT' : 'CREDIT' }}</span>
+                                <span class="ml-2">{{ $line->account->code }} - {{ $line->account->name }}</span>
+                            </div>
+                            <span class="font-weight-bold">₦{{ number_format($line->debit > 0 ? $line->debit : $line->credit, 2) }}</span>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
 
                 <!-- Depreciation Info (Read-Only) -->
                 <div class="form-section">
