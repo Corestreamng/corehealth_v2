@@ -148,6 +148,7 @@ class LiabilityPaymentObserver
                 'reference_type' => 'liability_payment',
                 'reference_id' => $payment->id,
                 'description' => "{$liabilityTypeLabel} payment #{$payment->payment_number} to {$liability->creditor_name}",
+                'entry_type' => JournalEntry::TYPE_AUTO,
                 'status' => JournalEntry::STATUS_POSTED,
                 'posted_at' => now(),
                 'created_by' => auth()->id() ?? 1,

@@ -2104,6 +2104,7 @@ rgba(255, 255, 255, 0.7) !important;
     <!-- container-scroller -->
     <!-- plugins:js -->
     <script src="{{ asset('admin/assets/vendors/js/vendor.bundle.base.js') }}"></script>
+    <script src="{{ asset('plugins/dataT/datatables.min.js') }}"></script>
     <script src="{{ asset('assets/js/select2.min.js') }}"></script>
     <script>
         $('.select2').select2();

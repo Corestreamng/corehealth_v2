@@ -106,6 +106,7 @@ class LiabilityScheduleObserver
                 'reference_type' => 'liability_schedule',
                 'reference_id' => $liability->id,
                 'description' => "{$liabilityTypeLabel} received from {$liability->creditor_name}: {$liability->liability_number}",
+                'entry_type' => JournalEntry::TYPE_AUTO,
                 'status' => JournalEntry::STATUS_POSTED,
                 'posted_at' => now(),
                 'created_by' => $liability->created_by ?? auth()->id() ?? 1,

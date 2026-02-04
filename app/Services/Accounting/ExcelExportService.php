@@ -1822,4 +1822,312 @@ class ExcelExportService
 
         return $this->download('cash-flow-forecast-' . $forecast->id . '-' . now()->format('Y-m-d'));
     }
+
+    /**
+     * Export Lease Portfolio to Excel.
+     *
+     * @param \Illuminate\Support\Collection $leases
+     * @param array $stats Dashboard statistics
+     * @return StreamedResponse
+     */
+    public function leasePortfolio($leases, array $stats): StreamedResponse
+    {
+        $this->initSpreadsheet('Lease Portfolio Report', 'As of ' . now()->format('F d, Y'));
+
+        // Summary Section
+        $this->activeSheet->setCellValue('A' . $this->currentRow, 'PORTFOLIO SUMMARY');
+        $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(11);
+        $this->currentRow++;
+
+        $this->addDataRow(['Active Leases:', $stats['active_count'] ?? 0]);
+        $this->addDataRow(['Total ROU Assets:', '₦' . number_format($stats['total_rou_asset'] ?? 0, 2)]);
+        $this->addDataRow(['Total Lease Liability:', '₦' . number_format($stats['total_liability'] ?? 0, 2)]);
+        $this->addDataRow(['Monthly Depreciation:', '₦' . number_format($stats['monthly_depreciation'] ?? 0, 2)]);
+        $this->addDataRow(['Payments Due This Month:', '₦' . number_format($stats['payments_due_this_month'] ?? 0, 2)]);
+        $this->addDataRow(['Overdue Payments:', '₦' . number_format($stats['overdue_payments'] ?? 0, 2)]);
+        $this->addDataRow(['Expiring in 90 Days:', $stats['expiring_soon'] ?? 0]);
+
+        $this->currentRow += 2;
+
+        // By Type Summary
+        if (!empty($stats['by_type'])) {
+            $this->activeSheet->setCellValue('A' . $this->currentRow, 'SUMMARY BY LEASE TYPE');
+            $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(11);
+            $this->currentRow++;
+
+            $this->addHeaderRow(['Lease Type', 'Count', 'ROU Asset Value', 'Lease Liability']);
+
+            foreach ($stats['by_type'] as $type => $data) {
+                $this->addDataRow([
+                    ucfirst(str_replace('_', ' ', $type)),
+                    $data['count'] ?? 0,
+                    '₦' . number_format($data['rou_asset'] ?? 0, 2),
+                    '₦' . number_format($data['liability'] ?? 0, 2),
+                ]);
+            }
+
+            $this->currentRow += 2;
+        }
+
+        // Lease Details
+        $this->activeSheet->setCellValue('A' . $this->currentRow, 'LEASE PORTFOLIO DETAILS');
+        $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(11);
+        $this->currentRow++;
+
+        $this->addHeaderRow([
+            'Lease #',
+            'Lease Type',
+            'Status',
+            'Leased Item',
+            'Lessor',
+            'Start Date',
+            'End Date',
+            'Monthly Payment',
+            'ROU Asset',
+            'Lease Liability',
+            'IBR %',
+        ]);
+
+        foreach ($leases as $lease) {
+            $this->addDataRow([
+                $lease->lease_number,
+                ucfirst(str_replace('_', ' ', $lease->lease_type)),
+                ucfirst($lease->status),
+                $lease->leased_item,
+                $lease->supplier_name ?? $lease->lessor_name ?? '-',
+                Carbon::parse($lease->commencement_date)->format('M d, Y'),
+                Carbon::parse($lease->end_date)->format('M d, Y'),
+                '₦' . number_format($lease->monthly_payment, 2),
+                '₦' . number_format($lease->current_rou_asset_value, 2),
+                '₦' . number_format($lease->current_lease_liability, 2),
+                number_format($lease->incremental_borrowing_rate, 2) . '%',
+            ]);
+        }
+
+        // Totals
+        $this->addDataRow([
+            '', '', '', '', '', '', 'TOTALS',
+            '',
+            '₦' . number_format($stats['total_rou_asset'] ?? 0, 2),
+            '₦' . number_format($stats['total_liability'] ?? 0, 2),
+            '',
+        ], 1, true);
+
+        $this->autoSizeColumns(1, 11);
+
+        return $this->download('lease-portfolio-' . now()->format('Y-m-d'));
+    }
+
+    /**
+     * Export Single Lease Details to Excel.
+     *
+     * @param object $lease Lease object
+     * @param \Illuminate\Support\Collection $schedule Payment schedule
+     * @param object|null $paymentSummary Payment summary stats
+     * @param \Illuminate\Support\Collection|null $journalEntries Related journal entries
+     * @return StreamedResponse
+     */
+    public function leaseDetail($lease, $schedule, $paymentSummary = null, $journalEntries = null): StreamedResponse
+    {
+        $this->initSpreadsheet('Lease Detail - ' . $lease->lease_number, 'Generated ' . now()->format('F d, Y'));
+
+        // Lease Information
+        $this->activeSheet->setCellValue('A' . $this->currentRow, 'LEASE INFORMATION');
+        $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(11);
+        $this->currentRow++;
+
+        $this->addDataRow(['Lease Number:', $lease->lease_number]);
+        $this->addDataRow(['Leased Item:', $lease->leased_item]);
+        $this->addDataRow(['Lease Type:', ucfirst(str_replace('_', ' ', $lease->lease_type))]);
+        $this->addDataRow(['Status:', ucfirst($lease->status)]);
+        $this->addDataRow(['Lessor:', $lease->supplier_name ?? $lease->lessor_name ?? '-']);
+        $this->addDataRow(['Department:', $lease->department_name ?? '-']);
+        $this->addDataRow(['Commencement Date:', Carbon::parse($lease->commencement_date)->format('M d, Y')]);
+        $this->addDataRow(['End Date:', Carbon::parse($lease->end_date)->format('M d, Y')]);
+        $this->addDataRow(['Lease Term:', $lease->lease_term_months . ' months']);
+        $this->addDataRow(['Monthly Payment:', '₦' . number_format($lease->monthly_payment, 2)]);
+        $this->addDataRow(['Incremental Borrowing Rate:', number_format($lease->incremental_borrowing_rate, 2) . '%']);
+
+        $this->currentRow += 2;
+
+        // IFRS 16 Values
+        $this->activeSheet->setCellValue('A' . $this->currentRow, 'IFRS 16 RECOGNITION VALUES');
+        $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(11);
+        $this->currentRow++;
+
+        $this->addDataRow(['Initial ROU Asset:', '₦' . number_format($lease->initial_rou_asset_value, 2)]);
+        $this->addDataRow(['Current ROU Asset:', '₦' . number_format($lease->current_rou_asset_value, 2)]);
+        $this->addDataRow(['Accumulated Depreciation:', '₦' . number_format($lease->accumulated_rou_depreciation, 2)]);
+        $this->addDataRow(['Initial Lease Liability:', '₦' . number_format($lease->initial_lease_liability, 2)]);
+        $this->addDataRow(['Current Lease Liability:', '₦' . number_format($lease->current_lease_liability, 2)]);
+
+        $this->currentRow += 2;
+
+        // Payment Summary
+        if ($paymentSummary) {
+            $this->activeSheet->setCellValue('A' . $this->currentRow, 'PAYMENT SUMMARY');
+            $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(11);
+            $this->currentRow++;
+
+            $this->addDataRow(['Total Payments:', $paymentSummary->total_payments ?? 0]);
+            $this->addDataRow(['Paid Payments:', $paymentSummary->paid_count ?? 0]);
+            $this->addDataRow(['Total Paid:', '₦' . number_format($paymentSummary->total_paid ?? 0, 2)]);
+            $this->addDataRow(['Total Scheduled:', '₦' . number_format($paymentSummary->total_scheduled ?? 0, 2)]);
+            $this->addDataRow(['Remaining:', '₦' . number_format(($paymentSummary->total_scheduled ?? 0) - ($paymentSummary->total_paid ?? 0), 2)]);
+
+            $this->currentRow += 2;
+        }
+
+        // Payment Schedule (First 12)
+        if ($schedule && $schedule->count() > 0) {
+            $this->activeSheet->setCellValue('A' . $this->currentRow, 'PAYMENT SCHEDULE (FIRST 12)');
+            $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(11);
+            $this->currentRow++;
+
+            $this->addHeaderRow([
+                '#', 'Due Date', 'Payment', 'Principal', 'Interest',
+                'Opening Liability', 'Closing Liability', 'ROU Depreciation', 'Status',
+            ]);
+
+            foreach ($schedule->take(12) as $payment) {
+                $isPaid = !is_null($payment->payment_date);
+                $isOverdue = !$isPaid && Carbon::parse($payment->due_date)->lt(now());
+                $status = $isPaid ? 'Paid' : ($isOverdue ? 'Overdue' : 'Scheduled');
+
+                $this->addDataRow([
+                    $payment->payment_number,
+                    Carbon::parse($payment->due_date)->format('M d, Y'),
+                    '₦' . number_format($payment->payment_amount, 2),
+                    '₦' . number_format($payment->principal_portion, 2),
+                    '₦' . number_format($payment->interest_portion, 2),
+                    '₦' . number_format($payment->opening_liability, 2),
+                    '₦' . number_format($payment->closing_liability, 2),
+                    '₦' . number_format($payment->rou_depreciation, 2),
+                    $status,
+                ]);
+            }
+
+            $this->currentRow += 2;
+        }
+
+        // Journal Entries
+        if ($journalEntries && $journalEntries->count() > 0) {
+            $this->activeSheet->setCellValue('A' . $this->currentRow, 'RELATED JOURNAL ENTRIES');
+            $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(11);
+            $this->currentRow++;
+
+            $this->addHeaderRow(['Entry #', 'Date', 'Description', 'Amount']);
+
+            foreach ($journalEntries as $je) {
+                $this->addDataRow([
+                    $je->entry_number,
+                    Carbon::parse($je->entry_date)->format('M d, Y'),
+                    $je->description,
+                    '₦' . number_format($je->total_debit, 2),
+                ]);
+            }
+        }
+
+        $this->autoSizeColumns(1, 9);
+
+        return $this->download('lease-detail-' . $lease->lease_number . '-' . now()->format('Y-m-d'));
+    }
+
+    /**
+     * Export Full Lease Payment Schedule to Excel.
+     *
+     * @param object $lease Lease object
+     * @param \Illuminate\Support\Collection $schedule Full payment schedule
+     * @return StreamedResponse
+     */
+    public function leaseSchedule($lease, $schedule): StreamedResponse
+    {
+        $this->initSpreadsheet('Payment Schedule - ' . $lease->lease_number, 'Generated ' . now()->format('F d, Y'));
+
+        // Lease Summary
+        $this->activeSheet->setCellValue('A' . $this->currentRow, 'LEASE SUMMARY');
+        $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(11);
+        $this->currentRow++;
+
+        $this->addDataRow(['Lease Number:', $lease->lease_number]);
+        $this->addDataRow(['Leased Item:', $lease->leased_item]);
+        $this->addDataRow(['Lessor:', $lease->supplier_name ?? $lease->lessor_name ?? '-']);
+        $this->addDataRow(['Lease Term:', Carbon::parse($lease->commencement_date)->format('M Y') . ' - ' . Carbon::parse($lease->end_date)->format('M Y')]);
+        $this->addDataRow(['Monthly Payment:', '₦' . number_format($lease->monthly_payment, 2)]);
+        $this->addDataRow(['IBR:', number_format($lease->incremental_borrowing_rate, 2) . '%']);
+
+        $this->currentRow += 2;
+
+        // Schedule Totals
+        $totalPayments = $schedule->sum('payment_amount');
+        $totalPrincipal = $schedule->sum('principal_portion');
+        $totalInterest = $schedule->sum('interest_portion');
+        $totalDepreciation = $schedule->sum('rou_depreciation');
+        $paidPayments = $schedule->whereNotNull('payment_date');
+        $paidCount = $paidPayments->count();
+        $paidAmount = $paidPayments->sum('actual_payment') ?: $paidPayments->sum('payment_amount');
+        $remainingPayments = $schedule->whereNull('payment_date');
+        $remainingAmount = $remainingPayments->sum('payment_amount');
+
+        $this->activeSheet->setCellValue('A' . $this->currentRow, 'SCHEDULE TOTALS');
+        $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(11);
+        $this->currentRow++;
+
+        $this->addDataRow(['Total Payments:', $schedule->count()]);
+        $this->addDataRow(['Total Amount:', '₦' . number_format($totalPayments, 2)]);
+        $this->addDataRow(['Total Principal:', '₦' . number_format($totalPrincipal, 2)]);
+        $this->addDataRow(['Total Interest:', '₦' . number_format($totalInterest, 2)]);
+        $this->addDataRow(['Total Depreciation:', '₦' . number_format($totalDepreciation, 2)]);
+        $this->addDataRow(['Paid Payments:', $paidCount . ' (₦' . number_format($paidAmount, 2) . ')']);
+        $this->addDataRow(['Remaining Payments:', $remainingPayments->count() . ' (₦' . number_format($remainingAmount, 2) . ')']);
+
+        $this->currentRow += 2;
+
+        // Full Schedule
+        $this->activeSheet->setCellValue('A' . $this->currentRow, 'FULL PAYMENT SCHEDULE');
+        $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(11);
+        $this->currentRow++;
+
+        $this->addHeaderRow([
+            '#', 'Due Date', 'Payment', 'Principal', 'Interest',
+            'Opening Liability', 'Closing Liability', 'ROU Depreciation',
+            'Opening ROU', 'Closing ROU', 'Status',
+        ]);
+
+        foreach ($schedule as $payment) {
+            $isPaid = !is_null($payment->payment_date);
+            $isOverdue = !$isPaid && Carbon::parse($payment->due_date)->lt(now());
+            $isCurrent = !$isPaid && Carbon::parse($payment->due_date)->isSameMonth(now());
+            $status = $isPaid ? 'PAID' : ($isOverdue ? 'OVERDUE' : ($isCurrent ? 'DUE' : 'SCHEDULED'));
+
+            $this->addDataRow([
+                $payment->payment_number,
+                Carbon::parse($payment->due_date)->format('M d, Y'),
+                '₦' . number_format($payment->payment_amount, 2),
+                '₦' . number_format($payment->principal_portion, 2),
+                '₦' . number_format($payment->interest_portion, 2),
+                '₦' . number_format($payment->opening_liability, 2),
+                '₦' . number_format($payment->closing_liability, 2),
+                '₦' . number_format($payment->rou_depreciation, 2),
+                '₦' . number_format($payment->opening_rou_value, 2),
+                '₦' . number_format($payment->closing_rou_value, 2),
+                $status,
+            ]);
+        }
+
+        // Totals Row
+        $this->addDataRow([
+            '', 'TOTALS',
+            '₦' . number_format($totalPayments, 2),
+            '₦' . number_format($totalPrincipal, 2),
+            '₦' . number_format($totalInterest, 2),
+            '-', '₦0.00',
+            '₦' . number_format($totalDepreciation, 2),
+            '-', '₦0.00', '',
+        ], 1, true);
+
+        $this->autoSizeColumns(1, 11);
+
+        return $this->download('lease-schedule-' . $lease->lease_number . '-' . now()->format('Y-m-d'));
+    }
 }

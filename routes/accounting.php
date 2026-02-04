@@ -332,19 +332,30 @@ Route::prefix('accounting')->name('accounting.')->middleware(['auth', 'verified'
         Route::get('/datatable', [LeaseController::class, 'datatable'])->name('datatable');
         Route::get('/create', [LeaseController::class, 'create'])->name('create');
         Route::post('/', [LeaseController::class, 'store'])->name('store');
+        Route::get('/reports/ifrs16', [LeaseController::class, 'ifrs16Report'])->name('reports.ifrs16');
+
+        // Portfolio exports (before {lease} parameter routes)
+        Route::get('/export/pdf', [LeaseController::class, 'exportPortfolioPdf'])->name('export.pdf');
+        Route::get('/export/excel', [LeaseController::class, 'exportPortfolioExcel'])->name('export.excel');
+
+        // Routes with {lease} parameter
         Route::get('/{lease}', [LeaseController::class, 'show'])->name('show');
         Route::get('/{lease}/edit', [LeaseController::class, 'edit'])->name('edit');
         Route::put('/{lease}', [LeaseController::class, 'update'])->name('update');
         Route::get('/{lease}/payment', [LeaseController::class, 'payment'])->name('payment');
         Route::post('/{lease}/payment', [LeaseController::class, 'recordPayment'])->name('payment.store');
-        Route::post('/run-depreciation', [LeaseController::class, 'runDepreciation'])->name('depreciation.run');
         Route::get('/{lease}/modification', [LeaseController::class, 'modification'])->name('modification');
         Route::post('/{lease}/modification', [LeaseController::class, 'storeModification'])->name('modification.store');
         Route::post('/{lease}/terminate', [LeaseController::class, 'terminate'])->name('terminate');
         Route::get('/{lease}/schedule', [LeaseController::class, 'paymentSchedule'])->name('schedule');
-        Route::get('/reports/ifrs16', [LeaseController::class, 'ifrs16Report'])->name('reports.ifrs16');
-        Route::get('/export/pdf', [LeaseController::class, 'exportPdf'])->name('export.pdf');
-        Route::get('/export/excel', [LeaseController::class, 'exportExcel'])->name('export.excel');
+
+        // Detail exports
+        Route::get('/{lease}/export/pdf', [LeaseController::class, 'exportDetailPdf'])->name('detail.export.pdf');
+        Route::get('/{lease}/export/excel', [LeaseController::class, 'exportDetailExcel'])->name('detail.export.excel');
+
+        // Schedule exports
+        Route::get('/{lease}/schedule/export/pdf', [LeaseController::class, 'exportSchedulePdf'])->name('schedule.export.pdf');
+        Route::get('/{lease}/schedule/export/excel', [LeaseController::class, 'exportScheduleExcel'])->name('schedule.export.excel');
     });
 
     // === COST CENTERS ===

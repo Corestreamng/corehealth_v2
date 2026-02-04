@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Accounting;
 
 use App\Http\Controllers\Controller;
+use App\Models\Accounting\Lease;
+use App\Models\Accounting\LeasePaymentSchedule;
 use App\Services\Accounting\ExcelExportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Yajra\DataTables\Facades\DataTables;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -118,8 +121,8 @@ class LeaseController extends Controller
             ->select([
                 'leases.*',
                 'departments.name as department_name',
-                'suppliers.name as supplier_name',
-                'users.name as created_by_name',
+                'suppliers.company_name as supplier_name',
+                DB::raw("CONCAT(users.firstname, ' ', users.surname) as created_by_name"),
             ])
             ->orderBy('leases.created_at', 'desc');
 
@@ -139,7 +142,7 @@ class LeaseController extends Controller
         if ($request->filled('lessor')) {
             $query->where(function ($q) use ($request) {
                 $q->where('leases.lessor_name', 'like', '%' . $request->lessor . '%')
-                  ->orWhere('suppliers.name', 'like', '%' . $request->lessor . '%');
+                  ->orWhere('suppliers.company_name', 'like', '%' . $request->lessor . '%');
             });
         }
 
@@ -219,7 +222,7 @@ class LeaseController extends Controller
 
         $suppliers = DB::table('suppliers')
             ->whereNull('deleted_at')
-            ->orderBy('name')
+            ->orderBy('company_name')
             ->get();
 
         return view('accounting.leases.create', compact(
@@ -246,33 +249,14 @@ class LeaseController extends Controller
         ]);
 
         try {
-            DB::beginTransaction();
-
-            // Generate lease number
-            $lastLease = DB::table('leases')
-                ->orderBy('id', 'desc')
-                ->first();
-            $nextNumber = $lastLease ? (intval(substr($lastLease->lease_number, 4)) + 1) : 1;
-            $leaseNumber = 'LSE-' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
-
             // Calculate lease term in months
             $commencementDate = Carbon::parse($request->commencement_date);
             $endDate = Carbon::parse($request->end_date);
             $leaseTermMonths = $commencementDate->diffInMonths($endDate);
 
-            // Calculate IFRS 16 values
-            $calculations = $this->calculateIfrs16Values(
-                $request->monthly_payment,
-                $leaseTermMonths,
-                $request->incremental_borrowing_rate,
-                $request->annual_rent_increase_rate ?? 0,
-                $request->initial_direct_costs ?? 0,
-                $request->lease_incentives_received ?? 0
-            );
-
-            // Create lease record
-            $leaseId = DB::table('leases')->insertGetId([
-                'lease_number' => $leaseNumber,
+            // Create lease using Eloquent (triggers LeaseObserver for JE and schedule)
+            $lease = Lease::create([
+                'lease_number' => Lease::generateNumber(),
                 'lease_type' => $request->lease_type,
                 'leased_item' => $request->leased_item,
                 'description' => $request->description,
@@ -289,12 +273,6 @@ class LeaseController extends Controller
                 'monthly_payment' => $request->monthly_payment,
                 'annual_rent_increase_rate' => $request->annual_rent_increase_rate ?? 0,
                 'incremental_borrowing_rate' => $request->incremental_borrowing_rate,
-                'total_lease_payments' => $calculations['total_payments'],
-                'initial_rou_asset_value' => $calculations['initial_rou_asset'],
-                'initial_lease_liability' => $calculations['initial_liability'],
-                'current_rou_asset_value' => $calculations['initial_rou_asset'],
-                'accumulated_rou_depreciation' => 0,
-                'current_lease_liability' => $calculations['initial_liability'],
                 'initial_direct_costs' => $request->initial_direct_costs ?? 0,
                 'lease_incentives_received' => $request->lease_incentives_received ?? 0,
                 'has_purchase_option' => $request->has_purchase_option ? true : false,
@@ -306,23 +284,15 @@ class LeaseController extends Controller
                 'residual_value_guarantee' => $request->residual_value_guarantee ?? 0,
                 'asset_location' => $request->asset_location,
                 'department_id' => $request->department_id,
-                'status' => 'active',
+                'status' => Lease::STATUS_ACTIVE, // Active to trigger observer JE creation
                 'notes' => $request->notes,
                 'created_by' => Auth::id(),
-                'created_at' => now(),
-                'updated_at' => now(),
             ]);
 
-            // Generate payment schedule
-            $this->generatePaymentSchedule($leaseId, $calculations['schedule']);
-
-            DB::commit();
-
-            return redirect()->route('accounting.leases.show', $leaseId)
-                ->with('success', 'Lease created successfully. Lease Number: ' . $leaseNumber);
+            return redirect()->route('accounting.leases.show', $lease->id)
+                ->with('success', 'Lease created successfully. Lease Number: ' . $lease->lease_number);
 
         } catch (\Exception $e) {
-            DB::rollBack();
             return back()->withInput()
                 ->with('error', 'Failed to create lease: ' . $e->getMessage());
         }
@@ -456,7 +426,7 @@ class LeaseController extends Controller
             ->select([
                 'leases.*',
                 'departments.name as department_name',
-                'suppliers.name as supplier_name',
+                'suppliers.company_name as supplier_name',
                 'rou_acc.name as rou_account_name',
                 'rou_acc.code as rou_account_code',
                 'liability_acc.name as liability_account_name',
@@ -465,7 +435,7 @@ class LeaseController extends Controller
                 'depreciation_acc.code as depreciation_account_code',
                 'interest_acc.name as interest_account_name',
                 'interest_acc.code as interest_account_code',
-                'users.name as created_by_name',
+                DB::raw("CONCAT(users.firstname, ' ', users.surname) as created_by_name"),
             ])
             ->where('leases.id', $id)
             ->first();
@@ -508,12 +478,29 @@ class LeaseController extends Controller
             ->orderBy('modification_date', 'desc')
             ->get();
 
+        // Get related journal entries with total amount calculated
+        $journalEntries = DB::table('journal_entries')
+            ->leftJoin('journal_entry_lines', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
+            ->select(
+                'journal_entries.id',
+                'journal_entries.entry_number',
+                'journal_entries.entry_date',
+                'journal_entries.description',
+                DB::raw('COALESCE(SUM(journal_entry_lines.debit), 0) as total_debit')
+            )
+            ->where('journal_entries.reference_type', 'lease')
+            ->where('journal_entries.reference_id', $id)
+            ->groupBy('journal_entries.id', 'journal_entries.entry_number', 'journal_entries.entry_date', 'journal_entries.description')
+            ->orderBy('journal_entries.entry_date', 'desc')
+            ->get();
+
         return view('accounting.leases.show', compact(
             'lease',
             'schedule',
             'paymentSummary',
             'nextPayment',
-            'modifications'
+            'modifications',
+            'journalEntries'
         ));
     }
 
@@ -582,7 +569,7 @@ class LeaseController extends Controller
     {
         $lease = DB::table('leases')
             ->leftJoin('suppliers', 'leases.lessor_id', '=', 'suppliers.id')
-            ->select(['leases.*', 'suppliers.name as supplier_name'])
+            ->select(['leases.*', 'suppliers.company_name as supplier_name'])
             ->where('leases.id', $id)
             ->first();
 
@@ -614,6 +601,11 @@ class LeaseController extends Controller
      */
     public function recordPayment(Request $request, $id)
     {
+        Log::info('LeaseController::recordPayment - Starting', [
+            'lease_id' => $id,
+            'request_data' => $request->all()
+        ]);
+
         $request->validate([
             'schedule_id' => 'required|exists:lease_payment_schedules,id',
             'payment_date' => 'required|date',
@@ -621,112 +613,100 @@ class LeaseController extends Controller
             'bank_account_id' => 'required|exists:accounts,id',
         ]);
 
+        Log::info('LeaseController::recordPayment - Validation passed', [
+            'schedule_id' => $request->schedule_id,
+            'payment_date' => $request->payment_date,
+            'actual_payment' => $request->actual_payment,
+            'bank_account_id' => $request->bank_account_id
+        ]);
+
         try {
-            DB::beginTransaction();
+            // Use Eloquent to trigger observer
+            $schedule = LeasePaymentSchedule::findOrFail($request->schedule_id);
 
-            $schedule = DB::table('lease_payment_schedules')
-                ->where('id', $request->schedule_id)
-                ->first();
+            Log::info('LeaseController::recordPayment - Found schedule', [
+                'schedule_id' => $schedule->id,
+                'lease_id' => $schedule->lease_id,
+                'current_status' => $schedule->status,
+                'current_payment_date' => $schedule->payment_date,
+                'due_date' => $schedule->due_date,
+                'payment_amount' => $schedule->payment_amount
+            ]);
 
-            // Update payment schedule
-            DB::table('lease_payment_schedules')
-                ->where('id', $request->schedule_id)
-                ->update([
-                    'payment_date' => $request->payment_date,
-                    'actual_payment' => $request->actual_payment,
-                    'status' => 'paid',
-                    'payment_reference' => $request->payment_reference,
-                    'notes' => $request->notes,
-                    'updated_at' => now(),
-                ]);
+            // Store bank_account_id in session/metadata for the observer
+            session(['lease_payment_bank_account_id' => $request->bank_account_id]);
+            Log::info('LeaseController::recordPayment - Stored bank_account_id in session', [
+                'bank_account_id' => $request->bank_account_id
+            ]);
 
-            // Update lease current values
-            $lease = DB::table('leases')->where('id', $id)->first();
+            // Prepare update data
+            $updateData = [
+                'payment_date' => $request->payment_date,
+                'actual_payment' => $request->actual_payment,
+                'status' => LeasePaymentSchedule::STATUS_PAID,
+                'payment_reference' => $request->payment_reference,
+                'notes' => $request->notes,
+            ];
 
-            // Update current lease liability (reduce by principal portion)
-            $newLiability = $lease->current_lease_liability - $schedule->principal_portion;
+            Log::info('LeaseController::recordPayment - Attempting update', [
+                'update_data' => $updateData
+            ]);
 
-            // Update accumulated depreciation and ROU value
-            $newAccumulatedDepreciation = $lease->accumulated_rou_depreciation + $schedule->rou_depreciation;
-            $newRouValue = $lease->initial_rou_asset_value - $newAccumulatedDepreciation;
+            // Update payment schedule - this will trigger the observer
+            $updateResult = $schedule->update($updateData);
 
-            DB::table('leases')
-                ->where('id', $id)
-                ->update([
-                    'current_lease_liability' => max(0, $newLiability),
-                    'accumulated_rou_depreciation' => $newAccumulatedDepreciation,
-                    'current_rou_asset_value' => max(0, $newRouValue),
-                    'updated_at' => now(),
-                ]);
+            Log::info('LeaseController::recordPayment - Update result', [
+                'update_result' => $updateResult,
+                'schedule_after_update' => [
+                    'id' => $schedule->id,
+                    'status' => $schedule->status,
+                    'payment_date' => $schedule->payment_date,
+                    'actual_payment' => $schedule->actual_payment
+                ]
+            ]);
 
-            DB::commit();
+            // Verify the update persisted
+            $verifySchedule = LeasePaymentSchedule::find($request->schedule_id);
+            Log::info('LeaseController::recordPayment - Verification query', [
+                'verified_status' => $verifySchedule->status ?? 'NOT FOUND',
+                'verified_payment_date' => $verifySchedule->payment_date ?? 'NOT FOUND',
+                'verified_actual_payment' => $verifySchedule->actual_payment ?? 'NOT FOUND'
+            ]);
+
+            // Clear session
+            session()->forget('lease_payment_bank_account_id');
+
+            Log::info('LeaseController::recordPayment - Success, redirecting', [
+                'lease_id' => $id
+            ]);
 
             return redirect()->route('accounting.leases.show', $id)
-                ->with('success', 'Payment recorded successfully.');
+                ->with('success', 'Payment recorded successfully. Journal entry created automatically.');
 
         } catch (\Exception $e) {
-            DB::rollBack();
+            Log::error('LeaseController::recordPayment - Exception', [
+                'lease_id' => $id,
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return back()->withInput()
                 ->with('error', 'Failed to record payment: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Run ROU depreciation for all active leases.
+    /*
+     * DESIGN NOTE: Standalone runDepreciation() method removed.
+     *
+     * Under IFRS 16, ROU depreciation is tracked per-payment in the payment schedule.
+     * When payments are recorded via LeasePaymentObserver:
+     * - accumulated_rou_depreciation is updated
+     * - current_rou_asset_value is updated
+     * - Proper JE is created (DR Depreciation Exp, CR ROU Asset)
+     *
+     * This aligns with the JE-centric architecture where ALL balance changes
+     * must originate from journal entries.
      */
-    public function runDepreciation(Request $request)
-    {
-        $request->validate([
-            'depreciation_date' => 'required|date',
-        ]);
-
-        try {
-            DB::beginTransaction();
-
-            $activeLeases = DB::table('leases')
-                ->where('status', 'active')
-                ->whereNull('deleted_at')
-                ->get();
-
-            $processedCount = 0;
-            $totalDepreciation = 0;
-
-            foreach ($activeLeases as $lease) {
-                // Calculate monthly depreciation
-                $monthlyDepreciation = $lease->initial_rou_asset_value / $lease->lease_term_months;
-
-                // Check if there's remaining value to depreciate
-                if ($lease->current_rou_asset_value > 0) {
-                    $depreciation = min($monthlyDepreciation, $lease->current_rou_asset_value);
-
-                    // Update lease values
-                    $newAccumulatedDepreciation = $lease->accumulated_rou_depreciation + $depreciation;
-                    $newRouValue = $lease->initial_rou_asset_value - $newAccumulatedDepreciation;
-
-                    DB::table('leases')
-                        ->where('id', $lease->id)
-                        ->update([
-                            'accumulated_rou_depreciation' => $newAccumulatedDepreciation,
-                            'current_rou_asset_value' => max(0, $newRouValue),
-                            'updated_at' => now(),
-                        ]);
-
-                    $processedCount++;
-                    $totalDepreciation += $depreciation;
-                }
-            }
-
-            DB::commit();
-
-            return redirect()->route('accounting.leases.index')
-                ->with('success', "Depreciation run completed. Processed {$processedCount} leases. Total depreciation: ₦" . number_format($totalDepreciation, 2));
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()
-                ->with('error', 'Failed to run depreciation: ' . $e->getMessage());
-        }
-    }
 
     /**
      * Show modification form.
@@ -735,7 +715,7 @@ class LeaseController extends Controller
     {
         $lease = DB::table('leases')
             ->leftJoin('suppliers', 'leases.lessor_id', '=', 'suppliers.id')
-            ->select(['leases.*', 'suppliers.name as supplier_name'])
+            ->select(['leases.*', 'suppliers.company_name as supplier_name'])
             ->where('leases.id', $id)
             ->first();
 
@@ -904,7 +884,7 @@ class LeaseController extends Controller
     {
         $lease = DB::table('leases')
             ->leftJoin('suppliers', 'leases.lessor_id', '=', 'suppliers.id')
-            ->select(['leases.*', 'suppliers.name as supplier_name'])
+            ->select(['leases.*', 'suppliers.company_name as supplier_name'])
             ->where('leases.id', $id)
             ->first();
 
@@ -977,40 +957,240 @@ class LeaseController extends Controller
     }
 
     /**
-     * Export leases to PDF.
+     * Export lease portfolio to PDF.
      */
-    public function exportPdf(Request $request)
+    public function exportPortfolioPdf(Request $request)
     {
         $leases = DB::table('leases')
             ->leftJoin('departments', 'leases.department_id', '=', 'departments.id')
+            ->leftJoin('suppliers', 'leases.lessor_id', '=', 'suppliers.id')
             ->whereNull('leases.deleted_at')
             ->when($request->status, fn($q, $status) => $q->where('leases.status', $status))
             ->when($request->type, fn($q, $type) => $q->where('leases.lease_type', $type))
-            ->select(['leases.*', 'departments.name as department_name'])
+            ->select(['leases.*', 'departments.name as department_name', 'suppliers.company_name as supplier_name'])
             ->orderBy('leases.lease_number')
             ->get();
 
         $stats = $this->getDashboardStats();
 
-        $pdf = Pdf::loadView('accounting.leases.export-pdf', compact('leases', 'stats'));
-        return $pdf->download('leases-' . now()->format('Y-m-d') . '.pdf');
+        $pdf = Pdf::loadView('accounting.leases.pdf.index', compact('leases', 'stats'));
+        return $pdf->download('lease-portfolio-' . now()->format('Y-m-d') . '.pdf');
     }
 
     /**
-     * Export leases to Excel.
+     * Export lease portfolio to Excel.
      */
-    public function exportExcel(Request $request)
+    public function exportPortfolioExcel(Request $request)
     {
         $leases = DB::table('leases')
             ->leftJoin('departments', 'leases.department_id', '=', 'departments.id')
+            ->leftJoin('suppliers', 'leases.lessor_id', '=', 'suppliers.id')
             ->whereNull('leases.deleted_at')
             ->when($request->status, fn($q, $status) => $q->where('leases.status', $status))
             ->when($request->type, fn($q, $type) => $q->where('leases.lease_type', $type))
-            ->select(['leases.*', 'departments.name as department_name'])
+            ->select(['leases.*', 'departments.name as department_name', 'suppliers.company_name as supplier_name'])
             ->orderBy('leases.lease_number')
             ->get();
 
+        $stats = $this->getDashboardStats();
+
         $excelService = app(ExcelExportService::class);
-        return $excelService->leases($leases, $request->status);
+        return $excelService->leasePortfolio($leases, $stats);
+    }
+
+    /**
+     * Export single lease detail to PDF.
+     */
+    public function exportDetailPdf($id)
+    {
+        $lease = DB::table('leases')
+            ->leftJoin('departments', 'leases.department_id', '=', 'departments.id')
+            ->leftJoin('suppliers', 'leases.lessor_id', '=', 'suppliers.id')
+            ->leftJoin('accounts as rou_acc', 'leases.rou_asset_account_id', '=', 'rou_acc.id')
+            ->leftJoin('accounts as liability_acc', 'leases.lease_liability_account_id', '=', 'liability_acc.id')
+            ->leftJoin('accounts as depreciation_acc', 'leases.depreciation_account_id', '=', 'depreciation_acc.id')
+            ->leftJoin('accounts as interest_acc', 'leases.interest_account_id', '=', 'interest_acc.id')
+            ->leftJoin('users', 'leases.created_by', '=', 'users.id')
+            ->select([
+                'leases.*',
+                'departments.name as department_name',
+                'suppliers.company_name as supplier_name',
+                'rou_acc.name as rou_account_name',
+                'rou_acc.code as rou_account_code',
+                'liability_acc.name as liability_account_name',
+                'liability_acc.code as liability_account_code',
+                'depreciation_acc.name as depreciation_account_name',
+                'depreciation_acc.code as depreciation_account_code',
+                'interest_acc.name as interest_account_name',
+                'interest_acc.code as interest_account_code',
+                DB::raw("CONCAT(users.firstname, ' ', users.surname) as created_by_name"),
+            ])
+            ->where('leases.id', $id)
+            ->first();
+
+        if (!$lease) {
+            return redirect()->route('accounting.leases.index')
+                ->with('error', 'Lease not found.');
+        }
+
+        // Get payment schedule (first 12)
+        $schedule = DB::table('lease_payment_schedules')
+            ->where('lease_id', $id)
+            ->orderBy('payment_number')
+            ->limit(12)
+            ->get();
+
+        // Payment summary
+        $paymentSummary = DB::table('lease_payment_schedules')
+            ->where('lease_id', $id)
+            ->selectRaw('
+                COUNT(*) as total_payments,
+                SUM(CASE WHEN payment_date IS NOT NULL THEN 1 ELSE 0 END) as paid_count,
+                SUM(CASE WHEN payment_date IS NOT NULL THEN actual_payment ELSE 0 END) as total_paid,
+                SUM(payment_amount) as total_scheduled,
+                SUM(interest_portion) as total_interest,
+                SUM(principal_portion) as total_principal
+            ')
+            ->first();
+
+        // Get related journal entries
+        $journalEntries = DB::table('journal_entries')
+            ->leftJoin('journal_entry_lines', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
+            ->select(
+                'journal_entries.id',
+                'journal_entries.entry_number',
+                'journal_entries.entry_date',
+                'journal_entries.description',
+                DB::raw('COALESCE(SUM(journal_entry_lines.debit), 0) as total_debit')
+            )
+            ->where('journal_entries.reference_type', 'lease')
+            ->where('journal_entries.reference_id', $id)
+            ->groupBy('journal_entries.id', 'journal_entries.entry_number', 'journal_entries.entry_date', 'journal_entries.description')
+            ->orderBy('journal_entries.entry_date', 'desc')
+            ->get();
+
+        $pdf = Pdf::loadView('accounting.leases.pdf.show', compact('lease', 'schedule', 'paymentSummary', 'journalEntries'));
+        return $pdf->download('lease-detail-' . $lease->lease_number . '-' . now()->format('Y-m-d') . '.pdf');
+    }
+
+    /**
+     * Export single lease detail to Excel.
+     */
+    public function exportDetailExcel($id)
+    {
+        $lease = DB::table('leases')
+            ->leftJoin('departments', 'leases.department_id', '=', 'departments.id')
+            ->leftJoin('suppliers', 'leases.lessor_id', '=', 'suppliers.id')
+            ->leftJoin('accounts as rou_acc', 'leases.rou_asset_account_id', '=', 'rou_acc.id')
+            ->leftJoin('accounts as liability_acc', 'leases.lease_liability_account_id', '=', 'liability_acc.id')
+            ->leftJoin('accounts as depreciation_acc', 'leases.depreciation_account_id', '=', 'depreciation_acc.id')
+            ->leftJoin('accounts as interest_acc', 'leases.interest_account_id', '=', 'interest_acc.id')
+            ->select([
+                'leases.*',
+                'departments.name as department_name',
+                'suppliers.company_name as supplier_name',
+                'rou_acc.name as rou_account_name',
+                'rou_acc.code as rou_account_code',
+                'liability_acc.name as liability_account_name',
+                'liability_acc.code as liability_account_code',
+                'depreciation_acc.name as depreciation_account_name',
+                'depreciation_acc.code as depreciation_account_code',
+                'interest_acc.name as interest_account_name',
+                'interest_acc.code as interest_account_code',
+            ])
+            ->where('leases.id', $id)
+            ->first();
+
+        if (!$lease) {
+            return redirect()->route('accounting.leases.index')
+                ->with('error', 'Lease not found.');
+        }
+
+        // Get payment schedule
+        $schedule = DB::table('lease_payment_schedules')
+            ->where('lease_id', $id)
+            ->orderBy('payment_number')
+            ->limit(12)
+            ->get();
+
+        // Payment summary
+        $paymentSummary = DB::table('lease_payment_schedules')
+            ->where('lease_id', $id)
+            ->selectRaw('
+                COUNT(*) as total_payments,
+                SUM(CASE WHEN payment_date IS NOT NULL THEN 1 ELSE 0 END) as paid_count,
+                SUM(CASE WHEN payment_date IS NOT NULL THEN actual_payment ELSE 0 END) as total_paid,
+                SUM(payment_amount) as total_scheduled
+            ')
+            ->first();
+
+        // Get related journal entries
+        $journalEntries = DB::table('journal_entries')
+            ->leftJoin('journal_entry_lines', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
+            ->select(
+                'journal_entries.id',
+                'journal_entries.entry_number',
+                'journal_entries.entry_date',
+                'journal_entries.description',
+                DB::raw('COALESCE(SUM(journal_entry_lines.debit), 0) as total_debit')
+            )
+            ->where('journal_entries.reference_type', 'lease')
+            ->where('journal_entries.reference_id', $id)
+            ->groupBy('journal_entries.id', 'journal_entries.entry_number', 'journal_entries.entry_date', 'journal_entries.description')
+            ->orderBy('journal_entries.entry_date', 'desc')
+            ->get();
+
+        $excelService = app(ExcelExportService::class);
+        return $excelService->leaseDetail($lease, $schedule, $paymentSummary, $journalEntries);
+    }
+
+    /**
+     * Export full payment schedule to PDF.
+     */
+    public function exportSchedulePdf($id)
+    {
+        $lease = DB::table('leases')
+            ->leftJoin('suppliers', 'leases.lessor_id', '=', 'suppliers.id')
+            ->select(['leases.*', 'suppliers.company_name as supplier_name'])
+            ->where('leases.id', $id)
+            ->first();
+
+        if (!$lease) {
+            return redirect()->route('accounting.leases.index')
+                ->with('error', 'Lease not found.');
+        }
+
+        $schedule = DB::table('lease_payment_schedules')
+            ->where('lease_id', $id)
+            ->orderBy('payment_number')
+            ->get();
+
+        $pdf = Pdf::loadView('accounting.leases.pdf.schedule', compact('lease', 'schedule'));
+        return $pdf->download('lease-schedule-' . $lease->lease_number . '-' . now()->format('Y-m-d') . '.pdf');
+    }
+
+    /**
+     * Export full payment schedule to Excel.
+     */
+    public function exportScheduleExcel($id)
+    {
+        $lease = DB::table('leases')
+            ->leftJoin('suppliers', 'leases.lessor_id', '=', 'suppliers.id')
+            ->select(['leases.*', 'suppliers.company_name as supplier_name'])
+            ->where('leases.id', $id)
+            ->first();
+
+        if (!$lease) {
+            return redirect()->route('accounting.leases.index')
+                ->with('error', 'Lease not found.');
+        }
+
+        $schedule = DB::table('lease_payment_schedules')
+            ->where('lease_id', $id)
+            ->orderBy('payment_number')
+            ->get();
+
+        $excelService = app(ExcelExportService::class);
+        return $excelService->leaseSchedule($lease, $schedule);
     }
 }

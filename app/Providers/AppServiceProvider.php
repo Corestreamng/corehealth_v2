@@ -146,6 +146,10 @@ class AppServiceProvider extends ServiceProvider
         LiabilitySchedule::observe(LiabilityScheduleObserver::class);
         LiabilityPaymentSchedule::observe(LiabilityPaymentObserver::class);
 
+        // NEW: Lease observers (IFRS 16) - creates JE for lease recognition and payments
+        \App\Models\Accounting\Lease::observe(\App\Observers\Accounting\LeaseObserver::class);
+        \App\Models\Accounting\LeasePaymentSchedule::observe(\App\Observers\Accounting\LeasePaymentObserver::class);
+
         // Process daily bed bills - runs once per day automatically
         $this->processDailyBedBills();
 
