@@ -82,6 +82,7 @@ class DepreciationObserver
                 'reference_type' => 'fixed_asset_depreciation',
                 'reference_id' => $depreciation->id,
                 'description' => "Monthly depreciation: {$asset->name} ({$asset->asset_number}) - Y{$depreciation->year_number}M{$depreciation->month_number}",
+                'entry_type' => JournalEntry::TYPE_AUTO,
                 'status' => JournalEntry::STATUS_POSTED,
                 'posted_at' => now(),
                 'created_by' => $depreciation->processed_by,

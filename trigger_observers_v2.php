@@ -52,6 +52,8 @@ use App\Models\Accounting\FixedAssetDisposal;
 use App\Models\Accounting\FixedAsset;
 use App\Models\Accounting\StatutoryRemittance;
 use App\Models\CapexProjectExpense;
+use App\Models\Accounting\Lease;
+use App\Models\Accounting\LeasePaymentSchedule;
 use App\Observers\Accounting\PaymentObserver;
 use App\Observers\Accounting\ExpenseObserver;
 use App\Observers\Accounting\PayrollBatchObserver;
@@ -68,6 +70,8 @@ use App\Observers\Accounting\FixedAssetObserver;
 use App\Observers\Accounting\FixedAssetDisposalObserver;
 use App\Observers\Accounting\StatutoryRemittanceObserver;
 use App\Observers\Accounting\CapexExpenseObserver;
+use App\Observers\Accounting\LeaseObserver;
+use App\Observers\Accounting\LeasePaymentObserver;
 use App\Services\Accounting\SubAccountService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -108,6 +112,8 @@ $stats = [
     'fixed_assets' => ['found' => 0, 'processed' => 0, 'success' => 0, 'skipped' => 0, 'errors' => 0],
     'statutory_remittances' => ['found' => 0, 'processed' => 0, 'success' => 0, 'skipped' => 0, 'errors' => 0],
     'capex_expenses' => ['found' => 0, 'processed' => 0, 'success' => 0, 'skipped' => 0, 'errors' => 0],
+    'leases' => ['found' => 0, 'processed' => 0, 'success' => 0, 'skipped' => 0, 'errors' => 0],
+    'lease_payments' => ['found' => 0, 'processed' => 0, 'success' => 0, 'skipped' => 0, 'errors' => 0],
 ];
 
 // Get SubAccountService for observers that need it
@@ -812,6 +818,89 @@ try {
     echo "\n";
 } catch (\Exception $e) {
     echo "   Error processing CAPEX expenses: {$e->getMessage()}\n";
+}
+
+// =====================================
+// 18. Process Leases (Initial Recognition)
+// =====================================
+echo "\n18. Processing Leases (Initial Recognition)...\n";
+
+try {
+    // Find active leases that should have IFRS 16 recognition but don't have JEs yet
+    $leases = Lease::where('status', 'active')
+        ->whereIn('lease_type', ['finance', 'operating'])
+        ->whereDoesntHave('journalEntries', function($q) {
+            $q->where('description', 'like', '%Initial Recognition%');
+        })
+        ->get();
+    $stats['leases']['found'] = $leases->count();
+    echo "   Found {$leases->count()} active leases without initial recognition JE\n";
+
+    $observer = new LeaseObserver();
+
+    foreach ($leases as $lease) {
+        $stats['leases']['processed']++;
+
+        try {
+            // Trigger the observer's created method which handles initial recognition
+            $observer->created($lease);
+            $stats['leases']['success']++;
+            echo ".";
+        } catch (\Exception $e) {
+            $stats['leases']['errors']++;
+            echo "E";
+            Log::error("Observer trigger failed for Lease #{$lease->id}: " . $e->getMessage());
+        }
+    }
+    echo "\n";
+} catch (\Exception $e) {
+    echo "   Error processing leases: {$e->getMessage()}\n";
+}
+
+// =====================================
+// 19. Process Lease Payments
+// =====================================
+echo "\n19. Processing Lease Payments...\n";
+
+try {
+    // Find paid lease payment schedules without JEs
+    $payments = LeasePaymentSchedule::whereNotNull('payment_date')
+        ->whereDoesntHave('journalEntries')
+        ->with('lease')
+        ->get();
+    $stats['lease_payments']['found'] = $payments->count();
+    echo "   Found {$payments->count()} lease payments without JE\n";
+
+    $observer = new LeasePaymentObserver();
+
+    foreach ($payments as $payment) {
+        $stats['lease_payments']['processed']++;
+
+        try {
+            // Set a default bank account for the payment if not set
+            if (!$payment->bank_account_id) {
+                // Try to get default bank from settings or use a reasonable default
+                $defaultBank = \DB::table('chart_of_accounts')->where('account_code', '1020')->first();
+                if ($defaultBank) {
+                    session(['lease_payment_bank_account_id' => $defaultBank->id]);
+                }
+            } else {
+                session(['lease_payment_bank_account_id' => $payment->bank_account_id]);
+            }
+
+            // Trigger the observer's processPayment method (bypasses isDirty check)
+            $observer->processPayment($payment);
+            $stats['lease_payments']['success']++;
+            echo ".";
+        } catch (\Exception $e) {
+            $stats['lease_payments']['errors']++;
+            echo "E";
+            Log::error("Observer trigger failed for LeasePaymentSchedule #{$payment->id}: " . $e->getMessage());
+        }
+    }
+    echo "\n";
+} catch (\Exception $e) {
+    echo "   Error processing lease payments: {$e->getMessage()}\n";
 }
 
 // =====================================
