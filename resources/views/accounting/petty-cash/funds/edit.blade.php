@@ -3,6 +3,38 @@
 @section('page_name', 'Accounting')
 @section('subpage_name', 'Edit Fund')
 
+@push('styles')
+<style>
+    /* Select2 Fixes for consistency */
+    .select2-container--bootstrap4 .select2-selection--single {
+        height: calc(1.5em + 0.75rem + 2px) !important;
+        padding: 0.375rem 0.75rem !important;
+        border: 1px solid #ced4da !important;
+        border-radius: 0.25rem !important;
+    }
+    .select2-container--bootstrap4 .select2-selection--single .select2-selection__rendered {
+        line-height: 1.5 !important;
+        padding-left: 0 !important;
+        color: #495057 !important;
+    }
+    .select2-container--bootstrap4 .select2-selection--single .select2-selection__arrow {
+        height: calc(1.5em + 0.75rem) !important;
+    }
+    .select2-container--bootstrap4 .select2-selection--single .select2-selection__placeholder {
+        color: #6c757d !important;
+    }
+    .select2-container {
+        width: 100% !important;
+    }
+    .select2-dropdown {
+        border-color: #ced4da !important;
+    }
+    .select2-container--bootstrap4 .select2-results__option--highlighted[aria-selected] {
+        background-color: #667eea !important;
+    }
+</style>
+@endpush
+
 @section('content')
 @include('accounting.partials.breadcrumb', ['items' => [
     ['label' => 'Dashboard', 'url' => route('accounting.dashboard'), 'icon' => 'mdi-view-dashboard'],
@@ -60,7 +92,7 @@
                                         <option value="">Select Account</option>
                                         @foreach($accounts as $account)
                                             <option value="{{ $account->id }}" {{ old('account_id', $fund->account_id) == $account->id ? 'selected' : '' }}>
-                                                {{ $account->account_number }} - {{ $account->account_name }}
+                                                {{ $account->code }} - {{ $account->name }}
                                             </option>
                                         @endforeach
                                     </select>

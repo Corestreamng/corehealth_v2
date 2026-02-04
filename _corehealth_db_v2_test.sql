@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 04, 2026 at 09:54 AM
+-- Generation Time: Feb 04, 2026 at 10:20 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -180,7 +180,8 @@ INSERT INTO `accounts` (`id`, `account_group_id`, `code`, `name`, `description`,
 (78, 8, '22099', 'phl loan', 'loan', NULL, 0, 1, 0, NULL, '2026-01-30 19:17:00', '2026-01-30 19:17:00', NULL),
 (79, 1, '1031', 'Bank - Zenith bank', 'GL Account for Zenith bank (2250445688)', 1, 0, 1, 1, NULL, '2026-01-31 23:24:41', '2026-01-31 23:24:41', NULL),
 (80, 17, '6900', 'Loss on Disposal of Assets', 'Losses realized from disposal of fixed assets below book value', NULL, 0, 1, 0, NULL, '2026-02-03 08:50:31', '2026-02-03 08:50:31', NULL),
-(81, 4, '1460', 'Other Fixed Assets', 'General fixed assets not classified elsewhere', NULL, 0, 1, 0, NULL, '2026-02-04 06:30:08', '2026-02-04 06:30:08', NULL);
+(81, 4, '1460', 'Other Fixed Assets', 'General fixed assets not classified elsewhere', NULL, 0, 1, 0, NULL, '2026-02-04 06:30:08', '2026-02-04 06:30:08', NULL),
+(82, 17, '6270', 'Cash Over/Short', 'Petty cash variances from reconciliation', NULL, 0, 1, 0, NULL, '2026-02-04 19:37:59', '2026-02-04 19:37:59', NULL);
 
 -- --------------------------------------------------------
 
@@ -745,7 +746,27 @@ INSERT INTO `audits` (`id`, `user_type`, `user_id`, `event`, `auditable_type`, `
 (237, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 124, '[]', '{\"journal_entry_id\":66,\"line_number\":1,\"account_id\":32,\"debit\":77181.82,\"credit\":0,\"narration\":\"Principal repayment - Payment #1\",\"id\":124}', 'http://localhost:8000/accounting/liabilities/1/payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 07:48:23', '2026-02-04 07:48:23'),
 (238, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 125, '[]', '{\"journal_entry_id\":66,\"line_number\":2,\"account_id\":74,\"debit\":14498.169999999998,\"credit\":0,\"narration\":\"Interest expense - Payment #1\",\"id\":125}', 'http://localhost:8000/accounting/liabilities/1/payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 07:48:23', '2026-02-04 07:48:23'),
 (239, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 126, '[]', '{\"journal_entry_id\":66,\"line_number\":3,\"account_id\":74,\"debit\":600,\"credit\":0,\"narration\":\"Late fee - Payment #1\",\"id\":126}', 'http://localhost:8000/accounting/liabilities/1/payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 07:48:23', '2026-02-04 07:48:23'),
-(240, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 127, '[]', '{\"journal_entry_id\":66,\"line_number\":4,\"account_id\":79,\"debit\":0,\"credit\":92279.99,\"narration\":\"Payment to Zenith bank\",\"id\":127}', 'http://localhost:8000/accounting/liabilities/1/payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 07:48:23', '2026-02-04 07:48:23');
+(240, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 127, '[]', '{\"journal_entry_id\":66,\"line_number\":4,\"account_id\":79,\"debit\":0,\"credit\":92279.99,\"narration\":\"Payment to Zenith bank\",\"id\":127}', 'http://localhost:8000/accounting/liabilities/1/payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 07:48:23', '2026-02-04 07:48:23'),
+(241, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntry', 73, '[]', '{\"entry_number\":\"JE-202602-0053\",\"accounting_period_id\":1,\"entry_date\":\"2026-04-01 00:00:00\",\"reference_type\":\"lease_payment\",\"reference_id\":88,\"description\":\"Lease payment #4 - Office Space - 500 sqm at Victoria Island, Lagos (LSE-2026-TEST001)\",\"entry_type\":\"auto\",\"status\":\"posted\",\"posted_at\":\"2026-02-04 12:24:06\",\"created_by\":1,\"id\":73}', 'http://localhost:8000/accounting/leases/3/payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 11:24:07', '2026-02-04 11:24:07'),
+(242, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 143, '[]', '{\"journal_entry_id\":73,\"line_number\":1,\"account_id\":33,\"debit\":1480983.84,\"credit\":0,\"narration\":\"Principal repayment - Payment #4\",\"id\":143}', 'http://localhost:8000/accounting/leases/3/payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 11:24:07', '2026-02-04 11:24:07'),
+(243, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 144, '[]', '{\"journal_entry_id\":73,\"line_number\":2,\"account_id\":74,\"debit\":1019016.16,\"credit\":0,\"narration\":\"Interest expense - Payment #4\",\"id\":144}', 'http://localhost:8000/accounting/leases/3/payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 11:24:07', '2026-02-04 11:24:07'),
+(244, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 145, '[]', '{\"journal_entry_id\":73,\"line_number\":3,\"account_id\":79,\"debit\":0,\"credit\":2400000,\"narration\":\"Lease payment to Premium Properties Ltd\",\"id\":145}', 'http://localhost:8000/accounting/leases/3/payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 11:24:07', '2026-02-04 11:24:07'),
+(245, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntry', 74, '[]', '{\"entry_number\":\"JE-202602-0054\",\"accounting_period_id\":1,\"entry_date\":\"2026-05-01 00:00:00\",\"reference_type\":\"lease_payment\",\"reference_id\":89,\"description\":\"Lease payment #5 - Office Space - 500 sqm at Victoria Island, Lagos (LSE-2026-TEST001)\",\"entry_type\":\"auto\",\"status\":\"posted\",\"posted_at\":\"2026-02-04 12:28:53\",\"created_by\":1,\"id\":74}', 'http://localhost:8000/accounting/leases/3/payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 11:28:53', '2026-02-04 11:28:53'),
+(246, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 146, '[]', '{\"journal_entry_id\":74,\"line_number\":1,\"account_id\":33,\"debit\":1503198.6,\"credit\":0,\"narration\":\"Principal repayment - Payment #5\",\"id\":146}', 'http://localhost:8000/accounting/leases/3/payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 11:28:53', '2026-02-04 11:28:53'),
+(247, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 147, '[]', '{\"journal_entry_id\":74,\"line_number\":2,\"account_id\":74,\"debit\":996801.4,\"credit\":0,\"narration\":\"Interest expense - Payment #5\",\"id\":147}', 'http://localhost:8000/accounting/leases/3/payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 11:28:53', '2026-02-04 11:28:53'),
+(248, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 148, '[]', '{\"journal_entry_id\":74,\"line_number\":3,\"account_id\":79,\"debit\":0,\"credit\":2200000,\"narration\":\"Lease payment to Premium Properties Ltd\",\"id\":148}', 'http://localhost:8000/accounting/leases/3/payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 11:28:53', '2026-02-04 11:28:53'),
+(249, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntry', 75, '[]', '{\"entry_number\":\"JE-202602-0055\",\"entry_date\":\"2026-02-04 00:00:00\",\"accounting_period_id\":2,\"description\":\"Petty Cash Replenishment: PCV-NUPC-2026-00002 - Replenishment of petty cash fund\",\"reference_type\":\"App\\\\Models\\\\Accounting\\\\PettyCashTransaction\",\"reference_id\":2,\"entry_type\":\"auto\",\"status\":\"draft\",\"created_by\":1,\"id\":75}', 'http://localhost:8000/accounting/petty-cash/transactions/2/disburse', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 18:08:17', '2026-02-04 18:08:17'),
+(250, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 149, '[]', '{\"journal_entry_id\":75,\"line_number\":1,\"account_id\":4,\"sub_account_id\":null,\"narration\":\"Petty Cash Replenishment\",\"debit\":180000,\"credit\":0,\"cash_flow_category\":\"operating\",\"product_id\":null,\"service_id\":null,\"product_category_id\":null,\"service_category_id\":null,\"hmo_id\":null,\"supplier_id\":null,\"patient_id\":null,\"department_id\":null,\"category\":\"petty_cash_replenishment\",\"id\":149}', 'http://localhost:8000/accounting/petty-cash/transactions/2/disburse', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 18:08:17', '2026-02-04 18:08:17'),
+(251, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 150, '[]', '{\"journal_entry_id\":75,\"line_number\":2,\"account_id\":79,\"sub_account_id\":null,\"narration\":\"Replenishment to Petty Cash Fund from Zenith bank\",\"debit\":0,\"credit\":180000,\"cash_flow_category\":\"operating\",\"product_id\":null,\"service_id\":null,\"product_category_id\":null,\"service_category_id\":null,\"hmo_id\":null,\"supplier_id\":null,\"patient_id\":null,\"department_id\":null,\"category\":\"petty_cash_replenishment\",\"id\":150}', 'http://localhost:8000/accounting/petty-cash/transactions/2/disburse', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 18:08:17', '2026-02-04 18:08:17'),
+(252, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\JournalEntry', 75, '{\"status\":\"draft\",\"posted_by\":null,\"posted_at\":null}', '{\"status\":\"posted\",\"posted_by\":1,\"posted_at\":\"2026-02-04 19:08:17\"}', 'http://localhost:8000/accounting/petty-cash/transactions/2/disburse', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 18:08:17', '2026-02-04 18:08:17'),
+(253, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntry', 76, '[]', '{\"entry_number\":\"JE-202602-0056\",\"entry_date\":\"2026-02-04 00:00:00\",\"accounting_period_id\":2,\"description\":\"Petty Cash Disbursement: PCV-NUPC-2026-00004 - gadagahda\",\"reference_type\":\"App\\\\Models\\\\Accounting\\\\PettyCashTransaction\",\"reference_id\":4,\"entry_type\":\"auto\",\"status\":\"draft\",\"created_by\":1,\"id\":76}', 'http://localhost:8000/accounting/petty-cash/transactions/4/disburse', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 18:23:39', '2026-02-04 18:23:39'),
+(254, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 151, '[]', '{\"journal_entry_id\":76,\"line_number\":1,\"account_id\":55,\"sub_account_id\":null,\"narration\":\"Expense: John Doe\",\"debit\":70000,\"credit\":0,\"cash_flow_category\":\"operating\",\"product_id\":null,\"service_id\":null,\"product_category_id\":null,\"service_category_id\":null,\"hmo_id\":null,\"supplier_id\":null,\"patient_id\":null,\"department_id\":null,\"category\":\"travel\",\"id\":151}', 'http://localhost:8000/accounting/petty-cash/transactions/4/disburse', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 18:23:39', '2026-02-04 18:23:39'),
+(255, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 152, '[]', '{\"journal_entry_id\":76,\"line_number\":2,\"account_id\":4,\"sub_account_id\":null,\"narration\":\"Petty Cash Disbursement\",\"debit\":0,\"credit\":70000,\"cash_flow_category\":\"operating\",\"product_id\":null,\"service_id\":null,\"product_category_id\":null,\"service_category_id\":null,\"hmo_id\":null,\"supplier_id\":null,\"patient_id\":null,\"department_id\":null,\"category\":\"petty_cash\",\"id\":152}', 'http://localhost:8000/accounting/petty-cash/transactions/4/disburse', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 18:23:39', '2026-02-04 18:23:39'),
+(256, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\JournalEntry', 76, '{\"status\":\"draft\",\"posted_by\":null,\"posted_at\":null}', '{\"status\":\"posted\",\"posted_by\":1,\"posted_at\":\"2026-02-04 19:23:39\"}', 'http://localhost:8000/accounting/petty-cash/transactions/4/disburse', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 18:23:39', '2026-02-04 18:23:39'),
+(257, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntry', 77, '[]', '{\"entry_number\":\"JE-202602-0057\",\"entry_date\":\"2026-02-04 00:00:00\",\"accounting_period_id\":2,\"description\":\"Petty Cash Shortage Adjustment: PCR-202602-0002 - Physical count \\u20a6100,000.00 vs Book \\u20a6110,000.00\",\"reference_type\":\"App\\\\Models\\\\Accounting\\\\PettyCashReconciliation\",\"reference_id\":2,\"entry_type\":\"auto\",\"status\":\"draft\",\"created_by\":1,\"id\":77}', 'http://localhost:8000/accounting/petty-cash/reconciliations/2/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 20:19:43', '2026-02-04 20:19:43'),
+(258, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 153, '[]', '{\"journal_entry_id\":77,\"line_number\":1,\"account_id\":82,\"sub_account_id\":null,\"narration\":\"Cash Shortage - hhhhhhjk\",\"debit\":10000,\"credit\":0,\"cash_flow_category\":\"operating\",\"product_id\":null,\"service_id\":null,\"product_category_id\":null,\"service_category_id\":null,\"hmo_id\":null,\"supplier_id\":null,\"patient_id\":null,\"department_id\":null,\"category\":\"petty_cash_adjustment\",\"id\":153}', 'http://localhost:8000/accounting/petty-cash/reconciliations/2/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 20:19:43', '2026-02-04 20:19:43'),
+(259, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 154, '[]', '{\"journal_entry_id\":77,\"line_number\":2,\"account_id\":4,\"sub_account_id\":null,\"narration\":\"Petty Cash Adjustment - Shortage\",\"debit\":0,\"credit\":10000,\"cash_flow_category\":\"operating\",\"product_id\":null,\"service_id\":null,\"product_category_id\":null,\"service_category_id\":null,\"hmo_id\":null,\"supplier_id\":null,\"patient_id\":null,\"department_id\":null,\"category\":\"petty_cash_adjustment\",\"id\":154}', 'http://localhost:8000/accounting/petty-cash/reconciliations/2/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 20:19:43', '2026-02-04 20:19:43'),
+(260, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\JournalEntry', 77, '{\"status\":\"draft\",\"posted_by\":null,\"posted_at\":null}', '{\"status\":\"posted\",\"posted_by\":1,\"posted_at\":\"2026-02-04 21:19:43\"}', 'http://localhost:8000/accounting/petty-cash/reconciliations/2/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 20:19:43', '2026-02-04 20:19:43');
 
 -- --------------------------------------------------------
 
@@ -2910,7 +2931,17 @@ INSERT INTO `journal_entries` (`id`, `entry_number`, `accounting_period_id`, `en
 (63, 'JE-202602-0044', 2, '2026-02-04', 'CAPEX Expense: EMR development | Project Code: CAPEX-2026-0001 | Description: TEST: Observer Fix Verification - Technology Category | Amount: ₦2,500.00 | Payment: bank_transfer', 'App\\Models\\CapexProjectExpense', 7, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-02-04 06:25:10', 1, '2026-02-04 06:25:10', '2026-02-04 06:25:10', NULL),
 (64, 'JE-202602-0045', 1, '2026-02-04', 'Disposal of fixed asset: TEST VOID - Office Desk 20260203074929 (BLD-2026-00009) - Scrapped', 'fixed_asset_disposal', 6, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-04 06:41:06', 1, '2026-02-04 06:41:06', '2026-02-04 06:41:06', NULL),
 (65, 'JE-202602-0046', 1, '2026-02-04', 'Loan received from Zenith bank: LIA-2026-00001', 'liability_schedule', 1, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-04 07:25:24', 1, '2026-02-04 07:25:24', '2026-02-04 07:25:24', NULL),
-(66, 'JE-202602-0047', 1, '2026-02-04', 'Loan payment #1 to Zenith bank', 'liability_payment', 1, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-04 07:48:23', 1, '2026-02-04 07:48:23', '2026-02-04 07:48:23', NULL);
+(66, 'JE-202602-0047', 1, '2026-02-04', 'Loan payment #1 to Zenith bank', 'liability_payment', 1, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-04 07:48:23', 1, '2026-02-04 07:48:23', '2026-02-04 07:48:23', NULL),
+(67, 'JE-202602-0048', 1, '2026-02-05', 'IFRS 16 initial recognition - Finance Lease: Office building (LSE-000001)', 'lease', 1, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-04 09:12:48', 1, '2026-02-04 09:12:48', '2026-02-04 09:12:48', NULL),
+(69, 'JE-202602-0049', 1, '2026-01-01', 'IFRS 16 initial recognition - Finance Lease: Office Space - 500 sqm at Victoria Island, Lagos (LSE-2026-TEST001)', 'lease', 3, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-04 09:45:55', 1, '2026-02-04 09:45:55', '2026-02-04 09:45:55', NULL),
+(70, 'JE-202602-0050', 1, '2026-01-01', 'Lease payment #1 - Office Space - 500 sqm at Victoria Island, Lagos (LSE-2026-TEST001)', 'lease_payment', 85, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-04 09:45:55', 1, '2026-02-04 09:45:55', '2026-02-04 09:45:55', NULL),
+(71, 'JE-202602-0051', 1, '2026-02-01', 'Lease payment #2 - Office Space - 500 sqm at Victoria Island, Lagos (LSE-2026-TEST001)', 'lease_payment', 86, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-04 09:45:55', 1, '2026-02-04 09:45:55', '2026-02-04 09:45:55', NULL),
+(72, 'JE-202602-0052', 1, '2026-03-01', 'Lease payment #3 - Office Space - 500 sqm at Victoria Island, Lagos (LSE-2026-TEST001)', 'lease_payment', 87, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-04 09:45:55', 1, '2026-02-04 09:45:55', '2026-02-04 09:45:55', NULL),
+(73, 'JE-202602-0053', 1, '2026-04-01', 'Lease payment #4 - Office Space - 500 sqm at Victoria Island, Lagos (LSE-2026-TEST001)', 'lease_payment', 88, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-04 11:24:06', 1, '2026-02-04 11:24:06', '2026-02-04 11:24:06', NULL),
+(74, 'JE-202602-0054', 1, '2026-05-01', 'Lease payment #5 - Office Space - 500 sqm at Victoria Island, Lagos (LSE-2026-TEST001)', 'lease_payment', 89, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-04 11:28:53', 1, '2026-02-04 11:28:53', '2026-02-04 11:28:53', NULL),
+(75, 'JE-202602-0055', 2, '2026-02-04', 'Petty Cash Replenishment: PCV-NUPC-2026-00002 - Replenishment of petty cash fund', 'App\\Models\\Accounting\\PettyCashTransaction', 2, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-02-04 18:08:17', 1, '2026-02-04 18:08:16', '2026-02-04 18:08:17', NULL),
+(76, 'JE-202602-0056', 2, '2026-02-04', 'Petty Cash Disbursement: PCV-NUPC-2026-00004 - gadagahda', 'App\\Models\\Accounting\\PettyCashTransaction', 4, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-02-04 18:23:39', 1, '2026-02-04 18:23:39', '2026-02-04 18:23:39', NULL),
+(77, 'JE-202602-0057', 2, '2026-02-04', 'Petty Cash Shortage Adjustment: PCR-202602-0002 - Physical count ₦100,000.00 vs Book ₦110,000.00', 'App\\Models\\Accounting\\PettyCashReconciliation', 2, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-02-04 20:19:43', 1, '2026-02-04 20:19:43', '2026-02-04 20:19:43', NULL);
 
 -- --------------------------------------------------------
 
@@ -3074,7 +3105,32 @@ INSERT INTO `journal_entry_lines` (`id`, `journal_entry_id`, `line_number`, `acc
 (124, 66, 1, 32, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 77181.82, 0.00, 'Principal repayment - Payment #1', NULL, '2026-02-04 07:48:23', '2026-02-04 07:48:23'),
 (125, 66, 2, 74, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 14498.17, 0.00, 'Interest expense - Payment #1', NULL, '2026-02-04 07:48:23', '2026-02-04 07:48:23'),
 (126, 66, 3, 74, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 600.00, 0.00, 'Late fee - Payment #1', NULL, '2026-02-04 07:48:23', '2026-02-04 07:48:23'),
-(127, 66, 4, 79, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 92279.99, 'Payment to Zenith bank', NULL, '2026-02-04 07:48:23', '2026-02-04 07:48:23');
+(127, 66, 4, 79, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 92279.99, 'Payment to Zenith bank', NULL, '2026-02-04 07:48:23', '2026-02-04 07:48:23'),
+(128, 67, 1, 79, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 235490.17, 0.00, 'Right-of-Use Asset: Office building', NULL, '2026-02-04 09:12:48', '2026-02-04 09:12:48'),
+(129, 67, 2, 32, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 227490.17, 'Lease liability: Office building', NULL, '2026-02-04 09:12:48', '2026-02-04 09:12:48'),
+(132, 69, 1, 81, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 72747332.28, 0.00, 'Right-of-Use Asset: Office Space - 500 sqm at Victoria Island, Lagos', NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(133, 69, 2, 33, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 72247332.28, 'Lease liability: Office Space - 500 sqm at Victoria Island, Lagos', NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(134, 70, 1, 33, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1416290.02, 0.00, 'Principal repayment - Payment #1', NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(135, 70, 2, 74, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1083709.98, 0.00, 'Interest expense - Payment #1', NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(136, 70, 3, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 2500000.00, 'Lease payment to Premium Properties Ltd', NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(137, 71, 1, 33, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1437534.37, 0.00, 'Principal repayment - Payment #2', NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(138, 71, 2, 74, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1062465.63, 0.00, 'Interest expense - Payment #2', NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(139, 71, 3, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 2500000.00, 'Lease payment to Premium Properties Ltd', NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(140, 72, 1, 33, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1459097.38, 0.00, 'Principal repayment - Payment #3', NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(141, 72, 2, 74, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1040902.62, 0.00, 'Interest expense - Payment #3', NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(142, 72, 3, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 2500000.00, 'Lease payment to Premium Properties Ltd', NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(143, 73, 1, 33, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1480983.84, 0.00, 'Principal repayment - Payment #4', NULL, '2026-02-04 11:24:07', '2026-02-04 11:24:07'),
+(144, 73, 2, 74, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1019016.16, 0.00, 'Interest expense - Payment #4', NULL, '2026-02-04 11:24:07', '2026-02-04 11:24:07'),
+(145, 73, 3, 79, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 2400000.00, 'Lease payment to Premium Properties Ltd', NULL, '2026-02-04 11:24:07', '2026-02-04 11:24:07'),
+(146, 74, 1, 33, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1503198.60, 0.00, 'Principal repayment - Payment #5', NULL, '2026-02-04 11:28:53', '2026-02-04 11:28:53'),
+(147, 74, 2, 74, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 996801.40, 0.00, 'Interest expense - Payment #5', NULL, '2026-02-04 11:28:53', '2026-02-04 11:28:53'),
+(148, 74, 3, 79, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 2200000.00, 'Lease payment to Premium Properties Ltd', NULL, '2026-02-04 11:28:53', '2026-02-04 11:28:53'),
+(149, 75, 1, 4, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'petty_cash_replenishment', 180000.00, 0.00, 'Petty Cash Replenishment', 'operating', '2026-02-04 18:08:17', '2026-02-04 18:08:17'),
+(150, 75, 2, 79, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'petty_cash_replenishment', 0.00, 180000.00, 'Replenishment to Petty Cash Fund from Zenith bank', 'operating', '2026-02-04 18:08:17', '2026-02-04 18:08:17'),
+(151, 76, 1, 55, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'travel', 70000.00, 0.00, 'Expense: John Doe', 'operating', '2026-02-04 18:23:39', '2026-02-04 18:23:39'),
+(152, 76, 2, 4, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'petty_cash', 0.00, 70000.00, 'Petty Cash Disbursement', 'operating', '2026-02-04 18:23:39', '2026-02-04 18:23:39'),
+(153, 77, 1, 82, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'petty_cash_adjustment', 10000.00, 0.00, 'Cash Shortage - hhhhhhjk', 'operating', '2026-02-04 20:19:43', '2026-02-04 20:19:43'),
+(154, 77, 2, 4, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'petty_cash_adjustment', 0.00, 10000.00, 'Petty Cash Adjustment - Shortage', 'operating', '2026-02-04 20:19:43', '2026-02-04 20:19:43');
 
 -- --------------------------------------------------------
 
@@ -3190,6 +3246,14 @@ CREATE TABLE `leases` (
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `leases`
+--
+
+INSERT INTO `leases` (`id`, `lease_number`, `lease_type`, `leased_item`, `description`, `lessor_id`, `lessor_name`, `lessor_contact`, `rou_asset_account_id`, `lease_liability_account_id`, `depreciation_account_id`, `interest_account_id`, `commencement_date`, `end_date`, `lease_term_months`, `monthly_payment`, `annual_rent_increase_rate`, `incremental_borrowing_rate`, `total_lease_payments`, `initial_rou_asset_value`, `initial_lease_liability`, `current_rou_asset_value`, `accumulated_rou_depreciation`, `current_lease_liability`, `initial_direct_costs`, `lease_incentives_received`, `has_purchase_option`, `purchase_option_amount`, `purchase_option_reasonably_certain`, `has_termination_option`, `earliest_termination_date`, `termination_penalty`, `residual_value_guarantee`, `asset_location`, `department_id`, `status`, `notes`, `created_by`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'LSE-000001', 'finance', 'Office building', 'an ofice building', 1, NULL, NULL, 79, 32, 53, 53, '2026-02-05', '2027-02-05', 12, 20000.00, 3.00, 10.0000, 240000.00, 235490.17, 227490.17, 215865.99, 19624.18, 227490.17, 10000.00, 2000.00, 1, 300000.00, 1, 1, '2027-02-05', 20000.00, 10000.00, NULL, 14, 'active', 'test', 1, '2026-02-04 08:43:15', '2026-02-04 10:35:14', NULL),
+(3, 'LSE-2026-TEST001', 'finance', 'Office Space - 500 sqm at Victoria Island, Lagos', 'Head office premises lease at Victoria Island, Lagos. 500 square meters of prime office space.', NULL, 'Premium Properties Ltd', '+234 802 123 4567', 81, 33, 72, 74, '2026-01-01', '2028-12-31', 36, 2500000.00, 5.00, 18.0000, 94575000.00, 72747332.28, 72247332.28, 62643536.13, 12124555.38, 64950228.07, 500000.00, 0.00, 0, NULL, 0, 0, NULL, NULL, 0.00, 'Victoria Island, Lagos', 37, 'active', 'Test lease for IFRS 16 demonstration - CoreHealth Head Office', 1, '2026-02-04 09:45:55', '2026-02-04 11:28:53', NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -3246,6 +3310,60 @@ CREATE TABLE `lease_payment_schedules` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `lease_payment_schedules`
+--
+
+INSERT INTO `lease_payment_schedules` (`id`, `lease_id`, `journal_entry_id`, `payment_number`, `due_date`, `payment_date`, `payment_amount`, `principal_portion`, `interest_portion`, `actual_payment`, `opening_liability`, `closing_liability`, `rou_depreciation`, `opening_rou_value`, `closing_rou_value`, `status`, `payment_reference`, `notes`, `created_at`, `updated_at`) VALUES
+(1, 1, NULL, 1, '2026-02-05', NULL, 20000.00, 18104.25, 1895.75, NULL, 227490.17, 209385.92, 19624.18, 235490.17, 215865.99, 'scheduled', NULL, NULL, '2026-02-04 08:43:15', '2026-02-04 08:43:15'),
+(2, 1, NULL, 2, '2026-03-05', NULL, 20000.00, 18255.12, 1744.88, NULL, 209385.92, 191130.80, 19624.18, 215865.99, 196241.81, 'scheduled', NULL, NULL, '2026-02-04 08:43:15', '2026-02-04 08:43:15'),
+(3, 1, NULL, 3, '2026-04-05', NULL, 20000.00, 18407.24, 1592.76, NULL, 191130.80, 172723.56, 19624.18, 196241.81, 176617.63, 'scheduled', NULL, NULL, '2026-02-04 08:43:15', '2026-02-04 08:43:15'),
+(4, 1, NULL, 4, '2026-05-05', NULL, 20000.00, 18560.64, 1439.36, NULL, 172723.56, 154162.92, 19624.18, 176617.63, 156993.45, 'scheduled', NULL, NULL, '2026-02-04 08:43:15', '2026-02-04 08:43:15'),
+(5, 1, NULL, 5, '2026-06-05', NULL, 20000.00, 18715.31, 1284.69, NULL, 154162.92, 135447.61, 19624.18, 156993.45, 137369.26, 'scheduled', NULL, NULL, '2026-02-04 08:43:15', '2026-02-04 08:43:15'),
+(6, 1, NULL, 6, '2026-07-05', NULL, 20000.00, 18871.27, 1128.73, NULL, 135447.61, 116576.34, 19624.18, 137369.26, 117745.08, 'scheduled', NULL, NULL, '2026-02-04 08:43:15', '2026-02-04 08:43:15'),
+(7, 1, NULL, 7, '2026-08-05', NULL, 20000.00, 19028.53, 971.47, NULL, 116576.34, 97547.81, 19624.18, 117745.08, 98120.90, 'scheduled', NULL, NULL, '2026-02-04 08:43:15', '2026-02-04 08:43:15'),
+(8, 1, NULL, 8, '2026-09-05', NULL, 20000.00, 19187.10, 812.90, NULL, 97547.81, 78360.71, 19624.18, 98120.90, 78496.72, 'scheduled', NULL, NULL, '2026-02-04 08:43:15', '2026-02-04 08:43:15'),
+(9, 1, NULL, 9, '2026-10-05', NULL, 20000.00, 19346.99, 653.01, NULL, 78360.71, 59013.72, 19624.18, 78496.72, 58872.54, 'scheduled', NULL, NULL, '2026-02-04 08:43:15', '2026-02-04 08:43:15'),
+(10, 1, NULL, 10, '2026-11-05', NULL, 20000.00, 19508.22, 491.78, NULL, 59013.72, 39505.50, 19624.18, 58872.54, 39248.36, 'scheduled', NULL, NULL, '2026-02-04 08:43:15', '2026-02-04 08:43:15'),
+(11, 1, NULL, 11, '2026-12-05', NULL, 20000.00, 19670.79, 329.21, NULL, 39505.50, 19834.71, 19624.18, 39248.36, 19624.18, 'scheduled', NULL, NULL, '2026-02-04 08:43:15', '2026-02-04 08:43:15'),
+(12, 1, NULL, 12, '2027-01-05', NULL, 20000.00, 19834.71, 165.29, NULL, 19834.71, 0.00, 19624.18, 19624.18, 0.00, 'scheduled', NULL, NULL, '2026-02-04 08:43:15', '2026-02-04 08:43:15'),
+(85, 3, 70, 1, '2026-01-01', '2026-01-01', 2500000.00, 1416290.02, 1083709.98, 2500000.00, 72247332.28, 70831042.26, 2020759.23, 72747332.28, 70726573.05, 'scheduled', 'TRF-20260101-001', NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(86, 3, 71, 2, '2026-02-01', '2026-02-01', 2500000.00, 1437534.37, 1062465.63, 2500000.00, 70831042.26, 69393507.89, 2020759.23, 70726573.05, 68705813.82, 'scheduled', 'TRF-20260201-001', NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(87, 3, 72, 3, '2026-03-01', '2026-03-01', 2500000.00, 1459097.38, 1040902.62, 2500000.00, 69393507.89, 67934410.51, 2020759.23, 68705813.82, 66685054.59, 'scheduled', 'TRF-20260301-001', NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(88, 3, 73, 4, '2026-04-01', '2026-04-01', 2500000.00, 1480983.84, 1019016.16, 2400000.00, 67934410.51, 66453426.67, 2020759.23, 66685054.59, 64664295.36, 'paid', '6627', NULL, '2026-02-04 09:45:55', '2026-02-04 11:24:06'),
+(89, 3, 74, 5, '2026-05-01', '2026-05-01', 2500000.00, 1503198.60, 996801.40, 2200000.00, 66453426.67, 64950228.07, 2020759.23, 64664295.36, 62643536.13, 'paid', 'sgdah', NULL, '2026-02-04 09:45:55', '2026-02-04 11:28:53'),
+(90, 3, NULL, 6, '2026-06-01', NULL, 2500000.00, 1525746.58, 974253.42, NULL, 64950228.07, 63424481.49, 2020759.23, 62643536.13, 60622776.90, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(91, 3, NULL, 7, '2026-07-01', NULL, 2500000.00, 1548632.78, 951367.22, NULL, 63424481.49, 61875848.71, 2020759.23, 60622776.90, 58602017.67, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(92, 3, NULL, 8, '2026-08-01', NULL, 2500000.00, 1571862.27, 928137.73, NULL, 61875848.71, 60303986.44, 2020759.23, 58602017.67, 56581258.44, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(93, 3, NULL, 9, '2026-09-01', NULL, 2500000.00, 1595440.20, 904559.80, NULL, 60303986.44, 58708546.24, 2020759.23, 56581258.44, 54560499.21, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(94, 3, NULL, 10, '2026-10-01', NULL, 2500000.00, 1619371.81, 880628.19, NULL, 58708546.24, 57089174.43, 2020759.23, 54560499.21, 52539739.98, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(95, 3, NULL, 11, '2026-11-01', NULL, 2500000.00, 1643662.38, 856337.62, NULL, 57089174.43, 55445512.05, 2020759.23, 52539739.98, 50518980.75, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(96, 3, NULL, 12, '2026-12-01', NULL, 2500000.00, 1668317.32, 831682.68, NULL, 55445512.05, 53777194.73, 2020759.23, 50518980.75, 48498221.52, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(97, 3, NULL, 13, '2027-01-01', NULL, 2625000.00, 1818342.08, 806657.92, NULL, 53777194.73, 51958852.65, 2020759.23, 48498221.52, 46477462.29, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(98, 3, NULL, 14, '2027-02-01', NULL, 2625000.00, 1845617.21, 779382.79, NULL, 51958852.65, 50113235.44, 2020759.23, 46477462.29, 44456703.06, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(99, 3, NULL, 15, '2027-03-01', NULL, 2625000.00, 1873301.47, 751698.53, NULL, 50113235.44, 48239933.97, 2020759.23, 44456703.06, 42435943.83, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(100, 3, NULL, 16, '2027-04-01', NULL, 2625000.00, 1901400.99, 723599.01, NULL, 48239933.97, 46338532.98, 2020759.23, 42435943.83, 40415184.60, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(101, 3, NULL, 17, '2027-05-01', NULL, 2625000.00, 1929922.01, 695077.99, NULL, 46338532.98, 44408610.97, 2020759.23, 40415184.60, 38394425.37, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(102, 3, NULL, 18, '2027-06-01', NULL, 2625000.00, 1958870.84, 666129.16, NULL, 44408610.97, 42449740.13, 2020759.23, 38394425.37, 36373666.14, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(103, 3, NULL, 19, '2027-07-01', NULL, 2625000.00, 1988253.90, 636746.10, NULL, 42449740.13, 40461486.23, 2020759.23, 36373666.14, 34352906.91, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(104, 3, NULL, 20, '2027-08-01', NULL, 2625000.00, 2018077.71, 606922.29, NULL, 40461486.23, 38443408.52, 2020759.23, 34352906.91, 32332147.68, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(105, 3, NULL, 21, '2027-09-01', NULL, 2625000.00, 2048348.87, 576651.13, NULL, 38443408.52, 36395059.65, 2020759.23, 32332147.68, 30311388.45, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(106, 3, NULL, 22, '2027-10-01', NULL, 2625000.00, 2079074.11, 545925.89, NULL, 36395059.65, 34315985.54, 2020759.23, 30311388.45, 28290629.22, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(107, 3, NULL, 23, '2027-11-01', NULL, 2625000.00, 2110260.22, 514739.78, NULL, 34315985.54, 32205725.32, 2020759.23, 28290629.22, 26269869.99, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(108, 3, NULL, 24, '2027-12-01', NULL, 2625000.00, 2141914.12, 483085.88, NULL, 32205725.32, 30063811.20, 2020759.23, 26269869.99, 24249110.76, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(109, 3, NULL, 25, '2028-01-01', NULL, 2756250.00, 2305292.83, 450957.17, NULL, 30063811.20, 27758518.37, 2020759.23, 24249110.76, 22228351.53, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(110, 3, NULL, 26, '2028-02-01', NULL, 2756250.00, 2339872.22, 416377.78, NULL, 27758518.37, 25418646.15, 2020759.23, 22228351.53, 20207592.30, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(111, 3, NULL, 27, '2028-03-01', NULL, 2756250.00, 2374970.31, 381279.69, NULL, 25418646.15, 23043675.84, 2020759.23, 20207592.30, 18186833.07, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(112, 3, NULL, 28, '2028-04-01', NULL, 2756250.00, 2410594.86, 345655.14, NULL, 23043675.84, 20633080.98, 2020759.23, 18186833.07, 16166073.84, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(113, 3, NULL, 29, '2028-05-01', NULL, 2756250.00, 2446753.79, 309496.21, NULL, 20633080.98, 18186327.19, 2020759.23, 16166073.84, 14145314.61, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(114, 3, NULL, 30, '2028-06-01', NULL, 2756250.00, 2483455.09, 272794.91, NULL, 18186327.19, 15702872.10, 2020759.23, 14145314.61, 12124555.38, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(115, 3, NULL, 31, '2028-07-01', NULL, 2756250.00, 2520706.92, 235543.08, NULL, 15702872.10, 13182165.18, 2020759.23, 12124555.38, 10103796.15, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(116, 3, NULL, 32, '2028-08-01', NULL, 2756250.00, 2558517.52, 197732.48, NULL, 13182165.18, 10623647.66, 2020759.23, 10103796.15, 8083036.92, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(117, 3, NULL, 33, '2028-09-01', NULL, 2756250.00, 2596895.29, 159354.71, NULL, 10623647.66, 8026752.37, 2020759.23, 8083036.92, 6062277.69, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(118, 3, NULL, 34, '2028-10-01', NULL, 2756250.00, 2635848.71, 120401.29, NULL, 8026752.37, 5390903.66, 2020759.23, 6062277.69, 4041518.46, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(119, 3, NULL, 35, '2028-11-01', NULL, 2756250.00, 2675386.45, 80863.55, NULL, 5390903.66, 2715517.21, 2020759.23, 4041518.46, 2020759.23, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55'),
+(120, 3, NULL, 36, '2028-12-01', NULL, 2756250.00, 2715517.24, 40732.76, NULL, 2715517.21, 0.00, 2020759.23, 2020759.23, 0.00, 'scheduled', NULL, NULL, '2026-02-04 09:45:55', '2026-02-04 09:45:55');
 
 -- --------------------------------------------------------
 
@@ -3763,7 +3881,8 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (250, '2026_02_03_225658_add_missing_capex_tables_and_columns', 121),
 (251, '2026_02_03_231409_drop_capex_views', 122),
 (252, '2026_02_04_000008_add_payment_fields_to_capex_project_expenses', 123),
-(253, '2026_02_04_100001_add_journal_entry_to_liability_schedules', 124);
+(253, '2026_02_04_100001_add_journal_entry_to_liability_schedules', 124),
+(254, '2026_02_04_204436_add_approval_status_to_petty_cash_reconciliations_table', 125);
 
 -- --------------------------------------------------------
 
@@ -61802,6 +61921,13 @@ CREATE TABLE `petty_cash_funds` (
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `petty_cash_funds`
+--
+
+INSERT INTO `petty_cash_funds` (`id`, `fund_name`, `fund_code`, `account_id`, `custodian_user_id`, `department_id`, `fund_limit`, `transaction_limit`, `current_balance`, `requires_approval`, `approval_threshold`, `status`, `notes`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'Nursing unit petty cash', 'NUPC', 4, 1, 8, 1000000.00, 160000.00, 100000.00, 1, 600.00, 'active', 'test fund up', '2026-02-04 11:55:03', '2026-02-04 20:19:43', NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -61820,14 +61946,24 @@ CREATE TABLE `petty_cash_reconciliations` (
   `outstanding_vouchers` decimal(15,2) NOT NULL DEFAULT 0.00,
   `outstanding_voucher_ids` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`outstanding_voucher_ids`)),
   `status` enum('balanced','shortage','overage','pending') NOT NULL DEFAULT 'pending',
+  `approval_status` enum('pending_approval','approved','rejected') NOT NULL DEFAULT 'pending_approval' COMMENT 'Workflow status for variance approval',
   `adjustment_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
   `notes` text DEFAULT NULL,
+  `rejection_reason` text DEFAULT NULL,
   `reconciled_by` bigint(20) UNSIGNED NOT NULL,
   `reviewed_by` bigint(20) UNSIGNED DEFAULT NULL,
   `reviewed_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `petty_cash_reconciliations`
+--
+
+INSERT INTO `petty_cash_reconciliations` (`id`, `fund_id`, `reconciliation_date`, `reconciliation_number`, `expected_balance`, `actual_cash_count`, `variance`, `denomination_breakdown`, `outstanding_vouchers`, `outstanding_voucher_ids`, `status`, `approval_status`, `adjustment_entry_id`, `notes`, `rejection_reason`, `reconciled_by`, `reviewed_by`, `reviewed_at`, `created_at`, `updated_at`) VALUES
+(1, 1, '2026-02-04', 'PCR-202602-0001', 110000.00, 109000.00, 1000.00, NULL, 0.00, '[]', 'shortage', 'rejected', NULL, 'tetsts', 'ghghg', 1, 1, '2026-02-04 20:12:11', '2026-02-04 19:27:30', '2026-02-04 20:12:11'),
+(2, 1, '2026-02-04', 'PCR-202602-0002', 110000.00, 100000.00, 10000.00, NULL, 0.00, '[]', 'shortage', 'approved', 77, 'hhhhhhjk', NULL, 1, 1, '2026-02-04 20:19:43', '2026-02-04 20:12:50', '2026-02-04 20:19:43');
 
 -- --------------------------------------------------------
 
@@ -61862,6 +61998,16 @@ CREATE TABLE `petty_cash_transactions` (
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `petty_cash_transactions`
+--
+
+INSERT INTO `petty_cash_transactions` (`id`, `fund_id`, `journal_entry_id`, `transaction_type`, `transaction_date`, `voucher_number`, `description`, `amount`, `expense_category`, `expense_account_id`, `requested_by`, `approved_by`, `approved_at`, `receipt_number`, `receipt_attached`, `receipt_path`, `payee_name`, `payee_type`, `payment_method`, `bank_id`, `status`, `rejection_reason`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 1, NULL, 'replenishment', '2026-02-04', 'PCV-NUPC-2026-00001', 'Replenishment of petty cash fund', 100000.00, NULL, NULL, 1, 1, '2026-02-04 17:52:23', NULL, 0, NULL, NULL, NULL, 'bank_transfer', 1, 'rejected', 'ehhgwehwe', '2026-02-04 17:37:30', '2026-02-04 17:52:23', NULL),
+(2, 1, 75, 'replenishment', '2026-02-04', 'PCV-NUPC-2026-00002', 'Replenishment of petty cash fund', 180000.00, NULL, NULL, 1, 1, '2026-02-04 18:00:41', NULL, 0, NULL, NULL, NULL, 'bank_transfer', 1, 'disbursed', NULL, '2026-02-04 18:00:29', '2026-02-04 18:08:16', NULL),
+(3, 1, NULL, 'disbursement', '2026-02-04', 'PCV-NUPC-2026-00003', 'salary advane', 40000.00, 'miscellaneous', 55, 1, 1, '2026-02-04 18:09:53', '3726332', 0, NULL, 'John Doe', NULL, NULL, NULL, 'rejected', 'twtew', '2026-02-04 18:09:36', '2026-02-04 18:09:53', NULL),
+(4, 1, 76, 'disbursement', '2026-02-04', 'PCV-NUPC-2026-00004', 'gadagahda', 70000.00, 'travel', 55, 1, 1, '2026-02-04 18:10:36', '3726332', 0, NULL, 'John Doe', NULL, NULL, NULL, 'disbursed', NULL, '2026-02-04 18:10:25', '2026-02-04 18:23:39', NULL);
 
 -- --------------------------------------------------------
 
@@ -81153,7 +81299,7 @@ ALTER TABLE `accounting_periods`
 -- AUTO_INCREMENT for table `accounts`
 --
 ALTER TABLE `accounts`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=82;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=83;
 
 --
 -- AUTO_INCREMENT for table `account_classes`
@@ -81201,7 +81347,7 @@ ALTER TABLE `application_status`
 -- AUTO_INCREMENT for table `audits`
 --
 ALTER TABLE `audits`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=241;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=261;
 
 --
 -- AUTO_INCREMENT for table `banks`
@@ -81603,7 +81749,7 @@ ALTER TABLE `jobs`
 -- AUTO_INCREMENT for table `journal_entries`
 --
 ALTER TABLE `journal_entries`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=67;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=78;
 
 --
 -- AUTO_INCREMENT for table `journal_entry_edits`
@@ -81615,7 +81761,7 @@ ALTER TABLE `journal_entry_edits`
 -- AUTO_INCREMENT for table `journal_entry_lines`
 --
 ALTER TABLE `journal_entry_lines`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=128;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=155;
 
 --
 -- AUTO_INCREMENT for table `lab_service_requests`
@@ -81633,7 +81779,7 @@ ALTER TABLE `lab_workbench_audit_logs`
 -- AUTO_INCREMENT for table `leases`
 --
 ALTER TABLE `leases`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `lease_modifications`
@@ -81645,7 +81791,7 @@ ALTER TABLE `lease_modifications`
 -- AUTO_INCREMENT for table `lease_payment_schedules`
 --
 ALTER TABLE `lease_payment_schedules`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=121;
 
 --
 -- AUTO_INCREMENT for table `leave_balances`
@@ -81705,7 +81851,7 @@ ALTER TABLE `messages`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=254;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=255;
 
 --
 -- AUTO_INCREMENT for table `misc_bills`
@@ -81819,19 +81965,19 @@ ALTER TABLE `personal_access_tokens`
 -- AUTO_INCREMENT for table `petty_cash_funds`
 --
 ALTER TABLE `petty_cash_funds`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `petty_cash_reconciliations`
 --
 ALTER TABLE `petty_cash_reconciliations`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `petty_cash_transactions`
 --
 ALTER TABLE `petty_cash_transactions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `prices`

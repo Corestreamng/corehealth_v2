@@ -52,9 +52,9 @@
                         <option value="">All Status</option>
                         <option value="pending">Pending</option>
                         <option value="approved">Approved</option>
-                        <option value="completed">Completed</option>
+                        <option value="disbursed">Disbursed</option>
                         <option value="rejected">Rejected</option>
-                        <option value="cancelled">Cancelled</option>
+                        <option value="voided">Voided</option>
                     </select>
                 </div>
                 <div class="col-md-2 mb-2">
@@ -80,13 +80,12 @@
                 <thead class="thead-light">
                     <tr>
                         <th width="100">Date</th>
-                        <th width="120">Reference</th>
-                        <th width="100">Type</th>
+                        <th width="120">Voucher #</th>
+                        <th width="90">Type</th>
                         <th>Description</th>
-                        <th width="120">Expense Account</th>
-                        <th width="120" class="text-right">Amount</th>
-                        <th width="100">Status</th>
-                        <th width="100">Actions</th>
+                        <th width="100" class="text-right">Amount</th>
+                        <th width="80">Status</th>
+                        <th width="120">Actions</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -124,24 +123,13 @@ $(document).ready(function() {
                 data: 'transaction_date_formatted',
                 name: 'transaction_date'
             },
-            { data: 'reference_number', name: 'reference_number' },
+            { data: 'voucher_number', name: 'voucher_number' },
             {
                 data: 'type_badge',
                 name: 'transaction_type',
                 orderable: false
             },
             { data: 'description', name: 'description' },
-            {
-                data: 'expense_account',
-                name: 'expense_account',
-                render: function(data, type, row) {
-                    if (row.expense_account) {
-                        return row.expense_account.account_number || '-';
-                    }
-                    return '-';
-                },
-                orderable: false
-            },
             {
                 data: 'amount_formatted',
                 name: 'amount',
@@ -165,6 +153,13 @@ $(document).ready(function() {
                     actions += '<i class="mdi mdi-eye"></i>';
                     actions += '</button>';
 
+                    // View JE for disbursed items
+                    if (row.journal_entry_id) {
+                        actions += '<a href="' + route('accounting.journal-entries.show', ':id').replace(':id', row.journal_entry_id) + '" class="btn btn-outline-secondary" title="View Journal Entry">';
+                        actions += '<i class="mdi mdi-book-open-variant"></i>';
+                        actions += '</a>';
+                    }
+
                     // Approve/Reject for pending items
                     if (row.status === 'pending') {
                         actions += '<button type="button" class="btn btn-outline-success btn-approve" data-id="' + data + '" title="Approve">';
@@ -172,6 +167,13 @@ $(document).ready(function() {
                         actions += '</button>';
                         actions += '<button type="button" class="btn btn-outline-danger btn-reject" data-id="' + data + '" title="Reject">';
                         actions += '<i class="mdi mdi-close"></i>';
+                        actions += '</button>';
+                    }
+
+                    // Disburse for approved items
+                    if (row.status === 'approved') {
+                        actions += '<button type="button" class="btn btn-outline-primary btn-disburse" data-id="' + data + '" title="Disburse">';
+                        actions += '<i class="mdi mdi-cash-check"></i>';
                         actions += '</button>';
                     }
 
@@ -207,7 +209,7 @@ $(document).ready(function() {
         var id = $(this).data('id');
         if (confirm('Are you sure you want to approve this transaction?')) {
             $.ajax({
-                url: '/accounting/petty-cash/transactions/' + id + '/approve',
+                url: "{{ route('accounting.petty-cash.transactions.approve', ':id') }}".replace(':id', id),
                 type: 'POST',
                 data: { _token: '{{ csrf_token() }}' },
                 success: function(response) {
@@ -215,7 +217,7 @@ $(document).ready(function() {
                     table.draw(false);
                 },
                 error: function(xhr) {
-                    toastr.error('Failed to approve transaction');
+                    toastr.error(xhr.responseJSON?.message || 'Failed to approve transaction');
                 }
             });
         }
@@ -227,15 +229,34 @@ $(document).ready(function() {
         var reason = prompt('Please enter rejection reason:');
         if (reason) {
             $.ajax({
-                url: '/accounting/petty-cash/transactions/' + id + '/reject',
+                url: "{{ route('accounting.petty-cash.transactions.reject', ':id') }}".replace(':id', id),
                 type: 'POST',
-                data: { _token: '{{ csrf_token() }}', reason: reason },
+                data: { _token: '{{ csrf_token() }}', rejection_reason: reason },
                 success: function(response) {
                     toastr.success('Transaction rejected');
                     table.draw(false);
                 },
                 error: function(xhr) {
-                    toastr.error('Failed to reject transaction');
+                    toastr.error(xhr.responseJSON?.message || 'Failed to reject transaction');
+                }
+            });
+        }
+    });
+
+    // Disburse transaction
+    $(document).on('click', '.btn-disburse', function() {
+        var id = $(this).data('id');
+        if (confirm('Are you sure you want to disburse this transaction? This will create journal entries and update the fund balance.')) {
+            $.ajax({
+                url: "{{ route('accounting.petty-cash.transactions.disburse', ':id') }}".replace(':id', id),
+                type: 'POST',
+                data: { _token: '{{ csrf_token() }}' },
+                success: function(response) {
+                    toastr.success('Transaction disbursed successfully');
+                    table.draw(false);
+                },
+                error: function(xhr) {
+                    toastr.error(xhr.responseJSON?.message || 'Failed to disburse transaction');
                 }
             });
         }

@@ -120,9 +120,25 @@ class PettyCashTransaction extends Model
     }
 
     /**
+     * Alias for requester relationship.
+     */
+    public function requestedBy()
+    {
+        return $this->belongsTo(User::class, 'requested_by');
+    }
+
+    /**
      * User who approved this transaction.
      */
     public function approver()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    /**
+     * Alias for approver relationship.
+     */
+    public function approvedBy()
     {
         return $this->belongsTo(User::class, 'approved_by');
     }
