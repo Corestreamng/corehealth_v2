@@ -128,6 +128,10 @@
                 <!-- Category Selection -->
                 <div class="form-card">
                     <h6><i class="mdi mdi-shape mr-2"></i>Category</h6>
+                    <p class="text-muted small mb-3">
+                        <i class="mdi mdi-information-outline mr-1"></i>
+                        Select the category that best describes this capital expenditure. Categories help organize and track spending patterns.
+                    </p>
                     <input type="hidden" name="category" id="categoryInput" value="{{ old('category', $capex->category) }}">
                     <div class="row">
                         @foreach($categories as $key => $label)
@@ -173,12 +177,17 @@
                 <!-- Basic Info -->
                 <div class="form-card">
                     <h6><i class="mdi mdi-information-outline mr-2"></i>Request Details</h6>
+                    <p class="text-muted small mb-3">
+                        <i class="mdi mdi-information-outline mr-1"></i>
+                        Update request information as needed. Ensure all details are accurate before resubmitting for approval.
+                    </p>
                     <div class="row">
                         <div class="col-md-8">
                             <div class="form-group">
                                 <label>Title <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" name="title"
                                        value="{{ old('title', $capex->title) }}" required>
+                                <small class="form-text text-muted">Provide a clear, descriptive title for this capital expenditure</small>
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -192,10 +201,14 @@
                     <div class="form-group">
                         <label>Description</label>
                         <textarea class="form-control" name="description" rows="3">{{ old('description', $capex->description) }}</textarea>
+                        <small class="form-text text-muted">Provide additional details about what will be purchased/constructed and its intended use</small>
                     </div>
                     <div class="form-group">
                         <label>Business Justification <span class="text-danger">*</span></label>
                         <textarea class="form-control" name="justification" rows="4" required>{{ old('justification', $capex->justification) }}</textarea>
+                        <small class="form-text text-muted">
+                            <strong>Required:</strong> Explain why this is needed, expected benefits, ROI, and impact if not approved
+                        </small>
                     </div>
                 </div>
 
@@ -203,12 +216,26 @@
                 <div class="form-card">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h6 class="mb-0"><i class="mdi mdi-format-list-bulleted mr-2"></i>Line Items</h6>
+                    </div>
+                    <p class="text-muted small mb-3">
+                        <i class="mdi mdi-information-outline mr-1"></i>
+                        Break down the expenditure into individual items. Update quantities and costs as needed. Total amount is calculated automatically.
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div></div>
                         <button type="button" class="btn btn-outline-primary btn-sm" id="addItem">
                             <i class="mdi mdi-plus mr-1"></i> Add Item
                         </button>
                     </div>
 
                     <div id="itemsContainer">
+                        <div class="row mb-2">
+                            <div class="col-md-5"><small class="text-muted"><strong>Item Description</strong></small></div>
+                            <div class="col-md-2"><small class="text-muted"><strong>Quantity</strong></small></div>
+                            <div class="col-md-2"><small class="text-muted"><strong>Unit Cost</strong></small></div>
+                            <div class="col-md-2"><small class="text-muted"><strong>Total Amount</strong></small></div>
+                            <div class="col-md-1"></div>
+                        </div>
                         @forelse($items as $index => $item)
                             <div class="item-row">
                                 <div class="row">
@@ -270,6 +297,10 @@
                 <!-- Additional Details -->
                 <div class="form-card">
                     <h6><i class="mdi mdi-cog mr-2"></i>Additional Details</h6>
+                    <p class="text-muted small mb-3">
+                        <i class="mdi mdi-information-outline mr-1"></i>
+                        Optional information for budget tracking, vendor management, and project timeline planning.
+                    </p>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">

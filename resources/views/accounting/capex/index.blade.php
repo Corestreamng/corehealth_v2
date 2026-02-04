@@ -102,6 +102,24 @@
         </div>
     @endif
 
+    <!-- Info Banner -->
+    <div class="alert alert-info alert-dismissible fade show mb-3">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <h6 class="mb-2"><i class="mdi mdi-information-outline mr-2"></i>Capital Expenditure Management</h6>
+        <small>
+            <strong>What is CAPEX?</strong> Capital expenditures are investments in long-term assets (life > 1 year, value > ₦100,000) such as equipment, facilities, technology, and vehicles.
+            <br>
+            <strong>Workflow:</strong>
+            <span class="badge badge-secondary badge-sm">Draft</span> →
+            <span class="badge badge-warning badge-sm">Pending</span> →
+            <span class="badge badge-primary badge-sm">Approved</span> →
+            <span class="badge badge-info badge-sm">In Progress</span> →
+            <span class="badge badge-success badge-sm">Completed</span>
+            <br>
+            <strong>Budget Tracking:</strong> All capex requests are tracked against annual fiscal year budgets by category to ensure spending stays within allocated limits.
+        </small>
+    </div>
+
     <!-- Stats Cards -->
     <div class="row">
         <div class="col-md-3">
@@ -144,6 +162,10 @@
             <h6 class="mb-0"><i class="mdi mdi-chart-bar mr-2"></i>Budget Utilization</h6>
             <span class="text-muted">{{ $stats['utilization'] }}% of Budget Committed</span>
         </div>
+        <p class="text-muted small mb-3">
+            <i class="mdi mdi-information-outline mr-1"></i>
+            Tracks your capital expenditure budget utilization for the current fiscal year. <strong>Committed</strong> = approved requests, <strong>Spent</strong> = actual expenditures, <strong>Remaining</strong> = available budget.
+        </p>
         <div class="utilization-bar">
             @php
                 $util = min($stats['utilization'], 100);
@@ -185,6 +207,10 @@
                         <i class="mdi mdi-plus mr-1"></i> New Request
                     </a>
                 </div>
+                <p class="text-muted small mb-3">
+                    <i class="mdi mdi-information-outline mr-1"></i>
+                    View and manage all capital expenditure requests. Use filters to find specific requests by year, status, category, or priority. Click on any request to view full details.
+                </p>
 
                 <!-- Filters -->
                 <div class="row mb-3">
@@ -271,12 +297,20 @@
             <div class="info-card">
                 <h6><i class="mdi mdi-speedometer mr-2"></i>Quick Stats</h6>
                 <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Total Requests:</span>
+                    <span class="badge badge-secondary">{{ $stats['total_requests'] }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">Pending Approvals:</span>
                     <span class="badge badge-warning">{{ $stats['pending_approvals'] }}</span>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">In Progress:</span>
                     <span class="badge badge-info">{{ $stats['in_progress'] }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Completed:</span>
+                    <span class="badge badge-success">{{ $stats['completed'] }}</span>
                 </div>
                 <div class="d-flex justify-content-between">
                     <span class="text-muted">Fiscal Year:</span>
@@ -307,7 +341,15 @@
 </div>
 @endsection
 
+@push('styles')
+<!-- DataTables CSS -->
+<link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
+@endpush
+
 @push('scripts')
+<!-- DataTables JS -->
+<script src="{{ asset('/plugins/dataT/datatables.min.js') }}"></script>
+<script src="{{ asset('plugins/datatables-bs4/js/dataTables.bootstrap4.min.js') }}"></script>
 <script>
 $(document).ready(function() {
     var table = $('#capexTable').DataTable({
