@@ -70,6 +70,10 @@
             <div class="col-md-6">
                 <h3 class="mb-1">Capex Budget Overview</h3>
                 <div>Fiscal Year: {{ $fiscalYear }}</div>
+                <small class="opacity-75 d-block mt-1">
+                    <i class="mdi mdi-information-outline mr-1"></i>
+                    Manage and monitor capital expenditure budgets by category and cost center
+                </small>
             </div>
             <div class="col-md-6 text-md-right">
                 <select class="form-control d-inline-block w-auto bg-light" id="yearSelect">
@@ -94,18 +98,32 @@
                         <i class="mdi mdi-plus mr-1"></i> Add Budget
                     </button>
                 </div>
+                <p class="text-muted small mb-3">
+                    <i class="mdi mdi-information-outline mr-1"></i>
+                    View and manage budget allocations for capital expenditures. Create separate budgets for different categories or departments. <strong>Committed</strong> represents approved requests, while <strong>Spent</strong> shows actual expenditures.
+                </p>
 
                 @forelse($budgets as $budget)
-                    <div class="budget-item {{ $budget->status }}">
+                    <div class="budget-item">
                         <div class="row align-items-center">
                             <div class="col-md-4">
-                                <strong>{{ $budget->name ?? $budget->category }}</strong>
+                                <strong>{{ $budget->budget_name ?? 'Unnamed Budget' }}</strong>
                                 @if($budget->cost_center_name)
                                     <small class="text-muted d-block">{{ $budget->cost_center_name }}</small>
                                 @endif
-                                <span class="badge badge-{{ $budget->status == 'approved' ? 'success' : 'warning' }} badge-sm">
-                                    {{ ucfirst($budget->status) }}
-                                </span>
+                                @if($budget->status)
+                                    @php
+                                        $statusClass = match($budget->status) {
+                                            'approved', 'active' => 'success',
+                                            'locked' => 'info',
+                                            'draft' => 'warning',
+                                            default => 'secondary'
+                                        };
+                                    @endphp
+                                    <span class="badge badge-{{ $statusClass }} badge-sm">
+                                        {{ ucfirst($budget->status) }}
+                                    </span>
+                                @endif
                             </div>
                             <div class="col-md-4 text-center">
                                 <small class="text-muted">Allocated</small>
@@ -133,19 +151,62 @@
             <!-- Spending by Category Chart -->
             <div class="info-card">
                 <h6><i class="mdi mdi-chart-bar mr-2"></i>Spending by Category</h6>
+                <p class="text-muted small mb-3">
+                    <i class="mdi mdi-information-outline mr-1"></i>
+                    Visual breakdown of capital expenditure spending across different asset categories for the selected fiscal year.
+                </p>
                 <canvas id="categoryChart" height="250"></canvas>
             </div>
         </div>
 
         <!-- Sidebar -->
         <div class="col-lg-4">
+            <!-- CAPEX Requests Summary -->
+            <div class="info-card mb-3">
+                <h6><i class="mdi mdi-file-document-multiple mr-2"></i>CAPEX Requests (FY {{ $fiscalYear }})</h6>
+                <p class="text-muted small mb-3">
+                    <i class="mdi mdi-information-outline mr-1"></i>
+                    Overview of capital expenditure requests and their status for this fiscal year.
+                </p>
+                <div class="row text-center">
+                    <div class="col-6 col-md-3 mb-2">
+                        <div class="h4 mb-0 text-warning">{{ $capexStats->pending ?? 0 }}</div>
+                        <small class="text-muted">Pending</small>
+                    </div>
+                    <div class="col-6 col-md-3 mb-2">
+                        <div class="h4 mb-0 text-success">{{ $capexStats->approved ?? 0 }}</div>
+                        <small class="text-muted">Approved</small>
+                    </div>
+                    <div class="col-6 col-md-3 mb-2">
+                        <div class="h4 mb-0 text-info">{{ $capexStats->in_progress ?? 0 }}</div>
+                        <small class="text-muted">In Progress</small>
+                    </div>
+                    <div class="col-6 col-md-3 mb-2">
+                        <div class="h4 mb-0 text-primary">{{ $capexStats->completed ?? 0 }}</div>
+                        <small class="text-muted">Completed</small>
+                    </div>
+                </div>
+                @if(($capexStats->pending ?? 0) > 0)
+                    <div class="alert alert-warning py-2 px-3 mt-2 mb-0">
+                        <small>
+                            <i class="mdi mdi-alert mr-1"></i>
+                            ₦{{ number_format($capexStats->pending_amount ?? 0, 0) }} in pending requests awaiting approval
+                        </small>
+                    </div>
+                @endif
+                <a href="{{ route('accounting.capex.index', ['fiscal_year' => $fiscalYear]) }}" class="btn btn-outline-primary btn-sm btn-block mt-2">
+                    <i class="mdi mdi-eye mr-1"></i> View All Requests
+                </a>
+            </div>
+
             <!-- Summary -->
             <div class="info-card">
                 <h6><i class="mdi mdi-calculator mr-2"></i>Budget Summary</h6>
+                <p class="text-muted small mb-3">
+                    <i class="mdi mdi-information-outline mr-1"></i>
+                    Overall budget performance metrics showing total allocated budget, committed amounts (approved requests), actual spending, and remaining available budget.
+                </p>
                 @php
-                    $totalBudget = $budgets->where('status', 'approved')->sum('amount');
-                    $totalCommitted = $byCategory->sum('committed');
-                    $totalSpent = $byCategory->sum('spent');
                     $utilization = $totalBudget > 0 ? round(($totalCommitted / $totalBudget) * 100, 1) : 0;
                 @endphp
 
@@ -180,13 +241,17 @@
             <!-- By Category Breakdown -->
             <div class="info-card">
                 <h6><i class="mdi mdi-chart-pie mr-2"></i>By Category</h6>
+                <p class="text-muted small mb-3">
+                    <i class="mdi mdi-information-outline mr-1"></i>
+                    Category-wise breakdown showing committed amounts against allocated budgets.
+                </p>
                 @forelse($byCategory as $cat)
                     @php
-                        $catTotal = $budgets->where('status', 'approved')->where('category', $cat->category)->sum('amount');
-                        $catUtil = $catTotal > 0 ? round(($cat->committed / $catTotal) * 100, 1) : 0;
+                        $catTotal = $cat->committed ?? 0;
+                        $catUtil = $totalCommitted > 0 ? round(($cat->committed / $totalCommitted) * 100, 1) : 0;
                     @endphp
                     <div class="category-bar">
-                        <span style="width: 100px;">{{ ucfirst($cat->category ?? 'Other') }}</span>
+                        <span style="width: 100px;">{{ $categories[$cat->category] ?? ucfirst($cat->category ?? 'Other') }}</span>
                         <div class="progress">
                             <div class="progress-bar bg-info" style="width: {{ min($catUtil, 100) }}%;"></div>
                         </div>
@@ -222,16 +287,30 @@
 <div class="modal fade" id="addBudgetModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form action="{{ route('accounting.capex.budget-overview') }}" method="POST" id="budgetForm">
+            <form action="{{ route('accounting.capex.budget.store') }}" method="POST" id="budgetForm">
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title">Add Capex Budget</h5>
                     <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
+                    @if($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+                    <div class="alert alert-info py-2 px-3 mb-3">
+                        <i class="mdi mdi-information-outline mr-1"></i>
+                        <small>Create a budget allocation for a specific category or cost center. This sets spending limits for capital expenditure requests.</small>
+                    </div>
                     <div class="form-group">
                         <label>Budget Name</label>
                         <input type="text" class="form-control" name="name" placeholder="e.g., IT Equipment Budget">
+                        <small class="form-text text-muted">Optional: Give this budget a descriptive name</small>
                     </div>
                     <div class="row">
                         <div class="col-md-6">
@@ -242,6 +321,7 @@
                                         <option value="{{ $key }}">{{ $label }}</option>
                                     @endforeach
                                 </select>
+                                <small class="form-text text-muted">Select the asset category for this budget</small>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -260,13 +340,17 @@
                             </div>
                             <input type="number" class="form-control" name="amount" step="0.01" min="0" required>
                         </div>
+                        <small class="form-text text-muted">Total budget allocation for this category in the fiscal year</small>
                     </div>
                     <div class="form-group mb-0">
                         <label>Cost Center</label>
                         <select class="form-control" name="cost_center_id">
                             <option value="">-- All Departments --</option>
-                            {{-- Add cost centers dynamically --}}
+                            @foreach($costCenters as $center)
+                                <option value="{{ $center->id }}">{{ $center->name }}</option>
+                            @endforeach
                         </select>
+                        <small class="form-text text-muted">Optional: Assign this budget to a specific department or cost center</small>
                     </div>
                 </div>
                 <div class="modal-footer">

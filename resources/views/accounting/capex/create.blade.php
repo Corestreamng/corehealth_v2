@@ -106,6 +106,10 @@
                 <!-- Category Selection -->
                 <div class="form-card">
                     <h6><i class="mdi mdi-shape mr-2"></i>Category</h6>
+                    <p class="text-muted small mb-3">
+                        <i class="mdi mdi-information-outline mr-1"></i>
+                        Select the category that best describes this capital expenditure. Categories help organize and track spending patterns across different asset types.
+                    </p>
                     <input type="hidden" name="category" id="categoryInput" value="{{ old('category') }}">
                     <div class="row">
                         @foreach($categories as $key => $label)
@@ -151,12 +155,17 @@
                 <!-- Basic Info -->
                 <div class="form-card">
                     <h6><i class="mdi mdi-information-outline mr-2"></i>Request Details</h6>
+                    <p class="text-muted small mb-3">
+                        <i class="mdi mdi-information-outline mr-1"></i>
+                        Provide clear and detailed information about this capital expenditure request. A well-documented request speeds up the approval process.
+                    </p>
                     <div class="row">
                         <div class="col-md-8">
                             <div class="form-group">
                                 <label>Title <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" name="title" value="{{ old('title') }}"
                                        placeholder="e.g., Purchase of Laboratory Equipment" required>
+                                <small class="form-text text-muted">Provide a concise, descriptive title that clearly identifies this capital expenditure</small>
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -167,17 +176,22 @@
                                         <option value="{{ $year }}" {{ old('fiscal_year', date('Y')) == $year ? 'selected' : '' }}>{{ $year }}</option>
                                     @endforeach
                                 </select>
+                                <small class="form-text text-muted">The budget year for this expenditure</small>
                             </div>
                         </div>
                     </div>
                     <div class="form-group">
                         <label>Description</label>
                         <textarea class="form-control" name="description" rows="3" placeholder="Brief description of the capital expenditure...">{{ old('description') }}</textarea>
+                        <small class="form-text text-muted">Provide additional details about what will be purchased/constructed and its intended use</small>
                     </div>
                     <div class="form-group">
                         <label>Business Justification <span class="text-danger">*</span></label>
                         <textarea class="form-control" name="justification" rows="4"
                                   placeholder="Explain why this expenditure is necessary, expected benefits, ROI, etc." required>{{ old('justification') }}</textarea>
+                        <small class="form-text text-muted">
+                            <strong>Required:</strong> Explain the business case including: Why is this needed? What problems does it solve? Expected benefits and ROI? Impact if not approved?
+                        </small>
                     </div>
                 </div>
 
@@ -185,12 +199,26 @@
                 <div class="form-card">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h6 class="mb-0"><i class="mdi mdi-format-list-bulleted mr-2"></i>Line Items</h6>
+                    </div>
+                    <p class="text-muted small mb-3">
+                        <i class="mdi mdi-information-outline mr-1"></i>
+                        Break down the total expenditure into individual items. Specify quantity and unit cost for each item. The system will automatically calculate the total amount.
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div></div>
                         <button type="button" class="btn btn-outline-primary btn-sm" id="addItem">
                             <i class="mdi mdi-plus mr-1"></i> Add Item
                         </button>
                     </div>
 
                     <div id="itemsContainer">
+                        <div class="row mb-2">
+                            <div class="col-md-5"><small class="text-muted"><strong>Item Description</strong></small></div>
+                            <div class="col-md-2"><small class="text-muted"><strong>Quantity</strong></small></div>
+                            <div class="col-md-2"><small class="text-muted"><strong>Unit Cost</strong></small></div>
+                            <div class="col-md-2"><small class="text-muted"><strong>Total Amount</strong></small></div>
+                            <div class="col-md-1"></div>
+                        </div>
                         <div class="item-row">
                             <div class="row">
                                 <div class="col-md-5">
@@ -228,6 +256,10 @@
                 <!-- Additional Details -->
                 <div class="form-card">
                     <h6><i class="mdi mdi-cog mr-2"></i>Additional Details</h6>
+                    <p class="text-muted small mb-3">
+                        <i class="mdi mdi-information-outline mr-1"></i>
+                        Provide optional information to help with budget tracking, vendor management, and project timeline planning.
+                    </p>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
@@ -240,6 +272,7 @@
                                         </option>
                                     @endforeach
                                 </select>
+                                <small class="form-text text-muted">Assign to a department/unit for budget tracking purposes</small>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -253,6 +286,7 @@
                                         </option>
                                     @endforeach
                                 </select>
+                                <small class="form-text text-muted">Suggest a vendor if you have a preferred supplier for this purchase</small>
                             </div>
                         </div>
                     </div>
@@ -261,12 +295,14 @@
                             <div class="form-group">
                                 <label>Expected Start Date</label>
                                 <input type="date" class="form-control" name="expected_start_date" value="{{ old('expected_start_date') }}">
+                                <small class="form-text text-muted">When do you expect to begin this project/purchase?</small>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Expected Completion Date</label>
                                 <input type="date" class="form-control" name="expected_completion_date" value="{{ old('expected_completion_date') }}">
+                                <small class="form-text text-muted">When should this project/purchase be completed?</small>
                             </div>
                         </div>
                     </div>
@@ -285,13 +321,17 @@
                 <!-- Priority -->
                 <div class="form-card">
                     <h6><i class="mdi mdi-flag mr-2"></i>Priority Level</h6>
+                    <p class="text-muted small mb-3">
+                        <i class="mdi mdi-information-outline mr-1"></i>
+                        Indicate the urgency and importance of this request. Higher priority items are reviewed first and may receive expedited approval.
+                    </p>
 
                     <label class="priority-option {{ old('priority') == 'low' ? 'selected' : '' }}">
                         <input type="radio" name="priority" value="low" {{ old('priority') == 'low' ? 'checked' : '' }}>
                         <span class="priority-dot priority-low"></span>
                         <div>
                             <strong>Low</strong>
-                            <small class="text-muted d-block">Can wait, no urgency</small>
+                            <small class="text-muted d-block">Can be deferred if needed, no immediate operational impact</small>
                         </div>
                     </label>
 
@@ -300,7 +340,7 @@
                         <span class="priority-dot priority-medium"></span>
                         <div>
                             <strong>Medium</strong>
-                            <small class="text-muted d-block">Normal priority</small>
+                            <small class="text-muted d-block">Standard processing timeline, should be completed within budget cycle</small>
                         </div>
                     </label>
 
@@ -309,7 +349,7 @@
                         <span class="priority-dot priority-high"></span>
                         <div>
                             <strong>High</strong>
-                            <small class="text-muted d-block">Important, time-sensitive</small>
+                            <small class="text-muted d-block">Time-sensitive with significant operational benefit, needs prompt attention</small>
                         </div>
                     </label>
 
@@ -318,7 +358,7 @@
                         <span class="priority-dot priority-critical"></span>
                         <div>
                             <strong>Critical</strong>
-                            <small class="text-muted d-block">Urgent, affects operations</small>
+                            <small class="text-muted d-block">Urgent - operational necessity, safety concern, or regulatory requirement</small>
                         </div>
                     </label>
                 </div>
@@ -326,6 +366,10 @@
                 <!-- Actions -->
                 <div class="form-card">
                     <h6><i class="mdi mdi-send mr-2"></i>Actions</h6>
+                    <p class="text-muted small mb-3">
+                        <strong>Save as Draft:</strong> Save your progress without submitting for approval<br>
+                        <strong>Save & Submit:</strong> Submit request for management review and approval
+                    </p>
                     <button type="submit" class="btn btn-primary btn-block mb-2">
                         <i class="mdi mdi-content-save mr-1"></i> Save as Draft
                     </button>
@@ -341,12 +385,17 @@
                 <div class="form-card bg-light">
                     <h6><i class="mdi mdi-help-circle mr-2"></i>Capex Guidelines</h6>
                     <small class="text-muted">
-                        <ul class="pl-3 mb-0">
-                            <li>Capital expenditures are for assets with useful life > 1 year</li>
-                            <li>Include detailed justification for approval</li>
-                            <li>All requests above ₦500,000 require management approval</li>
-                            <li>Attach supporting documents when needed</li>
+                        <ul class="pl-3 mb-2">
+                            <li><strong>Definition:</strong> Capital expenditures are for assets with useful life > 1 year and value > ₦100,000</li>
+                            <li><strong>Documentation:</strong> Include detailed business justification explaining ROI and operational benefits</li>
+                            <li><strong>Approval Levels:</strong> Requests above ₦500,000 require senior management approval</li>
+                            <li><strong>Budget Tracking:</strong> All capex is tracked against annual fiscal year budgets by category</li>
+                            <li><strong>Supporting Documents:</strong> Attach vendor quotes, technical specifications, or feasibility studies when available</li>
                         </ul>
+                        <div class="alert alert-info py-2 px-3 mb-0">
+                            <i class="mdi mdi-lightbulb-outline mr-1"></i>
+                            <strong>Tip:</strong> Thoroughly complete all sections to expedite the approval process.
+                        </div>
                     </small>
                 </div>
             </div>

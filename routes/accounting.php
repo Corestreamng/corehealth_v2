@@ -376,6 +376,7 @@ Route::prefix('accounting')->name('accounting.')->middleware(['auth', 'verified'
         Route::get('/create', [CapexController::class, 'create'])->name('create');
         Route::post('/', [CapexController::class, 'store'])->name('store');
         Route::get('/budget-overview', [CapexController::class, 'budgetOverview'])->name('budget-overview');
+        Route::post('/budget', [CapexController::class, 'storeBudget'])->name('budget.store');
         Route::get('/export', [CapexController::class, 'export'])->name('export');
         Route::get('/{capex}', [CapexController::class, 'show'])->name('show');
         Route::get('/{capex}/edit', [CapexController::class, 'edit'])->name('edit');
