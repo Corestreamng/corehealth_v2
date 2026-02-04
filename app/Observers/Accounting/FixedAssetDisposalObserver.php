@@ -116,6 +116,7 @@ class FixedAssetDisposalObserver
                 'reference_type' => 'fixed_asset_disposal',
                 'reference_id' => $disposal->id,
                 'description' => "Disposal of fixed asset: {$asset->name} ({$asset->asset_number}) - " . ucfirst($disposal->disposal_type),
+                'entry_type' => JournalEntry::TYPE_AUTO,
                 'status' => JournalEntry::STATUS_POSTED,
                 'posted_at' => now(),
                 'created_by' => $disposal->approved_by ?? auth()->id() ?? 1,

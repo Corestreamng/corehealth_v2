@@ -105,6 +105,7 @@ class FixedAssetObserver
                 'reference_type' => 'fixed_asset_acquisition',
                 'reference_id' => $asset->id,
                 'description' => "Acquisition of fixed asset: {$asset->name} ({$asset->asset_number})",
+                'entry_type' => JournalEntry::TYPE_AUTO,
                 'status' => JournalEntry::STATUS_POSTED,
                 'posted_at' => now(),
                 'created_by' => $asset->created_by ?? auth()->id() ?? 1,

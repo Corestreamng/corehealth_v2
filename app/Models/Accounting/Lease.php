@@ -150,6 +150,16 @@ class Lease extends Model
         return $this->hasMany(LeaseModification::class, 'lease_id');
     }
 
+    /**
+     * Get all journal entries related to this lease.
+     * Uses polymorphic relationship via reference_type and reference_id.
+     */
+    public function journalEntries()
+    {
+        return $this->hasMany(JournalEntry::class, 'reference_id')
+            ->where('reference_type', 'lease');
+    }
+
     // ==========================================
     // IFRS 16 CALCULATIONS
     // ==========================================

@@ -670,7 +670,7 @@ class KpiController extends Controller
                 'financial_kpis.kpi_code',
                 'financial_kpis.category',
                 'financial_kpis.unit',
-                'users.name as acknowledged_by_name',
+                DB::raw("CONCAT(users.firstname, ' ', users.surname) as acknowledged_by_name"),
             ])
             ->orderBy('financial_kpi_alerts.is_acknowledged')
             ->orderBy('financial_kpi_alerts.created_at', 'desc')
