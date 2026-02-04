@@ -9,11 +9,13 @@ use App\Models\Accounting\Account;
 use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\JournalEntryLine;
 use App\Services\Accounting\AccountingService;
+use App\Services\Accounting\ExcelExportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Yajra\DataTables\Facades\DataTables;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 /**
  * Inter-Account Transfer Controller
@@ -28,10 +30,12 @@ use Yajra\DataTables\Facades\DataTables;
 class TransferController extends Controller
 {
     protected AccountingService $accountingService;
+    protected ExcelExportService $excelService;
 
-    public function __construct(AccountingService $accountingService)
+    public function __construct(AccountingService $accountingService, ExcelExportService $excelService)
     {
         $this->accountingService = $accountingService;
+        $this->excelService = $excelService;
     }
 
     /**
@@ -40,8 +44,19 @@ class TransferController extends Controller
     public function index()
     {
         $stats = $this->getDashboardStats();
+        $banks = Bank::where('is_active', true)->orderBy('name')->get();
 
-        return view('accounting.transfers.index', compact('stats'));
+        // Get unique initiators from transfers
+        $initiatorIds = InterAccountTransfer::distinct()->pluck('initiated_by')->filter();
+        $initiators = \App\Models\User::whereIn('id', $initiatorIds)
+            ->orderBy('surname')
+            ->get(['id', 'surname', 'firstname', 'othername'])
+            ->map(function ($user) {
+                $user->full_name = trim("{$user->surname} {$user->firstname} {$user->othername}");
+                return $user;
+            });
+
+        return view('accounting.transfers.index', compact('stats', 'banks', 'initiators'));
     }
 
     /**
@@ -69,6 +84,18 @@ class TransferController extends Controller
             $query->where('transfer_method', $request->transfer_method);
         }
 
+        if ($request->filled('initiated_by')) {
+            $query->where('initiated_by', $request->initiated_by);
+        }
+
+        if ($request->filled('amount_min')) {
+            $query->where('amount', '>=', $request->amount_min);
+        }
+
+        if ($request->filled('amount_max')) {
+            $query->where('amount', '<=', $request->amount_max);
+        }
+
         if ($request->filled('date_from')) {
             $query->whereDate('transfer_date', '>=', $request->date_from);
         }
@@ -82,6 +109,11 @@ class TransferController extends Controller
             ->addColumn('amount_formatted', fn($t) => '₦' . number_format($t->amount, 2))
             ->addColumn('from_bank_name', fn($t) => $t->fromBank?->bank_name ?? '-')
             ->addColumn('to_bank_name', fn($t) => $t->toBank?->bank_name ?? '-')
+            ->addColumn('bank_flow', function ($t) {
+                $from = $t->fromBank?->bank_name ?? 'N/A';
+                $to = $t->toBank?->bank_name ?? 'N/A';
+                return '<span class="text-danger">' . $from . '</span> <i class="mdi mdi-arrow-right text-muted"></i> <span class="text-success">' . $to . '</span>';
+            })
             ->addColumn('method_badge', function ($t) {
                 $colors = [
                     'internal' => 'info',
@@ -91,8 +123,17 @@ class TransferController extends Controller
                     'rtgs' => 'dark',
                     'neft' => 'secondary',
                 ];
+                $icons = [
+                    'internal' => 'mdi-bank',
+                    'wire' => 'mdi-access-point-network',
+                    'eft' => 'mdi-credit-card-wireless',
+                    'cheque' => 'mdi-checkbook',
+                    'rtgs' => 'mdi-lightning-bolt',
+                    'neft' => 'mdi-swap-horizontal',
+                ];
                 $color = $colors[$t->transfer_method] ?? 'secondary';
-                return '<span class="badge badge-' . $color . '">' . strtoupper($t->transfer_method) . '</span>';
+                $icon = $icons[$t->transfer_method] ?? 'mdi-bank-transfer';
+                return '<span class="badge badge-' . $color . '"><i class="mdi ' . $icon . ' mr-1"></i>' . strtoupper($t->transfer_method) . '</span>';
             })
             ->addColumn('status_badge', function ($t) {
                 $colors = [
@@ -105,11 +146,22 @@ class TransferController extends Controller
                     'failed' => 'danger',
                     'cancelled' => 'dark',
                 ];
+                $icons = [
+                    'draft' => 'mdi-file-document-outline',
+                    'pending_approval' => 'mdi-clock-outline',
+                    'approved' => 'mdi-check',
+                    'initiated' => 'mdi-send',
+                    'in_transit' => 'mdi-truck-delivery',
+                    'cleared' => 'mdi-check-all',
+                    'failed' => 'mdi-alert-circle',
+                    'cancelled' => 'mdi-cancel',
+                ];
                 $color = $colors[$t->status] ?? 'secondary';
+                $icon = $icons[$t->status] ?? 'mdi-help-circle';
                 $label = str_replace('_', ' ', ucwords($t->status, '_'));
-                return '<span class="badge badge-' . $color . '">' . $label . '</span>';
+                return '<span class="badge badge-' . $color . '"><i class="mdi ' . $icon . ' mr-1"></i>' . $label . '</span>';
             })
-            ->addColumn('initiator_name', fn($t) => $t->initiator?->name ?? '-')
+            ->addColumn('initiator_name', fn($t) => $t->initiator ? trim("{$t->initiator->surname} {$t->initiator->firstname}") : '-')
             ->addColumn('actions', function ($t) {
                 $actions = '<div class="btn-group btn-group-sm">';
                 $actions .= '<a href="' . route('accounting.transfers.show', $t->id) . '" class="btn btn-outline-info" title="View"><i class="mdi mdi-eye"></i></a>';
@@ -121,6 +173,7 @@ class TransferController extends Controller
 
                 if (in_array($t->status, ['approved', 'initiated', 'in_transit'])) {
                     $actions .= '<button class="btn btn-outline-success clearance-btn" data-id="' . $t->id . '" title="Confirm Clearance"><i class="mdi mdi-bank-check"></i></button>';
+                    $actions .= '<button class="btn btn-outline-warning mark-failed-btn" data-id="' . $t->id . '" title="Mark Failed"><i class="mdi mdi-alert"></i></button>';
                 }
 
                 if (in_array($t->status, ['draft', 'pending_approval'])) {
@@ -130,7 +183,7 @@ class TransferController extends Controller
                 $actions .= '</div>';
                 return $actions;
             })
-            ->rawColumns(['method_badge', 'status_badge', 'actions'])
+            ->rawColumns(['bank_flow', 'method_badge', 'status_badge', 'actions'])
             ->make(true);
     }
 
@@ -140,9 +193,13 @@ class TransferController extends Controller
     public function create()
     {
         $banks = Bank::where('is_active', true)->orderBy('name')->get();
+
+        // Get expense accounts through group -> class relationship
         $feeAccounts = Account::where('is_active', true)
-            ->where('account_type', 'expense')
-            ->orderBy('account_number')
+            ->whereHas('accountGroup.accountClass', function ($query) {
+                $query->where('name', 'Expenses');
+            })
+            ->orderBy('code')
             ->get();
 
         return view('accounting.transfers.create', compact('banks', 'feeAccounts'));
@@ -224,6 +281,7 @@ class TransferController extends Controller
 
     /**
      * Approve transfer.
+     * Note: JE is created by TransferObserver when status changes to CLEARED.
      */
     public function approve(Request $request, InterAccountTransfer $transfer)
     {
@@ -231,26 +289,13 @@ class TransferController extends Controller
             return $this->errorResponse('Transfer is not pending approval.', $request);
         }
 
-        try {
-            DB::beginTransaction();
+        $transfer->update([
+            'status' => InterAccountTransfer::STATUS_APPROVED,
+            'approved_by' => Auth::id(),
+            'approved_at' => now(),
+        ]);
 
-            // Create journal entry
-            $journalEntry = $this->createTransferJournalEntry($transfer);
-
-            $transfer->update([
-                'status' => InterAccountTransfer::STATUS_APPROVED,
-                'journal_entry_id' => $journalEntry->id,
-                'approved_by' => Auth::id(),
-                'approved_at' => now(),
-            ]);
-
-            DB::commit();
-
-            return $this->successResponse('Transfer approved successfully.', $request);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return $this->errorResponse('Failed to approve: ' . $e->getMessage(), $request);
-        }
+        return $this->successResponse('Transfer approved. Awaiting clearance confirmation.', $request);
     }
 
     /**
@@ -326,73 +371,140 @@ class TransferController extends Controller
     }
 
     /**
-     * Export PDF.
+     * Mark transfer as failed.
+     * Used when a transfer that was approved fails during processing.
+     */
+    public function markFailed(Request $request, InterAccountTransfer $transfer)
+    {
+        $validated = $request->validate([
+            'failure_reason' => 'required|string|max:500',
+        ]);
+
+        // Can only mark as failed if it's in approved, initiated, or in_transit status
+        if (!in_array($transfer->status, [
+            InterAccountTransfer::STATUS_APPROVED,
+            InterAccountTransfer::STATUS_INITIATED,
+            InterAccountTransfer::STATUS_IN_TRANSIT
+        ])) {
+            return $this->errorResponse('Transfer cannot be marked as failed in current status.', $request);
+        }
+
+        $transfer->update([
+            'status' => InterAccountTransfer::STATUS_FAILED,
+            'failure_reason' => $validated['failure_reason'],
+            'failed_at' => now(),
+        ]);
+
+        return $this->successResponse('Transfer marked as failed.', $request);
+    }
+
+    // ==========================================
+    // EXPORT METHODS
+    // ==========================================
+
+    /**
+     * Export transfers report as PDF.
      */
     public function exportPdf(Request $request)
     {
-        $query = InterAccountTransfer::with(['fromBank', 'toBank', 'initiator'])
-            ->when($request->filled('status'), fn($q) => $q->where('status', $request->status))
-            ->when($request->filled('date_from'), fn($q) => $q->whereDate('transfer_date', '>=', $request->date_from))
-            ->when($request->filled('date_to'), fn($q) => $q->whereDate('transfer_date', '<=', $request->date_to))
-            ->orderBy('transfer_date', 'desc')
-            ->get();
+        $transfers = $this->getFilteredTransfers($request);
 
-        $pdf = \PDF::loadView('accounting.transfers.reports.transfers-report', [
-            'transfers' => $query,
-            'dateFrom' => $request->date_from ?? 'Start',
-            'dateTo' => $request->date_to ?? 'Present',
+        $dateFrom = $request->date_from ? Carbon::parse($request->date_from)->format('M d, Y') : 'Start';
+        $dateTo = $request->date_to ? Carbon::parse($request->date_to)->format('M d, Y') : now()->format('M d, Y');
+
+        // Calculate summary stats
+        $summary = [
+            'total_count' => $transfers->count(),
+            'total_amount' => $transfers->sum('amount'),
+            'total_fees' => $transfers->sum('transfer_fee'),
+            'cleared_count' => $transfers->where('status', 'cleared')->count(),
+            'cleared_amount' => $transfers->where('status', 'cleared')->sum('amount'),
+            'pending_count' => $transfers->whereIn('status', ['pending_approval', 'approved', 'initiated', 'in_transit'])->count(),
+            'pending_amount' => $transfers->whereIn('status', ['pending_approval', 'approved', 'initiated', 'in_transit'])->sum('amount'),
+            'failed_count' => $transfers->where('status', 'failed')->count(),
+            'failed_amount' => $transfers->where('status', 'failed')->sum('amount'),
+        ];
+
+        // Group by method for breakdown
+        $byMethod = $transfers->groupBy('transfer_method')->map(function ($group, $method) {
+            return [
+                'method' => strtoupper($method),
+                'count' => $group->count(),
+                'amount' => $group->sum('amount'),
+            ];
+        })->values();
+
+        $pdf = Pdf::loadView('accounting.transfers.reports.transfers-report', [
+            'transfers' => $transfers,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+            'summary' => $summary,
+            'byMethod' => $byMethod,
+            'statusFilter' => $request->status ? ucwords(str_replace('_', ' ', $request->status)) : 'All Statuses',
         ]);
 
-        return $pdf->download('inter-account-transfers-report.pdf');
+        $pdf->setPaper('a4', 'landscape');
+
+        return $pdf->download('inter-account-transfers-' . now()->format('Y-m-d') . '.pdf');
     }
 
     /**
-     * Export Excel.
+     * Export transfers report as Excel.
      */
     public function exportExcel(Request $request)
     {
-        $transfers = InterAccountTransfer::with(['fromBank', 'toBank', 'initiator'])
+        $transfers = $this->getFilteredTransfers($request);
+
+        $dateFrom = $request->date_from ? Carbon::parse($request->date_from)->format('M d, Y') : 'Start';
+        $dateTo = $request->date_to ? Carbon::parse($request->date_to)->format('M d, Y') : now()->format('M d, Y');
+        $statusFilter = $request->status ? ucwords(str_replace('_', ' ', $request->status)) : 'All Statuses';
+
+        return $this->excelService->interAccountTransfersReport($transfers, $dateFrom, $dateTo, $statusFilter);
+    }
+
+    /**
+     * Export single transfer as PDF voucher.
+     */
+    public function exportSinglePdf(InterAccountTransfer $transfer)
+    {
+        $transfer->load(['fromBank', 'toBank', 'fromAccount', 'toAccount', 'feeAccount', 'journalEntry.lines.account', 'initiator', 'approver']);
+
+        $pdf = Pdf::loadView('accounting.transfers.reports.transfer-detail', [
+            'transfer' => $transfer,
+        ]);
+
+        $pdf->setPaper('a4', 'portrait');
+
+        return $pdf->download('transfer-voucher-' . $transfer->transfer_number . '.pdf');
+    }
+
+    /**
+     * Export single transfer as Excel.
+     */
+    public function exportSingleExcel(InterAccountTransfer $transfer)
+    {
+        $transfer->load(['fromBank', 'toBank', 'fromAccount', 'toAccount', 'feeAccount', 'journalEntry.lines.account', 'initiator', 'approver']);
+
+        return $this->excelService->singleTransferReport($transfer);
+    }
+
+    /**
+     * Get filtered transfers for export.
+     */
+    protected function getFilteredTransfers(Request $request)
+    {
+        return InterAccountTransfer::with(['fromBank', 'toBank', 'initiator', 'approver', 'journalEntry'])
             ->when($request->filled('status'), fn($q) => $q->where('status', $request->status))
+            ->when($request->filled('from_bank_id'), fn($q) => $q->where('from_bank_id', $request->from_bank_id))
+            ->when($request->filled('to_bank_id'), fn($q) => $q->where('to_bank_id', $request->to_bank_id))
+            ->when($request->filled('transfer_method'), fn($q) => $q->where('transfer_method', $request->transfer_method))
+            ->when($request->filled('initiated_by'), fn($q) => $q->where('initiated_by', $request->initiated_by))
+            ->when($request->filled('amount_min'), fn($q) => $q->where('amount', '>=', $request->amount_min))
+            ->when($request->filled('amount_max'), fn($q) => $q->where('amount', '<=', $request->amount_max))
             ->when($request->filled('date_from'), fn($q) => $q->whereDate('transfer_date', '>=', $request->date_from))
             ->when($request->filled('date_to'), fn($q) => $q->whereDate('transfer_date', '<=', $request->date_to))
             ->orderBy('transfer_date', 'desc')
             ->get();
-
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-
-        // Headers
-        $headers = ['Transfer #', 'Date', 'From Bank', 'To Bank', 'Amount', 'Method', 'Status', 'Reference', 'Initiated By'];
-        $col = 'A';
-        foreach ($headers as $header) {
-            $sheet->setCellValue($col . '1', $header);
-            $col++;
-        }
-
-        // Data
-        $row = 2;
-        foreach ($transfers as $t) {
-            $sheet->setCellValue('A' . $row, $t->transfer_number);
-            $sheet->setCellValue('B' . $row, $t->transfer_date->format('Y-m-d'));
-            $sheet->setCellValue('C' . $row, $t->fromBank?->bank_name);
-            $sheet->setCellValue('D' . $row, $t->toBank?->bank_name);
-            $sheet->setCellValue('E' . $row, $t->amount);
-            $sheet->setCellValue('F' . $row, strtoupper($t->transfer_method));
-            $sheet->setCellValue('G' . $row, ucfirst($t->status));
-            $sheet->setCellValue('H' . $row, $t->reference);
-            $sheet->setCellValue('I' . $row, $t->initiator?->name);
-            $row++;
-        }
-
-        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-        $filename = 'transfers-' . now()->format('Y-m-d') . '.xlsx';
-
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $filename . '"');
-        header('Cache-Control: max-age=0');
-
-        $writer->save('php://output');
-        exit;
     }
 
     // ==========================================
@@ -404,77 +516,89 @@ class TransferController extends Controller
      */
     protected function getDashboardStats(): array
     {
+        $now = Carbon::now();
+        $today = Carbon::today();
+        $yesterday = Carbon::yesterday();
+        $startOfWeek = $now->copy()->startOfWeek();
+        $startOfLastWeek = $now->copy()->subWeek()->startOfWeek();
+        $endOfLastWeek = $now->copy()->subWeek()->endOfWeek();
+        $startOfMonth = $now->copy()->startOfMonth();
+        $startOfLastMonth = $now->copy()->subMonth()->startOfMonth();
+        $endOfLastMonth = $now->copy()->subMonth()->endOfMonth();
+
+        // Status counts and amounts
+        $pendingApproval = InterAccountTransfer::where('status', 'pending_approval');
+        $approved = InterAccountTransfer::where('status', 'approved');
+        $inTransit = InterAccountTransfer::whereIn('status', ['initiated', 'in_transit']);
+        $cleared = InterAccountTransfer::where('status', 'cleared');
+        $failed = InterAccountTransfer::where('status', 'failed');
+
+        // Today's stats
+        $todayTransfers = InterAccountTransfer::whereDate('transfer_date', $today);
+        $yesterdayAmount = InterAccountTransfer::whereDate('transfer_date', $yesterday)->sum('amount');
+
+        // Week stats
+        $weekTransfers = InterAccountTransfer::whereDate('transfer_date', '>=', $startOfWeek);
+        $lastWeekAmount = InterAccountTransfer::whereBetween('transfer_date', [$startOfLastWeek, $endOfLastWeek])->sum('amount');
+
+        // Month stats
+        $monthTransfers = InterAccountTransfer::whereDate('transfer_date', '>=', $startOfMonth);
+        $lastMonthAmount = InterAccountTransfer::whereBetween('transfer_date', [$startOfLastMonth, $endOfLastMonth])->sum('amount');
+
+        // Calculate trends
+        $todayAmount = $todayTransfers->sum('amount');
+        $weekAmount = $weekTransfers->sum('amount');
+        $monthAmount = $monthTransfers->sum('amount');
+
+        $todayVsYesterday = $yesterdayAmount > 0 ? round((($todayAmount - $yesterdayAmount) / $yesterdayAmount) * 100) : 0;
+        $weekVsLast = $lastWeekAmount > 0 ? round((($weekAmount - $lastWeekAmount) / $lastWeekAmount) * 100) : 0;
+        $monthVsLast = $lastMonthAmount > 0 ? round((($monthAmount - $lastMonthAmount) / $lastMonthAmount) * 100) : 0;
+
+        // Pending trend (vs last week)
+        $lastWeekPending = InterAccountTransfer::where('status', 'pending_approval')
+            ->whereBetween('created_at', [$startOfLastWeek, $endOfLastWeek])
+            ->count();
+        $currentPending = $pendingApproval->count();
+        $pendingTrend = $lastWeekPending > 0 ? round((($currentPending - $lastWeekPending) / $lastWeekPending) * 100) : 0;
+
         return [
+            // Total
             'total_transfers' => InterAccountTransfer::count(),
-            'pending_approval' => InterAccountTransfer::where('status', 'pending_approval')->count(),
-            'in_transit' => InterAccountTransfer::whereIn('status', ['approved', 'initiated', 'in_transit'])->count(),
-            'cleared_today' => InterAccountTransfer::where('status', 'cleared')
-                ->whereDate('cleared_at', today())
-                ->count(),
-            'today_amount' => InterAccountTransfer::whereDate('transfer_date', today())->sum('amount'),
-            'month_amount' => InterAccountTransfer::whereMonth('transfer_date', now()->month)
-                ->whereYear('transfer_date', now()->year)
-                ->sum('amount'),
-            'pending_clearance_amount' => InterAccountTransfer::whereIn('status', ['approved', 'initiated', 'in_transit'])
-                ->sum('amount'),
+
+            // Status counts
+            'pending_approval' => $currentPending,
+            'pending_amount' => $pendingApproval->sum('amount'),
+            'pending_trend' => $pendingTrend,
+
+            'approved_count' => $approved->count(),
+            'approved_amount' => $approved->sum('amount'),
+
+            'in_transit' => $inTransit->count(),
+            'transit_amount' => $inTransit->sum('amount'),
+
+            'cleared_today' => $cleared->clone()->whereDate('cleared_at', $today)->count(),
+            'cleared_month' => $cleared->clone()->whereDate('cleared_at', '>=', $startOfMonth)->count(),
+            'cleared_month_amount' => $cleared->clone()->whereDate('cleared_at', '>=', $startOfMonth)->sum('amount'),
+
+            'failed_count' => $failed->count(),
+            'failed_amount' => $failed->sum('amount'),
+
+            // Volume stats
+            'today_amount' => $todayAmount,
+            'today_count' => $todayTransfers->count(),
+            'today_vs_yesterday' => $todayVsYesterday,
+
+            'week_amount' => $weekAmount,
+            'week_count' => $weekTransfers->count(),
+            'week_vs_last' => $weekVsLast,
+
+            'month_amount' => $monthAmount,
+            'month_count' => $monthTransfers->count(),
+            'month_vs_last' => $monthVsLast,
+
+            // Legacy (keeping for compatibility)
+            'pending_clearance_amount' => InterAccountTransfer::whereIn('status', ['approved', 'initiated', 'in_transit'])->sum('amount'),
         ];
-    }
-
-    /**
-     * Create journal entry for transfer.
-     */
-    protected function createTransferJournalEntry(InterAccountTransfer $transfer): JournalEntry
-    {
-        // Create journal entry
-        $entry = JournalEntry::create([
-            'entry_number' => $this->accountingService->generateEntryNumber(),
-            'entry_date' => $transfer->transfer_date,
-            'entry_type' => JournalEntry::TYPE_AUTOMATED,
-            'description' => "Inter-account transfer: {$transfer->description}",
-            'reference' => $transfer->transfer_number,
-            'status' => JournalEntry::STATUS_POSTED,
-            'created_by' => Auth::id(),
-            'posted_at' => now(),
-        ]);
-
-        // Debit destination account (money coming in)
-        JournalEntryLine::create([
-            'journal_entry_id' => $entry->id,
-            'account_id' => $transfer->to_account_id,
-            'debit' => $transfer->amount,
-            'credit' => 0,
-            'description' => "Transfer from {$transfer->fromBank->bank_name}",
-        ]);
-
-        // Credit source account (money going out)
-        JournalEntryLine::create([
-            'journal_entry_id' => $entry->id,
-            'account_id' => $transfer->from_account_id,
-            'debit' => 0,
-            'credit' => $transfer->amount,
-            'description' => "Transfer to {$transfer->toBank->bank_name}",
-        ]);
-
-        // Handle transfer fee if applicable
-        if ($transfer->transfer_fee > 0 && $transfer->fee_account_id) {
-            JournalEntryLine::create([
-                'journal_entry_id' => $entry->id,
-                'account_id' => $transfer->fee_account_id,
-                'debit' => $transfer->transfer_fee,
-                'credit' => 0,
-                'description' => "Transfer fee",
-            ]);
-
-            JournalEntryLine::create([
-                'journal_entry_id' => $entry->id,
-                'account_id' => $transfer->from_account_id,
-                'debit' => 0,
-                'credit' => $transfer->transfer_fee,
-                'description' => "Transfer fee deducted",
-            ]);
-        }
-
-        return $entry;
     }
 
     /**
