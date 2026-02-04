@@ -103,7 +103,7 @@
                         <table class="table table-sm table-borderless">
                             <tr>
                                 <td class="text-muted">GL Account:</td>
-                                <td><strong>{{ $fund->account?->account_number }}</strong> - {{ $fund->account?->account_name }}</td>
+                                <td><strong>{{ $fund->account?->code }}</strong> - {{ $fund->account?->name }}</td>
                             </tr>
                             <tr>
                                 <td class="text-muted">Department:</td>
@@ -147,7 +147,9 @@
                     </div>
                     <div class="card-body text-center">
                         @php
-                            $utilizationPct = $fund->fund_limit > 0 ? (($fund->fund_limit - $fund->current_balance) / $fund->fund_limit) * 100 : 0;
+                            // Calculate based on actual disbursed transactions vs fund limit
+                            $totalDisbursed = $stats['total_disbursements'] ?? 0;
+                            $utilizationPct = $fund->fund_limit > 0 ? ($totalDisbursed / $fund->fund_limit) * 100 : 0;
                             $availablePct = 100 - $utilizationPct;
                         @endphp
                         <div class="mb-3">
@@ -159,8 +161,8 @@
                                 <small class="text-muted">Available ({{ number_format($availablePct, 1) }}%)</small>
                             </div>
                             <div class="col-6">
-                                <h5 class="mb-0 text-danger">₦{{ number_format($fund->fund_limit - $fund->current_balance, 2) }}</h5>
-                                <small class="text-muted">Used ({{ number_format($utilizationPct, 1) }}%)</small>
+                                <h5 class="mb-0 text-danger">₦{{ number_format($totalDisbursed, 2) }}</h5>
+                                <small class="text-muted">Disbursed ({{ number_format($utilizationPct, 1) }}%)</small>
                             </div>
                         </div>
                     </div>
@@ -203,6 +205,7 @@
                                             <th>Description</th>
                                             <th class="text-right">Amount</th>
                                             <th>Status</th>
+                                            <th>JE</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
@@ -226,11 +229,23 @@
                                                     @if($transaction->status === 'pending')
                                                         <span class="badge badge-warning">Pending</span>
                                                     @elseif($transaction->status === 'approved')
-                                                        <span class="badge badge-success">Approved</span>
+                                                        <span class="badge badge-info">Approved</span>
+                                                    @elseif($transaction->status === 'disbursed')
+                                                        <span class="badge badge-success">Disbursed</span>
                                                     @elseif($transaction->status === 'rejected')
                                                         <span class="badge badge-danger">Rejected</span>
                                                     @else
                                                         <span class="badge badge-secondary">{{ ucfirst($transaction->status) }}</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if($transaction->journal_entry_id)
+                                                        <a href="{{ route('accounting.journal-entries.show', $transaction->journal_entry_id) }}"
+                                                           class="btn btn-sm btn-outline-secondary" title="View Journal Entry">
+                                                            <i class="mdi mdi-book-open-variant"></i>
+                                                        </a>
+                                                    @else
+                                                        <span class="text-muted">-</span>
                                                     @endif
                                                 </td>
                                                 <td>
@@ -243,6 +258,10 @@
                                                                 <i class="mdi mdi-close"></i>
                                                             </button>
                                                         </div>
+                                                    @elseif($transaction->status === 'approved')
+                                                        <button class="btn btn-sm btn-outline-primary disburse-btn" data-id="{{ $transaction->id }}" title="Disburse">
+                                                            <i class="mdi mdi-cash-check"></i> Disburse
+                                                        </button>
                                                     @endif
                                                 </td>
                                             </tr>
@@ -254,6 +273,102 @@
                             <div class="text-center py-5">
                                 <i class="mdi mdi-cash-remove mdi-48px text-muted"></i>
                                 <p class="text-muted mt-2">No transactions yet</p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- Reconciliation History -->
+                <div class="card-modern mt-4">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0"><i class="mdi mdi-scale-balance mr-2"></i>Reconciliation History</h6>
+                        <a href="{{ route('accounting.petty-cash.reconciliations.index') }}?fund_id={{ $fund->id }}" class="btn btn-sm btn-outline-info">
+                            View All
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        @php
+                            $reconciliations = $fund->reconciliations()->with(['reconciledBy', 'adjustmentEntry'])->latest()->take(5)->get();
+                        @endphp
+                        @if($reconciliations->count() > 0)
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Recon #</th>
+                                            <th class="text-right">Book</th>
+                                            <th class="text-right">Physical</th>
+                                            <th class="text-right">Variance</th>
+                                            <th>Status</th>
+                                            <th>Approval</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($reconciliations as $recon)
+                                            <tr>
+                                                <td>{{ $recon->reconciliation_date->format('M d, Y') }}</td>
+                                                <td><code>{{ $recon->reconciliation_number }}</code></td>
+                                                <td class="text-right">₦{{ number_format($recon->expected_balance, 2) }}</td>
+                                                <td class="text-right">₦{{ number_format($recon->actual_cash_count, 2) }}</td>
+                                                <td class="text-right">
+                                                    @if($recon->variance == 0)
+                                                        <span class="text-success">₦0.00</span>
+                                                    @elseif($recon->variance > 0)
+                                                        <span class="text-danger">-₦{{ number_format($recon->variance, 2) }}</span>
+                                                    @else
+                                                        <span class="text-warning">+₦{{ number_format(abs($recon->variance), 2) }}</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if($recon->status === 'balanced')
+                                                        <span class="badge badge-success">Balanced</span>
+                                                    @elseif($recon->status === 'shortage')
+                                                        <span class="badge badge-danger">Shortage</span>
+                                                    @else
+                                                        <span class="badge badge-warning">Overage</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if($recon->approval_status === 'pending_approval')
+                                                        <span class="badge badge-warning">Pending</span>
+                                                    @elseif($recon->approval_status === 'approved')
+                                                        <span class="badge badge-success">Approved</span>
+                                                    @else
+                                                        <span class="badge badge-danger">Rejected</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        @if($recon->adjustment_entry_id)
+                                                            <a href="{{ route('accounting.journal-entries.show', $recon->adjustment_entry_id) }}"
+                                                               class="btn btn-outline-secondary" title="View Adjustment JE">
+                                                                <i class="mdi mdi-book-open-variant"></i>
+                                                            </a>
+                                                        @endif
+                                                        @if($recon->approval_status === 'pending_approval')
+                                                            <button class="btn btn-outline-success recon-approve-btn" data-id="{{ $recon->id }}" title="Approve">
+                                                                <i class="mdi mdi-check"></i>
+                                                            </button>
+                                                            <button class="btn btn-outline-danger recon-reject-btn" data-id="{{ $recon->id }}" title="Reject">
+                                                                <i class="mdi mdi-close"></i>
+                                                            </button>
+                                                        @endif
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @else
+                            <div class="text-center py-4">
+                                <i class="mdi mdi-scale-balance mdi-48px text-muted"></i>
+                                <p class="text-muted mt-2">No reconciliations yet</p>
+                                <a href="{{ route('accounting.petty-cash.reconcile', $fund) }}" class="btn btn-sm btn-info">
+                                    <i class="mdi mdi-plus"></i> Start Reconciliation
+                                </a>
                             </div>
                         @endif
                     </div>
@@ -281,6 +396,36 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-danger">Reject</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Reconciliation Reject Modal -->
+<div class="modal fade" id="reconRejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Reject Reconciliation</h5>
+                <button type="button" class="close" data-bs-dismiss="modal">&times;</button>
+            </div>
+            <form id="reconRejectForm">
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="mdi mdi-information-outline"></i>
+                        Rejecting this reconciliation means the variance will not be recorded.
+                        The custodian will need to recount or provide explanation.
+                    </div>
+                    <div class="form-group">
+                        <label>Rejection Reason <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="recon-rejection-reason" rows="3" required
+                                  placeholder="Explain why this reconciliation is being rejected..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Reject Reconciliation</button>
                 </div>
             </form>
         </div>
@@ -339,7 +484,7 @@ $(document).ready(function() {
         var id = $(this).data('id');
         if (confirm('Are you sure you want to approve this transaction?')) {
             $.ajax({
-                url: "{{ route('accounting.petty-cash.transactions.approve', '') }}/" + id,
+                url: "{{ route('accounting.petty-cash.transactions.approve', ':id') }}".replace(':id', id),
                 type: 'POST',
                 data: { _token: '{{ csrf_token() }}' },
                 success: function(res) {
@@ -366,7 +511,7 @@ $(document).ready(function() {
     $('#rejectForm').submit(function(e) {
         e.preventDefault();
         $.ajax({
-            url: "{{ route('accounting.petty-cash.transactions.reject', '') }}/" + rejectId,
+            url: "{{ route('accounting.petty-cash.transactions.reject', ':id') }}".replace(':id', rejectId),
             type: 'POST',
             data: {
                 _token: '{{ csrf_token() }}',
@@ -376,6 +521,78 @@ $(document).ready(function() {
                 if (res.success) {
                     toastr.success(res.message);
                     $('#rejectModal').modal('hide');
+                    location.reload();
+                }
+            },
+            error: function(xhr) {
+                toastr.error(xhr.responseJSON?.message || 'An error occurred');
+            }
+        });
+    });
+
+    // Disburse transaction
+    $('.disburse-btn').click(function() {
+        var id = $(this).data('id');
+        if (confirm('Are you sure you want to disburse this transaction? This will create journal entries and update the fund balance.')) {
+            $.ajax({
+                url: "{{ route('accounting.petty-cash.transactions.disburse', ':id') }}".replace(':id', id),
+                type: 'POST',
+                data: { _token: '{{ csrf_token() }}' },
+                success: function(res) {
+                    if (res.success) {
+                        toastr.success(res.message);
+                        location.reload();
+                    }
+                },
+                error: function(xhr) {
+                    toastr.error(xhr.responseJSON?.message || 'An error occurred');
+                }
+            });
+        }
+    });
+
+    // Approve reconciliation
+    $('.recon-approve-btn').click(function() {
+        var id = $(this).data('id');
+        if (confirm('Are you sure you want to approve this reconciliation? This will create an adjustment journal entry for the variance.')) {
+            $.ajax({
+                url: "{{ route('accounting.petty-cash.reconciliations.approve', ':id') }}".replace(':id', id),
+                type: 'POST',
+                data: { _token: '{{ csrf_token() }}' },
+                success: function(res) {
+                    if (res.success) {
+                        toastr.success(res.message);
+                        location.reload();
+                    }
+                },
+                error: function(xhr) {
+                    toastr.error(xhr.responseJSON?.message || 'An error occurred');
+                }
+            });
+        }
+    });
+
+    // Reject reconciliation
+    var rejectReconId = null;
+    $('.recon-reject-btn').click(function() {
+        rejectReconId = $(this).data('id');
+        $('#recon-rejection-reason').val('');
+        $('#reconRejectModal').modal('show');
+    });
+
+    $('#reconRejectForm').submit(function(e) {
+        e.preventDefault();
+        $.ajax({
+            url: "{{ route('accounting.petty-cash.reconciliations.reject', ':id') }}".replace(':id', rejectReconId),
+            type: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                rejection_reason: $('#recon-rejection-reason').val()
+            },
+            success: function(res) {
+                if (res.success) {
+                    toastr.success(res.message);
+                    $('#reconRejectModal').modal('hide');
                     location.reload();
                 }
             },

@@ -20,6 +20,13 @@
                 <a href="{{ route('accounting.petty-cash.funds.index') }}" class="btn btn-outline-primary">
                     <i class="mdi mdi-wallet"></i> View All Funds
                 </a>
+                <a href="{{ route('accounting.petty-cash.reconciliations.index') }}" class="btn btn-outline-info">
+                    <i class="mdi mdi-scale-balance"></i> Reconciliations
+                    @php $pendingReconCount = \App\Models\Accounting\PettyCashReconciliation::pendingApproval()->count(); @endphp
+                    @if($pendingReconCount > 0)
+                        <span class="badge badge-warning ml-1">{{ $pendingReconCount }}</span>
+                    @endif
+                </a>
                 <a href="{{ route('accounting.petty-cash.funds.create') }}" class="btn btn-primary">
                     <i class="mdi mdi-plus"></i> New Fund
                 </a>
@@ -350,7 +357,7 @@ $(document).ready(function() {
         var id = $(this).data('id');
         if (confirm('Are you sure you want to approve this transaction?')) {
             $.ajax({
-                url: "{{ route('accounting.petty-cash.transactions.approve', '') }}/" + id,
+                url: "{{ route('accounting.petty-cash.transactions.approve', ':id') }}".replace(':id', id),
                 type: 'POST',
                 data: { _token: '{{ csrf_token() }}' },
                 success: function(res) {
@@ -377,7 +384,7 @@ $(document).ready(function() {
     $('#rejectForm').submit(function(e) {
         e.preventDefault();
         $.ajax({
-            url: "{{ route('accounting.petty-cash.transactions.reject', '') }}/" + rejectId,
+            url: "{{ route('accounting.petty-cash.transactions.reject', ':id') }}".replace(':id', rejectId),
             type: 'POST',
             data: {
                 _token: '{{ csrf_token() }}',
@@ -394,6 +401,27 @@ $(document).ready(function() {
                 toastr.error(xhr.responseJSON?.message || 'An error occurred');
             }
         });
+    });
+
+    // Disburse transaction
+    $(document).on('click', '.disburse-btn', function() {
+        var id = $(this).data('id');
+        if (confirm('Are you sure you want to disburse this transaction? This will create journal entries and update the fund balance.')) {
+            $.ajax({
+                url: "{{ route('accounting.petty-cash.transactions.disburse', ':id') }}".replace(':id', id),
+                type: 'POST',
+                data: { _token: '{{ csrf_token() }}' },
+                success: function(res) {
+                    if (res.success) {
+                        toastr.success(res.message);
+                        table.ajax.reload();
+                    }
+                },
+                error: function(xhr) {
+                    toastr.error(xhr.responseJSON?.message || 'An error occurred');
+                }
+            });
+        }
     });
 });
 </script>

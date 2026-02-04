@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  * Reference: ACCOUNTING_IMPLEMENTATION_CHECKLIST.md - Phase 1.4
  *
  * Records periodic physical cash counts and variance tracking.
+ * Variances require approval before adjustment JE is created.
  */
 class PettyCashReconciliation extends Model
 {
@@ -20,11 +21,18 @@ class PettyCashReconciliation extends Model
 
     protected $table = 'petty_cash_reconciliations';
 
-    // Status constants
+    // Variance status constants (what type of variance)
     public const STATUS_BALANCED = 'balanced';
     public const STATUS_SHORTAGE = 'shortage';
     public const STATUS_OVERAGE = 'overage';
-    public const STATUS_PENDING = 'pending';
+
+    // Approval status constants (workflow state)
+    public const APPROVAL_PENDING = 'pending_approval';
+    public const APPROVAL_APPROVED = 'approved';
+    public const APPROVAL_REJECTED = 'rejected';
+
+    // Cash Over/Short account code
+    public const CASH_OVER_SHORT_ACCOUNT_CODE = '6270';
 
     protected $fillable = [
         'fund_id',
@@ -37,8 +45,10 @@ class PettyCashReconciliation extends Model
         'outstanding_vouchers',
         'outstanding_voucher_ids',
         'status',
+        'approval_status',
         'adjustment_entry_id',
         'notes',
+        'rejection_reason',
         'reconciled_by',
         'reviewed_by',
         'reviewed_at',
@@ -110,14 +120,35 @@ class PettyCashReconciliation extends Model
         return $this->status === self::STATUS_OVERAGE;
     }
 
-    public function isPending(): bool
+    public function hasVariance(): bool
     {
-        return $this->status === self::STATUS_PENDING;
+        return abs($this->variance) > 0.01;
+    }
+
+    // Approval status methods
+    public function isPendingApproval(): bool
+    {
+        return $this->approval_status === self::APPROVAL_PENDING;
+    }
+
+    public function isApproved(): bool
+    {
+        return $this->approval_status === self::APPROVAL_APPROVED;
+    }
+
+    public function isRejected(): bool
+    {
+        return $this->approval_status === self::APPROVAL_REJECTED;
     }
 
     public function needsAdjustment(): bool
     {
-        return abs($this->variance) > 0.01 && !$this->adjustment_entry_id;
+        return $this->hasVariance() && !$this->adjustment_entry_id;
+    }
+
+    public function canApprove(): bool
+    {
+        return $this->isPendingApproval() && $this->hasVariance();
     }
 
     // ==========================================
@@ -177,9 +208,14 @@ class PettyCashReconciliation extends Model
         return $query->where('status', self::STATUS_BALANCED);
     }
 
-    public function scopePendingReview($query)
+    public function scopePendingApproval($query)
     {
-        return $query->whereNull('reviewed_by');
+        return $query->where('approval_status', self::APPROVAL_PENDING);
+    }
+
+    public function scopeApproved($query)
+    {
+        return $query->where('approval_status', self::APPROVAL_APPROVED);
     }
 
     public function scopeForPeriod($query, string $fromDate, string $toDate)

@@ -2130,4 +2130,72 @@ class ExcelExportService
 
         return $this->download('lease-schedule-' . $lease->lease_number . '-' . now()->format('Y-m-d'));
     }
+
+    /**
+     * Export Petty Cash Fund Report to Excel.
+     */
+    public function pettyCashFundReport($fund, $transactions, string $dateFrom, string $dateTo): StreamedResponse
+    {
+        $this->initSpreadsheet(
+            'Petty Cash Fund Report',
+            $fund->fund_name . ' | ' . $dateFrom . ' to ' . $dateTo
+        );
+
+        // Fund Summary Section
+        $this->activeSheet->setCellValue('A' . $this->currentRow, 'FUND SUMMARY');
+        $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(11);
+        $this->currentRow++;
+
+        $this->addDataRow(['Fund Code:', $fund->fund_code, 'Fund Limit:', '₦' . number_format($fund->fund_limit, 2)]);
+        $this->addDataRow(['Department:', $fund->department?->name ?? 'N/A', 'Current Balance:', '₦' . number_format($fund->current_balance, 2)]);
+        $this->addDataRow(['Custodian:', $fund->custodian?->name ?? 'N/A', 'Transaction Limit:', '₦' . number_format($fund->transaction_limit, 2)]);
+        $this->addDataRow(['GL Account:', ($fund->account?->code ?? '') . ' - ' . ($fund->account?->name ?? 'N/A'), 'Status:', ucfirst($fund->status)]);
+
+        $this->currentRow++;
+
+        // Transaction Totals
+        $totalDisbursements = $transactions->where('transaction_type', 'disbursement')->where('status', 'disbursed')->sum('amount');
+        $totalReplenishments = $transactions->where('transaction_type', 'replenishment')->where('status', 'disbursed')->sum('amount');
+
+        $this->addDataRow(['Total Disbursements:', '-₦' . number_format($totalDisbursements, 2), 'Total Replenishments:', '+₦' . number_format($totalReplenishments, 2)], 1, true);
+        $this->addDataRow(['Net Movement:', '₦' . number_format($totalReplenishments - $totalDisbursements, 2)], 1, true);
+
+        $this->currentRow += 2;
+
+        // Transactions Section
+        $this->activeSheet->setCellValue('A' . $this->currentRow, 'TRANSACTIONS');
+        $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(11);
+        $this->currentRow++;
+
+        // Headers
+        $this->addHeaderRow(['Date', 'Voucher #', 'Type', 'Description', 'Amount', 'Status', 'Requested By', 'Approved By']);
+
+        // Data rows
+        foreach ($transactions as $transaction) {
+            $amountDisplay = $transaction->transaction_type === 'disbursement'
+                ? '-₦' . number_format($transaction->amount, 2)
+                : '+₦' . number_format($transaction->amount, 2);
+
+            $this->addDataRow([
+                Carbon::parse($transaction->transaction_date)->format('M d, Y'),
+                $transaction->voucher_number ?? '-',
+                ucfirst($transaction->transaction_type),
+                $transaction->description,
+                $amountDisplay,
+                ucfirst($transaction->status),
+                $transaction->requestedBy?->name ?? '-',
+                $transaction->approvedBy?->name ?? '-',
+            ]);
+        }
+
+        // Summary footer
+        $this->currentRow++;
+        $this->addDataRow(['', '', '', 'Total Disbursements:', '-₦' . number_format($totalDisbursements, 2), '', '', ''], 1, true);
+        $this->addDataRow(['', '', '', 'Total Replenishments:', '+₦' . number_format($totalReplenishments, 2), '', '', ''], 1, true);
+        $this->addDataRow(['', '', '', 'Net Movement:', '₦' . number_format($totalReplenishments - $totalDisbursements, 2), '', '', ''], 1, true);
+
+        $this->autoSizeColumns(1, 8);
+
+        return $this->download('petty-cash-' . $fund->fund_code . '-' . now()->format('Y-m-d'));
+    }
 }

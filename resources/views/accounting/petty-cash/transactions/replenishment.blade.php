@@ -3,6 +3,40 @@
 @section('page_name', 'Accounting')
 @section('subpage_name', 'Replenishment')
 
+@push('styles')
+<style>
+    /* Select2 styling for Bootstrap 4 consistency */
+    .select2-container--bootstrap4 .select2-selection--single {
+        height: calc(1.5em + 0.75rem + 2px) !important;
+        padding: 0.375rem 0.75rem !important;
+        border: 1px solid #ced4da !important;
+        border-radius: 0.25rem !important;
+    }
+    .select2-container--bootstrap4 .select2-selection--single .select2-selection__rendered {
+        line-height: 1.5 !important;
+        padding-left: 0 !important;
+        color: #495057 !important;
+    }
+    .select2-container--bootstrap4 .select2-selection--single .select2-selection__arrow {
+        height: calc(1.5em + 0.75rem) !important;
+    }
+    .select2-container {
+        width: 100% !important;
+    }
+    .select2-container--bootstrap4 .select2-selection--single:focus {
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+    }
+    .select2-container--bootstrap4.select2-container--focus .select2-selection {
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+    }
+    .select2-container--bootstrap4 .select2-results__option--highlighted[aria-selected] {
+        background-color: #667eea !important;
+    }
+</style>
+@endpush
+
 @section('content')
 @include('accounting.partials.breadcrumb', ['items' => [
     ['label' => 'Dashboard', 'url' => route('accounting.dashboard'), 'icon' => 'mdi-view-dashboard'],
