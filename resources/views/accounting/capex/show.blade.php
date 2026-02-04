@@ -196,6 +196,10 @@
         if ($capex->status == 'rejected') $currentIndex = 1;
     @endphp
     <div class="info-card">
+        <p class="text-muted small mb-3">
+            <i class="mdi mdi-information-outline mr-1"></i>
+            This timeline shows the current status and approval workflow for this capital expenditure request. Each stage must be completed before moving to the next.
+        </p>
         <div class="progress-timeline">
             @foreach(['Draft', 'Pending Approval', 'Approved', 'In Progress', 'Completed'] as $index => $step)
                 <div class="progress-step {{ $index < $currentIndex ? 'completed' : ($index == $currentIndex ? 'active' : '') }}">
@@ -215,6 +219,14 @@
     </div>
 
     <!-- Amount Summary -->
+    <div class="row">
+        <div class="col-12 mb-3">
+            <p class="text-muted small">
+                <i class="mdi mdi-information-outline mr-1"></i>
+                <strong>Requested:</strong> Initial amount requested | <strong>Approved:</strong> Amount authorized for spending | <strong>Spent:</strong> Actual expenditure to date | <strong>Remaining:</strong> Approved budget still available
+            </p>
+        </div>
+    </div>
     <div class="row">
         <div class="col-md-3 mb-3">
             <div class="stat-box" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);">
@@ -250,6 +262,10 @@
             <!-- Details -->
             <div class="info-card">
                 <h6><i class="mdi mdi-information-outline mr-2"></i>Request Details</h6>
+                <p class="text-muted small mb-3">
+                    <i class="mdi mdi-information-outline mr-1"></i>
+                    Complete information about this capital expenditure request including category, budget allocation, requesting department, and project timeline.
+                </p>
                 <div class="row">
                     <div class="col-md-6">
                         <p class="mb-2"><strong>Category:</strong> {{ ucfirst($capex->category) }}</p>
@@ -279,6 +295,10 @@
             <!-- Line Items -->
             <div class="info-card">
                 <h6><i class="mdi mdi-format-list-bulleted mr-2"></i>Line Items ({{ $items->count() }})</h6>
+                <p class="text-muted small mb-3">
+                    <i class="mdi mdi-information-outline mr-1"></i>
+                    Detailed breakdown of items included in this capital expenditure, showing quantity, unit cost, and total amount for each item.
+                </p>
                 @forelse($items as $item)
                     <div class="item-row">
                         <div class="d-flex justify-content-between align-items-center">
@@ -316,6 +336,10 @@
                             </button>
                         @endif
                     </div>
+                    <p class="text-muted small mb-3">
+                        <i class="mdi mdi-information-outline mr-1"></i>
+                        Track actual expenditures against this capital project. Record each payment or expense as it occurs to monitor spending vs approved budget. Each expense entry includes date, amount, and payment reference.
+                    </p>
                     @forelse($expenses as $expense)
                         <div class="expense-row">
                             <div class="d-flex justify-content-between align-items-center">
@@ -327,10 +351,24 @@
                                             | Ref: {{ $expense->payment_reference }}
                                         @endif
                                     </small>
+                                    <small class="d-block">
+                                        <span class="badge badge-{{ $expense->payment_method == 'cash' ? 'warning' : 'info' }} badge-sm">
+                                            {{ ucfirst(str_replace('_', ' ', $expense->payment_method ?? 'N/A')) }}
+                                        </span>
+                                        @if($expense->bank_id && $expense->payment_method != 'cash')
+                                            @php $bank = $banks->firstWhere('id', $expense->bank_id); @endphp
+                                            @if($bank)
+                                                <span class="text-muted">{{ $bank->name }}</span>
+                                            @endif
+                                        @endif
+                                        @if($expense->cheque_number)
+                                            <span class="text-muted">| Cheque: {{ $expense->cheque_number }}</span>
+                                        @endif
+                                    </small>
                                 </div>
                                 <div class="text-right">
                                     <strong class="text-info">₦{{ number_format($expense->amount, 2) }}</strong>
-                                    <small class="text-muted d-block">{{ $expense->created_by_name ?? 'System' }}</small>
+                                    <small class="text-muted d-block">{{ $expense->vendor ?? 'N/A' }}</small>
                                 </div>
                             </div>
                         </div>
@@ -372,6 +410,10 @@
             <!-- Dates -->
             <div class="info-card">
                 <h6><i class="mdi mdi-calendar mr-2"></i>Timeline</h6>
+                <p class="text-muted small mb-3">
+                    <i class="mdi mdi-information-outline mr-1"></i>
+                    Important milestone dates tracked throughout the capex lifecycle.
+                </p>
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">Created:</span>
                     <strong>{{ \Carbon\Carbon::parse($capex->created_at)->format('M d, Y') }}</strong>
@@ -405,6 +447,10 @@
             <!-- Approval History -->
             <div class="info-card">
                 <h6><i class="mdi mdi-history mr-2"></i>Approval History</h6>
+                <p class="text-muted small mb-3">
+                    <i class="mdi mdi-information-outline mr-1"></i>
+                    Complete audit trail of all status changes, approvals, and actions taken on this request.
+                </p>
                 @forelse($approvalHistory as $history)
                     <div class="history-item">
                         <div class="history-dot {{ $history->action }}"></div>
@@ -448,26 +494,66 @@
                     <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <div class="form-group">
-                        <label>Expense Date <span class="text-danger">*</span></label>
-                        <input type="date" class="form-control" name="expense_date" value="{{ date('Y-m-d') }}" required>
+                    <div class="alert alert-info py-2 px-3 mb-3">
+                        <i class="mdi mdi-information-outline mr-1"></i>
+                        <small>Record each payment or expense against this capital project. This helps track actual spending vs approved budget.</small>
                     </div>
-                    <div class="form-group">
-                        <label>Amount <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text">₦</span>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Expense Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" name="expense_date" value="{{ date('Y-m-d') }}" required>
                             </div>
-                            <input type="number" class="form-control" name="amount" step="0.01" min="0" required>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Amount <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">₦</span>
+                                    </div>
+                                    <input type="number" class="form-control" name="amount" step="0.01" min="0" required>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="form-group">
                         <label>Description <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" name="description" required>
+                        <small class="form-text text-muted">Brief description of what was purchased or paid for</small>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Payment Method <span class="text-danger">*</span></label>
+                                <select class="form-control" name="payment_method" id="paymentMethod" required>
+                                    <option value="bank_transfer">Bank Transfer</option>
+                                    <option value="cheque">Cheque</option>
+                                    <option value="cash">Cash</option>
+                                    <option value="card">Card Payment</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group" id="bankSelectGroup">
+                                <label>Bank Account <span class="text-danger">*</span></label>
+                                <select class="form-control" name="bank_id" id="bankSelect">
+                                    <option value="">-- Select Bank --</option>
+                                    @foreach($banks as $bank)
+                                        <option value="{{ $bank->id }}">{{ $bank->name }} - {{ $bank->account_number }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group" id="chequeNumberGroup" style="display: none;">
+                        <label>Cheque Number</label>
+                        <input type="text" class="form-control" name="cheque_number" placeholder="Enter cheque number">
                     </div>
                     <div class="form-group">
-                        <label>Payment Reference</label>
-                        <input type="text" class="form-control" name="payment_reference" placeholder="e.g., Cheque #, Transfer Ref">
+                        <label>Payment Reference / Invoice Number</label>
+                        <input type="text" class="form-control" name="payment_reference" placeholder="e.g., Transfer Ref, Invoice #">
+                        <small class="form-text text-muted">Optional: Bank transfer reference or invoice number</small>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -491,6 +577,10 @@
                     <button type="button" class="close"  data-bs-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
+                    <div class="alert alert-success py-2 px-3 mb-3">
+                        <i class="mdi mdi-information-outline mr-1"></i>
+                        <small>Approve this capital expenditure request. You can adjust the approved amount if needed (e.g., partial approval or increase based on budget availability).</small>
+                    </div>
                     <div class="form-group">
                         <label>Approved Amount</label>
                         <div class="input-group">
@@ -501,10 +591,12 @@
                                    value="{{ $capex->requested_amount }}" step="0.01" min="0" required>
                         </div>
                         <small class="text-muted">Requested: ₦{{ number_format($capex->requested_amount, 2) }}</small>
+                        <small class="form-text text-muted d-block">You can approve the full amount or adjust it based on budget availability</small>
                     </div>
                     <div class="form-group">
                         <label>Notes</label>
                         <textarea class="form-control" name="notes" rows="2"></textarea>
+                        <small class="form-text text-muted">Optional: Add any comments or conditions for this approval</small>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -620,6 +712,24 @@ $(document).ready(function() {
         }
     });
 
+    // Payment method toggle
+    $('#paymentMethod').on('change', function() {
+        var method = $(this).val();
+        if (method === 'cash') {
+            $('#bankSelectGroup').hide();
+            $('#bankSelect').prop('required', false);
+            $('#chequeNumberGroup').hide();
+        } else if (method === 'cheque') {
+            $('#bankSelectGroup').show();
+            $('#bankSelect').prop('required', true);
+            $('#chequeNumberGroup').show();
+        } else {
+            $('#bankSelectGroup').show();
+            $('#bankSelect').prop('required', true);
+            $('#chequeNumberGroup').hide();
+        }
+    });
+
     // Record expense
     $('#expenseForm').on('submit', function(e) {
         e.preventDefault();
@@ -631,6 +741,9 @@ $(document).ready(function() {
                 expense_date: $(this).find('[name="expense_date"]').val(),
                 amount: $(this).find('[name="amount"]').val(),
                 description: $(this).find('[name="description"]').val(),
+                payment_method: $(this).find('[name="payment_method"]').val(),
+                bank_id: $(this).find('[name="bank_id"]').val(),
+                cheque_number: $(this).find('[name="cheque_number"]').val(),
                 payment_reference: $(this).find('[name="payment_reference"]').val()
             },
             success: function(response) {
