@@ -614,8 +614,8 @@ class CapexController extends Controller
             'payment_reference' => 'nullable|string',
         ]);
 
-        // Insert into capex_project_expenses table
-        DB::table('capex_project_expenses')->insert([
+        // Use Eloquent model to trigger observer for journal entry creation
+        $expense = \App\Models\CapexProjectExpense::create([
             'project_id' => $id,
             'expense_date' => $request->expense_date,
             'amount' => $request->amount,
@@ -625,14 +625,13 @@ class CapexController extends Controller
             'bank_id' => $request->bank_id,
             'cheque_number' => $request->cheque_number,
             'vendor' => $request->vendor_id,
-            'status' => 'pending',  // Use valid enum: pending, approved, paid, rejected
-            'created_at' => now(),
-            'updated_at' => now(),
+            'status' => 'approved',  // Set to approved to trigger JE creation
         ]);
 
         // Update actual amount from expenses table
         $totalExpenses = DB::table('capex_project_expenses')
             ->where('project_id', $id)
+            ->whereIn('status', ['approved', 'paid'])
             ->sum('amount');
 
         DB::table('capex_projects')->where('id', $id)->update([
@@ -641,7 +640,11 @@ class CapexController extends Controller
             'updated_at' => now(),
         ]);
 
-        return response()->json(['success' => true, 'message' => 'Expense recorded successfully.']);
+        return response()->json([
+            'success' => true,
+            'message' => 'Expense recorded successfully.',
+            'journal_entry_id' => $expense->journal_entry_id
+        ]);
     }
 
     /**

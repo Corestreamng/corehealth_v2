@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 03, 2026 at 11:03 PM
+-- Generation Time: Feb 04, 2026 at 09:54 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -179,7 +179,8 @@ INSERT INTO `accounts` (`id`, `account_group_id`, `code`, `name`, `description`,
 (77, 7, '2050', 'Salaries Payable', 'Accrued salaries and wages liability for employees. Used in two-stage payroll accounting - credited when payroll is approved, debited when paid.', NULL, 1, 1, 0, NULL, '2026-01-30 17:13:09', '2026-01-30 17:13:09', NULL),
 (78, 8, '22099', 'phl loan', 'loan', NULL, 0, 1, 0, NULL, '2026-01-30 19:17:00', '2026-01-30 19:17:00', NULL),
 (79, 1, '1031', 'Bank - Zenith bank', 'GL Account for Zenith bank (2250445688)', 1, 0, 1, 1, NULL, '2026-01-31 23:24:41', '2026-01-31 23:24:41', NULL),
-(80, 17, '6900', 'Loss on Disposal of Assets', 'Losses realized from disposal of fixed assets below book value', NULL, 0, 1, 0, NULL, '2026-02-03 08:50:31', '2026-02-03 08:50:31', NULL);
+(80, 17, '6900', 'Loss on Disposal of Assets', 'Losses realized from disposal of fixed assets below book value', NULL, 0, 1, 0, NULL, '2026-02-03 08:50:31', '2026-02-03 08:50:31', NULL),
+(81, 4, '1460', 'Other Fixed Assets', 'General fixed assets not classified elsewhere', NULL, 0, 1, 0, NULL, '2026-02-04 06:30:08', '2026-02-04 06:30:08', NULL);
 
 -- --------------------------------------------------------
 
@@ -727,7 +728,24 @@ INSERT INTO `audits` (`id`, `user_type`, `user_id`, `event`, `auditable_type`, `
 (220, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\CashFlowForecastItem', 24, '[]', '{\"item_description\":\"Cash Sales\",\"cash_flow_category\":\"operating_inflow\",\"forecasted_amount\":13856.81,\"source_type\":\"pattern\",\"source_reference\":\"pattern:1\",\"forecast_period_id\":26,\"id\":24}', 'http://localhost:8000/accounting/cash-flow-forecast/2/apply-patterns', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 20:51:12', '2026-02-03 20:51:12'),
 (221, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\CashFlowForecastItem', 25, '[]', '{\"item_description\":\"Utilities\",\"cash_flow_category\":\"operating_outflow\",\"forecasted_amount\":11547.34,\"source_type\":\"pattern\",\"source_reference\":\"pattern:2\",\"forecast_period_id\":26,\"id\":25}', 'http://localhost:8000/accounting/cash-flow-forecast/2/apply-patterns', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 20:51:12', '2026-02-03 20:51:12'),
 (222, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\CashFlowForecast', 2, '{\"status\":\"draft\",\"approved_by\":null,\"approved_at\":null}', '{\"status\":\"active\",\"approved_by\":1,\"approved_at\":\"2026-02-03 21:51:46\"}', 'http://localhost:8000/accounting/cash-flow-forecast/2/activate', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 20:51:46', '2026-02-03 20:51:46'),
-(223, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\CashFlowForecastPeriod', 13, '{\"actual_closing_balance\":null,\"variance\":null}', '{\"actual_closing_balance\":\"7000\",\"variance\":4690.530000000001}', 'http://localhost:8000/accounting/cash-flow-forecast/periods/13/actuals', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 20:52:20', '2026-02-03 20:52:20');
+(223, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\CashFlowForecastPeriod', 13, '{\"actual_closing_balance\":null,\"variance\":null}', '{\"actual_closing_balance\":\"7000\",\"variance\":4690.530000000001}', 'http://localhost:8000/accounting/cash-flow-forecast/periods/13/actuals', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 20:52:20', '2026-02-03 20:52:20'),
+(224, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntry', 62, '[]', '{\"entry_number\":\"JE-202602-0043\",\"entry_date\":\"2026-02-04 00:00:00\",\"accounting_period_id\":2,\"description\":\"CAPEX Expense: Ms Word | Project Code: CAPEX-2026-0003 | Description: test jornal | Amount: \\u20a66,000.00 | Invoice: dhhadad | Payment: bank_transfer\",\"reference_type\":\"App\\\\Models\\\\CapexProjectExpense\",\"reference_id\":6,\"entry_type\":\"auto\",\"status\":\"draft\",\"created_by\":1,\"id\":62}', 'http://localhost:8000/accounting/capex/10/expense', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 23:50:51', '2026-02-03 23:50:51'),
+(225, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 114, '[]', '{\"journal_entry_id\":62,\"line_number\":1,\"account_id\":19,\"sub_account_id\":null,\"narration\":\"CAPEX: Ms Word - test jornal\",\"debit\":6000,\"credit\":0,\"cash_flow_category\":\"operating\",\"product_id\":null,\"service_id\":null,\"product_category_id\":null,\"service_category_id\":null,\"hmo_id\":null,\"supplier_id\":null,\"patient_id\":null,\"department_id\":null,\"category\":\"capex\",\"id\":114}', 'http://localhost:8000/accounting/capex/10/expense', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 23:50:51', '2026-02-03 23:50:51'),
+(226, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 115, '[]', '{\"journal_entry_id\":62,\"line_number\":2,\"account_id\":79,\"sub_account_id\":null,\"narration\":\"Paid via Bank_transfer - Zenith bank\",\"debit\":0,\"credit\":6000,\"cash_flow_category\":\"operating\",\"product_id\":null,\"service_id\":null,\"product_category_id\":null,\"service_category_id\":null,\"hmo_id\":null,\"supplier_id\":null,\"patient_id\":null,\"department_id\":null,\"category\":\"capex\",\"id\":115}', 'http://localhost:8000/accounting/capex/10/expense', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 23:50:51', '2026-02-03 23:50:51'),
+(227, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\JournalEntry', 62, '{\"status\":\"draft\",\"posted_by\":null,\"posted_at\":null}', '{\"status\":\"posted\",\"posted_by\":1,\"posted_at\":\"2026-02-04 00:50:51\"}', 'http://localhost:8000/accounting/capex/10/expense', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-03 23:50:51', '2026-02-03 23:50:51'),
+(228, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntry', 64, '[]', '{\"entry_number\":\"JE-202602-0045\",\"accounting_period_id\":1,\"entry_date\":\"2026-02-04 00:00:00\",\"reference_type\":\"fixed_asset_disposal\",\"reference_id\":6,\"description\":\"Disposal of fixed asset: TEST VOID - Office Desk 20260203074929 (BLD-2026-00009) - Scrapped\",\"status\":\"posted\",\"posted_at\":\"2026-02-04 07:41:06\",\"created_by\":1,\"id\":64}', 'http://localhost:8000/accounting/fixed-assets/14/dispose', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 06:41:06', '2026-02-04 06:41:06'),
+(229, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 118, '[]', '{\"journal_entry_id\":64,\"line_number\":1,\"account_id\":1,\"debit\":\"6000.00\",\"credit\":0,\"narration\":\"Proceeds from disposal via Cash: TEST VOID - Office Desk 20260203074929\",\"id\":118}', 'http://localhost:8000/accounting/fixed-assets/14/dispose', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 06:41:06', '2026-02-04 06:41:06'),
+(230, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 119, '[]', '{\"journal_entry_id\":64,\"line_number\":2,\"account_id\":19,\"debit\":\"375.00\",\"credit\":0,\"narration\":\"Remove accumulated depreciation: TEST VOID - Office Desk 20260203074929\",\"id\":119}', 'http://localhost:8000/accounting/fixed-assets/14/dispose', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 06:41:06', '2026-02-04 06:41:06'),
+(231, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 120, '[]', '{\"journal_entry_id\":64,\"line_number\":3,\"account_id\":17,\"debit\":0,\"credit\":\"25000.00\",\"narration\":\"Remove fixed asset: TEST VOID - Office Desk 20260203074929\",\"id\":120}', 'http://localhost:8000/accounting/fixed-assets/14/dispose', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 06:41:06', '2026-02-04 06:41:06'),
+(232, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 121, '[]', '{\"journal_entry_id\":64,\"line_number\":4,\"account_id\":80,\"debit\":18625,\"credit\":0,\"narration\":\"Loss on disposal: TEST VOID - Office Desk 20260203074929\",\"id\":121}', 'http://localhost:8000/accounting/fixed-assets/14/dispose', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 06:41:06', '2026-02-04 06:41:06'),
+(233, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntry', 65, '[]', '{\"entry_number\":\"JE-202602-0046\",\"accounting_period_id\":1,\"entry_date\":\"2026-02-04 00:00:00\",\"reference_type\":\"liability_schedule\",\"reference_id\":1,\"description\":\"Loan received from Zenith bank: LIA-2026-00001\",\"status\":\"posted\",\"posted_at\":\"2026-02-04 08:25:24\",\"created_by\":1,\"id\":65}', 'http://localhost:8000/accounting/liabilities', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 07:25:24', '2026-02-04 07:25:24'),
+(234, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 122, '[]', '{\"journal_entry_id\":65,\"line_number\":1,\"account_id\":2,\"debit\":\"1000000.00\",\"credit\":0,\"narration\":\"Loan proceeds received\",\"id\":122}', 'http://localhost:8000/accounting/liabilities', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 07:25:24', '2026-02-04 07:25:24'),
+(235, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 123, '[]', '{\"journal_entry_id\":65,\"line_number\":2,\"account_id\":32,\"debit\":0,\"credit\":\"1000000.00\",\"narration\":\"Loan payable to Zenith bank\",\"id\":123}', 'http://localhost:8000/accounting/liabilities', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 07:25:24', '2026-02-04 07:25:24'),
+(236, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntry', 66, '[]', '{\"entry_number\":\"JE-202602-0047\",\"accounting_period_id\":1,\"entry_date\":\"2026-02-04 00:00:00\",\"reference_type\":\"liability_payment\",\"reference_id\":1,\"description\":\"Loan payment #1 to Zenith bank\",\"status\":\"posted\",\"posted_at\":\"2026-02-04 08:48:23\",\"created_by\":1,\"id\":66}', 'http://localhost:8000/accounting/liabilities/1/payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 07:48:23', '2026-02-04 07:48:23'),
+(237, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 124, '[]', '{\"journal_entry_id\":66,\"line_number\":1,\"account_id\":32,\"debit\":77181.82,\"credit\":0,\"narration\":\"Principal repayment - Payment #1\",\"id\":124}', 'http://localhost:8000/accounting/liabilities/1/payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 07:48:23', '2026-02-04 07:48:23'),
+(238, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 125, '[]', '{\"journal_entry_id\":66,\"line_number\":2,\"account_id\":74,\"debit\":14498.169999999998,\"credit\":0,\"narration\":\"Interest expense - Payment #1\",\"id\":125}', 'http://localhost:8000/accounting/liabilities/1/payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 07:48:23', '2026-02-04 07:48:23'),
+(239, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 126, '[]', '{\"journal_entry_id\":66,\"line_number\":3,\"account_id\":74,\"debit\":600,\"credit\":0,\"narration\":\"Late fee - Payment #1\",\"id\":126}', 'http://localhost:8000/accounting/liabilities/1/payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 07:48:23', '2026-02-04 07:48:23'),
+(240, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 127, '[]', '{\"journal_entry_id\":66,\"line_number\":4,\"account_id\":79,\"debit\":0,\"credit\":92279.99,\"narration\":\"Payment to Zenith bank\",\"id\":127}', 'http://localhost:8000/accounting/liabilities/1/payment', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 07:48:23', '2026-02-04 07:48:23');
 
 -- --------------------------------------------------------
 
@@ -958,7 +976,9 @@ CREATE TABLE `budgets` (
 --
 
 INSERT INTO `budgets` (`id`, `budget_name`, `fiscal_year_id`, `year`, `department_id`, `cost_center_id`, `budget_type`, `total_budgeted`, `total_actual`, `total_variance`, `status`, `created_by`, `approved_by`, `approved_at`, `unapproved_by`, `unapproved_at`, `unapproval_reason`, `locked_by`, `locked_at`, `rejection_reason`, `notes`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, '2026 Misc budget', 1, 2026, NULL, NULL, 'operating', 730000.00, 0.00, 0.00, 'locked', 1, 1, '2026-02-03 12:13:53', 1, '2026-02-03 12:13:13', 'gad  adad a dada dad', 1, '2026-02-03 12:14:53', 'aghahgadad ad ad', NULL, '2026-02-03 11:19:59', '2026-02-03 12:14:53', NULL);
+(1, '2026 Misc budget', 1, 2026, NULL, NULL, 'operating', 730000.00, 0.00, 0.00, 'locked', 1, 1, '2026-02-03 12:13:53', 1, '2026-02-03 12:13:13', 'gad  adad a dada dad', 1, '2026-02-03 12:14:53', 'aghahgadad ad ad', NULL, '2026-02-03 11:19:59', '2026-02-03 12:14:53', NULL),
+(2, 'Tractor budget', NULL, 2026, NULL, 1, 'capital', 7689.00, 0.00, 0.00, 'approved', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 22:54:09', '2026-02-03 22:54:09', NULL),
+(3, 'more', NULL, 2026, NULL, 1, 'capital', 8900.00, 0.00, 0.00, 'approved', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 23:07:37', '2026-02-03 23:07:37', NULL);
 
 -- --------------------------------------------------------
 
@@ -1018,33 +1038,78 @@ CREATE TABLE `budget_revisions` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `capex_approval_history`
+--
+
+CREATE TABLE `capex_approval_history` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `capex_request_id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` bigint(20) UNSIGNED NOT NULL,
+  `action` enum('submitted','approved','rejected','revision_requested','started','completed','cancelled') NOT NULL,
+  `notes` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `capex_approval_history`
+--
+
+INSERT INTO `capex_approval_history` (`id`, `capex_request_id`, `user_id`, `action`, `notes`, `created_at`, `updated_at`) VALUES
+(8, 8, 1, 'submitted', 'Request submitted for approval', '2026-02-03 22:31:27', NULL),
+(9, 8, 1, 'rejected', 'test reect', '2026-02-03 22:31:45', NULL),
+(10, 9, 1, 'submitted', 'Request submitted for approval', '2026-02-03 22:34:07', NULL),
+(11, 9, 1, 'approved', NULL, '2026-02-03 22:34:22', NULL),
+(12, 9, 1, 'started', 'Execution started', '2026-02-03 22:34:53', NULL),
+(13, 9, 1, 'completed', 'Capex completed', '2026-02-03 22:36:00', NULL),
+(14, 10, 1, 'submitted', 'Request submitted for approval', '2026-02-03 23:49:38', NULL),
+(15, 10, 1, 'approved', NULL, '2026-02-03 23:49:47', NULL),
+(16, 10, 1, 'started', 'Execution started', '2026-02-03 23:50:01', NULL);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `capex_projects`
 --
 
 CREATE TABLE `capex_projects` (
   `id` bigint(20) UNSIGNED NOT NULL,
+  `reference_number` varchar(255) DEFAULT NULL,
   `project_code` varchar(255) NOT NULL,
+  `fiscal_year` int(11) DEFAULT NULL,
   `project_name` varchar(255) NOT NULL,
+  `title` varchar(255) DEFAULT NULL,
   `description` text DEFAULT NULL,
   `project_type` enum('equipment','building','renovation','technology','vehicle','furniture','other') NOT NULL,
+  `category` varchar(255) DEFAULT NULL,
   `department_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `cost_center_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `vendor_id` bigint(20) UNSIGNED DEFAULT NULL,
   `fixed_asset_category_id` bigint(20) UNSIGNED DEFAULT NULL,
   `estimated_cost` decimal(15,2) NOT NULL,
+  `requested_amount` decimal(15,2) DEFAULT NULL,
   `approved_budget` decimal(15,2) DEFAULT NULL,
+  `approved_amount` decimal(15,2) DEFAULT NULL,
   `actual_cost` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `actual_amount` decimal(15,2) DEFAULT NULL,
   `committed_cost` decimal(15,2) NOT NULL DEFAULT 0.00,
   `remaining_budget` decimal(15,2) NOT NULL DEFAULT 0.00,
   `proposed_date` date NOT NULL,
   `approved_date` date DEFAULT NULL,
+  `approved_at` timestamp NULL DEFAULT NULL,
+  `submitted_at` timestamp NULL DEFAULT NULL,
   `expected_start_date` date DEFAULT NULL,
   `expected_completion_date` date DEFAULT NULL,
   `actual_start_date` date DEFAULT NULL,
   `actual_completion_date` date DEFAULT NULL,
+  `completion_date` date DEFAULT NULL,
   `requested_by` bigint(20) UNSIGNED NOT NULL,
   `approved_by` bigint(20) UNSIGNED DEFAULT NULL,
   `justification` text DEFAULT NULL,
   `rejection_reason` text DEFAULT NULL,
-  `status` enum('draft','pending_approval','approved','in_progress','completed','cancelled','on_hold') NOT NULL DEFAULT 'draft',
+  `revision_notes` text DEFAULT NULL,
+  `status` enum('draft','pending','pending_approval','approved','in_progress','completed','cancelled','rejected','on_hold','revision') DEFAULT 'draft',
+  `priority` enum('low','medium','high','critical') NOT NULL DEFAULT 'medium',
   `completion_percentage` int(11) NOT NULL DEFAULT 0,
   `expected_benefits` text DEFAULT NULL,
   `expected_annual_savings` decimal(15,2) DEFAULT NULL,
@@ -1055,6 +1120,15 @@ CREATE TABLE `capex_projects` (
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `capex_projects`
+--
+
+INSERT INTO `capex_projects` (`id`, `reference_number`, `project_code`, `fiscal_year`, `project_name`, `title`, `description`, `project_type`, `category`, `department_id`, `cost_center_id`, `vendor_id`, `fixed_asset_category_id`, `estimated_cost`, `requested_amount`, `approved_budget`, `approved_amount`, `actual_cost`, `actual_amount`, `committed_cost`, `remaining_budget`, `proposed_date`, `approved_date`, `approved_at`, `submitted_at`, `expected_start_date`, `expected_completion_date`, `actual_start_date`, `actual_completion_date`, `completion_date`, `requested_by`, `approved_by`, `justification`, `rejection_reason`, `revision_notes`, `status`, `priority`, `completion_percentage`, `expected_benefits`, `expected_annual_savings`, `expected_payback_months`, `expected_roi_percentage`, `notes`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(8, 'CAPEX-2026-0001', 'CAPEX-2026-0001', 2026, 'EMR development', 'EMR development', 'tets capex', 'technology', 'technology', NULL, 1, NULL, NULL, 33000.00, 33000.00, NULL, NULL, 2500.00, NULL, 0.00, 0.00, '2026-02-03', NULL, NULL, '2026-02-03 22:31:27', '2026-02-01', '2026-02-28', NULL, NULL, NULL, 1, NULL, 'tets', 'test reect', NULL, 'rejected', 'high', 0, NULL, NULL, NULL, NULL, NULL, '2026-02-03 22:28:44', '2026-02-04 06:25:10', NULL),
+(9, 'CAPEX-2026-0002', 'CAPEX-2026-0002', 2026, 'Tractor', 'Tractor', NULL, 'equipment', 'equipment', NULL, 1, NULL, NULL, 22000.00, 22000.00, 22000.00, 22000.00, 9589.00, 8089.00, 0.00, 0.00, '2026-02-03', '2026-02-03', '2026-02-03 22:34:22', '2026-02-03 22:34:07', '2026-02-01', '2026-02-28', '2026-02-03', '2026-02-03', '2026-02-03', 1, 1, 'tractor project', NULL, NULL, 'completed', 'medium', 0, NULL, NULL, NULL, NULL, NULL, '2026-02-03 22:33:57', '2026-02-03 23:38:19', NULL),
+(10, 'CAPEX-2026-0003', 'CAPEX-2026-0003', 2026, 'Ms Word', 'Ms Word', NULL, 'renovation', 'renovation', NULL, 1, NULL, NULL, 5800.00, 5800.00, 5800.00, 5800.00, 6000.00, 6000.00, 0.00, 0.00, '2026-02-04', '2026-02-04', '2026-02-03 23:49:47', '2026-02-03 23:49:38', NULL, NULL, '2026-02-04', NULL, NULL, 1, 1, 'wfkwf', NULL, NULL, 'in_progress', 'medium', 0, NULL, NULL, NULL, NULL, NULL, '2026-02-03 23:49:20', '2026-02-03 23:50:51', NULL);
 
 -- --------------------------------------------------------
 
@@ -1072,11 +1146,55 @@ CREATE TABLE `capex_project_expenses` (
   `description` varchar(255) NOT NULL,
   `vendor` varchar(255) DEFAULT NULL,
   `invoice_number` varchar(255) DEFAULT NULL,
+  `payment_method` enum('cash','bank_transfer','cheque','card') NOT NULL DEFAULT 'bank_transfer',
+  `bank_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `cheque_number` varchar(255) DEFAULT NULL,
   `amount` decimal(15,2) NOT NULL,
   `status` enum('pending','approved','paid','rejected') NOT NULL DEFAULT 'pending',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `capex_project_expenses`
+--
+
+INSERT INTO `capex_project_expenses` (`id`, `project_id`, `journal_entry_id`, `purchase_order_id`, `expense_id`, `expense_date`, `description`, `vendor`, `invoice_number`, `payment_method`, `bank_id`, `cheque_number`, `amount`, `status`, `created_at`, `updated_at`) VALUES
+(3, 9, 59, NULL, NULL, '2026-02-03', 'engine boy', NULL, '6666', 'bank_transfer', 1, NULL, 4000.00, 'approved', '2026-02-03 22:35:23', '2026-02-03 23:33:07'),
+(4, 9, 60, NULL, NULL, '2026-02-03', 'yyw', NULL, NULL, 'bank_transfer', 1, NULL, 4089.00, 'approved', '2026-02-03 22:35:46', '2026-02-03 23:38:18'),
+(5, 9, 61, NULL, NULL, '2026-02-04', 'Test Observer - New Expense', NULL, NULL, 'bank_transfer', 1, NULL, 1500.00, 'approved', '2026-02-03 23:38:19', '2026-02-03 23:38:19'),
+(6, 10, 62, NULL, NULL, '2026-02-04', 'test jornal', NULL, 'dhhadad', 'bank_transfer', 1, NULL, 6000.00, 'approved', '2026-02-03 23:50:51', '2026-02-03 23:50:51'),
+(7, 8, 63, NULL, NULL, '2026-02-04', 'TEST: Observer Fix Verification - Technology Category', NULL, NULL, 'bank_transfer', 1, NULL, 2500.00, 'approved', '2026-02-04 06:25:10', '2026-02-04 06:25:10');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `capex_request_items`
+--
+
+CREATE TABLE `capex_request_items` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `capex_request_id` bigint(20) UNSIGNED NOT NULL,
+  `description` varchar(255) NOT NULL,
+  `quantity` int(11) NOT NULL DEFAULT 1,
+  `unit_cost` decimal(15,2) NOT NULL,
+  `amount` decimal(15,2) NOT NULL,
+  `notes` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `capex_request_items`
+--
+
+INSERT INTO `capex_request_items` (`id`, `capex_request_id`, `description`, `quantity`, `unit_cost`, `amount`, `notes`, `created_at`, `updated_at`) VALUES
+(10, 8, 'Good 1', 2, 6000.00, 12000.00, NULL, '2026-02-03 22:31:17', '2026-02-03 22:31:17'),
+(11, 8, 'item 2', 3, 7000.00, 21000.00, NULL, '2026-02-03 22:31:17', '2026-02-03 22:31:17'),
+(12, 9, 'Engine change', 4, 5000.00, 20000.00, NULL, '2026-02-03 22:33:57', '2026-02-03 22:33:57'),
+(13, 9, 'Paint job', 5, 400.00, 2000.00, NULL, '2026-02-03 22:33:57', '2026-02-03 22:33:57'),
+(14, 10, 'User 1', 5, 600.00, 3000.00, NULL, '2026-02-03 23:49:20', '2026-02-03 23:49:20'),
+(15, 10, 'Installation', 4, 700.00, 2800.00, NULL, '2026-02-03 23:49:20', '2026-02-03 23:49:20');
 
 -- --------------------------------------------------------
 
@@ -2129,9 +2247,9 @@ INSERT INTO `fixed_assets` (`id`, `asset_number`, `name`, `description`, `catego
 (8, 'BLD-2026-00006', 'Test Laptop Computer', 'Dell Latitude 5520 - Test Asset for Depreciation', 1, 17, 5, 'manual', NULL, 150000.00, 0.00, 150000.00, 7500.00, 142500.00, 296.88, 149703.12, 'straight_line', 40, 480, 296.88, '2025-12-03', '2025-12-03', '2026-02-03', NULL, 'TEST-1770103630', NULL, NULL, 'IT Department', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'INV-TEST-001', 'active', NULL, '2026-02-03 06:27:10', '2026-02-03 09:20:56', NULL),
 (9, 'BLD-2026-00007', 'Test Laptop Computer', 'Dell Latitude 5520 - Test Asset for Depreciation', 1, 17, 12, 'manual', NULL, 150000.00, 0.00, 150000.00, 7500.00, 142500.00, 296.88, 149703.12, 'straight_line', 40, 480, 296.88, '2025-12-03', '2025-12-03', '2026-02-03', NULL, 'TEST-1770103708', NULL, NULL, 'IT Department', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'INV-TEST-001', 'active', NULL, '2026-02-03 06:28:28', '2026-02-03 09:20:56', NULL),
 (13, 'BLD-2026-00008', 'TEST VOID - Office Desk 20260203074844', 'Test asset for void functionality', 1, 17, 16, 'manual', NULL, 25000.00, 0.00, 25000.00, 2500.00, 22500.00, 375.00, 24625.00, 'straight_line', 5, 60, 375.00, '2026-02-03', '2026-02-03', '2026-02-03', NULL, 'TEST-VOID-1770104924', NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'active', NULL, '2026-02-03 06:48:44', '2026-02-03 09:20:56', NULL),
-(14, 'BLD-2026-00009', 'TEST VOID - Office Desk 20260203074929', 'Test asset for void functionality', 1, 17, 17, 'manual', NULL, 25000.00, 0.00, 25000.00, 2500.00, 22500.00, 375.00, 24625.00, 'straight_line', 5, 60, 375.00, '2026-02-03', '2026-02-03', '2026-02-03', NULL, 'TEST-VOID-1770104969', NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'active', NULL, '2026-02-03 06:49:29', '2026-02-03 09:20:56', NULL),
+(14, 'BLD-2026-00009', 'TEST VOID - Office Desk 20260203074929', 'Test asset for void functionality', 1, 17, 17, 'manual', NULL, 25000.00, 0.00, 25000.00, 2500.00, 22500.00, 375.00, 24625.00, 'straight_line', 5, 60, 375.00, '2026-02-03', '2026-02-03', '2026-02-03', '2026-02-04', 'TEST-VOID-1770104969', NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'disposed', NULL, '2026-02-03 06:49:29', '2026-02-04 06:41:06', NULL),
 (15, 'BLD-2026-00010', 'TEST VOID - Office Desk 20260203074954', 'Test asset for void functionality', 1, 17, 18, 'manual', NULL, 25000.00, 0.00, 25000.00, 2500.00, 22500.00, 375.00, 24625.00, 'straight_line', 5, 60, 375.00, '2026-02-03', '2026-02-03', '2026-02-03', NULL, 'TEST-VOID-1770104994', NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'active', NULL, '2026-02-03 06:49:54', '2026-02-03 09:20:56', NULL),
-(16, 'BLD-2026-00011', 'TEST VOID - Office Desk 20260203075041', 'Test asset for void functionality', 1, 17, 19, 'manual', NULL, 25000.00, 0.00, 25000.00, 2500.00, 22500.00, 0.00, 25000.00, 'straight_line', 5, 60, 375.00, '2026-02-03', '2026-02-03', NULL, NULL, 'TEST-VOID-1770105041', NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'disposed', NULL, '2026-02-03 06:50:41', '2026-02-03 07:53:58', NULL),
+(16, 'BLD-2026-00011', 'TEST VOID - Office Desk 20260203075041', 'Test asset for void functionality', 1, 17, 19, 'manual', NULL, 25000.00, 0.00, 25000.00, 2500.00, 22500.00, 0.00, 25000.00, 'straight_line', 5, 60, 375.00, '2026-02-03', '2026-02-03', NULL, '2026-02-03', 'TEST-VOID-1770105041', NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'disposed', NULL, '2026-02-03 06:50:41', '2026-02-03 23:31:55', NULL),
 (17, 'BLD-2026-00012', 'TEST VOID - Office Desk 20260203075113', 'Test asset for void functionality', 1, 17, 20, 'manual', NULL, 25000.00, 0.00, 25000.00, 2500.00, 22500.00, 0.00, 25000.00, 'straight_line', 5, 60, 375.00, '2026-02-03', '2026-02-03', NULL, NULL, 'TEST-VOID-1770105073', NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'voided', 'VOIDED: 2026-02-03 08:47:05 - dulicate', '2026-02-03 06:51:13', '2026-02-03 07:47:05', NULL),
 (18, 'BLD-2026-00013', 'TEST VOID - Office Desk 20260203075329', 'Test asset for void functionality', 1, 17, 22, 'manual', NULL, 25000.00, 0.00, 25000.00, 2500.00, 22500.00, 0.00, 25000.00, 'straight_line', 5, 60, 375.00, '2026-02-03', '2026-02-03', NULL, NULL, 'TEST-VOID-1770105209', NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'voided', 'VOIDED: 2026-02-03 07:53:29 - Test void operation - verifying functionality', '2026-02-03 06:53:29', '2026-02-03 06:53:29', NULL),
 (19, 'BLD-2026-00014', 'TEST VOID - Office Desk 20260203075403', 'Test asset for void functionality', 1, 17, 24, 'manual', NULL, 25000.00, 0.00, 25000.00, 2500.00, 22500.00, 0.00, 25000.00, 'straight_line', 5, 60, 375.00, '2026-02-03', '2026-02-03', NULL, NULL, 'TEST-VOID-1770105243', NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'voided', 'VOIDED: 2026-02-03 07:54:03 - Test void operation - verifying functionality', '2026-02-03 06:54:03', '2026-02-03 06:54:03', NULL),
@@ -2257,9 +2375,10 @@ CREATE TABLE `fixed_asset_disposals` (
 INSERT INTO `fixed_asset_disposals` (`id`, `fixed_asset_id`, `journal_entry_id`, `disposal_date`, `disposal_type`, `disposal_proceeds`, `book_value_at_disposal`, `gain_loss_on_disposal`, `disposal_costs`, `buyer_name`, `invoice_number`, `reason`, `approved_by`, `approved_at`, `status`, `payment_method`, `bank_id`, `created_at`, `updated_at`, `deleted_at`) VALUES
 (1, 3, NULL, '2026-02-03', 'scrapped', 0.00, 150000.00, -150000.00, 0.00, NULL, NULL, 'slaod', NULL, NULL, 'pending', NULL, NULL, '2026-02-03 07:32:14', '2026-02-03 07:32:14', NULL),
 (2, 3, NULL, '2026-02-03', 'sale', 52.00, 150000.00, -149948.00, 0.00, 'app', NULL, 'teta', NULL, NULL, 'pending', 'bank_transfer', 1, '2026-02-03 07:33:24', '2026-02-03 07:33:24', NULL),
-(3, 16, NULL, '2026-02-03', 'scrapped', 4000.00, 25000.00, -21000.00, 0.00, NULL, NULL, 'test', NULL, NULL, 'completed', 'bank_transfer', 1, '2026-02-03 07:53:58', '2026-02-03 07:53:58', NULL),
+(3, 16, 58, '2026-02-03', 'scrapped', 4000.00, 25000.00, -21000.00, 0.00, NULL, NULL, 'test', NULL, NULL, 'completed', 'bank_transfer', 1, '2026-02-03 07:53:58', '2026-02-03 23:31:55', NULL),
 (4, 3, 48, '2026-02-03', 'scrapped', 4000.00, 150000.00, -146000.00, 0.00, NULL, NULL, '63722', NULL, NULL, 'completed', 'bank_transfer', 1, '2026-02-03 08:14:05', '2026-02-03 08:59:38', NULL),
-(5, 4, 49, '2026-02-03', 'donated', 88000.00, 150000.00, -62000.00, 0.00, NULL, NULL, 'test cash disposal', NULL, NULL, 'completed', 'cash', NULL, '2026-02-03 09:03:25', '2026-02-03 09:03:25', NULL);
+(5, 4, 49, '2026-02-03', 'donated', 88000.00, 150000.00, -62000.00, 0.00, NULL, NULL, 'test cash disposal', NULL, NULL, 'completed', 'cash', NULL, '2026-02-03 09:03:25', '2026-02-03 09:03:25', NULL),
+(6, 14, 64, '2026-02-04', 'scrapped', 6000.00, 24625.00, -18625.00, 0.00, NULL, NULL, 'tttt', NULL, NULL, 'completed', 'cash', NULL, '2026-02-04 06:41:06', '2026-02-04 06:41:06', NULL);
 
 -- --------------------------------------------------------
 
@@ -2782,7 +2901,16 @@ INSERT INTO `journal_entries` (`id`, `entry_number`, `accounting_period_id`, `en
 (54, 'JE-202602-0035', 1, '2026-02-03', 'Monthly depreciation: Test Laptop Computer (BLD-2026-00007) - Y1M2', 'fixed_asset_depreciation', 16, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 09:20:56', 1, '2026-02-03 09:20:56', '2026-02-03 09:20:56', NULL),
 (55, 'JE-202602-0036', 1, '2026-02-03', 'Monthly depreciation: TEST VOID - Office Desk 20260203074844 (BLD-2026-00008) - Y1M2', 'fixed_asset_depreciation', 17, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 09:20:56', 1, '2026-02-03 09:20:56', '2026-02-03 09:20:56', NULL),
 (56, 'JE-202602-0037', 1, '2026-02-03', 'Monthly depreciation: TEST VOID - Office Desk 20260203074929 (BLD-2026-00009) - Y1M2', 'fixed_asset_depreciation', 18, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 09:20:56', 1, '2026-02-03 09:20:56', '2026-02-03 09:20:56', NULL),
-(57, 'JE-202602-0038', 1, '2026-02-03', 'Monthly depreciation: TEST VOID - Office Desk 20260203074954 (BLD-2026-00010) - Y1M2', 'fixed_asset_depreciation', 19, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 09:20:56', 1, '2026-02-03 09:20:56', '2026-02-03 09:20:56', NULL);
+(57, 'JE-202602-0038', 1, '2026-02-03', 'Monthly depreciation: TEST VOID - Office Desk 20260203074954 (BLD-2026-00010) - Y1M2', 'fixed_asset_depreciation', 19, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 09:20:56', 1, '2026-02-03 09:20:56', '2026-02-03 09:20:56', NULL),
+(58, 'JE-202602-0039', 1, '2026-02-03', 'Disposal of fixed asset: TEST VOID - Office Desk 20260203075041 (BLD-2026-00011) - Scrapped', 'fixed_asset_disposal', 3, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 23:31:55', 1, '2026-02-03 23:31:55', '2026-02-03 23:31:55', NULL),
+(59, 'JE-202602-0040', 2, '2026-02-04', 'CAPEX Expense: Tractor | Project Code: CAPEX-2026-0002 | Description: engine boy | Amount: ₦4,000.00 | Invoice: 6666 | Payment: bank_transfer', 'App\\Models\\CapexProjectExpense', 3, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-02-03 23:33:07', 1, '2026-02-03 23:33:07', '2026-02-03 23:33:07', NULL),
+(60, 'JE-202602-0041', 2, '2026-02-04', 'CAPEX Expense: Tractor | Project Code: CAPEX-2026-0002 | Description: yyw | Amount: ₦4,089.00 | Payment: bank_transfer', 'App\\Models\\CapexProjectExpense', 4, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-02-03 23:38:19', 1, '2026-02-03 23:38:18', '2026-02-03 23:38:19', NULL),
+(61, 'JE-202602-0042', 2, '2026-02-04', 'CAPEX Expense: Tractor | Project Code: CAPEX-2026-0002 | Description: Test Observer - New Expense | Amount: ₦1,500.00 | Payment: bank_transfer', 'App\\Models\\CapexProjectExpense', 5, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-02-03 23:38:19', 1, '2026-02-03 23:38:19', '2026-02-03 23:38:19', NULL),
+(62, 'JE-202602-0043', 2, '2026-02-04', 'CAPEX Expense: Ms Word | Project Code: CAPEX-2026-0003 | Description: test jornal | Amount: ₦6,000.00 | Invoice: dhhadad | Payment: bank_transfer', 'App\\Models\\CapexProjectExpense', 6, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-02-03 23:50:51', 1, '2026-02-03 23:50:51', '2026-02-03 23:50:51', NULL),
+(63, 'JE-202602-0044', 2, '2026-02-04', 'CAPEX Expense: EMR development | Project Code: CAPEX-2026-0001 | Description: TEST: Observer Fix Verification - Technology Category | Amount: ₦2,500.00 | Payment: bank_transfer', 'App\\Models\\CapexProjectExpense', 7, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-02-04 06:25:10', 1, '2026-02-04 06:25:10', '2026-02-04 06:25:10', NULL),
+(64, 'JE-202602-0045', 1, '2026-02-04', 'Disposal of fixed asset: TEST VOID - Office Desk 20260203074929 (BLD-2026-00009) - Scrapped', 'fixed_asset_disposal', 6, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-04 06:41:06', 1, '2026-02-04 06:41:06', '2026-02-04 06:41:06', NULL),
+(65, 'JE-202602-0046', 1, '2026-02-04', 'Loan received from Zenith bank: LIA-2026-00001', 'liability_schedule', 1, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-04 07:25:24', 1, '2026-02-04 07:25:24', '2026-02-04 07:25:24', NULL),
+(66, 'JE-202602-0047', 1, '2026-02-04', 'Loan payment #1 to Zenith bank', 'liability_payment', 1, NULL, 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-04 07:48:23', 1, '2026-02-04 07:48:23', '2026-02-04 07:48:23', NULL);
 
 -- --------------------------------------------------------
 
@@ -2922,7 +3050,31 @@ INSERT INTO `journal_entry_lines` (`id`, `journal_entry_id`, `line_number`, `acc
 (100, 56, 1, 72, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 375.00, 0.00, 'Depreciation expense: TEST VOID - Office Desk 20260203074929', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
 (101, 56, 2, 19, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 375.00, 'Accumulated depreciation: TEST VOID - Office Desk 20260203074929', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
 (102, 57, 1, 72, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 375.00, 0.00, 'Depreciation expense: TEST VOID - Office Desk 20260203074954', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
-(103, 57, 2, 19, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 375.00, 'Accumulated depreciation: TEST VOID - Office Desk 20260203074954', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56');
+(103, 57, 2, 19, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 375.00, 'Accumulated depreciation: TEST VOID - Office Desk 20260203074954', NULL, '2026-02-03 09:20:56', '2026-02-03 09:20:56'),
+(104, 58, 1, 79, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 4000.00, 0.00, 'Proceeds from disposal via Zenith bank: TEST VOID - Office Desk 20260203075041', NULL, '2026-02-03 23:31:55', '2026-02-03 23:31:55'),
+(105, 58, 2, 19, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 0.00, 'Remove accumulated depreciation: TEST VOID - Office Desk 20260203075041', NULL, '2026-02-03 23:31:55', '2026-02-03 23:31:55'),
+(106, 58, 3, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 25000.00, 'Remove fixed asset: TEST VOID - Office Desk 20260203075041', NULL, '2026-02-03 23:31:55', '2026-02-03 23:31:55'),
+(107, 58, 4, 80, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 21000.00, 0.00, 'Loss on disposal: TEST VOID - Office Desk 20260203075041', NULL, '2026-02-03 23:31:55', '2026-02-03 23:31:55'),
+(108, 59, 1, 13, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'capex', 4000.00, 0.00, 'CAPEX: Tractor - engine boy', 'operating', '2026-02-03 23:33:07', '2026-02-03 23:33:07'),
+(109, 59, 2, 79, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'capex', 0.00, 4000.00, 'Paid via Bank_transfer - Zenith bank', 'operating', '2026-02-03 23:33:07', '2026-02-03 23:33:07'),
+(110, 60, 1, 13, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'capex', 4089.00, 0.00, 'CAPEX: Tractor - yyw', 'operating', '2026-02-03 23:38:19', '2026-02-03 23:38:19'),
+(111, 60, 2, 79, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'capex', 0.00, 4089.00, 'Paid via Bank_transfer - Zenith bank', 'operating', '2026-02-03 23:38:19', '2026-02-03 23:38:19'),
+(112, 61, 1, 13, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'capex', 1500.00, 0.00, 'CAPEX: Tractor - Test Observer - New Expense', 'operating', '2026-02-03 23:38:19', '2026-02-03 23:38:19'),
+(113, 61, 2, 79, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'capex', 0.00, 1500.00, 'Paid via Bank_transfer - Zenith bank', 'operating', '2026-02-03 23:38:19', '2026-02-03 23:38:19'),
+(114, 62, 1, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'capex', 6000.00, 0.00, 'CAPEX: Ms Word - test jornal', 'operating', '2026-02-03 23:50:51', '2026-02-03 23:50:51'),
+(115, 62, 2, 79, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'capex', 0.00, 6000.00, 'Paid via Bank_transfer - Zenith bank', 'operating', '2026-02-03 23:50:51', '2026-02-03 23:50:51'),
+(116, 63, 1, 15, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'capex', 2500.00, 0.00, 'CAPEX: EMR development - TEST: Observer Fix Verification - Technology Category', 'operating', '2026-02-04 06:25:10', '2026-02-04 06:25:10'),
+(117, 63, 2, 79, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'capex', 0.00, 2500.00, 'Paid via Bank_transfer - Zenith bank', 'operating', '2026-02-04 06:25:10', '2026-02-04 06:25:10'),
+(118, 64, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 6000.00, 0.00, 'Proceeds from disposal via Cash: TEST VOID - Office Desk 20260203074929', NULL, '2026-02-04 06:41:06', '2026-02-04 06:41:06'),
+(119, 64, 2, 19, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 375.00, 0.00, 'Remove accumulated depreciation: TEST VOID - Office Desk 20260203074929', NULL, '2026-02-04 06:41:06', '2026-02-04 06:41:06'),
+(120, 64, 3, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 25000.00, 'Remove fixed asset: TEST VOID - Office Desk 20260203074929', NULL, '2026-02-04 06:41:06', '2026-02-04 06:41:06'),
+(121, 64, 4, 80, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 18625.00, 0.00, 'Loss on disposal: TEST VOID - Office Desk 20260203074929', NULL, '2026-02-04 06:41:06', '2026-02-04 06:41:06'),
+(122, 65, 1, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1000000.00, 0.00, 'Loan proceeds received', NULL, '2026-02-04 07:25:24', '2026-02-04 07:25:24'),
+(123, 65, 2, 32, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 1000000.00, 'Loan payable to Zenith bank', NULL, '2026-02-04 07:25:24', '2026-02-04 07:25:24'),
+(124, 66, 1, 32, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 77181.82, 0.00, 'Principal repayment - Payment #1', NULL, '2026-02-04 07:48:23', '2026-02-04 07:48:23'),
+(125, 66, 2, 74, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 14498.17, 0.00, 'Interest expense - Payment #1', NULL, '2026-02-04 07:48:23', '2026-02-04 07:48:23'),
+(126, 66, 3, 74, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 600.00, 0.00, 'Late fee - Payment #1', NULL, '2026-02-04 07:48:23', '2026-02-04 07:48:23'),
+(127, 66, 4, 79, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 92279.99, 'Payment to Zenith bank', NULL, '2026-02-04 07:48:23', '2026-02-04 07:48:23');
 
 -- --------------------------------------------------------
 
@@ -3212,6 +3364,24 @@ CREATE TABLE `liability_payment_schedules` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `liability_payment_schedules`
+--
+
+INSERT INTO `liability_payment_schedules` (`id`, `liability_id`, `journal_entry_id`, `payment_number`, `due_date`, `payment_date`, `scheduled_payment`, `principal_portion`, `interest_portion`, `actual_payment`, `late_fee`, `opening_balance`, `closing_balance`, `status`, `payment_reference`, `notes`, `created_at`, `updated_at`) VALUES
+(1, 1, 66, 1, '2026-03-04', '2026-02-04', 91679.99, 76679.99, 15000.00, 92279.99, 600.00, 1000000.00, 923320.01, 'paid', 'shdadgdas', NULL, '2026-02-04 07:25:24', '2026-02-04 07:48:23'),
+(2, 1, NULL, 2, '2026-04-04', NULL, 101641.26, 70863.93, 30777.33, NULL, 0.00, 923320.01, 852456.08, 'scheduled', NULL, NULL, '2026-02-04 07:25:24', '2026-02-04 07:50:57'),
+(3, 1, NULL, 3, '2026-05-04', NULL, 101641.26, 73226.06, 28415.20, NULL, 0.00, 852456.08, 779230.02, 'scheduled', NULL, NULL, '2026-02-04 07:25:24', '2026-02-04 07:50:57'),
+(4, 1, NULL, 4, '2026-06-04', NULL, 101641.26, 75666.93, 25974.33, NULL, 0.00, 779230.02, 703563.09, 'scheduled', NULL, NULL, '2026-02-04 07:25:24', '2026-02-04 07:50:57'),
+(5, 1, NULL, 5, '2026-07-04', NULL, 101641.26, 78189.16, 23452.10, NULL, 0.00, 703563.09, 625373.93, 'scheduled', NULL, NULL, '2026-02-04 07:25:24', '2026-02-04 07:50:57'),
+(6, 1, NULL, 6, '2026-08-04', NULL, 101641.26, 80795.46, 20845.80, NULL, 0.00, 625373.93, 544578.47, 'scheduled', NULL, NULL, '2026-02-04 07:25:24', '2026-02-04 07:50:57'),
+(7, 1, NULL, 7, '2026-09-04', NULL, 101641.26, 83488.64, 18152.62, NULL, 0.00, 544578.47, 461089.83, 'scheduled', NULL, NULL, '2026-02-04 07:25:24', '2026-02-04 07:50:57'),
+(8, 1, NULL, 8, '2026-10-04', NULL, 101641.26, 86271.60, 15369.66, NULL, 0.00, 461089.83, 374818.23, 'scheduled', NULL, NULL, '2026-02-04 07:25:24', '2026-02-04 07:50:57'),
+(9, 1, NULL, 9, '2026-11-04', NULL, 101641.26, 89147.32, 12493.94, NULL, 0.00, 374818.23, 285670.91, 'scheduled', NULL, NULL, '2026-02-04 07:25:24', '2026-02-04 07:50:57'),
+(10, 1, NULL, 10, '2026-12-04', NULL, 101641.26, 92118.90, 9522.36, NULL, 0.00, 285670.91, 193552.01, 'scheduled', NULL, NULL, '2026-02-04 07:25:24', '2026-02-04 07:50:57'),
+(11, 1, NULL, 11, '2027-01-04', NULL, 101641.26, 95189.53, 6451.73, NULL, 0.00, 193552.01, 98362.48, 'scheduled', NULL, NULL, '2026-02-04 07:25:24', '2026-02-04 07:50:57'),
+(12, 1, NULL, 12, '2027-02-04', NULL, 101641.23, 98362.48, 3278.75, NULL, 0.00, 98362.48, 0.00, 'scheduled', NULL, NULL, '2026-02-04 07:25:24', '2026-02-04 07:50:57');
+
 -- --------------------------------------------------------
 
 --
@@ -3223,6 +3393,8 @@ CREATE TABLE `liability_schedules` (
   `liability_number` varchar(255) NOT NULL,
   `account_id` bigint(20) UNSIGNED NOT NULL,
   `interest_expense_account_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `journal_entry_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `bank_account_id` bigint(20) UNSIGNED DEFAULT NULL,
   `liability_type` varchar(255) NOT NULL,
   `creditor_name` varchar(255) NOT NULL,
   `creditor_contact` varchar(255) DEFAULT NULL,
@@ -3248,6 +3420,13 @@ CREATE TABLE `liability_schedules` (
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `liability_schedules`
+--
+
+INSERT INTO `liability_schedules` (`id`, `liability_number`, `account_id`, `interest_expense_account_id`, `journal_entry_id`, `bank_account_id`, `liability_type`, `creditor_name`, `creditor_contact`, `reference_number`, `principal_amount`, `current_balance`, `interest_rate`, `interest_type`, `start_date`, `maturity_date`, `term_months`, `payment_frequency`, `next_payment_date`, `regular_payment_amount`, `collateral_description`, `collateral_value`, `current_portion`, `non_current_portion`, `status`, `notes`, `created_by`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'LIA-2026-00001', 32, 74, 65, 79, 'loan', 'Zenith bank', '7213', 'tewehwd', 1000000.00, 923320.01, 40.0000, 'simple', '2026-02-04', '2027-02-04', 12, 'monthly', '2026-04-04', 101641.26, 'our house', 1000000.00, 923320.01, 0.00, 'active', NULL, 1, '2026-02-04 07:25:24', '2026-02-04 07:50:57', NULL);
 
 -- --------------------------------------------------------
 
@@ -3574,7 +3753,17 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (240, '2026_02_02_120000_add_source_payment_id_to_patient_deposits', 111),
 (241, '2026_02_03_075200_add_voided_status_to_fixed_assets', 112),
 (242, '2026_02_03_131212_add_unapprove_and_lock_fields_to_budgets_table', 113),
-(243, '2026_02_03_100001_add_pattern_source_type_to_cash_flow_items', 114);
+(243, '2026_02_03_100001_add_pattern_source_type_to_cash_flow_items', 114),
+(244, '2026_02_03_100002_add_fiscal_year_to_capex_projects', 115),
+(245, '2026_02_03_222320_add_capex_request_compatibility_tables', 116),
+(246, '2026_02_03_223652_add_missing_capex_fields', 117),
+(247, '2026_02_03_223913_update_capex_expenses_view', 118),
+(248, '2026_02_03_224336_recreate_capex_requests_view', 119),
+(249, '2026_02_03_225011_add_final_missing_capex_fields_properly', 120),
+(250, '2026_02_03_225658_add_missing_capex_tables_and_columns', 121),
+(251, '2026_02_03_231409_drop_capex_views', 122),
+(252, '2026_02_04_000008_add_payment_fields_to_capex_project_expenses', 123),
+(253, '2026_02_04_100001_add_journal_entry_to_liability_schedules', 124);
 
 -- --------------------------------------------------------
 
@@ -63313,7 +63502,8 @@ CREATE TABLE `product_or_service_requests` (
 INSERT INTO `product_or_service_requests` (`id`, `type`, `invoice_id`, `payment_id`, `hmo_remittance_id`, `user_id`, `patient_id`, `encounter_id`, `admission_request_id`, `staff_user_id`, `created_by`, `order_date`, `dispensed_from_store_id`, `product_id`, `service_id`, `qty`, `amount`, `discount`, `payable_amount`, `claims_amount`, `coverage_mode`, `hmo_id`, `validation_status`, `auth_code`, `validated_by`, `validated_at`, `validation_notes`, `submitted_to_hmo_at`, `hmo_submission_batch`, `created_at`, `updated_at`) VALUES
 (1, NULL, NULL, 3, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 39, 1, 0.00, 0.00, 7000.00, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-02 16:05:40', '2026-02-02 16:10:26'),
 (2, NULL, NULL, 3, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, 649, NULL, 3, 0.00, 0.00, 765.00, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-02 16:05:40', '2026-02-02 16:10:26'),
-(3, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, 0.00, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 05:43:18', '2026-02-03 05:43:18');
+(3, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, 0.00, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 05:43:18', '2026-02-03 05:43:18'),
+(4, NULL, NULL, NULL, NULL, 64684, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, 3, 1, 0.00, 0.00, NULL, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-03 23:00:08', '2026-02-03 23:00:08');
 
 -- --------------------------------------------------------
 
@@ -79490,16 +79680,28 @@ ALTER TABLE `budget_revisions`
   ADD KEY `budget_revisions_budget_id_status_index` (`budget_id`,`status`);
 
 --
+-- Indexes for table `capex_approval_history`
+--
+ALTER TABLE `capex_approval_history`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `capex_approval_history_user_id_foreign` (`user_id`),
+  ADD KEY `capex_approval_history_capex_request_id_created_at_index` (`capex_request_id`,`created_at`);
+
+--
 -- Indexes for table `capex_projects`
 --
 ALTER TABLE `capex_projects`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `capex_projects_project_code_unique` (`project_code`),
+  ADD UNIQUE KEY `capex_projects_reference_number_unique` (`reference_number`),
   ADD KEY `capex_projects_fixed_asset_category_id_foreign` (`fixed_asset_category_id`),
   ADD KEY `capex_projects_requested_by_foreign` (`requested_by`),
   ADD KEY `capex_projects_approved_by_foreign` (`approved_by`),
   ADD KEY `capex_projects_department_id_status_index` (`department_id`,`status`),
-  ADD KEY `capex_projects_project_type_status_index` (`project_type`,`status`);
+  ADD KEY `capex_projects_project_type_status_index` (`project_type`,`status`),
+  ADD KEY `capex_projects_fiscal_year_index` (`fiscal_year`),
+  ADD KEY `capex_projects_cost_center_id_foreign` (`cost_center_id`),
+  ADD KEY `capex_projects_vendor_id_foreign` (`vendor_id`);
 
 --
 -- Indexes for table `capex_project_expenses`
@@ -79509,7 +79711,15 @@ ALTER TABLE `capex_project_expenses`
   ADD KEY `capex_project_expenses_journal_entry_id_foreign` (`journal_entry_id`),
   ADD KEY `capex_project_expenses_purchase_order_id_foreign` (`purchase_order_id`),
   ADD KEY `capex_project_expenses_expense_id_foreign` (`expense_id`),
-  ADD KEY `capex_project_expenses_project_id_expense_date_index` (`project_id`,`expense_date`);
+  ADD KEY `capex_project_expenses_project_id_expense_date_index` (`project_id`,`expense_date`),
+  ADD KEY `capex_project_expenses_bank_id_foreign` (`bank_id`);
+
+--
+-- Indexes for table `capex_request_items`
+--
+ALTER TABLE `capex_request_items`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `capex_request_items_capex_request_id_index` (`capex_request_id`);
 
 --
 -- Indexes for table `cash_flow_forecasts`
@@ -80194,7 +80404,9 @@ ALTER TABLE `liability_schedules`
   ADD KEY `liability_schedules_created_by_foreign` (`created_by`),
   ADD KEY `liability_schedules_account_id_status_index` (`account_id`,`status`),
   ADD KEY `liability_schedules_next_payment_date_index` (`next_payment_date`),
-  ADD KEY `liability_schedules_maturity_date_index` (`maturity_date`);
+  ADD KEY `liability_schedules_maturity_date_index` (`maturity_date`),
+  ADD KEY `liability_schedules_journal_entry_id_foreign` (`journal_entry_id`),
+  ADD KEY `liability_schedules_bank_account_id_foreign` (`bank_account_id`);
 
 --
 -- Indexes for table `medication_administrations`
@@ -80941,7 +81153,7 @@ ALTER TABLE `accounting_periods`
 -- AUTO_INCREMENT for table `accounts`
 --
 ALTER TABLE `accounts`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=81;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=82;
 
 --
 -- AUTO_INCREMENT for table `account_classes`
@@ -80989,7 +81201,7 @@ ALTER TABLE `application_status`
 -- AUTO_INCREMENT for table `audits`
 --
 ALTER TABLE `audits`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=224;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=241;
 
 --
 -- AUTO_INCREMENT for table `banks`
@@ -81025,7 +81237,7 @@ ALTER TABLE `beds`
 -- AUTO_INCREMENT for table `budgets`
 --
 ALTER TABLE `budgets`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `budget_lines`
@@ -81040,16 +81252,28 @@ ALTER TABLE `budget_revisions`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `capex_approval_history`
+--
+ALTER TABLE `capex_approval_history`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+
+--
 -- AUTO_INCREMENT for table `capex_projects`
 --
 ALTER TABLE `capex_projects`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `capex_project_expenses`
 --
 ALTER TABLE `capex_project_expenses`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
+-- AUTO_INCREMENT for table `capex_request_items`
+--
+ALTER TABLE `capex_request_items`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `cash_flow_forecasts`
@@ -81277,7 +81501,7 @@ ALTER TABLE `fixed_asset_depreciations`
 -- AUTO_INCREMENT for table `fixed_asset_disposals`
 --
 ALTER TABLE `fixed_asset_disposals`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `fixed_asset_transfers`
@@ -81379,7 +81603,7 @@ ALTER TABLE `jobs`
 -- AUTO_INCREMENT for table `journal_entries`
 --
 ALTER TABLE `journal_entries`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=67;
 
 --
 -- AUTO_INCREMENT for table `journal_entry_edits`
@@ -81391,7 +81615,7 @@ ALTER TABLE `journal_entry_edits`
 -- AUTO_INCREMENT for table `journal_entry_lines`
 --
 ALTER TABLE `journal_entry_lines`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=104;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=128;
 
 --
 -- AUTO_INCREMENT for table `lab_service_requests`
@@ -81445,13 +81669,13 @@ ALTER TABLE `leave_types`
 -- AUTO_INCREMENT for table `liability_payment_schedules`
 --
 ALTER TABLE `liability_payment_schedules`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `liability_schedules`
 --
 ALTER TABLE `liability_schedules`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `medication_administrations`
@@ -81481,7 +81705,7 @@ ALTER TABLE `messages`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=244;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=254;
 
 --
 -- AUTO_INCREMENT for table `misc_bills`
@@ -81667,7 +81891,7 @@ ALTER TABLE `product_categories`
 -- AUTO_INCREMENT for table `product_or_service_requests`
 --
 ALTER TABLE `product_or_service_requests`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `product_requests`
@@ -82040,6 +82264,13 @@ ALTER TABLE `budget_revisions`
   ADD CONSTRAINT `budget_revisions_requested_by_foreign` FOREIGN KEY (`requested_by`) REFERENCES `users` (`id`);
 
 --
+-- Constraints for table `capex_approval_history`
+--
+ALTER TABLE `capex_approval_history`
+  ADD CONSTRAINT `capex_approval_history_capex_request_id_foreign` FOREIGN KEY (`capex_request_id`) REFERENCES `capex_projects` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `capex_approval_history_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
+
+--
 -- Constraints for table `capex_projects`
 --
 ALTER TABLE `capex_projects`
@@ -82052,10 +82283,17 @@ ALTER TABLE `capex_projects`
 -- Constraints for table `capex_project_expenses`
 --
 ALTER TABLE `capex_project_expenses`
+  ADD CONSTRAINT `capex_project_expenses_bank_id_foreign` FOREIGN KEY (`bank_id`) REFERENCES `banks` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `capex_project_expenses_expense_id_foreign` FOREIGN KEY (`expense_id`) REFERENCES `expenses` (`id`),
   ADD CONSTRAINT `capex_project_expenses_journal_entry_id_foreign` FOREIGN KEY (`journal_entry_id`) REFERENCES `journal_entries` (`id`),
   ADD CONSTRAINT `capex_project_expenses_project_id_foreign` FOREIGN KEY (`project_id`) REFERENCES `capex_projects` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `capex_project_expenses_purchase_order_id_foreign` FOREIGN KEY (`purchase_order_id`) REFERENCES `purchase_orders` (`id`);
+
+--
+-- Constraints for table `capex_request_items`
+--
+ALTER TABLE `capex_request_items`
+  ADD CONSTRAINT `capex_request_items_capex_request_id_foreign` FOREIGN KEY (`capex_request_id`) REFERENCES `capex_projects` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `cash_flow_forecasts`
@@ -82542,8 +82780,10 @@ ALTER TABLE `liability_payment_schedules`
 --
 ALTER TABLE `liability_schedules`
   ADD CONSTRAINT `liability_schedules_account_id_foreign` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`),
+  ADD CONSTRAINT `liability_schedules_bank_account_id_foreign` FOREIGN KEY (`bank_account_id`) REFERENCES `accounts` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `liability_schedules_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`),
-  ADD CONSTRAINT `liability_schedules_interest_expense_account_id_foreign` FOREIGN KEY (`interest_expense_account_id`) REFERENCES `accounts` (`id`);
+  ADD CONSTRAINT `liability_schedules_interest_expense_account_id_foreign` FOREIGN KEY (`interest_expense_account_id`) REFERENCES `accounts` (`id`),
+  ADD CONSTRAINT `liability_schedules_journal_entry_id_foreign` FOREIGN KEY (`journal_entry_id`) REFERENCES `journal_entries` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `medication_administrations`

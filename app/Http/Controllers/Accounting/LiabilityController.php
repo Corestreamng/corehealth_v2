@@ -3,11 +3,15 @@
 namespace App\Http\Controllers\Accounting;
 
 use App\Http\Controllers\Controller;
+use App\Models\Accounting\LiabilitySchedule;
+use App\Models\Accounting\LiabilityPaymentSchedule;
+use App\Models\Accounting\Account;
 use App\Services\Accounting\ExcelExportService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -56,14 +60,14 @@ class LiabilityController extends Controller
 
         $paymentsThisMonth = DB::table('liability_payment_schedules')
             ->whereBetween('due_date', [$thisMonthStart, $thisMonthEnd])
-            ->whereNull('paid_date')
-            ->sum('payment_amount');
+            ->whereNull('payment_date')
+            ->sum('scheduled_payment');
 
         // Overdue payments
         $overduePayments = DB::table('liability_payment_schedules')
             ->where('due_date', '<', Carbon::now())
-            ->whereNull('paid_date')
-            ->sum('payment_amount');
+            ->whereNull('payment_date')
+            ->sum('scheduled_payment');
 
         // By type breakdown
         $byType = $liabilities->where('status', 'active')
@@ -98,7 +102,7 @@ class LiabilityController extends Controller
                 'liability_schedules.*',
                 'accounts.name as account_name',
                 'accounts.code as account_code',
-                'users.name as created_by_name',
+                DB::raw("CONCAT(users.firstname, ' ', users.surname) as created_by_name"),
             ])
             ->orderBy('liability_schedules.created_at', 'desc');
 
@@ -166,53 +170,61 @@ class LiabilityController extends Controller
      */
     public function create()
     {
+        // Get Liability accounts (class code 2 = Liabilities)
         $accounts = DB::table('accounts')
-            ->where('is_active', true)
-            ->where('account_type', 'Liability')
-            ->orderBy('code')
+            ->join('account_groups', 'accounts.account_group_id', '=', 'account_groups.id')
+            ->join('account_classes', 'account_groups.account_class_id', '=', 'account_classes.id')
+            ->where('accounts.is_active', true)
+            ->where('account_classes.code', '2') // Liabilities class
+            ->select('accounts.id', 'accounts.code', 'accounts.name')
+            ->orderBy('accounts.code')
             ->get();
 
+        // Get Expense accounts (class code 5 = Expenses)
         $expenseAccounts = DB::table('accounts')
-            ->where('is_active', true)
-            ->where('account_type', 'Expense')
-            ->orderBy('code')
+            ->join('account_groups', 'accounts.account_group_id', '=', 'account_groups.id')
+            ->join('account_classes', 'account_groups.account_class_id', '=', 'account_classes.id')
+            ->where('accounts.is_active', true)
+            ->where('account_classes.code', '5') // Expenses class
+            ->select('accounts.id', 'accounts.code', 'accounts.name')
+            ->orderBy('accounts.code')
             ->get();
 
-        return view('accounting.liabilities.create', compact('accounts', 'expenseAccounts'));
+        $banks = DB::table('banks')->where('is_active', true)->orderBy('name')->get();
+
+        return view('accounting.liabilities.create', compact('accounts', 'expenseAccounts', 'banks'));
     }
 
     /**
      * Store new liability.
+     * Uses Eloquent to trigger LiabilityScheduleObserver which:
+     * 1. Creates initial JE: DEBIT Bank, CREDIT Liability Account
+     * 2. Generates the amortization schedule
      */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'liability_type' => 'required|in:loan,mortgage,bond,deferred_revenue,other',
+            'liability_type' => 'required|in:loan,mortgage,overdraft,credit_line,bond,deferred_revenue,other',
             'creditor_name' => 'required|string|max:255',
             'creditor_contact' => 'nullable|string|max:255',
             'reference_number' => 'nullable|string|max:100',
             'principal_amount' => 'required|numeric|min:0',
             'interest_rate' => 'required|numeric|min:0|max:100',
-            'interest_type' => 'required|in:fixed,variable',
+            'interest_type' => 'required|in:simple,compound,flat',
             'start_date' => 'required|date',
             'maturity_date' => 'required|date|after:start_date',
             'term_months' => 'required|integer|min:1',
-            'payment_frequency' => 'required|in:monthly,quarterly,semi_annually,annually',
+            'payment_frequency' => 'required|in:weekly,bi_weekly,monthly,quarterly,semi_annually,annually,at_maturity',
             'account_id' => 'required|exists:accounts,id',
             'interest_expense_account_id' => 'required|exists:accounts,id',
+            'bank_account_id' => 'nullable|exists:accounts,id',
             'collateral_description' => 'nullable|string|max:500',
             'collateral_value' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string|max:1000',
         ]);
 
-        DB::beginTransaction();
         try {
-            // Generate liability number
-            $lastLiability = DB::table('liability_schedules')->orderBy('id', 'desc')->first();
-            $nextNum = $lastLiability ? intval(substr($lastLiability->liability_number, 4)) + 1 : 1;
-            $liabilityNumber = 'LIB-' . str_pad($nextNum, 6, '0', STR_PAD_LEFT);
-
-            // Calculate regular payment amount
+            // Calculate regular payment amount (for display - observer recalculates)
             $regularPayment = $this->calculateRegularPayment(
                 $validated['principal_amount'],
                 $validated['interest_rate'],
@@ -220,9 +232,9 @@ class LiabilityController extends Controller
                 $validated['payment_frequency']
             );
 
-            // Create liability
-            $liabilityId = DB::table('liability_schedules')->insertGetId([
-                'liability_number' => $liabilityNumber,
+            // Create liability using Eloquent - triggers LiabilityScheduleObserver
+            $liability = LiabilitySchedule::create([
+                'liability_number' => LiabilitySchedule::generateNumber(),
                 'liability_type' => $validated['liability_type'],
                 'creditor_name' => $validated['creditor_name'],
                 'creditor_contact' => $validated['creditor_contact'],
@@ -239,6 +251,7 @@ class LiabilityController extends Controller
                 'next_payment_date' => $this->calculateNextPaymentDate($validated['start_date'], $validated['payment_frequency']),
                 'account_id' => $validated['account_id'],
                 'interest_expense_account_id' => $validated['interest_expense_account_id'],
+                'bank_account_id' => $validated['bank_account_id'],
                 'collateral_description' => $validated['collateral_description'],
                 'collateral_value' => $validated['collateral_value'],
                 'current_portion' => $this->calculateCurrentPortion($validated['principal_amount'], $validated['term_months'], 12),
@@ -246,21 +259,13 @@ class LiabilityController extends Controller
                 'status' => 'active',
                 'notes' => $validated['notes'],
                 'created_by' => Auth::id(),
-                'created_at' => now(),
-                'updated_at' => now(),
             ]);
 
-            // Generate payment schedule
-            $this->generatePaymentSchedule($liabilityId, $validated);
-
-            DB::commit();
-
             return redirect()
-                ->route('accounting.liabilities.show', $liabilityId)
-                ->with('success', "Liability {$liabilityNumber} created successfully with payment schedule.");
+                ->route('accounting.liabilities.show', $liability->id)
+                ->with('success', "Liability {$liability->liability_number} created successfully. Journal entry and payment schedule generated automatically.");
 
         } catch (\Exception $e) {
-            DB::rollBack();
             return back()
                 ->withInput()
                 ->with('error', 'Failed to create liability: ' . $e->getMessage());
@@ -284,7 +289,7 @@ class LiabilityController extends Controller
                 'accounts.code as account_code',
                 'expense_acc.name as interest_account_name',
                 'expense_acc.code as interest_account_code',
-                'users.name as created_by_name',
+                DB::raw("CONCAT(users.firstname, ' ', users.surname) as created_by_name"),
             ])
             ->first();
 
@@ -298,11 +303,11 @@ class LiabilityController extends Controller
             ->orderBy('due_date')
             ->get();
 
-        // Payment summary
-        $paidCount = $paymentSchedule->whereNotNull('paid_date')->count();
-        $totalPaid = $paymentSchedule->whereNotNull('paid_date')->sum('amount_paid');
-        $pendingCount = $paymentSchedule->whereNull('paid_date')->count();
-        $overdueCount = $paymentSchedule->where('due_date', '<', now()->toDateString())->whereNull('paid_date')->count();
+        // Payment summary - use correct column names from migration
+        $paidCount = $paymentSchedule->whereNotNull('payment_date')->count();
+        $totalPaid = $paymentSchedule->whereNotNull('payment_date')->sum('actual_payment');
+        $pendingCount = $paymentSchedule->whereNull('payment_date')->count();
+        $overdueCount = $paymentSchedule->where('due_date', '<', now()->toDateString())->whereNull('payment_date')->count();
 
         return view('accounting.liabilities.show', compact(
             'liability',
@@ -328,30 +333,63 @@ class LiabilityController extends Controller
             abort(404);
         }
 
+        // Get payment counts for warning message
+        $paidPayments = DB::table('liability_payment_schedules')
+            ->where('liability_id', $id)
+            ->whereNotNull('payment_date')
+            ->count();
+
+        $totalPayments = DB::table('liability_payment_schedules')
+            ->where('liability_id', $id)
+            ->count();
+
+        // Get Liability accounts (class code 2 = Liabilities)
         $accounts = DB::table('accounts')
-            ->where('is_active', true)
-            ->where('account_type', 'Liability')
-            ->orderBy('code')
+            ->join('account_groups', 'accounts.account_group_id', '=', 'account_groups.id')
+            ->join('account_classes', 'account_groups.account_class_id', '=', 'account_classes.id')
+            ->where('accounts.is_active', true)
+            ->where('account_classes.code', '2') // Liabilities class
+            ->select('accounts.id', 'accounts.code', 'accounts.name')
+            ->orderBy('accounts.code')
             ->get();
 
+        // Get Expense accounts (class code 5 = Expenses)
         $expenseAccounts = DB::table('accounts')
-            ->where('is_active', true)
-            ->where('account_type', 'Expense')
-            ->orderBy('code')
+            ->join('account_groups', 'accounts.account_group_id', '=', 'account_groups.id')
+            ->join('account_classes', 'account_groups.account_class_id', '=', 'account_classes.id')
+            ->where('accounts.is_active', true)
+            ->where('account_classes.code', '5') // Expenses class
+            ->select('accounts.id', 'accounts.code', 'accounts.name')
+            ->orderBy('accounts.code')
             ->get();
 
-        return view('accounting.liabilities.edit', compact('liability', 'accounts', 'expenseAccounts'));
+        $banks = DB::table('banks')->where('is_active', true)->orderBy('name')->get();
+
+        return view('accounting.liabilities.edit', compact(
+            'liability',
+            'accounts',
+            'expenseAccounts',
+            'banks',
+            'paidPayments',
+            'totalPayments'
+        ));
     }
 
     /**
      * Update liability.
      */
+    /**
+     * Update liability details.
+     *
+     * Best Practice for Interest Rate Changes:
+     * - If interest rate changes, only FUTURE (unpaid) payments are recalculated
+     * - Already paid payments remain unchanged (JEs already posted)
+     * - Uses current balance as base for recalculation (not original principal)
+     * - Preserves payment history and audit trail
+     */
     public function update(Request $request, $id)
     {
-        $liability = DB::table('liability_schedules')
-            ->where('id', $id)
-            ->whereNull('deleted_at')
-            ->first();
+        $liability = LiabilitySchedule::find($id);
 
         if (!$liability) {
             abort(404);
@@ -367,9 +405,15 @@ class LiabilityController extends Controller
             'notes' => 'nullable|string|max:1000',
         ]);
 
-        DB::table('liability_schedules')
-            ->where('id', $id)
-            ->update([
+        $oldInterestRate = (float) $liability->interest_rate;
+        $newInterestRate = (float) $validated['interest_rate'];
+        $interestRateChanged = abs($oldInterestRate - $newInterestRate) > 0.0001;
+
+        try {
+            DB::beginTransaction();
+
+            // Update liability details
+            $liability->update([
                 'creditor_name' => $validated['creditor_name'],
                 'creditor_contact' => $validated['creditor_contact'],
                 'reference_number' => $validated['reference_number'],
@@ -377,12 +421,141 @@ class LiabilityController extends Controller
                 'collateral_description' => $validated['collateral_description'],
                 'collateral_value' => $validated['collateral_value'],
                 'notes' => $validated['notes'],
-                'updated_at' => now(),
             ]);
 
-        return redirect()
-            ->route('accounting.liabilities.show', $id)
-            ->with('success', 'Liability updated successfully.');
+            // If interest rate changed, recalculate FUTURE payments only
+            if ($interestRateChanged) {
+                $this->recalculateFuturePayments($liability, $oldInterestRate, $newInterestRate);
+            }
+
+            DB::commit();
+
+            $message = 'Liability updated successfully.';
+            if ($interestRateChanged) {
+                $message .= ' Future payment schedule has been recalculated with the new interest rate.';
+            }
+
+            return redirect()
+                ->route('accounting.liabilities.show', $id)
+                ->with('success', $message);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()
+                ->withInput()
+                ->with('error', 'Failed to update liability: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Recalculate future (unpaid) payments when interest rate changes.
+     *
+     * This follows the Prospective Adjustment approach:
+     * - Already paid payments are NOT touched (preserves audit trail)
+     * - Only unpaid payments are recalculated
+     * - Uses current balance as the base for remaining amortization
+     */
+    protected function recalculateFuturePayments(LiabilitySchedule $liability, float $oldRate, float $newRate): void
+    {
+        // Get all unpaid payment schedules
+        $unpaidSchedules = LiabilityPaymentSchedule::where('liability_id', $liability->id)
+            ->whereNull('payment_date')
+            ->orderBy('due_date')
+            ->get();
+
+        if ($unpaidSchedules->isEmpty()) {
+            return; // No future payments to adjust
+        }
+
+        // Use current balance as the remaining principal
+        $remainingBalance = (float) $liability->current_balance;
+        $remainingPayments = $unpaidSchedules->count();
+        $frequency = $liability->payment_frequency;
+        $interestType = $liability->interest_type;
+
+        // Calculate periods per year
+        $periodsPerYear = match($frequency) {
+            'weekly' => 52,
+            'bi_weekly' => 26,
+            'monthly' => 12,
+            'quarterly' => 4,
+            'semi_annually' => 2,
+            'annually' => 1,
+            'at_maturity' => 1,
+            default => 12,
+        };
+
+        $periodicRate = ($newRate / 100) / $periodsPerYear;
+
+        // Calculate new regular payment amount using amortization formula
+        if ($frequency === 'at_maturity') {
+            // Bullet payment
+            $remainingTermMonths = Carbon::now()->diffInMonths(Carbon::parse($liability->maturity_date));
+            $totalInterest = $remainingBalance * ($newRate / 100) * ($remainingTermMonths / 12);
+            $newRegularPayment = $remainingBalance + $totalInterest;
+        } elseif ($periodicRate > 0 && $remainingPayments > 0) {
+            // Standard amortization formula
+            $newRegularPayment = $remainingBalance * ($periodicRate * pow(1 + $periodicRate, $remainingPayments))
+                               / (pow(1 + $periodicRate, $remainingPayments) - 1);
+        } else {
+            // Zero interest
+            $newRegularPayment = $remainingBalance / max(1, $remainingPayments);
+        }
+
+        $newRegularPayment = round($newRegularPayment, 2);
+        $balance = $remainingBalance;
+
+        // Recalculate each unpaid payment
+        foreach ($unpaidSchedules as $index => $schedule) {
+            // Calculate interest portion
+            if ($interestType === 'flat') {
+                $interestPortion = round(($remainingBalance * ($newRate / 100) * ($liability->term_months / 12)) / $remainingPayments, 2);
+            } else {
+                $interestPortion = round($balance * $periodicRate, 2);
+            }
+
+            // Calculate principal portion
+            $principalPortion = $newRegularPayment - $interestPortion;
+
+            // Adjust last payment for rounding
+            if ($index == $unpaidSchedules->count() - 1) {
+                $principalPortion = $balance;
+                $newRegularPayment = $principalPortion + $interestPortion;
+            }
+
+            $openingBalance = $balance;
+            $balance = max(0, round($balance - $principalPortion, 2));
+
+            // Update the schedule (without triggering observers)
+            $schedule->updateQuietly([
+                'scheduled_payment' => round($newRegularPayment, 2),
+                'principal_portion' => round($principalPortion, 2),
+                'interest_portion' => round($interestPortion, 2),
+                'opening_balance' => round($openingBalance, 2),
+                'closing_balance' => round($balance, 2),
+            ]);
+
+            // Reset for next iteration (use the same regular payment for amortization)
+            if ($index < $unpaidSchedules->count() - 2) {
+                $newRegularPayment = round($newRegularPayment, 2); // Keep consistent
+            }
+        }
+
+        // Update liability's regular payment amount
+        $liability->updateQuietly([
+            'regular_payment_amount' => $unpaidSchedules->first()->scheduled_payment,
+        ]);
+
+        // Update current/non-current portions
+        $liability->updatePortions();
+
+        Log::info('LiabilityController: Future payments recalculated', [
+            'liability_id' => $liability->id,
+            'old_rate' => $oldRate,
+            'new_rate' => $newRate,
+            'remaining_payments' => $remainingPayments,
+            'new_regular_payment' => $newRegularPayment,
+        ]);
     }
 
     /**
@@ -390,19 +563,15 @@ class LiabilityController extends Controller
      */
     public function payment($id)
     {
-        $liability = DB::table('liability_schedules')
-            ->where('id', $id)
-            ->whereNull('deleted_at')
-            ->first();
+        $liability = LiabilitySchedule::with(['account', 'interestExpenseAccount'])->find($id);
 
         if (!$liability) {
             abort(404);
         }
 
-        // Get next unpaid scheduled payment
-        $nextPayment = DB::table('liability_payment_schedules')
-            ->where('liability_id', $id)
-            ->whereNull('paid_date')
+        // Get next unpaid scheduled payment using Eloquent
+        $nextPayment = LiabilityPaymentSchedule::where('liability_id', $id)
+            ->whereNull('payment_date')
             ->orderBy('due_date')
             ->first();
 
@@ -411,86 +580,104 @@ class LiabilityController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('accounting.liabilities.payment', compact('liability', 'nextPayment', 'banks'));
+        // Get accounts for JE preview
+        $liabilityAccount = $liability->account;
+        $interestAccount = $liability->interestExpenseAccount ?? Account::where('code', '6300')->first();
+
+        return view('accounting.liabilities.payment', compact('liability', 'nextPayment', 'banks', 'liabilityAccount', 'interestAccount'));
     }
 
     /**
      * Record liability payment.
+     * Uses Eloquent to trigger LiabilityPaymentObserver which creates JE:
+     *   DEBIT: Liability Account (principal reduction)
+     *   DEBIT: Interest Expense (interest portion)
+     *   CREDIT: Bank Account (cash outflow)
      */
     public function recordPayment(Request $request, $id)
     {
-        $liability = DB::table('liability_schedules')
-            ->where('id', $id)
-            ->whereNull('deleted_at')
-            ->first();
+        Log::info('LiabilityController::recordPayment called', [
+            'liability_id' => $id,
+            'request_data' => $request->all(),
+        ]);
+
+        $liability = LiabilitySchedule::find($id);
 
         if (!$liability) {
+            Log::error('LiabilityController::recordPayment - Liability not found', ['id' => $id]);
             abort(404);
         }
 
         $validated = $request->validate([
             'payment_date' => 'required|date',
-            'amount_paid' => 'required|numeric|min:0.01',
-            'principal_paid' => 'required|numeric|min:0',
-            'interest_paid' => 'required|numeric|min:0',
+            'actual_payment' => 'required|numeric|min:0.01',
+            'principal_portion' => 'required|numeric|min:0',
+            'interest_portion' => 'required|numeric|min:0',
+            'late_fee' => 'nullable|numeric|min:0',
             'bank_id' => 'required|exists:banks,id',
             'payment_reference' => 'nullable|string|max:100',
             'notes' => 'nullable|string|max:500',
         ]);
 
-        DB::beginTransaction();
+        Log::info('LiabilityController::recordPayment - Validation passed', ['validated' => $validated]);
+
         try {
-            // Find next unpaid schedule entry and update
-            $schedule = DB::table('liability_payment_schedules')
-                ->where('liability_id', $id)
-                ->whereNull('paid_date')
+            // Find next unpaid schedule entry using Eloquent
+            $schedule = LiabilityPaymentSchedule::where('liability_id', $id)
+                ->whereNull('payment_date')
                 ->orderBy('due_date')
                 ->first();
 
-            if ($schedule) {
-                DB::table('liability_payment_schedules')
-                    ->where('id', $schedule->id)
-                    ->update([
-                        'paid_date' => $validated['payment_date'],
-                        'amount_paid' => $validated['amount_paid'],
-                        'principal_paid' => $validated['principal_paid'],
-                        'interest_paid' => $validated['interest_paid'],
-                        'payment_reference' => $validated['payment_reference'],
-                        'updated_at' => now(),
-                    ]);
+            if (!$schedule) {
+                Log::warning('LiabilityController::recordPayment - No pending payments', ['liability_id' => $id]);
+                return back()->with('error', 'No pending payments found for this liability.');
             }
 
-            // Update liability balance
-            $newBalance = $liability->current_balance - $validated['principal_paid'];
+            Log::info('LiabilityController::recordPayment - Found schedule', [
+                'schedule_id' => $schedule->id,
+                'payment_number' => $schedule->payment_number,
+            ]);
 
-            // Calculate next payment date
-            $nextPayment = DB::table('liability_payment_schedules')
-                ->where('liability_id', $id)
-                ->whereNull('paid_date')
-                ->orderBy('due_date')
-                ->first();
+            // Update bank_account_id on liability if not set (for JE credit account)
+            if (!$liability->bank_account_id && $validated['bank_id']) {
+                $bank = DB::table('banks')->find($validated['bank_id']);
+                if ($bank && $bank->account_id) {
+                    $liability->bank_account_id = $bank->account_id;
+                    $liability->saveQuietly();
+                    Log::info('LiabilityController::recordPayment - Updated bank_account_id', [
+                        'bank_id' => $validated['bank_id'],
+                        'account_id' => $bank->account_id,
+                    ]);
+                }
+            }
 
-            $status = $newBalance <= 0 ? 'paid_off' : 'active';
+            // Update the payment schedule - triggers LiabilityPaymentObserver
+            // The observer will create the JE when payment_date is set
+            $schedule->update([
+                'payment_date' => $validated['payment_date'],
+                'actual_payment' => $validated['actual_payment'],
+                'principal_portion' => $validated['principal_portion'],
+                'interest_portion' => $validated['interest_portion'],
+                'late_fee' => $validated['late_fee'] ?? 0,
+                'status' => 'paid',
+                'payment_reference' => $validated['payment_reference'],
+                'notes' => $validated['notes'],
+            ]);
 
-            DB::table('liability_schedules')
-                ->where('id', $id)
-                ->update([
-                    'current_balance' => max(0, $newBalance),
-                    'next_payment_date' => $nextPayment?->due_date,
-                    'status' => $status,
-                    'updated_at' => now(),
-                ]);
-
-            // TODO: Create journal entry for payment via observer
-
-            DB::commit();
+            Log::info('LiabilityController::recordPayment - Payment recorded successfully', [
+                'schedule_id' => $schedule->id,
+                'journal_entry_id' => $schedule->fresh()->journal_entry_id,
+            ]);
 
             return redirect()
                 ->route('accounting.liabilities.show', $id)
-                ->with('success', 'Payment recorded successfully.');
+                ->with('success', 'Payment recorded successfully. Journal entry created automatically.');
 
         } catch (\Exception $e) {
-            DB::rollBack();
+            Log::error('LiabilityController::recordPayment - Exception', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
             return back()
                 ->withInput()
                 ->with('error', 'Failed to record payment: ' . $e->getMessage());
@@ -597,14 +784,19 @@ class LiabilityController extends Controller
     protected function calculateRegularPayment(float $principal, float $annualRate, int $termMonths, string $frequency): float
     {
         $periodsPerYear = match($frequency) {
+            'weekly' => 52,
+            'bi_weekly' => 26,
             'monthly' => 12,
             'quarterly' => 4,
             'semi_annually' => 2,
             'annually' => 1,
+            'at_maturity' => 1,
             default => 12,
         };
 
         $totalPayments = ($termMonths / 12) * $periodsPerYear;
+        if ($totalPayments < 1) $totalPayments = 1;
+
         $periodicRate = ($annualRate / 100) / $periodsPerYear;
 
         if ($periodicRate == 0) {
@@ -662,14 +854,19 @@ class LiabilityController extends Controller
     protected function generatePaymentSchedule(int $liabilityId, array $data): void
     {
         $periodsPerYear = match($data['payment_frequency']) {
+            'weekly' => 52,
+            'bi_weekly' => 26,
             'monthly' => 12,
             'quarterly' => 4,
             'semi_annually' => 2,
             'annually' => 1,
+            'at_maturity' => 1,
             default => 12,
         };
 
         $totalPayments = (int)(($data['term_months'] / 12) * $periodsPerYear);
+        if ($totalPayments < 1) $totalPayments = 1;
+
         $periodicRate = ($data['interest_rate'] / 100) / $periodsPerYear;
         $balance = $data['principal_amount'];
         $payment = $this->calculateRegularPayment(
@@ -681,16 +878,27 @@ class LiabilityController extends Controller
 
         $paymentDate = Carbon::parse($data['start_date']);
         $monthsToAdd = match($data['payment_frequency']) {
+            'weekly' => 0, // handled differently
+            'bi_weekly' => 0, // handled differently
             'monthly' => 1,
             'quarterly' => 3,
             'semi_annually' => 6,
             'annually' => 12,
+            'at_maturity' => $data['term_months'],
             default => 1,
         };
 
         for ($i = 1; $i <= $totalPayments; $i++) {
-            $paymentDate = $paymentDate->copy()->addMonths($monthsToAdd);
+            // Calculate next payment date based on frequency
+            if ($data['payment_frequency'] === 'weekly') {
+                $paymentDate = $paymentDate->copy()->addWeek();
+            } elseif ($data['payment_frequency'] === 'bi_weekly') {
+                $paymentDate = $paymentDate->copy()->addWeeks(2);
+            } else {
+                $paymentDate = $paymentDate->copy()->addMonths($monthsToAdd);
+            }
 
+            $openingBalance = $balance;
             $interestAmount = round($balance * $periodicRate, 2);
             $principalAmount = round($payment - $interestAmount, 2);
 
@@ -703,14 +911,17 @@ class LiabilityController extends Controller
             $balance -= $principalAmount;
             if ($balance < 0) $balance = 0;
 
+            // Use correct column names from migration
             DB::table('liability_payment_schedules')->insert([
                 'liability_id' => $liabilityId,
                 'payment_number' => $i,
                 'due_date' => $paymentDate->toDateString(),
-                'payment_amount' => $payment,
-                'principal_amount' => $principalAmount,
-                'interest_amount' => $interestAmount,
-                'balance_after_payment' => $balance,
+                'scheduled_payment' => $payment,
+                'principal_portion' => $principalAmount,
+                'interest_portion' => $interestAmount,
+                'opening_balance' => $openingBalance,
+                'closing_balance' => $balance,
+                'status' => 'scheduled',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

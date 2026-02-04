@@ -12,6 +12,23 @@
 
 <div id="content-wrapper">
     <div class="container-fluid">
+        {{-- Success/Error Messages --}}
+        @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show mb-4">
+            <i class="mdi mdi-check-circle mr-2"></i>
+            {{ session('success') }}
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
+        @endif
+
+        @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show mb-4">
+            <i class="mdi mdi-alert-circle mr-2"></i>
+            <strong>Error:</strong> {{ session('error') }}
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
+        @endif
+
         <div class="row">
             <div class="col-lg-8">
                 <!-- Main Info Card -->
@@ -179,21 +196,22 @@
                                         <th class="text-right">Interest</th>
                                         <th class="text-right">Balance</th>
                                         <th>Status</th>
+                                        <th>JE</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @forelse($paymentSchedule->take(12) as $payment)
-                                    <tr class="{{ $payment->paid_date ? 'table-success' : ($payment->due_date < now()->toDateString() ? 'table-danger' : '') }}">
+                                    <tr class="{{ $payment->payment_date ? 'table-success' : ($payment->due_date < now()->toDateString() ? 'table-danger' : '') }}">
                                         <td>{{ $payment->payment_number }}</td>
                                         <td>{{ \Carbon\Carbon::parse($payment->due_date)->format('M d, Y') }}</td>
-                                        <td class="text-right">₦{{ number_format($payment->payment_amount, 2) }}</td>
-                                        <td class="text-right">₦{{ number_format($payment->principal_amount, 2) }}</td>
-                                        <td class="text-right">₦{{ number_format($payment->interest_amount, 2) }}</td>
-                                        <td class="text-right">₦{{ number_format($payment->balance_after_payment, 2) }}</td>
+                                        <td class="text-right">₦{{ number_format($payment->scheduled_payment, 2) }}</td>
+                                        <td class="text-right">₦{{ number_format($payment->principal_portion, 2) }}</td>
+                                        <td class="text-right">₦{{ number_format($payment->interest_portion, 2) }}</td>
+                                        <td class="text-right">₦{{ number_format($payment->closing_balance, 2) }}</td>
                                         <td>
-                                            @if($payment->paid_date)
+                                            @if($payment->payment_date)
                                                 <span class="badge badge-success">
-                                                    <i class="mdi mdi-check"></i> Paid {{ \Carbon\Carbon::parse($payment->paid_date)->format('M d') }}
+                                                    <i class="mdi mdi-check"></i> Paid {{ \Carbon\Carbon::parse($payment->payment_date)->format('M d') }}
                                                 </span>
                                             @elseif($payment->due_date < now()->toDateString())
                                                 <span class="badge badge-danger">
@@ -205,10 +223,20 @@
                                                 </span>
                                             @endif
                                         </td>
+                                        <td>
+                                            @if($payment->journal_entry_id)
+                                                <a href="{{ route('accounting.journal-entries.show', $payment->journal_entry_id) }}"
+                                                   class="btn btn-sm btn-link text-primary p-0" title="View Journal Entry">
+                                                    <i class="mdi mdi-book-open-page-variant"></i>
+                                                </a>
+                                            @else
+                                                <span class="text-muted">-</span>
+                                            @endif
+                                        </td>
                                     </tr>
                                     @empty
                                     <tr>
-                                        <td colspan="7" class="text-center text-muted">No payment schedule found</td>
+                                        <td colspan="8" class="text-center text-muted">No payment schedule found</td>
                                     </tr>
                                     @endforelse
                                 </tbody>
@@ -285,7 +313,19 @@
                         <p class="text-muted mb-3">{{ $liability->account_code }} - {{ $liability->account_name }}</p>
 
                         <p class="mb-1"><strong>Interest Expense Account</strong></p>
-                        <p class="text-muted mb-0">{{ $liability->interest_account_code }} - {{ $liability->interest_account_name }}</p>
+                        <p class="text-muted mb-3">{{ $liability->interest_account_code }} - {{ $liability->interest_account_name }}</p>
+
+                        @if($liability->journal_entry_id)
+                        <hr>
+                        <p class="mb-1"><strong>Initial Booking JE</strong></p>
+                        <a href="{{ route('accounting.journal-entries.show', $liability->journal_entry_id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="mdi mdi-book-open-page-variant mr-1"></i>
+                            View Journal Entry
+                        </a>
+                        <small class="text-muted d-block mt-1">
+                            Created when liability was recorded
+                        </small>
+                        @endif
                     </div>
                 </div>
 
