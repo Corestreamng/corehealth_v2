@@ -255,12 +255,18 @@
         let totalDebit = 0;
         let totalCredit = 0;
 
+        // Get account info from asset data (passed from category relationships)
+        const assetAccountName = currentAssetData.asset_account_name || 'Fixed Asset';
+        const assetAccountCode = currentAssetData.asset_account_code || '1460';
+        const deprAccountName = currentAssetData.depreciation_account_name || 'Accumulated Depreciation';
+        const deprAccountCode = currentAssetData.depreciation_account_code || '1500';
+
         // 1. DEBIT: Cash/Bank (if proceeds > 0)
         if (proceeds > 0) {
             let accountName = 'Cash Account (1010)';
             if (paymentMethod === 'bank_transfer' && bankId) {
                 const bankName = $('#dispose-bank-id option:selected').text().split(' - ')[0];
-                accountName = bankName + ' - Bank Account (1020)';
+                accountName = bankName + ' - Bank Account';
             }
             html += `<tr>
                 <td><strong>${accountName}</strong></td>
@@ -270,9 +276,9 @@
             totalDebit += proceeds;
         }
 
-        // 2. DEBIT: Accumulated Depreciation
+        // 2. DEBIT: Accumulated Depreciation (use category's depreciation account)
         html += `<tr>
-            <td><strong>Accumulated Depreciation (1410)</strong></td>
+            <td><strong>${deprAccountName} (${deprAccountCode})</strong></td>
             <td class="text-right text-success"><strong>₦${accumDepr.toLocaleString('en-US', {minimumFractionDigits: 2})}</strong></td>
             <td class="text-right">-</td>
         </tr>`;
@@ -288,9 +294,9 @@
             totalDebit += Math.abs(gainLoss);
         }
 
-        // 4. CREDIT: Fixed Asset at cost
+        // 4. CREDIT: Fixed Asset at cost (use category's asset account)
         html += `<tr>
-            <td><strong>Fixed Asset - ${currentAssetData.category || 'Asset'} (1400)</strong></td>
+            <td><strong>${assetAccountName} (${assetAccountCode})</strong></td>
             <td class="text-right">-</td>
             <td class="text-right text-danger"><strong>₦${totalCost.toLocaleString('en-US', {minimumFractionDigits: 2})}</strong></td>
         </tr>`;

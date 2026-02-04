@@ -833,7 +833,12 @@ $(document).ready(function() {
             total_cost: {{ $fixedAsset->total_cost }},
             accumulated_depreciation: {{ $fixedAsset->accumulated_depreciation }},
             book_value: {{ $fixedAsset->book_value }},
-            category: "{{ $fixedAsset->category?->name ?? '' }}"
+            category: "{{ $fixedAsset->category?->name ?? '' }}",
+            // Account info for JE preview
+            asset_account_name: "{{ $fixedAsset->category?->assetAccount?->name ?? 'Other Fixed Assets' }}",
+            asset_account_code: "{{ $fixedAsset->category?->assetAccount?->code ?? '1460' }}",
+            depreciation_account_name: "{{ $fixedAsset->category?->depreciationAccount?->name ?? 'Accumulated Depreciation' }}",
+            depreciation_account_code: "{{ $fixedAsset->category?->depreciationAccount?->code ?? '1500' }}"
         });
     });
 

@@ -56,6 +56,13 @@
                 <h5 class="mb-0"><i class="mdi mdi-table mr-2"></i>Full Amortization Schedule</h5>
             </div>
             <div class="card-body">
+                <div class="alert alert-info border mb-3" style="font-size: 0.9rem;">
+                    <i class="mdi mdi-information-outline mr-1"></i>
+                    <strong>Automatic Journal Entries:</strong> When a payment is recorded, a JE is automatically created:
+                    <span class="text-success"><strong>DEBIT</strong></span> Liability Account (principal) + Interest Expense |
+                    <span class="text-danger"><strong>CREDIT</strong></span> Bank Account (cash outflow).
+                    Click the <i class="mdi mdi-book-open-page-variant"></i> icon to view the linked JE.
+                </div>
                 <div class="table-responsive">
                     <table class="table table-striped table-bordered" id="amortization-table">
                         <thead class="thead-dark">
@@ -69,6 +76,7 @@
                                 <th class="text-center">Status</th>
                                 <th>Paid Date</th>
                                 <th>Reference</th>
+                                <th class="text-center no-print">JE</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -80,15 +88,15 @@
                             @endphp
                             @foreach($schedule as $payment)
                             @php
-                                $totalPayment += $payment->payment_amount;
-                                $totalPrincipal += $payment->principal_amount;
-                                $totalInterest += $payment->interest_amount;
-                                if ($payment->paid_date) {
-                                    $totalPaid += $payment->amount_paid ?? $payment->payment_amount;
+                                $totalPayment += $payment->scheduled_payment;
+                                $totalPrincipal += $payment->principal_portion;
+                                $totalInterest += $payment->interest_portion;
+                                if ($payment->payment_date) {
+                                    $totalPaid += $payment->actual_payment ?? $payment->scheduled_payment;
                                 }
 
                                 $rowClass = '';
-                                if ($payment->paid_date) {
+                                if ($payment->payment_date) {
                                     $rowClass = 'table-success';
                                 } elseif ($payment->due_date < now()->toDateString()) {
                                     $rowClass = 'table-danger';
@@ -97,12 +105,12 @@
                             <tr class="{{ $rowClass }}">
                                 <td class="text-center">{{ $payment->payment_number }}</td>
                                 <td>{{ \Carbon\Carbon::parse($payment->due_date)->format('M d, Y') }}</td>
-                                <td class="text-right">₦{{ number_format($payment->payment_amount, 2) }}</td>
-                                <td class="text-right">₦{{ number_format($payment->principal_amount, 2) }}</td>
-                                <td class="text-right">₦{{ number_format($payment->interest_amount, 2) }}</td>
-                                <td class="text-right">₦{{ number_format($payment->balance_after_payment, 2) }}</td>
+                                <td class="text-right">₦{{ number_format($payment->scheduled_payment, 2) }}</td>
+                                <td class="text-right">₦{{ number_format($payment->principal_portion, 2) }}</td>
+                                <td class="text-right">₦{{ number_format($payment->interest_portion, 2) }}</td>
+                                <td class="text-right">₦{{ number_format($payment->closing_balance, 2) }}</td>
                                 <td class="text-center">
-                                    @if($payment->paid_date)
+                                    @if($payment->payment_date)
                                         <span class="badge badge-success"><i class="mdi mdi-check"></i> Paid</span>
                                     @elseif($payment->due_date < now()->toDateString())
                                         <span class="badge badge-danger"><i class="mdi mdi-alert"></i> Overdue</span>
@@ -111,13 +119,23 @@
                                     @endif
                                 </td>
                                 <td>
-                                    @if($payment->paid_date)
-                                        {{ \Carbon\Carbon::parse($payment->paid_date)->format('M d, Y') }}
+                                    @if($payment->payment_date)
+                                        {{ \Carbon\Carbon::parse($payment->payment_date)->format('M d, Y') }}
                                     @else
                                         -
                                     @endif
                                 </td>
                                 <td>{{ $payment->payment_reference ?? '-' }}</td>
+                                <td class="text-center no-print">
+                                    @if($payment->journal_entry_id)
+                                        <a href="{{ route('accounting.journal-entries.show', $payment->journal_entry_id) }}"
+                                           class="btn btn-sm btn-link text-primary p-0" title="View Journal Entry">
+                                            <i class="mdi mdi-book-open-page-variant"></i>
+                                        </a>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
                             </tr>
                             @endforeach
                         </tbody>
@@ -127,7 +145,7 @@
                                 <th class="text-right">₦{{ number_format($totalPayment, 2) }}</th>
                                 <th class="text-right">₦{{ number_format($totalPrincipal, 2) }}</th>
                                 <th class="text-right">₦{{ number_format($totalInterest, 2) }}</th>
-                                <th colspan="4"></th>
+                                <th colspan="5"></th>
                             </tr>
                         </tfoot>
                     </table>
@@ -147,7 +165,7 @@
                         <div class="card-modern bg-success text-white">
                             <div class="card-body text-center">
                                 <h6>Payments Made</h6>
-                                <h4 class="mb-0">{{ $schedule->whereNotNull('paid_date')->count() }}</h4>
+                                <h4 class="mb-0">{{ $schedule->whereNotNull('payment_date')->count() }}</h4>
                             </div>
                         </div>
                     </div>
@@ -177,7 +195,7 @@
 @push('styles')
 <style>
     @media print {
-        .btn, .breadcrumb, nav, .sidebar, .navbar, footer { display: none !important; }
+        .btn, .breadcrumb, nav, .sidebar, .navbar, footer, .alert, .no-print { display: none !important; }
         .card { border: 1px solid #ddd !important; }
         .table-responsive { overflow: visible !important; }
     }

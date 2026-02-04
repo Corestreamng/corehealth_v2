@@ -51,6 +51,7 @@ use App\Models\Accounting\FixedAssetDepreciation;
 use App\Models\Accounting\FixedAssetDisposal;
 use App\Models\Accounting\FixedAsset;
 use App\Models\Accounting\StatutoryRemittance;
+use App\Models\CapexProjectExpense;
 use App\Observers\Accounting\PaymentObserver;
 use App\Observers\Accounting\ExpenseObserver;
 use App\Observers\Accounting\PayrollBatchObserver;
@@ -66,6 +67,7 @@ use App\Observers\Accounting\DepreciationObserver;
 use App\Observers\Accounting\FixedAssetObserver;
 use App\Observers\Accounting\FixedAssetDisposalObserver;
 use App\Observers\Accounting\StatutoryRemittanceObserver;
+use App\Observers\Accounting\CapexExpenseObserver;
 use App\Services\Accounting\SubAccountService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -105,6 +107,7 @@ $stats = [
     'hmo_claims' => ['found' => 0, 'processed' => 0, 'success' => 0, 'skipped' => 0, 'errors' => 0],
     'fixed_assets' => ['found' => 0, 'processed' => 0, 'success' => 0, 'skipped' => 0, 'errors' => 0],
     'statutory_remittances' => ['found' => 0, 'processed' => 0, 'success' => 0, 'skipped' => 0, 'errors' => 0],
+    'capex_expenses' => ['found' => 0, 'processed' => 0, 'success' => 0, 'skipped' => 0, 'errors' => 0],
 ];
 
 // Get SubAccountService for observers that need it
@@ -767,6 +770,48 @@ try {
     echo "\n";
 } catch (\Exception $e) {
     echo "   Error processing statutory remittances: {$e->getMessage()}\n";
+}
+
+// =====================================
+// 17. Process CAPEX Expenses
+// =====================================
+echo "\n17. Processing CAPEX Expenses...\n";
+
+try {
+    $capexExpenses = CapexProjectExpense::whereIn('status', ['approved', 'paid'])
+        ->whereNull('journal_entry_id')
+        ->get();
+    $stats['capex_expenses']['found'] = $capexExpenses->count();
+    echo "   Found {$capexExpenses->count()} CAPEX expenses without JE\n";
+
+    $observer = new CapexExpenseObserver();
+
+    foreach ($capexExpenses as $expense) {
+        $stats['capex_expenses']['processed']++;
+
+        // Skip if already has JE
+        if ($expense->journal_entry_id) {
+            $stats['capex_expenses']['skipped']++;
+            echo "s";
+            continue;
+        }
+
+        try {
+            // Use reflection to call protected method
+            $reflectionMethod = new \ReflectionMethod($observer, 'createCapexJournalEntry');
+            $reflectionMethod->setAccessible(true);
+            $reflectionMethod->invoke($observer, $expense);
+            $stats['capex_expenses']['success']++;
+            echo ".";
+        } catch (\Exception $e) {
+            $stats['capex_expenses']['errors']++;
+            echo "E";
+            Log::error("Observer trigger failed for CapexProjectExpense #{$expense->id}: " . $e->getMessage());
+        }
+    }
+    echo "\n";
+} catch (\Exception $e) {
+    echo "   Error processing CAPEX expenses: {$e->getMessage()}\n";
 }
 
 // =====================================

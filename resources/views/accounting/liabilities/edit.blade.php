@@ -21,6 +21,16 @@
                     Contact your administrator if restructuring is needed.
                 </div>
 
+                @if($paidPayments > 0)
+                <div class="alert alert-warning mb-4">
+                    <i class="mdi mdi-alert mr-2"></i>
+                    <strong>Payments Already Made:</strong> {{ $paidPayments }} of {{ $totalPayments }} payments have been recorded.
+                    <br>
+                    <small>If you change the interest rate, only the <strong>{{ $totalPayments - $paidPayments }} remaining unpaid payments</strong> will be recalculated.
+                    Already paid payments and their journal entries will remain unchanged to preserve the audit trail.</small>
+                </div>
+                @endif
+
                 <form action="{{ route('accounting.liabilities.update', $liability->id) }}" method="POST">
                     @csrf
                     @method('PUT')
@@ -73,13 +83,27 @@
                                     <input type="number" name="interest_rate" id="interest_rate"
                                            class="form-control @error('interest_rate') is-invalid @enderror"
                                            value="{{ old('interest_rate', $liability->interest_rate) }}"
+                                           data-original="{{ $liability->interest_rate }}"
                                            step="0.01" min="0" max="100" required>
                                     <div class="input-group-append">
                                         <span class="input-group-text">%</span>
                                     </div>
                                 </div>
                                 @error('interest_rate')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
-                                <small class="text-muted">Changing this will affect future interest calculations</small>
+                                <small class="text-muted">
+                                    @if($paidPayments > 0)
+                                        <i class="mdi mdi-information-outline text-warning"></i>
+                                        Changing this will recalculate only the {{ $totalPayments - $paidPayments }} unpaid payments
+                                        based on current balance of ₦{{ number_format($liability->current_balance, 2) }}
+                                    @else
+                                        Changing this will recalculate all {{ $totalPayments }} scheduled payments
+                                    @endif
+                                </small>
+                            </div>
+                            <div id="rate-change-preview" class="alert alert-light border d-none mt-3">
+                                <i class="mdi mdi-calculator mr-1"></i>
+                                <strong>Preview:</strong>
+                                <span id="rate-change-text"></span>
                             </div>
                         </div>
                     </div>
@@ -148,3 +172,44 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+$(document).ready(function() {
+    var originalRate = parseFloat($('#interest_rate').data('original'));
+    var currentBalance = {{ $liability->current_balance }};
+    var unpaidPayments = {{ $totalPayments - $paidPayments }};
+    var paidPayments = {{ $paidPayments }};
+
+    $('#interest_rate').on('change keyup', function() {
+        var newRate = parseFloat($(this).val()) || 0;
+        var rateChanged = Math.abs(newRate - originalRate) > 0.0001;
+
+        if (rateChanged && unpaidPayments > 0) {
+            // Simple estimate: monthly payment calculation
+            var monthlyRate = newRate / 100 / 12;
+            var estimatedPayment = 0;
+
+            if (monthlyRate > 0) {
+                estimatedPayment = currentBalance * (monthlyRate * Math.pow(1 + monthlyRate, unpaidPayments))
+                                 / (Math.pow(1 + monthlyRate, unpaidPayments) - 1);
+            } else {
+                estimatedPayment = currentBalance / unpaidPayments;
+            }
+
+            var changeText = 'Rate changed from ' + originalRate.toFixed(2) + '% to ' + newRate.toFixed(2) + '%. ';
+            changeText += 'Estimated new payment: ₦' + estimatedPayment.toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+            if (paidPayments > 0) {
+                changeText += ' (for remaining ' + unpaidPayments + ' payments)';
+            }
+
+            $('#rate-change-text').text(changeText);
+            $('#rate-change-preview').removeClass('d-none');
+        } else {
+            $('#rate-change-preview').addClass('d-none');
+        }
+    });
+});
+</script>
+@endpush

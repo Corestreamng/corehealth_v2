@@ -154,6 +154,35 @@
                                 </div>
                             @endif
 
+                            <!-- Journal Entry Preview -->
+                            <div class="card bg-light mt-3">
+                                <div class="card-body py-2 px-3">
+                                    <h6 class="mb-2"><i class="mdi mdi-book-open-variant mr-1"></i>Journal Entry Preview</h6>
+                                    <small class="text-muted d-block mb-2">This entry will be created when disbursement is approved:</small>
+                                    <table class="table table-sm mb-0" style="font-size: 0.85rem;">
+                                        <thead style="background: #495057; color: white;">
+                                            <tr>
+                                                <th style="width: 50%;">Account</th>
+                                                <th class="text-right" style="width: 25%;">Debit</th>
+                                                <th class="text-right" style="width: 25%;">Credit</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td id="je-expense-account">Expense Account</td>
+                                                <td class="text-right" id="je-debit">₦0.00</td>
+                                                <td class="text-right">-</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Petty Cash - {{ $fund->name }}</td>
+                                                <td class="text-right">-</td>
+                                                <td class="text-right" id="je-credit">₦0.00</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
                             <hr class="my-4">
 
                             <div class="d-flex justify-content-between">
@@ -194,7 +223,23 @@ $(document).ready(function() {
         if (amount > balance) {
             toastr.warning('Amount exceeds available balance of ₦' + balance.toLocaleString());
         }
+
+        updateJePreview();
     });
+
+    // Update JE preview
+    function updateJePreview() {
+        var amount = parseFloat($('#amount').val()) || 0;
+        var expenseAccount = $('select[name="expense_account_id"] option:selected').text() || 'Expense Account';
+
+        $('#je-expense-account').text(expenseAccount);
+        $('#je-debit').text('₦' + amount.toLocaleString('en-NG', {minimumFractionDigits: 2}));
+        $('#je-credit').text('₦' + amount.toLocaleString('en-NG', {minimumFractionDigits: 2}));
+    }
+
+    $('select[name="expense_account_id"]').on('change', updateJePreview);
+    $('#amount').on('input', updateJePreview);
+    updateJePreview();
 });
 </script>
 @endpush

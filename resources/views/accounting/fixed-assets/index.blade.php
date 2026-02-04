@@ -582,7 +582,12 @@ $(document).ready(function() {
                         total_cost: res.data.total_cost,
                         accumulated_depreciation: res.data.accumulated_depreciation,
                         book_value: res.data.book_value,
-                        category: res.data.category
+                        category: res.data.category,
+                        // Account info for JE preview
+                        asset_account_name: res.data.asset_account_name,
+                        asset_account_code: res.data.asset_account_code,
+                        depreciation_account_name: res.data.depreciation_account_name,
+                        depreciation_account_code: res.data.depreciation_account_code
                     });
                     $('#disposeModal').modal('show');
                 }

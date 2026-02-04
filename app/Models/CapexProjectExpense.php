@@ -20,6 +20,9 @@ class CapexProjectExpense extends Model
         'description',
         'vendor',
         'invoice_number',
+        'payment_method',
+        'bank_id',
+        'cheque_number',
         'amount',
         'status',
     ];
@@ -29,6 +32,12 @@ class CapexProjectExpense extends Model
         'expense_date' => 'date',
     ];
 
+    // Status constants
+    const STATUS_PENDING = 'pending';
+    const STATUS_APPROVED = 'approved';
+    const STATUS_PAID = 'paid';
+    const STATUS_VOID = 'void';
+
     // Relationships
     public function project()
     {
@@ -37,7 +46,7 @@ class CapexProjectExpense extends Model
 
     public function journalEntry()
     {
-        return $this->belongsTo(JournalEntry::class);
+        return $this->belongsTo(\App\Models\Accounting\JournalEntry::class);
     }
 
     public function purchaseOrder()
@@ -48,5 +57,10 @@ class CapexProjectExpense extends Model
     public function expense()
     {
         return $this->belongsTo(Expense::class);
+    }
+
+    public function bank()
+    {
+        return $this->belongsTo(\App\Models\Accounting\Bank::class);
     }
 }

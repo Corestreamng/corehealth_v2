@@ -31,6 +31,9 @@ use App\Models\Accounting\FixedAssetDepreciation;
 use App\Models\Accounting\FixedAssetDisposal;
 use App\Models\Accounting\StatutoryRemittance;
 use App\Models\Accounting\CashFlowForecastPeriod;
+use App\Models\Accounting\LiabilitySchedule;
+use App\Models\Accounting\LiabilityPaymentSchedule;
+use App\Models\CapexProjectExpense;
 use App\Observers\ProductObserver;
 use App\Observers\ServiceObserver;
 use App\Observers\ServicePriceObserver;
@@ -55,6 +58,9 @@ use App\Observers\Accounting\FixedAssetDisposalObserver;
 use App\Observers\Accounting\BankObserver;
 use App\Observers\Accounting\StatutoryRemittanceObserver;
 use App\Observers\Accounting\CashFlowForecastPeriodObserver;
+use App\Observers\Accounting\CapexExpenseObserver;
+use App\Observers\Accounting\LiabilityScheduleObserver;
+use App\Observers\Accounting\LiabilityPaymentObserver;
 use App\Helpers\HmoHelper;
 use App\Services\DepartmentNotificationService;
 use Carbon\Carbon;
@@ -132,6 +138,13 @@ class AppServiceProvider extends ServiceProvider
 
         // NEW: Cash Flow Forecast Period observer - auto-applies recurring patterns to new periods
         CashFlowForecastPeriod::observe(CashFlowForecastPeriodObserver::class);
+
+        // NEW: CAPEX Expense observer - creates JE when CAPEX expenses are recorded/approved
+        CapexProjectExpense::observe(CapexExpenseObserver::class);
+
+        // NEW: Liability observers - creates JE for loan receipts and payments
+        LiabilitySchedule::observe(LiabilityScheduleObserver::class);
+        LiabilityPaymentSchedule::observe(LiabilityPaymentObserver::class);
 
         // Process daily bed bills - runs once per day automatically
         $this->processDailyBedBills();

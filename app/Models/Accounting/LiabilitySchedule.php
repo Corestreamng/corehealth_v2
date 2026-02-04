@@ -42,6 +42,8 @@ class LiabilitySchedule extends Model
         'liability_number',
         'account_id',
         'interest_expense_account_id',
+        'journal_entry_id',
+        'bank_account_id',
         'liability_type',
         'creditor_name',
         'creditor_contact',
@@ -91,6 +93,22 @@ class LiabilitySchedule extends Model
     public function interestExpenseAccount()
     {
         return $this->belongsTo(Account::class, 'interest_expense_account_id');
+    }
+
+    /**
+     * Journal entry for initial liability booking
+     */
+    public function journalEntry()
+    {
+        return $this->belongsTo(JournalEntry::class, 'journal_entry_id');
+    }
+
+    /**
+     * Bank account that received the loan proceeds
+     */
+    public function bankAccount()
+    {
+        return $this->belongsTo(Account::class, 'bank_account_id');
     }
 
     public function creator()
