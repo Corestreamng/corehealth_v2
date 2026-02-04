@@ -339,6 +339,16 @@
                     <h5 class="mb-0"><i class="mdi mdi-cog mr-2"></i>Actions</h5>
                 </div>
                 <div class="card-body">
+                    <!-- Export Buttons -->
+                    <a href="{{ route('accounting.transfers.show.export.pdf', $transfer) }}" class="btn btn-outline-primary btn-block mb-2" target="_blank">
+                        <i class="mdi mdi-file-pdf-box mr-1"></i> Download PDF Voucher
+                    </a>
+                    <a href="{{ route('accounting.transfers.show.export.excel', $transfer) }}" class="btn btn-outline-success btn-block mb-2">
+                        <i class="mdi mdi-file-excel mr-1"></i> Download Excel
+                    </a>
+
+                    <hr>
+
                     @if($transfer->status === 'pending_approval')
                         <button class="btn btn-success btn-block mb-2" id="approve-btn">
                             <i class="mdi mdi-check mr-1"></i> Approve Transfer
@@ -599,9 +609,9 @@ $(document).ready(function() {
             return;
         }
         $.ajax({
-            url: '/accounting/transfers/' + transferId + '/reject',
+            url: '/accounting/transfers/' + transferId + '/mark-failed',
             type: 'POST',
-            data: { _token: '{{ csrf_token() }}', rejection_reason: reason },
+            data: { _token: '{{ csrf_token() }}', failure_reason: reason },
             success: function(res) {
                 toastr.success(res.message);
                 location.reload();

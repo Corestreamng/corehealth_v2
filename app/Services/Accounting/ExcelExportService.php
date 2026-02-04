@@ -2198,4 +2198,244 @@ class ExcelExportService
 
         return $this->download('petty-cash-' . $fund->fund_code . '-' . now()->format('Y-m-d'));
     }
+
+    /**
+     * Inter-Account Transfers Report
+     */
+    public function interAccountTransfersReport($transfers, string $dateFrom, string $dateTo, string $statusFilter = 'All Statuses'): StreamedResponse
+    {
+        $this->initSpreadsheet(
+            'Inter-Account Transfers Report',
+            $dateFrom . ' to ' . $dateTo . ' | ' . $statusFilter
+        );
+
+        // Summary Section
+        $this->activeSheet->setCellValue('A' . $this->currentRow, 'SUMMARY');
+        $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(11);
+        $this->currentRow++;
+
+        $totalAmount = $transfers->sum('amount');
+        $totalFees = $transfers->sum('transfer_fee');
+        $clearedTransfers = $transfers->where('status', 'cleared');
+        $pendingTransfers = $transfers->whereIn('status', ['pending_approval', 'approved', 'initiated', 'in_transit']);
+        $failedTransfers = $transfers->where('status', 'failed');
+
+        $this->addDataRow(['Total Transfers:', $transfers->count(), 'Total Amount:', '₦' . number_format($totalAmount, 2)]);
+        $this->addDataRow(['Cleared:', $clearedTransfers->count(), 'Cleared Amount:', '₦' . number_format($clearedTransfers->sum('amount'), 2)]);
+        $this->addDataRow(['Pending/In-Transit:', $pendingTransfers->count(), 'Pending Amount:', '₦' . number_format($pendingTransfers->sum('amount'), 2)]);
+        $this->addDataRow(['Failed:', $failedTransfers->count(), 'Failed Amount:', '₦' . number_format($failedTransfers->sum('amount'), 2)]);
+        $this->addDataRow(['Total Fees:', '', '', '₦' . number_format($totalFees, 2)]);
+
+        $this->currentRow += 2;
+
+        // Method Breakdown
+        $byMethod = $transfers->groupBy('transfer_method');
+        if ($byMethod->isNotEmpty()) {
+            $this->activeSheet->setCellValue('A' . $this->currentRow, 'BY TRANSFER METHOD');
+            $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(11);
+            $this->currentRow++;
+
+            $this->addHeaderRow(['Method', 'Count', 'Amount']);
+            foreach ($byMethod as $method => $group) {
+                $this->addDataRow([
+                    strtoupper($method),
+                    $group->count(),
+                    '₦' . number_format($group->sum('amount'), 2),
+                ]);
+            }
+            $this->currentRow += 2;
+        }
+
+        // Transfers Detail Section
+        $this->activeSheet->setCellValue('A' . $this->currentRow, 'TRANSFER DETAILS');
+        $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(11);
+        $this->currentRow++;
+
+        // Headers
+        $this->addHeaderRow([
+            'Transfer #',
+            'Date',
+            'From Account',
+            'From Type',
+            'To Account',
+            'To Type',
+            'Amount',
+            'Fee',
+            'Method',
+            'Status',
+            'Reference',
+            'Initiated By',
+            'Approved By',
+            'JE #',
+            'Description'
+        ]);
+
+        // Data rows
+        foreach ($transfers as $transfer) {
+            $fromType = $transfer->fromBank?->is_cash_account ? 'Cash' : 'Bank';
+            $toType = $transfer->toBank?->is_cash_account ? 'Cash' : 'Bank';
+
+            $initiatorName = $transfer->initiator
+                ? trim(($transfer->initiator->surname ?? '') . ' ' . ($transfer->initiator->firstname ?? ''))
+                : '-';
+
+            $approverName = $transfer->approver
+                ? trim(($transfer->approver->surname ?? '') . ' ' . ($transfer->approver->firstname ?? ''))
+                : '-';
+
+            $this->addDataRow([
+                $transfer->transfer_number,
+                Carbon::parse($transfer->transfer_date)->format('M d, Y'),
+                $transfer->fromBank?->bank_name ?? 'N/A',
+                $fromType,
+                $transfer->toBank?->bank_name ?? 'N/A',
+                $toType,
+                '₦' . number_format($transfer->amount, 2),
+                $transfer->transfer_fee > 0 ? '₦' . number_format($transfer->transfer_fee, 2) : '-',
+                strtoupper($transfer->transfer_method),
+                ucwords(str_replace('_', ' ', $transfer->status)),
+                $transfer->reference ?? '-',
+                $initiatorName,
+                $approverName,
+                $transfer->journalEntry?->entry_number ?? '-',
+                $transfer->description ?? '-',
+            ]);
+        }
+
+        // Summary footer
+        $this->currentRow++;
+        $this->addDataRow([
+            'TOTAL',
+            $transfers->count() . ' transfers',
+            '', '', '', '',
+            '₦' . number_format($totalAmount, 2),
+            '₦' . number_format($totalFees, 2),
+            '', '', '', '', '', '', ''
+        ], 1, true);
+
+        $this->autoSizeColumns(1, 15);
+
+        return $this->download('inter-account-transfers-' . now()->format('Y-m-d'));
+    }
+
+    /**
+     * Single Transfer Report (Voucher)
+     */
+    public function singleTransferReport($transfer): StreamedResponse
+    {
+        $this->initSpreadsheet(
+            'Transfer Voucher',
+            $transfer->transfer_number . ' | ' . Carbon::parse($transfer->transfer_date)->format('F d, Y')
+        );
+
+        // Transfer Header
+        $this->activeSheet->setCellValue('A' . $this->currentRow, 'TRANSFER DETAILS');
+        $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(11);
+        $this->currentRow++;
+
+        $fromType = $transfer->fromBank?->is_cash_account ? 'Cash Account' : 'Bank Account';
+        $toType = $transfer->toBank?->is_cash_account ? 'Cash Account' : 'Bank Account';
+
+        $initiatorName = $transfer->initiator
+            ? trim(($transfer->initiator->surname ?? '') . ' ' . ($transfer->initiator->firstname ?? ''))
+            : 'System';
+
+        $approverName = $transfer->approver
+            ? trim(($transfer->approver->surname ?? '') . ' ' . ($transfer->approver->firstname ?? ''))
+            : 'N/A';
+
+        $this->addDataRow(['Transfer Number:', $transfer->transfer_number, 'Status:', ucwords(str_replace('_', ' ', $transfer->status))]);
+        $this->addDataRow(['Transfer Date:', Carbon::parse($transfer->transfer_date)->format('F d, Y'), 'Transfer Method:', strtoupper($transfer->transfer_method)]);
+        $this->addDataRow(['Reference:', $transfer->reference ?? 'N/A', 'Same Bank:', $transfer->is_same_bank ? 'Yes' : 'No']);
+
+        $this->currentRow++;
+
+        // Source & Destination
+        $this->activeSheet->setCellValue('A' . $this->currentRow, 'SOURCE & DESTINATION');
+        $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(11);
+        $this->currentRow++;
+
+        $this->addDataRow(['From Bank:', $transfer->fromBank?->bank_name ?? 'N/A', 'Account Number:', $transfer->fromBank?->account_number ?? 'N/A']);
+        $this->addDataRow(['Account Type:', $fromType, '', '']);
+        $this->addDataRow(['To Bank:', $transfer->toBank?->bank_name ?? 'N/A', 'Account Number:', $transfer->toBank?->account_number ?? 'N/A']);
+        $this->addDataRow(['Account Type:', $toType, '', '']);
+
+        $this->currentRow++;
+
+        // Amount Details
+        $this->activeSheet->setCellValue('A' . $this->currentRow, 'AMOUNT DETAILS');
+        $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(11);
+        $this->currentRow++;
+
+        $this->addDataRow(['Transfer Amount:', '₦' . number_format($transfer->amount, 2)], 1, true);
+        if ($transfer->transfer_fee > 0) {
+            $this->addDataRow(['Transfer Fee:', '₦' . number_format($transfer->transfer_fee, 2)]);
+            $this->addDataRow(['Fee Account:', $transfer->feeAccount?->account_name ?? 'N/A']);
+            $this->addDataRow(['Total Deduction:', '₦' . number_format($transfer->amount + $transfer->transfer_fee, 2)], 1, true);
+        }
+
+        $this->currentRow++;
+
+        // Authorization
+        $this->activeSheet->setCellValue('A' . $this->currentRow, 'AUTHORIZATION');
+        $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(11);
+        $this->currentRow++;
+
+        $this->addDataRow(['Initiated By:', $initiatorName, 'Initiated On:', Carbon::parse($transfer->created_at)->format('M d, Y h:i A')]);
+        $this->addDataRow(['Approved By:', $approverName, 'Approved On:', $transfer->approved_at ? Carbon::parse($transfer->approved_at)->format('M d, Y h:i A') : 'N/A']);
+
+        if ($transfer->actual_clearance_date) {
+            $this->addDataRow(['Cleared On:', Carbon::parse($transfer->actual_clearance_date)->format('M d, Y'), '', '']);
+        }
+
+        $this->currentRow++;
+
+        // Description
+        if ($transfer->description) {
+            $this->activeSheet->setCellValue('A' . $this->currentRow, 'DESCRIPTION');
+            $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(11);
+            $this->currentRow++;
+            $this->addDataRow([$transfer->description]);
+            $this->currentRow++;
+        }
+
+        // Journal Entry
+        if ($transfer->journalEntry) {
+            $this->activeSheet->setCellValue('A' . $this->currentRow, 'JOURNAL ENTRY - ' . $transfer->journalEntry->entry_number);
+            $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(11);
+            $this->currentRow++;
+
+            $this->addHeaderRow(['Account Code', 'Account Name', 'Description', 'Debit', 'Credit']);
+
+            foreach ($transfer->journalEntry->lines as $line) {
+                $this->addDataRow([
+                    $line->account?->account_number ?? '-',
+                    $line->account?->account_name ?? '-',
+                    $line->description ?? '-',
+                    $line->debit > 0 ? '₦' . number_format($line->debit, 2) : '-',
+                    $line->credit > 0 ? '₦' . number_format($line->credit, 2) : '-',
+                ]);
+            }
+
+            // Totals
+            $this->addDataRow([
+                '', 'TOTAL', '',
+                '₦' . number_format($transfer->journalEntry->lines->sum('debit'), 2),
+                '₦' . number_format($transfer->journalEntry->lines->sum('credit'), 2),
+            ], 1, true);
+        }
+
+        // Failure reason if failed
+        if ($transfer->status === 'failed' && $transfer->failure_reason) {
+            $this->currentRow++;
+            $this->activeSheet->setCellValue('A' . $this->currentRow, 'FAILURE REASON');
+            $this->activeSheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true)->setSize(11)->getColor()->setRGB('dc3545');
+            $this->currentRow++;
+            $this->addDataRow([$transfer->failure_reason]);
+        }
+
+        $this->autoSizeColumns(1, 5);
+
+        return $this->download('transfer-voucher-' . $transfer->transfer_number);
+    }
 }

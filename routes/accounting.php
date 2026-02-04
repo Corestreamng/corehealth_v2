@@ -199,15 +199,18 @@ Route::prefix('accounting')->name('accounting.')->middleware(['auth', 'verified'
     Route::prefix('transfers')->name('transfers.')->middleware(['role:SUPERADMIN|ADMIN|ACCOUNTS'])->group(function () {
         Route::get('/', [TransferController::class, 'index'])->name('index');
         Route::get('/datatable', [TransferController::class, 'datatable'])->name('datatable');
+        Route::get('/export/pdf', [TransferController::class, 'exportPdf'])->name('export.pdf');
+        Route::get('/export/excel', [TransferController::class, 'exportExcel'])->name('export.excel');
         Route::get('/create', [TransferController::class, 'create'])->name('create');
         Route::post('/', [TransferController::class, 'store'])->name('store');
         Route::get('/{transfer}', [TransferController::class, 'show'])->name('show');
+        Route::get('/{transfer}/export/pdf', [TransferController::class, 'exportSinglePdf'])->name('show.export.pdf');
+        Route::get('/{transfer}/export/excel', [TransferController::class, 'exportSingleExcel'])->name('show.export.excel');
         Route::post('/{transfer}/approve', [TransferController::class, 'approve'])->name('approve');
         Route::post('/{transfer}/reject', [TransferController::class, 'reject'])->name('reject');
+        Route::post('/{transfer}/mark-failed', [TransferController::class, 'markFailed'])->name('mark-failed');
         Route::post('/{transfer}/confirm-clearance', [TransferController::class, 'confirmClearance'])->name('confirm-clearance');
         Route::post('/{transfer}/cancel', [TransferController::class, 'cancel'])->name('cancel');
-        Route::get('/export/pdf', [TransferController::class, 'exportPdf'])->name('export.pdf');
-        Route::get('/export/excel', [TransferController::class, 'exportExcel'])->name('export.excel');
     });
 
     // === BANK RECONCILIATION ===

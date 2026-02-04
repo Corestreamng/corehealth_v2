@@ -28,11 +28,30 @@ class TransferObserver
 {
     /**
      * Handle the InterAccountTransfer "updated" event.
+     *
+     * IMPORTANT: Use wasChanged() in updated event, not isDirty().
+     * isDirty() is for checking changes BEFORE save.
+     * wasChanged() is for checking what changed AFTER save.
      */
     public function updated(InterAccountTransfer $transfer): void
     {
-        // Only create journal entry when transfer is cleared
-        if ($transfer->isDirty('status') && $transfer->status === InterAccountTransfer::STATUS_CLEARED) {
+        // Only create journal entry when transfer status changes to cleared
+        if ($transfer->wasChanged('status') && $transfer->status === InterAccountTransfer::STATUS_CLEARED) {
+            // Skip if already has JE
+            if ($transfer->journal_entry_id) {
+                Log::info('TransferObserver: Transfer already has JE', [
+                    'transfer_id' => $transfer->id,
+                    'journal_entry_id' => $transfer->journal_entry_id
+                ]);
+                return;
+            }
+
+            Log::info('TransferObserver: Creating JE for cleared transfer', [
+                'transfer_id' => $transfer->id,
+                'transfer_number' => $transfer->transfer_number,
+                'amount' => $transfer->amount,
+            ]);
+
             try {
                 $this->createTransferJournalEntry($transfer);
             } catch (\Exception $e) {
