@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 04, 2026 at 10:20 PM
+-- Generation Time: Feb 05, 2026 at 12:13 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -181,7 +181,8 @@ INSERT INTO `accounts` (`id`, `account_group_id`, `code`, `name`, `description`,
 (79, 1, '1031', 'Bank - Zenith bank', 'GL Account for Zenith bank (2250445688)', 1, 0, 1, 1, NULL, '2026-01-31 23:24:41', '2026-01-31 23:24:41', NULL),
 (80, 17, '6900', 'Loss on Disposal of Assets', 'Losses realized from disposal of fixed assets below book value', NULL, 0, 1, 0, NULL, '2026-02-03 08:50:31', '2026-02-03 08:50:31', NULL),
 (81, 4, '1460', 'Other Fixed Assets', 'General fixed assets not classified elsewhere', NULL, 0, 1, 0, NULL, '2026-02-04 06:30:08', '2026-02-04 06:30:08', NULL),
-(82, 17, '6270', 'Cash Over/Short', 'Petty cash variances from reconciliation', NULL, 0, 1, 0, NULL, '2026-02-04 19:37:59', '2026-02-04 19:37:59', NULL);
+(82, 17, '6270', 'Cash Over/Short', 'Petty cash variances from reconciliation', NULL, 0, 1, 0, NULL, '2026-02-04 19:37:59', '2026-02-04 19:37:59', NULL),
+(83, 1, '1032', 'Bank - UBA', 'GL Account for UBA (2045667799)', 2, 0, 1, 1, NULL, '2026-02-04 20:47:43', '2026-02-04 20:47:43', NULL);
 
 -- --------------------------------------------------------
 
@@ -766,7 +767,14 @@ INSERT INTO `audits` (`id`, `user_type`, `user_id`, `event`, `auditable_type`, `
 (257, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntry', 77, '[]', '{\"entry_number\":\"JE-202602-0057\",\"entry_date\":\"2026-02-04 00:00:00\",\"accounting_period_id\":2,\"description\":\"Petty Cash Shortage Adjustment: PCR-202602-0002 - Physical count \\u20a6100,000.00 vs Book \\u20a6110,000.00\",\"reference_type\":\"App\\\\Models\\\\Accounting\\\\PettyCashReconciliation\",\"reference_id\":2,\"entry_type\":\"auto\",\"status\":\"draft\",\"created_by\":1,\"id\":77}', 'http://localhost:8000/accounting/petty-cash/reconciliations/2/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 20:19:43', '2026-02-04 20:19:43'),
 (258, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 153, '[]', '{\"journal_entry_id\":77,\"line_number\":1,\"account_id\":82,\"sub_account_id\":null,\"narration\":\"Cash Shortage - hhhhhhjk\",\"debit\":10000,\"credit\":0,\"cash_flow_category\":\"operating\",\"product_id\":null,\"service_id\":null,\"product_category_id\":null,\"service_category_id\":null,\"hmo_id\":null,\"supplier_id\":null,\"patient_id\":null,\"department_id\":null,\"category\":\"petty_cash_adjustment\",\"id\":153}', 'http://localhost:8000/accounting/petty-cash/reconciliations/2/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 20:19:43', '2026-02-04 20:19:43'),
 (259, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 154, '[]', '{\"journal_entry_id\":77,\"line_number\":2,\"account_id\":4,\"sub_account_id\":null,\"narration\":\"Petty Cash Adjustment - Shortage\",\"debit\":0,\"credit\":10000,\"cash_flow_category\":\"operating\",\"product_id\":null,\"service_id\":null,\"product_category_id\":null,\"service_category_id\":null,\"hmo_id\":null,\"supplier_id\":null,\"patient_id\":null,\"department_id\":null,\"category\":\"petty_cash_adjustment\",\"id\":154}', 'http://localhost:8000/accounting/petty-cash/reconciliations/2/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 20:19:43', '2026-02-04 20:19:43'),
-(260, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\JournalEntry', 77, '{\"status\":\"draft\",\"posted_by\":null,\"posted_at\":null}', '{\"status\":\"posted\",\"posted_by\":1,\"posted_at\":\"2026-02-04 21:19:43\"}', 'http://localhost:8000/accounting/petty-cash/reconciliations/2/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 20:19:43', '2026-02-04 20:19:43');
+(260, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\JournalEntry', 77, '{\"status\":\"draft\",\"posted_by\":null,\"posted_at\":null}', '{\"status\":\"posted\",\"posted_by\":1,\"posted_at\":\"2026-02-04 21:19:43\"}', 'http://localhost:8000/accounting/petty-cash/reconciliations/2/approve', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 20:19:43', '2026-02-04 20:19:43'),
+(261, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\Account', 83, '[]', '{\"account_group_id\":1,\"code\":\"1032\",\"name\":\"Bank - UBA\",\"description\":\"GL Account for UBA (2045667799)\",\"bank_id\":2,\"is_active\":true,\"is_system\":false,\"is_bank_account\":true,\"id\":83}', 'http://localhost:8000/banks', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 20:47:43', '2026-02-04 20:47:43'),
+(262, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntry', 78, '[]', '{\"entry_number\":\"JE-202602-0058\",\"entry_date\":\"2026-02-04 00:00:00\",\"accounting_period_id\":2,\"description\":\"Inter-Account Transfer: TRF-20260204-0004 - Zenith bank to UBA\",\"reference_type\":\"App\\\\Models\\\\InterAccountTransfer\",\"reference_id\":4,\"entry_type\":\"auto\",\"status\":\"draft\",\"created_by\":1,\"id\":78}', 'http://localhost:8000/accounting/transfers/4/confirm-clearance', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 21:28:06', '2026-02-04 21:28:06'),
+(263, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 155, '[]', '{\"journal_entry_id\":78,\"line_number\":1,\"account_id\":83,\"sub_account_id\":null,\"narration\":\"Transfer received from Zenith bank\",\"debit\":50000,\"credit\":0,\"cash_flow_category\":\"operating\",\"product_id\":null,\"service_id\":null,\"product_category_id\":null,\"service_category_id\":null,\"hmo_id\":null,\"supplier_id\":null,\"patient_id\":null,\"department_id\":null,\"category\":\"inter_account_transfer\",\"id\":155}', 'http://localhost:8000/accounting/transfers/4/confirm-clearance', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 21:28:06', '2026-02-04 21:28:06'),
+(264, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 156, '[]', '{\"journal_entry_id\":78,\"line_number\":2,\"account_id\":79,\"sub_account_id\":null,\"narration\":\"Transfer sent to UBA\",\"debit\":0,\"credit\":50000,\"cash_flow_category\":\"operating\",\"product_id\":null,\"service_id\":null,\"product_category_id\":null,\"service_category_id\":null,\"hmo_id\":null,\"supplier_id\":null,\"patient_id\":null,\"department_id\":null,\"category\":\"inter_account_transfer\",\"id\":156}', 'http://localhost:8000/accounting/transfers/4/confirm-clearance', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 21:28:06', '2026-02-04 21:28:06'),
+(265, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 157, '[]', '{\"journal_entry_id\":78,\"line_number\":3,\"account_id\":56,\"sub_account_id\":null,\"narration\":\"Transfer fee - TRF-20260204-0004 (Electronic Funds Transfer)\",\"debit\":7800,\"credit\":0,\"cash_flow_category\":\"operating\",\"product_id\":null,\"service_id\":null,\"product_category_id\":null,\"service_category_id\":null,\"hmo_id\":null,\"supplier_id\":null,\"patient_id\":null,\"department_id\":null,\"category\":\"bank_charges\",\"id\":157}', 'http://localhost:8000/accounting/transfers/4/confirm-clearance', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 21:28:06', '2026-02-04 21:28:06'),
+(266, 'App\\Models\\User', 1, 'created', 'App\\Models\\Accounting\\JournalEntryLine', 158, '[]', '{\"journal_entry_id\":78,\"line_number\":4,\"account_id\":79,\"sub_account_id\":null,\"narration\":\"Transfer fee deducted\",\"debit\":0,\"credit\":7800,\"cash_flow_category\":\"operating\",\"product_id\":null,\"service_id\":null,\"product_category_id\":null,\"service_category_id\":null,\"hmo_id\":null,\"supplier_id\":null,\"patient_id\":null,\"department_id\":null,\"category\":\"bank_charges\",\"id\":158}', 'http://localhost:8000/accounting/transfers/4/confirm-clearance', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 21:28:06', '2026-02-04 21:28:06'),
+(267, 'App\\Models\\User', 1, 'updated', 'App\\Models\\Accounting\\JournalEntry', 78, '{\"status\":\"draft\",\"posted_by\":null,\"posted_at\":null}', '{\"status\":\"posted\",\"posted_by\":1,\"posted_at\":\"2026-02-04 22:28:06\"}', 'http://localhost:8000/accounting/transfers/4/confirm-clearance', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36', NULL, '2026-02-04 21:28:06', '2026-02-04 21:28:06');
 
 -- --------------------------------------------------------
 
@@ -805,7 +813,8 @@ CREATE TABLE `banks` (
 --
 
 INSERT INTO `banks` (`id`, `name`, `account_number`, `account_name`, `bank_code`, `bank_type`, `last_statement_date`, `last_statement_balance`, `statement_closing_day`, `overdraft_limit`, `minimum_balance`, `swift_code`, `branch_name`, `branch_code`, `contact_person`, `contact_phone`, `contact_email`, `signatories`, `description`, `is_active`, `account_id`, `created_at`, `updated_at`) VALUES
-(1, 'Zenith bank', '2250445688', 'Ola Hospital', '0090', 'current', NULL, NULL, 25, 0.00, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 79, '2026-01-07 10:55:27', '2026-01-31 23:24:41');
+(1, 'Zenith bank', '2250445688', 'Ola Hospital', '0090', 'current', NULL, NULL, 25, 0.00, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 79, '2026-01-07 10:55:27', '2026-01-31 23:24:41'),
+(2, 'UBA', '2045667799', 'Ola Hospital UBA', '002', 'current', NULL, NULL, 25, 0.00, 0.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 83, '2026-02-04 20:47:43', '2026-02-04 20:47:43');
 
 -- --------------------------------------------------------
 
@@ -2818,6 +2827,16 @@ CREATE TABLE `inter_account_transfers` (
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `inter_account_transfers`
+--
+
+INSERT INTO `inter_account_transfers` (`id`, `transfer_number`, `from_bank_id`, `to_bank_id`, `from_account_id`, `to_account_id`, `journal_entry_id`, `transfer_date`, `amount`, `reference`, `description`, `transfer_method`, `is_same_bank`, `expected_clearance_date`, `actual_clearance_date`, `transfer_fee`, `fee_account_id`, `status`, `initiated_by`, `approved_by`, `approved_at`, `initiated_at`, `cleared_at`, `failure_reason`, `cancelled_by`, `cancelled_at`, `notes`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'TRF-20260204-0001', 1, 2, 79, 83, NULL, '2026-02-04', 40000.00, 'hhe', 'hfhf', 'eft', 0, '2026-02-04', NULL, 600.00, 73, 'cancelled', 1, NULL, NULL, NULL, NULL, NULL, 1, '2026-02-04 20:57:10', NULL, '2026-02-04 20:56:46', '2026-02-04 20:57:10', NULL),
+(2, 'TRF-20260204-0002', 1, 2, 79, 83, NULL, '2026-02-04', 70000.00, NULL, 'fknskfsf', 'wire', 0, '2026-02-04', NULL, 700.00, 73, 'cancelled', 1, NULL, NULL, NULL, NULL, 'tetse thehwe', 1, '2026-02-04 20:58:46', 'kejwrw', '2026-02-04 20:58:34', '2026-02-04 20:58:46', NULL),
+(3, 'TRF-20260204-0003', 1, 2, 79, 83, NULL, '2026-02-04', 40000.00, 'shad', 'dakda', 'rtgs', 0, '2026-02-04', NULL, 2000.00, 59, 'failed', 1, 1, '2026-02-04 21:17:09', NULL, NULL, 'hghhh', NULL, NULL, NULL, '2026-02-04 21:10:43', '2026-02-04 21:26:44', NULL),
+(4, 'TRF-20260204-0004', 1, 2, 79, 83, 78, '2026-02-04', 50000.00, 'dff', 'djdjjd', 'eft', 0, '2026-02-05', '2026-02-04', 7800.00, 56, 'cleared', 1, 1, '2026-02-04 21:27:55', NULL, '2026-02-04 21:28:06', NULL, NULL, NULL, '\nClearance confirmed: dhdhd', '2026-02-04 21:27:48', '2026-02-04 21:28:06', NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -2941,7 +2960,8 @@ INSERT INTO `journal_entries` (`id`, `entry_number`, `accounting_period_id`, `en
 (74, 'JE-202602-0054', 1, '2026-05-01', 'Lease payment #5 - Office Space - 500 sqm at Victoria Island, Lagos (LSE-2026-TEST001)', 'lease_payment', 89, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-02-04 11:28:53', 1, '2026-02-04 11:28:53', '2026-02-04 11:28:53', NULL),
 (75, 'JE-202602-0055', 2, '2026-02-04', 'Petty Cash Replenishment: PCV-NUPC-2026-00002 - Replenishment of petty cash fund', 'App\\Models\\Accounting\\PettyCashTransaction', 2, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-02-04 18:08:17', 1, '2026-02-04 18:08:16', '2026-02-04 18:08:17', NULL),
 (76, 'JE-202602-0056', 2, '2026-02-04', 'Petty Cash Disbursement: PCV-NUPC-2026-00004 - gadagahda', 'App\\Models\\Accounting\\PettyCashTransaction', 4, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-02-04 18:23:39', 1, '2026-02-04 18:23:39', '2026-02-04 18:23:39', NULL),
-(77, 'JE-202602-0057', 2, '2026-02-04', 'Petty Cash Shortage Adjustment: PCR-202602-0002 - Physical count ₦100,000.00 vs Book ₦110,000.00', 'App\\Models\\Accounting\\PettyCashReconciliation', 2, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-02-04 20:19:43', 1, '2026-02-04 20:19:43', '2026-02-04 20:19:43', NULL);
+(77, 'JE-202602-0057', 2, '2026-02-04', 'Petty Cash Shortage Adjustment: PCR-202602-0002 - Physical count ₦100,000.00 vs Book ₦110,000.00', 'App\\Models\\Accounting\\PettyCashReconciliation', 2, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-02-04 20:19:43', 1, '2026-02-04 20:19:43', '2026-02-04 20:19:43', NULL),
+(78, 'JE-202602-0058', 2, '2026-02-04', 'Inter-Account Transfer: TRF-20260204-0004 - Zenith bank to UBA', 'App\\Models\\InterAccountTransfer', 4, 'auto', 'posted', NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '2026-02-04 21:28:06', 1, '2026-02-04 21:28:06', '2026-02-04 21:28:06', NULL);
 
 -- --------------------------------------------------------
 
@@ -3130,7 +3150,11 @@ INSERT INTO `journal_entry_lines` (`id`, `journal_entry_id`, `line_number`, `acc
 (151, 76, 1, 55, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'travel', 70000.00, 0.00, 'Expense: John Doe', 'operating', '2026-02-04 18:23:39', '2026-02-04 18:23:39'),
 (152, 76, 2, 4, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'petty_cash', 0.00, 70000.00, 'Petty Cash Disbursement', 'operating', '2026-02-04 18:23:39', '2026-02-04 18:23:39'),
 (153, 77, 1, 82, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'petty_cash_adjustment', 10000.00, 0.00, 'Cash Shortage - hhhhhhjk', 'operating', '2026-02-04 20:19:43', '2026-02-04 20:19:43'),
-(154, 77, 2, 4, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'petty_cash_adjustment', 0.00, 10000.00, 'Petty Cash Adjustment - Shortage', 'operating', '2026-02-04 20:19:43', '2026-02-04 20:19:43');
+(154, 77, 2, 4, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'petty_cash_adjustment', 0.00, 10000.00, 'Petty Cash Adjustment - Shortage', 'operating', '2026-02-04 20:19:43', '2026-02-04 20:19:43'),
+(155, 78, 1, 83, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'inter_account_transfer', 50000.00, 0.00, 'Transfer received from Zenith bank', 'operating', '2026-02-04 21:28:06', '2026-02-04 21:28:06'),
+(156, 78, 2, 79, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'inter_account_transfer', 0.00, 50000.00, 'Transfer sent to UBA', 'operating', '2026-02-04 21:28:06', '2026-02-04 21:28:06'),
+(157, 78, 3, 56, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'bank_charges', 7800.00, 0.00, 'Transfer fee - TRF-20260204-0004 (Electronic Funds Transfer)', 'operating', '2026-02-04 21:28:06', '2026-02-04 21:28:06'),
+(158, 78, 4, 79, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'bank_charges', 0.00, 7800.00, 'Transfer fee deducted', 'operating', '2026-02-04 21:28:06', '2026-02-04 21:28:06');
 
 -- --------------------------------------------------------
 
@@ -81299,7 +81323,7 @@ ALTER TABLE `accounting_periods`
 -- AUTO_INCREMENT for table `accounts`
 --
 ALTER TABLE `accounts`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=83;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=84;
 
 --
 -- AUTO_INCREMENT for table `account_classes`
@@ -81347,13 +81371,13 @@ ALTER TABLE `application_status`
 -- AUTO_INCREMENT for table `audits`
 --
 ALTER TABLE `audits`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=261;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=268;
 
 --
 -- AUTO_INCREMENT for table `banks`
 --
 ALTER TABLE `banks`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `bank_reconciliations`
@@ -81731,7 +81755,7 @@ ALTER TABLE `intake_output_records`
 -- AUTO_INCREMENT for table `inter_account_transfers`
 --
 ALTER TABLE `inter_account_transfers`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `invoices`
@@ -81749,7 +81773,7 @@ ALTER TABLE `jobs`
 -- AUTO_INCREMENT for table `journal_entries`
 --
 ALTER TABLE `journal_entries`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=78;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=79;
 
 --
 -- AUTO_INCREMENT for table `journal_entry_edits`
@@ -81761,7 +81785,7 @@ ALTER TABLE `journal_entry_edits`
 -- AUTO_INCREMENT for table `journal_entry_lines`
 --
 ALTER TABLE `journal_entry_lines`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=155;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=159;
 
 --
 -- AUTO_INCREMENT for table `lab_service_requests`
