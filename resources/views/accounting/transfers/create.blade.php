@@ -415,6 +415,47 @@
                                         <strong id="summary-total">₦0.00</strong>
                                     </div>
                                 </div>
+
+                                <!-- Journal Entry Preview -->
+                                <div class="card bg-light mt-3">
+                                    <div class="card-body py-2 px-3">
+                                        <h6 class="mb-2"><i class="mdi mdi-book-open-variant mr-1"></i>Journal Entry Preview</h6>
+                                        <small class="text-muted d-block mb-2">This entry will be created when transfer is cleared:</small>
+                                        <table class="table table-sm mb-0" style="font-size: 0.85rem;">
+                                            <thead style="background: #495057; color: white;">
+                                                <tr>
+                                                    <th style="width: 50%;">Account</th>
+                                                    <th class="text-right" style="width: 25%;">Debit</th>
+                                                    <th class="text-right" style="width: 25%;">Credit</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="jePreviewBody">
+                                                <tr>
+                                                    <td id="je-to-bank">Destination Bank</td>
+                                                    <td class="text-right" id="je-to-debit">₦0.00</td>
+                                                    <td class="text-right">-</td>
+                                                </tr>
+                                                <tr id="je-fee-row" style="display: none;">
+                                                    <td id="je-fee-account">Bank Charges</td>
+                                                    <td class="text-right" id="je-fee-debit">₦0.00</td>
+                                                    <td class="text-right">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td id="je-from-bank">Source Bank</td>
+                                                    <td class="text-right">-</td>
+                                                    <td class="text-right" id="je-from-credit">₦0.00</td>
+                                                </tr>
+                                            </tbody>
+                                            <tfoot style="background: #f8f9fa; font-weight: 600;">
+                                                <tr>
+                                                    <td>TOTALS</td>
+                                                    <td class="text-right" id="je-total-debit">₦0.00</td>
+                                                    <td class="text-right" id="je-total-credit">₦0.00</td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -498,7 +539,38 @@ $(document).ready(function() {
         $('#summary-amount').text('₦' + amount.toLocaleString('en-NG', {minimumFractionDigits: 2}));
         $('#summary-fee').text('₦' + fee.toLocaleString('en-NG', {minimumFractionDigits: 2}));
         $('#summary-total').text('₦' + total.toLocaleString('en-NG', {minimumFractionDigits: 2}));
+
+        // Update JE Preview
+        updateJePreview();
     }
+
+    function updateJePreview() {
+        var amount = parseFloat($('#amount').val()) || 0;
+        var fee = parseFloat($('#transfer_fee').val()) || 0;
+        var total = amount + fee;
+
+        var fromBank = $('#from_bank_id option:selected').data('name') || 'Source Bank';
+        var toBank = $('#to_bank_id option:selected').data('name') || 'Destination Bank';
+        var feeAccount = $('#fee_account_id option:selected').text() || 'Bank Charges';
+
+        $('#je-from-bank').text(fromBank);
+        $('#je-to-bank').text(toBank);
+        $('#je-to-debit').text('₦' + amount.toLocaleString('en-NG', {minimumFractionDigits: 2}));
+        $('#je-from-credit').text('₦' + total.toLocaleString('en-NG', {minimumFractionDigits: 2}));
+
+        if (fee > 0) {
+            $('#je-fee-row').show();
+            $('#je-fee-account').text(feeAccount.length > 30 ? feeAccount.substring(0, 30) + '...' : feeAccount);
+            $('#je-fee-debit').text('₦' + fee.toLocaleString('en-NG', {minimumFractionDigits: 2}));
+        } else {
+            $('#je-fee-row').hide();
+        }
+
+        $('#je-total-debit').text('₦' + total.toLocaleString('en-NG', {minimumFractionDigits: 2}));
+        $('#je-total-credit').text('₦' + total.toLocaleString('en-NG', {minimumFractionDigits: 2}));
+    }
+
+    $('#from_bank_id, #to_bank_id, #fee_account_id').on('change', updateJePreview);
 
     // Transfer method selection
     $('.method-card').on('click', function() {

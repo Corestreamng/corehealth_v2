@@ -107,6 +107,8 @@
                             <option value="">All Types</option>
                             <option value="loan">Loan</option>
                             <option value="mortgage">Mortgage</option>
+                            <option value="overdraft">Overdraft</option>
+                            <option value="credit_line">Credit Line</option>
                             <option value="bond">Bond</option>
                             <option value="deferred_revenue">Deferred Revenue</option>
                             <option value="other">Other</option>

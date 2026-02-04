@@ -184,6 +184,7 @@ class ChartOfAccountsSeeder extends Seeder
                 ['code' => '1430', 'name' => 'Vehicles'],
                 ['code' => '1440', 'name' => 'Building'],
                 ['code' => '1450', 'name' => 'Land'],
+                ['code' => '1460', 'name' => 'Other Fixed Assets', 'description' => 'General fixed assets not classified elsewhere'],
             ],
             // Accumulated Depreciation (Group 14)
             '14' => [

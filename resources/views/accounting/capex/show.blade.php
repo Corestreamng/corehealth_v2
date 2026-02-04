@@ -369,6 +369,16 @@
                                 <div class="text-right">
                                     <strong class="text-info">₦{{ number_format($expense->amount, 2) }}</strong>
                                     <small class="text-muted d-block">{{ $expense->vendor ?? 'N/A' }}</small>
+                                    @if($expense->journal_entry_id)
+                                        <a href="{{ route('accounting.journal-entries.show', $expense->journal_entry_id) }}"
+                                           class="badge badge-success badge-sm" title="View Journal Entry">
+                                            <i class="mdi mdi-book-open-variant"></i> JE #{{ $expense->journal_entry_id }}
+                                        </a>
+                                    @else
+                                        <span class="badge badge-warning badge-sm" title="No journal entry">
+                                            <i class="mdi mdi-alert-circle-outline"></i> No JE
+                                        </span>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -383,6 +393,39 @@
                             <strong class="text-info">₦{{ number_format($expenses->sum('amount'), 2) }}</strong>
                         </div>
                     @endif
+                </div>
+            @endif
+
+            <!-- Journal Entries Section -->
+            @php
+                $journalEntries = collect($expenses)->filter(fn($e) => $e->journal_entry_id)->pluck('journal_entry_id')->unique();
+            @endphp
+            @if($journalEntries->count() > 0)
+                <div class="info-card">
+                    <h6><i class="mdi mdi-book-open-variant mr-2"></i>Related Journal Entries</h6>
+                    <p class="text-muted small mb-3">
+                        <i class="mdi mdi-information-outline mr-1"></i>
+                        Journal entries automatically created for expenses recorded against this CAPEX project.
+                    </p>
+                    @foreach($journalEntries as $jeId)
+                        @php
+                            $je = \DB::table('journal_entries')->where('id', $jeId)->first();
+                        @endphp
+                        @if($je)
+                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                <div>
+                                    <strong>{{ $je->entry_number }}</strong>
+                                    <small class="text-muted d-block">{{ \Carbon\Carbon::parse($je->entry_date)->format('M d, Y') }}</small>
+                                    <span class="badge badge-{{ $je->status == 'posted' ? 'success' : 'warning' }} badge-sm">
+                                        {{ ucfirst($je->status) }}
+                                    </span>
+                                </div>
+                                <a href="{{ route('accounting.journal-entries.show', $je->id) }}" class="btn btn-outline-info btn-sm">
+                                    <i class="mdi mdi-eye mr-1"></i>View
+                                </a>
+                            </div>
+                        @endif
+                    @endforeach
                 </div>
             @endif
 
@@ -554,6 +597,35 @@
                         <label>Payment Reference / Invoice Number</label>
                         <input type="text" class="form-control" name="payment_reference" placeholder="e.g., Transfer Ref, Invoice #">
                         <small class="form-text text-muted">Optional: Bank transfer reference or invoice number</small>
+                    </div>
+
+                    <!-- Journal Entry Preview -->
+                    <div class="card bg-light mt-3" id="jePreviewCard">
+                        <div class="card-body py-2 px-3">
+                            <h6 class="mb-2"><i class="mdi mdi-book-open-variant mr-1"></i>Journal Entry Preview</h6>
+                            <small class="text-muted d-block mb-2">This journal entry will be created automatically:</small>
+                            <table class="table table-sm mb-0" style="font-size: 0.85rem;">
+                                <thead style="background: #495057; color: white;">
+                                    <tr>
+                                        <th style="width: 50%;">Account</th>
+                                        <th class="text-right" style="width: 25%;">Debit</th>
+                                        <th class="text-right" style="width: 25%;">Credit</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="jePreviewBody">
+                                    <tr>
+                                        <td id="jeDebitAccount">Other Fixed Assets (1460)</td>
+                                        <td class="text-right" id="jeDebitAmount">₦0.00</td>
+                                        <td class="text-right">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td id="jeCreditAccount">Cash/Bank</td>
+                                        <td class="text-right">-</td>
+                                        <td class="text-right" id="jeCreditAmount">₦0.00</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -728,7 +800,66 @@ $(document).ready(function() {
             $('#bankSelect').prop('required', true);
             $('#chequeNumberGroup').hide();
         }
+        updateJePreview();
     });
+
+    // Bank selection change
+    $('#bankSelect').on('change', function() {
+        updateJePreview();
+    });
+
+    // Amount change
+    $('input[name="amount"]').on('input', function() {
+        updateJePreview();
+    });
+
+    // Update JE Preview
+    function updateJePreview() {
+        var amount = parseFloat($('input[name="amount"]').val()) || 0;
+        var method = $('#paymentMethod').val();
+        var bankId = $('#bankSelect').val();
+        var bankName = $('#bankSelect option:selected').text();
+
+        // Format amount
+        var formattedAmount = '₦' + amount.toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+        // Update amounts
+        $('#jeDebitAmount').text(formattedAmount);
+        $('#jeCreditAmount').text(formattedAmount);
+
+        // Update debit account based on project type
+        // Fixed Assets are in the 14xx range
+        var projectType = '{{ strtolower($capex->category ?? $capex->project_type ?? "") }}';
+        var debitAccount = 'Other Fixed Assets (1460)'; // Default for unclassified
+        if (projectType.includes('equipment') || projectType.includes('machinery') || projectType.includes('medical')) {
+            debitAccount = 'Medical Equipment (1400)';
+        } else if (projectType.includes('furniture') || projectType.includes('fixture')) {
+            debitAccount = 'Furniture & Fixtures (1410)';
+        } else if (projectType.includes('technology') || projectType.includes('it') || projectType.includes('software') || projectType.includes('computer')) {
+            debitAccount = 'Computer Equipment (1420)';
+        } else if (projectType.includes('vehicle') || projectType.includes('transport')) {
+            debitAccount = 'Vehicles (1430)';
+        } else if (projectType.includes('building') || projectType.includes('renovation') || projectType.includes('improvement') || projectType.includes('construction')) {
+            debitAccount = 'Building (1440)';
+        } else if (projectType.includes('land') || projectType.includes('property')) {
+            debitAccount = 'Land (1450)';
+        }
+        $('#jeDebitAccount').text(debitAccount);
+
+        // Update credit account based on payment method
+        var creditAccount = 'Cash in Hand (1010)';
+        if (method === 'bank_transfer' || method === 'cheque' || method === 'card') {
+            if (bankId && bankName) {
+                creditAccount = bankName.split(' - ')[0] + ' (Bank)';
+            } else {
+                creditAccount = 'Bank Account (1020)';
+            }
+        }
+        $('#jeCreditAccount').text(creditAccount);
+    }
+
+    // Initial preview update
+    updateJePreview();
 
     // Record expense
     $('#expenseForm').on('submit', function(e) {

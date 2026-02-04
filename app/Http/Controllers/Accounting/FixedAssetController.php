@@ -537,7 +537,7 @@ class FixedAssetController extends Controller
      */
     public function getAsset(FixedAsset $fixedAsset)
     {
-        $fixedAsset->load(['category', 'department', 'custodian']);
+        $fixedAsset->load(['category.assetAccount', 'category.depreciationAccount', 'department', 'custodian']);
 
         return response()->json([
             'success' => true,
@@ -551,6 +551,11 @@ class FixedAssetController extends Controller
                 'status' => $fixedAsset->status,
                 'category' => $fixedAsset->category?->name,
                 'department' => $fixedAsset->department?->name,
+                // Account information from category for JE preview
+                'asset_account_name' => $fixedAsset->category?->assetAccount?->name ?? 'Other Fixed Assets',
+                'asset_account_code' => $fixedAsset->category?->assetAccount?->code ?? '1460',
+                'depreciation_account_name' => $fixedAsset->category?->depreciationAccount?->name ?? 'Accumulated Depreciation',
+                'depreciation_account_code' => $fixedAsset->category?->depreciationAccount?->code ?? '1500',
             ],
         ]);
     }
