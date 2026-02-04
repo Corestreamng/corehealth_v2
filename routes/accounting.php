@@ -180,10 +180,15 @@ Route::prefix('accounting')->name('accounting.')->middleware(['auth', 'verified'
         Route::post('/funds/{fund}/replenishment', [PettyCashController::class, 'replenishmentStore'])->name('replenishment.store');
         Route::post('/transactions/{transaction}/approve', [PettyCashController::class, 'approve'])->name('transactions.approve');
         Route::post('/transactions/{transaction}/reject', [PettyCashController::class, 'reject'])->name('transactions.reject');
+        Route::post('/transactions/{transaction}/disburse', [PettyCashController::class, 'disburse'])->name('transactions.disburse');
 
         // Reconciliation
         Route::get('/funds/{fund}/reconcile', [PettyCashController::class, 'reconcile'])->name('reconcile');
         Route::post('/funds/{fund}/reconcile', [PettyCashController::class, 'storeReconciliation'])->name('reconcile.store');
+        Route::get('/reconciliations', [PettyCashController::class, 'reconciliationsIndex'])->name('reconciliations.index');
+        Route::get('/reconciliations/datatable', [PettyCashController::class, 'reconciliationsDatatable'])->name('reconciliations.datatable');
+        Route::post('/reconciliations/{reconciliation}/approve', [PettyCashController::class, 'approveReconciliation'])->name('reconciliations.approve');
+        Route::post('/reconciliations/{reconciliation}/reject', [PettyCashController::class, 'rejectReconciliation'])->name('reconciliations.reject');
 
         // Export
         Route::get('/funds/{fund}/export/pdf', [PettyCashController::class, 'exportPdf'])->name('export.pdf');

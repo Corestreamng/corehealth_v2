@@ -278,6 +278,7 @@ class ChartOfAccountsSeeder extends Seeder
                 ['code' => '6240', 'name' => 'Travel & Transportation'],
                 ['code' => '6250', 'name' => 'Advertising & Marketing'],
                 ['code' => '6260', 'name' => 'Depreciation Expense'],
+                ['code' => '6270', 'name' => 'Cash Over/Short', 'description' => 'Petty cash variances from reconciliation'],
                 ['code' => '6090', 'name' => 'Miscellaneous Expenses'],
             ],
             // Financial Expenses (Group 54)

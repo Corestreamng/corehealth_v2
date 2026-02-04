@@ -11,9 +11,11 @@ use App\Models\Bank;
 use App\Models\Department;
 use App\Models\User;
 use App\Services\Accounting\PettyCashService;
+use App\Services\Accounting\ExcelExportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -30,10 +32,12 @@ use Yajra\DataTables\Facades\DataTables;
 class PettyCashController extends Controller
 {
     protected PettyCashService $pettyCashService;
+    protected ExcelExportService $excelService;
 
-    public function __construct(PettyCashService $pettyCashService)
+    public function __construct(PettyCashService $pettyCashService, ExcelExportService $excelService)
     {
         $this->pettyCashService = $pettyCashService;
+        $this->excelService = $excelService;
         // Role-based access is handled in routes via middleware
     }
 
@@ -100,7 +104,8 @@ class PettyCashController extends Controller
             ->addColumn('status_badge', function ($t) {
                 $colors = [
                     'pending' => 'warning',
-                    'approved' => 'success',
+                    'approved' => 'info',
+                    'disbursed' => 'success',
                     'rejected' => 'danger',
                     'voided' => 'secondary',
                 ];
@@ -108,19 +113,33 @@ class PettyCashController extends Controller
                 return '<span class="badge badge-' . $color . '">' . ucfirst($t->status) . '</span>';
             })
             ->addColumn('requested_by_name', fn($t) => $t->requestedBy?->name ?? '-')
+            ->addColumn('je_link', function ($t) {
+                if ($t->journal_entry_id) {
+                    return '<a href="' . route('accounting.journal-entries.show', $t->journal_entry_id) . '" class="btn btn-outline-secondary btn-sm" title="View Journal Entry"><i class="mdi mdi-book-open-variant"></i></a>';
+                }
+                return '-';
+            })
             ->addColumn('actions', function ($t) {
                 $actions = '<div class="btn-group btn-group-sm">';
                 $actions .= '<a href="' . route('accounting.petty-cash.funds.show', $t->fund_id) . '" class="btn btn-outline-info" title="View Fund"><i class="mdi mdi-eye"></i></a>';
+
+                if ($t->journal_entry_id) {
+                    $actions .= '<a href="' . route('accounting.journal-entries.show', $t->journal_entry_id) . '" class="btn btn-outline-secondary" title="View JE"><i class="mdi mdi-book-open-variant"></i></a>';
+                }
 
                 if ($t->status === 'pending') {
                     $actions .= '<button class="btn btn-outline-success approve-btn" data-id="' . $t->id . '" title="Approve"><i class="mdi mdi-check"></i></button>';
                     $actions .= '<button class="btn btn-outline-danger reject-btn" data-id="' . $t->id . '" title="Reject"><i class="mdi mdi-close"></i></button>';
                 }
 
+                if ($t->status === 'approved') {
+                    $actions .= '<button class="btn btn-outline-primary disburse-btn" data-id="' . $t->id . '" title="Disburse"><i class="mdi mdi-cash-check"></i></button>';
+                }
+
                 $actions .= '</div>';
                 return $actions;
             })
-            ->rawColumns(['type_badge', 'status_badge', 'actions'])
+            ->rawColumns(['type_badge', 'status_badge', 'je_link', 'actions'])
             ->make(true);
     }
 
@@ -182,10 +201,10 @@ class PettyCashController extends Controller
             })
             ->addColumn('actions', function ($f) {
                 $actions = '<div class="btn-group btn-group-sm">';
-                $actions .= '<a href="' . route('accounting.petty-cash.funds.show', $f->id) . '" class="btn btn-outline-info" title="View"><i class="mdi mdi-eye"></i></a>';
-                $actions .= '<a href="' . route('accounting.petty-cash.funds.edit', $f->id) . '" class="btn btn-outline-primary" title="Edit"><i class="mdi mdi-pencil"></i></a>';
-                $actions .= '<a href="' . route('accounting.petty-cash.disbursement.create', $f->id) . '" class="btn btn-outline-danger" title="Disburse"><i class="mdi mdi-cash-minus"></i></a>';
-                $actions .= '<a href="' . route('accounting.petty-cash.replenishment.create', $f->id) . '" class="btn btn-outline-success" title="Replenish"><i class="mdi mdi-cash-plus"></i></a>';
+                $actions .= '<a href="' . route('accounting.petty-cash.funds.show', $f->id) . '" class="btn btn-outline-info" title="View"><i class="mdi mdi-eye mr-1"></i>View</a>';
+                $actions .= '<a href="' . route('accounting.petty-cash.funds.edit', $f->id) . '" class="btn btn-outline-primary" title="Edit"><i class="mdi mdi-pencil mr-1"></i>Edit</a>';
+                $actions .= '<a href="' . route('accounting.petty-cash.disbursement.create', $f->id) . '" class="btn btn-outline-danger" title="Disburse"><i class="mdi mdi-cash-remove mr-1"></i>Disburse</a>';
+                $actions .= '<a href="' . route('accounting.petty-cash.replenishment.create', $f->id) . '" class="btn btn-outline-success" title="Replenish"><i class="mdi mdi-cash-refund mr-1"></i>Replenish</a>';
                 $actions .= '</div>';
                 return $actions;
             })
@@ -198,16 +217,25 @@ class PettyCashController extends Controller
      */
     public function fundsCreate()
     {
+        // Get asset accounts (class code '1' = ASSET)
         $accounts = Account::where('is_active', true)
-            ->where('account_type', 'asset')
-            ->orderBy('account_number')
+            ->whereHas('accountGroup.accountClass', function ($q) {
+                $q->where('code', '1'); // ASSET class
+            })
+            ->orderBy('code')
             ->get();
         $departments = Department::where('is_active', true)->orderBy('name')->get();
         $custodians = User::whereHas('roles', function ($q) {
             $q->whereIn('name', ['SUPERADMIN', 'ADMIN', 'ACCOUNTS']);
-        })->orderBy('name')->get();
+        })->orderBy('firstname')->get();
 
-        return view('accounting.petty-cash.funds.create', compact('accounts', 'departments', 'custodians'));
+        // Get banks for initial funding source
+        $banks = Bank::with('account')
+            ->whereNotNull('account_id')
+            ->orderBy('name')
+            ->get();
+
+        return view('accounting.petty-cash.funds.create', compact('accounts', 'departments', 'custodians', 'banks'));
     }
 
     /**
@@ -226,6 +254,10 @@ class PettyCashController extends Controller
             'requires_approval' => 'boolean',
             'approval_threshold' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
+            // Initial funding fields
+            'initial_funding' => 'nullable|numeric|min:0',
+            'funding_source' => 'required_with:initial_funding|nullable|in:cash,bank',
+            'funding_bank_id' => 'required_if:funding_source,bank|nullable|exists:banks,id',
         ]);
 
         $validated['current_balance'] = 0;
@@ -233,9 +265,32 @@ class PettyCashController extends Controller
 
         $fund = $this->pettyCashService->createFund($validated);
 
+        // Process initial funding if provided
+        $initialFunding = (float) ($request->initial_funding ?? 0);
+        if ($initialFunding > 0) {
+            $fundingData = [
+                'amount' => $initialFunding,
+                'description' => 'Initial fund establishment',
+                'payment_method' => $request->funding_source === 'bank' ? 'bank_transfer' : 'cash',
+                'bank_id' => $request->funding_bank_id,
+            ];
+
+            try {
+                $this->pettyCashService->processReplenishment($fund, $fundingData);
+                return redirect()
+                    ->route('accounting.petty-cash.funds.show', $fund->id)
+                    ->with('success', 'Petty cash fund created and funded with ₦' . number_format($initialFunding, 2));
+            } catch (\Exception $e) {
+                // Fund created but funding failed
+                return redirect()
+                    ->route('accounting.petty-cash.funds.show', $fund->id)
+                    ->with('warning', 'Fund created but initial funding failed: ' . $e->getMessage() . '. Please create a replenishment manually.');
+            }
+        }
+
         return redirect()
             ->route('accounting.petty-cash.funds.show', $fund->id)
-            ->with('success', 'Petty cash fund created successfully.');
+            ->with('success', 'Petty cash fund created successfully. Remember to fund it via a replenishment.');
     }
 
     /**
@@ -246,8 +301,14 @@ class PettyCashController extends Controller
         $fund->load(['custodian', 'department', 'account']);
 
         $stats = [
-            'total_disbursements' => $fund->transactions()->where('transaction_type', 'disbursement')->where('status', 'approved')->sum('amount'),
-            'total_replenishments' => $fund->transactions()->where('transaction_type', 'replenishment')->where('status', 'approved')->sum('amount'),
+            'total_disbursements' => $fund->transactions()
+                ->where('transaction_type', 'disbursement')
+                ->where('status', 'disbursed')
+                ->sum('amount'),
+            'total_replenishments' => $fund->transactions()
+                ->where('transaction_type', 'replenishment')
+                ->where('status', 'disbursed')
+                ->sum('amount'),
             'pending_count' => $fund->transactions()->where('status', 'pending')->count(),
             'je_balance' => $fund->getBalanceFromJournalEntries(),
         ];
@@ -266,14 +327,17 @@ class PettyCashController extends Controller
      */
     public function fundsEdit(PettyCashFund $fund)
     {
+        // Get asset accounts (class code '1' = ASSET)
         $accounts = Account::where('is_active', true)
-            ->where('account_type', 'asset')
-            ->orderBy('account_number')
+            ->whereHas('accountGroup.accountClass', function ($q) {
+                $q->where('code', '1'); // ASSET class
+            })
+            ->orderBy('code')
             ->get();
         $departments = Department::where('is_active', true)->orderBy('name')->get();
         $custodians = User::whereHas('roles', function ($q) {
             $q->whereIn('name', ['SUPERADMIN', 'ADMIN', 'ACCOUNTS']);
-        })->orderBy('name')->get();
+        })->orderBy('firstname')->get();
 
         return view('accounting.petty-cash.funds.edit', compact('fund', 'accounts', 'departments', 'custodians'));
     }
@@ -348,7 +412,8 @@ class PettyCashController extends Controller
             ->addColumn('status_badge', function ($t) {
                 $colors = [
                     'pending' => 'warning',
-                    'approved' => 'success',
+                    'approved' => 'info',
+                    'disbursed' => 'success',
                     'rejected' => 'danger',
                     'voided' => 'secondary',
                 ];
@@ -359,9 +424,17 @@ class PettyCashController extends Controller
             ->addColumn('actions', function ($t) {
                 $actions = '<div class="btn-group btn-group-sm">';
 
+                if ($t->journal_entry_id) {
+                    $actions .= '<a href="' . route('accounting.journal-entries.show', $t->journal_entry_id) . '" class="btn btn-outline-secondary" title="View JE"><i class="mdi mdi-book-open-variant"></i></a>';
+                }
+
                 if ($t->status === 'pending') {
                     $actions .= '<button class="btn btn-outline-success approve-btn" data-id="' . $t->id . '" title="Approve"><i class="mdi mdi-check"></i></button>';
                     $actions .= '<button class="btn btn-outline-danger reject-btn" data-id="' . $t->id . '" title="Reject"><i class="mdi mdi-close"></i></button>';
+                }
+
+                if ($t->status === 'approved') {
+                    $actions .= '<button class="btn btn-outline-primary disburse-btn" data-id="' . $t->id . '" title="Disburse"><i class="mdi mdi-cash-check"></i></button>';
                 }
 
                 $actions .= '</div>';
@@ -376,9 +449,12 @@ class PettyCashController extends Controller
      */
     public function disbursementCreate(PettyCashFund $fund)
     {
+        // Get expense accounts (class code '5' = EXPENSE)
         $expenseAccounts = Account::where('is_active', true)
-            ->where('account_type', 'expense')
-            ->orderBy('account_number')
+            ->whereHas('accountGroup.accountClass', function ($q) {
+                $q->where('code', '5'); // EXPENSE class
+            })
+            ->orderBy('code')
             ->get();
 
         return view('accounting.petty-cash.transactions.disbursement', compact('fund', 'expenseAccounts'));
@@ -502,8 +578,8 @@ class PettyCashController extends Controller
         try {
             $this->pettyCashService->rejectTransaction(
                 $transaction,
-                Auth::id(),
-                $validated['rejection_reason']
+                $validated['rejection_reason'],
+                Auth::id()
             );
 
             if ($request->ajax()) {
@@ -511,6 +587,29 @@ class PettyCashController extends Controller
             }
 
             return back()->with('success', 'Transaction rejected.');
+        } catch (\Exception $e) {
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
+            }
+
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Disburse an approved transaction.
+     * This creates the journal entry and updates fund balance.
+     */
+    public function disburse(Request $request, PettyCashTransaction $transaction)
+    {
+        try {
+            $this->pettyCashService->disburseTransaction($transaction);
+
+            if ($request->ajax()) {
+                return response()->json(['success' => true, 'message' => 'Transaction disbursed successfully.']);
+            }
+
+            return back()->with('success', 'Transaction disbursed successfully.');
         } catch (\Exception $e) {
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
@@ -552,21 +651,162 @@ class PettyCashController extends Controller
         ]);
 
         try {
-            $reconciliation = $this->pettyCashService->reconcile(
+            $reconciliation = $this->pettyCashService->startReconciliation(
                 $fund,
-                $validated['physical_count'],
+                (float) $validated['physical_count'],
                 Auth::id(),
-                $validated['notes'] ?? null,
-                Carbon::parse($validated['reconciliation_date'])
+                $validated['notes'] ?? null
             );
+
+            $message = $reconciliation->isBalanced()
+                ? 'Reconciliation completed. Fund is balanced.'
+                : 'Reconciliation submitted for approval. Variance: ₦' . number_format(abs($reconciliation->variance), 2) . ' (' . ucfirst($reconciliation->status) . ')';
 
             return redirect()
                 ->route('accounting.petty-cash.funds.show', $fund->id)
-                ->with('success', 'Reconciliation completed successfully.');
+                ->with('success', $message);
         } catch (\Exception $e) {
             return back()
                 ->withInput()
                 ->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * List all reconciliations with pending approvals highlighted.
+     */
+    public function reconciliationsIndex()
+    {
+        $pendingCount = PettyCashReconciliation::pendingApproval()->count();
+
+        return view('accounting.petty-cash.reconciliations.index', compact('pendingCount'));
+    }
+
+    /**
+     * Datatable for reconciliations.
+     */
+    public function reconciliationsDatatable(Request $request)
+    {
+        $query = PettyCashReconciliation::with(['fund', 'reconciledBy', 'reviewedBy', 'adjustmentEntry'])
+            ->orderBy('created_at', 'desc');
+
+        // Filters
+        if ($request->filled('fund_id')) {
+            $query->where('fund_id', $request->fund_id);
+        }
+
+        if ($request->filled('approval_status')) {
+            $query->where('approval_status', $request->approval_status);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        return DataTables::of($query)
+            ->addColumn('reconciliation_date_formatted', fn($r) => Carbon::parse($r->reconciliation_date)->format('M d, Y'))
+            ->addColumn('fund_name', fn($r) => $r->fund?->fund_name ?? '-')
+            ->addColumn('expected_formatted', fn($r) => '₦' . number_format($r->expected_balance, 2))
+            ->addColumn('actual_formatted', fn($r) => '₦' . number_format($r->actual_cash_count, 2))
+            ->addColumn('variance_formatted', function ($r) {
+                $prefix = $r->variance > 0 ? '-' : '+';
+                $color = $r->variance == 0 ? 'success' : ($r->variance > 0 ? 'danger' : 'warning');
+                return '<span class="text-' . $color . '">' . $prefix . '₦' . number_format(abs($r->variance), 2) . '</span>';
+            })
+            ->addColumn('status_badge', function ($r) {
+                $colors = [
+                    'balanced' => 'success',
+                    'shortage' => 'danger',
+                    'overage' => 'warning',
+                ];
+                $color = $colors[$r->status] ?? 'secondary';
+                return '<span class="badge badge-' . $color . '">' . ucfirst($r->status) . '</span>';
+            })
+            ->addColumn('approval_badge', function ($r) {
+                $colors = [
+                    'pending_approval' => 'warning',
+                    'approved' => 'success',
+                    'rejected' => 'danger',
+                ];
+                $labels = [
+                    'pending_approval' => 'Pending',
+                    'approved' => 'Approved',
+                    'rejected' => 'Rejected',
+                ];
+                $color = $colors[$r->approval_status] ?? 'secondary';
+                $label = $labels[$r->approval_status] ?? $r->approval_status;
+                return '<span class="badge badge-' . $color . '">' . $label . '</span>';
+            })
+            ->addColumn('reconciled_by_name', fn($r) => $r->reconciledBy?->name ?? '-')
+            ->addColumn('actions', function ($r) {
+                $actions = '<div class="btn-group btn-group-sm">';
+
+                // View fund
+                $actions .= '<a href="' . route('accounting.petty-cash.funds.show', $r->fund_id) . '" class="btn btn-outline-info" title="View Fund"><i class="mdi mdi-eye"></i></a>';
+
+                // View adjustment JE if exists
+                if ($r->adjustment_entry_id) {
+                    $actions .= '<a href="' . route('accounting.journal-entries.show', $r->adjustment_entry_id) . '" class="btn btn-outline-secondary" title="View Adjustment JE"><i class="mdi mdi-book-open-variant"></i></a>';
+                }
+
+                // Approve/Reject for pending
+                if ($r->isPendingApproval()) {
+                    $actions .= '<button class="btn btn-outline-success approve-btn" data-id="' . $r->id . '" title="Approve"><i class="mdi mdi-check"></i></button>';
+                    $actions .= '<button class="btn btn-outline-danger reject-btn" data-id="' . $r->id . '" title="Reject"><i class="mdi mdi-close"></i></button>';
+                }
+
+                $actions .= '</div>';
+                return $actions;
+            })
+            ->rawColumns(['variance_formatted', 'status_badge', 'approval_badge', 'actions'])
+            ->make(true);
+    }
+
+    /**
+     * Approve a reconciliation.
+     */
+    public function approveReconciliation(PettyCashReconciliation $reconciliation)
+    {
+        try {
+            $this->pettyCashService->approveReconciliation($reconciliation, Auth::id());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Reconciliation approved. Adjustment journal entry created.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    /**
+     * Reject a reconciliation.
+     */
+    public function rejectReconciliation(Request $request, PettyCashReconciliation $reconciliation)
+    {
+        $validated = $request->validate([
+            'rejection_reason' => 'required|string|max:500',
+        ]);
+
+        try {
+            $this->pettyCashService->rejectReconciliation(
+                $reconciliation,
+                Auth::id(),
+                $validated['rejection_reason']
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Reconciliation rejected.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
         }
     }
 
@@ -588,11 +828,14 @@ class PettyCashController extends Controller
             ->orderBy('transaction_date', 'desc')
             ->get();
 
-        $pdf = \PDF::loadView('accounting.petty-cash.reports.fund-report', [
+        $dateFrom = $request->date_from ? Carbon::parse($request->date_from)->format('M d, Y') : 'Start';
+        $dateTo = $request->date_to ? Carbon::parse($request->date_to)->format('M d, Y') : now()->format('M d, Y');
+
+        $pdf = Pdf::loadView('accounting.petty-cash.reports.fund-report', [
             'fund' => $fund,
             'transactions' => $transactions,
-            'dateFrom' => $request->date_from ?? 'Start',
-            'dateTo' => $request->date_to ?? 'Present',
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
         ]);
 
         return $pdf->download('petty-cash-' . $fund->fund_code . '-report.pdf');
@@ -603,6 +846,8 @@ class PettyCashController extends Controller
      */
     public function exportExcel(Request $request, PettyCashFund $fund)
     {
+        $fund->load(['custodian', 'department', 'account']);
+
         $transactions = $fund->transactions()
             ->with(['requestedBy', 'approvedBy', 'expenseAccount'])
             ->when($request->filled('date_from'), fn($q) => $q->whereDate('transaction_date', '>=', $request->date_from))
@@ -610,43 +855,10 @@ class PettyCashController extends Controller
             ->orderBy('transaction_date', 'desc')
             ->get();
 
-        // Create export using PhpSpreadsheet
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
+        $dateFrom = $request->date_from ? Carbon::parse($request->date_from)->format('M d, Y') : 'Start';
+        $dateTo = $request->date_to ? Carbon::parse($request->date_to)->format('M d, Y') : now()->format('M d, Y');
 
-        // Headers
-        $sheet->setCellValue('A1', 'Date');
-        $sheet->setCellValue('B1', 'Voucher #');
-        $sheet->setCellValue('C1', 'Type');
-        $sheet->setCellValue('D1', 'Description');
-        $sheet->setCellValue('E1', 'Amount');
-        $sheet->setCellValue('F1', 'Status');
-        $sheet->setCellValue('G1', 'Requested By');
-        $sheet->setCellValue('H1', 'Approved By');
-
-        // Data
-        $row = 2;
-        foreach ($transactions as $t) {
-            $sheet->setCellValue('A' . $row, $t->transaction_date);
-            $sheet->setCellValue('B' . $row, $t->voucher_number);
-            $sheet->setCellValue('C' . $row, ucfirst($t->transaction_type));
-            $sheet->setCellValue('D' . $row, $t->description);
-            $sheet->setCellValue('E' . $row, $t->amount);
-            $sheet->setCellValue('F' . $row, ucfirst($t->status));
-            $sheet->setCellValue('G' . $row, $t->requestedBy?->name);
-            $sheet->setCellValue('H' . $row, $t->approvedBy?->name);
-            $row++;
-        }
-
-        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-        $filename = 'petty-cash-' . $fund->fund_code . '-' . now()->format('Y-m-d') . '.xlsx';
-
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $filename . '"');
-        header('Cache-Control: max-age=0');
-
-        $writer->save('php://output');
-        exit;
+        return $this->excelService->pettyCashFundReport($fund, $transactions, $dateFrom, $dateTo);
     }
 
     // ==========================================

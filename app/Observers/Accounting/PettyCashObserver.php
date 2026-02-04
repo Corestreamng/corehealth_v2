@@ -35,8 +35,25 @@ class PettyCashObserver
      */
     public function updated(PettyCashTransaction $transaction): void
     {
-        // Only create journal entry when transaction is disbursed
-        if ($transaction->isDirty('status') && $transaction->status === PettyCashTransaction::STATUS_DISBURSED) {
+        // Only create journal entry when transaction status changes to disbursed
+        // IMPORTANT: Use wasChanged() in updated event, not isDirty() (isDirty is for before save)
+        if ($transaction->wasChanged('status') && $transaction->status === PettyCashTransaction::STATUS_DISBURSED) {
+            // Skip if already has JE
+            if ($transaction->journal_entry_id) {
+                Log::info('PettyCashObserver: Transaction already has JE', [
+                    'transaction_id' => $transaction->id,
+                    'journal_entry_id' => $transaction->journal_entry_id
+                ]);
+                return;
+            }
+
+            Log::info('PettyCashObserver: Creating JE for disbursed transaction', [
+                'transaction_id' => $transaction->id,
+                'transaction_type' => $transaction->transaction_type,
+                'amount' => $transaction->amount,
+                'voucher_number' => $transaction->voucher_number
+            ]);
+
             try {
                 $this->createJournalEntry($transaction);
             } catch (\Exception $e) {

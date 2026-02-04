@@ -3,6 +3,38 @@
 @section('page_name', 'Accounting')
 @section('subpage_name', 'New Fund')
 
+@push('styles')
+<style>
+    /* Select2 Fixes for consistency */
+    .select2-container--bootstrap4 .select2-selection--single {
+        height: calc(1.5em + 0.75rem + 2px) !important;
+        padding: 0.375rem 0.75rem !important;
+        border: 1px solid #ced4da !important;
+        border-radius: 0.25rem !important;
+    }
+    .select2-container--bootstrap4 .select2-selection--single .select2-selection__rendered {
+        line-height: 1.5 !important;
+        padding-left: 0 !important;
+        color: #495057 !important;
+    }
+    .select2-container--bootstrap4 .select2-selection--single .select2-selection__arrow {
+        height: calc(1.5em + 0.75rem) !important;
+    }
+    .select2-container--bootstrap4 .select2-selection--single .select2-selection__placeholder {
+        color: #6c757d !important;
+    }
+    .select2-container {
+        width: 100% !important;
+    }
+    .select2-dropdown {
+        border-color: #ced4da !important;
+    }
+    .select2-container--bootstrap4 .select2-results__option--highlighted[aria-selected] {
+        background-color: #667eea !important;
+    }
+</style>
+@endpush
+
 @section('content')
 @include('accounting.partials.breadcrumb', ['items' => [
     ['label' => 'Dashboard', 'url' => route('accounting.dashboard'), 'icon' => 'mdi-view-dashboard'],
@@ -58,7 +90,7 @@
                                             <option value="">Select Account</option>
                                             @foreach($accounts as $account)
                                                 <option value="{{ $account->id }}" {{ old('account_id') == $account->id ? 'selected' : '' }}>
-                                                    {{ $account->account_number }} - {{ $account->account_name }}
+                                                    {{ $account->code }} - {{ $account->name }}
                                                 </option>
                                             @endforeach
                                         </select>
@@ -111,7 +143,7 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label>Fund Limit (₦) <span class="text-danger">*</span></label>
-                                        <input type="number" name="fund_limit" class="form-control @error('fund_limit') is-invalid @enderror"
+                                        <input type="number" name="fund_limit" id="fund_limit" class="form-control @error('fund_limit') is-invalid @enderror"
                                                value="{{ old('fund_limit', 100000) }}" step="0.01" min="0" required>
                                         @error('fund_limit')
                                             <div class="invalid-feedback">{{ $message }}</div>
@@ -128,6 +160,56 @@
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                         <small class="form-text text-muted">Maximum amount per single disbursement</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr class="my-4">
+                            <h6 class="mb-3"><i class="mdi mdi-cash-plus mr-2"></i>Initial Funding (Optional)</h6>
+                            <div class="alert alert-info py-2">
+                                <i class="mdi mdi-information mr-1"></i>
+                                <small>You can optionally fund this petty cash immediately. This will create a replenishment transaction and journal entry.</small>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Initial Amount (₦)</label>
+                                        <input type="number" name="initial_funding" id="initial_funding" class="form-control @error('initial_funding') is-invalid @enderror"
+                                               value="{{ old('initial_funding') }}" step="0.01" min="0" placeholder="0.00">
+                                        @error('initial_funding')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                        <small class="form-text text-muted">Leave empty or 0 to skip initial funding</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group" id="funding_source_group" style="display: none;">
+                                        <label>Funding Source <span class="text-danger">*</span></label>
+                                        <select name="funding_source" id="funding_source" class="form-control @error('funding_source') is-invalid @enderror">
+                                            <option value="">-- Select Source --</option>
+                                            <option value="cash" {{ old('funding_source') == 'cash' ? 'selected' : '' }}>Cash on Hand</option>
+                                            <option value="bank" {{ old('funding_source') == 'bank' ? 'selected' : '' }}>Bank Transfer</option>
+                                        </select>
+                                        @error('funding_source')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group" id="funding_bank_group" style="display: none;">
+                                        <label>Source Bank <span class="text-danger">*</span></label>
+                                        <select name="funding_bank_id" id="funding_bank_id" class="form-control select2 @error('funding_bank_id') is-invalid @enderror">
+                                            <option value="">-- Select Bank --</option>
+                                            @foreach($banks as $bank)
+                                                <option value="{{ $bank->id }}" {{ old('funding_bank_id') == $bank->id ? 'selected' : '' }}>
+                                                    {{ $bank->name }} ({{ $bank->account_number }})
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        @error('funding_bank_id')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
                                     </div>
                                 </div>
                             </div>
@@ -189,6 +271,41 @@ $(document).ready(function() {
         theme: 'bootstrap4',
         width: '100%'
     });
+
+    // Handle initial funding visibility
+    function toggleFundingFields() {
+        var amount = parseFloat($('#initial_funding').val()) || 0;
+        if (amount > 0) {
+            $('#funding_source_group').show();
+            toggleBankField();
+        } else {
+            $('#funding_source_group').hide();
+            $('#funding_bank_group').hide();
+        }
+    }
+
+    function toggleBankField() {
+        var source = $('#funding_source').val();
+        if (source === 'bank') {
+            $('#funding_bank_group').show();
+        } else {
+            $('#funding_bank_group').hide();
+        }
+    }
+
+    // Set initial funding to fund limit by default when user clicks on it
+    $('#initial_funding').on('focus', function() {
+        if (!$(this).val()) {
+            $(this).val($('#fund_limit').val());
+            toggleFundingFields();
+        }
+    });
+
+    $('#initial_funding').on('input change', toggleFundingFields);
+    $('#funding_source').on('change', toggleBankField);
+
+    // Initialize on page load (for old() values)
+    toggleFundingFields();
 });
 </script>
 @endpush

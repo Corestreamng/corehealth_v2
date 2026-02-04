@@ -161,6 +161,61 @@ class PettyCashService
     }
 
     /**
+     * Process a replenishment in one step (create, approve, disburse).
+     *
+     * This is a convenience method for situations like initial funding
+     * where we want to immediately fund the petty cash without approval workflow.
+     *
+     * @param PettyCashFund $fund The fund to replenish
+     * @param array $data Replenishment data (amount, description, payment_method, bank_id)
+     * @return PettyCashTransaction
+     */
+    public function processReplenishment(PettyCashFund $fund, array $data): PettyCashTransaction
+    {
+        $userId = auth()->id() ?? 1;
+
+        Log::info('PettyCashService::processReplenishment - Starting', [
+            'fund_id' => $fund->id,
+            'amount' => $data['amount'],
+            'payment_method' => $data['payment_method'] ?? 'bank_transfer'
+        ]);
+
+        // Create the replenishment transaction
+        $transaction = $this->createReplenishment(
+            $fund,
+            $data['amount'],
+            $data['description'] ?? 'Fund replenishment',
+            $userId,
+            $data['payment_method'] ?? 'bank_transfer',
+            $data['bank_id'] ?? null
+        );
+
+        Log::info('PettyCashService::processReplenishment - Transaction created', [
+            'transaction_id' => $transaction->id,
+            'status' => $transaction->status
+        ]);
+
+        // Approve the transaction
+        $transaction = $this->approveTransaction($transaction, $userId);
+
+        Log::info('PettyCashService::processReplenishment - Transaction approved', [
+            'transaction_id' => $transaction->id,
+            'status' => $transaction->status
+        ]);
+
+        // Disburse (this triggers the observer to create JE)
+        $transaction = $this->disburseTransaction($transaction);
+
+        Log::info('PettyCashService::processReplenishment - Transaction disbursed', [
+            'transaction_id' => $transaction->id,
+            'status' => $transaction->status,
+            'journal_entry_id' => $transaction->journal_entry_id
+        ]);
+
+        return $transaction;
+    }
+
+    /**
      * Approve a transaction.
      */
     public function approveTransaction(PettyCashTransaction $transaction, int $approvedBy): PettyCashTransaction
@@ -251,16 +306,20 @@ class PettyCashService
 
     /**
      * Start reconciliation for a fund.
+     *
+     * If balanced: approval_status = 'approved' (no action needed)
+     * If variance: approval_status = 'pending_approval' (requires review)
      */
     public function startReconciliation(
         PettyCashFund $fund,
         float $actualCashCount,
         int $reconciledBy,
+        ?string $notes = null,
         ?array $denominationBreakdown = null
     ): PettyCashReconciliation {
         $expectedBalance = $fund->getBalanceFromJournalEntries();
 
-        // Get outstanding vouchers (approved but not yet replenished)
+        // Get outstanding vouchers (disbursed but JE not yet created - should be rare with observer)
         $outstandingVouchers = $fund->transactions()
             ->where('transaction_type', PettyCashTransaction::TYPE_DISBURSEMENT)
             ->where('status', PettyCashTransaction::STATUS_DISBURSED)
@@ -270,15 +329,22 @@ class PettyCashService
         $outstandingAmount = $outstandingVouchers->sum('amount');
         $outstandingIds = $outstandingVouchers->pluck('id')->toArray();
 
-        // Calculate variance
+        // Calculate variance (positive = shortage, negative = overage)
         $variance = round($expectedBalance - $actualCashCount, 2);
 
-        // Determine status
+        // Determine variance status
         $status = match (true) {
             abs($variance) < 0.01 => PettyCashReconciliation::STATUS_BALANCED,
             $variance > 0 => PettyCashReconciliation::STATUS_SHORTAGE,
             default => PettyCashReconciliation::STATUS_OVERAGE,
         };
+
+        // Determine approval status
+        // If balanced, auto-approve (no JE needed)
+        // If variance exists, require approval before JE creation
+        $approvalStatus = abs($variance) < 0.01
+            ? PettyCashReconciliation::APPROVAL_APPROVED
+            : PettyCashReconciliation::APPROVAL_PENDING;
 
         return PettyCashReconciliation::create([
             'fund_id' => $fund->id,
@@ -291,8 +357,69 @@ class PettyCashService
             'outstanding_vouchers' => $outstandingAmount,
             'outstanding_voucher_ids' => $outstandingIds,
             'status' => $status,
+            'approval_status' => $approvalStatus,
+            'notes' => $notes,
             'reconciled_by' => $reconciledBy,
         ]);
+    }
+
+    /**
+     * Approve a reconciliation with variance.
+     * This triggers the observer to create adjustment JE.
+     */
+    public function approveReconciliation(
+        PettyCashReconciliation $reconciliation,
+        int $approvedBy
+    ): PettyCashReconciliation {
+        if (!$reconciliation->isPendingApproval()) {
+            throw new \InvalidArgumentException('Reconciliation is not pending approval');
+        }
+
+        $reconciliation->update([
+            'approval_status' => PettyCashReconciliation::APPROVAL_APPROVED,
+            'reviewed_by' => $approvedBy,
+            'reviewed_at' => now(),
+        ]);
+
+        return $reconciliation->fresh();
+    }
+
+    /**
+     * Reject a reconciliation.
+     */
+    public function rejectReconciliation(
+        PettyCashReconciliation $reconciliation,
+        int $rejectedBy,
+        string $reason
+    ): PettyCashReconciliation {
+        if (!$reconciliation->isPendingApproval()) {
+            throw new \InvalidArgumentException('Reconciliation is not pending approval');
+        }
+
+        $reconciliation->update([
+            'approval_status' => PettyCashReconciliation::APPROVAL_REJECTED,
+            'reviewed_by' => $rejectedBy,
+            'reviewed_at' => now(),
+            'rejection_reason' => $reason,
+        ]);
+
+        return $reconciliation->fresh();
+    }
+
+    /**
+     * Get pending reconciliations for approval.
+     */
+    public function getPendingReconciliations(?int $fundId = null): Collection
+    {
+        $query = PettyCashReconciliation::with(['fund', 'reconciledBy'])
+            ->pendingApproval()
+            ->orderBy('created_at', 'desc');
+
+        if ($fundId) {
+            $query->forFund($fundId);
+        }
+
+        return $query->get();
     }
 
     /**

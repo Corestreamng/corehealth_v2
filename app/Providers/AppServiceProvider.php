@@ -25,6 +25,7 @@ use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\CreditNote;
 use App\Models\Accounting\JournalEntryEdit;
 use App\Models\Accounting\PettyCashTransaction;
+use App\Models\Accounting\PettyCashReconciliation;
 use App\Models\Accounting\PatientDeposit;
 use App\Models\Accounting\FixedAsset;
 use App\Models\Accounting\FixedAssetDepreciation;
@@ -50,6 +51,7 @@ use App\Observers\Accounting\ProductOrServiceRequestObserver;
 use App\Observers\Accounting\HmoRemittanceObserver;
 use App\Observers\Accounting\PurchaseOrderPaymentObserver;
 use App\Observers\Accounting\PettyCashObserver;
+use App\Observers\Accounting\PettyCashReconciliationObserver;
 use App\Observers\Accounting\TransferObserver;
 use App\Observers\Accounting\PatientDepositObserver;
 use App\Observers\Accounting\FixedAssetObserver;
@@ -120,6 +122,7 @@ class AppServiceProvider extends ServiceProvider
 
         // NEW: Petty Cash and Inter-Account Transfer observers
         PettyCashTransaction::observe(PettyCashObserver::class);
+        PettyCashReconciliation::observe(PettyCashReconciliationObserver::class);
         InterAccountTransfer::observe(TransferObserver::class);
 
         // NEW: Patient Deposit observer
