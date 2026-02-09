@@ -1359,9 +1359,10 @@ class PharmacyWorkbenchController extends Controller
                     $billReq->user_id = $request->patient_user_id;
                     $billReq->staff_user_id = Auth::id();
                     $billReq->product_id = $prodId;
+                    $billReq->qty = $productRequest->qty; // Use the qty from ProductRequest (may have been adjusted)
 
                     // Apply HMO tariff if patient has HMO
-                    $this->applyHmoTariffToRequest($billReq, $patient, $prodId, $productRequest->product);
+                    $this->applyHmoTariffToRequest($billReq, $patient, $prodId, $productRequest->product, $productRequest->qty);
 
                     $billReq->save();
 
@@ -1397,9 +1398,10 @@ class PharmacyWorkbenchController extends Controller
                     $billReq->user_id = $request->patient_user_id;
                     $billReq->staff_user_id = Auth::id();
                     $billReq->product_id = $productId;
+                    $billReq->qty = 1; // Default qty for newly added items
 
                     // Apply HMO tariff
-                    $this->applyHmoTariffToRequest($billReq, $patient, $productId, $product);
+                    $this->applyHmoTariffToRequest($billReq, $patient, $productId, $product, 1);
 
                     $billReq->save();
 
@@ -1445,14 +1447,15 @@ class PharmacyWorkbenchController extends Controller
     /**
      * Helper to apply HMO tariff to a ProductOrServiceRequest
      */
-    private function applyHmoTariffToRequest(ProductOrServiceRequest $billReq, Patient $patient, $productId, $product = null)
+    private function applyHmoTariffToRequest(ProductOrServiceRequest $billReq, Patient $patient, $productId, $product = null, $qty = 1)
     {
         try {
             if ($patient->hmo_id) {
                 $hmoData = HmoHelper::applyHmoTariff($patient->id, $productId, null);
                 if ($hmoData) {
-                    $billReq->payable_amount = $hmoData['payable_amount'];
-                    $billReq->claims_amount = $hmoData['claims_amount'];
+                    // Multiply by quantity
+                    $billReq->payable_amount = $hmoData['payable_amount'] * $qty;
+                    $billReq->claims_amount = $hmoData['claims_amount'] * $qty;
                     $billReq->coverage_mode = $hmoData['coverage_mode'];
                     $billReq->validation_status = $hmoData['validation_status'] ?? 'pending';
                     return;
@@ -1471,7 +1474,7 @@ class PharmacyWorkbenchController extends Controller
             $product = Product::with('price')->find($productId);
         }
         $price = optional(optional($product)->price)->current_sale_price ?? 0;
-        $billReq->payable_amount = $price;
+        $billReq->payable_amount = $price * $qty; // Multiply by quantity
         $billReq->claims_amount = 0;
         $billReq->coverage_mode = 'none';
     }
@@ -2674,7 +2677,7 @@ class PharmacyWorkbenchController extends Controller
             'adjustment_reason' => 'required|string|max:500',
         ]);
 
-        $productRequest = ProductRequest::with(['product.price', 'productOrServiceRequest.payment'])
+        $productRequest = ProductRequest::with(['product.price', 'productOrServiceRequest.payment', 'patient.hmo'])
             ->findOrFail($id);
 
         // Allow adjustment for unbilled (status 1) and billed (status 2) items
@@ -2741,19 +2744,37 @@ class PharmacyWorkbenchController extends Controller
                 'qty_adjusted_by' => Auth::id(),
             ]);
 
-            // Update the billing record
+            // Update the billing record if it exists
             if ($productRequest->productOrServiceRequest) {
                 $posr = $productRequest->productOrServiceRequest;
+                $oldTotal = $posr->payable_amount + $posr->claims_amount;
                 $oldPayableAmount = $posr->payable_amount;
-                $newPayableAmount = $unitPrice * $newQty;
+                $oldClaimsAmount = $posr->claims_amount;
+
+                // Calculate new total amount
+                $newTotal = $unitPrice * $newQty;
+
+                // Recalculate payable and claims amounts based on coverage
+                $newPayableAmount = $newTotal;
+                $newClaimsAmount = 0;
+
+                // If there was HMO coverage, maintain the same coverage ratio
+                if ($oldTotal > 0 && $oldClaimsAmount > 0) {
+                    $payableRatio = $oldPayableAmount / $oldTotal;
+                    $claimsRatio = $oldClaimsAmount / $oldTotal;
+
+                    $newPayableAmount = $newTotal * $payableRatio;
+                    $newClaimsAmount = $newTotal * $claimsRatio;
+                }
 
                 $posr->update([
                     'qty' => $newQty,
                     'payable_amount' => $newPayableAmount,
+                    'claims_amount' => $newClaimsAmount,
                 ]);
 
                 // Log billing adjustment
-                $priceDifference = $newPayableAmount - $oldPayableAmount;
+                $priceDifference = ($newPayableAmount + $newClaimsAmount) - ($oldPayableAmount + $oldClaimsAmount);
 
                 Log::info('Billing quantity adjustment', [
                     'product_request_id' => $id,
@@ -2763,9 +2784,11 @@ class PharmacyWorkbenchController extends Controller
                     'original_qty' => $originalQty,
                     'new_qty' => $newQty,
                     'unit_price' => $unitPrice,
-                    'old_amount' => $oldPayableAmount,
-                    'new_amount' => $newPayableAmount,
-                    'difference' => $priceDifference,
+                    'old_payable_amount' => $oldPayableAmount,
+                    'new_payable_amount' => $newPayableAmount,
+                    'old_claims_amount' => $oldClaimsAmount,
+                    'new_claims_amount' => $newClaimsAmount,
+                    'total_difference' => $priceDifference,
                     'adjusted_by' => Auth::id(),
                     'reason' => $request->adjustment_reason,
                 ]);
