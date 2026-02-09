@@ -859,6 +859,7 @@ class ImportExportController extends Controller
      * Import services from CSV or XLSX
      * - Batch commits every 50 records
      * - Detects duplicates by service_code and updates instead of skipping
+     * - Handles special categories: Bed (creates Bed records), Procedures (creates ProcedureDefinition)
      * - Returns detailed import report
      */
     public function importServices(Request $request)
@@ -881,6 +882,13 @@ class ImportExportController extends Controller
             $existingServices = Service::pluck('id', 'service_code')->toArray();
             $categories = ServiceCategory::pluck('id', 'category_name')->toArray();
 
+            // Get special category IDs from appsettings
+            $bedCategoryId = appsettings('bed_service_category_id');
+            $procedureCategoryId = appsettings('procedure_category_id');
+
+            // Pre-fetch procedure categories
+            $procedureCategories = \App\Models\ProcedureCategory::pluck('id', 'name')->toArray();
+
             $report = [
                 'created' => 0,
                 'updated' => 0,
@@ -888,6 +896,8 @@ class ImportExportController extends Controller
                 'errors' => [],
                 'created_items' => [],
                 'updated_items' => [],
+                'beds_created' => 0,
+                'procedures_created' => 0,
             ];
 
             $batches = array_chunk($data, self::BATCH_SIZE);
@@ -930,7 +940,10 @@ class ImportExportController extends Controller
                             // UPDATE existing service
                             $serviceId = $existingServices[$serviceCode];
 
-                            Service::where('id', $serviceId)->update([
+                            $service = Service::find($serviceId);
+                            $oldCategoryId = $service->category_id;
+
+                            $service->update([
                                 'service_name' => $serviceName,
                                 'category_id' => $categoryId,
                                 'status' => $isActive,
@@ -943,6 +956,19 @@ class ImportExportController extends Controller
                                     'cost_price' => $costPrice,
                                     'sale_price' => $salePrice,
                                 ]
+                            );
+
+                            // Handle category-specific related models
+                            $this->handleCategoryRelatedModels(
+                                $service,
+                                $categoryId,
+                                $oldCategoryId,
+                                $bedCategoryId,
+                                $procedureCategoryId,
+                                $salePrice,
+                                $row,
+                                $procedureCategories,
+                                $report
                             );
 
                             $report['updated']++;
@@ -963,6 +989,19 @@ class ImportExportController extends Controller
                                 'cost_price' => $costPrice,
                                 'sale_price' => $salePrice,
                             ]);
+
+                            // Handle category-specific related models for new services
+                            $this->handleCategoryRelatedModels(
+                                $service,
+                                $categoryId,
+                                null,  // No old category for new service
+                                $bedCategoryId,
+                                $procedureCategoryId,
+                                $salePrice,
+                                $row,
+                                $procedureCategories,
+                                $report
+                            );
 
                             $existingServices[$serviceCode] = $service->id;
 
@@ -990,12 +1029,142 @@ class ImportExportController extends Controller
                 'duration' => $duration,
                 'total_rows' => count($data),
                 'batches_processed' => $totalBatches,
+                'beds_created' => $report['beds_created'],
+                'procedures_created' => $report['procedures_created'],
             ]);
 
         } catch (\Exception $e) {
             Log::error('Service import failed: ' . $e->getMessage());
             return back()->with('error', 'Import failed: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Handle category-specific related models (Bed, ProcedureDefinition)
+     * Called during service import for both create and update operations.
+     */
+    protected function handleCategoryRelatedModels(
+        $service,
+        $categoryId,
+        $oldCategoryId,
+        $bedCategoryId,
+        $procedureCategoryId,
+        $salePrice,
+        $row,
+        $procedureCategories,
+        &$report
+    ) {
+        // === BED CATEGORY ===
+        if ($categoryId == $bedCategoryId) {
+            // Create or update linked Bed record
+            $bed = \App\Models\Bed::where('service_id', $service->id)->first();
+
+            // Parse bed details from service name or specific columns
+            $bedName = $row['bed_name'] ?? $this->extractBedNameFromServiceName($service->service_name);
+            $wardName = $row['ward'] ?? $this->extractWardFromServiceName($service->service_name);
+            $wardId = null;
+
+            // Try to find ward by name
+            if ($wardName) {
+                $ward = \App\Models\Ward::where('name', 'LIKE', "%{$wardName}%")->first();
+                $wardId = $ward ? $ward->id : null;
+            }
+
+            if ($bed) {
+                // Update existing bed
+                $bed->update([
+                    'name' => $bedName,
+                    'ward' => $wardName,
+                    'ward_id' => $wardId ?? $bed->ward_id,
+                    'price' => $salePrice,
+                    'unit' => $row['unit'] ?? $bed->unit,
+                ]);
+            } else {
+                // Create new bed linked to this service
+                \App\Models\Bed::create([
+                    'name' => $bedName,
+                    'ward' => $wardName,
+                    'ward_id' => $wardId,
+                    'price' => $salePrice,
+                    'unit' => $row['unit'] ?? null,
+                    'service_id' => $service->id,
+                    'status' => 1,
+                    'bed_status' => 'available',
+                ]);
+                $report['beds_created']++;
+            }
+        } elseif ($oldCategoryId == $bedCategoryId && $categoryId != $bedCategoryId) {
+            // Category changed FROM bed - unlink bed from service (don't delete bed)
+            \App\Models\Bed::where('service_id', $service->id)->update(['service_id' => null]);
+        }
+
+        // === PROCEDURE CATEGORY ===
+        if ($categoryId == $procedureCategoryId) {
+            // Get procedure category from row or default
+            $procCategoryName = $row['procedure_category'] ?? 'General';
+            $procCategoryId = $procedureCategories[$procCategoryName] ?? null;
+
+            // Create default procedure category if not found
+            if (!$procCategoryId) {
+                $procCat = \App\Models\ProcedureCategory::firstOrCreate(
+                    ['name' => $procCategoryName],
+                    ['description' => 'Auto-created during import', 'status' => 1]
+                );
+                $procCategoryId = $procCat->id;
+                $procedureCategories[$procCategoryName] = $procCategoryId;
+            }
+
+            // Create or update procedure definition
+            \App\Models\ProcedureDefinition::updateOrCreate(
+                ['service_id' => $service->id],
+                [
+                    'procedure_category_id' => $procCategoryId,
+                    'name' => $service->service_name,
+                    'code' => $row['procedure_code'] ?? $service->service_code,
+                    'description' => $row['procedure_description'] ?? $row['description'] ?? null,
+                    'is_surgical' => filter_var($row['is_surgical'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                    'estimated_duration_minutes' => intval($row['duration_minutes'] ?? 0) ?: null,
+                    'status' => 1,
+                ]
+            );
+            $report['procedures_created']++;
+        } elseif ($oldCategoryId == $procedureCategoryId && $categoryId != $procedureCategoryId) {
+            // Category changed FROM procedure - delete linked procedure definition
+            \App\Models\ProcedureDefinition::where('service_id', $service->id)->delete();
+        }
+    }
+
+    /**
+     * Extract bed name from service name (e.g., "Bed ICU 1 Intensive Care Unit" -> "ICU 1")
+     */
+    protected function extractBedNameFromServiceName($serviceName)
+    {
+        // Remove "Bed " prefix if present
+        $name = preg_replace('/^Bed\s+/i', '', $serviceName);
+
+        // Try to extract the bed identifier (usually first 1-3 words)
+        $parts = explode(' ', $name);
+        if (count($parts) >= 2) {
+            return $parts[0] . ' ' . $parts[1];
+        }
+        return $parts[0] ?? $serviceName;
+    }
+
+    /**
+     * Extract ward name from service name (e.g., "Bed ICU 1 Intensive Care Unit" -> "Intensive Care Unit")
+     */
+    protected function extractWardFromServiceName($serviceName)
+    {
+        // Remove "Bed " prefix if present
+        $name = preg_replace('/^Bed\s+/i', '', $serviceName);
+
+        // Skip bed identifier and return the rest
+        $parts = explode(' ', $name);
+        if (count($parts) > 2) {
+            // Return everything after the first 2 words
+            return implode(' ', array_slice($parts, 2));
+        }
+        return null;
     }
 
     /**

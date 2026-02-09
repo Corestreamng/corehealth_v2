@@ -13,9 +13,9 @@
 <div id="content-wrapper">
     <div class="container-fluid">
         <div class="row">
-            <!-- Main Content -->
+            {{-- Main Content --}}
             <div class="col-lg-8">
-                <!-- Header -->
+                {{-- Header --}}
                 <div class="card-modern mb-4">
                     <div class="card-body">
                         <div class="row align-items-center">
@@ -27,63 +27,62 @@
                                 </small>
                             </div>
                             <div class="col-md-4 text-right">
-                                @if($latestValue)
-                                    @php
-                                        $statusColors = [
-                                            'normal' => 'success',
-                                            'warning' => 'warning',
-                                            'critical' => 'danger',
-                                        ];
-                                        $statusColor = $statusColors[$latestValue->status] ?? 'secondary';
-                                    @endphp
+                                @php
+                                    $statusColors = [
+                                        'normal' => 'success',
+                                        'warning' => 'warning',
+                                        'critical' => 'danger',
+                                    ];
+                                    $statusColor = isset($latestValue) ? ($statusColors[$latestValue->status] ?? 'secondary') : 'secondary';
+                                @endphp
+                                @isset($latestValue)
                                     <h3 class="mb-0 text-{{ $statusColor }}">
-                                        @switch($kpi->unit)
-                                            @case('percentage')
-                                                {{ number_format($latestValue->value, 2) }}%
-                                                @break
-                                            @case('ratio')
-                                                {{ number_format($latestValue->value, 2) }}x
-                                                @break
-                                            @case('currency')
-                                                ₦{{ number_format($latestValue->value, 0) }}
-                                                @break
-                                            @case('days')
-                                                {{ number_format($latestValue->value, 0) }} days
-                                                @break
-                                            @default
-                                                {{ number_format($latestValue->value, 2) }}
-                                        @endswitch
+                                        @php
+                                            $val = number_format($latestValue->value, 2);
+                                            $unit = $kpi->unit;
+                                        @endphp
+                                        @if($unit === 'percentage')
+                                            {{ $val }}%
+                                        @elseif($unit === 'ratio')
+                                            {{ $val }}x
+                                        @elseif($unit === 'currency')
+                                            ₦{{ number_format($latestValue->value, 0) }}
+                                        @elseif($unit === 'days')
+                                            {{ number_format($latestValue->value, 0) }} days
+                                        @else
+                                            {{ $val }}
+                                        @endif
                                     </h3>
                                     <small class="text-muted">Latest Value</small>
                                 @else
                                     <h4 class="text-muted mb-0">No Data</h4>
-                                @endif
+                                @endisset
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Trend Chart -->
+                {{-- Trend Chart --}}
                 <div class="card-modern mb-4">
                     <div class="card-header">
                         <h5 class="mb-0"><i class="mdi mdi-chart-line mr-2"></i>Historical Trend</h5>
                     </div>
                     <div class="card-body">
                         @if($history->count() > 0)
-                        <div style="height: 300px;">
-                            <canvas id="trendChart"></canvas>
-                        </div>
+                            <div style="height: 300px;">
+                                <canvas id="trendChart"></canvas>
+                            </div>
                         @else
-                        <div class="text-center py-5 text-muted">
-                            <i class="mdi mdi-chart-line-stacked mdi-48px"></i>
-                            <p class="mt-2">No historical data available</p>
-                        </div>
+                            <div class="text-center py-5 text-muted">
+                                <i class="mdi mdi-chart-line-stacked mdi-48px"></i>
+                                <p class="mt-2">No historical data available</p>
+                            </div>
                         @endif
                     </div>
                 </div>
 
-                <!-- History Table -->
-                <div class="card-modern card-modern">
+                {{-- History Table --}}
+                <div class="card-modern">
                     <div class="card-header">
                         <h5 class="mb-0"><i class="mdi mdi-history mr-2"></i>Value History</h5>
                     </div>
@@ -100,68 +99,68 @@
                             </thead>
                             <tbody>
                                 @forelse($history as $record)
-                                <tr>
-                                    <td>{{ \Carbon\Carbon::parse($record->calculation_date)->format('M d, Y') }}</td>
-                                    <td class="text-right">
-                                        @switch($kpi->unit)
-                                            @case('percentage')
-                                                {{ number_format($record->value, 2) }}%
-                                                @break
-                                            @case('ratio')
-                                                {{ number_format($record->value, 2) }}x
-                                                @break
-                                            @case('currency')
-                                                ₦{{ number_format($record->value, 0) }}
-                                                @break
-                                            @case('days')
-                                                {{ number_format($record->value, 0) }}
-                                                @break
-                                            @default
-                                                {{ number_format($record->value, 2) }}
-                                        @endswitch
-                                    </td>
-                                    <td class="text-right">
-                                        @if($record->change_percentage !== null)
-                                            <span class="{{ $record->change_percentage >= 0 ? 'text-success' : 'text-danger' }}">
-                                                <i class="mdi {{ $record->change_percentage >= 0 ? 'mdi-arrow-up' : 'mdi-arrow-down' }}"></i>
-                                                {{ number_format(abs($record->change_percentage), 1) }}%
+                                    @php
+                                        $recVal = $record->value;
+                                        $recUnit = $kpi->unit;
+                                    @endphp
+                                    <tr>
+                                        <td>{{ \Carbon\Carbon::parse($record->calculation_date)->format('M d, Y') }}</td>
+                                        <td class="text-right">
+                                            @if($recUnit === 'percentage')
+                                                {{ number_format($recVal, 2) }}%
+                                            @elseif($recUnit === 'ratio')
+                                                {{ number_format($recVal, 2) }}x
+                                            @elseif($recUnit === 'currency')
+                                                ₦{{ number_format($recVal, 0) }}
+                                            @elseif($recUnit === 'days')
+                                                {{ number_format($recVal, 0) }}
+                                            @else
+                                                {{ number_format($recVal, 2) }}
+                                            @endif
+                                        </td>
+                                        <td class="text-right">
+                                            @if($record->change_percentage !== null)
+                                                @php $chgPct = $record->change_percentage; @endphp
+                                                <span class="{{ $chgPct >= 0 ? 'text-success' : 'text-danger' }}">
+                                                    <i class="mdi {{ $chgPct >= 0 ? 'mdi-arrow-up' : 'mdi-arrow-down' }}"></i>
+                                                    {{ number_format(abs($chgPct), 1) }}%
+                                                </span>
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
+                                        <td class="text-center">
+                                            @php
+                                                $rowColors = ['normal' => 'success', 'warning' => 'warning', 'critical' => 'danger'];
+                                            @endphp
+                                            <span class="badge badge-{{ $rowColors[$record->status] ?? 'secondary' }}">
+                                                {{ ucfirst($record->status) }}
                                             </span>
-                                        @else
-                                            -
-                                        @endif
-                                    </td>
-                                    <td class="text-center">
-                                        @php
-                                            $statusColors = ['normal' => 'success', 'warning' => 'warning', 'critical' => 'danger'];
-                                        @endphp
-                                        <span class="badge badge-{{ $statusColors[$record->status] ?? 'secondary' }}">
-                                            {{ ucfirst($record->status) }}
-                                        </span>
-                                    </td>
-                                    <td>{{ $record->notes ?? '-' }}</td>
-                                </tr>
+                                        </td>
+                                        <td>{{ $record->notes ?? '-' }}</td>
+                                    </tr>
                                 @empty
-                                <tr>
-                                    <td colspan="5" class="text-center text-muted py-4">
-                                        No history records found
-                                    </td>
-                                </tr>
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-4">
+                                            No history records found
+                                        </td>
+                                    </tr>
                                 @endforelse
                             </tbody>
                         </table>
 
-                        @if($history->hasPages())
-                        <div class="d-flex justify-content-center mt-3">
-                            {{ $history->links() }}
-                        </div>
+                        @if(method_exists($history, 'hasPages') && $history->hasPages())
+                            <div class="d-flex justify-content-center mt-3">
+                                {{ $history->links() }}
+                            </div>
                         @endif
                     </div>
                 </div>
             </div>
 
-            <!-- Sidebar -->
+            {{-- Sidebar --}}
             <div class="col-lg-4">
-                <!-- KPI Details -->
+                {{-- KPI Details --}}
                 <div class="card-modern mb-4">
                     <div class="card-header">
                         <h5 class="mb-0"><i class="mdi mdi-information mr-2"></i>KPI Details</h5>
@@ -179,35 +178,29 @@
                             <tr>
                                 <td class="text-muted">Unit:</td>
                                 <td>
-                                    @switch($kpi->unit)
-                                        @case('percentage')
-                                            Percentage (%)
-                                            @break
-                                        @case('ratio')
-                                            Ratio (x)
-                                            @break
-                                        @case('currency')
-                                            Currency (₦)
-                                            @break
-                                        @case('days')
-                                            Days
-                                            @break
-                                        @default
-                                            {{ ucfirst($kpi->unit) }}
-                                    @endswitch
+                                    @php $detailUnit = $kpi->unit; @endphp
+                                    @if($detailUnit === 'percentage')
+                                        Percentage (%)
+                                    @elseif($detailUnit === 'ratio')
+                                        Ratio (x)
+                                    @elseif($detailUnit === 'currency')
+                                        Currency (₦)
+                                    @elseif($detailUnit === 'days')
+                                        Days
+                                    @else
+                                        {{ ucfirst($detailUnit) }}
+                                    @endif
                                 </td>
                             </tr>
                             <tr>
                                 <td class="text-muted">Frequency:</td>
-                                <td>{{ ucfirst($kpi->calculation_frequency) }}</td>
+                                <td>{{ ucfirst($kpi->frequency) }}</td>
                             </tr>
                             <tr>
                                 <td class="text-muted">Target:</td>
                                 <td>
                                     @if($kpi->target_value)
-                                        {{ number_format($kpi->target_value, 2) }}
-                                        @if($kpi->unit === 'percentage')%@endif
-                                        @if($kpi->unit === 'ratio')x@endif
+                                        {{ number_format($kpi->target_value, 2) }}{{ $kpi->unit === 'percentage' ? '%' : '' }}{{ $kpi->unit === 'ratio' ? 'x' : '' }}
                                     @else
                                         -
                                     @endif
@@ -216,24 +209,18 @@
                             <tr>
                                 <td class="text-muted">Comparison:</td>
                                 <td>
-                                    @if($kpi->comparison_operator === 'higher_better')
-                                        <i class="mdi mdi-arrow-up text-success"></i> Higher is Better
-                                    @elseif($kpi->comparison_operator === 'lower_better')
-                                        <i class="mdi mdi-arrow-down text-success"></i> Lower is Better
-                                    @else
-                                        <i class="mdi mdi-target"></i> Target Range
-                                    @endif
+                                    <i class="mdi mdi-arrow-up text-success"></i> Higher is Better
                                 </td>
                             </tr>
                         </table>
                         @if($kpi->description)
-                        <hr>
-                        <p class="text-muted mb-0 small">{{ $kpi->description }}</p>
+                            <hr>
+                            <p class="text-muted mb-0 small">{{ $kpi->description }}</p>
                         @endif
                     </div>
                 </div>
 
-                <!-- Thresholds -->
+                {{-- Thresholds --}}
                 <div class="card-modern mb-4">
                     <div class="card-header">
                         <h5 class="mb-0"><i class="mdi mdi-alert-circle mr-2"></i>Thresholds</h5>
@@ -264,37 +251,37 @@
                     </div>
                 </div>
 
-                <!-- Statistics -->
-                @if($statistics)
-                <div class="card-modern mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="mdi mdi-chart-box mr-2"></i>Statistics</h5>
+                {{-- Statistics --}}
+                @isset($statistics)
+                    <div class="card-modern mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="mdi mdi-chart-box mr-2"></i>Statistics</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-sm table-borderless mb-0">
+                                <tr>
+                                    <td class="text-muted">Min Value:</td>
+                                    <td class="text-right">{{ number_format($statistics->min_value, 2) }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Max Value:</td>
+                                    <td class="text-right">{{ number_format($statistics->max_value, 2) }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Average:</td>
+                                    <td class="text-right">{{ number_format($statistics->avg_value, 2) }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Total Records:</td>
+                                    <td class="text-right">{{ $statistics->total_records }}</td>
+                                </tr>
+                            </table>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <table class="table table-sm table-borderless mb-0">
-                            <tr>
-                                <td class="text-muted">Min Value:</td>
-                                <td class="text-right">{{ number_format($statistics->min_value, 2) }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-muted">Max Value:</td>
-                                <td class="text-right">{{ number_format($statistics->max_value, 2) }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-muted">Average:</td>
-                                <td class="text-right">{{ number_format($statistics->avg_value, 2) }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-muted">Total Records:</td>
-                                <td class="text-right">{{ $statistics->total_records }}</td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
-                @endif
+                @endisset
 
-                <!-- Actions -->
-                <div class="card-modern card-modern">
+                {{-- Actions --}}
+                <div class="card-modern">
                     <div class="card-body">
                         <button type="button" class="btn btn-success btn-block mb-2" id="calculateBtn">
                             <i class="mdi mdi-calculator"></i> Calculate Now
@@ -318,78 +305,69 @@
 <script>
 $(document).ready(function() {
     @if($history->count() > 0)
-    // Trend Chart
-    var ctx = document.getElementById('trendChart').getContext('2d');
-    var chartData = @json($chartData);
+    (function() {
+        var ctx = document.getElementById('trendChart').getContext('2d');
+        var chartData = @json($chartData);
+        var targetValue = {{ $kpi->target_value ?? 'null' }};
 
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: chartData.labels,
-            datasets: [{
-                label: '{{ $kpi->kpi_name }}',
-                data: chartData.values,
-                borderColor: '#007bff',
-                backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: chartData.statusColors,
-                pointBorderColor: chartData.statusColors,
-                pointRadius: 5
-            }
-            @if($kpi->target_value)
-            ,{
+        var datasets = [{
+            label: '{{ $kpi->kpi_name }}',
+            data: chartData.values,
+            borderColor: '#007bff',
+            backgroundColor: 'rgba(0, 123, 255, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: chartData.statusColors,
+            pointBorderColor: chartData.statusColors,
+            pointRadius: 5
+        }];
+
+        if (targetValue !== null) {
+            datasets.push({
                 label: 'Target',
-                data: Array(chartData.labels.length).fill({{ $kpi->target_value }}),
+                data: Array(chartData.labels.length).fill(targetValue),
                 borderColor: '#28a745',
                 borderWidth: 2,
                 borderDash: [5, 5],
                 fill: false,
                 pointRadius: 0
-            }
-            @endif
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top'
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            var value = context.parsed.y;
-                            @if($kpi->unit === 'percentage')
-                                return context.dataset.label + ': ' + value.toFixed(2) + '%';
-                            @elseif($kpi->unit === 'ratio')
-                                return context.dataset.label + ': ' + value.toFixed(2) + 'x';
-                            @elseif($kpi->unit === 'currency')
-                                return context.dataset.label + ': ₦' + value.toLocaleString();
-                            @else
+            });
+        }
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartData.labels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: true, position: 'top' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                var value = context.parsed.y;
+                                var unit = '{{ $kpi->unit }}';
+                                if (unit === 'percentage') return context.dataset.label + ': ' + value.toFixed(2) + '%';
+                                if (unit === 'ratio') return context.dataset.label + ': ' + value.toFixed(2) + 'x';
+                                if (unit === 'currency') return context.dataset.label + ': ₦' + value.toLocaleString();
                                 return context.dataset.label + ': ' + value.toFixed(2);
-                            @endif
+                            }
                         }
                     }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: false,
-                    grid: { color: 'rgba(0,0,0,0.05)' }
                 },
-                x: {
-                    grid: { display: false }
+                scales: {
+                    y: { beginAtZero: false, grid: { color: 'rgba(0,0,0,0.05)' } },
+                    x: { grid: { display: false } }
                 }
             }
-        }
-    });
+        });
+    })();
     @endif
 
-    // Calculate Button
     $('#calculateBtn').on('click', function() {
         var btn = $(this);
         btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Calculating...');
