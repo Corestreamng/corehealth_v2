@@ -68,17 +68,17 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="calculation_frequency">Calculation Frequency <span class="text-danger">*</span></label>
-                                        <select name="calculation_frequency" id="calculation_frequency"
-                                                class="form-control @error('calculation_frequency') is-invalid @enderror" required>
+                                        <label for="frequency">Calculation Frequency <span class="text-danger">*</span></label>
+                                        <select name="frequency" id="frequency"
+                                                class="form-control @error('frequency') is-invalid @enderror" required>
                                             <option value="">Select Frequency</option>
-                                            <option value="daily" {{ old('calculation_frequency', $kpi->calculation_frequency) == 'daily' ? 'selected' : '' }}>Daily</option>
-                                            <option value="weekly" {{ old('calculation_frequency', $kpi->calculation_frequency) == 'weekly' ? 'selected' : '' }}>Weekly</option>
-                                            <option value="monthly" {{ old('calculation_frequency', $kpi->calculation_frequency) == 'monthly' ? 'selected' : '' }}>Monthly</option>
-                                            <option value="quarterly" {{ old('calculation_frequency', $kpi->calculation_frequency) == 'quarterly' ? 'selected' : '' }}>Quarterly</option>
-                                            <option value="yearly" {{ old('calculation_frequency', $kpi->calculation_frequency) == 'yearly' ? 'selected' : '' }}>Yearly</option>
+                                            <option value="daily" {{ old('frequency', $kpi->frequency) == 'daily' ? 'selected' : '' }}>Daily</option>
+                                            <option value="weekly" {{ old('frequency', $kpi->frequency) == 'weekly' ? 'selected' : '' }}>Weekly</option>
+                                            <option value="monthly" {{ old('frequency', $kpi->frequency) == 'monthly' ? 'selected' : '' }}>Monthly</option>
+                                            <option value="quarterly" {{ old('frequency', $kpi->frequency) == 'quarterly' ? 'selected' : '' }}>Quarterly</option>
+                                            <option value="yearly" {{ old('frequency', $kpi->frequency) == 'yearly' ? 'selected' : '' }}>Yearly</option>
                                         </select>
-                                        @error('calculation_frequency')
+                                        @error('frequency')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
@@ -105,7 +105,7 @@
                                 <label for="formula">Formula <span class="text-danger">*</span></label>
                                 <input type="text" name="formula" id="formula"
                                        class="form-control font-monospace @error('formula') is-invalid @enderror"
-                                       value="{{ old('formula', $kpi->formula) }}" required>
+                                       value="{{ old('formula', $kpi->calculation_formula) }}" required>
                                 @error('formula')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -119,9 +119,9 @@
                                     <div class="form-group">
                                         <label for="data_source">Data Source</label>
                                         <select name="data_source" id="data_source" class="form-control">
-                                            <option value="trial_balance" {{ old('data_source', $kpi->data_source) == 'trial_balance' ? 'selected' : '' }}>Trial Balance</option>
-                                            <option value="financial_statements" {{ old('data_source', $kpi->data_source) == 'financial_statements' ? 'selected' : '' }}>Financial Statements</option>
-                                            <option value="custom" {{ old('data_source', $kpi->data_source) == 'custom' ? 'selected' : '' }}>Custom Query</option>
+                                            <option value="trial_balance" {{ old('data_source', 'trial_balance') == 'trial_balance' ? 'selected' : '' }}>Trial Balance</option>
+                                            <option value="financial_statements" {{ old('data_source', 'trial_balance') == 'financial_statements' ? 'selected' : '' }}>Financial Statements</option>
+                                            <option value="custom" {{ old('data_source', 'trial_balance') == 'custom' ? 'selected' : '' }}>Custom Query</option>
                                         </select>
                                     </div>
                                 </div>
@@ -163,9 +163,9 @@
                                     <div class="form-group">
                                         <label for="comparison_operator">Comparison <span class="text-danger">*</span></label>
                                         <select name="comparison_operator" id="comparison_operator" class="form-control" required>
-                                            <option value="higher_better" {{ old('comparison_operator', $kpi->comparison_operator) == 'higher_better' ? 'selected' : '' }}>Higher is Better</option>
-                                            <option value="lower_better" {{ old('comparison_operator', $kpi->comparison_operator) == 'lower_better' ? 'selected' : '' }}>Lower is Better</option>
-                                            <option value="target_range" {{ old('comparison_operator', $kpi->comparison_operator) == 'target_range' ? 'selected' : '' }}>Target Range</option>
+                                            <option value="higher_better" {{ old('comparison_operator', 'higher_better') == 'higher_better' ? 'selected' : '' }}>Higher is Better</option>
+                                            <option value="lower_better" {{ old('comparison_operator', 'higher_better') == 'lower_better' ? 'selected' : '' }}>Lower is Better</option>
+                                            <option value="target_range" {{ old('comparison_operator', 'higher_better') == 'target_range' ? 'selected' : '' }}>Target Range</option>
                                         </select>
                                     </div>
                                 </div>
@@ -255,11 +255,11 @@
                             <table class="table table-sm table-borderless mb-0">
                                 <tr>
                                     <td class="text-muted">Created:</td>
-                                    <td>{{ $kpi->created_at->format('M d, Y') }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($kpi->created_at)->format('M d, Y') }}</td>
                                 </tr>
                                 <tr>
                                     <td class="text-muted">Last Updated:</td>
-                                    <td>{{ $kpi->updated_at->format('M d, Y H:i') }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($kpi->updated_at)->format('M d, Y H:i') }}</td>
                                 </tr>
                                 <tr>
                                     <td class="text-muted">Total Records:</td>

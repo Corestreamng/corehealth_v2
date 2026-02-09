@@ -6652,7 +6652,8 @@ function initializeEventListeners() {
     $('#booking-clinic').on('change', function() {
         const clinicId = $(this).val();
         loadDoctorsByClinic(clinicId);
-        updateServicesByClinic(clinicId);
+        // Don't reset services when clinic changes - services are not clinic-specific
+        // updateServicesByClinic(clinicId);
     });
 
     // Book Service - Service type selection
@@ -7183,8 +7184,9 @@ function updateProfileTab(patient) {
     `;
     $('#profile-hmo-table').html(hmoInfoHtml);
 
-    // Load current queue entries for this patient
+    // Load current queue entries for this patient (both overview and booking tabs)
     loadPatientQueueEntries(patient.id);
+    loadBookingQueueEntries(patient.id);
 }
 
 function loadPatientQueueEntries(patientId) {
@@ -7229,6 +7231,51 @@ function loadPatientQueueEntries(patientId) {
         $container.html(html);
     }).fail(function() {
         $('#current-queue-entries').html('<p class="text-muted">Failed to load queue entries</p>');
+    });
+}
+
+// Load queue entries for the booking tab
+function loadBookingQueueEntries(patientId) {
+    $.get(`{{ url('reception/patient') }}/${patientId}/queue`, function(data) {
+        const $container = $('#booking-current-queue');
+        const entries = Array.isArray(data) ? data : (data.entries || []);
+
+        if (entries.length === 0) {
+            $container.html('<p class="text-muted">No active queue entries</p>');
+            return;
+        }
+
+        let html = '<div class="queue-entries-list">';
+        entries.forEach(entry => {
+            const statusClass = {
+                1: 'badge-warning',
+                2: 'badge-info',
+                3: 'badge-primary',
+                4: 'badge-success'
+            }[entry.status] || 'badge-secondary';
+
+            const statusText = {
+                1: 'Waiting',
+                2: 'Vitals Pending',
+                3: 'In Consultation',
+                4: 'Completed'
+            }[entry.status] || 'Unknown';
+
+            html += `
+                <div class="queue-entry-item d-flex justify-content-between align-items-center p-2 border-bottom">
+                    <div>
+                        <strong>Q-${entry.queue_no || 'N/A'}</strong>
+                        <span class="text-muted ml-2">${entry.clinic_name || 'N/A'}</span>
+                        ${entry.doctor_name ? `<br><small class="text-muted"><i class="mdi mdi-doctor"></i> Dr. ${entry.doctor_name}</small>` : ''}
+                    </div>
+                    <span class="badge ${statusClass}">${statusText}</span>
+                </div>
+            `;
+        });
+        html += '</div>';
+        $container.html(html);
+    }).fail(function() {
+        $('#booking-current-queue').html('<p class="text-muted">Failed to load queue entries</p>');
     });
 }
 
@@ -7849,12 +7896,18 @@ function bookConsultation() {
                 // Reset form
                 $('#booking-clinic').val('');
                 $('#booking-doctor').empty().append('<option value="">Select Doctor</option>');
-                $('#booking-service').empty().append('<option value="">Select Service</option>');
+                $('#booking-service').val('');
                 $('#book-reason').val('');
-                $('#tariff-preview-container').hide();
+                $('#tariff-preview-card').hide();
 
                 // Refresh queue counts
                 loadQueueCounts();
+
+                // Refresh patient queue entries in both overview and booking tabs
+                if (currentPatient) {
+                    loadPatientQueueEntries(currentPatient);
+                    loadBookingQueueEntries(currentPatient);
+                }
             } else {
                 toastr.error(response.message || 'Failed to book service');
             }

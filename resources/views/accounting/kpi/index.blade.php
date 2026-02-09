@@ -153,8 +153,8 @@ $(document).ready(function() {
                 }
             },
             {
-                data: 'calculation_frequency',
-                name: 'calculation_frequency',
+                data: 'frequency',
+                name: 'frequency',
                 render: function(data) {
                     return data ? data.charAt(0).toUpperCase() + data.slice(1) : '-';
                 }
@@ -194,10 +194,10 @@ $(document).ready(function() {
                 searchable: false,
                 render: function(data, type, row) {
                     return '<div class="btn-group btn-group-sm">' +
-                        '<a href="/accounting/kpi/history/' + data + '" class="btn btn-outline-info" title="History">' +
+                        '<a href="/accounting/kpi/' + data + '/history" class="btn btn-outline-info" title="History">' +
                             '<i class="mdi mdi-chart-line"></i>' +
                         '</a>' +
-                        '<a href="/accounting/kpi/edit/' + data + '" class="btn btn-outline-primary" title="Edit">' +
+                        '<a href="/accounting/kpi/' + data + '/edit" class="btn btn-outline-primary" title="Edit">' +
                             '<i class="mdi mdi-pencil"></i>' +
                         '</a>' +
                         '<button type="button" class="btn btn-outline-success btn-calculate" data-id="' + data + '" title="Calculate">' +
@@ -228,7 +228,7 @@ $(document).ready(function() {
         btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i>');
 
         $.ajax({
-            url: '/accounting/kpi/calculate-single/' + id,
+            url: '/accounting/kpi/' + id + '/calculate',
             type: 'POST',
             data: { _token: '{{ csrf_token() }}' },
             success: function(response) {

@@ -211,7 +211,8 @@ class BillingWorkbenchController extends Controller
                     'coverage_mode' => $row->coverage_mode,
                     'validation_status' => $row->validation_status,
                     'discount' => $row->discount ?? 0,
-                    'created_at' => $row->created_at,
+                    'created_at' => $row->created_at ? $row->created_at->toIso8601String() : null,
+                    'created_at_formatted' => $row->created_at ? $row->created_at->format('d/m/Y H:i') : 'N/A',
                 ];
             });
 
@@ -927,6 +928,126 @@ class BillingWorkbenchController extends Controller
     }
 
     /**
+     * Print invoice for selected unpaid items
+     */
+    public function printInvoice(Request $request)
+    {
+        $request->validate([
+            'patient_id' => 'required|integer|exists:patients,id',
+            'item_ids' => 'required|array|min:1',
+            'item_ids.*' => 'integer|exists:product_or_service_requests,id',
+        ]);
+
+        $patient = Patient::with('hmo')->findOrFail($request->patient_id);
+
+        // Get the unpaid items
+        $items = ProductOrServiceRequest::whereIn('id', $request->item_ids)
+            ->whereNull('payment_id')
+            ->whereNull('invoice_id')
+            ->with(['service.price', 'product.price'])
+            ->get();
+
+        if ($items->isEmpty()) {
+            return response()->json(['message' => 'No valid unpaid items found'], 422);
+        }
+
+        $invoiceDetails = [];
+        $totalAmount = 0;
+        $totalDiscount = 0;
+        $totalHmoCoverage = 0;
+
+        foreach ($items as $row) {
+            $isService = $row->service_id !== null;
+            $basePrice = $isService
+                ? optional(optional($row->service)->price)->sale_price
+                : optional(optional($row->product)->price)->current_sale_price;
+            $price = $row->payable_amount !== null ? $row->payable_amount : ($basePrice ?? 0);
+            $qty = $row->qty ?? 1;
+            $discountPercent = $row->discount ?? 0;
+            $subtotal = $price * $qty;
+            $discountAmount = $subtotal * ($discountPercent / 100);
+            $lineTotal = $subtotal - $discountAmount;
+            $hmoCoverage = $row->claims_amount ?? 0;
+
+            $totalAmount += $lineTotal;
+            $totalDiscount += $discountAmount;
+            $totalHmoCoverage += $hmoCoverage;
+
+            $invoiceDetails[] = [
+                'type' => $isService ? 'Service' : 'Product',
+                'name' => $isService ? optional($row->service)->service_name : optional($row->product)->product_name,
+                'price' => $price,
+                'qty' => $qty,
+                'discount_percent' => $discountPercent,
+                'discount_amount' => $discountAmount,
+                'hmo_coverage' => $hmoCoverage,
+                'amount' => $lineTotal,
+                'date' => $row->created_at ? $row->created_at->format('d/m/Y H:i') : 'N/A',
+            ];
+        }
+
+        $site = appsettings();
+        $patientName = userfullname($patient->user_id);
+        $patientFileNo = $patient->file_no ?? 'N/A';
+        $hmoName = $patient->hmo ? $patient->hmo->name : null;
+        $hmoNo = $patient->hmo_no ?? null;
+        $currentUserName = Auth::user() ? userfullname(Auth::id()) : '';
+        $date = now()->format('Y-m-d H:i');
+        $invoiceNo = 'INV-' . strtoupper(substr(md5(time() . rand()), 0, 8));
+
+        // Calculate patient payable (total minus HMO coverage)
+        $patientPayable = $totalAmount - $totalHmoCoverage;
+
+        $amountParts = explode('.', number_format((float) $patientPayable, 2, '.', ''));
+        $nairaWords = convert_number_to_words((int) $amountParts[0]);
+        $koboWords = ((int) $amountParts[1]) > 0 ? ' and ' . convert_number_to_words((int) $amountParts[1]) . ' Kobo' : '';
+        $amountInWords = ucwords($nairaWords . ' Naira' . $koboWords);
+
+        // Use invoice views (same as receipt but titled as Invoice)
+        $a4 = View::make('admin.Accounts.invoice_a4', [
+            'site' => $site,
+            'patientName' => $patientName,
+            'patientFileNo' => $patientFileNo,
+            'hmoName' => $hmoName,
+            'hmoNo' => $hmoNo,
+            'date' => $date,
+            'invoiceNo' => $invoiceNo,
+            'invoiceDetails' => $invoiceDetails,
+            'totalDiscount' => $totalDiscount,
+            'totalAmount' => $totalAmount,
+            'totalHmoCoverage' => $totalHmoCoverage,
+            'patientPayable' => $patientPayable,
+            'amountInWords' => $amountInWords,
+            'notes' => 'This is a proforma invoice. Payment is required to confirm services.',
+            'currentUserName' => $currentUserName,
+        ])->render();
+
+        $thermal = View::make('admin.Accounts.invoice_thermal', [
+            'site' => $site,
+            'patientName' => $patientName,
+            'patientFileNo' => $patientFileNo,
+            'hmoName' => $hmoName,
+            'hmoNo' => $hmoNo,
+            'date' => $date,
+            'invoiceNo' => $invoiceNo,
+            'invoiceDetails' => $invoiceDetails,
+            'totalDiscount' => $totalDiscount,
+            'totalAmount' => $totalAmount,
+            'totalHmoCoverage' => $totalHmoCoverage,
+            'patientPayable' => $patientPayable,
+            'amountInWords' => $amountInWords,
+            'notes' => '',
+            'currentUserName' => $currentUserName,
+        ])->render();
+
+        return response()->json([
+            'invoice_a4' => $a4,
+            'invoice_thermal' => $thermal,
+            'invoice_no' => $invoiceNo,
+        ]);
+    }
+
+    /**
      * Get current user's transactions (for report modal)
      */
     public function getMyTransactions(Request $request)
@@ -1563,5 +1684,337 @@ class BillingWorkbenchController extends Controller
             'other' => 'Other Deposit',
             default => ucfirst($type),
         };
+    }
+
+    /**
+     * Get patient admission history
+     */
+    public function getAdmissionHistory($patientId)
+    {
+        $patient = Patient::find($patientId);
+        if (!$patient) {
+            return response()->json(['error' => 'Patient not found'], 404);
+        }
+
+        $admissions = \App\Models\AdmissionRequest::where('patient_id', $patientId)
+            ->with(['bed.wardRelation'])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($admission) use ($patient) {
+                $admitDate = $admission->bed_assign_date;
+                $dischargeDate = $admission->discharge_date;
+
+                // Calculate length of stay
+                $los = 0;
+                if ($admitDate) {
+                    $endDate = $dischargeDate ?? now();
+                    $los = Carbon::parse($admitDate)->diffInDays(Carbon::parse($endDate)) + 1;
+                }
+
+                // Calculate total bill for this admission period
+                $totalBill = $this->calculateAdmissionBillTotal($patient->user_id, $admitDate, $dischargeDate);
+
+                // Get doctor name - doctor_id stores Staff ID, not User ID
+                $doctorStaffId = $admission->doctor_id;
+                $doctorName = 'N/A';
+                if ($doctorStaffId) {
+                    $doctorStaff = \App\Models\Staff::find($doctorStaffId);
+                    if ($doctorStaff && $doctorStaff->user_id) {
+                        $doctorName = userfullname($doctorStaff->user_id);
+                    }
+                }
+
+                return [
+                    'id' => $admission->id,
+                    'admitted_date' => $admitDate ? Carbon::parse($admitDate)->format('d/m/Y H:i') : 'Pending',
+                    'discharge_date' => $dischargeDate ? Carbon::parse($dischargeDate)->format('d/m/Y H:i') : ($admission->discharged ? 'Unknown' : null),
+                    'los' => $los,
+                    'ward' => optional(optional($admission->bed)->wardRelation)->name ?? ($admission->bed->ward ?? 'N/A'),
+                    'bed' => optional($admission->bed)->name ?? 'N/A',
+                    'doctor' => $doctorName,
+                    'reason' => $admission->admission_reason ?? $admission->note ?? 'N/A',
+                    'status' => $admission->discharged ? 'discharged' : 'admitted',
+                    'total_bill' => $totalBill,
+                ];
+            });
+
+        return response()->json([
+            'admissions' => $admissions,
+            'count' => $admissions->count(),
+        ]);
+    }
+
+    /**
+     * Calculate total bill amount for an admission period
+     */
+    protected function calculateAdmissionBillTotal($userId, $admitDate, $dischargeDate)
+    {
+        if (!$admitDate) return 0;
+
+        $query = ProductOrServiceRequest::where('user_id', $userId)
+            ->where('created_at', '>=', $admitDate);
+
+        if ($dischargeDate) {
+            $query->where('created_at', '<=', Carbon::parse($dischargeDate)->endOfDay());
+        }
+
+        return $query->sum(DB::raw('COALESCE(payable_amount, amount * qty)'));
+    }
+
+    /**
+     * Get detailed admission bill (categorized)
+     */
+    public function getAdmissionBillDetail($admissionId)
+    {
+        $admission = \App\Models\AdmissionRequest::with(['bed.wardRelation', 'patient'])->find($admissionId);
+
+        if (!$admission) {
+            return response()->json(['error' => 'Admission not found'], 404);
+        }
+
+        $patient = $admission->patient;
+        $admitDate = $admission->bed_assign_date;
+        $dischargeDate = $admission->discharge_date;
+
+        if (!$admitDate) {
+            return response()->json(['error' => 'Admission date not set'], 400);
+        }
+
+        // Get all billing items during admission period
+        $query = ProductOrServiceRequest::with(['service.category', 'product.category', 'payment'])
+            ->where('user_id', $patient->user_id)
+            ->where('created_at', '>=', $admitDate);
+
+        if ($dischargeDate) {
+            $query->where('created_at', '<=', Carbon::parse($dischargeDate)->endOfDay());
+        }
+
+        $billingItems = $query->orderBy('created_at', 'asc')->get();
+
+        // Define category mappings (customize based on your categories)
+        $categoryMap = [
+            'accommodation' => ['bed', 'ward', 'room', 'accommodation'],
+            'nursing' => ['nursing', 'nurse'],
+            'consultation' => ['consultation', 'doctor', 'visit'],
+            'laboratory' => ['lab', 'laboratory', 'test', 'investigation'],
+            'radiology' => ['radiology', 'xray', 'x-ray', 'scan', 'imaging', 'ultrasound', 'ct', 'mri'],
+            'pharmacy' => ['drug', 'pharmacy', 'medication', 'medicine'],
+            'procedure' => ['procedure', 'surgery', 'operation', 'theatre'],
+            'consumables' => ['consumable', 'supply', 'supplies', 'material'],
+        ];
+
+        $categoryIcons = [
+            'accommodation' => 'mdi-bed',
+            'nursing' => 'mdi-account-nurse',
+            'consultation' => 'mdi-stethoscope',
+            'laboratory' => 'mdi-flask',
+            'radiology' => 'mdi-radiology-box',
+            'pharmacy' => 'mdi-pill',
+            'procedure' => 'mdi-medical-bag',
+            'consumables' => 'mdi-bandage',
+            'other' => 'mdi-file-document',
+        ];
+
+        $categoryLabels = [
+            'accommodation' => 'Accommodation & Bed',
+            'nursing' => 'Nursing Care',
+            'consultation' => 'Consultations',
+            'laboratory' => 'Laboratory',
+            'radiology' => 'Radiology/Imaging',
+            'pharmacy' => 'Pharmacy/Medications',
+            'procedure' => 'Procedures',
+            'consumables' => 'Consumables/Supplies',
+            'other' => 'Other Services',
+        ];
+
+        // Categorize items
+        $categories = [];
+        $grossTotal = 0;
+        $totalDiscount = 0;
+        $totalHmo = 0;
+        $totalPaid = 0;
+        $timeline = [];
+
+        foreach ($billingItems as $item) {
+            // Determine category
+            $itemCategory = 'other';
+            $categoryName = '';
+
+            if ($item->service_id && $item->service) {
+                $categoryName = strtolower($item->service->category->category_name ?? '');
+            } elseif ($item->product_id && $item->product) {
+                $categoryName = strtolower($item->product->category->category_name ?? 'pharmacy');
+                // Products are typically pharmacy
+                $itemCategory = 'pharmacy';
+            }
+
+            // Match category
+            foreach ($categoryMap as $cat => $keywords) {
+                foreach ($keywords as $keyword) {
+                    if (str_contains($categoryName, $keyword)) {
+                        $itemCategory = $cat;
+                        break 2;
+                    }
+                }
+            }
+
+            // Calculate amounts
+            $qty = $item->qty ?? 1;
+            $price = $item->amount ?? 0;
+            $subtotal = $price * $qty;
+            $discount = $item->discount ?? 0;
+            $discountAmount = $subtotal * ($discount / 100);
+            $payable = $item->payable_amount ?? ($subtotal - $discountAmount);
+            $hmo = $item->claims_amount ?? 0;
+            $paid = $item->payment_id ? $payable : 0;
+
+            $grossTotal += $subtotal;
+            $totalDiscount += $discountAmount;
+            $totalHmo += $hmo;
+            $totalPaid += $paid;
+
+            // Add to category
+            if (!isset($categories[$itemCategory])) {
+                $categories[$itemCategory] = [
+                    'name' => $categoryLabels[$itemCategory] ?? ucfirst($itemCategory),
+                    'icon' => $categoryIcons[$itemCategory] ?? 'mdi-file-document',
+                    'items' => [],
+                    'total' => 0,
+                    'count' => 0,
+                ];
+            }
+
+            $itemName = $item->service_id
+                ? ($item->service->service_name ?? 'Service')
+                : ($item->product->name ?? 'Product');
+
+            $categories[$itemCategory]['items'][] = [
+                'name' => $itemName,
+                'qty' => $qty,
+                'price' => $price,
+                'amount' => $payable,
+                'date' => Carbon::parse($item->created_at)->format('d/m H:i'),
+                'paid' => $paid > 0,
+            ];
+            $categories[$itemCategory]['total'] += $payable;
+            $categories[$itemCategory]['count']++;
+
+            // Add to timeline
+            $dayKey = Carbon::parse($item->created_at)->format('Y-m-d');
+            if (!isset($timeline[$dayKey])) {
+                $timeline[$dayKey] = [
+                    'date' => Carbon::parse($item->created_at)->format('D, d M Y'),
+                    'day_number' => Carbon::parse($admitDate)->diffInDays(Carbon::parse($item->created_at)) + 1,
+                    'items' => [],
+                    'total' => 0,
+                ];
+            }
+            $timeline[$dayKey]['items'][] = [
+                'name' => $itemName,
+                'amount' => $payable,
+            ];
+            $timeline[$dayKey]['total'] += $payable;
+        }
+
+        // Sort categories by total (highest first)
+        uasort($categories, fn($a, $b) => $b['total'] <=> $a['total']);
+
+        // Sort timeline by date
+        ksort($timeline);
+
+        $balanceDue = $grossTotal - $totalDiscount - $totalHmo - $totalPaid;
+
+        // Get doctor name - doctor_id stores Staff ID
+        $doctorName = 'N/A';
+        if ($admission->doctor_id) {
+            $doctorStaff = \App\Models\Staff::find($admission->doctor_id);
+            if ($doctorStaff && $doctorStaff->user_id) {
+                $doctorName = userfullname($doctorStaff->user_id);
+            }
+        }
+
+        return response()->json([
+            'admission' => [
+                'id' => $admission->id,
+                'patient_name' => userfullname($patient->user_id),
+                'patient_file_no' => $patient->file_no,
+                'admitted_date' => $admitDate ? Carbon::parse($admitDate)->format('d/m/Y H:i') : 'N/A',
+                'discharge_date' => $dischargeDate ? Carbon::parse($dischargeDate)->format('d/m/Y H:i') : 'Currently Admitted',
+                'los' => $admitDate ? (Carbon::parse($admitDate)->diffInDays($dischargeDate ? Carbon::parse($dischargeDate) : now()) + 1) . ' days' : 'N/A',
+                'ward' => optional(optional($admission->bed)->wardRelation)->name ?? ($admission->bed->ward ?? 'N/A'),
+                'bed' => optional($admission->bed)->name ?? 'N/A',
+                'doctor' => $doctorName,
+                'reason' => $admission->admission_reason ?? $admission->note ?? 'N/A',
+                'status' => $admission->discharged ? 'discharged' : 'admitted',
+            ],
+            'categories' => array_values($categories),
+            'timeline' => array_values($timeline),
+            'totals' => [
+                'gross' => $grossTotal,
+                'discount' => $totalDiscount,
+                'hmo' => $totalHmo,
+                'paid' => $totalPaid,
+                'balance' => $balanceDue,
+            ],
+        ]);
+    }
+
+    /**
+     * Print admission bill
+     */
+    public function printAdmissionBill($admissionId)
+    {
+        $detailResponse = $this->getAdmissionBillDetail($admissionId);
+        $data = json_decode($detailResponse->getContent(), true);
+
+        if (isset($data['error'])) {
+            return response()->json($data, 400);
+        }
+
+        $site = \App\Models\ApplicationStatu::first();
+        $currentUserName = Auth::user() ? (Auth::user()->surname . ' ' . Auth::user()->firstname) : 'System';
+        $date = now()->format('d/m/Y H:i');
+
+        $admission = $data['admission'];
+        $categories = $data['categories'];
+        $totals = $data['totals'];
+        $timeline = $data['timeline'];
+
+        // Generate admission bill number
+        $billNo = 'ADM-' . $admissionId . '-' . now()->format('YmdHis');
+
+        // Amount in words
+        $amountParts = explode('.', number_format((float) $totals['balance'], 2, '.', ''));
+        $nairaWords = convert_number_to_words((int) $amountParts[0]);
+        $koboWords = ((int) $amountParts[1]) > 0 ? ' and ' . convert_number_to_words((int) $amountParts[1]) . ' Kobo' : '';
+        $amountInWords = ucwords($nairaWords . ' Naira' . $koboWords);
+
+        $a4 = View::make('admin.Accounts.admission_bill_a4', [
+            'site' => $site,
+            'admission' => $admission,
+            'categories' => $categories,
+            'timeline' => $timeline,
+            'totals' => $totals,
+            'billNo' => $billNo,
+            'date' => $date,
+            'amountInWords' => $amountInWords,
+            'currentUserName' => $currentUserName,
+        ])->render();
+
+        $thermal = View::make('admin.Accounts.admission_bill_thermal', [
+            'site' => $site,
+            'admission' => $admission,
+            'categories' => $categories,
+            'totals' => $totals,
+            'billNo' => $billNo,
+            'date' => $date,
+            'currentUserName' => $currentUserName,
+        ])->render();
+
+        return response()->json([
+            'bill_a4' => $a4,
+            'bill_thermal' => $thermal,
+            'bill_no' => $billNo,
+        ]);
     }
 }

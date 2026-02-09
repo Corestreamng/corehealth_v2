@@ -20,8 +20,15 @@ use OwenIt\Auditing\Contracts\Auditable;
  * - maintenance: Under cleaning/repair
  * - out_of_service: Not available for use
  *
+ * Billing Architecture:
+ * - Each bed MUST have a linked service (service_id) in the bed service category
+ * - The service is auto-created when bed is created (via BedController or BedObserver)
+ * - Billing uses bed->price field directly, synced to service->price->sale_price
+ * - See: BedObserver for auto-service creation
+ *
  * @see App\Models\Ward
  * @see App\Models\AdmissionRequest
+ * @see App\Observers\BedObserver
  */
 class Bed extends Model implements Auditable
 {
@@ -93,7 +100,76 @@ class Bed extends Model implements Auditable
 
     public function service()
     {
-        return $this->hasOne(service::class, 'id', 'service_id');
+        return $this->belongsTo(service::class, 'service_id', 'id');
+    }
+
+    /**
+     * Get the service with pricing eager loaded.
+     * Use this for billing operations.
+     */
+    public function serviceWithPrice()
+    {
+        return $this->belongsTo(service::class, 'service_id', 'id')->with('price');
+    }
+
+    // =====================
+    // Billing Helpers
+    // =====================
+
+    /**
+     * Get the daily billing price for this bed.
+     * Priority: bed->price > service->price->sale_price
+     *
+     * @return float
+     */
+    public function getBillingPrice(): float
+    {
+        // Primary source: bed price field
+        if ($this->price && $this->price > 0) {
+            return (float) $this->price;
+        }
+
+        // Fallback: service price
+        $this->loadMissing('service.price');
+        if ($this->service && $this->service->price) {
+            return (float) ($this->service->price->sale_price ?? 0);
+        }
+
+        return 0.0;
+    }
+
+    /**
+     * Check if bed has valid service configuration for billing.
+     *
+     * @return bool
+     */
+    public function hasValidBillingService(): bool
+    {
+        if (!$this->service_id) {
+            return false;
+        }
+
+        $bedServiceCategoryId = appsettings('bed_service_category_id');
+        if (!$bedServiceCategoryId) {
+            return true; // No category configured, accept any service
+        }
+
+        $this->loadMissing('service');
+        return $this->service && $this->service->category_id == $bedServiceCategoryId;
+    }
+
+    /**
+     * Get the service name for display in billing.
+     *
+     * @return string
+     */
+    public function getBillingServiceName(): string
+    {
+        $this->loadMissing('service');
+        if ($this->service) {
+            return $this->service->service_name;
+        }
+        return "Bed {$this->name} - {$this->ward}";
     }
 
     // =====================

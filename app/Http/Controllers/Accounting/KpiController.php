@@ -629,7 +629,7 @@ class KpiController extends Controller
                 ->with('error', 'KPI not found.');
         }
 
-        // Get historical values (last 12 periods)
+        // Get historical values (last 24 periods)
         $history = DB::table('financial_kpi_values')
             ->where('kpi_id', $id)
             ->orderBy('calculation_date', 'desc')
@@ -645,15 +645,33 @@ class KpiController extends Controller
             ->limit(10)
             ->get();
 
-        // Stats
-        $stats = [
-            'min' => $history->min('value'),
-            'max' => $history->max('value'),
-            'avg' => $history->avg('value'),
-            'latest' => $history->last(),
+        // Latest value
+        $latestValue = $history->last();
+
+        // Statistics
+        $statistics = null;
+        if ($history->count() > 0) {
+            $statistics = (object) [
+                'min_value' => $history->min('value'),
+                'max_value' => $history->max('value'),
+                'avg_value' => $history->avg('value'),
+                'total_records' => $history->count(),
+            ];
+        }
+
+        // Chart data
+        $chartData = [
+            'labels' => $history->pluck('calculation_date')->map(function ($date) {
+                return \Carbon\Carbon::parse($date)->format('M d');
+            })->toArray(),
+            'values' => $history->pluck('value')->toArray(),
+            'statusColors' => $history->map(function ($record) {
+                $colors = ['normal' => '#28a745', 'warning' => '#ffc107', 'critical' => '#dc3545'];
+                return $colors[$record->status] ?? '#6c757d';
+            })->toArray(),
         ];
 
-        return view('accounting.kpi.history', compact('kpi', 'history', 'alerts', 'stats'));
+        return view('accounting.kpi.history', compact('kpi', 'history', 'alerts', 'latestValue', 'statistics', 'chartData'));
     }
 
     /**
