@@ -6334,6 +6334,10 @@ function initializeEventListeners() {
 let selectedProducts = [];
 
 function searchProducts(query) {
+    const $container = $('#product-search-results');
+    $container.html('<li class="list-group-item text-center"><i class="mdi mdi-loading mdi-spin"></i> Loading products...</li>');
+    $container.show();
+
     $.ajax({
         url: '/pharmacy-workbench/search-products',
         method: 'GET',
@@ -6346,6 +6350,7 @@ function searchProducts(query) {
         },
         error: function() {
             console.error('Product search failed');
+            $container.html('<li class="list-group-item text-danger"><i class="mdi mdi-alert-circle"></i> Failed to search products</li>');
             toastr.error('Failed to search products');
         }
     });
@@ -6356,7 +6361,7 @@ function displayProductSearchResults(results) {
     $container.empty();
 
     if (results.length === 0) {
-        $container.html('<li class="list-group-item text-muted">No products found</li>');
+        $container.html('<li class="list-group-item text-center text-muted"><i class="mdi mdi-magnify"></i> No products found matching your search</li>');
         $container.show();
         return;
     }
@@ -6943,38 +6948,6 @@ function injectUnifiedPrescPartial(patientId, patientUserId) {
                                     </thead>
                                     <tbody></tbody>
                                 </table>
-                            </div>
-
-                            <hr>
-
-                            <!-- Add More Items Section -->
-                            <div class="card-modern mb-3">
-                                <div class="card-header bg-light">
-                                    <h6 class="mb-0"><i class="mdi mdi-plus-circle"></i> Add More Items</h6>
-                                </div>
-                                <div class="card-body">
-                                    <div style="position: relative;">
-                                        <label>Search products</label>
-                                        <input type="text" class="form-control" id="presc_product_search"
-                                               onkeyup="searchProductsForPresc(this.value)"
-                                               placeholder="Search products by name or code..." autocomplete="off">
-                                        <ul class="list-group position-absolute w-100" id="presc_product_results"
-                                            style="display: none; max-height: 300px; overflow-y: auto; z-index: 9999; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #ddd;"></ul>
-                                    </div>
-                                    <br>
-                                    <div class="table-responsive">
-                                        <table class="table table-sm table-bordered">
-                                            <thead class="table-light">
-                                                <th style="width: 40px;">*</th>
-                                                <th>Product</th>
-                                                <th style="width: 100px;">Price</th>
-                                                <th style="width: 200px;">Dose/Freq.</th>
-                                                <th style="width: 60px;">*</th>
-                                            </thead>
-                                            <tbody id="presc_added_products"></tbody>
-                                        </table>
-                                    </div>
-                                </div>
                             </div>
 
                             <!-- Total and Actions -->
@@ -13184,29 +13157,10 @@ window.billPrescItems = function() {
     console.log('Bill - Found checkboxes:', $('#presc_billing_table').find('.presc-billing-check:checked').length);
     console.log('Bill - Selected IDs:', selectedIds);
 
-    // Get added products
-    const addedProducts = [];
-    const addedDoses = [];
-    $('#presc_added_products tr').each(function() {
-        const checkbox = $(this).find('.presc-added-check');
-        if (checkbox.is(':checked')) {
-            addedProducts.push(checkbox.val());
-            addedDoses.push($(this).find('.presc-added-dose').val());
-        }
-    });
-
     // Validate
-    if (selectedIds.length === 0 && addedProducts.length === 0) {
+    if (selectedIds.length === 0) {
         toastr.warning('Please select at least one item to bill');
         return;
-    }
-
-    // Validate doses for added items
-    for (let i = 0; i < addedDoses.length; i++) {
-        if (!addedDoses[i] || addedDoses[i].trim() === '') {
-            toastr.error('Please enter dose/frequency for all added medications');
-            return;
-        }
     }
 
     if (!confirm('Are you sure you want to bill the selected items?')) {
@@ -13225,8 +13179,6 @@ window.billPrescItems = function() {
         },
         data: {
             selectedPrescBillRows: selectedIds,
-            addedPrescBillRows: addedProducts,
-            consult_presc_dose: addedDoses,
             patient_id: currentPatient,
             patient_user_id: currentPatientData?.user_id || ''
         },

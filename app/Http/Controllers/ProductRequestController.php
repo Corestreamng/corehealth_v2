@@ -420,6 +420,7 @@ class ProductRequestController extends Controller
                     $bill_req->user_id = $request->patient_user_id;
                     $bill_req->staff_user_id = Auth::id();
                     $bill_req->product_id = $prod_id;
+                    $bill_req->qty = $prod_req->qty; // Use the qty from ProductRequest (may have been adjusted)
 
                     // Apply HMO tariff
                     $patient = patient::find($request->patient_id);
@@ -427,20 +428,21 @@ class ProductRequestController extends Controller
                         try {
                             $hmoData = HmoHelper::applyHmoTariff($patient->id, $prod_id, null);
                             if ($hmoData) {
-                                $bill_req->payable_amount = $hmoData['payable_amount'];
-                                $bill_req->claims_amount = $hmoData['claims_amount'];
+                                // Multiply by quantity
+                                $bill_req->payable_amount = $hmoData['payable_amount'] * $prod_req->qty;
+                                $bill_req->claims_amount = $hmoData['claims_amount'] * $prod_req->qty;
                                 $bill_req->coverage_mode = $hmoData['coverage_mode'];
                                 $bill_req->validation_status = $hmoData['validation_status'] ?? 'pending';
                             }
                         } catch (\Exception $e) {
                             $price = optional($prod_req->product->price)->current_sale_price ?? 0;
-                            $bill_req->payable_amount = $price;
+                            $bill_req->payable_amount = $price * $prod_req->qty; // Multiply by quantity
                             $bill_req->claims_amount = 0;
                             $bill_req->coverage_mode = 'none';
                         }
                     } else {
                         $price = optional($prod_req->product->price)->current_sale_price ?? 0;
-                        $bill_req->payable_amount = $price;
+                        $bill_req->payable_amount = $price * $prod_req->qty; // Multiply by quantity
                         $bill_req->claims_amount = 0;
                         $bill_req->coverage_mode = 'none';
                     }
@@ -484,6 +486,7 @@ class ProductRequestController extends Controller
                     $bill_req->user_id = $request->patient_user_id;
                     $bill_req->staff_user_id = Auth::id();
                     $bill_req->product_id = $productId;
+                    $bill_req->qty = 1; // Newly added items default to qty 1
 
                     // Apply HMO tariff
                     $patient = patient::find($request->patient_id);
@@ -491,6 +494,7 @@ class ProductRequestController extends Controller
                         try {
                             $hmoData = HmoHelper::applyHmoTariff($patient->id, $productId, null);
                             if ($hmoData) {
+                                // Already qty 1, no need to multiply
                                 $bill_req->payable_amount = $hmoData['payable_amount'];
                                 $bill_req->claims_amount = $hmoData['claims_amount'];
                                 $bill_req->coverage_mode = $hmoData['coverage_mode'];

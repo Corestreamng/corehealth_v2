@@ -1361,10 +1361,30 @@ class PharmacyWorkbenchController extends Controller
                     $billReq->product_id = $prodId;
                     $billReq->qty = $productRequest->qty; // Use the qty from ProductRequest (may have been adjusted)
 
+                    \Log::info('PharmacyWorkbench: Before applyHmoTariff', [
+                        'product_request_id' => $productRequest->id,
+                        'product_id' => $prodId,
+                        'qty_from_product_request' => $productRequest->qty,
+                        'billReq_qty_before' => $billReq->qty
+                    ]);
+
                     // Apply HMO tariff if patient has HMO
                     $this->applyHmoTariffToRequest($billReq, $patient, $prodId, $productRequest->product, $productRequest->qty);
 
+                    \Log::info('PharmacyWorkbench: After applyHmoTariff', [
+                        'product_request_id' => $productRequest->id,
+                        'billReq_qty_after' => $billReq->qty,
+                        'payable_amount' => $billReq->payable_amount,
+                        'claims_amount' => $billReq->claims_amount
+                    ]);
+
                     $billReq->save();
+
+                    \Log::info('PharmacyWorkbench: After save', [
+                        'product_request_id' => $productRequest->id,
+                        'bill_request_id' => $billReq->id,
+                        'saved_qty' => $billReq->qty
+                    ]);
 
                     // Update ProductRequest to billed status
                     // Note: Stock is NOT deducted at billing - it will be deducted at dispense

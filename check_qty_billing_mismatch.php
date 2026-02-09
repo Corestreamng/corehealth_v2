@@ -39,10 +39,10 @@ foreach ($mismatches as $pr) {
     $posr = $pr->productOrServiceRequest;
     $product = $pr->product;
     $patient = $pr->patient;
-    
+
     $patientName = $patient && $patient->user ? userfullname($patient->user_id) : 'Unknown';
     $productName = $product ? $product->product_name : 'Unknown Product';
-    
+
     $issue = [
         'product_request_id' => $pr->id,
         'posr_id' => $posr->id,
@@ -59,9 +59,9 @@ foreach ($mismatches as $pr) {
         'expected_total' => ($product && $product->price ? $product->price->current_sale_price : 0) * $pr->qty,
         'created_at' => $pr->created_at->format('Y-m-d H:i:s'),
     ];
-    
+
     $issues[] = $issue;
-    
+
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
     echo "Issue #{$pr->id}\n";
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
@@ -115,49 +115,49 @@ $failed = 0;
 foreach ($issues as $issue) {
     try {
         DB::beginTransaction();
-        
+
         $pr = ProductRequest::with(['product.price', 'productOrServiceRequest'])->find($issue['product_request_id']);
         $posr = $pr->productOrServiceRequest;
-        
+
         if (!$posr) {
             echo "❌ ProductRequest #{$pr->id}: No billing record found\n";
             $failed++;
             DB::rollBack();
             continue;
         }
-        
+
         $unitPrice = $pr->product && $pr->product->price ? $pr->product->price->current_sale_price : 0;
         $correctQty = $pr->qty;
-        
+
         // Calculate new total
         $newTotal = $unitPrice * $correctQty;
-        
+
         // Maintain coverage ratio if HMO
         $oldTotal = $posr->payable_amount + $posr->claims_amount;
         $newPayableAmount = $newTotal;
         $newClaimsAmount = 0;
-        
+
         if ($oldTotal > 0 && $posr->claims_amount > 0) {
             $payableRatio = $posr->payable_amount / $oldTotal;
             $claimsRatio = $posr->claims_amount / $oldTotal;
-            
+
             $newPayableAmount = $newTotal * $payableRatio;
             $newClaimsAmount = $newTotal * $claimsRatio;
         }
-        
+
         $posr->update([
             'qty' => $correctQty,
             'payable_amount' => $newPayableAmount,
             'claims_amount' => $newClaimsAmount,
         ]);
-        
+
         DB::commit();
-        
+
         echo "✓ Fixed ProductRequest #{$pr->id}: Updated billing qty from {$issue['posr_qty']} to {$correctQty}, ";
         echo "amount from ₦" . number_format($oldTotal, 2) . " to ₦" . number_format($newTotal, 2) . "\n";
-        
+
         $fixed++;
-        
+
     } catch (\Exception $e) {
         DB::rollBack();
         echo "❌ Failed to fix ProductRequest #{$issue['product_request_id']}: " . $e->getMessage() . "\n";
