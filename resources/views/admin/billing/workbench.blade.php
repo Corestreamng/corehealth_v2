@@ -1995,6 +1995,91 @@
         gap: 0.5rem;
     }
 
+    /* Billing Filter Bar */
+    .billing-filter-bar {
+        padding: 1rem 1.5rem;
+        background: #fff;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .billing-filter-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: center;
+    }
+
+    .billing-filter-search {
+        position: relative;
+        flex: 1;
+        min-width: 200px;
+        max-width: 300px;
+    }
+
+    .billing-filter-search i {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        font-size: 1.1rem;
+    }
+
+    .billing-filter-search input {
+        padding-left: 35px !important;
+    }
+
+    .billing-filter-category {
+        min-width: 150px;
+        max-width: 200px;
+    }
+
+    .billing-filter-date {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .billing-filter-date input {
+        width: 140px;
+    }
+
+    .billing-filter-date .date-separator {
+        color: #6c757d;
+        font-size: 0.85rem;
+    }
+
+    .billing-filter-stats {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-top: 0.75rem;
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+
+    .filter-stat-divider {
+        color: #dee2e6;
+    }
+
+    .filter-stat label {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+
+    .total-visible-amount strong {
+        color: var(--hospital-primary);
+    }
+
+    /* Billing item row highlighting for filtered view */
+    #billing-items-table tbody tr.filtered-out {
+        display: none;
+    }
+
+    #billing-items-table tbody tr.highlighted-match {
+        background: rgba(13, 110, 253, 0.08) !important;
+    }
+
     .billing-items-container {
         padding: 1rem;
         overflow-x: auto;
@@ -2027,23 +2112,120 @@
         border-radius: 0.25rem;
     }
 
-    /* Payment Summary Card */
+    /* Floating Cart Button */
+    .floating-cart {
+        position: fixed;
+        bottom: 90px;
+        right: 24px;
+        z-index: 1040;
+        display: none;
+    }
+
+    .floating-cart-btn {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 24px;
+        background: linear-gradient(135deg, var(--hospital-primary) 0%, #0056b3 100%);
+        color: white;
+        border: none;
+        border-radius: 50px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25), 0 2px 6px rgba(0, 0, 0, 0.15);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .floating-cart-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3), 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .floating-cart-btn .cart-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 28px;
+        height: 28px;
+        padding: 0 8px;
+        background: #fff;
+        color: var(--hospital-primary);
+        border-radius: 14px;
+        font-weight: 700;
+        font-size: 0.9rem;
+    }
+
+    .floating-cart-btn .cart-total {
+        font-size: 1.1rem;
+        font-weight: 700;
+    }
+
+    .floating-cart-btn i {
+        font-size: 1.4rem;
+    }
+
+    /* Floating cart pulse animation when items added */
+    @keyframes cartPulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    .floating-cart-btn.pulse {
+        animation: cartPulse 0.3s ease;
+    }
+
+    /* Payment Modal Styles */
+    #paymentModal .modal-dialog {
+        max-width: 500px;
+    }
+
+    #paymentModal .modal-header {
+        background: linear-gradient(135deg, var(--hospital-primary) 0%, #0056b3 100%);
+        color: white;
+        border-radius: 0.5rem 0.5rem 0 0;
+    }
+
+    #paymentModal .modal-header .close {
+        color: white;
+        opacity: 0.8;
+    }
+
+    #paymentModal .modal-header .close:hover {
+        opacity: 1;
+    }
+
+    #paymentModal .modal-title {
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    #paymentModal .modal-title .item-count-badge {
+        background: rgba(255,255,255,0.2);
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+    }
+
+    /* Payment Summary Card (inside modal) */
     .payment-summary-card {
-        margin: 1.5rem;
-        padding: 1.5rem;
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        border-radius: 0.5rem;
-        border: 2px solid var(--hospital-primary);
+        padding: 0;
+        background: transparent;
+        border: none;
     }
 
     .payment-summary-card h5 {
-        margin-bottom: 1rem;
-        color: var(--hospital-primary);
-        font-weight: 700;
+        display: none; /* Hidden in modal since we have modal title */
     }
 
     .summary-details {
         margin-bottom: 1.5rem;
+        background: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 1rem;
     }
 
     .summary-row {
@@ -2065,15 +2247,412 @@
     }
 
     .payment-method-section,
+    .bank-selection-section,
     .payment-reference-section {
         margin-bottom: 1rem;
     }
 
     .payment-method-section label,
+    .bank-selection-section label,
     .payment-reference-section label {
         font-weight: 600;
         margin-bottom: 0.5rem;
         display: block;
+        color: #495057;
+    }
+
+    /* Account Balance in Modal */
+    .account-balance-info {
+        background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid #28a745;
+    }
+
+    .account-balance-info .balance-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .account-balance-info .balance-amount {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #28a745;
+    }
+
+    /* Quick actions in modal footer */
+    #paymentModal .modal-footer {
+        border-top: 1px solid #dee2e6;
+        padding: 1rem 1.5rem;
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    #paymentModal .btn-confirm-payment {
+        flex: 1;
+        padding: 12px 20px;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    /* ========== ADMISSIONS TAB STYLES ========== */
+    .admissions-tab-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .admissions-tab-header h4 {
+        margin: 0;
+        color: #495057;
+        font-weight: 600;
+    }
+
+    .admissions-split-view {
+        display: flex;
+        height: calc(100vh - 400px);
+        min-height: 500px;
+    }
+
+    .admissions-list-panel {
+        width: 55%;
+        border-right: 1px solid #dee2e6;
+        overflow: auto;
+    }
+
+    .admissions-table-container {
+        padding: 0;
+    }
+
+    #admissions-table {
+        margin: 0;
+        font-size: 0.9rem;
+    }
+
+    #admissions-table thead th {
+        position: sticky;
+        top: 0;
+        background: #f8f9fa;
+        z-index: 10;
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        color: #6c757d;
+        padding: 12px 10px;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    #admissions-table tbody tr {
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    #admissions-table tbody tr:hover {
+        background: rgba(13, 110, 253, 0.05);
+    }
+
+    #admissions-table tbody tr.selected {
+        background: rgba(13, 110, 253, 0.1);
+        border-left: 3px solid var(--hospital-primary);
+    }
+
+    #admissions-table td {
+        padding: 10px;
+        vertical-align: middle;
+    }
+
+    .admission-status-pill {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .admission-status-pill.admitted {
+        background: rgba(25, 135, 84, 0.15);
+        color: #198754;
+    }
+
+    .admission-status-pill.discharged {
+        background: rgba(108, 117, 125, 0.15);
+        color: #6c757d;
+    }
+
+    .admission-detail-panel {
+        width: 45%;
+        overflow: auto;
+        background: #fafbfc;
+    }
+
+    .admission-detail-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #adb5bd;
+    }
+
+    .admission-detail-placeholder i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+
+    .admission-detail-content {
+        padding: 1.5rem;
+    }
+
+    .admission-detail-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .admission-status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .admission-status-badge.admitted {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        color: #047857;
+    }
+
+    .admission-status-badge.discharged {
+        background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+        color: #4b5563;
+    }
+
+    .admission-info-cards {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-bottom: 1.5rem;
+    }
+
+    .admission-info-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+    }
+
+    .admission-info-card.full-width {
+        grid-column: span 2;
+    }
+
+    .info-card-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(13, 110, 253, 0.1);
+        border-radius: 8px;
+        color: var(--hospital-primary);
+        font-size: 1.2rem;
+    }
+
+    .info-card-content {
+        flex: 1;
+    }
+
+    .info-label {
+        display: block;
+        font-size: 0.75rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .info-value {
+        display: block;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #212529;
+    }
+
+    .admission-bill-summary {
+        background: white;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border: 1px solid #e9ecef;
+    }
+
+    .admission-bill-summary h5 {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .bill-category-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 12px;
+        margin-bottom: 8px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .bill-category-item:hover {
+        background: #e9ecef;
+    }
+
+    .bill-category-item.expanded {
+        background: #e3f2fd;
+    }
+
+    .category-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .category-icon {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        border-radius: 6px;
+        font-size: 1rem;
+    }
+
+    .category-name {
+        font-weight: 500;
+        color: #212529;
+    }
+
+    .category-count {
+        font-size: 0.75rem;
+        color: #6c757d;
+    }
+
+    .category-amount {
+        font-weight: 600;
+        color: #212529;
+    }
+
+    .category-items {
+        display: none;
+        margin-top: 8px;
+        margin-left: 42px;
+        padding: 10px;
+        background: white;
+        border-radius: 6px;
+        font-size: 0.85rem;
+    }
+
+    .category-items.show {
+        display: block;
+    }
+
+    .category-item-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0;
+        border-bottom: 1px dashed #e9ecef;
+    }
+
+    .category-item-row:last-child {
+        border-bottom: none;
+    }
+
+    .admission-bill-totals {
+        background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .bill-total-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.9rem;
+    }
+
+    .bill-total-row.discount span:last-child,
+    .bill-total-row.hmo span:last-child,
+    .bill-total-row.paid span:last-child {
+        color: #86efac;
+    }
+
+    .bill-total-row.grand-total {
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        margin-top: 8px;
+        padding-top: 12px;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: white;
+    }
+
+    .bill-total-row.grand-total span:last-child {
+        color: #fbbf24;
+    }
+
+    .admission-timeline-section {
+        margin-top: 1rem;
+    }
+
+    #toggle-timeline-view {
+        width: 100%;
+    }
+
+    .admission-timeline {
+        margin-top: 1rem;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .timeline-day {
+        margin-bottom: 1rem;
+        padding: 12px;
+        background: white;
+        border-radius: 8px;
+        border-left: 3px solid var(--hospital-primary);
+    }
+
+    .timeline-day-header {
+        font-weight: 600;
+        color: var(--hospital-primary);
+        margin-bottom: 8px;
+        font-size: 0.85rem;
+    }
+
+    .timeline-day-items {
+        font-size: 0.8rem;
+        color: #495057;
+    }
+
+    .timeline-day-items div {
+        display: flex;
+        justify-content: space-between;
+        padding: 4px 0;
     }
 
     /* Receipt Display */
@@ -3123,6 +3702,11 @@
                     <i class="mdi mdi-receipt"></i>
                     <span>Receipts</span>
                 </button>
+                <button class="workspace-tab" data-tab="admissions">
+                    <i class="mdi mdi-hospital-building"></i>
+                    <span>Admissions</span>
+                    <span class="workspace-tab-badge" id="admissions-badge" style="display: none;">0</span>
+                </button>
                 <button class="workspace-tab" data-tab="account">
                     <i class="mdi mdi-wallet"></i>
                     <span>Account</span>
@@ -3136,9 +3720,49 @@
                         <button class="btn btn-sm btn-secondary" id="refresh-billing-items">
                             <i class="mdi mdi-refresh"></i> Refresh
                         </button>
+                        <button class="btn btn-sm btn-warning" id="print-invoice-btn" disabled>
+                            <i class="mdi mdi-file-document-outline"></i> Print Invoice
+                        </button>
                         <button class="btn btn-sm btn-success" id="process-payment-btn" disabled>
                             <i class="mdi mdi-cash"></i> Process Payment
                         </button>
+                    </div>
+                </div>
+
+                <!-- Billing Items Filter/Search Bar -->
+                <div class="billing-filter-bar">
+                    <div class="billing-filter-row">
+                        <div class="billing-filter-search">
+                            <i class="mdi mdi-magnify"></i>
+                            <input type="text" id="billing-search-input" class="form-control form-control-sm" placeholder="Search items...">
+                        </div>
+                        <div class="billing-filter-category">
+                            <select id="billing-category-filter" class="form-control form-control-sm">
+                                <option value="">All Categories</option>
+                            </select>
+                        </div>
+                        <div class="billing-filter-date">
+                            <input type="date" id="billing-date-from" class="form-control form-control-sm" placeholder="From">
+                            <span class="date-separator">to</span>
+                            <input type="date" id="billing-date-to" class="form-control form-control-sm" placeholder="To">
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary" id="clear-billing-filters">
+                            <i class="mdi mdi-filter-remove"></i> Clear
+                        </button>
+                    </div>
+                    <div class="billing-filter-stats">
+                        <span class="filter-stat">
+                            <span id="billing-items-visible">0</span> of <span id="billing-items-total">0</span> items
+                        </span>
+                        <span class="filter-stat-divider">|</span>
+                        <span class="filter-stat">
+                            <input type="checkbox" id="select-visible-only" style="margin-right: 4px;">
+                            <label for="select-visible-only" style="margin-bottom: 0; cursor: pointer;">Select visible only</label>
+                        </span>
+                        <span class="filter-stat-divider">|</span>
+                        <span class="filter-stat total-visible-amount">
+                            Visible Total: <strong id="billing-visible-total">₦0.00</strong>
+                        </span>
                     </div>
                 </div>
 
@@ -3147,6 +3771,7 @@
                         <thead>
                             <tr>
                                 <th width="40"><input type="checkbox" id="select-all-billing-items"></th>
+                                <th>Date/Time</th>
                                 <th>Item</th>
                                 <th>Category</th>
                                 <th>Price</th>
@@ -3158,7 +3783,7 @@
                         </thead>
                         <tbody id="billing-items-tbody">
                             <tr>
-                                <td colspan="8" class="text-center text-muted py-5">
+                                <td colspan="9" class="text-center text-muted py-5">
                                     <i class="mdi mdi-information-outline" style="font-size: 3rem;"></i>
                                     <p>No unpaid items for this patient</p>
                                 </td>
@@ -3167,58 +3792,88 @@
                     </table>
                 </div>
 
-                <!-- Payment Summary Card (appears when items selected) -->
-                <div class="payment-summary-card" id="payment-summary-card" style="display: none;">
-                    <h5><i class="mdi mdi-calculator"></i> Payment Summary</h5>
-
-                    <!-- Account Balance Info -->
-                    <div class="account-balance-info" id="billing-account-balance" style="display: none;">
-                        <div class="balance-row">
-                            <span><i class="mdi mdi-wallet"></i> Account Balance:</span>
-                            <span id="billing-balance-amount" class="balance-amount">₦0.00</span>
-                        </div>
-                    </div>
-
-                    <div class="summary-details">
-                        <div class="summary-row">
-                            <span>Subtotal:</span>
-                            <span id="summary-subtotal">₦0.00</span>
-                        </div>
-                        <div class="summary-row">
-                            <span>Total Discount:</span>
-                            <span id="summary-discount">₦0.00</span>
-                        </div>
-                        <div class="summary-row total">
-                            <span>Total Payable:</span>
-                            <span id="summary-total">₦0.00</span>
-                        </div>
-                    </div>
-                    <div class="payment-method-section">
-                        <label><i class="mdi mdi-cash-multiple"></i> Payment Method</label>
-                        <select class="form-control" id="payment-method">
-                            <option value="CASH">Cash</option>
-                            <option value="POS">POS/Card</option>
-                            <option value="TRANSFER">Bank Transfer</option>
-                            <option value="MOBILE">Mobile Money</option>
-                            <option value="ACCOUNT" id="account-payment-option" style="display: none;">Pay from Account Balance</option>
-                        </select>
-                        <small class="text-muted" id="account-payment-note" style="display: none;">
-                            <i class="mdi mdi-information"></i> Payment will be deducted from account balance
-                        </small>
-                    </div>
-                    <div class="bank-selection-section" id="bank-selection-section" style="display: none;">
-                        <label><i class="mdi mdi-bank"></i> Select Bank</label>
-                        <select class="form-control" id="payment-bank">
-                            <option value="">-- Select Bank --</option>
-                        </select>
-                    </div>
-                    <div class="payment-reference-section">
-                        <label>Reference Number (Optional)</label>
-                        <input type="text" class="form-control" id="payment-reference" placeholder="Enter transaction reference">
-                    </div>
-                    <button class="btn btn-success btn-block btn-lg" id="confirm-payment-btn">
-                        <i class="mdi mdi-check-circle"></i> Confirm Payment
+                <!-- Floating Cart Button (appears when items selected) -->
+                <div class="floating-cart" id="floating-cart">
+                    <button class="floating-cart-btn" data-bs-toggle="modal" data-bs-target="#paymentModal">
+                        <i class="mdi mdi-cart-outline"></i>
+                        <span class="cart-badge" id="cart-item-count">0</span>
+                        <span class="cart-total" id="cart-total-display">₦0.00</span>
+                        <i class="mdi mdi-chevron-up"></i>
                     </button>
+                </div>
+
+                <!-- Payment Modal -->
+                <div class="modal fade" id="paymentModal" tabindex="-1" role="dialog" aria-labelledby="paymentModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="paymentModalLabel">
+                                    <i class="mdi mdi-cart-check"></i> Checkout
+                                    <span class="item-count-badge"><span id="modal-item-count">0</span> items</span>
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="payment-summary-card" id="payment-summary-card">
+                                    <h5><i class="mdi mdi-calculator"></i> Payment Summary</h5>
+
+                                    <!-- Account Balance Info -->
+                                    <div class="account-balance-info" id="billing-account-balance" style="display: none;">
+                                        <div class="balance-row">
+                                            <span><i class="mdi mdi-wallet"></i> Account Balance:</span>
+                                            <span id="billing-balance-amount" class="balance-amount">₦0.00</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="summary-details">
+                                        <div class="summary-row">
+                                            <span>Subtotal:</span>
+                                            <span id="summary-subtotal">₦0.00</span>
+                                        </div>
+                                        <div class="summary-row">
+                                            <span>Total Discount:</span>
+                                            <span id="summary-discount">₦0.00</span>
+                                        </div>
+                                        <div class="summary-row total">
+                                            <span>Total Payable:</span>
+                                            <span id="summary-total">₦0.00</span>
+                                        </div>
+                                    </div>
+                                    <div class="payment-method-section">
+                                        <label><i class="mdi mdi-cash-multiple"></i> Payment Method</label>
+                                        <select class="form-control" id="payment-method">
+                                            <option value="CASH">Cash</option>
+                                            <option value="POS">POS/Card</option>
+                                            <option value="TRANSFER">Bank Transfer</option>
+                                            <option value="MOBILE">Mobile Money</option>
+                                            <option value="ACCOUNT" id="account-payment-option" style="display: none;">Pay from Account Balance</option>
+                                        </select>
+                                        <small class="text-muted" id="account-payment-note" style="display: none;">
+                                            <i class="mdi mdi-information"></i> Payment will be deducted from account balance
+                                        </small>
+                                    </div>
+                                    <div class="bank-selection-section" id="bank-selection-section" style="display: none;">
+                                        <label><i class="mdi mdi-bank"></i> Select Bank</label>
+                                        <select class="form-control" id="payment-bank">
+                                            <option value="">-- Select Bank --</option>
+                                        </select>
+                                    </div>
+                                    <div class="payment-reference-section">
+                                        <label>Reference Number (Optional)</label>
+                                        <input type="text" class="form-control" id="payment-reference" placeholder="Enter transaction reference">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                    <i class="mdi mdi-close"></i> Cancel
+                                </button>
+                                <button type="button" class="btn btn-success btn-confirm-payment" id="confirm-payment-btn">
+                                    <i class="mdi mdi-check-circle"></i> Confirm Payment
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Receipt Display (after payment) -->
@@ -3331,6 +3986,159 @@
                             </tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- Admissions Tab -->
+            <div class="workspace-tab-content" id="admissions-tab">
+                <div class="admissions-tab-header">
+                    <h4><i class="mdi mdi-hospital-building"></i> Admission History</h4>
+                    <div class="admissions-toolbar">
+                        <button class="btn btn-sm btn-secondary" id="refresh-admissions">
+                            <i class="mdi mdi-refresh"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Admissions List / Detail Split View -->
+                <div class="admissions-split-view">
+                    <!-- Left: Admissions List -->
+                    <div class="admissions-list-panel" id="admissions-list-panel">
+                        <div class="admissions-table-container">
+                            <table class="table table-hover table-sm" id="admissions-table">
+                                <thead>
+                                    <tr>
+                                        <th>Admitted</th>
+                                        <th>Discharged</th>
+                                        <th>Days</th>
+                                        <th>Ward/Bed</th>
+                                        <th>Doctor</th>
+                                        <th>Status</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admissions-tbody">
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted py-5">
+                                            <i class="mdi mdi-hospital-building" style="font-size: 3rem;"></i>
+                                            <p>No admission history found</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Right: Admission Detail -->
+                    <div class="admission-detail-panel" id="admission-detail-panel">
+                        <div class="admission-detail-placeholder">
+                            <i class="mdi mdi-gesture-tap"></i>
+                            <p>Select an admission to view details</p>
+                        </div>
+
+                        <!-- Admission Detail Content (hidden by default) -->
+                        <div class="admission-detail-content" id="admission-detail-content" style="display: none;">
+                            <!-- Admission Header -->
+                            <div class="admission-detail-header">
+                                <div class="admission-status-badge" id="admission-status-badge">
+                                    <i class="mdi mdi-check-circle"></i> Discharged
+                                </div>
+                                <div class="admission-detail-actions">
+                                    <button class="btn btn-sm btn-warning" id="print-admission-bill-btn">
+                                        <i class="mdi mdi-printer"></i> Print Bill
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Admission Info Cards -->
+                            <div class="admission-info-cards">
+                                <div class="admission-info-card">
+                                    <div class="info-card-icon"><i class="mdi mdi-calendar-check"></i></div>
+                                    <div class="info-card-content">
+                                        <span class="info-label">Admitted</span>
+                                        <span class="info-value" id="detail-admitted-date">-</span>
+                                    </div>
+                                </div>
+                                <div class="admission-info-card">
+                                    <div class="info-card-icon"><i class="mdi mdi-calendar-remove"></i></div>
+                                    <div class="info-card-content">
+                                        <span class="info-label">Discharged</span>
+                                        <span class="info-value" id="detail-discharge-date">-</span>
+                                    </div>
+                                </div>
+                                <div class="admission-info-card">
+                                    <div class="info-card-icon"><i class="mdi mdi-clock-outline"></i></div>
+                                    <div class="info-card-content">
+                                        <span class="info-label">Length of Stay</span>
+                                        <span class="info-value" id="detail-los">-</span>
+                                    </div>
+                                </div>
+                                <div class="admission-info-card">
+                                    <div class="info-card-icon"><i class="mdi mdi-bed"></i></div>
+                                    <div class="info-card-content">
+                                        <span class="info-label">Ward / Bed</span>
+                                        <span class="info-value" id="detail-ward-bed">-</span>
+                                    </div>
+                                </div>
+                                <div class="admission-info-card full-width">
+                                    <div class="info-card-icon"><i class="mdi mdi-doctor"></i></div>
+                                    <div class="info-card-content">
+                                        <span class="info-label">Attending Doctor</span>
+                                        <span class="info-value" id="detail-doctor">-</span>
+                                    </div>
+                                </div>
+                                <div class="admission-info-card full-width">
+                                    <div class="info-card-icon"><i class="mdi mdi-clipboard-text"></i></div>
+                                    <div class="info-card-content">
+                                        <span class="info-label">Admission Reason</span>
+                                        <span class="info-value" id="detail-reason">-</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Categorized Bill Summary -->
+                            <div class="admission-bill-summary">
+                                <h5><i class="mdi mdi-format-list-bulleted"></i> Bill Summary by Category</h5>
+                                <div class="bill-categories" id="bill-categories">
+                                    <!-- Categories will be populated dynamically -->
+                                </div>
+                            </div>
+
+                            <!-- Bill Totals -->
+                            <div class="admission-bill-totals">
+                                <div class="bill-total-row">
+                                    <span>Gross Total:</span>
+                                    <span id="admission-gross-total">₦0.00</span>
+                                </div>
+                                <div class="bill-total-row discount">
+                                    <span>Total Discount:</span>
+                                    <span id="admission-total-discount">-₦0.00</span>
+                                </div>
+                                <div class="bill-total-row hmo">
+                                    <span>HMO Coverage:</span>
+                                    <span id="admission-hmo-coverage">-₦0.00</span>
+                                </div>
+                                <div class="bill-total-row paid">
+                                    <span>Paid:</span>
+                                    <span id="admission-paid-amount">-₦0.00</span>
+                                </div>
+                                <div class="bill-total-row grand-total">
+                                    <span>Balance Due:</span>
+                                    <span id="admission-balance-due">₦0.00</span>
+                                </div>
+                            </div>
+
+                            <!-- Day-by-Day Timeline Toggle -->
+                            <div class="admission-timeline-section">
+                                <button class="btn btn-sm btn-outline-primary" id="toggle-timeline-view">
+                                    <i class="mdi mdi-timeline"></i> Show Day-by-Day Breakdown
+                                </button>
+                                <div class="admission-timeline" id="admission-timeline" style="display: none;">
+                                    <!-- Timeline populated dynamically -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -4804,6 +5612,9 @@ function switchWorkspaceTab(tab) {
             setDefaultReceiptDates();
             loadPatientReceipts();
             break;
+        case 'admissions':
+            loadAdmissionHistory();
+            break;
         case 'account':
             loadAccountSummary();
             break;
@@ -5443,6 +6254,287 @@ function createPatientAccount() {
     });
 }
 
+// ========== ADMISSIONS TAB FUNCTIONS ==========
+
+let selectedAdmissionId = null;
+
+function loadAdmissionHistory() {
+    if (!currentPatient) return;
+
+    $.ajax({
+        url: `/billing-workbench/patient/${currentPatient}/admissions`,
+        method: 'GET',
+        success: function(response) {
+            renderAdmissionHistory(response.admissions);
+            updateAdmissionsBadge(response.count);
+        },
+        error: function(xhr) {
+            console.error('Failed to load admission history', xhr);
+            toastr.error('Failed to load admission history');
+        }
+    });
+}
+
+function renderAdmissionHistory(admissions) {
+    const tbody = $('#admissions-tbody');
+    tbody.empty();
+
+    if (admissions.length === 0) {
+        tbody.html(`
+            <tr>
+                <td colspan="7" class="text-center text-muted py-5">
+                    <i class="mdi mdi-hospital-building" style="font-size: 3rem;"></i>
+                    <p>No admission history found</p>
+                </td>
+            </tr>
+        `);
+        return;
+    }
+
+    admissions.forEach(admission => {
+        const statusClass = admission.status === 'admitted' ? 'admitted' : 'discharged';
+        const statusText = admission.status === 'admitted' ? 'Admitted' : 'Discharged';
+        const row = `
+            <tr data-admission-id="${admission.id}" class="${selectedAdmissionId == admission.id ? 'selected' : ''}">
+                <td>${admission.admitted_date}</td>
+                <td>${admission.discharge_date || '<span class="text-success">In Progress</span>'}</td>
+                <td>${admission.los} day${admission.los > 1 ? 's' : ''}</td>
+                <td>${admission.ward}<br><small class="text-muted">${admission.bed}</small></td>
+                <td>${admission.doctor}</td>
+                <td><span class="admission-status-pill ${statusClass}">${statusText}</span></td>
+                <td class="font-weight-bold">₦${parseFloat(admission.total_bill).toLocaleString()}</td>
+            </tr>
+        `;
+        tbody.append(row);
+    });
+
+    // If an admission was previously selected, reload its details
+    if (selectedAdmissionId) {
+        loadAdmissionDetail(selectedAdmissionId);
+    }
+}
+
+function updateAdmissionsBadge(count) {
+    const badge = $('#admissions-badge');
+    badge.text(count);
+    if (count > 0) {
+        badge.show();
+    } else {
+        badge.hide();
+    }
+}
+
+// Handle admission row click
+$(document).on('click', '#admissions-tbody tr[data-admission-id]', function() {
+    const admissionId = $(this).data('admission-id');
+
+    // Update selection styling
+    $('#admissions-tbody tr').removeClass('selected');
+    $(this).addClass('selected');
+
+    selectedAdmissionId = admissionId;
+    loadAdmissionDetail(admissionId);
+});
+
+function loadAdmissionDetail(admissionId) {
+    // Show loading state
+    $('#admission-detail-content').hide();
+    $('.admission-detail-placeholder').html(`
+        <i class="mdi mdi-loading mdi-spin" style="font-size: 3rem;"></i>
+        <p>Loading admission details...</p>
+    `).show();
+
+    $.ajax({
+        url: `/billing-workbench/admission/${admissionId}/bill`,
+        method: 'GET',
+        success: function(response) {
+            renderAdmissionDetail(response);
+            $('.admission-detail-placeholder').hide();
+            $('#admission-detail-content').show();
+        },
+        error: function(xhr) {
+            $('.admission-detail-placeholder').html(`
+                <i class="mdi mdi-alert-circle-outline" style="font-size: 3rem; color: #dc3545;"></i>
+                <p>Failed to load admission details</p>
+            `);
+            toastr.error(xhr.responseJSON?.error || 'Failed to load admission details');
+        }
+    });
+}
+
+function renderAdmissionDetail(data) {
+    const admission = data.admission;
+    const categories = data.categories;
+    const totals = data.totals;
+    const timeline = data.timeline;
+
+    // Update status badge
+    const statusBadge = $('#admission-status-badge');
+    statusBadge.removeClass('admitted discharged').addClass(admission.status);
+    statusBadge.html(admission.status === 'admitted'
+        ? '<i class="mdi mdi-hospital"></i> Currently Admitted'
+        : '<i class="mdi mdi-check-circle"></i> Discharged');
+
+    // Update info cards
+    $('#detail-admitted-date').text(admission.admitted_date);
+    $('#detail-discharge-date').text(admission.discharge_date);
+    $('#detail-los').text(admission.los);
+    $('#detail-ward-bed').text(`${admission.ward} / ${admission.bed}`);
+    $('#detail-doctor').text(admission.doctor);
+    $('#detail-reason').text(admission.reason);
+
+    // Render categories
+    renderBillCategories(categories);
+
+    // Update totals
+    $('#admission-gross-total').text(`₦${parseFloat(totals.gross).toLocaleString()}`);
+    $('#admission-total-discount').text(`-₦${parseFloat(totals.discount).toLocaleString()}`);
+    $('#admission-hmo-coverage').text(`-₦${parseFloat(totals.hmo).toLocaleString()}`);
+    $('#admission-paid-amount').text(`-₦${parseFloat(totals.paid).toLocaleString()}`);
+    $('#admission-balance-due').text(`₦${parseFloat(totals.balance).toLocaleString()}`);
+
+    // Render timeline
+    renderAdmissionTimeline(timeline);
+}
+
+function renderBillCategories(categories) {
+    const container = $('#bill-categories');
+    container.empty();
+
+    if (categories.length === 0) {
+        container.html('<p class="text-muted text-center py-3">No charges during this admission</p>');
+        return;
+    }
+
+    const iconMap = {
+        'mdi-bed': '🛏️',
+        'mdi-account-nurse': '👩‍⚕️',
+        'mdi-stethoscope': '🩺',
+        'mdi-flask': '🔬',
+        'mdi-radiology-box': '📷',
+        'mdi-pill': '💊',
+        'mdi-medical-bag': '🏥',
+        'mdi-bandage': '🩹',
+        'mdi-file-document': '📋',
+    };
+
+    categories.forEach((category, index) => {
+        const icon = iconMap[category.icon] || '📋';
+        const html = `
+            <div class="bill-category-item" data-category-index="${index}">
+                <div class="category-info">
+                    <span class="category-icon">${icon}</span>
+                    <div>
+                        <span class="category-name">${category.name}</span>
+                        <span class="category-count">${category.count} item${category.count > 1 ? 's' : ''}</span>
+                    </div>
+                </div>
+                <span class="category-amount">₦${parseFloat(category.total).toLocaleString()}</span>
+            </div>
+            <div class="category-items" id="category-items-${index}">
+                ${category.items.map(item => `
+                    <div class="category-item-row">
+                        <span>${item.name} ${item.qty > 1 ? `(x${item.qty})` : ''}</span>
+                        <span>₦${parseFloat(item.amount).toLocaleString()}</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        container.append(html);
+    });
+}
+
+// Toggle category items
+$(document).on('click', '.bill-category-item', function() {
+    const index = $(this).data('category-index');
+    $(this).toggleClass('expanded');
+    $(`#category-items-${index}`).toggleClass('show');
+});
+
+function renderAdmissionTimeline(timeline) {
+    const container = $('#admission-timeline');
+    container.empty();
+
+    if (timeline.length === 0) {
+        container.html('<p class="text-muted text-center py-3">No timeline data</p>');
+        return;
+    }
+
+    timeline.forEach(day => {
+        const html = `
+            <div class="timeline-day">
+                <div class="timeline-day-header">
+                    Day ${day.day_number} - ${day.date} (₦${parseFloat(day.total).toLocaleString()})
+                </div>
+                <div class="timeline-day-items">
+                    ${day.items.map(item => `
+                        <div>
+                            <span>${item.name}</span>
+                            <span>₦${parseFloat(item.amount).toLocaleString()}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        container.append(html);
+    });
+}
+
+// Toggle timeline view
+$(document).on('click', '#toggle-timeline-view', function() {
+    const timeline = $('#admission-timeline');
+    const btn = $(this);
+
+    if (timeline.is(':visible')) {
+        timeline.slideUp();
+        btn.html('<i class="mdi mdi-timeline"></i> Show Day-by-Day Breakdown');
+    } else {
+        timeline.slideDown();
+        btn.html('<i class="mdi mdi-timeline"></i> Hide Day-by-Day Breakdown');
+    }
+});
+
+// Print admission bill
+$(document).on('click', '#print-admission-bill-btn', function() {
+    if (!selectedAdmissionId) {
+        toastr.warning('No admission selected');
+        return;
+    }
+
+    toastr.info('Generating admission bill...');
+
+    $.ajax({
+        url: `/billing-workbench/admission/${selectedAdmissionId}/print-bill`,
+        method: 'GET',
+        success: function(response) {
+            // Show in receipt modal (reusing)
+            $('#modal-receipt-a4').html(response.bill_a4);
+            $('#modal-receipt-thermal').html(response.bill_thermal);
+
+            // Reset tabs to A4
+            $('.receipt-modal-tab').removeClass('active');
+            $('.receipt-modal-tab[data-format="a4"]').addClass('active');
+            $('#modal-receipt-a4').show();
+            $('#modal-receipt-thermal').hide();
+
+            // Update modal title
+            $('#receiptPreviewModal .modal-title').text('Admission Bill - ' + response.bill_no);
+
+            // Show modal
+            $('#receiptPreviewModal').modal('show');
+        },
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.error || 'Failed to generate admission bill');
+        }
+    });
+});
+
+// Refresh admissions button
+$(document).on('click', '#refresh-admissions', function() {
+    loadAdmissionHistory();
+    toastr.info('Refreshing admission history...');
+});
+
 // ========== BILLING WORKBENCH FUNCTIONS ==========
 
 function loadBillingItems() {
@@ -5471,7 +6563,7 @@ function renderBillingItems(items) {
     if (items.length === 0) {
         tbody.html(`
             <tr>
-                <td colspan="8" class="text-center text-muted py-5">
+                <td colspan="9" class="text-center text-muted py-5">
                     <i class="mdi mdi-information-outline" style="font-size: 3rem;"></i>
                     <p>No unpaid items for this patient</p>
                 </td>
@@ -5481,9 +6573,12 @@ function renderBillingItems(items) {
     }
 
     items.forEach(item => {
+        // Use pre-formatted datetime or format it client-side
+        const datetime = item.created_at_formatted || (item.created_at ? formatDateTime(item.created_at) : 'N/A');
         const row = `
             <tr data-item-id="${item.id}">
                 <td><input type="checkbox" class="billing-item-checkbox" data-id="${item.id}"></td>
+                <td class="text-nowrap" style="font-size: 0.85rem;"><i class="mdi mdi-clock-outline text-muted"></i> ${datetime}</td>
                 <td>${item.name}</td>
                 <td>${item.category || 'N/A'}</td>
                 <td>₦${parseFloat(item.price).toLocaleString()}</td>
@@ -5499,7 +6594,19 @@ function renderBillingItems(items) {
     // Attach event listeners
     $('.billing-item-checkbox').on('change', updatePaymentSummary);
     $('#select-all-billing-items').on('change', function() {
-        $('.billing-item-checkbox').prop('checked', $(this).is(':checked'));
+        const selectVisibleOnly = $('#select-visible-only').is(':checked');
+        if (selectVisibleOnly) {
+            // Only select/deselect visible (not filtered out) items
+            $('.billing-item-checkbox').each(function() {
+                const row = $(this).closest('tr');
+                if (!row.hasClass('filtered-out')) {
+                    $(this).prop('checked', $('#select-all-billing-items').is(':checked'));
+                }
+            });
+        } else {
+            // Select all items regardless of filter
+            $('.billing-item-checkbox').prop('checked', $(this).is(':checked'));
+        }
         updatePaymentSummary();
     });
     $('.item-qty-input, .item-discount-input').on('input', function() {
@@ -5508,7 +6615,175 @@ function renderBillingItems(items) {
         updatePaymentSummary();
     });
 
+    // Populate category filter dropdown and update stats
+    populateCategoryFilter(items);
+    updateBillingFilterStats();
+
     console.log('Rendered', items.length, 'billing items');
+}
+
+// ========== BILLING FILTER FUNCTIONS ==========
+
+// Populate category filter dropdown with unique categories from items
+function populateCategoryFilter(items) {
+    const select = $('#billing-category-filter');
+    const categories = [...new Set(items.map(item => item.category).filter(c => c))].sort();
+
+    select.empty();
+    select.append('<option value="">All Categories</option>');
+    categories.forEach(cat => {
+        select.append(`<option value="${cat}">${cat}</option>`);
+    });
+}
+
+// Apply all billing filters
+function applyBillingFilters() {
+    const searchTerm = $('#billing-search-input').val().toLowerCase().trim();
+    const categoryFilter = $('#billing-category-filter').val();
+    const dateFrom = $('#billing-date-from').val();
+    const dateTo = $('#billing-date-to').val();
+
+    $('#billing-items-tbody tr').each(function() {
+        const row = $(this);
+        if (row.find('td').length < 3) return; // Skip empty rows
+
+        const itemName = row.find('td:eq(2)').text().toLowerCase();
+        const itemCategory = row.find('td:eq(3)').text();
+        const itemDateText = row.find('td:eq(1)').text().trim();
+
+        let visible = true;
+
+        // Search filter
+        if (searchTerm && !itemName.includes(searchTerm)) {
+            visible = false;
+        }
+
+        // Category filter
+        if (categoryFilter && itemCategory !== categoryFilter) {
+            visible = false;
+        }
+
+        // Date filters
+        if (dateFrom || dateTo) {
+            const itemDate = parseDateFromDisplay(itemDateText);
+            if (itemDate) {
+                if (dateFrom && itemDate < new Date(dateFrom)) {
+                    visible = false;
+                }
+                if (dateTo) {
+                    const toDate = new Date(dateTo);
+                    toDate.setHours(23, 59, 59, 999);
+                    if (itemDate > toDate) {
+                        visible = false;
+                    }
+                }
+            }
+        }
+
+        if (visible) {
+            row.removeClass('filtered-out');
+            // Highlight search match
+            if (searchTerm) {
+                row.addClass('highlighted-match');
+            } else {
+                row.removeClass('highlighted-match');
+            }
+        } else {
+            row.addClass('filtered-out');
+            row.removeClass('highlighted-match');
+            // Uncheck filtered out items if select-visible-only is checked
+            if ($('#select-visible-only').is(':checked')) {
+                row.find('.billing-item-checkbox').prop('checked', false);
+            }
+        }
+    });
+
+    updateBillingFilterStats();
+    updatePaymentSummary();
+}
+
+// Parse date from display format (DD/MM/YYYY HH:MM)
+function parseDateFromDisplay(dateText) {
+    if (!dateText || dateText === 'N/A') return null;
+    try {
+        // Handle DD/MM/YYYY HH:MM format
+        const parts = dateText.split(' ');
+        const dateParts = parts[0].split('/');
+        if (dateParts.length === 3) {
+            return new Date(dateParts[2], dateParts[1] - 1, dateParts[0]);
+        }
+        return new Date(dateText);
+    } catch (e) {
+        return null;
+    }
+}
+
+// Update filter stats display
+function updateBillingFilterStats() {
+    const totalRows = $('#billing-items-tbody tr').filter(function() {
+        return $(this).find('td').length >= 3;
+    }).length;
+
+    const visibleRows = $('#billing-items-tbody tr').filter(function() {
+        return $(this).find('td').length >= 3 && !$(this).hasClass('filtered-out');
+    }).length;
+
+    let visibleTotal = 0;
+    $('#billing-items-tbody tr').each(function() {
+        const row = $(this);
+        if (row.find('td').length >= 3 && !row.hasClass('filtered-out')) {
+            const totalText = row.find('.item-total').text().replace('₦', '').replace(/,/g, '');
+            visibleTotal += parseFloat(totalText) || 0;
+        }
+    });
+
+    $('#billing-items-total').text(totalRows);
+    $('#billing-items-visible').text(visibleRows);
+    $('#billing-visible-total').text(`₦${visibleTotal.toLocaleString()}`);
+}
+
+// Clear all billing filters
+function clearBillingFilters() {
+    $('#billing-search-input').val('');
+    $('#billing-category-filter').val('');
+    $('#billing-date-from').val('');
+    $('#billing-date-to').val('');
+    applyBillingFilters();
+}
+
+// Initialize filter event listeners
+$(document).on('input', '#billing-search-input', debounce(applyBillingFilters, 300));
+$(document).on('change', '#billing-category-filter', applyBillingFilters);
+$(document).on('change', '#billing-date-from, #billing-date-to', applyBillingFilters);
+$(document).on('click', '#clear-billing-filters', clearBillingFilters);
+
+// Debounce utility
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Format datetime for display
+function formatDateTime(dateString) {
+    if (!dateString) return 'N/A';
+    try {
+        const date = new Date(dateString);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${day}/${month}/${year} ${hours}:${minutes}`;
+    } catch (e) {
+        return dateString;
+    }
 }
 
 function calculateItemTotal(item) {
@@ -5523,7 +6798,7 @@ function calculateItemTotal(item) {
 function recalculateItemTotal(itemId) {
     const row = $(`tr[data-item-id="${itemId}"]`);
     const qty = parseFloat(row.find('.item-qty-input').val()) || 1;
-    const price = parseFloat(row.find('td:eq(3)').text().replace('₦', '').replace(/,/g, ''));
+    const price = parseFloat(row.find('td:eq(4)').text().replace('₦', '').replace(/,/g, ''));
     const discount = parseFloat(row.find('.item-discount-input').val()) || 0;
 
     const subtotal = price * qty;
@@ -5537,8 +6812,10 @@ function updatePaymentSummary() {
     const selectedItems = $('.billing-item-checkbox:checked');
 
     if (selectedItems.length === 0) {
-        $('#payment-summary-card').hide();
+        // Hide floating cart
+        $('#floating-cart').fadeOut(200);
         $('#process-payment-btn').prop('disabled', true);
+        $('#print-invoice-btn').prop('disabled', true);
         return;
     }
 
@@ -5548,7 +6825,7 @@ function updatePaymentSummary() {
     selectedItems.each(function() {
         const row = $(this).closest('tr');
         const qty = parseFloat(row.find('.item-qty-input').val()) || 1;
-        const price = parseFloat(row.find('td:eq(3)').text().replace('₦', '').replace(/,/g, ''));
+        const price = parseFloat(row.find('td:eq(4)').text().replace('₦', '').replace(/,/g, ''));
         const discountPercent = parseFloat(row.find('.item-discount-input').val()) || 0;
 
         const itemSubtotal = price * qty;
@@ -5560,16 +6837,43 @@ function updatePaymentSummary() {
 
     const total = subtotal - totalDiscount;
 
+    // Update summary in modal
     $('#summary-subtotal').text(`₦${subtotal.toLocaleString()}`);
     $('#summary-discount').text(`₦${totalDiscount.toLocaleString()}`);
     $('#summary-total').text(`₦${total.toLocaleString()}`);
 
-    $('#payment-summary-card').show();
+    // Update floating cart
+    $('#cart-item-count').text(selectedItems.length);
+    $('#modal-item-count').text(selectedItems.length);
+    $('#cart-total-display').text(`₦${total.toLocaleString()}`);
+
+    // Show floating cart with pulse animation
+    const floatingCart = $('#floating-cart');
+    if (!floatingCart.is(':visible')) {
+        floatingCart.fadeIn(300);
+    }
+    // Pulse animation on update
+    $('.floating-cart-btn').addClass('pulse');
+    setTimeout(() => $('.floating-cart-btn').removeClass('pulse'), 300);
+
     $('#process-payment-btn').prop('disabled', false);
+    $('#print-invoice-btn').prop('disabled', false);
 }
 
-// Process payment button click
-$(document).on('click', '#process-payment-btn, #confirm-payment-btn', function() {
+// Process payment button click (toolbar) - opens the modal
+$(document).on('click', '#process-payment-btn', function() {
+    const selectedItems = $('.billing-item-checkbox:checked');
+    if (selectedItems.length === 0) {
+        toastr.warning('Please select items to process payment');
+        return;
+    }
+    // Open the payment modal using Bootstrap 5 API
+    const paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
+    paymentModal.show();
+});
+
+// Confirm payment button click (inside modal) - processes the payment
+$(document).on('click', '#confirm-payment-btn', function() {
     processPayment();
 });
 
@@ -5578,6 +6882,7 @@ function processPayment() {
 
     if (selectedItems.length === 0) {
         toastr.warning('Please select items to process payment');
+        $('#paymentModal').modal('hide');
         return;
     }
 
@@ -5646,6 +6951,9 @@ function processPayment() {
 
             toastr.success('Payment processed successfully!');
 
+            // Close payment modal
+            $('#paymentModal').modal('hide');
+
             // Generate new reference number for next payment
             generateReferenceNumber();
 
@@ -5659,10 +6967,11 @@ function processPayment() {
             $('#modal-receipt-a4').show();
             $('#modal-receipt-thermal').hide();
 
-            // Show modal
+            // Show receipt modal
             $('#receiptPreviewModal').modal('show');
 
-            $('#payment-summary-card').hide();
+            // Hide floating cart
+            $('#floating-cart').fadeOut(200);
 
             // Clear all billing selections and reset summary
             $('.billing-item-checkbox').prop('checked', false);
@@ -5819,6 +7128,63 @@ function reprintReceipt(paymentIds) {
         },
         error: function(xhr) {
             toastr.error(xhr.responseJSON?.message || 'Failed to generate receipt');
+        }
+    });
+}
+
+// ==========================================
+// PRINT INVOICE FUNCTIONALITY (For Unpaid Items)
+// ==========================================
+
+// Print invoice button click handler
+$(document).on('click', '#print-invoice-btn', function() {
+    printInvoice();
+});
+
+function printInvoice() {
+    const selectedItems = $('.billing-item-checkbox:checked');
+
+    if (selectedItems.length === 0) {
+        toastr.warning('Please select items to print invoice');
+        return;
+    }
+
+    // Collect selected item IDs
+    const itemIds = [];
+    selectedItems.each(function() {
+        itemIds.push($(this).data('id'));
+    });
+
+    // Show loading
+    toastr.info('Generating invoice...');
+
+    $.ajax({
+        url: '/billing-workbench/print-invoice',
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            patient_id: currentPatient,
+            item_ids: itemIds
+        },
+        success: function(response) {
+            // Show in modal (reusing receipt modal)
+            $('#modal-receipt-a4').html(response.invoice_a4);
+            $('#modal-receipt-thermal').html(response.invoice_thermal);
+
+            // Reset tabs to A4
+            $('.receipt-modal-tab').removeClass('active');
+            $('.receipt-modal-tab[data-format="a4"]').addClass('active');
+            $('#modal-receipt-a4').show();
+            $('#modal-receipt-thermal').hide();
+
+            // Update modal title temporarily
+            $('#receiptPreviewModal .modal-title').text('Invoice Preview - ' + response.invoice_no);
+
+            // Show modal
+            $('#receiptPreviewModal').modal('show');
+        },
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Failed to generate invoice');
         }
     });
 }
@@ -8084,6 +9450,11 @@ $('#receiptPreviewModal, #accountStatementModal').on('hidden.bs.modal', function
     $('body').css('overflow', '');
     $('body').css('padding-right', '');
     $('.modal-backdrop').remove();
+
+    // Reset receipt modal title back to default
+    if ($(this).attr('id') === 'receiptPreviewModal') {
+        $(this).find('.modal-title').text('Receipt Preview');
+    }
 });
 
 </script>

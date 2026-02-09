@@ -178,17 +178,43 @@ class BedController extends Controller
                     $wardName = $ward ? $ward->name : $request->ward;
                 }
 
-                $bed_servie_entry                      = service::where('id', $bed->service_id)->first();
-                $bed_servie_entry->category_id         = appsettings('bed_service_category_id', 1);
-                $bed_servie_entry->service_name        = 'Bed ' . $request->name . " " . $wardName . " " . $request->unit;
-                $bed_servie_entry->service_code        = strtoupper('Bed ' . $request->name . " " . $wardName . " " . $request->unit);
-                $bed_servie_entry->update();
+                $bedCategoryId = appsettings('bed_service_category_id', 1);
+                $serviceName = 'Bed ' . $request->name . " " . $wardName . " " . $request->unit;
+                $serviceCode = strtoupper(str_replace(' ', '-', $serviceName));
 
-                $bed_entry_service_price_entry                 = ServicePrice::where('service_id', $bed->service_id)->first();
-                $bed_entry_service_price_entry->service_id     = $bed_servie_entry->id;
-                $bed_entry_service_price_entry->cost_price     = $request->price;
-                $bed_entry_service_price_entry->sale_price     = $request->price;
-                $bed_entry_service_price_entry->update();
+                // Find or create bed service
+                if ($bed->service_id) {
+                    $bed_service_entry = service::find($bed->service_id);
+                }
+
+                if (!isset($bed_service_entry) || !$bed_service_entry) {
+                    // Create new service if bed doesn't have one
+                    $bed_service_entry = service::create([
+                        'user_id' => auth()->id() ?? 1,
+                        'category_id' => $bedCategoryId,
+                        'service_name' => $serviceName,
+                        'service_code' => $serviceCode,
+                        'status' => 1,
+                        'price_assign' => 1,
+                    ]);
+                    $bed->service_id = $bed_service_entry->id;
+                } else {
+                    // Update existing service
+                    $bed_service_entry->category_id = $bedCategoryId;
+                    $bed_service_entry->service_name = $serviceName;
+                    $bed_service_entry->service_code = $serviceCode;
+                    $bed_service_entry->update();
+                }
+
+                // Update or create service price - ALWAYS sync with bed price
+                ServicePrice::updateOrCreate(
+                    ['service_id' => $bed_service_entry->id],
+                    [
+                        'cost_price' => $request->price ?? 0,
+                        'sale_price' => $request->price ?? 0,
+                        'status' => 1,
+                    ]
+                );
 
                 $bed->name        = $request->name;
                 $bed->ward        = $wardName;

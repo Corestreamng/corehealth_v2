@@ -34,8 +34,10 @@ use App\Models\Accounting\StatutoryRemittance;
 use App\Models\Accounting\CashFlowForecastPeriod;
 use App\Models\Accounting\LiabilitySchedule;
 use App\Models\Accounting\LiabilityPaymentSchedule;
+use App\Models\Bed;
 use App\Models\CapexProjectExpense;
 use App\Observers\ProductObserver;
+use App\Observers\BedObserver;
 use App\Observers\ServiceObserver;
 use App\Observers\ServicePriceObserver;
 use App\Observers\PriceObserver;
@@ -153,6 +155,9 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\Accounting\Lease::observe(\App\Observers\Accounting\LeaseObserver::class);
         \App\Models\Accounting\LeasePaymentSchedule::observe(\App\Observers\Accounting\LeasePaymentObserver::class);
 
+        // NEW: Bed observer - ensures beds have proper services for billing
+        Bed::observe(BedObserver::class);
+
         // Process daily bed bills - runs once per day automatically
         $this->processDailyBedBills();
 
@@ -176,97 +181,199 @@ class AppServiceProvider extends ServiceProvider
 
     /**
      * Process daily bed billing for all occupied beds
-     * Uses cache to ensure it only runs once per day
+     * Uses DATABASE-BACKED tracking (not cache) for reliability on shared hosting.
+     *
+     * How it works:
+     * - Runs on every web request but checks if billing already done for today
+     * - Uses application_status table to track last billing date (reliable across restarts)
+     * - Creates one bed bill per active admission per day
+     * - Uses file lock to prevent race conditions from concurrent requests
      */
     protected function processDailyBedBills()
     {
         try {
-            // Check if already processed today using cache
-            $cacheKey = 'bed_billing_processed_' . Carbon::today()->format('Y-m-d');
+            $today = Carbon::today()->format('Y-m-d');
 
-            if (Cache::has($cacheKey)) {
+            // Quick check: Has billing already run today? (DB-backed, reliable on shared hosting)
+            $lastBillingDate = $this->getLastBedBillingDate();
+            if ($lastBillingDate === $today) {
                 return; // Already processed today
             }
 
-            // Get all active admissions with assigned beds
-            $admissions = AdmissionRequest::with(['patient.user', 'patient.hmo'])
-                ->where('discharged', 0)
-                ->where('status', 1)
-                ->whereNotNull('bed_id')
-                ->whereNotNull('bed_assign_date')
-                ->whereNotNull('service_id')
-                ->get();
+            // Use file lock to prevent concurrent execution (works on shared hosting)
+            $lockFile = storage_path('framework/bed_billing.lock');
+            $lockHandle = fopen($lockFile, 'c+');
 
-            if ($admissions->isEmpty()) {
-                // Mark as processed even if no beds to process
-                Cache::put($cacheKey, true, Carbon::tomorrow());
+            if (!flock($lockHandle, LOCK_EX | LOCK_NB)) {
+                // Another process is already running billing
+                fclose($lockHandle);
                 return;
             }
 
-            $billsCreated = 0;
-
-            foreach ($admissions as $admission) {
-                try {
-                    // Check if a bill has already been created for today
-                    $today = Carbon::today();
-                    $existingBill = ProductOrServiceRequest::where('user_id', $admission->patient->user->id)
-                        ->where('service_id', $admission->service_id)
-                        ->whereDate('created_at', $today)
-                        ->first();
-
-                    if ($existingBill) {
-                        continue; // Skip if bill already exists
-                    }
-
-                    // Create daily bed bill
-                    DB::beginTransaction();
-
-                    $bill_req = new ProductOrServiceRequest();
-                    $bill_req->user_id = $admission->patient->user->id;
-                    $bill_req->staff_user_id = 1; // System user
-                    $bill_req->service_id = $admission->service_id;
-                    $bill_req->qty = 1; // One day
-                    $bill_req->created_at = Carbon::now();
-
-                    // Apply HMO tariff if patient has HMO
-                    if ($admission->patient->hmo_id) {
-                        try {
-                            $hmoData = HmoHelper::applyHmoTariff(
-                                $admission->patient_id,
-                                null,
-                                $admission->service_id
-                            );
-                            if ($hmoData) {
-                                $bill_req->payable_amount = $hmoData['payable_amount'];
-                                $bill_req->claims_amount = $hmoData['claims_amount'];
-                                $bill_req->coverage_mode = $hmoData['coverage_mode'];
-                                $bill_req->validation_status = $hmoData['validation_status'];
-                            }
-                        } catch (\Exception $e) {
-                            Log::warning("HMO tariff error for patient {$admission->patient_id}: " . $e->getMessage());
-                            // Continue with cash pricing if HMO fails
-                        }
-                    }
-
-                    $bill_req->save();
-                    DB::commit();
-                    $billsCreated++;
-
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    Log::error("Error creating bed bill for admission {$admission->id}: " . $e->getMessage());
+            try {
+                // Double-check after acquiring lock (another request might have completed)
+                $lastBillingDate = $this->getLastBedBillingDate();
+                if ($lastBillingDate === $today) {
+                    return;
                 }
-            }
 
-            // Mark as processed for today (cache expires at midnight tomorrow)
-            Cache::put($cacheKey, true, Carbon::tomorrow());
+                // Get all active admissions with assigned beds
+                $admissions = AdmissionRequest::with(['patient.user', 'patient.hmo'])
+                    ->where('discharged', 0)
+                    ->where('status', 1)
+                    ->whereNotNull('bed_id')
+                    ->whereNotNull('bed_assign_date')
+                    ->whereNotNull('service_id')
+                    ->get();
 
-            if ($billsCreated > 0) {
-                Log::info("Bed billing: Created {$billsCreated} daily bed bills");
+                $billsCreated = 0;
+                $errors = [];
+
+                foreach ($admissions as $admission) {
+                    try {
+                        // Skip if patient/user doesn't exist
+                        if (!$admission->patient || !$admission->patient->user) {
+                            continue;
+                        }
+
+                        // Check if a bill has already been created for today (individual check)
+                        $existingBill = ProductOrServiceRequest::where('user_id', $admission->patient->user->id)
+                            ->where('service_id', $admission->service_id)
+                            ->whereDate('created_at', $today)
+                            ->exists();
+
+                        if ($existingBill) {
+                            continue; // Skip if bill already exists for today
+                        }
+
+                        // Create daily bed bill
+                        $bill_req = new ProductOrServiceRequest();
+                        $bill_req->user_id = $admission->patient->user->id;
+                        $bill_req->staff_user_id = 1; // System user
+                        $bill_req->service_id = $admission->service_id;
+                        $bill_req->qty = 1; // One day
+                        $bill_req->created_at = Carbon::now();
+
+                        // Get bed for pricing
+                        $bed = Bed::find($admission->bed_id);
+
+                        // Determine price
+                        $price = $this->determineBedBillPrice($admission, $bed);
+                        $bill_req->payable_amount = $price['payable_amount'];
+
+                        if (isset($price['claims_amount'])) {
+                            $bill_req->claims_amount = $price['claims_amount'];
+                            $bill_req->coverage_mode = $price['coverage_mode'] ?? null;
+                            $bill_req->validation_status = $price['validation_status'] ?? null;
+                        }
+
+                        $bill_req->save();
+                        $billsCreated++;
+
+                    } catch (\Exception $e) {
+                        $errors[] = "Admission {$admission->id}: " . $e->getMessage();
+                        Log::error("Error creating bed bill for admission {$admission->id}: " . $e->getMessage());
+                    }
+                }
+
+                // Update last billing date in database (reliable tracking)
+                $this->setLastBedBillingDate($today);
+
+                // Log summary
+                if ($billsCreated > 0 || !empty($errors)) {
+                    Log::info("Bed billing completed", [
+                        'date' => $today,
+                        'bills_created' => $billsCreated,
+                        'errors' => count($errors),
+                    ]);
+                }
+
+            } finally {
+                // Release lock
+                flock($lockHandle, LOCK_UN);
+                fclose($lockHandle);
             }
 
         } catch (\Exception $e) {
             Log::error("Fatal error in processDailyBedBills: " . $e->getMessage());
         }
+    }
+
+    /**
+     * Get the last date bed billing was processed (from database)
+     */
+    protected function getLastBedBillingDate(): ?string
+    {
+        try {
+            $result = DB::table('application_status')
+                ->where('id', 1)
+                ->value('last_bed_billing_date');
+
+            return $result;
+        } catch (\Exception $e) {
+            // Column might not exist yet - return null to trigger billing
+            return null;
+        }
+    }
+
+    /**
+     * Set the last date bed billing was processed (in database)
+     */
+    protected function setLastBedBillingDate(string $date): void
+    {
+        try {
+            DB::table('application_status')
+                ->where('id', 1)
+                ->update(['last_bed_billing_date' => $date]);
+        } catch (\Exception $e) {
+            // Column might not exist - try to add it
+            try {
+                DB::statement('ALTER TABLE application_status ADD COLUMN last_bed_billing_date DATE NULL');
+                DB::table('application_status')
+                    ->where('id', 1)
+                    ->update(['last_bed_billing_date' => $date]);
+            } catch (\Exception $e2) {
+                Log::warning("Could not update last_bed_billing_date: " . $e2->getMessage());
+            }
+        }
+    }
+
+    /**
+     * Determine the price for a bed bill (HMO or direct)
+     */
+    protected function determineBedBillPrice(AdmissionRequest $admission, ?Bed $bed): array
+    {
+        $basePrice = $bed->price ?? 0;
+
+        // Fallback: service price if bed price is 0
+        if (!$basePrice && $bed && $bed->service_id) {
+            $servicePrice = ServicePrice::where('service_id', $bed->service_id)->value('sale_price');
+            $basePrice = $servicePrice ?? 0;
+        }
+
+        // Apply HMO tariff if patient has HMO
+        if ($admission->patient->hmo_id) {
+            try {
+                $hmoData = HmoHelper::applyHmoTariff(
+                    $admission->patient_id,
+                    null,
+                    $admission->service_id
+                );
+
+                if ($hmoData && isset($hmoData['payable_amount'])) {
+                    return [
+                        'payable_amount' => $hmoData['payable_amount'],
+                        'claims_amount' => $hmoData['claims_amount'] ?? 0,
+                        'coverage_mode' => $hmoData['coverage_mode'] ?? null,
+                        'validation_status' => $hmoData['validation_status'] ?? null,
+                    ];
+                }
+            } catch (\Exception $e) {
+                Log::warning("HMO tariff error for patient {$admission->patient_id}: " . $e->getMessage());
+            }
+        }
+
+        // Cash patient or HMO failed - use bed price
+        return ['payable_amount' => $basePrice];
     }
 }
