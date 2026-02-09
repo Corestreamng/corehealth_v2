@@ -3522,6 +3522,100 @@
         50% { opacity: 0.5; }
     }
 
+    /* File Number Status Indicators */
+    .file-no-input.status-valid {
+        border-color: #28a745 !important;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='m2.3 6.73.6.57 4.8-4.82-.6-.57-4.2 4.25-1.8-1.81-.6.57 2.4 2.38z'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 1rem;
+        padding-right: 2.5rem;
+    }
+
+    .file-no-input.status-checking {
+        border-color: #ffc107 !important;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ffc107' stroke-width='2'%3e%3ccircle cx='12' cy='12' r='10'/%3e%3cpath d='M12 6v6l4 2'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 1rem;
+        padding-right: 2.5rem;
+    }
+
+    .file-no-input.status-duplicate {
+        border-color: #fd7e14 !important;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fd7e14'%3e%3cpath d='M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z'/%3e%3cpath d='M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 1rem;
+        padding-right: 2.5rem;
+    }
+
+    /* File Number Info Panel */
+    .file-no-info-panel {
+        background: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        margin-top: 0.5rem;
+        font-size: 0.8rem;
+        border: 1px solid #e9ecef;
+    }
+
+    .file-no-info-panel .format-display {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .file-no-info-panel .format-pattern {
+        font-family: monospace;
+        background: #e9ecef;
+        padding: 0.15rem 0.5rem;
+        border-radius: 0.25rem;
+        font-weight: 600;
+    }
+
+    .file-no-recent-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        margin-top: 0.35rem;
+    }
+
+    .file-no-recent-item {
+        background: #e9ecef;
+        padding: 0.15rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        font-family: monospace;
+    }
+
+    .file-no-recent-item:hover {
+        background: #dee2e6;
+    }
+
+    .file-no-duplicate-warning {
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        border-radius: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        margin-top: 0.5rem;
+        font-size: 0.8rem;
+    }
+
+    .file-no-duplicate-warning .warning-title {
+        font-weight: 600;
+        color: #856404;
+        margin-bottom: 0.25rem;
+    }
+
+    .file-no-duplicate-warning .duplicate-patient {
+        font-size: 0.75rem;
+        color: #856404;
+    }
+
     /* Allergies Input */
     .allergies-input-container {
         border: 2px solid #e9ecef;
@@ -4028,6 +4122,10 @@
             <button class="quick-action-btn" id="btn-new-patient">
                 <i class="mdi mdi-account-plus"></i>
                 <span>New Patient</span>
+            </button>
+            <button class="quick-action-btn" id="btn-quick-register">
+                <i class="mdi mdi-account-plus-outline text-success"></i>
+                <span>Quick Register</span>
             </button>
             <button class="quick-action-btn" id="btn-today-stats">
                 <i class="mdi mdi-chart-bar"></i>
@@ -5211,8 +5309,25 @@
                                                 <button type="button" class="file-no-mode-btn" data-mode="manual">
                                                     <i class="mdi mdi-pencil"></i> Manual
                                                 </button>
+                                                <button type="button" class="file-no-mode-btn" id="pf-file-no-refresh" title="Regenerate (Ctrl+G)" style="margin-left: auto;">
+                                                    <i class="mdi mdi-refresh"></i>
+                                                </button>
                                             </div>
                                             <input type="text" class="form-control file-no-input" id="pf-file-no" readonly placeholder="Auto-generated">
+                                            <!-- Info panel showing format and recent numbers -->
+                                            <div class="file-no-info-panel" id="pf-file-no-info">
+                                                <div class="format-display">
+                                                    <span class="text-muted">Format:</span>
+                                                    <span class="format-pattern" id="pf-format-pattern">--</span>
+                                                </div>
+                                                <div class="text-muted">Recent: <span id="pf-recent-label">click to copy</span></div>
+                                                <div class="file-no-recent-list" id="pf-recent-file-nos"></div>
+                                            </div>
+                                            <!-- Duplicate warning (hidden by default) -->
+                                            <div class="file-no-duplicate-warning" id="pf-duplicate-warning" style="display: none;">
+                                                <div class="warning-title"><i class="mdi mdi-alert"></i> File number already in use</div>
+                                                <div id="pf-duplicate-patients"></div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
@@ -5753,20 +5868,39 @@
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label>File Number <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" id="quick-register-file-no" readonly>
-                                    <div class="input-group-append">
-                                        <div class="input-group-text" style="padding: 0;">
-                                            <label class="mb-0 px-2 d-flex align-items-center" title="Toggle manual edit" style="cursor: pointer;">
-                                                <input type="checkbox" id="toggle-file-no-edit" class="mr-1">
-                                                <i class="mdi mdi-pencil"></i>
-                                            </label>
-                                        </div>
-                                    </div>
+                            <div class="form-group mb-3">
+                                <div class="file-no-label-row">
+                                    <label class="form-label mb-0">File Number <span class="text-danger">*</span></label>
+                                    <span class="file-no-next-badge" id="qr-file-no-hint" title="Next auto-generated number">
+                                        Next: <strong id="qr-next-file-no">--</strong>
+                                    </span>
                                 </div>
-                                <small class="text-muted">Next serial number auto-generated</small>
+                                <div class="file-no-btn-group">
+                                    <button type="button" class="file-no-mode-btn active" data-mode="auto" id="qr-mode-auto">
+                                        <i class="mdi mdi-autorenew"></i> Auto
+                                    </button>
+                                    <button type="button" class="file-no-mode-btn" data-mode="manual" id="qr-mode-manual">
+                                        <i class="mdi mdi-pencil"></i> Manual
+                                    </button>
+                                    <button type="button" class="file-no-mode-btn" id="qr-file-no-refresh" title="Regenerate (Ctrl+G)" style="margin-left: auto;">
+                                        <i class="mdi mdi-refresh"></i>
+                                    </button>
+                                </div>
+                                <input type="text" class="form-control file-no-input" id="quick-register-file-no" readonly placeholder="Auto-generated">
+                                <!-- Info panel showing format and recent numbers -->
+                                <div class="file-no-info-panel" id="qr-file-no-info">
+                                    <div class="format-display">
+                                        <span class="text-muted">Format:</span>
+                                        <span class="format-pattern" id="qr-format-pattern">--</span>
+                                    </div>
+                                    <div class="text-muted">Recent: <span id="qr-recent-label">click to copy</span></div>
+                                    <div class="file-no-recent-list" id="qr-recent-file-nos"></div>
+                                </div>
+                                <!-- Duplicate warning (hidden by default) -->
+                                <div class="file-no-duplicate-warning" id="qr-duplicate-warning" style="display: none;">
+                                    <div class="warning-title"><i class="mdi mdi-alert"></i> File number already in use</div>
+                                    <div id="qr-duplicate-patients"></div>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -6567,6 +6701,10 @@ function initializeEventListeners() {
 
     // Quick actions
     $('#btn-new-patient').on('click', function() {
+        showPatientFormModal('create');
+    });
+
+    $('#btn-quick-register').on('click', function() {
         showQuickRegisterModal();
     });
 
@@ -7864,10 +8002,7 @@ function bookConsultation() {
         return;
     }
 
-    if (serviceType === 'consultation' && !doctorId) {
-        toastr.warning('Please select a doctor');
-        return;
-    }
+    // Doctor selection is optional - patient can be queued without a specific doctor
 
     if (!serviceId) {
         toastr.warning('Please select a service');
@@ -8801,36 +8936,185 @@ function initializeVisitHistoryTable(patientId) {
 // =============================================
 function showQuickRegisterModal() {
     $('#quickRegisterModal').modal('show');
-    // Reset the toggle
-    $('#toggle-file-no-edit').prop('checked', false);
-    $('#quick-register-file-no').prop('readonly', true);
+    // Reset mode buttons
+    $('#qr-mode-auto').addClass('active');
+    $('#qr-mode-manual').removeClass('active');
+    $('#quick-register-file-no').prop('readonly', true).removeClass('status-valid status-checking status-duplicate');
+    $('#qr-duplicate-warning').hide();
+    $('#qr-file-no-hint').removeClass('manual-mode');
     // Generate new file number from server
     generateFileNumber();
 }
 
 function generateFileNumber() {
+    const $input = $('#quick-register-file-no');
+    $input.removeClass('status-valid status-checking status-duplicate');
+
     $.ajax({
         url: '/reception/patient/next-file-number',
         method: 'GET',
         success: function(response) {
-            $('#quick-register-file-no').val(response.file_no);
+            $input.val(response.file_no).addClass('status-valid');
+            $('#qr-next-file-no').text(response.file_no);
+
+            // Update format pattern display
+            if (response.format_pattern) {
+                $('#qr-format-pattern').text(response.format_pattern);
+            } else {
+                $('#qr-format-pattern').text('Sequential');
+            }
+
+            // Populate recent file numbers
+            const $recentList = $('#qr-recent-file-nos');
+            $recentList.empty();
+            if (response.recent_file_nos && response.recent_file_nos.length > 0) {
+                response.recent_file_nos.forEach(fileNo => {
+                    $recentList.append(`<span class="file-no-recent-item qr-recent-item" data-file-no="${fileNo}">${fileNo}</span>`);
+                });
+            }
+
+            $('#qr-duplicate-warning').hide();
         },
         error: function() {
             // Fallback: use timestamp-based number if server fails
             const now = new Date();
             const fallbackNo = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
             $('#quick-register-file-no').val(fallbackNo);
+            $('#qr-next-file-no').text(fallbackNo);
+            $('#qr-format-pattern').text('Auto-generated');
+            $('#qr-recent-file-nos').empty();
             toastr.warning('Could not fetch next file number, using auto-generated');
         }
     });
 }
 
-// Toggle file number edit
-$('#toggle-file-no-edit').on('change', function() {
-    const isChecked = $(this).is(':checked');
-    $('#quick-register-file-no').prop('readonly', !isChecked);
-    if (isChecked) {
-        $('#quick-register-file-no').focus();
+// Toggle file number mode for quick register (Auto/Manual buttons)
+function toggleQRFileNumberMode(mode) {
+    const $input = $('#quick-register-file-no');
+    const $hint = $('#qr-file-no-hint');
+
+    // Update button states
+    $('#qr-mode-auto, #qr-mode-manual').removeClass('active');
+    if (mode === 'manual') {
+        $('#qr-mode-manual').addClass('active');
+    } else {
+        $('#qr-mode-auto').addClass('active');
+    }
+
+    if (mode === 'manual') {
+        // Manual mode - allow editing
+        $input.prop('readonly', false).attr('placeholder', 'Enter file number');
+        $hint.addClass('manual-mode');
+        $input.focus().select();
+
+        // Check current value for duplicates
+        if ($input.val()) {
+            checkQRFileNumberDuplicate($input.val());
+        }
+    } else {
+        // Auto mode - readonly with generated number
+        $input.prop('readonly', true).attr('placeholder', 'Auto-generated');
+        $hint.removeClass('manual-mode');
+        generateFileNumber();
+    }
+}
+
+// Click handlers for mode buttons
+$('#qr-mode-auto').on('click', function() {
+    toggleQRFileNumberMode('auto');
+});
+
+$('#qr-mode-manual').on('click', function() {
+    toggleQRFileNumberMode('manual');
+});
+
+// Quick register refresh button
+$('#qr-file-no-refresh').on('click', function() {
+    toggleQRFileNumberMode('auto');
+    toastr.info('File number regenerated');
+});
+
+// Click handler for recent file numbers in quick register (copy to input)
+$(document).on('click', '.qr-recent-item', function() {
+    const fileNo = $(this).data('file-no');
+    const $input = $('#quick-register-file-no');
+
+    // Switch to manual mode
+    toggleQRFileNumberMode('manual');
+
+    // Set the value
+    $input.val(fileNo);
+
+    // Check for duplicates
+    checkQRFileNumberDuplicate(fileNo);
+
+    toastr.info(`Copied "${fileNo}" - you can edit it now`);
+});
+
+// Debounced file number duplicate check for quick register
+let quickRegisterCheckTimeout = null;
+function checkQRFileNumberDuplicate(fileNo) {
+    const $input = $('#quick-register-file-no');
+
+    // Clear previous timeout
+    if (quickRegisterCheckTimeout) {
+        clearTimeout(quickRegisterCheckTimeout);
+    }
+
+    if (!fileNo || fileNo.trim() === '') {
+        $input.removeClass('status-valid status-checking status-duplicate');
+        $('#qr-duplicate-warning').hide();
+        return;
+    }
+
+    // Show checking state
+    $input.removeClass('status-valid status-duplicate').addClass('status-checking');
+
+    // Debounce the AJAX call
+    quickRegisterCheckTimeout = setTimeout(function() {
+        $.ajax({
+            url: '/reception/patient/check-file-number',
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                file_no: fileNo
+            },
+            success: function(response) {
+                $input.removeClass('status-checking');
+
+                if (response.exists) {
+                    // Show warning (not blocking, just informative)
+                    $input.addClass('status-duplicate');
+                    const $warning = $('#qr-duplicate-warning');
+                    const $patients = $('#qr-duplicate-patients');
+
+                    let html = '';
+                    response.patients.forEach(p => {
+                        html += `<div class="duplicate-patient"><i class="mdi mdi-account"></i> ${p.name} (${p.file_no})</div>`;
+                    });
+                    if (response.count > 3) {
+                        html += `<div class="duplicate-patient text-muted">...and ${response.count - 3} more</div>`;
+                    }
+                    $patients.html(html);
+                    $warning.show();
+                } else {
+                    // File number is unique
+                    $input.addClass('status-valid');
+                    $('#qr-duplicate-warning').hide();
+                }
+            },
+            error: function() {
+                $input.removeClass('status-checking');
+            }
+        });
+    }, 400); // 400ms debounce
+}
+
+// Quick register file number input change (for duplicate check)
+$('#quick-register-file-no').on('input', function() {
+    const $input = $(this);
+    if (!$input.prop('readonly')) {
+        checkQRFileNumberDuplicate($input.val());
     }
 });
 
@@ -9290,24 +9574,152 @@ function resetPatientForm() {
 }
 
 function generatePatientFormFileNumber() {
+    const $input = $('#pf-file-no');
+    $input.removeClass('status-valid status-checking status-duplicate');
+
     $.ajax({
         url: '/reception/patient/next-file-number',
         method: 'GET',
         success: function(response) {
             $('#pf-file-no').val(response.file_no);
-            // Show the last and next file numbers
-            $('#pf-last-file-no').text(response.last_file_no || '0');
             $('#pf-next-file-no').text(response.file_no);
+
+            // Update format pattern display
+            if (response.format_pattern) {
+                $('#pf-format-pattern').text(response.format_pattern);
+            } else {
+                $('#pf-format-pattern').text('Sequential');
+            }
+
+            // Populate recent file numbers
+            const $recentList = $('#pf-recent-file-nos');
+            $recentList.empty();
+            if (response.recent_file_nos && response.recent_file_nos.length > 0) {
+                response.recent_file_nos.forEach(fileNo => {
+                    $recentList.append(`<span class="file-no-recent-item" data-file-no="${fileNo}">${fileNo}</span>`);
+                });
+            }
+
+            // Store data for later use
+            $input.data('lastFileNo', response.last_file_no);
+            $input.data('formatPattern', response.format_pattern);
+
+            // Mark as valid (auto-generated)
+            $input.addClass('status-valid');
+            $('#pf-duplicate-warning').hide();
         },
         error: function() {
             const now = new Date();
             const fallbackNo = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
             $('#pf-file-no').val(fallbackNo);
-            $('#pf-last-file-no').text('--');
             $('#pf-next-file-no').text(fallbackNo);
+            $('#pf-format-pattern').text('Auto-generated');
+            $('#pf-recent-file-nos').empty();
         }
     });
 }
+
+// Debounced file number duplicate check
+let fileNoCheckTimeout = null;
+function checkFileNumberDuplicate(fileNo, excludePatientId = null) {
+    const $input = $('#pf-file-no');
+
+    // Clear previous timeout
+    if (fileNoCheckTimeout) {
+        clearTimeout(fileNoCheckTimeout);
+    }
+
+    if (!fileNo || fileNo.trim() === '') {
+        $input.removeClass('status-valid status-checking status-duplicate');
+        $('#pf-duplicate-warning').hide();
+        return;
+    }
+
+    // Show checking state
+    $input.removeClass('status-valid status-duplicate').addClass('status-checking');
+
+    // Debounce the AJAX call
+    fileNoCheckTimeout = setTimeout(function() {
+        $.ajax({
+            url: '/reception/patient/check-file-number',
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                file_no: fileNo,
+                exclude_patient_id: excludePatientId
+            },
+            success: function(response) {
+                $input.removeClass('status-checking');
+
+                if (response.exists) {
+                    // Show warning (not blocking, just informative)
+                    $input.addClass('status-duplicate');
+                    const $warning = $('#pf-duplicate-warning');
+                    const $patients = $('#pf-duplicate-patients');
+
+                    let html = '';
+                    response.patients.forEach(p => {
+                        html += `<div class="duplicate-patient"><i class="mdi mdi-account"></i> ${p.name} (${p.file_no})</div>`;
+                    });
+                    if (response.count > 3) {
+                        html += `<div class="duplicate-patient text-muted">...and ${response.count - 3} more</div>`;
+                    }
+                    $patients.html(html);
+                    $warning.show();
+                } else {
+                    // File number is unique
+                    $input.addClass('status-valid');
+                    $('#pf-duplicate-warning').hide();
+                }
+            },
+            error: function() {
+                $input.removeClass('status-checking');
+            }
+        });
+    }, 400); // 400ms debounce
+}
+
+// Click handler for recent file numbers (copy to input)
+$(document).on('click', '.file-no-recent-item', function() {
+    const fileNo = $(this).data('file-no');
+    const $input = $('#pf-file-no');
+
+    // Switch to manual mode
+    toggleFileNumberEdit('manual');
+
+    // Set the value
+    $input.val(fileNo);
+
+    // Check for duplicates
+    checkFileNumberDuplicate(fileNo);
+
+    toastr.info(`Copied "${fileNo}" - you can edit it now`);
+});
+
+// Keyboard shortcut: Ctrl+G to regenerate file number
+$(document).on('keydown', function(e) {
+    if (e.ctrlKey && e.key === 'g' && $('#patientFormModal').is(':visible')) {
+        e.preventDefault();
+        toggleFileNumberEdit('auto');
+        toastr.info('File number regenerated');
+    }
+});
+
+// Refresh button click handler
+$('#pf-file-no-refresh').on('click', function() {
+    toggleFileNumberEdit('auto');
+    toastr.info('File number regenerated');
+});
+
+// Input change handler for duplicate check (in manual mode)
+$('#pf-file-no').on('input', function() {
+    const $input = $(this);
+    if (!$input.prop('readonly')) {
+        const fileNo = $input.val();
+        const excludeId = $input.data('editPatientId'); // Set when editing existing patient
+        checkFileNumberDuplicate(fileNo, excludeId);
+    }
+});
 
 function toggleFileNumberEdit(mode) {
     const $input = $('#pf-file-no');
@@ -9323,6 +9735,11 @@ function toggleFileNumberEdit(mode) {
         $input.prop('readonly', false).attr('placeholder', 'Enter file number');
         $hint.addClass('manual-mode');
         $input.focus().select();
+
+        // Check current value for duplicates
+        if ($input.val()) {
+            checkFileNumberDuplicate($input.val(), $input.data('editPatientId'));
+        }
     } else {
         // Auto mode - readonly with generated number
         $input.prop('readonly', true).attr('placeholder', 'Auto-generated');
@@ -10181,11 +10598,6 @@ $(document).ready(function() {
         } else {
             $(this).removeClass('has-value');
         }
-    });
-
-    // New patient button (update to use new modal)
-    $('#btn-new-patient').off('click').on('click', function() {
-        showPatientFormModal('create');
     });
 });
 

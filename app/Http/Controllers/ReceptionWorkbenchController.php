@@ -1124,17 +1124,148 @@ class ReceptionWorkbenchController extends Controller
 
     /**
      * Get the next sequential file number
+     * Handles various formats: 14-38-78, EMR009, EMR-90, 7809PT, etc.
+     * Only increments the last numeric segment while preserving the format
      */
     public function getNextFileNumber()
     {
-        $lastPatient = patient::whereNotNull('file_no')->orderByRaw('CAST(file_no AS UNSIGNED) DESC')->first();
-        $lastFileNo = $lastPatient ? intval($lastPatient->file_no) : 0;
-        $nextFileNo = $lastFileNo + 1;
+        // Get the last 5 patients with file numbers for reference
+        $recentPatients = patient::whereNotNull('file_no')
+            ->where('file_no', '!=', '')
+            ->orderBy('id', 'desc')
+            ->limit(5)
+            ->get(['id', 'file_no']);
+
+        $recentFileNumbers = $recentPatients->pluck('file_no')->toArray();
+
+        if ($recentPatients->isEmpty()) {
+            return response()->json([
+                'file_no' => '1',
+                'last_file_no' => null,
+                'recent_file_nos' => [],
+                'format_pattern' => null,
+                'format_example' => null
+            ]);
+        }
+
+        $lastFileNo = $recentPatients->first()->file_no;
+        $nextFileNo = $this->incrementLastNumericSegment($lastFileNo);
+
+        // Detect and describe the format pattern
+        $formatInfo = $this->detectFileNumberFormat($lastFileNo);
 
         return response()->json([
             'file_no' => $nextFileNo,
-            'last_file_no' => $lastFileNo
+            'last_file_no' => $lastFileNo,
+            'recent_file_nos' => $recentFileNumbers,
+            'format_pattern' => $formatInfo['pattern'],
+            'format_example' => $formatInfo['example']
         ]);
+    }
+
+    /**
+     * Check if a file number already exists
+     */
+    public function checkFileNumberExists(Request $request)
+    {
+        $fileNo = $request->input('file_no');
+        $excludePatientId = $request->input('exclude_patient_id'); // For edit mode
+
+        $query = patient::where('file_no', $fileNo);
+
+        if ($excludePatientId) {
+            $query->where('id', '!=', $excludePatientId);
+        }
+
+        $existingPatients = $query->with('user')->limit(3)->get();
+
+        $patients = $existingPatients->map(function ($patient) {
+            return [
+                'id' => $patient->id,
+                'name' => $patient->user ? userfullname($patient->user->id) : 'Unknown',
+                'file_no' => $patient->file_no
+            ];
+        });
+
+        return response()->json([
+            'exists' => $existingPatients->isNotEmpty(),
+            'count' => $existingPatients->count(),
+            'patients' => $patients
+        ]);
+    }
+
+    /**
+     * Detect the format pattern of a file number
+     */
+    private function detectFileNumberFormat(string $fileNo): array
+    {
+        // Analyze the file number to describe its format
+        $pattern = '';
+        $example = '';
+
+        if (preg_match('/^([A-Za-z]+)[-]?(\d+)$/', $fileNo, $matches)) {
+            // Format: EMR001 or EMR-001
+            $prefix = $matches[1];
+            $hasHyphen = strpos($fileNo, '-') !== false;
+            $numLength = strlen($matches[2]);
+            $pattern = $prefix . ($hasHyphen ? '-' : '') . str_repeat('#', $numLength);
+            $example = $prefix . ($hasHyphen ? '-' : '') . str_pad('X', $numLength, '0', STR_PAD_LEFT);
+        } elseif (preg_match('/^(\d+)[-](\d+)[-](\d+)$/', $fileNo, $matches)) {
+            // Format: 14-38-78
+            $pattern = str_repeat('#', strlen($matches[1])) . '-' . str_repeat('#', strlen($matches[2])) . '-' . str_repeat('#', strlen($matches[3]));
+            $example = 'XX-XX-XX';
+        } elseif (preg_match('/^(\d+)([A-Za-z]+)$/', $fileNo, $matches)) {
+            // Format: 7809PT
+            $numLength = strlen($matches[1]);
+            $suffix = $matches[2];
+            $pattern = str_repeat('#', $numLength) . $suffix;
+            $example = str_repeat('X', $numLength) . $suffix;
+        } elseif (preg_match('/^\d+$/', $fileNo)) {
+            // Pure numeric
+            $pattern = str_repeat('#', strlen($fileNo));
+            $example = 'Sequential number';
+        } else {
+            // Unknown format
+            $pattern = 'Custom';
+            $example = $fileNo;
+        }
+
+        return [
+            'pattern' => $pattern,
+            'example' => $example
+        ];
+    }
+
+    /**
+     * Increment only the last numeric segment of a file number
+     * Examples:
+     *   14-38-78  → 14-38-79
+     *   EMR009    → EMR010
+     *   EMR-90    → EMR-91
+     *   7809PT    → 7810PT
+     *   ABC       → ABC1 (no numbers found, append 1)
+     */
+    private function incrementLastNumericSegment(string $fileNo): string
+    {
+        // Find the last numeric segment in the string
+        // This regex captures everything before the last number, the last number itself, and everything after
+        if (preg_match('/^(.*?)(\d+)(\D*)$/', $fileNo, $matches)) {
+            $prefix = $matches[1];      // Everything before the last number
+            $number = $matches[2];      // The last numeric segment
+            $suffix = $matches[3];      // Everything after the last number (non-digits)
+
+            // Preserve leading zeros by tracking the original length
+            $originalLength = strlen($number);
+            $incrementedNumber = intval($number) + 1;
+
+            // Pad with leading zeros to maintain format (if new number doesn't exceed original length)
+            $newNumber = str_pad($incrementedNumber, $originalLength, '0', STR_PAD_LEFT);
+
+            return $prefix . $newNumber . $suffix;
+        }
+
+        // No numeric segment found, append "1"
+        return $fileNo . '1';
     }
 
     /**

@@ -144,12 +144,19 @@ class EncounterController extends Controller
         try {
             $doc = Staff::where('user_id', Auth::id())->first();
 
+            // Handle case where staff record doesn't exist
+            if (!$doc) {
+                return DataTables::of(collect([]))->make(true);
+            }
+
             // Get start and end dates from request, fallback to null
             $startDate = $request->input('start_date') ? Carbon::parse($request->input('start_date')) : null;
             $endDate = $request->input('end_date') ? Carbon::parse($request->input('end_date')) : null;
 
             $queueQuery = DoctorQueue::where(function ($q) use ($doc) {
-                $q->where('clinic_id', $doc->clinic_id);
+                if ($doc->clinic_id) {
+                    $q->where('clinic_id', $doc->clinic_id);
+                }
                 $q->orWhere('staff_id', $doc->id);
             })
                 ->where('status', '>', '2');
