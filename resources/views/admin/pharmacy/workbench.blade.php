@@ -1006,170 +1006,166 @@
         overflow-y: auto;
     }
 
-    /* Sticky Action Bar for Prescription Tabs */
-    .presc-sticky-action-bar {
+    /* ── Floating Cart (billing-style) ── */
+    .floating-cart {
         position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-        border-top: 2px solid var(--hospital-primary);
-        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
-        padding: 12px 20px;
+        bottom: 90px;
+        right: 24px;
         z-index: 1040;
         display: none;
-        transform: translateY(100%);
-        transition: transform 0.3s ease, opacity 0.3s ease;
-        opacity: 0;
-        /* Leave space for chat icon on right (60px icon + 30px margin + padding) */
-        padding-right: 110px;
     }
 
-    .presc-sticky-action-bar.visible {
-        display: flex !important;
-        transform: translateY(0);
-        opacity: 1;
-    }
-
-    .presc-sticky-action-bar .action-bar-content {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
-        max-width: 1400px;
-        margin: 0 auto;
-        gap: 15px;
-    }
-
-    .presc-sticky-action-bar .selection-info {
+    .floating-cart-btn {
         display: flex;
         align-items: center;
         gap: 12px;
-        flex-wrap: wrap;
-    }
-
-    .presc-sticky-action-bar .selection-count {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-weight: 600;
-        color: #212529;
-        font-size: 0.95rem;
-    }
-
-    .presc-sticky-action-bar .selection-count .count-badge {
-        background: var(--hospital-primary);
+        padding: 14px 24px;
+        background: linear-gradient(135deg, var(--hospital-primary) 0%, #0056b3 100%);
         color: white;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 700;
-        min-width: 28px;
-        text-align: center;
+        border: none;
+        border-radius: 50px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.25), 0 2px 6px rgba(0,0,0,0.15);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+        font-weight: 600;
     }
 
-    .presc-sticky-action-bar .selection-total {
+    .floating-cart-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3), 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    .floating-cart-btn .cart-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 28px;
+        height: 28px;
+        padding: 0 8px;
+        background: #fff;
+        color: var(--hospital-primary);
+        border-radius: 14px;
+        font-weight: 700;
+        font-size: 0.9rem;
+    }
+
+    .floating-cart-btn .cart-total {
         font-size: 1.1rem;
         font-weight: 700;
-        color: #198754;
-        padding: 6px 14px;
-        background: rgba(25, 135, 84, 0.1);
-        border-radius: 8px;
-        border: 1px solid rgba(25, 135, 84, 0.2);
     }
 
-    .presc-sticky-action-bar .action-buttons {
+    .floating-cart-btn i {
+        font-size: 1.4rem;
+    }
+
+    @keyframes cartPulse {
+        0%   { transform: scale(1); }
+        50%  { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    .floating-cart-btn.pulse {
+        animation: cartPulse 0.3s ease;
+    }
+
+    /* ── Cart Review Modal ── */
+    #cartReviewModal .modal-header {
+        background: linear-gradient(135deg, var(--hospital-primary), #0056b3);
+        color: white;
+    }
+
+    #cartReviewModal .cart-section {
+        border: 1px solid #e9ecef;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+
+    #cartReviewModal .cart-section-header {
         display: flex;
-        gap: 10px;
+        justify-content: space-between;
         align-items: center;
-        flex-wrap: wrap;
-    }
-
-    .presc-sticky-action-bar .btn {
-        padding: 10px 20px;
+        padding: 0.75rem 1rem;
+        background: #f8f9fa;
         font-weight: 600;
-        border-radius: 8px;
+        font-size: 0.9rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    #cartReviewModal .cart-item {
         display: flex;
+        justify-content: space-between;
         align-items: center;
-        gap: 6px;
+        padding: 0.6rem 1rem;
+        border-bottom: 1px solid #f1f3f5;
+        font-size: 0.88rem;
+    }
+
+    #cartReviewModal .cart-item:last-child {
+        border-bottom: none;
+    }
+
+    #cartReviewModal .cart-item-name {
+        font-weight: 500;
+        flex: 1;
+    }
+
+    #cartReviewModal .cart-item-meta {
+        color: #6c757d;
+        font-size: 0.8rem;
+    }
+
+    #cartReviewModal .cart-item-price {
+        font-weight: 600;
+        color: #198754;
+        margin-left: 0.75rem;
         white-space: nowrap;
     }
 
-    .presc-sticky-action-bar .btn-primary {
-        background: var(--hospital-primary);
-        border-color: var(--hospital-primary);
-        box-shadow: 0 2px 8px rgba(var(--hospital-primary-rgb), 0.3);
+    #cartReviewModal .cart-item-remove {
+        background: none;
+        border: none;
+        color: #dc3545;
+        cursor: pointer;
+        padding: 2px 6px;
+        border-radius: 50%;
+        font-size: 1rem;
+        line-height: 1;
+        margin-left: 0.5rem;
     }
 
-    .presc-sticky-action-bar .btn-primary:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(var(--hospital-primary-rgb), 0.4);
+    #cartReviewModal .cart-item-remove:hover {
+        background: #fde8e8;
     }
 
-    .presc-sticky-action-bar .btn-success {
-        box-shadow: 0 2px 8px rgba(25, 135, 84, 0.3);
+    #cartReviewModal .cart-empty {
+        text-align: center;
+        padding: 2rem;
+        color: #adb5bd;
     }
 
-    .presc-sticky-action-bar .btn-success:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(25, 135, 84, 0.4);
+    #cartReviewModal .cart-empty i {
+        font-size: 3rem;
+        display: block;
+        margin-bottom: 0.5rem;
     }
 
-    /* Mobile Responsive for Sticky Bar */
-    @media (max-width: 768px) {
-        .presc-sticky-action-bar {
-            padding: 10px 15px;
-            padding-right: 100px; /* Slightly less on mobile */
-            flex-direction: column;
-        }
-
-        .presc-sticky-action-bar .action-bar-content {
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .presc-sticky-action-bar .selection-info {
-            justify-content: center;
-            width: 100%;
-        }
-
-        .presc-sticky-action-bar .action-buttons {
-            justify-content: center;
-            width: 100%;
-        }
-
-        .presc-sticky-action-bar .btn {
-            padding: 8px 16px;
-            font-size: 0.9rem;
-        }
-
-        .presc-sticky-action-bar .selection-total {
-            font-size: 1rem;
-        }
+    #cartReviewModal .cart-action-row {
+        display: flex;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: #f8f9fa;
+        border-top: 1px solid #e9ecef;
     }
 
-    @media (max-width: 480px) {
-        .presc-sticky-action-bar {
-            padding-right: 90px;
-        }
-
-        .presc-sticky-action-bar .action-buttons {
-            flex-direction: column;
-            width: 100%;
-        }
-
-        .presc-sticky-action-bar .btn {
-            width: 100%;
-            justify-content: center;
-        }
-    }
-
-    /* Add bottom padding to prescription tab content when sticky bar is visible */
-    .presc-sticky-action-bar.visible ~ .tab-content .tab-pane.active .card-body,
-    body:has(.presc-sticky-action-bar.visible) #presc-billing-pane .card-body,
-    body:has(.presc-sticky-action-bar.visible) #presc-pending-pane .card-body,
-    body:has(.presc-sticky-action-bar.visible) #presc-dispense-pane .card-body {
-        padding-bottom: 100px !important;
+    #cartReviewModal .cart-section-total {
+        text-align: right;
+        padding: 0.5rem 1rem;
+        font-weight: 700;
+        color: #198754;
+        background: rgba(25, 135, 84, 0.05);
+        border-top: 1px solid #e9ecef;
     }
 
     /* Pending Requests Display */
@@ -5030,182 +5026,38 @@
     justify-content: center;
     gap: 0.5rem;
 }
-
-/* Enhanced Sticky Bar Item List */
-.sticky-items-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    max-width: 50%;
-    max-height: 60px;
-    overflow-y: auto;
-    padding: 4px 0;
-}
-
-.sticky-item-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: #fff;
-    border: 1px solid #dee2e6;
-    border-radius: 20px;
-    padding: 4px 10px;
-    font-size: 0.75rem;
-    white-space: nowrap;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-}
-
-.sticky-item-chip .item-name {
-    max-width: 120px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-weight: 500;
-    color: #212529;
-}
-
-.sticky-item-chip .item-details {
-    color: #6c757d;
-    font-size: 0.7rem;
-}
-
-.sticky-item-chip .item-price {
-    color: #198754;
-    font-weight: 600;
-}
-
-.sticky-item-chip .btn-remove-item {
-    background: none;
-    border: none;
-    padding: 0;
-    margin-left: 4px;
-    color: #dc3545;
-    cursor: pointer;
-    font-size: 0.85rem;
-    line-height: 1;
-    opacity: 0.7;
-}
-
-.sticky-item-chip .btn-remove-item:hover {
-    opacity: 1;
-}
-
-.sticky-items-overflow {
-    font-size: 0.75rem;
-    color: #6c757d;
-    padding: 4px 8px;
-    background: #f8f9fa;
-    border-radius: 12px;
-}
-
-.btn-clear-selection {
-    padding: 4px 10px;
-    font-size: 0.75rem;
-    border-radius: 15px;
-}
-
-@media (max-width: 768px) {
-    .sticky-items-list {
-        max-width: 100%;
-        max-height: 45px;
-    }
-    .sticky-item-chip .item-name {
-        max-width: 80px;
-    }
-}
 </style>
 
-<!-- Sticky Action Bars for Prescription Tabs -->
-<!-- Billing Tab Sticky Bar -->
-<div id="billing-sticky-bar" class="presc-sticky-action-bar" data-tab="billing">
-    <div class="action-bar-content">
-        <div class="selection-info">
-            <div class="d-flex align-items-center gap-2 mb-1">
-                <div class="selection-count">
-                    <i class="mdi mdi-checkbox-marked-circle text-primary"></i>
-                    <span class="count-badge" id="billing-selected-count">0</span>
-                    <span>selected</span>
-                </div>
-                <button type="button" class="btn btn-outline-secondary btn-clear-selection" onclick="clearSelection('billing')" title="Clear selection">
-                    <i class="mdi mdi-close"></i> Clear
-                </button>
-            </div>
-            <div class="sticky-items-list" id="billing-items-list"></div>
-        </div>
-        <div class="d-flex flex-column align-items-end gap-2">
-            <div class="selection-total" id="billing-selected-total">₦0.00</div>
-            <div class="action-buttons">
-                <button type="button" class="btn btn-outline-danger btn-sm" onclick="showDismissModal('billing')">
-                    <i class="mdi mdi-close-circle"></i>
-                    <span class="d-none d-sm-inline">Dismiss</span>
-                </button>
-                <button type="button" class="btn btn-primary" onclick="billPrescItems()" id="sticky-btn-bill-presc">
-                    <i class="mdi mdi-cash-register"></i>
-                    <span>Bill</span>
-                </button>
-            </div>
-        </div>
-    </div>
+<!-- Floating Cart Button -->
+<div class="floating-cart" id="floating-cart">
+    <button class="floating-cart-btn" onclick="openCartReviewModal()">
+        <i class="mdi mdi-cart-outline"></i>
+        <span class="cart-badge" id="cart-item-count">0</span>
+        <span class="cart-total" id="cart-total-display">₦0.00</span>
+        <i class="mdi mdi-chevron-up"></i>
+    </button>
 </div>
 
-<!-- Pending Tab Sticky Bar -->
-<div id="pending-sticky-bar" class="presc-sticky-action-bar" data-tab="pending">
-    <div class="action-bar-content">
-        <div class="selection-info">
-            <div class="d-flex align-items-center gap-2 mb-1">
-                <div class="selection-count">
-                    <i class="mdi mdi-checkbox-marked-circle text-warning"></i>
-                    <span class="count-badge" id="pending-selected-count" style="background: #ffc107; color: #212529;">0</span>
-                    <span>selected</span>
-                </div>
-                <button type="button" class="btn btn-outline-secondary btn-clear-selection" onclick="clearSelection('pending')" title="Clear selection">
-                    <i class="mdi mdi-close"></i> Clear
-                </button>
+<!-- Cart Review Modal -->
+<div class="modal fade" id="cartReviewModal" tabindex="-1" role="dialog" aria-labelledby="cartReviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cartReviewModalLabel">
+                    <i class="mdi mdi-cart-check"></i> Selected Items
+                    <span class="badge bg-light text-primary ms-2" id="modal-cart-count">0</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="sticky-items-list" id="pending-items-list"></div>
-        </div>
-        <div class="d-flex flex-column align-items-end gap-2">
-            <div class="selection-total text-warning" id="pending-selected-total" style="background: rgba(255, 193, 7, 0.1); border-color: rgba(255, 193, 7, 0.3); color: #856404;">
-                Awaiting settlement
+            <div class="modal-body p-0" id="cart-review-body">
+                <!-- Populated by JS -->
             </div>
-            <div class="action-buttons">
-                <button type="button" class="btn btn-outline-primary btn-sm" onclick="printSelectedPendingPrescriptions()">
-                    <i class="mdi mdi-printer"></i>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearAllSelections()">
+                    <i class="mdi mdi-close-circle-outline"></i> Clear All
                 </button>
-                <button type="button" class="btn btn-danger" onclick="showDismissModal('pending')">
-                    <i class="mdi mdi-close-circle"></i>
-                    <span>Dismiss</span>
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Dispense Tab Sticky Bar -->
-<div id="dispense-sticky-bar" class="presc-sticky-action-bar" data-tab="dispense">
-    <div class="action-bar-content">
-        <div class="selection-info">
-            <div class="d-flex align-items-center gap-2 mb-1">
-                <div class="selection-count">
-                    <i class="mdi mdi-checkbox-marked-circle text-success"></i>
-                    <span class="count-badge" id="dispense-selected-count" style="background: #198754;">0</span>
-                    <span>ready</span>
-                </div>
-                <button type="button" class="btn btn-outline-secondary btn-clear-selection" onclick="clearSelection('dispense')" title="Clear selection">
-                    <i class="mdi mdi-close"></i> Clear
-                </button>
-            </div>
-            <div class="sticky-items-list" id="dispense-items-list"></div>
-        </div>
-        <div class="d-flex flex-column align-items-end gap-2">
-            <div class="selection-total" id="dispense-selected-total">₦0.00</div>
-            <div class="action-buttons">
-                <button type="button" class="btn btn-outline-danger btn-sm" onclick="showDismissModal('dispense')">
-                    <i class="mdi mdi-close-circle"></i>
-                    <span class="d-none d-sm-inline">Dismiss</span>
-                </button>
-                <button type="button" class="btn btn-success" onclick="addSelectedToCartAndOpen()">
-                    <i class="mdi mdi-cart-plus"></i>
-                    <span>Cart</span>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="mdi mdi-close"></i> Close
                 </button>
             </div>
         </div>
@@ -7590,97 +7442,185 @@ let selectedItemsData = {
 // Store dismiss type for modal
 let currentDismissType = null;
 
-// Update sticky action bar visibility, counts, and item list
-function updateStickyActionBar(type) {
-    const $bar = $(`#${type}-sticky-bar`);
-    const $itemsList = $(`#${type}-items-list`);
-    let selectedCount = 0;
-    let totalAmount = 0;
-    let items = [];
+// Gather selected items data from all tabs
+function gatherSelectedItems() {
+    const data = { billing: [], pending: [], dispense: [] };
+    let grandTotal = 0;
 
-    if (type === 'billing') {
-        $('#presc_billing_table').find('.presc-billing-check:checked').each(function() {
-            const $row = $(this).closest('tr');
-            const $card = $row.find('.presc-card');
-            const id = $(this).data('id');
-            const price = parseFloat($(this).data('price')) || 0;
-            const name = $card.find('.presc-card-title').text().trim() || 'Unknown';
-            const qty = $card.find('.presc-card-body').text().match(/Qty:\s*(\d+)/)?.[1] || '1';
-
-            selectedCount++;
-            totalAmount += price;
-            items.push({ id, name, qty, price });
-        });
-        $('#billing-selected-count').text(selectedCount);
-        $('#billing-selected-total').text('₦' + formatMoneyPharmacy(totalAmount));
-    } else if (type === 'pending') {
-        $('#presc_pending_table').find('.presc-pending-check:checked').each(function() {
-            const $row = $(this).closest('tr');
-            const $card = $row.find('.presc-card');
-            const id = $(this).data('id');
-            const name = $card.find('.presc-card-title').text().trim() || 'Unknown';
-            const qty = $card.find('.presc-card-body').text().match(/Qty:\s*(\d+)/)?.[1] || '1';
-            const priceText = $card.find('.presc-card-price').text();
-            const price = parseFloat(priceText.replace(/[₦,]/g, '')) || 0;
-
-            selectedCount++;
-            totalAmount += price;
-            items.push({ id, name, qty, price });
-        });
-        $('#pending-selected-count').text(selectedCount);
-    } else if (type === 'dispense') {
-        $('#presc_dispense_table').find('.presc-dispense-check:checked').each(function() {
-            const $row = $(this).closest('tr');
-            const $card = $row.find('.presc-card');
-            const id = $(this).data('id');
-            const name = $card.find('.presc-card-title').text().trim() || 'Unknown';
-            const qty = $card.find('.presc-card-body').text().match(/Qty:\s*(\d+)/)?.[1] || '1';
-            const priceText = $card.find('.presc-card-price').text();
-            const price = parseFloat(priceText.replace(/[₦,]/g, '')) || 0;
-
-            selectedCount++;
-            totalAmount += price;
-            items.push({ id, name, qty, price });
-        });
-        $('#dispense-selected-count').text(selectedCount);
-        $('#dispense-selected-total').text('₦' + formatMoneyPharmacy(totalAmount));
-    }
-
-    // Store items data
-    selectedItemsData[type] = items;
-
-    // Build item chips HTML (show max 5 items)
-    let chipsHtml = '';
-    const maxDisplay = 5;
-    items.slice(0, maxDisplay).forEach(item => {
-        const shortName = item.name.length > 15 ? item.name.substring(0, 15) + '...' : item.name;
-        chipsHtml += `
-            <div class="sticky-item-chip">
-                <span class="item-name" title="${item.name}">${shortName}</span>
-                <span class="item-details">×${item.qty}</span>
-                <span class="item-price">₦${formatMoneyPharmacy(item.price)}</span>
-                <button type="button" class="btn-remove-item" onclick="removeItemFromSelection('${type}', ${item.id})" title="Remove">
-                    <i class="mdi mdi-close-circle"></i>
-                </button>
-            </div>
-        `;
+    $('#presc_billing_table').find('.presc-billing-check:checked').each(function() {
+        const $row = $(this).closest('tr');
+        const $card = $row.find('.presc-card');
+        const id = $(this).data('id');
+        const price = parseFloat($(this).data('price')) || 0;
+        const name = $card.find('.presc-card-title').text().trim() || 'Unknown';
+        const qty = $card.find('.presc-card-body').text().match(/Qty:\s*(\d+)/)?.[1] || '1';
+        grandTotal += price;
+        data.billing.push({ id, name, qty, price });
     });
 
-    if (items.length > maxDisplay) {
-        chipsHtml += `<span class="sticky-items-overflow">+${items.length - maxDisplay} more</span>`;
+    $('#presc_pending_table').find('.presc-pending-check:checked').each(function() {
+        const $row = $(this).closest('tr');
+        const $card = $row.find('.presc-card');
+        const id = $(this).data('id');
+        const name = $card.find('.presc-card-title').text().trim() || 'Unknown';
+        const qty = $card.find('.presc-card-body').text().match(/Qty:\s*(\d+)/)?.[1] || '1';
+        const priceText = $card.find('.presc-card-price').text();
+        const price = parseFloat(priceText.replace(/[₦,]/g, '')) || 0;
+        grandTotal += price;
+        data.pending.push({ id, name, qty, price });
+    });
+
+    $('#presc_dispense_table').find('.presc-dispense-check:checked').each(function() {
+        const $row = $(this).closest('tr');
+        const $card = $row.find('.presc-card');
+        const id = $(this).data('id');
+        const name = $card.find('.presc-card-title').text().trim() || 'Unknown';
+        const qty = $card.find('.presc-card-body').text().match(/Qty:\s*(\d+)/)?.[1] || '1';
+        const priceText = $card.find('.presc-card-price').text();
+        const price = parseFloat(priceText.replace(/[₦,]/g, '')) || 0;
+        grandTotal += price;
+        data.dispense.push({ id, name, qty, price });
+    });
+
+    data.totalCount = data.billing.length + data.pending.length + data.dispense.length;
+    data.grandTotal = grandTotal;
+    return data;
+}
+
+// Update floating cart — called by every checkbox handler
+function updateStickyActionBar(type) {
+    // Keep selectedItemsData in sync for dismiss modal
+    const data = gatherSelectedItems();
+    selectedItemsData.billing  = data.billing;
+    selectedItemsData.pending  = data.pending;
+    selectedItemsData.dispense = data.dispense;
+
+    if (data.totalCount === 0) {
+        $('#floating-cart').fadeOut(200);
+        return;
     }
 
-    $itemsList.html(chipsHtml);
+    $('#cart-item-count').text(data.totalCount);
+    $('#cart-total-display').text('₦' + formatMoneyPharmacy(data.grandTotal));
+    $('#floating-cart').fadeIn(300);
+    $('.floating-cart-btn').addClass('pulse');
+    setTimeout(() => $('.floating-cart-btn').removeClass('pulse'), 300);
+}
 
-    // Show/hide the bar based on selection
-    if (selectedCount > 0) {
-        // Hide other bars first
-        $('.presc-sticky-action-bar').removeClass('visible');
-        // Show this bar with animation
-        $bar.addClass('visible');
+// Open the cart review modal listing all selected items
+function openCartReviewModal() {
+    const data = gatherSelectedItems();
+    $('#modal-cart-count').text(data.totalCount);
+
+    let html = '';
+
+    if (data.totalCount === 0) {
+        html = `<div style="text-align:center;padding:2rem;color:#adb5bd;">
+            <i class="mdi mdi-cart-outline" style="font-size:3rem;display:block;margin-bottom:0.5rem;"></i>
+            <p>No items selected</p>
+            <p class="small">Check items in any tab, then open the cart</p>
+        </div>`;
     } else {
-        $bar.removeClass('visible');
+        // Billing section
+        if (data.billing.length > 0) {
+            const billingTotal = data.billing.reduce((s, i) => s + i.price, 0);
+            html += `<div class="cart-section">
+                <div class="cart-section-header">
+                    <span><i class="mdi mdi-cash-register text-primary"></i> Billing</span>
+                    <span class="badge bg-primary">${data.billing.length}</span>
+                </div>`;
+            data.billing.forEach(item => {
+                html += `<div class="cart-item">
+                    <div style="flex:1">
+                        <div class="cart-item-name">${item.name}</div>
+                        <div class="cart-item-meta">Qty: ${item.qty}</div>
+                    </div>
+                    <span class="cart-item-price">₦${formatMoneyPharmacy(item.price)}</span>
+                    <button class="cart-item-remove" onclick="removeItemFromSelection('billing', ${item.id})" title="Remove">
+                        <i class="mdi mdi-close-circle"></i>
+                    </button>
+                </div>`;
+            });
+            html += `<div class="cart-section-total">Subtotal: ₦${formatMoneyPharmacy(billingTotal)}</div>`;
+            html += `<div class="cart-action-row">
+                <button class="btn btn-primary btn-sm" onclick="billPrescItems()">
+                    <i class="mdi mdi-cash-register"></i> Bill (${data.billing.length})
+                </button>
+                <button class="btn btn-outline-danger btn-sm" onclick="showDismissModal('billing')">
+                    <i class="mdi mdi-close-circle"></i> Dismiss
+                </button>
+            </div></div>`;
+        }
+
+        // Pending section
+        if (data.pending.length > 0) {
+            html += `<div class="cart-section">
+                <div class="cart-section-header">
+                    <span><i class="mdi mdi-clock-outline text-warning"></i> Pending</span>
+                    <span class="badge bg-warning text-dark">${data.pending.length}</span>
+                </div>`;
+            data.pending.forEach(item => {
+                html += `<div class="cart-item">
+                    <div style="flex:1">
+                        <div class="cart-item-name">${item.name}</div>
+                        <div class="cart-item-meta">Qty: ${item.qty}</div>
+                    </div>
+                    <span class="cart-item-price">₦${formatMoneyPharmacy(item.price)}</span>
+                    <button class="cart-item-remove" onclick="removeItemFromSelection('pending', ${item.id})" title="Remove">
+                        <i class="mdi mdi-close-circle"></i>
+                    </button>
+                </div>`;
+            });
+            html += `<div class="cart-action-row">
+                <button class="btn btn-outline-primary btn-sm" onclick="printSelectedPendingPrescriptions()">
+                    <i class="mdi mdi-printer"></i> Print
+                </button>
+                <button class="btn btn-outline-danger btn-sm" onclick="showDismissModal('pending')">
+                    <i class="mdi mdi-close-circle"></i> Dismiss
+                </button>
+            </div></div>`;
+        }
+
+        // Dispense section
+        if (data.dispense.length > 0) {
+            const dispenseTotal = data.dispense.reduce((s, i) => s + i.price, 0);
+            html += `<div class="cart-section">
+                <div class="cart-section-header">
+                    <span><i class="mdi mdi-pill text-success"></i> Ready to Dispense</span>
+                    <span class="badge bg-success">${data.dispense.length}</span>
+                </div>`;
+            data.dispense.forEach(item => {
+                html += `<div class="cart-item">
+                    <div style="flex:1">
+                        <div class="cart-item-name">${item.name}</div>
+                        <div class="cart-item-meta">Qty: ${item.qty}</div>
+                    </div>
+                    <span class="cart-item-price">₦${formatMoneyPharmacy(item.price)}</span>
+                    <button class="cart-item-remove" onclick="removeItemFromSelection('dispense', ${item.id})" title="Remove">
+                        <i class="mdi mdi-close-circle"></i>
+                    </button>
+                </div>`;
+            });
+            html += `<div class="cart-section-total">Subtotal: ₦${formatMoneyPharmacy(dispenseTotal)}</div>`;
+            html += `<div class="cart-action-row">
+                <button class="btn btn-success btn-sm" onclick="$('#cartReviewModal').modal('hide'); addSelectedToCartAndOpen();">
+                    <i class="mdi mdi-cart-plus"></i> Add to Dispense Cart (${data.dispense.length})
+                </button>
+                <button class="btn btn-outline-danger btn-sm" onclick="showDismissModal('dispense')">
+                    <i class="mdi mdi-close-circle"></i> Dismiss
+                </button>
+            </div></div>`;
+        }
     }
+
+    $('#cart-review-body').html(html);
+    $('#cartReviewModal').modal('show');
+}
+
+// Clear all selections across all tabs
+function clearAllSelections() {
+    ['billing', 'pending', 'dispense'].forEach(type => clearSelection(type));
+    $('#cartReviewModal').modal('hide');
 }
 
 // Remove single item from selection
@@ -7697,6 +7637,10 @@ function removeItemFromSelection(type, itemId) {
         if (type === 'billing') handlePrescBillingCheckPharmacy($checkbox[0]);
         else if (type === 'pending') handlePrescPendingCheckPharmacy($checkbox[0]);
         else if (type === 'dispense') handlePrescDispenseCheckPharmacy($checkbox[0]);
+    }
+    // Re-render modal if open
+    if ($('#cartReviewModal').hasClass('show')) {
+        openCartReviewModal();
     }
 }
 
@@ -7777,9 +7721,9 @@ function confirmDismiss() {
     dismissPrescItemsConfirmed(currentDismissType);
 }
 
-// Hide all sticky bars (for tab switching)
+// Hide floating cart (for patient switches / tab resets)
 function hideAllStickyBars() {
-    $('.presc-sticky-action-bar').removeClass('visible');
+    $('#floating-cart').fadeOut(200);
 }
 
 // Checkbox handler for billing
