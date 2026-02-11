@@ -34,10 +34,14 @@ use App\Models\Accounting\StatutoryRemittance;
 use App\Models\Accounting\CashFlowForecastPeriod;
 use App\Models\Accounting\LiabilitySchedule;
 use App\Models\Accounting\LiabilityPaymentSchedule;
+use App\Models\PharmacyReturn;
+use App\Models\PharmacyDamage;
 use App\Models\Bed;
+use App\Models\StockBatch;
 use App\Models\CapexProjectExpense;
 use App\Observers\ProductObserver;
 use App\Observers\BedObserver;
+use App\Observers\StockBatchObserver;
 use App\Observers\ServiceObserver;
 use App\Observers\ServicePriceObserver;
 use App\Observers\PriceObserver;
@@ -65,6 +69,8 @@ use App\Observers\Accounting\CashFlowForecastPeriodObserver;
 use App\Observers\Accounting\CapexExpenseObserver;
 use App\Observers\Accounting\LiabilityScheduleObserver;
 use App\Observers\Accounting\LiabilityPaymentObserver;
+use App\Observers\Accounting\PharmacyReturnObserver;
+use App\Observers\Accounting\PharmacyDamageObserver;
 use App\Helpers\HmoHelper;
 use App\Services\DepartmentNotificationService;
 use Carbon\Carbon;
@@ -143,6 +149,13 @@ class AppServiceProvider extends ServiceProvider
 
         // NEW: Cash Flow Forecast Period observer - auto-applies recurring patterns to new periods
         CashFlowForecastPeriod::observe(CashFlowForecastPeriodObserver::class);
+
+        // NEW: Pharmacy Returns and Damages observers
+        PharmacyReturn::observe(PharmacyReturnObserver::class);
+        PharmacyDamage::observe(PharmacyDamageObserver::class);
+
+        // NEW: StockBatch observer — auto-syncs store_stocks and global stocks
+        StockBatch::observe(StockBatchObserver::class);
 
         // NEW: CAPEX Expense observer - creates JE when CAPEX expenses are recorded/approved
         CapexProjectExpense::observe(CapexExpenseObserver::class);

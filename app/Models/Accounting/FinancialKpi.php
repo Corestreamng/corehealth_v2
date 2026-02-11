@@ -149,7 +149,7 @@ class FinancialKpi extends Model
             return 0;
         }
 
-        $account = Account::where('account_code', $accountCode)->first();
+        $account = Account::where('code', $accountCode)->first();
         if (!$account) {
             return 0;
         }

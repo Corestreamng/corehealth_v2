@@ -1278,7 +1278,7 @@ class PatientProcedureController extends Controller
     private function createBillingEntry(Procedure $procedure, $item, $basePrice, $type)
     {
         // Get patient's user_id from the patient record
-        $patient = \App\Models\Patient::find($procedure->patient_id);
+        $patient = \App\Models\patient::find($procedure->patient_id);
 
         $billingEntry = new ProductOrServiceRequest();
         $billingEntry->type = $type;

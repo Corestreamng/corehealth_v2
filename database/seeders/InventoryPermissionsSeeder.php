@@ -68,6 +68,25 @@ class InventoryPermissionsSeeder extends Seeder
             'stock.view' => 'View stock levels',
             'stock.transfer' => 'Transfer stock between stores',
             'stock.dispense-with-batch' => 'Dispense items with batch selection',
+
+            // ===== PHARMACY RETURNS =====
+            'pharmacy.returns.view' => 'View pharmacy returns',
+            'pharmacy.returns.create' => 'Create pharmacy returns',
+            'pharmacy.returns.approve' => 'Approve pharmacy returns',
+            'pharmacy.returns.reject' => 'Reject pharmacy returns',
+            'pharmacy.returns.process' => 'Process refunds for returns',
+
+            // ===== PHARMACY DAMAGES =====
+            'pharmacy.damages.view' => 'View pharmacy damage reports',
+            'pharmacy.damages.create' => 'Record pharmacy damage reports',
+            'pharmacy.damages.approve' => 'Approve pharmacy damage reports',
+            'pharmacy.damages.reject' => 'Reject pharmacy damage reports',
+
+            // ===== PHARMACY REPORTS =====
+            'pharmacy.reports.stock' => 'View pharmacy stock reports',
+            'pharmacy.reports.valuation' => 'View pharmacy stock valuation',
+            'pharmacy.reports.expiring' => 'View expiring stock reports',
+            'pharmacy.reports.export' => 'Export pharmacy reports',
         ];
 
         foreach ($permissions as $name => $description) {
@@ -96,6 +115,7 @@ class InventoryPermissionsSeeder extends Seeder
             $adminRole->givePermissionTo(Permission::where('name', 'like', 'store-workbench.%')->pluck('name'));
             $adminRole->givePermissionTo(Permission::where('name', 'like', 'expenses.%')->pluck('name'));
             $adminRole->givePermissionTo(Permission::where('name', 'like', 'stock.%')->pluck('name'));
+            $adminRole->givePermissionTo(Permission::where('name', 'like', 'pharmacy.%')->pluck('name'));
             $this->command->info('Assigned all inventory permissions to admin role');
         }
 
@@ -109,6 +129,14 @@ class InventoryPermissionsSeeder extends Seeder
                 'store-workbench.view',
                 'stock.view',
                 'stock.dispense-with-batch',
+                'pharmacy.returns.view',
+                'pharmacy.returns.create',
+                'pharmacy.damages.view',
+                'pharmacy.damages.create',
+                'pharmacy.reports.stock',
+                'pharmacy.reports.valuation',
+                'pharmacy.reports.expiring',
+                'pharmacy.reports.export',
             ]);
             $this->command->info('Assigned pharmacy permissions to pharmacist role');
         }
@@ -134,6 +162,19 @@ class InventoryPermissionsSeeder extends Seeder
                 'store-workbench.view-reports',
                 'stock.view',
                 'stock.transfer',
+                'pharmacy.returns.view',
+                'pharmacy.returns.create',
+                'pharmacy.returns.approve',
+                'pharmacy.returns.reject',
+                'pharmacy.returns.process',
+                'pharmacy.damages.view',
+                'pharmacy.damages.create',
+                'pharmacy.damages.approve',
+                'pharmacy.damages.reject',
+                'pharmacy.reports.stock',
+                'pharmacy.reports.valuation',
+                'pharmacy.reports.expiring',
+                'pharmacy.reports.export',
             ]);
             $this->command->info('Assigned store management permissions to store-manager role');
         }

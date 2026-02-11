@@ -29,7 +29,7 @@
     - 50xx-60xx: Expenses
 --}}
 
-<div class="card bg-light {{ $class ?? '' }}">
+<div class="card-modern bg-light {{ $class ?? '' }}">
     <div class="card-body py-2 px-3">
         <h6 class="mb-2">
             <i class="mdi mdi-book-open-variant mr-1"></i>{{ $title ?? 'Journal Entry Preview' }}

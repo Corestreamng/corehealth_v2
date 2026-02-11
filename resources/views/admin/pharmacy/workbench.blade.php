@@ -307,6 +307,66 @@
         font-size: 1.25rem;
     }
 
+    /* Skeleton Loading Animation for Stat Cards */
+    .stat-skeleton {
+        position: relative;
+        color: transparent !important;
+        background: linear-gradient(90deg, #e9ecef 25%, #f8f9fa 50%, #e9ecef 75%);
+        background-size: 200% 100%;
+        animation: skeleton-pulse 1.5s ease-in-out infinite;
+        border-radius: 4px;
+        min-width: 40px;
+        min-height: 1.2em;
+    }
+    @keyframes skeleton-pulse {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+
+    /* Return Condition Hint */
+    #return_condition_hint, #damage-type-hint {
+        font-size: 0.8rem;
+        color: #6c757d;
+        font-style: italic;
+        min-height: 1.2em;
+    }
+
+    /* JE Preview Table */
+    #return-je-preview, #damage-je-preview {
+        font-size: 0.85rem;
+    }
+    #return-je-preview table, #damage-je-preview table {
+        margin-bottom: 0;
+    }
+
+    /* View Detail Modal Overrides */
+    #viewReturnModal .modal-dialog,
+    #viewDamageModal .modal-dialog {
+        max-width: 700px;
+    }
+
+    /* Store summary cards for stock reports */
+    .store-summary-card {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    .store-summary-card h6 {
+        margin-bottom: 0.75rem;
+        color: var(--hospital-primary);
+    }
+    .store-metric {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.25rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .store-metric:last-child {
+        border-bottom: none;
+    }
+
     /* Main Workspace */
     .main-workspace {
         flex: 1;
@@ -2399,6 +2459,142 @@
         color: white;
     }
 
+    /* ============================================
+       PHARMACY RETURNS PANE STYLES
+       ============================================ */
+    #pharmacy-returns-view {
+        background: linear-gradient(135deg, #f5f7fa 0%, #e8edf2 100%);
+    }
+    #pharmacy-returns-view .queue-view-header {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    #pharmacy-return-create-view {
+        background: linear-gradient(135deg, #fdfcfb 0%, #f5f0eb 100%);
+    }
+    #pharmacy-return-create-view .queue-view-header {
+        background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+    }
+
+    /* ============================================
+       PHARMACY DAMAGES PANE STYLES
+       ============================================ */
+    #pharmacy-damages-view {
+        background: linear-gradient(135deg, #f5f7fa 0%, #f0e8e8 100%);
+    }
+    #pharmacy-damages-view .queue-view-header {
+        background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+        color: #333;
+    }
+    #pharmacy-damages-view .queue-view-header h4,
+    #pharmacy-damages-view .queue-view-header .btn-close-queue {
+        color: #333;
+    }
+    #pharmacy-damage-create-view {
+        background: linear-gradient(135deg, #fdfcfb 0%, #f5ebe8 100%);
+    }
+    #pharmacy-damage-create-view .queue-view-header {
+        background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        color: #333;
+    }
+    #pharmacy-damage-create-view .queue-view-header h4,
+    #pharmacy-damage-create-view .queue-view-header .btn-close-queue {
+        color: #333;
+    }
+
+    /* ============================================
+       PHARMACY STOCK REPORTS PANE STYLES
+       ============================================ */
+    #pharmacy-stock-reports-view {
+        background: linear-gradient(135deg, #f5f7fa 0%, #e8f2e8 100%);
+    }
+    #pharmacy-stock-reports-view .queue-view-header {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+
+    /* Shared DataTable Styles for Post-Transaction Panels */
+    #pharmacy-returns-view .dataTables_wrapper,
+    #pharmacy-damages-view .dataTables_wrapper,
+    #pharmacy-stock-reports-view .dataTables_wrapper {
+        font-size: 0.85rem;
+    }
+    #pharmacy-returns-view table thead th,
+    #pharmacy-damages-view table thead th,
+    #pharmacy-stock-reports-view table thead th {
+        background: #1e293b;
+        color: white;
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 0.75rem;
+        white-space: nowrap;
+    }
+    #pharmacy-returns-view table tbody td,
+    #pharmacy-damages-view table tbody td,
+    #pharmacy-stock-reports-view table tbody td {
+        padding: 0.6rem 0.75rem;
+        vertical-align: middle;
+    }
+
+    /* Stock Report Tabs */
+    #stock-report-tabs {
+        background: white;
+        border-radius: 0.5rem;
+        padding: 0.25rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    #stock-report-tabs .nav-link {
+        border: none;
+        border-radius: 0.4rem;
+        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #64748b;
+        transition: all 0.2s;
+    }
+    #stock-report-tabs .nav-link:hover {
+        color: #11998e;
+        background: rgba(17, 153, 142, 0.1);
+    }
+    #stock-report-tabs .nav-link.active {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        color: white;
+    }
+    #stock-report-tabs .nav-link i {
+        margin-right: 0.4rem;
+    }
+
+    /* Expiry Range Buttons */
+    .expiry-range-btn.active {
+        color: white !important;
+        border-color: currentColor;
+    }
+    .expiry-range-btn[data-days="30"].active { background: #dc3545; border-color: #dc3545; }
+    .expiry-range-btn[data-days="60"].active { background: #ffc107; border-color: #ffc107; color: #333 !important; }
+    .expiry-range-btn[data-days="90"].active { background: #17a2b8; border-color: #17a2b8; }
+    .expiry-range-btn[data-days="180"].active { background: #6c757d; border-color: #6c757d; }
+
+    /* Store Summary Cards */
+    .store-summary-card {
+        background: white;
+        border-radius: 0.5rem;
+        padding: 1.25rem;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        border-left: 4px solid #11998e;
+    }
+    .store-summary-card h6 {
+        font-weight: 600;
+        color: #1e293b;
+    }
+    .store-summary-card .store-metric {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        padding: 0.3rem 0;
+        border-bottom: 1px dashed #e9ecef;
+    }
+    .store-summary-card .store-metric:last-child { border-bottom: none; }
+
     /* Responsive Adjustments */
     @media (max-width: 768px) {
         .date-presets-bar {
@@ -3868,6 +4064,23 @@
                 <i class="mdi mdi-chart-box-outline"></i>
                 <span>Reports & Analytics</span>
             </button>
+
+            <!-- Post-Transaction Quick Actions -->
+            @hasanyrole('SUPERADMIN|ADMIN|PHARMACIST|STORE_MANAGER')
+            <button class="quick-action-btn" id="btn-pharmacy-returns">
+                <i class="mdi mdi-undo-variant"></i>
+                <span>Process Returns</span>
+            </button>
+            <button class="quick-action-btn" id="btn-pharmacy-damages">
+                <i class="mdi mdi-alert-octagon"></i>
+                <span>Report Damages</span>
+            </button>
+            <button class="quick-action-btn" id="btn-pharmacy-stock-reports">
+                <i class="mdi mdi-file-chart"></i>
+                <span>Stock Reports</span>
+            </button>
+            @endhasanyrole
+
             <button class="quick-action-btn" disabled style="opacity: 0.5;">
                 <i class="mdi mdi-file-invoice-dollar"></i>
                 <span>Generate Invoice (Coming Soon)</span>
@@ -4439,6 +4652,11 @@
                 </div>
             </div>
         </div>
+
+        {{-- Post-Transaction Action Panels --}}
+        @include('admin.pharmacy.partials._returns')
+        @include('admin.pharmacy.partials._damages')
+        @include('admin.pharmacy.partials._stock_reports')
 
         <!-- Patient Header -->
         <div class="patient-header" id="patient-header">
@@ -12408,6 +12626,12 @@ function showPharmacyReports() {
     $('#patient-header').removeClass('active');
     $('#workspace-content').removeClass('active');
     $('#queue-view').removeClass('active');
+    // Hide post-transaction panels
+    $('#pharmacy-returns-view').removeClass('active');
+    $('#pharmacy-return-create-view').removeClass('active');
+    $('#pharmacy-damages-view').removeClass('active');
+    $('#pharmacy-damage-create-view').removeClass('active');
+    $('#pharmacy-stock-reports-view').removeClass('active');
 
     // Show pharmacy reports view
     $('#pharmacy-reports-view').addClass('active');
@@ -15992,6 +16216,1195 @@ $('#confirm-qty-adjustment').on('click', function() {
 
 // ===========================================
 // END QUANTITY ADJUSTMENT MODULE
+// ===========================================
+
+// ===========================================
+// POST-TRANSACTION ACTIONS MODULE
+// Returns, Damages & Stock Reports
+// ===========================================
+
+// --------------- Helper: hide ALL full-screen views ---------------
+function hideAllPanelViews() {
+    $('#empty-state').hide();
+    $('#patient-header').removeClass('active');
+    $('#workspace-content').removeClass('active');
+    $('#queue-view').removeClass('active');
+    $('#pharmacy-reports-view').removeClass('active');
+    $('#pharmacy-returns-view').removeClass('active');
+    $('#pharmacy-return-create-view').removeClass('active');
+    $('#pharmacy-damages-view').removeClass('active');
+    $('#pharmacy-damage-create-view').removeClass('active');
+    $('#pharmacy-stock-reports-view').removeClass('active');
+}
+
+function showMobileMainWorkspace() {
+    if (window.innerWidth < 768) {
+        $('#left-panel').addClass('hidden');
+        $('#main-workspace').addClass('active');
+    }
+}
+
+function backToEmptyState() {
+    hideAllPanelViews();
+    $('#empty-state').show();
+    if (window.innerWidth < 768) {
+        $('#main-workspace').removeClass('active');
+        $('#left-panel').removeClass('hidden');
+    }
+}
+
+// ==========================================
+// RETURNS PANEL
+// ==========================================
+var returnsTableInstance = null;
+window.pharmacyReturnsInitialized = false;
+
+function showPharmacyReturns() {
+    hideAllPanelViews();
+    $('#pharmacy-returns-view').addClass('active');
+    showMobileMainWorkspace();
+
+    if (!window.pharmacyReturnsInitialized) {
+        initReturnsDataTable();
+        loadReturnsStats();
+        window.pharmacyReturnsInitialized = true;
+    } else {
+        if (returnsTableInstance) returnsTableInstance.ajax.reload(null, false);
+        loadReturnsStats();
+    }
+}
+
+function hidePharmacyReturns() {
+    $('#pharmacy-returns-view').removeClass('active');
+    backToEmptyState();
+}
+
+function showReturnCreateForm() {
+    $('#pharmacy-returns-view').removeClass('active');
+    $('#pharmacy-return-create-view').addClass('active');
+    $('#dispensedItemResults').html('');
+    $('#dispensedItemSearch').val('');
+    $('#returnDetailsSection').hide();
+    $('#return-je-preview').hide();
+    $('#createReturnForm')[0].reset();
+}
+
+function hideReturnCreateForm() {
+    $('#pharmacy-return-create-view').removeClass('active');
+    showPharmacyReturns();
+}
+
+function initReturnsDataTable() {
+    returnsTableInstance = $('#returnsTable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: '{{ route("pharmacy.returns.datatables") }}',
+            data: function(d) {
+                d.status = $('#returns-status-filter').val();
+                d.from_date = $('#returns-date-from').val();
+                d.to_date = $('#returns-date-to').val();
+            }
+        },
+        columns: [
+            { data: 'DT_RowIndex', orderable: false, searchable: false, width: '30px' },
+            { data: 'item_info', name: 'product_name', orderable: false },
+            { data: 'details_info', orderable: false },
+            { data: 'status_info', orderable: false },
+            { data: 'actions', orderable: false, width: '90px' }
+        ],
+        order: [],
+        pageLength: 15,
+        stateSave: true,
+        stateLoadCallback: function(settings, callback) {
+            return JSON.parse(localStorage.getItem('DT_returnsTable_v2') || 'null');
+        },
+        stateSaveCallback: function(settings, data) {
+            localStorage.setItem('DT_returnsTable_v2', JSON.stringify(data));
+        },
+        responsive: true,
+        language: {
+            emptyTable: '<div class="text-center p-3"><i class="mdi mdi-undo-variant mdi-36px text-muted"></i><br><span class="text-muted">No returns found</span></div>',
+            processing: '<i class="mdi mdi-loading mdi-spin"></i> Loading...'
+        }
+    });
+}
+
+function loadReturnsStats() {
+    // Show skeleton state
+    $('#returns-stat-pending, #returns-stat-approved, #returns-stat-rejected').addClass('stat-skeleton');
+    $('#returns-stat-refunded').addClass('stat-skeleton');
+
+    $.get('{{ route("pharmacy.returns.index") }}', { stats_only: 1 })
+        .done(function(res) {
+            if (res.stats) {
+                $('#returns-stat-pending').text(res.stats.pending || 0).removeClass('stat-skeleton');
+                $('#returns-stat-approved').text(res.stats.approved || 0).removeClass('stat-skeleton');
+                $('#returns-stat-rejected').text(res.stats.rejected || 0).removeClass('stat-skeleton');
+                $('#returns-stat-refunded').text('₦' + formatMoneyPharmacy(res.stats.total_value || 0)).removeClass('stat-skeleton');
+            }
+        });
+}
+
+// Returns: Search dispensed items (debounced)
+var returnSearchTimer = null;
+$('#dispensedItemSearch').on('keyup', function() {
+    var q = $(this).val().trim();
+    clearTimeout(returnSearchTimer);
+    if (q.length < 2) { $('#dispensedItemResults').html(''); return; }
+
+    returnSearchTimer = setTimeout(function() {
+        $('#dispensedItemResults').html('<p class="text-center text-muted p-2"><i class="mdi mdi-loading mdi-spin"></i> Searching...</p>');
+
+        $.get('{{ route("pharmacy.returns.search-dispensed") }}', { term: q })
+            .done(function(res) {
+                var items = res.items || res.data || res;
+                if (!items.length) {
+                    $('#dispensedItemResults').html('<p class="text-muted text-center p-3"><i class="mdi mdi-magnify"></i> No dispensed items match your search.</p>');
+                    return;
+                }
+                var html = '<div class="list-group">';
+                items.forEach(function(item) {
+                    html += '<a href="#" class="list-group-item list-group-item-action return-item-select" ' +
+                        'data-id="'+item.id+'" data-product="'+(item.product_name||'')+'" data-patient="'+(item.patient_name||'')+'" ' +
+                        'data-qty="'+(item.qty||0)+'" data-amount="'+(item.amount||0)+'" data-store="'+(item.store||'')+'" ' +
+                        'data-payable="'+(item.payable_amount||0)+'" data-claims="'+(item.claims_amount||0)+'" ' +
+                        'data-date="'+(item.dispensed_date||'')+'">' +
+                        '<div class="d-flex justify-content-between align-items-start">' +
+                        '<div><strong>'+(item.product_name||'Unknown')+'</strong>' +
+                        '<br><small class="text-muted">Patient: '+(item.patient_name||'N/A')+' ('+(item.file_number||'')+') | Store: '+(item.store||'')+
+                        '</small></div>' +
+                        '<div class="text-right"><span class="badge badge-primary">Qty: '+(item.qty||0)+'</span>' +
+                        '<br><small class="text-success fw-bold">₦'+formatMoneyPharmacy(item.amount||0)+'</small></div>' +
+                        '</div>' +
+                        '<small class="text-muted"><i class="mdi mdi-calendar"></i> '+(item.dispensed_date||'')+'</small>' +
+                        '</a>';
+                });
+                html += '</div>';
+                $('#dispensedItemResults').html(html);
+            })
+            .fail(function() { toastr.error('Search failed'); });
+    }, 400);
+});
+
+// Returns: Select item from search
+$(document).on('click', '.return-item-select', function(e) {
+    e.preventDefault();
+    var $el = $(this);
+    var infoHtml = '<div class="row">' +
+        '<div class="col-md-6"><strong>Product:</strong> ' + $el.data('product') + '</div>' +
+        '<div class="col-md-6"><strong>Patient:</strong> ' + $el.data('patient') + '</div>' +
+        '</div>' +
+        '<div class="row mt-1">' +
+        '<div class="col-md-4"><strong>Qty Dispensed:</strong> ' + $el.data('qty') + '</div>' +
+        '<div class="col-md-4"><strong>Total Amount:</strong> ₦' + formatMoneyPharmacy($el.data('amount')) + '</div>' +
+        '<div class="col-md-4"><strong>Store:</strong> ' + $el.data('store') + '</div>' +
+        '</div>';
+    if ($el.data('claims') > 0) {
+        infoHtml += '<div class="mt-1"><span class="badge badge-info">HMO Split</span> Patient: ₦' +
+            formatMoneyPharmacy($el.data('payable')) + ' | HMO: ₦' + formatMoneyPharmacy($el.data('claims')) + '</div>';
+    }
+    $('#selectedReturnItemInfo').html(infoHtml);
+    $('#return_product_request_id').val($el.data('id'));
+    $('#return_qty_returned').attr('max', $el.data('qty')).val($el.data('qty'));
+    $('#return_max_qty').text($el.data('qty'));
+    // Store amount data for JE preview
+    $('#return_qty_returned').data('total-amount', $el.data('amount'));
+    $('#return_qty_returned').data('original-qty', $el.data('qty'));
+    $('#return_qty_returned').data('payable', $el.data('payable'));
+    $('#return_qty_returned').data('claims', $el.data('claims'));
+    $('#returnDetailsSection').slideDown(200);
+    $('#dispensedItemResults').html('');
+    $('#dispensedItemSearch').val('');
+    updateReturnJEPreview();
+});
+
+// Returns: Condition change hint + JE preview update
+$('#return_condition').on('change', function() {
+    var val = $(this).val();
+    var hints = {
+        'good': 'Item will be restocked. DR: Inventory (1300) / CR: Customer Deposits (2200)',
+        'expired': 'Item cannot be restocked. DR: Loss on Returns (5060) / CR: Customer Deposits (2200)',
+        'damaged': 'Item cannot be restocked. DR: Loss on Returns (5060) / CR: Customer Deposits (2200)',
+        'wrong_item': 'Item will be restocked. DR: Inventory (1300) / CR: Customer Deposits (2200)'
+    };
+    $('#return_condition_hint').text(hints[val] || '');
+    updateReturnJEPreview();
+});
+
+$('#return_qty_returned').on('input', function() { updateReturnJEPreview(); });
+
+function updateReturnJEPreview() {
+    var condition = $('#return_condition').val();
+    var qtyReturned = parseFloat($('#return_qty_returned').val()) || 0;
+    var originalQty = parseFloat($('#return_qty_returned').data('original-qty')) || 1;
+    var totalAmount = parseFloat($('#return_qty_returned').data('total-amount')) || 0;
+    var payable = parseFloat($('#return_qty_returned').data('payable')) || 0;
+    var claims = parseFloat($('#return_qty_returned').data('claims')) || 0;
+
+    if (!condition || !qtyReturned) { $('#return-je-preview').hide(); return; }
+
+    var refundAmt = (totalAmount / originalQty) * qtyReturned;
+    var isRestock = (condition === 'good' || condition === 'wrong_item');
+    var debitAcct = isRestock ? 'Inventory - Pharmacy (1300)' : 'Loss on Returns (5060)';
+    var hasHmo = claims > 0;
+
+    var rows = '<tr><td>' + debitAcct + '</td><td class="text-right">₦' + formatMoneyPharmacy(refundAmt) + '</td><td class="text-right">—</td></tr>';
+
+    if (hasHmo) {
+        var patientRefund = (payable / totalAmount) * refundAmt;
+        var hmoRefund = (claims / totalAmount) * refundAmt;
+        rows += '<tr><td>Customer Deposits (2200) — Patient Wallet</td><td class="text-right">—</td><td class="text-right">₦' + formatMoneyPharmacy(patientRefund) + '</td></tr>';
+        rows += '<tr><td>AR - HMO (1110)</td><td class="text-right">—</td><td class="text-right">₦' + formatMoneyPharmacy(hmoRefund) + '</td></tr>';
+    } else {
+        rows += '<tr><td>Customer Deposits (2200) — Patient Wallet</td><td class="text-right">—</td><td class="text-right">₦' + formatMoneyPharmacy(refundAmt) + '</td></tr>';
+    }
+
+    $('#return-je-preview-body').html(rows);
+    $('#return-je-preview').slideDown(200);
+}
+
+// Returns: Submit
+$('#createReturnForm').on('submit', function(e) {
+    e.preventDefault();
+    var $btn = $('#submitReturnBtn');
+    $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Processing...');
+
+    $.ajax({
+        url: '{{ route("pharmacy.returns.store") }}',
+        method: 'POST',
+        data: $(this).serialize(),
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        success: function(res) {
+            toastr.success(res.message || 'Return created');
+            hideReturnCreateForm();
+            if (returnsTableInstance) returnsTableInstance.ajax.reload(null, false);
+            loadReturnsStats();
+        },
+        error: function(xhr) {
+            var msg = xhr.responseJSON?.message || 'Failed to create return';
+            if (xhr.responseJSON?.errors) {
+                var errs = Object.values(xhr.responseJSON.errors).flat();
+                msg = errs.join('. ');
+            }
+            toastr.error(msg);
+        },
+        complete: function() {
+            $btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Submit Return for Approval');
+        }
+    });
+});
+
+// Returns: Reset form
+$('#resetReturnForm').on('click', function() {
+    $('#createReturnForm')[0].reset();
+    $('#returnDetailsSection').hide();
+    $('#return-je-preview').hide();
+    $('#dispensedItemResults').html('');
+    $('#return_condition_hint').text('');
+});
+
+// Returns: View detail
+$(document).on('click', '.btn-view-return', function() {
+    var id = $(this).data('id');
+    var $body = $('#viewReturnModalBody');
+    $body.html('<div class="text-center p-4"><i class="mdi mdi-loading mdi-spin mdi-36px"></i></div>');
+    $('#viewReturnModal').modal('show');
+
+    $.get('/pharmacy/returns/' + id)
+        .done(function(res) {
+            if (!res.success) { $body.html('<p class="text-danger">Failed to load</p>'); return; }
+            var r = res['return'];
+            var html = '<div class="row">';
+            html += '<div class="col-md-6"><table class="table table-sm table-borderless">';
+            html += '<tr><th width="40%">Return #</th><td>' + r.id + '</td></tr>';
+            html += '<tr><th>Patient</th><td>' + r.patient_name + ' <small class="text-muted">(' + r.file_no + ')</small></td></tr>';
+            html += '<tr><th>Product</th><td>' + r.product_name + '</td></tr>';
+            html += '<tr><th>Store</th><td>' + r.store_name + '</td></tr>';
+            html += '<tr><th>Batch</th><td>' + r.batch_number + '</td></tr>';
+            html += '</table></div>';
+            html += '<div class="col-md-6"><table class="table table-sm table-borderless">';
+            html += '<tr><th width="40%">Qty Returned</th><td>' + r.qty_returned + ' / ' + r.original_qty + '</td></tr>';
+            html += '<tr><th>Refund Amount</th><td class="text-success fw-bold">₦' + formatMoneyPharmacy(r.refund_amount) + '</td></tr>';
+            if (r.refund_to_hmo > 0) {
+                html += '<tr><th>Patient Portion</th><td>₦' + formatMoneyPharmacy(r.refund_to_patient) + '</td></tr>';
+                html += '<tr><th>HMO Portion</th><td>₦' + formatMoneyPharmacy(r.refund_to_hmo) + '</td></tr>';
+            }
+            html += '<tr><th>Condition</th><td>' + r.return_condition + (r.restock ? ' <span class="badge badge-success badge-sm">Restockable</span>' : ' <span class="badge badge-secondary badge-sm">Non-restockable</span>') + '</td></tr>';
+            html += '<tr><th>Status</th><td><span class="badge badge-' + ({pending:'warning',approved:'success',rejected:'danger',completed:'info'}[r.status]||'secondary') + '">' + r.status + '</span></td></tr>';
+            html += '</table></div></div>';
+
+            html += '<div class="border-top pt-2 mt-2"><strong>Reason:</strong> ' + r.return_reason + '</div>';
+            html += '<div class="row mt-2"><div class="col-md-6"><small class="text-muted">Created by ' + r.created_by + ' on ' + r.created_at + '</small></div>';
+            if (r.approved_by) {
+                html += '<div class="col-md-6"><small class="text-muted">' + (r.status === 'rejected' ? 'Rejected' : 'Approved') + ' by ' + r.approved_by + ' on ' + r.approved_at + '</small></div>';
+            }
+            html += '</div>';
+            if (r.approval_notes) {
+                html += '<div class="mt-1"><small><strong>' + (r.status === 'rejected' ? 'Rejection' : 'Approval') + ' Notes:</strong> ' + r.approval_notes + '</small></div>';
+            }
+
+            // JE section
+            if (r.journal_entry) {
+                html += '<div class="border-top pt-2 mt-3">';
+                html += '<div class="d-flex justify-content-between align-items-center mb-2">';
+                html += '<h6 class="mb-0"><i class="mdi mdi-book-open-page-variant text-primary"></i> Journal Entry</h6>';
+                html += '<div>';
+                if (r.journal_entry.status) {
+                    var jeBadge = {draft:'secondary',submitted:'info',approved:'primary',posted:'success',rejected:'danger'}[r.journal_entry.status] || 'secondary';
+                    html += '<span class="badge badge-' + jeBadge + ' mr-2">' + r.journal_entry.status.toUpperCase() + '</span>';
+                }
+                html += '<a href="/accounting/journal-entries/' + r.journal_entry.id + '" target="_blank" class="btn btn-sm btn-outline-primary" title="Open in Accounting Module">';
+                html += '<i class="mdi mdi-open-in-new"></i> ' + r.journal_entry.reference + '</a>';
+                html += '</div></div>';
+                html += '<table class="table table-sm table-bordered mb-0" style="font-size: 0.85rem;">';
+                html += '<thead class="thead-light"><tr><th>Account</th><th>Code</th><th class="text-right">Debit</th><th class="text-right">Credit</th></tr></thead><tbody>';
+                var totalDebit = 0, totalCredit = 0;
+                r.journal_entry.lines.forEach(function(line) {
+                    html += '<tr><td>' + line.account_name + '</td><td><code>' + line.account_code + '</code></td>';
+                    html += '<td class="text-right">' + (line.debit > 0 ? '₦' + formatMoneyPharmacy(line.debit) : '—') + '</td>';
+                    html += '<td class="text-right">' + (line.credit > 0 ? '₦' + formatMoneyPharmacy(line.credit) : '—') + '</td></tr>';
+                    totalDebit += parseFloat(line.debit) || 0;
+                    totalCredit += parseFloat(line.credit) || 0;
+                });
+                html += '<tr class="font-weight-bold bg-light"><td colspan="2" class="text-right">Totals</td>';
+                html += '<td class="text-right">₦' + formatMoneyPharmacy(totalDebit) + '</td>';
+                html += '<td class="text-right">₦' + formatMoneyPharmacy(totalCredit) + '</td></tr>';
+                html += '</tbody></table></div>';
+            }
+
+            // Stock / Batch link section
+            if (r.status === 'approved' && r.restock && r.product_id) {
+                html += '<div class="border-top pt-2 mt-2">';
+                html += '<div class="d-flex align-items-center">';
+                html += '<i class="mdi mdi-package-variant text-success mr-2"></i>';
+                html += '<span class="mr-2"><strong>Stock restocked</strong> — ' + r.qty_returned + ' unit(s) returned to <em>' + r.batch_number + '</em></span>';
+                html += '<a href="/inventory/store-workbench/product/' + r.product_id + '/batches" target="_blank" class="btn btn-sm btn-outline-success ml-auto" title="View batches in Store Workbench">';
+                html += '<i class="mdi mdi-store"></i> View Batches</a>';
+                html += '</div></div>';
+            } else if (r.status === 'approved' && !r.restock) {
+                html += '<div class="border-top pt-2 mt-2">';
+                html += '<div class="d-flex align-items-center">';
+                html += '<i class="mdi mdi-package-variant-closed text-secondary mr-2"></i>';
+                html += '<span><strong>Non-restockable</strong> — recorded as loss (stock not returned)</span>';
+                html += '</div></div>';
+            }
+
+            $body.html(html);
+        })
+        .fail(function() { $body.html('<p class="text-danger text-center">Failed to load return details</p>'); });
+});
+
+// Returns: Approve / Reject (event delegation for DataTable-rendered buttons)
+$(document).on('click', '.btn-approve-return, .approve-return', function() {
+    var id = $(this).data('id');
+    $('#approve_return_id').val(id);
+    // Load summary for confirmation
+    $.get('/pharmacy/returns/' + id).done(function(res) {
+        if (res.success) {
+            var r = res['return'];
+            var summary = '<strong>' + r.product_name + '</strong> — ' + r.qty_returned + ' unit(s)<br>' +
+                '<span class="text-success">Refund: ₦' + formatMoneyPharmacy(r.refund_amount) + '</span>';
+            if (r.restock) {
+                $('#approve-return-restock-note').html('<strong>Restock</strong> inventory automatically (good condition)');
+            } else {
+                $('#approve-return-restock-note').html('Record as loss (non-restockable)');
+            }
+            $('#approve-return-summary').html(summary);
+        }
+    });
+    $('#approveReturnModal').modal('show');
+});
+
+$(document).on('click', '.btn-reject-return, .reject-return', function() {
+    var id = $(this).data('id');
+    $('#reject_return_id').val(id);
+    $('#reject_return_reason').val('');
+    $('#rejectReturnModal').modal('show');
+});
+
+$('#approveReturnForm').on('submit', function(e) {
+    e.preventDefault();
+    var id = $('#approve_return_id').val();
+    var notes = $('#approve_return_notes').val();
+    var $btn = $(this).find('button[type="submit"]');
+    $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Approving...');
+    $.ajax({
+        url: '/pharmacy/returns/' + id + '/approve',
+        method: 'POST',
+        data: { approval_notes: notes },
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        success: function(res) {
+            toastr.success(res.message || 'Return approved');
+            $('#approveReturnModal').modal('hide');
+            if (returnsTableInstance) returnsTableInstance.ajax.reload(null, false);
+            loadReturnsStats();
+        },
+        error: function(xhr) { toastr.error(xhr.responseJSON?.message || 'Approval failed'); },
+        complete: function() { $btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Confirm Approval'); }
+    });
+});
+
+$('#rejectReturnForm').on('submit', function(e) {
+    e.preventDefault();
+    var id = $('#reject_return_id').val();
+    var reason = $('#reject_return_reason').val();
+    if (!reason || reason.length < 10) { toastr.warning('Enter a rejection reason (min 10 characters)'); return; }
+    var $btn = $(this).find('button[type="submit"]');
+    $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Rejecting...');
+    $.ajax({
+        url: '/pharmacy/returns/' + id + '/reject',
+        method: 'POST',
+        data: { rejection_reason: reason },
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        success: function(res) {
+            toastr.success(res.message || 'Return rejected');
+            $('#rejectReturnModal').modal('hide');
+            if (returnsTableInstance) returnsTableInstance.ajax.reload(null, false);
+            loadReturnsStats();
+        },
+        error: function(xhr) { toastr.error(xhr.responseJSON?.message || 'Rejection failed'); },
+        complete: function() { $btn.prop('disabled', false).html('<i class="mdi mdi-close"></i> Reject Return'); }
+    });
+});
+
+// Returns: Filter buttons
+$('#apply-returns-filters').on('click', function() {
+    if (returnsTableInstance) returnsTableInstance.ajax.reload();
+});
+
+// Returns: Button handlers
+$('#btn-pharmacy-returns').on('click', function() { showPharmacyReturns(); });
+$('#btn-close-returns').on('click', function() { hidePharmacyReturns(); });
+$('#btn-create-return').on('click', function() { showReturnCreateForm(); });
+$('#btn-cancel-create-return').on('click', function() { hideReturnCreateForm(); });
+
+// ==========================================
+// DAMAGES PANEL
+// ==========================================
+var damagesTableInstance = null;
+window.pharmacyDamagesInitialized = false;
+
+function showPharmacyDamages() {
+    hideAllPanelViews();
+    $('#pharmacy-damages-view').addClass('active');
+    showMobileMainWorkspace();
+
+    if (!window.pharmacyDamagesInitialized) {
+        initDamagesDataTable();
+        loadDamagesStats();
+        window.pharmacyDamagesInitialized = true;
+    } else {
+        if (damagesTableInstance) damagesTableInstance.ajax.reload(null, false);
+        loadDamagesStats();
+    }
+}
+
+function hidePharmacyDamages() {
+    $('#pharmacy-damages-view').removeClass('active');
+    backToEmptyState();
+}
+
+function showDamageCreateForm() {
+    $('#pharmacy-damages-view').removeClass('active');
+    $('#pharmacy-damage-create-view').addClass('active');
+    $('#createDamageForm')[0].reset();
+    $('#damage_total_display').val('₦0.00');
+    $('#damage_available_stock').val('-');
+    $('#damage-je-preview').hide();
+    $('#damage-type-hint').text('');
+    initDamageSelect2();
+    loadDamageStores();
+}
+
+function hideDamageCreateForm() {
+    $('#pharmacy-damage-create-view').removeClass('active');
+    showPharmacyDamages();
+}
+
+function initDamagesDataTable() {
+    damagesTableInstance = $('#damagesTable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: '{{ route("pharmacy.damages.datatables") }}',
+            data: function(d) {
+                d.status = $('#damages-status-filter').val();
+                d.damage_type = $('#damages-type-filter').val();
+                d.date_from = $('#damages-date-from').val();
+                d.date_to = $('#damages-date-to').val();
+            }
+        },
+        columns: [
+            { data: 'DT_RowIndex', orderable: false, searchable: false, width: '30px' },
+            { data: 'item_info', name: 'product_name', orderable: false },
+            { data: 'details_info', orderable: false },
+            { data: 'total_value', render: function(d) { return '₦' + formatMoneyPharmacy(d); }},
+            { data: 'status_info', orderable: false },
+            { data: 'actions', orderable: false, width: '90px' }
+        ],
+        order: [],
+        pageLength: 15,
+        stateSave: true,
+        stateLoadCallback: function(settings, callback) {
+            return JSON.parse(localStorage.getItem('DT_damagesTable_v2') || 'null');
+        },
+        stateSaveCallback: function(settings, data) {
+            localStorage.setItem('DT_damagesTable_v2', JSON.stringify(data));
+        },
+        responsive: true,
+        language: {
+            emptyTable: '<div class="text-center p-3"><i class="mdi mdi-alert-octagon mdi-36px text-muted"></i><br><span class="text-muted">No damage reports found</span></div>',
+            processing: '<i class="mdi mdi-loading mdi-spin"></i> Loading...'
+        }
+    });
+}
+
+function loadDamagesStats() {
+    // Show skeleton state
+    $('#damages-stat-pending, #damages-stat-approved, #damages-stat-deducted').addClass('stat-skeleton');
+    $('#damages-stat-value').addClass('stat-skeleton');
+
+    $.get('{{ route("pharmacy.damages.index") }}', { stats_only: 1 })
+        .done(function(res) {
+            if (res.stats) {
+                $('#damages-stat-pending').text(res.stats.pending || 0).removeClass('stat-skeleton');
+                $('#damages-stat-approved').text(res.stats.approved || 0).removeClass('stat-skeleton');
+                $('#damages-stat-value').text('₦' + formatMoneyPharmacy(res.stats.total_value || 0)).removeClass('stat-skeleton');
+                $('#damages-stat-deducted').text(res.stats.stock_deducted || 0).removeClass('stat-skeleton');
+            }
+        });
+}
+
+// Damages: Initialize Select2 for store, product, and batch dropdowns
+function initDamageSelect2() {
+    var $panel = $('#pharmacy-damage-create-view');
+
+    // Destroy existing Select2 instances to allow re-init
+    if ($('#damage_store_id').hasClass('select2-hidden-accessible')) {
+        $('#damage_store_id').select2('destroy');
+    }
+    if ($('#damage_product_id').hasClass('select2-hidden-accessible')) {
+        $('#damage_product_id').select2('destroy');
+    }
+    if ($('#damage_batch_id').hasClass('select2-hidden-accessible')) {
+        $('#damage_batch_id').select2('destroy');
+    }
+
+    // Store — simple Select2 (options loaded via loadDamageStores)
+    $('#damage_store_id').select2({
+        dropdownParent: $panel,
+        placeholder: '-- Select store --',
+        allowClear: true,
+        width: '100%'
+    });
+
+    // Product — Select2 with AJAX search (searches by name/code within selected store)
+    $('#damage_product_id').select2({
+        dropdownParent: $panel,
+        placeholder: 'Select or search product...',
+        allowClear: true,
+        minimumInputLength: 0,
+        width: '100%',
+        ajax: {
+            url: '{{ route("pharmacy.damages.search-products") }}',
+            dataType: 'json',
+            delay: 250,
+            data: function(params) {
+                return {
+                    search: params.term || '',
+                    store_id: $('#damage_store_id').val()
+                };
+            },
+            processResults: function(data) {
+                var items = data.products || data;
+                return {
+                    results: items.map(function(p) {
+                        return {
+                            id: p.id,
+                            text: (p.product_name || p.name) + (p.product_code ? ' (' + p.product_code + ')' : '') + ' — Stock: ' + (p.current_quantity || 0),
+                            unit_cost: p.unit_cost || 0,
+                            current_quantity: p.current_quantity || 0
+                        };
+                    })
+                };
+            },
+            cache: true
+        }
+    }).prop('disabled', true);
+
+    // Batch — simple Select2 (options loaded after product selection)
+    $('#damage_batch_id').select2({
+        dropdownParent: $panel,
+        placeholder: '-- Select batch (optional) --',
+        allowClear: true,
+        width: '100%'
+    }).prop('disabled', true);
+}
+
+// Damages: Load stores for create form
+function loadDamageStores() {
+    $.get('/pharmacy-workbench/stores')
+        .done(function(res) {
+            var stores = res.stores || res;
+            var opts = '<option value="">-- Select store --</option>';
+            stores.forEach(function(s) {
+                opts += '<option value="' + s.id + '">' + (s.store_name || s.name) + '</option>';
+            });
+            $('#damage_store_id').html(opts).trigger('change.select2');
+        });
+}
+
+// Damages: Store change → enable/reset product Select2
+$('#damage_store_id').on('change', function() {
+    var storeId = $(this).val();
+
+    // Reset product and batch
+    $('#damage_product_id').val(null).trigger('change.select2');
+    $('#damage_batch_id').html('<option value="">-- Select batch (optional) --</option>').trigger('change.select2').prop('disabled', true);
+    $('#damage_available_stock').val('-');
+    $('#damage_unit_cost').val('');
+    $('#damage_total_display').val('₦0.00');
+    $('#damage-je-preview').hide();
+
+    if (storeId) {
+        $('#damage_product_id').prop('disabled', false);
+    } else {
+        $('#damage_product_id').prop('disabled', true);
+    }
+});
+
+// Damages: Product selection → auto-fill cost, load batches
+$('#damage_product_id').on('select2:select', function(e) {
+    var data = e.params.data;
+    var productId = data.id;
+    var storeId = $('#damage_store_id').val();
+    var productCost = parseFloat(data.unit_cost) || 0;
+    var productQty = parseFloat(data.current_quantity) || 0;
+
+    // Set product-level cost as default (batch will override if selected)
+    if (productCost > 0) {
+        $('#damage_unit_cost').val(productCost.toFixed(2));
+        recalcDamageTotal();
+    }
+    $('#damage_available_stock').val(productQty || '-');
+
+    // Load batches for this product
+    $('#damage_batch_id').html('<option value="">-- Loading... --</option>').prop('disabled', true);
+
+    $.get('{{ route("pharmacy.damages.get-batches") }}', { product_id: productId, store_id: storeId })
+        .done(function(res) {
+            var batches = res.batches || res;
+            var opts = '<option value="">-- No batch (use store stock) --</option>';
+            batches.forEach(function(b) {
+                opts += '<option value="' + b.id + '" data-cost="' + (b.unit_cost||0) + '" data-qty="' + (b.quantity_available||b.quantity||0) + '">' +
+                    'Batch: ' + (b.batch_number||'N/A') + ' | Exp: ' + (b.expiry_date||'N/A') + ' | Qty: ' + (b.quantity_available||b.quantity||0) + ' | ₦' + formatMoneyPharmacy(b.unit_cost||0) +
+                    '</option>';
+            });
+            $('#damage_batch_id').html(opts).prop('disabled', false).trigger('change.select2');
+        })
+        .fail(function() { toastr.error('Could not load batches'); });
+});
+
+// Damages: Product cleared → reset downstream
+$('#damage_product_id').on('select2:clear', function() {
+    $('#damage_batch_id').html('<option value="">-- Select product first --</option>').prop('disabled', true).trigger('change.select2');
+    $('#damage_available_stock').val('-');
+    $('#damage_unit_cost').val('');
+    $('#damage_total_display').val('₦0.00');
+    $('#damage-je-preview').hide();
+});
+
+// Damages: Batch selection → auto-fill cost & available stock
+$('#damage_batch_id').on('change', function() {
+    var $opt = $(this).find(':selected');
+    var cost = parseFloat($opt.data('cost')) || 0;
+    var qty = parseFloat($opt.data('qty')) || 0;
+    if (cost > 0) $('#damage_unit_cost').val(cost.toFixed(2));
+    if (qty > 0) $('#damage_available_stock').val(qty);
+    recalcDamageTotal();
+    updateDamageJEPreview();
+});
+
+// Damages: Damage type hint + JE preview
+$('#damage_type').on('change', function() {
+    var val = $(this).val();
+    var hints = {
+        'expired': 'DR: Expired Stock Write-off (5040) / CR: Inventory (1300)',
+        'broken': 'DR: Damaged Goods Write-off (5030) / CR: Inventory (1300)',
+        'contaminated': 'DR: Damaged Goods Write-off (5030) / CR: Inventory (1300)',
+        'spoiled': 'DR: Damaged Goods Write-off (5030) / CR: Inventory (1300)',
+        'theft': 'DR: Theft/Shrinkage (5050) / CR: Inventory (1300)',
+        'other': 'DR: Damaged Goods Write-off (5030) / CR: Inventory (1300)'
+    };
+    $('#damage-type-hint').text(hints[val] || '');
+    updateDamageJEPreview();
+});
+
+// Damages: Recalculate total + JE preview
+function recalcDamageTotal() {
+    var qty = parseFloat($('#damage_qty').val()) || 0;
+    var cost = parseFloat($('#damage_unit_cost').val()) || 0;
+    var total = qty * cost;
+    $('#damage_total_display').val('₦' + formatMoneyPharmacy(total));
+    updateDamageJEPreview();
+}
+$('#damage_qty, #damage_unit_cost').on('input', recalcDamageTotal);
+
+function updateDamageJEPreview() {
+    var damageType = $('#damage_type').val();
+    var qty = parseFloat($('#damage_qty').val()) || 0;
+    var cost = parseFloat($('#damage_unit_cost').val()) || 0;
+    var total = qty * cost;
+
+    if (!damageType || total <= 0) { $('#damage-je-preview').hide(); return; }
+
+    var debitAccounts = {
+        'expired': 'Expired Stock Write-off (5040)',
+        'broken': 'Damaged Goods Write-off (5030)',
+        'contaminated': 'Damaged Goods Write-off (5030)',
+        'spoiled': 'Damaged Goods Write-off (5030)',
+        'theft': 'Theft/Shrinkage (5050)',
+        'other': 'Damaged Goods Write-off (5030)'
+    };
+
+    var rows = '<tr><td>' + debitAccounts[damageType] + '</td><td class="text-right">₦' + formatMoneyPharmacy(total) + '</td><td class="text-right">—</td></tr>';
+    rows += '<tr><td>Inventory - Pharmacy (1300)</td><td class="text-right">—</td><td class="text-right">₦' + formatMoneyPharmacy(total) + '</td></tr>';
+
+    $('#damage-je-preview-body').html(rows);
+    $('#damage-je-preview').slideDown(200);
+}
+
+// Damages: Submit
+$('#createDamageForm').on('submit', function(e) {
+    e.preventDefault();
+    var $btn = $('#submitDamageBtn');
+    $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Processing...');
+
+    $.ajax({
+        url: '{{ route("pharmacy.damages.store") }}',
+        method: 'POST',
+        data: $(this).serialize(),
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        success: function(res) {
+            toastr.success(res.message || 'Damage report created');
+            hideDamageCreateForm();
+            if (damagesTableInstance) damagesTableInstance.ajax.reload(null, false);
+            loadDamagesStats();
+        },
+        error: function(xhr) {
+            var msg = xhr.responseJSON?.message || 'Failed to create damage report';
+            if (xhr.responseJSON?.errors) {
+                var errs = Object.values(xhr.responseJSON.errors).flat();
+                msg = errs.join('. ');
+            }
+            toastr.error(msg);
+        },
+        complete: function() {
+            $btn.prop('disabled', false).html('<i class="mdi mdi-alert-octagon"></i> Submit Damage Report');
+        }
+    });
+});
+
+// Damages: Reset
+$('#resetDamageForm').on('click', function() {
+    $('#createDamageForm')[0].reset();
+    // Reset Select2 dropdowns
+    $('#damage_store_id').val(null).trigger('change');
+    $('#damage_product_id').val(null).trigger('change.select2').prop('disabled', true);
+    $('#damage_batch_id').html('<option value="">-- Select product first --</option>').trigger('change.select2').prop('disabled', true);
+    $('#damage_total_display').val('₦0.00');
+    $('#damage_available_stock').val('-');
+    $('#damage-je-preview').hide();
+    $('#damage-type-hint').text('');
+});
+
+// Damages: View detail
+$(document).on('click', '.btn-view-damage', function() {
+    var id = $(this).data('id');
+    var $body = $('#viewDamageModalBody');
+    $body.html('<div class="text-center p-4"><i class="mdi mdi-loading mdi-spin mdi-36px"></i></div>');
+    $('#viewDamageModal').modal('show');
+
+    $.get('/pharmacy/damages/' + id)
+        .done(function(res) {
+            if (!res.success) { $body.html('<p class="text-danger">Failed to load</p>'); return; }
+            var d = res.damage;
+            var html = '<div class="row">';
+            html += '<div class="col-md-6"><table class="table table-sm table-borderless">';
+            html += '<tr><th width="40%">Damage #</th><td>' + d.id + '</td></tr>';
+            html += '<tr><th>Product</th><td>' + d.product_name + '</td></tr>';
+            html += '<tr><th>Store</th><td>' + d.store_name + '</td></tr>';
+            html += '<tr><th>Batch</th><td>' + (d.batch_id ? d.batch_number : '<span class="text-muted">Store-level (no batch selected)</span>') + '</td></tr>';
+            html += '<tr><th>Type</th><td><span class="badge badge-' + ({'expired':'warning','theft':'dark','broken':'danger','contaminated':'danger','spoiled':'info'}[d.damage_type]||'secondary') + '">' + d.damage_type + '</span></td></tr>';
+            html += '</table></div>';
+            html += '<div class="col-md-6"><table class="table table-sm table-borderless">';
+            html += '<tr><th width="40%">Qty Damaged</th><td>' + d.qty_damaged + '</td></tr>';
+            html += '<tr><th>Unit Cost</th><td>₦' + formatMoneyPharmacy(d.unit_cost) + '</td></tr>';
+            html += '<tr><th>Total Value</th><td class="text-danger fw-bold">₦' + formatMoneyPharmacy(d.total_value) + '</td></tr>';
+            html += '<tr><th>Status</th><td><span class="badge badge-' + ({pending:'warning',approved:'success',rejected:'danger'}[d.status]||'secondary') + '">' + d.status + '</span></td></tr>';
+            html += '<tr><th>Stock Deducted</th><td>' + (d.stock_deducted ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-secondary">No</span>') + '</td></tr>';
+            html += '</table></div></div>';
+
+            html += '<div class="border-top pt-2 mt-2"><strong>Reason:</strong> ' + d.damage_reason + '</div>';
+            html += '<div class="mt-1"><small class="text-muted">Discovered: ' + d.discovered_date + ' | Reported by ' + d.created_by + ' on ' + d.created_at + '</small></div>';
+            if (d.approved_by) {
+                html += '<div><small class="text-muted">' + (d.status === 'rejected' ? 'Rejected' : 'Approved') + ' by ' + d.approved_by + ' on ' + d.approved_at + '</small></div>';
+            }
+            if (d.approval_notes) {
+                html += '<div class="mt-1"><small><strong>Notes:</strong> ' + d.approval_notes + '</small></div>';
+            }
+
+            if (d.journal_entry) {
+                html += '<div class="border-top pt-2 mt-3">';
+                html += '<div class="d-flex justify-content-between align-items-center mb-2">';
+                html += '<h6 class="mb-0"><i class="mdi mdi-book-open-page-variant text-primary"></i> Journal Entry</h6>';
+                html += '<div>';
+                if (d.journal_entry.status) {
+                    var jeBadge = {draft:'secondary',submitted:'info',approved:'primary',posted:'success',rejected:'danger'}[d.journal_entry.status] || 'secondary';
+                    html += '<span class="badge badge-' + jeBadge + ' mr-2">' + d.journal_entry.status.toUpperCase() + '</span>';
+                }
+                html += '<a href="/accounting/journal-entries/' + d.journal_entry.id + '" target="_blank" class="btn btn-sm btn-outline-primary" title="Open in Accounting Module">';
+                html += '<i class="mdi mdi-open-in-new"></i> ' + d.journal_entry.reference + '</a>';
+                html += '</div></div>';
+                html += '<table class="table table-sm table-bordered mb-0" style="font-size: 0.85rem;">';
+                html += '<thead class="thead-light"><tr><th>Account</th><th>Code</th><th class="text-right">Debit</th><th class="text-right">Credit</th></tr></thead><tbody>';
+                var totalDebit = 0, totalCredit = 0;
+                d.journal_entry.lines.forEach(function(line) {
+                    html += '<tr><td>' + line.account_name + '</td><td><code>' + line.account_code + '</code></td>';
+                    html += '<td class="text-right">' + (line.debit > 0 ? '₦' + formatMoneyPharmacy(line.debit) : '—') + '</td>';
+                    html += '<td class="text-right">' + (line.credit > 0 ? '₦' + formatMoneyPharmacy(line.credit) : '—') + '</td></tr>';
+                    totalDebit += parseFloat(line.debit) || 0;
+                    totalCredit += parseFloat(line.credit) || 0;
+                });
+                html += '<tr class="font-weight-bold bg-light"><td colspan="2" class="text-right">Totals</td>';
+                html += '<td class="text-right">₦' + formatMoneyPharmacy(totalDebit) + '</td>';
+                html += '<td class="text-right">₦' + formatMoneyPharmacy(totalCredit) + '</td></tr>';
+                html += '</tbody></table></div>';
+            }
+
+            // Stock / Batch link section
+            if (d.stock_deducted && d.product_id) {
+                html += '<div class="border-top pt-2 mt-2">';
+                html += '<div class="d-flex align-items-center">';
+                html += '<i class="mdi mdi-package-variant-closed text-danger mr-2"></i>';
+                html += '<span class="mr-2"><strong>Stock deducted</strong> — ' + d.qty_damaged + ' unit(s) removed' + (d.batch_id ? ' from <em>' + d.batch_number + '</em>' : ' (store-level)') + '</span>';
+                html += '<a href="/inventory/store-workbench/product/' + d.product_id + '/batches" target="_blank" class="btn btn-sm btn-outline-info ml-auto" title="View batches in Store Workbench">';
+                html += '<i class="mdi mdi-store"></i> View Batches</a>';
+                html += '</div></div>';
+            } else if (d.status === 'approved' && !d.stock_deducted) {
+                html += '<div class="border-top pt-2 mt-2">';
+                html += '<div class="d-flex align-items-center">';
+                html += '<i class="mdi mdi-alert-circle-outline text-warning mr-2"></i>';
+                html += '<span><strong>Pending stock deduction</strong> — stock has not yet been deducted</span>';
+                html += '</div></div>';
+            }
+
+            $body.html(html);
+        })
+        .fail(function() { $body.html('<p class="text-danger text-center">Failed to load damage details</p>'); });
+});
+
+// Damages: Approve / Reject
+$(document).on('click', '.btn-approve-damage, .approve-damage', function() {
+    $('#approve_damage_id').val($(this).data('id'));
+    $('#approve_damage_notes').val('');
+    $('#approveDamageModal').modal('show');
+});
+$(document).on('click', '.btn-reject-damage, .reject-damage', function() {
+    $('#reject_damage_id').val($(this).data('id'));
+    $('#reject_damage_reason').val('');
+    $('#rejectDamageModal').modal('show');
+});
+
+$('#approveDamageForm').on('submit', function(e) {
+    e.preventDefault();
+    var id = $('#approve_damage_id').val();
+    var notes = $('#approve_damage_notes').val();
+    var $btn = $(this).find('button[type="submit"]');
+    $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Approving...');
+    $.ajax({
+        url: '/pharmacy/damages/' + id + '/approve',
+        method: 'POST',
+        data: { approval_notes: notes },
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        success: function(res) {
+            toastr.success(res.message || 'Damage approved');
+            $('#approveDamageModal').modal('hide');
+            if (damagesTableInstance) damagesTableInstance.ajax.reload(null, false);
+            loadDamagesStats();
+        },
+        error: function(xhr) { toastr.error(xhr.responseJSON?.message || 'Approval failed'); },
+        complete: function() { $btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Confirm Approval'); }
+    });
+});
+
+$('#rejectDamageForm').on('submit', function(e) {
+    e.preventDefault();
+    var id = $('#reject_damage_id').val();
+    var reason = $('#reject_damage_reason').val();
+    if (!reason || reason.length < 10) { toastr.warning('Enter a rejection reason (min 10 characters)'); return; }
+    var $btn = $(this).find('button[type="submit"]');
+    $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Rejecting...');
+    $.ajax({
+        url: '/pharmacy/damages/' + id + '/reject',
+        method: 'POST',
+        data: { rejection_reason: reason },
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        success: function(res) {
+            toastr.success(res.message || 'Damage rejected');
+            $('#rejectDamageModal').modal('hide');
+            if (damagesTableInstance) damagesTableInstance.ajax.reload(null, false);
+            loadDamagesStats();
+        },
+        error: function(xhr) { toastr.error(xhr.responseJSON?.message || 'Rejection failed'); },
+        complete: function() { $btn.prop('disabled', false).html('<i class="mdi mdi-close"></i> Reject Report'); }
+    });
+});
+
+// Damages: Filter buttons
+$('#apply-damages-filters').on('click', function() {
+    if (damagesTableInstance) damagesTableInstance.ajax.reload();
+});
+
+// Damages: Button handlers
+$('#btn-pharmacy-damages').on('click', function() { showPharmacyDamages(); });
+$('#btn-close-damages').on('click', function() { hidePharmacyDamages(); });
+$('#btn-create-damage').on('click', function() { showDamageCreateForm(); });
+$('#btn-cancel-create-damage').on('click', function() { hideDamageCreateForm(); });
+
+// ==========================================
+// STOCK REPORTS PANEL
+// ==========================================
+var stockOverviewTableInstance = null;
+var expiringStockTableInstance = null;
+var _stockDropdownsCached = false;
+window.pharmacyStockReportsInitialized = false;
+
+function showPharmacyStockReports() {
+    hideAllPanelViews();
+    $('#pharmacy-stock-reports-view').addClass('active');
+    showMobileMainWorkspace();
+
+    if (!window.pharmacyStockReportsInitialized) {
+        initStockOverviewTable();
+        initExpiringStockTable();
+        loadStockReportsStats();
+        if (!_stockDropdownsCached) { loadStockFilterDropdowns(); _stockDropdownsCached = true; }
+        window.pharmacyStockReportsInitialized = true;
+    } else {
+        if (stockOverviewTableInstance) stockOverviewTableInstance.ajax.reload(null, false);
+        loadStockReportsStats();
+    }
+}
+
+function hidePharmacyStockReports() {
+    $('#pharmacy-stock-reports-view').removeClass('active');
+    backToEmptyState();
+}
+
+function initStockOverviewTable() {
+    stockOverviewTableInstance = $('#stockOverviewTable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: '{{ route("pharmacy.reports.stock-overview") }}',
+            data: function(d) {
+                d.store_id = $('#stock-store-filter').val();
+                d.category_id = $('#stock-category-filter').val();
+                d.stock_level = $('#stock-level-filter').val();
+            }
+        },
+        columns: [
+            { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false, width: '30px' },
+            { data: 'product_name', name: 'products.product_name' },
+            { data: 'category_name', name: 'product_categories.category_name', defaultContent: 'N/A' },
+            { data: 'store_name', name: 'stores.store_name' },
+            { data: 'current_quantity', name: 'store_stocks.current_quantity' },
+            { data: 'reorder_level', name: 'store_stocks.reorder_level' },
+            { data: 'unit_cost', name: 'prices.pr_buy_price', searchable: false, render: function(d) { return '₦' + formatMoneyPharmacy(d); }},
+            { data: 'total_value', name: 'total_value', searchable: false, orderable: false, render: function(d) { return '₦' + formatMoneyPharmacy(d); }},
+            { data: 'stock_status', name: 'stock_status', orderable: false, searchable: false }
+        ],
+        order: [[4, 'asc']],
+        pageLength: 20,
+        stateSave: true,
+        responsive: true,
+        language: { emptyTable: 'No stock data', processing: '<i class="mdi mdi-loading mdi-spin"></i> Loading...' },
+        createdRow: function(row, data) {
+            if (data.current_quantity <= 0) {
+                $(row).addClass('table-danger');
+            } else if (data.current_quantity <= data.reorder_level) {
+                $(row).addClass('table-warning');
+            }
+        }
+    });
+}
+
+function initExpiringStockTable() {
+    expiringStockTableInstance = $('#expiringStockTable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: '{{ route("pharmacy.reports.expiring") }}',
+            data: function(d) {
+                d.days = $('.expiry-range-btn.active').data('days') || 30;
+            }
+        },
+        columns: [
+            { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false, width: '30px' },
+            { data: 'product_name', name: 'products.product_name' },
+            { data: 'store_name', name: 'stores.store_name' },
+            { data: 'batch_number', name: 'stock_batches.batch_number' },
+            { data: 'expiry_date', name: 'stock_batches.expiry_date' },
+            {
+                data: 'days_to_expiry',
+                name: 'days_to_expiry',
+                searchable: false,
+                render: function(d) {
+                    var cls = d <= 15 ? 'text-danger fw-bold' : d <= 30 ? 'text-warning fw-bold' : '';
+                    return '<span class="'+cls+'">' + d + ' days</span>';
+                }
+            },
+            { data: 'quantity_available', name: 'stock_batches.current_qty' },
+            { data: 'total_value', name: 'total_value', searchable: false, orderable: false, render: function(d) { return '₦' + formatMoneyPharmacy(d); }},
+            { data: 'expiry_status', name: 'expiry_status', orderable: false, searchable: false }
+        ],
+        order: [[5, 'asc']],
+        pageLength: 20,
+        stateSave: true,
+        responsive: true,
+        language: { emptyTable: 'No expiring stock found', processing: '<i class="mdi mdi-loading mdi-spin"></i> Loading...' },
+        createdRow: function(row, data) {
+            if (data.days_to_expiry <= 30) {
+                $(row).addClass('table-danger');
+            } else if (data.days_to_expiry <= 60) {
+                $(row).addClass('table-warning');
+            }
+        }
+    });
+}
+
+function loadStockReportsStats() {
+    $('#stock-stat-products, #stock-stat-low, #stock-stat-out').addClass('stat-skeleton');
+    $('#stock-stat-value').addClass('stat-skeleton');
+
+    $.get('{{ route("pharmacy.reports.index") }}', { stats_only: 1 })
+        .done(function(res) {
+            if (res.stats) {
+                $('#stock-stat-products').text(res.stats.products || 0).removeClass('stat-skeleton');
+                $('#stock-stat-value').text('₦' + formatMoneyPharmacy(res.stats.total_value || 0)).removeClass('stat-skeleton');
+                $('#stock-stat-low').text(res.stats.low_stock || 0).removeClass('stat-skeleton');
+                $('#stock-stat-out').text(res.stats.out_of_stock || 0).removeClass('stat-skeleton');
+            }
+        });
+}
+
+function loadStockFilterDropdowns() {
+    $.get('/pharmacy-workbench/stores')
+        .done(function(res) {
+            var stores = res.stores || res;
+            var opts = '<option value="">All Stores</option>';
+            stores.forEach(function(s) {
+                opts += '<option value="' + s.id + '">' + (s.store_name || s.name) + '</option>';
+            });
+            $('#stock-store-filter').html(opts);
+            $('#category-store-filter').html(opts);
+        });
+    $.get('{{ route("pharmacy.reports.by-category") }}', { list_only: 1 })
+        .done(function(res) {
+            var cats = res.categories || res;
+            var opts = '<option value="">All Categories</option>';
+            cats.forEach(function(c) {
+                opts += '<option value="' + c.id + '">' + (c.category_name || c.name) + '</option>';
+            });
+            $('#stock-category-filter').html(opts);
+        });
+}
+
+// Stock Reports: Filter handlers
+$('#apply-stock-filters').on('click', function() {
+    if (stockOverviewTableInstance) stockOverviewTableInstance.ajax.reload();
+});
+
+// Stock Reports: Expiry range toggle
+$('.expiry-range-btn').on('click', function() {
+    $('.expiry-range-btn').removeClass('active');
+    $(this).addClass('active');
+    if (expiringStockTableInstance) expiringStockTableInstance.ajax.reload();
+});
+
+// Stock Reports: By Store tab refresh
+$('#refresh-store-summary').on('click', function() {
+    var $container = $('#storeSummaryCards');
+    $container.html('<div class="col-12 text-center p-4"><i class="mdi mdi-loading mdi-spin"></i> Loading...</div>');
+    $.get('{{ route("pharmacy.reports.by-store") }}')
+        .done(function(res) {
+            var stores = res.stores || res;
+            if (!stores.length) {
+                $container.html('<div class="col-12 text-center text-muted p-4">No data found</div>');
+                return;
+            }
+            var html = '';
+            stores.forEach(function(s) {
+                html += '<div class="col-md-4 col-sm-6">' +
+                    '<div class="store-summary-card">' +
+                    '<h6><i class="mdi mdi-store"></i> ' + (s.store_name || s.name) + '</h6>' +
+                    '<div class="store-metric"><span>Products</span><strong>' + (s.total_products || 0) + '</strong></div>' +
+                    '<div class="store-metric"><span>Total Qty</span><strong>' + (s.total_quantity || 0) + '</strong></div>' +
+                    '<div class="store-metric"><span>Value</span><strong>₦' + formatMoneyPharmacy(s.total_value || 0) + '</strong></div>' +
+                    '<div class="store-metric"><span>Low Stock</span><strong class="text-warning">' + (s.low_stock_count || 0) + '</strong></div>' +
+                    '<div class="store-metric"><span>Out of Stock</span><strong class="text-danger">' + (s.out_of_stock_count || 0) + '</strong></div>' +
+                    '</div></div>';
+            });
+            $container.html(html);
+        })
+        .fail(function() { $container.html('<div class="col-12 text-center text-danger p-4">Failed to load</div>'); });
+});
+
+// Stock Reports: By Category tab refresh
+$('#refresh-category-summary').on('click', function() {
+    var $body = $('#categorySummaryBody');
+    var storeId = $('#category-store-filter').val();
+    $body.html('<tr><td colspan="4" class="text-center p-3"><i class="mdi mdi-loading mdi-spin"></i> Loading...</td></tr>');
+
+    $.get('{{ route("pharmacy.reports.by-category") }}', { store_id: storeId })
+        .done(function(res) {
+            var cats = res.categories || res;
+            if (!cats.length) {
+                $body.html('<tr><td colspan="4" class="text-center text-muted p-3">No data found</td></tr>');
+                return;
+            }
+            var html = '';
+            var totalQty = 0, totalVal = 0;
+            cats.forEach(function(c) {
+                var qty = c.total_quantity || 0;
+                var val = c.total_value || 0;
+                totalQty += parseFloat(qty);
+                totalVal += parseFloat(val);
+                html += '<tr><td>' + (c.category_name || c.name || 'Uncategorized') + '</td><td>' + (c.total_products || 0) + '</td><td>' + qty + '</td><td>₦' + formatMoneyPharmacy(val) + '</td></tr>';
+            });
+            // Add totals row
+            html += '<tr class="table-active fw-bold"><td>TOTAL</td><td>' + cats.length + ' categories</td><td>' + totalQty + '</td><td>₦' + formatMoneyPharmacy(totalVal) + '</td></tr>';
+            $body.html(html);
+        })
+        .fail(function() { $body.html('<tr><td colspan="4" class="text-center text-danger p-3">Failed to load</td></tr>'); });
+});
+
+// Stock Reports: CSV Export
+$('#btn-export-stock-csv').on('click', function() {
+    window.location.href = '{{ route("pharmacy.reports.export-stock") }}?' + $.param({
+        store_id: $('#stock-store-filter').val(),
+        category_id: $('#stock-category-filter').val()
+    });
+});
+
+// Stock Reports: Button handlers
+$('#btn-pharmacy-stock-reports').on('click', function() { showPharmacyStockReports(); });
+$('#btn-close-stock-reports').on('click', function() { hidePharmacyStockReports(); });
+
+// ===========================================
+// END POST-TRANSACTION ACTIONS MODULE
 // ===========================================
 </script>
 

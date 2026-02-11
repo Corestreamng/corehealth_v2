@@ -42,6 +42,8 @@ protected $fillable = [
     protected $casts = [
         'adapted_at' => 'datetime',
         'qty_adjusted_at' => 'datetime',
+        'dispense_date' => 'datetime',
+        'billed_date' => 'datetime',
     ];
 
     /**
