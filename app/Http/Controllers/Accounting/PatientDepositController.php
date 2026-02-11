@@ -9,7 +9,7 @@ use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\JournalEntryLine;
 use App\Models\Accounting\Account;
 use App\Models\PatientAccount;
-use App\Models\Patient;
+use App\Models\patient;
 use App\Models\Payment;
 use App\Models\Bank;
 use App\Models\AdmissionRequest;
@@ -538,7 +538,7 @@ class PatientDepositController extends Controller
             }
 
             // Create journal entry for application
-            // DEBIT: Patient Deposits Liability (2350)
+            // DEBIT: Customer Deposits (2200)
             // CREDIT: Accounts Receivable (1200) or Revenue (if direct payment)
             $this->createApplicationJournalEntry($patientDeposit, $application);
 
@@ -721,8 +721,8 @@ class PatientDepositController extends Controller
      */
     protected function createApplicationJournalEntry(PatientDeposit $deposit, PatientDepositApplication $application): void
     {
-        $liabilityAccount = Account::where('account_code', '2350')->first();
-        $revenueAccount = Account::where('account_code', '4000')->first();
+        $liabilityAccount = Account::where('code', '2200')->first();
+        $revenueAccount = Account::where('code', '4000')->first();
 
         if (!$liabilityAccount || !$revenueAccount) {
             Log::warning('PatientDepositController: Accounts not found for application JE');
@@ -764,8 +764,8 @@ class PatientDepositController extends Controller
      */
     protected function createPartialRefundJournalEntry(PatientDeposit $deposit, float $amount): void
     {
-        $liabilityAccount = Account::where('account_code', '2350')->first();
-        $cashAccount = Account::where('account_code', '1010')->first();
+        $liabilityAccount = Account::where('code', '2200')->first();
+        $cashAccount = Account::where('code', '1010')->first();
 
         if (!$liabilityAccount || !$cashAccount) {
             Log::warning('PatientDepositController: Accounts not found for partial refund JE');

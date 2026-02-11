@@ -952,9 +952,13 @@ class PharmacyWorkbenchController extends Controller
         }
 
         // PHASE 2: All validations passed - now execute dispense in transaction
+        // Uses StockService for batch-aware FIFO dispensing when batches exist,
+        // which auto-syncs store_stocks + global stocks via StockBatchObserver.
+        // Falls back to direct store_stock deduction for unbatched legacy stock.
         try {
             DB::beginTransaction();
 
+            $stockService = app(StockService::class);
             $dispensedCount = 0;
 
             foreach ($itemsToDispense as $item) {
@@ -962,15 +966,35 @@ class PharmacyWorkbenchController extends Controller
                 $storeStock = $item['storeStock'];
                 $qty = $item['qty'];
 
-                // Deduct from store stock
-                $storeStock->decrement('current_quantity', $qty);
-                $storeStock->increment('quantity_sale', $qty);
+                // Check if batches exist for this product+store
+                $hasBatches = StockBatch::where('product_id', $productRequest->product_id)
+                    ->where('store_id', $storeId)
+                    ->where('is_active', true)
+                    ->where('current_qty', '>', 0)
+                    ->exists();
 
-                // Also deduct from global stock for consistency
-                $globalStock = $productRequest->product->stock;
-                if ($globalStock) {
-                    $globalStock->decrement('current_quantity', $qty);
-                    $globalStock->increment('quantity_sale', $qty);
+                if ($hasBatches) {
+                    // Batch-aware FIFO dispensing
+                    // dispenseStock() deducts from batches (FIFO), records transactions,
+                    // triggers StockBatchObserver → syncStoreStock() → auto-syncs all tables
+                    $stockService->dispenseStock(
+                        $productRequest->product_id,
+                        $storeId,
+                        $qty,
+                        ProductRequest::class,
+                        $productRequest->id,
+                        "Dispensing: PR#{$productRequest->id}"
+                    );
+                } else {
+                    // Legacy fallback: no batches, deduct directly from store_stock + global
+                    $storeStock->decrement('current_quantity', $qty);
+                    $storeStock->increment('quantity_sale', $qty);
+
+                    $globalStock = $productRequest->product->stock;
+                    if ($globalStock) {
+                        $globalStock->decrement('current_quantity', $qty);
+                        $globalStock->increment('quantity_sale', $qty);
+                    }
                 }
 
                 // Update product request status to dispensed

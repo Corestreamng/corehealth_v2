@@ -327,7 +327,7 @@ class StockBatch extends Model implements Auditable
             'reference_type' => $referenceType,
             'reference_id' => $referenceId,
             'notes' => $notes,
-            'performed_by' => auth()->id(),
+            'performed_by' => auth()->id() ?? 1, // fallback to system user for CLI/queue contexts
         ]);
     }
 

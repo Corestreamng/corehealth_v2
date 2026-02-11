@@ -21,7 +21,7 @@
                             </div>
 
                             <!-- Asset Summary Card -->
-                            <div class="card mb-3" style="background: #f8f9fa;">
+                            <div class="card-modern mb-3" style="background: #f8f9fa;">
                                 <div class="card-body p-3">
                                     <h6 class="mb-2"><i class="mdi mdi-information mr-1"></i>Asset Information</h6>
                                     <div class="d-flex justify-content-between mb-1">
@@ -71,7 +71,7 @@
 
                             <!-- Payment Source Section -->
                             <div id="payment-source-section" style="display: none;">
-                                <div class="card mb-3" style="background: #e7f3ff; border-left: 3px solid #007bff;">
+                                <div class="card-modern mb-3" style="background: #e7f3ff; border-left: 3px solid #007bff;">
                                     <div class="card-body p-3">
                                         <h6 class="mb-2"><i class="mdi mdi-bank-transfer mr-1"></i>Payment Destination</h6>
                                         <div class="form-group mb-2">
@@ -113,7 +113,7 @@
                             <h6 class="mb-3"><i class="mdi mdi-calculator mr-1"></i>Disposal Calculation</h6>
 
                             <!-- Calculation Breakdown -->
-                            <div class="card mb-3" style="background: #f8f9fa;">
+                            <div class="card-modern mb-3" style="background: #f8f9fa;">
                                 <div class="card-body p-3">
                                     <table class="table table-sm table-borderless mb-0" style="font-size: 0.9rem;">
                                         <tr>
@@ -139,7 +139,7 @@
                                 <h6 class="mb-2"><i class="mdi mdi-book-open-variant mr-1"></i>Journal Entry Preview</h6>
                                 <small class="text-muted d-block mb-2">The following journal entry will be automatically created:</small>
 
-                                <div class="card">
+                                <div class="card-modern">
                                     <div class="card-body p-0">
                                         <table class="table table-sm mb-0" style="font-size: 0.85rem;">
                                             <thead style="background: #495057; color: white;">

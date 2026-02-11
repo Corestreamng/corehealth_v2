@@ -25,14 +25,14 @@ use Illuminate\Support\Facades\Log;
  * PATIENT ACCOUNT TRANSACTIONS:
  *   ACC_DEPOSIT (positive): Patient deposits into account
  *     DEBIT:  Cash/Bank (1010/1020)
- *     CREDIT: Patient Deposits Liability (2350)
+ *     CREDIT: Patient Deposits Liability (2200)
  *
  *   ACC_WITHDRAW (negative): Payment from account OR refund withdrawal
  *     When paying for services (linked to product_or_service_request):
- *       DEBIT:  Patient Deposits Liability (2350)
+ *       DEBIT:  Patient Deposits Liability (2200)
  *       CREDIT: Revenue (4xxx)
  *     When manual refund/withdrawal:
- *       DEBIT:  Patient Deposits Liability (2350)
+ *       DEBIT:  Patient Deposits Liability (2200)
  *       CREDIT: Cash/Bank (1010/1020)
  *
  *   ACC_ADJUSTMENT: Balance corrections
@@ -57,7 +57,7 @@ class PaymentObserver
     // Account codes
     private const CASH_ACCOUNT = '1010';
     private const BANK_ACCOUNT = '1020';
-    private const PATIENT_DEPOSITS_LIABILITY = '2350';
+    private const PATIENT_DEPOSITS_LIABILITY = '2200';
     private const CASH_OVERAGE = '4900';  // Miscellaneous income
     private const CASH_SHORTAGE = '5900'; // Miscellaneous expense
 
@@ -67,6 +67,15 @@ class PaymentObserver
     public function created(Payment $payment): void
     {
         try {
+            // GUARD: Skip if JE already linked (e.g. pharmacy return observer already created the JE)
+            if ($payment->journal_entry_id) {
+                Log::info('PaymentObserver: Skipping JE - already linked', [
+                    'payment_id' => $payment->id,
+                    'journal_entry_id' => $payment->journal_entry_id,
+                ]);
+                return;
+            }
+
             // Route to appropriate handler based on payment type
             if (in_array($payment->payment_type, ['ACC_DEPOSIT', 'ACC_WITHDRAW', 'ACC_ADJUSTMENT'])) {
                 // UNIFIED SYSTEM CHECK: Skip JE if a PatientDeposit was created for this payment
@@ -103,9 +112,9 @@ class PaymentObserver
         $accountingService = App::make(AccountingService::class);
 
         // Get patient deposits liability account
-        $liabilityAccount = Account::where('account_code', self::PATIENT_DEPOSITS_LIABILITY)->first();
+        $liabilityAccount = Account::where('code', self::PATIENT_DEPOSITS_LIABILITY)->first();
         if (!$liabilityAccount) {
-            Log::warning('PaymentObserver: Patient Deposits Liability account (2350) not found', [
+            Log::warning('PaymentObserver: Patient Deposits Liability account (2200) not found', [
                 'payment_id' => $payment->id,
             ]);
             return;
@@ -154,10 +163,10 @@ class PaymentObserver
                     // DEBIT: Patient Deposits Liability, CREDIT: Revenue
                     $metadata = $this->extractPaymentMetadata($payment);
                     $revenueAccountCode = $this->getRevenueAccountCode($payment);
-                    $revenueAccount = Account::where('account_code', $revenueAccountCode)->first();
+                    $revenueAccount = Account::where('code', $revenueAccountCode)->first();
 
                     if (!$revenueAccount) {
-                        $revenueAccount = Account::where('account_code', '4000')->first(); // Default revenue
+                        $revenueAccount = Account::where('code', '4000')->first(); // Default revenue
                     }
 
                     if (!$revenueAccount) {
@@ -226,8 +235,8 @@ class PaymentObserver
                 if ($isPositive) {
                     // Positive adjustment - increase patient balance (found money, correction)
                     // DEBIT: Cash Overage/Suspense, CREDIT: Patient Deposits Liability
-                    $overageAccount = Account::where('account_code', self::CASH_OVERAGE)->first()
-                        ?? Account::where('account_code', '4000')->first();
+                    $overageAccount = Account::where('code', self::CASH_OVERAGE)->first()
+                        ?? Account::where('code', '4000')->first();
 
                     if (!$overageAccount) return;
 
@@ -253,8 +262,8 @@ class PaymentObserver
                 } else {
                     // Negative adjustment - decrease patient balance (write-off, correction)
                     // DEBIT: Patient Deposits Liability, CREDIT: Cash Shortage/Suspense
-                    $shortageAccount = Account::where('account_code', self::CASH_SHORTAGE)->first()
-                        ?? Account::where('account_code', '5000')->first();
+                    $shortageAccount = Account::where('code', self::CASH_SHORTAGE)->first()
+                        ?? Account::where('code', '5000')->first();
 
                     if (!$shortageAccount) return;
 

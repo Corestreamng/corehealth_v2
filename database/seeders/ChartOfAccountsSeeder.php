@@ -251,6 +251,10 @@ class ChartOfAccountsSeeder extends Seeder
                 ['code' => '5000', 'name' => 'Cost of Goods Sold'],
                 ['code' => '5010', 'name' => 'Cost of Pharmacy Sales'],
                 ['code' => '5020', 'name' => 'Cost of Medical Supplies Used'],
+                ['code' => '5030', 'name' => 'Damaged Goods Write-off', 'description' => 'Damaged inventory written off'],
+                ['code' => '5040', 'name' => 'Expired Stock Write-off', 'description' => 'Expired inventory written off'],
+                ['code' => '5050', 'name' => 'Theft/Shrinkage', 'description' => 'Inventory loss due to theft or shrinkage'],
+                ['code' => '5060', 'name' => 'Loss on Returns', 'description' => 'Non-restockable returns loss'],
             ],
             // Personnel Expenses (Group 51)
             '51' => [

@@ -4,7 +4,7 @@ $app = require_once 'bootstrap/app.php';
 $app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
 
 // Check a specific patient's prescriptions - patient 9426 from the screenshot
-$patient = App\Models\Patient::where('id', 9426)->first();
+$patient = App\Models\patient::where('id', 9426)->first();
 
 if ($patient) {
     echo "Patient ID: " . $patient->id . PHP_EOL;

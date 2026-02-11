@@ -158,7 +158,7 @@
         @endphp
 
         {{-- Lease Header Card --}}
-        <div class="card card-modern mb-4">
+        <div class="card-modern mb-4">
             <div class="payment-header">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
@@ -213,7 +213,7 @@
             <div class="row">
                 {{-- LEFT COLUMN: Payment Form --}}
                 <div class="col-lg-6">
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-header bg-primary text-white">
                             <h6 class="mb-0"><i class="mdi mdi-pencil mr-2"></i>Payment Details</h6>
                         </div>
@@ -321,7 +321,7 @@
                     </div>
 
                     {{-- Payment Breakdown Card --}}
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-header">
                             <h6 class="mb-0"><i class="mdi mdi-calculator mr-2"></i>Payment Breakdown</h6>
                         </div>
@@ -361,14 +361,14 @@
                 <div class="col-lg-6">
                     <div class="preview-sidebar">
                         {{-- Balance Preview --}}
-                        <div class="card card-modern mb-4">
+                        <div class="card-modern mb-4">
                             <div class="card-header bg-secondary text-white">
                                 <h6 class="mb-0"><i class="mdi mdi-scale-balance mr-2"></i>Balance Movement Preview</h6>
                             </div>
                             <div class="card-body">
                                 @if(!$isExempt)
                                     {{-- Lease Liability Preview --}}
-                                    <div class="card value-card liability mb-3">
+                                    <div class="card-modern value-card liability mb-3">
                                         <div class="card-body py-3">
                                             <h6 class="text-danger mb-3"><i class="mdi mdi-file-document-outline mr-2"></i>Lease Liability</h6>
                                             <div class="row text-center">
@@ -393,7 +393,7 @@
                                     </div>
 
                                     {{-- ROU Asset Preview --}}
-                                    <div class="card value-card asset">
+                                    <div class="card-modern value-card asset">
                                         <div class="card-body py-3">
                                             <h6 class="text-success mb-3"><i class="mdi mdi-office-building mr-2"></i>ROU Asset</h6>
                                             <div class="row text-center">
@@ -414,7 +414,7 @@
                                     </div>
                                 @else
                                     {{-- Exempt Lease - Simple Cash Impact --}}
-                                    <div class="card value-card">
+                                    <div class="card-modern value-card">
                                         <div class="card-body py-3">
                                             <h6 class="text-info mb-3"><i class="mdi mdi-cash mr-2"></i>Cash Impact</h6>
                                             <div class="row text-center">
@@ -434,7 +434,7 @@
                         </div>
 
                         {{-- Journal Entry Preview --}}
-                        <div class="card card-modern mb-4">
+                        <div class="card-modern mb-4">
                             <div class="card-header bg-dark text-white">
                                 <h6 class="mb-0"><i class="mdi mdi-book-open-variant mr-2"></i>Journal Entry Preview</h6>
                             </div>

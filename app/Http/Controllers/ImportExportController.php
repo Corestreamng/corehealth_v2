@@ -15,6 +15,7 @@ use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Price;
 use App\Models\Stock;
+use App\Models\StockBatch;
 use App\Models\StoreStock;
 use App\Models\Store;
 use App\Models\Service;
@@ -773,6 +774,47 @@ class ImportExportController extends Controller
                                 ]
                             );
 
+                            // Ensure StoreStock + StockBatch exist for updated products too
+                            if ($storeId && $initialQty > 0) {
+                                $storeStock = StoreStock::firstOrCreate(
+                                    ['store_id' => $storeId, 'product_id' => $productId],
+                                    [
+                                        'initial_quantity' => 0,
+                                        'current_quantity' => 0,
+                                        'quantity_sale' => 0,
+                                        'order_quantity' => 0,
+                                        'reorder_level' => $reorderLevel,
+                                        'is_active' => true,
+                                    ]
+                                );
+
+                                // Check if this product already has batches in this store
+                                $existingBatchQty = StockBatch::where('product_id', $productId)
+                                    ->where('store_id', $storeId)
+                                    ->active()
+                                    ->sum('current_qty');
+
+                                // If store_stock qty is higher than batch total, create a reconciliation batch
+                                $storeQty = $storeStock->current_quantity;
+                                $unbatchedQty = max(0, $storeQty - $existingBatchQty);
+                                if ($unbatchedQty > 0) {
+                                    StockBatch::create([
+                                        'product_id' => $productId,
+                                        'store_id' => $storeId,
+                                        'batch_name' => 'Import Reconciliation - ' . now()->format('M d, Y h:i A'),
+                                        'batch_number' => 'IMP-RECON-' . strtoupper(Str::random(6)),
+                                        'initial_qty' => $unbatchedQty,
+                                        'current_qty' => $unbatchedQty,
+                                        'sold_qty' => 0,
+                                        'cost_price' => $costPrice,
+                                        'received_date' => now(),
+                                        'source' => 'manual',
+                                        'is_active' => true,
+                                        'created_by' => auth()->id(),
+                                    ]);
+                                }
+                            }
+
                             $report['updated']++;
                             $report['updated_items'][] = $productCode;
                         } else {
@@ -818,6 +860,24 @@ class ImportExportController extends Controller
                                     'reorder_level' => $reorderLevel,
                                     'is_active' => true,
                                 ]);
+
+                                // Create a StockBatch so batch-aware dispensing works
+                                if ($initialQty > 0) {
+                                    StockBatch::create([
+                                        'product_id' => $product->id,
+                                        'store_id' => $storeId,
+                                        'batch_name' => 'Import - ' . now()->format('M d, Y h:i A'),
+                                        'batch_number' => 'IMP-' . strtoupper(Str::random(6)),
+                                        'initial_qty' => $initialQty,
+                                        'current_qty' => $initialQty,
+                                        'sold_qty' => 0,
+                                        'cost_price' => $costPrice,
+                                        'received_date' => now(),
+                                        'source' => 'manual',
+                                        'is_active' => true,
+                                        'created_by' => auth()->id(),
+                                    ]);
+                                }
                             }
 
                             // Cache the new product

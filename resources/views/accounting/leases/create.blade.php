@@ -156,7 +156,7 @@
                 {{-- Main Form Column --}}
                 <div class="col-lg-8">
                     {{-- SECTION 1: Lease Classification --}}
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="section-header primary">
                             <h5 class="mb-0"><i class="mdi mdi-numeric-1-circle mr-2"></i>Lease Classification</h5>
                         </div>
@@ -196,7 +196,7 @@
                     </div>
 
                     {{-- SECTION 2: Asset Details --}}
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="section-header info">
                             <h5 class="mb-0"><i class="mdi mdi-numeric-2-circle mr-2"></i>Asset Details</h5>
                         </div>
@@ -242,7 +242,7 @@
                     </div>
 
                     {{-- SECTION 3: Lessor Information --}}
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="section-header" style="background: linear-gradient(135deg, #6f42c1 0%, #563d7c 100%);">
                             <h5 class="mb-0"><i class="mdi mdi-numeric-3-circle mr-2"></i>Lessor (Landlord/Supplier)</h5>
                         </div>
@@ -287,7 +287,7 @@
                     </div>
 
                     {{-- SECTION 4: Payment Terms --}}
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="section-header success">
                             <h5 class="mb-0"><i class="mdi mdi-numeric-4-circle mr-2"></i>Payment Terms</h5>
                         </div>
@@ -404,7 +404,7 @@
                     </div>
 
                     {{-- SECTION 5: Lease Options (Collapsible) --}}
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="section-header warning" data-toggle="collapse" data-target="#optionsCollapse" style="cursor: pointer;">
                             <h5 class="mb-0 d-flex justify-content-between align-items-center">
                                 <span><i class="mdi mdi-numeric-5-circle mr-2"></i>Lease Options (Optional)</span>
@@ -508,7 +508,7 @@
                     </div>
 
                     {{-- SECTION 6: GL Account Mapping --}}
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="section-header secondary">
                             <h5 class="mb-0"><i class="mdi mdi-numeric-6-circle mr-2"></i>GL Account Mapping</h5>
                         </div>
@@ -607,7 +607,7 @@
                     </div>
 
                     {{-- Notes Section --}}
-                    <div class="card card-modern mb-4">
+                    <div class="card-modern mb-4">
                         <div class="card-body">
                             <div class="form-group mb-0">
                                 <label for="notes"><i class="mdi mdi-note-text mr-1"></i>Additional Notes</label>
@@ -620,7 +620,7 @@
 
                 {{-- Sidebar Calculator --}}
                 <div class="col-lg-4">
-                    <div class="card card-modern sticky-sidebar calculator-panel">
+                    <div class="card-modern sticky-sidebar calculator-panel">
                         <div class="card-header bg-dark text-white">
                             <h5 class="mb-0"><i class="mdi mdi-calculator-variant mr-2"></i>IFRS 16 Calculator</h5>
                         </div>

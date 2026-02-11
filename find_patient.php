@@ -4,7 +4,7 @@ $app = require_once 'bootstrap/app.php';
 $app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
 
 // Find Martha patient
-$patient = App\Models\Patient::where('firstname', 'like', '%Martha%')
+$patient = App\Models\patient::where('firstname', 'like', '%Martha%')
     ->orWhere('lastname', 'like', '%Uwalaka%')
     ->first();
 
@@ -52,7 +52,7 @@ if ($patient) {
 
     // List some patients
     echo PHP_EOL . "Recent patients:" . PHP_EOL;
-    $patients = App\Models\Patient::orderByDesc('id')->limit(5)->get(['id', 'firstname', 'lastname']);
+    $patients = App\Models\patient::orderByDesc('id')->limit(5)->get(['id', 'firstname', 'lastname']);
     foreach ($patients as $p) {
         echo "  ID: " . $p->id . " - " . $p->firstname . " " . $p->lastname . PHP_EOL;
     }

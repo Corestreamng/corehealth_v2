@@ -395,6 +395,38 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/pharmacy-workbench/my-transactions', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getMyTransactions'])->name('pharmacy.my-transactions');
         Route::post('/pharmacy-workbench/print-prescription-slip', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'printPrescriptionSlip'])->name('pharmacy.print-prescription-slip');
 
+        // Pharmacy Returns Management Routes
+        Route::get('/pharmacy/returns', [\App\Http\Controllers\PharmacyReturnsController::class, 'index'])->name('pharmacy.returns.index');
+        Route::get('/pharmacy/returns/datatables', [\App\Http\Controllers\PharmacyReturnsController::class, 'datatables'])->name('pharmacy.returns.datatables');
+        Route::get('/pharmacy/returns/search-dispensed-items', [\App\Http\Controllers\PharmacyReturnsController::class, 'searchDispensedItems'])->name('pharmacy.returns.search-dispensed');
+        Route::get('/pharmacy/returns/create', [\App\Http\Controllers\PharmacyReturnsController::class, 'create'])->name('pharmacy.returns.create');
+        Route::post('/pharmacy/returns', [\App\Http\Controllers\PharmacyReturnsController::class, 'store'])->name('pharmacy.returns.store');
+        Route::get('/pharmacy/returns/{id}', [\App\Http\Controllers\PharmacyReturnsController::class, 'show'])->name('pharmacy.returns.show');
+        Route::post('/pharmacy/returns/{id}/approve', [\App\Http\Controllers\PharmacyReturnsController::class, 'approve'])->name('pharmacy.returns.approve');
+        Route::post('/pharmacy/returns/{id}/reject', [\App\Http\Controllers\PharmacyReturnsController::class, 'reject'])->name('pharmacy.returns.reject');
+        Route::post('/pharmacy/returns/{id}/process-refund', [\App\Http\Controllers\PharmacyReturnsController::class, 'processRefund'])->name('pharmacy.returns.process-refund');
+
+        // Pharmacy Damages Management Routes
+        Route::get('/pharmacy/damages', [\App\Http\Controllers\PharmacyDamagesController::class, 'index'])->name('pharmacy.damages.index');
+        Route::get('/pharmacy/damages/datatables', [\App\Http\Controllers\PharmacyDamagesController::class, 'datatables'])->name('pharmacy.damages.datatables');
+        Route::get('/pharmacy/damages/search-products', [\App\Http\Controllers\PharmacyDamagesController::class, 'searchProducts'])->name('pharmacy.damages.search-products');
+        Route::get('/pharmacy/damages/get-batches', [\App\Http\Controllers\PharmacyDamagesController::class, 'getBatches'])->name('pharmacy.damages.get-batches');
+        Route::get('/pharmacy/damages/create', [\App\Http\Controllers\PharmacyDamagesController::class, 'create'])->name('pharmacy.damages.create');
+        Route::post('/pharmacy/damages', [\App\Http\Controllers\PharmacyDamagesController::class, 'store'])->name('pharmacy.damages.store');
+        Route::get('/pharmacy/damages/{id}', [\App\Http\Controllers\PharmacyDamagesController::class, 'show'])->name('pharmacy.damages.show');
+        Route::post('/pharmacy/damages/{id}/approve', [\App\Http\Controllers\PharmacyDamagesController::class, 'approve'])->name('pharmacy.damages.approve');
+        Route::post('/pharmacy/damages/{id}/reject', [\App\Http\Controllers\PharmacyDamagesController::class, 'reject'])->name('pharmacy.damages.reject');
+
+        // Pharmacy Reports Routes
+        Route::get('/pharmacy/reports', [\App\Http\Controllers\PharmacyReportsController::class, 'index'])->name('pharmacy.reports.index');
+        Route::get('/pharmacy/reports/stock-overview', [\App\Http\Controllers\PharmacyReportsController::class, 'stockReport'])->name('pharmacy.reports.stock-overview');
+        Route::get('/pharmacy/reports/stock-by-store', [\App\Http\Controllers\PharmacyReportsController::class, 'stockByStore'])->name('pharmacy.reports.by-store');
+        Route::get('/pharmacy/reports/stock-by-category', [\App\Http\Controllers\PharmacyReportsController::class, 'stockByCategory'])->name('pharmacy.reports.by-category');
+        Route::get('/pharmacy/reports/valuation', [\App\Http\Controllers\PharmacyReportsController::class, 'valuationReport'])->name('pharmacy.reports.valuation');
+        Route::get('/pharmacy/reports/export-stock', [\App\Http\Controllers\PharmacyReportsController::class, 'exportStock'])->name('pharmacy.reports.export-stock');
+        Route::get('/pharmacy/reports/expiring-stock', [\App\Http\Controllers\PharmacyReportsController::class, 'expiringStock'])->name('pharmacy.reports.expiring');
+        Route::get('/pharmacy/reports/movement-analysis', [\App\Http\Controllers\PharmacyReportsController::class, 'movementAnalysis'])->name('pharmacy.reports.movement-analysis');
+
         // Pharmacy Reports & Analytics Routes
         Route::get('/pharmacy-workbench/pharmacists', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getPharmacists'])->name('pharmacy.pharmacists');
         Route::get('/pharmacy-workbench/filter-hmos', [\App\Http\Controllers\PharmacyWorkbenchController::class, 'getHmosForFilter'])->name('pharmacy.filterHmos');
