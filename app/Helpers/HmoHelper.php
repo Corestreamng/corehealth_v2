@@ -64,6 +64,11 @@ class HmoHelper
             return true;
         }
 
+        // If claims amount is 0 or null, HMO has nothing to validate — allow access
+        if (empty($request->claims_amount) || $request->claims_amount <= 0) {
+            return true;
+        }
+
         // Primary and Secondary - must be approved
         if (in_array($request->coverage_mode, ['primary', 'secondary'])) {
             return $request->validation_status === 'approved';
