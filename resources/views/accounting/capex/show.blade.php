@@ -600,7 +600,7 @@
                     </div>
 
                     <!-- Journal Entry Preview -->
-                    <div class="card bg-light mt-3" id="jePreviewCard">
+                    <div class="card-modern bg-light mt-3" id="jePreviewCard">
                         <div class="card-body py-2 px-3">
                             <h6 class="mb-2"><i class="mdi mdi-book-open-variant mr-1"></i>Journal Entry Preview</h6>
                             <small class="text-muted d-block mb-2">This journal entry will be created automatically:</small>

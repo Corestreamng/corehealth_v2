@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Accounting\CreditNote;
 use App\Models\Accounting\Account;
 use App\Models\Bank;
-use App\Models\Patient;
+use App\Models\patient;
 use App\Services\Accounting\AccountingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;

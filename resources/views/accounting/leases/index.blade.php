@@ -79,7 +79,7 @@
         {{-- Stats Row --}}
         <div class="row mb-4">
             <div class="col-xl-3 col-md-6 mb-3">
-                <div class="card card-modern stat-card h-100">
+                <div class="card-modern stat-card h-100">
                     <div class="card-body d-flex align-items-center">
                         <div class="stat-icon bg-primary mr-3">
                             <i class="mdi mdi-file-document-multiple text-white mdi-24px"></i>
@@ -92,7 +92,7 @@
                 </div>
             </div>
             <div class="col-xl-3 col-md-6 mb-3">
-                <div class="card card-modern stat-card h-100">
+                <div class="card-modern stat-card h-100">
                     <div class="card-body d-flex align-items-center">
                         <div class="stat-icon bg-info mr-3">
                             <i class="mdi mdi-office-building text-white mdi-24px"></i>
@@ -105,7 +105,7 @@
                 </div>
             </div>
             <div class="col-xl-3 col-md-6 mb-3">
-                <div class="card card-modern stat-card h-100">
+                <div class="card-modern stat-card h-100">
                     <div class="card-body d-flex align-items-center">
                         <div class="stat-icon bg-warning mr-3">
                             <i class="mdi mdi-scale-balance text-white mdi-24px"></i>
@@ -118,7 +118,7 @@
                 </div>
             </div>
             <div class="col-xl-3 col-md-6 mb-3">
-                <div class="card card-modern stat-card h-100">
+                <div class="card-modern stat-card h-100">
                     <div class="card-body d-flex align-items-center">
                         <div class="stat-icon bg-secondary mr-3">
                             <i class="mdi mdi-chart-line-variant text-white mdi-24px"></i>
@@ -135,7 +135,7 @@
         {{-- Secondary Stats Row --}}
         <div class="row mb-4">
             <div class="col-md-4 mb-3">
-                <div class="card card-modern h-100 border-left border-primary" style="border-left-width: 4px !important;">
+                <div class="card-modern h-100 border-left border-primary" style="border-left-width: 4px !important;">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -148,7 +148,7 @@
                 </div>
             </div>
             <div class="col-md-4 mb-3">
-                <div class="card card-modern h-100 border-left border-danger" style="border-left-width: 4px !important;">
+                <div class="card-modern h-100 border-left border-danger" style="border-left-width: 4px !important;">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -163,7 +163,7 @@
                 </div>
             </div>
             <div class="col-md-4 mb-3">
-                <div class="card card-modern h-100 border-left border-warning" style="border-left-width: 4px !important;">
+                <div class="card-modern h-100 border-left border-warning" style="border-left-width: 4px !important;">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -180,7 +180,7 @@
         </div>
 
         {{-- IFRS 16 Quick Reference (Collapsible) --}}
-        <div class="card card-modern mb-4">
+        <div class="card-modern mb-4">
             <div class="card-header bg-light" data-toggle="collapse" data-target="#ifrs16Help" style="cursor: pointer;">
                 <div class="d-flex justify-content-between align-items-center">
                     <h6 class="mb-0">
@@ -256,7 +256,7 @@
         </div>
 
         {{-- Leases Table --}}
-        <div class="card card-modern">
+        <div class="card-modern card-modern">
             <div class="card-header d-flex flex-wrap justify-content-between align-items-center">
                 <h5 class="mb-0">
                     <i class="mdi mdi-file-document-edit mr-2"></i>Lease Agreements

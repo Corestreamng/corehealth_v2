@@ -131,7 +131,7 @@ class OpeningBalanceController extends Controller
                 if ($request->filled('search.value')) {
                     $search = $request->input('search.value');
                     $query->where(function ($q) use ($search) {
-                        $q->where('account_code', 'like', "%{$search}%")
+                        $q->where('code', 'like', "%{$search}%")
                             ->orWhere('name', 'like', "%{$search}%");
                     });
                 }

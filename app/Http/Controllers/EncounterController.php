@@ -3297,8 +3297,8 @@ class EncounterController extends Controller
                 if ($billing && $billing->paid) {
                     // Create refund/credit entry
                     $patient = $procedure->patient;
-                    if ($patient && $patient->patientAccount) {
-                        $patient->patientAccount->increment('balance', $billing->price);
+                    if ($patient && $patient->account) {
+                        $patient->account->increment('balance', $billing->price);
                         $refundMessage = ' A credit of ₦' . number_format($billing->price, 2) . ' has been added to the patient account.';
                     }
                     $billing->update(['refunded' => true, 'refund_reason' => $request->cancellation_reason]);

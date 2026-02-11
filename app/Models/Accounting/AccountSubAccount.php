@@ -41,7 +41,7 @@ class AccountSubAccount extends Model
     ];
 
     // Common entity types
-    const ENTITY_PATIENT = 'App\\Models\\Patient';
+    const ENTITY_PATIENT = 'App\\Models\\patient';
     const ENTITY_SUPPLIER = 'App\\Models\\Supplier';
     const ENTITY_PRODUCT = 'App\\Models\\Product';
     const ENTITY_SERVICE = 'App\\Models\\Service';

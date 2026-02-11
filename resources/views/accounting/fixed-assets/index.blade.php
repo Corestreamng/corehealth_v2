@@ -405,7 +405,7 @@
                     <h6 class="mb-2">Asset to Void:</h6>
                     <p class="font-weight-bold" id="void-asset-name"></p>
 
-                    <div class="card bg-light mt-3">
+                    <div class="card-modern bg-light mt-3">
                         <div class="card-body p-2">
                             <h6 class="text-muted mb-2"><i class="mdi mdi-information mr-1"></i>What happens when you void?</h6>
                             <ul class="small mb-0">

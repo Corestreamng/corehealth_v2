@@ -21,14 +21,14 @@ use Illuminate\Support\Facades\Log;
  *
  * Journal Entry on deposit creation:
  *   DEBIT:  Cash/Bank (1010/1020)
- *   CREDIT: Patient Deposits Liability (2350)
+ *   CREDIT: Customer Deposits (2200)
  *
  * Journal Entry on deposit application to bill:
- *   DEBIT:  Patient Deposits Liability (2350)
+ *   DEBIT:  Customer Deposits (2200)
  *   CREDIT: Accounts Receivable (1200)
  *
  * Journal Entry on refund:
- *   DEBIT:  Patient Deposits Liability (2350)
+ *   DEBIT:  Customer Deposits (2200)
  *   CREDIT: Cash/Bank (1010/1020)
  */
 class PatientDepositObserver
@@ -36,7 +36,7 @@ class PatientDepositObserver
     // Account codes
     private const CASH_ACCOUNT = '1010';
     private const BANK_ACCOUNT = '1020';
-    private const PATIENT_DEPOSITS_LIABILITY = '2350';
+    private const PATIENT_DEPOSITS_LIABILITY = '2200';
     private const ACCOUNTS_RECEIVABLE = '1200';
 
     /**

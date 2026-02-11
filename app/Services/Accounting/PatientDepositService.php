@@ -7,7 +7,7 @@ use App\Models\Accounting\PatientDepositApplication;
 use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\JournalEntryLine;
 use App\Models\Accounting\Account;
-use App\Models\Patient;
+use App\Models\patient;
 use App\Models\Billing\Bill;
 use App\Models\Payment;
 use Illuminate\Support\Facades\DB;
@@ -26,7 +26,7 @@ use Carbon\Carbon;
 class PatientDepositService
 {
     // Account codes
-    private const PATIENT_DEPOSITS_LIABILITY = '2350';
+    private const PATIENT_DEPOSITS_LIABILITY = '2200';
     private const ACCOUNTS_RECEIVABLE = '1200';
     private const CASH_ACCOUNT = '1010';
     private const BANK_ACCOUNT = '1020';
@@ -89,10 +89,10 @@ class PatientDepositService
         DB::beginTransaction();
         try {
             // Create journal entry for application
-            // DEBIT: Patient Deposits Liability (2350)
+            // DEBIT: Patient Deposits Liability (2200)
             // CREDIT: Accounts Receivable (1200)
-            $debitAccount = Account::where('account_code', self::PATIENT_DEPOSITS_LIABILITY)->first();
-            $creditAccount = Account::where('account_code', self::ACCOUNTS_RECEIVABLE)->first();
+            $debitAccount = Account::where('code', self::PATIENT_DEPOSITS_LIABILITY)->first();
+            $creditAccount = Account::where('code', self::ACCOUNTS_RECEIVABLE)->first();
 
             if (!$debitAccount || !$creditAccount) {
                 throw new \RuntimeException('Required accounts not found');
@@ -237,9 +237,9 @@ class PatientDepositService
 
             // Reversal JE: reverse the original entries
             // DEBIT: Accounts Receivable (1200)
-            // CREDIT: Patient Deposits Liability (2350)
-            $arAccount = Account::where('account_code', self::ACCOUNTS_RECEIVABLE)->first();
-            $depositLiabilityAccount = Account::where('account_code', self::PATIENT_DEPOSITS_LIABILITY)->first();
+            // CREDIT: Patient Deposits Liability (2200)
+            $arAccount = Account::where('code', self::ACCOUNTS_RECEIVABLE)->first();
+            $depositLiabilityAccount = Account::where('code', self::PATIENT_DEPOSITS_LIABILITY)->first();
 
             $reversalJe = JournalEntry::create([
                 'entry_date' => now()->toDateString(),

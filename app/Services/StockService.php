@@ -431,16 +431,75 @@ class StockService
             ->active()
             ->sum('current_qty');
 
-        return StoreStock::updateOrCreate(
+        $storeStock = StoreStock::updateOrCreate(
             [
                 'product_id' => $productId,
                 'store_id' => $storeId,
             ],
             [
-                'qty' => $totalQty,
+                'current_quantity' => $totalQty,
                 'last_restocked_at' => $totalQty > 0 ? now() : null,
             ]
         );
+
+        // Also sync the legacy global Stock table
+        $this->syncGlobalStock($productId);
+
+        // Sync product buy price from latest batch cost
+        $this->syncProductPrice($productId);
+
+        return $storeStock;
+    }
+
+    /**
+     * Sync the legacy global stocks table with total across all stores.
+     *
+     * @param int $productId
+     * @return void
+     */
+    public function syncGlobalStock(int $productId): void
+    {
+        $totalQty = StockBatch::where('product_id', $productId)
+            ->active()
+            ->sum('current_qty');
+
+        \App\Models\Stock::where('product_id', $productId)
+            ->update(['current_quantity' => $totalQty]);
+    }
+
+    /**
+     * Sync product buy price (prices.pr_buy_price) from the latest stock batch cost_price.
+     *
+     * When new stock is received, the prices table should reflect the most recent
+     * purchase cost so that damage write-offs, reports, and COGS calculations
+     * use the current cost.
+     *
+     * @param int $productId
+     * @return void
+     */
+    public function syncProductPrice(int $productId): void
+    {
+        // Get the latest batch by received_date (FIFO-last = most recent purchase)
+        $latestBatch = StockBatch::where('product_id', $productId)
+            ->where('cost_price', '>', 0)
+            ->orderByDesc('received_date')
+            ->orderByDesc('id')
+            ->first();
+
+        if (!$latestBatch) {
+            return;
+        }
+
+        $price = \App\Models\Price::where('product_id', $productId)->first();
+
+        if ($price) {
+            // Only update if the cost actually changed
+            if ((float) $price->pr_buy_price !== (float) $latestBatch->cost_price) {
+                $price->update(['pr_buy_price' => $latestBatch->cost_price]);
+
+                \Illuminate\Support\Facades\Log::info("Price sync: Product #{$productId} buy price updated from {$price->pr_buy_price} to {$latestBatch->cost_price} (batch #{$latestBatch->id})");
+            }
+        }
     }
 
     /**

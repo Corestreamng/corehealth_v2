@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\StoreStock;
 use App\Models\Store;
+use App\Services\StockService;
 
 
 class MoveStockController extends Controller
@@ -78,6 +79,14 @@ class MoveStockController extends Controller
                     $pc->initial_quantity    = $pc->current_quantity;
                     $pc->current_quantity    = $pc->current_quantity - $request->quantity;
                     $pc->update();
+
+                    // Sync global stocks table after legacy transfer
+                    try {
+                        app(StockService::class)->syncGlobalStock($request->product_id);
+                    } catch (\Throwable $e) {
+                        \Log::warning('MoveStock: global sync failed after transfer', ['error' => $e->getMessage()]);
+                    }
+
                     // flash($msg, 'success');
                     return redirect(route('stores.index'))->withMessage($msg)->withMessageType('success')->with($msg);
                 } else {
@@ -97,6 +106,14 @@ class MoveStockController extends Controller
                     $pc->initial_quantity    = $pc->current_quantity;
                     $pc->current_quantity    = $pc->current_quantity - $request->quantity;
                     $pc->update();
+
+                    // Sync global stocks table after legacy transfer
+                    try {
+                        app(StockService::class)->syncGlobalStock($request->product_id);
+                    } catch (\Throwable $e) {
+                        \Log::warning('MoveStock: global sync failed after transfer', ['error' => $e->getMessage()]);
+                    }
+
                     $msg = 'Items were transfer successfully.';
                     // flash($msg, 'success');
                     return redirect(route('stores.index'))->withMessage($msg)->withMessageType('success')->with($msg);

@@ -4,7 +4,7 @@ namespace App\Models\Accounting;
 
 use App\Models\Department;
 use App\Models\Hmo;
-use App\Models\Patient;
+use App\Models\patient;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Service;

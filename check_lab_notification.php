@@ -5,7 +5,7 @@ require_once __DIR__ . '/vendor/autoload.php';
 $app = require_once __DIR__ . '/bootstrap/app.php';
 $app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
-use App\Models\Patient;
+use App\Models\patient;
 use App\Models\MedicationSchedule;
 use App\Services\DepartmentNotificationService;
 use Illuminate\Support\Facades\Cache;
