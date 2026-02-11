@@ -1264,6 +1264,34 @@
         border-color: var(--hospital-primary);
     }
 
+    .request-card.selected {
+        background: #e7f1ff;
+        border-color: #0d6efd;
+    }
+
+    .request-card-price {
+        font-weight: 700;
+        color: #198754;
+        font-size: 1rem;
+        white-space: nowrap;
+    }
+
+    .request-card-hmo-info {
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        padding: 0.4rem 0.6rem;
+        background: #f8f9fa;
+        border-radius: 0.25rem;
+    }
+
+    .request-card-audit {
+        font-size: 0.82rem;
+        line-height: 1.5;
+    }
+    .request-card-audit div {
+        margin-bottom: 0.1rem;
+    }
+
     .request-card-checkbox {
         flex-shrink: 0;
         margin-top: 0.25rem;
@@ -1338,13 +1366,13 @@
     }
 
     .request-status-badge.status-sample {
-        background: #ffeaa7;
-        color: #d63031;
+        background: #cfe2ff;
+        color: #084298;
     }
 
     .request-status-badge.status-results {
-        background: #ffeaa7;
-        color: #d63031;
+        background: #d1e7dd;
+        color: #0f5132;
     }
 
     .section-actions-footer {
@@ -1427,6 +1455,158 @@
 
     .btn-action-dismiss:hover:not(:disabled) {
         background: #c82333;
+    }
+
+    /* ── Floating Cart (billing-style) ── */
+    .floating-cart {
+        position: fixed;
+        bottom: 90px;
+        right: 24px;
+        z-index: 1040;
+        display: none;
+    }
+
+    .floating-cart-btn {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 24px;
+        background: linear-gradient(135deg, var(--hospital-primary) 0%, #0056b3 100%);
+        color: white;
+        border: none;
+        border-radius: 50px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.25), 0 2px 6px rgba(0,0,0,0.15);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .floating-cart-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3), 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    .floating-cart-btn .cart-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 28px;
+        height: 28px;
+        padding: 0 8px;
+        background: #fff;
+        color: var(--hospital-primary);
+        border-radius: 14px;
+        font-weight: 700;
+        font-size: 0.9rem;
+    }
+
+    .floating-cart-btn i {
+        font-size: 1.4rem;
+    }
+
+    @keyframes cartPulse {
+        0%   { transform: scale(1); }
+        50%  { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    .floating-cart-btn.pulse {
+        animation: cartPulse 0.3s ease;
+    }
+
+    /* ── Cart Review Modal ── */
+    #cartReviewModal .modal-header {
+        background: linear-gradient(135deg, var(--hospital-primary), #0056b3);
+        color: white;
+    }
+
+    #cartReviewModal .cart-section {
+        border: 1px solid #e9ecef;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+
+    #cartReviewModal .cart-section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        background: #f8f9fa;
+        font-weight: 600;
+        font-size: 0.9rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    #cartReviewModal .cart-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.6rem 1rem;
+        border-bottom: 1px solid #f1f3f5;
+        font-size: 0.88rem;
+    }
+
+    #cartReviewModal .cart-item:last-child {
+        border-bottom: none;
+    }
+
+    #cartReviewModal .cart-item-name {
+        font-weight: 500;
+        flex: 1;
+    }
+
+    #cartReviewModal .cart-item-meta {
+        color: #6c757d;
+        font-size: 0.8rem;
+    }
+
+    #cartReviewModal .cart-item-remove {
+        background: none;
+        border: none;
+        color: #dc3545;
+        cursor: pointer;
+        padding: 2px 6px;
+        border-radius: 50%;
+        font-size: 1rem;
+        line-height: 1;
+    }
+
+    #cartReviewModal .cart-item-remove:hover {
+        background: #fde8e8;
+    }
+
+    #cartReviewModal .cart-item-price {
+        font-weight: 600;
+        color: #198754;
+        font-size: 0.88rem;
+        white-space: nowrap;
+    }
+
+    #cartReviewModal .cart-section-total {
+        padding: 0.25rem 1rem 0.5rem;
+        font-size: 0.85rem;
+    }
+
+    #cartReviewModal .cart-empty {
+        text-align: center;
+        padding: 2rem;
+        color: #adb5bd;
+    }
+
+    #cartReviewModal .cart-empty i {
+        font-size: 3rem;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+
+    #cartReviewModal .cart-action-row {
+        display: flex;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: #f8f9fa;
+        border-top: 1px solid #e9ecef;
     }
 
     .medications-list {
@@ -3015,44 +3195,31 @@
                     </div>
                     <form id="new-lab-request-form" class="new-request-form">
                         <div class="form-row">
-                            <div class="form-group col-md-12">
+                            <div class="form-group col-md-12" style="position: relative;">
                                 <label for="service-search-input"><i class="mdi mdi-magnify"></i> Search Laboratory Services *</label>
-                                <input type="text" class="form-control" id="service-search-input" placeholder="Type to search for lab services..." autocomplete="off">
+                                <input type="text" class="form-control" id="service-search-input" placeholder="Type to search for lab services..." autocomplete="off" onkeyup="searchLabServices(this.value)">
                                 <ul class="list-group" id="service-search-results" style="display: none; position: absolute; z-index: 1000; max-height: 300px; overflow-y: auto; width: calc(100% - 30px);"></ul>
                             </div>
                         </div>
 
-                        <div id="selected-services-container" style="display: none;">
+                        <div id="selected-services-container" class="mb-3">
                             <label><i class="mdi mdi-test-tube"></i> Selected Services</label>
-                            <div id="selected-services-list" class="mb-3"></div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label for="request-urgency"><i class="mdi mdi-clock-alert"></i> Urgency Level</label>
-                                <select class="form-control" id="request-urgency" name="urgency">
-                                    <option value="routine">Routine</option>
-                                    <option value="urgent">Urgent</option>
-                                    <option value="stat">STAT (Immediate)</option>
-                                </select>
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label for="request-priority"><i class="mdi mdi-flag"></i> Priority</label>
-                                <select class="form-control" id="request-priority" name="priority">
-                                    <option value="normal">Normal</option>
-                                    <option value="high">High</option>
-                                </select>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered table-striped">
+                                    <thead>
+                                        <th>Name</th>
+                                        <th>Price</th>
+                                        <th>Notes</th>
+                                        <th>*</th>
+                                    </thead>
+                                    <tbody id="selected-lab-services"></tbody>
+                                </table>
                             </div>
                         </div>
 
                         <div class="form-group">
                             <label for="request-clinical-notes"><i class="mdi mdi-note-text"></i> Clinical Notes / Indication</label>
-                            <textarea class="form-control" id="request-clinical-notes" name="clinical_notes" rows="4" placeholder="Enter clinical indication, symptoms, or relevant patient history..."></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="request-special-instructions"><i class="mdi mdi-information"></i> Special Instructions</label>
-                            <textarea class="form-control" id="request-special-instructions" name="special_instructions" rows="2" placeholder="Any special handling or processing instructions..."></textarea>
+                            <textarea class="form-control" id="request-clinical-notes" name="clinical_notes" rows="3" placeholder="Enter clinical indication, symptoms, or relevant patient history..."></textarea>
                         </div>
 
                         <div class="form-actions">
@@ -3531,6 +3698,40 @@
     <i class="fa fa-clipboard-list"></i>
 </button>
 
+<!-- Floating Cart Button -->
+<div class="floating-cart" id="floating-cart">
+    <button class="floating-cart-btn" onclick="openCartReviewModal()">
+        <i class="mdi mdi-cart-outline"></i>
+        <span class="cart-badge" id="cart-item-count">0</span>
+        <span>selected</span>
+        <span class="cart-total" id="cart-total-display" style="display:none; margin-left:4px; font-weight:600;"></span>
+        <i class="mdi mdi-chevron-up"></i>
+    </button>
+</div>
+
+<!-- Cart Review Modal -->
+<div class="modal fade" id="cartReviewModal" tabindex="-1" role="dialog" aria-labelledby="cartReviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cartReviewModalLabel">
+                    <i class="mdi mdi-cart-check"></i> Selected Items
+                    <span class="badge bg-light text-primary ms-2" id="modal-cart-count">0</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0" id="cart-review-body">
+                <!-- Populated by JS -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="mdi mdi-close"></i> Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Include Investigation Result Entry Modal -->
 @include('admin.partials.invest_res_modal', ['save_route' => 'lab.saveResult'])
 
@@ -3750,7 +3951,7 @@ function loadPatient(patientId) {
             initializeProceduresDataTable(patientId);
         },
         error: function() {
-            alert('Failed to load patient data');
+            toastr.error('Failed to load patient data');
         }
     });
 }
@@ -3805,11 +4006,11 @@ function viewInvestigationResult(requestId) {
             if (request.result_document) {
                 window.open(request.result_document, '_blank');
             } else {
-                alert('No result document found');
+                toastr.warning('No result document found');
             }
         },
         error: function(xhr) {
-            alert('Error loading result: ' + (xhr.responseJSON?.message || 'Unknown error'));
+            toastr.error('Error loading result: ' + (xhr.responseJSON?.message || 'Unknown error'));
         }
     });
 }
@@ -4090,14 +4291,7 @@ function renderPendingSubtabContent(filter) {
                         <label for="select-all-billing">Select All</label>
                     </div>
                     <div class="action-buttons">
-                        <button class="btn-action btn-action-billing" id="btn-record-billing" disabled>
-                            <i class="mdi mdi-check-circle"></i>
-                            Record Billing
-                        </button>
-                        <button class="btn-action btn-action-dismiss" id="btn-dismiss-billing" disabled>
-                            <i class="mdi mdi-close-circle"></i>
-                            Dismiss
-                        </button>
+                        <span class="text-muted small"><i class="mdi mdi-cart-outline"></i> Actions in cart</span>
                     </div>
                 </div>
             </div>
@@ -4126,14 +4320,7 @@ function renderPendingSubtabContent(filter) {
                         <label for="select-all-sample">Select All</label>
                     </div>
                     <div class="action-buttons">
-                        <button class="btn-action btn-action-sample" id="btn-collect-sample" disabled>
-                            <i class="mdi mdi-check-circle"></i>
-                            Collect Sample
-                        </button>
-                        <button class="btn-action btn-action-dismiss" id="btn-dismiss-sample" disabled>
-                            <i class="mdi mdi-close-circle"></i>
-                            Dismiss
-                        </button>
+                        <span class="text-muted small"><i class="mdi mdi-cart-outline"></i> Actions in cart</span>
                     </div>
                 </div>
             </div>
@@ -4160,12 +4347,6 @@ function renderPendingSubtabContent(filter) {
                     <div class="select-all-container">
                         <span class="text-muted"><i class="mdi mdi-information"></i> Results must be entered individually</span>
                     </div>
-                    <div class="action-buttons">
-                        <button class="btn-action btn-action-dismiss" id="btn-dismiss-results" disabled>
-                            <i class="mdi mdi-close-circle"></i>
-                            Dismiss Selected
-                        </button>
-                    </div>
                 </div>
             </div>
         `;
@@ -4185,11 +4366,87 @@ function createRequestCard(request, section) {
     const doctorName = request.doctor ? (request.doctor.firstname + ' ' + request.doctor.surname) : 'N/A';
     const requestDate = formatDateTime(request.created_at);
     const note = request.note || '';
+    const price = parseFloat(request.service?.price_assign || 0);
+    const payableAmount = parseFloat(request.payable_amount || 0);
+    const claimsAmount = parseFloat(request.claims_amount || 0);
+    const coverageMode = request.coverage_mode || '';
+    const isPaid = request.is_paid || false;
+    const isValidated = request.is_validated || false;
+    const validationStatus = request.validation_status || '';
 
     const hasNote = note && note.trim() !== '';
     const noteHtml = hasNote ? `<div class="request-note"><i class="mdi mdi-note-text"></i> ${note}</div>` : '';
 
-    // Check delivery status
+    // --- Status badges & border-left per stage (pharmacy-style) ---
+    let statusBadges = '';
+    let borderStyle = '';
+    let pendingAlerts = '';
+
+    if (section === 'billing') {
+        statusBadges = '<span class="request-status-badge status-billing">Unbilled</span>';
+        borderStyle = 'border-left: 4px solid #ffc107;';
+    } else if (section === 'sample') {
+        statusBadges = '<span class="request-status-badge status-sample">Sample Pending</span>';
+        borderStyle = 'border-left: 4px solid #0d6efd;';
+
+        // Payment status (billed items)
+        if (payableAmount > 0 && !isPaid) {
+            statusBadges += ' <span class="badge bg-danger">Awaiting Payment</span>';
+            pendingAlerts += `<div class="alert alert-danger py-2 px-3 mb-2 mt-2" style="font-size: 0.85rem;">
+                <i class="mdi mdi-cash-clock"></i> <strong>Payment Required:</strong> ₦${Number(payableAmount).toLocaleString()}</div>`;
+        } else if (payableAmount > 0 && isPaid) {
+            statusBadges += ' <span class="badge bg-success"><i class="mdi mdi-check"></i> Paid</span>';
+        }
+        // HMO validation status
+        if (claimsAmount > 0 && (!validationStatus || validationStatus === 'pending')) {
+            statusBadges += ' <span class="badge bg-info">Awaiting HMO Validation</span>';
+            pendingAlerts += `<div class="alert alert-info py-2 px-3 mb-2 mt-2" style="font-size: 0.85rem;">
+                <i class="mdi mdi-shield-alert"></i> <strong>HMO Validation Required:</strong> ₦${Number(claimsAmount).toLocaleString()} claim pending</div>`;
+        } else if (claimsAmount > 0 && validationStatus === 'rejected') {
+            statusBadges += ' <span class="badge bg-danger"><i class="mdi mdi-close"></i> HMO Rejected</span>';
+        } else if (claimsAmount > 0 && isValidated) {
+            statusBadges += ' <span class="badge bg-success"><i class="mdi mdi-check"></i> HMO OK</span>';
+        }
+    } else if (section === 'results') {
+        statusBadges = '<span class="request-status-badge status-results">Awaiting Result</span>';
+        borderStyle = 'border-left: 4px solid #198754;';
+
+        // Payment status
+        if (payableAmount > 0 && !isPaid) {
+            statusBadges += ' <span class="badge bg-danger">Awaiting Payment</span>';
+            pendingAlerts += `<div class="alert alert-danger py-2 px-3 mb-2 mt-2" style="font-size: 0.85rem;">
+                <i class="mdi mdi-cash-clock"></i> <strong>Payment Required:</strong> ₦${Number(payableAmount).toLocaleString()}</div>`;
+        } else if (payableAmount > 0 && isPaid) {
+            statusBadges += ' <span class="badge bg-success"><i class="mdi mdi-check"></i> Paid</span>';
+        }
+        // HMO validation status
+        if (claimsAmount > 0 && (!validationStatus || validationStatus === 'pending')) {
+            statusBadges += ' <span class="badge bg-info">Awaiting HMO Validation</span>';
+            pendingAlerts += `<div class="alert alert-info py-2 px-3 mb-2 mt-2" style="font-size: 0.85rem;">
+                <i class="mdi mdi-shield-alert"></i> <strong>HMO Validation Required:</strong> ₦${Number(claimsAmount).toLocaleString()} claim pending</div>`;
+        } else if (claimsAmount > 0 && validationStatus === 'rejected') {
+            statusBadges += ' <span class="badge bg-danger"><i class="mdi mdi-close"></i> HMO Rejected</span>';
+        } else if (claimsAmount > 0 && isValidated) {
+            statusBadges += ' <span class="badge bg-success"><i class="mdi mdi-check"></i> HMO OK</span>';
+        }
+    }
+
+    // Price display
+    const priceHtml = price > 0 ? `<div class="request-card-price">₦${Number(price).toLocaleString()}</div>` : '';
+
+    // HMO coverage split info
+    let hmoHtml = '';
+    if (coverageMode && coverageMode !== 'null' && coverageMode !== 'none' && coverageMode !== '') {
+        hmoHtml = `
+            <div class="request-card-hmo-info">
+                <span class="badge bg-info">${coverageMode.toUpperCase()}</span>
+                ${payableAmount > 0 ? `<span class="text-danger ms-2">Pay: ₦${Number(payableAmount).toLocaleString()}</span>` : ''}
+                ${claimsAmount > 0 ? `<span class="text-success ms-2">HMO: ₦${Number(claimsAmount).toLocaleString()}</span>` : ''}
+            </div>
+        `;
+    }
+
+    // Delivery check
     const deliveryCheck = request.delivery_check;
     const canDeliver = deliveryCheck ? deliveryCheck.can_deliver : true;
 
@@ -4197,23 +4454,35 @@ function createRequestCard(request, section) {
     const bundledInfo = request.bundled_info;
     let bundledHtml = '';
     if (bundledInfo && bundledInfo.is_bundled) {
-        bundledHtml = `
-            <div class="alert alert-purple py-2 px-2 mb-2 mt-2" style="font-size: 0.85rem; background: #f3e8ff; border-color: #6f42c1; color: #6f42c1;">
-                <i class="fa fa-procedures"></i> <strong>Bundled with Procedure</strong><br>
-                <small>${bundledInfo.procedure_name || 'Procedure'}</small>
-            </div>
-        `;
+        bundledHtml = `<div class="mt-1"><span class="badge" style="background: #6f42c1; color: #fff;">
+            <i class="fa fa-procedures"></i> Bundled: ${bundledInfo.procedure_name || 'Procedure'}
+        </span></div>`;
     }
 
-    // Delivery warning message
+    // Delivery warning (only if pending alerts don't already explain the block)
     let deliveryWarningHtml = '';
-    if (!canDeliver && deliveryCheck) {
+    if (!canDeliver && deliveryCheck && !pendingAlerts) {
         deliveryWarningHtml = `
             <div class="alert alert-warning py-2 px-2 mb-2 mt-2" style="font-size: 0.85rem;">
                 <i class="fa fa-exclamation-triangle"></i> <strong>${deliveryCheck.reason}</strong><br>
                 <small>${deliveryCheck.hint}</small>
             </div>
         `;
+    }
+
+    // Meta info section (like pharmacy — billed by, sample by)
+    let metaDetails = '';
+    if (section !== 'billing') {
+        let metaItems = '';
+        if (request.billed_by_name) {
+            metaItems += `<div><i class="mdi mdi-cash-register"></i> Billed: ${request.billed_by_name}${request.billed_at_formatted ? ' (' + request.billed_at_formatted + ')' : ''}</div>`;
+        }
+        if (request.sample_by_name) {
+            metaItems += `<div><i class="mdi mdi-test-tube"></i> Sample: ${request.sample_by_name}${request.sample_at_formatted ? ' (' + request.sample_at_formatted + ')' : ''}</div>`;
+        }
+        if (metaItems) {
+            metaDetails = `<div class="request-card-audit small text-muted mt-2 pt-2 border-top">${metaItems}</div>`;
+        }
     }
 
     // Results section has individual action button instead of checkbox
@@ -4226,17 +4495,19 @@ function createRequestCard(request, section) {
         </button>
     ` : `
         <div class="request-card-checkbox">
-            <input type="checkbox" class="request-checkbox" data-request-id="${request.id}" data-section="${section}">
+            <input type="checkbox" class="request-checkbox" data-request-id="${request.id}" data-section="${section}"
+                   data-price="${price}">
         </div>
     `;
 
     return `
-        <div class="request-card">
+        <div class="request-card" data-request-id="${request.id}" style="${borderStyle}">
             ${checkboxOrAction}
             <div class="request-card-content">
                 <div class="request-card-header">
                     <div>
                         <div class="request-service-name">${serviceName}</div>
+                        ${bundledHtml}
                         <div class="request-card-meta">
                             <div class="request-meta-item">
                                 <i class="mdi mdi-doctor"></i>
@@ -4248,10 +4519,16 @@ function createRequestCard(request, section) {
                             </div>
                         </div>
                     </div>
+                    <div class="text-end">
+                        ${priceHtml}
+                        <div>${statusBadges}</div>
+                    </div>
                 </div>
+                ${pendingAlerts}
+                ${hmoHtml}
                 ${noteHtml}
-                ${bundledHtml}
                 ${deliveryWarningHtml}
+                ${metaDetails}
             </div>
         </div>
     `;
@@ -4265,52 +4542,26 @@ function initializeRequestHandlers() {
         $(`.request-checkbox[data-section="${section}"]`).prop('checked', isChecked).trigger('change');
     });
 
-    // Individual checkboxes
+    // Individual checkboxes — update floating cart + highlight card on change
     $('.request-checkbox').on('change', function() {
         const section = $(this).data('section');
-        const checkedCount = $(`.request-checkbox[data-section="${section}"]:checked`).length;
+        const $card = $(this).closest('.request-card');
 
-        // Enable/disable action buttons
-        $(`#btn-record-${section}, #btn-collect-${section}, #btn-dismiss-${section}`).prop('disabled', checkedCount === 0);
+        // Toggle selected highlight
+        if ($(this).is(':checked')) {
+            $card.addClass('selected');
+        } else {
+            $card.removeClass('selected');
+        }
+
+        const checkedCount = $(`.request-checkbox[data-section="${section}"]:checked`).length;
 
         // Update select all checkbox state
         const totalCount = $(`.request-checkbox[data-section="${section}"]`).length;
         $(`#select-all-${section}`).prop('checked', checkedCount === totalCount);
-    });
 
-    // Record Billing button
-    $('#btn-record-billing').on('click', function() {
-        const selectedIds = $('.request-checkbox[data-section="billing"]:checked').map(function() {
-            return $(this).data('request-id');
-        }).get();
-
-        if (selectedIds.length > 0) {
-            recordBilling(selectedIds);
-        }
-    });
-
-    // Collect Sample button
-    $('#btn-collect-sample').on('click', function() {
-        const selectedIds = $('.request-checkbox[data-section="sample"]:checked').map(function() {
-            return $(this).data('request-id');
-        }).get();
-
-        if (selectedIds.length > 0) {
-            collectSample(selectedIds);
-        }
-    });
-
-    // Dismiss buttons
-    $('.btn-action-dismiss').on('click', function() {
-        const btnId = $(this).attr('id');
-        const section = btnId.replace('btn-dismiss-', '');
-        const selectedIds = $(`.request-checkbox[data-section="${section}"]:checked`).map(function() {
-            return $(this).data('request-id');
-        }).get();
-
-        if (selectedIds.length > 0) {
-            dismissRequests(selectedIds, section);
-        }
+        // Update the floating cart
+        updateFloatingCart();
     });
 
     // Enter Result buttons (individual)
@@ -4814,8 +5065,6 @@ function loadUserPreferences() {
 
 // Action handlers for lab requests
 function recordBilling(requestIds) {
-    if (!confirm(`Record billing for ${requestIds.length} request(s)?`)) return;
-
     $.ajax({
         url: '{{ route("lab.recordBilling") }}',
         method: 'POST',
@@ -4824,19 +5073,22 @@ function recordBilling(requestIds) {
             request_ids: requestIds,
             patient_id: currentPatient
         },
+        beforeSend: function() {
+            toastr.info(`Recording billing for ${requestIds.length} item(s)...`);
+        },
         success: function(response) {
-            alert('Billing recorded successfully!');
-            loadPatient(currentPatient); // Reload patient data
+            toastr.success('Billing recorded successfully!');
+            $('#cartReviewModal').modal('hide');
+            $('#floating-cart').fadeOut(200);
+            loadPatient(currentPatient);
         },
         error: function(xhr) {
-            alert('Error recording billing: ' + (xhr.responseJSON?.message || 'Unknown error'));
+            toastr.error('Error recording billing: ' + (xhr.responseJSON?.message || 'Unknown error'));
         }
     });
 }
 
 function collectSample(requestIds) {
-    if (!confirm(`Mark sample collected for ${requestIds.length} request(s)?`)) return;
-
     $.ajax({
         url: '{{ route("lab.collectSample") }}',
         method: 'POST',
@@ -4845,19 +5097,22 @@ function collectSample(requestIds) {
             request_ids: requestIds,
             patient_id: currentPatient
         },
+        beforeSend: function() {
+            toastr.info(`Collecting samples for ${requestIds.length} item(s)...`);
+        },
         success: function(response) {
-            alert('Sample collection recorded successfully!');
+            toastr.success('Sample collection recorded successfully!');
+            $('#cartReviewModal').modal('hide');
+            $('#floating-cart').fadeOut(200);
             loadPatient(currentPatient);
         },
         error: function(xhr) {
-            alert('Error recording sample: ' + (xhr.responseJSON?.message || 'Unknown error'));
+            toastr.error('Error recording sample: ' + (xhr.responseJSON?.message || 'Unknown error'));
         }
     });
 }
 
 function dismissRequests(requestIds, section) {
-    if (!confirm(`Dismiss ${requestIds.length} request(s) from ${section} queue?`)) return;
-
     $.ajax({
         url: '{{ route("lab.dismissRequests") }}',
         method: 'POST',
@@ -4866,12 +5121,17 @@ function dismissRequests(requestIds, section) {
             request_ids: requestIds,
             patient_id: currentPatient
         },
+        beforeSend: function() {
+            toastr.info(`Dismissing ${requestIds.length} request(s)...`);
+        },
         success: function(response) {
-            alert('Requests dismissed successfully!');
+            toastr.success('Requests dismissed successfully!');
+            $('#cartReviewModal').modal('hide');
+            $('#floating-cart').fadeOut(200);
             loadPatient(currentPatient);
         },
         error: function(xhr) {
-            alert('Error dismissing requests: ' + (xhr.responseJSON?.message || 'Unknown error'));
+            toastr.error('Error dismissing requests: ' + (xhr.responseJSON?.message || 'Unknown error'));
         }
     });
 }
@@ -4886,10 +5146,173 @@ function enterResult(requestId) {
             $('#investResModal').modal('show');
         },
         error: function(xhr) {
-            alert('Error loading request: ' + (xhr.responseJSON?.message || 'Unknown error'));
+            toastr.error('Error loading request: ' + (xhr.responseJSON?.message || 'Unknown error'));
         }
     });
 }
+
+// ── Floating Cart Logic ──────────────────────────────────────────────
+function getSelectedItems() {
+    const items = { billing: [], sample: [] };
+
+    $('.request-checkbox[data-section="billing"]:checked').each(function() {
+        const $card = $(this).closest('.request-card');
+        items.billing.push({
+            id: $(this).data('request-id'),
+            name: $card.find('.request-service-name').text().trim() || 'Unknown Service',
+            doctor: $card.find('.request-meta-item:first span').text().trim(),
+            date: $card.find('.request-meta-item:last span').text().trim(),
+            price: parseFloat($(this).data('price')) || 0
+        });
+    });
+
+    $('.request-checkbox[data-section="sample"]:checked').each(function() {
+        const $card = $(this).closest('.request-card');
+        items.sample.push({
+            id: $(this).data('request-id'),
+            name: $card.find('.request-service-name').text().trim() || 'Unknown Service',
+            doctor: $card.find('.request-meta-item:first span').text().trim(),
+            date: $card.find('.request-meta-item:last span').text().trim(),
+            price: parseFloat($(this).data('price')) || 0
+        });
+    });
+
+    return items;
+}
+
+function updateFloatingCart() {
+    const items = getSelectedItems();
+    const totalCount = items.billing.length + items.sample.length;
+
+    if (totalCount === 0) {
+        $('#floating-cart').fadeOut(200);
+        return;
+    }
+
+    const totalPrice = [...items.billing, ...items.sample].reduce((sum, i) => sum + i.price, 0);
+    $('#cart-item-count').text(totalCount);
+    if (totalPrice > 0) {
+        $('#cart-total-display').text('₦' + Number(totalPrice).toLocaleString()).show();
+    } else {
+        $('#cart-total-display').hide();
+    }
+    $('#floating-cart').fadeIn(300);
+    $('.floating-cart-btn').addClass('pulse');
+    setTimeout(() => $('.floating-cart-btn').removeClass('pulse'), 300);
+}
+
+function openCartReviewModal() {
+    const items = getSelectedItems();
+    const totalCount = items.billing.length + items.sample.length;
+    $('#modal-cart-count').text(totalCount);
+
+    let html = '';
+
+    if (totalCount === 0) {
+        html = `<div class="cart-empty">
+            <i class="mdi mdi-cart-outline"></i>
+            <p>No items selected</p>
+            <p class="small">Check items in the queue, then open the cart</p>
+        </div>`;
+    } else {
+        // Billing section
+        if (items.billing.length > 0) {
+            const billingTotal = items.billing.reduce((sum, i) => sum + i.price, 0);
+            html += `<div class="cart-section">
+                <div class="cart-section-header">
+                    <span><i class="mdi mdi-cash-register text-success"></i> Awaiting Billing</span>
+                    <span class="badge bg-success">${items.billing.length}</span>
+                </div>`;
+            items.billing.forEach(item => {
+                html += `<div class="cart-item">
+                    <div>
+                        <div class="cart-item-name">${item.name}</div>
+                        <div class="cart-item-meta"><i class="mdi mdi-doctor"></i> ${item.doctor} &middot; ${item.date}</div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        ${item.price > 0 ? `<span class="cart-item-price">₦${Number(item.price).toLocaleString()}</span>` : ''}
+                        <button class="cart-item-remove" onclick="uncheckItem(${item.id}, 'billing')" title="Remove">
+                            <i class="mdi mdi-close-circle"></i>
+                        </button>
+                    </div>
+                </div>`;
+            });
+            if (billingTotal > 0) {
+                html += `<div class="cart-section-total text-end small text-muted pe-2">Subtotal: <strong>₦${Number(billingTotal).toLocaleString()}</strong></div>`;
+            }
+            html += `<div class="cart-action-row">
+                <button class="btn btn-success btn-sm" onclick="cartRecordBilling()">
+                    <i class="mdi mdi-check-circle"></i> Record Billing (${items.billing.length})
+                </button>
+                <button class="btn btn-outline-danger btn-sm" onclick="cartDismiss('billing')">
+                    <i class="mdi mdi-close-circle"></i> Dismiss (${items.billing.length})
+                </button>
+            </div></div>`;
+        }
+
+        // Sample section
+        if (items.sample.length > 0) {
+            html += `<div class="cart-section">
+                <div class="cart-section-header">
+                    <span><i class="mdi mdi-test-tube text-info"></i> Sample Collection</span>
+                    <span class="badge bg-info">${items.sample.length}</span>
+                </div>`;
+            items.sample.forEach(item => {
+                html += `<div class="cart-item">
+                    <div>
+                        <div class="cart-item-name">${item.name}</div>
+                        <div class="cart-item-meta"><i class="mdi mdi-doctor"></i> ${item.doctor} &middot; ${item.date}</div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        ${item.price > 0 ? `<span class="cart-item-price">₦${Number(item.price).toLocaleString()}</span>` : ''}
+                        <button class="cart-item-remove" onclick="uncheckItem(${item.id}, 'sample')" title="Remove">
+                            <i class="mdi mdi-close-circle"></i>
+                        </button>
+                    </div>
+                </div>`;
+            });
+            html += `<div class="cart-action-row">
+                <button class="btn btn-info btn-sm text-white" onclick="cartCollectSample()">
+                    <i class="mdi mdi-check-circle"></i> Collect Sample (${items.sample.length})
+                </button>
+                <button class="btn btn-outline-danger btn-sm" onclick="cartDismiss('sample')">
+                    <i class="mdi mdi-close-circle"></i> Dismiss (${items.sample.length})
+                </button>
+            </div></div>`;
+        }
+    }
+
+    $('#cart-review-body').html(html);
+    $('#cartReviewModal').modal('show');
+}
+
+function uncheckItem(requestId, section) {
+    $(`.request-checkbox[data-section="${section}"][data-request-id="${requestId}"]`).prop('checked', false).trigger('change');
+    // Re-render the modal
+    openCartReviewModal();
+}
+
+function cartRecordBilling() {
+    const ids = $('.request-checkbox[data-section="billing"]:checked').map(function() {
+        return $(this).data('request-id');
+    }).get();
+    if (ids.length > 0) recordBilling(ids);
+}
+
+function cartCollectSample() {
+    const ids = $('.request-checkbox[data-section="sample"]:checked').map(function() {
+        return $(this).data('request-id');
+    }).get();
+    if (ids.length > 0) collectSample(ids);
+}
+
+function cartDismiss(section) {
+    const ids = $(`.request-checkbox[data-section="${section}"]:checked`).map(function() {
+        return $(this).data('request-id');
+    }).get();
+    if (ids.length > 0) dismissRequests(ids, section);
+}
+// ── End Floating Cart Logic ──────────────────────────────────────────
 
 function setResTempInModal(request) {
     $('#investResModal').find('form').trigger('reset');
@@ -5259,14 +5682,14 @@ $('#investResForm').on('submit', function(e) {
         processData: false,
         contentType: false,
         success: function(response) {
-            alert('Result saved successfully!');
+            toastr.success('Result saved successfully!');
             $('#investResModal').modal('hide');
             if (currentPatient) {
                 loadPatient(currentPatient);
             }
         },
         error: function(xhr) {
-            alert('Error saving result: ' + (xhr.responseJSON?.message || 'Unknown error'));
+            toastr.error('Error saving result: ' + (xhr.responseJSON?.message || 'Unknown error'));
         }
     });
 });
@@ -5324,7 +5747,7 @@ function editLabResult(obj) {
             $('#investResModal').modal('show');
         },
         error: function(xhr) {
-            alert('Error loading request: ' + (xhr.responseJSON?.message || 'Unknown error'));
+            toastr.error('Error loading request: ' + (xhr.responseJSON?.message || 'Unknown error'));
         }
     });
 }
@@ -5532,7 +5955,7 @@ $('#deleteRequestForm').on('submit', function(e) {
     const reason = $('#delete_reason').val();
 
     if (reason.length < 10) {
-        alert('Please provide a detailed reason (minimum 10 characters)');
+        toastr.warning('Please provide a detailed reason (minimum 10 characters)');
         return;
     }
 
@@ -5545,7 +5968,7 @@ $('#deleteRequestForm').on('submit', function(e) {
         },
         success: function(response) {
             $('#deleteReasonModal').modal('hide');
-            alert(response.message);
+            toastr.success(response.message || 'Request deleted successfully');
 
             // Reload patient data if we're on a patient
             if (currentPatient) {
@@ -5558,7 +5981,7 @@ $('#deleteRequestForm').on('submit', function(e) {
             }
         },
         error: function(xhr) {
-            alert('Error: ' + (xhr.responseJSON?.message || 'Failed to delete request'));
+            toastr.error(xhr.responseJSON?.message || 'Failed to delete request');
         }
     });
 });
@@ -5580,7 +6003,7 @@ $('#dismissRequestForm').on('submit', function(e) {
     const reason = $('#dismiss_reason').val();
 
     if (reason.length < 10) {
-        alert('Please provide a detailed reason (minimum 10 characters)');
+        toastr.warning('Please provide a detailed reason (minimum 10 characters)');
         return;
     }
 
@@ -5593,7 +6016,7 @@ $('#dismissRequestForm').on('submit', function(e) {
         },
         success: function(response) {
             $('#dismissReasonModal').modal('hide');
-            alert(response.message);
+            toastr.success(response.message || 'Request dismissed successfully');
 
             // Reload patient data
             if (currentPatient) {
@@ -5606,19 +6029,18 @@ $('#dismissRequestForm').on('submit', function(e) {
             }
         },
         error: function(xhr) {
-            alert('Error: ' + (xhr.responseJSON?.message || 'Failed to dismiss request'));
+            toastr.error(xhr.responseJSON?.message || 'Failed to dismiss request');
         }
     });
 });
 
 // Restore Request (from deleted or dismissed)
 function restoreRequest(requestId, type) {
-    if (!confirm('Are you sure you want to restore this request?')) return;
-
     const url = type === 'deleted'
         ? `/lab-workbench/lab-service-requests/${requestId}/restore`
         : `/lab-workbench/lab-service-requests/${requestId}/undismiss`;
 
+    toastr.info('Restoring request...');
     $.ajax({
         url: url,
         method: 'POST',
@@ -5626,7 +6048,7 @@ function restoreRequest(requestId, type) {
             _token: '{{ csrf_token() }}'
         },
         success: function(response) {
-            alert(response.message);
+            toastr.success(response.message || 'Request restored successfully');
 
             // Reload patient data
             if (currentPatient) {
@@ -5637,7 +6059,7 @@ function restoreRequest(requestId, type) {
             loadTrashData();
         },
         error: function(xhr) {
-            alert('Error: ' + (xhr.responseJSON?.message || 'Failed to restore request'));
+            toastr.error(xhr.responseJSON?.message || 'Failed to restore request');
         }
     });
 }
@@ -5877,7 +6299,7 @@ function loadAuditLogs() {
 
 $('#exportAuditLog').on('click', function() {
     // TODO: Implement export to Excel functionality
-    alert('Export feature coming soon!');
+    toastr.info('Export feature coming soon!');
 });
 
 // Load trash counts on page load
@@ -6715,6 +7137,167 @@ $('#btn-new-request').on('click', function() {
     }
     switchWorkspaceTab('new-request');
     $('#new-request-patient-name').text(currentPatient.name);
+});
+
+// ==========================================
+// NEW LAB REQUEST — SEARCH, SELECT, SUBMIT
+// ==========================================
+let labSearchTimer = null;
+
+function searchLabServices(q) {
+    clearTimeout(labSearchTimer);
+    const $results = $('#service-search-results');
+
+    if (!q || q.trim().length < 2) {
+        $results.html('').hide();
+        return;
+    }
+
+    // Show loading state
+    $results.html('<li class="list-group-item text-center text-muted"><i class="mdi mdi-loading mdi-spin"></i> Searching...</li>').show();
+
+    labSearchTimer = setTimeout(function() {
+        $.ajax({
+            url: "{{ url('live-search-services') }}",
+            method: "GET",
+            dataType: 'json',
+            data: {
+                term: q,
+                category_id: {{ appsettings('investigation_category_id') ?? 2 }},
+                patient_id: currentPatient ? (typeof currentPatient === 'object' ? currentPatient.id : currentPatient) : null
+            },
+            success: function(data) {
+                $results.html('');
+
+                if (!data || data.length === 0) {
+                    $results.html('<li class="list-group-item text-center text-muted"><i class="mdi mdi-alert-circle-outline"></i> No lab services found for "' + q + '"</li>').show();
+                    return;
+                }
+
+                for (var i = 0; i < data.length; i++) {
+                    const item = data[i] || {};
+                    const category = (item.category && item.category.category_name) ? item.category.category_name : 'N/A';
+                    const name = item.service_name || 'Unknown';
+                    const code = item.service_code || '';
+                    const price = item.price && item.price.sale_price !== undefined ? item.price.sale_price : 0;
+                    const payable = item.payable_amount !== undefined && item.payable_amount !== null ? item.payable_amount : price;
+                    const claims = item.claims_amount !== undefined && item.claims_amount !== null ? item.claims_amount : 0;
+                    const mode = item.coverage_mode || null;
+                    const coverageBadge = mode && mode !== 'cash' ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ${payable}</span> <span class='text-success ms-1'>Claim: ${claims}</span>` : '';
+                    const displayName = `${name}[${code}]`;
+
+                    const escapedDisplayName = displayName.replace(/'/g, "\\'");
+                    const escapedId = (item.id + '').replace(/'/g, "\\'");
+
+                    var mk =
+                        `<li class='list-group-item'
+                           style="background-color: #f0f0f0; cursor: pointer;"
+                           onclick="setSearchValLab('${escapedDisplayName}', '${escapedId}', '${price}', '${mode}', '${claims}', '${payable}')">
+                           [${category}] <b>${name}[${code}]</b> NGN ${Number(price).toLocaleString()} ${coverageBadge}</li>`;
+                    $results.append(mk);
+                }
+                $results.show();
+            },
+            error: function() {
+                $results.html('<li class="list-group-item text-center text-danger"><i class="mdi mdi-alert"></i> Search failed. Please try again.</li>').show();
+            }
+        });
+    }, 300);
+}
+
+function setSearchValLab(name, id, price, coverageMode, claims, payable) {
+    coverageMode = (coverageMode === 'null' || coverageMode === 'undefined') ? null : coverageMode;
+    const coverageBadge = coverageMode && coverageMode !== 'cash' ?
+        `<div class="small mt-1"><span class="badge bg-info">${coverageMode.toUpperCase()}</span> <span class="text-danger">Pay: ${payable ?? price}</span> <span class="text-success">Claims: ${claims ?? 0}</span></div>` : '';
+
+    var mk = `
+        <tr>
+            <td>${name}${coverageBadge}</td>
+            <td>NGN ${Number(payable ?? price).toLocaleString()}</td>
+            <td>
+                <input type='text' class='form-control form-control-sm' name='consult_lab_note[]' placeholder='Optional note'>
+                <input type='hidden' name='consult_lab_id[]' value='${id}'>
+            </td>
+            <td><button type="button" class='btn btn-danger btn-sm' onclick="removeProdRow(this)"><i class="fa fa-times"></i></button></td>
+        </tr>
+    `;
+
+    $('#selected-lab-services').append(mk);
+    $('#service-search-results').html('').hide();
+    $('#service-search-input').val('');
+}
+
+function removeProdRow(btn) {
+    $(btn).closest('tr').remove();
+}
+
+// Lab request form submission
+$('#new-lab-request-form').on('submit', function(e) {
+    e.preventDefault();
+
+    const serviceIds = [];
+    const notes = [];
+    $('#selected-lab-services tr').each(function() {
+        const serviceId = $(this).find('input[name="consult_lab_id[]"]').val();
+        const note = $(this).find('input[name="consult_lab_note[]"]').val();
+        if (serviceId) {
+            serviceIds.push(serviceId);
+            notes.push(note || '');
+        }
+    });
+
+    if (serviceIds.length === 0) {
+        toastr.warning('Please select at least one lab service');
+        return;
+    }
+
+    const patientId = currentPatient ? (typeof currentPatient === 'object' ? currentPatient.id : currentPatient) : null;
+    if (!patientId) {
+        toastr.error('No patient selected');
+        return;
+    }
+
+    const $submitBtn = $(this).find('button[type="submit"]');
+    const originalBtnHtml = $submitBtn.html();
+    $submitBtn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Submitting...');
+
+    $.ajax({
+        url: '{{ route("lab.storeRequest") }}',
+        method: 'POST',
+        data: {
+            patient_id: patientId,
+            service_ids: serviceIds,
+            notes: notes,
+            clinical_notes: $('#request-clinical-notes').val(),
+            _token: $('meta[name="csrf-token"]').attr('content')
+        },
+        success: function(response) {
+            if (response.success) {
+                toastr.success(response.message);
+                $('#selected-lab-services').empty();
+                $('#request-clinical-notes').val('');
+                loadPatient(patientId);
+                getQueueCounts();
+                switchWorkspaceTab('pending');
+            } else {
+                toastr.error(response.message || 'Failed to create request');
+            }
+        },
+        error: function(xhr) {
+            const message = xhr.responseJSON?.message || 'Error creating lab request';
+            toastr.error(message);
+        },
+        complete: function() {
+            $submitBtn.prop('disabled', false).html(originalBtnHtml);
+        }
+    });
+});
+
+// Close search dropdown when clicking outside
+$(document).on('click', function(e) {
+    if (!$(e.target).closest('#service-search-input, #service-search-results').length) {
+        $('#service-search-results').html('').hide();
+    }
 });
 
 // ==========================================

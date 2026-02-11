@@ -103,11 +103,52 @@ class LabWorkbenchController extends Controller
         $patient = Patient::with(['user', 'hmo.scheme'])->findOrFail($patientId);
 
         // Get all pending investigation requests
-        $requests = LabServiceRequest::with(['service', 'doctor', 'biller', 'patient'])
+        $requests = LabServiceRequest::with(['service', 'doctor', 'biller', 'patient', 'productOrServiceRequest', 'resultBy'])
             ->where('patient_id', $patientId)
             ->whereIn('status', [1, 2, 3])
             ->orderBy('created_at', 'desc')
             ->get();
+
+        // Enrich each request with delivery check, bundled info, payment/HMO fields
+        $requests = $requests->map(function ($req) {
+            $deliveryCheck = null;
+            $bundledInfo = null;
+
+            // Check bundled procedure first
+            $bundledCheck = HmoHelper::isBundledItem('lab', $req->id);
+            if ($bundledCheck && $bundledCheck['is_bundled']) {
+                $deliveryCheck = HmoHelper::canDeliverBundledItem($bundledCheck['procedure_item']);
+                $bundledInfo = [
+                    'is_bundled' => true,
+                    'procedure_id' => $bundledCheck['procedure_id'],
+                    'procedure_name' => $bundledCheck['procedure_name'],
+                ];
+            } elseif ($req->productOrServiceRequest) {
+                $deliveryCheck = HmoHelper::canDeliverService($req->productOrServiceRequest);
+            }
+
+            $req->delivery_check = $deliveryCheck;
+            $req->bundled_info = $bundledInfo;
+
+            // Flatten payment/HMO fields from the billing record
+            $psr = $req->productOrServiceRequest;
+            $req->payable_amount = $psr ? (float) $psr->payable_amount : 0;
+            $req->claims_amount = $psr ? (float) $psr->claims_amount : 0;
+            $req->coverage_mode = $psr ? $psr->coverage_mode : null;
+            $req->is_paid = $psr && $psr->payment_id ? true : false;
+            $req->is_validated = $psr && in_array($psr->validation_status, ['approved', 'validated']) ? true : false;
+            $req->validation_status = $psr ? $psr->validation_status : null;
+
+            // Formatted meta for display
+            $req->billed_by_name = $req->biller ? $req->biller->surname . ' ' . $req->biller->firstname : null;
+            $req->billed_at_formatted = $req->billed_date ? \Carbon\Carbon::parse($req->billed_date)->format('M j, h:i A') : null;
+            $req->sample_by_name = $req->sample_taken_by ? userfullname($req->sample_taken_by) : null;
+            $req->sample_at_formatted = $req->sample_date ? \Carbon\Carbon::parse($req->sample_date)->format('M j, h:i A') : null;
+            $req->result_by_name = $req->resultBy ? $req->resultBy->surname . ' ' . $req->resultBy->firstname : null;
+            $req->result_at_formatted = $req->result_date ? \Carbon\Carbon::parse($req->result_date)->format('M j, h:i A') : null;
+
+            return $req;
+        });
 
         // Group by status
         $billing = $requests->where('status', 1)->values();
@@ -1231,9 +1272,6 @@ class LabWorkbenchController extends Controller
                 'service_ids' => 'required|array',
                 'service_ids.*' => 'exists:services,id',
                 'clinical_notes' => 'nullable|string',
-                'special_instructions' => 'nullable|string',
-                'urgency' => 'nullable|in:routine,urgent,stat',
-                'priority' => 'nullable|in:normal,high'
             ]);
 
             DB::beginTransaction();
@@ -1246,9 +1284,6 @@ class LabWorkbenchController extends Controller
                 $labRequest->doctor_id = Auth::id();
                 $labRequest->note = $request->clinical_notes[$index] ?? $request->clinical_notes ?? '';
                 $labRequest->status = 1; // Billing status
-                $labRequest->urgency = $request->urgency ?? 'routine';
-                $labRequest->priority = $request->priority ?? 'normal';
-                $labRequest->special_instructions = $request->special_instructions ?? '';
                 $labRequest->save();
 
                 $createdRequests[] = $labRequest->id;

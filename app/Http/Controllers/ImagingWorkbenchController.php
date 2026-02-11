@@ -100,20 +100,49 @@ class ImagingWorkbenchController extends Controller
         $patient = Patient::with(['user', 'hmo.scheme'])->findOrFail($patientId);
 
         // Get all pending imaging requests
-        $requests = ImagingServiceRequest::with(['service', 'doctor', 'biller', 'patient', 'productOrServiceRequest'])
+        $requests = ImagingServiceRequest::with(['service', 'doctor', 'biller', 'patient', 'productOrServiceRequest', 'resultBy'])
             ->where('patient_id', $patientId)
             ->whereIn('status', [1, 2])
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Add delivery check for each request
-        $requests = $requests->map(function ($request) {
+        // Enrich each request with delivery check, bundled info, payment/HMO fields
+        $requests = $requests->map(function ($req) {
             $deliveryCheck = null;
-            if ($request->productOrServiceRequest) {
-                $deliveryCheck = HmoHelper::canDeliverService($request->productOrServiceRequest);
+            $bundledInfo = null;
+
+            // Check bundled procedure first
+            $bundledCheck = HmoHelper::isBundledItem('imaging', $req->id);
+            if ($bundledCheck && $bundledCheck['is_bundled']) {
+                $deliveryCheck = HmoHelper::canDeliverBundledItem($bundledCheck['procedure_item']);
+                $bundledInfo = [
+                    'is_bundled' => true,
+                    'procedure_id' => $bundledCheck['procedure_id'],
+                    'procedure_name' => $bundledCheck['procedure_name'],
+                ];
+            } elseif ($req->productOrServiceRequest) {
+                $deliveryCheck = HmoHelper::canDeliverService($req->productOrServiceRequest);
             }
-            $request->delivery_check = $deliveryCheck;
-            return $request;
+
+            $req->delivery_check = $deliveryCheck;
+            $req->bundled_info = $bundledInfo;
+
+            // Flatten payment/HMO fields from the billing record
+            $psr = $req->productOrServiceRequest;
+            $req->payable_amount = $psr ? (float) $psr->payable_amount : 0;
+            $req->claims_amount = $psr ? (float) $psr->claims_amount : 0;
+            $req->coverage_mode = $psr ? $psr->coverage_mode : null;
+            $req->is_paid = $psr && $psr->payment_id ? true : false;
+            $req->is_validated = $psr && in_array($psr->validation_status, ['approved', 'validated']) ? true : false;
+            $req->validation_status = $psr ? $psr->validation_status : null;
+
+            // Formatted meta for display
+            $req->billed_by_name = $req->biller ? $req->biller->surname . ' ' . $req->biller->firstname : null;
+            $req->billed_at_formatted = $req->billed_date ? \Carbon\Carbon::parse($req->billed_date)->format('M j, h:i A') : null;
+            $req->result_by_name = $req->resultBy ? $req->resultBy->surname . ' ' . $req->resultBy->firstname : null;
+            $req->result_at_formatted = $req->result_date ? \Carbon\Carbon::parse($req->result_date)->format('M j, h:i A') : null;
+
+            return $req;
         });
 
         // Group by status - No sample stage for imaging
