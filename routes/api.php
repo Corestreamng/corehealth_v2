@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\DataEndpoint;
+use App\Http\Controllers\API\MobileAuthController;
 use App\Models\service;
 use App\Models\Product;
 use App\Models\ProcedureCategory;
@@ -70,7 +71,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     // Spec Reference: PROCEDURE_MODULE_DESIGN_PLAN.md Part 3.6
     Route::get('procedures', function () {
         $procedureCategoryId = appsettings('procedure_category_id');
-        
+
         if (!$procedureCategoryId) {
             return response()->json(['data' => [], 'message' => 'Procedure category not configured']);
         }
@@ -118,3 +119,21 @@ Route::get('get-facility-monthly-encounter/{year}', [DataEndpoint::class, 'encou
 Route::get('get-facility-monthly-income/{year}', [DataEndpoint::class, 'incomePerMonth'])->middleware(['auth.basic.sha256']);
 Route::get('get-facility-monthly-investigations/{year}', [DataEndpoint::class, 'investigationsPerMonth'])->middleware(['auth.basic.sha256']);
 Route::get('get-facility-monthly-hospitalization/{year}', [DataEndpoint::class, 'hospitalizationsPerMonth'])->middleware(['auth.basic.sha256']);
+
+/*
+|--------------------------------------------------------------------------
+| Mobile App API Routes
+|--------------------------------------------------------------------------
+*/
+
+// Public — no auth required (called before login)
+Route::prefix('mobile')->group(function () {
+    Route::get('instance-info',  [MobileAuthController::class, 'instanceInfo']);
+    Route::post('staff/login',   [MobileAuthController::class, 'staffLogin']);
+    Route::post('patient/login', [MobileAuthController::class, 'patientLogin']);
+});
+
+// Protected — requires Sanctum token
+Route::prefix('mobile')->middleware('auth:sanctum')->group(function () {
+    Route::post('logout', [MobileAuthController::class, 'logout']);
+});
