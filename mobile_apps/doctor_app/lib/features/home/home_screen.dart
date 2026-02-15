@@ -2,10 +2,12 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/api/api_client.dart';
+import '../../core/api/encounter_api_service.dart';
 import '../../core/config/server_config_provider.dart';
 import '../../core/storage/local_storage.dart';
 import '../../core/theme/theme_provider.dart';
 import '../auth/login_screen.dart';
+import '../queue/queue_screen.dart';
 import '../server_setup/server_setup_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -18,11 +20,20 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   Map<String, dynamic>? _user;
+  late EncounterApiService _encounterApi;
+
+  // Dashboard live stats
+  int _newCount = 0;
+  int _continuingCount = 0;
+  bool _statsLoading = true;
 
   @override
   void initState() {
     super.initState();
     _loadUser();
+    final baseUrl = LocalStorage.baseUrl ?? '';
+    _encounterApi = EncounterApiService(baseUrl);
+    _loadDashboardStats();
   }
 
   void _loadUser() {
@@ -30,6 +41,23 @@ class _HomeScreenState extends State<HomeScreen> {
     if (json != null) {
       setState(() => _user = jsonDecode(json));
     }
+  }
+
+  Future<void> _loadDashboardStats() async {
+    setState(() => _statsLoading = true);
+
+    // Fetch new and continuing queue counts in parallel
+    final results = await Future.wait([
+      _encounterApi.getQueues(status: 1, perPage: 1),
+      _encounterApi.getQueues(status: 2, perPage: 1),
+    ]);
+
+    if (!mounted) return;
+    setState(() {
+      _newCount = results[0].data?['total'] ?? 0;
+      _continuingCount = results[1].data?['total'] ?? 0;
+      _statsLoading = false;
+    });
   }
 
   Future<void> _logout() async {
@@ -71,6 +99,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _openQueue() {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const QueueScreen()))
+        .then((_) => _loadDashboardStats());
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = context.watch<ThemeProvider>();
@@ -101,8 +135,17 @@ class _HomeScreenState extends State<HomeScreen> {
       body: IndexedStack(
         index: _currentIndex,
         children: [
-          _DashboardTab(userName: userName, roles: roles, primary: primary),
-          const _PatientsTab(),
+          _DashboardTab(
+            userName: userName,
+            roles: roles,
+            primary: primary,
+            newCount: _newCount,
+            continuingCount: _continuingCount,
+            statsLoading: _statsLoading,
+            onOpenQueue: _openQueue,
+            onRefreshStats: _loadDashboardStats,
+          ),
+          const QueueScreen(embedded: true),
           const _ResultsTab(),
           _ProfileTab(
             user: _user,
@@ -123,9 +166,9 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Dashboard',
           ),
           NavigationDestination(
-            icon: Icon(Icons.people_outline_rounded),
-            selectedIcon: Icon(Icons.people_rounded),
-            label: 'Patients',
+            icon: Icon(Icons.queue_rounded),
+            selectedIcon: Icon(Icons.queue_rounded),
+            label: 'Queue',
           ),
           NavigationDestination(
             icon: Icon(Icons.science_outlined),
@@ -151,150 +194,137 @@ class _DashboardTab extends StatelessWidget {
   final String userName;
   final String roles;
   final Color primary;
+  final int newCount;
+  final int continuingCount;
+  final bool statsLoading;
+  final VoidCallback onOpenQueue;
+  final VoidCallback onRefreshStats;
 
   const _DashboardTab({
     required this.userName,
     required this.roles,
     required this.primary,
+    required this.newCount,
+    required this.continuingCount,
+    required this.statsLoading,
+    required this.onOpenQueue,
+    required this.onRefreshStats,
   });
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Greeting
-          Text(
-            'Hello, $userName 👋',
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          if (roles.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                roles,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey.shade600,
-                ),
+    return RefreshIndicator(
+      onRefresh: () async => onRefreshStats(),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Greeting
+            Text(
+              'Hello, $userName 👋',
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
               ),
             ),
-          const SizedBox(height: 24),
+            if (roles.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  roles,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ),
+            const SizedBox(height: 24),
 
-          // Quick stats cards
-          Row(
-            children: [
-              Expanded(
-                child: _StatCard(
-                  icon: Icons.people_alt_rounded,
-                  label: 'Queue',
-                  value: '—',
-                  color: primary,
+            // Quick stats cards
+            Row(
+              children: [
+                Expanded(
+                  child: _StatCard(
+                    icon: Icons.person_add_alt_1_rounded,
+                    label: 'New Patients',
+                    value: statsLoading ? '…' : '$newCount',
+                    color: primary,
+                    onTap: onOpenQueue,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: _StatCard(
-                  icon: Icons.edit_note_rounded,
-                  label: 'Consultations',
-                  value: '—',
-                  color: Color(0xFF00897B),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _StatCard(
+                    icon: Icons.replay_rounded,
+                    label: 'Continuing',
+                    value: statsLoading ? '…' : '$continuingCount',
+                    color: const Color(0xFF00897B),
+                    onTap: onOpenQueue,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Row(
-            children: [
-              Expanded(
-                child: _StatCard(
-                  icon: Icons.science_rounded,
-                  label: 'Lab Pending',
-                  value: '—',
-                  color: Color(0xFF5E35B1),
-                ),
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: _StatCard(
-                  icon: Icons.medication_rounded,
-                  label: 'Prescriptions',
-                  value: '—',
-                  color: Color(0xFFE65100),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-
-          // Quick actions
-          Text(
-            'Quick Actions',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade800,
+              ],
             ),
-          ),
-          const SizedBox(height: 16),
-          _ActionTile(
-            icon: Icons.add_circle_outline_rounded,
-            title: 'New Consultation',
-            subtitle: 'Start a new patient encounter',
-            color: primary,
-          ),
-          const _ActionTile(
-            icon: Icons.search_rounded,
-            title: 'Search Patient',
-            subtitle: 'Find patient by name or ID',
-            color: Color(0xFF00897B),
-          ),
-          const _ActionTile(
-            icon: Icons.assignment_turned_in_outlined,
-            title: 'Review Results',
-            subtitle: 'Lab & imaging results pending review',
-            color: Color(0xFF5E35B1),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-//  TAB 2 — Patients (placeholder)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-class _PatientsTab extends StatelessWidget {
-  const _PatientsTab();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.people_outlined, size: 64, color: Colors.grey.shade300),
-          const SizedBox(height: 16),
-          Text(
-            'Patient Queue',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade700,
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _StatCard(
+                    icon: Icons.queue_rounded,
+                    label: 'Total Queue',
+                    value: statsLoading
+                        ? '…'
+                        : '${newCount + continuingCount}',
+                    color: const Color(0xFF5E35B1),
+                    onTap: onOpenQueue,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: _StatCard(
+                    icon: Icons.check_circle_outline_rounded,
+                    label: 'Today',
+                    value: '—',
+                    color: Color(0xFFE65100),
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Patient management features coming soon',
-            style: TextStyle(color: Colors.grey.shade500),
-          ),
-        ],
+            const SizedBox(height: 32),
+
+            // Quick actions
+            Text(
+              'Quick Actions',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade800,
+              ),
+            ),
+            const SizedBox(height: 16),
+            _ActionTile(
+              icon: Icons.queue_rounded,
+              title: 'Patient Queue',
+              subtitle: 'View and manage your patient queue',
+              color: primary,
+              onTap: onOpenQueue,
+            ),
+            _ActionTile(
+              icon: Icons.refresh_rounded,
+              title: 'Refresh Stats',
+              subtitle: 'Pull latest queue counts',
+              color: const Color(0xFF00897B),
+              onTap: onRefreshStats,
+            ),
+            const _ActionTile(
+              icon: Icons.assignment_turned_in_outlined,
+              title: 'Review Results',
+              subtitle: 'Lab & imaging results pending review',
+              color: Color(0xFF5E35B1),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -464,48 +494,54 @@ class _StatCard extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
+  final VoidCallback? onTap;
 
   const _StatCard({
     required this.icon,
     required this.label,
     required this.value,
     required this.color,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: color, size: 22),
               ),
-              child: Icon(icon, color: color, size: 22),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w700,
-                color: Colors.grey.shade900,
+              const SizedBox(height: 16),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.grey.shade900,
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey.shade600,
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey.shade600,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -517,12 +553,14 @@ class _ActionTile extends StatelessWidget {
   final String title;
   final String subtitle;
   final Color color;
+  final VoidCallback? onTap;
 
   const _ActionTile({
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.color,
+    this.onTap,
   });
 
   @override
@@ -550,11 +588,12 @@ class _ActionTile extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('$title — coming soon')),
-          );
-        },
+        onTap: onTap ??
+            () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('$title — coming soon')),
+              );
+            },
       ),
     );
   }

@@ -4,6 +4,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\DataEndpoint;
 use App\Http\Controllers\API\MobileAuthController;
+use App\Http\Controllers\API\MobileEncounterController;
+use App\Http\Controllers\API\MobilePatientController;
+use App\Http\Controllers\EncounterController;
+use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\VitalSignController;
+use App\Http\Controllers\NursingWorkbenchController;
 use App\Models\service;
 use App\Models\Product;
 use App\Models\ProcedureCategory;
@@ -136,4 +143,86 @@ Route::prefix('mobile')->group(function () {
 // Protected — requires Sanctum token
 Route::prefix('mobile')->middleware('auth:sanctum')->group(function () {
     Route::post('logout', [MobileAuthController::class, 'logout']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Mobile Doctor Routes — Encounter & Queue Management
+|--------------------------------------------------------------------------
+| These routes power the Doctor App's clinical workflow.
+| Existing JSON-returning EncounterController methods are reused directly.
+*/
+Route::prefix('mobile/doctor')->middleware('auth:sanctum')->group(function () {
+
+    // ── Queue Management ──────────────────────────────────────────
+    Route::get('queues', [MobileEncounterController::class, 'queues']);
+
+    // ── Encounter Lifecycle ───────────────────────────────────────
+    Route::post('encounters/start', [MobileEncounterController::class, 'startEncounter']);
+    Route::get('encounters/{encounter}', [MobileEncounterController::class, 'encounterDetail']);
+
+    // ── Reused: Diagnosis & Notes (already return JSON) ──────────
+    Route::post('encounters/{encounter}/save-diagnosis', [EncounterController::class, 'saveDiagnosis']);
+    Route::put('encounters/{encounter}/notes', [EncounterController::class, 'updateEncounterNotes']);
+    Route::post('encounters/autosave', [EncounterController::class, 'autosaveNotes']);
+
+    // ── Reused: Lab / Imaging / Prescription / Procedure saves ──
+    Route::post('encounters/{encounter}/save-labs', [EncounterController::class, 'saveLabs']);
+    Route::post('encounters/{encounter}/save-imaging', [EncounterController::class, 'saveImaging']);
+    Route::post('encounters/{encounter}/save-prescriptions', [EncounterController::class, 'savePrescriptions']);
+    Route::post('encounters/{encounter}/save-procedures', [EncounterController::class, 'saveProcedures']);
+
+    // ── Reused: Finalize & Summary ──────────────────────────────
+    Route::post('encounters/{encounter}/finalize', [EncounterController::class, 'finalizeEncounter']);
+    Route::get('encounters/{encounter}/summary', [EncounterController::class, 'getEncounterSummary']);
+
+    // ── Reused: Delete endpoints ────────────────────────────────
+    Route::delete('encounters/{encounter}', [EncounterController::class, 'deleteEncounter']);
+    Route::delete('encounters/{encounter}/labs/{lab}', [EncounterController::class, 'deleteLab']);
+    Route::delete('encounters/{encounter}/imaging/{imaging}', [EncounterController::class, 'deleteImaging']);
+    Route::delete('encounters/{encounter}/prescriptions/{prescription}', [EncounterController::class, 'deletePrescription']);
+    Route::delete('encounters/{encounter}/procedures/{procedure}', [EncounterController::class, 'deleteProcedure']);
+
+    // ── Reused: Procedure sub-endpoints ─────────────────────────
+    Route::get('procedures/{procedure}', [EncounterController::class, 'getProcedureDetails']);
+    Route::post('procedures/{procedure}/cancel', [EncounterController::class, 'cancelProcedure']);
+    Route::get('procedures/{procedure}/team', [EncounterController::class, 'getProcedureTeam']);
+    Route::post('procedures/{procedure}/team', [EncounterController::class, 'addProcedureTeamMember']);
+    Route::delete('procedures/{procedure}/team/{member}', [EncounterController::class, 'deleteProcedureTeamMember']);
+    Route::get('procedures/{procedure}/notes', [EncounterController::class, 'getProcedureNotes']);
+    Route::post('procedures/{procedure}/notes', [EncounterController::class, 'addProcedureNote']);
+    Route::delete('procedures/{procedure}/notes/{note}', [EncounterController::class, 'deleteProcedureNote']);
+
+    // ── Patient History Lists (JSON versions) ───────────────────
+    Route::get('patient/{patient}/encounter-history', [MobileEncounterController::class, 'encounterHistory']);
+    Route::get('patient/{patient}/lab-history', [MobileEncounterController::class, 'labHistory']);
+    Route::get('patient/{patient}/imaging-history', [MobileEncounterController::class, 'imagingHistory']);
+    Route::get('patient/{patient}/prescription-history', [MobileEncounterController::class, 'prescriptionHistory']);
+    Route::get('patient/{patient}/procedure-history', [MobileEncounterController::class, 'procedureHistory']);
+
+    // ── Search / Autocomplete (reused, already return JSON) ─────
+    Route::get('search/diagnosis', [EncounterController::class, 'liveSearchReasons']);
+    Route::get('search/services', [ServiceController::class, 'liveSearchServices']);
+    Route::get('search/products', [ProductController::class, 'liveSearchProducts']);
+
+    // ── Vitals (reused, already JSON-aware) ─────────────────────
+    Route::post('vitals', [VitalSignController::class, 'store']);
+    Route::get('patient/{patientId}/vitals', [NursingWorkbenchController::class, 'getPatientVitals']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Mobile Patient Routes — Read-Only Health Records
+|--------------------------------------------------------------------------
+*/
+Route::prefix('mobile/patient')->middleware('auth:sanctum')->group(function () {
+    Route::get('profile', [MobilePatientController::class, 'myProfile']);
+    Route::get('encounters', [MobilePatientController::class, 'myEncounters']);
+    Route::get('encounters/{encounter}', [MobilePatientController::class, 'encounterDetail']);
+    Route::get('vitals', [MobilePatientController::class, 'myVitals']);
+    Route::get('lab-results', [MobilePatientController::class, 'myLabResults']);
+    Route::get('imaging-results', [MobilePatientController::class, 'myImagingResults']);
+    Route::get('prescriptions', [MobilePatientController::class, 'myPrescriptions']);
+    Route::get('procedures', [MobilePatientController::class, 'myProcedures']);
+    Route::get('admissions', [MobilePatientController::class, 'myAdmissions']);
 });

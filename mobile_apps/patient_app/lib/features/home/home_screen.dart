@@ -6,6 +6,12 @@ import '../../core/config/server_config_provider.dart';
 import '../../core/storage/local_storage.dart';
 import '../../core/theme/theme_provider.dart';
 import '../auth/login_screen.dart';
+import '../health/encounters_screen.dart';
+import '../health/lab_results_screen.dart';
+import '../health/imaging_results_screen.dart';
+import '../health/prescriptions_screen.dart';
+import '../health/vitals_screen.dart';
+import '../health/procedures_screen.dart';
 import '../server_setup/server_setup_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -106,7 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
             patient: _patient,
             primary: primary,
           ),
-          const _AppointmentsTab(),
+          const _VisitsTab(),
           const _ResultsTab(),
           _ProfileTab(
             patient: _patient,
@@ -267,28 +273,52 @@ class _DashboardTab extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           _ActionTile(
-            icon: Icons.calendar_month_rounded,
-            title: 'My Appointments',
-            subtitle: 'View upcoming visits & history',
+            icon: Icons.event_note_rounded,
+            title: 'My Visits',
+            subtitle: 'View your consultation history',
             color: primary,
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const EncountersScreen())),
           ),
-          const _ActionTile(
+          _ActionTile(
             icon: Icons.science_rounded,
             title: 'Lab Results',
             subtitle: 'View your latest test results',
-            color: Color(0xFF5E35B1),
+            color: const Color(0xFF5E35B1),
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const LabResultsScreen())),
           ),
-          const _ActionTile(
+          _ActionTile(
+            icon: Icons.image_rounded,
+            title: 'Imaging Results',
+            subtitle: 'X-rays, scans & imaging reports',
+            color: const Color(0xFF00695C),
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const ImagingResultsScreen())),
+          ),
+          _ActionTile(
             icon: Icons.medication_rounded,
             title: 'My Prescriptions',
             subtitle: 'Current & past medications',
-            color: Color(0xFFE65100),
+            color: const Color(0xFFE65100),
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const PrescriptionsScreen())),
           ),
-          const _ActionTile(
-            icon: Icons.receipt_long_rounded,
-            title: 'My Bills',
-            subtitle: 'Payment history & outstanding',
-            color: Color(0xFF00897B),
+          _ActionTile(
+            icon: Icons.monitor_heart_rounded,
+            title: 'My Vitals',
+            subtitle: 'Blood pressure, temperature & more',
+            color: Colors.red.shade700,
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const VitalsScreen())),
+          ),
+          _ActionTile(
+            icon: Icons.medical_services_rounded,
+            title: 'My Procedures',
+            subtitle: 'Surgeries & medical procedures',
+            color: const Color(0xFF00897B),
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const ProceduresScreen())),
           ),
         ],
       ),
@@ -297,33 +327,60 @@ class _DashboardTab extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//  TAB 2 — Appointments
+//  TAB 2 — Visits (Encounters)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-class _AppointmentsTab extends StatelessWidget {
-  const _AppointmentsTab();
+class _VisitsTab extends StatelessWidget {
+  const _VisitsTab();
 
   @override
   Widget build(BuildContext context) {
-    return Center(
+    final primary = Theme.of(context).colorScheme.primary;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.calendar_month_outlined,
-              size: 64, color: Colors.grey.shade300),
-          const SizedBox(height: 16),
-          Text(
-            'My Visits',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade700,
-            ),
-          ),
+          Text('My Health Records',
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.grey.shade800)),
           const SizedBox(height: 8),
-          Text(
-            'Appointment history coming soon',
-            style: TextStyle(color: Colors.grey.shade500),
+          Text('Access all your medical records in one place',
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+          const SizedBox(height: 24),
+          _HealthMenuTile(
+            icon: Icons.event_note_rounded,
+            title: 'Visit History',
+            subtitle: 'All doctor consultations',
+            color: primary,
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const EncountersScreen())),
+          ),
+          _HealthMenuTile(
+            icon: Icons.monitor_heart_rounded,
+            title: 'Vital Signs',
+            subtitle: 'BP, temperature, heart rate',
+            color: Colors.red.shade700,
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const VitalsScreen())),
+          ),
+          _HealthMenuTile(
+            icon: Icons.medical_services_rounded,
+            title: 'Procedures',
+            subtitle: 'Surgeries & medical procedures',
+            color: Colors.teal.shade700,
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const ProceduresScreen())),
+          ),
+          _HealthMenuTile(
+            icon: Icons.medication_rounded,
+            title: 'Prescriptions',
+            subtitle: 'Medication history',
+            color: Colors.orange.shade700,
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const PrescriptionsScreen())),
           ),
         ],
       ),
@@ -332,7 +389,7 @@ class _AppointmentsTab extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//  TAB 3 — Results
+//  TAB 3 — Results (Lab + Imaging)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class _ResultsTab extends StatelessWidget {
@@ -340,24 +397,35 @@ class _ResultsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.science_outlined, size: 64, color: Colors.grey.shade300),
-          const SizedBox(height: 16),
-          Text(
-            'My Results',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade700,
-            ),
-          ),
+          Text('Test Results',
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.grey.shade800)),
           const SizedBox(height: 8),
-          Text(
-            'Lab & imaging results viewer coming soon',
-            style: TextStyle(color: Colors.grey.shade500),
+          Text('View your lab and imaging results',
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+          const SizedBox(height: 24),
+          _HealthMenuTile(
+            icon: Icons.science_rounded,
+            title: 'Lab Results',
+            subtitle: 'Blood tests, urinalysis & more',
+            color: Colors.blue.shade700,
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const LabResultsScreen())),
+          ),
+          _HealthMenuTile(
+            icon: Icons.image_rounded,
+            title: 'Imaging Results',
+            subtitle: 'X-rays, CT scans, MRI & ultrasound',
+            color: Colors.purple.shade700,
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const ImagingResultsScreen())),
           ),
         ],
       ),
@@ -567,12 +635,14 @@ class _ActionTile extends StatelessWidget {
   final String title;
   final String subtitle;
   final Color color;
+  final VoidCallback? onTap;
 
   const _ActionTile({
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.color,
+    this.onTap,
   });
 
   @override
@@ -598,11 +668,70 @@ class _ActionTile extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('$title — coming soon')),
-          );
-        },
+        onTap: onTap ??
+            () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('$title — coming soon')),
+              );
+            },
+      ),
+    );
+  }
+}
+
+class _HealthMenuTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _HealthMenuTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(icon, color: color, size: 28),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        style: const TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 2),
+                    Text(subtitle,
+                        style: TextStyle(
+                            fontSize: 12, color: Colors.grey.shade600)),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: Colors.grey.shade400),
+            ],
+          ),
+        ),
       ),
     );
   }
