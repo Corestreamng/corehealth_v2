@@ -25,7 +25,7 @@ try {
     echo "\nTesting audit creation...\n";
 
     // Get first patient and update something
-    $patient = Patient::first();
+    $patient = patient::first();
     if ($patient) {
         $oldAddress = $patient->address;
         $patient->address = "Test Address " . time();

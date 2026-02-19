@@ -198,6 +198,14 @@
         border-bottom: 1px solid #dee2e6;
     }
 
+    @keyframes emergencyPulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); }
+        50% { box-shadow: 0 0 0 8px rgba(220, 53, 69, 0); }
+    }
+    .emergency-pulse {
+        animation: emergencyPulse 1.5s infinite;
+    }
+
     .queue-widget h6 {
         font-size: 0.85rem;
         font-weight: 700;
@@ -4028,7 +4036,11 @@
         </div>
 
         <div class="queue-widget">
-            <h6>� PRESCRIPTION QUEUE</h6>
+            <h6>📊 PRESCRIPTION QUEUE</h6>
+            <div class="queue-item" data-filter="emergency" style="background: #fff5f5; border-left: 3px solid #dc3545;">
+                <span class="queue-item-label">🚨 <strong class="text-danger">Emergency</strong></span>
+                <span class="queue-count" id="queue-emergency-count" style="background: #dc3545; color: #fff;">0</span>
+            </div>
             <div class="queue-item" data-filter="all">
                 <span class="queue-item-label">🟡 All Pending</span>
                 <span class="queue-count all-unpaid" id="queue-all-count">0</span>
@@ -4080,6 +4092,10 @@
             <button class="quick-action-btn" disabled style="opacity: 0.5;">
                 <i class="mdi mdi-file-invoice-dollar"></i>
                 <span>Generate Invoice (Coming Soon)</span>
+            </button>
+            <button class="quick-action-btn" data-bs-toggle="modal" data-bs-target="#emergencyIntakeModal">
+                <i class="mdi mdi-ambulance text-danger"></i>
+                <span>Emergency Intake</span>
             </button>
         </div>
     </div>
@@ -6138,6 +6154,19 @@ $(document).ready(function() {
     loadUserPreferences();
     createVitalTooltip();
     loadBanks(); // Load available banks for payment
+
+    // Auto-select patient from URL query parameter (e.g., from Patient list workbench button)
+    const urlParams = new URLSearchParams(window.location.search);
+    const patientId = urlParams.get('patient_id');
+    if (patientId) {
+        loadPatient(patientId);
+    }
+
+    // Auto-open queue from URL parameter (e.g., from dashboard queue widget click)
+    const queueFilter = urlParams.get('queue_filter');
+    if (queueFilter && ['all', 'unbilled', 'billed', 'hmo'].includes(queueFilter)) {
+        setTimeout(function() { showQueue(queueFilter); }, 500);
+    }
 });
 
 function initializeEventListeners() {
@@ -8181,8 +8210,16 @@ function setDefaultReceiptDates() {
 function loadQueueCounts() {
     $.get('{{ route("pharmacy.queue-counts") }}', function(counts) {
         $('#queue-all-count').text(counts.total || 0);
+        $('#queue-unbilled-count').text(counts.unbilled || 0);
+        $('#queue-ready-count').text(counts.ready || 0);
         $('#queue-hmo-count').text(counts.hmo || 0);
-        $('#queue-credit-count').text(counts.credit || 0);
+        var emergencyCount = counts.emergency || 0;
+        $('#queue-emergency-count').text(emergencyCount);
+        if (emergencyCount > 0) {
+            $('#queue-emergency-count').closest('.queue-item').addClass('emergency-pulse');
+        } else {
+            $('#queue-emergency-count').closest('.queue-item').removeClass('emergency-pulse');
+        }
         updateSyncIndicator();
     });
 }
@@ -12520,9 +12557,16 @@ function initializeQueueDataTable(filter) {
                 data: null,
                 orderable: false,
                 render: function(data, type, row) {
+                    var emergencyBadge = row.is_emergency
+                        ? '<span class=\"badge bg-danger me-2\"><i class=\"fa fa-bolt\"></i> EMERGENCY</span>'
+                        : '';
+                    var borderStyle = row.is_emergency
+                        ? 'border-left: 4px solid #dc3545; background: #fff8f8;'
+                        : '';
                     return `
-                        <div class="queue-patient-item" data-patient-id="${row.patient_id}" style="cursor: pointer; padding: 1rem; border-bottom: 1px solid #e9ecef;">
+                        <div class="queue-patient-item" data-patient-id="${row.patient_id}" style="cursor: pointer; padding: 1rem; border-bottom: 1px solid #e9ecef; ${borderStyle}">
                             <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                ${emergencyBadge}
                                 <div style="font-weight: 600; font-size: 1rem; color: #212529;">${row.patient_name}</div>
                                 <span class="badge badge-primary">${row.file_no}</span>
                             </div>
@@ -12880,11 +12924,16 @@ function renderQueueCard(data) {
         </div>
     ` : '';
 
+    const emergencyBadge = data.is_emergency
+        ? '<span class="badge bg-danger mb-1"><i class="fa fa-bolt"></i> EMERGENCY</span> '
+        : '';
+    const emergencyBorderStyle = data.is_emergency ? 'border-left: 4px solid #dc3545;' : '';
+
     return `
-        <div class="queue-card" data-patient-id="${data.patient_id}">
+        <div class="queue-card" data-patient-id="${data.patient_id}" style="${emergencyBorderStyle}">
             <div class="queue-card-header">
                 <div class="queue-card-patient">
-                    <div class="queue-card-patient-name">${data.patient_name}</div>
+                    <div class="queue-card-patient-name">${emergencyBadge}${data.patient_name}</div>
                     ${patientMeta}
                 </div>
                 <div class="queue-card-service">${data.service_name}</div>
@@ -17354,5 +17403,8 @@ $('#btn-close-stock-reports').on('click', function() { hidePharmacyStockReports(
 
 {{-- Clinical Context Modal --}}
 @include('admin.partials.clinical_context_modal')
+
+{{-- Emergency Intake Modal --}}
+@include('admin.partials.emergency-intake-modal')
 
 @endsection

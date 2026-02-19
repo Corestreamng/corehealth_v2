@@ -381,7 +381,7 @@ class NursingShift extends Model implements Auditable
 
             // Get patient info if we have an ID
             if ($patientId && !isset($grouped[$type]['patients'][$patientId])) {
-                $patient = Patient::with('user')->find($patientId);
+                $patient = patient::with('user')->find($patientId);
                 if ($patient) {
                     // Patient name comes from user relationship
                     $patientName = $patient->user?->name ?? $patient->user?->first_name ?? "Patient #{$patientId}";

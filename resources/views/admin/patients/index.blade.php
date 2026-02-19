@@ -25,6 +25,7 @@
                                     <th>Date</th>
                                     <th>View</th>
                                     <th>Edit</th>
+                                    <th>Workbench</th>
                                 </tr>
                             </thead>
                         </table>
@@ -93,6 +94,12 @@
                     {
                         data: "edit",
                         name: "edit"
+                    },
+                    {
+                        data: "workbenches",
+                        name: "workbenches",
+                        orderable: false,
+                        searchable: false
                     }
                 ],
                 // initComplete: function () {

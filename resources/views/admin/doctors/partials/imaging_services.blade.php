@@ -56,6 +56,7 @@
 
             {{-- New Request Tab --}}
             <div class="tab-pane fade tab-content-fade" id="imaging-new" role="tabpanel">
+                <div id="imaging_save_message" class="mb-2"></div>
                 <h5 class="mb-3"><i class="fa fa-plus-circle"></i> New Imaging Request</h5>
                 <div class="form-group">
                     <label for="consult_imaging_search">Search imaging services</label>
@@ -92,6 +93,5 @@
                 </button>
             </div>
         </div>
-        <div id="imaging_save_message" class="mt-2"></div>
     </div>
 </div>

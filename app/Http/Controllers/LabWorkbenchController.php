@@ -43,7 +43,7 @@ class LabWorkbenchController extends Controller
             return response()->json([]);
         }
 
-        $patients = Patient::with('user')
+        $patients = patient::with('user')
             ->where(function ($query) use ($term) {
                 $query->whereHas('user', function ($userQuery) use ($term) {
                     $userQuery->where('surname', 'like', "%{$term}%")
@@ -85,6 +85,7 @@ class LabWorkbenchController extends Controller
         $sampleCount = LabServiceRequest::where('status', 2)->count();
         $resultCount = LabServiceRequest::where('status', 3)->count();
         $completedCount = LabServiceRequest::where('status', 4)->count();
+        $emergencyCount = LabServiceRequest::where('priority', 'emergency')->whereIn('status', [1, 2, 3])->count();
 
         return response()->json([
             'billing' => $billingCount,
@@ -92,6 +93,7 @@ class LabWorkbenchController extends Controller
             'results' => $resultCount,
             'completed' => $completedCount,
             'total' => $billingCount + $sampleCount + $resultCount,
+            'emergency' => $emergencyCount,
         ]);
     }
 
@@ -100,7 +102,7 @@ class LabWorkbenchController extends Controller
      */
     public function getPatientRequests($patientId)
     {
-        $patient = Patient::with(['user', 'hmo.scheme'])->findOrFail($patientId);
+        $patient = patient::with(['user', 'hmo.scheme'])->findOrFail($patientId);
 
         // Get all pending investigation requests
         $requests = LabServiceRequest::with(['service', 'doctor', 'biller', 'patient', 'productOrServiceRequest', 'resultBy'])
@@ -288,7 +290,10 @@ class LabWorkbenchController extends Controller
                 $query->whereBetween('created_at', [$startDate, $endDate]);
             }
 
-            $requests = $query->orderBy('created_at', 'desc')->get();
+            $requests = $query
+                ->orderByRaw("FIELD(IFNULL(priority,'routine'), 'emergency', 'urgent', 'routine') ASC")
+                ->orderBy('created_at', 'desc')
+                ->get();
 
             return Datatables::of($requests)
                 ->addIndexColumn()
@@ -353,6 +358,7 @@ class LabWorkbenchController extends Controller
                         'updated_at' => $this->formatDateTime($request->updated_at),
                         'delivery_check' => $deliveryCheck, // Add delivery status
                         'bundled_info' => $bundledInfo, // Add bundled procedure info
+                        'priority' => $request->priority ?? 'routine',
                     ];
                 })
                 ->rawColumns(['card_data'])

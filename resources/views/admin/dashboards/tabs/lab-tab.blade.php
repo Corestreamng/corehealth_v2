@@ -82,6 +82,12 @@
     </div>
 </div>
 
+{{-- Live Insights Strip --}}
+@include('admin.dashboards.components.insights-strip', ['containerId' => 'lab-insights'])
+
+{{-- Live Queues --}}
+@include('admin.dashboards.components.queue-widget', ['containerId' => 'lab-queues'])
+
 {{-- Quick Actions --}}
 <div class="row mb-4">
     <div class="col-12">
@@ -99,7 +105,7 @@
             <div class="row g-3">
                 @if(Route::has('lab.workbench'))
                 <div class="col-6 col-md-3">
-                    <a href="{{ route('lab.workbench') }}" class="text-decoration-none">
+                    <a href="{{ route('lab.workbench', ['queue_filter' => 'sample']) }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #cffafe, #a5f3fc); border-color: #67e8f9;">
                             <i class="mdi mdi-flask dash-shortcut-icon" style="color: #0e7490;"></i>
                             <h6 class="dash-shortcut-title" style="color: #0e7490;">Lab</h6>
@@ -111,7 +117,7 @@
 
                 @if(Route::has('imaging.workbench'))
                 <div class="col-6 col-md-3">
-                    <a href="{{ route('imaging.workbench') }}" class="text-decoration-none">
+                    <a href="{{ route('imaging.workbench', ['queue_filter' => 'billing']) }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #e0e7ff, #c7d2fe); border-color: #a5b4fc;">
                             <i class="mdi mdi-radiobox-marked dash-shortcut-icon" style="color: #3730a3;"></i>
                             <h6 class="dash-shortcut-title" style="color: #3730a3;">Imaging</h6>
@@ -150,8 +156,8 @@
 </div>
 
 {{-- Charts --}}
-<div class="row g-4">
-    <div class="col-xl-6">
+<div class="row g-4 mb-4">
+    <div class="col-xl-8">
         <div class="dash-chart-card">
             <div class="dash-chart-header">
                 <div class="dash-section-icon bg-info bg-opacity-10">
@@ -167,7 +173,7 @@
             </div>
         </div>
     </div>
-    <div class="col-xl-6">
+    <div class="col-xl-4">
         <div class="dash-chart-card">
             <div class="dash-chart-header">
                 <div class="dash-section-icon bg-primary bg-opacity-10">
@@ -184,3 +190,12 @@
         </div>
     </div>
 </div>
+
+{{-- Recent Activity --}}
+@include('admin.dashboards.components.mini-table', [
+    'containerId' => 'lab-activity',
+    'title' => 'Recent Lab Activity',
+    'subtitle' => 'Latest test requests',
+    'icon' => 'mdi-flask',
+    'iconBg' => 'info'
+])

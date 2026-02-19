@@ -51,7 +51,9 @@ class AdmissionRequest extends Model implements Auditable
         'discharge_reason',
         'discharge_note',
         'followup_instructions',
-        'priority'
+        'priority',
+        'esi_level',
+        'chief_complaint'
     ];
 
     protected $casts = [

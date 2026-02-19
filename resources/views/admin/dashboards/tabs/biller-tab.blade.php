@@ -1,4 +1,4 @@
-{{-- Biller / Accounts Dashboard Tab --}}
+{{-- Biller / Accounts Dashboard Tab (Enhanced) --}}
 
 {{-- Welcome Card --}}
 <div class="row mb-4">
@@ -41,7 +41,6 @@
             </div>
         </div>
     </div>
-
     <div class="col-xl-3 col-lg-6">
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #7e22ce, #a855f7);">
             <div class="dash-stat-body">
@@ -54,7 +53,6 @@
             </div>
         </div>
     </div>
-
     <div class="col-xl-3 col-lg-6">
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #334155, #475569);">
             <div class="dash-stat-body">
@@ -67,7 +65,6 @@
             </div>
         </div>
     </div>
-
     <div class="col-xl-3 col-lg-6">
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #991b1b, #dc2626);">
             <div class="dash-stat-body">
@@ -82,6 +79,12 @@
     </div>
 </div>
 
+{{-- Live Insights Strip --}}
+@include('admin.dashboards.components.insights-strip', ['containerId' => 'biller-insights'])
+
+{{-- Live Queues --}}
+@include('admin.dashboards.components.queue-widget', ['containerId' => 'biller-queues'])
+
 {{-- Quick Actions --}}
 <div class="row mb-4">
     <div class="col-12">
@@ -95,11 +98,10 @@
                     <small class="text-muted">Billing & accounts tools</small>
                 </div>
             </div>
-
             <div class="row g-3">
                 @if(Route::has('billing.workbench'))
                 <div class="col-6 col-md-4 col-lg-2">
-                    <a href="{{ route('billing.workbench') }}" class="text-decoration-none">
+                    <a href="{{ route('billing.workbench', ['queue_filter' => 'all']) }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #e0f2fe, #bae6fd); border-color: #7dd3fc;">
                             <i class="mdi mdi-view-dashboard dash-shortcut-icon" style="color: #0369a1;"></i>
                             <h6 class="dash-shortcut-title" style="color: #0369a1;">Billing</h6>
@@ -108,7 +110,6 @@
                     </a>
                 </div>
                 @endif
-
                 @if(Route::has('product-or-service-request.index'))
                 <div class="col-6 col-md-4 col-lg-2">
                     <a href="{{ route('product-or-service-request.index') }}" class="text-decoration-none">
@@ -120,7 +121,6 @@
                     </a>
                 </div>
                 @endif
-
                 @if(Route::has('my-transactions'))
                 <div class="col-6 col-md-4 col-lg-2">
                     <a href="{{ route('my-transactions') }}" class="text-decoration-none">
@@ -132,7 +132,6 @@
                     </a>
                 </div>
                 @endif
-
                 @if(Route::has('allPrevEncounters'))
                 <div class="col-6 col-md-4 col-lg-2">
                     <a href="{{ route('allPrevEncounters') }}" class="text-decoration-none">
@@ -144,7 +143,6 @@
                     </a>
                 </div>
                 @endif
-
                 @if(Route::has('patient.index'))
                 <div class="col-6 col-md-4 col-lg-2">
                     <a href="{{ route('patient.index') }}" class="text-decoration-none">
@@ -156,22 +154,14 @@
                     </a>
                 </div>
                 @endif
-
-                <div class="col-6 col-md-4 col-lg-2">
-                    <div class="dash-shortcut" style="background: linear-gradient(145deg, #f1f5f9, #e2e8f0); border-color: #cbd5e1;">
-                        <i class="mdi mdi-cog dash-shortcut-icon" style="color: #475569;"></i>
-                        <h6 class="dash-shortcut-title" style="color: #475569;">More</h6>
-                        <small style="color: #475569;">Settings</small>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
 </div>
 
-{{-- Revenue Chart --}}
-<div class="row">
-    <div class="col-12">
+{{-- Charts Row --}}
+<div class="row g-4 mb-4">
+    <div class="col-xl-8">
         <div class="dash-chart-card">
             <div class="dash-chart-header">
                 <div class="dash-section-icon bg-success bg-opacity-10">
@@ -187,4 +177,29 @@
             </div>
         </div>
     </div>
+    <div class="col-xl-4">
+        <div class="dash-chart-card">
+            <div class="dash-chart-header">
+                <div class="dash-section-icon bg-primary bg-opacity-10">
+                    <i class="mdi mdi-chart-donut text-primary"></i>
+                </div>
+                <div>
+                    <h5 class="dash-section-title">Payment Methods</h5>
+                    <small class="text-muted">Today's breakdown</small>
+                </div>
+            </div>
+            <div class="dash-chart-body">
+                <canvas id="billerPaymentMethodsChart"></canvas>
+            </div>
+        </div>
+    </div>
 </div>
+
+{{-- Recent Activity --}}
+@include('admin.dashboards.components.mini-table', [
+    'containerId' => 'biller-activity',
+    'title' => 'Recent Payments',
+    'subtitle' => 'Latest transactions today',
+    'icon' => 'mdi-cash-check',
+    'iconBg' => 'success'
+])

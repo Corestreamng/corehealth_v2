@@ -38,6 +38,30 @@
         }
     </style>
 
+    {{-- Emergency Triage Alert Banner --}}
+    @if (isset($doctorQueue) && $doctorQueue && $doctorQueue->priority === 'emergency')
+        <div class="alert alert-danger border-danger shadow-sm mb-3" role="alert">
+            <div class="d-flex align-items-start">
+                <div class="me-3">
+                    <i class="fa fa-exclamation-triangle fa-2x text-danger"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <h5 class="alert-heading mb-1">
+                        <i class="fa fa-bolt"></i> Emergency Patient
+                        @if ($doctorQueue->source === 'emergency_intake')
+                            <span class="badge bg-danger ms-2">Via Emergency Intake</span>
+                        @endif
+                    </h5>
+                    @if ($doctorQueue->triage_note)
+                        <hr class="my-2">
+                        <p class="mb-0 small" style="white-space: pre-line;">{{ $doctorQueue->triage_note }}</p>
+                    @endif
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
+    @endif
+
     <!-- Action Bar -->
     <div class="card-modern mb-3 border-0 shadow-sm">
         <div class="card-body py-2">
@@ -3032,11 +3056,14 @@
         // Helper function to show messages
         function showMessage(elementId, message, type = 'success') {
             const element = document.getElementById(elementId);
-            const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+            const typeMap = { success: 'alert-success', error: 'alert-danger', warning: 'alert-warning', info: 'alert-info' };
+            const alertClass = typeMap[type] || 'alert-info';
             element.innerHTML = `<div class="alert ${alertClass} alert-dismissible fade show" role="alert">
                 ${message}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>`;
+            // Scroll the message into view
+            element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             setTimeout(() => { element.innerHTML = ''; }, 5000);
         }
 
@@ -3177,6 +3204,14 @@
                 success: function(response) {
                     showMessage('labs_save_message', response.message, 'success');
                     updateSummary();
+                    // Clear selected list
+                    $('#selected-services').empty();
+                    // Reload history DataTable
+                    if ($.fn.DataTable.isDataTable('#investigation_history_list')) {
+                        $('#investigation_history_list').DataTable().ajax.reload();
+                    }
+                    // Switch to history tab
+                    try { new bootstrap.Tab(document.getElementById('lab-history-tab')).show(); } catch(e) { $('#lab-history-tab').tab('show'); }
                 },
                 error: function(xhr) {
                     const message = xhr.responseJSON?.message || 'Error saving lab requests';
@@ -3224,6 +3259,14 @@
                 success: function(response) {
                     showMessage('imaging_save_message', response.message, 'success');
                     updateSummary();
+                    // Clear selected list
+                    $('#selected-imaging-services').empty();
+                    // Reload history DataTable
+                    if ($.fn.DataTable.isDataTable('#imaging_history_list')) {
+                        $('#imaging_history_list').DataTable().ajax.reload();
+                    }
+                    // Switch to history tab
+                    try { new bootstrap.Tab(document.getElementById('imaging-history-tab')).show(); } catch(e) { $('#imaging-history-tab').tab('show'); }
                 },
                 error: function(xhr) {
                     const message = xhr.responseJSON?.message || 'Error saving imaging requests';
@@ -3283,6 +3326,14 @@
                     const msgType = response.empty_doses && response.empty_doses.length > 0 ? 'warning' : 'success';
                     showMessage('prescriptions_save_message', response.message, msgType);
                     updateSummary();
+                    // Clear selected list
+                    $('#selected-products').empty();
+                    // Reload history DataTable
+                    if ($.fn.DataTable.isDataTable('#presc_history_list')) {
+                        $('#presc_history_list').DataTable().ajax.reload();
+                    }
+                    // Switch to history tab
+                    try { new bootstrap.Tab(document.getElementById('presc-history-tab')).show(); } catch(e) { $('#presc-history-tab').tab('show'); }
                 },
                 error: function(xhr) {
                     let message = 'Error saving prescriptions';

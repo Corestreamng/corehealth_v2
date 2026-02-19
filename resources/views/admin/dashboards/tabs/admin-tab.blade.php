@@ -82,6 +82,9 @@
     </div>
 </div>
 
+{{-- Live Insights Strip --}}
+@include('admin.dashboards.components.insights-strip', ['containerId' => 'admin-insights'])
+
 {{-- Quick Actions --}}
 <div class="row mb-4">
     <div class="col-12">

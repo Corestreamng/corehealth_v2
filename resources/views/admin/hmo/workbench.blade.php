@@ -399,6 +399,9 @@
                 <p class="workbench-subtitle">Claims Validation & Management Dashboard</p>
             </div>
             <div class="workbench-date">
+                <button class="btn btn-danger btn-sm me-2" data-bs-toggle="modal" data-bs-target="#emergencyIntakeModal">
+                    <i class="mdi mdi-ambulance"></i> Emergency Intake
+                </button>
                 <i class="mdi mdi-calendar mr-1"></i>{{ date('l, F j, Y') }}
             </div>
         </div>
@@ -532,6 +535,19 @@
                                 <h3 id="overdue_count">0</h3>
                             </div>
                             <i class="mdi mdi-alert-circle queue-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="queue-card-modern text-white" id="emergency-hmo-card" style="background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%); display: none;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white-50">Emergency Patients</h6>
+                                <h3 id="emergency_count">0</h3>
+                            </div>
+                            <i class="fa fa-bolt queue-icon"></i>
                         </div>
                     </div>
                 </div>
@@ -1151,6 +1167,15 @@ $(function() {
             $('#rejected_today_count').text(data.rejected_today || 0);
             $('#overdue_count').text(data.overdue || 0);
 
+            // Emergency count
+            var emergencyCount = data.emergency || 0;
+            $('#emergency_count').text(emergencyCount);
+            if (emergencyCount > 0) {
+                $('#emergency-hmo-card').show();
+            } else {
+                $('#emergency-hmo-card').hide();
+            }
+
             // Update tab badges
             $('#pending_badge').text(data.pending || 0);
             $('#express_badge').text(data.express || 0);
@@ -1198,6 +1223,16 @@ $(function() {
     initDataTable();
     loadQueueCounts();
     loadFinancialSummary();
+
+    // Auto-open queue/tab from URL parameter (e.g., from dashboard queue widget click)
+    const urlParams = new URLSearchParams(window.location.search);
+    const queueFilter = urlParams.get('queue_filter');
+    if (queueFilter && ['pending', 'approved', 'rejected'].includes(queueFilter)) {
+        currentTab = queueFilter;
+        $('#workbenchTabs a.nav-link').removeClass('active');
+        $('#' + queueFilter + '-tab').addClass('active');
+        if (table) { table.ajax.reload(); }
+    }
 
     // Tab change - using direct click handler for reliability
     $('#workbenchTabs a.nav-link').on('click', function (e) {
@@ -1731,4 +1766,8 @@ $(function() {
     .cursor-pointer { cursor: pointer; }
     .preset-card:hover { opacity: 0.9; transform: scale(1.02); transition: all 0.2s; }
 </style>
+
+{{-- Emergency Intake Modal --}}
+@include('admin.partials.emergency-intake-modal')
+
 @endsection
