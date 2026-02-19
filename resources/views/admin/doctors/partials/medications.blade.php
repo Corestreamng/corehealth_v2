@@ -56,6 +56,7 @@
 
             {{-- New Prescription Tab --}}
             <div class="tab-pane fade tab-content-fade" id="presc-new" role="tabpanel">
+                <div id="prescriptions_save_message" class="mb-2"></div>
                 <h5 class="mb-3"><i class="fa fa-plus-circle"></i> New Prescription</h5>
                 <div class="form-group">
                     <label for="consult_presc_search">Search products</label>
@@ -92,6 +93,5 @@
                 </button>
             </div>
         </div>
-        <div id="prescriptions_save_message" class="mt-2"></div>
     </div>
 </div>

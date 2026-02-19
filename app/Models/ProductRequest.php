@@ -8,11 +8,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\StockBatch;
 
 use OwenIt\Auditing\Contracts\Auditable;
+
 class ProductRequest extends Model implements Auditable
 {
     use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
-protected $fillable = [
+    protected $fillable = [
         'product_request_id',
         'billed_by',
         'billed_date',

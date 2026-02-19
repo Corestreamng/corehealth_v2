@@ -82,6 +82,12 @@
     </div>
 </div>
 
+{{-- Live Insights Strip --}}
+@include('admin.dashboards.components.insights-strip', ['containerId' => 'doc-insights'])
+
+{{-- Live Queues --}}
+@include('admin.dashboards.components.queue-widget', ['containerId' => 'doc-queues'])
+
 {{-- Quick Actions --}}
 <div class="row mb-4">
     <div class="col-12">
@@ -161,7 +167,7 @@
 
                 @if(Route::has('imaging.workbench'))
                 <div class="col-6 col-md-3">
-                    <a href="{{ route('imaging.workbench') }}" class="text-decoration-none">
+                    <a href="{{ route('imaging.workbench', ['queue_filter' => 'results']) }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #dbeafe, #bfdbfe); border-color: #93c5fd;">
                             <i class="mdi mdi-radiobox-marked dash-shortcut-icon" style="color: #1e40af;"></i>
                             <h6 class="dash-shortcut-title" style="color: #1e40af;">Imaging</h6>
@@ -200,7 +206,7 @@
 </div>
 
 {{-- Charts --}}
-<div class="row g-4">
+<div class="row g-4 mb-4">
     <div class="col-xl-6">
         <div class="dash-chart-card">
             <div class="dash-chart-header">
@@ -234,3 +240,12 @@
         </div>
     </div>
 </div>
+
+{{-- Recent Activity --}}
+@include('admin.dashboards.components.mini-table', [
+    'containerId' => 'doc-activity',
+    'title' => 'Recent Consultations',
+    'subtitle' => 'Latest patient encounters',
+    'icon' => 'mdi-stethoscope',
+    'iconBg' => 'primary'
+])

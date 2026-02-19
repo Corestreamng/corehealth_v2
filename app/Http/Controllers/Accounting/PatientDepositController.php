@@ -223,7 +223,7 @@ class PatientDepositController extends Controller
         $patientAccount = null;
 
         if ($request->filled('patient_id')) {
-            $patient = Patient::with(['user', 'hmo'])->find($request->patient_id);
+            $patient = patient::with(['user', 'hmo'])->find($request->patient_id);
             $patientAccount = PatientAccount::where('patient_id', $request->patient_id)->first();
         }
 
@@ -629,7 +629,7 @@ class PatientDepositController extends Controller
      */
     public function getPatientSummary($patientId)
     {
-        $patient = Patient::with(['user', 'hmo'])->findOrFail($patientId);
+        $patient = patient::with(['user', 'hmo'])->findOrFail($patientId);
 
         // Legacy system balance
         $patientAccount = PatientAccount::where('patient_id', $patientId)->first();
@@ -689,7 +689,7 @@ class PatientDepositController extends Controller
             return response()->json([]);
         }
 
-        $patients = Patient::with(['user', 'hmo', 'account'])
+        $patients = patient::with(['user', 'hmo', 'account'])
             ->whereHas('user', function ($q) use ($term) {
                 $q->where('surname', 'like', "%{$term}%")
                   ->orWhere('firstname', 'like', "%{$term}%")

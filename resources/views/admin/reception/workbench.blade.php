@@ -124,6 +124,15 @@
         border-bottom: 1px solid #dee2e6;
     }
 
+    /* Emergency pulse animation */
+    @keyframes emergencyPulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); }
+        50% { box-shadow: 0 0 0 8px rgba(220, 53, 69, 0); }
+    }
+    .emergency-pulse {
+        animation: emergencyPulse 1.5s infinite;
+    }
+
     .queue-widget h6 {
         font-size: 0.85rem;
         font-weight: 700;
@@ -4094,6 +4103,10 @@
 
         <div class="queue-widget">
             <h6><i class="mdi mdi-format-list-bulleted"></i> DOCTOR QUEUE</h6>
+            <div class="queue-item" data-filter="emergency" style="background: #fff5f5; border-left: 3px solid #dc3545;">
+                <span class="queue-item-label"><i class="fa fa-bolt text-danger"></i> <strong class="text-danger">Emergency</strong></span>
+                <span class="queue-count" id="queue-emergency-count" style="background: #dc3545; color: #fff;">0</span>
+            </div>
             <div class="queue-item" data-filter="waiting">
                 <span class="queue-item-label"><i class="mdi mdi-clock-outline text-warning"></i> Waiting</span>
                 <span class="queue-count all-unpaid" id="queue-waiting-count">0</span>
@@ -4134,6 +4147,10 @@
             <button class="quick-action-btn" id="btn-view-reports">
                 <i class="mdi mdi-file-chart"></i>
                 <span>Reports</span>
+            </button>
+            <button class="quick-action-btn" data-bs-toggle="modal" data-bs-target="#emergencyIntakeModal">
+                <i class="mdi mdi-ambulance text-danger"></i>
+                <span>Emergency Intake</span>
             </button>
         </div>
     </div>
@@ -6598,6 +6615,27 @@ $(document).ready(function() {
     startQueueRefresh();
     initializeEventListeners();
     loadReferenceData();
+
+    // Auto-select patient from URL query parameter (e.g., from Patient list workbench button)
+    const urlParams = new URLSearchParams(window.location.search);
+    const patientId = urlParams.get('patient_id');
+    if (patientId) {
+        loadPatient(patientId);
+    }
+
+    // Auto-open queue from URL parameter (e.g., from dashboard queue widget click)
+    const queueFilter = urlParams.get('queue_filter');
+    if (queueFilter && ['waiting', 'vitals', 'consultation', 'admitted'].includes(queueFilter)) {
+        setTimeout(function() { showQueue(queueFilter); }, 500);
+    }
+
+    // Auto-trigger action from URL parameter (e.g., from dashboard quick action click)
+    const action = urlParams.get('action');
+    if (action === 'new-patient' && typeof showPatientFormModal === 'function') {
+        setTimeout(function() { showPatientFormModal('create'); }, 800);
+    } else if (action === 'quick-register' && typeof showQuickRegisterModal === 'function') {
+        setTimeout(function() { showQuickRegisterModal(); }, 800);
+    }
 });
 
 // =============================================
@@ -7446,6 +7484,14 @@ function loadQueueCounts() {
         $('#queue-vitals-count').text(counts.vitals_pending || 0);
         $('#queue-consultation-count').text(counts.in_consultation || 0);
         $('#queue-admitted-count').text(counts.admitted || 0);
+        var emergencyCount = counts.emergency || 0;
+        $('#queue-emergency-count').text(emergencyCount);
+        // Pulse animation when emergency patients exist
+        if (emergencyCount > 0) {
+            $('#queue-emergency-count').closest('.queue-item').addClass('emergency-pulse');
+        } else {
+            $('#queue-emergency-count').closest('.queue-item').removeClass('emergency-pulse');
+        }
         updateSyncIndicator();
     }).fail(function() {
         console.error('Failed to load queue counts');
@@ -10602,5 +10648,9 @@ $(document).ready(function() {
 });
 
 </script>
+
+{{-- Emergency Intake Modal --}}
+@include('admin.partials.emergency-intake-modal')
+
 @endsection
 

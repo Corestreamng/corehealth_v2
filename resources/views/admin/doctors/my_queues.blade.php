@@ -69,6 +69,7 @@
                             <th>#</th>
                             <th>Patient Name</th>
                             <th>File No</th>
+                            <th>Priority</th>
                             <th>HMO/Insurance</th>
                             <th>Clinic</th>
                             <th>Doctor</th>
@@ -88,6 +89,7 @@
                             <th>#</th>
                             <th>Patient Name</th>
                             <th>File No</th>
+                            <th>Priority</th>
                             <th>HMO/Insurance</th>
                             <th>Clinic</th>
                             <th>Doctor</th>
@@ -226,6 +228,10 @@
                 {
                     data: "file_no",
                     name: "file_no"
+                },
+                {
+                    data: "priority",
+                    name: "priority"
                 },
                 {
                     data: "hmo_id",

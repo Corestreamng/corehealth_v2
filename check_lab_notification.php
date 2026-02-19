@@ -13,7 +13,7 @@ use Carbon\Carbon;
 
 $fileNo = '9426';
 
-$patient = Patient::where('file_no', $fileNo)->first();
+$patient = patient::where('file_no', $fileNo)->first();
 if (!$patient) {
     echo "Patient with file number {$fileNo} not found\n";
     exit(1);

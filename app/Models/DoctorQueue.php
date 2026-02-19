@@ -7,18 +7,22 @@ use Illuminate\Database\Eloquent\Model;
 
 
 use OwenIt\Auditing\Contracts\Auditable;
+
 class DoctorQueue extends Model implements Auditable
 {
     use HasFactory;
     use \OwenIt\Auditing\Auditable;
-protected $fillable = [
+    protected $fillable = [
         'patient_id',
         'clinic_id',
         'staff_id',
         'receptionist_id',
         'request_entry_id',
         'status',
-        'vitals_taken'
+        'vitals_taken',
+        'priority',
+        'source',
+        'triage_note',
     ];
 
     public function patient()

@@ -164,7 +164,7 @@ class CreditNoteController extends Controller
      */
     public function create(Request $request)
     {
-        $patients = Patient::with('user')
+        $patients = patient::with('user')
             ->whereHas('user')
             ->orderBy('id', 'desc')
             ->limit(100)
@@ -174,7 +174,7 @@ class CreditNoteController extends Controller
         $payments = collect();
 
         if ($request->filled('patient_id')) {
-            $selectedPatient = Patient::with('user')->find($request->patient_id);
+            $selectedPatient = patient::with('user')->find($request->patient_id);
             if ($selectedPatient) {
                 // Get payments that can be refunded
                 $payments = \App\Models\Payment::where('patient_id', $selectedPatient->id)

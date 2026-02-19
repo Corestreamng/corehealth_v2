@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\ProductOrServiceRequest;
 use App\Models\Hmo;
 use App\Models\patient;
+use App\Models\DoctorQueue;
+use App\Models\AdmissionRequest;
 use App\Models\VitalSign;
 use App\Models\Encounter;
 use App\Models\ProductRequest;
@@ -181,13 +183,30 @@ class HmoWorkbenchController extends Controller
 
         $requests = $query->orderBy('created_at', 'DESC')->get();
 
+        // Batch-load emergency patient IDs to avoid N+1 queries in patient_info column
+        $allPatientIds = $requests->map(function ($req) {
+            return $req->user && $req->user->patient_profile ? $req->user->patient_profile->id : null;
+        })->filter()->unique()->values();
+
+        $emergencyPatientIds = DoctorQueue::where('priority', 'emergency')
+            ->whereIn('patient_id', $allPatientIds)
+            ->whereIn('status', [1, 2, 3])
+            ->pluck('patient_id')
+            ->merge(
+                AdmissionRequest::where('priority', 'emergency')
+                    ->whereIn('patient_id', $allPatientIds)
+                    ->where('discharged', 0)
+                    ->pluck('patient_id')
+            )
+            ->unique();
+
         return DataTables::of($requests)
             ->addIndexColumn()
             ->addColumn('checkbox', function ($req) {
                 return '<input type="checkbox" class="batch-select-checkbox" data-id="' . $req->id . '" style="transform: scale(1.5); cursor: pointer;">';
             })
             // Column 1: Patient & Actions (combined)
-            ->addColumn('patient_info', function ($req) {
+            ->addColumn('patient_info', function ($req) use ($emergencyPatientIds) {
                 if ($req->user && $req->user->patient_profile) {
                     $name = userfullname($req->user_id);
                     $fileNo = $req->user->patient_profile->file_no ?? 'N/A';
@@ -195,7 +214,14 @@ class HmoWorkbenchController extends Controller
                     $hmoName = $req->user->patient_profile->hmo->name ?? 'N/A';
                     $patientId = $req->user->patient_profile->id;
 
-                    $html = "<strong>$name</strong>";
+                    // Check if this is an emergency patient (batch-loaded)
+                    $isEmergency = $emergencyPatientIds->contains($patientId);
+
+                    $emergencyBadge = $isEmergency
+                        ? '<span class="badge bg-danger mb-1"><i class="fa fa-bolt"></i> EMERGENCY</span><br>'
+                        : '';
+
+                    $html = $emergencyBadge . "<strong>$name</strong>";
                     $html .= "<br><small class=\"text-muted\">File: $fileNo</small>";
                     $html .= $hmoNo ? " | <small class=\"text-info\">HMO#: $hmoNo</small>" : '';
                     $html .= "<br><small class=\"text-primary\"><i class=\"fa fa-hospital\"></i> $hmoName</small>";
@@ -1080,9 +1106,36 @@ class HmoWorkbenchController extends Controller
                 ->whereIn('coverage_mode', ['primary', 'secondary'])
                 ->where('created_at', '<', Carbon::now()->subHours(4))
                 ->count(),
+
+            'emergency' => $this->getEmergencyHmoCount(),
         ];
 
         return response()->json($counts);
+    }
+
+    /**
+     * Count pending HMO requests belonging to emergency patients
+     */
+    private function getEmergencyHmoCount()
+    {
+        $emergencyPatientIds = DoctorQueue::where('priority', 'emergency')
+            ->whereIn('status', [1, 2, 3])
+            ->pluck('patient_id')
+            ->merge(
+                AdmissionRequest::where('priority', 'emergency')
+                    ->where('discharged', 0)
+                    ->pluck('patient_id')
+            )->unique();
+
+        if ($emergencyPatientIds->isEmpty()) return 0;
+
+        $emergencyUserIds = patient::whereIn('id', $emergencyPatientIds)->pluck('user_id');
+
+        return ProductOrServiceRequest::whereIn('user_id', $emergencyUserIds)
+            ->where('validation_status', 'pending')
+            ->whereIn('coverage_mode', ['primary', 'secondary'])
+            ->where('claims_amount', '>', 0)
+            ->count();
     }
 
     /**

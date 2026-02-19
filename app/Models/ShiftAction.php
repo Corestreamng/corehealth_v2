@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * ShiftAction Model
- * 
+ *
  * Logs individual nursing actions during a shift.
  * Provides detailed activity tracking for handover generation.
  */
@@ -70,7 +70,7 @@ class ShiftAction extends Model
 
     public function patient()
     {
-        return $this->belongsTo(Patient::class);
+        return $this->belongsTo(patient::class);
     }
 
     /**
@@ -165,7 +165,7 @@ class ShiftAction extends Model
                 'note' => 'notes',
                 'bill' => 'bills',
             ];
-            
+
             if (isset($counterMap[$data['action_type']])) {
                 $shift->incrementAction($counterMap[$data['action_type']]);
             }

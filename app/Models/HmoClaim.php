@@ -44,7 +44,7 @@ class HmoClaim extends Model
      */
     public function patient()
     {
-        return $this->belongsTo(Patient::class, 'patient_id');
+        return $this->belongsTo(patient::class, 'patient_id');
     }
 
     /**

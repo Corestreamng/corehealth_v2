@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Yajra\DataTables\DataTables;
 
 class EncounterController extends Controller
@@ -63,14 +64,33 @@ class EncounterController extends Controller
                 ]);
             }
 
-            // Get the filtered results
-            $queue = $queueQuery->orderBy('created_at', 'DESC')->get();
+            // Get the filtered results — emergency patients first
+            $queue = $queueQuery
+                ->orderByRaw("FIELD(IFNULL(priority,'routine'), 'emergency', 'urgent', 'routine') ASC")
+                ->orderBy('created_at', 'DESC')
+                ->get();
 
             return DataTables::of($queue)
                 ->addIndexColumn()
                 ->editColumn('fullname', function ($queue) {
                     $patient = patient::find($queue->patient_id);
-                    return userfullname($patient->user_id);
+                    $name = userfullname($patient->user_id);
+                    if ($queue->priority === 'emergency') {
+                        return '<span class="text-danger fw-bold"><i class="fa fa-exclamation-triangle"></i> ' . e($name) . '</span>';
+                    }
+                    return e($name);
+                })
+                ->addColumn('priority', function ($queue) {
+                    $badges = [
+                        'emergency' => '<span class="badge bg-danger"><i class="fa fa-bolt"></i> Emergency</span>',
+                        'urgent'    => '<span class="badge bg-warning text-dark">Urgent</span>',
+                        'routine'   => '<span class="badge bg-secondary">Routine</span>',
+                    ];
+                    $badge = $badges[$queue->priority] ?? $badges['routine'];
+                    if ($queue->triage_note) {
+                        $badge .= ' <a href="#" class="text-info triage-note-btn" data-bs-toggle="popover" data-bs-trigger="hover focus" title="Triage Note" data-bs-content="' . e(Str::limit($queue->triage_note, 300)) . '"><i class="fa fa-notes-medical"></i></a>';
+                    }
+                    return $badge;
                 })
                 ->editColumn('created_at', function ($note) {
                     return date('h:i a D M j, Y', strtotime($note->created_at));
@@ -116,7 +136,7 @@ class EncounterController extends Controller
 
                     return '<span class="badge ' . $badgeClass . '" title="' . $title . '">' . e($label) . '</span>';
                 })
-                ->rawColumns(['fullname', 'view', 'delivery_status'])
+                ->rawColumns(['fullname', 'view', 'delivery_status', 'priority'])
                 ->make(true);
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);
@@ -324,7 +344,7 @@ class EncounterController extends Controller
                     return date('h:i a D M j, Y', strtotime($note->created_at));
                 })
                 ->addColumn('hmo_id', function ($queue) {
-                    $patient = Patient::find($queue->patient_id);
+                    $patient = patient::find($queue->patient_id);
 
                     if (!$patient) return 'N/A';
                     if (!$patient->hmo_id) return 'N/A';
@@ -340,7 +360,7 @@ class EncounterController extends Controller
                     return $queue->doctor_id ? userfullname($queue->doctor_id) : 'N/A';
                 })
                 ->addColumn('file_no', function ($queue) {
-                    $patient = Patient::find($queue->patient_id);
+                    $patient = patient::find($queue->patient_id);
                     return $patient ? $patient->file_no : 'N/A';
                 })
                 ->addColumn('view', function ($queue) {
@@ -1670,6 +1690,7 @@ class EncounterController extends Controller
             $req_entry = ProductOrServiceRequest::find(request()->get('req_entry_id'));
             $admission_exists = AdmissionRequest::where('patient_id', request()->get('patient_id'))->where('discharged', 0)->first();
             $queue_id = $request->get('queue_id');
+            $doctorQueue = $queue_id ? DoctorQueue::find($queue_id) : null;
 
             $reasons_for_encounter_list = ReasonForEncounter::all();
             $reasons_for_encounter_cat_list = ReasonForEncounter::distinct()->get(['category']);
@@ -1779,6 +1800,7 @@ class EncounterController extends Controller
                         'others_record_template' => $others_record_template,
                         'admission_exists_' => $admission_exists_,
                         'encounter' => $encounter,
+                        'doctorQueue' => $doctorQueue,
                         'reasons_for_encounter_list' => $reasons_for_encounter_list,
                         'reasons_for_encounter_cat_list' => $reasons_for_encounter_cat_list,
                         'reasons_for_encounter_sub_cat_list' => $reasons_for_encounter_sub_cat_list,
@@ -1791,6 +1813,7 @@ class EncounterController extends Controller
                         'req_entry' => $req_entry,
                         'admission_exists_' => $admission_exists_,
                         'encounter' => $encounter,
+                        'doctorQueue' => $doctorQueue,
                         'reasons_for_encounter_list' => $reasons_for_encounter_list,
                         'reasons_for_encounter_cat_list' => $reasons_for_encounter_cat_list,
                         'reasons_for_encounter_sub_cat_list' => $reasons_for_encounter_sub_cat_list,
@@ -1948,6 +1971,13 @@ class EncounterController extends Controller
             $encounter->notes = $request->doctor_diagnosis;
             $encounter->completed = true;
             $encounter->update();
+
+            // Determine emergency priority from the doctor queue
+            $queuePriority = null;
+            if ($request->queue_id && $request->queue_id !== 'ward_round') {
+                $queuePriority = DoctorQueue::where('id', $request->queue_id)->value('priority');
+            }
+
             // dd($encounter);
             if (isset($request->consult_invest_id) && count($request->consult_invest_id) > 0) {
                 for ($r = 0; $r < count($request->consult_invest_id); ++$r) {
@@ -1957,6 +1987,9 @@ class EncounterController extends Controller
                     $invest->encounter_id = $encounter->id;
                     $invest->patient_id = $request->patient_id;
                     $invest->doctor_id = Auth::id();
+                    if ($queuePriority && $queuePriority !== 'routine') {
+                        $invest->priority = $queuePriority;
+                    }
                     $invest->save();
 
                     $req_entr = new ProductOrServiceRequest();
@@ -1971,6 +2004,9 @@ class EncounterController extends Controller
                     $imaging->encounter_id = $encounter->id;
                     $imaging->patient_id = $request->patient_id;
                     $imaging->doctor_id = Auth::id();
+                    if ($queuePriority && $queuePriority !== 'routine') {
+                        $imaging->priority = $queuePriority;
+                    }
                     $imaging->save();
                 }
             }

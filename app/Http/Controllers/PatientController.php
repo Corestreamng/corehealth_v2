@@ -93,6 +93,31 @@ class PatientController extends Controller
                     //     return $label;
                     // }
                 })
+                ->addColumn('workbenches', function ($patient) {
+                    $id = $patient->id;
+                    $items = '';
+                    $wb = [
+                        ['route' => 'reception.workbench',      'icon' => 'fa fa-desktop',        'label' => 'Reception',  'param' => 'patient_id'],
+                        ['route' => 'billing.workbench',        'icon' => 'fa fa-money',          'label' => 'Billing',    'param' => 'patient_id'],
+                        ['route' => 'pharmacy.workbench',       'icon' => 'fa fa-medkit',         'label' => 'Pharmacy',   'param' => 'patient_id'],
+                        ['route' => 'nursing-workbench.index',  'icon' => 'fa fa-heartbeat',      'label' => 'Nursing',    'param' => 'patient_id'],
+                        ['route' => 'lab.workbench',            'icon' => 'fa fa-flask',          'label' => 'Lab',        'param' => 'patient_id'],
+                        ['route' => 'imaging.workbench',        'icon' => 'fa fa-x-ray',          'label' => 'Imaging',    'param' => 'patient_id'],
+                        ['route' => 'hmo.workbench',            'icon' => 'fa fa-building',       'label' => 'HMO',        'param' => 'patient_id'],
+                    ];
+                    foreach ($wb as $w) {
+                        try {
+                            $url = route($w['route']) . '?' . $w['param'] . '=' . $id;
+                            $items .= '<li><a class="dropdown-item" href="' . $url . '"><i class="' . $w['icon'] . ' me-2"></i>' . $w['label'] . '</a></li>';
+                        } catch (\Exception $e) {
+                            // Route may not exist — skip
+                        }
+                    }
+                    return '<div class="btn-group">' .
+                        '<button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">' .
+                        '<i class="fa fa-briefcase me-1"></i>Workbench</button>' .
+                        '<ul class="dropdown-menu dropdown-menu-end">' . $items . '</ul></div>';
+                })
                 ->addColumn('delete', function ($patient) {
 
                     // if (Auth::user()->hasPermissionTo('user-delete') || Auth::user()->hasRole(['Super-Admin', 'Admin'])) {
@@ -103,7 +128,7 @@ class PatientController extends Controller
                     //     return $label;
                     // }
                 })
-                ->rawColumns(['fullname', 'view', 'edit', 'delete'])
+                ->rawColumns(['fullname', 'view', 'edit', 'workbenches', 'delete'])
                 ->make(true);
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['exception' => $e]);

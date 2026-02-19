@@ -1,4 +1,4 @@
-{{-- Receptionist Dashboard Tab --}}
+{{-- Receptionist Dashboard Tab (Enhanced) --}}
 
 {{-- Welcome Card --}}
 <div class="row mb-4">
@@ -41,7 +41,6 @@
             </div>
         </div>
     </div>
-
     <div class="col-xl-3 col-lg-6">
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #6d28d9, #8b5cf6);">
             <div class="dash-stat-body">
@@ -54,7 +53,6 @@
             </div>
         </div>
     </div>
-
     <div class="col-xl-3 col-lg-6">
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #0f766e, #14b8a6);">
             <div class="dash-stat-body">
@@ -67,7 +65,6 @@
             </div>
         </div>
     </div>
-
     <div class="col-xl-3 col-lg-6">
         <div class="dash-stat-card" style="background: linear-gradient(145deg, #c2410c, #ea580c);">
             <div class="dash-stat-body">
@@ -82,6 +79,12 @@
     </div>
 </div>
 
+{{-- Live Insights Strip --}}
+@include('admin.dashboards.components.insights-strip', ['containerId' => 'recep-insights'])
+
+{{-- Live Queues --}}
+@include('admin.dashboards.components.queue-widget', ['containerId' => 'recep-queues'])
+
 {{-- Quick Actions --}}
 <div class="row mb-4">
     <div class="col-12">
@@ -95,11 +98,10 @@
                     <small class="text-muted">Front desk operations</small>
                 </div>
             </div>
-
             <div class="row g-3">
                 @if(Route::has('reception.workbench'))
                 <div class="col-6 col-md-3">
-                    <a href="{{ route('reception.workbench') }}" class="text-decoration-none">
+                    <a href="{{ route('reception.workbench', ['queue_filter' => 'waiting']) }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #f3e8ff, #e9d5ff); border-color: #d8b4fe;">
                             <i class="mdi mdi-desktop-mac-dashboard dash-shortcut-icon" style="color: #6b21a8;"></i>
                             <h6 class="dash-shortcut-title" style="color: #6b21a8;">Workbench</h6>
@@ -108,7 +110,6 @@
                     </a>
                 </div>
                 @endif
-
                 @if(Route::has('patient.create'))
                 <div class="col-6 col-md-3">
                     <a href="{{ route('patient.create') }}" class="text-decoration-none">
@@ -120,7 +121,6 @@
                     </a>
                 </div>
                 @endif
-
                 @if(Route::has('patient.index'))
                 <div class="col-6 col-md-3">
                     <a href="{{ route('patient.index') }}" class="text-decoration-none">
@@ -132,10 +132,9 @@
                     </a>
                 </div>
                 @endif
-
                 @if(Route::has('billing.workbench'))
                 <div class="col-6 col-md-3">
-                    <a href="{{ route('billing.workbench') }}" class="text-decoration-none">
+                    <a href="{{ route('billing.workbench', ['queue_filter' => 'all']) }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #fff7ed, #ffedd5); border-color: #fed7aa;">
                             <i class="mdi mdi-cash-register dash-shortcut-icon" style="color: #c2410c;"></i>
                             <h6 class="dash-shortcut-title" style="color: #c2410c;">Billing</h6>
@@ -144,9 +143,6 @@
                     </a>
                 </div>
                 @endif
-            </div>
-
-            <div class="row g-3 mt-1">
                 @if(Route::has('appointments.index'))
                 <div class="col-6 col-md-3">
                     <a href="{{ route('appointments.index') }}" class="text-decoration-none">
@@ -158,7 +154,6 @@
                     </a>
                 </div>
                 @endif
-
                 @if(Route::has('insurance.index'))
                 <div class="col-6 col-md-3">
                     <a href="{{ route('insurance.index') }}" class="text-decoration-none">
@@ -170,7 +165,6 @@
                     </a>
                 </div>
                 @endif
-
                 @if(Route::has('emergency.index'))
                 <div class="col-6 col-md-3">
                     <a href="{{ route('emergency.index') }}" class="text-decoration-none">
@@ -182,26 +176,30 @@
                     </a>
                 </div>
                 @endif
-
-                @if(Route::has('reception.workbench'))
-                <div class="col-6 col-md-3">
-                    <a href="{{ route('reception.workbench') }}" class="text-decoration-none">
-                        <div class="dash-shortcut" style="background: linear-gradient(145deg, #dbeafe, #bfdbfe); border-color: #93c5fd;">
-                            <i class="mdi mdi-calendar-today dash-shortcut-icon" style="color: #1e40af;"></i>
-                            <h6 class="dash-shortcut-title" style="color: #1e40af;">Today's</h6>
-                            <small style="color: #1e40af;">Schedule</small>
-                        </div>
-                    </a>
-                </div>
-                @endif
             </div>
         </div>
     </div>
 </div>
 
-{{-- Charts --}}
-<div class="row g-4">
-    <div class="col-xl-6">
+{{-- Charts Row --}}
+<div class="row g-4 mb-4">
+    <div class="col-xl-4">
+        <div class="dash-chart-card">
+            <div class="dash-chart-header">
+                <div class="dash-section-icon bg-warning bg-opacity-10">
+                    <i class="mdi mdi-chart-bar text-warning"></i>
+                </div>
+                <div>
+                    <h5 class="dash-section-title">Hourly Patient Flow</h5>
+                    <small class="text-muted">Today's arrival pattern</small>
+                </div>
+            </div>
+            <div class="dash-chart-body">
+                <canvas id="recepHourlyFlowChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4">
         <div class="dash-chart-card">
             <div class="dash-chart-header">
                 <div class="dash-section-icon bg-primary bg-opacity-10">
@@ -217,21 +215,29 @@
             </div>
         </div>
     </div>
-
-    <div class="col-xl-6">
+    <div class="col-xl-4">
         <div class="dash-chart-card">
             <div class="dash-chart-header">
-                <div class="dash-section-icon bg-success bg-opacity-10">
-                    <i class="mdi mdi-calendar-check text-success"></i>
+                <div class="dash-section-icon bg-info bg-opacity-10">
+                    <i class="mdi mdi-chart-donut text-info"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Appointments</h5>
-                    <small class="text-muted">Daily distribution</small>
+                    <h5 class="dash-section-title">Patient Breakdown</h5>
+                    <small class="text-muted">New / Returning / HMO</small>
                 </div>
             </div>
             <div class="dash-chart-body">
-                <canvas id="recepAppointmentsChart"></canvas>
+                <canvas id="recepPatientBreakdownChart"></canvas>
             </div>
         </div>
     </div>
 </div>
+
+{{-- Recent Activity --}}
+@include('admin.dashboards.components.mini-table', [
+    'containerId' => 'recep-activity',
+    'title' => 'Recent Patient Activity',
+    'subtitle' => 'Latest queue entries today',
+    'icon' => 'mdi-history',
+    'iconBg' => 'primary'
+])

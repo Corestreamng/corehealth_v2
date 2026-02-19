@@ -20,7 +20,7 @@ protected $fillable = [
     ];
     public function patient()
     {
-        return $this->belongsTo(Patient::class);
+        return $this->belongsTo(patient::class);
     }
     public function nurse()
     {

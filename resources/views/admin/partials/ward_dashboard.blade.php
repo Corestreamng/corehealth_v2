@@ -1395,6 +1395,11 @@ window.WardDashboard = (function() {
                 toastr.success('Discharge completed, bed released');
                 $('#dischargeModal').modal('hide');
                 loadDashboardData();
+                // Also refresh nursing workbench queues if available (e.g. emergency queue)
+                if (typeof loadQueueCounts === 'function') loadQueueCounts();
+                if (typeof currentQueueFilter !== 'undefined' && currentQueueFilter === 'emergency' && typeof loadQueueData === 'function') {
+                    loadQueueData('emergency');
+                }
             } else {
                 toastr.error(response.message || 'Failed to complete discharge');
             }

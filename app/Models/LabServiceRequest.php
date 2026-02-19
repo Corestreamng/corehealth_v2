@@ -30,6 +30,7 @@ protected $fillable = [
         'doctor_id',
         'note',
         'status',
+        'priority',
         'deleted_by',
         'deletion_reason',
         'dismissed_at',

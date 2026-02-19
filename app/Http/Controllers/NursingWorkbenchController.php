@@ -23,6 +23,9 @@ use App\Models\IntakeOutputPeriod;
 use App\Models\IntakeOutputRecord;
 use App\Models\InjectionAdministration;
 use App\Models\ImmunizationRecord;
+use App\Models\LabServiceRequest;
+use App\Models\ImagingServiceRequest;
+use App\Models\Procedure;
 use App\Models\VaccineScheduleTemplate;
 use App\Models\VaccineScheduleItem;
 use App\Models\VaccineProductMapping;
@@ -37,6 +40,8 @@ use App\Models\Store;
 use App\Models\StoreStock;
 use App\Models\StockBatch;
 use App\Services\StockService;
+use App\Models\Clinic;
+use App\Models\DoctorQueue;
 use Yajra\DataTables\DataTables;
 
 class NursingWorkbenchController extends Controller{
@@ -57,33 +62,67 @@ class NursingWorkbenchController extends Controller{
 
             // Get overdue medications (scheduled_time < now, not administered)
             $overdueMeds = MedicationSchedule::where('patient_id', $patient->id)
-                ->where('scheduled_time', '<', \Carbon\Carbon::now())
+                ->where('scheduled_time', '<', Carbon::now())
                 ->whereDoesntHave('administrations', function ($q) {
                     $q->whereNull('deleted_at');
                 })
-                ->count();
+                ->get();
 
             // Get due medications (scheduled_time <= now, not administered)
             $dueMeds = MedicationSchedule::where('patient_id', $patient->id)
-                ->where('scheduled_time', '<=', \Carbon\Carbon::now())
+                ->where('scheduled_time', '<=', Carbon::now())
                 ->whereDoesntHave('administrations', function ($q) {
                     $q->whereNull('deleted_at');
                 })
-                ->count();
+                ->get();
 
-            if ($overdueMeds > 0 || $dueMeds > 0) {
+            // Get next upcoming medication
+            $nextMed = MedicationSchedule::where('patient_id', $patient->id)
+                ->where('scheduled_time', '>', Carbon::now())
+                ->whereDoesntHave('administrations', function ($q) {
+                    $q->whereNull('deleted_at');
+                })
+                ->orderBy('scheduled_time', 'asc')
+                ->first();
+
+            if ($overdueMeds->count() > 0 || $dueMeds->count() > 0) {
+                // Get the earliest overdue time
+                $earliestOverdue = $overdueMeds->sortBy('scheduled_time')->first();
+                $overdueMinutes = $earliestOverdue
+                    ? Carbon::parse($earliestOverdue->scheduled_time)->diffInMinutes(Carbon::now())
+                    : 0;
+
+                $wardName = 'N/A';
+                if ($admission->bed) {
+                    $wardName = $admission->bed->ward ?? 'N/A';
+                }
+
                 return [
                     'admission_id' => $admission->id,
                     'patient_id' => $patient->id,
                     'name' => userfullname($patient->user_id),
                     'file_no' => $patient->file_no,
-                    'bed' => $admission->bed ? $admission->bed->ward . ' - ' . $admission->bed->name : 'N/A',
-                    'medication_count' => $dueMeds,
-                    'overdue' => $overdueMeds > 0,
+                    'bed' => $admission->bed ? ($admission->bed->ward . ' - ' . $admission->bed->name) : 'N/A',
+                    'ward' => $wardName,
+                    'bed_name' => $admission->bed ? $admission->bed->name : 'N/A',
+                    'medication_count' => $dueMeds->count(),
+                    'overdue_count' => $overdueMeds->count(),
+                    'overdue' => $overdueMeds->count() > 0,
+                    'overdue_minutes' => $overdueMinutes,
+                    'overdue_display' => $overdueMinutes < 60
+                        ? $overdueMinutes . 'min late'
+                        : floor($overdueMinutes / 60) . 'h ' . ($overdueMinutes % 60) . 'm late',
+                    'next_med_time' => $nextMed
+                        ? Carbon::parse($nextMed->scheduled_time)->format('h:i A')
+                        : null,
+                    'priority' => $admission->priority ?? 'routine',
                 ];
             }
             return null;
         })->filter()->values();
+
+        // Sort: overdue first, then by overdue_minutes desc
+        $results = $results->sortByDesc('overdue_minutes')->values();
 
         return response()->json($results);
     }
@@ -232,18 +271,28 @@ class NursingWorkbenchController extends Controller{
         $query = AdmissionRequest::with([
                 'patient.user',
                 'patient.hmo',
-                'bed',
+                'bed.wardRelation',
                 'doctor'
             ])
             ->where('discharged', 0)
             ->whereNotNull('bed_id')
+            ->orderByRaw("FIELD(IFNULL(priority,'routine'), 'emergency', 'urgent', 'routine') ASC")
             ->orderBy('bed_assign_date', 'desc');
 
         // Filter by ward if provided
         if ($request->has('ward') && $request->ward !== 'all') {
             $query->whereHas('bed', function ($q) use ($request) {
-                $q->where('ward', $request->ward);
+                if (is_numeric($request->ward)) {
+                    $q->where('ward_id', $request->ward);
+                } else {
+                    $q->where('ward', $request->ward);
+                }
             });
+        }
+
+        // Filter by admission status
+        if ($request->has('status') && $request->status !== 'all') {
+            $query->where('admission_status', $request->status);
         }
 
         $admissions = $query->get();
@@ -278,6 +327,21 @@ class NursingWorkbenchController extends Controller{
                 ->orderBy('created_at', 'desc')
                 ->first();
             $vitalsDue = !$lastVital || Carbon::parse($lastVital->created_at)->diffInHours(Carbon::now()) >= 4;
+            $lastVitalTime = $lastVital ? Carbon::parse($lastVital->created_at)->diffForHumans() : 'Never';
+
+            // Ward info
+            $wardName = 'N/A';
+            $wardType = null;
+            $wardId = null;
+            if ($admission->bed) {
+                if ($admission->bed->wardRelation) {
+                    $wardName = $admission->bed->wardRelation->name;
+                    $wardType = $admission->bed->wardRelation->type;
+                    $wardId = $admission->bed->wardRelation->id;
+                } else {
+                    $wardName = $admission->bed->ward ?? 'N/A';
+                }
+            }
 
             return [
                 'admission_id' => $admission->id,
@@ -289,17 +353,23 @@ class NursingWorkbenchController extends Controller{
                 'gender' => $patient->gender ?? 'N/A',
                 'photo' => $patient->user->photo ?? 'avatar.png',
                 'hmo' => $patient->hmo ? $patient->hmo->name : null,
-                'bed' => $admission->bed ? $admission->bed->ward . ' - ' . $admission->bed->name : 'N/A',
-                'ward' => $admission->bed ? $admission->bed->ward : 'N/A',
+                'bed' => $admission->bed ? $wardName . ' - ' . $admission->bed->name : 'N/A',
+                'ward' => $wardName,
+                'ward_id' => $wardId,
+                'ward_type' => $wardType,
                 'bed_name' => $admission->bed ? $admission->bed->name : 'N/A',
                 'days_admitted' => $daysAdmitted,
                 'admitted_date' => $admission->bed_assign_date ? Carbon::parse($admission->bed_assign_date)->format('d M Y') : 'N/A',
                 'doctor' => $admission->doctor ? userfullname($admission->doctor->id) : 'N/A',
                 'admission_reason' => $admission->admission_reason ?? 'N/A',
+                'admission_status' => $admission->admission_status ?? 'admitted',
                 'pending_meds' => $pendingMeds,
                 'overdue_meds' => $overdueMeds,
                 'vitals_due' => $vitalsDue,
-                'priority' => $admission->priority ?? 'normal',
+                'last_vitals' => $lastVitalTime,
+                'priority' => $admission->priority ?? 'routine',
+                'chief_complaint' => $admission->chief_complaint ?? null,
+                'esi_level' => $admission->esi_level ?? null,
             ];
         });
 
@@ -334,13 +404,22 @@ class NursingWorkbenchController extends Controller{
             ->distinct('patient_id')
             ->count('patient_id');
 
-        // Vitals queue (requested but not taken)
-        $vitalsQueueCount = VitalSign::where('status', 1)->count();
+        // Vitals queue (patients in doctor queue with vitals not taken)
+        $vitalsQueueCount = DoctorQueue::where(function($q) {
+                $q->where('vitals_taken', 0)->orWhereNull('vitals_taken');
+            })
+            ->whereDate('created_at', Carbon::today())
+            ->count();
 
         // Critical patients (based on priority)
         $criticalCount = AdmissionRequest::where('discharged', 0)
             ->whereNotNull('bed_id')
             ->where('priority', 'critical')
+            ->count();
+
+        // Emergency queue count (priority = emergency and not discharged)
+        $emergencyCount = AdmissionRequest::where('priority', 'emergency')
+            ->where('discharged', 0)
             ->count();
 
         return response()->json([
@@ -352,6 +431,7 @@ class NursingWorkbenchController extends Controller{
             'vitals' => $vitalsQueueCount, // alias for frontend
             'medication_due' => $overdueMedsCount, // alias for frontend
             'critical' => $criticalCount,
+            'emergency' => $emergencyCount,
             'total' => $admittedCount,
         ]);
     }
@@ -385,6 +465,15 @@ class NursingWorkbenchController extends Controller{
         }
 
         return response()->json(['wards' => $wards]);
+    }
+
+    /**
+     * Get list of clinics for vitals queue filtering.
+     */
+    public function getClinics()
+    {
+        $clinics = Clinic::orderBy('name')->get(['id', 'name']);
+        return response()->json(['clinics' => $clinics]);
     }
 
     // =====================================
@@ -2692,41 +2781,48 @@ class NursingWorkbenchController extends Controller{
 
     public function getVitalsQueue(Request $request)
     {
-        $query = \App\Models\DoctorQueue::with(['patient.user', 'doctor'])
+        $query = DoctorQueue::with(['patient.user', 'patient.hmo', 'doctor', 'clinic'])
             ->where(function($q) {
                 $q->where('vitals_taken', 0)
                   ->orWhereNull('vitals_taken');
             })
             ->whereDate('created_at', Carbon::today())
+            ->orderByRaw("FIELD(IFNULL(priority,'routine'), 'emergency', 'urgent', 'routine') ASC")
             ->orderBy('created_at', 'asc');
 
-        return \Yajra\DataTables\Facades\DataTables::of($query)
-            ->addColumn('info', function ($queue) {
-                $patient = $queue->patient;
-                $patientId = $patient ? $patient->id : 0;
-                $patientName = $patient ? $patient->name : 'Unknown';
-                $fileNo = $patient ? $patient->file_no : 'N/A';
-                $doctorName = $queue->doctor ? $queue->doctor->name : 'N/A';
-                $time = $queue->created_at->format('h:i A');
+        // Clinic filter
+        if ($request->has('clinic_id') && $request->clinic_id && $request->clinic_id !== 'all') {
+            $query->where('clinic_id', $request->clinic_id);
+        }
 
-                $html = '<div class="card-modern mb-2 queue-card shadow-sm">';
-                $html .= '<div class="card-body p-3 d-flex justify-content-between align-items-center">';
-                $html .= '<div>';
-                $html .= '<h6 class="mb-1 text-primary fw-bold">' . htmlspecialchars($patientName) . '</h6>';
-                $html .= '<small class="text-muted"><i class="mdi mdi-file-document"></i> ' . htmlspecialchars($fileNo) . '</small> | ';
-                $html .= '<small class="text-muted"><i class="mdi mdi-doctor"></i> ' . htmlspecialchars($doctorName) . '</small>';
-                $html .= '</div>';
-                $html .= '<div>';
-                $html .= '<span class="badge bg-warning text-dark me-2">Pending Vitals</span>';
-                $html .= '<small class="text-muted">' . $time . '</small>';
-                $html .= '<button class="btn btn-sm btn-outline-primary ms-3" onclick="loadPatient('.$patientId.')">Open</button>';
-                $html .= '</div>';
-                $html .= '</div></div>';
+        $items = $query->get();
 
-                return $html;
-            })
-            ->rawColumns(['info'])
-            ->make(true);
+        $results = $items->map(function ($queue) {
+            $patient = $queue->patient;
+            $waitMinutes = Carbon::parse($queue->created_at)->diffInMinutes(Carbon::now());
+
+            return [
+                'id' => $queue->id,
+                'patient_id' => $patient ? $patient->id : 0,
+                'patient_name' => $patient ? userfullname($patient->user_id) : 'Unknown',
+                'file_no' => $patient ? ($patient->file_no ?? 'N/A') : 'N/A',
+                'age' => $patient ? $this->calculateAge($patient->dob) : 'N/A',
+                'gender' => $patient ? ($patient->gender ?? 'N/A') : 'N/A',
+                'hmo' => $patient && $patient->hmo ? $patient->hmo->name : null,
+                'doctor' => $queue->doctor ? userfullname($queue->doctor->id) : 'N/A',
+                'clinic' => $queue->clinic ? $queue->clinic->name : 'N/A',
+                'clinic_id' => $queue->clinic_id,
+                'priority' => $queue->priority ?? 'routine',
+                'source' => $queue->source ?? 'reception',
+                'triage_note' => $queue->triage_note,
+                'queued_at' => Carbon::parse($queue->created_at)->format('h:i A'),
+                'wait_minutes' => $waitMinutes,
+                'wait_display' => $waitMinutes < 60 ? $waitMinutes . 'min' : floor($waitMinutes / 60) . 'h ' . ($waitMinutes % 60) . 'm',
+                'wait_level' => $waitMinutes > 45 ? 'critical' : ($waitMinutes > 25 ? 'warning' : 'normal'),
+            ];
+        });
+
+        return response()->json($results);
     }
 
     public function getBedRequestsQueue(Request $request)
@@ -2999,7 +3095,7 @@ class NursingWorkbenchController extends Controller{
      */
     public function getDischargeQueue()
     {
-        $queue = AdmissionRequest::with(['patient.user', 'bed'])
+        $queue = AdmissionRequest::with(['patient.user', 'patient.hmo', 'bed', 'doctor'])
             ->where('discharged', 0)
             ->where(function($q) {
                 $q->where('admission_status', 'discharge_requested')
@@ -3009,6 +3105,18 @@ class NursingWorkbenchController extends Controller{
             ->get();
 
         return response()->json($queue->map(function($admission) {
+            $daysAdmitted = $admission->bed_assign_date
+                ? Carbon::parse($admission->bed_assign_date)->diffInDays(Carbon::now())
+                : 0;
+
+            // Check for unpaid bills
+            $unpaidBills = ProductOrServiceRequest::where('user_id', $admission->patient->user_id ?? 0)
+                ->where('payment_status', '!=', 'paid')
+                ->whereNull('voided_at')
+                ->count();
+
+            $waitMinutes = Carbon::parse($admission->updated_at)->diffInMinutes(Carbon::now());
+
             return [
                 'id' => $admission->id,
                 'admission_id' => $admission->id,
@@ -3016,10 +3124,18 @@ class NursingWorkbenchController extends Controller{
                 'patient_name' => userfullname($admission->patient->user_id ?? 0),
                 'file_no' => $admission->patient->file_no ?? 'N/A',
                 'bed_name' => $admission->bed ? ($admission->bed->ward . ' - ' . $admission->bed->name) : 'No bed assigned',
+                'ward' => $admission->bed ? ($admission->bed->ward ?? 'N/A') : 'N/A',
+                'doctor' => $admission->doctor ? userfullname($admission->doctor->id) : 'N/A',
+                'days_admitted' => $daysAdmitted,
                 'discharge_reason' => $admission->discharge_reason ?? 'Not specified',
                 'discharge_note' => $admission->discharge_note ?? '',
                 'discharge_requested_at' => $admission->updated_at->format('M d, Y H:i'),
+                'wait_display' => $waitMinutes < 60
+                    ? $waitMinutes . 'min ago'
+                    : floor($waitMinutes / 60) . 'h ' . ($waitMinutes % 60) . 'm ago',
                 'admission_status' => $admission->admission_status,
+                'unpaid_bills' => $unpaidBills,
+                'hmo' => $admission->patient->hmo ? $admission->patient->hmo->name : null,
             ];
         }));
     }
@@ -3349,6 +3465,73 @@ class NursingWorkbenchController extends Controller{
             'success' => true,
             'progress' => $progress,
         ]);
+    }
+
+    /**
+     * Transfer an emergency patient from current bed/ward to a new ward bed
+     */
+    public function transferWard(Request $request, $admissionId)
+    {
+        $request->validate([
+            'bed_id' => 'required|exists:beds,id',
+        ]);
+
+        $admission = AdmissionRequest::findOrFail($admissionId);
+        $newBed = Bed::findOrFail($request->bed_id);
+
+        // Verify new bed is available
+        $occupiedCheck = AdmissionRequest::where('bed_id', $newBed->id)
+            ->where('discharged', 0)
+            ->first();
+
+        if ($occupiedCheck) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Target bed is already occupied.'
+            ], 400);
+        }
+
+        DB::beginTransaction();
+        try {
+            // Release current bed (if any)
+            if ($admission->bed_id) {
+                $oldBed = Bed::find($admission->bed_id);
+                if ($oldBed) {
+                    $oldBed->bed_status = 'available';
+                    $oldBed->occupant_id = null;
+                    $oldBed->save();
+                }
+            }
+
+            // Assign new bed
+            $admission->bed_id = $newBed->id;
+            $admission->admission_status = 'admitted';
+            // Downgrade from emergency if moving to non-emergency ward
+            if ($admission->priority === 'emergency') {
+                $ward = \App\Models\Ward::find($newBed->ward_id);
+                if ($ward && $ward->type !== 'emergency') {
+                    $admission->priority = 'urgent';
+                }
+            }
+            $admission->save();
+
+            $newBed->bed_status = 'occupied';
+            $newBed->occupant_id = $admission->patient_id;
+            $newBed->save();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Patient transferred successfully to ' . ($newBed->name ?? 'new bed') . '.'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Transfer failed: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -4319,6 +4502,228 @@ class NursingWorkbenchController extends Controller{
                 return ['from' => Carbon::today()->startOfMonth(), 'to' => Carbon::today()->endOfDay()];
             default:
                 return ['from' => Carbon::today()->subDays(6)->startOfDay(), 'to' => Carbon::today()->endOfDay()];
+        }
+    }
+
+    // =======================================================
+    // CLINICAL REQUESTS (Nurse-initiated orders, no encounter)
+    // =======================================================
+
+    /**
+     * Save nurse-initiated lab requests.
+     */
+    public function saveNurseLabs(Request $request)
+    {
+        try {
+            $request->validate([
+                'patient_id'    => 'required|integer|exists:patients,id',
+                'service_ids'   => 'required|array|min:1',
+                'service_ids.*' => 'required|integer',
+                'notes'         => 'required|array',
+                'notes.*'       => 'nullable|string',
+            ]);
+
+            if (count($request->service_ids) !== count($request->notes)) {
+                return response()->json(['success' => false, 'message' => 'Mismatch between services and notes'], 422);
+            }
+
+            $patientId = $request->patient_id;
+
+            for ($i = 0; $i < count($request->service_ids); $i++) {
+                $lab              = new LabServiceRequest();
+                $lab->service_id  = $request->service_ids[$i];
+                $lab->note        = $request->notes[$i] ?? null;
+                $lab->patient_id  = $patientId;
+                $lab->doctor_id   = Auth::id();
+                $lab->save();
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => count($request->service_ids) . ' lab request(s) saved successfully'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['success' => false, 'message' => implode(', ', $e->validator->errors()->all())], 422);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error saving lab requests: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Save nurse-initiated imaging requests.
+     */
+    public function saveNurseImaging(Request $request)
+    {
+        try {
+            $request->validate([
+                'patient_id'    => 'required|integer|exists:patients,id',
+                'service_ids'   => 'required|array|min:1',
+                'service_ids.*' => 'required|integer',
+                'notes'         => 'required|array',
+                'notes.*'       => 'nullable|string',
+            ]);
+
+            if (count($request->service_ids) !== count($request->notes)) {
+                return response()->json(['success' => false, 'message' => 'Mismatch between services and notes'], 422);
+            }
+
+            $patientId = $request->patient_id;
+
+            for ($i = 0; $i < count($request->service_ids); $i++) {
+                $img              = new ImagingServiceRequest();
+                $img->service_id  = $request->service_ids[$i];
+                $img->note        = $request->notes[$i] ?? null;
+                $img->patient_id  = $patientId;
+                $img->doctor_id   = Auth::id();
+                $img->save();
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => count($request->service_ids) . ' imaging request(s) saved successfully'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['success' => false, 'message' => implode(', ', $e->validator->errors()->all())], 422);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error saving imaging requests: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Save nurse-initiated prescriptions.
+     */
+    public function saveNursePrescriptions(Request $request)
+    {
+        try {
+            $request->validate([
+                'patient_id'      => 'required|integer|exists:patients,id',
+                'product_ids'     => 'required|array|min:1',
+                'product_ids.*'   => 'required|integer',
+                'doses'           => 'required|array',
+                'doses.*'         => 'nullable|string',
+            ]);
+
+            if (count($request->product_ids) !== count($request->doses)) {
+                return response()->json(['success' => false, 'message' => 'Mismatch between products and doses'], 422);
+            }
+
+            $patientId  = $request->patient_id;
+            $emptyDoses = [];
+
+            for ($i = 0; $i < count($request->product_ids); $i++) {
+                if (empty(trim($request->doses[$i] ?? ''))) {
+                    $emptyDoses[] = $i + 1;
+                }
+                $presc              = new ProductRequest();
+                $presc->product_id  = $request->product_ids[$i];
+                $presc->dose        = $request->doses[$i] ?? '';
+                $presc->patient_id  = $patientId;
+                $presc->doctor_id   = Auth::id();
+                $presc->save();
+            }
+
+            $message = count($request->product_ids) . ' prescription(s) saved successfully';
+            if (!empty($emptyDoses)) {
+                $message .= '. Warning: Item(s) ' . implode(', ', $emptyDoses) . ' have no dosage specified.';
+            }
+
+            return response()->json(['success' => true, 'message' => $message]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['success' => false, 'message' => implode(', ', $e->validator->errors()->all())], 422);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error saving prescriptions: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Save nurse-initiated procedures.
+     */
+    public function saveNurseProcedures(Request $request)
+    {
+        try {
+            $request->validate([
+                'patient_id'                  => 'required|integer|exists:patients,id',
+                'procedures'                  => 'required|array|min:1',
+                'procedures.*.service_id'     => 'required|integer|exists:services,id',
+                'procedures.*.priority'       => 'required|in:routine,urgent,emergency',
+                'procedures.*.scheduled_date' => 'nullable|date',
+                'procedures.*.pre_notes'      => 'nullable|string|max:2000',
+            ]);
+
+            $patientId  = $request->patient_id;
+            $patient    = patient::findOrFail($patientId);
+            $savedCount = 0;
+
+            foreach ($request->procedures as $data) {
+                $service = service::with('price')->find($data['service_id']);
+                if (!$service) continue;
+
+                // Create the procedure record
+                $procedure                   = new Procedure();
+                $procedure->service_id       = $service->id;
+                $procedure->patient_id       = $patientId;
+                $procedure->requested_by     = Auth::id();
+                $procedure->requested_on     = now();
+                $procedure->priority         = $data['priority'];
+                $procedure->procedure_status = Procedure::STATUS_REQUESTED;
+                $procedure->pre_notes        = $data['pre_notes'] ?? null;
+                $procedure->pre_notes_by     = !empty($data['pre_notes']) ? Auth::id() : null;
+
+                if (!empty($data['scheduled_date'])) {
+                    $procedure->scheduled_date   = $data['scheduled_date'];
+                    $procedure->procedure_status = Procedure::STATUS_SCHEDULED;
+                }
+
+                if ($service->procedureDefinition) {
+                    $procedure->procedure_definition_id = $service->procedureDefinition->id;
+                }
+
+                $procedure->save();
+
+                // Create billing entry
+                $basePrice = optional($service->price)->sale_price ?? 0;
+                $coverage  = null;
+                try {
+                    $coverage = HmoHelper::applyHmoTariff($patientId, null, $service->id);
+                } catch (\Exception $e) {
+                    $coverage = null;
+                }
+
+                $billing                       = new ProductOrServiceRequest();
+                $billing->type                 = 'service';
+                $billing->service_id           = $service->id;
+                $billing->user_id              = $patient->user_id;
+                $billing->staff_user_id        = Auth::id();
+                $billing->created_by           = Auth::id();
+                $billing->order_date           = now();
+
+                if ($coverage && ($coverage['coverage_mode'] ?? '') === 'hmo') {
+                    $billing->amount        = $coverage['payable_amount'];
+                    $billing->claims_amount = $coverage['claims_amount'];
+                    $billing->coverage_mode = 'hmo';
+                    $billing->hmo_id        = $coverage['hmo_id'] ?? null;
+                } else {
+                    $billing->amount        = $basePrice;
+                    $billing->claims_amount = 0;
+                    $billing->coverage_mode = 'cash';
+                }
+
+                $billing->save();
+
+                $procedure->product_or_service_request_id = $billing->id;
+                $procedure->save();
+
+                $savedCount++;
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $savedCount . ' procedure(s) requested successfully'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['success' => false, 'message' => implode(', ', $e->validator->errors()->all())], 422);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error saving procedures: ' . $e->getMessage()], 500);
         }
     }
 }

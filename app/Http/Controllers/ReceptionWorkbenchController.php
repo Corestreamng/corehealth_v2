@@ -284,6 +284,7 @@ class ReceptionWorkbenchController extends Controller
             'completed' => DoctorQueue::where('status', 4)->whereDate('created_at', $today)->count(),
             'total_today' => DoctorQueue::whereDate('created_at', $today)->count(),
             'admitted' => AdmissionRequest::where('discharged', 0)->count(),
+            'emergency' => DoctorQueue::where('priority', 'emergency')->whereDate('created_at', $today)->whereIn('status', [1, 2, 3])->count(),
         ];
 
         return response()->json($counts);
@@ -305,6 +306,7 @@ class ReceptionWorkbenchController extends Controller
 
         $query = DoctorQueue::with(['patient.user', 'patient.hmo', 'clinic', 'doctor', 'request_entry.service'])
             ->whereDate('created_at', $today)
+            ->orderByRaw("FIELD(IFNULL(priority,'routine'), 'emergency', 'urgent', 'routine') ASC")
             ->orderBy('created_at', 'desc');
 
         // Apply status filter
@@ -316,6 +318,8 @@ class ReceptionWorkbenchController extends Controller
             $query->where('status', 3);
         } elseif ($filter === 'completed') {
             $query->where('status', 4);
+        } elseif ($filter === 'emergency') {
+            $query->where('priority', 'emergency')->whereIn('status', [1, 2, 3]);
         }
 
         // Apply clinic filter
@@ -350,7 +354,13 @@ class ReceptionWorkbenchController extends Controller
                     3 => '<span class="badge bg-success">In Consultation</span>',
                     4 => '<span class="badge bg-secondary">Completed</span>',
                 ];
-                return $badges[$q->status] ?? '<span class="badge bg-secondary">Unknown</span>';
+                $badge = $badges[$q->status] ?? '<span class="badge bg-secondary">Unknown</span>';
+                if ($q->priority === 'emergency') {
+                    $badge = '<span class="badge bg-danger"><i class="fa fa-bolt"></i> EMERGENCY</span> ' . $badge;
+                } elseif ($q->priority === 'urgent') {
+                    $badge = '<span class="badge bg-warning text-dark">Urgent</span> ' . $badge;
+                }
+                return $badge;
             })
             ->addColumn('time', function($q) {
                 return $q->created_at->format('h:i A');

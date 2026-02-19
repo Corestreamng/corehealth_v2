@@ -755,6 +755,19 @@ Route::get('/dashboard/hmo-stats', [App\Http\Controllers\HomeController::class, 
 Route::get('/dashboard/chart/revenue', [App\Http\Controllers\HomeController::class, 'chartRevenueOverTime'])->name('dashboard.chart.revenue');
 Route::get('/dashboard/chart/registrations', [App\Http\Controllers\HomeController::class, 'chartPatientRegistrations'])->name('dashboard.chart.registrations');
 
+// Enhanced dashboard data API (queues, insights, charts, activity)
+Route::prefix('dashboard/data')->group(function () {
+    Route::get('/reception', [App\Http\Controllers\DashboardDataController::class, 'receptionData'])->name('dashboard.data.reception');
+    Route::get('/billing', [App\Http\Controllers\DashboardDataController::class, 'billingData'])->name('dashboard.data.billing');
+    Route::get('/pharmacy', [App\Http\Controllers\DashboardDataController::class, 'pharmacyData'])->name('dashboard.data.pharmacy');
+    Route::get('/nursing', [App\Http\Controllers\DashboardDataController::class, 'nursingData'])->name('dashboard.data.nursing');
+    Route::get('/lab', [App\Http\Controllers\DashboardDataController::class, 'labData'])->name('dashboard.data.lab');
+    Route::get('/doctor', [App\Http\Controllers\DashboardDataController::class, 'doctorData'])->name('dashboard.data.doctor');
+    Route::get('/hmo', [App\Http\Controllers\DashboardDataController::class, 'hmoData'])->name('dashboard.data.hmo');
+    Route::get('/accounts', [App\Http\Controllers\DashboardDataController::class, 'accountsData'])->name('dashboard.data.accounts');
+    Route::get('/audit-log', [App\Http\Controllers\DashboardDataController::class, 'auditLog'])->name('dashboard.data.audit-log');
+});
+
 Route::get('/accounts', [App\Http\Controllers\Account\accountsController::class, 'index']);
 
 Route::group(['prefix' => 'doctor', 'middleware' => ['auth']], function () {
@@ -785,6 +798,9 @@ require __DIR__ . '/nurse_chart.php';
 
 // Reception Workbench routes
 require __DIR__ . '/reception_workbench.php';
+
+// Emergency Intake routes
+require __DIR__ . '/emergency_intake.php';
 
 // Inventory Management routes (PO, Requisitions, Store Workbench)
 require __DIR__ . '/inventory.php';

@@ -30,6 +30,7 @@ Route::middleware(['web', 'auth'])->prefix('nursing-workbench')->name('nursing-w
     Route::get('/queue/medication-due', [NursingWorkbenchController::class, 'getMedicationDueQueue'])->name('medication-due');
     Route::get('/queue-counts', [NursingWorkbenchController::class, 'getQueueCounts'])->name('queue-counts');
     Route::get('/wards', [NursingWorkbenchController::class, 'getWards'])->name('wards');
+    Route::get('/clinics', [NursingWorkbenchController::class, 'getClinics'])->name('clinics');
 
     // =====================================
     // Patient Details & Context
@@ -136,6 +137,7 @@ Route::middleware(['web', 'auth'])->prefix('nursing-workbench')->name('nursing-w
     Route::post('/admission-checklist/item/{itemId}/complete', [NursingWorkbenchController::class, 'completeAdmissionChecklistItem'])->name('admission-checklist.complete');
     Route::post('/admission-checklist/item/{itemId}/waive', [NursingWorkbenchController::class, 'waiveAdmissionChecklistItem'])->name('admission-checklist.waive');
     Route::post('/admission/{admissionId}/assign-bed', [NursingWorkbenchController::class, 'assignBed'])->name('admission.assign-bed');
+    Route::post('/admission/{admissionId}/transfer-ward', [NursingWorkbenchController::class, 'transferWard'])->name('admission.transfer-ward');
 
     // Discharge Workflow
     Route::get('/admission/{admissionId}/discharge-checklist', [NursingWorkbenchController::class, 'getDischargeChecklist'])->name('discharge.checklist');
@@ -178,5 +180,15 @@ Route::middleware(['web', 'auth'])->prefix('nursing-workbench')->name('nursing-w
         Route::get('/shifts', [NursingWorkbenchController::class, 'getReportsShifts'])->name('shifts');
         Route::get('/occupancy', [NursingWorkbenchController::class, 'getReportsOccupancy'])->name('occupancy');
         Route::get('/nurses', [NursingWorkbenchController::class, 'getReportsNurses'])->name('nurses');
+    });
+
+    // =====================================
+    // Clinical Requests (Nurse-initiated)
+    // =====================================
+    Route::prefix('clinical-requests')->name('clinical-requests.')->group(function () {
+        Route::post('/prescriptions', [NursingWorkbenchController::class, 'saveNursePrescriptions'])->name('prescriptions');
+        Route::post('/labs', [NursingWorkbenchController::class, 'saveNurseLabs'])->name('labs');
+        Route::post('/imaging', [NursingWorkbenchController::class, 'saveNurseImaging'])->name('imaging');
+        Route::post('/procedures', [NursingWorkbenchController::class, 'saveNurseProcedures'])->name('procedures');
     });
 });

@@ -82,6 +82,12 @@
     </div>
 </div>
 
+{{-- Live Insights Strip --}}
+@include('admin.dashboards.components.insights-strip', ['containerId' => 'pharm-insights'])
+
+{{-- Live Queues --}}
+@include('admin.dashboards.components.queue-widget', ['containerId' => 'pharm-queues'])
+
 {{-- Quick Actions --}}
 <div class="row mb-4">
     <div class="col-12">
@@ -99,7 +105,7 @@
             <div class="row g-3">
                 @if(Route::has('pharmacy.workbench'))
                 <div class="col-6 col-md-3">
-                    <a href="{{ route('pharmacy.workbench') }}" class="text-decoration-none">
+                    <a href="{{ route('pharmacy.workbench', ['queue_filter' => 'all']) }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #e0f2fe, #bae6fd); border-color: #7dd3fc;">
                             <i class="mdi mdi-pill dash-shortcut-icon" style="color: #0369a1;"></i>
                             <h6 class="dash-shortcut-title" style="color: #0369a1;">Pharmacy</h6>
@@ -200,8 +206,8 @@
 </div>
 
 {{-- Charts --}}
-<div class="row g-4">
-    <div class="col-xl-6">
+<div class="row g-4 mb-4">
+    <div class="col-xl-8">
         <div class="dash-chart-card">
             <div class="dash-chart-header">
                 <div class="dash-section-icon bg-success bg-opacity-10">
@@ -217,14 +223,14 @@
             </div>
         </div>
     </div>
-    <div class="col-xl-6">
+    <div class="col-xl-4">
         <div class="dash-chart-card">
             <div class="dash-chart-header">
                 <div class="dash-section-icon bg-warning bg-opacity-10">
                     <i class="mdi mdi-package-variant text-warning"></i>
                 </div>
                 <div>
-                    <h5 class="dash-section-title">Stock Levels</h5>
+                    <h5 class="dash-section-title">Stock Health</h5>
                     <small class="text-muted">Current inventory status</small>
                 </div>
             </div>
@@ -234,3 +240,12 @@
         </div>
     </div>
 </div>
+
+{{-- Recent Activity --}}
+@include('admin.dashboards.components.mini-table', [
+    'containerId' => 'pharm-activity',
+    'title' => 'Recent Dispensing',
+    'subtitle' => 'Latest prescriptions today',
+    'icon' => 'mdi-pill',
+    'iconBg' => 'success'
+])
