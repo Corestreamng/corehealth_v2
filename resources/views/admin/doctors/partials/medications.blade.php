@@ -58,6 +58,76 @@
             <div class="tab-pane fade tab-content-fade" id="presc-new" role="tabpanel">
                 <div id="prescriptions_save_message" class="mb-2"></div>
                 <h5 class="mb-3"><i class="fa fa-plus-circle"></i> New Prescription</h5>
+
+                {{-- Dose Mode Toggle --}}
+                <div class="d-flex align-items-center mb-3 gap-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="dose_mode_toggle" onchange="toggleDoseMode(this.checked)">
+                        <label class="form-check-label" for="dose_mode_toggle">
+                            <i class="fa fa-sliders-h"></i> Structured Dose Entry
+                        </label>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleDoseCalculator()">
+                        <i class="fa fa-calculator"></i> Dose Calculator
+                    </button>
+                </div>
+
+                {{-- Mini Dose Calculator Panel --}}
+                <div id="dose_calculator_panel" class="card border-secondary mb-3" style="display:none;">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
+                        <span><i class="fa fa-calculator"></i> <strong>Dose Calculator</strong></span>
+                        <button type="button" class="btn-close btn-sm" onclick="toggleDoseCalculator()"></button>
+                    </div>
+                    <div class="card-body py-2">
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <label class="small fw-bold">Patient Weight (kg)</label>
+                                <input type="number" class="form-control form-control-sm" id="calc_weight" step="0.1" min="0" oninput="calculateDose()">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="small fw-bold">Dose per kg (mg/kg)</label>
+                                <input type="number" class="form-control form-control-sm" id="calc_dose_per_kg" step="0.01" min="0" oninput="calculateDose()">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="small fw-bold">Frequency</label>
+                                <select class="form-select form-select-sm" id="calc_frequency" onchange="calculateDose()">
+                                    <option value="1">OD (once daily)</option>
+                                    <option value="2">BD (twice daily)</option>
+                                    <option value="3">TDS (three times)</option>
+                                    <option value="4">QID (four times)</option>
+                                    <option value="6">Q4H (every 4 hrs)</option>
+                                    <option value="4">Q6H (every 6 hrs)</option>
+                                    <option value="3">Q8H (every 8 hrs)</option>
+                                    <option value="2">Q12H (every 12 hrs)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="small fw-bold">Duration (days)</label>
+                                <input type="number" class="form-control form-control-sm" id="calc_duration" min="1" value="5" oninput="calculateDose()">
+                            </div>
+                        </div>
+                        <div class="row g-2 mt-1">
+                            <div class="col-md-3">
+                                <label class="small fw-bold">Tablet/Unit Strength</label>
+                                <div class="input-group input-group-sm">
+                                    <input type="number" class="form-control" id="calc_tab_strength" step="0.01" min="0" value="500" oninput="calculateDose()">
+                                    <span class="input-group-text">mg</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div id="calc_results" class="mt-2 small">
+                                    <span class="text-muted">Enter values to calculate...</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button type="button" class="btn btn-sm btn-primary w-100" onclick="applyCalculatorToSelected()">
+                                    <i class="fa fa-arrow-down"></i> Apply to Selected
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label for="consult_presc_search">Search products</label>
                     <input type="text" class="form-control" id="consult_presc_search"

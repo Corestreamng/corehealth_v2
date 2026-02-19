@@ -53,7 +53,8 @@ class AdmissionRequest extends Model implements Auditable
         'followup_instructions',
         'priority',
         'esi_level',
-        'chief_complaint'
+        'chief_complaint',
+        'preferred_ward_id'
     ];
 
     protected $casts = [
@@ -97,6 +98,11 @@ class AdmissionRequest extends Model implements Auditable
     public function encounter()
     {
         return $this->belongsTo(Encounter::class, 'encounter_id', 'id');
+    }
+
+    public function preferredWard()
+    {
+        return $this->belongsTo(Ward::class, 'preferred_ward_id');
     }
 
     public function patient()
