@@ -83,6 +83,7 @@
 
             {{-- New Procedure Request Tab --}}
             <div class="tab-pane fade tab-content-fade" id="proc-new" role="tabpanel">
+                <div id="procedures_save_message" class="mb-2"></div>
                 <h5 class="mb-3"><i class="fa fa-plus-circle"></i> Request New Procedure</h5>
 
                 <div class="row">
@@ -154,7 +155,6 @@
                 </button>
             </div>
         </div>
-        <div id="procedures_save_message" class="mt-2"></div>
     </div>
 </div>
 
@@ -619,6 +619,8 @@ function saveProcedures() {
                 $('#no_procedures_message').show();
                 // Reload history table
                 $('#procedure_history_list').DataTable().ajax.reload();
+                // Switch to history tab
+                try { new bootstrap.Tab(document.getElementById('proc-history-tab')).show(); } catch(e) { $('#proc-history-tab').tab('show'); }
             } else {
                 showProcedureMessage('danger', response.message || 'Failed to save procedures');
             }
@@ -647,6 +649,7 @@ function showProcedureMessage(type, message) {
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     `);
+    document.getElementById('procedures_save_message').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
     // Auto-hide after 5 seconds
     setTimeout(function() {

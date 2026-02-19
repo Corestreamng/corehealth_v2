@@ -82,6 +82,12 @@
     </div>
 </div>
 
+{{-- Live Insights Strip --}}
+@include('admin.dashboards.components.insights-strip', ['containerId' => 'hmo-insights'])
+
+{{-- Live Queues --}}
+@include('admin.dashboards.components.queue-widget', ['containerId' => 'hmo-queues'])
+
 {{-- Quick Actions --}}
 <div class="row mb-4">
     <div class="col-12">
@@ -99,7 +105,7 @@
             <div class="row g-3">
                 @if(Route::has('hmo.workbench'))
                 <div class="col-6 col-md-3">
-                    <a href="{{ route('hmo.workbench') }}" class="text-decoration-none">
+                    <a href="{{ route('hmo.workbench', ['queue_filter' => 'pending']) }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #f3e8ff, #e9d5ff); border-color: #d8b4fe;">
                             <i class="mdi mdi-shield-check dash-shortcut-icon" style="color: #6b21a8;"></i>
                             <h6 class="dash-shortcut-title" style="color: #6b21a8;">HMO</h6>
@@ -150,8 +156,8 @@
 </div>
 
 {{-- Charts --}}
-<div class="row g-4">
-    <div class="col-xl-6">
+<div class="row g-4 mb-4">
+    <div class="col-xl-8">
         <div class="dash-chart-card">
             <div class="dash-chart-header">
                 <div class="dash-section-icon bg-primary bg-opacity-10">
@@ -167,7 +173,7 @@
             </div>
         </div>
     </div>
-    <div class="col-xl-6">
+    <div class="col-xl-4">
         <div class="dash-chart-card">
             <div class="dash-chart-header">
                 <div class="dash-section-icon bg-success bg-opacity-10">
@@ -184,3 +190,12 @@
         </div>
     </div>
 </div>
+
+{{-- Recent Activity --}}
+@include('admin.dashboards.components.mini-table', [
+    'containerId' => 'hmo-activity',
+    'title' => 'Recent HMO Activity',
+    'subtitle' => 'Latest claims and validations',
+    'icon' => 'mdi-shield-check',
+    'iconBg' => 'primary'
+])

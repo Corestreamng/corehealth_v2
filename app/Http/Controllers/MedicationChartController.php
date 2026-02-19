@@ -48,7 +48,7 @@ class MedicationChartController extends Controller
     }
     public function index($patientId, Request $request)
     {
-        $patient = Patient::findOrFail($patientId);
+        $patient = patient::findOrFail($patientId);
         $userId = $patient->user_id ?? $patient->user->id ?? null;
 
         // Get date range from request or use defaults (30 days with today in middle)
@@ -134,7 +134,7 @@ class MedicationChartController extends Controller
 
     public function calendar($patientId, $medicationId, $startDate = null, Request $request)
     {
-        $patient = Patient::findOrFail($patientId);
+        $patient = patient::findOrFail($patientId);
         $medication = ProductOrServiceRequest::with(['product.category', 'productRequest.doctor'])
             ->where('id', $medicationId)
             ->where('user_id', $patient->user_id)

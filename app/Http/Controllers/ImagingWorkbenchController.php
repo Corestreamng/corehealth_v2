@@ -43,7 +43,7 @@ class ImagingWorkbenchController extends Controller
             return response()->json([]);
         }
 
-        $patients = Patient::with('user')
+        $patients = patient::with('user')
             ->where(function ($query) use ($term) {
                 $query->whereHas('user', function ($userQuery) use ($term) {
                     $userQuery->where('surname', 'like', "%{$term}%")
@@ -84,11 +84,13 @@ class ImagingWorkbenchController extends Controller
     {
         $billingCount = ImagingServiceRequest::where('status', 1)->count();
         $resultCount = ImagingServiceRequest::where('status', 2)->count();
+        $emergencyCount = ImagingServiceRequest::where('priority', 'emergency')->whereIn('status', [1, 2])->count();
 
         return response()->json([
             'billing' => $billingCount,
             'results' => $resultCount,
             'total' => $billingCount + $resultCount,
+            'emergency' => $emergencyCount,
         ]);
     }
 
@@ -97,7 +99,7 @@ class ImagingWorkbenchController extends Controller
      */
     public function getPatientRequests($patientId)
     {
-        $patient = Patient::with(['user', 'hmo.scheme'])->findOrFail($patientId);
+        $patient = patient::with(['user', 'hmo.scheme'])->findOrFail($patientId);
 
         // Get all pending imaging requests
         $requests = ImagingServiceRequest::with(['service', 'doctor', 'biller', 'patient', 'productOrServiceRequest', 'resultBy'])
@@ -281,7 +283,10 @@ class ImagingWorkbenchController extends Controller
                 $query->whereBetween('created_at', [$startDate, $endDate]);
             }
 
-            $requests = $query->orderBy('created_at', 'desc')->get();
+            $requests = $query
+                ->orderByRaw("FIELD(IFNULL(priority,'routine'), 'emergency', 'urgent', 'routine') ASC")
+                ->orderBy('created_at', 'desc')
+                ->get();
 
             return Datatables::of($requests)
                 ->addIndexColumn()
@@ -344,6 +349,7 @@ class ImagingWorkbenchController extends Controller
                         'updated_at' => $this->formatDateTime($request->updated_at),
                         'delivery_check' => $deliveryCheck,
                         'bundled_info' => $bundledInfo, // Add bundled procedure info
+                        'priority' => $request->priority ?? 'routine',
                     ];
                 })
                 ->rawColumns(['card_data'])
@@ -1170,12 +1176,12 @@ class ImagingWorkbenchController extends Controller
                 'clinical_notes' => 'nullable|string',
                 'special_instructions' => 'nullable|string',
                 'urgency' => 'nullable|string|in:routine,urgent,stat',
-                'priority' => 'nullable|string|in:normal,high',
+                'priority' => 'nullable|string|in:normal,high,emergency',
             ]);
 
             DB::beginTransaction();
 
-            $patient = Patient::findOrFail($request->patient_id);
+            $patient = patient::findOrFail($request->patient_id);
             $notes = $request->notes ?? [];
 
             foreach ($request->service_ids as $index => $serviceId) {

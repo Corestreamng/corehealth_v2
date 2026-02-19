@@ -2927,6 +2927,10 @@
                 <span class="queue-item-label"><i class="mdi mdi-pill"></i> Medication Due</span>
                 <span class="queue-count results" id="queue-medication-count">0</span>
             </div>
+            <div class="queue-item" data-filter="emergency" style="border-left: 3px solid #dc3545;">
+                <span class="queue-item-label"><i class="mdi mdi-ambulance"></i> Emergency Queue</span>
+                <span class="queue-count" id="queue-emergency-count" style="background: #dc3545; color: #fff;">0</span>
+            </div>
             <button class="btn-queue-all" id="refresh-queues-btn">
                 <i class="mdi mdi-refresh"></i> Refresh Queues
             </button>
@@ -2970,6 +2974,10 @@
             <button class="quick-action-btn" id="btn-admission-summary">
                 <i class="mdi mdi-account-switch text-secondary"></i>
                 <span>Admissions Today</span>
+            </button>
+            <button class="quick-action-btn" data-bs-toggle="modal" data-bs-target="#emergencyIntakeModal">
+                <i class="mdi mdi-ambulance text-danger"></i>
+                <span>Emergency Intake</span>
             </button>
         </div>
     </div>
@@ -4229,6 +4237,10 @@
                     <i class="mdi mdi-medical-bag"></i>
                     <span>Procedures</span>
                 </button>
+                <button class="workspace-tab" data-tab="clinical-requests">
+                    <i class="mdi mdi-clipboard-pulse"></i>
+                    <span>Clinical Requests</span>
+                </button>
                 <button class="workspace-tab" data-tab="billing">
                     <i class="mdi mdi-cash-register"></i>
                     <span>Billing</span>
@@ -4872,6 +4884,250 @@
                                 <th><i class="mdi mdi-medical-bag"></i> Procedures</th>
                             </thead>
                         </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clinical Requests Tab -->
+            <div class="workspace-tab-content" id="clinical-requests-tab">
+                <div class="clinical-requests-container p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="mb-0"><i class="mdi mdi-clipboard-pulse"></i> Clinical Requests</h4>
+                        <span class="badge bg-info" id="cr-patient-badge">No patient selected</span>
+                    </div>
+
+                    <!-- Sub-tabs -->
+                    <ul class="nav nav-tabs service-tabs mb-3" id="clinical-requests-sub-tabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="cr-prescriptions-tab" data-bs-toggle="tab"
+                                data-bs-target="#cr-prescriptions" type="button" role="tab">
+                                <i class="mdi mdi-pill"></i> Drug Prescription
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="cr-lab-tab" data-bs-toggle="tab"
+                                data-bs-target="#cr-lab" type="button" role="tab">
+                                <i class="mdi mdi-flask"></i> Lab Requests
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="cr-imaging-tab" data-bs-toggle="tab"
+                                data-bs-target="#cr-imaging" type="button" role="tab">
+                                <i class="mdi mdi-radioactive"></i> Imaging
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="cr-procedures-tab" data-bs-toggle="tab"
+                                data-bs-target="#cr-procedures" type="button" role="tab">
+                                <i class="mdi mdi-medical-bag"></i> Procedures
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="clinical-requests-sub-content">
+
+                        <!-- ===== PRESCRIPTIONS SUB-TAB ===== -->
+                        <div class="tab-pane fade show active" id="cr-prescriptions" role="tabpanel">
+                            <div class="card-modern">
+                                <div class="card-body">
+                                    <ul class="nav nav-tabs service-tabs mb-3" role="tablist">
+                                        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#cr-presc-history" type="button"><i class="fa fa-history"></i> Drug History</button></li>
+                                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#cr-presc-new" type="button"><i class="fa fa-plus-circle"></i> Add Prescription</button></li>
+                                    </ul>
+                                    <div class="tab-content">
+                                        <div class="tab-pane fade show active" id="cr-presc-history" role="tabpanel">
+                                            <div class="table-responsive">
+                                                <table class="table table-hover" style="width:100%" id="cr_presc_history_list">
+                                                    <thead class="table-light"><th style="width:100%"><i class="mdi mdi-pill"></i> Prescriptions</th></thead>
+                                                </table>
+                                            </div>
+                                        </div>
+                                        <div class="tab-pane fade" id="cr-presc-new" role="tabpanel">
+                                            <div id="cr_presc_message" class="mb-2"></div>
+                                            <h6 class="mb-3"><i class="fa fa-plus-circle"></i> New Prescription</h6>
+                                            <div class="form-group">
+                                                <label>Search drugs/products</label>
+                                                <input type="text" class="form-control" id="cr_presc_search"
+                                                    placeholder="Type to search products..." autocomplete="off">
+                                                <ul class="list-group" id="cr_presc_results" style="display:none; position:absolute; z-index:1050; width:calc(100% - 30px); max-height:250px; overflow-y:auto;"></ul>
+                                            </div>
+                                            <div class="table-responsive mt-3">
+                                                <table class="table table-sm table-bordered table-striped">
+                                                    <thead><th>Name</th><th>Price</th><th>Dose / Frequency</th><th>*</th></thead>
+                                                    <tbody id="cr-selected-products"></tbody>
+                                                </table>
+                                            </div>
+                                            <div class="text-end mt-3">
+                                                <button class="btn btn-success" id="cr-save-prescriptions-btn" onclick="ClinicalRequests.savePrescriptions()">
+                                                    <i class="mdi mdi-content-save"></i> Save Prescriptions
+                                                </button>
+                                            </div>
+                                            <div id="cr_presc_message" class="mt-2"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ===== LAB REQUESTS SUB-TAB ===== -->
+                        <div class="tab-pane fade" id="cr-lab" role="tabpanel">
+                            <div class="card-modern">
+                                <div class="card-body">
+                                    <ul class="nav nav-tabs service-tabs mb-3" role="tablist">
+                                        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#cr-lab-history" type="button"><i class="fa fa-history"></i> Lab History</button></li>
+                                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#cr-lab-new" type="button"><i class="fa fa-plus-circle"></i> New Lab Request</button></li>
+                                    </ul>
+                                    <div class="tab-content">
+                                        <div class="tab-pane fade show active" id="cr-lab-history" role="tabpanel">
+                                            <div class="table-responsive">
+                                                <table class="table table-hover" style="width:100%" id="cr_lab_history_list">
+                                                    <thead class="table-light"><th style="width:100%"><i class="mdi mdi-flask"></i> Lab Requests</th></thead>
+                                                </table>
+                                            </div>
+                                        </div>
+                                        <div class="tab-pane fade" id="cr-lab-new" role="tabpanel">
+                                            <div id="cr_lab_message" class="mb-2"></div>
+                                            <h6 class="mb-3"><i class="fa fa-plus-circle"></i> New Lab Request</h6>
+                                            <div class="form-group">
+                                                <label>Search lab services</label>
+                                                <input type="text" class="form-control" id="cr_lab_search"
+                                                    placeholder="Type to search lab services..." autocomplete="off">
+                                                <ul class="list-group" id="cr_lab_results" style="display:none; position:absolute; z-index:1050; width:calc(100% - 30px); max-height:250px; overflow-y:auto;"></ul>
+                                            </div>
+                                            <div class="table-responsive mt-3">
+                                                <table class="table table-sm table-bordered table-striped">
+                                                    <thead><th>Name</th><th>Price</th><th>Notes</th><th>*</th></thead>
+                                                    <tbody id="cr-selected-labs"></tbody>
+                                                </table>
+                                            </div>
+                                            <div class="text-end mt-3">
+                                                <button class="btn btn-success" id="cr-save-labs-btn" onclick="ClinicalRequests.saveLabs()">
+                                                    <i class="mdi mdi-content-save"></i> Save Lab Requests
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ===== IMAGING SUB-TAB ===== -->
+                        <div class="tab-pane fade" id="cr-imaging" role="tabpanel">
+                            <div class="card-modern">
+                                <div class="card-body">
+                                    <ul class="nav nav-tabs service-tabs mb-3" role="tablist">
+                                        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#cr-imaging-history" type="button"><i class="fa fa-history"></i> Imaging History</button></li>
+                                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#cr-imaging-new" type="button"><i class="fa fa-plus-circle"></i> New Imaging Request</button></li>
+                                    </ul>
+                                    <div class="tab-content">
+                                        <div class="tab-pane fade show active" id="cr-imaging-history" role="tabpanel">
+                                            <div class="table-responsive">
+                                                <table class="table table-hover" style="width:100%" id="cr_imaging_history_list">
+                                                    <thead class="table-light"><th style="width:100%"><i class="mdi mdi-radioactive"></i> Imaging Requests</th></thead>
+                                                </table>
+                                            </div>
+                                        </div>
+                                        <div class="tab-pane fade" id="cr-imaging-new" role="tabpanel">
+                                            <div id="cr_imaging_message" class="mb-2"></div>
+                                            <h6 class="mb-3"><i class="fa fa-plus-circle"></i> New Imaging Request</h6>
+                                            <div class="form-group">
+                                                <label>Search imaging services</label>
+                                                <input type="text" class="form-control" id="cr_imaging_search"
+                                                    placeholder="Type to search imaging services..." autocomplete="off">
+                                                <ul class="list-group" id="cr_imaging_results" style="display:none; position:absolute; z-index:1050; width:calc(100% - 30px); max-height:250px; overflow-y:auto;"></ul>
+                                            </div>
+                                            <div class="table-responsive mt-3">
+                                                <table class="table table-sm table-bordered table-striped">
+                                                    <thead><th>Name</th><th>Price</th><th>Notes</th><th>*</th></thead>
+                                                    <tbody id="cr-selected-imaging"></tbody>
+                                                </table>
+                                            </div>
+                                            <div class="text-end mt-3">
+                                                <button class="btn btn-success" id="cr-save-imaging-btn" onclick="ClinicalRequests.saveImaging()">
+                                                    <i class="mdi mdi-content-save"></i> Save Imaging Requests
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ===== PROCEDURES SUB-TAB ===== -->
+                        <div class="tab-pane fade" id="cr-procedures" role="tabpanel">
+                            <div class="card-modern">
+                                <div class="card-body">
+                                    <ul class="nav nav-tabs service-tabs mb-3" role="tablist">
+                                        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#cr-proc-history" type="button"><i class="fa fa-history"></i> Procedure History</button></li>
+                                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#cr-proc-new" type="button"><i class="fa fa-plus-circle"></i> Request Procedure</button></li>
+                                    </ul>
+                                    <div class="tab-content">
+                                        <div class="tab-pane fade show active" id="cr-proc-history" role="tabpanel">
+                                            <div class="table-responsive">
+                                                <table class="table table-hover" style="width:100%" id="cr_proc_history_list">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th><i class="mdi mdi-medical-bag"></i> Procedure</th>
+                                                            <th>Priority</th>
+                                                            <th>Status</th>
+                                                            <th>Date</th>
+                                                            <th>Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody></tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                        <div class="tab-pane fade" id="cr-proc-new" role="tabpanel">
+                                            <div id="cr_proc_message" class="mb-2"></div>
+                                            <h6 class="mb-3"><i class="fa fa-plus-circle"></i> Request New Procedure</h6>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-group mb-3">
+                                                        <label><i class="fa fa-search"></i> Search Procedure</label>
+                                                        <input type="text" class="form-control" id="cr_proc_search"
+                                                            placeholder="Search procedures..." autocomplete="off">
+                                                        <ul class="list-group" id="cr_proc_results" style="display:none; position:absolute; z-index:1050; width:calc(100% - 30px); max-height:250px; overflow-y:auto;"></ul>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="form-group mb-3">
+                                                        <label><i class="fa fa-exclamation-triangle"></i> Priority</label>
+                                                        <select class="form-control" id="cr_proc_priority">
+                                                            <option value="routine">Routine</option>
+                                                            <option value="urgent">Urgent</option>
+                                                            <option value="emergency">Emergency</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="form-group mb-3">
+                                                        <label><i class="fa fa-calendar"></i> Scheduled Date</label>
+                                                        <input type="date" class="form-control" id="cr_proc_scheduled_date">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group mb-3">
+                                                <label><i class="fa fa-sticky-note"></i> Pre-Procedure Notes</label>
+                                                <textarea class="form-control" id="cr_proc_notes" rows="2" placeholder="Clinical notes, indications..."></textarea>
+                                            </div>
+                                            <div class="table-responsive">
+                                                <table class="table table-sm table-bordered table-striped">
+                                                    <thead><tr><th>Procedure</th><th>Price</th><th>Priority</th><th>*</th></tr></thead>
+                                                    <tbody id="cr-selected-procedures"></tbody>
+                                                </table>
+                                            </div>
+                                            <div class="text-end mt-3">
+                                                <button class="btn btn-success" id="cr-save-procedures-btn" onclick="ClinicalRequests.saveProcedures()">
+                                                    <i class="mdi mdi-content-save"></i> Save Procedures
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -6528,14 +6784,15 @@ function showQueue(filter) {
 
     // Update queue title based on filter type
     const titles = {
-        'admitted': '≡ƒ¢Å∩╕Å Admitted Patients',
-        'vitals': '≡ƒÆë Vitals Queue',
-        'bed-requests': '≡ƒ¢Å∩╕Å Bed Requests',
-        'discharge-requests': '≡ƒ¢Å∩╕Å Discharge Requests',
-        'medication-due': '≡ƒÆè Medication Due',
-        'all': '≡ƒôï All Patients'
+        'admitted': '<i class="mdi mdi-bed"></i> Admitted Patients',
+        'vitals': '<i class="mdi mdi-heart-pulse"></i> Vitals Queue',
+        'bed-requests': '<i class="mdi mdi-bed-empty"></i> Bed Requests',
+        'discharge-requests': '<i class="mdi mdi-account-minus"></i> Discharge Requests',
+        'medication-due': '<i class="mdi mdi-pill"></i> Medication Due',
+        'emergency': '<i class="mdi mdi-ambulance"></i> Emergency Queue',
+        'all': '<i class="mdi mdi-format-list-bulleted"></i> All Patients'
     };
-    $('#queue-view-title').html(`<i class="mdi mdi-format-list-bulleted"></i> ${titles[filter] || titles['admitted']}`);
+    $('#queue-view-title').html(titles[filter] || titles['admitted']);
 
     // Update active state on queue buttons
     $('.queue-item').removeClass('active');
@@ -6605,6 +6862,10 @@ function loadQueueData(filter) {
             url = '{{ route("nursing-workbench.medication-due") }}';
             handler = displayMedicationDueQueue;
             break;
+        case 'emergency':
+            url = '{{ route("emergency.queue") }}';
+            handler = displayEmergencyQueue;
+            break;
         default:
             url = '{{ route("nursing-workbench.admitted-patients") }}';
             handler = displayAdmittedPatientsQueue;
@@ -6630,65 +6891,260 @@ function loadQueueData(filter) {
 }
 
 // Display admitted patients in queue (card-based)
+// Display admitted patients in queue — ward-grouped with filters
+let admittedPatientsData = [];
+let admittedWardFilter = 'all';
+let admittedStatusFilter = 'all';
+
 function displayAdmittedPatientsQueue(patients) {
+    admittedPatientsData = patients;
     const $container = $('#queue-view .queue-view-content');
 
-    let html = '<div class="row p-2">';
-    patients.forEach(p => {
-        const priorityClass = p.priority === 'critical' ? 'border-danger' : (p.priority === 'high' ? 'border-warning' : '');
-        html += `
-            <div class="col-md-6 col-lg-4 mb-3">
-                <div class="card-modern ${priorityClass} queue-patient-card" style="cursor: pointer;" onclick="loadPatient(${p.patient_id}); hideQueue();">
-                    <div class="card-body p-3">
-                        <h6 class="mb-1">${p.name || 'N/A'}</h6>
-                        <small class="text-muted d-block">${p.file_no || ''} | ${p.age || ''} ${p.gender || ''}</small>
-                        <hr class="my-2">
-                        <div class="d-flex justify-content-between">
-                            <span><i class="mdi mdi-bed"></i> ${p.bed || 'No bed'}</span>
-                            <span><i class="mdi mdi-calendar"></i> ${p.days_admitted || 0}d</span>
-                        </div>
-                        ${p.overdue_meds > 0 ? `<span class="badge badge-danger mt-2"><i class="mdi mdi-pill"></i> ${p.overdue_meds} overdue</span>` : ''}
-                        ${p.vitals_due ? '<span class="badge badge-warning mt-2 ms-1"><i class="mdi mdi-heart-pulse"></i> Vitals due</span>' : ''}
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-    html += '</div>';
+    // Collect unique wards
+    const wards = [...new Set(patients.map(p => p.ward).filter(w => w && w !== 'N/A'))];
 
-    $container.html(html);
+    // Filter bar
+    let filterHtml = `<div class="d-flex flex-wrap gap-2 mb-3 p-2 bg-light rounded align-items-center">
+        <div class="d-flex align-items-center gap-2">
+            <label class="mb-0 fw-bold small"><i class="mdi mdi-hospital-building"></i> Ward:</label>
+            <select class="form-select form-select-sm" id="admitted-ward-filter" style="width: auto; min-width: 150px;">
+                <option value="all">All Wards (${patients.length})</option>
+                ${wards.map(w => {
+                    const count = patients.filter(p => p.ward === w).length;
+                    return `<option value="${w}">${w} (${count})</option>`;
+                }).join('')}
+            </select>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <label class="mb-0 fw-bold small"><i class="mdi mdi-filter-variant"></i> Status:</label>
+            <select class="form-select form-select-sm" id="admitted-status-filter" style="width: auto; min-width: 140px;">
+                <option value="all">All Statuses</option>
+                <option value="admitted">Admitted</option>
+                <option value="discharge_requested">Discharge Requested</option>
+                <option value="pending_checklist">Pending Checklist</option>
+            </select>
+        </div>
+        <div class="ms-auto d-flex gap-2 small">
+            <span class="badge bg-danger">${patients.filter(p => p.overdue_meds > 0).length} overdue meds</span>
+            <span class="badge bg-warning text-dark">${patients.filter(p => p.vitals_due).length} vitals due</span>
+            <span class="badge bg-info">${patients.filter(p => p.priority === 'emergency').length} emergency</span>
+        </div>
+    </div>`;
+
+    let cardsHtml = renderAdmittedCards(patients);
+
+    $container.html(filterHtml + '<div id="admitted-cards-container">' + cardsHtml + '</div>');
+
+    // Attach filter handlers
+    $('#admitted-ward-filter').on('change', function() {
+        admittedWardFilter = $(this).val();
+        applyAdmittedFilters();
+    });
+    $('#admitted-status-filter').on('change', function() {
+        admittedStatusFilter = $(this).val();
+        applyAdmittedFilters();
+    });
 }
 
-// Display vitals queue (card-based)
+function applyAdmittedFilters() {
+    let filtered = admittedPatientsData;
+    if (admittedWardFilter !== 'all') {
+        filtered = filtered.filter(p => p.ward === admittedWardFilter);
+    }
+    if (admittedStatusFilter !== 'all') {
+        filtered = filtered.filter(p => p.admission_status === admittedStatusFilter);
+    }
+    $('#admitted-cards-container').html(renderAdmittedCards(filtered));
+}
+
+function renderAdmittedCards(patients) {
+    if (patients.length === 0) {
+        return '<div class="text-center p-4 text-muted"><i class="mdi mdi-bed mdi-48px"></i><br>No patients match the selected filters</div>';
+    }
+
+    // Group by ward
+    const wardGroups = {};
+    patients.forEach(p => {
+        const ward = p.ward || 'Unassigned';
+        if (!wardGroups[ward]) wardGroups[ward] = [];
+        wardGroups[ward].push(p);
+    });
+
+    let html = '';
+    const wardTypeIcons = {
+        'icu': 'mdi-heart-pulse',
+        'emergency': 'mdi-ambulance',
+        'pediatric': 'mdi-baby-carriage',
+        'maternity': 'mdi-mother-nurse',
+        'isolation': 'mdi-biohazard',
+        'general': 'mdi-hospital-building',
+    };
+
+    Object.keys(wardGroups).sort().forEach(ward => {
+        const wardPatients = wardGroups[ward];
+        const wardType = wardPatients[0]?.ward_type || 'general';
+        const wardIcon = wardTypeIcons[wardType] || 'mdi-hospital-building';
+
+        html += `<div class="mb-3">
+            <div class="d-flex align-items-center gap-2 mb-2 px-2">
+                <h6 class="mb-0 fw-bold text-primary"><i class="mdi ${wardIcon}"></i> ${ward}</h6>
+                <span class="badge bg-primary rounded-pill">${wardPatients.length}</span>
+            </div>
+            <div class="row px-2">`;
+
+        wardPatients.forEach(p => {
+            const priorityBorder = p.priority === 'emergency' ? 'border-left: 4px solid #dc3545;'
+                : (p.priority === 'urgent' ? 'border-left: 4px solid #fd7e14;' : '');
+            const priorityBadge = p.priority === 'emergency'
+                ? '<span class="badge bg-danger"><i class="mdi mdi-alert"></i> Emergency</span>'
+                : (p.priority === 'urgent' ? '<span class="badge bg-warning text-dark">Urgent</span>' : '');
+
+            html += `
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card-modern queue-patient-card" style="cursor: pointer; ${priorityBorder}" onclick="loadPatient(${p.patient_id}); hideQueue();">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <h6 class="mb-0 ${p.priority === 'emergency' ? 'text-danger fw-bold' : ''}">${p.name || 'N/A'}</h6>
+                                ${priorityBadge}
+                            </div>
+                            <small class="text-muted d-block">${p.file_no || ''} | ${p.age || ''} ${p.gender || ''}</small>
+                            ${p.hmo ? `<small class="text-info d-block"><i class="mdi mdi-shield-check"></i> ${p.hmo}</small>` : ''}
+                            <hr class="my-2">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="small"><i class="mdi mdi-bed text-primary"></i> ${p.bed_name || 'No bed'}</span>
+                                <span class="small text-muted"><i class="mdi mdi-calendar"></i> Day ${p.days_admitted || 0}</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="small text-muted"><i class="mdi mdi-doctor"></i> ${p.doctor || 'N/A'}</span>
+                                <span class="small text-muted"><i class="mdi mdi-heart-pulse"></i> ${p.last_vitals || 'Never'}</span>
+                            </div>
+                            <div class="d-flex flex-wrap gap-1 mt-2">
+                                ${p.overdue_meds > 0 ? `<span class="badge bg-danger"><i class="mdi mdi-pill"></i> ${p.overdue_meds} overdue</span>` : ''}
+                                ${p.pending_meds > 0 && p.overdue_meds === 0 ? `<span class="badge bg-warning text-dark"><i class="mdi mdi-pill"></i> ${p.pending_meds} due</span>` : ''}
+                                ${p.vitals_due ? '<span class="badge bg-warning text-dark"><i class="mdi mdi-heart-pulse"></i> Vitals due</span>' : ''}
+                                ${p.chief_complaint ? `<span class="badge bg-info" title="${p.chief_complaint}"><i class="mdi mdi-comment-medical"></i> CC</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+        });
+
+        html += '</div></div>';
+    });
+
+    return html;
+}
+
+// Display vitals queue with wait times and clinic filter
+let vitalsQueueData = [];
+let vitalsClinicFilter = 'all';
+let vitalsClinicsLoaded = false;
+let vitalsClinicsCache = [];
+
 function displayVitalsQueue(patients) {
+    vitalsQueueData = Array.isArray(patients) ? patients : (patients.data || []);
     const $container = $('#queue-view .queue-view-content');
 
-    if (!Array.isArray(patients)) {
-        // Handle DataTables format
-        patients = patients.data || [];
+    if (vitalsQueueData.length === 0) {
+        $container.html('<div class="text-center p-4 text-muted"><i class="mdi mdi-heart-pulse mdi-48px"></i><br>No patients pending vitals</div>');
+        return;
+    }
+
+    // Load clinics for filter if not already loaded
+    if (!vitalsClinicsLoaded) {
+        $.get('{{ route("nursing-workbench.clinics") }}', function(data) {
+            vitalsClinicsCache = data.clinics || [];
+            vitalsClinicsLoaded = true;
+            renderVitalsQueueFull();
+        });
+    } else {
+        renderVitalsQueueFull();
+    }
+
+    function renderVitalsQueueFull() {
+        const patients = vitalsQueueData;
+        const criticalWaits = patients.filter(p => p.wait_level === 'critical').length;
+        const warningWaits = patients.filter(p => p.wait_level === 'warning').length;
+        const emergencies = patients.filter(p => p.priority === 'emergency').length;
+
+        let filterHtml = `<div class="d-flex flex-wrap gap-2 mb-3 p-2 bg-light rounded align-items-center">
+            <div class="d-flex align-items-center gap-2">
+                <label class="mb-0 fw-bold small"><i class="mdi mdi-hospital-building"></i> Clinic:</label>
+                <select class="form-select form-select-sm" id="vitals-clinic-filter" style="width: auto; min-width: 170px;">
+                    <option value="all">All Clinics (${patients.length})</option>
+                    ${vitalsClinicsCache.map(c => `<option value="${c.id}" ${vitalsClinicFilter == c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
+                </select>
+            </div>
+            <div class="ms-auto d-flex gap-2 small">
+                ${emergencies > 0 ? `<span class="badge bg-danger"><i class="mdi mdi-alert"></i> ${emergencies} emergency</span>` : ''}
+                ${criticalWaits > 0 ? `<span class="badge bg-danger"><i class="mdi mdi-clock-alert"></i> ${criticalWaits} long wait</span>` : ''}
+                ${warningWaits > 0 ? `<span class="badge bg-warning text-dark"><i class="mdi mdi-clock"></i> ${warningWaits} moderate wait</span>` : ''}
+                <span class="badge bg-secondary">${patients.length} total in queue</span>
+            </div>
+        </div>`;
+
+        $container.html(filterHtml + '<div id="vitals-cards-container">' + renderVitalsCards(patients) + '</div>');
+
+        $('#vitals-clinic-filter').on('change', function() {
+            vitalsClinicFilter = $(this).val();
+            // Reload from server with clinic filter
+            $.get('{{ route("nursing-workbench.vitals-queue") }}', { clinic_id: vitalsClinicFilter }, function(data) {
+                vitalsQueueData = data;
+                $('#vitals-cards-container').html(renderVitalsCards(data));
+            });
+        });
+    }
+}
+
+function renderVitalsCards(patients) {
+    if (patients.length === 0) {
+        return '<div class="text-center p-4 text-muted"><i class="mdi mdi-heart-pulse mdi-48px"></i><br>No patients pending vitals</div>';
     }
 
     let html = '<div class="row p-2">';
-    patients.forEach(p => {
+    patients.forEach((p, index) => {
+        const waitColor = p.wait_level === 'critical' ? '#dc3545'
+            : (p.wait_level === 'warning' ? '#fd7e14' : '#28a745');
+        const waitBg = p.wait_level === 'critical' ? 'bg-danger'
+            : (p.wait_level === 'warning' ? 'bg-warning text-dark' : 'bg-success');
+        const priorityBorder = p.priority === 'emergency' ? 'border-left: 4px solid #dc3545;'
+            : (p.priority === 'urgent' ? 'border-left: 4px solid #fd7e14;' : `border-left: 4px solid ${waitColor};`);
+        const priorityBadge = p.priority === 'emergency'
+            ? '<span class="badge bg-danger"><i class="mdi mdi-alert"></i> Emergency</span>'
+            : (p.priority === 'urgent' ? '<span class="badge bg-warning text-dark">Urgent</span>' : '');
+        const sourceBadge = p.source === 'emergency_intake'
+            ? '<span class="badge bg-danger"><i class="mdi mdi-ambulance"></i> ER</span>' : '';
+
         html += `
             <div class="col-md-6 col-lg-4 mb-3">
-                <div class="card-modern border-warning queue-patient-card" style="cursor: pointer;" onclick="loadPatient(${p.patient_id}); hideQueue();">
+                <div class="card-modern queue-patient-card" style="cursor: pointer; ${priorityBorder}" onclick="loadPatient(${p.patient_id}); hideQueue();">
                     <div class="card-body p-3">
-                        <h6 class="mb-1">${p.name || p.patient_name || 'N/A'}</h6>
-                        <small class="text-muted d-block">${p.file_no || ''}</small>
-                        <hr class="my-2">
-                        <div class="d-flex justify-content-between">
-                            <span><i class="mdi mdi-clock-outline"></i> ${p.last_vitals || 'No vitals'}</span>
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <div>
+                                <span class="badge bg-light text-dark border me-1">#${index + 1}</span>
+                                <strong class="${p.priority === 'emergency' ? 'text-danger' : ''}">${p.patient_name || 'N/A'}</strong>
+                            </div>
+                            <div class="d-flex gap-1">
+                                ${priorityBadge}${sourceBadge}
+                            </div>
                         </div>
-                        <span class="badge badge-warning mt-2"><i class="mdi mdi-heart-pulse"></i> Vitals due</span>
+                        <small class="text-muted d-block">${p.file_no || ''} | ${p.age || ''} ${p.gender || ''}</small>
+                        <hr class="my-2">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small"><i class="mdi mdi-hospital-building text-primary"></i> ${p.clinic || 'N/A'}</span>
+                            <span class="small"><i class="mdi mdi-doctor"></i> ${p.doctor || 'N/A'}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="small text-muted"><i class="mdi mdi-clock-outline"></i> Queued ${p.queued_at || ''}</span>
+                            <span class="badge ${waitBg}"><i class="mdi mdi-timer-sand"></i> ${p.wait_display || '0min'}</span>
+                        </div>
+                        ${p.triage_note ? `<div class="mt-2 p-2 bg-light rounded small"><i class="mdi mdi-note-text text-info"></i> ${p.triage_note.substring(0, 100)}${p.triage_note.length > 100 ? '...' : ''}</div>` : ''}
                     </div>
                 </div>
-            </div>
-        `;
+            </div>`;
     });
     html += '</div>';
-
-    $container.html(html);
+    return html;
 }
 
 // Display bed requests queue (card-based)
@@ -6741,7 +7197,7 @@ function displayBedRequestsQueue(requests) {
     $container.html(html);
 }
 
-// Display discharge requests queue (card-based)
+// Display discharge requests queue — detailed cards with billing warnings
 function displayDischargeRequestsQueue(requests) {
     const $container = $('#queue-view .queue-view-content');
 
@@ -6754,28 +7210,57 @@ function displayDischargeRequestsQueue(requests) {
         return;
     }
 
+    // Summary bar
+    const withUnpaid = requests.filter(r => r.unpaid_bills > 0).length;
+    const checklistPhase = requests.filter(r => r.admission_status === 'discharge_checklist').length;
+
+    let summaryHtml = `<div class="d-flex flex-wrap gap-2 mb-3 p-2 bg-light rounded align-items-center">
+        <span class="fw-bold small"><i class="mdi mdi-account-minus"></i> ${requests.length} discharge requests</span>
+        <div class="ms-auto d-flex gap-2 small">
+            ${withUnpaid > 0 ? `<span class="badge bg-danger"><i class="mdi mdi-cash-remove"></i> ${withUnpaid} unpaid bills</span>` : ''}
+            ${checklistPhase > 0 ? `<span class="badge bg-info"><i class="mdi mdi-clipboard-check"></i> ${checklistPhase} in checklist</span>` : ''}
+        </div>
+    </div>`;
+
     let html = '<div class="row p-2">';
     requests.forEach(r => {
-        // Escape quotes for use in onclick attributes
         const patientName = (r.patient_name || r.name || 'N/A').replace(/'/g, "\\'");
         const fileNo = (r.file_no || '').replace(/'/g, "\\'");
         const bedName = (r.bed_name || 'No bed').replace(/'/g, "\\'");
+        const hasUnpaid = r.unpaid_bills > 0;
+        const borderStyle = hasUnpaid ? 'border-left: 4px solid #dc3545;' : 'border-left: 4px solid #ffc107;';
+        const statusBadge = r.admission_status === 'discharge_checklist'
+            ? '<span class="badge bg-info">Checklist In Progress</span>'
+            : '<span class="badge bg-warning text-dark">Discharge Requested</span>';
 
         html += `
             <div class="col-md-6 col-lg-4 mb-3">
-                <div class="card-modern border-warning queue-patient-card" style="cursor: pointer;" onclick="loadPatient(${r.patient_id}); hideQueue();">
+                <div class="card-modern queue-patient-card" style="cursor: pointer; ${borderStyle}" onclick="loadPatient(${r.patient_id}); hideQueue();">
                     <div class="card-body p-3">
-                        <h6 class="mb-1">${r.patient_name || r.name || 'N/A'}</h6>
-                        <small class="text-muted d-block">${r.file_no || ''}</small>
-                        <hr class="my-2">
-                        <div class="d-flex justify-content-between mb-2">
-                            <span><i class="mdi mdi-bed"></i> ${r.bed_name || 'No bed'}</span>
-                            <span class="badge badge-warning">Discharge Requested</span>
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <h6 class="mb-0">${r.patient_name || r.name || 'N/A'}</h6>
+                            ${statusBadge}
                         </div>
-                        <small class="text-muted d-block"><i class="mdi mdi-account-arrow-right"></i> Reason: ${r.discharge_reason || 'Not specified'}</small>
-                        <small class="text-muted d-block"><i class="mdi mdi-clock"></i> Requested: ${r.discharge_requested_at || r.updated_at || 'N/A'}</small>
+                        <small class="text-muted d-block">${r.file_no || ''}</small>
+                        ${r.hmo ? `<small class="text-info d-block"><i class="mdi mdi-shield-check"></i> ${r.hmo}</small>` : ''}
+                        <hr class="my-2">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="small"><i class="mdi mdi-bed text-primary"></i> ${r.bed_name || 'No bed'}</span>
+                            <span class="small text-muted"><i class="mdi mdi-hospital-building"></i> ${r.ward || 'N/A'}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="small text-muted"><i class="mdi mdi-doctor"></i> ${r.doctor || 'N/A'}</span>
+                            <span class="small text-muted"><i class="mdi mdi-calendar"></i> ${r.days_admitted || 0} days admitted</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <small class="text-muted"><i class="mdi mdi-clock"></i> Requested: ${r.wait_display || r.discharge_requested_at || 'N/A'}</small>
+                        </div>
+                        ${r.discharge_reason ? `<small class="d-block text-muted mb-2"><i class="mdi mdi-comment-text"></i> ${r.discharge_reason}</small>` : ''}
+                        <div class="d-flex flex-wrap gap-1 mt-1">
+                            ${hasUnpaid ? `<span class="badge bg-danger"><i class="mdi mdi-cash-remove"></i> ${r.unpaid_bills} unpaid bills</span>` : '<span class="badge bg-success"><i class="mdi mdi-check-circle"></i> Bills clear</span>'}
+                        </div>
                         <div class="mt-2">
-                            <button class="btn btn-sm btn-warning" onclick="event.stopPropagation(); WardDashboard.openDischarge(${r.admission_id}, '${patientName}', '${fileNo}', '${bedName}');">
+                            <button class="btn btn-sm btn-warning w-100" onclick="event.stopPropagation(); WardDashboard.openDischarge(${r.admission_id}, '${patientName}', '${fileNo}', '${bedName}');">
                                 <i class="mdi mdi-clipboard-check"></i> Process Discharge
                             </button>
                         </div>
@@ -6786,10 +7271,10 @@ function displayDischargeRequestsQueue(requests) {
     });
     html += '</div>';
 
-    $container.html(html);
+    $container.html(summaryHtml + html);
 }
 
-// Display medication due queue (card-based)
+// Display medication due queue — detailed with overdue timing and ward grouping
 function displayMedicationDueQueue(patients) {
     const $container = $('#queue-view .queue-view-content');
 
@@ -6802,19 +7287,116 @@ function displayMedicationDueQueue(patients) {
         return;
     }
 
+    // Sort by overdue_minutes desc (most overdue first)
+    patients.sort((a, b) => (b.overdue_minutes || 0) - (a.overdue_minutes || 0));
+
+    const overdueCount = patients.filter(p => p.overdue).length;
+    const dueCount = patients.filter(p => !p.overdue).length;
+
+    // Summary bar
+    let summaryHtml = `<div class="d-flex flex-wrap gap-2 mb-3 p-2 bg-light rounded align-items-center">
+        <span class="fw-bold small"><i class="mdi mdi-pill"></i> Medication Round</span>
+        <div class="ms-auto d-flex gap-2 small">
+            ${overdueCount > 0 ? `<span class="badge bg-danger"><i class="mdi mdi-clock-alert"></i> ${overdueCount} overdue</span>` : ''}
+            ${dueCount > 0 ? `<span class="badge bg-warning text-dark"><i class="mdi mdi-clock"></i> ${dueCount} due now</span>` : ''}
+            <span class="badge bg-secondary">${patients.length} patients total</span>
+        </div>
+    </div>`;
+
     let html = '<div class="row p-2">';
     patients.forEach(p => {
-        const urgencyClass = p.overdue ? 'border-danger' : 'border-warning';
+        const isOverdue = p.overdue;
+        const borderStyle = isOverdue
+            ? 'border-left: 4px solid #dc3545;'
+            : 'border-left: 4px solid #ffc107;';
+        const urgencyBadge = isOverdue
+            ? `<span class="badge bg-danger"><i class="mdi mdi-clock-alert"></i> ${p.overdue_display || 'Overdue'}</span>`
+            : '<span class="badge bg-warning text-dark"><i class="mdi mdi-clock"></i> Due now</span>';
+        const priorityBadge = p.priority === 'emergency'
+            ? ' <span class="badge bg-danger"><i class="mdi mdi-alert"></i> Emergency</span>'
+            : '';
+
         html += `
             <div class="col-md-6 col-lg-4 mb-3">
-                <div class="card-modern ${urgencyClass} queue-patient-card" style="cursor: pointer;" onclick="loadPatient(${p.patient_id}); hideQueue();">
+                <div class="card-modern queue-patient-card" style="cursor: pointer; ${borderStyle}" onclick="loadPatient(${p.patient_id}); hideQueue();">
                     <div class="card-body p-3">
-                        <h6 class="mb-1">${p.name || p.patient_name || 'N/A'}</h6>
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <h6 class="mb-0 ${isOverdue ? 'text-danger fw-bold' : ''}">${p.name || p.patient_name || 'N/A'}</h6>
+                            <div class="d-flex gap-1">${urgencyBadge}${priorityBadge}</div>
+                        </div>
                         <small class="text-muted d-block">${p.file_no || ''}</small>
                         <hr class="my-2">
-                        <div class="d-flex justify-content-between">
-                            <span><i class="mdi mdi-pill"></i> ${p.medication_count || 0} medications</span>
-                            ${p.overdue ? '<span class="badge badge-danger">Overdue</span>' : '<span class="badge badge-warning">Due</span>'}
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="small"><i class="mdi mdi-bed text-primary"></i> ${p.bed_name || 'N/A'}</span>
+                            <span class="small text-muted"><i class="mdi mdi-hospital-building"></i> ${p.ward || 'N/A'}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="small"><i class="mdi mdi-pill text-warning"></i> <strong>${p.medication_count || 0}</strong> medications${p.overdue_count > 0 ? ` (${p.overdue_count} overdue)` : ''}</span>
+                            ${p.next_med_time ? `<span class="small text-muted"><i class="mdi mdi-clock-fast"></i> Next: ${p.next_med_time}</span>` : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+
+    $container.html(summaryHtml + html);
+}
+
+// Display emergency queue patients
+function displayEmergencyQueue(patients) {
+    const $container = $('#queue-view .queue-view-content');
+
+    if (!Array.isArray(patients)) {
+        patients = patients.data || [];
+    }
+
+    if (patients.length === 0) {
+        $container.html('<div class="text-center p-4 text-muted"><i class="mdi mdi-ambulance mdi-48px"></i><br>No emergency patients at this time</div>');
+        return;
+    }
+
+    const esiColors = { 1: '#dc3545', 2: '#fd7e14', 3: '#ffc107', 4: '#28a745', 5: '#17a2b8' };
+
+    let html = '<div class="row p-2">';
+    patients.forEach(p => {
+        const esiLevel = p.esi_level;
+        const esiColor = esiColors[esiLevel] || '#dc3545';
+        const esiLabel = esiLevel ? ('ESI-' + esiLevel + ' ' + (p.esi_label || '')) : 'Emergency';
+
+        const bedInfo = p.bed && p.bed !== 'Unassigned'
+            ? `<span class="badge badge-info"><i class="mdi mdi-bed"></i> ${p.bed}</span>`
+            : '<span class="badge badge-secondary">No Bed</span>';
+        const wardInfo = p.ward && p.ward !== 'N/A' ? `<small class="text-muted">${p.ward}</small>` : '';
+
+        html += `
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card-modern queue-patient-card" style="border-left: 4px solid ${esiColor};">
+                    <div class="card-body p-3">
+                        <div class="d-flex justify-content-between align-items-start" style="cursor:pointer;" onclick="loadPatient(${p.patient_id}); hideQueue();">
+                            <h6 class="mb-1">${p.patient_name || 'N/A'}</h6>
+                            <span class="badge" style="background: ${esiColor}; color: #fff; font-size: 0.7rem;">${esiLabel}</span>
+                        </div>
+                        <small class="text-muted d-block">${p.file_no || ''} | ${p.hmo || 'Private'}</small>
+                        <hr class="my-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            ${bedInfo} ${wardInfo}
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-1">
+                            ${p.status_badge || ''}
+                            <small class="text-muted"><i class="mdi mdi-clock"></i> ${p.admitted_at || ''} (${p.duration || ''})</small>
+                        </div>
+                        <div class="mt-2 d-flex gap-1">
+                            <button class="btn btn-sm btn-outline-primary flex-fill" onclick="openTransferWardModal(${p.admission_id}, '${(p.patient_name || '').replace(/'/g, "\\'")}')">
+                                <i class="mdi mdi-swap-horizontal"></i> Transfer
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning flex-fill" onclick="event.stopPropagation(); WardDashboard.openDischarge(${p.admission_id}, '${(p.patient_name || '').replace(/'/g, "\\'")}', '${(p.file_no || '').replace(/'/g, "\\'")}', '${(p.bed || '').replace(/'/g, "\\'")}')">
+                                <i class="mdi mdi-account-minus"></i> Discharge
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="loadPatient(${p.patient_id}); hideQueue();">
+                                <i class="mdi mdi-eye"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -6824,6 +7406,64 @@ function displayMedicationDueQueue(patients) {
     html += '</div>';
 
     $container.html(html);
+}
+
+// ===== EMERGENCY WARD TRANSFER =====
+function openTransferWardModal(admissionId, patientName) {
+    $('#transfer-ward-admission-id').val(admissionId);
+    $('#transfer-ward-patient-name').text(patientName);
+    $('#transfer-ward-bed-select').html('<option value="">Loading beds...</option>');
+
+    // Load available non-emergency wards/beds
+    $.get('{{ route("nursing-workbench.ward-dashboard.available-beds") }}', function(beds) {
+        const $sel = $('#transfer-ward-bed-select').empty().append('<option value="">-- Select target bed --</option>');
+        beds.forEach(function(b) {
+            $sel.append(`<option value="${b.id}">${b.name} — ${b.ward_name}</option>`);
+        });
+    });
+
+    $('#transferWardModal').modal('show');
+}
+
+function submitWardTransfer() {
+    const admissionId = $('#transfer-ward-admission-id').val();
+    const bedId = $('#transfer-ward-bed-select').val();
+
+    if (!bedId) {
+        toastr.warning('Please select a target bed.');
+        return;
+    }
+
+    const $btn = $('#transfer-ward-submit-btn');
+    $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Transferring...');
+
+    $.ajax({
+        url: '{{ url("nursing-workbench") }}/admission/' + admissionId + '/transfer-ward',
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            bed_id: bedId
+        },
+        success: function(response) {
+            if (response.success) {
+                toastr.success(response.message);
+                $('#transferWardModal').modal('hide');
+                loadQueueCounts();
+                // Refresh emergency queue view
+                if (currentQueueFilter === 'emergency') {
+                    loadQueueData('emergency');
+                }
+            } else {
+                toastr.error(response.message || 'Transfer failed.');
+            }
+        },
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Server error during transfer.');
+        },
+        complete: function() {
+            $btn.prop('disabled', false).html('<i class="mdi mdi-check"></i> Transfer Patient');
+        }
+    });
 }
 
 // Create vital tooltip element (defined early to avoid hoisting issues)
@@ -6844,6 +7484,19 @@ $(document).ready(function() {
     loadUserPreferences();
     createVitalTooltip();
     updateQuickActions(); // Set initial state for patient-dependent buttons
+
+    // Auto-select patient from URL query parameter (e.g., from Patient list workbench button)
+    const urlParams = new URLSearchParams(window.location.search);
+    const patientId = urlParams.get('patient_id');
+    if (patientId) {
+        loadPatient(patientId);
+    }
+
+    // Auto-open queue from URL parameter (e.g., from dashboard queue widget click)
+    const queueFilter = urlParams.get('queue_filter');
+    if (queueFilter && ['admitted', 'vitals', 'bed-requests', 'discharge-requests', 'medication-due', 'emergency'].includes(queueFilter)) {
+        setTimeout(function() { showQueue(queueFilter); }, 500);
+    }
 });
 
 function initializeEventListeners() {
@@ -7041,6 +7694,9 @@ function loadPatient(patientId) {
             // Initialize procedures DataTable
             initializeProceduresDataTable(patientId);
 
+            // Initialize Clinical Requests module
+            ClinicalRequests.init(patientId);
+
             // Switch to overview tab
             switchWorkspaceTab('overview');
         },
@@ -7090,6 +7746,455 @@ function initializeHistoryDataTable(patientId) {
         }
     });
 }
+
+// =====================================
+// CLINICAL REQUESTS MODULE
+// =====================================
+const ClinicalRequests = (function() {
+    let patientId = null;
+    let selectedProcedures = [];
+    const CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
+    const procedureCategoryId = {{ appsettings('procedure_category_id', 0) }};
+    const investigationCategoryId = '{{ appsettings("investigation_category_id", "") }}';
+
+    function init(pid) {
+        patientId = pid;
+        $('#cr-patient-badge').text('Patient #' + pid).removeClass('bg-info').addClass('bg-primary');
+        selectedProcedures = [];
+
+        // Clear selection tables
+        $('#cr-selected-products').empty();
+        $('#cr-selected-labs').empty();
+        $('#cr-selected-imaging').empty();
+        $('#cr-selected-procedures').empty();
+
+        // Init history DataTables
+        initPrescHistory();
+        initLabHistory();
+        initImagingHistory();
+        initProcHistory();
+
+        // Setup search handlers (only once)
+        if (!ClinicalRequests._searchBound) {
+            setupSearchHandlers();
+            ClinicalRequests._searchBound = true;
+        }
+    }
+
+    // ===== HISTORY DATATABLES =====
+    function initPrescHistory() {
+        if ($.fn.DataTable.isDataTable('#cr_presc_history_list')) {
+            $('#cr_presc_history_list').DataTable().destroy();
+        }
+        $('#cr_presc_history_list').DataTable({
+            processing: true, serverSide: true,
+            ajax: { url: '/prescHistoryList/' + patientId, type: 'GET' },
+            columns: [{ data: 'info', name: 'info', orderable: false }],
+            order: [[0, 'desc']], pageLength: 10,
+            language: { emptyTable: 'No prescription history', processing: '<i class="fa fa-spinner fa-spin"></i> Loading...' }
+        });
+    }
+    function initLabHistory() {
+        if ($.fn.DataTable.isDataTable('#cr_lab_history_list')) {
+            $('#cr_lab_history_list').DataTable().destroy();
+        }
+        $('#cr_lab_history_list').DataTable({
+            processing: true, serverSide: true,
+            ajax: { url: '/investigationHistoryList/' + patientId, type: 'GET' },
+            columns: [{ data: 'info', name: 'info', orderable: false }],
+            order: [[0, 'desc']], pageLength: 10,
+            language: { emptyTable: 'No lab history', processing: '<i class="fa fa-spinner fa-spin"></i> Loading...' }
+        });
+    }
+    function initImagingHistory() {
+        if ($.fn.DataTable.isDataTable('#cr_imaging_history_list')) {
+            $('#cr_imaging_history_list').DataTable().destroy();
+        }
+        $('#cr_imaging_history_list').DataTable({
+            processing: true, serverSide: true,
+            ajax: { url: '/imagingHistoryList/' + patientId, type: 'GET' },
+            columns: [{ data: 'info', name: 'info', orderable: false }],
+            order: [[0, 'desc']], pageLength: 10,
+            language: { emptyTable: 'No imaging history', processing: '<i class="fa fa-spinner fa-spin"></i> Loading...' }
+        });
+    }
+    function initProcHistory() {
+        if ($.fn.DataTable.isDataTable('#cr_proc_history_list')) {
+            $('#cr_proc_history_list').DataTable().destroy();
+        }
+        $('#cr_proc_history_list').DataTable({
+            processing: true, serverSide: true,
+            ajax: { url: '/procedureHistoryList/' + patientId, type: 'GET' },
+            columns: [
+                { data: 'procedure', name: 'procedure' },
+                { data: 'priority', name: 'priority' },
+                { data: 'status', name: 'procedure_status' },
+                { data: 'date', name: 'requested_on' },
+                { data: 'actions', name: 'actions', orderable: false, searchable: false }
+            ],
+            order: [[3, 'desc']], pageLength: 10,
+            language: { emptyTable: 'No procedure history', processing: '<i class="fa fa-spinner fa-spin"></i> Loading...' }
+        });
+    }
+
+    // ===== SEARCH HANDLERS =====
+    function setupSearchHandlers() {
+        let searchTimeout;
+
+        // Drug search
+        $('#cr_presc_search').on('keyup', function() {
+            const q = $(this).val();
+            clearTimeout(searchTimeout);
+            if (q.length < 2) { $('#cr_presc_results').hide(); return; }
+            searchTimeout = setTimeout(() => searchProducts(q), 300);
+        });
+
+        // Lab search
+        $('#cr_lab_search').on('keyup', function() {
+            const q = $(this).val();
+            clearTimeout(searchTimeout);
+            if (q.length < 2) { $('#cr_lab_results').hide(); return; }
+            searchTimeout = setTimeout(() => searchLabServices(q), 300);
+        });
+
+        // Imaging search
+        $('#cr_imaging_search').on('keyup', function() {
+            const q = $(this).val();
+            clearTimeout(searchTimeout);
+            if (q.length < 2) { $('#cr_imaging_results').hide(); return; }
+            searchTimeout = setTimeout(() => searchImagingServices(q), 300);
+        });
+
+        // Procedure search
+        $('#cr_proc_search').on('keyup', function() {
+            const q = $(this).val();
+            clearTimeout(searchTimeout);
+            if (q.length < 2) { $('#cr_proc_results').hide(); return; }
+            searchTimeout = setTimeout(() => searchProcedureServices(q), 300);
+        });
+
+        // Close dropdowns on click outside
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('#cr_presc_search, #cr_presc_results').length) $('#cr_presc_results').hide();
+            if (!$(e.target).closest('#cr_lab_search, #cr_lab_results').length) $('#cr_lab_results').hide();
+            if (!$(e.target).closest('#cr_imaging_search, #cr_imaging_results').length) $('#cr_imaging_results').hide();
+            if (!$(e.target).closest('#cr_proc_search, #cr_proc_results').length) $('#cr_proc_results').hide();
+        });
+    }
+
+    // ===== SEARCH FUNCTIONS =====
+    function searchProducts(q) {
+        $.get('/live-search-products', { term: q, patient_id: patientId }, function(data) {
+            const $res = $('#cr_presc_results').empty();
+            if (!data.length) { $res.append('<li class="list-group-item text-muted">No products found</li>'); }
+            else {
+                data.forEach(item => {
+                    const name = item.product_name || 'Unknown';
+                    const code = item.product_code || '';
+                    const qty = item.stock?.current_quantity ?? 0;
+                    const price = item.price?.initial_sale_price ?? 0;
+                    const payable = item.payable_amount ?? price;
+                    const claims = item.claims_amount ?? 0;
+                    const mode = item.coverage_mode || null;
+                    const coverageBadge = mode ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ${payable}</span> <span class='text-success ms-1'>Claim: ${claims}</span>` : '';
+                    const displayName = `${name}[${code}](${qty} avail.)`;
+                    $res.append(`<li class='list-group-item' style="background:#f0f0f0; cursor:pointer;" onclick="ClinicalRequests.addProduct('${displayName.replace(/'/g,"\\'")}', ${item.id}, ${price}, '${mode}', ${claims}, ${payable})"><b>${name}[${code}]</b> (${qty} avail.) NGN ${price} ${coverageBadge}</li>`);
+                });
+            }
+            $res.show();
+        });
+    }
+
+    function searchLabServices(q) {
+        const data = { term: q, patient_id: patientId };
+        if (investigationCategoryId) data.category_id = investigationCategoryId;
+        $.get('/live-search-services', data, function(data) {
+            const $res = $('#cr_lab_results').empty();
+            if (!data.length) { $res.append('<li class="list-group-item text-muted">No lab services found</li>'); }
+            else {
+                data.forEach(item => {
+                    const name = item.service_name || 'Unknown';
+                    const code = item.service_code || '';
+                    const price = item.price?.sale_price ?? 0;
+                    const payable = item.payable_amount ?? price;
+                    const claims = item.claims_amount ?? 0;
+                    const mode = item.coverage_mode || null;
+                    const coverageBadge = mode ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ${payable}</span> <span class='text-success ms-1'>Claim: ${claims}</span>` : '';
+                    $res.append(`<li class='list-group-item' style="background:#f0f0f0; cursor:pointer;" onclick="ClinicalRequests.addLabService('${(name+'['+code+']').replace(/'/g,"\\'")}', ${item.id}, ${price}, '${mode}', ${claims}, ${payable})">[${item.category?.category_name || 'Lab'}] <b>${name}[${code}]</b> NGN ${price} ${coverageBadge}</li>`);
+                });
+            }
+            $res.show();
+        });
+    }
+
+    function searchImagingServices(q) {
+        $.get('/live-search-services', { term: q, category_id: 6, patient_id: patientId }, function(data) {
+            const $res = $('#cr_imaging_results').empty();
+            if (!data.length) { $res.append('<li class="list-group-item text-muted">No imaging services found</li>'); }
+            else {
+                data.forEach(item => {
+                    const name = item.service_name || 'Unknown';
+                    const code = item.service_code || '';
+                    const price = item.price?.sale_price ?? 0;
+                    const payable = item.payable_amount ?? price;
+                    const claims = item.claims_amount ?? 0;
+                    const mode = item.coverage_mode || null;
+                    const coverageBadge = mode ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ${payable}</span> <span class='text-success ms-1'>Claim: ${claims}</span>` : '';
+                    $res.append(`<li class='list-group-item' style="background:#f0f0f0; cursor:pointer;" onclick="ClinicalRequests.addImagingService('${(name+'['+code+']').replace(/'/g,"\\'")}', ${item.id}, ${price}, '${mode}', ${claims}, ${payable})">[${item.category?.category_name || 'Imaging'}] <b>${name}[${code}]</b> NGN ${price} ${coverageBadge}</li>`);
+                });
+            }
+            $res.show();
+        });
+    }
+
+    function searchProcedureServices(q) {
+        $.get('/live-search-services', { term: q, category_id: procedureCategoryId, patient_id: patientId }, function(data) {
+            const $res = $('#cr_proc_results').empty();
+            if (!data.length) { $res.append('<li class="list-group-item text-muted">No procedures found</li>'); }
+            else {
+                data.forEach(item => {
+                    const isSelected = selectedProcedures.some(p => p.id === item.id);
+                    const name = item.service_name || 'Unknown';
+                    const code = item.service_code || '';
+                    const price = item.price?.sale_price ?? 0;
+                    const payable = item.payable_amount ?? price;
+                    const disabledBadge = isSelected ? ' <span class="badge bg-warning">Already Added</span>' : '';
+                    const cursor = isSelected ? 'not-allowed' : 'pointer';
+                    const clickAttr = isSelected ? '' : `onclick="ClinicalRequests.addProcedure(${JSON.stringify(item).replace(/"/g, '&quot;')})"`;
+                    $res.append(`<li class='list-group-item' style="background:#f0f0f0; cursor:${cursor};" ${clickAttr}>[${item.category?.category_name || 'Procedure'}] <b>${name}[${code}]</b> NGN ${payable}${disabledBadge}</li>`);
+                });
+            }
+            $res.show();
+        });
+    }
+
+    // ===== ADD TO SELECTION TABLE =====
+    function addProduct(name, id, price, mode, claims, payable) {
+        const coverageBadge = mode && mode !== 'null' ? `<div class="small mt-1"><span class="badge bg-info">${mode.toUpperCase()}</span> <span class="text-danger">Pay: ${payable}</span> <span class="text-success">Claims: ${claims}</span></div>` : '';
+        $('#cr-selected-products').append(`
+            <tr>
+                <td>${name}${coverageBadge}</td>
+                <td>${payable ?? price}</td>
+                <td><input type="text" class="form-control form-control-sm" name="cr_presc_dose[]" placeholder="e.g. 500mg BD x 5days" required><input type="hidden" name="cr_presc_id[]" value="${id}"></td>
+                <td><button class="btn btn-sm btn-danger" onclick="$(this).closest('tr').remove()"><i class="fa fa-times"></i></button></td>
+            </tr>
+        `);
+        $('#cr_presc_search').val('');
+        $('#cr_presc_results').hide();
+    }
+
+    function addLabService(name, id, price, mode, claims, payable) {
+        const coverageBadge = mode && mode !== 'null' ? `<div class="small mt-1"><span class="badge bg-info">${mode.toUpperCase()}</span> <span class="text-danger">Pay: ${payable}</span> <span class="text-success">Claims: ${claims}</span></div>` : '';
+        $('#cr-selected-labs').append(`
+            <tr>
+                <td>${name}${coverageBadge}</td>
+                <td>${payable ?? price}</td>
+                <td><input type="text" class="form-control form-control-sm" name="cr_lab_note[]" placeholder="Clinical notes..."><input type="hidden" name="cr_lab_id[]" value="${id}"></td>
+                <td><button class="btn btn-sm btn-danger" onclick="$(this).closest('tr').remove()"><i class="fa fa-times"></i></button></td>
+            </tr>
+        `);
+        $('#cr_lab_search').val('');
+        $('#cr_lab_results').hide();
+    }
+
+    function addImagingService(name, id, price, mode, claims, payable) {
+        const coverageBadge = mode && mode !== 'null' ? `<div class="small mt-1"><span class="badge bg-info">${mode.toUpperCase()}</span> <span class="text-danger">Pay: ${payable}</span> <span class="text-success">Claims: ${claims}</span></div>` : '';
+        $('#cr-selected-imaging').append(`
+            <tr>
+                <td>${name}${coverageBadge}</td>
+                <td>${payable ?? price}</td>
+                <td><input type="text" class="form-control form-control-sm" name="cr_imaging_note[]" placeholder="Clinical notes..."><input type="hidden" name="cr_imaging_id[]" value="${id}"></td>
+                <td><button class="btn btn-sm btn-danger" onclick="$(this).closest('tr').remove()"><i class="fa fa-times"></i></button></td>
+            </tr>
+        `);
+        $('#cr_imaging_search').val('');
+        $('#cr_imaging_results').hide();
+    }
+
+    function addProcedure(item) {
+        if (selectedProcedures.some(p => p.id === item.id)) {
+            toastr.warning('Procedure already added');
+            return;
+        }
+        const priority = $('#cr_proc_priority').val();
+        const scheduledDate = $('#cr_proc_scheduled_date').val();
+        const preNotes = $('#cr_proc_notes').val();
+        item.priority = priority;
+        item.scheduled_date = scheduledDate;
+        item.pre_notes = preNotes;
+        selectedProcedures.push(item);
+        renderSelectedProcedures();
+        $('#cr_proc_search').val('');
+        $('#cr_proc_results').hide();
+    }
+
+    function removeProcedure(procId) {
+        selectedProcedures = selectedProcedures.filter(p => p.id !== procId);
+        renderSelectedProcedures();
+    }
+
+    function renderSelectedProcedures() {
+        const $tb = $('#cr-selected-procedures').empty();
+        if (selectedProcedures.length === 0) {
+            $tb.append('<tr><td colspan="4" class="text-center text-muted"><i class="fa fa-info-circle"></i> No procedures selected</td></tr>');
+            return;
+        }
+        selectedProcedures.forEach(p => {
+            const payable = p.payable_amount ?? (p.price?.sale_price ?? 0);
+            const priorityClass = { routine: 'bg-success', urgent: 'bg-warning text-dark', emergency: 'bg-danger' }[p.priority] || 'bg-secondary';
+            $tb.append(`
+                <tr>
+                    <td><strong>${p.service_name || 'N/A'}</strong><br><small class="text-muted">${p.service_code || ''}</small>${p.pre_notes ? '<br><small class="text-info"><i class="fa fa-sticky-note"></i> ' + p.pre_notes.substring(0, 60) + '</small>' : ''}</td>
+                    <td>NGN ${payable}</td>
+                    <td><span class="badge ${priorityClass}">${p.priority}</span>${p.scheduled_date ? '<br><small>' + p.scheduled_date + '</small>' : ''}</td>
+                    <td><button class="btn btn-sm btn-danger" onclick="ClinicalRequests.removeProcedure(${p.id})"><i class="fa fa-times"></i></button></td>
+                </tr>
+            `);
+        });
+    }
+
+    // ===== SAVE FUNCTIONS =====
+    function showMessage(containerId, msg, type) {
+        const alertType = type === 'error' ? 'danger' : type;
+        $(`#${containerId}`).html(`<div class="alert alert-${alertType} alert-dismissible fade show">${msg}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`);
+        document.getElementById(containerId).scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        setTimeout(() => $(`#${containerId} .alert`).alert('close'), 5000);
+    }
+
+    function savePrescriptions() {
+        if (!patientId) { toastr.error('No patient selected'); return; }
+        const products = [], doses = [];
+        $('#cr-selected-products tr').each(function() {
+            const id = $(this).find('input[name="cr_presc_id[]"]').val();
+            const dose = $(this).find('input[name="cr_presc_dose[]"]').val();
+            if (id) { products.push(id); doses.push(dose || ''); }
+        });
+        if (products.length === 0) { showMessage('cr_presc_message', 'No prescriptions selected.', 'error'); return; }
+
+        const $btn = $('#cr-save-prescriptions-btn').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
+        $.ajax({
+            url: '/nursing-workbench/clinical-requests/prescriptions',
+            method: 'POST',
+            data: { patient_id: patientId, product_ids: products, doses: doses, _token: CSRF_TOKEN },
+            success: function(r) {
+                if (r.success) {
+                    showMessage('cr_presc_message', r.message, 'success');
+                    $('#cr-selected-products').empty();
+                    initPrescHistory();
+                    // Switch to history tab
+                    try { new bootstrap.Tab($('[data-bs-target="#cr-presc-history"]')[0]).show(); } catch(e) { $('[data-bs-target="#cr-presc-history"]').tab('show'); }
+                } else showMessage('cr_presc_message', r.message, 'error');
+            },
+            error: function(xhr) { showMessage('cr_presc_message', xhr.responseJSON?.message || 'Server error', 'error'); },
+            complete: function() { $btn.prop('disabled', false).html('<i class="mdi mdi-content-save"></i> Save Prescriptions'); }
+        });
+    }
+
+    function saveLabs() {
+        if (!patientId) { toastr.error('No patient selected'); return; }
+        const services = [], notes = [];
+        $('#cr-selected-labs tr').each(function() {
+            const id = $(this).find('input[name="cr_lab_id[]"]').val();
+            const note = $(this).find('input[name="cr_lab_note[]"]').val();
+            if (id) { services.push(id); notes.push(note || ''); }
+        });
+        if (services.length === 0) { showMessage('cr_lab_message', 'No lab services selected.', 'error'); return; }
+
+        const $btn = $('#cr-save-labs-btn').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
+        $.ajax({
+            url: '/nursing-workbench/clinical-requests/labs',
+            method: 'POST',
+            data: { patient_id: patientId, service_ids: services, notes: notes, _token: CSRF_TOKEN },
+            success: function(r) {
+                if (r.success) {
+                    showMessage('cr_lab_message', r.message, 'success');
+                    $('#cr-selected-labs').empty();
+                    initLabHistory();
+                    // Switch to history tab
+                    try { new bootstrap.Tab($('[data-bs-target="#cr-lab-history"]')[0]).show(); } catch(e) { $('[data-bs-target="#cr-lab-history"]').tab('show'); }
+                } else showMessage('cr_lab_message', r.message, 'error');
+            },
+            error: function(xhr) { showMessage('cr_lab_message', xhr.responseJSON?.message || 'Server error', 'error'); },
+            complete: function() { $btn.prop('disabled', false).html('<i class="mdi mdi-content-save"></i> Save Lab Requests'); }
+        });
+    }
+
+    function saveImaging() {
+        if (!patientId) { toastr.error('No patient selected'); return; }
+        const services = [], notes = [];
+        $('#cr-selected-imaging tr').each(function() {
+            const id = $(this).find('input[name="cr_imaging_id[]"]').val();
+            const note = $(this).find('input[name="cr_imaging_note[]"]').val();
+            if (id) { services.push(id); notes.push(note || ''); }
+        });
+        if (services.length === 0) { showMessage('cr_imaging_message', 'No imaging services selected.', 'error'); return; }
+
+        const $btn = $('#cr-save-imaging-btn').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
+        $.ajax({
+            url: '/nursing-workbench/clinical-requests/imaging',
+            method: 'POST',
+            data: { patient_id: patientId, service_ids: services, notes: notes, _token: CSRF_TOKEN },
+            success: function(r) {
+                if (r.success) {
+                    showMessage('cr_imaging_message', r.message, 'success');
+                    $('#cr-selected-imaging').empty();
+                    initImagingHistory();
+                    // Switch to history tab
+                    try { new bootstrap.Tab($('[data-bs-target="#cr-imaging-history"]')[0]).show(); } catch(e) { $('[data-bs-target="#cr-imaging-history"]').tab('show'); }
+                } else showMessage('cr_imaging_message', r.message, 'error');
+            },
+            error: function(xhr) { showMessage('cr_imaging_message', xhr.responseJSON?.message || 'Server error', 'error'); },
+            complete: function() { $btn.prop('disabled', false).html('<i class="mdi mdi-content-save"></i> Save Imaging Requests'); }
+        });
+    }
+
+    function saveProcedures() {
+        if (!patientId) { toastr.error('No patient selected'); return; }
+        if (selectedProcedures.length === 0) { showMessage('cr_proc_message', 'No procedures selected.', 'error'); return; }
+
+        const $btn = $('#cr-save-procedures-btn').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
+        $.ajax({
+            url: '/nursing-workbench/clinical-requests/procedures',
+            method: 'POST',
+            data: {
+                patient_id: patientId,
+                _token: CSRF_TOKEN,
+                procedures: selectedProcedures.map(p => ({
+                    service_id: p.id,
+                    priority: p.priority,
+                    scheduled_date: p.scheduled_date,
+                    pre_notes: p.pre_notes
+                }))
+            },
+            success: function(r) {
+                if (r.success) {
+                    showMessage('cr_proc_message', r.message, 'success');
+                    selectedProcedures = [];
+                    renderSelectedProcedures();
+                    initProcHistory();
+                    // Switch to history tab
+                    try { new bootstrap.Tab($('[data-bs-target="#cr-proc-history"]')[0]).show(); } catch(e) { $('[data-bs-target="#cr-proc-history"]').tab('show'); }
+                } else showMessage('cr_proc_message', r.message, 'error');
+            },
+            error: function(xhr) { showMessage('cr_proc_message', xhr.responseJSON?.message || 'Server error', 'error'); },
+            complete: function() { $btn.prop('disabled', false).html('<i class="mdi mdi-content-save"></i> Save Procedures'); }
+        });
+    }
+
+    return {
+        init: init,
+        addProduct: addProduct,
+        addLabService: addLabService,
+        addImagingService: addImagingService,
+        addProcedure: addProcedure,
+        removeProcedure: removeProcedure,
+        savePrescriptions: savePrescriptions,
+        saveLabs: saveLabs,
+        saveImaging: saveImaging,
+        saveProcedures: saveProcedures,
+        _searchBound: false
+    };
+})();
 
 function initializeProceduresDataTable(patientId) {
     if ($.fn.DataTable.isDataTable('#procedures_history_list')) {
@@ -7998,6 +9103,7 @@ function loadQueueCounts() {
         $('#queue-bed-count').text(counts.bed_requests || 0);
         $('#queue-discharge-count').text(counts.discharge_requests || 0);
         $('#queue-medication-count').text(counts.medication_due || 0);
+        $('#queue-emergency-count').text(counts.emergency || 0);
         updateSyncIndicator();
     });
 }
@@ -16838,4 +17944,41 @@ $(document).ready(function() {
     ShiftManager.init();
 });
 </script>
+
+{{-- Transfer to Ward Modal --}}
+<div class="modal fade" id="transferWardModal" tabindex="-1" aria-labelledby="transferWardModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white py-2">
+                <h5 class="modal-title" id="transferWardModalLabel">
+                    <i class="mdi mdi-swap-horizontal"></i> Transfer to Ward
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="transfer-ward-admission-id">
+                <div class="alert alert-info py-2 mb-3">
+                    <i class="mdi mdi-account"></i> Transferring: <strong id="transfer-ward-patient-name"></strong>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Target Bed <span class="text-danger">*</span></label>
+                    <select class="form-select" id="transfer-ward-bed-select">
+                        <option value="">-- Loading... --</option>
+                    </select>
+                    <small class="text-muted">Patient will be moved from their current emergency bed to the selected bed.</small>
+                </div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary btn-sm" id="transfer-ward-submit-btn" onclick="submitWardTransfer()">
+                    <i class="mdi mdi-check"></i> Transfer Patient
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Emergency Intake Modal --}}
+@include('admin.partials.emergency-intake-modal')
+
 @endsection

@@ -13,6 +13,8 @@ use App\Models\Store;
 use App\Models\StoreStock;
 use App\Models\StockBatch;
 use App\Models\Hmo;
+use App\Models\DoctorQueue;
+use App\Models\AdmissionRequest;
 use App\Helpers\HmoHelper;
 use App\Helpers\BatchHelper;
 use App\Services\StockService;
@@ -355,7 +357,7 @@ class PharmacyWorkbenchController extends Controller
             return response()->json([]);
         }
 
-        $patients = Patient::with('user', 'hmo')
+        $patients = patient::with('user', 'hmo')
             ->where(function ($query) use ($term) {
                 $query->whereHas('user', function ($userQuery) use ($term) {
                     $userQuery->where('surname', 'like', "%{$term}%")
@@ -431,12 +433,27 @@ class PharmacyWorkbenchController extends Controller
             ->get();
 
         // Preload patient data
-        $patients = Patient::with('user', 'hmo')
+        $patients = patient::with('user', 'hmo')
             ->whereIn('id', $results->pluck('patient_id'))
             ->get()
             ->keyBy('id');
 
-        $queue = $results->map(function ($item) use ($patients) {
+        // Detect emergency patients
+        $patientIds = $patients->pluck('id')->toArray();
+        $emergencyPatientIds = collect();
+        if (!empty($patientIds)) {
+            $emergencyFromQueue = DoctorQueue::where('priority', 'emergency')
+                ->whereIn('patient_id', $patientIds)
+                ->whereIn('status', [1, 2, 3])
+                ->pluck('patient_id');
+            $emergencyFromAdmission = AdmissionRequest::where('priority', 'emergency')
+                ->whereIn('patient_id', $patientIds)
+                ->where('discharged', 0)
+                ->pluck('patient_id');
+            $emergencyPatientIds = $emergencyFromQueue->merge($emergencyFromAdmission)->unique();
+        }
+
+        $queue = $results->map(function ($item) use ($patients, $emergencyPatientIds) {
             $patient = $patients->get($item->patient_id);
 
             if (!$patient) {
@@ -451,8 +468,12 @@ class PharmacyWorkbenchController extends Controller
                 'unbilled_count' => $item->unbilled_count,
                 'ready_count' => $item->ready_count,
                 'hmo' => optional($patient->hmo)->name,
+                'is_emergency' => $emergencyPatientIds->contains($patient->id),
             ];
         })->filter();
+
+        // Sort emergency patients first
+        $queue = $queue->sortByDesc('is_emergency')->values();
 
         return response()->json($queue->values());
     }
@@ -493,7 +514,32 @@ class PharmacyWorkbenchController extends Controller
             'unbilled' => $unbilledCount,
             'ready' => $readyCount,
             'hmo' => $hmoCount,
+            'emergency' => $this->getEmergencyPharmacyCount(),
         ]);
+    }
+
+    /**
+     * Count patients with pending prescriptions who are emergency patients
+     */
+    private function getEmergencyPharmacyCount()
+    {
+        $pendingPatientIds = ProductRequest::whereIn('status', [1, 2])
+            ->distinct()
+            ->pluck('patient_id');
+
+        $fromQueue = DoctorQueue::where('priority', 'emergency')
+            ->whereIn('patient_id', $pendingPatientIds)
+            ->whereIn('status', [1, 2, 3])
+            ->distinct()
+            ->pluck('patient_id');
+
+        $fromAdmission = AdmissionRequest::where('priority', 'emergency')
+            ->whereIn('patient_id', $pendingPatientIds)
+            ->where('discharged', 0)
+            ->distinct()
+            ->pluck('patient_id');
+
+        return $fromQueue->merge($fromAdmission)->unique()->count();
     }
 
     /**
@@ -505,7 +551,7 @@ class PharmacyWorkbenchController extends Controller
      */
     public function getPatientPrescriptionData($patientId, Request $request)
     {
-        $patient = Patient::with('hmo', 'user')->findOrFail($patientId);
+        $patient = patient::with('hmo', 'user')->findOrFail($patientId);
         $statusFilter = $request->input('status');
 
         // Build query for items
@@ -676,7 +722,7 @@ class PharmacyWorkbenchController extends Controller
      */
     public function getPatientDispensingHistory($patientId, Request $request)
     {
-        $patient = Patient::findOrFail($patientId);
+        $patient = patient::findOrFail($patientId);
 
         $query = ProductRequest::with(['product', 'doctor', 'dispenser', 'productOrServiceRequest.payment'])
             ->where('patient_id', $patientId)
@@ -1184,7 +1230,7 @@ class PharmacyWorkbenchController extends Controller
         // Get the patient's HMO if patient_id is provided
         $patient = null;
         if ($patientId) {
-            $patient = Patient::find($patientId);
+            $patient = patient::find($patientId);
         }
 
         $products = Product::with(['category', 'price', 'stock'])
@@ -1276,7 +1322,7 @@ class PharmacyWorkbenchController extends Controller
             'products.*.dose' => 'nullable|string',
         ]);
 
-        $patient = Patient::findOrFail($request->patient_id);
+        $patient = patient::findOrFail($request->patient_id);
 
         DB::beginTransaction();
         try {
@@ -1358,7 +1404,7 @@ class PharmacyWorkbenchController extends Controller
 
             $billedCount = 0;
             $errors = [];
-            $patient = Patient::findOrFail($request->patient_id);
+            $patient = patient::findOrFail($request->patient_id);
 
             // Process existing ProductRequests (from DataTable checkboxes)
             if ($request->has('prescription_ids') && is_array($request->prescription_ids)) {

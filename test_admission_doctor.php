@@ -13,12 +13,12 @@ use App\Models\User;
 echo "=== Testing Admission Doctor Lookup for Patient 0001 ===\n\n";
 
 // Find patient with file_no 0001
-$patient = Patient::where('file_no', 'LIKE', '%0001%')->first();
+$patient = patient::where('file_no', 'LIKE', '%0001%')->first();
 
 if (!$patient) {
     echo "Patient with file_no containing '0001' not found.\n";
     echo "\nListing first 5 patients:\n";
-    $patients = Patient::take(5)->get(['id', 'file_no', 'user_id']);
+    $patients = patient::take(5)->get(['id', 'file_no', 'user_id']);
     foreach ($patients as $p) {
         echo "  - ID: {$p->id}, File No: {$p->file_no}, User ID: {$p->user_id}\n";
     }

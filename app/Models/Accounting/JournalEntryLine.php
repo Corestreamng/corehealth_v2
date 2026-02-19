@@ -194,7 +194,7 @@ class JournalEntryLine extends Model implements Auditable
      */
     public function patient(): BelongsTo
     {
-        return $this->belongsTo(Patient::class);
+        return $this->belongsTo(patient::class);
     }
 
     /**

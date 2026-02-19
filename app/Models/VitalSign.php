@@ -45,7 +45,8 @@ class VitalSign extends Model implements Auditable
         'pain_score',
         'other_notes',
         'time_taken',
-        'status'
+        'status',
+        'source'
     ];
 
     /**

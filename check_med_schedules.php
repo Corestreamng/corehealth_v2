@@ -14,7 +14,7 @@ $fileNo = '9426';
 echo "=== Medication Schedule Check for Patient File# {$fileNo} ===\n\n";
 
 // Find patient
-$patient = Patient::where('file_no', $fileNo)->first();
+$patient = patient::where('file_no', $fileNo)->first();
 
 if (!$patient) {
     echo "ERROR: Patient with file number {$fileNo} not found!\n";

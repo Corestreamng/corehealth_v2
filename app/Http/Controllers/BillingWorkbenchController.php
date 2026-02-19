@@ -9,6 +9,8 @@ use App\Models\payment;
 use App\Models\PatientAccount;
 use App\Models\HmoClaim;
 use App\Models\Hmo;
+use App\Models\DoctorQueue;
+use App\Models\AdmissionRequest;
 use App\Models\Accounting\PatientDeposit;
 use App\Models\Accounting\PatientDepositApplication;
 use Carbon\Carbon;
@@ -38,7 +40,7 @@ class BillingWorkbenchController extends Controller
             return response()->json([]);
         }
 
-        $patients = Patient::with('user', 'hmo')
+        $patients = patient::with('user', 'hmo')
             ->where(function ($query) use ($term) {
                 $query->whereHas('user', function ($userQuery) use ($term) {
                     $userQuery->where('surname', 'like', "%{$term}%")
@@ -93,7 +95,7 @@ class BillingWorkbenchController extends Controller
             // Filter for patients with credit accounts
             $creditPatientUserIds = PatientAccount::where('balance', '>', 0)
                 ->pluck('patient_id');
-            $creditUserIds = Patient::whereIn('id', $creditPatientUserIds)->pluck('user_id');
+            $creditUserIds = patient::whereIn('id', $creditPatientUserIds)->pluck('user_id');
             $query->whereIn('user_id', $creditUserIds);
         }
 
@@ -109,12 +111,27 @@ class BillingWorkbenchController extends Controller
             ->get();
 
         // Preload patient data
-        $patients = Patient::with('user', 'hmo')
+        $patients = patient::with('user', 'hmo')
             ->whereIn('user_id', $results->pluck('user_id'))
             ->get()
             ->keyBy('user_id');
 
-        $queue = $results->map(function ($item) use ($patients) {
+        // Detect emergency patients (have active emergency DoctorQueue or AdmissionRequest)
+        $patientIds = $patients->pluck('id')->toArray();
+        $emergencyPatientIds = collect();
+        if (!empty($patientIds)) {
+            $emergencyFromQueue = DoctorQueue::where('priority', 'emergency')
+                ->whereIn('patient_id', $patientIds)
+                ->whereIn('status', [1, 2, 3])
+                ->pluck('patient_id');
+            $emergencyFromAdmission = AdmissionRequest::where('priority', 'emergency')
+                ->whereIn('patient_id', $patientIds)
+                ->where('discharged', 0)
+                ->pluck('patient_id');
+            $emergencyPatientIds = $emergencyFromQueue->merge($emergencyFromAdmission)->unique();
+        }
+
+        $queue = $results->map(function ($item) use ($patients, $emergencyPatientIds) {
             $patient = $patients->get($item->user_id);
 
             // Skip if patient record not found
@@ -129,8 +146,12 @@ class BillingWorkbenchController extends Controller
                 'unpaid_count' => $item->unpaid_count,
                 'hmo_items' => $item->hmo_items,
                 'hmo' => optional($patient->hmo)->name,
+                'is_emergency' => $emergencyPatientIds->contains($patient->id),
             ];
         })->filter(); // Remove null entries
+
+        // Sort emergency patients first
+        $queue = $queue->sortByDesc('is_emergency')->values();
 
         return response()->json($queue->values());
     }
@@ -155,7 +176,7 @@ class BillingWorkbenchController extends Controller
 
         $creditPatientUserIds = PatientAccount::where('balance', '>', 0)
             ->pluck('patient_id');
-        $creditUserIds = Patient::whereIn('id', $creditPatientUserIds)->pluck('user_id');
+        $creditUserIds = patient::whereIn('id', $creditPatientUserIds)->pluck('user_id');
         $creditCount = ProductOrServiceRequest::whereNull('payment_id')
             ->whereNull('invoice_id')
             ->whereIn('user_id', $creditUserIds)
@@ -168,7 +189,35 @@ class BillingWorkbenchController extends Controller
             'hmo' => $hmoCount,
             'credit' => $creditCount,
             'total' => $unpaidCount,
+            'emergency' => $this->getEmergencyBillingCount(),
         ]);
+    }
+
+    /**
+     * Count patients with unpaid bills who are emergency patients
+     */
+    private function getEmergencyBillingCount()
+    {
+        $unpaidPatientUserIds = ProductOrServiceRequest::whereNull('payment_id')
+            ->whereNull('invoice_id')
+            ->distinct()
+            ->pluck('user_id');
+
+        $unpaidPatientIds = patient::whereIn('user_id', $unpaidPatientUserIds)->pluck('id');
+
+        $fromQueue = DoctorQueue::where('priority', 'emergency')
+            ->whereIn('patient_id', $unpaidPatientIds)
+            ->whereIn('status', [1, 2, 3])
+            ->distinct()
+            ->pluck('patient_id');
+
+        $fromAdmission = AdmissionRequest::where('priority', 'emergency')
+            ->whereIn('patient_id', $unpaidPatientIds)
+            ->where('discharged', 0)
+            ->distinct()
+            ->pluck('patient_id');
+
+        return $fromQueue->merge($fromAdmission)->unique()->count();
     }
 
     /**
@@ -176,7 +225,7 @@ class BillingWorkbenchController extends Controller
      */
     public function getPatientBillingData($patientId)
     {
-        $patient = Patient::with('hmo')->findOrFail($patientId);
+        $patient = patient::with('hmo')->findOrFail($patientId);
 
         $items = ProductOrServiceRequest::with([
                 'service.price',
@@ -238,7 +287,7 @@ class BillingWorkbenchController extends Controller
      */
     public function getPatientReceipts($patientId, Request $request)
     {
-        $patient = Patient::findOrFail($patientId);
+        $patient = patient::findOrFail($patientId);
         $receipts = collect();
 
         // Get filter values
@@ -365,7 +414,7 @@ class BillingWorkbenchController extends Controller
      */
     public function getPatientTransactions($patientId, Request $request)
     {
-        $patient = Patient::findOrFail($patientId);
+        $patient = patient::findOrFail($patientId);
 
         $query = payment::where('patient_id', $patientId);
 
@@ -409,7 +458,7 @@ class BillingWorkbenchController extends Controller
      */
     public function getAccountTransactions($patientId, Request $request)
     {
-        $patient = Patient::findOrFail($patientId);
+        $patient = patient::findOrFail($patientId);
         $account = PatientAccount::where('patient_id', $patientId)->first();
 
         // Apply date filters - default to current month if not provided
@@ -533,7 +582,7 @@ class BillingWorkbenchController extends Controller
      */
     public function getPatientAccountSummary($patientId)
     {
-        $patient = Patient::with('hmo')->findOrFail($patientId);
+        $patient = patient::with('hmo')->findOrFail($patientId);
 
         $account = PatientAccount::where('patient_id', $patientId)->first();
         $balance = $account ? $account->balance : 0;
@@ -585,7 +634,7 @@ class BillingWorkbenchController extends Controller
         DB::beginTransaction();
 
         try {
-            $patient = Patient::with('hmo')->findOrFail($data['patient_id']);
+            $patient = patient::with('hmo')->findOrFail($data['patient_id']);
 
             $ids = collect($data['items'])->pluck('id')->all();
 
@@ -840,7 +889,7 @@ class BillingWorkbenchController extends Controller
             'payment_ids.*' => 'integer|exists:payments,id',
         ]);
 
-        $patient = Patient::findOrFail($request->patient_id);
+        $patient = patient::findOrFail($request->patient_id);
         $payments = payment::whereIn('id', $request->payment_ids)->get();
 
         // Aggregate items from selected payments
@@ -938,7 +987,7 @@ class BillingWorkbenchController extends Controller
             'item_ids.*' => 'integer|exists:product_or_service_requests,id',
         ]);
 
-        $patient = Patient::with('hmo')->findOrFail($request->patient_id);
+        $patient = patient::with('hmo')->findOrFail($request->patient_id);
 
         // Get the unpaid items
         $items = ProductOrServiceRequest::whereIn('id', $request->item_ids)
@@ -1448,7 +1497,7 @@ class BillingWorkbenchController extends Controller
         $includeWithdrawals = filter_var($request->include_withdrawals, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
         $includeServices = filter_var($request->include_services, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
 
-        $patient = Patient::with(['hmo', 'user'])->findOrFail($patientId);
+        $patient = patient::with(['hmo', 'user'])->findOrFail($patientId);
         $account = PatientAccount::where('patient_id', $patientId)->first();
 
         $dateFrom = Carbon::parse($request->date_from)->startOfDay();
@@ -1691,7 +1740,7 @@ class BillingWorkbenchController extends Controller
      */
     public function getAdmissionHistory($patientId)
     {
-        $patient = Patient::find($patientId);
+        $patient = patient::find($patientId);
         if (!$patient) {
             return response()->json(['error' => 'Patient not found'], 404);
         }

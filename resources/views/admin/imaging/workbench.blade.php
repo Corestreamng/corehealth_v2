@@ -124,6 +124,15 @@
         border-bottom: 1px solid #dee2e6;
     }
 
+    /* Emergency pulse animation */
+    @keyframes emergencyPulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); }
+        50% { box-shadow: 0 0 0 8px rgba(220, 53, 69, 0); }
+    }
+    .emergency-pulse {
+        animation: emergencyPulse 1.5s infinite;
+    }
+
     .queue-widget h6 {
         font-size: 0.85rem;
         font-weight: 700;
@@ -2725,6 +2734,10 @@
 
         <div class="queue-widget">
             <h6>📊 PENDING QUEUE</h6>
+            <div class="queue-item" data-filter="emergency" style="background: #fff5f5; border-left: 3px solid #dc3545;">
+                <span class="queue-item-label">🚨 <strong class="text-danger">Emergency</strong></span>
+                <span class="queue-count" id="queue-emergency-count" style="background: #dc3545; color: #fff;">0</span>
+            </div>
             <div class="queue-item" data-filter="billing">
                 <span class="queue-item-label">🟡 Awaiting Billing</span>
                 <span class="queue-count billing" id="queue-billing-count">0</span>
@@ -2752,6 +2765,10 @@
             <button class="quick-action-btn" disabled style="opacity: 0.5;">
                 <i class="mdi mdi-package-variant"></i>
                 <span>Inventory (Coming Soon)</span>
+            </button>
+            <button class="quick-action-btn" data-bs-toggle="modal" data-bs-target="#emergencyIntakeModal">
+                <i class="mdi mdi-ambulance text-danger"></i>
+                <span>Emergency Intake</span>
             </button>
         </div>
     </div>
@@ -3893,6 +3910,19 @@ $(document).ready(function() {
     initializeEventListeners();
     loadUserPreferences();
     createVitalTooltip();
+
+    // Auto-select patient from URL query parameter (e.g., from Patient list workbench button)
+    const urlParams = new URLSearchParams(window.location.search);
+    const patientId = urlParams.get('patient_id');
+    if (patientId) {
+        loadPatient(patientId);
+    }
+
+    // Auto-open queue from URL parameter (e.g., from dashboard queue widget click)
+    const queueFilter = urlParams.get('queue_filter');
+    if (queueFilter && ['billing', 'results'].includes(queueFilter)) {
+        setTimeout(function() { showQueue(queueFilter); }, 500);
+    }
 });
 
 function initializeEventListeners() {
@@ -5174,6 +5204,13 @@ function loadQueueCounts() {
         $('#queue-billing-count').text(counts.billing);
         $('#queue-results-count').text(counts.results);
         $('#queue-sample-count').text(0); // Imaging doesn't have sample stage
+        var emergencyCount = counts.emergency || 0;
+        $('#queue-emergency-count').text(emergencyCount);
+        if (emergencyCount > 0) {
+            $('#queue-emergency-count').closest('.queue-item').addClass('emergency-pulse');
+        } else {
+            $('#queue-emergency-count').closest('.queue-item').removeClass('emergency-pulse');
+        }
         updateSyncIndicator();
     });
 }
@@ -7183,11 +7220,16 @@ function renderQueueCard(data) {
         </div>
     ` : '';
 
+    // Emergency badge
+    const emergencyBadge = data.priority === 'emergency'
+        ? '<span class=\"badge bg-danger me-2\"><i class=\"fa fa-bolt\"></i> EMERGENCY</span>'
+        : (data.priority === 'urgent' ? '<span class=\"badge bg-warning text-dark me-2\">Urgent</span>' : '');
+
     return `
-        <div class="queue-card" data-patient-id="${data.patient_id}">
+        <div class="queue-card" data-patient-id="${data.patient_id}" ${data.priority === 'emergency' ? 'style="border-left: 4px solid #dc3545; background: #fff8f8;"' : ''}>
             <div class="queue-card-header">
                 <div class="queue-card-patient">
-                    <div class="queue-card-patient-name">${data.patient_name}</div>
+                    <div class="queue-card-patient-name">${emergencyBadge}${data.patient_name}</div>
                     ${patientMeta}
                 </div>
                 <div class="queue-card-service">${data.service_name}</div>
@@ -7640,4 +7682,8 @@ function initializeReportsCharts(byStatus, monthlyTrends) {
 }
 
 </script>
+
+{{-- Emergency Intake Modal --}}
+@include('admin.partials.emergency-intake-modal')
+
 @endsection

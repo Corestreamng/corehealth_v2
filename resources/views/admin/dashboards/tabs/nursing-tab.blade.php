@@ -82,6 +82,12 @@
     </div>
 </div>
 
+{{-- Live Insights Strip --}}
+@include('admin.dashboards.components.insights-strip', ['containerId' => 'nurs-insights'])
+
+{{-- Live Queues --}}
+@include('admin.dashboards.components.queue-widget', ['containerId' => 'nurs-queues'])
+
 {{-- Quick Actions --}}
 <div class="row mb-4">
     <div class="col-12">
@@ -97,9 +103,9 @@
             </div>
 
             <div class="row g-3">
-                @if(Route::has('nursing.workbench'))
+                @if(Route::has('nursing-workbench.index'))
                 <div class="col-6 col-md-3">
-                    <a href="{{ route('nursing.workbench') }}" class="text-decoration-none">
+                    <a href="{{ route('nursing-workbench.index', ['queue_filter' => 'vitals']) }}" class="text-decoration-none">
                         <div class="dash-shortcut" style="background: linear-gradient(145deg, #fee2e2, #fecaca); border-color: #fca5a5;">
                             <i class="mdi mdi-heart-pulse dash-shortcut-icon" style="color: #991b1b;"></i>
                             <h6 class="dash-shortcut-title" style="color: #991b1b;">Nursing</h6>
@@ -200,8 +206,8 @@
 </div>
 
 {{-- Charts --}}
-<div class="row g-4">
-    <div class="col-xl-6">
+<div class="row g-4 mb-4">
+    <div class="col-xl-8">
         <div class="dash-chart-card">
             <div class="dash-chart-header">
                 <div class="dash-section-icon bg-danger bg-opacity-10">
@@ -217,7 +223,7 @@
             </div>
         </div>
     </div>
-    <div class="col-xl-6">
+    <div class="col-xl-4">
         <div class="dash-chart-card">
             <div class="dash-chart-header">
                 <div class="dash-section-icon bg-warning bg-opacity-10">
@@ -234,3 +240,12 @@
         </div>
     </div>
 </div>
+
+{{-- Recent Activity --}}
+@include('admin.dashboards.components.mini-table', [
+    'containerId' => 'nurs-activity',
+    'title' => 'Recent Nursing Activity',
+    'subtitle' => 'Vitals & medications today',
+    'icon' => 'mdi-heart-pulse',
+    'iconBg' => 'danger'
+])
