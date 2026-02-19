@@ -1429,20 +1429,46 @@ class EncounterController extends Controller
 
                 // Reasons for encounter
                 if ($hist->reasons_for_encounter != '') {
-                    $reasons_for_encounter = explode(',', $hist->reasons_for_encounter);
+                    $rawReasons = $hist->reasons_for_encounter;
+                    $decodedReasons = json_decode($rawReasons, true);
+
                     $str .= '<div class="mb-3">';
                     $str .= '<small><b><i class="mdi mdi-format-list-bulleted"></i> Reason(s) for Encounter/Diagnosis (ICPC-2):</b></small><br>';
-                    foreach ($reasons_for_encounter as $reason) {
-                        $str .= "<span class='badge bg-light text-dark me-1 mb-1'>" . trim($reason) . "</span>";
+
+                    if (is_array($decodedReasons) && isset($decodedReasons[0]['code'])) {
+                        // New JSON format with per-diagnosis comments
+                        $str .= '<table class="table table-sm table-bordered mb-1" style="font-size:0.8rem;">';
+                        $str .= '<thead><tr><th>Code</th><th>Diagnosis</th><th>Status</th><th>Course</th></tr></thead><tbody>';
+                        foreach ($decodedReasons as $dx) {
+                            $code = htmlspecialchars($dx['code'] ?? '');
+                            $name = htmlspecialchars($dx['name'] ?? '');
+                            $c1 = htmlspecialchars($dx['comment_1'] ?? '');
+                            $c2 = htmlspecialchars($dx['comment_2'] ?? '');
+                            $c1Badge = $c1 ? "<span class='badge bg-secondary'>{$c1}</span>" : '<span class="text-muted">-</span>';
+                            $c2Badge = $c2 ? "<span class='badge bg-secondary'>{$c2}</span>" : '<span class="text-muted">-</span>';
+                            $str .= "<tr><td><code>{$code}</code></td><td>{$name}</td><td>{$c1Badge}</td><td>{$c2Badge}</td></tr>";
+                        }
+                        $str .= '</tbody></table>';
+                    } else {
+                        // Legacy comma-separated format
+                        $reasons_for_encounter = explode(',', $rawReasons);
+                        foreach ($reasons_for_encounter as $reason) {
+                            $str .= "<span class='badge bg-light text-dark me-1 mb-1'>" . trim($reason) . "</span>";
+                        }
                     }
                     $str .= '</div>';
                 }
 
-                // Diagnosis comments
-                if ($hist->reasons_for_encounter_comment_1) {
+                // Diagnosis comments (legacy global - only show if no per-diagnosis JSON)
+                $hasPerDiagJson = false;
+                if ($hist->reasons_for_encounter) {
+                    $checkJson = json_decode($hist->reasons_for_encounter, true);
+                    $hasPerDiagJson = is_array($checkJson) && isset($checkJson[0]['code']);
+                }
+                if (!$hasPerDiagJson && $hist->reasons_for_encounter_comment_1) {
                     $str .= '<div class="mb-2"><small><b><i class="mdi mdi-comment-text"></i> Diagnosis Comment 1:</b> ' . $hist->reasons_for_encounter_comment_1 . '</small></div>';
                 }
-                if ($hist->reasons_for_encounter_comment_2) {
+                if (!$hasPerDiagJson && $hist->reasons_for_encounter_comment_2) {
                     $str .= '<div class="mb-2"><small><b><i class="mdi mdi-comment-text"></i> Diagnosis Comment 2:</b> ' . $hist->reasons_for_encounter_comment_2 . '</small></div>';
                 }
 
@@ -1510,12 +1536,22 @@ class EncounterController extends Controller
         try {
             $request->validate([
                 'encounter_id' => 'required',
-                'notes' => 'required',
+                'notes' => 'nullable',
             ]);
 
-            $encounter = Encounter::where('id', $request->encounter_id)->update([
-                'notes' => $request->notes,
-            ]);
+            $updateData = [
+                'notes' => $request->notes ?? '',
+            ];
+
+            // Also autosave diagnosis data if provided
+            if ($request->has('reasons_for_encounter_data')) {
+                $diagnosisData = $request->input('reasons_for_encounter_data');
+                if ($diagnosisData && $diagnosisData !== '[]') {
+                    $updateData['reasons_for_encounter'] = $diagnosisData;
+                }
+            }
+
+            Encounter::where('id', $request->encounter_id)->update($updateData);
 
             return response()->json(['success']);
         } catch (\Exception $e) {
@@ -1625,33 +1661,50 @@ class EncounterController extends Controller
             $comment2 = null;
 
             if ($diagnosisApplicable) {
-                $reasonsString = $request->reasons_for_encounter;
+                // Check for per-diagnosis comments JSON (new format)
+                $perDiagnosisComments = $request->input('per_diagnosis_comments');
+                if ($perDiagnosisComments) {
+                    $perDiagJson = json_decode($perDiagnosisComments, true);
+                    if (is_array($perDiagJson) && count($perDiagJson) > 0) {
+                        $reasonsString = json_encode($perDiagJson);
+                    }
+                }
+
+                // Fallback to legacy comma-separated format
+                if (!$reasonsString) {
+                    $reasonsString = $request->reasons_for_encounter;
+                }
+
                 $comment1 = $request->reasons_for_encounter_comment_1;
                 $comment2 = $request->reasons_for_encounter_comment_2;
 
+                // Process custom reasons from comma-separated or JSON
+                $reasonsToCheck = [];
                 if ($reasonsString) {
-                    $reasonsArray = explode(',', $reasonsString);
-                    $processedReasons = [];
+                    $decoded = json_decode($reasonsString, true);
+                    if (is_array($decoded) && isset($decoded[0]['code'])) {
+                        // JSON format - extract names for custom reason check
+                        foreach ($decoded as $item) {
+                            $reasonsToCheck[] = ($item['code'] ?? '') . '-' . ($item['name'] ?? '');
+                        }
+                    } else {
+                        // Legacy comma-separated
+                        $reasonsToCheck = explode(',', $reasonsString);
+                    }
 
-                    foreach ($reasonsArray as $reason) {
+                    foreach ($reasonsToCheck as $reason) {
                         $reason = trim($reason);
                         if (empty($reason)) continue;
 
-                        // Check if this is a custom reason (doesn't match existing pattern)
                         $existingReason = ReasonForEncounter::where(function($query) use ($reason) {
                             $query->where('code', 'LIKE', $reason.'%')
                                 ->orWhereRaw("CONCAT(code, '-', name) = ?", [$reason]);
                         })->first();
 
                         if (!$existingReason && !empty($reason)) {
-                            // Create custom reason
                             ReasonForEncounter::createCustomReason($reason);
                         }
-
-                        $processedReasons[] = $reason;
                     }
-
-                    $reasonsString = implode(',', $processedReasons);
                 }
             }
 
@@ -1964,7 +2017,18 @@ class EncounterController extends Controller
             $encounter->doctor_id = Auth::id();
             $encounter->patient_id = $request->patient_id;
             if (appsettings('requirediagnosis', 0)) {
-                $encounter->reasons_for_encounter = implode(',', $request->reasons_for_encounter);
+                // Check if per-diagnosis comments JSON is sent (new format)
+                $perDiagnosisComments = $request->input('per_diagnosis_comments');
+                if ($perDiagnosisComments) {
+                    $perDiagJson = json_decode($perDiagnosisComments, true);
+                    if (is_array($perDiagJson) && count($perDiagJson) > 0) {
+                        $encounter->reasons_for_encounter = json_encode($perDiagJson);
+                    } else {
+                        $encounter->reasons_for_encounter = implode(',', $request->reasons_for_encounter);
+                    }
+                } else {
+                    $encounter->reasons_for_encounter = implode(',', $request->reasons_for_encounter);
+                }
                 $encounter->reasons_for_encounter_comment_1 = $request->reasons_for_encounter_comment_1;
                 $encounter->reasons_for_encounter_comment_2 = $request->reasons_for_encounter_comment_2;
             }
@@ -2139,7 +2203,23 @@ class EncounterController extends Controller
 
             // Only save diagnosis fields if diagnosis is applicable
             if (appsettings('requirediagnosis', 0) && $diagnosisApplicable && $request->has('reasons_for_encounter')) {
-                $encounter->reasons_for_encounter = implode(',', $request->reasons_for_encounter);
+                // Check if per-diagnosis comments JSON is sent (new format)
+                $perDiagnosisComments = $request->input('per_diagnosis_comments');
+                if ($perDiagnosisComments) {
+                    $perDiagJson = json_decode($perDiagnosisComments, true);
+                    if (is_array($perDiagJson) && count($perDiagJson) > 0) {
+                        // Store as JSON with per-diagnosis comments
+                        $encounter->reasons_for_encounter = json_encode($perDiagJson);
+                    } else {
+                        // Fallback to comma-separated
+                        $encounter->reasons_for_encounter = implode(',', $request->reasons_for_encounter);
+                    }
+                } else {
+                    // Legacy: comma-separated
+                    $encounter->reasons_for_encounter = implode(',', $request->reasons_for_encounter);
+                }
+
+                // Legacy global comments (kept for backward compatibility)
                 $encounter->reasons_for_encounter_comment_1 = $request->reasons_for_encounter_comment_1;
                 $encounter->reasons_for_encounter_comment_2 = $request->reasons_for_encounter_comment_2;
 
@@ -2674,10 +2754,10 @@ class EncounterController extends Controller
     public function liveSearchReasons(Request $request)
     {
         $request->validate([
-            'term' => 'required|string|min:2'
+            'q' => 'required|string|min:2'
         ]);
 
-        $searchTerm = $request->term;
+        $searchTerm = $request->q;
 
         $reasons = ReasonForEncounter::where(function ($query) use ($searchTerm) {
             $query->where('name', 'LIKE', "%{$searchTerm}%")

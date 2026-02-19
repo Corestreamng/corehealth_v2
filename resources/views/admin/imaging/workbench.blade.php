@@ -4998,11 +4998,27 @@ function displayNotes(notes) {
                 const truncatedContent = truncateText(content, 200);
                 const noteId = `note-${meta.row}`;
 
-                // Build reasons for encounter badges
-                let reasonsBadges = '';
+                // Build reasons for encounter display (supports JSON per-diagnosis + legacy CSV)
+                let reasonsHtml = '';
+                let isJsonDiagnosis = false;
                 if (row.reasons_for_encounter && row.reasons_for_encounter.trim() !== '') {
-                    const reasons = row.reasons_for_encounter.split(',');
-                    reasonsBadges = reasons.map(r => `<span class="badge bg-light text-dark me-1 mb-1">${r.trim()}</span>`).join('');
+                    try {
+                        let parsed = JSON.parse(row.reasons_for_encounter);
+                        if (Array.isArray(parsed) && parsed.length && parsed[0].code) {
+                            isJsonDiagnosis = true;
+                            reasonsHtml = '<table class="table table-sm table-bordered mb-1" style="font-size:0.8rem;"><thead><tr><th>Code</th><th>Diagnosis</th><th>Status</th><th>Course</th></tr></thead><tbody>';
+                            parsed.forEach(dx => {
+                                let c1 = dx.comment_1 ? `<span class="badge bg-secondary">${escapeHtml(dx.comment_1)}</span>` : '<span class="text-muted">-</span>';
+                                let c2 = dx.comment_2 ? `<span class="badge bg-secondary">${escapeHtml(dx.comment_2)}</span>` : '<span class="text-muted">-</span>';
+                                reasonsHtml += `<tr><td><code>${escapeHtml(dx.code)}</code></td><td>${escapeHtml(dx.name)}</td><td>${c1}</td><td>${c2}</td></tr>`;
+                            });
+                            reasonsHtml += '</tbody></table>';
+                        }
+                    } catch(e) { /* not JSON, use legacy */ }
+                    if (!isJsonDiagnosis) {
+                        const reasons = row.reasons_for_encounter.split(',');
+                        reasonsHtml = reasons.map(r => `<span class="badge bg-light text-dark me-1 mb-1">${r.trim()}</span>`).join('');
+                    }
                 }
 
                 return `
@@ -5016,20 +5032,20 @@ function displayNotes(notes) {
                                 <span class="badge bg-info">${noteDate}</span>
                             </div>
 
-                            ${reasonsBadges ? `
+                            ${reasonsHtml ? `
                                 <div class="mb-2">
                                     <small><b><i class="mdi mdi-format-list-bulleted"></i> Reason(s) for Encounter/Diagnosis (ICPC-2):</b></small><br>
-                                    ${reasonsBadges}
+                                    ${reasonsHtml}
                                 </div>
                             ` : ''}
 
-                            ${row.reasons_for_encounter_comment_1 ? `
+                            ${!isJsonDiagnosis && row.reasons_for_encounter_comment_1 ? `
                                 <div class="mb-2">
                                     <small><b><i class="mdi mdi-comment-text"></i> Diagnosis Comment 1:</b> ${escapeHtml(row.reasons_for_encounter_comment_1)}</small>
                                 </div>
                             ` : ''}
 
-                            ${row.reasons_for_encounter_comment_2 ? `
+                            ${!isJsonDiagnosis && row.reasons_for_encounter_comment_2 ? `
                                 <div class="mb-2">
                                     <small><b><i class="mdi mdi-comment-text"></i> Diagnosis Comment 2:</b> ${escapeHtml(row.reasons_for_encounter_comment_2)}</small>
                                 </div>

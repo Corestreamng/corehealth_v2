@@ -250,4 +250,46 @@ class WardController extends Controller
 
         return response()->json($wards);
     }
+
+    /**
+     * Get ward availability with bed counts for admission modal.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getAvailability()
+    {
+        $wards = Ward::where('is_active', true)
+            ->withCount([
+                'beds as total_beds',
+                'beds as available_beds' => function ($q) {
+                    $q->where('bed_status', 'available');
+                },
+                'beds as occupied_beds' => function ($q) {
+                    $q->where('bed_status', 'occupied');
+                },
+            ])
+            ->orderBy('name')
+            ->get();
+
+        $result = $wards->map(function ($ward) {
+            $occupancyPct = $ward->total_beds > 0
+                ? round(($ward->occupied_beds / $ward->total_beds) * 100)
+                : 0;
+
+            return [
+                'id'             => $ward->id,
+                'name'           => $ward->name,
+                'type'           => $ward->type,
+                'type_label'     => Ward::TYPES[$ward->type] ?? ucfirst($ward->type),
+                'floor'          => $ward->floor,
+                'building'       => $ward->building,
+                'total_beds'     => (int) $ward->total_beds,
+                'available_beds' => (int) $ward->available_beds,
+                'occupied_beds'  => (int) $ward->occupied_beds,
+                'occupancy_pct'  => $occupancyPct,
+            ];
+        });
+
+        return response()->json($result);
+    }
 }

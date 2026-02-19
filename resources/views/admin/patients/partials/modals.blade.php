@@ -925,7 +925,7 @@
                     <!-- Selected reasons display -->
                     <div id="editSelected_reasons_container" class="mt-3">
                         <label class="d-block mb-2"><strong>Selected Diagnoses:</strong></label>
-                        <div id="editSelected_reasons_list" class="d-flex flex-wrap gap-2">
+                        <div id="editSelected_reasons_list">
                             <span class="text-muted"><i>No diagnoses selected yet</i></span>
                         </div>
                     </div>
@@ -1148,23 +1148,56 @@ function editRemoveReason(value) {
     editUpdateHiddenInput();
 }
 
-// Update the visual display of selected reasons in edit modal
+// Update the visual display of selected reasons in edit modal — TABLE layout with per-row dropdowns
 function editUpdateSelectedReasonsDisplay() {
     const container = $('#editSelected_reasons_list');
     container.empty();
 
     if (editSelectedReasons.length === 0) {
         container.html('<span class="text-muted"><i>No diagnoses selected yet</i></span>');
+        $('#editEncounterCommentsGroup').show();
     } else {
-        editSelectedReasons.forEach(reason => {
-            const badge = $(`
-                <span class="diagnosis-badge">
-                    <span>${reason.display}</span>
-                    <span class="remove-btn" onclick="editRemoveReasonByValue('${reason.value.replace(/'/g, "\\'")}')">×</span>
-                </span>
-            `);
-            container.append(badge);
+        // Hide global comment dropdowns — we use per-row now
+        $('#editEncounterCommentsGroup').hide();
+
+        let html = `<table class="table table-sm table-bordered mb-0" style="font-size:0.85rem;">
+            <thead class="table-light"><tr><th>Code</th><th>Diagnosis</th><th>Status</th><th>Course</th><th style="width:40px;"></th></tr></thead><tbody>`;
+        editSelectedReasons.forEach((reason, idx) => {
+            const c1 = reason.comment_1 || 'NA';
+            const c2 = reason.comment_2 || 'NA';
+            const safeValue = reason.value.replace(/'/g, "\\'");
+            html += `<tr>
+                <td><code>${reason.code || reason.value.split('-')[0] || '-'}</code></td>
+                <td>${reason.name || reason.display || reason.value}</td>
+                <td>
+                    <select class="form-select form-select-sm" onchange="editUpdateReasonComment(${idx}, 'comment_1', this.value)">
+                        <option value="NA" ${c1==='NA'?'selected':''}>NA</option>
+                        <option value="QUERY" ${c1==='QUERY'?'selected':''}>Query</option>
+                        <option value="DIFFRENTIAL" ${c1==='DIFFRENTIAL'?'selected':''}>Differential</option>
+                        <option value="CONFIRMED" ${c1==='CONFIRMED'?'selected':''}>Confirmed</option>
+                    </select>
+                </td>
+                <td>
+                    <select class="form-select form-select-sm" onchange="editUpdateReasonComment(${idx}, 'comment_2', this.value)">
+                        <option value="NA" ${c2==='NA'?'selected':''}>NA</option>
+                        <option value="ACUTE" ${c2==='ACUTE'?'selected':''}>Acute</option>
+                        <option value="CHRONIC" ${c2==='CHRONIC'?'selected':''}>Chronic</option>
+                        <option value="RECURRENT" ${c2==='RECURRENT'?'selected':''}>Recurrent</option>
+                    </select>
+                </td>
+                <td><button type="button" class="btn btn-sm btn-outline-danger p-0 px-1" onclick="editRemoveReasonByValue('${safeValue}')">×</button></td>
+            </tr>`;
         });
+        html += '</tbody></table>';
+        container.html(html);
+    }
+}
+
+// Update a specific reason's comment field
+function editUpdateReasonComment(index, field, value) {
+    if (editSelectedReasons[index]) {
+        editSelectedReasons[index][field] = value;
+        editUpdateHiddenInput();
     }
 }
 
@@ -1215,22 +1248,42 @@ function editEncounterNote(btn) {
         // Populate diagnosis selection if available
         if (reasons && reasons.trim() !== '') {
             console.log('Setting reasons:', reasons);
-            const reasonsArray = reasons.split(',').map(r => r.trim());
-            console.log('Reasons array:', reasonsArray);
 
-            // Add each reason to the selected list
-            reasonsArray.forEach(reasonValue => {
-                if (reasonValue) {
-                    // Create reason object from the value string
-                    const reason = {
-                        value: reasonValue,
-                        display: reasonValue,
-                        code: reasonValue.split('-')[0] || 'CUSTOM',
-                        name: reasonValue.split('-').slice(1).join('-') || reasonValue
-                    };
-                    editAddReason(reason);
+            // Try parsing as JSON (new per-diagnosis format)
+            let isJsonFormat = false;
+            try {
+                let parsed = JSON.parse(reasons);
+                if (Array.isArray(parsed) && parsed.length && parsed[0].code) {
+                    isJsonFormat = true;
+                    parsed.forEach(dx => {
+                        const reason = {
+                            value: (dx.code || '') + '-' + (dx.name || ''),
+                            display: (dx.code || '') + '-' + (dx.name || ''),
+                            code: dx.code || 'CUSTOM',
+                            name: dx.name || dx.code || '',
+                            comment_1: dx.comment_1 || 'NA',
+                            comment_2: dx.comment_2 || 'NA'
+                        };
+                        editAddReason(reason);
+                    });
                 }
-            });
+            } catch(e) { /* not JSON, use legacy */ }
+
+            if (!isJsonFormat) {
+                const reasonsArray = reasons.split(',').map(r => r.trim());
+                console.log('Reasons array:', reasonsArray);
+                reasonsArray.forEach(reasonValue => {
+                    if (reasonValue) {
+                        const reason = {
+                            value: reasonValue,
+                            display: reasonValue,
+                            code: reasonValue.split('-')[0] || 'CUSTOM',
+                            name: reasonValue.split('-').slice(1).join('-') || reasonValue
+                        };
+                        editAddReason(reason);
+                    }
+                });
+            }
 
             console.log('Selected reasons after setting:', editSelectedReasons);
 
@@ -1367,9 +1420,22 @@ $('#saveEncounterEditBtn').on('click', function() {
         diagnosis_applicable: diagnosisApplicable ? 1 : 0,
         reasons_for_encounter: diagnosisApplicable ? reasonValues.join(',') : '',
         reasons_for_encounter_comment_1: diagnosisApplicable ? comment1 : '',
-        reasons_for_encounter_comment_2: diagnosisApplicable ? comment2 : ''
+        reasons_for_encounter_comment_2: diagnosisApplicable ? comment2 : '',
         @endif
     };
+
+    // Build per-diagnosis comments JSON if we have per-reason data
+    @if(appsettings('requirediagnosis', 0))
+    if (diagnosisApplicable && selectedReasons && selectedReasons.length > 0) {
+        let perDiag = selectedReasons.map(r => ({
+            code: r.code || r.value.split('-')[0] || '',
+            name: r.name || r.value.split('-').slice(1).join('-') || r.value,
+            comment_1: r.comment_1 || comment1 || 'NA',
+            comment_2: r.comment_2 || comment2 || 'NA'
+        }));
+        ajaxData.per_diagnosis_comments = JSON.stringify(perDiag);
+    }
+    @endif
 
     console.log('Sending AJAX request with data:', ajaxData);
 

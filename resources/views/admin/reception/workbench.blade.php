@@ -4589,6 +4589,9 @@
                 <button class="btn btn-sm btn-info" id="btn-print-card" title="Print Hospital Card">
                     <i class="mdi mdi-card-account-details"></i> Print Card
                 </button>
+                <button class="btn btn-sm btn-outline-dark" id="btn-medical-reports" title="Medical Reports" style="display:none;">
+                    <i class="mdi mdi-file-document-multiple"></i> Medical Reports
+                </button>
                 <button class="btn-expand-patient" id="btn-expand-patient" title="Show more details">
                     <span class="btn-expand-text">more biodata</span>
                     <i class="mdi mdi-chevron-down"></i>
@@ -7137,6 +7140,15 @@ function loadPatient(patientId) {
 
             // Load recent requests for walk-in cart
             loadRecentRequests();
+
+            // Show Medical Reports button
+            $('#btn-medical-reports').show().off('click').on('click', function() {
+                openMedicalReportHistory(
+                    patientId,
+                    data.patient.name || '',
+                    data.patient.file_no || ''
+                );
+            });
         },
         error: function(xhr) {
             console.error('Error loading patient:', xhr);
@@ -10651,6 +10663,9 @@ $(document).ready(function() {
 
 {{-- Emergency Intake Modal --}}
 @include('admin.partials.emergency-intake-modal')
+
+{{-- Shared Medical Report History Modal --}}
+@include('admin.partials.medical_report_history_modal')
 
 @endsection
 

@@ -109,62 +109,146 @@
                             <label for="reasons_for_encounter_search">
                                 Search ICPC-2 Reason(s) for Encounter/Diagnosis <span class="text-danger">*</span>
                             </label>
-                            <input type="text"
-                                class="form-control mb-2"
-                                id="reasons_for_encounter_search"
-                                placeholder="Type to search diagnosis codes... (e.g., 'A03', 'Fever', 'Hypertension')"
-                                autocomplete="off">
+                            <div class="d-flex gap-2 mb-2">
+                                <input type="text"
+                                    class="form-control"
+                                    id="reasons_for_encounter_search"
+                                    placeholder="Type to search diagnosis codes... (e.g., 'A03', 'Fever', 'Hypertension')"
+                                    autocomplete="off">
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-warning dropdown-toggle" type="button" id="favoritesDropdownBtn"
+                                            data-bs-toggle="dropdown" aria-expanded="false" onclick="loadDiagnosisFavorites()">
+                                        <i class="fa fa-star"></i> Favorites
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end" id="favorites_dropdown_menu" style="min-width: 280px; max-height: 300px; overflow-y: auto;">
+                                        <li><span class="dropdown-item text-muted"><i class="fa fa-spinner fa-spin"></i> Loading...</span></li>
+                                    </ul>
+                                </div>
+                            </div>
                             <small class="text-muted d-block mb-2">
                                 <i class="mdi mdi-information"></i> Type at least 2 characters to search. You can also add custom reasons.
                             </small>
                             <ul class="list-group" id="reasons_search_results" style="display: none; max-height: 250px; overflow-y: auto;"></ul>
 
-                            <!-- Selected reasons display -->
+                            <!-- Selected diagnoses table with per-diagnosis comments -->
                             <div id="selected_reasons_container" class="mt-3">
                                 <label class="d-block mb-2"><strong>Selected Diagnoses:</strong></label>
-                                <div id="selected_reasons_list" class="d-flex flex-wrap gap-2">
+                                <div id="selected_reasons_list">
                                     <span class="text-muted"><i>No diagnoses selected yet</i></span>
                                 </div>
                             </div>
 
                             <!-- Hidden input to store selected reason values -->
                             <input type="hidden" name="reasons_for_encounter_data" id="reasons_for_encounter_data" value="[]">
+
+                            <!-- Save as favorite button (shown when diagnoses selected) -->
+                            <div id="save_favorite_section" class="mt-2" style="display: none;">
+                                <button type="button" class="btn btn-sm btn-outline-warning" onclick="showSaveFavoriteModal()">
+                                    <i class="fa fa-star"></i> Save as Favorite
+                                </button>
+                            </div>
                         </div>
                         <br>
-                        <div class="row">
-                            <div class="col-sm-6">
-                                <div class="form-group">
-                                    <label for="reasons_for_encounter_comment_1">Select Diagnosis Comment
-                                        1(required)</label>
-                                    <select class="form-control" name="reasons_for_encounter_comment_1"
-                                        id="reasons_for_encounter_comment_1" required>
-                                        <option value="NA">Not Applicable</option>
-                                        <option value="QUERY">Query</option>
-                                        <option value="DIFFRENTIAL">Diffrential</option>
-                                        <option value="CONFIRMED">Confirmed</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-sm-6">
-                                <div class="form-group">
-                                    <label for="reasons_for_encounter_comment_2"> Select Diagnosis Comment
-                                        2(required)</label>
-                                    <select class="form-control" name="reasons_for_encounter_comment_2"
-                                        id="reasons_for_encounter_comment_2" required>
-                                        <option value="NA">Not Applicable</option>
-                                        <option value="ACUTE">Acute</option>
-                                        <option value="CHRONIC">Chronic</option>
-                                        <option value="RECURRENT">Recurrent</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
+                        {{-- Global comments removed — now per-diagnosis in the table above --}}
+                        {{-- Legacy hidden inputs for backward compatibility --}}
+                        <input type="hidden" name="reasons_for_encounter_comment_1" id="reasons_for_encounter_comment_1" value="NA">
+                        <input type="hidden" name="reasons_for_encounter_comment_2" id="reasons_for_encounter_comment_2" value="NA">
                     </div>
                     <hr>
+
+<!-- Save Favorite Modal -->
+<div class="modal fade" id="saveFavoriteModal" tabindex="-1" aria-labelledby="saveFavoriteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h5 class="modal-title fw-bold" id="saveFavoriteModalLabel">
+                        <i class="fa fa-star text-warning"></i> Save Diagnosis Set
+                    </h5>
+                    <small class="text-muted">Save your current diagnoses as a reusable favorite</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body pt-3">
+                <div class="mb-3">
+                    <label for="favorite_set_name" class="form-label fw-semibold">Set Name</label>
+                    <input type="text" class="form-control form-control-lg" id="favorite_set_name" placeholder="e.g. Hypertension + Diabetes Workup" maxlength="100">
+                    <div class="invalid-feedback">Please enter a name for this set.</div>
+                </div>
+                <div class="card bg-light border-0 mb-2">
+                    <div class="card-body py-2 px-3">
+                        <small class="fw-semibold text-muted d-block mb-1">Diagnoses to save:</small>
+                        <div id="favorite_preview"></div>
+                    </div>
+                </div>
+                <div id="favorite_save_feedback" style="display: none;"></div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" id="confirmSaveFavoriteBtn" onclick="confirmSaveFavorite()">
+                    <i class="fa fa-star"></i> Save Favorite
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Insert Template Modal -->
+<div class="modal fade" id="insertTemplateModal" tabindex="-1" aria-labelledby="insertTemplateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h5 class="modal-title fw-bold" id="insertTemplateModalLabel">
+                        <i class="mdi mdi-file-document-edit text-primary"></i> Insert Template
+                    </h5>
+                    <small class="text-muted">Choose a template to insert into your clinical notes</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body pt-3">
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="templateSearchInput" placeholder="Search templates by name..." autocomplete="off">
+                </div>
+                <div id="templateModalContent" style="max-height: 400px; overflow-y: auto;">
+                    <div class="text-center py-4 text-muted">
+                        <i class="fa fa-spinner fa-spin fa-2x"></i>
+                        <p class="mt-2 mb-0">Loading templates...</p>
+                    </div>
+                </div>
+                <div id="templatePreviewSection" style="display: none;" class="mt-3">
+                    <hr class="my-2">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small class="fw-semibold text-muted"><i class="mdi mdi-eye"></i> Preview</small>
+                        <button type="button" class="btn btn-sm btn-link p-0" onclick="$('#templatePreviewSection').hide();">Hide</button>
+                    </div>
+                    <div id="templatePreviewBody" class="border rounded p-3 bg-light" style="max-height: 200px; overflow-y: auto; font-size: 0.85rem;"></div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmInsertTemplateBtn" onclick="confirmInsertTemplate()" disabled>
+                    <i class="mdi mdi-file-import"></i> Insert Selected
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
                 @endif
 
                 <div>
                     <label for="doctor_diagnosis_text">Clinical Notes / Diagnosis <span class="text-danger">*</span></label>
+
+                    {{-- Template Selector --}}
+                    <div class="d-flex align-items-center justify-content-between mb-2 mt-1">
+                        <div class="d-flex align-items-center">
+                            <button class="btn btn-outline-primary btn-sm me-2" type="button" onclick="showInsertTemplateModal()">
+                                <i class="mdi mdi-file-document-edit"></i> Insert Template
+                            </button>
+                        </div>
+                        <small id="autosave_status_text" class="text-muted"><i class="mdi mdi-floppy"></i> <i class="mdi mdi-cloud-check-outline"></i> Autosave enabled</small>
+                    </div>
+
                     <textarea name="doctor_diagnosis" id="doctor_diagnosis_text" class="form-control classic-editor2">{{ $encounter->notes }}</textarea>
                 </div>
 
@@ -373,6 +457,65 @@
 var clinicalSelectedReasons = [];
 var clinicalReasonSearchTimeout;
 
+// Restore previously saved diagnosis from encounter on page load
+(function() {
+    var savedDiagnosis = @json($encounter->reasons_for_encounter ?? null);
+    if (savedDiagnosis) {
+        try {
+            var parsed = (typeof savedDiagnosis === 'string') ? JSON.parse(savedDiagnosis) : savedDiagnosis;
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                clinicalSelectedReasons = parsed.map(function(item) {
+                    return {
+                        value: item.value || item.code || item,
+                        display: item.display || ((item.code || '') + ' - ' + (item.name || item.value || item)),
+                        code: item.code || item.value || item,
+                        name: item.name || item.value || item,
+                        comment_1: item.comment_1 || 'NA',
+                        comment_2: item.comment_2 || 'NA'
+                    };
+                });
+            } else if (typeof parsed === 'string' && parsed.trim() !== '') {
+                // Legacy comma-separated format
+                parsed.split(',').forEach(function(val) {
+                    val = val.trim();
+                    if (val) {
+                        clinicalSelectedReasons.push({
+                            value: val, display: val, code: val, name: val,
+                            comment_1: 'NA', comment_2: 'NA'
+                        });
+                    }
+                });
+            }
+        } catch(e) {
+            // If JSON parse fails, try comma-separated
+            if (typeof savedDiagnosis === 'string' && savedDiagnosis.trim() !== '') {
+                savedDiagnosis.split(',').forEach(function(val) {
+                    val = val.trim();
+                    if (val) {
+                        clinicalSelectedReasons.push({
+                            value: val, display: val, code: val, name: val,
+                            comment_1: 'NA', comment_2: 'NA'
+                        });
+                    }
+                });
+            }
+        }
+
+        // If we restored diagnoses, click the toggle to enable it and render
+        if (clinicalSelectedReasons.length > 0) {
+            $(function() {
+                // Defer the click so the change handler in new_encounter is registered first
+                setTimeout(function() {
+                    if (!$('#diagnosisApplicable').is(':checked')) {
+                        $('#diagnosisApplicable').trigger('click');
+                    }
+                    updateSelectedReasonsDisplay();
+                }, 200);
+            });
+        }
+    }
+})();
+
 // Add a reason to selected list
 function addReason(value, display, code, name) {
     // Check if already selected
@@ -380,7 +523,7 @@ function addReason(value, display, code, name) {
         return;
     }
 
-    clinicalSelectedReasons.push({value, display, code, name});
+    clinicalSelectedReasons.push({value, display, code, name, comment_1: 'NA', comment_2: 'NA'});
     updateSelectedReasonsDisplay();
 
     // Clear search
@@ -394,33 +537,370 @@ function removeReason(value) {
     updateSelectedReasonsDisplay();
 }
 
-// Update the visual display of selected reasons
+// Update per-diagnosis comment
+function updateReasonComment(value, field, newVal) {
+    const reason = clinicalSelectedReasons.find(r => r.value === value);
+    if (reason) {
+        reason[field] = newVal;
+        // Update hidden input
+        $('#reasons_for_encounter_data').val(JSON.stringify(clinicalSelectedReasons));
+    }
+}
+
+// Update the visual display of selected reasons — now a table with per-diagnosis comments
 function updateSelectedReasonsDisplay() {
     const container = $('#selected_reasons_list');
 
     if (clinicalSelectedReasons.length === 0) {
         container.html('<span class="text-muted"><i>No diagnoses selected yet</i></span>');
         $('#reasons_for_encounter_data').val('[]');
+        $('#save_favorite_section').hide();
         return;
     }
 
-    let html = '';
+    let html = '<div class="table-responsive"><table class="table table-sm table-bordered mb-0">';
+    html += '<thead class="table-light"><tr><th>Code</th><th>Diagnosis</th><th>Status</th><th>Course</th><th style="width:40px;"></th></tr></thead><tbody>';
+
     clinicalSelectedReasons.forEach(reason => {
-        html += `
-            <div class="diagnosis-badge">
-                <span class="reason-code">${reason.code}</span>
-                <span class="reason-name">${reason.name}</span>
-                <button type="button" class="remove-reason-btn" onclick="removeReason('${reason.value}')">
-                    ×
+        const escVal = reason.value.replace(/'/g, "\\'");
+        html += `<tr>
+            <td><span class="badge bg-primary">${reason.code}</span></td>
+            <td>${reason.name}</td>
+            <td>
+                <select class="form-select form-select-sm" onchange="updateReasonComment('${escVal}', 'comment_1', this.value)">
+                    <option value="NA" ${reason.comment_1 === 'NA' ? 'selected' : ''}>N/A</option>
+                    <option value="QUERY" ${reason.comment_1 === 'QUERY' ? 'selected' : ''}>Query</option>
+                    <option value="DIFFRENTIAL" ${reason.comment_1 === 'DIFFRENTIAL' ? 'selected' : ''}>Differential</option>
+                    <option value="CONFIRMED" ${reason.comment_1 === 'CONFIRMED' ? 'selected' : ''}>Confirmed</option>
+                </select>
+            </td>
+            <td>
+                <select class="form-select form-select-sm" onchange="updateReasonComment('${escVal}', 'comment_2', this.value)">
+                    <option value="NA" ${reason.comment_2 === 'NA' ? 'selected' : ''}>N/A</option>
+                    <option value="ACUTE" ${reason.comment_2 === 'ACUTE' ? 'selected' : ''}>Acute</option>
+                    <option value="CHRONIC" ${reason.comment_2 === 'CHRONIC' ? 'selected' : ''}>Chronic</option>
+                    <option value="RECURRENT" ${reason.comment_2 === 'RECURRENT' ? 'selected' : ''}>Recurrent</option>
+                </select>
+            </td>
+            <td>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeReason('${escVal}')">
+                    <i class="fa fa-times"></i>
                 </button>
-            </div>
-        `;
+            </td>
+        </tr>`;
     });
 
+    html += '</tbody></table></div>';
     container.html(html);
 
     // Update hidden input with JSON data
     $('#reasons_for_encounter_data').val(JSON.stringify(clinicalSelectedReasons));
+    $('#save_favorite_section').show();
+}
+
+// ─── Favorites ───
+function loadDiagnosisFavorites() {
+    const menu = $('#favorites_dropdown_menu');
+    menu.html('<li><span class="dropdown-item text-muted"><i class="fa fa-spinner fa-spin"></i> Loading...</span></li>');
+
+    $.ajax({
+        url: '{{ route("diagnosis-favorites.index") }}',
+        method: 'GET',
+        success: function(favorites) {
+            menu.empty();
+            if (favorites.length === 0) {
+                menu.html('<li><span class="dropdown-item text-muted">No saved favorites</span></li>');
+                return;
+            }
+            favorites.forEach(function(fav) {
+                const count = fav.diagnoses ? fav.diagnoses.length : 0;
+                menu.append(`
+                    <li class="d-flex align-items-center px-2">
+                        <a class="dropdown-item flex-grow-1 py-1" href="#" onclick="loadFavorite(${fav.id}, event)">
+                            <i class="fa fa-star text-warning"></i> ${fav.name} <span class="badge bg-secondary">${count}</span>
+                        </a>
+                        <button class="btn btn-sm btn-outline-danger border-0 py-0" onclick="deleteFavorite(${fav.id}, event)" title="Delete">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    </li>
+                `);
+            });
+        },
+        error: function() {
+            menu.html('<li><span class="dropdown-item text-danger">Error loading favorites</span></li>');
+        }
+    });
+}
+
+function loadFavorite(favoriteId, e) {
+    e.preventDefault();
+    $.ajax({
+        url: '{{ route("diagnosis-favorites.index") }}',
+        method: 'GET',
+        success: function(favorites) {
+            const fav = favorites.find(f => f.id === favoriteId);
+            if (!fav || !fav.diagnoses) return;
+
+            fav.diagnoses.forEach(function(diag) {
+                const value = diag.code + '-' + diag.name;
+                if (!clinicalSelectedReasons.some(r => r.value === value)) {
+                    clinicalSelectedReasons.push({
+                        value: value,
+                        display: diag.code + ' - ' + diag.name,
+                        code: diag.code,
+                        name: diag.name,
+                        comment_1: diag.comment_1 || 'NA',
+                        comment_2: diag.comment_2 || 'NA'
+                    });
+                }
+            });
+
+            updateSelectedReasonsDisplay();
+        }
+    });
+}
+
+function deleteFavorite(favoriteId, e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirm('Delete this favorite?')) return;
+
+    $.ajax({
+        url: '/diagnosis-favorites/' + favoriteId,
+        method: 'DELETE',
+        data: { _token: $('meta[name="csrf-token"]').attr('content') },
+        success: function() {
+            loadDiagnosisFavorites();
+        }
+    });
+}
+
+function showSaveFavoriteModal() {
+    // Reset modal state
+    $('#favorite_set_name').val('').removeClass('is-invalid');
+    $('#favorite_save_feedback').hide();
+    $('#confirmSaveFavoriteBtn').prop('disabled', false).html('<i class="fa fa-star"></i> Save Favorite');
+
+    // Show preview of what will be saved
+    let preview = '';
+    clinicalSelectedReasons.forEach(function(r) {
+        preview += '<span class="badge bg-primary me-1 mb-1 py-1 px-2">' + r.code + ' — ' + r.name + '</span> ';
+    });
+    $('#favorite_preview').html(preview);
+
+    // Show modal
+    var modal = new bootstrap.Modal(document.getElementById('saveFavoriteModal'));
+    modal.show();
+
+    // Focus input after modal opens
+    $('#saveFavoriteModal').off('shown.bs.modal').on('shown.bs.modal', function() {
+        $('#favorite_set_name').focus();
+    });
+
+    // Allow Enter key to save
+    $('#favorite_set_name').off('keypress').on('keypress', function(e) {
+        if (e.which === 13) { e.preventDefault(); confirmSaveFavorite(); }
+    });
+}
+
+function confirmSaveFavorite() {
+    const nameInput = $('#favorite_set_name');
+    const name = nameInput.val().trim();
+    const feedback = $('#favorite_save_feedback');
+    const btn = $('#confirmSaveFavoriteBtn');
+
+    if (!name) {
+        nameInput.addClass('is-invalid').focus();
+        return;
+    }
+    nameInput.removeClass('is-invalid');
+
+    const diagnoses = clinicalSelectedReasons.map(r => ({
+        code: r.code,
+        name: r.name,
+        comment_1: r.comment_1 || 'NA',
+        comment_2: r.comment_2 || 'NA'
+    }));
+
+    btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
+
+    $.ajax({
+        url: '{{ route("diagnosis-favorites.store") }}',
+        method: 'POST',
+        data: {
+            name: name,
+            diagnoses: diagnoses,
+            _token: $('meta[name="csrf-token"]').attr('content')
+        },
+        success: function(response) {
+            if (response.success) {
+                feedback.html('<div class="alert alert-success d-flex align-items-center py-2 px-3 mb-0"><i class="fa fa-check-circle me-2"></i> Saved as <strong class="ms-1">"' + name + '"</strong></div>').show();
+                btn.addClass('btn-success').removeClass('btn-warning').html('<i class="fa fa-check"></i> Saved!');
+                setTimeout(function() {
+                    $('#saveFavoriteModal .btn-close').trigger('click');
+                }, 800);
+            }
+        },
+        error: function(xhr) {
+            const msg = xhr.responseJSON?.message || 'Unknown error';
+            feedback.html('<div class="alert alert-danger d-flex align-items-center py-2 px-3 mb-0"><i class="fa fa-exclamation-circle me-2"></i> ' + msg + '</div>').show();
+            btn.prop('disabled', false).html('<i class="fa fa-star"></i> Save Favorite');
+        }
+    });
+}
+
+// ─── Insert Template Modal ───
+var _templateData = []; // cached template groups
+var _selectedTemplateId = null;
+var _templateModalLoaded = false;
+
+function showInsertTemplateModal() {
+    _selectedTemplateId = null;
+    $('#templateSearchInput').val('');
+    $('#templatePreviewSection').hide();
+    $('#confirmInsertTemplateBtn').prop('disabled', true);
+
+    var modal = new bootstrap.Modal(document.getElementById('insertTemplateModal'));
+    modal.show();
+
+    if (!_templateModalLoaded) {
+        loadTemplatesForModal();
+    } else {
+        renderTemplateList(_templateData, '');
+    }
+
+    // Focus search after modal opens
+    $('#insertTemplateModal').off('shown.bs.modal').on('shown.bs.modal', function() {
+        $('#templateSearchInput').focus();
+    });
+
+    // Live search
+    $('#templateSearchInput').off('input').on('input', function() {
+        renderTemplateList(_templateData, $(this).val().trim().toLowerCase());
+    });
+}
+
+function loadTemplatesForModal() {
+    const clinicId = '{{ $clinic->id ?? "" }}';
+    $.get('{{ route("clinic-note-templates.by-clinic") }}', { clinic_id: clinicId }, function(response) {
+        if (response.success && response.groups && response.groups.length > 0) {
+            _templateData = response.groups;
+            _templateModalLoaded = true;
+            renderTemplateList(_templateData, '');
+        } else {
+            $('#templateModalContent').html('<div class="text-center py-4 text-muted"><i class="mdi mdi-file-document-outline fa-2x"></i><p class="mt-2">No templates available for this clinic.</p></div>');
+        }
+    }).fail(function() {
+        $('#templateModalContent').html('<div class="text-center py-4 text-danger"><i class="fa fa-exclamation-triangle fa-2x"></i><p class="mt-2">Failed to load templates</p></div>');
+    });
+}
+
+function renderTemplateList(groups, filter) {
+    const container = $('#templateModalContent');
+    container.empty();
+    let anyMatch = false;
+
+    groups.forEach(function(group) {
+        let items = '';
+        group.templates.forEach(function(t) {
+            // Filter by name or category
+            if (filter && t.name.toLowerCase().indexOf(filter) === -1 && group.category.toLowerCase().indexOf(filter) === -1) return;
+            anyMatch = true;
+            const globalBadge = t.is_global ? ' <span class="badge bg-info-subtle text-info">Global</span>' : '';
+            const desc = t.description ? '<br><small class="text-muted">' + t.description + '</small>' : '';
+            const selectedClass = _selectedTemplateId === t.id ? 'active' : '';
+            items += '<a href="#" class="list-group-item list-group-item-action py-2 px-3 template-item ' + selectedClass + '" data-template-id="' + t.id + '" data-template-content="' + encodeURIComponent(t.content) + '" onclick="selectTemplate(' + t.id + ', this, event)">' +
+                '<div class="d-flex justify-content-between align-items-start">' +
+                '<div><strong>' + t.name + '</strong>' + globalBadge + desc + '</div>' +
+                '<i class="mdi mdi-chevron-right text-muted"></i>' +
+                '</div></a>';
+        });
+        if (items) {
+            container.append('<div class="mb-2"><div class="px-3 py-1 bg-light border-bottom"><small class="fw-semibold text-muted text-uppercase"><i class="mdi mdi-tag"></i> ' + group.category + '</small></div><div class="list-group list-group-flush">' + items + '</div></div>');
+        }
+    });
+
+    if (!anyMatch) {
+        container.html('<div class="text-center py-4 text-muted"><i class="mdi mdi-magnify fa-2x"></i><p class="mt-2 mb-0">No templates matching "' + (filter || '') + '"</p></div>');
+    }
+}
+
+function selectTemplate(templateId, el, e) {
+    e.preventDefault();
+    _selectedTemplateId = templateId;
+
+    // Highlight selected
+    $('.template-item').removeClass('active');
+    $(el).addClass('active');
+
+    // Enable insert button
+    $('#confirmInsertTemplateBtn').prop('disabled', false);
+
+    // Show preview
+    let content = decodeURIComponent($(el).data('template-content'));
+    $('#templatePreviewBody').html(content);
+    $('#templatePreviewSection').show();
+}
+
+function confirmInsertTemplate() {
+    if (!_selectedTemplateId) return;
+
+    const item = $('.template-item[data-template-id="' + _selectedTemplateId + '"]');
+    let content = decodeURIComponent(item.data('template-content'));
+    if (!content) return;
+
+    // Replace placeholders
+    const placeholders = {
+        '@{{patient_name}}': '{{ ($patient->surname ?? "") . " " . ($patient->first_name ?? "") . " " . ($patient->other_names ?? "") }}',
+        '@{{patient_file_no}}': '{{ $patient->file_no ?? "" }}',
+        '@{{patient_dob}}': '{{ isset($patient->dob) ? \Carbon\Carbon::parse($patient->dob)->format("M j, Y") : "" }}',
+        '@{{patient_age}}': '{{ isset($patient->dob) ? \Carbon\Carbon::parse($patient->dob)->age . " years" : "" }}',
+        '@{{patient_sex}}': '{{ $patient->sex ?? "" }}',
+        '@{{patient_phone}}': '{{ $patient->phone ?? "" }}',
+        '@{{patient_address}}': '{{ $patient->address ?? "" }}',
+        '@{{patient_blood_group}}': '{{ $patient->blood_group ?? "" }}',
+        '@{{doctor_name}}': '{{ ($doctor->surname ?? "") . " " . ($doctor->first_name ?? "") }}',
+        '@{{clinic_name}}': '{{ $clinic->name ?? "" }}',
+        '@{{date}}': new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
+        '@{{date_short}}': new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+        '@{{encounter_id}}': '{{ $encounter->id ?? "" }}',
+    };
+    for (const [placeholder, value] of Object.entries(placeholders)) {
+        content = content.replaceAll(placeholder, value);
+    }
+
+    // Find CKEditor
+    const editorElement = document.querySelector('#doctor_diagnosis_text');
+    let editor = null;
+    if (window.editor && typeof window.editor.setData === 'function') {
+        editor = window.editor;
+    } else if (editorElement && editorElement.ckeditorInstance) {
+        editor = editorElement.ckeditorInstance;
+    } else if (typeof window.classicEditors !== 'undefined') {
+        window.classicEditors.forEach(function(ed) {
+            if (ed.sourceElement && ed.sourceElement.id === 'doctor_diagnosis_text') editor = ed;
+        });
+    }
+
+    if (editor) {
+        const currentContent = editor.getData();
+        if (currentContent && currentContent.trim() !== '' && currentContent !== '<p>&nbsp;</p>') {
+            editor.setData(currentContent + content);
+        } else {
+            editor.setData(content);
+        }
+    } else {
+        const $ta = $('#doctor_diagnosis_text');
+        const current = $ta.val();
+        if (current && current.trim()) {
+            $ta.val(current + '\n' + content);
+        } else {
+            $ta.val(content);
+        }
+    }
+
+    // Close modal
+    $('#insertTemplateModal .btn-close').trigger('click');
 }
 
 // Search for reasons via AJAX
@@ -484,14 +964,10 @@ $(document).ready(function() {
 
         if ($(this).is(':checked')) {
             $diagnosisFields.removeClass('collapsed').slideDown(300);
-            $('#reasons_for_encounter_comment_1').prop('required', true);
-            $('#reasons_for_encounter_comment_2').prop('required', true);
         } else {
             $diagnosisFields.slideUp(300, function() {
                 $(this).addClass('collapsed');
             });
-            $('#reasons_for_encounter_comment_1').prop('required', false);
-            $('#reasons_for_encounter_comment_2').prop('required', false);
         }
     });
 
@@ -509,6 +985,9 @@ $(document).ready(function() {
             $('#reasons_search_results').hide();
         }
     });
+
 });
+
+// Note Templates and Insert Template functions are in the showInsertTemplateModal/confirmInsertTemplate functions above
 </script>
 @endpush

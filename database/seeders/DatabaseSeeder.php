@@ -44,6 +44,9 @@ class DatabaseSeeder extends Seeder
 
             // Other
             VaccineScheduleSeeder::class,
+
+            // Clinical Templates
+            ClinicNoteTemplateSeeder::class,
         ]);
     }
 }

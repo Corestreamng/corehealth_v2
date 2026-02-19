@@ -750,6 +750,12 @@
                     <span class="menu-title">Hospital Config</span>
                 </a>
             </li>
+            <li class="nav-item {{ request()->routeIs('clinic-note-templates.*') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('clinic-note-templates.*') ? 'active' : '' }}" href="{{ route('clinic-note-templates.index') }}" id="sidebar-admin-note-templates">
+                    <i class="mdi mdi-file-document-edit menu-icon"></i>
+                    <span class="menu-title">Note Templates</span>
+                </a>
+            </li>
             <li class="nav-item {{ request()->routeIs('wards.*', 'beds.*', 'checklist-templates.*') ? 'active' : '' }}">
                 <a class="nav-link {{ request()->routeIs('wards.*', 'beds.*', 'checklist-templates.*') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-admin-ward-bed-setup" data-bs-target="#sidebar-admin-ward-bed-setup" aria-expanded="{{ request()->routeIs('wards.*', 'beds.*', 'checklist-templates.*') ? 'true' : 'false' }}" aria-controls="sidebar-admin-ward-bed-setup" id="sidebar-admin-ward-bed-setup-toggle">
                     <i class="mdi mdi-hospital-building menu-icon"></i>

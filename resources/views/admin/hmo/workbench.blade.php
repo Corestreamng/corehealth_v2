@@ -1421,7 +1421,22 @@ $(function() {
                                 </div>
                                 <span class="note-date">${n.date_formatted}</span>
                             </div>
-                            ${n.reasons_for_encounter ? `<div class="note-diagnosis"><span class="diagnosis-badge">${n.reasons_for_encounter}</span></div>` : ''}
+                            ${n.reasons_for_encounter ? (function(){
+                                try {
+                                    let parsed = JSON.parse(n.reasons_for_encounter);
+                                    if (Array.isArray(parsed) && parsed.length && parsed[0].code) {
+                                        let tbl = '<table class="table table-sm table-bordered mb-1" style="font-size:0.8rem;"><thead><tr><th>Code</th><th>Diagnosis</th><th>Status</th><th>Course</th></tr></thead><tbody>';
+                                        parsed.forEach(dx => {
+                                            let c1 = dx.comment_1 && dx.comment_1 !== 'NA' ? `<span class="badge bg-secondary">${dx.comment_1}</span>` : '<span class="text-muted">-</span>';
+                                            let c2 = dx.comment_2 && dx.comment_2 !== 'NA' ? `<span class="badge bg-secondary">${dx.comment_2}</span>` : '<span class="text-muted">-</span>';
+                                            tbl += `<tr><td><code>${dx.code}</code></td><td>${dx.name}</td><td>${c1}</td><td>${c2}</td></tr>`;
+                                        });
+                                        tbl += '</tbody></table>';
+                                        return '<div class="note-diagnosis">' + tbl + '</div>';
+                                    }
+                                } catch(e) {}
+                                return `<div class="note-diagnosis"><span class="diagnosis-badge">${n.reasons_for_encounter}</span></div>`;
+                            })() : ''}
                             <div class="note-content">${n.notes}</div>
                         </div>
                     `;

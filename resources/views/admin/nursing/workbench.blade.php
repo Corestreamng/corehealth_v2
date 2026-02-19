@@ -4945,6 +4945,74 @@
                                         <div class="tab-pane fade" id="cr-presc-new" role="tabpanel">
                                             <div id="cr_presc_message" class="mb-2"></div>
                                             <h6 class="mb-3"><i class="fa fa-plus-circle"></i> New Prescription</h6>
+
+                                            {{-- Dose Mode Toggle --}}
+                                            <div class="d-flex align-items-center mb-3 gap-3">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="cr_dose_mode_toggle" onchange="ClinicalRequests.toggleDoseMode(this.checked)">
+                                                    <label class="form-check-label" for="cr_dose_mode_toggle">
+                                                        <i class="fa fa-sliders-h"></i> Structured Dose
+                                                    </label>
+                                                </div>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="ClinicalRequests.toggleCalculator()">
+                                                    <i class="fa fa-calculator"></i> Calculator
+                                                </button>
+                                            </div>
+
+                                            {{-- Mini Dose Calculator --}}
+                                            <div id="cr_dose_calculator_panel" class="card border-secondary mb-3" style="display:none;">
+                                                <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
+                                                    <span><i class="fa fa-calculator"></i> <strong>Dose Calculator</strong></span>
+                                                    <button type="button" class="btn-close btn-sm" onclick="ClinicalRequests.toggleCalculator()"></button>
+                                                </div>
+                                                <div class="card-body py-2">
+                                                    <div class="row g-2">
+                                                        <div class="col-md-3">
+                                                            <label class="small fw-bold">Weight (kg)</label>
+                                                            <input type="number" class="form-control form-control-sm" id="cr_calc_weight" step="0.1" min="0" oninput="ClinicalRequests.calculate()">
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <label class="small fw-bold">Dose/kg (mg)</label>
+                                                            <input type="number" class="form-control form-control-sm" id="cr_calc_dose_per_kg" step="0.01" min="0" oninput="ClinicalRequests.calculate()">
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <label class="small fw-bold">Frequency</label>
+                                                            <select class="form-select form-select-sm" id="cr_calc_frequency" onchange="ClinicalRequests.calculate()">
+                                                                <option value="1">OD (once daily)</option>
+                                                                <option value="2">BD (twice daily)</option>
+                                                                <option value="3">TDS (three times)</option>
+                                                                <option value="4">QID (four times)</option>
+                                                                <option value="6">Q4H (every 4 hrs)</option>
+                                                                <option value="4">Q6H (every 6 hrs)</option>
+                                                                <option value="3">Q8H (every 8 hrs)</option>
+                                                                <option value="2">Q12H (every 12 hrs)</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <label class="small fw-bold">Duration (d)</label>
+                                                            <input type="number" class="form-control form-control-sm" id="cr_calc_duration" min="1" value="5" oninput="ClinicalRequests.calculate()">
+                                                        </div>
+                                                    </div>
+                                                    <div class="row g-2 mt-1">
+                                                        <div class="col-md-3">
+                                                            <label class="small fw-bold">Tab Strength</label>
+                                                            <div class="input-group input-group-sm">
+                                                                <input type="number" class="form-control" id="cr_calc_tab_strength" value="500" oninput="ClinicalRequests.calculate()">
+                                                                <span class="input-group-text">mg</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div id="cr_calc_results" class="mt-2 small"><span class="text-muted">Enter values...</span></div>
+                                                        </div>
+                                                        <div class="col-md-3 d-flex align-items-end">
+                                                            <button type="button" class="btn btn-sm btn-primary w-100" onclick="ClinicalRequests.applyToSelected()">
+                                                                <i class="fa fa-arrow-down"></i> Apply to Selected
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
                                             <div class="form-group">
                                                 <label>Search drugs/products</label>
                                                 <input type="text" class="form-control" id="cr_presc_search"
@@ -5750,6 +5818,19 @@
         <button class="btn btn-lg btn-success" id="start-shift-btn">
             <i class="mdi mdi-play-circle"></i> Start Shift
         </button>
+        <div class="shift-lock-nav-buttons mt-4">
+            <a href="{{ route('home') }}" class="btn btn-outline-primary btn-lg me-2">
+                <i class="mdi mdi-home"></i> Home
+            </a>
+            <a href="{{ route('logout') }}"
+               onclick="event.preventDefault(); document.getElementById('shift-overlay-logout-form').submit();"
+               class="btn btn-outline-danger btn-lg">
+                <i class="mdi mdi-logout"></i> Logout
+            </a>
+            <form id="shift-overlay-logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                @csrf
+            </form>
+        </div>
     </div>
 </div>
 
@@ -6285,6 +6366,14 @@
         border-radius: 0.5rem;
         padding: 1rem;
         margin: 1.5rem 0;
+    }
+
+    .shift-lock-nav-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        border-top: 1px solid #dee2e6;
+        padding-top: 1.5rem;
     }
 
     .pending-handovers-list {
@@ -7753,6 +7842,7 @@ function initializeHistoryDataTable(patientId) {
 const ClinicalRequests = (function() {
     let patientId = null;
     let selectedProcedures = [];
+    let crDoseStructuredMode = false;
     const CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
     const procedureCategoryId = {{ appsettings('procedure_category_id', 0) }};
     const investigationCategoryId = '{{ appsettings("investigation_category_id", "") }}';
@@ -7971,16 +8061,126 @@ const ClinicalRequests = (function() {
     // ===== ADD TO SELECTION TABLE =====
     function addProduct(name, id, price, mode, claims, payable) {
         const coverageBadge = mode && mode !== 'null' ? `<div class="small mt-1"><span class="badge bg-info">${mode.toUpperCase()}</span> <span class="text-danger">Pay: ${payable}</span> <span class="text-success">Claims: ${claims}</span></div>` : '';
+        let doseCell;
+        if (crDoseStructuredMode) {
+            doseCell = `<td>${buildCrStructuredDoseHtml()}<input type="hidden" name="cr_presc_id[]" value="${id}"></td>`;
+        } else {
+            doseCell = `<td><input type="text" class="form-control form-control-sm" name="cr_presc_dose[]" placeholder="e.g. 500mg BD x 5days" required><input type="hidden" name="cr_presc_id[]" value="${id}"></td>`;
+        }
         $('#cr-selected-products').append(`
             <tr>
                 <td>${name}${coverageBadge}</td>
                 <td>${payable ?? price}</td>
-                <td><input type="text" class="form-control form-control-sm" name="cr_presc_dose[]" placeholder="e.g. 500mg BD x 5days" required><input type="hidden" name="cr_presc_id[]" value="${id}"></td>
+                ${doseCell}
                 <td><button class="btn btn-sm btn-danger" onclick="$(this).closest('tr').remove()"><i class="fa fa-times"></i></button></td>
             </tr>
         `);
         $('#cr_presc_search').val('');
         $('#cr_presc_results').hide();
+    }
+
+    function buildCrStructuredDoseHtml() {
+        return `
+            <div class="cr-structured-dose">
+                <div class="row g-1 mb-1">
+                    <div class="col-4"><input type="number" class="form-control form-control-sm cr-dose-amount" placeholder="Amt" min="0" step="0.01" onchange="ClinicalRequests.updateDoseVal(this)"></div>
+                    <div class="col-4"><select class="form-select form-select-sm cr-dose-unit" onchange="ClinicalRequests.updateDoseVal(this)"><option value="mg">mg</option><option value="g">g</option><option value="ml">ml</option><option value="IU">IU</option><option value="mcg">mcg</option><option value="units">units</option><option value="drops">drops</option><option value="puffs">puffs</option></select></div>
+                    <div class="col-4"><select class="form-select form-select-sm cr-dose-route" onchange="ClinicalRequests.updateDoseVal(this)"><option value="PO">PO</option><option value="IV">IV</option><option value="IM">IM</option><option value="SC">SC</option><option value="SL">SL</option><option value="PR">PR</option><option value="INH">INH</option><option value="TOP">Topical</option><option value="OPTH">Ophthalmic</option><option value="OT">Otic</option><option value="NGT">NGT</option></select></div>
+                </div>
+                <div class="row g-1">
+                    <div class="col-4"><select class="form-select form-select-sm cr-dose-freq" onchange="ClinicalRequests.updateDoseVal(this)"><option value="OD">OD</option><option value="BD">BD</option><option value="TDS">TDS</option><option value="QID">QID</option><option value="Q4H">Q4H</option><option value="Q6H">Q6H</option><option value="Q8H">Q8H</option><option value="Q12H">Q12H</option><option value="PRN">PRN</option><option value="STAT">STAT</option></select></div>
+                    <div class="col-4"><div class="input-group input-group-sm"><input type="number" class="form-control cr-dose-dur" placeholder="Dur" min="1" value="5" onchange="ClinicalRequests.updateDoseVal(this)"><select class="form-select cr-dose-dur-unit" style="max-width:55px;" onchange="ClinicalRequests.updateDoseVal(this)"><option value="days">d</option><option value="weeks">w</option><option value="months">m</option></select></div></div>
+                    <div class="col-4"><div class="input-group input-group-sm"><span class="input-group-text" style="font-size:0.7em;">Qty</span><input type="number" class="form-control cr-dose-qty" placeholder="Qty" min="1"></div></div>
+                </div>
+                <input type="hidden" name="cr_presc_dose[]" class="cr-structured-dose-value" value="">
+            </div>`;
+    }
+
+    // Frequency/duration multiplier maps for auto-Qty
+    const crFreqMultiplierMap = { 'OD': 1, 'BD': 2, 'TDS': 3, 'QID': 4, 'Q4H': 6, 'Q6H': 4, 'Q8H': 3, 'Q12H': 2, 'PRN': 1, 'STAT': 1 };
+    const crDurUnitMultiplierMap = { 'days': 1, 'weeks': 7, 'months': 30 };
+
+    function autoCalculateCrQty($row) {
+        const freq = $row.find('.cr-dose-freq').val() || 'OD';
+        const dur = parseFloat($row.find('.cr-dose-dur').val()) || 0;
+        const durUnit = $row.find('.cr-dose-dur-unit').val() || 'days';
+        if (dur > 0 && freq !== 'PRN') {
+            const totalDays = dur * (crDurUnitMultiplierMap[durUnit] || 1);
+            const perDay = crFreqMultiplierMap[freq] || 1;
+            $row.find('.cr-dose-qty').val(Math.ceil(totalDays * perDay));
+        }
+    }
+
+    function updateDoseVal(el) {
+        const $row = $(el).closest('.cr-structured-dose');
+        autoCalculateCrQty($row);
+        const amt = $row.find('.cr-dose-amount').val() || '';
+        const unit = $row.find('.cr-dose-unit').val() || '';
+        const route = $row.find('.cr-dose-route').val() || '';
+        const freq = $row.find('.cr-dose-freq').val() || '';
+        const dur = $row.find('.cr-dose-dur').val() || '';
+        const durUnit = $row.find('.cr-dose-dur-unit').val() || '';
+        const qty = $row.find('.cr-dose-qty').val() || '';
+        let parts = [];
+        if (amt) parts.push(amt + unit);
+        if (route) parts.push(route);
+        if (freq) parts.push(freq);
+        if (dur) parts.push(dur + ' ' + durUnit);
+        if (qty) parts.push('Qty: ' + qty);
+        $row.find('.cr-structured-dose-value').val(parts.join(' | '));
+    }
+
+    function toggleDoseMode(isStructured) {
+        crDoseStructuredMode = isStructured;
+        $('#cr-selected-products tr').each(function() {
+            const $td = $(this).find('td:eq(2)');
+            const hiddenId = $td.find('input[name="cr_presc_id[]"]').prop('outerHTML') || '';
+            if (isStructured) {
+                const val = $td.find('input[name="cr_presc_dose[]"]').val() || '';
+                $td.html(buildCrStructuredDoseHtml() + hiddenId);
+            } else {
+                const val = $td.find('.cr-structured-dose-value').val() || '';
+                $td.html(`<input type="text" class="form-control form-control-sm" name="cr_presc_dose[]" value="${val}" required>` + hiddenId);
+            }
+        });
+    }
+
+    function toggleCalculator() {
+        const p = document.getElementById('cr_dose_calculator_panel');
+        p.style.display = p.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function calculate() {
+        const w = parseFloat($('#cr_calc_weight').val()) || 0;
+        const d = parseFloat($('#cr_calc_dose_per_kg').val()) || 0;
+        const f = parseInt($('#cr_calc_frequency').val()) || 1;
+        const dur = parseInt($('#cr_calc_duration').val()) || 1;
+        const ts = parseFloat($('#cr_calc_tab_strength').val()) || 1;
+        if (w <= 0 || d <= 0) { $('#cr_calc_results').html('<span class="text-muted">Enter values...</span>'); return; }
+        const single = w * d, daily = single * f, total = daily * dur, tabs = Math.ceil(total / ts);
+        $('#cr_calc_results').html(`<span><strong>Single:</strong> ${single.toFixed(1)}mg</span> | <span><strong>Daily:</strong> ${daily.toFixed(1)}mg</span> | <span><strong>Total:</strong> ${total.toFixed(1)}mg</span> | <span><strong>Tabs:</strong> <span class="badge bg-success">${tabs}</span></span>`);
+    }
+
+    function applyToSelected() {
+        if (!crDoseStructuredMode) { alert('Switch to Structured Dose mode first.'); return; }
+        const $lastRow = $('#cr-selected-products tr:last .cr-structured-dose');
+        if ($lastRow.length === 0) { alert('Add a product first.'); return; }
+        const w = parseFloat($('#cr_calc_weight').val()) || 0;
+        const d = parseFloat($('#cr_calc_dose_per_kg').val()) || 0;
+        const ts = parseFloat($('#cr_calc_tab_strength').val()) || 1;
+        const f = parseInt($('#cr_calc_frequency').val()) || 1;
+        const dur = parseInt($('#cr_calc_duration').val()) || 1;
+        if (w <= 0 || d <= 0) { alert('Enter weight and dose/kg first.'); return; }
+        const single = w * d;
+        const tabs = Math.ceil((single * f * dur) / ts);
+        const freqRev = { 1: 'OD', 2: 'BD', 3: 'TDS', 4: 'QID', 6: 'Q4H' };
+        $lastRow.find('.cr-dose-amount').val(single.toFixed(1));
+        $lastRow.find('.cr-dose-unit').val('mg');
+        $lastRow.find('.cr-dose-freq').val(freqRev[f] || 'OD');
+        $lastRow.find('.cr-dose-dur').val(dur);
+        $lastRow.find('.cr-dose-dur-unit').val('days');
+        $lastRow.find('.cr-dose-qty').val(tabs);
+        updateDoseVal($lastRow.find('.cr-dose-amount')[0]);
     }
 
     function addLabService(name, id, price, mode, claims, payable) {
@@ -8066,7 +8266,11 @@ const ClinicalRequests = (function() {
         const products = [], doses = [];
         $('#cr-selected-products tr').each(function() {
             const id = $(this).find('input[name="cr_presc_id[]"]').val();
-            const dose = $(this).find('input[name="cr_presc_dose[]"]').val();
+            // Try structured hidden input first, fallback to text input
+            let dose = $(this).find('.cr-structured-dose-value').val();
+            if (dose === undefined || dose === null) {
+                dose = $(this).find('input[name="cr_presc_dose[]"]').val();
+            }
             if (id) { products.push(id); doses.push(dose || ''); }
         });
         if (products.length === 0) { showMessage('cr_presc_message', 'No prescriptions selected.', 'error'); return; }
@@ -8192,6 +8396,11 @@ const ClinicalRequests = (function() {
         saveLabs: saveLabs,
         saveImaging: saveImaging,
         saveProcedures: saveProcedures,
+        toggleDoseMode: toggleDoseMode,
+        toggleCalculator: toggleCalculator,
+        calculate: calculate,
+        applyToSelected: applyToSelected,
+        updateDoseVal: updateDoseVal,
         _searchBound: false
     };
 })();
@@ -8895,11 +9104,27 @@ function displayNotes(notes) {
                 const truncatedContent = truncateText(content, 200);
                 const noteId = `note-${meta.row}`;
 
-                // Build reasons for encounter badges
-                let reasonsBadges = '';
+                // Build reasons for encounter display (supports JSON per-diagnosis + legacy CSV)
+                let reasonsHtml = '';
+                let isJsonDiagnosis = false;
                 if (row.reasons_for_encounter && row.reasons_for_encounter.trim() !== '') {
-                    const reasons = row.reasons_for_encounter.split(',');
-                    reasonsBadges = reasons.map(r => `<span class="badge bg-light text-dark me-1 mb-1">${r.trim()}</span>`).join('');
+                    try {
+                        let parsed = JSON.parse(row.reasons_for_encounter);
+                        if (Array.isArray(parsed) && parsed.length && parsed[0].code) {
+                            isJsonDiagnosis = true;
+                            reasonsHtml = '<table class="table table-sm table-bordered mb-1" style="font-size:0.8rem;"><thead><tr><th>Code</th><th>Diagnosis</th><th>Status</th><th>Course</th></tr></thead><tbody>';
+                            parsed.forEach(dx => {
+                                let c1 = dx.comment_1 ? `<span class="badge bg-secondary">${escapeHtml(dx.comment_1)}</span>` : '<span class="text-muted">-</span>';
+                                let c2 = dx.comment_2 ? `<span class="badge bg-secondary">${escapeHtml(dx.comment_2)}</span>` : '<span class="text-muted">-</span>';
+                                reasonsHtml += `<tr><td><code>${escapeHtml(dx.code)}</code></td><td>${escapeHtml(dx.name)}</td><td>${c1}</td><td>${c2}</td></tr>`;
+                            });
+                            reasonsHtml += '</tbody></table>';
+                        }
+                    } catch(e) { /* not JSON, use legacy */ }
+                    if (!isJsonDiagnosis) {
+                        const reasons = row.reasons_for_encounter.split(',');
+                        reasonsHtml = reasons.map(r => `<span class="badge bg-light text-dark me-1 mb-1">${r.trim()}</span>`).join('');
+                    }
                 }
 
                 return `
@@ -8913,20 +9138,20 @@ function displayNotes(notes) {
                                 <span class="badge bg-info">${noteDate}</span>
                             </div>
 
-                            ${reasonsBadges ? `
+                            ${reasonsHtml ? `
                                 <div class="mb-2">
                                     <small><b><i class="mdi mdi-format-list-bulleted"></i> Reason(s) for Encounter/Diagnosis (ICPC-2):</b></small><br>
-                                    ${reasonsBadges}
+                                    ${reasonsHtml}
                                 </div>
                             ` : ''}
 
-                            ${row.reasons_for_encounter_comment_1 ? `
+                            ${!isJsonDiagnosis && row.reasons_for_encounter_comment_1 ? `
                                 <div class="mb-2">
                                     <small><b><i class="mdi mdi-comment-text"></i> Diagnosis Comment 1:</b> ${escapeHtml(row.reasons_for_encounter_comment_1)}</small>
                                 </div>
                             ` : ''}
 
-                            ${row.reasons_for_encounter_comment_2 ? `
+                            ${!isJsonDiagnosis && row.reasons_for_encounter_comment_2 ? `
                                 <div class="mb-2">
                                     <small><b><i class="mdi mdi-comment-text"></i> Diagnosis Comment 2:</b> ${escapeHtml(row.reasons_for_encounter_comment_2)}</small>
                                 </div>

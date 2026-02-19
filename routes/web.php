@@ -263,6 +263,31 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('encounters/{encounter}/finalize', [EncounterController::class, 'finalizeEncounter'])->name('encounters.finalize');
         Route::get('encounters/{encounter}/summary', [EncounterController::class, 'getEncounterSummary'])->name('encounters.summary');
 
+        // Diagnosis Favorites
+        Route::get('diagnosis-favorites', [\App\Http\Controllers\DiagnosisFavoriteController::class, 'index'])->name('diagnosis-favorites.index');
+        Route::post('diagnosis-favorites', [\App\Http\Controllers\DiagnosisFavoriteController::class, 'store'])->name('diagnosis-favorites.store');
+        Route::delete('diagnosis-favorites/{id}', [\App\Http\Controllers\DiagnosisFavoriteController::class, 'destroy'])->name('diagnosis-favorites.destroy');
+
+        // Clinic Note Templates
+        Route::get('clinic-note-templates', [\App\Http\Controllers\ClinicNoteTemplateController::class, 'index'])->name('clinic-note-templates.index');
+        Route::get('clinic-note-templates/data', [\App\Http\Controllers\ClinicNoteTemplateController::class, 'data'])->name('clinic-note-templates.data');
+        Route::post('clinic-note-templates', [\App\Http\Controllers\ClinicNoteTemplateController::class, 'store'])->name('clinic-note-templates.store');
+        Route::get('clinic-note-templates/by-clinic', [\App\Http\Controllers\ClinicNoteTemplateController::class, 'getByClinic'])->name('clinic-note-templates.by-clinic');
+        Route::get('clinic-note-templates/{clinic_note_template}', [\App\Http\Controllers\ClinicNoteTemplateController::class, 'show'])->name('clinic-note-templates.show');
+        Route::put('clinic-note-templates/{clinic_note_template}', [\App\Http\Controllers\ClinicNoteTemplateController::class, 'update'])->name('clinic-note-templates.update');
+        Route::post('clinic-note-templates/{clinic_note_template}/toggle', [\App\Http\Controllers\ClinicNoteTemplateController::class, 'toggle'])->name('clinic-note-templates.toggle');
+        Route::delete('clinic-note-templates/{clinic_note_template}', [\App\Http\Controllers\ClinicNoteTemplateController::class, 'destroy'])->name('clinic-note-templates.destroy');
+
+        // Medical Reports
+        Route::post('medical-reports', [\App\Http\Controllers\MedicalReportController::class, 'store'])->name('medical-reports.store');
+        Route::get('medical-reports/{medical_report}', [\App\Http\Controllers\MedicalReportController::class, 'show'])->name('medical-reports.show');
+        Route::put('medical-reports/{medical_report}', [\App\Http\Controllers\MedicalReportController::class, 'update'])->name('medical-reports.update');
+        Route::post('medical-reports/{medical_report}/finalize', [\App\Http\Controllers\MedicalReportController::class, 'finalize'])->name('medical-reports.finalize');
+        Route::delete('medical-reports/{medical_report}', [\App\Http\Controllers\MedicalReportController::class, 'destroy'])->name('medical-reports.destroy');
+        Route::get('medical-reports/{medical_report}/print', [\App\Http\Controllers\MedicalReportController::class, 'print'])->name('medical-reports.print');
+        Route::get('patient/{patient_id}/medical-reports', [\App\Http\Controllers\MedicalReportController::class, 'listByPatient'])->name('medical-reports.by-patient');
+        Route::get('patient/{patient_id}/report-data', [\App\Http\Controllers\MedicalReportController::class, 'getPatientData'])->name('medical-reports.patient-data');
+
         // Delete endpoints for service requests
         Route::delete('encounters/{encounter}/labs/{lab}', [EncounterController::class, 'deleteLab'])->name('encounters.deleteLab');
         Route::delete('encounters/{encounter}/imaging/{imaging}', [EncounterController::class, 'deleteImaging'])->name('encounters.deleteImaging');
@@ -530,6 +555,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::resource('wards', WardController::class);
         Route::get('ward-list', [WardController::class, 'listWards'])->name('ward-list');
         Route::get('wards-for-select', [WardController::class, 'getWardsForSelect'])->name('wards-for-select');
+        Route::get('ward-availability', [WardController::class, 'getAvailability'])->name('ward-availability');
 
         // Checklist Templates
         Route::resource('checklist-templates', ChecklistTemplateController::class);

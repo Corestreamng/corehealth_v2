@@ -112,6 +112,10 @@
                         </button>
                     @endif
 
+                    <button type="button" class="btn btn-outline-dark btn-sm d-flex align-items-center shadow-sm" onclick="openReportBuilder()">
+                        <i class="mdi mdi-file-document me-1"></i> Medical Report
+                    </button>
+
                     <div class="vr mx-2 text-muted"></div>
 
                     <button type="button" class="btn btn-sm text-white d-flex align-items-center shadow-sm" style="background-color: {{ appsettings('hos_color', '#007bff') }};" onclick="$('#concludeEncounterModal').modal('show')">
@@ -912,153 +916,17 @@
 
     <script>
         $(function() {
-            // Don't initialize Select2 - we're using AJAX search now
-            // $("#reasons_for_encounter").select2({...});
+            // Diagnosis search and display is handled by the clinical_notes partial
+            // which provides: addReason(), removeReason(), updateSelectedReasonsDisplay()
+            // using clinicalSelectedReasons[] and table-based per-diagnosis display
 
-            // Store selected reasons
-            let selectedReasons = [];
-            let reasonSearchTimeout = null;
-
-            // Function to add a reason to selected list
-            function addReason(reason) {
-                // Check if already selected
-                if (selectedReasons.find(r => r.value === reason.value)) {
-                    return;
-                }
-
-                selectedReasons.push(reason);
-                updateSelectedReasonsDisplay();
-                updateHiddenInput();
-            }
-
-            // Function to remove a reason
-            function removeReason(value) {
-                selectedReasons = selectedReasons.filter(r => r.value !== value);
-                updateSelectedReasonsDisplay();
-                updateHiddenInput();
-            }
-
-            // Update the visual display of selected reasons
-            function updateSelectedReasonsDisplay() {
-                const container = $('#selected_reasons_list');
-                container.empty();
-
-                if (selectedReasons.length === 0) {
-                    container.html('<span class="text-muted"><i>No diagnoses selected yet</i></span>');
-                } else {
-                    selectedReasons.forEach(reason => {
-                        const badge = $(`
-                            <span class="diagnosis-badge">
-                                <span>${reason.display}</span>
-                                <span class="remove-btn" onclick="removeReasonByValue('${reason.value}')">×</span>
-                            </span>
-                        `);
-                        container.append(badge);
-                    });
-                }
-            }
-
-            // Update hidden input with selected reason values
-            function updateHiddenInput() {
-                const values = selectedReasons.map(r => r.value);
-                $('#reasons_for_encounter_data').val(JSON.stringify(selectedReasons));
-                console.log('Selected reasons:', selectedReasons);
-            }
-
-            // Make removeReason accessible globally
+            // Make removeReason accessible globally (clinical_notes partial defines it globally already)
             window.removeReasonByValue = function(value) {
-                removeReason(value);
+                if (typeof removeReason === 'function') removeReason(value);
             };
 
-            // AJAX search for reasons
-            $('#reasons_for_encounter_search').on('keyup', function() {
-                const searchTerm = $(this).val().trim();
-
-                clearTimeout(reasonSearchTimeout);
-
-                if (searchTerm.length < 2) {
-                    $('#reasons_search_results').hide().empty();
-                    return;
-                }
-
-                reasonSearchTimeout = setTimeout(function() {
-                    $.ajax({
-                        url: "{{ url('live-search-reasons') }}",
-                        method: "GET",
-                        dataType: 'json',
-                        data: { term: searchTerm },
-                        success: function(data) {
-                            $('#reasons_search_results').empty();
-                            if (data.length === 0) {
-                                // Show option to add custom reason
-                                const customItem = $(`
-                                    <li class="list-group-item" style="background-color: #fff3cd;">
-                                        <div>
-                                            <span class="reason-code">CUSTOM</span>
-                                            <span class="reason-name">Add custom reason: "${searchTerm}"</span>
-                                        </div>
-                                        <div class="reason-category">
-                                            <i class="mdi mdi-plus-circle"></i> Click to add as custom diagnosis
-                                        </div>
-                                    </li>
-                                `);
-
-                                customItem.on('click', function() {
-                                    addReason({
-                                        value: searchTerm,
-                                        display: 'CUSTOM - ' + searchTerm,
-                                        code: 'CUSTOM',
-                                        name: searchTerm
-                                    });
-                                    $('#reasons_for_encounter_search').val('');
-                                    $('#reasons_search_results').hide();
-                                });
-
-                                $('#reasons_search_results').append(customItem);
-                            } else {
-                                // Show search results
-                                data.forEach(function(reason) {
-                                    const item = $(`
-                                        <li class="list-group-item">
-                                            <div>
-                                                <span class="reason-code">${reason.code}</span>
-                                                <span class="reason-name">${reason.name}</span>
-                                            </div>
-                                            <div class="reason-category">
-                                                ${reason.category} › ${reason.sub_category}
-                                            </div>
-                                        </li>
-                                    `);
-
-                                    item.on('click', function() {
-                                        addReason(reason);
-                                        $('#reasons_for_encounter_search').val('');
-                                        $('#reasons_search_results').hide();
-                                    });
-
-                                    $('#reasons_search_results').append(item);
-                                });
-                            }
-
-                            $('#reasons_search_results').show();
-                        },
-                        error: function() {
-                            $('#reasons_search_results').html(`
-                                <li class="list-group-item text-danger">
-                                    <i class="mdi mdi-alert"></i> Error searching diagnoses. Please try again.
-                                </li>
-                            `).show();
-                        }
-                    });
-                }, 300);
-            });
-
-            // Hide results when clicking outside
-            $(document).on('click', function(e) {
-                if (!$(e.target).closest('#reasons_for_encounter_search, #reasons_search_results').length) {
-                    $('#reasons_search_results').hide();
-                }
-            });
+            // AJAX search for reasons is handled by clinical_notes partial
+            // which binds to #reasons_for_encounter_search and uses addReason(value, display, code, name)
 
             // Initialize Select2 for edit modal diagnosis dropdown (keep for edit modal)
             @if(appsettings('requirediagnosis', 0))
@@ -1207,12 +1075,20 @@
     <script>
         function autosavenotes() {
             console.log('...');
-            let notes = $('.ck-editor__editable:last').text();
+            // Use the specific CKEditor instance for clinical notes (not the report builder editor)
+            let notes = '';
+            if (window.editor && typeof window.editor.getData === 'function') {
+                notes = window.editor.getData();
+            } else {
+                notes = $('#doctor_diagnosis_text').val();
+            }
             let encounter_id = $('#encounter_id__').val();
             let autosavesatustext = $('#autosave_status_text');
-            if (notes != '') {
-                notes = $('.ck-editor__editable:last').html();
-                autosavesatustext.text('Autosaving...');
+            let diagnosisData = $('#reasons_for_encounter_data').val() || '[]';
+            let hasDiagnosis = diagnosisData && diagnosisData !== '[]';
+            let hasNotes = notes && notes.trim() !== '' && notes.trim() !== '<p>&nbsp;</p>';
+            if (hasNotes || hasDiagnosis) {
+                autosavesatustext.html('<i class="mdi mdi-floppy"></i> <i class="fa fa-spinner fa-spin"></i> Autosaving...');
                 autosavereq = $.ajax({
                     type: 'POST',
                     headers: {
@@ -1222,16 +1098,17 @@
                     data: {
                         patient_id: "{{ request()->get('patient_id') }}",
                         notes: notes,
-                        encounter_id: encounter_id
+                        encounter_id: encounter_id,
+                        reasons_for_encounter_data: $('#reasons_for_encounter_data').val() || '[]'
                     },
                     success: function(data) {
                         console.log(data);
-                        autosavesatustext.text('Autosaved')
+                        autosavesatustext.html('<i class="mdi mdi-floppy"></i> <i class="mdi mdi-cloud-check-outline text-success"></i> Autosaved')
 
                     },
                     error: function(x, y, z) {
                         console.log(x, y, z);
-                        autosavesatustext.text('Autosave failed')
+                        autosavesatustext.html('<i class="mdi mdi-floppy"></i> <i class="mdi mdi-cloud-alert text-danger"></i> Autosave failed')
                     }
                 });
             }
@@ -1431,27 +1308,237 @@
         });
     </script>
     <script>
+        // ─── Dose Mode State ───
+        let doseStructuredMode = false;
+
+        function toggleDoseMode(isStructured) {
+            doseStructuredMode = isStructured;
+            // Convert existing rows
+            $('#selected-products tr').each(function() {
+                const $td = $(this).find('td:eq(2)');
+                const existingVal = $td.find('input[name="consult_presc_dose[]"]').val() || '';
+                const hiddenInput = $td.find('input[type="hidden"]').prop('outerHTML') || '';
+                if (isStructured) {
+                    $td.html(buildStructuredDoseHtml(existingVal) + hiddenInput);
+                } else {
+                    // Collapse structured to free text
+                    const collapsed = collapseStructuredDose($td);
+                    $td.html(`<input type='text' class='form-control' name='consult_presc_dose[]' value='${collapsed}' required>` + hiddenInput);
+                }
+            });
+        }
+
+        function buildStructuredDoseHtml(existingVal) {
+            return `
+                <div class="structured-dose">
+                    <div class="row g-1 mb-1">
+                        <div class="col-4">
+                            <input type="number" class="form-control form-control-sm dose-amount" placeholder="Amt" min="0" step="0.01" onchange="updateStructuredDoseValue(this)">
+                        </div>
+                        <div class="col-4">
+                            <select class="form-select form-select-sm dose-unit" onchange="updateStructuredDoseValue(this)">
+                                <option value="mg">mg</option>
+                                <option value="g">g</option>
+                                <option value="ml">ml</option>
+                                <option value="IU">IU</option>
+                                <option value="mcg">mcg</option>
+                                <option value="units">units</option>
+                                <option value="drops">drops</option>
+                                <option value="puffs">puffs</option>
+                            </select>
+                        </div>
+                        <div class="col-4">
+                            <select class="form-select form-select-sm dose-route" onchange="updateStructuredDoseValue(this)">
+                                <option value="PO">PO (Oral)</option>
+                                <option value="IV">IV</option>
+                                <option value="IM">IM</option>
+                                <option value="SC">SC</option>
+                                <option value="SL">SL</option>
+                                <option value="PR">PR</option>
+                                <option value="INH">INH (Inhaled)</option>
+                                <option value="TOP">Topical</option>
+                                <option value="OPTH">Ophthalmic</option>
+                                <option value="OT">Otic</option>
+                                <option value="NGT">NGT</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row g-1">
+                        <div class="col-4">
+                            <select class="form-select form-select-sm dose-frequency" onchange="updateStructuredDoseValue(this)">
+                                <option value="OD">OD (once daily)</option>
+                                <option value="BD">BD (twice daily)</option>
+                                <option value="TDS">TDS (3x daily)</option>
+                                <option value="QID">QID (4x daily)</option>
+                                <option value="Q4H">Q4H</option>
+                                <option value="Q6H">Q6H</option>
+                                <option value="Q8H">Q8H</option>
+                                <option value="Q12H">Q12H</option>
+                                <option value="PRN">PRN (as needed)</option>
+                                <option value="STAT">STAT (once)</option>
+                            </select>
+                        </div>
+                        <div class="col-4">
+                            <div class="input-group input-group-sm">
+                                <input type="number" class="form-control dose-duration" placeholder="Dur" min="1" value="5" onchange="updateStructuredDoseValue(this)">
+                                <select class="form-select dose-duration-unit" style="max-width:70px;" onchange="updateStructuredDoseValue(this)">
+                                    <option value="days">d</option>
+                                    <option value="weeks">w</option>
+                                    <option value="months">m</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text" style="font-size:0.75em;">Qty</span>
+                                <input type="number" class="form-control dose-qty" placeholder="Qty" min="1">
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" name="consult_presc_dose[]" class="structured-dose-value" value="">
+                </div>`;
+        }
+
+        // Frequency multiplier map for auto-Qty calculation
+        const freqMultiplierMap = { 'OD': 1, 'BD': 2, 'TDS': 3, 'QID': 4, 'Q4H': 6, 'Q6H': 4, 'Q8H': 3, 'Q12H': 2, 'PRN': 1, 'STAT': 1 };
+        const durUnitMultiplierMap = { 'days': 1, 'weeks': 7, 'months': 30 };
+
+        function autoCalculateQty($row) {
+            const freq = $row.find('.dose-frequency').val() || 'OD';
+            const dur = parseFloat($row.find('.dose-duration').val()) || 0;
+            const durUnit = $row.find('.dose-duration-unit').val() || 'days';
+            if (dur > 0 && freq !== 'PRN') {
+                const totalDays = dur * (durUnitMultiplierMap[durUnit] || 1);
+                const perDay = freqMultiplierMap[freq] || 1;
+                const qty = Math.ceil(totalDays * perDay);
+                $row.find('.dose-qty').val(qty);
+            }
+        }
+
+        function updateStructuredDoseValue(el) {
+            const $row = $(el).closest('.structured-dose');
+            // Auto-calculate Qty when relevant fields change
+            autoCalculateQty($row);
+
+            const amount = $row.find('.dose-amount').val() || '';
+            const unit = $row.find('.dose-unit').val() || '';
+            const route = $row.find('.dose-route').val() || '';
+            const freq = $row.find('.dose-frequency').val() || '';
+            const dur = $row.find('.dose-duration').val() || '';
+            const durUnit = $row.find('.dose-duration-unit').val() || '';
+            const qty = $row.find('.dose-qty').val() || '';
+
+            let parts = [];
+            if (amount) parts.push(amount + unit);
+            if (route) parts.push(route);
+            if (freq) parts.push(freq);
+            if (dur) parts.push(dur + ' ' + durUnit);
+            if (qty) parts.push('Qty: ' + qty);
+
+            $row.find('.structured-dose-value').val(parts.join(' | '));
+        }
+
+        function collapseStructuredDose($td) {
+            const val = $td.find('.structured-dose-value').val();
+            return val || '';
+        }
+
+        // ─── Dose Calculator ───
+        function toggleDoseCalculator() {
+            const panel = document.getElementById('dose_calculator_panel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function calculateDose() {
+            const weight = parseFloat($('#calc_weight').val()) || 0;
+            const dosePerKg = parseFloat($('#calc_dose_per_kg').val()) || 0;
+            const freqPerDay = parseInt($('#calc_frequency').val()) || 1;
+            const duration = parseInt($('#calc_duration').val()) || 1;
+            const tabStrength = parseFloat($('#calc_tab_strength').val()) || 1;
+
+            if (weight <= 0 || dosePerKg <= 0) {
+                $('#calc_results').html('<span class="text-muted">Enter weight and dose/kg to calculate...</span>');
+                return;
+            }
+
+            const singleDose = weight * dosePerKg;
+            const dailyDose = singleDose * freqPerDay;
+            const totalCourse = dailyDose * duration;
+            const totalTablets = Math.ceil(totalCourse / tabStrength);
+
+            $('#calc_results').html(`
+                <div class="d-flex flex-wrap gap-3">
+                    <span><strong>Single dose:</strong> <span class="text-primary">${singleDose.toFixed(1)} mg</span></span>
+                    <span><strong>Daily:</strong> <span class="text-info">${dailyDose.toFixed(1)} mg</span></span>
+                    <span><strong>Total course:</strong> <span class="text-warning">${totalCourse.toFixed(1)} mg</span></span>
+                    <span><strong>Tablets/units:</strong> <span class="badge bg-success">${totalTablets}</span> (${tabStrength}mg each)</span>
+                </div>
+            `);
+        }
+
+        // Apply calculator results to the last (or selected) structured dose row
+        function applyCalculatorToSelected() {
+            if (!doseStructuredMode) {
+                alert('Switch to Structured Dose mode first.');
+                return;
+            }
+            const $lastRow = $('#selected-products tr:last .structured-dose');
+            if ($lastRow.length === 0) {
+                alert('Add a product first, then apply calculator results.');
+                return;
+            }
+            const weight = parseFloat($('#calc_weight').val()) || 0;
+            const dosePerKg = parseFloat($('#calc_dose_per_kg').val()) || 0;
+            const tabStrength = parseFloat($('#calc_tab_strength').val()) || 1;
+            const freqPerDay = parseInt($('#calc_frequency').val()) || 1;
+            const duration = parseInt($('#calc_duration').val()) || 1;
+
+            if (weight <= 0 || dosePerKg <= 0) {
+                alert('Enter weight and dose/kg in the calculator first.');
+                return;
+            }
+
+            const singleDose = weight * dosePerKg;
+            const totalTablets = Math.ceil((singleDose * freqPerDay * duration) / tabStrength);
+
+            // Map calculator freqPerDay back to frequency code
+            const freqReverseMap = { 1: 'OD', 2: 'BD', 3: 'TDS', 4: 'QID', 6: 'Q4H' };
+            const freqCode = freqReverseMap[freqPerDay] || 'OD';
+
+            $lastRow.find('.dose-amount').val(singleDose.toFixed(1));
+            $lastRow.find('.dose-unit').val('mg');
+            $lastRow.find('.dose-frequency').val(freqCode);
+            $lastRow.find('.dose-duration').val(duration);
+            $lastRow.find('.dose-duration-unit').val('days');
+            $lastRow.find('.dose-qty').val(totalTablets);
+            updateStructuredDoseValue($lastRow.find('.dose-amount')[0]);
+        }
+
         function removeProdRow(obj) {
             $(obj).closest('tr').remove();
         }
 
         function setSearchValProd(name, id, price, coverageMode = null, claims = null, payable = null) {
             const coverageBadge = coverageMode ? `<div class="small mt-1"><span class="badge bg-info">${coverageMode.toUpperCase()}</span> <span class="text-danger">Pay: ${payable ?? price}</span> <span class="text-success">Claims: ${claims ?? 0}</span></div>` : '';
+
+            let doseCell;
+            if (doseStructuredMode) {
+                doseCell = `<td>${buildStructuredDoseHtml('')}<input type='hidden' name='consult_presc_id[]' value='${id}'></td>`;
+            } else {
+                doseCell = `<td><input type='text' class='form-control' name='consult_presc_dose[]' required><input type='hidden' name='consult_presc_id[]' value='${id}'></td>`;
+            }
+
             var mk = `
                 <tr>
                     <td>${name}${coverageBadge}</td>
                     <td>${payable ?? price}</td>
-                    <td>
-                        <input type = 'text' class='form-control' name=consult_presc_dose[] required>
-                        <input type = 'hidden' name=consult_presc_id[] value='${id}'>
-                    </td>
+                    ${doseCell}
                     <td><button class='btn btn-danger' onclick="removeProdRow(this)">x</button></td>
                 </tr>
             `;
 
             $('#selected-products').append(mk);
             $('#consult_presc_res').html('');
-
         }
 
         function searchProducts(q) {
@@ -3116,13 +3203,24 @@
                     return;
                 }
 
-                // Send reasons as values (code-name format)
+                // Send reasons as values (code-name format) for backward compat
                 parsedReasons.forEach(reason => {
                     formData.append('reasons_for_encounter[]', reason.value);
                 });
 
-                formData.append('reasons_for_encounter_comment_1', $('#reasons_for_encounter_comment_1').val());
-                formData.append('reasons_for_encounter_comment_2', $('#reasons_for_encounter_comment_2').val());
+                // Send per-diagnosis comments as JSON
+                const perDiagnosisComments = parsedReasons.map(r => ({
+                    code: r.code || '',
+                    name: r.name || '',
+                    value: r.value || '',
+                    comment_1: r.comment_1 || 'NA',
+                    comment_2: r.comment_2 || 'NA'
+                }));
+                formData.append('per_diagnosis_comments', JSON.stringify(perDiagnosisComments));
+
+                // Legacy global comments (first diagnosis values or NA)
+                formData.append('reasons_for_encounter_comment_1', parsedReasons[0]?.comment_1 || 'NA');
+                formData.append('reasons_for_encounter_comment_2', parsedReasons[0]?.comment_2 || 'NA');
             }
             @endif
 
@@ -3291,7 +3389,11 @@
 
             $('#selected-products tr').each(function() {
                 const productId = $(this).find('input[name="consult_presc_id[]"]').val();
-                const dose = $(this).find('input[name="consult_presc_dose[]"]').val();
+                // Try structured hidden input first, fallback to text input
+                let dose = $(this).find('.structured-dose-value').val();
+                if (dose === undefined || dose === null) {
+                    dose = $(this).find('input[name="consult_presc_dose[]"]').val();
+                }
                 if (productId) {
                     products.push(productId);
                     doses.push(dose || '');
@@ -3525,21 +3627,21 @@
                                           placeholder="Enter detailed clinical notes, diagnosis, and special care instructions..."></textarea>
                             </div>
 
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group mb-3">
-                                        <label for="admit_bed_id"><strong>Bed Assignment</strong></label>
-                                        <select class="form-control" name="bed_id" id="admit_bed_id">
-                                            <option value="">To be assigned later</option>
-                                            @php
-                                                $beds = \App\Models\Bed::where('status', 'available')->get();
-                                            @endphp
-                                            @foreach($beds as $bed)
-                                                <option value="{{ $bed->id }}">{{ $bed->name }} - {{ $bed->ward }} ({{ $bed->unit }})</option>
-                                            @endforeach
-                                        </select>
+                            <!-- Ward Availability Section -->
+                            <div class="mb-3">
+                                <label class="mb-2"><strong><i class="fa fa-hospital"></i> Ward Availability</strong></label>
+                                <div id="ward_availability_container" class="border rounded p-2" style="max-height: 280px; overflow-y: auto;">
+                                    <div class="text-center text-muted py-3" id="ward_loading">
+                                        <i class="fa fa-spinner fa-spin"></i> Loading ward availability...
                                     </div>
                                 </div>
+                                <input type="hidden" name="preferred_ward_id" id="preferred_ward_id" value="">
+                                <small class="text-muted">
+                                    <i class="fa fa-info-circle"></i> Ward preference is optional. Bed will be assigned by nursing staff.
+                                </small>
+                            </div>
+
+                            <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group mb-3">
                                         <label for="admit_priority"><strong>Priority</strong></label>
@@ -3739,11 +3841,89 @@
     </style>
 
     <script>
+    // ─── Ward Availability for Admission Modal ───
+    function loadWardAvailability() {
+        const container = document.getElementById('ward_availability_container');
+        container.innerHTML = '<div class="text-center text-muted py-3"><i class="fa fa-spinner fa-spin"></i> Loading ward availability...</div>';
+
+        $.ajax({
+            url: '{{ route("ward-availability") }}',
+            method: 'GET',
+            success: function(wards) {
+                if (!wards || wards.length === 0) {
+                    container.innerHTML = '<div class="text-center text-muted py-3"><i class="fa fa-info-circle"></i> No active wards configured.</div>';
+                    return;
+                }
+
+                let html = '<div class="list-group list-group-flush">';
+
+                // "No preference" option (default selected)
+                html += `
+                    <label class="list-group-item list-group-item-action d-flex align-items-center p-2 ward-option" style="cursor:pointer;">
+                        <input type="radio" name="ward_radio" value="" checked class="me-2 ward-radio" onchange="selectWardPreference('')">
+                        <div class="flex-grow-1">
+                            <span class="fw-bold text-muted"><i class="fa fa-globe"></i> No ward preference</span>
+                            <small class="d-block text-muted">Bed will be assigned by nursing staff</small>
+                        </div>
+                    </label>`;
+
+                wards.forEach(function(ward) {
+                    const pct = ward.occupancy_pct;
+                    let barColor = pct >= 90 ? '#dc3545' : (pct >= 70 ? '#ffc107' : '#28a745');
+                    let textColor = pct >= 90 ? 'text-danger' : (pct >= 70 ? 'text-warning' : 'text-success');
+                    let typeIcons = {
+                        'general': 'fa-bed', 'icu': 'fa-heartbeat', 'pediatric': 'fa-child',
+                        'maternity': 'fa-baby', 'emergency': 'fa-ambulance', 'psychiatric': 'fa-brain',
+                        'isolation': 'fa-shield-alt', 'recovery': 'fa-procedures', 'private': 'fa-star',
+                        'other': 'fa-hospital'
+                    };
+                    let icon = typeIcons[ward.type] || 'fa-hospital';
+                    let isDisabled = ward.available_beds === 0;
+
+                    html += `
+                        <label class="list-group-item list-group-item-action d-flex align-items-center p-2 ward-option ${isDisabled ? 'opacity-50' : ''}" style="cursor:${isDisabled ? 'not-allowed' : 'pointer'};">
+                            <input type="radio" name="ward_radio" value="${ward.id}" class="me-2 ward-radio"
+                                   ${isDisabled ? 'disabled' : ''}
+                                   onchange="selectWardPreference('${ward.id}')">
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold">
+                                        <i class="fa ${icon} me-1"></i> ${ward.name}
+                                        <span class="badge bg-secondary ms-1" style="font-size:0.7em;">${ward.type_label}</span>
+                                    </span>
+                                    <span class="${textColor} fw-bold" style="font-size: 0.85em;">
+                                        ${ward.available_beds}/${ward.total_beds} available
+                                    </span>
+                                </div>
+                                <div class="progress mt-1" style="height: 6px;">
+                                    <div class="progress-bar" role="progressbar"
+                                         style="width: ${pct}%; background-color: ${barColor};"
+                                         aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                ${ward.floor || ward.building ? `<small class="text-muted">${[ward.building, ward.floor].filter(Boolean).join(', ')}</small>` : ''}
+                            </div>
+                        </label>`;
+                });
+
+                html += '</div>';
+                container.innerHTML = html;
+            },
+            error: function() {
+                container.innerHTML = '<div class="text-center text-danger py-3"><i class="fa fa-exclamation-triangle"></i> Failed to load ward availability.</div>';
+            }
+        });
+    }
+
+    function selectWardPreference(wardId) {
+        document.getElementById('preferred_ward_id').value = wardId;
+    }
+
     // Open modal for admission request
     function openAdmitModal() {
         // Reset form
         document.getElementById('admitDischargeForm').reset();
         document.getElementById('modal_action').value = 'admit';
+        document.getElementById('preferred_ward_id').value = '';
 
         // Update UI for admission request
         document.getElementById('modal_title_text').textContent = 'Request Patient Admission';
@@ -3756,6 +3936,9 @@
         // Show/hide sections
         document.getElementById('admission_section').style.display = 'block';
         document.getElementById('discharge_section').style.display = 'none';
+
+        // Load live ward availability
+        loadWardAvailability();
 
         $('#admitDischargeModal').modal('show');
     }
@@ -3967,6 +4150,7 @@
         });
     </script>
 
+    @include('admin.doctors.partials.report_builder')
     @include('admin.doctors.partials.modals')
     @include('admin.doctors.partials.scripts')
 @endsection
