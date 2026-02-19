@@ -531,6 +531,7 @@ class AdmissionRequestController extends Controller
                 'note' => $request->note,
                 'admission_reason' => $request->admission_reason,
                 'bed_id' => $request->bed_id,
+                'preferred_ward_id' => $request->preferred_ward_id,
                 'priority' => $request->priority ?? 'routine',
                 'status' => 1,
             ]);
