@@ -303,7 +303,7 @@ class NursingShift extends Model implements Auditable
         // Injection & Immunization
         'App\\Models\\InjectionAdministration' => ['label' => 'Injections', 'icon' => 'mdi-needle', 'color' => 'info'],
         'App\\Models\\ImmunizationRecord' => ['label' => 'Immunizations', 'icon' => 'mdi-shield-check', 'color' => 'success'],
-        'App\\Models\\patientImmunizationSchedule' => ['label' => 'Immunization Schedule', 'icon' => 'mdi-calendar-check', 'color' => 'success'],
+        'App\\Models\\PatientImmunizationSchedule' => ['label' => 'Immunization Schedule', 'icon' => 'mdi-calendar-check', 'color' => 'success'],
 
         // Medication Management
         'App\\Models\\MedicationAdministration' => ['label' => 'Medication Administration', 'icon' => 'mdi-pill', 'color' => 'warning'],
