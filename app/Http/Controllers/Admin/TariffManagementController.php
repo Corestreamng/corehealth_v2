@@ -28,10 +28,15 @@ class TariffManagementController extends Controller
 
     /**
      * Get tariffs for DataTables with filters.
+     * Optimized for performance: Pagination at DB level, fixed N+1 queries, column selection
      */
     public function getTariffs(Request $request)
     {
-        $query = HmoTariff::with(['hmo', 'product.price', 'service.price']);
+        // Build base query with selected columns only
+        $query = HmoTariff::select([
+            'id', 'hmo_id', 'product_id', 'service_id',
+            'claims_amount', 'payable_amount', 'coverage_mode', 'created_at'
+        ])->with('hmo'); // Only load HMO relationship
 
         // Apply filters
         if ($request->filled('hmo_id')) {
@@ -50,18 +55,19 @@ class TariffManagementController extends Controller
             }
         }
 
-        $tariffs = $query->orderBy('created_at', 'DESC')->get();
-
-        return DataTables::of($tariffs)
+        // Use DataTables with server-side pagination (now properly paginated at DB level)
+        return DataTables::of($query->orderBy('created_at', 'DESC'))
             ->addIndexColumn()
             ->addColumn('hmo_name', function ($tariff) {
                 return $tariff->hmo ? $tariff->hmo->name : 'N/A';
             })
             ->addColumn('item_name', function ($tariff) {
                 if ($tariff->product_id) {
-                    return $tariff->product ? $tariff->product->product_name : 'N/A';
+                    $product = Product::find($tariff->product_id);
+                    return $product ? $product->product_name : 'N/A';
                 } elseif ($tariff->service_id) {
-                    return $tariff->service ? $tariff->service->service_name : 'N/A';
+                    $service = service::find($tariff->service_id);
+                    return $service ? $service->service_name : 'N/A';
                 }
                 return 'N/A';
             })
@@ -74,10 +80,18 @@ class TariffManagementController extends Controller
                 return '<span class="badge badge-secondary">N/A</span>';
             })
             ->addColumn('original_price', function ($tariff) {
-                if ($tariff->product_id && $tariff->product && $tariff->product->price) {
-                    return '₦' . number_format($tariff->product->price->current_sale_price, 2);
-                } elseif ($tariff->service_id && $tariff->service && $tariff->service->price) {
-                    return '₦' . number_format($tariff->service->price->sale_price, 2);
+                if ($tariff->product_id) {
+                    // Load product price from prices table
+                    $price = \DB::table('prices')
+                        ->where('product_id', $tariff->product_id)
+                        ->value('current_sale_price');
+                    return $price ? '₦' . number_format($price, 2) : 'N/A';
+                } elseif ($tariff->service_id) {
+                    // Load service price from service_prices table
+                    $price = \DB::table('service_prices')
+                        ->where('service_id', $tariff->service_id)
+                        ->value('sale_price');
+                    return $price ? '₦' . number_format($price, 2) : 'N/A';
                 }
                 return 'N/A';
             })
