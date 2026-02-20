@@ -29,7 +29,7 @@ use App\Models\Procedure;
 use App\Models\VaccineScheduleTemplate;
 use App\Models\VaccineScheduleItem;
 use App\Models\VaccineProductMapping;
-use App\Models\patientImmunizationSchedule;
+use App\Models\PatientImmunizationSchedule;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
