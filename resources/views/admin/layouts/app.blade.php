@@ -2008,6 +2008,76 @@ rgba(255, 255, 255, 0.7) !important;
                 overflow-wrap: break-word;
             }
         }
+
+        /* ── Global Checkbox & Radio Styles ── */
+        input[type="checkbox"],
+        input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #556ee6;
+            vertical-align: middle;
+            flex-shrink: 0;
+        }
+        input[type="checkbox"]:focus,
+        input[type="radio"]:focus {
+            outline: 2px solid rgba(85,110,230,.45);
+            outline-offset: 1px;
+        }
+
+        /* Bootstrap 4 .form-check alignment fixes */
+        .form-check {
+            display: flex;
+            align-items: center;
+            padding-left: 0;
+            min-height: 28px;
+            margin-bottom: .25rem;
+        }
+        .form-check .form-check-input {
+            position: static;
+            margin: 0 8px 0 0;
+        }
+        .form-check .form-check-label {
+            margin-left: 0;
+            cursor: pointer;
+            user-select: none;
+            line-height: 1.4;
+        }
+
+        /* Inline check groups */
+        .form-check-inline {
+            display: inline-flex;
+            align-items: center;
+            margin-right: 1rem;
+        }
+        .form-check-inline .form-check-input {
+            position: static;
+            margin: 0 6px 0 0;
+        }
+
+        /* Custom-control (BS4 legacy) alignment */
+        .custom-control {
+            display: flex;
+            align-items: center;
+            padding-left: 0;
+            min-height: 28px;
+        }
+        .custom-control .custom-control-input {
+            position: static;
+            width: 18px;
+            height: 18px;
+            margin: 0 8px 0 0;
+            opacity: 1;
+        }
+        .custom-control .custom-control-label {
+            position: static;
+            padding-left: 0;
+            cursor: pointer;
+        }
+        .custom-control .custom-control-label::before,
+        .custom-control .custom-control-label::after {
+            display: none;
+        }
     </style>
 
     <!-- Chat Styles -->

@@ -718,6 +718,32 @@
                     </ul>
                 </div>
             </li>
+
+            {{-- More HMO Management - Available to ADMIN/SUPERADMIN or HMO Executive who is unit/dept head --}}
+            @php
+                $isAdminUser = Auth::user()->hasAnyRole(['SUPERADMIN', 'ADMIN']);
+                $isQualifiedHmoExecutive = Auth::user()->hasRole('HMO Executive') && Auth::user()->staff_profile && (Auth::user()->staff_profile->is_unit_head || Auth::user()->staff_profile->is_dept_head);
+                $showHmoMgmt = $isAdminUser || $isQualifiedHmoExecutive;
+            @endphp
+            @if($showHmoMgmt)
+            <li class="nav-item {{ request()->routeIs('hmo-tariffs.*', 'hmo.index') ? 'active' : '' }}">
+                <a class="nav-link {{ request()->routeIs('hmo-tariffs.*', 'hmo.index') ? 'active' : '' }}" data-toggle="collapse" data-bs-toggle="collapse" href="javascript:void(0);" data-target="#sidebar-hmo-more-management" data-bs-target="#sidebar-hmo-more-management" aria-expanded="{{ request()->routeIs('hmo-tariffs.*', 'hmo.index') ? 'true' : 'false' }}" aria-controls="sidebar-hmo-more-management" id="sidebar-hmo-more-management-toggle">
+                    <i class="mdi mdi-medical-bag menu-icon"></i>
+                    <span class="menu-title">More Management</span>
+                    <i class="mdi mdi-chevron-right menu-arrow"></i>
+                </a>
+                <div class="collapse {{ request()->routeIs('hmo-tariffs.*', 'hmo.index') ? 'show' : '' }}" id="sidebar-hmo-more-management">
+                    <ul class="nav flex-column sub-menu">
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('hmo-tariffs.*') ? 'active' : '' }}" href="{{ route('hmo-tariffs.index') }}" id="sidebar-hmo-more-tariffs">Tariff Management</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('hmo.index') ? 'active' : '' }}" href="{{ route('hmo.index') }}" id="sidebar-hmo-more-settings">HMO Settings</a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+            @endif
             @endhasanyrole
 
             {{-- ========================================

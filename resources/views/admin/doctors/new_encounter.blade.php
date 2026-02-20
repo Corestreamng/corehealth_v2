@@ -8,23 +8,6 @@
 @section('subpage_name', 'New Encounter')
 @section('content')
     <style>
-        /* CSS to add a blue outline to all radio buttons and checkboxes */
-        input[type="radio"],
-        input[type="checkbox"] {
-            outline: 2px solid blue !important;
-            /* Blue outline with 2px thickness */
-            outline-offset: 2px !important;
-            margin-left: 4px;
-            /* Optional: offset the outline from the border */
-        }
-
-        /* Additional styles for better visibility and interaction */
-        input[type="radio"]:focus,
-        input[type="checkbox"]:focus {
-            outline-width: 3px !important;
-            /* Thicker outline on focus for better accessibility */
-        }
-
         /* Fix for modals inside overflow containers */
         .modal {
             position: fixed !important;
