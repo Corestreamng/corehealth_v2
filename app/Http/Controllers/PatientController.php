@@ -55,19 +55,23 @@ class PatientController extends Controller
     public function patientsList()
     {
         try {
-            $pc = patient::with('user')->orderBy('created_at', 'DESC')->get();
-            //dd($pc);
-            return Datatables::of($pc)
+            // Optimized query: Pagination at DB level, fixed N+1 queries, column selection
+            $query = patient::select([
+                'id', 'user_id', 'file_no', 'hmo_id', 'hmo_no', 'phone_no', 'created_at'
+            ])->with(['user', 'hmo']); // Eager load relationships
+
+            // Use DataTables with server-side pagination (properly paginated at DB level)
+            return Datatables::of($query->orderBy('created_at', 'DESC'))
                 ->addIndexColumn()
                 ->editColumn('fullname', function ($pc) {
                     return ($pc->user) ? (userfullname($pc->user->id)) : ($pc->user_id);
                 })
-
                 ->editColumn('created_at', function ($note) {
                     return date('h:i a D M j, Y', strtotime($note->created_at));
                 })
                 ->editColumn('hmo_id', function ($patient) {
-                    return Hmo::find($patient->hmo_id)->name ?? 'N/A';
+                    // HMO already eager loaded - no additional query
+                    return $patient->hmo ? $patient->hmo->name : 'N/A';
                 })
                 ->addColumn('view', function ($patient) {
 

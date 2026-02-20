@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 20, 2026 at 07:30 AM
+-- Generation Time: Feb 20, 2026 at 07:35 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -7104,7 +7104,8 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (264, '2026_02_19_100003_create_clinic_note_templates_table', 131),
 (265, '2026_02_19_100004_create_medical_reports_table', 132),
 (266, '2026_02_19_100005_add_deleted_at_to_medical_reports', 133),
-(267, '2026_02_20_000001_add_indexes_to_hmo_tariffs', 134);
+(267, '2026_02_20_000001_add_indexes_to_hmo_tariffs', 134),
+(268, '2026_02_20_000002_add_indexes_to_patients_table', 135);
 
 -- --------------------------------------------------------
 
@@ -85219,7 +85220,12 @@ ALTER TABLE `password_resets`
 -- Indexes for table `patients`
 --
 ALTER TABLE `patients`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `patients_user_id_index` (`user_id`),
+  ADD KEY `patients_hmo_id_index` (`hmo_id`),
+  ADD KEY `patients_created_at_index` (`created_at`),
+  ADD KEY `patients_file_no_index` (`file_no`),
+  ADD KEY `patients_hmo_id_created_at_index` (`hmo_id`,`created_at`);
 
 --
 -- Indexes for table `patient_accounts`
@@ -86457,7 +86463,7 @@ ALTER TABLE `messages`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=268;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=269;
 
 --
 -- AUTO_INCREMENT for table `misc_bills`
