@@ -857,7 +857,7 @@ function confirmInsertTemplate() {
         '@{{patient_age}}': '{{ isset($patient->dob) ? \Carbon\Carbon::parse($patient->dob)->age . " years" : "" }}',
         '@{{patient_sex}}': '{{ $patient->sex ?? "" }}',
         '@{{patient_phone}}': '{{ $patient->phone ?? "" }}',
-        '@{{patient_address}}': '{{ $patient->address ?? "" }}',
+        '@{{patient_address}}': @json((string) ($patient->address ?? '')),
         '@{{patient_blood_group}}': '{{ $patient->blood_group ?? "" }}',
         '@{{doctor_name}}': '{{ ($doctor->surname ?? "") . " " . ($doctor->first_name ?? "") }}',
         '@{{clinic_name}}': '{{ $clinic->name ?? "" }}',
