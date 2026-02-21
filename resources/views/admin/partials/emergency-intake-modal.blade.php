@@ -33,12 +33,21 @@
                     {{-- ========== STEP 1: Patient Identification (Enhanced) ========== --}}
                     <div class="emergency-panel" id="emergency-step-1">
                         <div class="p-3">
+                            <div class="mb-3">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <h6 class="mb-1 fw-bold">Patient Identification</h6>
+                                    <span class="badge bg-danger-subtle text-danger-emphasis">Required now</span>
+                                </div>
+                                <small class="text-muted emi-help-text">Search and select an existing patient, or use quick registration for emergencies where full demographics may not yet be available.</small>
+                            </div>
+
                             {{-- Search existing --}}
                             <div class="mb-3">
                                 <label class="form-label fw-bold"><i class="mdi mdi-magnify"></i> Find Existing Patient</label>
                                 <input type="text" class="form-control" id="emergency-patient-search"
                                        placeholder="Search by name, file number, or phone..." autocomplete="off">
                                 <div id="emergency-patient-results" class="list-group mt-1" style="max-height: 200px; overflow-y: auto; display: none;"></div>
+                                <small class="text-muted emi-help-text d-block mt-1">Type at least 2 characters. Existing records reduce duplicate registration and preserve history continuity.</small>
                             </div>
 
                             {{-- Selected patient display --}}
@@ -67,6 +76,7 @@
                                     <i class="mdi mdi-account-plus"></i> Register New Patient (Quick)
                                 </label>
                             </div>
+                            <div id="emergency-step1-inline-error" class="alert alert-warning py-2 px-2 mb-2 emi-inline-error" style="display:none;"></div>
 
                             {{-- New Patient Fields --}}
                             <div id="emergency-new-patient-fields" style="display: none;">
@@ -187,27 +197,40 @@
                     {{-- ========== STEP 2: Triage Assessment (Enhanced with vitals + GCS) ========== --}}
                     <div class="emergency-panel" id="emergency-step-2" style="display: none;">
                         <div class="p-3">
+                            <div class="mb-3">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <h6 class="mb-1 fw-bold">Rapid Triage Assessment</h6>
+                                    <span class="badge bg-danger-subtle text-danger-emphasis">Required now</span>
+                                </div>
+                                <small class="text-muted emi-help-text">Capture ESI and primary complaint first, then add vitals and neurologic indicators to improve disposition safety.</small>
+                            </div>
+
                             {{-- ESI Level with decision-support hints --}}
                             <div class="mb-3">
                                 <label class="form-label fw-bold">ESI Triage Level <span class="text-danger">*</span></label>
                                 <div class="d-flex flex-wrap gap-2" id="emergency-esi-buttons">
                                     <button type="button" class="btn btn-outline-danger esi-btn flex-fill" data-esi="1"
+                                            aria-label="ESI level 1 resuscitation"
                                             data-hint="Immediate life-saving intervention? Intubation, surgical airway, IV push meds, emergency procedure?">
                                         <strong>1</strong><br><small>Resuscitation</small>
                                     </button>
                                     <button type="button" class="btn btn-outline-danger esi-btn flex-fill" data-esi="2"
+                                            aria-label="ESI level 2 emergent"
                                             data-hint="High risk situation? Confused, lethargic, disoriented? Severe pain/distress (Pain ≥ 8/10)?">
                                         <strong>2</strong><br><small>Emergent</small>
                                     </button>
                                     <button type="button" class="btn btn-outline-warning esi-btn flex-fill" data-esi="3"
+                                            aria-label="ESI level 3 urgent"
                                             data-hint="Needs 2+ resources (labs, imaging, IV fluids, specialty consult)? Vitals may be outside normal range.">
                                         <strong>3</strong><br><small>Urgent</small>
                                     </button>
                                     <button type="button" class="btn btn-outline-info esi-btn flex-fill" data-esi="4"
+                                            aria-label="ESI level 4 less urgent"
                                             data-hint="Needs only 1 resource (e.g., one X-ray OR one lab test OR simple procedure). Vitals normal.">
                                         <strong>4</strong><br><small>Less Urgent</small>
                                     </button>
                                     <button type="button" class="btn btn-outline-success esi-btn flex-fill" data-esi="5"
+                                            aria-label="ESI level 5 non urgent"
                                             data-hint="No resources needed. Simple exam, prescription refill, minor complaint. Stable vitals.">
                                         <strong>5</strong><br><small>Non-Urgent</small>
                                     </button>
@@ -223,6 +246,7 @@
                                 <label class="form-label fw-bold">Chief Complaint <span class="text-danger">*</span></label>
                                 <textarea class="form-control form-control-sm" name="chief_complaint" id="emergency-chief-complaint"
                                           rows="2" placeholder="Describe the patient's primary complaint..." maxlength="500"></textarea>
+                                <small class="text-muted emi-help-text">Use the patient's own words when possible, then add key qualifiers (onset, severity, associated symptoms).</small>
                             </div>
 
                             {{-- Quick Vitals (collapsible) --}}
@@ -331,7 +355,7 @@
                                     <div class="mt-2">
                                         <label class="form-label">Pain Scale: <strong id="emi-pain-display">0</strong>/10</label>
                                         <input type="range" class="form-range emi-pain-range" name="pain_scale" id="emi-pain-scale" min="0" max="10" value="0">
-                                        <div class="d-flex justify-content-between" style="font-size:0.7rem; color:#999;">
+                                        <div class="d-flex justify-content-between emi-help-text text-muted">
                                             <span>No pain</span><span>Moderate</span><span>Worst pain</span>
                                         </div>
                                     </div>
@@ -366,7 +390,9 @@
                                 <label class="form-label fw-bold">Triage Notes</label>
                                 <textarea class="form-control form-control-sm" name="triage_notes" id="emergency-triage-notes"
                                           rows="2" placeholder="Additional observations, mechanism of injury, clinical findings..." maxlength="1000"></textarea>
+                                <small class="text-muted emi-help-text">Document objective findings, immediate interventions, and risk indicators relevant to first-contact clinical decisions.</small>
                             </div>
+                            <div id="emergency-step2-inline-error" class="alert alert-warning py-2 px-2 mb-0 emi-inline-error" style="display:none;"></div>
                         </div>
 
                         <div class="modal-footer border-top py-2">
@@ -383,24 +409,31 @@
                     <div class="emergency-panel" id="emergency-step-3" style="display: none;">
                         <div class="p-3">
                             <div class="mb-3">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <h6 class="mb-1 fw-bold">Disposition Planning</h6>
+                                    <span class="badge bg-danger-subtle text-danger-emphasis">Required now</span>
+                                </div>
+                                <small class="text-muted emi-help-text">Select one disposition pathway only. Supporting fields are required based on the selected pathway.</small>
+                            </div>
+                            <div class="mb-3">
                                 <label class="form-label fw-bold">Disposition <span class="text-danger">*</span></label>
                                 <div class="list-group">
                                     <label class="list-group-item list-group-item-action d-flex align-items-center">
-                                        <input type="radio" name="disposition" value="admit_emergency" class="form-check-input me-2 emergency-disposition-radio">
+                                        <input type="radio" name="disposition" value="admit_emergency" class="form-check-input me-2 emergency-disposition-radio" aria-label="Admit to emergency ward">
                                         <div>
                                             <strong><i class="mdi mdi-bed text-danger"></i> Admit to Emergency Ward</strong>
                                             <small class="d-block text-muted">Assign bed and admit immediately</small>
                                         </div>
                                     </label>
                                     <label class="list-group-item list-group-item-action d-flex align-items-center">
-                                        <input type="radio" name="disposition" value="queue_consultation" class="form-check-input me-2 emergency-disposition-radio">
+                                        <input type="radio" name="disposition" value="queue_consultation" class="form-check-input me-2 emergency-disposition-radio" aria-label="Queue for consultation">
                                         <div>
                                             <strong><i class="mdi mdi-account-clock text-warning"></i> Queue for Consultation</strong>
                                             <small class="d-block text-muted">Send to doctor queue for evaluation</small>
                                         </div>
                                     </label>
                                     <label class="list-group-item list-group-item-action d-flex align-items-center">
-                                        <input type="radio" name="disposition" value="direct_service" class="form-check-input me-2 emergency-disposition-radio">
+                                        <input type="radio" name="disposition" value="direct_service" class="form-check-input me-2 emergency-disposition-radio" aria-label="Direct to lab or imaging">
                                         <div>
                                             <strong><i class="mdi mdi-flask text-info"></i> Direct to Lab/Imaging</strong>
                                             <small class="d-block text-muted">Order lab or imaging services directly</small>
@@ -464,6 +497,7 @@
                                 </div>
                                 <div id="emergency-selected-services" class="mb-2"></div>
                             </div>
+                            <div id="emergency-step3-inline-error" class="alert alert-warning py-2 px-2 mb-0 emi-inline-error" style="display:none;"></div>
                         </div>
 
                         <div class="modal-footer border-top py-2">
@@ -560,6 +594,13 @@
         color: #000;
         border-color: #ffc107;
     }
+    .emi-help-text {
+        font-size: 0.72rem;
+        line-height: 1.35;
+    }
+    .emi-inline-error {
+        font-size: 0.78rem;
+    }
     /* Unidentified patient alert flash */
     @keyframes emi-pulse { 0%,100%{ opacity:1; } 50%{ opacity:.7; } }
     #emi-unknown-fields .alert { animation: emi-pulse 2s ease-in-out 3; }
@@ -604,10 +645,21 @@
         $('.emergency-panel').hide();
         $('#emergency-step-' + step).show();
         $('.emergency-step').removeClass('active completed');
+        clearStepError(1);
+        clearStepError(2);
+        clearStepError(3);
         for (let i = 1; i < step; i++) {
             $('.emergency-step[data-step="' + i + '"]').addClass('completed');
         }
         $('.emergency-step[data-step="' + step + '"]').addClass('active');
+    }
+
+    function setStepError(step, message) {
+        $('#emergency-step' + step + '-inline-error').html('<i class="mdi mdi-alert"></i> ' + message).show();
+    }
+
+    function clearStepError(step) {
+        $('#emergency-step' + step + '-inline-error').hide().empty();
     }
 
     // ===== IDENTITY MODE TOGGLE (Known / Unidentified) =====
@@ -663,10 +715,12 @@
 
     // Step 1 → 2
     $('#emergency-step1-next').on('click', function() {
+        clearStepError(1);
         var patientId = $('#emergency-patient-id').val();
         var isNew = $('#emergency-new-patient-toggle').is(':checked');
 
         if (!patientId && !isNew) {
+            setStepError(1, 'Select an existing patient or enable quick registration.');
             toastr.warning('Please select an existing patient or register a new one.');
             return;
         }
@@ -675,11 +729,13 @@
             var isUnidentified = $('#emergency-is-unidentified').val() === '1';
             if (!isUnidentified) {
                 if (!$('#emergency-surname').val().trim() || !$('#emergency-firstname').val().trim()) {
+                    setStepError(1, 'Surname and First Name are required for known patients.');
                     toastr.warning('Surname and First Name are required for known patients.');
                     return;
                 }
             }
             if (!$('#emergency-gender').val()) {
+                setStepError(1, 'Gender is required before continuing.');
                 toastr.warning('Gender is required.');
                 return;
             }
@@ -691,11 +747,14 @@
 
     // Step 2 → 3
     $('#emergency-step2-next').on('click', function() {
+        clearStepError(2);
         if (!$('#emergency-esi-level').val()) {
+            setStepError(2, 'Select an ESI triage level to continue.');
             toastr.warning('Please select an ESI triage level.');
             return;
         }
         if (!$('#emergency-chief-complaint').val().trim()) {
+            setStepError(2, 'Chief complaint is required to proceed to disposition.');
             toastr.warning('Chief complaint is required.');
             return;
         }
@@ -763,7 +822,18 @@
             if (typeof existingAllergies === 'object') {
                 $('#emi-allergies-text').val(existingAllergies.join(', '));
             } else {
-                $('#emi-allergies-text').val(existingAllergies);
+                var cleanAllergies = String(existingAllergies).trim();
+                if (cleanAllergies.startsWith('[') && cleanAllergies.endsWith(']')) {
+                    try {
+                        var parsedAllergies = JSON.parse(cleanAllergies);
+                        if (Array.isArray(parsedAllergies)) {
+                            cleanAllergies = parsedAllergies.join(', ');
+                        }
+                    } catch (e) {
+                        cleanAllergies = cleanAllergies.replace(/^\[\s*/, '').replace(/\s*\]$/, '');
+                    }
+                }
+                $('#emi-allergies-text').val(cleanAllergies);
             }
             $('#emi-allergy-input').show();
         }
@@ -808,6 +878,10 @@
         // Auto-expand GCS panel for ESI 1-2
         var esi = parseInt($(this).data('esi'));
         if (esi <= 2) {
+            var $vitalsPanel = $('#emi-vitals-panel');
+            if (!$vitalsPanel.hasClass('show')) {
+                $vitalsPanel.collapse('show');
+            }
             var $gcsPanel = $('#emi-gcs-panel');
             if (!$gcsPanel.hasClass('show')) {
                 $gcsPanel.collapse('show');
@@ -995,18 +1069,22 @@
 
     // ===== FORM SUBMISSION =====
     $('#emergency-submit-btn').on('click', function() {
+        clearStepError(3);
         var disposition = $('input[name="disposition"]:checked').val();
         if (!disposition) {
+            setStepError(3, 'Choose a disposition pathway before submission.');
             toastr.warning('Please select a disposition.');
             return;
         }
 
         if (disposition === 'admit_emergency') {
             if (!$('#emergency-admit-service-select').val()) {
+                setStepError(3, 'Admission service is required for emergency admission.');
                 toastr.warning('Please select an admission service.');
                 return;
             }
             if (!$('#emergency-admit-clinic-select').val()) {
+                setStepError(3, 'Clinic selection is required for doctor queue handoff.');
                 toastr.warning('Please select a clinic for the doctor queue.');
                 return;
             }
@@ -1014,16 +1092,19 @@
 
         if (disposition === 'queue_consultation') {
             if (!$('#emergency-clinic-select').val()) {
+                setStepError(3, 'Clinic is required for consultation queue.');
                 toastr.warning('Please select a clinic for consultation.');
                 return;
             }
             if (!$('#emergency-service-select').val()) {
+                setStepError(3, 'Service is required for consultation queue.');
                 toastr.warning('Please select a consultation service.');
                 return;
             }
         }
 
         if (disposition === 'direct_service' && emergencyDirectServices.length === 0) {
+            setStepError(3, 'Add at least one lab or imaging service for direct service flow.');
             toastr.warning('Please add at least one lab or imaging service.');
             return;
         }
@@ -1129,6 +1210,9 @@
     // ===== RESET FORM =====
     function resetEmergencyForm() {
         $('#emergencyIntakeForm')[0].reset();
+        clearStepError(1);
+        clearStepError(2);
+        clearStepError(3);
         $('#emergency-patient-id').val('');
         $('#emergency-is-unidentified').val('0');
         $('#emergency-selected-patient').hide();
