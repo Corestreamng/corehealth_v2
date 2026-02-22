@@ -16,6 +16,9 @@ class MedicationSchedule extends Model implements Auditable
 protected $fillable = [
         'patient_id',
         'product_or_service_request_id',
+        'product_id',
+        'drug_source',
+        'external_drug_name',
         'scheduled_date',
         'scheduled_time',
         'is_repeating',
@@ -55,6 +58,14 @@ protected $fillable = [
     public function productOrServiceRequest(): BelongsTo
     {
         return $this->belongsTo(ProductOrServiceRequest::class);
+    }
+
+    /**
+     * Get the product associated with this schedule (for direct entries).
+     */
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
     }
 
     /**

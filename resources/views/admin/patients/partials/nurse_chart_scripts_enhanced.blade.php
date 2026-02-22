@@ -42,6 +42,10 @@
     var medicationChartRemoveScheduleRoute = "{{ route('nurse.medication.remove_schedule') }}";
     var medicationChartCalendarRoute =
         "{{ route('nurse.medication.calendar', [':patient', ':medication', ':start_date']) }}";
+    var medicationChartPrescribedRoute = "{{ route('nurse.medication.prescribed_drugs', [':patient']) }}";
+    var medicationChartDismissRoute = "{{ route('nurse.medication.dismiss_prescription', [':patient']) }}";
+    var medicationChartAdministerDirectRoute = "{{ route('nurse.medication.administer_direct', [':patient']) }}";
+    var medicationChartDirectCalendarRoute = "{{ route('nurse.medication.direct_calendar', [':patient']) }}";
 
     console.log('Medication Chart Routes:', {
         index: medicationChartIndexRoute,
@@ -100,6 +104,22 @@
             (obj.nurse && obj.nurse.name) || 'Unknown';
     }
 
+    // §4.6: Drug source badge helper
+    function getDrugSourceBadge(drugSource, productRequestId) {
+        switch (drugSource) {
+            case 'patient_own':
+                return '<span class="badge" style="background:#7b1fa2;"><i class="mdi mdi-account-heart"></i> Patient\'s Own</span>';
+            case 'ward_stock':
+                if (productRequestId) {
+                    return '<span class="badge bg-primary"><i class="mdi mdi-hospital-building"></i> Ward Stock (Billed)</span>';
+                }
+                return '<span class="badge bg-info"><i class="mdi mdi-hospital-building"></i> Ward Stock</span>';
+            case 'pharmacy_dispensed':
+            default:
+                return '<span class="badge bg-success"><i class="mdi mdi-pill"></i> Pharmacy Dispensed</span>';
+        }
+    }
+
     // Configurable time window for editing/deleting administrations (from .env)
     var NOTE_EDIT_WINDOW = {{ appsettings('note_edit_window', 30) }}; // Default 30 minutes if not set
     var intakeOutputChartIndexRoute = "{{ route('nurse.intake_output.index', [':patient']) }}";
@@ -120,6 +140,8 @@
     let currentSchedules = [];
     let currentAdministrations = [];
     let medicationHistory = []; // Added to store history/logs
+    let patientPrescriptions = [];
+    let patientPrescriptionsLoaded = false;
 
     // Set edit window time display
     $('#edit-window-time').text(NOTE_EDIT_WINDOW);
@@ -136,70 +158,255 @@
 
     // Load medications list
     loadMedicationsList();
+    loadPatientPrescriptions();
 
     function loadMedicationsList() {
-        console.log('Loading medications list...');
+        console.log('Loading medications list (enriched §6.1)...');
         $('#medication-loading').show();
         $('#medication-calendar').hide();
 
-        // Check if PATIENT_ID is properly set
         if (PATIENT_ID === null || PATIENT_ID === 'null') {
-            console.error('Patient ID is not set properly');
+            console.error('Patient ID is not set');
             $('#medication-loading').hide();
             toastr.error('Patient ID is not available. Please reload the page.');
             return;
         }
 
-        const ajaxUrl = medicationChartIndexRoute.replace(':patient', PATIENT_ID);
-        console.log('Sending AJAX request to:', ajaxUrl);
+        // §6.1: Use prescribed-drugs API for enriched status data
+        const prescribedUrl = medicationChartPrescribedRoute.replace(':patient', PATIENT_ID);
 
         $.ajax({
-            url: ajaxUrl,
+            url: prescribedUrl,
             type: 'GET',
-            // No date parameters needed for medication chart anymore
             success: function(data) {
-                console.log('Medications loaded successfully:', data);
+                console.log('Prescribed drugs loaded:', data);
                 $('#medication-loading').hide();
-                medications = data.prescriptions || [];
 
-                // Populate medication dropdown
+                const prescriptions = data.prescriptions || [];
+
+                // Store all prescriptions for reference
+                window._rxLookup = {};
+                prescriptions.forEach(rx => { window._rxLookup[rx.posr_id || rx.id] = rx; });
+
+                // §6.1: Populate dropdown with rich, status-aware options
                 const select = $('#drug-select');
                 select.empty();
                 select.append('<option value="">-- Select a medication --</option>');
 
-                if (medications.length === 0) {
-                    console.log('No medications found');
+                if (prescriptions.length === 0) {
                     toastr.warning('No medications found for this patient.');
                 } else {
-                    console.log(`Found ${medications.length} medications`);
-                    medications.forEach(function(p) {
-                        const prod = p.product || {};
-                        select.append(
-                            `<option value="${p.id}">${prod.product_name || 'Unknown'} - ${prod.product_code || ''}</option>`
-                        );
+                    console.log(`Found ${prescriptions.length} prescriptions`);
 
-                        // Store medication status
-                        medicationStatus[p.id] = {
-                            discontinued: !!p.discontinued_at,
-                            discontinued_at: p.discontinued_at,
-                            discontinued_reason: p.discontinued_reason,
-                            resumed: !!p.resumed_at,
-                            resumed_at: p.resumed_at,
-                            resumed_reason: p.resumed_reason
-                        };
+                    prescriptions.forEach(function(rx) {
+                        const posrId = rx.posr_id || '';
+                        const canChart = rx.can_chart && posrId;
+
+                        // §6.1: Status icon + color
+                        let statusIcon, statusBadge;
+                        switch (rx.status) {
+                            case 3:
+                                statusIcon = '🟢';
+                                statusBadge = `<span class="badge bg-success">Dispensed</span>`;
+                                break;
+                            case 2:
+                                if (rx.is_paid) {
+                                    statusIcon = '🟡';
+                                    statusBadge = `<span class="badge bg-warning text-dark">Awaiting Pharmacy</span>`;
+                                } else {
+                                    statusIcon = '🟠';
+                                    statusBadge = `<span class="badge bg-secondary">${rx.status_label}</span>`;
+                                }
+                                break;
+                            default:
+                                statusIcon = '🔴';
+                                statusBadge = `<span class="badge bg-danger">Awaiting Billing</span>`;
+                        }
+
+                        // Administered progress
+                        const adminText = rx.is_dispensed
+                            ? `Administered: ${rx.times_administered}/${rx.qty_prescribed}`
+                            : '';
+
+                        // Doctor info
+                        const doctorText = rx.doctor_name ? `Dr. ${rx.doctor_name}` : '';
+
+                        // Build display text (plain for <option>, rich for Select2)
+                        const plainText = `${statusIcon} ${rx.product_name} (${rx.product_code}) — ${rx.status_label}`;
+
+                        const opt = new Option(plainText, posrId || ('rx_' + rx.id), false, false);
+                        opt.disabled = !canChart;
+
+                        // Store rich data on the option for Select2 templateResult
+                        $(opt).data('rx', rx);
+                        $(opt).data('status-icon', statusIcon);
+                        $(opt).data('status-badge', statusBadge);
+                        $(opt).data('admin-text', adminText);
+                        $(opt).data('doctor-text', doctorText);
+                        $(opt).data('drug-source', 'pharmacy_dispensed');
+                        $(opt).data('product-request-id', rx.product_request_id);
+                        $(opt).data('product-id', rx.product_id);
+
+                        select.append(opt);
+
+                        // Store medication status for discontinue/resume tracking
+                        if (posrId) {
+                            medicationStatus[posrId] = {
+                                discontinued: false,
+                                resumed: false,
+                            };
+                        }
                     });
+
+                    // §6.1: Merge direct administration entries (ward stock + patient's own)
+                    const directEntries = data.direct_entries || [];
+                    if (directEntries.length > 0) {
+                        // Add separator
+                        const separator = new Option('── Direct Administrations ──', '', false, false);
+                        separator.disabled = true;
+                        $(separator).data('is-separator', true);
+                        select.append(separator);
+
+                        directEntries.forEach(function(entry) {
+                            const isPatientOwn = entry.drug_source === 'patient_own';
+                            const icon = isPatientOwn ? '🟣' : '🔵';
+                            const label = isPatientOwn ? "Patient's Own" : 'Ward Stock';
+                            const drugName = entry.product_name || entry.external_drug_name || 'Unknown';
+                            const codeStr = entry.product_code ? ` (${entry.product_code})` : '';
+                            const plainText = `${icon} ${drugName}${codeStr} — ${label}`;
+
+                            const optVal = 'direct_' + entry.drug_source + '_' + (entry.product_id || entry.external_drug_name || entry.id);
+                            const opt = new Option(plainText, optVal, false, false);
+
+                            // Store data for Select2 template and calendar loading
+                            $(opt).data('direct-entry', entry);
+                            $(opt).data('drug-source', entry.drug_source);
+                            $(opt).data('product-id', entry.product_id || null);
+                            $(opt).data('external-drug-name', entry.external_drug_name || null);
+                            $(opt).data('status-icon', icon);
+                            $(opt).data('is-direct', true);
+
+                            select.append(opt);
+                        });
+
+                        console.log(`Added ${directEntries.length} direct administration entries to dropdown`);
+                    }
+
+                    // §6.1: Initialize Select2 with rich formatting
+                    if (select.hasClass('select2-hidden-accessible')) {
+                        select.select2('destroy');
+                    }
+                    select.select2({
+                        width: '100%',
+                        placeholder: '-- Select a medication --',
+                        allowClear: true,
+                        templateResult: formatRxOption,
+                        templateSelection: formatRxSelection,
+                    });
+                }
+
+                // Update Prescription Dashboard badge
+                if (typeof loadPrescriptionDashboard === 'function') {
+                    loadPrescriptionDashboard();
                 }
             },
             error: function(xhr, status, error) {
                 console.error('Failed to load medications:', status, error);
-                console.error(xhr.responseText);
                 $('#medication-loading').hide();
                 toastr.error(`Failed to load medications: ${error}`);
-            },
-            complete: function() {
-                console.log('Medications AJAX request completed');
             }
         });
+    }
+
+    // §6.1: Select2 template for dropdown results (rich format)
+    function formatRxOption(option) {
+        if (!option.id) return option.text; // placeholder
+
+        const $opt = $(option.element);
+
+        // Handle separator
+        if ($opt.data('is-separator')) {
+            return $(`<div class="text-muted fw-bold small py-1 border-top mt-1">${option.text}</div>`);
+        }
+
+        // Handle direct administration entries (ward stock / patient's own)
+        const directEntry = $opt.data('direct-entry');
+        if (directEntry) {
+            const icon = $opt.data('status-icon') || '';
+            const isPatientOwn = directEntry.drug_source === 'patient_own';
+            const label = isPatientOwn ? "Patient's Own" : 'Ward Stock';
+            const badgeClass = isPatientOwn ? 'bg-purple' : 'bg-info';
+            const badgeHtml = `<span class="badge ${badgeClass}">${label}</span>`;
+            const drugName = directEntry.product_name || directEntry.external_drug_name || 'Unknown';
+            const codeStr = directEntry.product_code ? `(${directEntry.product_code})` : '';
+
+            return $(`
+                <div class="d-flex flex-column py-1">
+                    <div class="d-flex align-items-center gap-2">
+                        <span style="font-size:1.1em;">${icon}</span>
+                        <strong>${drugName}</strong>
+                        <small class="text-muted">${codeStr}</small>
+                        ${badgeHtml}
+                    </div>
+                    <div class="d-flex gap-3 ms-4">
+                        <small class="text-info">Administered: ${directEntry.times_administered}×</small>
+                        <small class="text-muted">by ${directEntry.nurse_name}</small>
+                    </div>
+                </div>
+            `);
+        }
+
+        // Handle pharmacy prescriptions
+        const rx = $opt.data('rx');
+        if (!rx) return option.text;
+
+        const icon = $opt.data('status-icon') || '';
+        const badge = $opt.data('status-badge') || '';
+        const adminText = $opt.data('admin-text') || '';
+        const doctorText = $opt.data('doctor-text') || '';
+        const isDisabled = option.disabled;
+
+        const $container = $(`
+            <div class="d-flex flex-column py-1 ${isDisabled ? 'opacity-50' : ''}">
+                <div class="d-flex align-items-center gap-2">
+                    <span style="font-size:1.1em;">${icon}</span>
+                    <strong>${rx.product_name}</strong>
+                    <small class="text-muted">(${rx.product_code})</small>
+                    ${badge}
+                </div>
+                <div class="d-flex gap-3 ms-4">
+                    <small class="text-muted">Qty: ${rx.qty_prescribed}</small>
+                    ${adminText ? `<small class="text-info">${adminText}</small>` : ''}
+                    ${doctorText ? `<small class="text-muted">${doctorText}</small>` : ''}
+                    ${rx.remaining_doses === 0 && rx.is_dispensed ? '<small class="text-success fw-bold">✓ Fully administered</small>' : ''}
+                </div>
+                ${isDisabled ? `<small class="text-danger ms-4"><i class="mdi mdi-lock"></i> ${rx.status_label} — cannot chart</small>` : ''}
+            </div>
+        `);
+
+        return $container;
+    }
+
+    // §6.1: Select2 template for selected item (compact)
+    function formatRxSelection(option) {
+        if (!option.id) return option.text;
+
+        const $opt = $(option.element);
+
+        // Handle direct entry selections
+        const directEntry = $opt.data('direct-entry');
+        if (directEntry) {
+            const icon = $opt.data('status-icon') || '';
+            const drugName = directEntry.product_name || directEntry.external_drug_name || 'Unknown';
+            const codeStr = directEntry.product_code ? `(${directEntry.product_code})` : '';
+            return `${icon} ${drugName} ${codeStr}`;
+        }
+
+        const rx = $opt.data('rx');
+        if (!rx) return option.text;
+
+        const icon = $opt.data('status-icon') || '';
+        return `${icon} ${rx.product_name} (${rx.product_code})`;
     }
 
     // =============================================
@@ -212,7 +419,15 @@
 
         if (medicationId) {
             selectedMedication = medicationId;
+
+            // Detect if this is a direct entry (ward_stock / patient_own)
+            var $selectedOpt = $(this).find('option:selected');
+            var isDirect = $selectedOpt.data('is-direct') || false;
+
+            // Enable schedule button; disable discontinue/resume for direct entries
             $('#set-schedule-btn').prop('disabled', false);
+            $('#discontinue-btn').prop('disabled', isDirect);
+            $('#resume-btn').prop('disabled', isDirect);
 
             // Calculate end date (30 days after start date)
             const endDate = new Date(calendarStartDate);
@@ -761,95 +976,135 @@
         $('#medication-loading').show();
         $('#medication-calendar').hide();
 
-        const url = medicationChartCalendarRoute
-            .replace(':patient', PATIENT_ID)
-            .replace(':medication', medicationId)
-            .replace(':start_date', startDate);
+        // Determine if this is a direct entry by checking the selected option
+        var $selectedOpt = $('#drug-select').find('option[value="' + medicationId + '"]');
+        var isDirect = $selectedOpt.data('is-direct') || false;
+        var url;
 
-        $.ajax({
-            url: url,
-            type: 'GET',
-            data: {
+        if (isDirect) {
+            // Direct entry — use directCalendar endpoint with query params
+            var drugSource = $selectedOpt.data('drug-source');
+            var productId = $selectedOpt.data('product-id');
+            var externalDrugName = $selectedOpt.data('external-drug-name');
+
+            url = medicationChartDirectCalendarRoute.replace(':patient', PATIENT_ID);
+            var queryParams = {
+                drug_source: drugSource,
                 start_date: startDate,
                 end_date: endDate
-            },
-            success: function(data) {
-                $('#medication-loading').hide();
+            };
+            if (productId) queryParams.product_id = productId;
+            if (externalDrugName) queryParams.external_drug_name = externalDrugName;
 
-                if (data.medication) {
-                    const medication = data.medication;
-                    currentSchedules = data.schedules || [];
-                    currentAdministrations = data.administrations || [];
+            $.ajax({
+                url: url,
+                type: 'GET',
+                data: queryParams,
+                success: function(data) {
+                    $('#medication-loading').hide();
+                    handleCalendarResponse(data, medicationId);
+                },
+                error: function() {
+                    $('#medication-loading').hide();
+                    toastr.error('Failed to load medication calendar.');
+                }
+            });
+        } else {
+            // Standard POSR — use calendar route
+            url = medicationChartCalendarRoute
+                .replace(':patient', PATIENT_ID)
+                .replace(':medication', medicationId)
+                .replace(':start_date', startDate);
 
-                    // Update UI based on medication status
-                    updateMedicationStatus(medication);
-                    updateMedicationButtons(medication);
+            $.ajax({
+                url: url,
+                type: 'GET',
+                data: {
+                    start_date: startDate,
+                    end_date: endDate
+                },
+                success: function(data) {
+                    $('#medication-loading').hide();
+                    handleCalendarResponse(data, medicationId);
+                },
+                error: function() {
+                    $('#medication-loading').hide();
+                    toastr.error('Failed to load medication calendar.');
+                }
+            });
+        }
+    }
 
-                    // Store history data for logs
-                    let logEntries = [];
+    // Shared handler for calendar response (works for both POSR and direct entries)
+    function handleCalendarResponse(data, medicationId) {
+        if (data.medication) {
+            const medication = data.medication;
+            currentSchedules = data.schedules || [];
+            currentAdministrations = data.administrations || [];
 
-                    // Process medication history (discontinue/resume events)
-                    if (data.history && Array.isArray(data.history)) {
-                        logEntries = [...data.history];
-                    }
+            // Update UI based on medication status
+            updateMedicationStatus(medication);
+            updateMedicationButtons(medication);
 
-                    // Process administration history
-                    if (data.adminHistory && Array.isArray(data.adminHistory)) {
-                        data.adminHistory.forEach(admin => {
-                            // Regular administration event
-                            logEntries.push({
-                                date: admin.administered_at,
-                                action: 'administration',
-                                details: `${admin.dose} ${admin.route} ${admin.comment ? '- ' + admin.comment : ''}`,
-                                user: admin.administered_by_name || getUserName(admin) ||
-                                    'Unknown',
-                                id: admin.id
-                            });
+            // Store history data for logs
+            let logEntries = [];
 
-                            // Edit event if applicable
-                            if (admin.edited_at) {
-                                logEntries.push({
-                                    date: admin.edited_at,
-                                    action: 'edit',
-                                    details: admin.edit_reason || 'No reason provided',
-                                    user: admin.edited_by_name || (admin.edited_by ? admin
-                                        .edited_by.name : 'Unknown'),
-                                    id: admin.id
-                                });
-                            }
+            // Process medication history (discontinue/resume events)
+            if (data.history && Array.isArray(data.history)) {
+                logEntries = [...data.history];
+            }
 
-                            // Delete event if applicable
-                            if (admin.deleted_at) {
-                                logEntries.push({
-                                    date: admin.deleted_at,
-                                    action: 'delete',
-                                    reason: admin.delete_reason || 'No reason provided',
-                                    user: admin.deleted_by_name || (admin.deleted_by ? admin
-                                        .deleted_by.name : 'Unknown'),
-                                    id: admin.id
-                                });
-                            }
+            // Process administration history
+            if (data.adminHistory && Array.isArray(data.adminHistory)) {
+                data.adminHistory.forEach(admin => {
+                    // Regular administration event
+                    logEntries.push({
+                        date: admin.administered_at,
+                        action: 'administration',
+                        details: `${admin.dose} ${admin.route} ${admin.comment ? '- ' + admin.comment : ''}`,
+                        user: admin.administered_by_name || getUserName(admin) ||
+                            'Unknown',
+                        id: admin.id
+                    });
+
+                    // Edit event if applicable
+                    if (admin.edited_at) {
+                        logEntries.push({
+                            date: admin.edited_at,
+                            action: 'edit',
+                            details: admin.edit_reason || 'No reason provided',
+                            user: admin.edited_by_name || (admin.edited_by ? admin
+                                .edited_by.name : 'Unknown'),
+                            id: admin.id
                         });
                     }
 
-                    // Store all logs for this medication
-                    medicationHistory[selectedMedication] = logEntries;
-
-                    // Show the calendar with custom date range
-                    renderCalendarView(medication, currentSchedules, currentAdministrations, data.period);
-                    renderLegend();
-                    $('#medication-calendar').show();
-                    $('#calendar-legend').show();
-
-                    // Update date range inputs to match the loaded calendar view
-                    initializeMedicationDateRange(data.period.start, data.period.end);
-                }
-            },
-            error: function() {
-                $('#medication-loading').hide();
-                toastr.error('Failed to load medication calendar.');
+                    // Delete event if applicable
+                    if (admin.deleted_at) {
+                        logEntries.push({
+                            date: admin.deleted_at,
+                            action: 'delete',
+                            reason: admin.delete_reason || 'No reason provided',
+                            user: admin.deleted_by_name || (admin.deleted_by ? admin
+                                .deleted_by.name : 'Unknown'),
+                            id: admin.id
+                        });
+                    }
+                });
             }
-        });
+
+            // Store all logs for this medication
+            medicationHistory[selectedMedication] = logEntries;
+
+            // Show the calendar with custom date range
+            renderCalendarView(medication, currentSchedules, currentAdministrations, data.period);
+            renderLegend();
+            $('#medication-calendar').show();
+            $('#calendar-legend').show();
+
+            // Update date range inputs to match the loaded calendar view
+            initializeMedicationDateRange(data.period.start, data.period.end);
+        }
     }
 
     function loadMedicationCalendar(medicationId, startDate) {
@@ -970,7 +1225,21 @@
     function updateMedicationStatus(medication) {
         let statusHtml = '';
 
-        if (medication.product && medication.product.product_name) {
+        // Direct entries have product_name at top level; POSR entries have medication.product.product_name
+        if (medication.is_direct_entry) {
+            const productName = medication.product_name || 'Direct Entry';
+            const sourceLabel = medication.drug_source === 'patient_own' ? "Patient's Own" : 'Ward Stock';
+            const sourceBadge = medication.drug_source === 'patient_own' ? 'bg-purple' : 'bg-info';
+            statusHtml = `
+                <div class="alert alert-info py-2 mb-0">
+                    <div class="d-flex align-items-center">
+                        <i class="mdi mdi-pill me-2 fs-5"></i>
+                        <div>
+                            <strong>${productName}</strong>: <span class="badge ${sourceBadge}">${sourceLabel}</span>
+                        </div>
+                    </div>
+                </div>`;
+        } else if (medication.product && medication.product.product_name) {
             const productName = medication.product.product_name;
 
             if (medication.discontinued_at) {
@@ -1031,6 +1300,15 @@
     }
 
     function updateMedicationButtons(medication) {
+        // Direct entries don't support discontinue/resume
+        if (medication.is_direct_entry) {
+            $('#discontinue-btn').prop('disabled', true);
+            $('#resume-btn').prop('disabled', true);
+            $('#set-schedule-btn').prop('disabled', false);
+            $('#view-logs-btn').prop('disabled', false);
+            return;
+        }
+
         const isDiscontinued = !!medication.discontinued_at;
         const isResumed = !!medication.resumed_at;
 
@@ -1091,7 +1369,8 @@
         const product = medication.product || {};
 
         // Update calendar title with responsive design
-        const productName = product.product_name || 'Medication';
+        // Direct entries have product_name at top level; POSR entries have it under .product
+        const productName = medication.product_name || product.product_name || 'Medication';
         // Get doctor recommended dose/freq from medication.dose or medication.product_request.dose
         let doctorDose = medication.dose || (medication.product_request && medication.product_request.dose) || '';
         if (!doctorDose && medication.product_or_service_request_id && medications) {
@@ -1212,6 +1491,13 @@
                         const adminTime = formatDateTime(new Date(admin.administered_at));
                         tooltipContent =
                             `Dose: ${admin.dose}<br>Route: ${admin.route}<br>Status: Administered<br>Time: ${adminTime}`;
+
+                        // §4.6: Add drug source to tooltip
+                        if (admin.drug_source && admin.drug_source !== 'pharmacy_dispensed') {
+                            var srcLabel = admin.drug_source === 'patient_own' ? 'Patient\'s Own' : 'Ward Stock';
+                            if (admin.drug_source === 'ward_stock' && admin.product_request_id) srcLabel += ' (Billed)';
+                            tooltipContent += `<br>Source: ${srcLabel}`;
+                        }
 
                         if (admin.administered_by_name) {
                             tooltipContent += `<br>By: ${admin.administered_by_name}`;
@@ -1436,12 +1722,39 @@
     $('#set-schedule-btn').click(function() {
         if (!selectedMedication) return;
 
-        // Find the selected medication
-        const medication = medications.find(m => m.id == selectedMedication);
-        if (!medication || !medication.product) return;
+        // Detect if this is a direct entry
+        var $selectedOpt = $('#drug-select').find('option:selected');
+        var isDirect = $selectedOpt.data('is-direct') || false;
 
-        $('#schedule_medication_id').val(selectedMedication);
-        $('#schedule-medication-name').text(medication.product.product_name);
+        if (isDirect) {
+            // Direct entry: populate drug_source, product_id/external_drug_name
+            var drugSource = $selectedOpt.data('drug-source') || '';
+            var productId = $selectedOpt.data('product-id') || '';
+            var externalDrugName = $selectedOpt.data('external-drug-name') || '';
+            var drugName = ($selectedOpt.data('direct-entry') || {}).product_name || externalDrugName || 'Direct Entry';
+
+            $('#schedule_medication_id').val(''); // No POSR for direct entries
+            $('#schedule_drug_source').val(drugSource);
+            $('#schedule_product_id').val(productId);
+            $('#schedule_external_drug_name').val(externalDrugName);
+            if ($('#schedule-medication-name').length) {
+                $('#schedule-medication-name').text(drugName);
+            }
+        } else {
+            // Standard POSR medication
+            const medication = medications.find(m => m.id == selectedMedication);
+            if (!medication || !medication.product) return;
+
+            $('#schedule_medication_id').val(selectedMedication);
+            $('#schedule_drug_source').val('pharmacy_dispensed');
+            $('#schedule_product_id').val('');
+            $('#schedule_external_drug_name').val('');
+            if ($('#schedule-medication-name').length) {
+                $('#schedule-medication-name').text(medication.product.product_name);
+            }
+        }
+
+        $('#schedule_date').val(new Date().toISOString().split('T')[0]);
         $('#setScheduleModal').modal('show');
     });
 
@@ -1542,6 +1855,39 @@
     // ADMINISTRATION MANAGEMENT
     // =============================================
 
+    // §6.5: Source tab click handler removed — source is now determined by the selected medication
+    // The administer modal is for pharmacy_dispensed only (scheduled charting)
+
+    // §6.5: Simplified — always pharmacy_dispensed for scheduled charting
+    function setDrugSource(source) {
+        $('#administer_drug_source').val(source || 'pharmacy_dispensed');
+    }
+
+    function loadPatientPrescriptions(force = false) {
+        if (patientPrescriptionsLoaded && !force) {
+            return $.Deferred().resolve(patientPrescriptions).promise();
+        }
+
+        const url = medicationChartPrescribedRoute.replace(':patient', PATIENT_ID);
+        return $.ajax({
+            url: url,
+            type: 'GET'
+        }).then(function(res) {
+            if (res && res.success) {
+                patientPrescriptions = res.prescriptions || [];
+                patientPrescriptionsLoaded = true;
+                populateRxSelect();
+            } else {
+                toastr.warning('Unable to load prescriptions');
+            }
+            return patientPrescriptions;
+        }).catch(function(xhr) {
+            console.error('Failed to load prescriptions', xhr);
+            toastr.error('Failed to load prescriptions');
+            return [];
+        });
+    }
+
     // Open administer modal when clicking on a schedule slot
     $(document).on('click', '.schedule-slot[data-schedule-id]', function() {
         const scheduleId = $(this).data('schedule-id');
@@ -1549,7 +1895,6 @@
 
         if (schedule) {
             const scheduledTime = new Date(schedule.scheduled_time);
-            const medication = medications.find(m => m.id == selectedMedication);
 
             $('#administer_schedule_id').val(scheduleId);
             $('#administered_dose').val(schedule.dose || '');
@@ -1559,16 +1904,52 @@
             const formattedNow = formatDateTimeForInput(now);
             $('#administered_at').val(formattedNow);
 
-            if (medication && medication.product) {
-                $('#administer-medication-info').text(
-                    `${medication.product.product_name} - ${schedule.dose}`);
-                $('#administer-scheduled-time').text(
-                    `Scheduled for: ${formatDateTime(scheduledTime)}`);
+            // Check if this is a direct entry schedule
+            var scheduleDrugSource = schedule.drug_source || 'pharmacy_dispensed';
+            var isDirect = (scheduleDrugSource === 'ward_stock' || scheduleDrugSource === 'patient_own');
+
+            if (isDirect) {
+                // Direct entry schedule: use schedule data directly
+                var drugName = schedule.external_drug_name || 'Direct Entry';
+                var $selectedOpt = $('#drug-select').find('option:selected');
+                var directEntry = $selectedOpt.data('direct-entry');
+                if (directEntry) {
+                    drugName = directEntry.product_name || directEntry.external_drug_name || drugName;
+                }
+
+                $('#administer-medication-info').text(`${drugName} - ${schedule.dose || ''}`);
+                $('#administer-scheduled-time').text(`Scheduled for: ${formatDateTime(scheduledTime)}`);
+                $('#administer_product_id').val(schedule.product_id || '');
+                $('#administer_product_request_id').val('');
+                setDrugSource(scheduleDrugSource);
+            } else {
+                // §6.5: Auto-populate from the enriched dropdown data
+                const posrId = selectedMedication;
+                const rx = window._rxLookup ? window._rxLookup[posrId] : null;
+
+                if (rx) {
+                    $('#administer-medication-info').text(`${rx.product_name} - ${schedule.dose || rx.dose || ''}`);
+                    $('#administer-scheduled-time').text(`Scheduled for: ${formatDateTime(scheduledTime)}`);
+                    $('#administer_product_id').val(rx.product_id || '');
+                    // §6.5: Auto-set product_request_id from dropdown — no secondary selector needed
+                    $('#administer_product_request_id').val(rx.product_request_id || '');
+                } else {
+                    // Fallback to legacy data
+                    const medication = medications.find(m => m.id == selectedMedication);
+                    if (medication && medication.product) {
+                        $('#administer-medication-info').text(`${medication.product.product_name} - ${schedule.dose}`);
+                        $('#administer-scheduled-time').text(`Scheduled for: ${formatDateTime(scheduledTime)}`);
+                        $('#administer_product_id').val(medication.product.id || '');
+                    }
+                }
+
+                // §6.5: Source is always pharmacy_dispensed for scheduled charting
+                setDrugSource('pharmacy_dispensed');
             }
         }
     });
 
-    // Administer form submission
+    // Administer form submission — §6.5: simplified for pharmacy_dispensed only
     $('#administerForm').submit(function(e) {
         e.preventDefault();
 
@@ -1577,18 +1958,34 @@
         const dose = $('#administered_dose').val();
         const route = $('#administered_route').val();
         const note = $('#administered_note').val();
+        const productId = $('#administer_product_id').val();
+        const productRequestId = $('#administer_product_request_id').val();
+
+        const stopLoading = function() {
+            $('#administerSubmitBtn .spinner-border').addClass('d-none');
+            $('#administerSubmitBtn').prop('disabled', false);
+        };
+
+        // §6.5: product_request_id is auto-set from dropdown — validate it exists
+        if (!productRequestId) {
+            toastr.warning('No dispensed prescription linked to this medication. Cannot administer.');
+            return;
+        }
 
         // Show loading indicator
         $('#administerSubmitBtn .spinner-border').removeClass('d-none');
         $('#administerSubmitBtn').prop('disabled', true);
 
-        // Prepare data for API
+        // §6.5: Simplified payload — source is always pharmacy_dispensed
         const adminData = {
             schedule_id: scheduleId,
             administered_at: administeredTime,
             administered_dose: dose,
             route: route,
-            comment: note
+            comment: note,
+            drug_source: 'pharmacy_dispensed',
+            product_id: productId,
+            product_request_id: productRequestId,
         };
 
         $.ajax({
@@ -1620,8 +2017,7 @@
                 toastr.error(errorMsg);
             },
             complete: function() {
-                $('#administerSubmitBtn .spinner-border').addClass('d-none');
-                $('#administerSubmitBtn').prop('disabled', false);
+                stopLoading();
             }
         });
     });
@@ -1637,11 +2033,17 @@
 
             const medication = medications.find(m => m.id == admin
                 .product_or_service_request_id);
-            const medicationName = medication && medication.product ? medication.product
+            let medicationName = medication && medication.product ? medication.product
                 .product_name : 'Medication';
+            // §4.6: For patient's own, use external drug name
+            if (admin.drug_source === 'patient_own' && admin.external_drug_name) {
+                medicationName = admin.external_drug_name;
+            }
 
             detailsHtml += `<h6>${medicationName}</h6>`;
-            detailsHtml += `<dl class="row">
+            // §4.6: Show drug source badge
+            detailsHtml += getDrugSourceBadge(admin.drug_source, admin.product_request_id);
+            detailsHtml += `<dl class="row mt-2">
                     <dt class="col-sm-4">Administered</dt>
                     <dd class="col-sm-8">${formatDateTime(new Date(admin.administered_at))}</dd>
 
@@ -1657,6 +2059,20 @@
                     <dt class="col-sm-4">Administered By</dt>
                     <dd class="col-sm-8">${getUserName(admin)}</dd>
                 </dl>`;
+
+            // §4.6: Show external drug details for patient's own
+            if (admin.drug_source === 'patient_own') {
+                detailsHtml += `<div class="alert alert-light border"><small>`;
+                if (admin.external_qty) detailsHtml += `<strong>Qty:</strong> ${admin.external_qty} `;
+                if (admin.external_batch_number) detailsHtml += `| <strong>Batch:</strong> ${admin.external_batch_number} `;
+                if (admin.external_expiry_date) detailsHtml += `| <strong>Expiry:</strong> ${admin.external_expiry_date} `;
+                if (admin.external_source_note) detailsHtml += `<br><strong>Source:</strong> ${admin.external_source_note}`;
+                detailsHtml += `</small></div>`;
+            }
+            // §4.6: Show store info for ward stock
+            if (admin.drug_source === 'ward_stock' && admin.store_name) {
+                detailsHtml += `<div class="alert alert-light border"><small><strong>Store:</strong> ${admin.store_name}</small></div>`;
+            }
 
             if (admin.edited_at) {
                 detailsHtml += `<div class="alert alert-info">
@@ -2892,3 +3308,535 @@
         }, 1000); // Delay to ensure other scripts have run
     });
 </script> --}}
+
+{{-- ======================================================================
+     PRESCRIPTION DASHBOARD & DISMISS UI (Nurse Drug Source Revamp §6)
+     ====================================================================== --}}
+<script>
+(function() {
+    'use strict';
+
+    var _rxData = [];           // cached prescription data
+    var _rxFilter = 'all';      // current filter
+
+    // ── Load prescriptions from API ──────────────────────────────────
+    function loadPrescriptionDashboard() {
+        if (!PATIENT_ID || PATIENT_ID === 'null') return;
+
+        var url = medicationChartPrescribedRoute.replace(':patient', PATIENT_ID);
+
+        $('#rx-loading').show();
+        $('#rx-table-wrap, #rx-empty').hide();
+
+        $.ajax({
+            url: url,
+            type: 'GET',
+            headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
+            success: function(resp) {
+                _rxData = resp.data || resp || [];
+                renderRxDashboard();
+            },
+            error: function(xhr) {
+                console.error('Failed to load prescriptions', xhr);
+                $('#rx-loading').hide();
+                $('#rx-empty').show().find('p').text('Failed to load prescriptions.');
+            }
+        });
+    }
+
+    // ── Render the dashboard table ──────────────────────────────────
+    function renderRxDashboard() {
+        $('#rx-loading').hide();
+
+        var filtered = _rxFilter === 'all' ? _rxData : _rxData.filter(function(rx) {
+            return String(rx.status) === String(_rxFilter);
+        });
+
+        // Update summary counts
+        var dispensed = _rxData.filter(function(rx) { return rx.status === 3; }).length;
+        var billed   = _rxData.filter(function(rx) { return rx.status === 2; }).length;
+        var requested= _rxData.filter(function(rx) { return rx.status === 1; }).length;
+
+        $('#rx-count-dispensed').text(dispensed);
+        $('#rx-count-billed').text(billed);
+        $('#rx-count-requested').text(requested);
+        $('#rx-count-total').text(_rxData.length);
+
+        // Badge on tab
+        var badge = $('#rx-tab-badge');
+        if (_rxData.length > 0) {
+            badge.text(_rxData.length).show();
+        } else {
+            badge.hide();
+        }
+
+        if (filtered.length === 0) {
+            $('#rx-table-wrap').hide();
+            $('#rx-empty').show().find('p').text(
+                _rxFilter === 'all' ? 'No active prescriptions found for this patient.'
+                                    : 'No prescriptions match this filter.'
+            );
+            return;
+        }
+
+        $('#rx-empty').hide();
+        var tbody = $('#rx-dashboard-body').empty();
+
+        filtered.forEach(function(rx) {
+            var statusBadge = _rxStatusBadge(rx.status, rx.status_label);
+            var adminInfo = (rx.times_administered || 0) + ' / ' + (rx.qty_prescribed || '?');
+            var canDismiss = rx.status !== 3; // can't dismiss dispensed
+
+            var dismissBtn = canDismiss
+                ? '<button class="btn btn-outline-danger btn-sm rx-dismiss-btn" data-rx-id="' + rx.id + '" data-rx-name="' + _escHtml(rx.product_name) + '" data-rx-dose="' + _escHtml(rx.dose || '') + '">' +
+                  '<i class="mdi mdi-close-circle"></i> Dismiss</button>'
+                : '<span class="text-muted small">—</span>';
+
+            var row = '<tr data-rx-status="' + rx.status + '">' +
+                '<td><strong>' + _escHtml(rx.product_name) + '</strong>' +
+                    (rx.product_code ? ' <small class="text-muted">(' + _escHtml(rx.product_code) + ')</small>' : '') +
+                '</td>' +
+                '<td>' + _escHtml(rx.dose || '—') + '</td>' +
+                '<td>' + _escHtml(rx.doctor_name || '—') + '</td>' +
+                '<td><small>' + _formatDate(rx.prescribed_at) + '</small></td>' +
+                '<td>' + statusBadge + '</td>' +
+                '<td class="text-center"><span class="badge bg-light text-dark">' + adminInfo + '</span></td>' +
+                '<td class="text-center">' + dismissBtn + '</td>' +
+                '</tr>';
+
+            tbody.append(row);
+        });
+
+        $('#rx-table-wrap').show();
+    }
+
+    // ── Status badge helper ─────────────────────────────────────────
+    function _rxStatusBadge(status, label) {
+        var cls = 'secondary';
+        if (status === 3) cls = 'success';
+        else if (status === 2) cls = 'info';
+        else if (status === 1) cls = 'warning';
+        return '<span class="badge bg-' + cls + '">' + _escHtml(label || 'Unknown') + '</span>';
+    }
+
+    function _escHtml(str) {
+        if (!str) return '';
+        var d = document.createElement('div');
+        d.textContent = str;
+        return d.innerHTML;
+    }
+
+    function _formatDate(dt) {
+        if (!dt) return '—';
+        try {
+            var d = new Date(dt);
+            return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) +
+                   ' ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        } catch(e) { return dt; }
+    }
+
+    // ── Filter buttons ──────────────────────────────────────────────
+    $(document).on('click', '#rx-filter-group [data-rx-filter]', function() {
+        var btn = $(this);
+        $('#rx-filter-group .btn').removeClass('active');
+        btn.addClass('active');
+        _rxFilter = btn.data('rx-filter');
+        renderRxDashboard();
+    });
+
+    // ── Refresh button ──────────────────────────────────────────────
+    $(document).on('click', '#rx-refresh-btn', function() {
+        loadPrescriptionDashboard();
+    });
+
+    // ── Load on tab show ────────────────────────────────────────────
+    $(document).on('shown.bs.tab', '#med-rx-tab', function() {
+        loadPrescriptionDashboard();
+    });
+
+    // ── Dismiss: open modal ─────────────────────────────────────────
+    $(document).on('click', '.rx-dismiss-btn', function() {
+        var btn = $(this);
+        var rxId   = btn.data('rx-id');
+        var rxName = btn.data('rx-name');
+        var rxDose = btn.data('rx-dose');
+
+        $('#dismiss-rx-id').val(rxId);
+        $('#dismiss-rx-info').html(
+            '<div class="p-2 bg-light rounded">' +
+            '<strong>' + _escHtml(rxName) + '</strong>' +
+            (rxDose ? ' — <em>' + _escHtml(rxDose) + '</em>' : '') +
+            '</div>'
+        );
+        $('#dismiss-rx-reason').val('');
+        var modal = new bootstrap.Modal(document.getElementById('dismissRxModal'));
+        modal.show();
+    });
+
+    // ── Dismiss: confirm ────────────────────────────────────────────
+    $(document).on('click', '#confirm-dismiss-rx-btn', function() {
+        var rxId   = $('#dismiss-rx-id').val();
+        var reason = $('#dismiss-rx-reason').val().trim();
+
+        if (!reason) {
+            toastr.warning('Please enter a reason for dismissal.');
+            $('#dismiss-rx-reason').focus();
+            return;
+        }
+
+        var btn = $(this);
+        btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Dismissing...');
+
+        var url = medicationChartDismissRoute.replace(':patient', PATIENT_ID);
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
+            data: {
+                _token: CSRF_TOKEN,
+                product_request_id: rxId,
+                reason: reason
+            },
+            success: function(resp) {
+                toastr.success(resp.message || 'Prescription dismissed successfully.');
+                bootstrap.Modal.getInstance(document.getElementById('dismissRxModal')).hide();
+                loadPrescriptionDashboard(); // refresh
+            },
+            error: function(xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.error) || 'Failed to dismiss prescription.';
+                toastr.error(msg);
+            },
+            complete: function() {
+                btn.prop('disabled', false).html('<i class="mdi mdi-close-circle me-1"></i> Confirm Dismiss');
+            }
+        });
+    });
+
+    // ── Auto-load on page ready if tab is already active ────────────
+    $(document).ready(function() {
+        // Pre-load badge count even if not on the tab
+        if (PATIENT_ID && PATIENT_ID !== 'null') {
+            var url = medicationChartPrescribedRoute.replace(':patient', PATIENT_ID);
+            $.ajax({
+                url: url,
+                type: 'GET',
+                headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
+                success: function(resp) {
+                    _rxData = resp.data || resp || [];
+                    var badge = $('#rx-tab-badge');
+                    if (_rxData.length > 0) {
+                        badge.text(_rxData.length).show();
+                    }
+                }
+            });
+        }
+    });
+
+    // ═══════════════════════════════════════════════════════════
+    // §6.2–6.4: WARD STOCK & PATIENT'S OWN — DIRECT ADMINISTRATION
+    // ═══════════════════════════════════════════════════════════
+
+    // Helper: set datetime-local input to current time
+    function setCurrentDateTime(inputId) {
+        var now = new Date();
+        var offset = now.getTimezoneOffset();
+        var local = new Date(now.getTime() - offset * 60000);
+        document.getElementById(inputId).value = local.toISOString().slice(0, 16);
+    }
+
+    // ── Button click handlers ───────────────────────────────────
+    $('#btn-add-patient-own').on('click', function() {
+        // Reset form
+        $('#patientOwnForm')[0].reset();
+        setCurrentDateTime('po_administered_at');
+        var modal = new bootstrap.Modal(document.getElementById('patientOwnModal'));
+        modal.show();
+    });
+
+    $('#btn-add-ward-stock').on('click', function() {
+        // Reset form
+        $('#wardStockForm')[0].reset();
+        $('#ws_product_id').val('');
+        $('#ws_product_info').hide();
+        $('#ws_product_results').hide();
+        $('#ws_product_search').val('');
+        setCurrentDateTime('ws_administered_at');
+
+        // Load stores
+        loadWardStores();
+
+        var modal = new bootstrap.Modal(document.getElementById('wardStockModal'));
+        modal.show();
+    });
+
+    // ── Patient's Own Modal Submit ──────────────────────────────
+    $('#patientOwnForm').on('submit', function(e) {
+        e.preventDefault();
+
+        var $btn = $('#patientOwnSubmitBtn');
+        var $spinner = $btn.find('.spinner-border');
+        $btn.prop('disabled', true);
+        $spinner.removeClass('d-none');
+
+        var url = medicationChartAdministerDirectRoute.replace(':patient', PATIENT_ID);
+        var formData = {
+            drug_source: 'patient_own',
+            external_drug_name: $('#po_drug_name').val(),
+            external_qty: $('#po_qty').val(),
+            external_batch_number: $('#po_batch').val(),
+            external_expiry_date: $('#po_expiry').val(),
+            external_source_note: $('#po_source_note').val(),
+            administered_dose: $('#po_dose').val(),
+            route: $('#po_route').val(),
+            administered_at: $('#po_administered_at').val(),
+            note: $('#po_comment').val()
+        };
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
+            data: formData,
+            success: function(resp) {
+                $btn.prop('disabled', false);
+                $spinner.addClass('d-none');
+                toastr.success(resp.message || 'Patient\'s own drug administered successfully');
+                try {
+                    var modalEl = document.getElementById('patientOwnModal');
+                    var modalInst = bootstrap.Modal.getInstance(modalEl) || bootstrap.Modal.getOrCreateInstance(modalEl);
+                    modalInst.hide();
+                } catch(e) { $('#patientOwnModal').modal('hide'); }
+                // Reload medication list to show the new entry
+                if (typeof loadMedicationsList === 'function') loadMedicationsList();
+                if (typeof loadCalendar === 'function') loadCalendar();
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false);
+                $spinner.addClass('d-none');
+                var msg = 'Failed to administer';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.errors) {
+                        var errors = xhr.responseJSON.errors;
+                        msg = Object.values(errors).flat().join('<br>');
+                    } else if (xhr.responseJSON.message) {
+                        msg = xhr.responseJSON.message;
+                    }
+                }
+                toastr.error(msg);
+            }
+        });
+    });
+
+    // ── Ward Stock: Load stores ─────────────────────────────────
+    function loadWardStores() {
+        $.ajax({
+            url: "{{ url('pharmacy-workbench/stores') }}",
+            type: 'GET',
+            success: function(stores) {
+                var $select = $('#ws_store');
+                $select.find('option:not(:first)').remove();
+                stores.forEach(function(store) {
+                    $select.append('<option value="' + store.id + '">' + store.store_name + (store.location ? ' (' + store.location + ')' : '') + '</option>');
+                });
+            },
+            error: function() {
+                toastr.error('Failed to load stores');
+            }
+        });
+    }
+
+    // ── Ward Stock: Product search ──────────────────────────────
+    var wsSearchTimeout;
+    $('#ws_product_search').on('input', function() {
+        var query = $(this).val();
+        clearTimeout(wsSearchTimeout);
+
+        if (query.length < 2) {
+            $('#ws_product_results').hide();
+            return;
+        }
+
+        wsSearchTimeout = setTimeout(function() {
+            $.ajax({
+                url: "{{ url('live-search-products') }}",
+                method: 'GET',
+                dataType: 'json',
+                data: { term: query, patient_id: PATIENT_ID },
+                success: function(data) {
+                    var $results = $('#ws_product_results');
+                    $results.html('');
+
+                    if (!data || data.length === 0) {
+                        $results.html('<li class="list-group-item text-muted">No products found</li>').show();
+                        return;
+                    }
+
+                    data.forEach(function(item) {
+                        var name = item.product_name || 'Unknown';
+                        var code = item.product_code || '';
+                        var qty = (item.stock && item.stock.current_quantity !== undefined) ? item.stock.current_quantity : 0;
+                        var price = (item.price && item.price.current_sale_price !== undefined) ? item.price.current_sale_price : 0;
+                        var qtyClass = qty > 0 ? 'text-success' : 'text-danger';
+
+                        var li = '<li class="list-group-item list-group-item-action" style="cursor:pointer;" ' +
+                            'data-id="' + item.id + '" ' +
+                            'data-name="' + name + '" ' +
+                            'data-code="' + code + '" ' +
+                            'data-qty="' + qty + '" ' +
+                            'data-price="' + price + '">' +
+                            '<div class="d-flex justify-content-between">' +
+                            '<div><strong>' + name + '</strong> <small class="text-muted">[' + code + ']</small></div>' +
+                            '<div class="text-end"><span class="' + qtyClass + '"><strong>' + qty + '</strong> avail.</span><br><small>₦' + Number(price).toLocaleString() + '</small></div>' +
+                            '</div></li>';
+                        $results.append(li);
+                    });
+                    $results.show();
+                },
+                error: function() {
+                    $('#ws_product_results').html('<li class="list-group-item text-danger">Search failed</li>').show();
+                }
+            });
+        }, 300);
+    });
+
+    // ── Ward Stock: Select product from search results ──────────
+    $(document).on('click', '#ws_product_results li[data-id]', function() {
+        var id = $(this).data('id');
+        var name = $(this).data('name');
+        var code = $(this).data('code');
+        var qty = $(this).data('qty');
+        var price = $(this).data('price');
+
+        $('#ws_product_id').val(id);
+        $('#ws_product_search').val(name);
+        $('#ws_product_name').text(name);
+        $('#ws_product_code').text('[' + code + ']');
+        $('#ws_product_price').text('₦' + Number(price).toLocaleString());
+        $('#ws_product_results').hide();
+
+        // Show stock for the selected store
+        var storeId = $('#ws_store').val();
+        if (storeId) {
+            updateWsStockDisplay(id, storeId);
+        } else {
+            $('#ws_available_stock').text(qty + ' global stock').removeClass('bg-success bg-danger').addClass('bg-info');
+        }
+
+        $('#ws_product_info').slideDown(200);
+    });
+
+    // ── Ward Stock: Update stock when store changes ─────────────
+    $('#ws_store').on('change', function() {
+        var productId = $('#ws_product_id').val();
+        var storeId = $(this).val();
+        if (productId && storeId) {
+            updateWsStockDisplay(productId, storeId);
+        }
+    });
+
+    function updateWsStockDisplay(productId, storeId) {
+        $.ajax({
+            url: '/pharmacy-workbench/product/' + productId + '/stock',
+            method: 'GET',
+            success: function(resp) {
+                var storeStock = (resp.stores || []).find(function(s) { return s.store_id == storeId; });
+                var available = storeStock ? storeStock.quantity : 0;
+                var badge = $('#ws_available_stock');
+                badge.text(available + ' in store');
+                if (available > 0) {
+                    badge.removeClass('bg-danger bg-info').addClass('bg-success');
+                } else {
+                    badge.removeClass('bg-success bg-info').addClass('bg-danger');
+                }
+            },
+            error: function() {
+                $('#ws_available_stock').text('? stock').removeClass('bg-success bg-danger').addClass('bg-warning');
+            }
+        });
+    }
+
+    // Hide product results when clicking outside
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#ws_product_search, #ws_product_results').length) {
+            $('#ws_product_results').hide();
+        }
+    });
+
+    // ── Ward Stock Modal Submit ─────────────────────────────────
+    $('#wardStockForm').on('submit', function(e) {
+        e.preventDefault();
+
+        var productId = $('#ws_product_id').val();
+        if (!productId) {
+            toastr.warning('Please search and select a product');
+            $('#ws_product_search').focus();
+            return;
+        }
+
+        var storeId = $('#ws_store').val();
+        if (!storeId) {
+            toastr.warning('Please select a ward/store');
+            $('#ws_store').focus();
+            return;
+        }
+
+        var $btn = $('#wardStockSubmitBtn');
+        var $spinner = $btn.find('.spinner-border');
+        $btn.prop('disabled', true);
+        $spinner.removeClass('d-none');
+
+        var url = medicationChartAdministerDirectRoute.replace(':patient', PATIENT_ID);
+        var formData = {
+            drug_source: 'ward_stock',
+            product_id: productId,
+            store_id: storeId,
+            qty: $('#ws_qty').val(),
+            administered_dose: $('#ws_dose').val(),
+            route: $('#ws_route').val(),
+            administered_at: $('#ws_administered_at').val(),
+            note: $('#ws_comment').val(),
+            bill_patient: $('#ws_bill_patient').is(':checked') ? 1 : 0
+        };
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
+            data: formData,
+            success: function(resp) {
+                $btn.prop('disabled', false);
+                $spinner.addClass('d-none');
+                var msg = resp.message || 'Ward stock drug administered successfully';
+                if (formData.bill_patient) {
+                    msg += ' (billed)';
+                }
+                toastr.success(msg);
+                try {
+                    var modalEl = document.getElementById('wardStockModal');
+                    var modalInst = bootstrap.Modal.getInstance(modalEl) || bootstrap.Modal.getOrCreateInstance(modalEl);
+                    modalInst.hide();
+                } catch(e) { $('#wardStockModal').modal('hide'); }
+                // Reload to show new entry
+                if (typeof loadMedicationsList === 'function') loadMedicationsList();
+                if (typeof loadCalendar === 'function') loadCalendar();
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false);
+                $spinner.addClass('d-none');
+                var msg = 'Failed to administer';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.errors) {
+                        var errors = xhr.responseJSON.errors;
+                        msg = Object.values(errors).flat().join('<br>');
+                    } else if (xhr.responseJSON.message) {
+                        msg = xhr.responseJSON.message;
+                    }
+                }
+                toastr.error(msg);
+            }
+        });
+    });
+
+})();
+</script>

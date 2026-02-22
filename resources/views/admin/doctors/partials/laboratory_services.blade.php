@@ -25,6 +25,20 @@
 
 <div class="card-modern mt-2">
     <div class="card-body">
+        {{-- Treatment Plans + Save as Template (Plan §6.4: buttons at top of all 4 tab areas) --}}
+        <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
+            <div class="btn-group">
+                <button class="btn btn-sm btn-outline-secondary"
+                        data-bs-toggle="modal" data-bs-target="#treatmentPlanModal">
+                    <i class="fa fa-clipboard-list"></i> Treatment Plans
+                </button>
+                <button class="btn btn-sm btn-outline-success"
+                        onclick="ClinicalOrdersKit.openSaveTemplateModal()">
+                    <i class="fa fa-save"></i> Save as Template
+                </button>
+            </div>
+        </div>
+
         {{-- Sub-tabs for History and New Request --}}
         <ul class="nav nav-tabs service-tabs mb-3" role="tablist">
             <li class="nav-item" role="presentation">
@@ -76,20 +90,19 @@
                         <tbody id="selected-services"></tbody>
                     </table>
                 </div>
+                {{-- Phase 2d (Plan §4.5): Auto-save status line — items save on add --}}
+                <div class="auto-save-status text-muted small mt-2" id="labs-auto-save-status"></div>
             </div>
         </div>
 
-        {{-- Navigation Buttons --}}
+        {{-- Navigation Buttons (Save removed — labs auto-save on add) --}}
         <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
             <button type="button" onclick="switch_tab(event,'clinical_notes_tab')" class="btn btn-secondary">
                 <i class="fa fa-arrow-left"></i> Previous
             </button>
             <div>
-                <button type="button" onclick="saveLabsAndNext()" id="save_labs_btn" class="btn btn-success me-2">
-                    <i class="fa fa-save"></i> Save & Next
-                </button>
-                <button type="button" onclick="saveLabs()" class="btn btn-outline-success">
-                    <i class="fa fa-save"></i> Save
+                <button type="button" onclick="$('#imaging_services_tab').click();" class="btn btn-success">
+                    <i class="fa fa-arrow-right"></i> Next
                 </button>
             </div>
         </div>

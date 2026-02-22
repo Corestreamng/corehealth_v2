@@ -376,9 +376,28 @@
         padding: 15px;
         text-align: center;
         transition: transform 0.2s;
+        border: 1px solid rgba(0,0,0,0.08);
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .overview-stat-card.stat-primary {
+        background: linear-gradient(135deg, #e3f0ff 0%, #cfe2ff 100%) !important;
+        border-left: 4px solid #0d6efd;
+    }
+    .overview-stat-card.stat-success {
+        background: linear-gradient(135deg, #d1f5e0 0%, #b7ebc9 100%) !important;
+        border-left: 4px solid #198754;
+    }
+    .overview-stat-card.stat-warning {
+        background: linear-gradient(135deg, #fff6d5 0%, #ffecb5 100%) !important;
+        border-left: 4px solid #ffc107;
+    }
+    .overview-stat-card.stat-danger {
+        background: linear-gradient(135deg, #fde0e0 0%, #f5c6cb 100%) !important;
+        border-left: 4px solid #dc3545;
     }
     .overview-stat-card:hover {
         transform: translateY(-2px);
+        box-shadow: 0 3px 8px rgba(0,0,0,0.1);
     }
     .overview-stat-card .stat-number {
         font-size: 2rem;
@@ -387,7 +406,24 @@
     }
     .overview-stat-card .stat-label {
         font-size: 0.85rem;
-        opacity: 0.9;
+        font-weight: 600;
+    }
+    /* Overview legend */
+    .overview-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 8px 12px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        border: 1px solid #e9ecef;
+    }
+    .overview-legend .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.8rem;
+        color: #495057;
     }
 </style>
 
@@ -437,6 +473,13 @@
                 <i class="mdi mdi-view-grid"></i>Overview
             </button>
         </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="med-rx-tab" data-bs-toggle="tab" data-bs-target="#med-rx-content"
+                    type="button" role="tab" aria-controls="med-rx-content" aria-selected="false">
+                <i class="mdi mdi-clipboard-list"></i>Prescriptions
+                <span class="badge bg-primary ms-1" id="rx-tab-badge" style="display:none;">0</span>
+            </button>
+        </li>
     </ul>
 
     <div class="tab-content pt-3" id="medSubTabsContent">
@@ -456,6 +499,15 @@
                             <option value="">-- Select a medication --</option>
                             <!-- Will be populated via AJAX -->
                         </select>
+                        {{-- §6.2: Drug source at medication entry level --}}
+                        <div class="d-flex gap-2 mt-2">
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="btn-add-ward-stock">
+                                <i class="mdi mdi-hospital-building me-1"></i> Administer from Ward Stock
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-add-patient-own">
+                                <i class="mdi mdi-account-heart me-1"></i> Administer Patient's Own Drug
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <hr class="my-3">
@@ -537,25 +589,25 @@
             <!-- Summary Stats -->
             <div class="row mb-4" id="overview-stats-row">
                 <div class="col-md-3 col-6 mb-3">
-                    <div class="overview-stat-card bg-primary bg-opacity-10">
+                    <div class="overview-stat-card stat-primary">
                         <div class="stat-number text-primary" id="stat-total-meds">0</div>
                         <div class="stat-label text-primary">Active Medications</div>
                     </div>
                 </div>
                 <div class="col-md-3 col-6 mb-3">
-                    <div class="overview-stat-card bg-success bg-opacity-10">
+                    <div class="overview-stat-card stat-success">
                         <div class="stat-number text-success" id="stat-given">0</div>
                         <div class="stat-label text-success">Doses Given</div>
                     </div>
                 </div>
                 <div class="col-md-3 col-6 mb-3">
-                    <div class="overview-stat-card bg-warning bg-opacity-10">
+                    <div class="overview-stat-card stat-warning">
                         <div class="stat-number text-warning" id="stat-scheduled">0</div>
                         <div class="stat-label text-warning">Scheduled</div>
                     </div>
                 </div>
                 <div class="col-md-3 col-6 mb-3">
-                    <div class="overview-stat-card bg-danger bg-opacity-10">
+                    <div class="overview-stat-card stat-danger">
                         <div class="stat-number text-danger" id="stat-missed">0</div>
                         <div class="stat-label text-danger">Missed</div>
                     </div>
@@ -591,9 +643,107 @@
                         <!-- Calendar will be rendered here via JavaScript -->
                     </div>
                 </div>
+                <div class="card-footer bg-white py-2">
+                    <div class="overview-legend">
+                        <div class="legend-item"><span>✅</span> Given</div>
+                        <div class="legend-item"><span>❌</span> Missed</div>
+                        <div class="legend-item"><span>🕐</span> Pending</div>
+                        <div class="legend-item"><span>💊</span> Pharmacy</div>
+                        <div class="legend-item"><span>🏥</span> Ward Stock</div>
+                        <div class="legend-item"><span>👤</span> Patient's Own</div>
+                    </div>
+                </div>
             </div>
         </div>
         <!-- END OVERVIEW TAB -->
+
+        <!-- PRESCRIPTIONS TAB -->
+        <div class="tab-pane fade" id="med-rx-content" role="tabpanel" aria-labelledby="med-rx-tab">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0 fw-bold"><i class="mdi mdi-clipboard-list text-primary me-1"></i> Prescription Status Dashboard</h6>
+                <button type="button" class="btn btn-outline-primary btn-sm" id="rx-refresh-btn">
+                    <i class="mdi mdi-refresh"></i> Refresh
+                </button>
+            </div>
+
+            <!-- Status summary cards -->
+            <div class="row mb-3" id="rx-status-summary">
+                <div class="col-md-3 col-6 mb-2">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body text-center py-2">
+                            <div class="fs-4 fw-bold text-success" id="rx-count-dispensed">0</div>
+                            <small class="text-muted">Dispensed</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-2">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body text-center py-2">
+                            <div class="fs-4 fw-bold text-info" id="rx-count-billed">0</div>
+                            <small class="text-muted">Billed / Awaiting Pharmacy</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-2">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body text-center py-2">
+                            <div class="fs-4 fw-bold text-warning" id="rx-count-requested">0</div>
+                            <small class="text-muted">Requested / Awaiting Billing</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-2">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body text-center py-2">
+                            <div class="fs-4 fw-bold text-secondary" id="rx-count-total">0</div>
+                            <small class="text-muted">Total Active</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter buttons -->
+            <div class="btn-group mb-3" role="group" id="rx-filter-group">
+                <button type="button" class="btn btn-outline-secondary btn-sm active" data-rx-filter="all">All</button>
+                <button type="button" class="btn btn-outline-success btn-sm" data-rx-filter="3">Dispensed</button>
+                <button type="button" class="btn btn-outline-info btn-sm" data-rx-filter="2">Billed</button>
+                <button type="button" class="btn btn-outline-warning btn-sm" data-rx-filter="1">Requested</button>
+            </div>
+
+            <!-- Loading -->
+            <div class="text-center my-4" id="rx-loading" style="display:none;">
+                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                <span class="ms-2 text-muted">Loading prescriptions...</span>
+            </div>
+
+            <!-- Empty state -->
+            <div class="text-center my-4 text-muted" id="rx-empty" style="display:none;">
+                <i class="mdi mdi-clipboard-text-off" style="font-size:2rem;"></i>
+                <p class="mt-2">No active prescriptions found for this patient.</p>
+            </div>
+
+            <!-- Prescriptions table -->
+            <div class="table-responsive" id="rx-table-wrap" style="display:none;">
+                <table class="table table-sm table-hover align-middle" id="rx-dashboard-table">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Drug</th>
+                            <th>Dose</th>
+                            <th>Prescribed By</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Administered</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rx-dashboard-body">
+                        <!-- Populated via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!-- END PRESCRIPTIONS TAB -->
     </div>
 
     <!-- Set Schedule Modal -->
@@ -611,6 +761,9 @@
                         <input type="hidden" id="schedule_patient_id" name="patient_id"
                             value="{{ $patient->id ?? '' }}">
                         <input type="hidden" id="schedule_medication_id" name="product_or_service_request_id">
+                        <input type="hidden" id="schedule_drug_source" name="drug_source" value="pharmacy_dispensed">
+                        <input type="hidden" id="schedule_product_id" name="product_id" value="">
+                        <input type="hidden" id="schedule_external_drug_name" name="external_drug_name" value="">
 
                         <div class="mb-3">
                             <label for="schedule_date" class="form-label">Start Date</label>
@@ -719,47 +872,65 @@
                     <div class="modal-body">
                         <input type="hidden" id="administer_schedule_id" name="schedule_id">
                         <input type="hidden" id="administer_product_id" name="product_id">
+                        <input type="hidden" id="administer_product_request_id" name="product_request_id">
+                        {{-- Drug source: pharmacy_dispensed | ward_stock | patient_own --}}
+                        <input type="hidden" id="administer_drug_source" name="drug_source" value="pharmacy_dispensed">
+                        {{-- For patient_own direct schedules --}}
+                        <input type="hidden" id="administer_external_drug_name" name="external_drug_name">
 
                         <div class="mb-3">
                             <label id="administer-medication-info" class="form-label fw-bold text-primary"></label>
+                            <div id="administer-counts-info" class="small text-muted"></div>
                         </div>
 
                         <div class="mb-3">
                             <label id="administer-scheduled-time" class="form-label text-muted"></label>
                         </div>
 
-                        <!-- Store Selection with Stock Display -->
-                        <div class="mb-3 p-3 rounded" style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border: 2px solid #81c784;">
-                            <label for="administer_store_id" class="form-label fw-bold">
-                                <i class="mdi mdi-store text-success"></i> Select Dispensing Store <span class="text-danger">*</span>
-                            </label>
-                            <select class="form-select" id="administer_store_id" name="store_id" required>
-                                <option value="">-- Choose Store --</option>
-                                @foreach($stores ?? [] as $store)
-                                    <option value="{{ $store->id }}">{{ $store->store_name }}</option>
-                                @endforeach
-                            </select>
-                            <div id="administer-stock-info" class="mt-2 p-2 bg-white rounded shadow-sm" style="display: none;">
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <span class="small text-muted"><i class="mdi mdi-package-variant"></i> Available Stock:</span>
-                                    <span id="administer-stock-qty" class="badge bg-secondary">--</span>
-                                </div>
-                            </div>
-                            <div id="administer-stock-warning" class="alert alert-danger mt-2 py-2 small" style="display: none;">
-                                <i class="mdi mdi-alert-circle"></i> <span id="administer-stock-warning-text">Insufficient stock!</span>
+                        {{-- Source indicator badge — swapped dynamically by JS --}}
+                        <div class="mb-3" id="administer-source-badge">
+                            <span class="badge bg-success"><i class="mdi mdi-pill"></i> Pharmacy Dispensed</span>
+                            <small class="text-muted ms-2">Source is determined by the selected medication</small>
+                        </div>
+
+                        {{-- Pharmacy dispensed: qty per administration (hidden for direct entries) --}}
+                        <div id="administer-pharmacy-qty-section" class="">
+                            <div class="mb-3">
+                                <label for="administer_pharmacy_qty" class="form-label">Qty per Administration <span class="text-danger">*</span></label>
+                                <input type="number" step="0.01" class="form-control" id="administer_pharmacy_qty" name="pharmacy_qty" min="0.01" value="1">
+                                <small class="text-muted">Units consumed from prescribed quantity per this administration</small>
+                                <div id="administer-remaining-info" class="mt-1 small"></div>
                             </div>
                         </div>
 
-                        <!-- Batch Selection (optional - FIFO by default) -->
-                        <div class="mb-3" id="administer-batch-section" style="display: none;">
-                            <label for="administer_batch_id" class="form-label">
-                                <i class="mdi mdi-package-variant text-info"></i> Select Batch <small class="text-muted">(optional)</small>
-                            </label>
-                            <select class="form-select" id="administer_batch_id" name="batch_id">
-                                <option value="">Use FIFO (Auto - oldest batch first)</option>
-                                <!-- Populated via AJAX when store is selected -->
-                            </select>
-                            <small class="text-muted">Leave empty for automatic FIFO selection from oldest batch</small>
+                        {{-- Ward stock: store select + qty (hidden by default) --}}
+                        <div id="administer-ward-stock-section" class="d-none">
+                            <div class="mb-3">
+                                <label for="administer_store_id" class="form-label">Dispensing Store <span class="text-danger">*</span></label>
+                                <select class="form-select" id="administer_store_id" name="store_id">
+                                    <option value="">-- Select Store --</option>
+                                </select>
+                                <div id="administer-stock-info" class="mt-1 d-none">
+                                    <small>Available: <span id="administer-stock-qty" class="badge bg-secondary">—</span></small>
+                                </div>
+                                <div id="administer-stock-warning" class="text-danger small mt-1 d-none">
+                                    <i class="mdi mdi-alert"></i> <span id="administer-stock-warning-text"></span>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="administer_qty" class="form-label">Qty to Deduct <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="administer_qty" name="qty" min="1" value="1">
+                                <small class="text-muted">Number of units to deduct from store stock</small>
+                            </div>
+                        </div>
+
+                        {{-- Patient's own: qty field (hidden by default) --}}
+                        <div id="administer-patient-own-section" class="d-none">
+                            <div class="mb-3">
+                                <label for="administer_external_qty" class="form-label">Quantity <span class="text-danger">*</span></label>
+                                <input type="number" step="0.01" class="form-control" id="administer_external_qty" name="external_qty" min="0.01" value="1">
+                                <small class="text-muted">Quantity administered from patient's own supply</small>
+                            </div>
                         </div>
 
                         <div class="mb-3">
@@ -1040,6 +1211,241 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Dismiss Prescription Confirmation Modal -->
+    <div class="modal fade" id="dismissRxModal" tabindex="-1" aria-labelledby="dismissRxModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="dismissRxModalLabel"><i class="mdi mdi-close-circle"></i> Dismiss Prescription</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="dismiss-rx-id">
+                    <div class="alert alert-warning mb-3">
+                        <i class="mdi mdi-alert me-1"></i>
+                        You are about to dismiss this prescription. This action cannot be undone.
+                    </div>
+                    <div class="mb-3" id="dismiss-rx-info">
+                        <!-- Drug info populated by JS -->
+                    </div>
+                    <div class="mb-3">
+                        <label for="dismiss-rx-reason" class="form-label fw-bold">Reason for Dismissal <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="dismiss-rx-reason" rows="3" placeholder="Enter reason for dismissing this prescription..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirm-dismiss-rx-btn">
+                        <i class="mdi mdi-close-circle me-1"></i> Confirm Dismiss
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- §6.3: Patient's Own Drug Modal --}}
+    <div class="modal fade" id="patientOwnModal" tabindex="-1" aria-labelledby="patientOwnModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <form id="patientOwnForm">
+                <div class="modal-content">
+                    <div class="modal-header" style="background: #7b1fa2; color: #fff;">
+                        <h5 class="modal-title" id="patientOwnModalLabel">
+                            <i class="mdi mdi-account-heart me-1"></i> Administer Patient's Own Drug
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="drug_source" value="patient_own">
+
+                        <div class="alert alert-light border mb-3">
+                            <i class="mdi mdi-information-outline text-info me-1"></i>
+                            Record a drug the patient brought from outside. No billing or stock changes.
+                        </div>
+
+                        <h6 class="text-muted mb-3"><i class="mdi mdi-pill me-1"></i> Drug Information</h6>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="po_drug_name" class="form-label">Drug Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="po_drug_name" name="external_drug_name" placeholder="e.g. Metformin 500mg" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="po_qty" class="form-label">Quantity <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="po_qty" name="external_qty" min="1" value="1" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="po_batch" class="form-label">Batch No.</label>
+                                <input type="text" class="form-control" id="po_batch" name="external_batch_number" placeholder="Optional">
+                            </div>
+                        </div>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label for="po_expiry" class="form-label">Expiry Date</label>
+                                <input type="date" class="form-control" id="po_expiry" name="external_expiry_date">
+                            </div>
+                            <div class="col-md-8">
+                                <label for="po_source_note" class="form-label">Source Note</label>
+                                <input type="text" class="form-control" id="po_source_note" name="external_source_note" placeholder="e.g. Brought by wife, purchased from XYZ pharmacy">
+                            </div>
+                        </div>
+
+                        <hr>
+                        <h6 class="text-muted mb-3"><i class="mdi mdi-needle me-1"></i> Administration Details</h6>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label for="po_dose" class="form-label">Dose <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="po_dose" name="administered_dose" placeholder="e.g. 500mg" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="po_route" class="form-label">Route <span class="text-danger">*</span></label>
+                                <select class="form-select" id="po_route" name="route" required>
+                                    <option value="Oral">Oral</option>
+                                    <option value="IV">IV</option>
+                                    <option value="IM">IM</option>
+                                    <option value="SC">SC</option>
+                                    <option value="Topical">Topical</option>
+                                    <option value="Rectal">Rectal</option>
+                                    <option value="Inhalation">Inhalation</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="po_administered_at" class="form-label">Administered At <span class="text-danger">*</span></label>
+                                <input type="datetime-local" class="form-control" id="po_administered_at" name="administered_at" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="po_comment" class="form-label">Comment</label>
+                            <textarea class="form-control" id="po_comment" name="note" rows="2" placeholder="Optional notes..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn text-white" id="patientOwnSubmitBtn" style="background: #7b1fa2;">
+                            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                            <i class="mdi mdi-check me-1"></i> Administer
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- §6.4: Ward Stock Modal --}}
+    <div class="modal fade" id="wardStockModal" tabindex="-1" aria-labelledby="wardStockModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <form id="wardStockForm">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="wardStockModalLabel">
+                            <i class="mdi mdi-hospital-building me-1"></i> Administer from Ward Stock
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="drug_source" value="ward_stock">
+
+                        <div class="alert alert-light border mb-3">
+                            <i class="mdi mdi-information-outline text-info me-1"></i>
+                            Administer a drug from the ward/store inventory. Stock will be deducted.
+                        </div>
+
+                        <h6 class="text-muted mb-3"><i class="mdi mdi-store me-1"></i> Stock Selection</h6>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="ws_store" class="form-label">Ward/Store <span class="text-danger">*</span></label>
+                                <select class="form-select" id="ws_store" name="store_id" required>
+                                    <option value="">-- Select Store --</option>
+                                    {{-- Populated via AJAX --}}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="ws_product_search" class="form-label">Search Product <span class="text-danger">*</span></label>
+                                <div class="position-relative">
+                                    <input type="text" class="form-control" id="ws_product_search" placeholder="Type to search products..." autocomplete="off">
+                                    <input type="hidden" id="ws_product_id" name="product_id">
+                                    <ul class="list-group position-absolute w-100 shadow" id="ws_product_results" style="z-index: 1060; display: none; max-height: 250px; overflow-y: auto;"></ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Selected product info card --}}
+                        <div id="ws_product_info" class="card border-primary mb-3" style="display: none;">
+                            <div class="card-body py-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong id="ws_product_name"></strong>
+                                        <small class="text-muted ms-2" id="ws_product_code"></small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-success" id="ws_available_stock">0 available</span>
+                                        <span class="ms-2 text-muted" id="ws_product_price"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label for="ws_qty" class="form-label">Quantity <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="ws_qty" name="qty" min="1" value="1" required>
+                            </div>
+                        </div>
+
+                        <hr>
+                        <h6 class="text-muted mb-3"><i class="mdi mdi-needle me-1"></i> Administration Details</h6>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label for="ws_dose" class="form-label">Dose <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="ws_dose" name="administered_dose" placeholder="e.g. 500mg" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="ws_route" class="form-label">Route <span class="text-danger">*</span></label>
+                                <select class="form-select" id="ws_route" name="route" required>
+                                    <option value="Oral">Oral</option>
+                                    <option value="IV">IV</option>
+                                    <option value="IM">IM</option>
+                                    <option value="SC">SC</option>
+                                    <option value="Topical">Topical</option>
+                                    <option value="Rectal">Rectal</option>
+                                    <option value="Inhalation">Inhalation</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="ws_administered_at" class="form-label">Administered At <span class="text-danger">*</span></label>
+                                <input type="datetime-local" class="form-control" id="ws_administered_at" name="administered_at" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="ws_comment" class="form-label">Comment</label>
+                            <textarea class="form-control" id="ws_comment" name="note" rows="2" placeholder="Optional notes..."></textarea>
+                        </div>
+
+                        <hr>
+                        {{-- §6.4: Bill Patient checkbox --}}
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="ws_bill_patient" name="bill_patient" value="1">
+                            <label class="form-check-label" for="ws_bill_patient">
+                                <strong>Bill Patient</strong>
+                            </label>
+                        </div>
+                        <small class="text-muted d-block mb-2">
+                            <i class="mdi mdi-information-outline me-1"></i>
+                            When checked, creates a billing entry with HMO tariff pricing. The item will appear in the patient's billing queue for cashier processing.
+                        </small>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="wardStockSubmitBtn">
+                            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                            <i class="mdi mdi-check me-1"></i> Administer
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
 </div>

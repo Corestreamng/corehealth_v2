@@ -26,9 +26,11 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Yajra\DataTables\DataTables;
+use App\Http\Traits\ClinicalOrdersTrait;
 
 class EncounterController extends Controller
 {
+    use ClinicalOrdersTrait;
     /**
      * Display a listing of the resource.
      *
@@ -539,6 +541,25 @@ class EncounterController extends Controller
                     </button>";
                 }
 
+                // Re-order button (Plan §5.2)
+                $roName = htmlspecialchars(($his->service) ? $his->service->service_name : 'N/A', ENT_QUOTES);
+                $roSvcId = $his->service_id;
+                $roPrice = optional(optional($his->service)->price)->sale_price ?? 0;
+                $roCov   = optional($his->productOrServiceRequest)->coverage_mode ?? '';
+                $roPay   = optional($his->productOrServiceRequest)->payable_amount ?? $roPrice;
+                $roClaim = optional($his->productOrServiceRequest)->claims_amount ?? 0;
+                $str .= "<button type='button' class='btn btn-outline-primary btn-sm re-order-btn ms-1'
+                    data-type='labs'
+                    data-service-id='{$roSvcId}'
+                    data-name='{$roName}'
+                    data-price='{$roPrice}'
+                    data-coverage-mode='{$roCov}'
+                    data-payable='{$roPay}'
+                    data-claims='{$roClaim}'
+                    title='Add to current lab requests'>
+                    <i class='fa fa-redo'></i> Re-order
+                </button>";
+
                 $str .= '</div>'; // Close btn-group
                 $str .= '</div>'; // Close card-body
                 $str .= '</div>'; // Close card
@@ -733,6 +754,25 @@ class EncounterController extends Controller
                         <i class='fa fa-trash'></i> Delete
                     </button>";
                 }
+
+                // Re-order button (Plan §5.2)
+                $roName = htmlspecialchars(($his->service) ? $his->service->service_name : 'N/A', ENT_QUOTES);
+                $roSvcId = $his->service_id;
+                $roPrice = optional(optional($his->service)->price)->sale_price ?? 0;
+                $roCov   = optional($his->productOrServiceRequest)->coverage_mode ?? '';
+                $roPay   = optional($his->productOrServiceRequest)->payable_amount ?? $roPrice;
+                $roClaim = optional($his->productOrServiceRequest)->claims_amount ?? 0;
+                $str .= "<button type='button' class='btn btn-outline-primary btn-sm re-order-btn ms-1'
+                    data-type='imaging'
+                    data-service-id='{$roSvcId}'
+                    data-name='{$roName}'
+                    data-price='{$roPrice}'
+                    data-coverage-mode='{$roCov}'
+                    data-payable='{$roPay}'
+                    data-claims='{$roClaim}'
+                    title='Add to current imaging requests'>
+                    <i class='fa fa-redo'></i> Re-order
+                </button>";
 
                 $str .= '</div>'; // Close btn-group
                 $str .= '</div>'; // Close card-body
@@ -1374,6 +1414,13 @@ class EncounterController extends Controller
                     }
                 }
 
+                // Re-prescribe button data (Plan §5.2)
+                $roName  = htmlspecialchars($productName, ENT_QUOTES);
+                $roDose  = htmlspecialchars($dose, ENT_QUOTES);
+                $roCov   = optional($item->productOrServiceRequest)->coverage_mode ?? '';
+                $roPay   = optional($item->productOrServiceRequest)->payable_amount ?? $price;
+                $roClaim = optional($item->productOrServiceRequest)->claims_amount ?? 0;
+
                 return "
                     <div class='p-2 border-bottom'>
                         <div class='d-flex justify-content-between'>
@@ -1387,6 +1434,20 @@ class EncounterController extends Controller
                             <span class='ms-2'><i class='mdi mdi-cash'></i> ₦" . number_format($price, 2) . "</span>
                         </div>
                         {$statusInfo}
+                        <div class='mt-1'>
+                            <button type='button' class='btn btn-outline-primary btn-sm re-order-btn'
+                                data-type='prescriptions'
+                                data-product-id='{$item->product_id}'
+                                data-name='{$roName}'
+                                data-price='{$price}'
+                                data-dose='{$roDose}'
+                                data-coverage-mode='{$roCov}'
+                                data-payable='{$roPay}'
+                                data-claims='{$roClaim}'
+                                title='Add to current prescriptions'>
+                                <i class='fa fa-redo'></i> Re-prescribe
+                            </button>
+                        </div>
                     </div>
                 ";
             })
@@ -3459,5 +3520,226 @@ class EncounterController extends Controller
         ]);
 
         return view('admin.doctors.procedures.print', compact('procedure'));
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+     * Single-item add endpoints (auto-save — Plan §3.2)
+     * Thin wrappers around ClinicalOrdersTrait methods.
+     * ═══════════════════════════════════════════════════════════════ */
+
+    /**
+     * Add a single lab request for the encounter.
+     * POST encounters/{encounter}/add-lab
+     */
+    public function addSingleLabRequest(Request $request, Encounter $encounter)
+    {
+        try {
+            $request->validate(['service_id' => 'required|integer']);
+            $lab = $this->addSingleLab(
+                $request->input('service_id'),
+                $request->input('note'),
+                $encounter->patient_id,
+                $encounter->id
+            );
+            return response()->json([
+                'success' => true,
+                'id' => $lab->id,
+                'item' => ['id' => $lab->id, 'service_id' => $lab->service_id, 'note' => $lab->note, 'created_at' => $lab->created_at],
+                'message' => 'Lab added'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('addSingleLabRequest: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Add a single imaging request for the encounter.
+     * POST encounters/{encounter}/add-imaging
+     */
+    public function addSingleImagingRequest(Request $request, Encounter $encounter)
+    {
+        try {
+            $request->validate(['service_id' => 'required|integer']);
+            $imaging = $this->addSingleImaging(
+                $request->input('service_id'),
+                $request->input('note'),
+                $encounter->patient_id,
+                $encounter->id
+            );
+            return response()->json([
+                'success' => true,
+                'id' => $imaging->id,
+                'item' => ['id' => $imaging->id, 'service_id' => $imaging->service_id, 'note' => $imaging->note, 'created_at' => $imaging->created_at],
+                'message' => 'Imaging added'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('addSingleImagingRequest: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Add a single prescription for the encounter.
+     * POST encounters/{encounter}/add-prescription
+     */
+    public function addSinglePrescriptionRequest(Request $request, Encounter $encounter)
+    {
+        try {
+            $request->validate(['product_id' => 'required|integer']);
+            $presc = $this->addSinglePrescription(
+                $request->input('product_id'),
+                $request->input('dose', ''),
+                $encounter->patient_id,
+                $encounter->id
+            );
+            return response()->json([
+                'success' => true,
+                'id' => $presc->id,
+                'item' => ['id' => $presc->id, 'product_id' => $presc->product_id, 'dose' => $presc->dose, 'created_at' => $presc->created_at],
+                'message' => 'Prescription added'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('addSinglePrescriptionRequest: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Update prescription dose (debounced auto-save — Plan §4.3).
+     * PUT encounters/{encounter}/prescriptions/{prescription}/dose
+     */
+    public function updatePrescriptionDoseRequest(Request $request, Encounter $encounter, ProductRequest $prescription)
+    {
+        try {
+            if ($prescription->encounter_id != $encounter->id) {
+                return response()->json(['success' => false, 'message' => 'Prescription does not belong to this encounter'], 403);
+            }
+            $presc = $this->updatePrescriptionDose($prescription->id, $request->input('dose', ''));
+            return response()->json(['success' => true, 'id' => $presc->id, 'message' => 'Dose updated']);
+        } catch (\Exception $e) {
+            Log::error('updatePrescriptionDoseRequest: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Add a single procedure for the encounter.
+     * POST encounters/{encounter}/add-procedure
+     */
+    public function addSingleProcedureRequest(Request $request, Encounter $encounter)
+    {
+        try {
+            $request->validate(['service_id' => 'required|integer', 'priority' => 'required|string']);
+            $procedure = $this->addSingleProcedure(
+                $request->only(['service_id', 'priority', 'scheduled_date', 'pre_notes']),
+                $encounter->patient_id,
+                $encounter->id,
+                $encounter->admission_request_id
+            );
+            return response()->json([
+                'success' => true,
+                'id' => $procedure->id,
+                'item' => ['id' => $procedure->id, 'service_id' => $procedure->service_id, 'priority' => $procedure->priority, 'created_at' => $procedure->created_at],
+                'message' => 'Procedure added'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('addSingleProcedureRequest: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Update a lab's clinical note (debounced auto-save).
+     * PUT encounters/{encounter}/labs/{lab}/note
+     */
+    public function updateLabNoteRequest(Request $request, Encounter $encounter, LabServiceRequest $lab)
+    {
+        try {
+            if ($lab->encounter_id != $encounter->id) {
+                return response()->json(['success' => false, 'message' => 'Lab does not belong to this encounter'], 403);
+            }
+            $lab = $this->updateSingleLabNote($lab->id, $request->input('note', ''));
+            return response()->json(['success' => true, 'id' => $lab->id, 'message' => 'Note updated']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Update an imaging request's clinical note (debounced auto-save).
+     * PUT encounters/{encounter}/imaging/{imaging}/note
+     */
+    public function updateImagingNoteRequest(Request $request, Encounter $encounter, ImagingServiceRequest $imaging)
+    {
+        try {
+            if ($imaging->encounter_id != $encounter->id) {
+                return response()->json(['success' => false, 'message' => 'Imaging does not belong to this encounter'], 403);
+            }
+            $imaging = $this->updateSingleImagingNote($imaging->id, $request->input('note', ''));
+            return response()->json(['success' => true, 'id' => $imaging->id, 'message' => 'Note updated']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Re-prescribe items from a previous encounter (Plan §5.1).
+     * POST /encounters/{encounter}/re-prescribe
+     * Expects: { source_type: 'labs'|'imaging'|'prescriptions', source_ids: [...], adjust_doses?: {...} }
+     */
+    public function rePrescribe(Request $request, Encounter $encounter)
+    {
+        $request->validate([
+            'source_type' => 'required|in:labs,imaging,prescriptions,procedures',
+            'source_ids'  => 'required|array|min:1',
+            'source_ids.*' => 'integer',
+            'adjust_doses' => 'nullable|array',
+        ]);
+
+        try {
+            $created = $this->rePrescribeItems(
+                $request->input('source_type'),
+                $request->input('source_ids'),
+                $encounter->patient_id,
+                $encounter->id,
+                $request->input('adjust_doses', [])
+            );
+
+            return response()->json([
+                'success' => true,
+                'items'   => $created->map(fn($item) => ['id' => $item->id]),
+                'count'   => $created->count(),
+                'message' => $created->count() . ' item(s) re-prescribed'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Fetch recent encounters for a patient with item counts.
+     * GET encounters/{encounter}/recent-encounters
+     * Plan §5.3 — "Re-prescribe from encounter" dropdown data.
+     */
+    public function recentEncounters(Encounter $encounter)
+    {
+        $encounters = $this->recentEncountersForPatient(
+            $encounter->patient_id,
+            5,
+            $encounter->id  // exclude current
+        );
+        return response()->json(['success' => true, 'encounters' => $encounters]);
+    }
+
+    /**
+     * Get all items from a specific encounter (for re-prescribe preview).
+     * GET encounters/{encounter}/encounter-items/{sourceEncounter}
+     * Plan §5.3
+     */
+    public function encounterItems(Encounter $encounter, int $sourceEncounter)
+    {
+        $items = $this->getEncounterItems($sourceEncounter);
+        return response()->json(['success' => true, 'items' => $items]);
     }
 }

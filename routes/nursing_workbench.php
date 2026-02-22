@@ -71,6 +71,8 @@ Route::middleware(['web', 'auth'])->prefix('nursing-workbench')->name('nursing-w
     Route::get('/service-categories', [NursingWorkbenchController::class, 'getServiceCategories'])->name('service-categories');
     Route::get('/product-categories', [NursingWorkbenchController::class, 'getProductCategories'])->name('product-categories');
     Route::get('/patient/{patientId}/pending-bills', [NursingWorkbenchController::class, 'getPendingBills'])->name('billing.pending');
+    Route::get('/patient/{patientId}/service-requests', [NursingWorkbenchController::class, 'getServiceRequests'])->name('billing.service-requests');
+    Route::get('/patient/{patientId}/service-requests-stats', [NursingWorkbenchController::class, 'getServiceRequestsStats'])->name('billing.service-requests-stats');
     Route::post('/add-service-bill', [NursingWorkbenchController::class, 'addServiceBill'])->name('billing.add-service');
     Route::post('/add-consumable-bill', [NursingWorkbenchController::class, 'addConsumableBill'])->name('billing.add-consumable');
     Route::delete('/remove-bill/{id}', [NursingWorkbenchController::class, 'removeBillItem'])->name('billing.remove');
@@ -190,5 +192,28 @@ Route::middleware(['web', 'auth'])->prefix('nursing-workbench')->name('nursing-w
         Route::post('/labs', [NursingWorkbenchController::class, 'saveNurseLabs'])->name('labs');
         Route::post('/imaging', [NursingWorkbenchController::class, 'saveNurseImaging'])->name('imaging');
         Route::post('/procedures', [NursingWorkbenchController::class, 'saveNurseProcedures'])->name('procedures');
+
+        // Single-item add/remove endpoints (auto-save — Plan §3.3)
+        Route::post('/add-lab', [NursingWorkbenchController::class, 'nurseAddSingleLab'])->name('addLab');
+        Route::delete('/labs/{lab}', [NursingWorkbenchController::class, 'nurseRemoveSingleLab'])->name('removeLab');
+        Route::post('/add-imaging', [NursingWorkbenchController::class, 'nurseAddSingleImaging'])->name('addImaging');
+        Route::delete('/imaging/{imaging}', [NursingWorkbenchController::class, 'nurseRemoveSingleImaging'])->name('removeImaging');
+        Route::post('/add-prescription', [NursingWorkbenchController::class, 'nurseAddSinglePrescription'])->name('addPrescription');
+        Route::put('/prescriptions/{prescription}/dose', [NursingWorkbenchController::class, 'nurseUpdatePrescriptionDose'])->name('updatePrescriptionDose');
+        Route::put('/labs/{lab}/note', [NursingWorkbenchController::class, 'nurseUpdateLabNote'])->name('updateLabNote');
+        Route::put('/imaging/{imaging}/note', [NursingWorkbenchController::class, 'nurseUpdateImagingNote'])->name('updateImagingNote');
+        Route::delete('/prescriptions/{prescription}', [NursingWorkbenchController::class, 'nurseRemoveSinglePrescription'])->name('removePrescription');
+        Route::post('/add-procedure', [NursingWorkbenchController::class, 'nurseAddSingleProcedure'])->name('addProcedure');
+        Route::delete('/procedures/{procedure}', [NursingWorkbenchController::class, 'nurseRemoveSingleProcedure'])->name('removeProcedure');
+
+        // Re-prescribe from history (Plan §5.1)
+        Route::post('/re-prescribe', [NursingWorkbenchController::class, 'nurseRePrescribe'])->name('rePrescribe');
+
+        // Recent encounters + items for re-prescribe dropdown (Plan §5.3)
+        Route::get('/recent-encounters', [NursingWorkbenchController::class, 'nurseRecentEncounters'])->name('recentEncounters');
+        Route::get('/encounter-items/{encounterId}', [NursingWorkbenchController::class, 'nurseEncounterItems'])->name('encounterItems');
+
+        // Apply treatment plan (Plan §6.3)
+        Route::post('/apply-treatment-plan', [\App\Http\Controllers\TreatmentPlanController::class, 'applyForNurse'])->name('applyTreatmentPlan');
     });
 });

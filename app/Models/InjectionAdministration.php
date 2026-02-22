@@ -21,6 +21,13 @@ class InjectionAdministration extends Model implements Auditable
         'site',
         'administered_at',
         'administered_by',
+        'drug_source',
+        'product_request_id',
+        'external_drug_name',
+        'external_qty',
+        'external_batch_number',
+        'external_expiry_date',
+        'external_source_note',
         'dispensed_from_store_id',
         'notes',
         'batch_number',
@@ -46,6 +53,14 @@ class InjectionAdministration extends Model implements Auditable
     public function product()
     {
         return $this->belongsTo(Product::class, 'product_id');
+    }
+
+    /**
+     * Get the prescription record for this injection.
+     */
+    public function productRequest()
+    {
+        return $this->belongsTo(ProductRequest::class, 'product_request_id');
     }
 
     /**
