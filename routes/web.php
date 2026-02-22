@@ -18,6 +18,7 @@ use App\Http\Controllers\HmoWorkbenchController;
 use App\Http\Controllers\HmoReportsController;
 use App\Http\Controllers\Admin\TariffManagementController;
 use App\Http\Controllers\HospitalConfigController;
+use App\Http\Controllers\TreatmentPlanController;
 use App\Http\Controllers\LabServiceRequestController;
 use App\Http\Controllers\ImagingServiceRequestController;
 use App\Http\Controllers\MiscBillController;
@@ -287,6 +288,33 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('medical-reports/{medical_report}/print', [\App\Http\Controllers\MedicalReportController::class, 'print'])->name('medical-reports.print');
         Route::get('patient/{patient_id}/medical-reports', [\App\Http\Controllers\MedicalReportController::class, 'listByPatient'])->name('medical-reports.by-patient');
         Route::get('patient/{patient_id}/report-data', [\App\Http\Controllers\MedicalReportController::class, 'getPatientData'])->name('medical-reports.patient-data');
+
+        // Single-item add endpoints (auto-save — Plan §3.2)
+        Route::post('encounters/{encounter}/add-lab', [EncounterController::class, 'addSingleLabRequest'])->name('encounters.addLab');
+        Route::post('encounters/{encounter}/add-imaging', [EncounterController::class, 'addSingleImagingRequest'])->name('encounters.addImaging');
+        Route::post('encounters/{encounter}/add-prescription', [EncounterController::class, 'addSinglePrescriptionRequest'])->name('encounters.addPrescription');
+        Route::put('encounters/{encounter}/prescriptions/{prescription}/dose', [EncounterController::class, 'updatePrescriptionDoseRequest'])->name('encounters.updatePrescriptionDose');
+        Route::put('encounters/{encounter}/labs/{lab}/note', [EncounterController::class, 'updateLabNoteRequest'])->name('encounters.updateLabNote');
+        Route::put('encounters/{encounter}/imaging/{imaging}/note', [EncounterController::class, 'updateImagingNoteRequest'])->name('encounters.updateImagingNote');
+        Route::post('encounters/{encounter}/add-procedure', [EncounterController::class, 'addSingleProcedureRequest'])->name('encounters.addProcedure');
+
+        // Re-prescribe from history (Plan §5.1)
+        Route::post('encounters/{encounter}/re-prescribe', [EncounterController::class, 'rePrescribe'])->name('encounters.rePrescribe');
+
+        // Recent encounters + items for re-prescribe dropdown (Plan §5.3)
+        Route::get('encounters/{encounter}/recent-encounters', [EncounterController::class, 'recentEncounters'])->name('encounters.recentEncounters');
+        Route::get('encounters/{encounter}/encounter-items/{sourceEncounter}', [EncounterController::class, 'encounterItems'])->name('encounters.encounterItems');
+
+        // Apply treatment plan to encounter (Plan §6.3)
+        Route::post('encounters/{encounter}/apply-treatment-plan', [TreatmentPlanController::class, 'applyToEncounter'])->name('encounters.applyTreatmentPlan');
+
+        // Treatment plans CRUD (Plan §6.3)
+        Route::get('treatment-plans', [TreatmentPlanController::class, 'index'])->name('treatmentPlans.index');
+        Route::post('treatment-plans', [TreatmentPlanController::class, 'store'])->name('treatmentPlans.store');
+        Route::post('treatment-plans/from-current', [TreatmentPlanController::class, 'fromCurrent'])->name('treatmentPlans.fromCurrent');
+        Route::get('treatment-plans/{treatmentPlan}', [TreatmentPlanController::class, 'show'])->name('treatmentPlans.show');
+        Route::put('treatment-plans/{treatmentPlan}', [TreatmentPlanController::class, 'update'])->name('treatmentPlans.update');
+        Route::delete('treatment-plans/{treatmentPlan}', [TreatmentPlanController::class, 'destroy'])->name('treatmentPlans.destroy');
 
         // Delete endpoints for service requests
         Route::delete('encounters/{encounter}/labs/{lab}', [EncounterController::class, 'deleteLab'])->name('encounters.deleteLab');

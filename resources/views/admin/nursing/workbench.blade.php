@@ -4,6 +4,7 @@
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('plugins/dataT/datatables.min.css') }}">
+<link rel="stylesheet" href="{{ asset('css/clinical-orders-shared.css') }}">
 @endpush
 
 @section('content')
@@ -20,6 +21,49 @@
         --danger: #dc3545;
         --info: #17a2b8;
     }
+
+    /* Billing History Stat Cards */
+    .bh-stat-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 16px;
+        border-radius: 10px;
+        background: #fff;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        border-left: 4px solid transparent;
+        transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .bh-stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .bh-stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; }
+    .bh-stat-value { font-size: 1.15rem; font-weight: 700; color: #2d3748; }
+    .bh-stat-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; color: #718096; }
+
+    .bh-stat-purple { border-left-color: #667eea; }
+    .bh-stat-purple .bh-stat-icon { background: linear-gradient(135deg, #667eea, #764ba2); }
+    .bh-stat-green { border-left-color: #11998e; }
+    .bh-stat-green .bh-stat-icon { background: linear-gradient(135deg, #11998e, #38ef7d); }
+    .bh-stat-pink { border-left-color: #f093fb; }
+    .bh-stat-pink .bh-stat-icon { background: linear-gradient(135deg, #f093fb, #f5576c); }
+    .bh-stat-blue { border-left-color: #4facfe; }
+    .bh-stat-blue .bh-stat-icon { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+
+    /* Billing/Delivery Badges */
+    .billing-badge, .delivery-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    .billing-badge.billing-pending { background: #fff3cd; color: #856404; }
+    .billing-badge.billing-billed { background: #cce5ff; color: #004085; }
+    .billing-badge.billing-paid { background: #d4edda; color: #155724; }
+    .delivery-badge.delivery-pending { background: #fff3cd; color: #856404; }
+    .delivery-badge.delivery-progress { background: #cce5ff; color: #004085; }
+    .delivery-badge.delivery-completed { background: #d4edda; color: #155724; }
 
     /* Main Layout */
     .nursing-workbench-container {
@@ -4432,42 +4476,121 @@
                                     <h6 class="mb-0"><i class="mdi mdi-needle"></i> Administer Injection</h6>
                                 </div>
                                 <div class="card-body">
-                                    <!-- Step 1: Store Selection - Primary Action -->
-                                    <div class="store-selection-panel mb-4 p-3 rounded" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border: 2px solid #90caf9;">
-                                        <div class="row align-items-center">
-                                            <div class="col-md-6">
-                                                <label class="form-label fw-bold mb-2" style="font-size: 1rem;">
-                                                    <i class="mdi mdi-store text-primary"></i> Step 1: Select Dispensing Store
-                                                </label>
-                                                <select id="injection-store" class="form-control form-control-lg" style="border: 2px solid #1976d2; font-weight: 500;" required>
-                                                    <option value="">-- Choose Store --</option>
-                                                    @foreach($stores ?? [] as $store)
-                                                        <option value="{{ $store->id }}">{{ $store->store_name }}</option>
-                                                    @endforeach
+                                    <input type="hidden" id="injection-drug-source" value="pharmacy_dispensed">
+
+                                    <!-- Drug Source Selector -->
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">Drug Source</label>
+                                        <div class="btn-group w-100" role="group" aria-label="Injection drug source">
+                                            <button type="button" class="btn btn-outline-primary active" data-inj-source="pharmacy_dispensed">Pharmacy Dispensed</button>
+                                            <button type="button" class="btn btn-outline-secondary" data-inj-source="patient_own">Patient's Own</button>
+                                            <button type="button" class="btn btn-outline-info" data-inj-source="ward_stock">Ward Stock</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Pharmacy Dispensed Section -->
+                                    <div class="mb-3 source-section" id="inj-source-pharmacy">
+                                        <div class="alert alert-info py-2 mb-2"><i class="mdi mdi-pill"></i> Select dispensed prescriptions to chart.</div>
+                                        <div class="row g-2 align-items-end">
+                                            <div class="col-md-8">
+                                                <label for="injection-rx-select" class="form-label">Dispensed Prescriptions</label>
+                                                <select class="form-control" id="injection-rx-select">
+                                                    <option value="">-- Loading prescriptions --</option>
                                                 </select>
                                             </div>
+                                            <div class="col-md-4 text-right">
+                                                <button type="button" class="btn btn-success mt-4 w-100" id="injection-add-rx">
+                                                    <i class="mdi mdi-plus"></i> Add to list
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="small text-muted mt-1" id="injection-rx-summary" style="display:none;"></div>
+                                    </div>
+
+                                    <!-- Patient Own Section -->
+                                    <div class="mb-3 source-section" id="inj-source-patient" style="display:none;">
+                                        <div class="alert alert-warning py-2 mb-3"><i class="mdi mdi-account-alert"></i> Record patient-supplied drug details. No stock will be deducted.</div>
+                                        <div class="row g-2">
                                             <div class="col-md-6">
-                                                <div id="injection-store-info" class="p-3 bg-white rounded shadow-sm" style="display: none;">
-                                                    <h6 class="text-primary mb-2"><i class="mdi mdi-package-variant"></i> Selected Store Stock</h6>
-                                                    <div id="injection-store-stock-summary" class="small">
-                                                        <!-- Stock will show here when items are selected -->
-                                                    </div>
-                                                </div>
-                                                <div id="injection-store-placeholder" class="p-3 text-muted text-center">
-                                                    <i class="mdi mdi-arrow-left-bold mdi-24px"></i>
-                                                    <p class="mb-0 small">Select store first, then add drugs</p>
-                                                </div>
+                                                <label class="form-label">Drug Name</label>
+                                                <input type="text" class="form-control" id="inj-external-name" placeholder="Patient supplied drug">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label">Quantity</label>
+                                                <input type="number" step="0.01" class="form-control" id="inj-external-qty" placeholder="1">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label">Batch (optional)</label>
+                                                <input type="text" class="form-control" id="inj-external-batch" placeholder="Batch #">
+                                            </div>
+                                        </div>
+                                        <div class="row g-2 mt-2">
+                                            <div class="col-md-4">
+                                                <label class="form-label">Expiry (optional)</label>
+                                                <input type="date" class="form-control" id="inj-external-expiry">
+                                            </div>
+                                            <div class="col-md-8">
+                                                <label class="form-label">Source Note (optional)</label>
+                                                <input type="text" class="form-control" id="inj-external-note" placeholder="Where obtained / remarks">
+                                            </div>
+                                        </div>
+                                        {{-- §7.2: Add to List button for patient's own virtual row --}}
+                                        <div class="row mt-3">
+                                            <div class="col text-end">
+                                                <button type="button" class="btn btn-warning btn-sm" id="btn-add-patient-own-injection" onclick="addPatientOwnInjectionRow()">
+                                                    <i class="mdi mdi-plus"></i> Add Drug to List
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <!-- Step 2: Drug Search (enabled after store selection) -->
-                                    <div class="form-group mb-3">
+                                    <!-- Ward Stock Section -->
+                                    <div class="source-section" id="inj-source-ward" style="display:none;">
+                                        <div class="store-selection-panel mb-4 p-3 rounded" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border: 2px solid #90caf9;">
+                                            <div class="row align-items-center">
+                                                <div class="col-md-6">
+                                                    <label class="form-label fw-bold mb-2" style="font-size: 1rem;">
+                                                        <i class="mdi mdi-store text-primary"></i> Select Ward Store
+                                                    </label>
+                                                    <select id="injection-store" class="form-control form-control-lg" style="border: 2px solid #1976d2; font-weight: 500;">
+                                                        <option value="">-- Choose Store --</option>
+                                                        @foreach($stores ?? [] as $store)
+                                                            <option value="{{ $store->id }}">{{ $store->store_name }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div id="injection-store-info" class="p-3 bg-white rounded shadow-sm" style="display: none;">
+                                                        <h6 class="text-primary mb-2"><i class="mdi mdi-package-variant"></i> Selected Store Stock</h6>
+                                                        <div id="injection-store-stock-summary" class="small">
+                                                            <!-- Stock will show here when items are selected -->
+                                                        </div>
+                                                    </div>
+                                                    <div id="injection-store-placeholder" class="p-3 text-muted text-center">
+                                                        <i class="mdi mdi-arrow-left-bold mdi-24px"></i>
+                                                        <p class="mb-0 small">Select store first, then add drugs</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {{-- §5.3: Bill Patient checkbox — unchecked = hospital absorbs cost, checked = creates POSR via tariff pipeline --}}
+                                        <div class="form-check mt-2 ms-1">
+                                            <input class="form-check-input" type="checkbox" id="injection-bill-patient" value="1">
+                                            <label class="form-check-label" for="injection-bill-patient">
+                                                <i class="mdi mdi-receipt text-info"></i> <strong>Bill Patient</strong>
+                                                <small class="text-muted d-block">Creates a billing entry for this item (applies HMO tariff if applicable)</small>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- Step 2: Drug Search (for ward stock / patient-own) -->
+                                    <div class="form-group mb-3 inj-non-pharmacy">
                                         <label for="injection-drug-search"><i class="mdi mdi-magnify"></i> Step 2: Search Drug/Product</label>
                                         <input type="text" class="form-control" id="injection-drug-search"
                                                placeholder="Type to search for any drug or product..." autocomplete="off">
                                         <ul class="list-group" id="injection-drug-results"
                                             style="display: none; position: absolute; z-index: 1000; max-height: 250px; overflow-y: auto; width: calc(100% - 30px); box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></ul>
+                                        <small class="text-muted">Search hospital inventory. For dispensed prescriptions, use the list above.</small>
                                     </div>
 
                                     <!-- Selected Drugs Table with Stock & Batch Column -->
@@ -4930,6 +5053,30 @@
                         <div class="tab-pane fade show active" id="cr-prescriptions" role="tabpanel">
                             <div class="card-modern">
                                 <div class="card-body">
+                                    {{-- Treatment Plans + Re-prescribe buttons (Plan §6.4, §5.3) --}}
+                                    <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-secondary"
+                                                    data-bs-toggle="modal" data-bs-target="#treatmentPlanModal">
+                                                <i class="fa fa-clipboard-list"></i> Treatment Plans
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-success"
+                                                    onclick="ClinicalOrdersKit.openSaveTemplateModal()">
+                                                <i class="fa fa-save"></i> Save as Template
+                                            </button>
+                                        </div>
+                                        {{-- Re-prescribe from previous encounter dropdown (Plan §5.3) --}}
+                                        <div class="dropdown" id="cr-rp-encounter-dropdown">
+                                            <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button"
+                                                    data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                                <i class="fa fa-redo"></i> Re-prescribe from Encounter
+                                            </button>
+                                            <ul class="dropdown-menu rp-encounter-menu" style="min-width: 320px; max-height: 300px; overflow-y: auto;">
+                                                <li class="dropdown-item text-muted"><i class="fa fa-spinner fa-spin"></i> Loading...</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
                                     <ul class="nav nav-tabs service-tabs mb-3" role="tablist">
                                         <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#cr-presc-history" type="button"><i class="fa fa-history"></i> Drug History</button></li>
                                         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#cr-presc-new" type="button"><i class="fa fa-plus-circle"></i> Add Prescription</button></li>
@@ -4946,72 +5093,8 @@
                                             <div id="cr_presc_message" class="mb-2"></div>
                                             <h6 class="mb-3"><i class="fa fa-plus-circle"></i> New Prescription</h6>
 
-                                            {{-- Dose Mode Toggle --}}
-                                            <div class="d-flex align-items-center mb-3 gap-3">
-                                                <div class="form-check form-switch">
-                                                    <input class="form-check-input" type="checkbox" id="cr_dose_mode_toggle" onchange="ClinicalRequests.toggleDoseMode(this.checked)">
-                                                    <label class="form-check-label" for="cr_dose_mode_toggle">
-                                                        <i class="fa fa-sliders-h"></i> Structured Dose
-                                                    </label>
-                                                </div>
-                                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="ClinicalRequests.toggleCalculator()">
-                                                    <i class="fa fa-calculator"></i> Calculator
-                                                </button>
-                                            </div>
-
-                                            {{-- Mini Dose Calculator --}}
-                                            <div id="cr_dose_calculator_panel" class="card border-secondary mb-3" style="display:none;">
-                                                <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
-                                                    <span><i class="fa fa-calculator"></i> <strong>Dose Calculator</strong></span>
-                                                    <button type="button" class="btn-close btn-sm" onclick="ClinicalRequests.toggleCalculator()"></button>
-                                                </div>
-                                                <div class="card-body py-2">
-                                                    <div class="row g-2">
-                                                        <div class="col-md-3">
-                                                            <label class="small fw-bold">Weight (kg)</label>
-                                                            <input type="number" class="form-control form-control-sm" id="cr_calc_weight" step="0.1" min="0" oninput="ClinicalRequests.calculate()">
-                                                        </div>
-                                                        <div class="col-md-3">
-                                                            <label class="small fw-bold">Dose/kg (mg)</label>
-                                                            <input type="number" class="form-control form-control-sm" id="cr_calc_dose_per_kg" step="0.01" min="0" oninput="ClinicalRequests.calculate()">
-                                                        </div>
-                                                        <div class="col-md-3">
-                                                            <label class="small fw-bold">Frequency</label>
-                                                            <select class="form-select form-select-sm" id="cr_calc_frequency" onchange="ClinicalRequests.calculate()">
-                                                                <option value="1">OD (once daily)</option>
-                                                                <option value="2">BD (twice daily)</option>
-                                                                <option value="3">TDS (three times)</option>
-                                                                <option value="4">QID (four times)</option>
-                                                                <option value="6">Q4H (every 4 hrs)</option>
-                                                                <option value="4">Q6H (every 6 hrs)</option>
-                                                                <option value="3">Q8H (every 8 hrs)</option>
-                                                                <option value="2">Q12H (every 12 hrs)</option>
-                                                            </select>
-                                                        </div>
-                                                        <div class="col-md-3">
-                                                            <label class="small fw-bold">Duration (d)</label>
-                                                            <input type="number" class="form-control form-control-sm" id="cr_calc_duration" min="1" value="5" oninput="ClinicalRequests.calculate()">
-                                                        </div>
-                                                    </div>
-                                                    <div class="row g-2 mt-1">
-                                                        <div class="col-md-3">
-                                                            <label class="small fw-bold">Tab Strength</label>
-                                                            <div class="input-group input-group-sm">
-                                                                <input type="number" class="form-control" id="cr_calc_tab_strength" value="500" oninput="ClinicalRequests.calculate()">
-                                                                <span class="input-group-text">mg</span>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-md-6">
-                                                            <div id="cr_calc_results" class="mt-2 small"><span class="text-muted">Enter values...</span></div>
-                                                        </div>
-                                                        <div class="col-md-3 d-flex align-items-end">
-                                                            <button type="button" class="btn btn-sm btn-primary w-100" onclick="ClinicalRequests.applyToSelected()">
-                                                                <i class="fa fa-arrow-down"></i> Apply to Selected
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            {{-- Dose Mode Toggle — Segmented button group (Plan §2.2, structured default) --}}
+                                            @include('admin.partials.dose-mode-toggle', ['prefix' => 'cr_'])
 
                                             <div class="form-group">
                                                 <label>Search drugs/products</label>
@@ -5025,11 +5108,7 @@
                                                     <tbody id="cr-selected-products"></tbody>
                                                 </table>
                                             </div>
-                                            <div class="text-end mt-3">
-                                                <button class="btn btn-success" id="cr-save-prescriptions-btn" onclick="ClinicalRequests.savePrescriptions()">
-                                                    <i class="mdi mdi-content-save"></i> Save Prescriptions
-                                                </button>
-                                            </div>
+                                            {{-- Save button removed — prescriptions auto-save on add (Plan §4.5) --}}
                                             <div id="cr_presc_message" class="mt-2"></div>
                                         </div>
                                     </div>
@@ -5041,6 +5120,20 @@
                         <div class="tab-pane fade" id="cr-lab" role="tabpanel">
                             <div class="card-modern">
                                 <div class="card-body">
+                                    {{-- Treatment Plans + Save as Template (Plan §6.4: buttons at top of all 4 tab areas) --}}
+                                    <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-secondary"
+                                                    data-bs-toggle="modal" data-bs-target="#treatmentPlanModal">
+                                                <i class="fa fa-clipboard-list"></i> Treatment Plans
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-success"
+                                                    onclick="ClinicalOrdersKit.openSaveTemplateModal()">
+                                                <i class="fa fa-save"></i> Save as Template
+                                            </button>
+                                        </div>
+                                    </div>
+
                                     <ul class="nav nav-tabs service-tabs mb-3" role="tablist">
                                         <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#cr-lab-history" type="button"><i class="fa fa-history"></i> Lab History</button></li>
                                         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#cr-lab-new" type="button"><i class="fa fa-plus-circle"></i> New Lab Request</button></li>
@@ -5068,11 +5161,8 @@
                                                     <tbody id="cr-selected-labs"></tbody>
                                                 </table>
                                             </div>
-                                            <div class="text-end mt-3">
-                                                <button class="btn btn-success" id="cr-save-labs-btn" onclick="ClinicalRequests.saveLabs()">
-                                                    <i class="mdi mdi-content-save"></i> Save Lab Requests
-                                                </button>
-                                            </div>
+                                            {{-- Phase 2d (Plan §4.5): Auto-save status — labs save on add --}}
+                                            <div class="auto-save-status text-muted small mt-2" id="cr-labs-auto-save-status"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -5083,6 +5173,20 @@
                         <div class="tab-pane fade" id="cr-imaging" role="tabpanel">
                             <div class="card-modern">
                                 <div class="card-body">
+                                    {{-- Treatment Plans + Save as Template (Plan §6.4: buttons at top of all 4 tab areas) --}}
+                                    <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-secondary"
+                                                    data-bs-toggle="modal" data-bs-target="#treatmentPlanModal">
+                                                <i class="fa fa-clipboard-list"></i> Treatment Plans
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-success"
+                                                    onclick="ClinicalOrdersKit.openSaveTemplateModal()">
+                                                <i class="fa fa-save"></i> Save as Template
+                                            </button>
+                                        </div>
+                                    </div>
+
                                     <ul class="nav nav-tabs service-tabs mb-3" role="tablist">
                                         <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#cr-imaging-history" type="button"><i class="fa fa-history"></i> Imaging History</button></li>
                                         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#cr-imaging-new" type="button"><i class="fa fa-plus-circle"></i> New Imaging Request</button></li>
@@ -5110,11 +5214,8 @@
                                                     <tbody id="cr-selected-imaging"></tbody>
                                                 </table>
                                             </div>
-                                            <div class="text-end mt-3">
-                                                <button class="btn btn-success" id="cr-save-imaging-btn" onclick="ClinicalRequests.saveImaging()">
-                                                    <i class="mdi mdi-content-save"></i> Save Imaging Requests
-                                                </button>
-                                            </div>
+                                            {{-- Phase 2d (Plan §4.5): Auto-save status — imaging saves on add --}}
+                                            <div class="auto-save-status text-muted small mt-2" id="cr-imaging-auto-save-status"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -5125,6 +5226,20 @@
                         <div class="tab-pane fade" id="cr-procedures" role="tabpanel">
                             <div class="card-modern">
                                 <div class="card-body">
+                                    {{-- Treatment Plans + Save as Template (Plan §6.4: buttons at top of all 4 tab areas) --}}
+                                    <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-secondary"
+                                                    data-bs-toggle="modal" data-bs-target="#treatmentPlanModal">
+                                                <i class="fa fa-clipboard-list"></i> Treatment Plans
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-success"
+                                                    onclick="ClinicalOrdersKit.openSaveTemplateModal()">
+                                                <i class="fa fa-save"></i> Save as Template
+                                            </button>
+                                        </div>
+                                    </div>
+
                                     <ul class="nav nav-tabs service-tabs mb-3" role="tablist">
                                         <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#cr-proc-history" type="button"><i class="fa fa-history"></i> Procedure History</button></li>
                                         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#cr-proc-new" type="button"><i class="fa fa-plus-circle"></i> Request Procedure</button></li>
@@ -5185,11 +5300,7 @@
                                                     <tbody id="cr-selected-procedures"></tbody>
                                                 </table>
                                             </div>
-                                            <div class="text-end mt-3">
-                                                <button class="btn btn-success" id="cr-save-procedures-btn" onclick="ClinicalRequests.saveProcedures()">
-                                                    <i class="mdi mdi-content-save"></i> Save Procedures
-                                                </button>
-                                            </div>
+                                            {{-- Save button removed — procedures auto-save on add (Plan §4.5) --}}
                                         </div>
                                     </div>
                                 </div>
@@ -5218,6 +5329,11 @@
                         <li class="nav-item">
                             <a class="nav-link" id="billing-pending-tab" data-toggle="tab" href="#billing-pending" role="tab">
                                 <i class="mdi mdi-clock-outline"></i> Pending Bills
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="billing-history-tab" data-toggle="tab" href="#billing-history" role="tab">
+                                <i class="mdi mdi-clipboard-list"></i> Billing History
                             </a>
                         </li>
                     </ul>
@@ -5375,6 +5491,123 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Billing History Sub-tab -->
+                        <div class="tab-pane fade" id="billing-history" role="tabpanel">
+                            <!-- Summary Stats -->
+                            <div class="row mb-3">
+                                <div class="col-md-3">
+                                    <div class="bh-stat-card bh-stat-purple">
+                                        <div class="bh-stat-icon"><i class="mdi mdi-clipboard-list mdi-24px"></i></div>
+                                        <div>
+                                            <div class="bh-stat-value" id="bh-total-requests">0</div>
+                                            <div class="bh-stat-label">Total Requests</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="bh-stat-card bh-stat-green">
+                                        <div class="bh-stat-icon"><i class="mdi mdi-shield-check mdi-24px"></i></div>
+                                        <div>
+                                            <div class="bh-stat-value" id="bh-hmo-covered">₦0.00</div>
+                                            <div class="bh-stat-label">HMO Covered</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="bh-stat-card bh-stat-pink">
+                                        <div class="bh-stat-icon"><i class="mdi mdi-cash mdi-24px"></i></div>
+                                        <div>
+                                            <div class="bh-stat-value" id="bh-patient-payable">₦0.00</div>
+                                            <div class="bh-stat-label">Patient Payable</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="bh-stat-card bh-stat-blue">
+                                        <div class="bh-stat-icon"><i class="mdi mdi-check-circle mdi-24px"></i></div>
+                                        <div>
+                                            <div class="bh-stat-value" id="bh-completed-count">0</div>
+                                            <div class="bh-stat-label">Completed</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Filters -->
+                            <div class="card-modern mb-3">
+                                <div class="card-body py-2">
+                                    <form id="bh-filter-form" class="form-inline flex-wrap">
+                                        <div class="form-group mr-2 mb-2">
+                                            <label class="mr-1 small font-weight-bold">From</label>
+                                            <input type="date" class="form-control form-control-sm" id="bh-date-from">
+                                        </div>
+                                        <div class="form-group mr-2 mb-2">
+                                            <label class="mr-1 small font-weight-bold">To</label>
+                                            <input type="date" class="form-control form-control-sm" id="bh-date-to">
+                                        </div>
+                                        <div class="form-group mr-2 mb-2">
+                                            <select class="form-control form-control-sm" id="bh-type-filter">
+                                                <option value="">All Types</option>
+                                                <option value="lab">Lab Test</option>
+                                                <option value="imaging">Imaging</option>
+                                                <option value="product">Product/Drug</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group mr-2 mb-2">
+                                            <select class="form-control form-control-sm" id="bh-billing-filter">
+                                                <option value="">All Billing</option>
+                                                <option value="pending">Pending</option>
+                                                <option value="billed">Billed</option>
+                                                <option value="paid">Paid</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group mr-2 mb-2">
+                                            <select class="form-control form-control-sm" id="bh-delivery-filter">
+                                                <option value="">All Delivery</option>
+                                                <option value="pending">Pending</option>
+                                                <option value="in_progress">In Progress</option>
+                                                <option value="completed">Completed</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group mb-2">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary mr-1" id="bh-clear-filters" title="Clear Filters">
+                                                <i class="mdi mdi-refresh"></i>
+                                            </button>
+                                            <button type="submit" class="btn btn-sm btn-primary">
+                                                <i class="mdi mdi-filter"></i> Apply
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <!-- DataTable -->
+                            <div class="card-modern">
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-hover" id="billing-history-table" style="width:100%">
+                                            <thead>
+                                                <tr>
+                                                    <th>Date</th>
+                                                    <th>Request #</th>
+                                                    <th>Type</th>
+                                                    <th>Service/Item</th>
+                                                    <th>Price</th>
+                                                    <th>HMO Covers</th>
+                                                    <th>Payable</th>
+                                                    <th>Billing</th>
+                                                    <th>Delivery</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -6821,12 +7054,15 @@
 
 <!-- Include Clinical Context Modal -->
 @include('admin.partials.clinical_context_modal')
+@include('admin.partials.treatment-plan-modal')
+@include('admin.partials.re-prescribe-encounter-modal')
 
 @endsection
 
 @section('scripts')
 <script src="{{ asset('plugins/dataT/datatables.min.js') }}"></script>
 <script src="{{ asset('plugins/ckeditor/ckeditor5/ckeditor.js') }}"></script>
+<script src="{{ asset('js/clinical-orders-shared.js') }}"></script>
 <script>
 // Global state
 let currentPatient = null;
@@ -6836,6 +7072,9 @@ let patientSearchTimeout = null;
 let vitalTooltip = null;
 let queueDataTable = null;
 let currentQueueFilter = 'admitted';
+var medicationChartPrescribedRoute = "{{ route('nurse.medication.prescribed_drugs', [':patient']) }}";
+let injectionPrescriptions = [];
+let injectionPrescriptionsLoaded = false;
 
 // =============================================
 // VIEW MANAGEMENT HELPERS
@@ -7759,6 +7998,10 @@ function loadPatient(patientId) {
         success: function(data) {
             console.log('Patient details loaded:', data); // Debug log
             currentPatientData = data; // Store patient data including allergies
+
+            // Store patient weight for dose calculators (last recorded weight from vitals)
+            window.patientWeight = data.last_weight || null;
+
             displayPatientInfo(data);
 
             // Load overview content using the already fetched data
@@ -7779,6 +8022,7 @@ function loadPatient(patientId) {
             loadImmunizationHistory(patientId);
             loadPendingBills(patientId);
             loadNotesHistory(patientId);
+            billingHistoryLoaded = false; // Reset so billing history lazy-loads fresh for new patient
 
             // Initialize procedures DataTable
             initializeProceduresDataTable(patientId);
@@ -7842,7 +8086,7 @@ function initializeHistoryDataTable(patientId) {
 const ClinicalRequests = (function() {
     let patientId = null;
     let selectedProcedures = [];
-    let crDoseStructuredMode = false;
+    let crDoseStructuredMode = true; // Plan §2.2: structured is now the default
     const CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
     const procedureCategoryId = {{ appsettings('procedure_category_id', 0) }};
     const investigationCategoryId = '{{ appsettings("investigation_category_id", "") }}';
@@ -7863,6 +8107,105 @@ const ClinicalRequests = (function() {
         initLabHistory();
         initImagingHistory();
         initProcHistory();
+
+        // Clear duplicate tracking (Plan §4.4)
+        ClinicalOrdersKit.clearAddedIds();
+
+        // Initialize dose mode toggle — structured by default (Plan §2.2)
+        if (!ClinicalRequests._doseToggleInit) {
+            var nurseDoseState = ClinicalOrdersKit.initDoseModeToggle({
+                prefix: 'cr_',
+                cssPrefix: 'cr-',
+                tableSelector: '#cr-selected-products',
+                idInputName: 'cr_presc_id[]',
+                doseInputName: 'cr_presc_dose[]',
+                onchange: 'ClinicalOrdersKit.updateDoseValue(this, "cr-")',
+                onToggle: function(isStructured) { crDoseStructuredMode = isStructured; }
+            });
+            crDoseStructuredMode = nurseDoseState.isStructured;
+
+            // Phase 2b (Plan §4.3): Register debounced dose auto-save for medications
+            ClinicalOrdersKit.onDoseUpdate('cr-', function(recordId, doseValue) {
+                ClinicalOrdersKit.debouncedUpdate({
+                    url: '/nursing-workbench/clinical-requests/prescriptions/' + recordId + '/dose',
+                    payload: { dose: doseValue },
+                    csrfToken: CSRF_TOKEN
+                });
+            });
+
+            // Phase 4d (Plan §6.4): Initialize treatment plans module
+            ClinicalOrdersKit.initTreatmentPlans({
+                applyUrl: '/nursing-workbench/clinical-requests/apply-treatment-plan',
+                csrfToken: CSRF_TOKEN,
+                extraPayload: { patient_id: patientId },
+                onApplySuccess: function(response) {
+                    initLabHistory();
+                    initImagingHistory();
+                    initPrescHistory();
+                    initProcHistory();
+                },
+                currentItemsGatherer: function() {
+                    // Gather all auto-saved items from selection tables (all 4 types)
+                    var items = [];
+                    $('#cr-selected-labs tr[data-record-id]').each(function() {
+                        items.push({
+                            item_type: 'lab',
+                            reference_id: parseInt($(this).data('service-id')),
+                            display_name: $(this).find('td:first').text().trim(),
+                            note: $(this).find('input[name="cr_lab_note[]"]').val() || ''
+                        });
+                    });
+                    $('#cr-selected-imaging tr[data-record-id]').each(function() {
+                        items.push({
+                            item_type: 'imaging',
+                            reference_id: parseInt($(this).data('service-id')),
+                            display_name: $(this).find('td:first').text().trim(),
+                            note: $(this).find('input[name="cr_imaging_note[]"]').val() || ''
+                        });
+                    });
+                    $('#cr-selected-products tr[data-record-id]').each(function() {
+                        items.push({
+                            item_type: 'medication',
+                            reference_id: parseInt($(this).data('service-id')),
+                            display_name: $(this).find('td:first').text().trim(),
+                            dose: $(this).find('input[name="cr_presc_dose[]"]').val() || ''
+                        });
+                    });
+                    $('#cr-selected-procedures tr[data-record-id]').each(function() {
+                        items.push({
+                            item_type: 'procedure',
+                            reference_id: parseInt($(this).data('service-id')),
+                            display_name: $(this).find('td:first').text().trim(),
+                            note: ''
+                        });
+                    });
+                    return items;
+                }
+            });
+
+            // Phase 3c (Plan §5.3): Initialize re-prescribe from encounter dropdown
+            ClinicalOrdersKit.initRePrescribeFromEncounter({
+                recentUrl: '/nursing-workbench/clinical-requests/recent-encounters',
+                encounterItemsUrl: '/nursing-workbench/clinical-requests/encounter-items/{id}',
+                rePrescribeUrl: '/nursing-workbench/clinical-requests/re-prescribe',
+                csrfToken: CSRF_TOKEN,
+                extraPayload: { patient_id: patientId },
+                dropdownSelector: '#cr-rp-encounter-dropdown',
+                onRePrescribed: function() {
+                    initLabHistory();
+                    initImagingHistory();
+                    initPrescHistory();
+                    initProcHistory();
+                }
+            });
+
+            ClinicalRequests._doseToggleInit = true;
+        }
+
+        // A5 fix: Update treatment plan & re-prescribe config on EVERY patient switch
+        // (Plan §6.4 + §5.3) — keeps extraPayload.patient_id current
+        ClinicalOrdersKit.updateTreatmentPlanConfig({ extraPayload: { patient_id: patientId } });
+        ClinicalOrdersKit.updateRePrescribeConfig({ extraPayload: { patient_id: patientId } });
 
         // Setup search handlers (only once)
         if (!ClinicalRequests._searchBound) {
@@ -7931,6 +8274,45 @@ const ClinicalRequests = (function() {
     function setupSearchHandlers() {
         let searchTimeout;
 
+        // Re-order / Re-prescribe from history (Plan §5.2)
+        $(document).off('click.reorder').on('click.reorder', '.re-order-btn', function() {
+            var $btn = $(this);
+            if ($btn.prop('disabled')) return;
+
+            var type          = $btn.data('type');
+            var name          = $btn.data('name');
+            var price         = $btn.data('price') || 0;
+            var coverageMode  = $btn.data('coverage-mode') || null;
+            var claims        = $btn.data('claims') || null;
+            var payable       = $btn.data('payable') || null;
+            if (coverageMode === '') coverageMode = null;
+
+            if (type === 'labs') {
+                var serviceId = parseInt($btn.data('service-id'));
+                if (ClinicalOrdersKit.isAlreadyAdded('labs', serviceId)) {
+                    toastr.warning(name + ' is already in your current lab requests');
+                    return;
+                }
+                addLabService(name, serviceId, price, coverageMode, claims, payable);
+            } else if (type === 'imaging') {
+                var serviceId = parseInt($btn.data('service-id'));
+                if (ClinicalOrdersKit.isAlreadyAdded('imaging', serviceId)) {
+                    toastr.warning(name + ' is already in your current imaging requests');
+                    return;
+                }
+                addImagingService(name, serviceId, price, coverageMode, claims, payable);
+            } else if (type === 'prescriptions') {
+                var productId = parseInt($btn.data('product-id'));
+                if (ClinicalOrdersKit.isAlreadyAdded('meds', productId)) {
+                    toastr.warning(name + ' is already in your current prescriptions');
+                    return;
+                }
+                addProduct(name, productId, price, coverageMode, claims, payable);
+            }
+
+            $btn.prop('disabled', true).html('<i class="fa fa-check text-success"></i> Added');
+        });
+
         // Drug search
         $('#cr_presc_search').on('keyup', function() {
             const q = $(this).val();
@@ -7988,7 +8370,17 @@ const ClinicalRequests = (function() {
                     const mode = item.coverage_mode || null;
                     const coverageBadge = mode ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ${payable}</span> <span class='text-success ms-1'>Claim: ${claims}</span>` : '';
                     const displayName = `${name}[${code}](${qty} avail.)`;
-                    $res.append(`<li class='list-group-item' style="background:#f0f0f0; cursor:pointer;" onclick="ClinicalRequests.addProduct('${displayName.replace(/'/g,"\\'")}', ${item.id}, ${price}, '${mode}', ${claims}, ${payable})"><b>${name}[${code}]</b> (${qty} avail.) NGN ${price} ${coverageBadge}</li>`);
+
+                    // Phase 2c (Plan §4.4): Duplicate filtering for medications
+                    const alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('meds', parseInt(item.id));
+                    const disabledStyle = alreadyAdded ? 'opacity:0.5; pointer-events:none;' : 'cursor:pointer;';
+                    const alreadyBadge = alreadyAdded ? '<span class="badge bg-secondary ms-2">Already Added</span>' : '';
+
+                    if (alreadyAdded) {
+                        $res.append(`<li class='list-group-item' style="background:#f0f0f0; ${disabledStyle}"><b>${name}[${code}]</b> (${qty} avail.) NGN ${price} ${coverageBadge}${alreadyBadge}</li>`);
+                    } else {
+                        $res.append(`<li class='list-group-item' style="background:#f0f0f0; cursor:pointer;" onclick="ClinicalRequests.addProduct('${displayName.replace(/'/g,"\\'")}', ${item.id}, ${price}, '${mode}', ${claims}, ${payable})"><b>${name}[${code}]</b> (${qty} avail.) NGN ${price} ${coverageBadge}</li>`);
+                    }
                 });
             }
             $res.show();
@@ -8010,7 +8402,12 @@ const ClinicalRequests = (function() {
                     const claims = item.claims_amount ?? 0;
                     const mode = item.coverage_mode || null;
                     const coverageBadge = mode ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ${payable}</span> <span class='text-success ms-1'>Claim: ${claims}</span>` : '';
-                    $res.append(`<li class='list-group-item' style="background:#f0f0f0; cursor:pointer;" onclick="ClinicalRequests.addLabService('${(name+'['+code+']').replace(/'/g,"\\'")}', ${item.id}, ${price}, '${mode}', ${claims}, ${payable})">[${item.category?.category_name || 'Lab'}] <b>${name}[${code}]</b> NGN ${price} ${coverageBadge}</li>`);
+                    const alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('labs', parseInt(item.id));
+                    if (alreadyAdded) {
+                        $res.append(`<li class='list-group-item text-muted' style="background:#e9ecef; cursor:not-allowed;">[${item.category?.category_name || 'Lab'}] <b>${name}[${code}]</b> NGN ${price} ${coverageBadge} <span class='badge bg-warning ms-2'>Already Added</span></li>`);
+                    } else {
+                        $res.append(`<li class='list-group-item' style="background:#f0f0f0; cursor:pointer;" onclick="ClinicalRequests.addLabService('${(name+'['+code+']').replace(/'/g,"\\'")}', ${item.id}, ${price}, '${mode}', ${claims}, ${payable})">[${item.category?.category_name || 'Lab'}] <b>${name}[${code}]</b> NGN ${price} ${coverageBadge}</li>`);
+                    }
                 });
             }
             $res.show();
@@ -8030,7 +8427,12 @@ const ClinicalRequests = (function() {
                     const claims = item.claims_amount ?? 0;
                     const mode = item.coverage_mode || null;
                     const coverageBadge = mode ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ${payable}</span> <span class='text-success ms-1'>Claim: ${claims}</span>` : '';
-                    $res.append(`<li class='list-group-item' style="background:#f0f0f0; cursor:pointer;" onclick="ClinicalRequests.addImagingService('${(name+'['+code+']').replace(/'/g,"\\'")}', ${item.id}, ${price}, '${mode}', ${claims}, ${payable})">[${item.category?.category_name || 'Imaging'}] <b>${name}[${code}]</b> NGN ${price} ${coverageBadge}</li>`);
+                    const alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('imaging', parseInt(item.id));
+                    if (alreadyAdded) {
+                        $res.append(`<li class='list-group-item text-muted' style="background:#e9ecef; cursor:not-allowed;">[${item.category?.category_name || 'Imaging'}] <b>${name}[${code}]</b> NGN ${price} ${coverageBadge} <span class='badge bg-warning ms-2'>Already Added</span></li>`);
+                    } else {
+                        $res.append(`<li class='list-group-item' style="background:#f0f0f0; cursor:pointer;" onclick="ClinicalRequests.addImagingService('${(name+'['+code+']').replace(/'/g,"\\'")}', ${item.id}, ${price}, '${mode}', ${claims}, ${payable})">[${item.category?.category_name || 'Imaging'}] <b>${name}[${code}]</b> NGN ${price} ${coverageBadge}</li>`);
+                    }
                 });
             }
             $res.show();
@@ -8043,7 +8445,7 @@ const ClinicalRequests = (function() {
             if (!data.length) { $res.append('<li class="list-group-item text-muted">No procedures found</li>'); }
             else {
                 data.forEach(item => {
-                    const isSelected = selectedProcedures.some(p => p.id === item.id);
+                    const isSelected = ClinicalOrdersKit.isAlreadyAdded('procedures', item.id);
                     const name = item.service_name || 'Unknown';
                     const code = item.service_code || '';
                     const price = item.price?.sale_price ?? 0;
@@ -8059,176 +8461,171 @@ const ClinicalRequests = (function() {
     }
 
     // ===== ADD TO SELECTION TABLE =====
+    // Phase 2b (Plan §4.3): Two-phase medication auto-save
+    // Phase 1 — instant POST with empty dose; Phase 2 — debounced PUT on dose field changes
     function addProduct(name, id, price, mode, claims, payable) {
-        const coverageBadge = mode && mode !== 'null' ? `<div class="small mt-1"><span class="badge bg-info">${mode.toUpperCase()}</span> <span class="text-danger">Pay: ${payable}</span> <span class="text-success">Claims: ${claims}</span></div>` : '';
-        let doseCell;
-        if (crDoseStructuredMode) {
-            doseCell = `<td>${buildCrStructuredDoseHtml()}<input type="hidden" name="cr_presc_id[]" value="${id}"></td>`;
-        } else {
-            doseCell = `<td><input type="text" class="form-control form-control-sm" name="cr_presc_dose[]" placeholder="e.g. 500mg BD x 5days" required><input type="hidden" name="cr_presc_id[]" value="${id}"></td>`;
-        }
-        $('#cr-selected-products').append(`
-            <tr>
-                <td>${name}${coverageBadge}</td>
-                <td>${payable ?? price}</td>
-                ${doseCell}
-                <td><button class="btn btn-sm btn-danger" onclick="$(this).closest('tr').remove()"><i class="fa fa-times"></i></button></td>
-            </tr>
-        `);
+        const rowId = 'crx_' + Date.now() + '_' + id;
+        const coverageBadge = ClinicalOrdersKit.renderCoverageBadge(
+            mode && mode !== 'null' ? mode : null, payable ?? price, claims ?? 0
+        );
+
+        ClinicalOrdersKit.addItem({
+            url: '/nursing-workbench/clinical-requests/add-prescription',
+            payload: { patient_id: patientId, product_id: id, dose: '' },
+            csrfToken: CSRF_TOKEN,
+            tableSelector: '#cr-selected-products',
+            type: 'meds',
+            referenceId: parseInt(id),
+            buildRowHtml: function(resp) {
+                const recordId = resp.id;
+                const doseOnchange = "ClinicalOrdersKit.updateDoseValue(this, 'cr-'); " +
+                    "ClinicalOrdersKit.debouncedUpdate({url:'/nursing-workbench/clinical-requests/prescriptions/" + recordId + "/dose'," +
+                    "payload:{dose: $(this).closest('.cr-structured-dose').find('.cr-structured-dose-value').val()}," +
+                    "csrfToken:'" + CSRF_TOKEN + "'});";
+
+                let doseCell;
+                if (crDoseStructuredMode) {
+                    doseCell = '<td>' + ClinicalOrdersKit.buildStructuredDoseHtml({
+                        cssPrefix: 'cr-',
+                        hiddenName: 'cr_presc_dose[]',
+                        onchange: doseOnchange,
+                        drugName: name,
+                        rowId: rowId
+                    }) + '<input type="hidden" name="cr_presc_id[]" value="' + id + '"></td>';
+                } else {
+                    doseCell = '<td><input type="text" class="form-control form-control-sm" name="cr_presc_dose[]" ' +
+                        'placeholder="e.g. 500mg BD x 5days" ' +
+                        'onchange="ClinicalOrdersKit.debouncedUpdate({url:\'/nursing-workbench/clinical-requests/prescriptions/' + recordId + '/dose\',' +
+                        'payload:{dose:this.value},csrfToken:\'' + CSRF_TOKEN + '\'})" required>' +
+                        '<input type="hidden" name="cr_presc_id[]" value="' + id + '"></td>';
+                }
+
+                return '<tr data-record-id="' + recordId + '" data-record-type="prescription" data-service-id="' + id + '" data-drug-name="' + name.replace(/"/g, '&quot;') + '" data-row-id="' + rowId + '">' +
+                    '<td>' + name + coverageBadge + '</td>' +
+                    '<td>' + (payable ?? price) + '</td>' +
+                    doseCell +
+                    '<td><button class="btn btn-sm btn-danger" onclick="ClinicalRequests.removeAutoSavedRow(this,\'prescription\',' + recordId + ',' + id + ')"><i class="fa fa-times"></i></button></td>' +
+                '</tr>';
+            },
+            onSuccess: function(resp) {
+                initPrescHistory();
+            }
+        });
         $('#cr_presc_search').val('');
         $('#cr_presc_results').hide();
     }
 
-    function buildCrStructuredDoseHtml() {
-        return `
-            <div class="cr-structured-dose">
-                <div class="row g-1 mb-1">
-                    <div class="col-4"><input type="number" class="form-control form-control-sm cr-dose-amount" placeholder="Amt" min="0" step="0.01" onchange="ClinicalRequests.updateDoseVal(this)"></div>
-                    <div class="col-4"><select class="form-select form-select-sm cr-dose-unit" onchange="ClinicalRequests.updateDoseVal(this)"><option value="mg">mg</option><option value="g">g</option><option value="ml">ml</option><option value="IU">IU</option><option value="mcg">mcg</option><option value="units">units</option><option value="drops">drops</option><option value="puffs">puffs</option></select></div>
-                    <div class="col-4"><select class="form-select form-select-sm cr-dose-route" onchange="ClinicalRequests.updateDoseVal(this)"><option value="PO">PO</option><option value="IV">IV</option><option value="IM">IM</option><option value="SC">SC</option><option value="SL">SL</option><option value="PR">PR</option><option value="INH">INH</option><option value="TOP">Topical</option><option value="OPTH">Ophthalmic</option><option value="OT">Otic</option><option value="NGT">NGT</option></select></div>
-                </div>
-                <div class="row g-1">
-                    <div class="col-4"><select class="form-select form-select-sm cr-dose-freq" onchange="ClinicalRequests.updateDoseVal(this)"><option value="OD">OD</option><option value="BD">BD</option><option value="TDS">TDS</option><option value="QID">QID</option><option value="Q4H">Q4H</option><option value="Q6H">Q6H</option><option value="Q8H">Q8H</option><option value="Q12H">Q12H</option><option value="PRN">PRN</option><option value="STAT">STAT</option></select></div>
-                    <div class="col-4"><div class="input-group input-group-sm"><input type="number" class="form-control cr-dose-dur" placeholder="Dur" min="1" value="5" onchange="ClinicalRequests.updateDoseVal(this)"><select class="form-select cr-dose-dur-unit" style="max-width:55px;" onchange="ClinicalRequests.updateDoseVal(this)"><option value="days">d</option><option value="weeks">w</option><option value="months">m</option></select></div></div>
-                    <div class="col-4"><div class="input-group input-group-sm"><span class="input-group-text" style="font-size:0.7em;">Qty</span><input type="number" class="form-control cr-dose-qty" placeholder="Qty" min="1"></div></div>
-                </div>
-                <input type="hidden" name="cr_presc_dose[]" class="cr-structured-dose-value" value="">
-            </div>`;
-    }
+    // Legacy dose functions (buildCrStructuredDoseHtml, crFreqMultiplierMap, crDurUnitMultiplierMap,
+    // autoCalculateCrQty, updateDoseVal, toggleDoseMode) removed.
+    // All dose logic now lives in ClinicalOrdersKit (clinical-orders-shared.js) per Plan §2.1–§2.3.
 
-    // Frequency/duration multiplier maps for auto-Qty
-    const crFreqMultiplierMap = { 'OD': 1, 'BD': 2, 'TDS': 3, 'QID': 4, 'Q4H': 6, 'Q6H': 4, 'Q8H': 3, 'Q12H': 2, 'PRN': 1, 'STAT': 1 };
-    const crDurUnitMultiplierMap = { 'days': 1, 'weeks': 7, 'months': 30 };
-
-    function autoCalculateCrQty($row) {
-        const freq = $row.find('.cr-dose-freq').val() || 'OD';
-        const dur = parseFloat($row.find('.cr-dose-dur').val()) || 0;
-        const durUnit = $row.find('.cr-dose-dur-unit').val() || 'days';
-        if (dur > 0 && freq !== 'PRN') {
-            const totalDays = dur * (crDurUnitMultiplierMap[durUnit] || 1);
-            const perDay = crFreqMultiplierMap[freq] || 1;
-            $row.find('.cr-dose-qty').val(Math.ceil(totalDays * perDay));
-        }
-    }
-
-    function updateDoseVal(el) {
-        const $row = $(el).closest('.cr-structured-dose');
-        autoCalculateCrQty($row);
-        const amt = $row.find('.cr-dose-amount').val() || '';
-        const unit = $row.find('.cr-dose-unit').val() || '';
-        const route = $row.find('.cr-dose-route').val() || '';
-        const freq = $row.find('.cr-dose-freq').val() || '';
-        const dur = $row.find('.cr-dose-dur').val() || '';
-        const durUnit = $row.find('.cr-dose-dur-unit').val() || '';
-        const qty = $row.find('.cr-dose-qty').val() || '';
-        let parts = [];
-        if (amt) parts.push(amt + unit);
-        if (route) parts.push(route);
-        if (freq) parts.push(freq);
-        if (dur) parts.push(dur + ' ' + durUnit);
-        if (qty) parts.push('Qty: ' + qty);
-        $row.find('.cr-structured-dose-value').val(parts.join(' | '));
-    }
-
-    function toggleDoseMode(isStructured) {
-        crDoseStructuredMode = isStructured;
-        $('#cr-selected-products tr').each(function() {
-            const $td = $(this).find('td:eq(2)');
-            const hiddenId = $td.find('input[name="cr_presc_id[]"]').prop('outerHTML') || '';
-            if (isStructured) {
-                const val = $td.find('input[name="cr_presc_dose[]"]').val() || '';
-                $td.html(buildCrStructuredDoseHtml() + hiddenId);
-            } else {
-                const val = $td.find('.cr-structured-dose-value').val() || '';
-                $td.html(`<input type="text" class="form-control form-control-sm" name="cr_presc_dose[]" value="${val}" required>` + hiddenId);
-            }
-        });
-    }
-
-    function toggleCalculator() {
-        const p = document.getElementById('cr_dose_calculator_panel');
-        p.style.display = p.style.display === 'none' ? 'block' : 'none';
-    }
-
-    function calculate() {
-        const w = parseFloat($('#cr_calc_weight').val()) || 0;
-        const d = parseFloat($('#cr_calc_dose_per_kg').val()) || 0;
-        const f = parseInt($('#cr_calc_frequency').val()) || 1;
-        const dur = parseInt($('#cr_calc_duration').val()) || 1;
-        const ts = parseFloat($('#cr_calc_tab_strength').val()) || 1;
-        if (w <= 0 || d <= 0) { $('#cr_calc_results').html('<span class="text-muted">Enter values...</span>'); return; }
-        const single = w * d, daily = single * f, total = daily * dur, tabs = Math.ceil(total / ts);
-        $('#cr_calc_results').html(`<span><strong>Single:</strong> ${single.toFixed(1)}mg</span> | <span><strong>Daily:</strong> ${daily.toFixed(1)}mg</span> | <span><strong>Total:</strong> ${total.toFixed(1)}mg</span> | <span><strong>Tabs:</strong> <span class="badge bg-success">${tabs}</span></span>`);
-    }
-
-    function applyToSelected() {
-        if (!crDoseStructuredMode) { alert('Switch to Structured Dose mode first.'); return; }
-        const $lastRow = $('#cr-selected-products tr:last .cr-structured-dose');
-        if ($lastRow.length === 0) { alert('Add a product first.'); return; }
-        const w = parseFloat($('#cr_calc_weight').val()) || 0;
-        const d = parseFloat($('#cr_calc_dose_per_kg').val()) || 0;
-        const ts = parseFloat($('#cr_calc_tab_strength').val()) || 1;
-        const f = parseInt($('#cr_calc_frequency').val()) || 1;
-        const dur = parseInt($('#cr_calc_duration').val()) || 1;
-        if (w <= 0 || d <= 0) { alert('Enter weight and dose/kg first.'); return; }
-        const single = w * d;
-        const tabs = Math.ceil((single * f * dur) / ts);
-        const freqRev = { 1: 'OD', 2: 'BD', 3: 'TDS', 4: 'QID', 6: 'Q4H' };
-        $lastRow.find('.cr-dose-amount').val(single.toFixed(1));
-        $lastRow.find('.cr-dose-unit').val('mg');
-        $lastRow.find('.cr-dose-freq').val(freqRev[f] || 'OD');
-        $lastRow.find('.cr-dose-dur').val(dur);
-        $lastRow.find('.cr-dose-dur-unit').val('days');
-        $lastRow.find('.cr-dose-qty').val(tabs);
-        updateDoseVal($lastRow.find('.cr-dose-amount')[0]);
-    }
+    // Phase 0d (Plan §2.3): Old global calculator functions removed.
+    // Per-drug inline calculator now lives in ClinicalOrdersKit (clinical-orders-shared.js).
 
     function addLabService(name, id, price, mode, claims, payable) {
-        const coverageBadge = mode && mode !== 'null' ? `<div class="small mt-1"><span class="badge bg-info">${mode.toUpperCase()}</span> <span class="text-danger">Pay: ${payable}</span> <span class="text-success">Claims: ${claims}</span></div>` : '';
-        $('#cr-selected-labs').append(`
-            <tr>
-                <td>${name}${coverageBadge}</td>
-                <td>${payable ?? price}</td>
-                <td><input type="text" class="form-control form-control-sm" name="cr_lab_note[]" placeholder="Clinical notes..."><input type="hidden" name="cr_lab_id[]" value="${id}"></td>
-                <td><button class="btn btn-sm btn-danger" onclick="$(this).closest('tr').remove()"><i class="fa fa-times"></i></button></td>
-            </tr>
-        `);
+        var csrfToken = $('meta[name="csrf-token"]').attr('content');
+
+        ClinicalOrdersKit.addItem({
+            url: '/nursing-workbench/clinical-requests/add-lab',
+            payload: { service_id: id, patient_id: patientId, note: '' },
+            csrfToken: csrfToken,
+            tableSelector: '#cr-selected-labs',
+            type: 'labs',
+            referenceId: parseInt(id),
+            buildRowHtml: function(response) {
+                var coverageBadge = mode && mode !== 'null' ? '<div class="small mt-1"><span class="badge bg-info">' + (mode||'').toUpperCase() + '</span> <span class="text-danger">Pay: ' + payable + '</span> <span class="text-success">Claims: ' + claims + '</span></div>' : '';
+                return '<tr data-record-id="' + response.id + '" data-record-type="lab" data-service-id="' + id + '">' +
+                    '<td>' + name + coverageBadge + '</td>' +
+                    '<td>' + (payable ?? price) + '</td>' +
+                    '<td><input type="text" class="form-control form-control-sm" name="cr_lab_note[]" placeholder="Clinical notes..." onchange="ClinicalOrdersKit.debouncedUpdate({url:\'/nursing-workbench/clinical-requests/labs/' + response.id + '/note\',payload:{note:this.value},csrfToken:\'' + csrfToken + '\'})"><input type="hidden" name="cr_lab_id[]" value="' + id + '"></td>' +
+                    '<td><button class="btn btn-sm btn-danger" onclick="ClinicalRequests.removeAutoSavedRow(this,\'lab\',' + response.id + ',' + id + ')"><i class="fa fa-times"></i></button></td>' +
+                '</tr>';
+            },
+            onSuccess: function(resp) {
+                initLabHistory();
+            }
+        });
+
         $('#cr_lab_search').val('');
         $('#cr_lab_results').hide();
     }
 
     function addImagingService(name, id, price, mode, claims, payable) {
-        const coverageBadge = mode && mode !== 'null' ? `<div class="small mt-1"><span class="badge bg-info">${mode.toUpperCase()}</span> <span class="text-danger">Pay: ${payable}</span> <span class="text-success">Claims: ${claims}</span></div>` : '';
-        $('#cr-selected-imaging').append(`
-            <tr>
-                <td>${name}${coverageBadge}</td>
-                <td>${payable ?? price}</td>
-                <td><input type="text" class="form-control form-control-sm" name="cr_imaging_note[]" placeholder="Clinical notes..."><input type="hidden" name="cr_imaging_id[]" value="${id}"></td>
-                <td><button class="btn btn-sm btn-danger" onclick="$(this).closest('tr').remove()"><i class="fa fa-times"></i></button></td>
-            </tr>
-        `);
+        var csrfToken = $('meta[name="csrf-token"]').attr('content');
+
+        ClinicalOrdersKit.addItem({
+            url: '/nursing-workbench/clinical-requests/add-imaging',
+            payload: { service_id: id, patient_id: patientId, note: '' },
+            csrfToken: csrfToken,
+            tableSelector: '#cr-selected-imaging',
+            type: 'imaging',
+            referenceId: parseInt(id),
+            buildRowHtml: function(response) {
+                var coverageBadge = mode && mode !== 'null' ? '<div class="small mt-1"><span class="badge bg-info">' + (mode||'').toUpperCase() + '</span> <span class="text-danger">Pay: ' + payable + '</span> <span class="text-success">Claims: ' + claims + '</span></div>' : '';
+                return '<tr data-record-id="' + response.id + '" data-record-type="imaging" data-service-id="' + id + '">' +
+                    '<td>' + name + coverageBadge + '</td>' +
+                    '<td>' + (payable ?? price) + '</td>' +
+                    '<td><input type="text" class="form-control form-control-sm" name="cr_imaging_note[]" placeholder="Clinical notes..." onchange="ClinicalOrdersKit.debouncedUpdate({url:\'/nursing-workbench/clinical-requests/imaging/' + response.id + '/note\',payload:{note:this.value},csrfToken:\'' + csrfToken + '\'})"><input type="hidden" name="cr_imaging_id[]" value="' + id + '"></td>' +
+                    '<td><button class="btn btn-sm btn-danger" onclick="ClinicalRequests.removeAutoSavedRow(this,\'imaging\',' + response.id + ',' + id + ')"><i class="fa fa-times"></i></button></td>' +
+                '</tr>';
+            },
+            onSuccess: function(resp) {
+                initImagingHistory();
+            }
+        });
+
         $('#cr_imaging_search').val('');
         $('#cr_imaging_results').hide();
     }
 
     function addProcedure(item) {
-        if (selectedProcedures.some(p => p.id === item.id)) {
+        // Phase 2a (Plan §4.1): Auto-save procedure via ClinicalOrdersKit.addItem
+        const procId = item.id;
+        if (ClinicalOrdersKit.isAlreadyAdded('procedures', procId)) {
             toastr.warning('Procedure already added');
             return;
         }
         const priority = $('#cr_proc_priority').val();
         const scheduledDate = $('#cr_proc_scheduled_date').val();
         const preNotes = $('#cr_proc_notes').val();
-        item.priority = priority;
-        item.scheduled_date = scheduledDate;
-        item.pre_notes = preNotes;
-        selectedProcedures.push(item);
-        renderSelectedProcedures();
+
+        const payable = item.payable_amount ?? (item.price?.sale_price ?? 0);
+        const priorityClass = { routine: 'bg-success', urgent: 'bg-warning text-dark', emergency: 'bg-danger' }[priority] || 'bg-secondary';
+        const priorityLabel = priority.charAt(0).toUpperCase() + priority.slice(1);
+
+        ClinicalOrdersKit.addItem({
+            url: '/nursing-workbench/clinical-requests/add-procedure',
+            payload: {
+                patient_id: patientId,
+                service_id: procId,
+                priority: priority,
+                scheduled_date: scheduledDate,
+                pre_notes: preNotes
+            },
+            csrfToken: CSRF_TOKEN,
+            tableSelector: '#cr-selected-procedures',
+            type: 'procedures',
+            referenceId: procId,
+            buildRowHtml: function(resp) {
+                return '<tr data-record-id="' + resp.id + '" data-record-type="procedure" data-service-id="' + procId + '">' +
+                    '<td><strong>' + (item.service_name || 'N/A') + '</strong><br><small class="text-muted">' + (item.service_code || '') + '</small>' +
+                    (preNotes ? '<br><small class="text-info"><i class="fa fa-sticky-note"></i> ' + preNotes.substring(0, 60) + '</small>' : '') + '</td>' +
+                    '<td>NGN ' + payable + '</td>' +
+                    '<td><span class="badge ' + priorityClass + '">' + priorityLabel + '</span>' +
+                    (scheduledDate ? '<br><small>' + scheduledDate + '</small>' : '') + '</td>' +
+                    '<td><button class="btn btn-sm btn-danger" onclick="ClinicalRequests.removeAutoSavedRow(this,\'procedure\',' + resp.id + ',' + procId + ')"><i class="fa fa-times"></i></button></td>' +
+                '</tr>';
+            },
+            onSuccess: function() {
+                initProcHistory();
+            }
+        });
         $('#cr_proc_search').val('');
         $('#cr_proc_results').hide();
     }
 
     function removeProcedure(procId) {
+        // Legacy fallback — for non-auto-saved rows only
         selectedProcedures = selectedProcedures.filter(p => p.id !== procId);
         renderSelectedProcedures();
     }
@@ -8261,10 +8658,15 @@ const ClinicalRequests = (function() {
         setTimeout(() => $(`#${containerId} .alert`).alert('close'), 5000);
     }
 
+    // Phase 2b (Plan §4.3): skip auto-saved prescription rows
     function savePrescriptions() {
         if (!patientId) { toastr.error('No patient selected'); return; }
         const products = [], doses = [];
+        let autoSavedCount = 0;
+
         $('#cr-selected-products tr').each(function() {
+            // Skip rows already auto-saved (Phase 2b)
+            if ($(this).data('record-id')) { autoSavedCount++; return; }
             const id = $(this).find('input[name="cr_presc_id[]"]').val();
             // Try structured hidden input first, fallback to text input
             let dose = $(this).find('.cr-structured-dose-value').val();
@@ -8273,6 +8675,17 @@ const ClinicalRequests = (function() {
             }
             if (id) { products.push(id); doses.push(dose || ''); }
         });
+
+        // If ALL rows are auto-saved, show success and clear
+        if (products.length === 0 && autoSavedCount > 0) {
+            showMessage('cr_presc_message', autoSavedCount + ' prescription(s) already auto-saved', 'success');
+            $('#cr-selected-products').empty();
+            ClinicalOrdersKit.addedIds.meds.clear(); // A3 fix: only clear meds
+            initPrescHistory();
+            try { new bootstrap.Tab($('[data-bs-target="#cr-presc-history"]')[0]).show(); } catch(e) { $('[data-bs-target="#cr-presc-history"]').tab('show'); }
+            return;
+        }
+
         if (products.length === 0) { showMessage('cr_presc_message', 'No prescriptions selected.', 'error'); return; }
 
         const $btn = $('#cr-save-prescriptions-btn').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
@@ -8282,8 +8695,10 @@ const ClinicalRequests = (function() {
             data: { patient_id: patientId, product_ids: products, doses: doses, _token: CSRF_TOKEN },
             success: function(r) {
                 if (r.success) {
-                    showMessage('cr_presc_message', r.message, 'success');
+                    const saved = autoSavedCount > 0 ? ` (${autoSavedCount} auto-saved earlier)` : '';
+                    showMessage('cr_presc_message', r.message + saved, 'success');
                     $('#cr-selected-products').empty();
+                    ClinicalOrdersKit.addedIds.meds.clear(); // A3 fix: only clear meds
                     initPrescHistory();
                     // Switch to history tab
                     try { new bootstrap.Tab($('[data-bs-target="#cr-presc-history"]')[0]).show(); } catch(e) { $('[data-bs-target="#cr-presc-history"]').tab('show'); }
@@ -8297,11 +8712,25 @@ const ClinicalRequests = (function() {
     function saveLabs() {
         if (!patientId) { toastr.error('No patient selected'); return; }
         const services = [], notes = [];
+        var autoSavedCount = 0;
+
         $('#cr-selected-labs tr').each(function() {
+            if ($(this).data('record-id')) { autoSavedCount++; return; }
             const id = $(this).find('input[name="cr_lab_id[]"]').val();
             const note = $(this).find('input[name="cr_lab_note[]"]').val();
             if (id) { services.push(id); notes.push(note || ''); }
         });
+
+        // If all items were auto-saved
+        if (services.length === 0 && autoSavedCount > 0) {
+            showMessage('cr_lab_message', autoSavedCount + ' lab(s) already saved', 'success');
+            $('#cr-selected-labs').empty();
+            ClinicalOrdersKit.addedIds.labs.clear(); // A3 fix: only clear labs
+            initLabHistory();
+            try { new bootstrap.Tab($('[data-bs-target="#cr-lab-history"]')[0]).show(); } catch(e) { $('[data-bs-target="#cr-lab-history"]').tab('show'); }
+            return;
+        }
+
         if (services.length === 0) { showMessage('cr_lab_message', 'No lab services selected.', 'error'); return; }
 
         const $btn = $('#cr-save-labs-btn').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
@@ -8326,11 +8755,24 @@ const ClinicalRequests = (function() {
     function saveImaging() {
         if (!patientId) { toastr.error('No patient selected'); return; }
         const services = [], notes = [];
+        var autoSavedCount = 0;
+
         $('#cr-selected-imaging tr').each(function() {
+            if ($(this).data('record-id')) { autoSavedCount++; return; }
             const id = $(this).find('input[name="cr_imaging_id[]"]').val();
             const note = $(this).find('input[name="cr_imaging_note[]"]').val();
             if (id) { services.push(id); notes.push(note || ''); }
         });
+
+        if (services.length === 0 && autoSavedCount > 0) {
+            showMessage('cr_imaging_message', autoSavedCount + ' imaging request(s) already saved', 'success');
+            $('#cr-selected-imaging').empty();
+            ClinicalOrdersKit.addedIds.imaging.clear(); // A3 fix: only clear imaging
+            initImagingHistory();
+            try { new bootstrap.Tab($('[data-bs-target="#cr-imaging-history"]')[0]).show(); } catch(e) { $('[data-bs-target="#cr-imaging-history"]').tab('show'); }
+            return;
+        }
+
         if (services.length === 0) { showMessage('cr_imaging_message', 'No imaging services selected.', 'error'); return; }
 
         const $btn = $('#cr-save-imaging-btn').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
@@ -8385,6 +8827,40 @@ const ClinicalRequests = (function() {
         });
     }
 
+    /**
+     * Remove an auto-saved row (lab/imaging) via DELETE.
+     * Called from inline onclick in auto-saved rows.
+     */
+    function removeAutoSavedRow(btn, type, recordId, serviceId) {
+        var deleteUrl;
+        var tableSelector;
+        if (type === 'lab') {
+            deleteUrl = '/nursing-workbench/clinical-requests/labs/' + recordId;
+            tableSelector = '#cr-selected-labs';
+        } else if (type === 'imaging') {
+            deleteUrl = '/nursing-workbench/clinical-requests/imaging/' + recordId;
+            tableSelector = '#cr-selected-imaging';
+        } else if (type === 'prescription') {
+            deleteUrl = '/nursing-workbench/clinical-requests/prescriptions/' + recordId;
+            tableSelector = '#cr-selected-products';
+        } else if (type === 'procedure') {
+            deleteUrl = '/nursing-workbench/clinical-requests/procedures/' + recordId;
+            tableSelector = '#cr-selected-procedures';
+        }
+
+        // Map onclick type strings to addedIds keys
+        var idsType = { lab: 'labs', imaging: 'imaging', prescription: 'meds', procedure: 'procedures' }[type] || type;
+
+        ClinicalOrdersKit.removeItem({
+            url: deleteUrl,
+            csrfToken: $('meta[name="csrf-token"]').attr('content'),
+            rowSelector: $(btn).closest('tr'),
+            type: idsType,
+            referenceId: serviceId ? parseInt(serviceId) : null,
+            tableSelector: tableSelector
+        });
+    }
+
     return {
         init: init,
         addProduct: addProduct,
@@ -8392,16 +8868,18 @@ const ClinicalRequests = (function() {
         addImagingService: addImagingService,
         addProcedure: addProcedure,
         removeProcedure: removeProcedure,
+        removeAutoSavedRow: removeAutoSavedRow,
         savePrescriptions: savePrescriptions,
         saveLabs: saveLabs,
         saveImaging: saveImaging,
         saveProcedures: saveProcedures,
-        toggleDoseMode: toggleDoseMode,
-        toggleCalculator: toggleCalculator,
-        calculate: calculate,
-        applyToSelected: applyToSelected,
-        updateDoseVal: updateDoseVal,
-        _searchBound: false
+        toggleDoseMode: function() { /* removed — now handled by ClinicalOrdersKit.initDoseModeToggle (Plan §2.2) */ },
+        toggleCalculator: function() { /* removed — global calculator replaced by per-drug calc (Plan §2.3) */ },
+        calculate: function() { /* removed */ },
+        applyToSelected: function() { /* removed */ },
+        updateDoseVal: function() { /* removed — now handled by ClinicalOrdersKit.updateDoseValue (Plan §2.2) */ },
+        _searchBound: false,
+        _doseToggleInit: false
     };
 })();
 
@@ -9355,6 +9833,7 @@ function refreshCurrentPatientData() {
     // Silently reload patient data
     loadPendingBills(currentPatient);
     loadInjectionHistory(currentPatient);
+    loadInjectionPrescriptions(true);
     loadImmunizationHistory(currentPatient);
     loadNotesHistory(currentPatient);
 }
@@ -12218,6 +12697,140 @@ function loadMedicationDue() {
 // INJECTION MODULE - Drug Search & Administration
 // ========================================
 
+function setInjectionDrugSource(source) {
+    $('#injection-drug-source').val(source);
+    $('[data-inj-source]').removeClass('active');
+    $(`[data-inj-source="${source}"]`).addClass('active');
+
+    $('.source-section').hide();
+    $('#inj-source-' + (source === 'ward_stock' ? 'ward' : source === 'patient_own' ? 'patient' : 'pharmacy')).show();
+
+    // §7.1: Only ward_stock needs the hospital product search (Step 2)
+    // Pharmacy uses prescription dropdown, Patient's Own uses free-text fields
+    if (source === 'ward_stock') {
+        $('.inj-non-pharmacy').show();
+    } else {
+        $('.inj-non-pharmacy').hide();
+    }
+
+    // Clear any previously selected items when switching source to avoid mixed payloads
+    $('#injection-selected-body').empty();
+    updateInjectionTotals();
+    $('#injection-stock-error').remove();
+}
+
+function loadInjectionPrescriptions(force = false) {
+    if (injectionPrescriptionsLoaded && !force) {
+        return $.Deferred().resolve(injectionPrescriptions).promise();
+    }
+    if (!currentPatient) return $.Deferred().resolve([]).promise();
+
+    const url = medicationChartPrescribedRoute.replace(':patient', currentPatient);
+    return $.ajax({ url: url, type: 'GET' })
+        .then(function(res) {
+            if (res && res.success) {
+                injectionPrescriptions = res.prescriptions || [];
+                injectionPrescriptionsLoaded = true;
+                populateInjectionRxSelect();
+            }
+            return injectionPrescriptions;
+        })
+        .catch(function(err) {
+            console.error('Failed to load prescriptions for injections', err);
+            return [];
+        });
+}
+
+function populateInjectionRxSelect() {
+    const select = $('#injection-rx-select');
+    if (!select.length) return;
+
+    select.empty();
+    const dispensed = (injectionPrescriptions || []).filter(p => p.is_dispensed);
+
+    if (dispensed.length === 0) {
+        select.append('<option value="">No dispensed prescriptions</option>');
+        return;
+    }
+
+    select.append('<option value="">-- Select dispensed prescription --</option>');
+    dispensed.forEach(function(rx) {
+        const label = `${rx.product_name || 'Drug'} (${rx.product_code || ''}) from ${rx.dispensed_from_store || 'Pharmacy'}`;
+        select.append(`<option value="${rx.id}" data-product-id="${rx.product_id || ''}" data-remaining="${rx.remaining_doses ?? ''}">${label}</option>`);
+    });
+}
+
+function addInjectionRxToTable() {
+    const rxId = $('#injection-rx-select').val();
+    if (!rxId) {
+        showNotification('warning', 'Select a dispensed prescription first');
+        return;
+    }
+    const rx = (injectionPrescriptions || []).find(p => p.id == rxId);
+    if (!rx || !rx.is_dispensed) {
+        showNotification('warning', 'Only dispensed prescriptions can be charted');
+        return;
+    }
+
+    // Prevent duplicates
+    if ($(`#injection-selected-body tr[data-product-request-id="${rx.id}"]`).length > 0) {
+        showNotification('info', 'Prescription already added');
+        return;
+    }
+
+    const price = parseFloat(rx.payable_amount || rx.claims_amount || 0) || 0;
+    const coverage = rx.coverage_mode || 'cash';
+    const coverageInfo = coverage && coverage !== 'cash'
+        ? `<span class="badge bg-info">${coverage.toUpperCase()}</span>`
+        : '<span class="badge bg-secondary">Cash</span>';
+
+    const remaining = rx.remaining_doses ?? null;
+    const remainText = remaining !== null ? `<div class="small text-muted">Remaining: ${remaining}</div>` : '';
+
+    const row = `
+        <tr data-product-id="${rx.product_id}" data-product-request-id="${rx.id}" data-price="${price}" data-source="pharmacy_dispensed">
+            <td><input type="checkbox" class="form-check-input injection-row-check" checked></td>
+            <td>
+                <strong>${rx.product_name || 'Drug'}</strong><br>
+                <small class="text-muted">[${rx.product_code || ''}]</small>
+                ${remainText}
+            </td>
+            <td>
+                <input type="number" class="form-control form-control-sm injection-qty" value="1" min="1" style="width: 60px;" readonly>
+            </td>
+            <td class="batch-cell text-muted">N/A</td>
+            <td class="stock-cell text-muted">N/A</td>
+            <td>₦${price.toFixed(2)}</td>
+            <td>${coverageInfo}</td>
+            <td>
+                <input type="text" class="form-control form-control-sm" name="injection_dose[]" placeholder="e.g., 5mg" required>
+            </td>
+            <td>
+                <button type="button" class="btn btn-sm btn-danger" onclick="removeInjectionRow(this)">
+                    <i class="mdi mdi-close"></i>
+                </button>
+            </td>
+        </tr>`;
+
+    $('#injection-selected-body').append(row);
+    updateInjectionTotals();
+
+    $('#injection-rx-summary').text(`${rx.product_name || 'Drug'} added`).show();
+}
+
+// Drug source toggle
+$(document).on('click', '[data-inj-source]', function() {
+    const source = $(this).data('inj-source');
+    setInjectionDrugSource(source);
+});
+
+$('#injection-add-rx').on('click', function() {
+    addInjectionRxToTable();
+});
+
+// Default selection
+setInjectionDrugSource('pharmacy_dispensed');
+
 // Injection Drug Search (uses same endpoint as prescription form)
 let injectionSearchTimeout;
 $('#injection-drug-search').on('input', function() {
@@ -12316,10 +12929,12 @@ function addInjectionDrug(element) {
     const claims = parseFloat($el.data('claims')) || 0;
     const mode = $el.data('mode') || 'cash';
 
+    const drugSource = $('#injection-drug-source').val();
+
     // Check if store is selected first
     const storeId = $('#injection-store').val();
-    if (!storeId) {
-        showNotification('warning', 'Please select a store first');
+    if (drugSource === 'ward_stock' && !storeId) {
+        showNotification('warning', 'Please select a ward store first');
         $('#injection-store').focus();
         return;
     }
@@ -12337,7 +12952,7 @@ function addInjectionDrug(element) {
         : '<span class="badge bg-secondary">Cash</span>';
 
     const row = `
-        <tr data-product-id="${id}" data-price="${payable}">
+        <tr data-product-id="${id}" data-price="${payable}" data-source="${drugSource}">
             <td><input type="checkbox" class="form-check-input injection-row-check" checked></td>
             <td>
                 <strong>${name}</strong><br>
@@ -12348,16 +12963,8 @@ function addInjectionDrug(element) {
                 <input type="number" class="form-control form-control-sm injection-qty"
                        name="injection_qty[]" value="1" min="1" style="width: 60px;">
             </td>
-            <td class="batch-cell">
-                <div class="batch-loading"><i class="mdi mdi-loading mdi-spin"></i> Loading...</div>
-                <select class="form-control form-control-sm batch-select-dropdown d-none" name="injection_batch_id[]">
-                    <option value="">Auto (FIFO)</option>
-                </select>
-                <input type="hidden" name="injection_selected_batch_id[]" value="">
-            </td>
-            <td class="stock-cell">
-                <span class="text-muted"><i class="mdi mdi-loading mdi-spin"></i></span>
-            </td>
+            <td class="batch-cell">${drugSource === 'ward_stock' ? '<div class="batch-loading"><i class="mdi mdi-loading mdi-spin"></i> Loading...</div><select class="form-control form-control-sm batch-select-dropdown d-none" name="injection_batch_id[]"><option value="">Auto (FIFO)</option></select><input type="hidden" name="injection_selected_batch_id[]" value="">' : '<span class="text-muted">N/A</span>'}</td>
+            <td class="stock-cell">${drugSource === 'ward_stock' ? '<span class="text-muted"><i class="mdi mdi-loading mdi-spin"></i></span>' : '<span class="text-muted">N/A</span>'}</td>
             <td>₦${payable.toFixed(2)}</td>
             <td>${coverageInfo}</td>
             <td>
@@ -12375,8 +12982,10 @@ function addInjectionDrug(element) {
     $('#injection-selected-body').append(row);
     updateInjectionTotals();
 
-    // Fetch and populate batch dropdown for this product
-    fetchAndPopulateBatchDropdown(id, storeId, `#injection-selected-body tr[data-product-id="${id}"]`);
+    // Fetch and populate batch dropdown for this product if ward stock
+    if (drugSource === 'ward_stock') {
+        fetchAndPopulateBatchDropdown(id, storeId, `#injection-selected-body tr[data-product-id="${id}"]`);
+    }
 
     $('#injection-drug-results').hide();
     $('#injection-drug-search').val('');
@@ -12386,6 +12995,80 @@ function addInjectionDrug(element) {
 function removeInjectionRow(btn) {
     $(btn).closest('tr').remove();
     updateInjectionTotals();
+}
+
+// §7.2: Insert a virtual row for patient's own drug (no hospital product_id)
+function addPatientOwnInjectionRow() {
+    const drugName  = $('#inj-external-name').val()?.trim();
+    const qty       = $('#inj-external-qty').val();
+    const batch     = $('#inj-external-batch').val()?.trim() || '';
+    const expiry    = $('#inj-external-expiry').val() || '';
+    const note      = $('#inj-external-note').val()?.trim() || '';
+
+    if (!drugName) {
+        showNotification('warning', 'Enter the drug name');
+        $('#inj-external-name').focus();
+        return;
+    }
+    if (!qty || parseFloat(qty) <= 0) {
+        showNotification('warning', 'Enter a valid quantity');
+        $('#inj-external-qty').focus();
+        return;
+    }
+
+    // Prevent duplicate virtual rows with same drug name
+    const duplicate = $('#injection-selected-body tr[data-source="patient_own"]').filter(function() {
+        return $(this).find('td:eq(1) strong').text().toLowerCase() === drugName.toLowerCase();
+    });
+    if (duplicate.length > 0) {
+        showNotification('warning', 'This drug is already in the list');
+        return;
+    }
+
+    const uid = 'po_' + Date.now(); // virtual row identifier
+
+    const row = `
+        <tr data-source="patient_own" data-virtual-id="${uid}" data-price="0"
+            data-ext-name="${drugName}" data-ext-qty="${qty}"
+            data-ext-batch="${batch}" data-ext-expiry="${expiry}" data-ext-note="${note}">
+            <td><input type="checkbox" class="form-check-input injection-row-check" checked></td>
+            <td>
+                <strong>${drugName}</strong><br>
+                <span class="badge bg-purple text-white" style="background:#9c27b0;">Patient's Own</span>
+                ${batch ? `<small class="text-muted ms-1">Batch: ${batch}</small>` : ''}
+                ${expiry ? `<small class="text-muted ms-1">Exp: ${expiry}</small>` : ''}
+            </td>
+            <td>
+                <input type="number" class="form-control form-control-sm injection-qty"
+                       name="injection_qty[]" value="${qty}" min="0.01" step="0.01" style="width: 60px;">
+            </td>
+            <td><span class="text-muted">N/A</span></td>
+            <td><span class="text-muted">N/A</span></td>
+            <td><span class="text-muted">—</span></td>
+            <td><span class="badge bg-secondary">No Billing</span></td>
+            <td>
+                <input type="text" class="form-control form-control-sm"
+                       name="injection_dose[]" placeholder="e.g., 5mg" required>
+            </td>
+            <td>
+                <button type="button" class="btn btn-sm btn-danger" onclick="removeInjectionRow(this)">
+                    <i class="mdi mdi-close"></i>
+                </button>
+            </td>
+        </tr>
+    `;
+
+    $('#injection-selected-body').append(row);
+    updateInjectionTotals();
+
+    // Clear the input fields so nurse can add another if needed
+    $('#inj-external-name').val('').focus();
+    $('#inj-external-qty').val('');
+    $('#inj-external-batch').val('');
+    $('#inj-external-expiry').val('');
+    $('#inj-external-note').val('');
+
+    showNotification('success', `"${drugName}" added to list`);
 }
 
 // Update injection totals
@@ -12804,35 +13487,80 @@ function showStockValidationError(items, tableSelector) {
     return errorHtml;
 }
 
-// Injection Form Submit
+// Injection Form Submit — §7.3 rewrite: 3-path source model
 $('#injection-form').on('submit', function(e) {
     e.preventDefault();
 
-    // Validate store selection
+    const drugSource = $('#injection-drug-source').val();
     const storeId = $('#injection-store').val();
-    if (!storeId) {
+    const billPatient = drugSource === 'ward_stock' ? ($('#injection-bill-patient').is(':checked') ? 1 : 0) : 0;
+
+    // Ward stock requires store
+    if (drugSource === 'ward_stock' && !storeId) {
         showNotification('error', 'Please select a store to dispense from');
         $('#injection-store').focus();
         return;
     }
 
-    // Collect selected products with names, batch selection for validation feedback
+    // Collect selected products/virtual rows
     const products = [];
     $('#injection-selected-body tr').each(function() {
-        if ($(this).find('.injection-row-check').is(':checked')) {
-            const batchId = $(this).find('.batch-select-dropdown').val() || null;
+        if (!$(this).find('.injection-row-check').is(':checked')) return;
+
+        const rowSource = $(this).data('source') || drugSource;
+        const batchId = $(this).find('.batch-select-dropdown').val() || null;
+        const productRequestId = $(this).data('product-request-id') || null;
+
+        if (rowSource === 'patient_own') {
+            // §7.2: Virtual row — read external data from data attributes
+            products.push({
+                product_id: null, // no hospital product for patient's own
+                product_name: $(this).find('td:eq(1) strong').text(),
+                qty: $(this).find('.injection-qty').val(),
+                dose: $(this).find('input[name="injection_dose[]"]').val(),
+                batch_id: null,
+                product_request_id: null,
+                external_drug_name: $(this).data('ext-name') || $(this).find('td:eq(1) strong').text(),
+                external_qty: $(this).data('ext-qty') || $(this).find('.injection-qty').val(),
+                external_batch_number: $(this).data('ext-batch') || null,
+                external_expiry_date: $(this).data('ext-expiry') || null,
+                external_source_note: $(this).data('ext-note') || null,
+            });
+        } else {
+            // pharmacy_dispensed or ward_stock — real hospital product
             products.push({
                 product_id: $(this).data('product-id'),
                 product_name: $(this).find('td:eq(1) strong').text(),
                 qty: $(this).find('.injection-qty').val(),
                 dose: $(this).find('input[name="injection_dose[]"]').val(),
-                batch_id: batchId // Include selected batch ID
+                batch_id: batchId,
+                product_request_id: productRequestId,
             });
         }
     });
 
     if (products.length === 0) {
-        showNotification('error', 'Please select at least one drug');
+        if (drugSource === 'patient_own') {
+            showNotification('error', "Click 'Add Drug to List' first, then submit");
+        } else {
+            showNotification('error', 'Please select at least one drug');
+        }
+        return;
+    }
+
+    // Pharmacy dispensed must have product_request_id
+    if (drugSource === 'pharmacy_dispensed') {
+        const missingRx = products.some(p => !p.product_request_id);
+        if (missingRx) {
+            showNotification('error', 'Select from dispensed prescriptions before administering');
+            return;
+        }
+    }
+
+    // Dose is required for all rows
+    const missingDose = products.some(p => !p.dose || !p.dose.trim());
+    if (missingDose) {
+        showNotification('warning', 'Enter a dose for every drug in the list');
         return;
     }
 
@@ -12842,29 +13570,40 @@ $('#injection-form').on('submit', function(e) {
     $('#injection-selected-body tr').removeClass('table-danger');
     $('#injection-stock-error').remove();
 
-    // Validate stock before submission
+    // Validate stock before submission (ward_stock only)
     const $submitBtn = $(this).find('button[type="submit"]');
     const originalBtnHtml = $submitBtn.html();
     $submitBtn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Checking Stock...');
 
-    validateStockAvailability(storeId, products)
+    const stockPromise = drugSource === 'ward_stock'
+        ? validateStockAvailability(storeId, products.filter(p => p.product_id))
+        : Promise.resolve();
+
+    stockPromise
         .then(() => {
-            // Stock OK - proceed with submission
             $submitBtn.html('<i class="mdi mdi-loading mdi-spin"></i> Administering...');
 
             const data = {
                 patient_id: currentPatient,
+                drug_source: drugSource,
+                bill_patient: billPatient,
                 products: products.map(p => ({
-                    product_id: p.product_id,
+                    product_id: p.product_id || null,
                     qty: p.qty,
                     dose: p.dose,
-                    batch_id: p.batch_id // Include selected batch ID
+                    batch_id: p.batch_id || null,
+                    product_request_id: p.product_request_id || null,
+                    external_drug_name: p.external_drug_name || null,
+                    external_qty: p.external_qty || null,
+                    external_batch_number: p.external_batch_number || null,
+                    external_expiry_date: p.external_expiry_date || null,
+                    external_source_note: p.external_source_note || null,
                 })),
                 route: $('#injection-route').val(),
                 site: $('#injection-site').val(),
                 administered_at: $('#injection-time').val(),
                 notes: $('#injection-notes').val(),
-                store_id: storeId
+                store_id: drugSource === 'ward_stock' ? storeId : null
             };
 
             $.ajax({
@@ -12877,6 +13616,7 @@ $('#injection-form').on('submit', function(e) {
                     showNotification('success', response.message || 'Injection administered successfully');
                     $('#injection-form')[0].reset();
                     $('#injection-selected-body').empty();
+                    setInjectionDrugSource('pharmacy_dispensed');
                     updateInjectionTotals();
                     loadInjectionHistory(currentPatient);
                 },
@@ -12888,7 +13628,6 @@ $('#injection-form').on('submit', function(e) {
             });
         })
         .catch(stockError => {
-            // Stock insufficient - show error
             $submitBtn.prop('disabled', false).html(originalBtnHtml);
 
             const errorHtml = showStockValidationError(stockError.items, '#injection-selected-body');
@@ -12964,7 +13703,23 @@ function loadInjectionHistory(patientId) {
         },
         columns: [
             { data: 'administered_at' },
-            { data: 'product_name' },
+            {
+                data: 'product_name',
+                render: function(data, type, row) {
+                    let name = data || 'N/A';
+                    if (row.drug_source === 'patient_own') {
+                        let tip = 'Patient\'s Own Drug';
+                        if (row.external_qty) tip += ' | Qty: ' + row.external_qty;
+                        if (row.external_batch_number) tip += ' | Batch: ' + row.external_batch_number;
+                        if (row.external_expiry_date) tip += ' | Exp: ' + row.external_expiry_date;
+                        if (row.external_source_note) tip += ' | Note: ' + row.external_source_note;
+                        name = '<span title="' + tip + '">' + name + '</span> <span class="badge badge-warning badge-sm">Patient\'s Own</span>';
+                    } else if (row.drug_source === 'ward_stock') {
+                        name += ' <span class="badge badge-info badge-sm">Ward Stock</span>';
+                    }
+                    return name;
+                }
+            },
             { data: 'dose' },
             { data: 'route' },
             { data: 'site' },
@@ -14306,6 +15061,7 @@ $('#service-billing-form').on('submit', function(e) {
         headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
         success: function(response) {
             showNotification('success', response.message || 'Service added successfully');
+                if (billingHistoryLoaded) reloadBillingHistory();
             $('#service-billing-form')[0].reset();
             $('#service-id').val('');
             loadPendingBills(currentPatient);
@@ -14370,6 +15126,7 @@ $('#consumable-billing-form').on('submit', function(e) {
             success: function(response) {
                 $submitBtn.prop('disabled', false).html(originalBtnHtml);
                 showNotification('success', response.message || 'Consumable added successfully');
+                if (billingHistoryLoaded) reloadBillingHistory();
                 $('#consumable-billing-form')[0].reset();
                 $('#consumable-id').val('');
                 $('#consumable-batch-select').html('<option value="">-- Select product first --</option>');
@@ -14454,18 +15211,199 @@ function loadPendingBills(patientId) {
 }
 
 function removeBillItem(id) {
-    if (!confirm('Remove this item?')) return;
+    if (!confirm('Are you sure you want to remove this bill item?')) return;
 
     $.ajax({
         url: `/nursing-workbench/remove-bill/${id}`,
         method: 'DELETE',
         headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'},
         success: function(response) {
-            showNotification('success', 'Item removed');
+            showNotification('success', response.message || 'Item removed');
             loadPendingBills(currentPatient);
+            // Refresh billing history if loaded
+            if (billingHistoryLoaded) reloadBillingHistory();
         },
-        error: function() {
-            showNotification('error', 'Failed to remove item');
+        error: function(xhr) {
+            var msg = 'Failed to remove item';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                msg = xhr.responseJSON.message;
+            }
+            showNotification('error', msg);
+        }
+    });
+}
+
+// =====================================
+// BILLING HISTORY (Service Requests)
+// =====================================
+let billingHistoryTable = null;
+let billingHistoryLoaded = false;
+
+function initBillingHistory(patientId) {
+    if (!patientId) return;
+
+    // Set default date range: current month
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    $('#bh-date-from').val(firstDay.toISOString().split('T')[0]);
+    $('#bh-date-to').val(lastDay.toISOString().split('T')[0]);
+
+    loadBillingHistoryTable(patientId);
+    loadBillingHistoryStats(patientId);
+    billingHistoryLoaded = true;
+}
+
+function loadBillingHistoryTable(patientId) {
+    if (billingHistoryTable) {
+        billingHistoryTable.destroy();
+        billingHistoryTable = null;
+    }
+
+    billingHistoryTable = $('#billing-history-table').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: `/nursing-workbench/patient/${patientId}/service-requests`,
+            data: function(d) {
+                d.date_from = $('#bh-date-from').val();
+                d.date_to = $('#bh-date-to').val();
+                d.type_filter = $('#bh-type-filter').val();
+                d.billing_filter = $('#bh-billing-filter').val();
+                d.delivery_filter = $('#bh-delivery-filter').val();
+            }
+        },
+        columns: [
+            { data: 'date_formatted', name: 'date_formatted' },
+            { data: 'request_no', name: 'request_no' },
+            { data: 'type_badge', name: 'type_badge' },
+            { data: 'name', name: 'name' },
+            { data: 'price_formatted', name: 'price_formatted', className: 'text-right' },
+            { data: 'hmo_covers_formatted', name: 'hmo_covers_formatted', className: 'text-right text-success' },
+            { data: 'payable_formatted', name: 'payable_formatted', className: 'text-right text-primary font-weight-bold' },
+            { data: 'billing_badge', name: 'billing_badge' },
+            { data: 'delivery_badge', name: 'delivery_badge' },
+            { data: 'actions', name: 'actions', orderable: false, searchable: false }
+        ],
+        order: [[0, 'desc']],
+        pageLength: 25,
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
+        language: {
+            emptyTable: 'No service requests found',
+            processing: '<i class="mdi mdi-loading mdi-spin mdi-24px"></i>'
+        },
+        drawCallback: function() {
+            loadBillingHistoryStats(currentPatient);
+        }
+    });
+}
+
+function loadBillingHistoryStats(patientId) {
+    if (!patientId) return;
+    $.ajax({
+        url: `/nursing-workbench/patient/${patientId}/service-requests-stats`,
+        data: {
+            date_from: $('#bh-date-from').val(),
+            date_to: $('#bh-date-to').val()
+        },
+        success: function(res) {
+            if (res.success) {
+                $('#bh-total-requests').text(res.stats.total_requests);
+                $('#bh-hmo-covered').text(res.stats.hmo_covered);
+                $('#bh-patient-payable').text(res.stats.patient_payable);
+                $('#bh-completed-count').text(res.stats.completed);
+            }
+        }
+    });
+}
+
+function reloadBillingHistory() {
+    if (billingHistoryTable) {
+        billingHistoryTable.ajax.reload();
+    }
+}
+
+// Filter form submit
+$(document).on('submit', '#bh-filter-form', function(e) {
+    e.preventDefault();
+    reloadBillingHistory();
+});
+
+// Clear filters
+$(document).on('click', '#bh-clear-filters', function() {
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    $('#bh-date-from').val(firstDay.toISOString().split('T')[0]);
+    $('#bh-date-to').val(lastDay.toISOString().split('T')[0]);
+    $('#bh-type-filter').val('');
+    $('#bh-billing-filter').val('');
+    $('#bh-delivery-filter').val('');
+    reloadBillingHistory();
+});
+
+// Lazy-load billing history when sub-tab is shown
+$(document).on('shown.bs.tab', '#billing-history-tab', function() {
+    if (!billingHistoryLoaded && currentPatient) {
+        initBillingHistory(currentPatient);
+    }
+});
+
+// View request details from billing history
+$(document).on('click', '#billing-history .view-request-btn', function() {
+    const type = $(this).data('type');
+    const id = $(this).data('id');
+    showBillingRequestDetails(type, id);
+});
+
+function showBillingRequestDetails(type, id) {
+    // Build a simple detail view in a SweetAlert or Bootstrap modal
+    const typeColors = { lab: '#17a2b8', imaging: '#ffc107', product: '#28a745' };
+    const typeLabels = { lab: 'Lab Test', imaging: 'Imaging', product: 'Product/Drug' };
+
+    Swal.fire({
+        title: `<i class="mdi mdi-eye"></i> ${typeLabels[type] || 'Request'} Details`,
+        html: '<div class="text-center"><i class="mdi mdi-loading mdi-spin mdi-36px"></i><br>Loading...</div>',
+        showConfirmButton: true,
+        confirmButtonText: 'Close',
+        width: '500px',
+        didOpen: () => {
+            // Fetch details — use the same data from the table row if available
+            const tableData = billingHistoryTable ? billingHistoryTable.rows().data().toArray() : [];
+            const row = tableData.find(r => r.id == id && r.type === type);
+
+            if (row) {
+                const hmoCoverage = row.hmo_covers > 0
+                    ? `<tr><td class="text-muted">HMO Covers</td><td class="text-success font-weight-bold">₦${parseFloat(row.hmo_covers).toFixed(2)}</td></tr>`
+                    : '';
+                const coverageMode = row.coverage_mode
+                    ? `<tr><td class="text-muted">Coverage</td><td><span class="badge badge-info">${row.coverage_mode}</span></td></tr>`
+                    : '';
+
+                Swal.update({
+                    html: `
+                        <div class="text-left">
+                            <div class="mb-3 p-2 rounded" style="background: ${typeColors[type]}15; border-left: 4px solid ${typeColors[type]};">
+                                <strong style="color: ${typeColors[type]};">${row.request_no}</strong>
+                                <span class="badge ml-2" style="background: ${typeColors[type]}; color: #fff;">${typeLabels[type]}</span>
+                            </div>
+                            <table class="table table-sm table-borderless mb-0">
+                                <tr><td class="text-muted" style="width:40%;">Service/Item</td><td class="font-weight-bold">${row.name}</td></tr>
+                                <tr><td class="text-muted">Price</td><td>₦${parseFloat(row.price).toFixed(2)}</td></tr>
+                                ${hmoCoverage}
+                                <tr><td class="text-muted">Payable</td><td class="text-primary font-weight-bold">₦${parseFloat(row.payable).toFixed(2)}</td></tr>
+                                ${coverageMode}
+                                <tr><td class="text-muted">Billing Status</td><td>${row.billing_badge}</td></tr>
+                                <tr><td class="text-muted">Delivery Status</td><td>${row.delivery_badge}</td></tr>
+                                <tr><td class="text-muted">Requested By</td><td>${row.requested_by || '-'}</td></tr>
+                                <tr><td class="text-muted">Date</td><td>${row.date_formatted}</td></tr>
+                            </table>
+                        </div>
+                    `
+                });
+            } else {
+                Swal.update({ html: '<p class="text-muted">Details not available. Try refreshing the table.</p>' });
+            }
         }
     });
 }
@@ -14683,6 +15621,11 @@ var medicationChartDeleteRoute = "{{ route('nurse.medication.delete') }}";
 var medicationChartEditRoute = "{{ route('nurse.medication.edit') }}";
 var medicationChartRemoveScheduleRoute = "{{ route('nurse.medication.remove_schedule') }}";
 var medicationChartCalendarRoute = "{{ route('nurse.medication.calendar', ['patient' => ':patient', 'medication' => ':medication', 'start_date' => ':start_date']) }}";
+var medicationChartPrescribedRoute = "{{ route('nurse.medication.prescribed_drugs', ['patient' => ':patient']) }}";
+var medicationChartDismissRoute = "{{ route('nurse.medication.dismiss_prescription', ['patient' => ':patient']) }}";
+var medicationChartAdministerDirectRoute = "{{ route('nurse.medication.administer_direct', ['patient' => ':patient']) }}";
+var medicationChartDirectCalendarRoute = "{{ route('nurse.medication.direct_calendar', ['patient' => ':patient']) }}";
+var medicationChartOverviewRoute = "{{ route('nurse.medication.overview', ['patient' => ':patient']) }}";
 
 var intakeOutputChartIndexRoute = "{{ route('nurse.intake_output.index', ['patient' => ':patient']) }}";
 var intakeOutputChartLogsRoute = "{{ route('nurse.intake_output.logs', ['patient' => ':patient', 'period' => ':period']) }}";
@@ -14703,6 +15646,565 @@ let medicationStatus = {};
 let currentSchedules = [];
 let currentAdministrations = [];
 let medicationHistory = {};
+let patientPrescriptions = [];
+let patientPrescriptionsLoaded = false;
+
+// §4.6: Drug source badge helper
+function getDrugSourceBadge(drugSource, productRequestId) {
+    switch (drugSource) {
+        case 'patient_own':
+            return '<span class="badge" style="background:#7b1fa2;"><i class="mdi mdi-account-heart"></i> Patient\'s Own</span>';
+        case 'ward_stock':
+            if (productRequestId) {
+                return '<span class="badge bg-primary"><i class="mdi mdi-hospital-building"></i> Ward Stock (Billed)</span>';
+            }
+            return '<span class="badge bg-info"><i class="mdi mdi-hospital-building"></i> Ward Stock</span>';
+        case 'pharmacy_dispensed':
+        default:
+            return '<span class="badge bg-success"><i class="mdi mdi-pill"></i> Pharmacy Dispensed</span>';
+    }
+}
+
+function setDrugSource(source) {
+    $('#administer_drug_source').val(source || 'pharmacy_dispensed');
+}
+
+// Helper: set datetime-local input to current time
+function setCurrentDateTime(inputId) {
+    var now = new Date();
+    var offset = now.getTimezoneOffset();
+    var local = new Date(now.getTime() - offset * 60000);
+    document.getElementById(inputId).value = local.toISOString().slice(0, 16);
+}
+
+// §6.1: Select2 template for dropdown results (rich format)
+function formatRxOption(option) {
+    if (!option.id) return option.text;
+
+    var $opt = $(option.element);
+
+    // Handle separator
+    if ($opt.data('is-separator')) {
+        return $('<div class="text-muted fw-bold small py-1 border-top mt-1">' + option.text + '</div>');
+    }
+
+    // Handle direct administration entries (ward stock / patient's own)
+    var directEntry = $opt.data('direct-entry');
+    if (directEntry) {
+        var deIcon = $opt.data('status-icon') || '';
+        var isPatientOwn = directEntry.drug_source === 'patient_own';
+        var deLabel = isPatientOwn ? "Patient's Own" : 'Ward Stock';
+        var deBadgeClass = isPatientOwn ? 'bg-purple' : 'bg-info';
+        var deBadgeHtml = '<span class="badge ' + deBadgeClass + '">' + deLabel + '</span>';
+        var deDrugName = directEntry.product_name || directEntry.external_drug_name || 'Unknown';
+        var deCodeStr = directEntry.product_code ? '(' + directEntry.product_code + ')' : '';
+        var deSchedCount = directEntry.times_scheduled || 0;
+        var deAdminCount = directEntry.times_administered || 0;
+
+        return $(
+            '<div class="d-flex flex-column py-1">' +
+                '<div class="d-flex align-items-center gap-2">' +
+                    '<span style="font-size:1.1em;">' + deIcon + '</span>' +
+                    '<strong>' + deDrugName + '</strong>' +
+                    '<small class="text-muted">' + deCodeStr + '</small>' +
+                    deBadgeHtml +
+                '</div>' +
+                '<div class="d-flex gap-3 ms-4">' +
+                    '<small class="text-muted">Scheduled: ' + deSchedCount + '</small>' +
+                    '<small class="text-info">Administered: ' + deAdminCount + '</small>' +
+                    '<small class="text-muted">by ' + directEntry.nurse_name + '</small>' +
+                '</div>' +
+            '</div>'
+        );
+    }
+
+    // Handle pharmacy prescriptions
+    var rx = $opt.data('rx');
+    if (!rx) return option.text;
+
+    var icon = $opt.data('status-icon') || '';
+    var badge = $opt.data('status-badge') || '';
+    var adminText = $opt.data('admin-text') || '';
+    var doctorText = $opt.data('doctor-text') || '';
+    var isDisabled = option.disabled;
+
+    return $(
+        '<div class="d-flex flex-column py-1 ' + (isDisabled ? 'opacity-50' : '') + '">' +
+            '<div class="d-flex align-items-center gap-2">' +
+                '<span style="font-size:1.1em;">' + icon + '</span>' +
+                '<strong>' + rx.product_name + '</strong>' +
+                '<small class="text-muted">(' + rx.product_code + ')</small>' +
+                badge +
+            '</div>' +
+            '<div class="d-flex gap-3 ms-4">' +
+                '<small class="text-muted">Prescribed: ' + rx.qty_prescribed + '</small>' +
+                '<small class="text-muted">Administered: ' + (rx.qty_administered || 0) + '</small>' +
+                '<small class="text-muted">Remaining: ' + (rx.remaining_doses || 0) + '</small>' +
+                '<small class="text-muted">Scheduled: ' + (rx.times_scheduled || 0) + '</small>' +
+                (adminText ? '<small class="text-info">' + adminText + '</small>' : '') +
+                (doctorText ? '<small class="text-muted">' + doctorText + '</small>' : '') +
+                (rx.remaining_doses === 0 && rx.is_dispensed ? '<small class="text-success fw-bold">✓ Fully administered</small>' : '') +
+            '</div>' +
+            (isDisabled ? '<small class="text-danger ms-4"><i class="mdi mdi-lock"></i> ' + rx.status_label + ' — cannot chart</small>' : '') +
+        '</div>'
+    );
+}
+
+// §6.1: Select2 template for selected item (compact)
+function formatRxSelection(option) {
+    if (!option.id) return option.text;
+
+    var $opt = $(option.element);
+
+    // Handle direct entry selections
+    var directEntry = $opt.data('direct-entry');
+    if (directEntry) {
+        var deIcon = $opt.data('status-icon') || '';
+        var deDrugName = directEntry.product_name || directEntry.external_drug_name || 'Unknown';
+        var deCodeStr = directEntry.product_code ? '(' + directEntry.product_code + ')' : '';
+        return deIcon + ' ' + deDrugName + ' ' + deCodeStr;
+    }
+
+    var rx = $opt.data('rx');
+    if (!rx) return option.text;
+
+    var icon = $opt.data('status-icon') || '';
+    var remainStr = (rx.remaining_doses !== undefined) ? ' [' + (rx.qty_administered || 0) + '/' + rx.qty_prescribed + ' used]' : '';
+    return icon + ' ' + rx.product_name + ' (' + rx.product_code + ')' + remainStr;
+}
+
+// =============================================
+// OVERVIEW TAB FUNCTIONS
+// =============================================
+var overviewCurrentStart = null;
+var overviewDataCache = null;
+
+function loadMedOverview(startDate) {
+    if (!PATIENT_ID) return;
+
+    if (!startDate) {
+        // Default to current week start (Monday)
+        var d = new Date();
+        d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); // Monday
+        startDate = formatDateForApi(d);
+    }
+    overviewCurrentStart = startDate;
+
+    var endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + 6);
+    var endStr = formatDateForApi(endDate);
+
+    $('#overview-loading').show();
+    $('#unified-overview-container').html('');
+
+    var url = medicationChartOverviewRoute.replace(':patient', PATIENT_ID);
+
+    $.ajax({
+        url: url,
+        type: 'GET',
+        data: { start_date: startDate, end_date: endStr },
+        success: function(data) {
+            $('#overview-loading').hide();
+            overviewDataCache = data;
+
+            // Update stats
+            var stats = data.stats || {};
+            $('#stat-total-meds').text(stats.total_medications || 0);
+            $('#stat-given').text(stats.total_given || 0);
+            $('#stat-scheduled').text(stats.total_scheduled || 0);
+            $('#stat-missed').text(stats.total_missed || 0);
+
+            // Render the 7-day calendar
+            renderOverviewCalendar(data, startDate, endStr);
+        },
+        error: function(xhr) {
+            $('#overview-loading').hide();
+            $('#unified-overview-container').html('<div class="alert alert-danger"><i class="mdi mdi-alert"></i> Failed to load overview.</div>');
+        }
+    });
+}
+
+function renderOverviewCalendar(data, startStr, endStr) {
+    var container = $('#unified-overview-container');
+    container.html('');
+
+    var startDate = new Date(startStr);
+    var today = new Date();
+    today.setHours(0,0,0,0);
+
+    var dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+    // Build day columns header
+    var headerHtml = '<div class="calendar-weekday-header d-flex">';
+    for (var i = 0; i < 7; i++) {
+        var day = new Date(startDate);
+        day.setDate(day.getDate() + i);
+        var isToday = day.toDateString() === today.toDateString();
+        var isWeekend = (day.getDay() === 0 || day.getDay() === 6);
+        headerHtml += '<div class="weekday-name flex-fill text-center py-1 small fw-bold ' +
+            (isToday ? 'bg-primary text-white rounded' : '') +
+            (isWeekend ? ' text-muted' : '') + '">' +
+            dayNames[day.getDay()] + ' ' + day.getDate() + '/' + (day.getMonth()+1) +
+            '</div>';
+    }
+    headerHtml += '</div>';
+
+    // Group schedules and admins by date
+    var schedulesByDay = {};
+    var adminsByDay = {};
+
+    (data.schedules || []).forEach(function(s) {
+        var dateKey = s.scheduled_time.substring(0, 10);
+        if (!schedulesByDay[dateKey]) schedulesByDay[dateKey] = [];
+        schedulesByDay[dateKey].push(s);
+    });
+
+    (data.unscheduled_admins || []).forEach(function(a) {
+        var dateKey = a.administered_at.substring(0, 10);
+        if (!adminsByDay[dateKey]) adminsByDay[dateKey] = [];
+        adminsByDay[dateKey].push(a);
+    });
+
+    // Build day columns
+    var gridHtml = '<div class="medication-calendar-grid d-flex" style="min-height:200px;">';
+    for (var i = 0; i < 7; i++) {
+        var day = new Date(startDate);
+        day.setDate(day.getDate() + i);
+        var dateKey = formatDateForApi(day);
+        var isToday = day.toDateString() === today.toDateString();
+        var isPast = day < today && !isToday;
+        var isWeekend = (day.getDay() === 0 || day.getDay() === 6);
+
+        var cellClass = 'calendar-day-cell flex-fill border-end p-1';
+        if (isToday) cellClass += ' today';
+        if (isPast) cellClass += ' past-date';
+        if (isWeekend) cellClass += ' weekend';
+
+        gridHtml += '<div class="' + cellClass + '" data-date="' + dateKey + '">';
+        gridHtml += '<div class="schedule-items">';
+
+        // Render schedules
+        var daySchedules = (schedulesByDay[dateKey] || []).sort(function(a,b) {
+            return a.scheduled_time.localeCompare(b.scheduled_time);
+        });
+
+        daySchedules.forEach(function(s) {
+            var time = new Date(s.scheduled_time);
+            var timeStr = time.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', hour12:true});
+            var statusClass = s.is_administered ? 'status-given' : (isPast ? 'status-missed' : 'status-pending');
+            var sourceIcon = s.drug_source === 'ward_stock' ? '🏥' : (s.drug_source === 'patient_own' ? '👤' : '💊');
+            var statusIcon = s.is_administered ? '✅' : (isPast ? '❌' : '🕐');
+
+            gridHtml += '<div class="med-item ' + statusClass + '" title="' + s.drug_name + ' - ' + s.dose + ' ' + s.route + '">';
+            gridHtml += '<span class="med-time">' + timeStr + '</span> ';
+            gridHtml += '<span class="med-name">' + sourceIcon + ' ' + truncate(s.drug_name, 15) + '</span> ';
+            gridHtml += '<span class="med-status">' + statusIcon + '</span>';
+            gridHtml += '</div>';
+        });
+
+        // Render unscheduled administrations
+        var dayAdmins = adminsByDay[dateKey] || [];
+        dayAdmins.forEach(function(a) {
+            var time = new Date(a.administered_at);
+            var timeStr = time.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', hour12:true});
+            var sourceIcon = a.drug_source === 'ward_stock' ? '🏥' : (a.drug_source === 'patient_own' ? '👤' : '💊');
+
+            gridHtml += '<div class="med-item status-given" title="' + a.drug_name + ' - ' + a.dose + ' (unscheduled)">';
+            gridHtml += '<span class="med-time">' + timeStr + '</span> ';
+            gridHtml += '<span class="med-name">' + sourceIcon + ' ' + truncate(a.drug_name, 15) + '</span> ';
+            gridHtml += '<span class="med-status">✅</span>';
+            gridHtml += '</div>';
+        });
+
+        if (daySchedules.length === 0 && dayAdmins.length === 0) {
+            gridHtml += '<div class="text-muted text-center small py-3"><i class="mdi mdi-calendar-blank"></i><br>No items</div>';
+        }
+
+        gridHtml += '</div></div>';
+    }
+    gridHtml += '</div>';
+
+    container.html(headerHtml + gridHtml);
+}
+
+function truncate(str, len) {
+    if (!str) return '';
+    return str.length > len ? str.substring(0, len) + '…' : str;
+}
+
+// Overview nav buttons
+$(document).on('click', '#overview-prev-btn', function() {
+    if (!overviewCurrentStart) return;
+    var d = new Date(overviewCurrentStart);
+    d.setDate(d.getDate() - 7);
+    loadMedOverview(formatDateForApi(d));
+});
+
+$(document).on('click', '#overview-next-btn', function() {
+    if (!overviewCurrentStart) return;
+    var d = new Date(overviewCurrentStart);
+    d.setDate(d.getDate() + 7);
+    loadMedOverview(formatDateForApi(d));
+});
+
+$(document).on('click', '#overview-today-btn', function() {
+    loadMedOverview(null); // null → defaults to current week
+});
+
+// =============================================
+// PRESCRIPTIONS TAB FUNCTIONS
+// =============================================
+var rxTabDataCache = null;
+var rxCurrentFilter = 'all';
+
+function loadPrescriptionsTab() {
+    if (!PATIENT_ID) return;
+
+    $('#rx-loading').show();
+    $('#rx-table-wrap').hide();
+    $('#rx-empty').hide();
+
+    var url = medicationChartPrescribedRoute.replace(':patient', PATIENT_ID);
+
+    $.ajax({
+        url: url,
+        type: 'GET',
+        success: function(data) {
+            $('#rx-loading').hide();
+            rxTabDataCache = data;
+
+            var rxList = data.prescriptions || [];
+            var directList = data.direct_entries || [];
+
+            // Update summary counts
+            var dispensed = rxList.filter(function(r) { return r.status === 3; }).length;
+            var billed = rxList.filter(function(r) { return r.status === 2; }).length;
+            var requested = rxList.filter(function(r) { return r.status === 1; }).length;
+            var total = rxList.length + directList.length;
+
+            $('#rx-count-dispensed').text(dispensed);
+            $('#rx-count-billed').text(billed);
+            $('#rx-count-requested').text(requested);
+            $('#rx-count-total').text(total);
+            $('#rx-tab-badge').text(total).toggle(total > 0);
+
+            // Render table
+            renderPrescriptionsTable(rxList, directList, rxCurrentFilter);
+        },
+        error: function() {
+            $('#rx-loading').hide();
+            $('#rx-empty').show().find('p').text('Failed to load prescriptions.');
+        }
+    });
+}
+
+function renderPrescriptionsTable(rxList, directList, filter) {
+    var $body = $('#rx-dashboard-body');
+    $body.empty();
+
+    var filtered = rxList;
+    if (filter && filter !== 'all') {
+        filtered = rxList.filter(function(r) { return r.status == filter; });
+    }
+
+    if (filtered.length === 0 && (filter !== 'all' || directList.length === 0)) {
+        $('#rx-table-wrap').hide();
+        $('#rx-empty').show();
+        return;
+    }
+
+    $('#rx-empty').hide();
+    $('#rx-table-wrap').show();
+
+    // Pharmacy prescriptions
+    filtered.forEach(function(rx) {
+        var statusBadge, statusClass;
+        switch (rx.status) {
+            case 3:
+                statusBadge = '<span class="badge bg-success">Dispensed</span>';
+                statusClass = '';
+                break;
+            case 2:
+                statusBadge = rx.is_paid
+                    ? '<span class="badge bg-warning text-dark">Awaiting Pharmacy</span>'
+                    : '<span class="badge bg-secondary">' + (rx.status_label || 'Awaiting Payment') + '</span>';
+                statusClass = '';
+                break;
+            default:
+                statusBadge = '<span class="badge bg-danger">Awaiting Billing</span>';
+                statusClass = 'table-danger';
+        }
+
+        var qtyInfo = rx.qty_prescribed || 0;
+        var adminInfo = (rx.qty_administered || 0) + ' / ' + qtyInfo;
+        var remaining = rx.remaining_doses || 0;
+        var adminBadge = rx.is_fully_administered
+            ? '<span class="badge bg-success">Complete</span>'
+            : '<span class="badge bg-' + (remaining <= 0 ? 'danger' : 'secondary') + '">' + adminInfo + '</span>';
+
+        var prescDate = rx.prescribed_at ? formatDate(new Date(rx.prescribed_at)) : '-';
+
+        var actionBtns = '';
+        if (rx.can_chart) {
+            actionBtns = '<button class="btn btn-sm btn-outline-primary rx-select-btn" data-posr-id="' + rx.posr_id + '" title="Select in chart"><i class="mdi mdi-pencil-plus"></i></button>';
+        }
+        if (rx.status !== 3 && rx.status !== 0) {
+            actionBtns += ' <button class="btn btn-sm btn-outline-danger rx-dismiss-btn" data-product-request-id="' + rx.product_request_id + '" data-drug-name="' + (rx.product_name || '') + '" title="Dismiss"><i class="mdi mdi-close-circle"></i></button>';
+        }
+
+        $body.append(
+            '<tr class="' + statusClass + '">' +
+                '<td><strong>' + (rx.product_name || 'Unknown') + '</strong><br><small class="text-muted">' + (rx.product_code || '') + '</small></td>' +
+                '<td>' + (rx.dose || '-') + '</td>' +
+                '<td><small>' + (rx.doctor_name ? 'Dr. ' + rx.doctor_name : '-') + '</small></td>' +
+                '<td><small>' + prescDate + '</small></td>' +
+                '<td>' + statusBadge + '</td>' +
+                '<td>' + adminBadge + '<br><small class="text-muted">Remaining: ' + remaining + '</small></td>' +
+                '<td class="text-center">' + actionBtns + '</td>' +
+            '</tr>'
+        );
+    });
+
+    // Direct entries (show if filter = 'all')
+    if (filter === 'all' && directList.length > 0) {
+        $body.append('<tr class="table-light"><td colspan="7" class="fw-bold small text-muted py-1"><i class="mdi mdi-arrow-right"></i> Direct Administrations</td></tr>');
+
+        directList.forEach(function(entry) {
+            var isPatientOwn = entry.drug_source === 'patient_own';
+            var sourceBadge = isPatientOwn
+                ? '<span class="badge" style="background:#7b1fa2;">Patient\'s Own</span>'
+                : '<span class="badge bg-info">Ward Stock</span>';
+            var drugName = entry.product_name || entry.external_drug_name || 'Unknown';
+
+            $body.append(
+                '<tr>' +
+                    '<td><strong>' + drugName + '</strong><br><small class="text-muted">' + (entry.product_code || '') + '</small></td>' +
+                    '<td>-</td>' +
+                    '<td><small>' + (entry.nurse_name || '-') + '</small></td>' +
+                    '<td><small>' + (entry.last_administered_at ? formatDate(new Date(entry.last_administered_at)) : '-') + '</small></td>' +
+                    '<td>' + sourceBadge + '</td>' +
+                    '<td><span class="badge bg-secondary">' + (entry.times_administered || 0) + ' given</span>' +
+                        '<br><small class="text-muted">Scheduled: ' + (entry.times_scheduled || 0) + '</small></td>' +
+                    '<td class="text-center">' +
+                        '<button class="btn btn-sm btn-outline-primary rx-select-direct-btn" ' +
+                            'data-drug-source="' + entry.drug_source + '" ' +
+                            'data-product-id="' + (entry.product_id || '') + '" ' +
+                            'data-external-name="' + (entry.external_drug_name || '') + '" ' +
+                            'title="Select in chart"><i class="mdi mdi-pencil-plus"></i></button>' +
+                    '</td>' +
+                '</tr>'
+            );
+        });
+    }
+}
+
+// Filter buttons for prescriptions tab
+$(document).on('click', '#rx-filter-group .btn', function() {
+    $('#rx-filter-group .btn').removeClass('active');
+    $(this).addClass('active');
+    rxCurrentFilter = $(this).data('rx-filter') || 'all';
+
+    if (rxTabDataCache) {
+        renderPrescriptionsTable(
+            rxTabDataCache.prescriptions || [],
+            rxTabDataCache.direct_entries || [],
+            rxCurrentFilter
+        );
+    }
+});
+
+// Refresh button
+$(document).on('click', '#rx-refresh-btn', function() {
+    loadPrescriptionsTab();
+});
+
+// Select prescription in chart (switch to Entry tab and pick the drug)
+$(document).on('click', '.rx-select-btn', function() {
+    var posrId = $(this).data('posr-id');
+    if (posrId) {
+        // Switch to Entry tab
+        $('#med-entry-tab').tab('show');
+        // Select the drug in the dropdown
+        setTimeout(function() {
+            $('#drug-select').val(posrId).trigger('change');
+        }, 200);
+    }
+});
+
+// Select direct entry in chart
+$(document).on('click', '.rx-select-direct-btn', function() {
+    var drugSource = $(this).data('drug-source');
+    var productId = $(this).data('product-id');
+    var externalName = $(this).data('external-name');
+
+    // Switch to Entry tab
+    $('#med-entry-tab').tab('show');
+
+    // Find matching option in dropdown
+    setTimeout(function() {
+        var matchVal = null;
+        $('#drug-select option').each(function() {
+            var $opt = $(this);
+            var de = $opt.data('direct-entry');
+            if (de && de.drug_source === drugSource) {
+                if (drugSource === 'ward_stock' && de.product_id == productId) {
+                    matchVal = $opt.val();
+                    return false;
+                }
+                if (drugSource === 'patient_own' && de.external_drug_name === externalName) {
+                    matchVal = $opt.val();
+                    return false;
+                }
+            }
+        });
+        if (matchVal) {
+            $('#drug-select').val(matchVal).trigger('change');
+        }
+    }, 200);
+});
+
+// Dismiss prescription from prescriptions tab
+$(document).on('click', '.rx-dismiss-btn', function() {
+    var productRequestId = $(this).data('product-request-id');
+    var drugName = $(this).data('drug-name');
+    var reason = prompt('Dismiss "' + drugName + '"? Enter reason:');
+    if (!reason) return;
+
+    var url = medicationChartDismissRoute.replace(':patient', PATIENT_ID);
+
+    $.ajax({
+        url: url,
+        type: 'POST',
+        data: {
+            _token: CSRF_TOKEN,
+            product_request_id: productRequestId,
+            reason: reason
+        },
+        success: function(response) {
+            if (response.success) {
+                toastr.success(response.message || 'Prescription dismissed.');
+                loadPrescriptionsTab();
+                loadMedicationsList(); // Refresh the dropdown too
+            } else {
+                toastr.error(response.error || 'Failed to dismiss.');
+            }
+        },
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.error || 'Failed to dismiss prescription.');
+        }
+    });
+});
+
+// =============================================
+// TAB SWITCH TRIGGERS
+// =============================================
+$(document).on('shown.bs.tab', '#med-overview-tab', function() {
+    loadMedOverview(overviewCurrentStart);
+});
+
+$(document).on('shown.bs.tab', '#med-rx-tab', function() {
+    loadPrescriptionsTab();
+});
 
 // Global variables for I/O chart
 let fluidPeriods = [];
@@ -14815,41 +16317,145 @@ function loadMedicationsList() {
         return;
     }
 
+    console.log('Loading medications list (enriched §6.1)...');
     $('#medication-loading').show();
     $('#medication-calendar').hide();
 
-    const ajaxUrl = medicationChartIndexRoute.replace(':patient', PATIENT_ID);
+    // §6.1: Use prescribed-drugs API for enriched status data
+    var prescribedUrl = medicationChartPrescribedRoute.replace(':patient', PATIENT_ID);
 
     $.ajax({
-        url: ajaxUrl,
+        url: prescribedUrl,
         type: 'GET',
         success: function(data) {
+            console.log('Prescribed drugs loaded:', data);
             $('#medication-loading').hide();
-            medications = data.prescriptions || [];
 
-            const select = $('#drug-select');
+            var prescriptions = data.prescriptions || [];
+
+            // Store all prescriptions for reference
+            window._rxLookup = {};
+            prescriptions.forEach(function(rx) { window._rxLookup[rx.posr_id || rx.id] = rx; });
+
+            // §6.1: Populate dropdown with rich, status-aware options
+            var select = $('#drug-select');
             select.empty();
             select.append('<option value="">-- Select a medication --</option>');
 
-            if (medications.length === 0) {
-                toastr.info('No medications found for this patient.');
+            if (prescriptions.length === 0) {
+                toastr.warning('No medications found for this patient.');
             } else {
-                medications.forEach(function(p) {
-                    const prod = p.product || {};
-                    select.append(`<option value="${p.id}">${prod.product_name || 'Unknown'} - ${prod.product_code || ''}</option>`);
+                console.log('Found ' + prescriptions.length + ' prescriptions');
 
-                    medicationStatus[p.id] = {
-                        discontinued: !!p.discontinued_at,
-                        discontinued_at: p.discontinued_at,
-                        discontinued_reason: p.discontinued_reason,
-                        resumed: !!p.resumed_at,
-                        resumed_at: p.resumed_at,
-                        resumed_reason: p.resumed_reason
-                    };
+                prescriptions.forEach(function(rx) {
+                    var posrId = rx.posr_id || '';
+                    var canChart = rx.can_chart && posrId;
+
+                    // §6.1: Status icon + color
+                    var statusIcon, statusBadge;
+                    switch (rx.status) {
+                        case 3:
+                            statusIcon = '🟢';
+                            statusBadge = '<span class="badge bg-success">Dispensed</span>';
+                            break;
+                        case 2:
+                            if (rx.is_paid) {
+                                statusIcon = '🟡';
+                                statusBadge = '<span class="badge bg-warning text-dark">Awaiting Pharmacy</span>';
+                            } else {
+                                statusIcon = '🟠';
+                                statusBadge = '<span class="badge bg-secondary">' + rx.status_label + '</span>';
+                            }
+                            break;
+                        default:
+                            statusIcon = '🔴';
+                            statusBadge = '<span class="badge bg-danger">Awaiting Billing</span>';
+                    }
+
+                    // Administered progress
+                    var adminText = rx.is_dispensed
+                        ? 'Administered: ' + rx.times_administered + '/' + rx.qty_prescribed
+                        : '';
+
+                    // Doctor info
+                    var doctorText = rx.doctor_name ? 'Dr. ' + rx.doctor_name : '';
+
+                    // Build display text
+                    var plainText = statusIcon + ' ' + rx.product_name + ' (' + rx.product_code + ') — ' + rx.status_label;
+
+                    var opt = new Option(plainText, posrId || ('rx_' + rx.id), false, false);
+                    opt.disabled = !canChart;
+
+                    // Store rich data on the option for Select2 templateResult
+                    $(opt).data('rx', rx);
+                    $(opt).data('status-icon', statusIcon);
+                    $(opt).data('status-badge', statusBadge);
+                    $(opt).data('admin-text', adminText);
+                    $(opt).data('doctor-text', doctorText);
+                    $(opt).data('drug-source', 'pharmacy_dispensed');
+                    $(opt).data('product-request-id', rx.product_request_id);
+                    $(opt).data('product-id', rx.product_id);
+
+                    select.append(opt);
+
+                    // Store medication status for discontinue/resume tracking
+                    if (posrId) {
+                        medicationStatus[posrId] = {
+                            discontinued: false,
+                            resumed: false,
+                        };
+                    }
+                });
+
+                // §6.1: Merge direct administration entries (ward stock + patient's own)
+                var directEntries = data.direct_entries || [];
+                if (directEntries.length > 0) {
+                    // Add separator
+                    var separator = new Option('── Direct Administrations ──', '', false, false);
+                    separator.disabled = true;
+                    $(separator).data('is-separator', true);
+                    select.append(separator);
+
+                    directEntries.forEach(function(entry) {
+                        var isPatientOwn = entry.drug_source === 'patient_own';
+                        var icon = isPatientOwn ? '🟣' : '🔵';
+                        var label = isPatientOwn ? "Patient's Own" : 'Ward Stock';
+                        var drugName = entry.product_name || entry.external_drug_name || 'Unknown';
+                        var codeStr = entry.product_code ? ' (' + entry.product_code + ')' : '';
+                        var plainText = icon + ' ' + drugName + codeStr + ' — ' + label;
+
+                        var optVal = 'direct_' + entry.drug_source + '_' + (entry.product_id || entry.external_drug_name || entry.id);
+                        var opt = new Option(plainText, optVal, false, false);
+
+                        // Store data for Select2 template and calendar loading
+                        $(opt).data('direct-entry', entry);
+                        $(opt).data('drug-source', entry.drug_source);
+                        $(opt).data('product-id', entry.product_id || null);
+                        $(opt).data('external-drug-name', entry.external_drug_name || null);
+                        $(opt).data('status-icon', icon);
+                        $(opt).data('is-direct', true);
+
+                        select.append(opt);
+                    });
+
+                    console.log('Added ' + directEntries.length + ' direct administration entries to dropdown');
+                }
+
+                // §6.1: Initialize Select2 with rich formatting
+                if (select.hasClass('select2-hidden-accessible')) {
+                    select.select2('destroy');
+                }
+                select.select2({
+                    width: '100%',
+                    placeholder: '-- Select a medication --',
+                    allowClear: true,
+                    templateResult: formatRxOption,
+                    templateSelection: formatRxSelection,
                 });
             }
         },
         error: function(xhr, status, error) {
+            console.error('Failed to load medications:', status, error);
             $('#medication-loading').hide();
             toastr.error('Failed to load medications: ' + error);
         }
@@ -14862,7 +16468,15 @@ $(document).on('change', '#drug-select', function() {
 
     if (medicationId) {
         selectedMedication = medicationId;
+
+        // Detect if this is a direct entry (ward_stock / patient_own)
+        var $selectedOpt = $(this).find('option:selected');
+        var isDirect = $selectedOpt.data('is-direct') || false;
+
+        // Enable schedule button; disable discontinue/resume for direct entries
         $('#set-schedule-btn').prop('disabled', false);
+        $('#discontinue-btn').prop('disabled', isDirect);
+        $('#resume-btn').prop('disabled', isDirect);
 
         const endDate = new Date(calendarStartDate);
         endDate.setDate(endDate.getDate() + 30);
@@ -14959,75 +16573,152 @@ function loadMedicationCalendarWithDateRange(medicationId, startDate, endDate) {
     $('#medication-loading').show();
     $('#medication-calendar').hide();
 
-    const url = medicationChartCalendarRoute
-        .replace(':patient', PATIENT_ID)
-        .replace(':medication', medicationId)
-        .replace(':start_date', startDate);
+    // Determine if this is a direct entry by checking the selected option
+    var $selectedOpt = $('#drug-select').find('option[value="' + medicationId + '"]');
+    var isDirect = $selectedOpt.data('is-direct') || false;
+    var url;
 
-    $.ajax({
-        url: url,
-        type: 'GET',
-        data: { start_date: startDate, end_date: endDate },
-        success: function(data) {
-            $('#medication-loading').hide();
+    if (isDirect) {
+        // Direct entry — use directCalendar endpoint with query params
+        var drugSource = $selectedOpt.data('drug-source');
+        var productId = $selectedOpt.data('product-id');
+        var externalDrugName = $selectedOpt.data('external-drug-name');
 
-            if (data.medication) {
-                const medication = data.medication;
-                currentSchedules = data.schedules || [];
-                currentAdministrations = data.administrations || [];
+        url = medicationChartDirectCalendarRoute.replace(':patient', PATIENT_ID);
+        var queryParams = {
+            drug_source: drugSource,
+            start_date: startDate,
+            end_date: endDate
+        };
+        if (productId) queryParams.product_id = productId;
+        if (externalDrugName) queryParams.external_drug_name = externalDrugName;
 
-                updateMedicationStatus(medication);
-                updateMedicationButtons(medication);
-
-                // Store history
-                let logEntries = [];
-                if (data.history && Array.isArray(data.history)) {
-                    logEntries = [...data.history];
-                }
-                if (data.adminHistory && Array.isArray(data.adminHistory)) {
-                    data.adminHistory.forEach(admin => {
-                        logEntries.push({
-                            date: admin.administered_at,
-                            action: 'administration',
-                            details: `${admin.dose} ${admin.route} ${admin.comment ? '- ' + admin.comment : ''}`,
-                            user: admin.administered_by_name || getUserName(admin) || 'Unknown',
-                            id: admin.id
-                        });
-                    });
-                }
-                medicationHistory[selectedMedication] = logEntries;
-
-                renderCalendarView(medication, currentSchedules, currentAdministrations, data.period);
-                renderLegend();
-                $('#medication-calendar').show();
-                $('#calendar-legend').show();
+        $.ajax({
+            url: url,
+            type: 'GET',
+            data: queryParams,
+            success: function(data) {
+                $('#medication-loading').hide();
+                handleCalendarResponse(data, medicationId);
+            },
+            error: function() {
+                $('#medication-loading').hide();
+                toastr.error('Failed to load medication calendar.');
             }
-        },
-        error: function() {
-            $('#medication-loading').hide();
-            toastr.error('Failed to load medication calendar.');
+        });
+    } else {
+        // Standard POSR — use calendar route
+        url = medicationChartCalendarRoute
+            .replace(':patient', PATIENT_ID)
+            .replace(':medication', medicationId)
+            .replace(':start_date', startDate);
+
+        $.ajax({
+            url: url,
+            type: 'GET',
+            data: { start_date: startDate, end_date: endDate },
+            success: function(data) {
+                $('#medication-loading').hide();
+                handleCalendarResponse(data, medicationId);
+            },
+            error: function() {
+                $('#medication-loading').hide();
+                toastr.error('Failed to load medication calendar.');
+            }
+        });
+    }
+}
+
+// Shared handler for calendar response (works for both POSR and direct entries)
+function handleCalendarResponse(data, medicationId) {
+    if (data.medication) {
+        const medication = data.medication;
+        currentSchedules = data.schedules || [];
+        currentAdministrations = data.administrations || [];
+
+        // Store total counts from server (all-time, not just date range)
+        window._currentMedCounts = {
+            totalScheduled: data.total_scheduled || currentSchedules.length,
+            totalAdministered: data.total_administered || currentAdministrations.filter(a => a.administered_at).length,
+            rangeScheduled: currentSchedules.length,
+            rangeAdministered: currentAdministrations.filter(a => a.administered_at).length
+        };
+
+        updateMedicationStatus(medication);
+        updateMedicationButtons(medication);
+
+        // Store history
+        let logEntries = [];
+        if (data.history && Array.isArray(data.history)) {
+            logEntries = [...data.history];
         }
-    });
+        if (data.adminHistory && Array.isArray(data.adminHistory)) {
+            data.adminHistory.forEach(admin => {
+                logEntries.push({
+                    date: admin.administered_at,
+                    action: 'administration',
+                    details: `${admin.dose} ${admin.route} ${admin.comment ? '- ' + admin.comment : ''}`,
+                    user: admin.administered_by_name || getUserName(admin) || 'Unknown',
+                    id: admin.id
+                });
+            });
+        }
+        medicationHistory[selectedMedication] = logEntries;
+
+        renderCalendarView(medication, currentSchedules, currentAdministrations, data.period);
+        renderLegend();
+        $('#medication-calendar').show();
+        $('#calendar-legend').show();
+    }
 }
 
 function updateMedicationStatus(medication) {
     let statusHtml = '';
+    var counts = window._currentMedCounts || { totalScheduled: 0, totalAdministered: 0 };
+    var countsHtml = '<span class="badge bg-light text-dark border me-1"><i class="mdi mdi-calendar-clock"></i> ' + counts.totalScheduled + ' scheduled</span>' +
+                     '<span class="badge bg-light text-dark border"><i class="mdi mdi-check-circle"></i> ' + counts.totalAdministered + ' administered</span>';
 
-    if (medication.product && medication.product.product_name) {
-        const productName = medication.product.product_name;
+    // Direct entries have product_name at top level; POSR entries have medication.product.product_name
+    var productName = '';
+    if (medication.is_direct_entry) {
+        productName = medication.product_name || 'Direct Entry';
+        var sourceLabel = medication.drug_source === 'patient_own' ? "Patient's Own" : 'Ward Stock';
+        var sourceBadge = medication.drug_source === 'patient_own' ? 'bg-purple' : 'bg-info';
+        statusHtml = `
+            <div class="alert alert-info py-2 mb-0">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <i class="mdi mdi-pill me-2"></i>
+                        <strong>${productName}</strong>: <span class="badge ${sourceBadge}">${sourceLabel}</span>
+                    </div>
+                    <div>${countsHtml}</div>
+                </div>
+            </div>`;
+    } else if (medication.product && medication.product.product_name) {
+        productName = medication.product.product_name;
 
         if (medication.discontinued_at && !medication.resumed_at) {
             statusHtml = `
                 <div class="alert alert-danger py-2 mb-0">
-                    <i class="mdi mdi-calendar-remove me-2"></i>
-                    <strong>${productName}</strong>: Discontinued
-                    <div class="small">Reason: ${medication.discontinued_reason || 'N/A'}</div>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <i class="mdi mdi-calendar-remove me-2"></i>
+                            <strong>${productName}</strong>: Discontinued
+                            <div class="small">Reason: ${medication.discontinued_reason || 'N/A'}</div>
+                        </div>
+                        <div>${countsHtml}</div>
+                    </div>
                 </div>`;
         } else {
             statusHtml = `
                 <div class="alert alert-success py-2 mb-0">
-                    <i class="mdi mdi-check-circle me-2"></i>
-                    <strong>${productName}</strong>: <span class="badge bg-success">Active</span>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <i class="mdi mdi-check-circle me-2"></i>
+                            <strong>${productName}</strong>: <span class="badge bg-success">Active</span>
+                        </div>
+                        <div>${countsHtml}</div>
+                    </div>
                 </div>`;
         }
     }
@@ -15036,6 +16727,15 @@ function updateMedicationStatus(medication) {
 }
 
 function updateMedicationButtons(medication) {
+    // Direct entries don't support discontinue/resume
+    if (medication.is_direct_entry) {
+        $('#discontinue-btn').prop('disabled', true);
+        $('#resume-btn').prop('disabled', true);
+        $('#set-schedule-btn').prop('disabled', false);
+        $('#view-logs-btn').prop('disabled', false);
+        return;
+    }
+
     const isDiscontinued = !!medication.discontinued_at;
     const isResumed = !!medication.resumed_at;
     const effectivelyDiscontinued = isDiscontinued && !isResumed;
@@ -15083,8 +16783,18 @@ $(document).on('click', '#view-logs-btn', function() {
         logsHtml += '</tbody></table></div>';
     }
 
-    const medication = medications.find(m => m.id == selectedMedication);
-    const medicationName = medication?.product?.product_name || 'Medication';
+    // Get medication name from dropdown option data (works for both POSR and direct entries)
+    let medicationName = 'Medication';
+    const $logsSelectedOpt = $('#drug-select').find('option:selected');
+    const logsDirectEntry = $logsSelectedOpt.data('direct-entry');
+    if (logsDirectEntry) {
+        medicationName = logsDirectEntry.product_name || logsDirectEntry.external_drug_name || 'Direct Entry';
+    } else {
+        const logsRx = $logsSelectedOpt.data('rx');
+        if (logsRx) {
+            medicationName = logsRx.product_name || 'Medication';
+        }
+    }
 
     $('#medication-logs-title').text('Activity Logs: ' + medicationName);
     $('#medication-logs-content').html(logsHtml);
@@ -15114,7 +16824,8 @@ function renderCalendarView(medication, schedules, administrations, period) {
     const startDate = new Date(period.start);
     const endDate = new Date(period.end);
     const product = medication.product || {};
-    const productName = product.product_name || 'Medication';
+    // Direct entries have product_name at top level; POSR entries have it under .product
+    const productName = medication.product_name || product.product_name || 'Medication';
 
     let doctorDose = medication.dose || '';
     let doctorInfoHtml = '';
@@ -15178,18 +16889,33 @@ function renderCalendarView(medication, schedules, administrations, period) {
             return scheduleDate.toDateString() === day.toDateString();
         });
 
-        if (daySchedules.length === 0) {
-            gridHtml += `<span class="text-muted small fst-italic">No schedules</span>`;
+        // Find unscheduled (direct) administrations for this day
+        const dayUnscheduledAdmins = administrations.filter(a => {
+            if (!a.administered_at || a.schedule_id) return false;
+            const adminDate = new Date(a.administered_at);
+            return adminDate.toDateString() === day.toDateString();
+        });
+
+        if (daySchedules.length === 0 && dayUnscheduledAdmins.length === 0) {
+            gridHtml += `<span class="text-muted small fst-italic">No activity</span>`;
         } else {
+            // Render scheduled items
             daySchedules.forEach(schedule => {
                 const scheduleTime = new Date(schedule.scheduled_time);
                 const formattedTime = formatTime(scheduleTime);
                 const admin = administrations.find(a => a.schedule_id === schedule.id);
 
+                // Detect if schedule is for a direct entry (ward_stock / patient_own)
+                const isDirectSchedule = schedule.drug_source && schedule.drug_source !== 'pharmacy_dispensed';
+
                 let badgeClass = 'bg-primary';
                 let badgeContent = `<i class="mdi mdi-calendar-clock"></i> ${formattedTime}`;
-                let adminAction = `data-bs-toggle="modal" data-bs-target="#administerModal" data-schedule-id="${schedule.id}"`;
+                // All schedule slots open the administer modal (handler routes to correct endpoint)
+                let adminAction = `data-bs-target="#administerModal" data-schedule-id="${schedule.id}"`;
                 let tooltipContent = `Dose: ${schedule.dose}<br>Route: ${schedule.route}<br>Status: Scheduled`;
+                if (isDirectSchedule) {
+                    tooltipContent += `<br><em>${schedule.drug_source === 'ward_stock' ? 'Ward Stock' : "Patient's Own"}</em>`;
+                }
 
                 const isDiscontinued = medication.discontinued_at &&
                     new Date(medication.discontinued_at) < scheduleTime &&
@@ -15202,7 +16928,7 @@ function renderCalendarView(medication, schedules, administrations, period) {
                 } else if (admin) {
                     badgeClass = 'bg-success';
                     badgeContent = `<i class="mdi mdi-check"></i> ${formattedTime}`;
-                    adminAction = `data-bs-toggle="modal" data-bs-target="#adminDetailsModal" data-admin-id="${admin.id}"`;
+                    adminAction = `data-bs-target="#adminDetailsModal" data-admin-id="${admin.id}"`;
                     tooltipContent = `Dose: ${admin.dose}<br>Route: ${admin.route}<br>Status: Administered`;
 
                     if (admin.edited_at) {
@@ -15231,6 +16957,30 @@ function renderCalendarView(medication, schedules, administrations, period) {
                 gridHtml += `<div class="calendar-schedule-item">`;
                 gridHtml += `<span class="schedule-slot badge ${badgeClass}" ${adminAction} data-bs-toggle="tooltip" data-bs-html="true" data-bs-title="${tooltipContent}">${badgeContent}</span>`;
                 gridHtml += removeBtn;
+                gridHtml += `</div>`;
+            });
+
+            // Render unscheduled (direct) administrations — these come from ward stock / patient's own buttons
+            dayUnscheduledAdmins.forEach(admin => {
+                const adminTime = new Date(admin.administered_at);
+                const formattedTime = formatTime(adminTime);
+                let badgeClass = 'bg-success';
+                let badgeContent = `<i class="mdi mdi-check"></i> ${formattedTime}`;
+                let adminAction = `data-bs-target="#adminDetailsModal" data-admin-id="${admin.id}"`;
+                let tooltipContent = `Dose: ${admin.dose || 'N/A'}<br>Route: ${admin.route || 'N/A'}<br>Direct Administration`;
+
+                if (admin.edited_at) {
+                    badgeClass = 'bg-info';
+                    badgeContent = `<i class="mdi mdi-pencil"></i> ${formattedTime}`;
+                }
+                if (admin.deleted_at) {
+                    badgeClass = 'bg-dark';
+                    badgeContent = `<i class="mdi mdi-close"></i> ${formattedTime}`;
+                    adminAction = '';
+                }
+
+                gridHtml += `<div class="calendar-schedule-item">`;
+                gridHtml += `<span class="schedule-slot badge ${badgeClass}" ${adminAction} data-bs-toggle="tooltip" data-bs-html="true" data-bs-title="${tooltipContent}">${badgeContent}</span>`;
                 gridHtml += `</div>`;
             });
         }
@@ -15293,7 +17043,29 @@ $(document).off('click', '.remove-schedule-btn').on('click', '.remove-schedule-b
 // Set schedule button
 $(document).on('click', '#set-schedule-btn', function() {
     if (!selectedMedication) return;
-    $('#schedule_medication_id').val(selectedMedication);
+
+    // Detect if this is a direct entry
+    var $selectedOpt = $('#drug-select').find('option:selected');
+    var isDirect = $selectedOpt.data('is-direct') || false;
+
+    if (isDirect) {
+        // Direct entry: populate drug_source, product_id/external_drug_name
+        var drugSource = $selectedOpt.data('drug-source') || '';
+        var productId = $selectedOpt.data('product-id') || '';
+        var externalDrugName = $selectedOpt.data('external-drug-name') || '';
+
+        $('#schedule_medication_id').val(''); // No POSR for direct entries
+        $('#schedule_drug_source').val(drugSource);
+        $('#schedule_product_id').val(productId);
+        $('#schedule_external_drug_name').val(externalDrugName);
+    } else {
+        // Standard POSR medication
+        $('#schedule_medication_id').val(selectedMedication);
+        $('#schedule_drug_source').val('pharmacy_dispensed');
+        $('#schedule_product_id').val('');
+        $('#schedule_external_drug_name').val('');
+    }
+
     $('#schedule_date').val(new Date().toISOString().split('T')[0]);
     $('#setScheduleModal').modal('show');
 });
@@ -15329,8 +17101,9 @@ $(document).on('submit', '#setScheduleForm', function(e) {
 $(document).on('click', '#discontinue-btn', function() {
     if (!selectedMedication) return;
     $('#discontinue_medication_id').val(selectedMedication);
-    const med = medications.find(m => m.id == selectedMedication);
-    $('#discontinue-medication-name').text(med?.product?.product_name || 'Medication');
+    const discRx = $('#drug-select').find('option:selected').data('rx');
+    const discName = discRx?.product_name || 'Medication';
+    $('#discontinue-medication-name').text(discName);
     $('#discontinueModal').modal('show');
 });
 
@@ -15369,8 +17142,9 @@ $(document).on('submit', '#discontinueForm', function(e) {
 $(document).on('click', '#resume-btn', function() {
     if (!selectedMedication) return;
     $('#resume_medication_id').val(selectedMedication);
-    const med = medications.find(m => m.id == selectedMedication);
-    $('#resume-medication-name').text(med?.product?.product_name || 'Medication');
+    const resRx = $('#drug-select').find('option:selected').data('rx');
+    const resName = resRx?.product_name || 'Medication';
+    $('#resume-medication-name').text(resName);
     $('#resumeModal').modal('show');
 });
 
@@ -15408,67 +17182,164 @@ $(document).on('submit', '#resumeForm', function(e) {
 // Store stock data cache for medication administration
 var administerStockData = null;
 
-// Administer modal population
+// Administer modal population — §6.5: enriched with _rxLookup data
 $(document).on('click', '[data-bs-target="#administerModal"]', function() {
     const scheduleId = $(this).data('schedule-id');
     const schedule = currentSchedules.find(s => s.id == scheduleId);
 
     if (schedule) {
         $('#administer_schedule_id').val(scheduleId);
-        const med = medications.find(m => m.id == selectedMedication);
-        const productId = med?.product?.id || med?.product_id;
-        const productName = med?.product?.product_name || 'N/A';
 
-        $('#administer_product_id').val(productId);
-        $('#administer-medication-info').html(`<i class="mdi mdi-pill"></i> ${productName}`);
+        // Determine drug source from schedule
+        var scheduleDrugSource = schedule.drug_source || 'pharmacy_dispensed';
+        var isDirect = (scheduleDrugSource === 'ward_stock' || scheduleDrugSource === 'patient_own');
+        var productId = '';
+
+        // Reset all conditional sections
+        $('#administer-ward-stock-section').addClass('d-none');
+        $('#administer-patient-own-section').addClass('d-none');
+        $('#administer-pharmacy-qty-section').addClass('d-none');
+        $('#administer-stock-info').addClass('d-none');
+        $('#administer-stock-warning').addClass('d-none');
+        administerStockData = null;
+
+        if (isDirect) {
+            // Direct entry schedule: use schedule data directly
+            productId = schedule.product_id || '';
+            var drugName = schedule.external_drug_name || 'Direct Entry';
+
+            // Try to get product name from the selected dropdown option
+            var $selectedOpt = $('#drug-select').find('option:selected');
+            var directEntry = $selectedOpt.data('direct-entry');
+            if (directEntry) {
+                drugName = directEntry.product_name || directEntry.external_drug_name || drugName;
+            }
+
+            $('#administer_product_id').val(productId);
+            $('#administer_product_request_id').val('');
+            $('#administer-medication-info').html('<i class="mdi mdi-pill"></i> ' + drugName);
+            setDrugSource(scheduleDrugSource);
+
+            // Set the external_drug_name hidden field for patient_own
+            $('#administer_external_drug_name').val(schedule.external_drug_name || '');
+
+            // Update source badge
+            if (scheduleDrugSource === 'ward_stock') {
+                $('#administer-source-badge').html(
+                    '<span class="badge bg-warning text-dark"><i class="mdi mdi-hospital-box"></i> Ward Stock</span>' +
+                    '<small class="text-muted ms-2">Stock will be deducted from selected store</small>'
+                );
+                // Show ward stock section + load stores
+                $('#administer-ward-stock-section').removeClass('d-none');
+                loadAdministerStores(productId);
+            } else {
+                $('#administer-source-badge').html(
+                    '<span class="badge bg-info"><i class="mdi mdi-account-heart"></i> Patient\'s Own</span>' +
+                    '<small class="text-muted ms-2">Patient-supplied medication</small>'
+                );
+                // Show patient's own section
+                $('#administer-patient-own-section').removeClass('d-none');
+            }
+        } else {
+            // §6.5: Pharmacy dispensed — use enriched _rxLookup
+            var posrId = selectedMedication;
+            var rx = window._rxLookup ? window._rxLookup[posrId] : null;
+
+            if (rx) {
+                productId = rx.product_id || '';
+                var productName = rx.product_name || 'N/A';
+                $('#administer_product_id').val(productId);
+                $('#administer_product_request_id').val(rx.product_request_id || '');
+                $('#administer-medication-info').html('<i class="mdi mdi-pill"></i> ' + productName);
+            } else {
+                var fallbackRx = window._rxLookup ? window._rxLookup[selectedMedication] : null;
+                productId = fallbackRx ? (fallbackRx.product_id || '') : '';
+                var productName = fallbackRx ? (fallbackRx.product_name || 'N/A') : 'N/A';
+                $('#administer_product_id').val(productId);
+                $('#administer-medication-info').html('<i class="mdi mdi-pill"></i> ' + productName);
+            }
+
+            setDrugSource('pharmacy_dispensed');
+            $('#administer_external_drug_name').val('');
+
+            // Restore pharmacy dispensed badge
+            $('#administer-source-badge').html(
+                '<span class="badge bg-success"><i class="mdi mdi-pill"></i> Pharmacy Dispensed</span>' +
+                '<small class="text-muted ms-2">Source is determined by the selected medication</small>'
+            );
+
+            // Show pharmacy qty section and populate remaining info
+            $('#administer-pharmacy-qty-section').removeClass('d-none');
+            $('#administer_pharmacy_qty').val(1);
+            if (rx) {
+                var qtyAdmin = rx.qty_administered || 0;
+                var remaining = rx.remaining_doses || 0;
+                $('#administer-remaining-info').html(
+                    '<i class="mdi mdi-pill"></i> Prescribed: <strong>' + (rx.qty_prescribed || 0) + '</strong>' +
+                    ' &nbsp;|&nbsp; Administered: <strong>' + qtyAdmin + '</strong>' +
+                    ' &nbsp;|&nbsp; Remaining: <strong class="' + (remaining <= 0 ? 'text-danger' : 'text-success') + '">' + remaining + '</strong>'
+                );
+            } else {
+                $('#administer-remaining-info').html('');
+            }
+        }
 
         const scheduledTime = new Date(schedule.scheduled_time);
-        $('#administer-scheduled-time').html(`<i class="mdi mdi-clock-outline"></i> Scheduled: ${formatDateTime(scheduledTime)}`);
+        $('#administer-scheduled-time').html('<i class="mdi mdi-clock-outline"></i> Scheduled: ' + formatDateTime(scheduledTime));
         $('#administered_at').val(new Date().toISOString().slice(0, 16));
         $('#administered_dose').val(schedule.dose);
         $('#administered_route').val(schedule.route);
         $('#administered_note').val('');
-
-        // Reset store selection and stock info
         $('#administer_store_id').val('');
-        $('#administer-stock-info').hide();
-        $('#administer-stock-warning').hide();
-        administerStockData = null;
+        $('#administer_qty').val(1);
+        $('#administer_external_qty').val(1);
 
-        // Fetch product stock data
-        if (productId) {
-            fetchProductStockByStore(productId, function(stockData) {
-                administerStockData = stockData;
-                console.log('Stock data loaded for medication:', stockData);
-            });
-        }
+        // Show scheduled/administered counts
+        var counts = window._currentMedCounts || { totalScheduled: 0, totalAdministered: 0 };
+        $('#administer-counts-info').html(
+            '<i class="mdi mdi-calendar-clock"></i> ' + counts.totalScheduled + ' scheduled &nbsp;|&nbsp; ' +
+            '<i class="mdi mdi-check-circle"></i> ' + counts.totalAdministered + ' administered'
+        );
+
+        // Explicitly show modal (data-bs-toggle is used for tooltip, not modal)
+        $('#administerModal').modal('show');
     }
 });
 
-// Store selection change - show stock for selected store and populate batch dropdown
+// Load stores into the administer modal's ward stock store select
+function loadAdministerStores(productId) {
+    var $select = $('#administer_store_id');
+    $select.find('option:not(:first)').remove();
+    $.ajax({
+        url: "{{ url('pharmacy-workbench/stores') }}",
+        type: 'GET',
+        success: function(stores) {
+            stores.forEach(function(store) {
+                $select.append('<option value="' + store.id + '">' + store.store_name +
+                    (store.location ? ' (' + store.location + ')' : '') + '</option>');
+            });
+        }
+    });
+}
+
+// Store selection change in administer modal - show stock for selected store
 $(document).on('change', '#administer_store_id', function() {
     const storeId = $(this).val();
     const productId = $('#administer_product_id').val();
     const $stockInfo = $('#administer-stock-info');
     const $stockQty = $('#administer-stock-qty');
     const $stockWarning = $('#administer-stock-warning');
-    const $batchSection = $('#administer-batch-section');
-    const $batchSelect = $('#administer_batch_id');
-
-    // Reset batch selection
-    $batchSelect.html('<option value="">Use FIFO (Auto - oldest batch first)</option>');
-    $batchSection.hide();
 
     if (!storeId) {
-        $stockInfo.hide();
-        $stockWarning.hide();
+        $stockInfo.addClass('d-none');
+        $stockWarning.addClass('d-none');
         return;
     }
 
-    $stockInfo.show();
+    $stockInfo.removeClass('d-none');
     $stockQty.removeClass('bg-success bg-warning bg-danger').addClass('bg-secondary').text('Loading...');
 
-    // Fetch batches for this product/store combination
+    // Fetch stock for this product/store combination
     if (productId && storeId) {
         $.ajax({
             url: '/nursing-workbench/product-batches',
@@ -15477,163 +17348,101 @@ $(document).on('change', '#administer_store_id', function() {
             success: function(response) {
                 if (response.success) {
                     const totalAvailable = response.total_available || 0;
-                    const batches = response.batches || [];
-
-                    // Update stock display
                     $stockQty.text(totalAvailable + ' units');
                     if (totalAvailable <= 0) {
                         $stockQty.removeClass('bg-secondary bg-success bg-warning').addClass('bg-danger');
-                        $stockWarning.show();
+                        $stockWarning.removeClass('d-none');
                         $('#administer-stock-warning-text').text('No stock available in this store!');
                     } else if (totalAvailable < 5) {
                         $stockQty.removeClass('bg-secondary bg-success bg-danger').addClass('bg-warning');
-                        $stockWarning.hide();
+                        $stockWarning.addClass('d-none');
                     } else {
                         $stockQty.removeClass('bg-secondary bg-warning bg-danger').addClass('bg-success');
-                        $stockWarning.hide();
+                        $stockWarning.addClass('d-none');
                     }
-
-                    // Populate batch dropdown
-                    if (batches.length > 0) {
-                        $batchSelect.html('<option value="">Use FIFO (Auto - oldest batch first)</option>');
-                        batches.forEach(function(batch) {
-                            const expiry = batch.expiry_formatted || 'No expiry';
-                            const warning = batch.is_expiring_soon ? '⚠️ ' : '';
-                            const expired = batch.is_expired ? '❌ EXPIRED - ' : '';
-                            $batchSelect.append(`<option value="${batch.id}" ${batch.is_expired ? 'disabled' : ''}>${expired}${warning}${batch.batch_number} (${batch.qty} units, Exp: ${expiry})</option>`);
-                        });
-                        $batchSection.show();
-                    }
-
-                    // Update cache
-                    administerStockData = {
-                        stores: [{ store_id: storeId, quantity: totalAvailable }],
-                        batches: batches
-                    };
+                    administerStockData = { stores: [{ store_id: storeId, quantity: totalAvailable }] };
                 } else {
                     $stockQty.text('0 units').removeClass('bg-secondary bg-success bg-warning').addClass('bg-danger');
-                    $stockWarning.show();
+                    $stockWarning.removeClass('d-none');
                     $('#administer-stock-warning-text').text('Failed to check stock');
                 }
             },
             error: function() {
-                // Fallback to old method
-                if (administerStockData && administerStockData.stores) {
-                    const storeStock = administerStockData.stores.find(s => s.store_id == storeId);
-                    const availableQty = storeStock ? storeStock.quantity : 0;
-                    $stockQty.text(availableQty + ' units');
-                    if (availableQty <= 0) {
-                        $stockQty.removeClass('bg-secondary bg-success bg-warning').addClass('bg-danger');
-                        $stockWarning.show();
-                    } else {
-                        $stockQty.removeClass('bg-secondary bg-warning bg-danger').addClass('bg-success');
-                        $stockWarning.hide();
-                    }
-                }
+                $stockQty.text('Error').removeClass('bg-secondary bg-success bg-warning').addClass('bg-danger');
+                $stockWarning.removeClass('d-none');
+                $('#administer-stock-warning-text').text('Failed to check stock availability');
             }
         });
-    } else if (administerStockData && administerStockData.stores) {
-        const storeStock = administerStockData.stores.find(s => s.store_id == storeId);
-        const availableQty = storeStock ? storeStock.quantity : 0;
-
-        $stockQty.text(availableQty + ' units');
-
-        if (availableQty <= 0) {
-            $stockQty.removeClass('bg-secondary bg-success bg-warning').addClass('bg-danger');
-            $stockWarning.show();
-            $('#administer-stock-warning-text').text('No stock available in this store!');
-        } else if (availableQty < 5) {
-            $stockQty.removeClass('bg-secondary bg-success bg-danger').addClass('bg-warning');
-            $stockWarning.hide();
-        } else {
-            $stockQty.removeClass('bg-secondary bg-warning bg-danger').addClass('bg-success');
-            $stockWarning.hide();
-        }
-    } else {
-        // Fetch stock if not already loaded
-        if (productId) {
-            fetchProductStockByStore(productId, function(stockData) {
-                administerStockData = stockData;
-                const storeStock = stockData.stores.find(s => s.store_id == storeId);
-                const availableQty = storeStock ? storeStock.quantity : 0;
-
-                $stockQty.text(availableQty + ' units');
-
-                if (availableQty <= 0) {
-                    $stockQty.removeClass('bg-secondary bg-success bg-warning').addClass('bg-danger');
-                    $stockWarning.show();
-                    $('#administer-stock-warning-text').text('No stock available in this store!');
-                } else if (availableQty < 5) {
-                    $stockQty.removeClass('bg-secondary bg-success bg-danger').addClass('bg-warning');
-                    $stockWarning.hide();
-                } else {
-                    $stockQty.removeClass('bg-secondary bg-warning bg-danger').addClass('bg-success');
-                    $stockWarning.hide();
-                }
-            });
-        }
     }
 });
 
-// Administer form submit with stock validation
+// Administer form submit — routes to correct endpoint based on drug source
 $(document).on('submit', '#administerForm', function(e) {
     e.preventDefault();
 
-    const storeId = $('#administer_store_id').val();
-    const productId = $('#administer_product_id').val();
+    const drugSource = $('#administer_drug_source').val() || 'pharmacy_dispensed';
+    const isDirect = (drugSource === 'ward_stock' || drugSource === 'patient_own');
 
-    // Validate store selection
-    if (!storeId) {
-        toastr.error('Please select a dispensing store');
-        $('#administer_store_id').focus();
-        return;
-    }
+    // ── Direct entry (ward_stock / patient_own): submit to administerDirect ──
+    if (isDirect) {
+        // Validate required fields per source
+        if (drugSource === 'ward_stock') {
+            var storeId = $('#administer_store_id').val();
+            if (!storeId) {
+                toastr.error('Please select a dispensing store');
+                $('#administer_store_id').focus();
+                return;
+            }
+            var qty = parseInt($('#administer_qty').val()) || 0;
+            if (qty < 1) {
+                toastr.error('Quantity must be at least 1');
+                $('#administer_qty').focus();
+                return;
+            }
+        } else if (drugSource === 'patient_own') {
+            var extQty = parseFloat($('#administer_external_qty').val()) || 0;
+            if (extQty <= 0) {
+                toastr.error('Quantity must be greater than 0');
+                $('#administer_external_qty').focus();
+                return;
+            }
+        }
 
-    const $btn = $('#administerSubmitBtn');
-    const originalBtnHtml = $btn.html();
-    $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Checking stock...');
+        var $btn = $('#administerSubmitBtn');
+        var originalBtnHtml = $btn.html();
+        $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Administering...');
 
-    // Check stock before submitting
-    const checkStock = function(callback) {
-        if (administerStockData && administerStockData.stores) {
-            const storeStock = administerStockData.stores.find(s => s.store_id == storeId);
-            const availableQty = storeStock ? storeStock.quantity : 0;
-            callback(availableQty);
-        } else if (productId) {
-            fetchProductStockByStore(productId, function(stockData) {
-                administerStockData = stockData;
-                const storeStock = stockData.stores.find(s => s.store_id == storeId);
-                const availableQty = storeStock ? storeStock.quantity : 0;
-                callback(availableQty);
-            });
+        var directUrl = medicationChartAdministerDirectRoute.replace(':patient', PATIENT_ID);
+
+        // Build form data — collect what administerDirect expects
+        var formData = {
+            _token: CSRF_TOKEN,
+            drug_source: drugSource,
+            schedule_id: $('#administer_schedule_id').val(),
+            administered_at: $('#administered_at').val(),
+            administered_dose: $('#administered_dose').val(),
+            route: $('#administered_route').val(),
+            note: $('#administered_note').val() || ''
+        };
+
+        if (drugSource === 'ward_stock') {
+            formData.product_id = $('#administer_product_id').val();
+            formData.store_id = $('#administer_store_id').val();
+            formData.qty = $('#administer_qty').val();
         } else {
-            callback(0);
+            formData.external_drug_name = $('#administer_external_drug_name').val();
+            formData.external_qty = $('#administer_external_qty').val();
         }
-    };
-
-    checkStock(function(availableQty) {
-        if (availableQty <= 0) {
-            $btn.prop('disabled', false).html(originalBtnHtml);
-            toastr.error('Insufficient stock in selected store!');
-            $('#administer-stock-warning').show();
-            $('#administer-stock-warning-text').text('No stock available in this store!');
-            return;
-        }
-
-        // Stock OK - proceed with submission
-        $btn.html('<span class="spinner-border spinner-border-sm"></span> Administering...');
 
         $.ajax({
-            url: medicationChartAdministerRoute,
+            url: directUrl,
             type: 'POST',
-            data: $('#administerForm').serialize() + '&_token=' + CSRF_TOKEN,
+            data: formData,
             success: function(response) {
                 $btn.prop('disabled', false).html(originalBtnHtml);
                 if (response.success) {
-                    toastr.success('Medication administered and stock deducted.');
-                    $('#administerModal').modal('hide');
-                    // Reset stock data to force refresh on next open
-                    administerStockData = null;
+                    toastr.success(response.message || 'Medication administered successfully.');
+                    try { bootstrap.Modal.getOrCreateInstance('#administerModal').hide(); } catch(e) {}
                     if (selectedMedication) {
                         loadMedicationCalendarWithDateRange(selectedMedication, $('#med-start-date').val(), $('#med-end-date').val());
                     }
@@ -15643,10 +17452,54 @@ $(document).on('submit', '#administerForm', function(e) {
             },
             error: function(xhr) {
                 $btn.prop('disabled', false).html(originalBtnHtml);
-                const errorMsg = xhr.responseJSON?.message || xhr.responseJSON?.errors?.store_id?.[0] || 'Failed to administer.';
-                toastr.error(errorMsg);
+                var msg = xhr.responseJSON?.message || 'Failed to administer.';
+                if (xhr.responseJSON?.errors) {
+                    msg = Object.values(xhr.responseJSON.errors).flat().join(', ');
+                }
+                toastr.error(msg);
             }
         });
+        return; // Don't fall through to pharmacy_dispensed flow
+    }
+
+    // ── Pharmacy dispensed: standard flow (no store needed — stock from dispensed POSR) ──
+    var $btn = $('#administerSubmitBtn');
+    var originalBtnHtml = $btn.html();
+    $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Administering...');
+
+    // Validate pharmacy qty
+    var pharmacyQty = parseFloat($('#administer_pharmacy_qty').val()) || 0;
+    if (pharmacyQty <= 0) {
+        toastr.error('Quantity must be greater than 0');
+        $btn.prop('disabled', false).html(originalBtnHtml);
+        $('#administer_pharmacy_qty').focus();
+        return;
+    }
+
+    $.ajax({
+        url: medicationChartAdministerRoute,
+        type: 'POST',
+        data: $('#administerForm').serialize() + '&qty=' + pharmacyQty + '&_token=' + CSRF_TOKEN,
+        success: function(response) {
+            $btn.prop('disabled', false).html(originalBtnHtml);
+            if (response.success) {
+                toastr.success('Medication administered successfully.');
+                try { bootstrap.Modal.getOrCreateInstance('#administerModal').hide(); } catch(e) {}
+                if (selectedMedication) {
+                    loadMedicationCalendarWithDateRange(selectedMedication, $('#med-start-date').val(), $('#med-end-date').val());
+                }
+            } else {
+                toastr.error(response.message || 'Failed to administer.');
+            }
+        },
+        error: function(xhr) {
+            $btn.prop('disabled', false).html(originalBtnHtml);
+            var msg = xhr.responseJSON?.message || 'Failed to administer.';
+            if (xhr.responseJSON?.errors) {
+                msg = Object.values(xhr.responseJSON.errors).flat().join(', ');
+            }
+            toastr.error(msg);
+        }
     });
 });
 
@@ -15656,13 +17509,28 @@ $(document).on('click', '[data-bs-target="#adminDetailsModal"]', function() {
     const admin = currentAdministrations.find(a => a.id == adminId);
 
     if (admin) {
-        const med = medications.find(m => m.id == selectedMedication);
-        const productName = med?.product?.product_name || 'Medication';
+        // Get medication name from dropdown option data (works for both POSR and direct entries)
+        let productName = 'Medication';
+        const $detailsSelectedOpt = $('#drug-select').find('option:selected');
+        const detailsDirectEntry = $detailsSelectedOpt.data('direct-entry');
+        if (detailsDirectEntry) {
+            productName = detailsDirectEntry.product_name || detailsDirectEntry.external_drug_name || 'Direct Entry';
+        } else {
+            const detailsRx = $detailsSelectedOpt.data('rx');
+            if (detailsRx) {
+                productName = detailsRx.product_name || 'Medication';
+            }
+        }
         const adminTime = new Date(admin.administered_at);
 
         let detailsHtml = `
             <div class="mb-3">
                 <h6 class="text-primary fw-bold"><i class="mdi mdi-pill"></i> ${productName}</h6>
+                <small class="text-muted">
+                    <i class="mdi mdi-calendar-clock"></i> ${(window._currentMedCounts || {}).totalScheduled || 0} scheduled
+                    &nbsp;|&nbsp;
+                    <i class="mdi mdi-check-circle"></i> ${(window._currentMedCounts || {}).totalAdministered || 0} administered
+                </small>
             </div>
             <table class="table table-sm table-borderless">
                 <tr>
@@ -15672,6 +17540,10 @@ $(document).on('click', '[data-bs-target="#adminDetailsModal"]', function() {
                 <tr>
                     <td class="text-muted"><i class="mdi mdi-medical-bag"></i> Dose:</td>
                     <td class="fw-bold">${admin.dose || '-'}</td>
+                </tr>
+                <tr>
+                    <td class="text-muted"><i class="mdi mdi-pill"></i> Qty:</td>
+                    <td class="fw-bold">${admin.qty || admin.external_qty || 1}</td>
                 </tr>
                 <tr>
                     <td class="text-muted"><i class="mdi mdi-routes"></i> Route:</td>
@@ -15687,6 +17559,17 @@ $(document).on('click', '[data-bs-target="#adminDetailsModal"]', function() {
                 <tr>
                     <td class="text-muted"><i class="mdi mdi-store"></i> Dispensed From:</td>
                     <td class="fw-bold">${admin.store_name}</td>
+                </tr>`;
+        }
+
+        if (admin.drug_source && admin.drug_source !== 'pharmacy_dispensed') {
+            var sourceBadge = admin.drug_source === 'ward_stock'
+                ? '<span class="badge bg-warning text-dark">Ward Stock</span>'
+                : '<span class="badge bg-info">Patient\'s Own</span>';
+            detailsHtml += `
+                <tr>
+                    <td class="text-muted"><i class="mdi mdi-tag"></i> Source:</td>
+                    <td>${sourceBadge}</td>
                 </tr>`;
         }
 
@@ -15736,6 +17619,9 @@ $(document).on('click', '[data-bs-target="#adminDetailsModal"]', function() {
         } else {
             $('#edit-admin-btn, #delete-admin-btn').show();
         }
+
+        // Explicitly show modal (data-bs-toggle is used for tooltip, not modal)
+        $('#adminDetailsModal').modal('show');
     } else {
         $('#admin-details-content').html('<div class="alert alert-warning">Administration details not found.</div>');
     }
@@ -15846,6 +17732,301 @@ $(document).on('change', 'input[name="repeat_type"]', function() {
     } else {
         $('#days-selector').hide();
     }
+});
+
+// =============================================
+// §6.2–6.4: WARD STOCK & PATIENT'S OWN — DIRECT ADMINISTRATION
+// =============================================
+
+// ── Button click handlers ───────────────────────────────────
+$('#btn-add-patient-own').on('click', function() {
+    // Reset form
+    $('#patientOwnForm')[0].reset();
+    setCurrentDateTime('po_administered_at');
+    var modal = new bootstrap.Modal(document.getElementById('patientOwnModal'));
+    modal.show();
+});
+
+$('#btn-add-ward-stock').on('click', function() {
+    // Reset form
+    $('#wardStockForm')[0].reset();
+    $('#ws_product_id').val('');
+    $('#ws_product_info').hide();
+    $('#ws_product_results').hide();
+    $('#ws_product_search').val('');
+    setCurrentDateTime('ws_administered_at');
+
+    // Load stores
+    loadWardStores();
+
+    var modal = new bootstrap.Modal(document.getElementById('wardStockModal'));
+    modal.show();
+});
+
+// ── Patient's Own Modal Submit ──────────────────────────────
+$('#patientOwnForm').on('submit', function(e) {
+    e.preventDefault();
+
+    var $btn = $('#patientOwnSubmitBtn');
+    var $spinner = $btn.find('.spinner-border');
+    $btn.prop('disabled', true);
+    $spinner.removeClass('d-none');
+
+    var url = medicationChartAdministerDirectRoute.replace(':patient', PATIENT_ID);
+    var formData = {
+        drug_source: 'patient_own',
+        external_drug_name: $('#po_drug_name').val(),
+        external_qty: $('#po_qty').val(),
+        external_batch_number: $('#po_batch').val(),
+        external_expiry_date: $('#po_expiry').val(),
+        external_source_note: $('#po_source_note').val(),
+        administered_dose: $('#po_dose').val(),
+        route: $('#po_route').val(),
+        administered_at: $('#po_administered_at').val(),
+        note: $('#po_comment').val()
+    };
+
+    $.ajax({
+        url: url,
+        type: 'POST',
+        headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
+        data: formData,
+        success: function(resp) {
+            $btn.prop('disabled', false);
+            $spinner.addClass('d-none');
+            toastr.success(resp.message || 'Patient\'s own drug administered successfully');
+            try {
+                var modalEl = document.getElementById('patientOwnModal');
+                var modalInst = bootstrap.Modal.getInstance(modalEl) || bootstrap.Modal.getOrCreateInstance(modalEl);
+                modalInst.hide();
+            } catch(e) { $('#patientOwnModal').modal('hide'); }
+            // Reload medication list to show the new entry
+            if (typeof loadMedicationsList === 'function') loadMedicationsList();
+        },
+        error: function(xhr) {
+            $btn.prop('disabled', false);
+            $spinner.addClass('d-none');
+            var msg = 'Failed to administer';
+            if (xhr.responseJSON) {
+                if (xhr.responseJSON.errors) {
+                    var errors = xhr.responseJSON.errors;
+                    msg = Object.values(errors).flat().join('<br>');
+                } else if (xhr.responseJSON.message) {
+                    msg = xhr.responseJSON.message;
+                }
+            }
+            toastr.error(msg);
+        }
+    });
+});
+
+// ── Ward Stock: Load stores ─────────────────────────────────
+function loadWardStores() {
+    $.ajax({
+        url: "{{ url('pharmacy-workbench/stores') }}",
+        type: 'GET',
+        success: function(stores) {
+            var $select = $('#ws_store');
+            $select.find('option:not(:first)').remove();
+            stores.forEach(function(store) {
+                $select.append('<option value="' + store.id + '">' + store.store_name + (store.location ? ' (' + store.location + ')' : '') + '</option>');
+            });
+        },
+        error: function() {
+            toastr.error('Failed to load stores');
+        }
+    });
+}
+
+// ── Ward Stock: Product search ──────────────────────────────
+var wsSearchTimeout;
+$('#ws_product_search').on('input', function() {
+    var query = $(this).val();
+    clearTimeout(wsSearchTimeout);
+
+    if (query.length < 2) {
+        $('#ws_product_results').hide();
+        return;
+    }
+
+    wsSearchTimeout = setTimeout(function() {
+        $.ajax({
+            url: "{{ url('live-search-products') }}",
+            method: 'GET',
+            dataType: 'json',
+            data: { term: query, patient_id: PATIENT_ID },
+            success: function(data) {
+                var $results = $('#ws_product_results');
+                $results.html('');
+
+                if (!data || data.length === 0) {
+                    $results.html('<li class="list-group-item text-muted">No products found</li>').show();
+                    return;
+                }
+
+                data.forEach(function(item) {
+                    var name = item.product_name || 'Unknown';
+                    var code = item.product_code || '';
+                    var qty = (item.stock && item.stock.current_quantity !== undefined) ? item.stock.current_quantity : 0;
+                    var price = (item.price && item.price.current_sale_price !== undefined) ? item.price.current_sale_price : 0;
+                    var qtyClass = qty > 0 ? 'text-success' : 'text-danger';
+
+                    var li = '<li class="list-group-item list-group-item-action" style="cursor:pointer;" ' +
+                        'data-id="' + item.id + '" ' +
+                        'data-name="' + name + '" ' +
+                        'data-code="' + code + '" ' +
+                        'data-qty="' + qty + '" ' +
+                        'data-price="' + price + '">' +
+                        '<div class="d-flex justify-content-between">' +
+                        '<div><strong>' + name + '</strong> <small class="text-muted">[' + code + ']</small></div>' +
+                        '<div class="text-end"><span class="' + qtyClass + '"><strong>' + qty + '</strong> avail.</span><br><small>₦' + Number(price).toLocaleString() + '</small></div>' +
+                        '</div></li>';
+                    $results.append(li);
+                });
+                $results.show();
+            },
+            error: function() {
+                $('#ws_product_results').html('<li class="list-group-item text-danger">Search failed</li>').show();
+            }
+        });
+    }, 300);
+});
+
+// ── Ward Stock: Select product from search results ──────────
+$(document).on('click', '#ws_product_results li[data-id]', function() {
+    var id = $(this).data('id');
+    var name = $(this).data('name');
+    var code = $(this).data('code');
+    var qty = $(this).data('qty');
+    var price = $(this).data('price');
+
+    $('#ws_product_id').val(id);
+    $('#ws_product_search').val(name);
+    $('#ws_product_name').text(name);
+    $('#ws_product_code').text('[' + code + ']');
+    $('#ws_product_price').text('₦' + Number(price).toLocaleString());
+    $('#ws_product_results').hide();
+
+    // Show stock for the selected store
+    var storeId = $('#ws_store').val();
+    if (storeId) {
+        updateWsStockDisplay(id, storeId);
+    } else {
+        $('#ws_available_stock').text(qty + ' global stock').removeClass('bg-success bg-danger').addClass('bg-info');
+    }
+
+    $('#ws_product_info').slideDown(200);
+});
+
+// ── Ward Stock: Update stock when store changes ─────────────
+$('#ws_store').on('change', function() {
+    var productId = $('#ws_product_id').val();
+    var storeId = $(this).val();
+    if (productId && storeId) {
+        updateWsStockDisplay(productId, storeId);
+    }
+});
+
+function updateWsStockDisplay(productId, storeId) {
+    $.ajax({
+        url: '/pharmacy-workbench/product/' + productId + '/stock',
+        method: 'GET',
+        success: function(resp) {
+            var storeStock = (resp.stores || []).find(function(s) { return s.store_id == storeId; });
+            var available = storeStock ? storeStock.quantity : 0;
+            var badge = $('#ws_available_stock');
+            badge.text(available + ' in store');
+            if (available > 0) {
+                badge.removeClass('bg-danger bg-info').addClass('bg-success');
+            } else {
+                badge.removeClass('bg-success bg-info').addClass('bg-danger');
+            }
+        },
+        error: function() {
+            $('#ws_available_stock').text('? stock').removeClass('bg-success bg-danger').addClass('bg-warning');
+        }
+    });
+}
+
+// Hide product results when clicking outside
+$(document).on('click', function(e) {
+    if (!$(e.target).closest('#ws_product_search, #ws_product_results').length) {
+        $('#ws_product_results').hide();
+    }
+});
+
+// ── Ward Stock Modal Submit ─────────────────────────────────
+$('#wardStockForm').on('submit', function(e) {
+    e.preventDefault();
+
+    var productId = $('#ws_product_id').val();
+    if (!productId) {
+        toastr.warning('Please search and select a product');
+        $('#ws_product_search').focus();
+        return;
+    }
+
+    var storeId = $('#ws_store').val();
+    if (!storeId) {
+        toastr.warning('Please select a ward/store');
+        $('#ws_store').focus();
+        return;
+    }
+
+    var $btn = $('#wardStockSubmitBtn');
+    var $spinner = $btn.find('.spinner-border');
+    $btn.prop('disabled', true);
+    $spinner.removeClass('d-none');
+
+    var url = medicationChartAdministerDirectRoute.replace(':patient', PATIENT_ID);
+    var formData = {
+        drug_source: 'ward_stock',
+        product_id: productId,
+        store_id: storeId,
+        qty: $('#ws_qty').val(),
+        administered_dose: $('#ws_dose').val(),
+        route: $('#ws_route').val(),
+        administered_at: $('#ws_administered_at').val(),
+        note: $('#ws_comment').val(),
+        bill_patient: $('#ws_bill_patient').is(':checked') ? 1 : 0
+    };
+
+    $.ajax({
+        url: url,
+        type: 'POST',
+        headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
+        data: formData,
+        success: function(resp) {
+            $btn.prop('disabled', false);
+            $spinner.addClass('d-none');
+            var msg = resp.message || 'Ward stock drug administered successfully';
+            if (formData.bill_patient) {
+                msg += ' (billed)';
+            }
+            toastr.success(msg);
+            try {
+                var modalEl = document.getElementById('wardStockModal');
+                var modalInst = bootstrap.Modal.getInstance(modalEl) || bootstrap.Modal.getOrCreateInstance(modalEl);
+                modalInst.hide();
+            } catch(e) { $('#wardStockModal').modal('hide'); }
+            // Reload to show new entry
+            if (typeof loadMedicationsList === 'function') loadMedicationsList();
+        },
+        error: function(xhr) {
+            $btn.prop('disabled', false);
+            $spinner.addClass('d-none');
+            var msg = 'Failed to administer';
+            if (xhr.responseJSON) {
+                if (xhr.responseJSON.errors) {
+                    var errors = xhr.responseJSON.errors;
+                    msg = Object.values(errors).flat().join('<br>');
+                } else if (xhr.responseJSON.message) {
+                    msg = xhr.responseJSON.message;
+                }
+            }
+            toastr.error(msg);
+        }
+    });
 });
 
 // =============================================
