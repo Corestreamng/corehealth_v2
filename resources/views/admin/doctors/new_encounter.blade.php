@@ -7,6 +7,7 @@
 @endif
 @section('subpage_name', 'New Encounter')
 @section('content')
+    <link rel="stylesheet" href="{{ asset('css/clinical-orders-shared.css') }}">
     <style>
         /* Fix for modals inside overflow containers */
         .modal {
@@ -759,6 +760,7 @@
 @section('scripts')
     <script src="{{ asset('/plugins/dataT/datatables.min.js') }}" defer></script>
     <script src="{{ asset('plugins/ckeditor/ckeditor5/ckeditor.js') }}"></script>
+    <script src="{{ asset('js/clinical-orders-shared.js') }}"></script>
 
     <style>
         /* Modern Toggle Switch Styling */
@@ -1245,6 +1247,46 @@
         });
     </script>
     <script>
+        /* ═══ Re-order / Re-prescribe from history (Plan §5.2) ═══ */
+        $(document).on('click', '.re-order-btn', function() {
+            var $btn = $(this);
+            if ($btn.prop('disabled')) return;
+
+            var type          = $btn.data('type');
+            var name          = $btn.data('name');
+            var price         = $btn.data('price') || 0;
+            var coverageMode  = $btn.data('coverage-mode') || null;
+            var claims        = $btn.data('claims') || null;
+            var payable       = $btn.data('payable') || null;
+            if (coverageMode === '') coverageMode = null;
+
+            if (type === 'labs') {
+                var serviceId = parseInt($btn.data('service-id'));
+                if (ClinicalOrdersKit.isAlreadyAdded('labs', serviceId)) {
+                    toastr.warning(name + ' is already in your current lab requests');
+                    return;
+                }
+                setSearchValSer(name, serviceId, price, coverageMode, claims, payable);
+            } else if (type === 'imaging') {
+                var serviceId = parseInt($btn.data('service-id'));
+                if (ClinicalOrdersKit.isAlreadyAdded('imaging', serviceId)) {
+                    toastr.warning(name + ' is already in your current imaging requests');
+                    return;
+                }
+                setSearchValImaging(name, serviceId, price, coverageMode, claims, payable);
+            } else if (type === 'prescriptions') {
+                var productId = parseInt($btn.data('product-id'));
+                if (ClinicalOrdersKit.isAlreadyAdded('meds', productId)) {
+                    toastr.warning(name + ' is already in your current prescriptions');
+                    return;
+                }
+                setSearchValProd(name, productId, price, coverageMode, claims, payable);
+            }
+
+            $btn.prop('disabled', true).html('<i class="fa fa-check text-success"></i> Added');
+        });
+    </script>
+    <script>
         $(function() {
             $('#scheduled_consult_list').DataTable({
                 "dom": 'Bfrtip',
@@ -1292,235 +1334,95 @@
     </script>
     <script>
         // ─── Dose Mode State ───
-        let doseStructuredMode = false;
+        // Plan §2.2: Structured is default (matches dose-mode-toggle partial's checked state)
+        let doseStructuredMode = true;
 
-        function toggleDoseMode(isStructured) {
-            doseStructuredMode = isStructured;
-            // Convert existing rows
-            $('#selected-products tr').each(function() {
-                const $td = $(this).find('td:eq(2)');
-                const existingVal = $td.find('input[name="consult_presc_dose[]"]').val() || '';
-                const hiddenInput = $td.find('input[type="hidden"]').prop('outerHTML') || '';
-                if (isStructured) {
-                    $td.html(buildStructuredDoseHtml(existingVal) + hiddenInput);
-                } else {
-                    // Collapse structured to free text
-                    const collapsed = collapseStructuredDose($td);
-                    $td.html(`<input type='text' class='form-control' name='consult_presc_dose[]' value='${collapsed}' required>` + hiddenInput);
-                }
-            });
-        }
-
-        function buildStructuredDoseHtml(existingVal) {
-            return `
-                <div class="structured-dose">
-                    <div class="row g-1 mb-1">
-                        <div class="col-4">
-                            <input type="number" class="form-control form-control-sm dose-amount" placeholder="Amt" min="0" step="0.01" onchange="updateStructuredDoseValue(this)">
-                        </div>
-                        <div class="col-4">
-                            <select class="form-select form-select-sm dose-unit" onchange="updateStructuredDoseValue(this)">
-                                <option value="mg">mg</option>
-                                <option value="g">g</option>
-                                <option value="ml">ml</option>
-                                <option value="IU">IU</option>
-                                <option value="mcg">mcg</option>
-                                <option value="units">units</option>
-                                <option value="drops">drops</option>
-                                <option value="puffs">puffs</option>
-                            </select>
-                        </div>
-                        <div class="col-4">
-                            <select class="form-select form-select-sm dose-route" onchange="updateStructuredDoseValue(this)">
-                                <option value="PO">PO (Oral)</option>
-                                <option value="IV">IV</option>
-                                <option value="IM">IM</option>
-                                <option value="SC">SC</option>
-                                <option value="SL">SL</option>
-                                <option value="PR">PR</option>
-                                <option value="INH">INH (Inhaled)</option>
-                                <option value="TOP">Topical</option>
-                                <option value="OPTH">Ophthalmic</option>
-                                <option value="OT">Otic</option>
-                                <option value="NGT">NGT</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="row g-1">
-                        <div class="col-4">
-                            <select class="form-select form-select-sm dose-frequency" onchange="updateStructuredDoseValue(this)">
-                                <option value="OD">OD (once daily)</option>
-                                <option value="BD">BD (twice daily)</option>
-                                <option value="TDS">TDS (3x daily)</option>
-                                <option value="QID">QID (4x daily)</option>
-                                <option value="Q4H">Q4H</option>
-                                <option value="Q6H">Q6H</option>
-                                <option value="Q8H">Q8H</option>
-                                <option value="Q12H">Q12H</option>
-                                <option value="PRN">PRN (as needed)</option>
-                                <option value="STAT">STAT (once)</option>
-                            </select>
-                        </div>
-                        <div class="col-4">
-                            <div class="input-group input-group-sm">
-                                <input type="number" class="form-control dose-duration" placeholder="Dur" min="1" value="5" onchange="updateStructuredDoseValue(this)">
-                                <select class="form-select dose-duration-unit" style="max-width:70px;" onchange="updateStructuredDoseValue(this)">
-                                    <option value="days">d</option>
-                                    <option value="weeks">w</option>
-                                    <option value="months">m</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-text" style="font-size:0.75em;">Qty</span>
-                                <input type="number" class="form-control dose-qty" placeholder="Qty" min="1">
-                            </div>
-                        </div>
-                    </div>
-                    <input type="hidden" name="consult_presc_dose[]" class="structured-dose-value" value="">
-                </div>`;
-        }
-
-        // Frequency multiplier map for auto-Qty calculation
-        const freqMultiplierMap = { 'OD': 1, 'BD': 2, 'TDS': 3, 'QID': 4, 'Q4H': 6, 'Q6H': 4, 'Q8H': 3, 'Q12H': 2, 'PRN': 1, 'STAT': 1 };
-        const durUnitMultiplierMap = { 'days': 1, 'weeks': 7, 'months': 30 };
-
-        function autoCalculateQty($row) {
-            const freq = $row.find('.dose-frequency').val() || 'OD';
-            const dur = parseFloat($row.find('.dose-duration').val()) || 0;
-            const durUnit = $row.find('.dose-duration-unit').val() || 'days';
-            if (dur > 0 && freq !== 'PRN') {
-                const totalDays = dur * (durUnitMultiplierMap[durUnit] || 1);
-                const perDay = freqMultiplierMap[freq] || 1;
-                const qty = Math.ceil(totalDays * perDay);
-                $row.find('.dose-qty').val(qty);
-            }
-        }
-
-        function updateStructuredDoseValue(el) {
-            const $row = $(el).closest('.structured-dose');
-            // Auto-calculate Qty when relevant fields change
-            autoCalculateQty($row);
-
-            const amount = $row.find('.dose-amount').val() || '';
-            const unit = $row.find('.dose-unit').val() || '';
-            const route = $row.find('.dose-route').val() || '';
-            const freq = $row.find('.dose-frequency').val() || '';
-            const dur = $row.find('.dose-duration').val() || '';
-            const durUnit = $row.find('.dose-duration-unit').val() || '';
-            const qty = $row.find('.dose-qty').val() || '';
-
-            let parts = [];
-            if (amount) parts.push(amount + unit);
-            if (route) parts.push(route);
-            if (freq) parts.push(freq);
-            if (dur) parts.push(dur + ' ' + durUnit);
-            if (qty) parts.push('Qty: ' + qty);
-
-            $row.find('.structured-dose-value').val(parts.join(' | '));
-        }
-
-        function collapseStructuredDose($td) {
-            const val = $td.find('.structured-dose-value').val();
-            return val || '';
-        }
-
-        // ─── Dose Calculator ───
-        function toggleDoseCalculator() {
-            const panel = document.getElementById('dose_calculator_panel');
-            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-        }
-
-        function calculateDose() {
-            const weight = parseFloat($('#calc_weight').val()) || 0;
-            const dosePerKg = parseFloat($('#calc_dose_per_kg').val()) || 0;
-            const freqPerDay = parseInt($('#calc_frequency').val()) || 1;
-            const duration = parseInt($('#calc_duration').val()) || 1;
-            const tabStrength = parseFloat($('#calc_tab_strength').val()) || 1;
-
-            if (weight <= 0 || dosePerKg <= 0) {
-                $('#calc_results').html('<span class="text-muted">Enter weight and dose/kg to calculate...</span>');
-                return;
-            }
-
-            const singleDose = weight * dosePerKg;
-            const dailyDose = singleDose * freqPerDay;
-            const totalCourse = dailyDose * duration;
-            const totalTablets = Math.ceil(totalCourse / tabStrength);
-
-            $('#calc_results').html(`
-                <div class="d-flex flex-wrap gap-3">
-                    <span><strong>Single dose:</strong> <span class="text-primary">${singleDose.toFixed(1)} mg</span></span>
-                    <span><strong>Daily:</strong> <span class="text-info">${dailyDose.toFixed(1)} mg</span></span>
-                    <span><strong>Total course:</strong> <span class="text-warning">${totalCourse.toFixed(1)} mg</span></span>
-                    <span><strong>Tablets/units:</strong> <span class="badge bg-success">${totalTablets}</span> (${tabStrength}mg each)</span>
-                </div>
-            `);
-        }
-
-        // Apply calculator results to the last (or selected) structured dose row
-        function applyCalculatorToSelected() {
-            if (!doseStructuredMode) {
-                alert('Switch to Structured Dose mode first.');
-                return;
-            }
-            const $lastRow = $('#selected-products tr:last .structured-dose');
-            if ($lastRow.length === 0) {
-                alert('Add a product first, then apply calculator results.');
-                return;
-            }
-            const weight = parseFloat($('#calc_weight').val()) || 0;
-            const dosePerKg = parseFloat($('#calc_dose_per_kg').val()) || 0;
-            const tabStrength = parseFloat($('#calc_tab_strength').val()) || 1;
-            const freqPerDay = parseInt($('#calc_frequency').val()) || 1;
-            const duration = parseInt($('#calc_duration').val()) || 1;
-
-            if (weight <= 0 || dosePerKg <= 0) {
-                alert('Enter weight and dose/kg in the calculator first.');
-                return;
-            }
-
-            const singleDose = weight * dosePerKg;
-            const totalTablets = Math.ceil((singleDose * freqPerDay * duration) / tabStrength);
-
-            // Map calculator freqPerDay back to frequency code
-            const freqReverseMap = { 1: 'OD', 2: 'BD', 3: 'TDS', 4: 'QID', 6: 'Q4H' };
-            const freqCode = freqReverseMap[freqPerDay] || 'OD';
-
-            $lastRow.find('.dose-amount').val(singleDose.toFixed(1));
-            $lastRow.find('.dose-unit').val('mg');
-            $lastRow.find('.dose-frequency').val(freqCode);
-            $lastRow.find('.dose-duration').val(duration);
-            $lastRow.find('.dose-duration-unit').val('days');
-            $lastRow.find('.dose-qty').val(totalTablets);
-            updateStructuredDoseValue($lastRow.find('.dose-amount')[0]);
-        }
+        // Legacy dose functions (toggleDoseMode, buildStructuredDoseHtml, updateStructuredDoseValue,
+        // autoCalculateQty, collapseStructuredDose, freqMultiplierMap, durUnitMultiplierMap) removed.
+        // All dose logic now lives in ClinicalOrdersKit (clinical-orders-shared.js) per Plan §2.1–§2.3.
 
         function removeProdRow(obj) {
-            $(obj).closest('tr').remove();
+            var $tr = $(obj).closest('tr');
+            var recordId = $tr.data('record-id');
+            var recordType = $tr.data('record-type');
+            var serviceId = $tr.data('service-id');
+
+            // If row has been auto-saved, fire DELETE to server
+            if (recordId && recordType) {
+                var deleteUrl;
+                if (recordType === 'lab') {
+                    deleteUrl = '/encounters/' + encounterId + '/labs/' + recordId;
+                } else if (recordType === 'imaging') {
+                    deleteUrl = '/encounters/' + encounterId + '/imaging/' + recordId;
+                } else if (recordType === 'prescription') {
+                    deleteUrl = '/encounters/' + encounterId + '/prescriptions/' + recordId;
+                }
+                if (deleteUrl) {
+                    ClinicalOrdersKit.removeItem({
+                        url: deleteUrl,
+                        csrfToken: $('meta[name="csrf-token"]').attr('content'),
+                        rowSelector: $tr,
+                        type: recordType === 'lab' ? 'labs' : (recordType === 'imaging' ? 'imaging' : 'meds'),
+                        referenceId: serviceId ? parseInt(serviceId) : null,
+                        tableSelector: $tr.closest('tbody').attr('id') ? '#' + $tr.closest('tbody').attr('id') : null
+                    });
+                    return;
+                }
+            }
+            // Fallback: just remove the row (for medications that aren't auto-saved)
+            $tr.remove();
         }
 
+        // Phase 2b (Plan §4.3): Two-phase medication auto-save
+        // Phase 1 — instant POST with empty dose; Phase 2 — debounced PUT on dose field changes
         function setSearchValProd(name, id, price, coverageMode = null, claims = null, payable = null) {
-            const coverageBadge = coverageMode ? `<div class="small mt-1"><span class="badge bg-info">${coverageMode.toUpperCase()}</span> <span class="text-danger">Pay: ${payable ?? price}</span> <span class="text-success">Claims: ${claims ?? 0}</span></div>` : '';
+            const csrfToken = $('meta[name="csrf-token"]').attr('content');
+            const rowId = 'rx_' + Date.now() + '_' + id;
+            const coverageBadge = ClinicalOrdersKit.renderCoverageBadge(coverageMode, payable ?? price, claims ?? 0);
 
-            let doseCell;
-            if (doseStructuredMode) {
-                doseCell = `<td>${buildStructuredDoseHtml('')}<input type='hidden' name='consult_presc_id[]' value='${id}'></td>`;
-            } else {
-                doseCell = `<td><input type='text' class='form-control' name='consult_presc_dose[]' required><input type='hidden' name='consult_presc_id[]' value='${id}'></td>`;
-            }
+            ClinicalOrdersKit.addItem({
+                url: `/encounters/${encounterId}/add-prescription`,
+                payload: { product_id: id, dose: '' },
+                csrfToken: csrfToken,
+                tableSelector: '#selected-products',
+                type: 'meds',
+                referenceId: parseInt(id),
+                buildRowHtml: function(resp) {
+                    const recordId = resp.id;
+                    const doseOnchange = "ClinicalOrdersKit.updateDoseValue(this, ''); " +
+                        "ClinicalOrdersKit.debouncedUpdate({url:'/encounters/" + encounterId + "/prescriptions/" + recordId + "/dose'," +
+                        "payload:{dose: $(this).closest('.structured-dose').find('.structured-dose-value').val()}," +
+                        "csrfToken:'" + csrfToken + "'});";
 
-            var mk = `
-                <tr>
-                    <td>${name}${coverageBadge}</td>
-                    <td>${payable ?? price}</td>
-                    ${doseCell}
-                    <td><button class='btn btn-danger' onclick="removeProdRow(this)">x</button></td>
-                </tr>
-            `;
+                    let doseCell;
+                    if (doseStructuredMode) {
+                        doseCell = '<td>' + ClinicalOrdersKit.buildStructuredDoseHtml({
+                            cssPrefix: '',
+                            hiddenName: 'consult_presc_dose[]',
+                            onchange: doseOnchange,
+                            drugName: name,
+                            rowId: rowId
+                        }) + '<input type="hidden" name="consult_presc_id[]" value="' + id + '"></td>';
+                    } else {
+                        doseCell = '<td><input type="text" class="form-control" name="consult_presc_dose[]" ' +
+                            'onchange="ClinicalOrdersKit.debouncedUpdate({url:\'/encounters/' + encounterId + '/prescriptions/' + recordId + '/dose\',' +
+                            'payload:{dose:this.value},csrfToken:\'' + csrfToken + '\'})" required>' +
+                            '<input type="hidden" name="consult_presc_id[]" value="' + id + '"></td>';
+                    }
 
-            $('#selected-products').append(mk);
+                    return '<tr data-record-id="' + recordId + '" data-record-type="prescription" data-service-id="' + id + '" data-drug-name="' + name.replace(/"/g, '&quot;') + '" data-row-id="' + rowId + '">' +
+                        '<td>' + name + coverageBadge + '</td>' +
+                        '<td>' + (payable ?? price) + '</td>' +
+                        doseCell +
+                        '<td><button class="btn btn-danger btn-sm" onclick="removeProdRow(this)"><i class="fa fa-times"></i></button></td>' +
+                    '</tr>';
+                },
+                onSuccess: function(resp) {
+                    if ($.fn.DataTable.isDataTable('#presc_history_list')) {
+                        $('#presc_history_list').DataTable().ajax.reload(null, false);
+                    }
+                }
+            });
             $('#consult_presc_res').html('');
         }
 
@@ -1553,11 +1455,16 @@
                             const coverageBadge = mode ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ${payable}</span> <span class='text-success ms-1'>Claim: ${claims}</span>` : '';
                             const displayName = `${name}[${code}](${qty} avail.)`;
 
+                            // Phase 2c (Plan §4.4): Duplicate filtering for medications
+                            const alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('meds', parseInt(item.id));
+                            const disabledStyle = alreadyAdded ? 'opacity:0.5; pointer-events:none; cursor:default;' : 'cursor:pointer;';
+                            const alreadyBadge = alreadyAdded ? '<span class="badge bg-secondary ms-2">Already Added</span>' : '';
+
                             var mk =
                                 `<li class='list-group-item'
-                                   style="background-color: #f0f0f0;"
-                                   onclick="setSearchValProd('${displayName}', '${item.id}', '${price}', '${mode}', '${claims}', '${payable}')">
-                                   [${category}]<b>${name}[${code}]</b> (${qty} avail.) NGN ${price} ${coverageBadge}</li>`;
+                                   style="background-color: #f0f0f0; ${disabledStyle}"
+                                   ${alreadyAdded ? '' : `onclick="setSearchValProd('${displayName}', '${item.id}', '${price}', '${mode}', '${claims}', '${payable}')"`}>
+                                   [${category}]<b>${name}[${code}]</b> (${qty} avail.) NGN ${price} ${coverageBadge}${alreadyBadge}</li>`;
                             $('#consult_presc_res').append(mk);
                             $('#consult_presc_res').show();
                         }
@@ -1589,41 +1496,67 @@
 
 
         function setSearchValSer(name, id, price, coverageMode = null, claims = null, payable = null) {
-            const coverageBadge = coverageMode ? `<div class="small mt-1"><span class="badge bg-info">${coverageMode.toUpperCase()}</span> <span class="text-danger">Pay: ${payable ?? price}</span> <span class="text-success">Claims: ${claims ?? 0}</span></div>` : '';
-            var mk = `
-                <tr>
-                    <td>${name}${coverageBadge}</td>
-                    <td>${payable ?? price}</td>
-                    <td>
-                        <input type = 'text' class='form-control' name=consult_invest_note[]>
-                        <input type = 'hidden' name=consult_invest_id[] value='${id}'>
-                    </td>
-                    <td><button class='btn btn-danger' onclick="removeProdRow(this)">x</button></td>
-                </tr>
-            `;
+            var csrfToken = $('meta[name="csrf-token"]').attr('content');
 
-            $('#selected-services').append(mk);
+            ClinicalOrdersKit.addItem({
+                url: '/encounters/' + encounterId + '/add-lab',
+                payload: { service_id: id, note: '' },
+                csrfToken: csrfToken,
+                tableSelector: '#selected-services',
+                type: 'labs',
+                referenceId: parseInt(id),
+                buildRowHtml: function(response) {
+                    var coverageBadge = coverageMode ? '<div class="small mt-1"><span class="badge bg-info">' + (coverageMode||'').toUpperCase() + '</span> <span class="text-danger">Pay: ' + (payable ?? price) + '</span> <span class="text-success">Claims: ' + (claims ?? 0) + '</span></div>' : '';
+                    return '<tr data-record-id="' + response.id + '" data-record-type="lab" data-service-id="' + id + '">' +
+                        '<td>' + name + coverageBadge + '</td>' +
+                        '<td>' + (payable ?? price) + '</td>' +
+                        '<td>' +
+                            '<input type="text" class="form-control" name="consult_invest_note[]" onchange="ClinicalOrdersKit.debouncedUpdate({url:\'/encounters/' + encounterId + '/labs/' + response.id + '/note\',payload:{note:this.value},csrfToken:\'' + csrfToken + '\'})">' +
+                            '<input type="hidden" name="consult_invest_id[]" value="' + id + '">' +
+                        '</td>' +
+                        '<td><button class="btn btn-danger" onclick="removeProdRow(this)">x</button></td>' +
+                    '</tr>';
+                },
+                onSuccess: function(resp) {
+                    if ($.fn.DataTable.isDataTable('#investigation_history_list')) {
+                        $('#investigation_history_list').DataTable().ajax.reload(null, false);
+                    }
+                }
+            });
+
             $('#consult_invest_res').html('');
-
         }
 
         function setSearchValImaging(name, id, price, coverageMode = null, claims = null, payable = null) {
-            const coverageBadge = coverageMode ? `<div class="small mt-1"><span class="badge bg-info">${coverageMode.toUpperCase()}</span> <span class="text-danger">Pay: ${payable ?? price}</span> <span class="text-success">Claims: ${claims ?? 0}</span></div>` : '';
-            var mk = `
-                <tr>
-                    <td>${name}${coverageBadge}</td>
-                    <td>${payable ?? price}</td>
-                    <td>
-                        <input type = 'text' class='form-control' name=consult_imaging_note[]>
-                        <input type = 'hidden' name=consult_imaging_id[] value='${id}'>
-                    </td>
-                    <td><button class='btn btn-danger' onclick="removeProdRow(this)">x</button></td>
-                </tr>
-            `;
+            var csrfToken = $('meta[name="csrf-token"]').attr('content');
 
-            $('#selected-imaging-services').append(mk);
+            ClinicalOrdersKit.addItem({
+                url: '/encounters/' + encounterId + '/add-imaging',
+                payload: { service_id: id, note: '' },
+                csrfToken: csrfToken,
+                tableSelector: '#selected-imaging-services',
+                type: 'imaging',
+                referenceId: parseInt(id),
+                buildRowHtml: function(response) {
+                    var coverageBadge = coverageMode ? '<div class="small mt-1"><span class="badge bg-info">' + (coverageMode||'').toUpperCase() + '</span> <span class="text-danger">Pay: ' + (payable ?? price) + '</span> <span class="text-success">Claims: ' + (claims ?? 0) + '</span></div>' : '';
+                    return '<tr data-record-id="' + response.id + '" data-record-type="imaging" data-service-id="' + id + '">' +
+                        '<td>' + name + coverageBadge + '</td>' +
+                        '<td>' + (payable ?? price) + '</td>' +
+                        '<td>' +
+                            '<input type="text" class="form-control" name="consult_imaging_note[]" onchange="ClinicalOrdersKit.debouncedUpdate({url:\'/encounters/' + encounterId + '/imaging/' + response.id + '/note\',payload:{note:this.value},csrfToken:\'' + csrfToken + '\'})">' +
+                            '<input type="hidden" name="consult_imaging_id[]" value="' + id + '">' +
+                        '</td>' +
+                        '<td><button class="btn btn-danger" onclick="removeProdRow(this)">x</button></td>' +
+                    '</tr>';
+                },
+                onSuccess: function(resp) {
+                    if ($.fn.DataTable.isDataTable('#imaging_history_list')) {
+                        $('#imaging_history_list').DataTable().ajax.reload(null, false);
+                    }
+                }
+            });
+
             $('#consult_imaging_res').html('');
-
         }
 
         function searchServices(q) {
@@ -1653,9 +1586,12 @@
                             const mode = item.coverage_mode || null;
                             const coverageBadge = mode ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ${payable}</span> <span class='text-success ms-1'>Claim: ${claims}</span>` : '';
                             const displayName = `${name}[${code}]`;
+                            const alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('labs', parseInt(item.id));
 
-                            var mk =
-                                `<li class='list-group-item'
+                            var mk = alreadyAdded
+                                ? `<li class='list-group-item text-muted' style="background-color: #e9ecef; cursor: not-allowed;">
+                                   [${category}]<b>${name}[${code}]</b> NGN ${price} ${coverageBadge} <span class='badge bg-warning ms-2'>Already Added</span></li>`
+                                : `<li class='list-group-item'
                                    style="background-color: #f0f0f0;"
                                    onclick="setSearchValSer('${displayName}', '${item.id}', '${price}', '${mode}', '${claims}', '${payable}')">
                                    [${category}]<b>${name}[${code}]</b> NGN ${price} ${coverageBadge}</li>`;
@@ -1699,9 +1635,12 @@
                             const mode = item.coverage_mode || null;
                             const coverageBadge = mode ? `<span class='badge bg-info ms-1'>${mode.toUpperCase()}</span> <span class='text-danger ms-1'>Pay: ${payable}</span> <span class='text-success ms-1'>Claim: ${claims}</span>` : '';
                             const displayName = `${name}[${code}]`;
+                            const alreadyAdded = ClinicalOrdersKit.isAlreadyAdded('imaging', parseInt(item.id));
 
-                            var mk =
-                                `<li class='list-group-item'
+                            var mk = alreadyAdded
+                                ? `<li class='list-group-item text-muted' style="background-color: #e9ecef; cursor: not-allowed;">
+                                   [${category}]<b>${name}[${code}]</b> NGN ${price} ${coverageBadge} <span class='badge bg-warning ms-2'>Already Added</span></li>`
+                                : `<li class='list-group-item'
                                    style="background-color: #f0f0f0;"
                                    onclick="setSearchValImaging('${displayName}', '${item.id}', '${price}', '${mode}', '${claims}', '${payable}')">
                                    [${category}]<b>${name}[${code}]</b> NGN ${price} ${coverageBadge}</li>`;
@@ -2251,14 +2190,34 @@
                         const prescriptionCount = data.prescriptions ? data.prescriptions.length : 0;
                         const administrationCount = data.administrations ? data.administrations.length : 0;
 
-                        document.getElementById('data-summary-stats').innerHTML = `
+                        // Count direct entries (ward_stock + patient_own that are not linked to a prescription)
+                        const prescriptionIds = new Set((data.prescriptions || []).map(p => p.id));
+                        const directAdmins = (data.administrations || []).filter(a =>
+                            !a.product_or_service_request_id || !prescriptionIds.has(a.product_or_service_request_id)
+                        );
+                        const wardStockCount = directAdmins.filter(a => a.drug_source === 'ward_stock').length;
+                        const patientOwnCount = directAdmins.filter(a => a.drug_source === 'patient_own').length;
+
+                        let statsHtml = `
                             <span class="badge bg-primary rounded-pill fs-6">
                                 <i class="mdi mdi-pill me-1"></i> ${prescriptionCount} medications
                             </span>
                             <span class="badge bg-info rounded-pill fs-6">
                                 <i class="mdi mdi-history me-1"></i> ${administrationCount} administrations
-                            </span>
-                        `;
+                            </span>`;
+                        if (wardStockCount > 0) {
+                            statsHtml += `
+                            <span class="badge bg-primary rounded-pill fs-6" style="background-color: #0d6efd !important;">
+                                <i class="mdi mdi-hospital-box me-1"></i> ${wardStockCount} ward stock
+                            </span>`;
+                        }
+                        if (patientOwnCount > 0) {
+                            statsHtml += `
+                            <span class="badge bg-warning text-dark rounded-pill fs-6">
+                                <i class="mdi mdi-account-arrow-left me-1"></i> ${patientOwnCount} patient's own
+                            </span>`;
+                        }
+                        document.getElementById('data-summary-stats').innerHTML = statsHtml;
 
                         // Render calendar grid view
                         renderDoctorMedicationCalendar(data, startDate, endDate);
@@ -2279,7 +2238,64 @@
                 console.log('Prescriptions count:', data.prescriptions ? data.prescriptions.length : 0);
                 console.log('Administrations count:', data.administrations ? data.administrations.length : 0);
 
-                if (!data.prescriptions || data.prescriptions.length === 0) {
+                // ─── Build unified prescriptions array: pharmacy + direct entries ───
+                const allAdmins = data.administrations || [];
+                const prescriptionIds = new Set((data.prescriptions || []).map(p => p.id));
+
+                // Find orphan administrations (ward_stock/patient_own not linked to any prescription)
+                const orphanAdmins = allAdmins.filter(a =>
+                    !a.product_or_service_request_id || !prescriptionIds.has(a.product_or_service_request_id)
+                );
+
+                // Group orphans into virtual prescriptions by drug_source + identifier
+                const directGroups = {};
+                orphanAdmins.forEach(admin => {
+                    let key;
+                    if (admin.drug_source === 'patient_own') {
+                        key = 'po_' + (admin.external_drug_name || 'unknown').toLowerCase();
+                    } else if (admin.drug_source === 'ward_stock') {
+                        key = 'ws_' + (admin.product_id || admin.id);
+                    } else {
+                        return; // skip pharmacy_dispensed orphans (shouldn't happen)
+                    }
+                    if (!directGroups[key]) {
+                        directGroups[key] = {
+                            admins: [],
+                            drug_source: admin.drug_source,
+                            product_id: admin.product_id,
+                            external_drug_name: admin.external_drug_name,
+                            product_name: admin.product_name,
+                        };
+                    }
+                    directGroups[key].admins.push(admin);
+                });
+
+                // Create virtual prescription entries for direct groups
+                const virtualPrescriptions = Object.entries(directGroups).map(([key, group]) => {
+                    const isPatientOwn = group.drug_source === 'patient_own';
+                    const medName = isPatientOwn
+                        ? (group.external_drug_name || 'Unknown Drug')
+                        : (group.product_name || 'Unknown Product');
+
+                    return {
+                        id: 'direct_' + key,
+                        is_direct_entry: true,
+                        drug_source: group.drug_source,
+                        product_name: medName,
+                        external_drug_name: group.external_drug_name,
+                        product_id: group.product_id,
+                        schedules: [], // direct entries use unscheduled administrations
+                        _direct_admins: group.admins, // stash for calendar rendering
+                    };
+                });
+
+                // Merge prescription + virtual entries
+                const unifiedPrescriptions = [
+                    ...(data.prescriptions || []).map(p => ({ ...p, is_direct_entry: false, drug_source: 'pharmacy_dispensed' })),
+                    ...virtualPrescriptions,
+                ];
+
+                if (unifiedPrescriptions.length === 0) {
                     container.innerHTML = '<div class="alert alert-info">No active medications found for this period.</div>';
                     return;
                 }
@@ -2300,7 +2316,7 @@
 
                 // Build medication color map
                 const medColorMap = {};
-                data.prescriptions.forEach((p, idx) => {
+                unifiedPrescriptions.forEach((p, idx) => {
                     medColorMap[p.id] = medicationColors[idx % medicationColors.length];
                 });
 
@@ -2502,13 +2518,28 @@
                     // Collect all items for this day across ALL medications
                     let dayItems = [];
 
-                    data.prescriptions.forEach(prescription => {
-                        const medicationName = extractMedicationName(prescription, null);
+                    unifiedPrescriptions.forEach(prescription => {
+                        const medicationName = prescription.is_direct_entry
+                            ? (prescription.product_name || prescription.external_drug_name || 'Unknown')
+                            : extractMedicationName(prescription, null);
                         const color = medColorMap[prescription.id];
                         const schedules = prescription.schedules || [];
-                        const administrations = (data.administrations || []).filter(a =>
-                            a.product_or_service_request_id === prescription.id
-                        );
+
+                        // Resolve administrations depending on source type
+                        let administrations;
+                        if (prescription.is_direct_entry) {
+                            // Direct entries: use stashed admins from the virtual prescription
+                            administrations = prescription._direct_admins || [];
+                        } else {
+                            // Regular prescriptions: filter by POSR id
+                            administrations = (data.administrations || []).filter(a =>
+                                a.product_or_service_request_id === prescription.id
+                            );
+                        }
+
+                        // Drug source badge suffix for display
+                        const sourceBadge = prescription.drug_source === 'ward_stock' ? ' [WS]'
+                            : prescription.drug_source === 'patient_own' ? ' [PO]' : '';
 
                         // Log for debugging
                         if (currentDate.toDateString() === today.toDateString()) {
@@ -2576,6 +2607,8 @@
                                 status: status,
                                 icon: icon,
                                 isPrn: false,
+                                drugSource: prescription.drug_source || 'pharmacy_dispensed',
+                                sourceBadge: sourceBadge,
                                 // Detailed data for modal
                                 dose: admin ? (admin.dose || schedule.dose) : schedule.dose,
                                 route: admin ? (admin.route || schedule.route) : schedule.route,
@@ -2584,7 +2617,10 @@
                                 administeredBy: admin ? admin.administered_by_name : null,
                                 comment: admin ? admin.comment : null,
                                 scheduleId: schedule.id,
-                                adminId: admin ? admin.id : null
+                                adminId: admin ? admin.id : null,
+                                storeName: admin ? admin.store_name : null,
+                                externalDrugName: admin ? admin.external_drug_name : null,
+                                externalSourceNote: admin ? admin.external_source_note : null,
                             });
                         });
 
@@ -2597,14 +2633,22 @@
                                 hour12: true
                             });
 
+                            // For direct entries, use a specific icon
+                            const directIcon = prescription.drug_source === 'ward_stock' ? 'mdi-hospital-box'
+                                : prescription.drug_source === 'patient_own' ? 'mdi-account-arrow-left'
+                                : 'mdi-plus-circle';
+
                             dayItems.push({
                                 sortTime: adminDate.getTime(),
                                 time: adminTime,
                                 medName: medicationName,
                                 color: color,
                                 status: 'given',
-                                icon: 'mdi-plus-circle',
-                                isPrn: true,
+                                icon: prescription.is_direct_entry ? directIcon : 'mdi-plus-circle',
+                                isPrn: !prescription.is_direct_entry,
+                                isDirectEntry: prescription.is_direct_entry || false,
+                                drugSource: prescription.drug_source || 'pharmacy_dispensed',
+                                sourceBadge: sourceBadge,
                                 // Detailed data for modal
                                 dose: admin.dose,
                                 route: admin.route,
@@ -2613,7 +2657,10 @@
                                 administeredBy: admin.administered_by_name,
                                 comment: admin.comment,
                                 scheduleId: null,
-                                adminId: admin.id
+                                adminId: admin.id,
+                                storeName: admin.store_name,
+                                externalDrugName: admin.external_drug_name,
+                                externalSourceNote: admin.external_source_note,
                             });
                         });
                     });
@@ -2630,6 +2677,14 @@
                                               item.status === 'discontinued' ? 'text-muted' : 'text-primary';
                             const prnLabel = item.isPrn ? ' (PRN)' : '';
 
+                            // Drug source label for non-pharmacy items
+                            let sourceLabel = '';
+                            if (item.drugSource === 'ward_stock') {
+                                sourceLabel = ' <span style="font-size:9px;background:#0d6efd;color:#fff;padding:1px 3px;border-radius:3px;">WS</span>';
+                            } else if (item.drugSource === 'patient_own') {
+                                sourceLabel = ' <span style="font-size:9px;background:#ffc107;color:#000;padding:1px 3px;border-radius:3px;">PO</span>';
+                            }
+
                             // Encode item data as JSON for the click handler
                             const itemData = JSON.stringify(item).replace(/"/g, '&quot;');
 
@@ -2638,7 +2693,7 @@
                                 onclick="showMedDetails(this)" data-med-details="${itemData}">
                                 <i class="mdi ${item.icon} ${iconColor}"></i>
                                 <div class="med-details">
-                                    <span class="med-name">${item.medName}${prnLabel}</span>
+                                    <span class="med-name">${item.medName}${prnLabel}${sourceLabel}</span>
                                     <span class="med-time">${item.time}</span>
                                 </div>
                             </div>`;
@@ -2679,6 +2734,13 @@
 
                 if (data.isPrn) {
                     statusBadge += ' <span class="badge bg-purple"><i class="mdi mdi-plus-circle me-1"></i>PRN</span>';
+                }
+
+                // Drug source badge
+                if (data.drugSource === 'ward_stock') {
+                    statusBadge += ' <span class="badge bg-primary"><i class="mdi mdi-hospital-box me-1"></i>Ward Stock</span>';
+                } else if (data.drugSource === 'patient_own') {
+                    statusBadge += ' <span class="badge bg-warning text-dark"><i class="mdi mdi-account-arrow-left me-1"></i>Patient\'s Own</span>';
                 }
 
                 // Build modal content
@@ -2749,6 +2811,38 @@
                             <div class="p-2 bg-light rounded">${data.comment}</div>
                         </div>
                     </div>`;
+                }
+
+                // Drug source details for ward stock / patient's own
+                if (data.drugSource === 'ward_stock' && data.storeName) {
+                    content += `
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label class="text-muted small">Dispensed From</label>
+                            <div class="fw-bold"><i class="mdi mdi-store me-1"></i>${data.storeName}</div>
+                        </div>
+                    </div>`;
+                }
+
+                if (data.drugSource === 'patient_own') {
+                    let poDetails = '';
+                    if (data.externalDrugName) {
+                        poDetails += `<div><strong>Drug Name:</strong> ${data.externalDrugName}</div>`;
+                    }
+                    if (data.externalSourceNote) {
+                        poDetails += `<div><strong>Source Note:</strong> ${data.externalSourceNote}</div>`;
+                    }
+                    if (poDetails) {
+                        content += `
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label class="text-muted small">Patient's Own Drug Details</label>
+                                <div class="p-2 bg-warning bg-opacity-10 rounded border border-warning">
+                                    ${poDetails}
+                                </div>
+                            </div>
+                        </div>`;
+                    }
                 }
 
                 document.getElementById('medDetailsModalBody').innerHTML = content;
@@ -3123,6 +3217,122 @@
         const patientId = '{{ request()->get("patient_id") }}';
         const queueId = '{{ request()->get("queue_id") ?? "ward_round" }}';
 
+        // Patient weight from last vital that recorded a weight (for dose calculators)
+        window.patientWeight = <?php echo json_encode(\App\Models\VitalSign::where('patient_id', $patient->id)->whereNotNull('weight')->where('weight', '>', 0)->orderBy('created_at', 'desc')->value('weight')); ?>;
+
+        // Initialize dose mode toggle — structured by default (Plan §2.2)
+        // Uses the shared ClinicalOrdersKit from clinical-orders-shared.js
+        var doctorDoseState = ClinicalOrdersKit.initDoseModeToggle({
+            prefix: '',
+            cssPrefix: '',
+            tableSelector: '#selected-products',
+            idInputName: 'consult_presc_id[]',
+            doseInputName: 'consult_presc_dose[]',
+            onchange: 'ClinicalOrdersKit.updateDoseValue(this, \"\")',
+            onToggle: function(isStructured) { doseStructuredMode = isStructured; }
+        });
+        // Sync legacy variable with new default (structured = true)
+        doseStructuredMode = doctorDoseState.isStructured;
+
+        // Phase 2b (Plan §4.3): Register debounced dose auto-save for medications
+        // When any structured dose field changes → updateDoseValue fires → triggers this handler
+        ClinicalOrdersKit.onDoseUpdate('', function(recordId, doseValue) {
+            ClinicalOrdersKit.debouncedUpdate({
+                url: '/encounters/' + encounterId + '/prescriptions/' + recordId + '/dose',
+                payload: { dose: doseValue },
+                csrfToken: $('meta[name="csrf-token"]').attr('content')
+            });
+        });
+
+        // B1 fix (Plan §4.4): Scan pre-existing rows to populate duplicate tracking
+        ClinicalOrdersKit.scanExistingRows('#selected-services', 'labs');
+        ClinicalOrdersKit.scanExistingRows('#selected-imaging-services', 'imaging');
+        ClinicalOrdersKit.scanExistingRows('#selected-products', 'meds');
+        ClinicalOrdersKit.scanExistingRows('#selected-procedures-table tbody', 'procedures');
+
+        // Phase 4d (Plan §6.4): Initialize treatment plans module
+        ClinicalOrdersKit.initTreatmentPlans({
+            applyUrl: '/encounters/' + encounterId + '/apply-treatment-plan',
+            csrfToken: $('meta[name="csrf-token"]').attr('content'),
+            extraPayload: {},
+            onApplySuccess: function(response) {
+                // Reload all history tables after applying a plan (A2 fix: include procedures)
+                if ($.fn.DataTable.isDataTable('#investigation_history_list')) {
+                    $('#investigation_history_list').DataTable().ajax.reload(null, false);
+                }
+                if ($.fn.DataTable.isDataTable('#imaging_history_list')) {
+                    $('#imaging_history_list').DataTable().ajax.reload(null, false);
+                }
+                if ($.fn.DataTable.isDataTable('#presc_history_list')) {
+                    $('#presc_history_list').DataTable().ajax.reload(null, false);
+                }
+                if ($.fn.DataTable.isDataTable('#procedure_history_list')) {
+                    $('#procedure_history_list').DataTable().ajax.reload(null, false);
+                }
+            },
+            currentItemsGatherer: function() {
+                // Gather all auto-saved items from selection tables (all 4 types)
+                var items = [];
+                $('#selected-services tr[data-record-id]').each(function() {
+                    items.push({
+                        item_type: 'lab',
+                        reference_id: parseInt($(this).data('service-id')),
+                        display_name: $(this).find('td:first').text().trim(),
+                        note: $(this).find('input[name="consult_invest_note[]"]').val() || ''
+                    });
+                });
+                $('#selected-imaging-services tr[data-record-id]').each(function() {
+                    items.push({
+                        item_type: 'imaging',
+                        reference_id: parseInt($(this).data('service-id')),
+                        display_name: $(this).find('td:first').text().trim(),
+                        note: $(this).find('input[name="consult_imaging_note[]"]').val() || ''
+                    });
+                });
+                $('#selected-products tr[data-record-id]').each(function() {
+                    items.push({
+                        item_type: 'medication',
+                        reference_id: parseInt($(this).data('service-id')),
+                        display_name: $(this).find('td:first').text().trim(),
+                        dose: $(this).find('input[name="consult_presc_dose[]"]').val() || ''
+                    });
+                });
+                $('#selected-procedures tr[data-record-id]').each(function() {
+                    items.push({
+                        item_type: 'procedure',
+                        reference_id: parseInt($(this).data('service-id')),
+                        display_name: $(this).find('td:first').text().trim(),
+                        note: ''
+                    });
+                });
+                return items;
+            }
+        });
+
+        // Phase 3c (Plan §5.3): Initialize re-prescribe from encounter dropdown
+        ClinicalOrdersKit.initRePrescribeFromEncounter({
+            recentUrl: '/encounters/' + encounterId + '/recent-encounters',
+            encounterItemsUrl: '/encounters/' + encounterId + '/encounter-items/{id}',
+            rePrescribeUrl: '/encounters/' + encounterId + '/re-prescribe',
+            csrfToken: $('meta[name="csrf-token"]').attr('content'),
+            dropdownSelector: '#rp-encounter-dropdown',
+            onRePrescribed: function() {
+                // Reload all history tables (B3 fix: include procedures)
+                if ($.fn.DataTable.isDataTable('#investigation_history_list')) {
+                    $('#investigation_history_list').DataTable().ajax.reload(null, false);
+                }
+                if ($.fn.DataTable.isDataTable('#imaging_history_list')) {
+                    $('#imaging_history_list').DataTable().ajax.reload(null, false);
+                }
+                if ($.fn.DataTable.isDataTable('#presc_history_list')) {
+                    $('#presc_history_list').DataTable().ajax.reload(null, false);
+                }
+                if ($.fn.DataTable.isDataTable('#procedure_history_list')) {
+                    $('#procedure_history_list').DataTable().ajax.reload(null, false);
+                }
+            }
+        });
+
         // Helper function to show messages
         function showMessage(elementId, message, type = 'success') {
             const element = document.getElementById(elementId);
@@ -3258,7 +3468,14 @@
         function saveLabs() {
             const services = [];
             const notes = [];
+            var autoSavedCount = 0;
+
             $('#selected-services tr').each(function() {
+                // Skip auto-saved rows (already persisted via addItem)
+                if ($(this).data('record-id')) {
+                    autoSavedCount++;
+                    return; // continue
+                }
                 const serviceId = $(this).find('input[name="consult_invest_id[]"]').val();
                 const note = $(this).find('input[name="consult_invest_note[]"]').val();
                 if (serviceId) {
@@ -3266,6 +3483,19 @@
                     notes.push(note || '');
                 }
             });
+
+            // If all items were auto-saved and nothing new to batch-save
+            if (services.length === 0 && autoSavedCount > 0) {
+                showMessage('labs_save_message', autoSavedCount + ' lab(s) already saved', 'success');
+                updateSummary();
+                $('#selected-services').empty();
+                ClinicalOrdersKit.addedIds.labs.clear(); // A3 fix: only clear labs, not all types
+                if ($.fn.DataTable.isDataTable('#investigation_history_list')) {
+                    $('#investigation_history_list').DataTable().ajax.reload();
+                }
+                try { new bootstrap.Tab(document.getElementById('lab-history-tab')).show(); } catch(e) { $('#lab-history-tab').tab('show'); }
+                return;
+            }
 
             if (services.length === 0) {
                 showMessage('labs_save_message', 'No lab services selected', 'error');
@@ -3313,7 +3543,13 @@
         function saveImaging() {
             const services = [];
             const notes = [];
+            var autoSavedCount = 0;
+
             $('#selected-imaging-services tr').each(function() {
+                if ($(this).data('record-id')) {
+                    autoSavedCount++;
+                    return;
+                }
                 const serviceId = $(this).find('input[name="consult_imaging_id[]"]').val();
                 const note = $(this).find('input[name="consult_imaging_note[]"]').val();
                 if (serviceId) {
@@ -3321,6 +3557,18 @@
                     notes.push(note || '');
                 }
             });
+
+            if (services.length === 0 && autoSavedCount > 0) {
+                showMessage('imaging_save_message', autoSavedCount + ' imaging request(s) already saved', 'success');
+                updateSummary();
+                $('#selected-imaging-services').empty();
+                ClinicalOrdersKit.addedIds.imaging.clear(); // A3 fix: only clear imaging
+                if ($.fn.DataTable.isDataTable('#imaging_history_list')) {
+                    $('#imaging_history_list').DataTable().ajax.reload();
+                }
+                try { new bootstrap.Tab(document.getElementById('imaging-history-tab')).show(); } catch(e) { $('#imaging-history-tab').tab('show'); }
+                return;
+            }
 
             if (services.length === 0) {
                 showMessage('imaging_save_message', 'No imaging services selected', 'error');
@@ -3364,13 +3612,19 @@
             setTimeout(() => $('#medications_tab').click(), 800);
         }
 
-        // Save Prescriptions
+        // Save Prescriptions (Phase 2b: skip auto-saved rows — Plan §4.3)
         function savePrescriptions() {
             const products = [];
             const doses = [];
             let hasEmptyDose = false;
+            let autoSavedCount = 0;
 
             $('#selected-products tr').each(function() {
+                // Skip rows already auto-saved (Phase 2b)
+                if ($(this).data('record-id')) {
+                    autoSavedCount++;
+                    return; // continue
+                }
                 const productId = $(this).find('input[name="consult_presc_id[]"]').val();
                 // Try structured hidden input first, fallback to text input
                 let dose = $(this).find('.structured-dose-value').val();
@@ -3385,6 +3639,18 @@
                     }
                 }
             });
+
+            // If ALL rows are auto-saved, show success and clear
+            if (products.length === 0 && autoSavedCount > 0) {
+                showMessage('prescriptions_save_message', autoSavedCount + ' prescription(s) already auto-saved', 'success');
+                $('#selected-products').empty();
+                ClinicalOrdersKit.addedIds.meds.clear(); // A3 fix: only clear meds
+                if ($.fn.DataTable.isDataTable('#presc_history_list')) {
+                    $('#presc_history_list').DataTable().ajax.reload();
+                }
+                try { new bootstrap.Tab(document.getElementById('presc-history-tab')).show(); } catch(e) { $('#presc-history-tab').tab('show'); }
+                return;
+            }
 
             if (products.length === 0) {
                 showMessage('prescriptions_save_message', 'No prescriptions selected', 'error');
@@ -3408,11 +3674,13 @@
                     _token: $('meta[name="csrf-token"]').attr('content')
                 },
                 success: function(response) {
+                    const saved = autoSavedCount > 0 ? ` (${autoSavedCount} auto-saved earlier)` : '';
                     const msgType = response.empty_doses && response.empty_doses.length > 0 ? 'warning' : 'success';
-                    showMessage('prescriptions_save_message', response.message, msgType);
+                    showMessage('prescriptions_save_message', response.message + saved, msgType);
                     updateSummary();
                     // Clear selected list
                     $('#selected-products').empty();
+                    ClinicalOrdersKit.addedIds.meds.clear(); // A3 fix: only clear meds
                     // Reload history DataTable
                     if ($.fn.DataTable.isDataTable('#presc_history_list')) {
                         $('#presc_history_list').DataTable().ajax.reload();
@@ -4135,5 +4403,7 @@
 
     @include('admin.doctors.partials.report_builder')
     @include('admin.doctors.partials.modals')
+    @include('admin.partials.treatment-plan-modal')
+    @include('admin.partials.re-prescribe-encounter-modal')
     @include('admin.doctors.partials.scripts')
 @endsection

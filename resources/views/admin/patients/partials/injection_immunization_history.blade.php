@@ -214,8 +214,18 @@
                 },
                 {
                     data: 'product_name',
-                    render: function(data) {
-                        return data || 'N/A';
+                    render: function(data, type, row) {
+                        let name = data || 'N/A';
+                        if (row.drug_source === 'patient_own') {
+                            let tip = 'Patient\'s Own Drug';
+                            if (row.external_qty) tip += ' | Qty: ' + row.external_qty;
+                            if (row.external_batch_number) tip += ' | Batch: ' + row.external_batch_number;
+                            if (row.external_expiry_date) tip += ' | Exp: ' + row.external_expiry_date;
+                            name = '<span title="' + tip + '">' + name + '</span> <span class="badge badge-warning badge-sm">Patient\'s Own</span>';
+                        } else if (row.drug_source === 'ward_stock') {
+                            name += ' <span class="badge badge-info badge-sm">Ward Stock</span>';
+                        }
+                        return name;
                     }
                 },
                 {

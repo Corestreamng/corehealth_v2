@@ -45,6 +45,20 @@
 
 <div class="card-modern mt-2">
     <div class="card-body">
+        {{-- Treatment Plans + Save as Template (Plan §6.4: buttons at top of all 4 tab areas) --}}
+        <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
+            <div class="btn-group">
+                <button class="btn btn-sm btn-outline-secondary"
+                        data-bs-toggle="modal" data-bs-target="#treatmentPlanModal">
+                    <i class="fa fa-clipboard-list"></i> Treatment Plans
+                </button>
+                <button class="btn btn-sm btn-outline-success"
+                        onclick="ClinicalOrdersKit.openSaveTemplateModal()">
+                    <i class="fa fa-save"></i> Save as Template
+                </button>
+            </div>
+        </div>
+
         {{-- Sub-tabs for History and New Request --}}
         <ul class="nav nav-tabs service-tabs mb-3" role="tablist">
             <li class="nav-item" role="presentation">
@@ -141,19 +155,14 @@
             </div>
         </div>
 
-        {{-- Navigation Buttons --}}
+        {{-- Navigation Buttons (Save removed — procedures auto-save on add; Plan §4.5) --}}
         <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
             <button type="button" onclick="switch_tab(event,'medications_tab')" class="btn btn-secondary">
                 <i class="fa fa-arrow-left"></i> Previous
             </button>
-            <div>
-                <button type="button" onclick="saveProceduresAndNext()" id="save_procedures_btn" class="btn btn-success me-2">
-                    <i class="fa fa-save"></i> Save & Next
-                </button>
-                <button type="button" onclick="saveProcedures()" class="btn btn-outline-success">
-                    <i class="fa fa-save"></i> Save
-                </button>
-            </div>
+            <button type="button" onclick="switch_tab(event,'admissions_tab')" class="btn btn-primary">
+                Next <i class="fa fa-arrow-right"></i>
+            </button>
         </div>
     </div>
 </div>
@@ -373,7 +382,7 @@
 @push('scripts')
 <script>
 // Procedure Module JavaScript
-let selectedProcedures = [];
+// NOTE: selectedProcedures array REMOVED — procedures auto-save via ClinicalOrdersKit.addItem (Phase 2a)
 let procedureCategoryId = {{ appsettings('procedure_category_id', 0) }};
 let currentProcedureId = null;
 
@@ -457,8 +466,8 @@ function searchProcedures(query) {
                 $results.append('<li class="list-group-item text-muted">No procedures found</li>');
             } else {
                 data.forEach(function(item) {
-                    // Check if already selected
-                    const isSelected = selectedProcedures.some(p => p.id === item.id);
+                    // Check if already selected (Phase 2c — duplicate filtering via shared tracker)
+                    const isSelected = ClinicalOrdersKit.isAlreadyAdded('procedures', item.id);
 
                     const category = (item.category && item.category.category_name) ? item.category.category_name : 'N/A';
                     const name = item.service_name || 'Unknown';
@@ -495,151 +504,107 @@ function searchProcedures(query) {
 }
 
 function addProcedure(procedure) {
-    // Check if already added
-    if (selectedProcedures.some(p => p.id === procedure.id)) {
-        alert('This procedure is already added');
+    // Phase 2a (Plan §4.1): Auto-save procedure via ClinicalOrdersKit.addItem
+    const procId = procedure.id;
+    if (ClinicalOrdersKit.isAlreadyAdded('procedures', procId)) {
+        toastr.warning('This procedure is already added');
         return;
     }
 
     const priority = $('#procedure_priority').val();
     const scheduledDate = $('#procedure_scheduled_date').val();
     const preNotes = $('#procedure_pre_notes').val();
+    const encounterId = {{ $encounter->id ?? 0 }};
+    const csrfToken = $('meta[name="csrf-token"]').attr('content');
 
-    procedure.priority = priority;
-    procedure.scheduled_date = scheduledDate;
-    procedure.pre_notes = preNotes;
+    const coverageMode = procedure.coverage_mode || null;
+    const payable = procedure.payable_amount ?? (procedure.price?.sale_price ?? 0);
+    const claims = procedure.claims_amount ?? 0;
+    const basePrice = procedure.price?.sale_price ?? 0;
 
-    selectedProcedures.push(procedure);
-    updateSelectedProceduresTable();
+    const coverageDisplay = coverageMode === 'hmo' ?
+        '<span class="badge bg-success"><i class="fa fa-shield-alt"></i> HMO Covered</span>' :
+        '<span class="badge bg-secondary"><i class="fa fa-wallet"></i> Self-Pay</span>';
+    const priceDisplay = coverageMode === 'hmo' ? `₦${formatNumber(claims)}` : `₦${formatNumber(payable)}`;
+    const priorityClass = `priority-${priority}`;
+    const priorityLabel = priority.charAt(0).toUpperCase() + priority.slice(1);
+    const categoryName = procedure.category ? procedure.category.category_name : 'Procedures';
 
-    // Clear search
-    $('#procedure_search').val('');
-    $('#procedure_search_results').hide();
-
-    // Hide no procedures message
-    $('#no_procedures_message').hide();
-}
-
-function removeProcedure(procedureId) {
-    selectedProcedures = selectedProcedures.filter(p => p.id !== procedureId);
-    updateSelectedProceduresTable();
-
-    if (selectedProcedures.length === 0) {
-        $('#no_procedures_message').show();
-    }
-}
-
-function updateSelectedProceduresTable() {
-    const $tbody = $('#selected-procedures');
-    $tbody.empty();
-
-    selectedProcedures.forEach(function(procedure, index) {
-        const coverageDisplay = procedure.coverage_mode === 'hmo' ?
-            '<span class="badge bg-success"><i class="fa fa-shield-alt"></i> HMO Covered</span>' :
-            '<span class="badge bg-secondary"><i class="fa fa-wallet"></i> Self-Pay</span>';
-
-        const priceDisplay = procedure.coverage_mode === 'hmo' ?
-            `₦${formatNumber(procedure.claims_amount)}` :
-            `₦${formatNumber(procedure.payable_amount)}`;
-
-        const priorityClass = `priority-${procedure.priority}`;
-        const priorityLabel = procedure.priority.charAt(0).toUpperCase() + procedure.priority.slice(1);
-
-        const categoryName = procedure.category ? procedure.category.category_name : 'Procedures';
-
-        $tbody.append(`
-            <tr data-procedure-id="${procedure.id}">
+    ClinicalOrdersKit.addItem({
+        url: `/encounters/${encounterId}/add-procedure`,
+        payload: {
+            service_id: procId,
+            priority: priority,
+            scheduled_date: scheduledDate,
+            pre_notes: preNotes
+        },
+        csrfToken: csrfToken,
+        tableSelector: '#selected-procedures',
+        type: 'procedures',
+        referenceId: procId,
+        buildRowHtml: function(resp) {
+            return `<tr data-record-id="${resp.id}" data-record-type="procedure" data-service-id="${procId}">
                 <td>
-                    <strong>${procedure.service_name}</strong>
+                    <strong>${procedure.service_name || 'N/A'}</strong>
                     <br><small class="text-muted">${procedure.service_code || ''}</small>
-                    ${procedure.pre_notes ? `<br><small class="text-info"><i class="fa fa-sticky-note"></i> ${procedure.pre_notes.substring(0, 50)}...</small>` : ''}
+                    ${preNotes ? `<br><small class="text-info"><i class="fa fa-sticky-note"></i> ${preNotes.substring(0, 50)}...</small>` : ''}
                 </td>
                 <td><small>${categoryName}</small></td>
                 <td>${priceDisplay}</td>
                 <td>${coverageDisplay}</td>
                 <td>
                     <span class="priority-badge ${priorityClass}">${priorityLabel}</span>
-                    ${procedure.scheduled_date ? `<br><small class="text-muted"><i class="fa fa-calendar"></i> ${procedure.scheduled_date}</small>` : ''}
+                    ${scheduledDate ? `<br><small class="text-muted"><i class="fa fa-calendar"></i> ${scheduledDate}</small>` : ''}
                 </td>
                 <td>
-                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeProcedure(${procedure.id})">
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeProcedure(this, ${procId})">
                         <i class="fa fa-times"></i>
                     </button>
                 </td>
-            </tr>
-        `);
-    });
-
-    if (selectedProcedures.length === 0) {
-        $tbody.append(`
-            <tr>
-                <td colspan="6" class="text-center text-muted">
-                    <i class="fa fa-info-circle"></i> No procedures selected
-                </td>
-            </tr>
-        `);
-    }
-}
-
-function saveProcedures() {
-    if (selectedProcedures.length === 0) {
-        showProcedureMessage('info', 'No procedures to save. Add some procedures first.');
-        return;
-    }
-
-    const encounterId = {{ $encounter->id ?? 0 }};
-
-    if (!encounterId) {
-        showProcedureMessage('danger', 'No active encounter. Please save the encounter first.');
-        return;
-    }
-
-    $('#save_procedures_btn').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
-
-    $.ajax({
-        url: `/encounters/${encounterId}/save-procedures`,
-        type: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            </tr>`;
         },
-        data: {
-            procedures: selectedProcedures.map(p => ({
-                service_id: p.id,
-                priority: p.priority,
-                scheduled_date: p.scheduled_date,
-                pre_notes: p.pre_notes
-            }))
-        },
-        success: function(response) {
-            if (response.success) {
-                showProcedureMessage('success', response.message || 'Procedures saved successfully!');
-                // Clear selected procedures
-                selectedProcedures = [];
-                updateSelectedProceduresTable();
-                $('#no_procedures_message').show();
-                // Reload history table
+        onSuccess: function() {
+            // Reload procedure history DataTable
+            if ($('#procedure_history_list').length) {
                 $('#procedure_history_list').DataTable().ajax.reload();
-                // Switch to history tab
-                try { new bootstrap.Tab(document.getElementById('proc-history-tab')).show(); } catch(e) { $('#proc-history-tab').tab('show'); }
-            } else {
-                showProcedureMessage('danger', response.message || 'Failed to save procedures');
             }
-        },
-        error: function(xhr) {
-            const errorMsg = xhr.responseJSON?.message || 'An error occurred while saving procedures';
-            showProcedureMessage('danger', errorMsg);
-        },
-        complete: function() {
-            $('#save_procedures_btn').prop('disabled', false).html('<i class="fa fa-save"></i> Save & Next');
         }
     });
+
+    // Clear search
+    $('#procedure_search').val('');
+    $('#procedure_search_results').hide();
+    // Hide no procedures message
+    $('#no_procedures_message').hide();
 }
 
-function saveProceduresAndNext() {
-    saveProcedures();
-    setTimeout(function() {
-        switch_tab(event, 'admissions_tab');
-    }, 1000);
+function removeProcedure(btn, serviceId) {
+    // Phase 2a (Plan §4.1): Auto-delete procedure via ClinicalOrdersKit.removeItem
+    var $tr = $(btn).closest('tr');
+    var recordId = $tr.data('record-id');
+    var encounterId = {{ $encounter->id ?? 0 }};
+
+    if (recordId) {
+        ClinicalOrdersKit.removeItem({
+            url: '/encounters/' + encounterId + '/procedures/' + recordId,
+            csrfToken: $('meta[name="csrf-token"]').attr('content'),
+            rowSelector: $tr,
+            type: 'procedures',
+            referenceId: serviceId ? parseInt(serviceId) : null,
+            tableSelector: '#selected-procedures',
+            onSuccess: function() {
+                if ($('#selected-procedures tr[data-record-id]').length === 0) {
+                    $('#no_procedures_message').show();
+                }
+                if ($('#procedure_history_list').length) {
+                    $('#procedure_history_list').DataTable().ajax.reload();
+                }
+            }
+        });
+    } else {
+        // Fallback for non-auto-saved rows
+        $tr.remove();
+    }
 }
 
 function showProcedureMessage(type, message) {

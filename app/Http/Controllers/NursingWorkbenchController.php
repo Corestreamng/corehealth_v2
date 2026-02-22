@@ -43,8 +43,10 @@ use App\Services\StockService;
 use App\Models\Clinic;
 use App\Models\DoctorQueue;
 use Yajra\DataTables\DataTables;
+use App\Http\Traits\ClinicalOrdersTrait;
 
 class NursingWorkbenchController extends Controller{
+    use ClinicalOrdersTrait;
 
     /**
      * Get patients with medication due (for medication-due queue).
@@ -515,6 +517,13 @@ class NursingWorkbenchController extends Controller{
             ->orderBy('created_at', 'desc')
             ->first();
 
+        // Get last recorded weight (may be from a different vital than the most recent)
+        $lastWeight = VitalSign::where('patient_id', $patientId)
+            ->whereNotNull('weight')
+            ->where('weight', '>', 0)
+            ->orderBy('created_at', 'desc')
+            ->value('weight');
+
         // Get latest nursing note
         $lastNursingNote = NursingNote::with(['createdBy', 'type'])
             ->where('patient_id', $patientId)
@@ -555,11 +564,14 @@ class NursingWorkbenchController extends Controller{
                 'admitted_date' => $admission->bed_assign_date ? Carbon::parse($admission->bed_assign_date)->format('d M Y') : 'N/A',
                 'reason' => $admission->admission_reason ?? 'N/A',
             ] : null,
+            'last_weight' => $lastWeight ? (float) $lastWeight : null,
             'last_vitals' => $lastVitals ? [
                 'bp' => $lastVitals->blood_pressure ?? 'N/A',
                 'temp' => $lastVitals->temp ?? 'N/A',
                 'heart_rate' => $lastVitals->heart_rate ?? 'N/A',
                 'resp_rate' => $lastVitals->resp_rate ?? 'N/A',
+                'weight' => $lastVitals->weight ? (float) $lastVitals->weight : null,
+                'spo2' => $lastVitals->spo2 ? (float) $lastVitals->spo2 : null,
                 'time' => Carbon::parse($lastVitals->created_at)->format('h:i a, d M'),
             ] : null,
             'latest_nurse_note' => $lastNursingNote ? [
@@ -693,16 +705,31 @@ class NursingWorkbenchController extends Controller{
             ->get();
 
         $results = $injections->map(function ($inj) {
+            // For patient's own drugs, show external_drug_name; for hospital drugs, show product name
+            $drugName = $inj->product
+                ? $inj->product->product_name
+                : ($inj->external_drug_name ?? 'N/A');
+
+            $drugSource = $inj->drug_source ?? 'pharmacy_dispensed';
+            $isPatientOwn = $drugSource === 'patient_own';
+
             return [
                 'id' => $inj->id,
-                'product_name' => $inj->product ? $inj->product->product_name : 'N/A',
+                'product_name' => $drugName,
                 'dose' => $inj->dose,
                 'route' => $inj->route,
                 'site' => $inj->site,
                 'administered_at' => Carbon::parse($inj->administered_at)->format('h:i a, d M Y'),
                 'administered_by' => userfullname($inj->administered_by),
-                'batch_number' => $inj->batch_number,
+                'batch_number' => $isPatientOwn ? ($inj->external_batch_number ?? null) : $inj->batch_number,
                 'notes' => $inj->notes,
+                'drug_source' => $drugSource,
+                'is_patient_own' => $isPatientOwn,
+                'external_drug_name' => $inj->external_drug_name,
+                'external_qty' => $inj->external_qty,
+                'external_batch_number' => $inj->external_batch_number,
+                'external_expiry_date' => $inj->external_expiry_date ? Carbon::parse($inj->external_expiry_date)->format('d M Y') : null,
+                'external_source_note' => $inj->external_source_note,
             ];
         });
 
@@ -710,116 +737,221 @@ class NursingWorkbenchController extends Controller{
     }
 
     /**
-     * Administer an injection (creates billing record + injection record).
-     * Stock is deducted from selected store at administration time using batch-based FIFO.
+     * Administer an injection — 3-path drug source model (§5 + §7).
+     *
+     * Pharmacy Dispensed: uses existing prescription pipeline (POSR already exists)
+     * Patient's Own:      no product_id, no POSR, no stock — just record the administration
+     * Ward Stock:         deducts stock; creates POSR + ProductRequest ONLY if bill_patient=true
+     *                     (applies tariff pipeline via HmoHelper for HMO patients)
      */
     public function administerInjection(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'patient_id' => 'required|exists:patients,id',
-            'store_id' => 'required|exists:stores,id',
-            'products' => 'required|array|min:1',
-            'products.*.product_id' => 'required|exists:products,id',
+        $drugSource = $request->drug_source;
+
+        // §7.3: Conditional validation rules per drug source
+        $rules = [
+            'patient_id'    => 'required|exists:patients,id',
+            'drug_source'   => 'required|in:pharmacy_dispensed,patient_own,ward_stock',
+            'store_id'      => 'required_if:drug_source,ward_stock|nullable|exists:stores,id',
+            'bill_patient'  => 'nullable|boolean',
+            'products'      => 'required|array|min:1',
             'products.*.dose' => 'required|string|max:100',
-            'products.*.payable_amount' => 'nullable|numeric',
-            'products.*.claims_amount' => 'nullable|numeric',
-            'products.*.coverage_mode' => 'nullable|string',
-            'route' => 'required|in:IM,IV,SC,ID',
-            'site' => 'nullable|string|max:100',
+            'products.*.batch_id' => 'nullable|exists:stock_batches,id',
+            'route'         => 'required|in:IM,IV,SC,ID',
+            'site'          => 'nullable|string|max:100',
             'administered_at' => 'required|date',
-        ]);
+        ];
+
+        if ($drugSource === 'patient_own') {
+            // Patient's own: no product_id needed, external fields required
+            $rules['products.*.product_id'] = 'nullable|exists:products,id';
+            $rules['products.*.external_drug_name'] = 'required|string|max:255';
+            $rules['products.*.external_qty'] = 'required|numeric|min:0.01';
+            $rules['products.*.external_batch_number'] = 'nullable|string|max:50';
+            $rules['products.*.external_expiry_date'] = 'nullable|date';
+            $rules['products.*.external_source_note'] = 'nullable|string|max:500';
+        } elseif ($drugSource === 'pharmacy_dispensed') {
+            $rules['products.*.product_id'] = 'required|exists:products,id';
+            $rules['products.*.product_request_id'] = 'required|exists:product_requests,id';
+        } else {
+            // ward_stock
+            $rules['products.*.product_id'] = 'required|exists:products,id';
+            $rules['products.*.product_request_id'] = 'nullable|exists:product_requests,id';
+        }
+
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
+        $billPatient = (bool) ($request->bill_patient ?? false);
+
         try {
             DB::beginTransaction();
 
             $patient = PatientLowerCase::findOrFail($request->patient_id);
-            $storeId = $request->store_id;
+            $storeId = $request->store_id ?? null;
             $injections = [];
-            $stockService = app(StockService::class);
+            $stockService = ($drugSource === 'ward_stock') ? app(StockService::class) : null;
 
-            // Process each product
             foreach ($request->products as $productData) {
-                $product = Product::with(['price', 'stock'])->findOrFail($productData['product_id']);
-                $qty = 1;
+                $product = null;
+                $productRequest = null;
+                $productOrServiceRequestId = null;
+                $dispensedStoreId = null;
+                $productRequestId = null;
 
-                // Check stock availability using StockService
-                $availableStock = $stockService->getAvailableStock($product->id, $storeId);
-                if ($availableStock < $qty) {
-                    throw new \Exception("Insufficient stock for {$product->product_name} (need {$qty}, available: {$availableStock})");
-                }
+                // ─── PATH 1: PHARMACY DISPENSED ───
+                if ($drugSource === 'pharmacy_dispensed') {
+                    $product = Product::with(['price', 'stock'])->findOrFail($productData['product_id']);
+                    $productRequest = ProductRequest::find($productData['product_request_id']);
 
-                // Create ProductOrServiceRequest for billing first (to get reference ID)
-                $billReq = new ProductOrServiceRequest();
-                $billReq->user_id = $patient->user_id;
-                $billReq->staff_user_id = Auth::id();
-                $billReq->product_id = $product->id;
-                $billReq->dispensed_from_store_id = $storeId;
-                $billReq->qty = 1;
-
-                // Use provided HMO tariff data from frontend
-                if (isset($productData['payable_amount'])) {
-                    $billReq->payable_amount = $productData['payable_amount'];
-                    $billReq->claims_amount = $productData['claims_amount'] ?? 0;
-                    $billReq->coverage_mode = $productData['coverage_mode'] ?? 'FULL_PAYMENT';
-                } else {
-                    // Fallback to applying HMO tariff
-                    try {
-                        $hmoData = HmoHelper::applyHmoTariff($patient->id, $product->id, null);
-                        if ($hmoData) {
-                            $billReq->payable_amount = $hmoData['payable_amount'];
-                            $billReq->claims_amount = $hmoData['claims_amount'];
-                            $billReq->coverage_mode = $hmoData['coverage_mode'];
-                            $billReq->validation_status = $hmoData['validation_status'];
-                        }
-                    } catch (\Exception $e) {
-                        // If no HMO tariff, use regular price
-                        $billReq->payable_amount = $product->price ? $product->price->selling_price : 0;
+                    if (!$productRequest || $productRequest->patient_id !== $patient->id) {
+                        DB::rollBack();
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Prescription not found for this patient',
+                        ], 422);
                     }
+
+                    if ($productRequest->status !== 3) {
+                        DB::rollBack();
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'This prescription has not been dispensed yet',
+                        ], 422);
+                    }
+
+                    if ($productRequest->product_id !== $product->id) {
+                        DB::rollBack();
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Prescription does not match selected product',
+                        ], 422);
+                    }
+
+                    $productOrServiceRequestId = $productRequest->product_request_id;
+                    $productRequestId = $productRequest->id;
+                    $dispensedStoreId = $productRequest->dispensed_from_store_id;
+
+                // ─── PATH 2: PATIENT'S OWN (§5.1 Path 2) ───
+                // No hospital product, no billing, no stock. Just record external drug details.
+                } elseif ($drugSource === 'patient_own') {
+                    // Product is optional — patient might bring a drug not in our catalogue
+                    if (!empty($productData['product_id'])) {
+                        $product = Product::find($productData['product_id']);
+                    }
+                    // No POSR, no ProductRequest, no stock deduction
+                    // $productOrServiceRequestId stays null
+                    // $dispensedStoreId stays null
+
+                // ─── PATH 3: WARD STOCK (§5.1 Paths 3 & 4) ───
+                } elseif ($drugSource === 'ward_stock') {
+                    $product = Product::with(['price', 'stock'])->findOrFail($productData['product_id']);
+
+                    if (!$storeId) {
+                        DB::rollBack();
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Ward stock administration requires a store',
+                        ], 422);
+                    }
+
+                    $qty = intval($productData['qty'] ?? 1) ?: 1;
+
+                    $availableStock = $stockService->getAvailableStock($product->id, $storeId);
+                    if ($availableStock < $qty) {
+                        DB::rollBack();
+                        return response()->json([
+                            'success' => false,
+                            'message' => "Insufficient stock for {$product->product_name} (need {$qty}, available: {$availableStock})",
+                        ], 422);
+                    }
+
+                    // §5.3: Only create billing records if nurse checked "Bill Patient"
+                    if ($billPatient) {
+                        // ─── PATH 3B: WARD STOCK — BILLED (§5.1 Path 4) ───
+                        // Create ProductRequest first (mirrors pharmacy prescription flow)
+                        $prodReq = ProductRequest::create([
+                            'product_id'   => $product->id,
+                            'patient_id'   => $patient->id,
+                            'encounter_id' => $patient->current_encounter_id ?? null,
+                            'doctor_id'    => null, // nurse-initiated
+                            'qty'          => $qty,
+                            'status'       => 2,    // billed (skip "requested" since nurse is billing directly)
+                            'billed_by'    => Auth::id(),
+                            'billed_date'  => now(),
+                        ]);
+
+                        // Create POSR through the tariff pipeline (same as PharmacyWorkbenchController)
+                        $billReq = new ProductOrServiceRequest();
+                        $billReq->user_id = $patient->user_id;
+                        $billReq->staff_user_id = Auth::id();
+                        $billReq->product_id = $product->id;
+                        $billReq->dispensed_from_store_id = $storeId;
+                        $billReq->qty = $qty;
+                        $billReq->hmo_id = $patient->hmo_id ?? null;
+
+                        // Apply tariff pipeline — identical to PharmacyWorkbenchController::applyHmoTariffToRequest()
+                        $this->applyTariffToRequest($billReq, $patient, $product->id, $product, $qty);
+
+                        $billReq->save();
+
+                        // Link ProductRequest → POSR
+                        $prodReq->update(['product_request_id' => $billReq->id]);
+
+                        $productOrServiceRequestId = $billReq->id;
+                        $productRequestId = $prodReq->id;
+                    }
+                    // else: PATH 3A — UNBILLED — no POSR, no ProductRequest
+
+                    // Deduct stock regardless of billing
+                    $batchId = $productData['batch_id'] ?? null;
+                    $refType = $billPatient ? ProductOrServiceRequest::class : InjectionAdministration::class;
+                    $refId   = $billPatient ? $productOrServiceRequestId : null;
+
+                    if ($batchId) {
+                        $stockService->dispenseFromBatch(
+                            $batchId,
+                            $qty,
+                            $refType,
+                            $refId,
+                            'Injection administration — ward stock' . ($billPatient ? ' (billed)' : ' (unbilled)')
+                        );
+                    } else {
+                        $stockService->dispenseStock(
+                            $product->id,
+                            $storeId,
+                            $qty,
+                            $refType,
+                            $refId,
+                            'Injection administration — ward stock FIFO' . ($billPatient ? ' (billed)' : ' (unbilled)')
+                        );
+                    }
+
+                    $dispensedStoreId = $storeId;
                 }
 
-                $billReq->save();
-
-                // Deduct stock using batch-based system
-                // If specific batch_id provided, use it; otherwise use FIFO
-                $batchId = $productData['batch_id'] ?? null;
-
-                if ($batchId) {
-                    // Dispense from specific batch selected by user
-                    $stockService->dispenseFromBatch(
-                        $batchId,
-                        $qty,
-                        ProductOrServiceRequest::class,
-                        $billReq->id,
-                        "Injection administered to patient (manual batch selection)"
-                    );
-                    $dispensed = [$batchId => $qty];
-                } else {
-                    // Use FIFO batch-based system
-                    $dispensed = $stockService->dispenseStock(
-                        $product->id,
-                        $storeId,
-                        $qty,
-                        ProductOrServiceRequest::class,
-                        $billReq->id,
-                        "Injection administered to patient (FIFO)"
-                    );
-                }
-
-                // Create injection administration record
+                // Create the injection administration record
                 $injection = InjectionAdministration::create([
-                    'patient_id' => $patient->id,
-                    'product_id' => $product->id,
-                    'product_or_service_request_id' => $billReq->id,
-                    'dose' => $productData['dose'],
-                    'route' => $request->route,
-                    'site' => $request->site,
-                    'administered_at' => $request->administered_at,
-                    'administered_by' => Auth::id(),
-                    'dispensed_from_store_id' => $storeId,
+                    'patient_id'                    => $patient->id,
+                    'product_id'                    => optional($product)->id,
+                    'product_or_service_request_id' => $productOrServiceRequestId,
+                    'product_request_id'            => $productRequestId,
+                    'dose'                          => $productData['dose'],
+                    'route'                         => $request->route,
+                    'site'                          => $request->site,
+                    'administered_at'               => $request->administered_at,
+                    'administered_by'               => Auth::id(),
+                    'drug_source'                   => $drugSource,
+                    'dispensed_from_store_id'        => $dispensedStoreId,
+                    'external_drug_name'            => $drugSource === 'patient_own' ? ($productData['external_drug_name'] ?? null) : null,
+                    'external_qty'                  => $drugSource === 'patient_own' ? ($productData['external_qty'] ?? null) : null,
+                    'external_batch_number'         => $drugSource === 'patient_own' ? ($productData['external_batch_number'] ?? null) : null,
+                    'external_expiry_date'          => $drugSource === 'patient_own' ? ($productData['external_expiry_date'] ?? null) : null,
+                    'external_source_note'          => $drugSource === 'patient_own' ? ($productData['external_source_note'] ?? null) : null,
+                    'notes'                         => $request->notes ?? null,
                 ]);
 
                 $injections[] = $injection;
@@ -827,11 +959,13 @@ class NursingWorkbenchController extends Controller{
 
             DB::commit();
 
+            $billLabel = ($drugSource === 'ward_stock' && $billPatient) ? ' (billing entry created)' : '';
+
             return response()->json([
                 'success' => true,
                 'message' => count($injections) > 1
-                    ? count($injections) . ' injections administered successfully'
-                    : 'Injection administered successfully',
+                    ? count($injections) . ' injections administered successfully' . $billLabel
+                    : 'Injection administered successfully' . $billLabel,
                 'injections' => $injections,
             ]);
         } catch (\Exception $e) {
@@ -841,6 +975,46 @@ class NursingWorkbenchController extends Controller{
                 'message' => 'Error administering injection: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Apply HMO tariff pipeline to a POSR — mirrors PharmacyWorkbenchController::applyHmoTariffToRequest()
+     * §5.2: This ensures billed ward stock goes through the EXACT same pricing logic as real prescriptions.
+     *
+     * For HMO patients: looks up tariff → sets payable_amount (patient pays) + claims_amount (HMO pays)
+     * For cash patients: falls back to product's current_sale_price
+     */
+    private function applyTariffToRequest(
+        ProductOrServiceRequest $billReq,
+        $patient,
+        $productId,
+        $product = null,
+        $qty = 1
+    ) {
+        try {
+            if ($patient->hmo_id) {
+                $hmoData = HmoHelper::applyHmoTariff($patient->id, $productId, null);
+                if ($hmoData) {
+                    $billReq->payable_amount    = $hmoData['payable_amount'] * $qty;
+                    $billReq->claims_amount     = $hmoData['claims_amount'] * $qty;
+                    $billReq->coverage_mode     = $hmoData['coverage_mode'];
+                    $billReq->validation_status = $hmoData['validation_status'] ?? 'pending';
+                    return;
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::warning('HMO tariff lookup failed for ward stock injection', [
+                'patient_id' => $patient->id,
+                'product_id' => $productId,
+                'error'      => $e->getMessage(),
+            ]);
+        }
+
+        // Fallback: cash patient or tariff not found — use product's sale price
+        $price = optional(optional($product)->price)->current_sale_price ?? 0;
+        $billReq->payable_amount = $price * $qty;
+        $billReq->claims_amount  = 0;
+        $billReq->coverage_mode  = 'none';
     }
 
     // =====================================
@@ -1367,7 +1541,7 @@ class NursingWorkbenchController extends Controller{
     {
         $patient = PatientLowerCase::findOrFail($patientId);
 
-        $bills = ProductOrServiceRequest::with(['product', 'service', 'staff'])
+        $bills = ProductOrServiceRequest::with(['product', 'service', 'staff', 'sale', 'productRequest'])
             ->where('user_id', $patient->user_id)
             ->whereNull('payment_id') // Not yet paid
             ->orderBy('created_at', 'desc')
@@ -1385,6 +1559,15 @@ class NursingWorkbenchController extends Controller{
                 $type = 'service';
             }
 
+            // Determine if delivery has occurred
+            $delivered = false;
+            if ($bill->sale) {
+                $delivered = true;
+            }
+            if ($bill->productRequest && $bill->productRequest->status >= 3) {
+                $delivered = true;
+            }
+
             return [
                 'id' => $bill->id,
                 'item_name' => $itemName,
@@ -1397,7 +1580,8 @@ class NursingWorkbenchController extends Controller{
                 'created_at' => Carbon::parse($bill->created_at)->format('h:i a, d M Y'),
                 'added_by' => $bill->staff_user_id ? userfullname($bill->staff_user_id) : 'N/A',
                 'staff_user_id' => $bill->staff_user_id,
-                'can_delete' => $bill->staff_user_id === Auth::id(),
+                'delivered' => $delivered,
+                'can_delete' => $bill->staff_user_id === Auth::id() && !$delivered,
             ];
         });
 
@@ -1583,6 +1767,41 @@ class NursingWorkbenchController extends Controller{
                 ], 403);
             }
 
+            // Check if delivery has been done (product dispensed via sale)
+            if ($bill->sale) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot remove — item has already been dispensed'
+                ], 400);
+            }
+
+            // Check associated request delivery status
+            // Product request: status 3 = dispensed
+            if ($bill->productRequest && $bill->productRequest->status >= 3) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot remove — product has already been dispensed'
+                ], 400);
+            }
+
+            // Check associated lab request: status >= 2 means sample taken / in progress
+            $labReq = LabServiceRequest::where('service_request_id', $bill->id)->first();
+            if ($labReq && $labReq->status >= 2) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot remove — lab test is already in progress'
+                ], 400);
+            }
+
+            // Check associated imaging request: status >= 2 means in progress
+            $imagingReq = ImagingServiceRequest::where('service_request_id', $bill->id)->first();
+            if ($imagingReq && $imagingReq->status >= 2) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot remove — imaging request is already in progress'
+                ], 400);
+            }
+
             $bill->delete();
 
             return response()->json([
@@ -1595,6 +1814,342 @@ class NursingWorkbenchController extends Controller{
                 'message' => 'Error removing item: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    // =====================================
+    // BILLING HISTORY (Service Requests)
+    // =====================================
+
+    /**
+     * Get all service requests (lab, imaging, product) for a patient — full billing history.
+     */
+    public function getServiceRequests($patientId, Request $request)
+    {
+        $patient = patient::findOrFail($patientId);
+
+        $allRequests = collect();
+
+        $dateFrom = $request->date_from ? Carbon::parse($request->date_from)->startOfDay() : null;
+        $dateTo = $request->date_to ? Carbon::parse($request->date_to)->endOfDay() : null;
+        $typeFilter = $request->type_filter;
+        $billingFilter = $request->billing_filter;
+        $deliveryFilter = $request->delivery_filter;
+
+        // Lab Requests
+        if (!$typeFilter || $typeFilter === 'lab') {
+            $labQuery = LabServiceRequest::with(['service.price', 'productOrServiceRequest.payment', 'doctor'])
+                ->where('patient_id', $patientId);
+            if ($dateFrom) $labQuery->where('created_at', '>=', $dateFrom);
+            if ($dateTo) $labQuery->where('created_at', '<=', $dateTo);
+
+            $labRequests = $labQuery->orderBy('created_at', 'desc')->get()
+                ->map(function ($req) {
+                    $posr = $req->productOrServiceRequest;
+                    $basePrice = optional(optional($req->service)->price)->sale_price ?? 0;
+                    return [
+                        'id' => $req->id,
+                        'request_no' => 'LAB-' . str_pad($req->id, 6, '0', STR_PAD_LEFT),
+                        'type' => 'lab',
+                        'type_label' => 'Lab Test',
+                        'name' => optional($req->service)->service_name ?? 'Unknown Service',
+                        'price' => $posr ? ($posr->payable_amount + $posr->claims_amount) : $basePrice,
+                        'hmo_covers' => $posr->claims_amount ?? 0,
+                        'payable' => $posr->payable_amount ?? $basePrice,
+                        'coverage_mode' => $posr->coverage_mode ?? null,
+                        'billing_status' => $this->getReqBillingStatus($req->status, $posr),
+                        'billing_status_code' => $this->getReqBillingStatusCode($req->status, $posr),
+                        'delivery_status' => $this->getReqDeliveryStatus($req->status, 'lab'),
+                        'delivery_status_code' => $this->getReqDeliveryStatusCode($req->status, 'lab'),
+                        'requested_by' => $req->doctor ? ($req->doctor->surname . ' ' . $req->doctor->firstname) : 'Walk-in',
+                        'created_at' => $req->created_at,
+                        'posr_id' => $posr->id ?? null,
+                        'is_paid' => $posr && $posr->payment_id ? true : false,
+                    ];
+                });
+            $allRequests = $allRequests->merge($labRequests);
+        }
+
+        // Imaging Requests
+        if (!$typeFilter || $typeFilter === 'imaging') {
+            $imagingQuery = ImagingServiceRequest::with(['service.price', 'productOrServiceRequest.payment', 'doctor'])
+                ->where('patient_id', $patientId);
+            if ($dateFrom) $imagingQuery->where('created_at', '>=', $dateFrom);
+            if ($dateTo) $imagingQuery->where('created_at', '<=', $dateTo);
+
+            $imagingRequests = $imagingQuery->orderBy('created_at', 'desc')->get()
+                ->map(function ($req) {
+                    $posr = $req->productOrServiceRequest;
+                    $basePrice = optional(optional($req->service)->price)->sale_price ?? 0;
+                    return [
+                        'id' => $req->id,
+                        'request_no' => 'IMG-' . str_pad($req->id, 6, '0', STR_PAD_LEFT),
+                        'type' => 'imaging',
+                        'type_label' => 'Imaging',
+                        'name' => optional($req->service)->service_name ?? 'Unknown Service',
+                        'price' => $posr ? ($posr->payable_amount + $posr->claims_amount) : $basePrice,
+                        'hmo_covers' => $posr->claims_amount ?? 0,
+                        'payable' => $posr->payable_amount ?? $basePrice,
+                        'coverage_mode' => $posr->coverage_mode ?? null,
+                        'billing_status' => $this->getReqBillingStatus($req->status, $posr),
+                        'billing_status_code' => $this->getReqBillingStatusCode($req->status, $posr),
+                        'delivery_status' => $this->getReqDeliveryStatus($req->status, 'imaging'),
+                        'delivery_status_code' => $this->getReqDeliveryStatusCode($req->status, 'imaging'),
+                        'requested_by' => $req->doctor ? ($req->doctor->surname . ' ' . $req->doctor->firstname) : 'Walk-in',
+                        'created_at' => $req->created_at,
+                        'posr_id' => $posr->id ?? null,
+                        'is_paid' => $posr && $posr->payment_id ? true : false,
+                    ];
+                });
+            $allRequests = $allRequests->merge($imagingRequests);
+        }
+
+        // Product Requests
+        if (!$typeFilter || $typeFilter === 'product') {
+            $productQuery = ProductRequest::with(['product.price', 'productOrServiceRequest.payment', 'doctor'])
+                ->where('patient_id', $patientId);
+            if ($dateFrom) $productQuery->where('created_at', '>=', $dateFrom);
+            if ($dateTo) $productQuery->where('created_at', '<=', $dateTo);
+
+            $productRequests = $productQuery->orderBy('created_at', 'desc')->get()
+                ->map(function ($req) {
+                    $posr = $req->productOrServiceRequest;
+                    $qty = $posr->qty ?? 1;
+                    $unitPrice = optional(optional($req->product)->price)->current_sale_price ?? 0;
+                    $basePrice = $unitPrice * $qty;
+                    return [
+                        'id' => $req->id,
+                        'request_no' => 'PRD-' . str_pad($req->id, 6, '0', STR_PAD_LEFT),
+                        'type' => 'product',
+                        'type_label' => 'Product',
+                        'name' => optional($req->product)->product_name ?? 'Unknown Product',
+                        'price' => $posr ? ($posr->payable_amount + $posr->claims_amount) : $basePrice,
+                        'hmo_covers' => $posr->claims_amount ?? 0,
+                        'payable' => $posr->payable_amount ?? $basePrice,
+                        'coverage_mode' => $posr->coverage_mode ?? null,
+                        'billing_status' => $this->getReqProductBillingStatus($req->status, $posr),
+                        'billing_status_code' => $this->getReqProductBillingStatusCode($req->status, $posr),
+                        'delivery_status' => $this->getReqProductDeliveryStatus($req->status),
+                        'delivery_status_code' => $this->getReqProductDeliveryStatusCode($req->status),
+                        'requested_by' => $req->doctor ? ($req->doctor->surname . ' ' . $req->doctor->firstname) : 'Walk-in',
+                        'created_at' => $req->created_at,
+                        'posr_id' => $posr->id ?? null,
+                        'is_paid' => $posr && $posr->payment_id ? true : false,
+                    ];
+                });
+            $allRequests = $allRequests->merge($productRequests);
+        }
+
+        // Apply billing filter
+        if ($billingFilter) {
+            $allRequests = $allRequests->filter(function ($req) use ($billingFilter) {
+                return $req['billing_status_code'] === $billingFilter;
+            });
+        }
+
+        // Apply delivery filter
+        if ($deliveryFilter) {
+            $allRequests = $allRequests->filter(function ($req) use ($deliveryFilter) {
+                return $req['delivery_status_code'] === $deliveryFilter;
+            });
+        }
+
+        $allRequests = $allRequests->sortByDesc('created_at')->values();
+
+        return DataTables::of($allRequests)
+            ->addColumn('date_formatted', function ($row) {
+                return Carbon::parse($row['created_at'])->format('d M Y H:i');
+            })
+            ->addColumn('price_formatted', function ($row) {
+                return '₦' . number_format($row['price'], 2);
+            })
+            ->addColumn('hmo_covers_formatted', function ($row) {
+                return $row['hmo_covers'] > 0 ? '₦' . number_format($row['hmo_covers'], 2) : '-';
+            })
+            ->addColumn('payable_formatted', function ($row) {
+                return '₦' . number_format($row['payable'], 2);
+            })
+            ->addColumn('billing_badge', function ($row) {
+                $statusMap = [
+                    'pending' => '<span class="billing-badge billing-pending">Pending</span>',
+                    'billed' => '<span class="billing-badge billing-billed">Billed</span>',
+                    'paid' => '<span class="billing-badge billing-paid">Paid</span>',
+                ];
+                return $statusMap[$row['billing_status_code']] ?? '<span class="billing-badge">Unknown</span>';
+            })
+            ->addColumn('delivery_badge', function ($row) {
+                $statusMap = [
+                    'pending' => '<span class="delivery-badge delivery-pending">Pending</span>',
+                    'in_progress' => '<span class="delivery-badge delivery-progress">In Progress</span>',
+                    'completed' => '<span class="delivery-badge delivery-completed">Completed</span>',
+                ];
+                return $statusMap[$row['delivery_status_code']] ?? '<span class="delivery-badge">Unknown</span>';
+            })
+            ->addColumn('type_badge', function ($row) {
+                $typeColors = [
+                    'lab' => 'badge-info',
+                    'imaging' => 'badge-warning',
+                    'product' => 'badge-success',
+                    'consultation' => 'badge-primary',
+                    'procedure' => 'badge-secondary',
+                ];
+                return '<span class="badge ' . ($typeColors[$row['type']] ?? 'badge-secondary') . '">' . $row['type_label'] . '</span>';
+            })
+            ->addColumn('actions', function ($row) {
+                return '<button class="btn btn-xs btn-outline-primary view-request-btn" data-type="' . $row['type'] . '" data-id="' . $row['id'] . '" title="View Details">
+                    <i class="mdi mdi-eye"></i>
+                </button>';
+            })
+            ->rawColumns(['billing_badge', 'delivery_badge', 'type_badge', 'actions'])
+            ->make(true);
+    }
+
+    /**
+     * Get service requests stats summary for the billing history tab.
+     */
+    public function getServiceRequestsStats($patientId, Request $request)
+    {
+        $patient = patient::findOrFail($patientId);
+
+        $dateFrom = $request->date_from ? Carbon::parse($request->date_from)->startOfDay() : null;
+        $dateTo = $request->date_to ? Carbon::parse($request->date_to)->endOfDay() : null;
+
+        $stats = [
+            'total_requests' => 0,
+            'hmo_covered' => 0,
+            'patient_payable' => 0,
+            'completed' => 0,
+        ];
+
+        // Lab
+        $labQuery = LabServiceRequest::with(['productOrServiceRequest'])->where('patient_id', $patientId);
+        if ($dateFrom) $labQuery->where('created_at', '>=', $dateFrom);
+        if ($dateTo) $labQuery->where('created_at', '<=', $dateTo);
+        $labRequests = $labQuery->get();
+        $stats['total_requests'] += $labRequests->count();
+        $stats['completed'] += $labRequests->where('status', 4)->count();
+        foreach ($labRequests as $req) {
+            if ($req->productOrServiceRequest) {
+                $stats['hmo_covered'] += $req->productOrServiceRequest->claims_amount ?? 0;
+                $stats['patient_payable'] += $req->productOrServiceRequest->payable_amount ?? 0;
+            }
+        }
+
+        // Imaging
+        $imagingQuery = ImagingServiceRequest::with(['productOrServiceRequest'])->where('patient_id', $patientId);
+        if ($dateFrom) $imagingQuery->where('created_at', '>=', $dateFrom);
+        if ($dateTo) $imagingQuery->where('created_at', '<=', $dateTo);
+        $imagingRequests = $imagingQuery->get();
+        $stats['total_requests'] += $imagingRequests->count();
+        $stats['completed'] += $imagingRequests->where('status', 3)->count();
+        foreach ($imagingRequests as $req) {
+            if ($req->productOrServiceRequest) {
+                $stats['hmo_covered'] += $req->productOrServiceRequest->claims_amount ?? 0;
+                $stats['patient_payable'] += $req->productOrServiceRequest->payable_amount ?? 0;
+            }
+        }
+
+        // Products
+        $productQuery = ProductRequest::with(['productOrServiceRequest'])->where('patient_id', $patientId);
+        if ($dateFrom) $productQuery->where('created_at', '>=', $dateFrom);
+        if ($dateTo) $productQuery->where('created_at', '<=', $dateTo);
+        $productRequests = $productQuery->get();
+        $stats['total_requests'] += $productRequests->count();
+        $stats['completed'] += $productRequests->where('status', 3)->count();
+        foreach ($productRequests as $req) {
+            if ($req->productOrServiceRequest) {
+                $stats['hmo_covered'] += $req->productOrServiceRequest->claims_amount ?? 0;
+                $stats['patient_payable'] += $req->productOrServiceRequest->payable_amount ?? 0;
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'stats' => [
+                'total_requests' => $stats['total_requests'],
+                'hmo_covered' => '₦' . number_format($stats['hmo_covered'], 2),
+                'patient_payable' => '₦' . number_format($stats['patient_payable'], 2),
+                'completed' => $stats['completed'],
+            ],
+        ]);
+    }
+
+    // Helper methods for billing history statuses
+    private function getReqBillingStatus($status, $posr)
+    {
+        if ($posr) {
+            return $posr->payment_id ? 'Paid' : 'Billed';
+        }
+        return 'Pending Billing';
+    }
+
+    private function getReqBillingStatusCode($status, $posr)
+    {
+        if ($posr) {
+            return $posr->payment_id ? 'paid' : 'billed';
+        }
+        return 'pending';
+    }
+
+    private function getReqDeliveryStatus($status, $type)
+    {
+        if ($type === 'lab') {
+            if ($status == 1) return 'Pending Billing';
+            if ($status == 2) return 'Awaiting Sample';
+            if ($status == 3) return 'Awaiting Results';
+            if ($status == 4) return 'Completed';
+        } else {
+            if ($status == 1) return 'Pending Billing';
+            if ($status == 2) return 'Awaiting Results';
+            if ($status == 3) return 'Completed';
+        }
+        return 'Unknown';
+    }
+
+    private function getReqDeliveryStatusCode($status, $type)
+    {
+        if ($type === 'lab') {
+            if ($status == 1) return 'pending';
+            if ($status == 2) return 'in_progress';
+            if ($status == 3) return 'in_progress';
+            if ($status == 4) return 'completed';
+        } else {
+            if ($status == 1) return 'pending';
+            if ($status == 2) return 'in_progress';
+            if ($status == 3) return 'completed';
+        }
+        return 'pending';
+    }
+
+    private function getReqProductBillingStatus($status, $posr)
+    {
+        if ($posr) {
+            return $posr->payment_id ? 'Paid' : 'Billed';
+        }
+        return 'Pending Billing';
+    }
+
+    private function getReqProductBillingStatusCode($status, $posr)
+    {
+        if ($posr) {
+            return $posr->payment_id ? 'paid' : 'billed';
+        }
+        return 'pending';
+    }
+
+    private function getReqProductDeliveryStatus($status)
+    {
+        if ($status == 1) return 'Pending Billing';
+        if ($status == 2) return 'Awaiting Dispensing';
+        if ($status == 3) return 'Dispensed';
+        return 'Unknown';
+    }
+
+    private function getReqProductDeliveryStatusCode($status)
+    {
+        if ($status == 1) return 'pending';
+        if ($status == 2) return 'in_progress';
+        if ($status == 3) return 'completed';
+        return 'pending';
     }
 
     // =====================================
@@ -4094,11 +4649,19 @@ class NursingWorkbenchController extends Controller{
                     return $row->patient ? userfullname($row->patient->user_id) : 'N/A';
                 })
                 ->addColumn('drug_name', function($row) {
-                    return $row->product ? $row->product->product_name : 'N/A';
+                    if ($row->product) {
+                        return $row->product->product_name;
+                    }
+                    // Patient's own drug — show external name with badge
+                    if ($row->external_drug_name) {
+                        return $row->external_drug_name . ' <span class="badge badge-warning badge-sm">Patient\'s Own</span>';
+                    }
+                    return 'N/A';
                 })
                 ->addColumn('administered_by_name', function($row) {
                     return $row->administered_by ? userfullname($row->administered_by) : 'N/A';
                 })
+                ->rawColumns(['drug_name'])
                 ->make(true);
         }
 
@@ -4725,5 +5288,230 @@ class NursingWorkbenchController extends Controller{
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Error saving procedures: ' . $e->getMessage()], 500);
         }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+     * Single-item add/remove endpoints (auto-save — Plan §3.3)
+     * Nurse: patient_id from request, encounter_id = null
+     * ═══════════════════════════════════════════════════════════════ */
+
+    public function nurseAddSingleLab(Request $request)
+    {
+        try {
+            $request->validate(['service_id' => 'required|integer', 'patient_id' => 'required|integer']);
+            $lab = $this->addSingleLab(
+                $request->input('service_id'),
+                $request->input('note'),
+                $request->input('patient_id'),
+                null // nurse has no encounter
+            );
+            return response()->json([
+                'success' => true,
+                'id' => $lab->id,
+                'item' => ['id' => $lab->id, 'service_id' => $lab->service_id, 'note' => $lab->note, 'created_at' => $lab->created_at],
+                'message' => 'Lab added'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function nurseRemoveSingleLab(LabServiceRequest $lab)
+    {
+        try {
+            $this->removeSingleLab($lab->id);
+            return response()->json(['success' => true, 'message' => 'Lab removed']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function nurseAddSingleImaging(Request $request)
+    {
+        try {
+            $request->validate(['service_id' => 'required|integer', 'patient_id' => 'required|integer']);
+            $imaging = $this->addSingleImaging(
+                $request->input('service_id'),
+                $request->input('note'),
+                $request->input('patient_id'),
+                null
+            );
+            return response()->json([
+                'success' => true,
+                'id' => $imaging->id,
+                'item' => ['id' => $imaging->id, 'service_id' => $imaging->service_id, 'note' => $imaging->note, 'created_at' => $imaging->created_at],
+                'message' => 'Imaging added'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function nurseRemoveSingleImaging(ImagingServiceRequest $imaging)
+    {
+        try {
+            $this->removeSingleImaging($imaging->id);
+            return response()->json(['success' => true, 'message' => 'Imaging removed']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function nurseAddSinglePrescription(Request $request)
+    {
+        try {
+            $request->validate(['product_id' => 'required|integer', 'patient_id' => 'required|integer']);
+            $presc = $this->addSinglePrescription(
+                $request->input('product_id'),
+                $request->input('dose', ''),
+                $request->input('patient_id'),
+                null
+            );
+            return response()->json([
+                'success' => true,
+                'id' => $presc->id,
+                'item' => ['id' => $presc->id, 'product_id' => $presc->product_id, 'dose' => $presc->dose, 'created_at' => $presc->created_at],
+                'message' => 'Prescription added'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function nurseUpdatePrescriptionDose(ProductRequest $prescription)
+    {
+        try {
+            $dose = request()->input('dose', '');
+            $presc = $this->updatePrescriptionDose($prescription->id, $dose);
+            return response()->json(['success' => true, 'id' => $presc->id, 'message' => 'Dose updated']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function nurseRemoveSinglePrescription(ProductRequest $prescription)
+    {
+        try {
+            $this->removeSinglePrescription($prescription->id);
+            return response()->json(['success' => true, 'message' => 'Prescription removed']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function nurseAddSingleProcedure(Request $request)
+    {
+        try {
+            $request->validate([
+                'service_id' => 'required|integer',
+                'patient_id' => 'required|integer',
+                'priority' => 'required|string',
+            ]);
+            $procedure = $this->addSingleProcedure(
+                $request->only(['service_id', 'priority', 'scheduled_date', 'pre_notes']),
+                $request->input('patient_id'),
+                null,  // nurse has no encounter
+                null   // nurse has no admission_request_id
+            );
+            return response()->json([
+                'success' => true,
+                'id' => $procedure->id,
+                'item' => ['id' => $procedure->id, 'service_id' => $procedure->service_id, 'priority' => $procedure->priority, 'created_at' => $procedure->created_at],
+                'message' => 'Procedure added'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function nurseRemoveSingleProcedure(Procedure $procedure)
+    {
+        try {
+            $this->removeSingleProcedure($procedure->id);
+            return response()->json(['success' => true, 'message' => 'Procedure removed']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function nurseUpdateLabNote(LabServiceRequest $lab)
+    {
+        try {
+            $lab = $this->updateSingleLabNote($lab->id, request()->input('note', ''));
+            return response()->json(['success' => true, 'id' => $lab->id, 'message' => 'Note updated']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function nurseUpdateImagingNote(ImagingServiceRequest $imaging)
+    {
+        try {
+            $imaging = $this->updateSingleImagingNote($imaging->id, request()->input('note', ''));
+            return response()->json(['success' => true, 'id' => $imaging->id, 'message' => 'Note updated']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Re-prescribe items from history (Plan §5.1) — nurse scope (no encounter).
+     * POST /nursing-workbench/clinical-requests/re-prescribe
+     * Expects: { patient_id, source_type: 'labs'|'imaging'|'prescriptions', source_ids: [...], adjust_doses?: {...} }
+     */
+    public function nurseRePrescribe(Request $request)
+    {
+        $request->validate([
+            'patient_id'   => 'required|integer',
+            'source_type'  => 'required|in:labs,imaging,prescriptions,procedures',
+            'source_ids'   => 'required|array|min:1',
+            'source_ids.*' => 'integer',
+            'adjust_doses' => 'nullable|array',
+        ]);
+
+        try {
+            $created = $this->rePrescribeItems(
+                $request->input('source_type'),
+                $request->input('source_ids'),
+                $request->input('patient_id'),
+                null, // Nurse: no encounter
+                $request->input('adjust_doses', [])
+            );
+
+            return response()->json([
+                'success' => true,
+                'items'   => $created->map(fn($item) => ['id' => $item->id]),
+                'count'   => $created->count(),
+                'message' => $created->count() . ' item(s) re-prescribed'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Fetch recent encounters for a patient with item counts.
+     * GET nursing-workbench/clinical-requests/recent-encounters
+     * Plan §5.3 — "Re-prescribe from encounter" dropdown data.
+     */
+    public function nurseRecentEncounters(Request $request)
+    {
+        $request->validate(['patient_id' => 'required|integer']);
+        $encounters = $this->recentEncountersForPatient(
+            $request->input('patient_id'),
+            5
+        );
+        return response()->json(['success' => true, 'encounters' => $encounters]);
+    }
+
+    /**
+     * Get all items from a specific encounter (for re-prescribe preview).
+     * GET nursing-workbench/clinical-requests/encounter-items/{encounterId}
+     * Plan §5.3
+     */
+    public function nurseEncounterItems(Request $request, int $encounterId)
+    {
+        $items = $this->getEncounterItems($encounterId);
+        return response()->json(['success' => true, 'items' => $items]);
     }
 }

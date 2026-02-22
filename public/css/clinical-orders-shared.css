@@ -1,0 +1,76 @@
+/**
+ * ClinicalOrdersKit — Shared CSS
+ * Ref: CLINICAL_ORDERS_PLAN.md §2.4
+ */
+
+/* ─── Dose Mode Toggle (Plan §2.2) ─── */
+.dose-mode-toggle-group .btn-group .btn {
+    min-width: 120px;
+}
+.dose-mode-toggle-group .btn-check:checked + .btn-outline-primary {
+    background: #0d6efd;
+    color: #fff;
+    font-weight: 600;
+}
+.dose-mode-toggle-group .btn-check:checked + .btn-outline-secondary {
+    background: #6c757d;
+    color: #fff;
+    font-weight: 600;
+}
+
+/* ─── Inline Calculator (Plan §2.3) ─── */
+.dose-calc-inline {
+    max-width: 100%;
+}
+.dose-calc-inline .form-label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.78em;
+    margin-bottom: 0.15rem;
+}
+
+/* Calculator row slide animation */
+tr.calc-enter {
+    animation: calcSlideDown 0.2s ease-out;
+}
+@keyframes calcSlideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Calculator toggle button inside structured dose */
+.calc-toggle-btn {
+    font-size: 0.75em;
+    padding: 0.15rem 0.4rem;
+}
+
+/* Auto-save status line (Plan §4.5) */
+.auto-save-status {
+    font-size: 0.82em;
+    padding: 0.25rem 0;
+}
+.auto-save-status .fa-check-circle {
+    margin-right: 0.25rem;
+}
+
+/* Already-added badge in search results (Plan §4.4) */
+.already-added-badge {
+    pointer-events: none;
+    opacity: 0.65;
+    cursor: not-allowed !important;
+}
+
+/* ─── Mobile Stack (Plan §2.4) ─── */
+@media (max-width: 576px) {
+    .dose-calc-inline .row > [class*="col-md-"] {
+        margin-bottom: 0.25rem;
+    }
+    .dose-mode-toggle-group .btn-group {
+        width: 100%;
+    }
+    .dose-mode-toggle-group .btn-group .btn {
+        flex: 1;
+        font-size: 0.85em;
+        min-width: auto;
+    }
+}
