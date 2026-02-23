@@ -39,6 +39,7 @@ class patient extends Model implements Auditable
 
     protected $casts = [
         'allergies' => 'array',
+        'dob' => 'date',
     ];
 
     public function user()
