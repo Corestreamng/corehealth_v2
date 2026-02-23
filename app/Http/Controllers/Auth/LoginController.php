@@ -25,10 +25,6 @@ class LoginController extends Controller
 
     protected function authenticated()
     {
-        if(Auth::user()->is_admin == 22){
-            return redirect()->route('doctor.dashboard');
-        }
-
         return redirect()->route('home');
     }
 
