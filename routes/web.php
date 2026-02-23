@@ -530,6 +530,14 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/lab-workbench/filter-hmos', [\App\Http\Controllers\LabWorkbenchController::class, 'getHmosForFilter'])->name('lab.filterHmos');
         Route::get('/lab-workbench/filter-services', [\App\Http\Controllers\LabWorkbenchController::class, 'getLabServicesForFilter'])->name('lab.filterServices');
 
+        // Lab Result Approval Routes
+        Route::get('/lab-workbench/approval-queue', [\App\Http\Controllers\LabWorkbenchController::class, 'getApprovalQueue'])->name('lab.approvalQueue');
+        Route::get('/lab-workbench/approval-count', [\App\Http\Controllers\LabWorkbenchController::class, 'getApprovalCount'])->name('lab.approvalCount');
+        Route::get('/lab-workbench/approval/{id}', [\App\Http\Controllers\LabWorkbenchController::class, 'getApprovalDetail'])->name('lab.approvalDetail');
+        Route::post('/lab-workbench/approval/{id}/approve', [\App\Http\Controllers\LabWorkbenchController::class, 'approveResult'])->name('lab.approveResult');
+        Route::post('/lab-workbench/approval/{id}/reject', [\App\Http\Controllers\LabWorkbenchController::class, 'rejectResult'])->name('lab.rejectResult');
+        Route::post('/lab-workbench/approval/{id}/reverse', [\App\Http\Controllers\LabWorkbenchController::class, 'reverseApproval'])->name('lab.reverseApproval');
+
         // Imaging Workbench Routes
         Route::get('/imaging-workbench', [\App\Http\Controllers\ImagingWorkbenchController::class, 'index'])->name('imaging.workbench');
         Route::get('/imaging-workbench/patient-search', [\App\Http\Controllers\ImagingWorkbenchController::class, 'searchPatients'])->name('imaging.search-patients');
@@ -555,6 +563,14 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/imaging-workbench/audit-logs', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getAuditLog'])->name('imaging.auditLogs');
         Route::get('/imaging-workbench/search-services', [\App\Http\Controllers\ImagingWorkbenchController::class, 'searchServices'])->name('imaging.searchServices');
         Route::post('/imaging-workbench/create-request', [\App\Http\Controllers\ImagingWorkbenchController::class, 'createRequest'])->name('imaging.createRequest');
+
+        // Imaging Result Approval Routes
+        Route::get('/imaging-workbench/approval-queue', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getApprovalQueue'])->name('imaging.approvalQueue');
+        Route::get('/imaging-workbench/approval-count', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getApprovalCount'])->name('imaging.approvalCount');
+        Route::get('/imaging-workbench/approval/{id}', [\App\Http\Controllers\ImagingWorkbenchController::class, 'getApprovalDetail'])->name('imaging.approvalDetail');
+        Route::post('/imaging-workbench/approval/{id}/approve', [\App\Http\Controllers\ImagingWorkbenchController::class, 'approveResult'])->name('imaging.approveResult');
+        Route::post('/imaging-workbench/approval/{id}/reject', [\App\Http\Controllers\ImagingWorkbenchController::class, 'rejectResult'])->name('imaging.rejectResult');
+        Route::post('/imaging-workbench/approval/{id}/reverse', [\App\Http\Controllers\ImagingWorkbenchController::class, 'reverseApproval'])->name('imaging.reverseApproval');
 
         // Imaging Service Request Routes (Legacy)
         Route::resource('imaging-requests', ImagingServiceRequestController::class);

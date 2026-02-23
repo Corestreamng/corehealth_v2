@@ -35,12 +35,24 @@ protected $fillable = [
         'deletion_reason',
         'dismissed_at',
         'dismissed_by',
-        'dismiss_reason'
+        'dismiss_reason',
+        'pending_result',
+        'pending_result_data',
+        'pending_attachments',
+        'approved_by',
+        'approved_at',
+        'rejected_by',
+        'rejected_at',
+        'rejection_reason',
     ];
 
     protected $casts = [
         'attachments' => 'array',
-        'result_data' => 'array'
+        'result_data' => 'array',
+        'pending_result_data' => 'array',
+        'pending_attachments' => 'array',
+        'approved_at' => 'datetime',
+        'rejected_at' => 'datetime',
     ];
 
     public function productOrServiceRequest()
@@ -81,6 +93,46 @@ protected $fillable = [
     public function resultBy()
     {
         return $this->belongsTo(User::class, 'result_by', 'id');
+    }
+
+    /**
+     * Get the user who approved this result.
+     */
+    public function approver()
+    {
+        return $this->belongsTo(User::class, 'approved_by', 'id');
+    }
+
+    /**
+     * Get the user who rejected this result.
+     */
+    public function rejector()
+    {
+        return $this->belongsTo(User::class, 'rejected_by', 'id');
+    }
+
+    /**
+     * Check if result is pending approval.
+     */
+    public function isPendingApproval(): bool
+    {
+        return $this->status == 5;
+    }
+
+    /**
+     * Check if result was rejected.
+     */
+    public function isRejected(): bool
+    {
+        return $this->status == 6;
+    }
+
+    /**
+     * Check if result was approved (completed via approval workflow).
+     */
+    public function hasApprovedResult(): bool
+    {
+        return $this->status == 4 && $this->approved_by !== null;
     }
 
     /**
