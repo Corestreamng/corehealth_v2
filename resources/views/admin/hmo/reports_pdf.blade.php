@@ -152,7 +152,7 @@
                 <td>{{ $claim->user->patient_profile->file_no ?? 'N/A' }}</td>
                 <td>{{ $claim->user->patient_profile->hmo_no ?? 'N/A' }}</td>
                 <td>{{ $claim->created_at ? \Carbon\Carbon::parse($claim->created_at)->format('M d, Y') : 'N/A' }}</td>
-                <td>{{ $claim->product ? $claim->product->product_name : ($claim->service ? $claim->service->service_name : 'N/A') }}</td>
+                <td>{{ \App\Helpers\HmoHelper::getDisplayName($claim) }}</td>
                 <td>{{ $claim->product_id ? 'Product' : 'Service' }}</td>
                 <td>{{ $claim->auth_code ?? '-' }}</td>
                 <td class="text-center">{{ $claim->qty ?? 1 }}</td>

@@ -4,7 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\ProductOrServiceRequest;
 use App\Models\Hmo;
+use App\Models\HmoScheme;
+use App\Models\HmoTariff;
 use App\Models\patient;
+use App\Models\User;
+use App\Helpers\HmoHelper;
 use App\Models\DoctorQueue;
 use App\Models\AdmissionRequest;
 use App\Models\VitalSign;
@@ -45,7 +49,16 @@ class HmoWorkbenchController extends Controller
     {
         $hmos = Hmo::where('status', 1)->orderBy('name', 'ASC')->get();
         $rejectionReasons = self::REJECTION_REASONS;
-        return view('admin.hmo.workbench', compact('hmos', 'rejectionReasons'));
+
+        // Users who have participated in validation (approved or rejected at least one request)
+        $validators = User::whereIn('id', function ($q) {
+            $q->select('validated_by')
+              ->from('product_or_service_requests')
+              ->whereNotNull('validated_by')
+              ->distinct();
+        })->orderBy('firstname')->orderBy('surname')->get();
+
+        return view('admin.hmo.workbench', compact('hmos', 'rejectionReasons', 'validators'));
     }
 
     /**
@@ -154,6 +167,10 @@ class HmoWorkbenchController extends Controller
 
         if ($request->filled('date_to')) {
             $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        if ($request->filled('validated_by')) {
+            $query->where('validated_by', $request->validated_by);
         }
 
         // Search
@@ -323,12 +340,12 @@ class HmoWorkbenchController extends Controller
                     $itemName = $procedure->procedureDefinition->name ?? 'Unknown Procedure';
                     $itemType = 'Procedure';
                     $badgeColor = 'purple';
-                } elseif ($req->product_id && $req->product) {
-                    $itemName = $req->product->product_name;
+                } elseif ($req->product_id) {
+                    $itemName = HmoHelper::getDisplayName($req);
                     $itemType = 'Product';
                     $badgeColor = 'success';
-                } elseif ($req->service_id && $req->service) {
-                    $itemName = $req->service->service_name;
+                } elseif ($req->service_id) {
+                    $itemName = HmoHelper::getDisplayName($req);
                     $itemType = 'Service';
                     $badgeColor = 'info';
                 }
@@ -461,9 +478,7 @@ class HmoWorkbenchController extends Controller
                 'hmo_name' => $request->user && $request->user->patient_profile && $request->user->patient_profile->hmo
                     ? $request->user->patient_profile->hmo->name : 'N/A',
                 'item_type' => $request->product_id ? 'Product' : 'Service',
-                'item_name' => $request->product_id
-                    ? ($request->product ? $request->product->product_name : 'N/A')
-                    : ($request->service ? $request->service->service_name : 'N/A'),
+                'item_name' => HmoHelper::getDisplayName($request),
                 'qty' => $request->qty,
                 'original_price' => $request->product_id && $request->product && $request->product->price
                     ? $request->product->price->current_sale_price
@@ -512,9 +527,7 @@ class HmoWorkbenchController extends Controller
                 return [
                     'id' => $req->id,
                     'date' => Carbon::parse($req->created_at)->format('Y-m-d H:i'),
-                    'item' => $req->product_id
-                        ? ($req->product ? $req->product->product_name : 'N/A')
-                        : ($req->service ? $req->service->service_name : 'N/A'),
+                    'item' => HmoHelper::getDisplayName($req),
                     'type' => $req->product_id ? 'Product' : 'Service',
                     'claims_amount' => $req->claims_amount,
                     'payable_amount' => $req->payable_amount,
@@ -568,8 +581,16 @@ class HmoWorkbenchController extends Controller
                     'temp' => $v->temp,
                     'heart_rate' => $v->heart_rate,
                     'resp_rate' => $v->resp_rate,
+                    'weight' => $v->weight,
+                    'height' => $v->height,
+                    'spo2' => $v->spo2,
+                    'blood_sugar' => $v->blood_sugar,
+                    'bmi' => $v->bmi,
+                    'pain_score' => $v->pain_score,
                     'other_notes' => $v->other_notes,
                     'time_taken' => $v->time_taken,
+                    'taken_by' => $v->taken_by ? userfullname($v->taken_by) : null,
+                    'source' => $v->source,
                 ];
             });
 
@@ -586,7 +607,7 @@ class HmoWorkbenchController extends Controller
         $encounters = Encounter::with(['doctor.staff_profile.specialization'])
             ->where('patient_id', $patientId)
             ->whereNotNull('notes')
-            ->where('completed', true)
+            ->where('notes', '!=', '')
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
@@ -651,6 +672,29 @@ class HmoWorkbenchController extends Controller
     }
 
     /**
+     * Get patient allergies for clinical context
+     */
+    public function getPatientAllergies($patientId)
+    {
+        $patient = patient::findOrFail($patientId);
+
+        $allergies = $patient->allergies ?? [];
+
+        // Ensure it's always an array
+        if (is_string($allergies)) {
+            $decoded = json_decode($allergies, true);
+            $allergies = is_array($decoded) ? $decoded : array_filter(array_map('trim', explode(',', $allergies)));
+        } elseif (!is_array($allergies)) {
+            $allergies = [];
+        }
+
+        return response()->json([
+            'allergies' => array_values($allergies),
+            'medical_history' => $patient->medical_history ?? null,
+        ]);
+    }
+
+    /**
      * Approve an HMO request.
      */
     public function approveRequest(Request $request, $id)
@@ -693,7 +737,7 @@ class HmoWorkbenchController extends Controller
             // Send notification to HMO executives group
             $this->sendHmoNotification(
                 "Request #{$id} Approved",
-                "HMO request for " . ($hmoRequest->service ? $hmoRequest->service->service_name : ($hmoRequest->product ? $hmoRequest->product->product_name : 'Unknown')) . " has been approved by " . userfullname(Auth::id())
+                "HMO request for " . HmoHelper::getDisplayName($hmoRequest) . " has been approved by " . userfullname(Auth::id())
             );
 
             return response()->json([
@@ -750,7 +794,7 @@ class HmoWorkbenchController extends Controller
             // Send notification
             $this->sendHmoNotification(
                 "Request #{$id} Rejected",
-                "HMO request for " . ($hmoRequest->service ? $hmoRequest->service->service_name : ($hmoRequest->product ? $hmoRequest->product->product_name : 'Unknown')) . " has been rejected. Reason: " . $reasonText
+                "HMO request for " . HmoHelper::getDisplayName($hmoRequest) . " has been rejected. Reason: " . $reasonText
             );
 
             return response()->json([
@@ -1264,7 +1308,7 @@ class HmoWorkbenchController extends Controller
                     $claim->user && $claim->user->patient_profile ? $claim->user->patient_profile->hmo_no : 'N/A',
                     $claim->user && $claim->user->patient_profile && $claim->user->patient_profile->hmo ? $claim->user->patient_profile->hmo->name : 'N/A',
                     $claim->product_id ? 'Product' : 'Service',
-                    $claim->product_id ? ($claim->product ? $claim->product->product_name : 'N/A') : ($claim->service ? $claim->service->service_name : 'N/A'),
+                    HmoHelper::getDisplayName($claim),
                     $claim->qty,
                     $claim->claims_amount,
                     $claim->payable_amount,
@@ -1322,5 +1366,160 @@ class HmoWorkbenchController extends Controller
 
             return $conversation;
         });
+    }
+
+    // ─── TARIFF INLINE EDIT ──────────────────────────────────────────
+
+    /**
+     * Get tariff details for a given request (used to populate the foldable tariff section).
+     */
+    public function getTariffDetails($id)
+    {
+        $req = ProductOrServiceRequest::with(['product:id,product_name', 'service:id,service_name', 'hmo:id,name,hmo_scheme_id'])
+            ->findOrFail($id);
+
+        // Look up tariff
+        $tariff = HmoTariff::where('hmo_id', $req->hmo_id)
+            ->when($req->product_id, fn($q) => $q->where('product_id', $req->product_id)->whereNull('service_id'))
+            ->when($req->service_id, fn($q) => $q->where('service_id', $req->service_id)->whereNull('product_id'))
+            ->first();
+
+        // Original item name (fallback)
+        $originalName = $req->product_id
+            ? ($req->product->product_name ?? 'N/A')
+            : ($req->service->service_name ?? 'N/A');
+
+        // Scheme info for "apply to all HMOs" checkbox
+        $scheme = null;
+        $schemeHmoCount = 0;
+        if ($req->hmo && $req->hmo->hmo_scheme_id) {
+            $scheme = HmoScheme::find($req->hmo->hmo_scheme_id);
+            $schemeHmoCount = Hmo::where('hmo_scheme_id', $req->hmo->hmo_scheme_id)->count();
+        }
+
+        return response()->json([
+            'success' => true,
+            'tariff' => $tariff ? [
+                'id'             => $tariff->id,
+                'display_name'   => $tariff->display_name,
+                'coverage_mode'  => $tariff->coverage_mode,
+                'claims_amount'  => (float) $tariff->claims_amount,
+                'payable_amount' => (float) $tariff->payable_amount,
+            ] : null,
+            'original_name' => $originalName,
+            'hmo_name'      => $req->hmo->name ?? 'N/A',
+            'item_type'     => $req->product_id ? 'product' : 'service',
+            'scheme'        => $scheme ? [
+                'id'        => $scheme->id,
+                'name'      => $scheme->name,
+                'hmo_count' => $schemeHmoCount,
+            ] : null,
+            // Current POSR values (may differ from tariff if qty > 1)
+            'current' => [
+                'coverage_mode'  => $req->coverage_mode,
+                'claims_amount'  => (float) $req->claims_amount,
+                'payable_amount' => (float) $req->payable_amount,
+                'qty'            => (int) ($req->qty ?? 1),
+            ],
+        ]);
+    }
+
+    /**
+     * Update tariff inline during validation workflow.
+     */
+    public function updateTariffInline(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'coverage_mode'  => 'required|in:express,primary,secondary',
+            'claims_amount'  => 'required|numeric|min:0',
+            'payable_amount' => 'required|numeric|min:0',
+            'display_name'   => 'nullable|string|max:255',
+            'apply_to_scheme' => 'nullable|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            $posr = ProductOrServiceRequest::with('hmo')->findOrFail($id);
+            $productId = $posr->product_id;
+            $serviceId = $posr->service_id;
+            $hmoId     = $posr->hmo_id;
+
+            if (!$hmoId) {
+                return response()->json(['success' => false, 'message' => 'This request has no HMO association'], 422);
+            }
+
+            $newMode   = $request->coverage_mode;
+            $newClaims = (float) $request->claims_amount;
+            $newPay    = (float) $request->payable_amount;
+            $displayName = $request->display_name ?: null;
+
+            // ── 1. Update (or create) the tariff record ──────────────────
+            $tariffData = [
+                'claims_amount'  => $newClaims,
+                'payable_amount' => $newPay,
+                'coverage_mode'  => $newMode,
+                'display_name'   => $displayName,
+            ];
+
+            $tariffMatch = $productId
+                ? ['hmo_id' => $hmoId, 'product_id' => $productId, 'service_id' => null]
+                : ['hmo_id' => $hmoId, 'service_id' => $serviceId, 'product_id' => null];
+
+            HmoTariff::updateOrCreate($tariffMatch, $tariffData);
+
+            // ── 2. Recalculate the current POSR based on qty ─────────────
+            // Note: validation_status is NOT changed here — the subsequent
+            // approve / reject / reapprove action handles that separately.
+            $qty = (int) ($posr->qty ?? 1);
+            $posr->coverage_mode  = $newMode;
+            $posr->claims_amount  = $newClaims * $qty;
+            $posr->payable_amount = $newPay * $qty;
+            $posr->save();
+
+            // ── 3. Propagate to scheme if requested ──────────────────────
+            $schemeUpdated = 0;
+            if ($request->apply_to_scheme && $posr->hmo && $posr->hmo->hmo_scheme_id) {
+                $schemeId = $posr->hmo->hmo_scheme_id;
+                $schemeHmoIds = Hmo::where('hmo_scheme_id', $schemeId)
+                    ->where('id', '!=', $hmoId) // skip current HMO (already updated)
+                    ->pluck('id');
+
+                foreach ($schemeHmoIds as $otherHmoId) {
+                    $otherMatch = $productId
+                        ? ['hmo_id' => $otherHmoId, 'product_id' => $productId, 'service_id' => null]
+                        : ['hmo_id' => $otherHmoId, 'service_id' => $serviceId, 'product_id' => null];
+
+                    HmoTariff::updateOrCreate($otherMatch, $tariffData);
+                }
+                $schemeUpdated = $schemeHmoIds->count();
+            }
+
+            DB::commit();
+
+            $schemeName = ($schemeUpdated > 0 && $posr->hmo->hmo_scheme_id)
+                ? (HmoScheme::find($posr->hmo->hmo_scheme_id)->name ?? 'scheme')
+                : null;
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Tariff updated successfully'
+                    . ($schemeUpdated > 0 ? ". Also applied to {$schemeUpdated} other HMOs under {$schemeName}." : ''),
+                'scheme_updated' => $schemeUpdated,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating tariff. Please try again or contact support.',
+            ], 500);
+        }
     }
 }

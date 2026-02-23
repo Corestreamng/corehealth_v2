@@ -691,11 +691,26 @@
     let clinicalInjectionTableInit = false;
     let clinicalImmunizationTableInit = false;
 
-    // Load when tab is shown
+    // Load when tab is shown (using multiple event bindings for reliability)
     $(document).on('shown.bs.tab', '#inj-imm-tab-btn', function() {
         if (!clinicalInjImmLoaded) {
             loadClinicalInjImmContent();
         }
+    });
+
+    // Also bind click event as fallback (matches enc-notes, meds, procedures pattern)
+    $(document).on('click', '#inj-imm-tab-btn', function() {
+        setTimeout(function() {
+            if (!clinicalInjImmLoaded && $('#inj-imm-tab').hasClass('show')) {
+                loadClinicalInjImmContent();
+            }
+        }, 150);
+    });
+
+    // Refresh button handler
+    $(document).on('click', '.refresh-clinical-btn[data-panel="inj-imm"]', function() {
+        clinicalInjImmLoaded = false;
+        loadClinicalInjImmContent();
     });
 
     function loadClinicalInjImmContent() {
@@ -818,7 +833,18 @@
         // Load injection table
         loadClinicalInjectionTable(uniqueId, patientId);
 
-        // Tab switch handler for immunization
+        // Tab switch handler for immunization (use click + delegated for reliability across BS4/BS5 contexts)
+        $(`#${uniqueId}-tabs`).on('click', 'a[data-bs-toggle="tab"]', function() {
+            var href = $(this).attr('href');
+            if (href === `#${uniqueId}-immunization`) {
+                // Small delay to let tab pane become visible first
+                setTimeout(function() {
+                    loadClinicalImmunizationTimeline(uniqueId, patientId);
+                }, 100);
+            }
+        });
+
+        // Also listen for shown.bs.tab in case BS5 native tabs fire it
         $(`#${uniqueId}-tabs a[data-bs-toggle="tab"]`).on('shown.bs.tab', function(e) {
             if ($(e.target).attr('href') === `#${uniqueId}-immunization`) {
                 loadClinicalImmunizationTimeline(uniqueId, patientId);

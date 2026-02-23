@@ -3895,6 +3895,7 @@
 @section('scripts')
 <script src="{{ asset('plugins/dataT/datatables.min.js') }}"></script>
 <script src="{{ asset('plugins/ckeditor/ckeditor5/ckeditor.js') }}"></script>
+<script src="{{ asset('js/clinical-context.js') }}"></script>
 <script>
 // Global state
 let currentPatient = null;
@@ -3979,11 +3980,11 @@ function initializeEventListeners() {
     });
 
     $('#btn-clinical-context').on('click', function() {
-        // Open clinical context modal
-        $('#clinical-context-modal').modal('show');
-        // Load clinical data if patient selected
+        // Open clinical context modal with shared module
         if (currentPatient) {
-            loadClinicalContext(currentPatient);
+            ClinicalContext.load(currentPatient);
+        } else {
+            $('#clinical-context-modal').modal('show');
         }
     });
 
@@ -4818,152 +4819,15 @@ function initializeRequestHandlers() {
     });
 }
 
-function loadClinicalContext(patientId) {
-    // Load vitals
-    $.get(`/imaging-workbench/patient/${patientId}/vitals?limit=10`, function(vitals) {
-        displayVitals(vitals);
-    });
-
-    // Load notes
+// loadClinicalContext is now handled by ClinicalContext.load() from clinical-context.js
+// Notes display is still handled locally since it has Imaging-specific formatting
+function loadClinicalNotes(patientId) {
     $.get(`/imaging-workbench/patient/${patientId}/notes?limit=10`, function(notes) {
         displayNotes(notes);
     });
-
-    // Load medications
-    $.get(`/imaging-workbench/patient/${patientId}/medications?limit=20`, function(meds) {
-        displayMedications(meds);
-    });
 }
 
-function displayVitals(vitals) {
-    // Check if DataTables is loaded
-    if (typeof $.fn.DataTable === 'undefined') {
-        console.error('DataTables library is not loaded');
-        $('#vitals-panel-body').html('<p class="text-danger">Error: DataTables library not loaded</p>');
-        return;
-    }
-
-    // Destroy existing DataTable if present
-    if ($.fn.DataTable.isDataTable('#vitals-table')) {
-        $('#vitals-table').DataTable().destroy();
-    }
-
-    // Initialize DataTable with custom card rendering
-    $('#vitals-table').DataTable({
-        data: vitals,
-        paging: false,
-        searching: false,
-        info: false,
-        ordering: false,
-        dom: 't',
-        language: {
-            emptyTable: '<p class="text-muted">No recent vitals recorded</p>'
-        },
-        columns: [{
-            data: null,
-            render: function(data, type, row) {
-                // Use time_taken if available, otherwise created_at
-                const vitalDate = formatDateTime(row.time_taken || row.created_at);
-
-                // Correct field names from database
-                const temp = row.temp || 'N/A';
-                const heartRate = row.heart_rate || 'N/A';
-                const bp = row.blood_pressure || 'N/A';
-                const respRate = row.resp_rate || 'N/A';
-                const weight = row.weight || 'N/A';
-
-                return `
-                    <div class="vital-entry">
-                        <div class="vital-entry-header">
-                            <span class="vital-date">${vitalDate}</span>
-                        </div>
-                        <div class="vital-entry-grid">
-                            <div class="vital-item ${getTempClass(temp)}"
-                                 onmouseenter="showVitalTooltip(event, 'temperature', '${temp}', '34°C - 39°C')">
-                                <i class="mdi mdi-thermometer"></i>
-                                <span class="vital-value">${temp}°C</span>
-                                <span class="vital-label">Temp</span>
-                            </div>
-                            <div class="vital-item ${getHeartRateClass(heartRate)}"
-                                 onmouseenter="showVitalTooltip(event, 'pulse', '${heartRate}', '60-220 BPM')">
-                                <i class="mdi mdi-heart-pulse"></i>
-                                <span class="vital-value">${heartRate}</span>
-                                <span class="vital-label">Heart Rate</span>
-                            </div>
-                            <div class="vital-item ${getBPClass(bp)}"
-                                 onmouseenter="showVitalTooltip(event, 'bp', '${bp}', '90/60 - 140/90 mmHg')">
-                                <i class="mdi mdi-water"></i>
-                                <span class="vital-value">${bp}</span>
-                                <span class="vital-label">BP (mmHg)</span>
-                            </div>
-                            <div class="vital-item ${getRespRateClass(respRate)}">
-                                <i class="mdi mdi-lungs"></i>
-                                <span class="vital-value">${respRate}</span>
-                                <span class="vital-label">Resp Rate (BPM)</span>
-                            </div>
-                            <div class="vital-item">
-                                <i class="mdi mdi-weight-kilogram"></i>
-                                <span class="vital-value">${weight}</span>
-                                <span class="vital-label">Weight (Kg)</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-        }],
-        drawCallback: function() {
-            // Add "Show All" link after table
-            const $wrapper = $('#vitals-table_wrapper');
-            $wrapper.find('.show-all-link').remove();
-            $wrapper.append(`
-                <a href="/patients/show/${currentPatient}?section=vitalsCardBody" target="_blank" class="show-all-link">
-                    Show All Vitals →
-                </a>
-            `);
-        }
-    });
-}
-
-function calculateBMI(weight, height) {
-    if (!weight || !height || height === 0) return null;
-    const bmi = weight / ((height / 100) ** 2);
-    return bmi.toFixed(1);
-}
-
-function getTempClass(temp) {
-    if (temp === 'N/A') return '';
-    const t = parseFloat(temp);
-    // Based on form: Min: 34, Max: 39
-    if (t < 34 || t > 39) return 'vital-critical';
-    if (t < 36.1 || t > 38.0) return 'vital-warning';
-    return 'vital-normal';
-}
-
-function getHeartRateClass(heartRate) {
-    if (heartRate === 'N/A') return '';
-    const hr = parseInt(heartRate);
-    // Based on form: Min: 60, Max: 220
-    if (hr < 50 || hr > 220) return 'vital-critical';
-    if (hr < 60 || hr > 100) return 'vital-warning';
-    return 'vital-normal';
-}
-
-function getRespRateClass(respRate) {
-    if (respRate === 'N/A') return '';
-    const rr = parseInt(respRate);
-    // Based on form: Min: 12, Max: 30
-    if (rr < 10 || rr > 35) return 'vital-critical';
-    if (rr < 12 || rr > 30) return 'vital-warning';
-    return 'vital-normal';
-}
-
-function getBPClass(bp) {
-    if (bp === 'N/A' || !bp.includes('/')) return '';
-    const [systolic, diastolic] = bp.split('/').map(v => parseInt(v));
-    if (systolic > 180 || systolic < 80 || diastolic > 110 || diastolic < 50) return 'vital-critical';
-    if (systolic > 140 || systolic < 90 || diastolic > 90 || diastolic < 60) return 'vital-warning';
-    return 'vital-normal';
-}
+// displayVitals, classifiers are now handled by ClinicalContext module (clinical-context.js)
 
 function displayNotes(notes) {
     // Check if DataTables is loaded
@@ -5102,105 +4966,7 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-function displayMedications(meds) {
-    const $container = $('#medications-list-container');
-    const $alertBanner = $('#allergy-alert-banner');
-    const $showAll = $('#medications-show-all');
-
-    // Check for allergies if patient data is available
-    const patientAllergies = currentPatientData?.allergies || [];
-    const allergyAlerts = checkForAllergies(meds, patientAllergies);
-
-    // Display allergy alert if present
-    if (allergyAlerts.length > 0) {
-        $alertBanner.html(displayAllergyAlert(allergyAlerts));
-    } else {
-        $alertBanner.html('');
-    }
-
-    // Check if no medications
-    if (!meds || meds.length === 0) {
-        $container.html('<p class="text-muted text-center">No recent medications</p>');
-        $showAll.html('');
-        return;
-    }
-
-    // Build cards for each medication (matching encounter prescription history style)
-    let html = '';
-    meds.forEach(med => {
-        const drugName = med.drug_name || 'N/A';
-        const productCode = med.product_code || '';
-        const dose = med.dose || 'N/A';
-        const status = med.status || 'pending';
-        const requestedDate = med.requested_date || 'N/A';
-        const prescribedBy = med.doctor || 'N/A';
-        const billedBy = med.billed_by || null;
-        const billedDate = med.billed_date || null;
-        const dispensedBy = med.dispensed_by || null;
-        const dispensedDate = med.dispensed_date || null;
-
-        // Check if this medication triggers allergy alert
-        const isAllergic = allergyAlerts.some(alert => alert.medication === drugName);
-
-        // Status badge
-        let statusBadge = '';
-        if (status === 'dispensed') {
-            statusBadge = "<span class='badge bg-info'>Dispensed</span>";
-        } else if (status === 'billed') {
-            statusBadge = "<span class='badge bg-primary'>Billed</span>";
-        } else {
-            statusBadge = "<span class='badge bg-secondary'>Pending</span>";
-        }
-
-        html += '<div class="medication-card card mb-2" style="border-left: 4px solid ' + (isAllergic ? '#dc3545' : '#0d6efd') + ';">';
-        html += '<div class="card-body p-3">';
-
-        // Header with drug name and status
-        html += '<div class="d-flex justify-content-between align-items-start mb-3">';
-        html += "<h6 class='mb-0'><span class='badge bg-success'>[" + productCode + '] ' + drugName + '</span></h6>';
-        html += statusBadge;
-        html += '</div>';
-
-        // Allergy warning if applicable
-        if (isAllergic) {
-            const allergyMatch = allergyAlerts.find(alert => alert.medication === drugName);
-            html += '<div class="alert alert-danger mb-2"><small><i class="fa fa-exclamation-triangle"></i> <b>ALLERGY WARNING:</b> Patient allergic to ' + allergyMatch.allergy + '</small></div>';
-        }
-
-        // Dosage information
-        html += '<div class="alert alert-light mb-3"><small><b><i class="mdi mdi-pill"></i> Dose/Frequency:</b><br>' + dose + '</small></div>';
-
-        // Timeline section
-        html += '<div class="mb-2"><small>';
-        html += '<div class="mb-2"><i class="mdi mdi-account-arrow-right text-primary"></i> <b>Requested by:</b> '
-            + prescribedBy + ' <span class="text-muted">(' + requestedDate + ')</span>';
-        html += '</div>';
-
-        html += '<div class="mb-2"><i class="mdi mdi-cash-multiple text-success"></i> <b>Billed by:</b> '
-            + (billedBy ? billedBy + ' <span class="text-muted">(' + billedDate + ')</span>' : "<span class='badge bg-secondary'>Not billed</span>");
-        html += '</div>';
-
-        html += '<div class="mb-2"><i class="mdi mdi-package-variant text-warning"></i> <b>Dispensed by:</b> '
-            + (dispensedBy ? dispensedBy + ' <span class="text-muted">(' + dispensedDate + ')</span>' : "<span class='badge bg-secondary'>Not dispensed</span>");
-        html += '</div>';
-
-        html += '</small></div>';
-
-        html += '</div>'; // Close card-body
-        html += '</div>'; // Close card
-    });
-
-    $container.html(html);
-
-    // Add "Show All" link
-    $showAll.html(`
-        <div class="text-center mt-3">
-            <a href="/patients/show/${currentPatient}?section=prescriptionsCardBody" target="_blank" class="btn btn-sm btn-outline-primary">
-                Show All Medications <i class="fa fa-arrow-right"></i>
-            </a>
-        </div>
-    `);
-}
+// displayMedications is now handled by ClinicalContext.displayMedications() from clinical-context.js
 
 function formatDate(dateString) {
     const date = new Date(dateString);
@@ -5297,22 +5063,15 @@ function refreshClinicalPanel(panel) {
     const $btn = $(`.refresh-clinical-btn[data-panel="${panel}"]`);
     $btn.find('i').addClass('fa-spin');
 
-    // Reload specific panel data
-    if (panel === 'vitals') {
-        $.get(`/imaging-workbench/patient/${currentPatient}/vitals?limit=10`, function(vitals) {
-            displayVitals(vitals);
-            $btn.find('i').removeClass('fa-spin');
-        });
-    } else if (panel === 'notes') {
+    // Vitals and medications refresh is handled by clinical-context.js refresh handlers
+    if (panel === 'notes') {
         $.get(`/imaging-workbench/patient/${currentPatient}/notes?limit=10`, function(notes) {
             displayNotes(notes);
             $btn.find('i').removeClass('fa-spin');
         });
-    } else if (panel === 'medications') {
-        $.get(`/imaging-workbench/patient/${currentPatient}/medications?limit=20`, function(meds) {
-            displayMedications(meds);
-            $btn.find('i').removeClass('fa-spin');
-        });
+    } else {
+        // For vitals/medications/allergies — the shared module handles these via delegated click events
+        setTimeout(function() { $btn.find('i').removeClass('fa-spin'); }, 1000);
     }
 }
 
