@@ -11940,7 +11940,9 @@ function initializeReportsCharts(byStatus, monthlyTrends) {
         1: { name: 'Awaiting Billing', color: '#ffc107' },
         2: { name: 'Awaiting Sample', color: '#17a2b8' },
         3: { name: 'Awaiting Results', color: '#007bff' },
-        4: { name: 'Completed', color: '#28a745' }
+        4: { name: 'Completed', color: '#28a745' },
+        5: { name: 'Pending Approval', color: '#6f42c1' },
+        6: { name: 'Rejected', color: '#dc3545' }
     };
 
     if (byStatus && byStatus.length > 0) {

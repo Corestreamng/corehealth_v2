@@ -61,6 +61,8 @@ protected $fillable = [
         'corehms_superadmin_pass',
         'registration_category_id',
         'procedure_category_id',
+        'lab_results_require_approval',
+        'imaging_results_require_approval',
     ];
 
     /**

@@ -29,7 +29,11 @@ class LabWorkbenchController extends Controller
             abort(403, 'Unauthorized access to Lab Workbench');
         }
 
-        return view('admin.lab.workbench');
+        $staff = Auth::user()->staff_profile;
+        $isApprover = $staff && ($staff->is_unit_head || $staff->is_dept_head);
+        $requiresApproval = (bool) appsettings('lab_results_require_approval');
+
+        return view('admin.lab.workbench', compact('isApprover', 'requiresApproval'));
     }
 
     /**
@@ -86,6 +90,7 @@ class LabWorkbenchController extends Controller
         $resultCount = LabServiceRequest::where('status', 3)->count();
         $completedCount = LabServiceRequest::where('status', 4)->count();
         $emergencyCount = LabServiceRequest::where('priority', 'emergency')->whereIn('status', [1, 2, 3])->count();
+        $approvalCount = LabServiceRequest::whereIn('status', [5, 6])->count();
 
         return response()->json([
             'billing' => $billingCount,
@@ -94,6 +99,7 @@ class LabWorkbenchController extends Controller
             'completed' => $completedCount,
             'total' => $billingCount + $sampleCount + $resultCount,
             'emergency' => $emergencyCount,
+            'approval' => $approvalCount,
         ]);
     }
 
@@ -105,9 +111,15 @@ class LabWorkbenchController extends Controller
         $patient = patient::with(['user', 'hmo.scheme'])->findOrFail($patientId);
 
         // Get all pending investigation requests
+        $statuses = [1, 2, 3];
+        // Include approval statuses (5 = pending approval, 6 = rejected) if approval is enabled
+        if (appsettings('lab_results_require_approval')) {
+            $statuses = array_merge($statuses, [5, 6]);
+        }
+
         $requests = LabServiceRequest::with(['service', 'doctor', 'biller', 'patient', 'productOrServiceRequest', 'resultBy'])
             ->where('patient_id', $patientId)
-            ->whereIn('status', [1, 2, 3])
+            ->whereIn('status', $statuses)
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -156,6 +168,8 @@ class LabWorkbenchController extends Controller
         $billing = $requests->where('status', 1)->values();
         $sample = $requests->where('status', 2)->values();
         $results = $requests->where('status', 3)->values();
+        $pendingApproval = $requests->where('status', 5)->values();
+        $rejected = $requests->where('status', 6)->values();
 
         // Calculate detailed age
         $ageText = 'N/A';
@@ -199,6 +213,8 @@ class LabWorkbenchController extends Controller
                 'billing' => $billing,
                 'sample' => $sample,
                 'results' => $results,
+                'pending_approval' => $pendingApproval,
+                'rejected' => $rejected,
             ],
         ]);
     }
@@ -275,7 +291,18 @@ class LabWorkbenchController extends Controller
             ]);
 
             // Filter by status if provided
-            if ($request->has('status') && $request->status !== 'all') {
+            if ($request->has('status') && $request->status === 'approval') {
+                // Special approval queue: pending (5), rejected (6), and recently approved by current user
+                $query->where(function ($q) {
+                    $q->whereIn('status', [5, 6])
+                      ->orWhere(function ($q2) {
+                          $q2->where('status', 4)
+                             ->whereNotNull('approved_by')
+                             ->where('approved_by', Auth::id())
+                             ->where('approved_at', '>=', now()->subHours(72));
+                      });
+                });
+            } elseif ($request->has('status') && $request->status !== 'all') {
                 $statuses = explode(',', $request->status);
                 $query->whereIn('status', $statuses);
             } else {
@@ -359,6 +386,8 @@ class LabWorkbenchController extends Controller
                         'delivery_check' => $deliveryCheck, // Add delivery status
                         'bundled_info' => $bundledInfo, // Add bundled procedure info
                         'priority' => $request->priority ?? 'routine',
+                        'approved_by' => $request->approved_by,
+                        'approved_at' => $this->formatDateTime($request->approved_at),
                     ];
                 })
                 ->rawColumns(['card_data'])
@@ -851,17 +880,46 @@ class LabWorkbenchController extends Controller
 
             DB::beginTransaction();
 
-            $updateData = [
-                'result' => $resultHtml,
-                'result_data' => $resultData,
-                'attachments' => !empty($allAttachments) ? json_encode($allAttachments) : null,
-                'status' => 4
-            ];
+            $requiresApproval = appsettings('lab_results_require_approval');
 
-            // Only update result_date and result_by if this is not an edit
-            if (!$isEdit) {
-                $updateData['result_date'] = date('Y-m-d H:i:s');
-                $updateData['result_by'] = Auth::id();
+            if ($requiresApproval && !$isEdit) {
+                // Save to pending columns — result not visible until approved
+                $updateData = [
+                    'pending_result' => $resultHtml,
+                    'pending_result_data' => $resultData,
+                    'pending_attachments' => !empty($allAttachments) ? json_encode($allAttachments) : null,
+                    'status' => 5, // Pending Approval
+                    'result_date' => date('Y-m-d H:i:s'),
+                    'result_by' => Auth::id(),
+                    // Clear any previous rejection
+                    'rejected_by' => null,
+                    'rejected_at' => null,
+                    'rejection_reason' => null,
+                ];
+            } else {
+                // Original behavior — save directly to live columns
+                $updateData = [
+                    'result' => $resultHtml,
+                    'result_data' => $resultData,
+                    'attachments' => !empty($allAttachments) ? json_encode($allAttachments) : null,
+                    'status' => 4
+                ];
+
+                // Only update result_date and result_by if this is not an edit
+                if (!$isEdit) {
+                    $updateData['result_date'] = date('Y-m-d H:i:s');
+                    $updateData['result_by'] = Auth::id();
+                }
+
+                // If re-submitting after rejection, also update pending → live and clear pending
+                if ($labRequest->status == 6) {
+                    $updateData['pending_result'] = null;
+                    $updateData['pending_result_data'] = null;
+                    $updateData['pending_attachments'] = null;
+                    $updateData['rejected_by'] = null;
+                    $updateData['rejected_at'] = null;
+                    $updateData['rejection_reason'] = null;
+                }
             }
 
             $req = LabServiceRequest::where('id', $request->invest_res_entry_id)->update($updateData);
@@ -873,7 +931,7 @@ class LabWorkbenchController extends Controller
 
             DB::commit();
 
-            $message = $isEdit ? "Results Updated Successfully" : "Results Saved Successfully";
+            $message = $isEdit ? "Results Updated Successfully" : ($requiresApproval && !$isEdit ? "Results saved — pending approval" : "Results Saved Successfully");
             return response()->json([
                 'success' => true,
                 'message' => $message
@@ -1394,7 +1452,9 @@ class LabWorkbenchController extends Controller
                         1 => '<span class="badge badge-warning">Awaiting Billing</span>',
                         2 => '<span class="badge badge-info">Awaiting Sample</span>',
                         3 => '<span class="badge badge-primary">Awaiting Results</span>',
-                        4 => '<span class="badge badge-success">Completed</span>'
+                        4 => '<span class="badge badge-success">Completed</span>',
+                        5 => '<span class="badge" style="background-color: #6f42c1; color: #fff;">Pending Approval</span>',
+                        6 => '<span class="badge badge-danger"><i class="mdi mdi-close-circle"></i> Rejected</span>'
                     ];
                     return $badges[$row->status] ?? '<span class="badge badge-secondary">Unknown</span>';
                 })
@@ -1654,6 +1714,259 @@ class LabWorkbenchController extends Controller
                 'error' => 'An error occurred while fetching statistics.',
                 'message' => config('app.debug') ? $e->getMessage() : 'Internal Server Error'
             ], 500);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  RESULT APPROVAL WORKFLOW
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * Check if the authenticated user is a unit head or dept head.
+     */
+    private function authorizeApprover()
+    {
+        $staff = Auth::user()->staff_profile;
+
+        if (!$staff || (!$staff->is_unit_head && !$staff->is_dept_head)) {
+            abort(403, 'Only Unit Heads and Department Heads can approve results.');
+        }
+    }
+
+    /**
+     * Get the approval queue (status 5 = pending, status 6 = rejected).
+     */
+    public function getApprovalQueue(Request $request)
+    {
+        $this->authorizeApprover();
+
+        try {
+            $query = LabServiceRequest::with(['service', 'patient', 'patient.user', 'encounter', 'resultBy', 'rejector'])
+                ->whereIn('status', [5, 6])
+                ->orderBy('result_date', 'asc');
+
+            // Optional filter by status
+            if ($request->has('filter_status') && in_array($request->filter_status, [5, 6])) {
+                $query->where('status', $request->filter_status);
+            }
+
+            $items = $query->get()->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'service_name' => $item->service->service_name ?? 'N/A',
+                    'patient_name' => $item->patient && $item->patient->user
+                        ? $item->patient->user->surname . ' ' . $item->patient->user->firstname
+                        : 'N/A',
+                    'patient_id' => $item->patient_id,
+                    'entered_by' => $item->result_by ? userfullname($item->result_by) : 'N/A',
+                    'result_date' => $item->result_date ? date('d M Y H:i', strtotime($item->result_date)) : null,
+                    'status' => $item->status,
+                    'status_label' => $item->status == 5 ? 'Pending Approval' : 'Rejected',
+                    'rejection_reason' => $item->rejection_reason,
+                    'rejected_by_name' => $item->rejector ? ($item->rejector->surname . ' ' . $item->rejector->firstname) : null,
+                    'rejected_at' => $item->rejected_at ? date('d M Y H:i', strtotime($item->rejected_at)) : null,
+                ];
+            });
+
+            // Counts
+            $pendingCount = $items->where('status', 5)->count();
+            $rejectedCount = $items->where('status', 6)->count();
+
+            return response()->json([
+                'success' => true,
+                'data' => $items->values(),
+                'pending_count' => $pendingCount,
+                'rejected_count' => $rejectedCount,
+                'total_count' => $items->count(),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Get count of pending approval items (for badge polling).
+     */
+    public function getApprovalCount()
+    {
+        try {
+            $staff = Auth::user()->staff_profile;
+            if (!$staff || (!$staff->is_unit_head && !$staff->is_dept_head)) {
+                return response()->json(['count' => 0]);
+            }
+
+            $count = LabServiceRequest::where('status', 5)->count();
+            return response()->json(['count' => $count]);
+        } catch (\Exception $e) {
+            return response()->json(['count' => 0]);
+        }
+    }
+
+    /**
+     * Get a single pending result for review.
+     */
+    public function getApprovalDetail($id)
+    {
+        $this->authorizeApprover();
+
+        try {
+            $item = LabServiceRequest::with(['service', 'patient', 'patient.user', 'encounter', 'resultBy', 'rejector'])
+                ->findOrFail($id);
+
+            if (!in_array($item->status, [5, 6])) {
+                return response()->json(['success' => false, 'message' => 'This result is not pending approval.'], 422);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $item->id,
+                    'service_name' => $item->service->service_name ?? 'N/A',
+                    'patient_name' => $item->patient && $item->patient->user
+                        ? $item->patient->user->surname . ' ' . $item->patient->user->firstname
+                        : 'N/A',
+                    'patient_id' => $item->patient_id,
+                    'encounter_id' => $item->encounter_id,
+                    'result_html' => $item->pending_result,
+                    'result_data' => $item->pending_result_data,
+                    'attachments' => $item->pending_attachments,
+                    'entered_by' => $item->result_by ? userfullname($item->result_by) : 'N/A',
+                    'result_date' => $item->result_date ? date('d M Y H:i', strtotime($item->result_date)) : null,
+                    'status' => $item->status,
+                    'rejection_reason' => $item->rejection_reason,
+                    'rejected_by_name' => $item->rejector ? ($item->rejector->surname . ' ' . $item->rejector->firstname) : null,
+                    'rejected_at' => $item->rejected_at ? date('d M Y H:i', strtotime($item->rejected_at)) : null,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Approve a pending result — moves pending → live columns, status → 4.
+     */
+    public function approveResult($id)
+    {
+        $this->authorizeApprover();
+
+        try {
+            $labRequest = LabServiceRequest::findOrFail($id);
+
+            if ($labRequest->status != 5) {
+                return response()->json(['success' => false, 'message' => 'This result is not pending approval.'], 422);
+            }
+
+            DB::beginTransaction();
+
+            $labRequest->update([
+                // Move pending → live
+                'result' => $labRequest->pending_result,
+                'result_data' => $labRequest->pending_result_data,
+                'attachments' => $labRequest->pending_attachments,
+                // Clear pending
+                'pending_result' => null,
+                'pending_result_data' => null,
+                'pending_attachments' => null,
+                // Approval metadata
+                'approved_by' => Auth::id(),
+                'approved_at' => now(),
+                'status' => 4, // Completed
+            ]);
+
+            $this->logAudit($id, 'result_approved', 'Result approved by ' . Auth::user()->surname . ' ' . Auth::user()->firstname);
+
+            DB::commit();
+
+            return response()->json(['success' => true, 'message' => 'Result approved successfully.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Reject a pending result — status → 6, record reason.
+     */
+    public function rejectResult(Request $request, $id)
+    {
+        $this->authorizeApprover();
+
+        try {
+            $request->validate(['rejection_reason' => 'required|string|max:500']);
+
+            $labRequest = LabServiceRequest::findOrFail($id);
+
+            if ($labRequest->status != 5) {
+                return response()->json(['success' => false, 'message' => 'This result is not pending approval.'], 422);
+            }
+
+            DB::beginTransaction();
+
+            $labRequest->update([
+                'status' => 6, // Rejected
+                'rejected_by' => Auth::id(),
+                'rejected_at' => now(),
+                'rejection_reason' => $request->rejection_reason,
+            ]);
+
+            $this->logAudit($id, 'result_rejected', 'Result rejected: ' . $request->rejection_reason);
+
+            DB::commit();
+
+            return response()->json(['success' => true, 'message' => 'Result rejected. The technician will be notified.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Reverse a previously approved result — moves live → pending, status → 5.
+     * Only the person who approved can reverse it.
+     */
+    public function reverseApproval($id)
+    {
+        $this->authorizeApprover();
+
+        try {
+            $labRequest = LabServiceRequest::findOrFail($id);
+
+            if ($labRequest->status != 4 || !$labRequest->approved_by) {
+                return response()->json(['success' => false, 'message' => 'This result has not been approved or is not eligible for reversal.'], 422);
+            }
+
+            // Only the person who approved can reverse
+            if ($labRequest->approved_by != Auth::id()) {
+                return response()->json(['success' => false, 'message' => 'Only the person who approved this result can reverse the approval.'], 403);
+            }
+
+            DB::beginTransaction();
+
+            $labRequest->update([
+                // Move live → pending
+                'pending_result' => $labRequest->result,
+                'pending_result_data' => $labRequest->result_data,
+                'pending_attachments' => $labRequest->attachments,
+                // Clear live result
+                'result' => null,
+                'result_data' => null,
+                'attachments' => null,
+                // Clear approval metadata
+                'approved_by' => null,
+                'approved_at' => null,
+                // Set back to pending approval
+                'status' => 5,
+            ]);
+
+            $this->logAudit($id, 'approval_reversed', 'Approval reversed by ' . Auth::user()->surname . ' ' . Auth::user()->firstname);
+
+            DB::commit();
+
+            return response()->json(['success' => true, 'message' => 'Approval has been reversed. The result is now pending approval again.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
 }

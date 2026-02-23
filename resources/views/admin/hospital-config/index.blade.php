@@ -585,6 +585,39 @@
                                         </label>
                                     </div>
                                 </div>
+
+                                <hr class="my-3">
+                                <h6 class="text-muted mb-3" style="font-weight: 600;"><i class="mdi mdi-clipboard-check-outline mr-1"></i> Result Approval Workflow</h6>
+
+                                <div class="mb-3">
+                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <label for="lab_results_require_approval" class="mb-0" style="font-weight: 600; cursor: pointer;">
+                                                <i class="mdi mdi-flask-outline text-info mr-1"></i>Lab Results Require Approval
+                                            </label>
+                                            <small class="text-muted d-block">Lab results must be approved by a Unit/Dept Head before becoming visible to doctors</small>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" name="lab_results_require_approval" value="1" {{ $config->lab_results_require_approval ? 'checked' : '' }}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="feature-toggle-row d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <label for="imaging_results_require_approval" class="mb-0" style="font-weight: 600; cursor: pointer;">
+                                                <i class="mdi mdi-radiology-box-outline text-warning mr-1"></i>Imaging Results Require Approval
+                                            </label>
+                                            <small class="text-muted d-block">Imaging results must be approved by a Unit/Dept Head before becoming visible to doctors</small>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" name="imaging_results_require_approval" value="1" {{ $config->imaging_results_require_approval ? 'checked' : '' }}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

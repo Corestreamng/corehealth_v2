@@ -90,6 +90,8 @@ class HospitalConfigController extends Controller
             'goonline' => 'boolean',
             'requirediagnosis' => 'boolean',
             'enable_twakto' => 'boolean',
+            'lab_results_require_approval' => 'boolean',
+            'imaging_results_require_approval' => 'boolean',
         ]);
 
         $config = ApplicationStatu::first();
@@ -103,6 +105,8 @@ class HospitalConfigController extends Controller
         $validated['goonline'] = $request->has('goonline');
         $validated['requirediagnosis'] = $request->has('requirediagnosis');
         $validated['enable_twakto'] = $request->has('enable_twakto');
+        $validated['lab_results_require_approval'] = $request->has('lab_results_require_approval');
+        $validated['imaging_results_require_approval'] = $request->has('imaging_results_require_approval');
 
         // Handle logo upload
         if ($request->hasFile('logo')) {
